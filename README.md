@@ -71,15 +71,13 @@ BeyondElysium ships in-app documentation, viewable inside the plugin's own admin
 | Notifications and game dashboard | Complete |
 | Internationalization scaffolding and accessibility pass | Complete |
 | In-app documentation — Storyteller, Admin, and Player guides, REST API reference | Complete |
-| Character-sheet defect pass, contrast/mobile/print polish | In progress |
+| Character-sheet defect pass, WCAG AA contrast, phone-width layout, print styles | Complete |
 | Configurable purchase-approval rules, in-memoriam page, NPC forms | Planned |
 | Release readiness and public beta | Planned |
 
 ## Roadmap
 
-Three things stand between here and 1.0.
-
-**Finishing polish.** A handful of defects turned up in live playtesting on the character sheet, a WCAG AA contrast pass, a layout pass for phone-width screens, and print styles for the roster and boon ledger.
+Two things stand between here and 1.0.
 
 **Feature rounding.** Granular, configurable purchase-approval rules, so a chronicle can set its own house rules on what needs Storyteller or coordinator-level review, plus an in-memoriam and credits page and NPC-specific character forms.
 
