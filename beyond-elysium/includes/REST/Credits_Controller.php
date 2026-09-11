@@ -29,6 +29,9 @@ class Credits_Controller extends Base_Controller {
 		[ 'name' => 'Travis Dunn', 'note' => '' ],
 		[ 'name' => 'Carl Gosline', 'note' => '' ],
 		[ 'name' => 'Gary "House" Williams', 'note' => '' ],
+		[ 'name' => 'Ash White', 'note' => '' ],
+		[ 'name' => 'Sarah Gabbey', 'note' => '' ],
+		[ 'name' => 'J. T. Nielsen', 'note' => '' ],
 	];
 
 	/**

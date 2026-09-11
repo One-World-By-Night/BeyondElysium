@@ -24,6 +24,7 @@ class Plugin {
 		load_plugin_textdomain( 'beyond-elysium', false, dirname( plugin_basename( BE_PLUGIN_FILE ) ) . '/languages' );
 
 		self::enqueue_assets();
+		\BeyondElysium\Core\Elementor_Requirement::register();
 		\BeyondElysium\Elementor\Init::register();
 		User_Settings::register();
 		Health_Notice::register();

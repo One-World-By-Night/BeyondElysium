@@ -2,19 +2,20 @@
 /**
  * Plugin Name: Beyond Elysium
  * Description: Character management system for Mind's Eye Theatre LARP chronicles.
- * Version: 0.99.0
+ * Version: 0.99.1
  * Author: OWBN
  * License: GPL-2.0-or-later
  * Text Domain: beyond-elysium
  * Domain Path: /languages
  * Requires PHP: 8.2
  * Requires at least: 6.0
+ * Requires Plugins: elementor
  */
 
 defined( 'ABSPATH' ) || exit;
 
 // Constants.
-define( 'BE_VERSION', '0.99.0' );
+define( 'BE_VERSION', '0.99.1' );
 define( 'BE_PLUGIN_FILE', __FILE__ );
 define( 'BE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

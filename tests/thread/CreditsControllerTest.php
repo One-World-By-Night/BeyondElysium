@@ -36,7 +36,7 @@ class CreditsControllerTest extends WP_UnitTestCase {
 		$this->assertNotEmpty( $data['credits_text'] );
 		$names = array_column( $data['in_memoriam'], 'name' );
 		$this->assertSame(
-			[ 'Arielle M.', 'Stephen Page', 'Scott Little', 'Jamison', 'Travis Dunn', 'Carl Gosline', 'Gary "House" Williams' ],
+			[ 'Arielle M.', 'Stephen Page', 'Scott Little', 'Jamison', 'Travis Dunn', 'Carl Gosline', 'Gary "House" Williams', 'Ash White', 'Sarah Gabbey', 'J. T. Nielsen' ],
 			$names
 		);
 	}
