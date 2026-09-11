@@ -1,0 +1,63 @@
+.be-import-tool__steps {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 1.25rem;
+	flex-wrap: wrap;
+}
+
+.be-import-tool__step {
+	padding: 0.3rem 0.7rem;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	color: #777;
+	font-size: 0.85rem;
+}
+
+.be-import-tool__step.is-active {
+	border-color: #333;
+	color: #111;
+	font-weight: 600;
+}
+
+.be-import-tool__step.is-done {
+	color: #2e7d32;
+}
+
+.be-import-tool__upload {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	align-items: flex-start;
+}
+
+.be-import-tool__nav-row {
+	display: flex;
+	justify-content: space-between;
+	margin-top: 1.5rem;
+}
+
+.be-import-tool__error {
+	padding: 0.75rem;
+	border: 1px solid #b3261e;
+	background: #fdecea;
+	color: #611a15;
+	border-radius: 3px;
+	margin-bottom: 1rem;
+}
+
+.be-import-tool__blocking-note {
+	color: #b3261e;
+}
+
+.be-import-tool__target {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	align-items: flex-start;
+}
+
+.be-import-tool__target label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+}

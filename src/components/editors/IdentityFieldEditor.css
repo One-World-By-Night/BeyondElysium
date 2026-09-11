@@ -1,0 +1,32 @@
+.be-identity-field-editor__row {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin-bottom: 0.75rem;
+}
+
+.be-identity-field-editor__label {
+	font-weight: 600;
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	color: #555;
+}
+
+.be-identity-field-editor__multiselect {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+}
+
+.be-identity-field-editor__checkbox {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-weight: normal;
+	text-transform: none;
+}
+
+.be-identity-field-editor__hint {
+	font-size: 0.75rem;
+	color: #777;
+}

@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+#
+# The validation gate. Every workflow document's Validation Gate runs this.
+# See BE_PROCESS/TESTING.md for the three test layers.
+#
+# Usage:
+#   bin/verify            lint, static analysis, unit tests, build
+#   bin/verify --all      also run thread and workflow suites (needs WP_TESTS_DIR)
+#
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+# Prefer the PHP that matches production (8.2). Falls back to whatever is on PATH.
+PHP="${BE_PHP:-}"
+if [ -z "$PHP" ] && [ -x /opt/homebrew/opt/php@8.2/bin/php ]; then
+    PHP=/opt/homebrew/opt/php@8.2/bin/php
+fi
+[ -n "$PHP" ] || PHP="$(command -v php)"
+RUN_ALL=0
+[ "${1:-}" = "--all" ] && RUN_ALL=1
+
+if [ -z "$PHP" ] || [ ! -x "$PHP" ]; then
+    echo "No php binary found. Set BE_PHP or put php on PATH." >&2
+    exit 1
+fi
+
+PHP_VER="$("$PHP" -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')"
+if [ "$PHP_VER" != "8.2" ]; then
+    echo "note: running on PHP $PHP_VER; production is 8.2. PHPStan enforces the 8.2 target."
+fi
+
+echo "==> php -l (PHP $("$PHP" -r 'echo PHP_VERSION;'))"
+find beyond-elysium/includes -name '*.php' -not -path '*/accessschema-client/*' -print0 \
+    | xargs -0 -n1 "$PHP" -l > /dev/null
+"$PHP" -l beyond-elysium/beyond-elysium.php > /dev/null
+echo "    ok"
+
+echo "==> phpstan (level 5)"
+"$PHP" beyond-elysium/vendor/bin/phpstan analyse --no-progress --memory-limit=1G --quiet
+
+echo "==> phpunit :: unit"
+"$PHP" beyond-elysium/vendor/bin/phpunit --testsuite unit --no-coverage
+
+if [ "$RUN_ALL" = "1" ]; then
+    if [ -z "${WP_TESTS_DIR:-}" ]; then
+        echo "==> phpunit :: thread + workflow  SKIPPED (WP_TESTS_DIR is not set)"
+    else
+        echo "==> phpunit :: thread"
+        "$PHP" beyond-elysium/vendor/bin/phpunit --testsuite thread --no-coverage
+        echo "==> phpunit :: workflow"
+        "$PHP" beyond-elysium/vendor/bin/phpunit --testsuite workflow --no-coverage
+    fi
+fi
+
+if [ ! -d node_modules ]; then
+    echo "    node_modules missing - running npm install first"
+    npm install --silent
+fi
+
+echo "==> npm run check-types"
+npm run check-types --silent
+
+echo "==> npm test"
+npm test --silent
+
+echo "==> npm run build"
+npm run build --silent
+
+echo
+echo "all green"

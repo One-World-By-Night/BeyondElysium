@@ -1,0 +1,46 @@
+.be-approval-queue__filters {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+	flex-wrap: wrap;
+}
+
+.be-approval-queue__table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.be-approval-queue__table th,
+.be-approval-queue__table td {
+	text-align: left;
+	padding: 0.4rem 0.6rem;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.be-approval-queue__reason {
+	max-width: 22rem;
+	font-size: 0.85rem;
+	color: #6b5300;
+}
+
+.be-approval-queue__actions {
+	display: flex;
+	gap: 0.35rem;
+	align-items: center;
+}
+
+.be-approval-queue__error {
+	padding: 0.75rem;
+	margin-bottom: 1rem;
+	border: 1px solid #b3261e;
+	background: #fdecea;
+	color: #611a15;
+	border-radius: 3px;
+}
+
+.be-approval-queue__pagination {
+	display: flex;
+	gap: 0.75rem;
+	align-items: center;
+	margin-top: 1rem;
+}

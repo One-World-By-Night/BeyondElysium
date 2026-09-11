@@ -1,0 +1,45 @@
+.be-query-builder__logic {
+	display: flex;
+	gap: 1rem;
+	margin-bottom: 0.75rem;
+}
+
+.be-query-builder__field-search {
+	width: 100%;
+	margin-bottom: 0.75rem;
+	padding: 0.35rem 0.5rem;
+}
+
+.be-query-builder__clauses {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 0.75rem 0;
+}
+
+.be-query-builder__clause {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: center;
+	padding: 0.5rem 0;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.be-query-builder__not {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-size: 0.85rem;
+}
+
+.be-query-builder__description {
+	flex-basis: 100%;
+	margin: 0.25rem 0 0 0;
+	font-style: italic;
+	color: #555;
+	font-size: 0.85rem;
+}
+
+.be-query-builder__error {
+	color: #c00;
+}

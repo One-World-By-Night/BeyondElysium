@@ -1,0 +1,46 @@
+{
+  "name": "owbn/beyond-elysium",
+  "description": "Character management system for Mind's Eye Theatre LARP chronicles.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "autoload": {
+    "psr-4": {
+      "BeyondElysium\\": "beyond-elysium/includes/"
+    }
+  },
+  "require": {
+    "php": ">=8.2"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.6",
+    "phpstan/phpstan": "^1.11",
+    "szepeviktor/phpstan-wordpress": "^1.3",
+    "yoast/phpunit-polyfills": "^2.0",
+    "brain/monkey": "^2.6",
+    "doctrine/instantiator": "^1.5",
+    "wpackagist-plugin/elementor": "^4.2"
+  },
+  "config": {
+    "platform": {
+      "php": "8.2.33"
+    },
+    "allow-plugins": {
+      "composer/installers": true
+    },
+    "vendor-dir": "beyond-elysium/vendor"
+  },
+  "repositories": [
+    {
+      "name": "wpackagist",
+      "type": "composer",
+      "url": "https://wpackagist.org"
+    }
+  ],
+  "extra": {
+    "installer-paths": {
+      "beyond-elysium/vendor/wpackagist-plugin/{$name}/": [
+        "type:wordpress-plugin"
+      ]
+    }
+  }
+}

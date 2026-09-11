@@ -1,0 +1,58 @@
+.be-statistics-view__form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: center;
+	margin-bottom: 1rem;
+}
+
+.be-statistics-view__bars {
+	list-style: none;
+	padding: 0;
+}
+
+.be-statistics-view__bucket-toggle {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	width: 100%;
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 0.3rem 0;
+}
+
+.be-statistics-view__bucket-label {
+	flex: 0 0 180px;
+	text-align: left;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.be-statistics-view__bar-track {
+	flex: 1;
+	background: #eee;
+	height: 14px;
+	border-radius: 3px;
+	overflow: hidden;
+}
+
+.be-statistics-view__bar-fill {
+	display: block;
+	height: 100%;
+	background: #1a4f9c;
+}
+
+.be-statistics-view__bucket-value {
+	flex: 0 0 40px;
+	text-align: right;
+}
+
+.be-statistics-view__bucket-names {
+	list-style: none;
+	padding-left: 1rem;
+	margin: 0.25rem 0 0.5rem 0;
+	color: #555;
+	font-size: 0.85rem;
+}

@@ -1,0 +1,51 @@
+.be-powered-by {
+	text-align: center;
+	color: #787c82;
+	font-size: 12px;
+	margin: 2em 0 1em;
+}
+
+.be-powered-by__link {
+	background: none;
+	border: none;
+	margin: 0;
+	padding: 0;
+	color: #2271b1;
+	font: inherit;
+	line-height: inherit;
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.be-powered-by__error {
+	color: #b3261e;
+}
+
+.be-powered-by__memoriam-list {
+	list-style: none;
+	margin: 0 0 1rem;
+	padding: 0;
+}
+
+.be-powered-by__memoriam-note {
+	color: #666;
+}
+
+.be-powered-by__edit textarea {
+	width: 100%;
+	min-height: 4rem;
+	display: block;
+	margin-top: 0.25rem;
+}
+
+.be-powered-by__memoriam-row {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 0.4rem;
+}
+
+.be-powered-by__edit-actions {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 1rem;
+}

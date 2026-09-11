@@ -1,0 +1,20 @@
+includes:
+    - beyond-elysium/vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+    level: 5
+    phpVersion: 80200
+
+    paths:
+        - beyond-elysium/includes
+        - beyond-elysium/beyond-elysium.php
+
+    bootstrapFiles:
+        - tests/phpstan-bootstrap.php
+
+    # Elementor ships no autoload map of its own; scanning its source directly is what
+    # lets PHPStan resolve \Elementor\Widget_Base etc. without pulling a live Elementor
+    # install into CI. Dev-only - vendor/ is gitignored, never shipped in dist.
+    scanDirectories:
+        - beyond-elysium/vendor/wpackagist-plugin/elementor/includes
+        - beyond-elysium/vendor/wpackagist-plugin/elementor/core

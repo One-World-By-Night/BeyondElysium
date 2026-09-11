@@ -1,0 +1,72 @@
+/* Decision 057. Tokens inherited from .be-plot-manager (PlotManager.css). */
+
+.be-rumor-panel section + section {
+	margin-top: 1.25rem;
+	padding-top: 1rem;
+	border-top: 1px solid var( --be-st-border, #ddd );
+}
+
+.be-rumor-panel__heading {
+	margin: 0 0 0.5rem;
+	font-size: 0.85rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: var( --be-st-muted, #555 );
+}
+
+/* D34: compound specificity, so hello-elementor's reset.css can't win. */
+.be-rumor-panel__form.be-rumor-panel__form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.be-rumor-panel__form--inline.be-rumor-panel__form--inline {
+	flex-direction: row;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.be-rumor-panel__form.be-rumor-panel__form input,
+.be-rumor-panel__form.be-rumor-panel__form textarea,
+.be-rumor-panel__form.be-rumor-panel__form select {
+	box-sizing: border-box;
+	padding: 0.4rem 0.6rem;
+}
+
+.be-rumor-panel__form--inline.be-rumor-panel__form--inline input {
+	width: auto;
+}
+
+.be-rumor-panel__form.be-rumor-panel__form textarea {
+	min-height: 4rem;
+	resize: vertical;
+}
+
+.be-rumor-panel__form.be-rumor-panel__form button {
+	align-self: flex-start;
+}
+
+.be-rumor-panel__items {
+	list-style: none;
+	padding: 0;
+	margin: 0.5rem 0;
+}
+
+.be-rumor-panel__items li {
+	padding: 0.35rem 0;
+	border-bottom: 1px solid var( --be-st-border, #ddd );
+	font-size: 0.9rem;
+}
+
+.be-rumor-panel__none {
+	color: var( --be-st-faint, #777 );
+	font-size: 0.9rem;
+}
+
+.be-rumor-panel__ok {
+	color: #1a6e2e;
+	font-weight: 600;
+	font-size: 0.9rem;
+}

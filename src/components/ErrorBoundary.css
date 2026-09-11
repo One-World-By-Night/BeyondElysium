@@ -1,0 +1,13 @@
+.be-error-boundary {
+	padding: 1rem;
+	border: 1px solid #c00;
+	border-radius: 4px;
+	color: #c00;
+	background: #fff5f5;
+}
+
+.be-error-boundary__detail {
+	font-size: 0.85rem;
+	opacity: 0.8;
+	margin: 0.25rem 0 0;
+}

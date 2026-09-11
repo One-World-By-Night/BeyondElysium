@@ -1,0 +1,109 @@
+.be-tiered-power-editor__rows {
+	list-style: none;
+	margin: 0 0 0.75rem;
+	padding: 0;
+}
+
+.be-tiered-power-editor__row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.25rem 0;
+}
+
+.be-tiered-power-editor__row--removed {
+	opacity: 0.5;
+	text-decoration: line-through;
+}
+
+.be-tiered-power-editor__name {
+	flex: 1 1 auto;
+	min-width: 8rem;
+}
+
+/*
+ * Two-class compound selector, not a single class - D34/Decision 045: the live
+ * hello-elementor theme ships `input[type=text]{width:100%}` in its own reset at
+ * specificity (0,1,1), which beats a plain `.be-tiered-power-editor__tradition` (0,1,0)
+ * regardless of source order and would stretch this box across the whole row.
+ */
+.be-tiered-power-editor__row .be-tiered-power-editor__tradition {
+	flex: 0 0 auto;
+	box-sizing: border-box;
+	width: 9rem;
+	min-width: 0;
+	padding: 0.15rem 0.35rem;
+	font-size: 0.9em;
+}
+
+.be-tiered-power-editor__tradition-text {
+	font-size: 0.9em;
+	opacity: 0.8;
+}
+
+.be-tiered-power-editor__stepper {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.be-tiered-power-editor__level {
+	min-width: 1.5rem;
+	text-align: center;
+}
+
+/* A bare class selector safely beats hello-elementor's `button{...}` element-selector reset
+ * (live theme, never present on local dev - it gives every unstyled button a bold pink
+ * border and 0.5rem/1rem padding, oversized for a compact +/- stepper) without needing
+ * `!important`. */
+.be-tiered-power-editor__stepper-button {
+	width: 1.6rem;
+	height: 1.6rem;
+	padding: 0;
+	border: 1px solid #999;
+	border-radius: 3px;
+	background: transparent;
+	color: #333;
+	font-size: 0.9rem;
+	line-height: 1;
+	text-align: center;
+	cursor: pointer;
+}
+
+.be-tiered-power-editor__stepper-button:disabled {
+	color: #ccc;
+	border-color: #ddd;
+	cursor: default;
+}
+
+.be-tiered-power-editor__stepper-button:not( :disabled ):hover,
+.be-tiered-power-editor__stepper-button:not( :disabled ):focus-visible {
+	background: #eee;
+}
+
+.be-tiered-power-editor__cost {
+	color: #555;
+	font-size: 0.85rem;
+}
+
+/* Additive-first, matching TraitListEditor.css - see its own comment for the reasoning. */
+.be-tiered-power-editor__remove {
+	flex: 0 0 auto;
+	padding: 0.15rem 0.4rem;
+	border: none;
+	background: none;
+	color: #999;
+	font-size: 0.8rem;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.be-tiered-power-editor__remove:hover,
+.be-tiered-power-editor__remove:focus-visible {
+	color: #b3261e;
+}
+
+.be-tiered-power-editor__row--removed .be-tiered-power-editor__remove {
+	color: #666;
+	font-weight: 600;
+}

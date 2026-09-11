@@ -1,0 +1,49 @@
+.be-world-editor__field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin-bottom: 0.75rem;
+}
+
+.be-world-editor__row {
+	display: flex;
+	gap: 1rem;
+}
+
+.be-world-editor__row .be-world-editor__field {
+	flex: 1;
+}
+
+.be-world-editor__trait-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.be-world-editor__trait-row {
+	display: flex;
+	gap: 0.4rem;
+}
+
+.be-world-editor__trait-row input[type='text']:first-child {
+	flex: 2;
+}
+
+.be-world-editor__trait-row input {
+	flex: 1;
+}
+
+.be-world-editor__actions {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 1rem;
+}
+
+.be-world-editor__error {
+	padding: 0.75rem;
+	border: 1px solid #b3261e;
+	background: #fdecea;
+	color: #611a15;
+	border-radius: 3px;
+	margin-bottom: 1rem;
+}

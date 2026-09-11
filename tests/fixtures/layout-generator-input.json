@@ -1,0 +1,54 @@
+{
+    "stack": {
+        "slug": "test-stack",
+        "stack_definition": {
+            "sections": [
+                { "block_slug": "resources", "display_order": 80, "label": "Resources" },
+                { "block_slug": "identity", "display_order": 1, "label": "Identity" },
+                { "block_slug": "abilities", "display_order": 30, "label": "Abilities" },
+                { "block_slug": "disciplines", "display_order": 60, "label": "Disciplines" },
+                { "block_slug": "merits", "display_order": 90, "label": "Merits" }
+            ]
+        }
+    },
+    "blocks": {
+        "identity": {
+            "slug": "identity",
+            "name": "Identity",
+            "section_type": "identity_field",
+            "definition": { "fields": [ { "name": "Clan" } ] }
+        },
+        "resources": {
+            "slug": "resources",
+            "name": "Resources",
+            "section_type": "resource_pool",
+            "definition": { "pools": [ { "name": "Blood" } ] }
+        },
+        "abilities": {
+            "slug": "abilities",
+            "name": "Abilities",
+            "section_type": "trait_list",
+            "definition": { "items": [ { "name": "A" }, { "name": "B" } ] }
+        },
+        "disciplines": {
+            "slug": "disciplines",
+            "name": "Disciplines",
+            "section_type": "tiered_power",
+            "definition": { "powers": [ { "name": "X" } ] }
+        },
+        "merits": {
+            "slug": "merits",
+            "name": "Merits",
+            "section_type": "trait_list",
+            "definition": {
+                "items": [
+                    { "name": "M1" },
+                    { "name": "M2" },
+                    { "name": "M3" },
+                    { "name": "M4" },
+                    { "name": "M5" }
+                ]
+            }
+        }
+    }
+}

@@ -1,0 +1,55 @@
+.be-searchable-select {
+	position: relative;
+	display: inline-block;
+	width: 100%;
+}
+
+/* `.be-searchable-select .be-searchable-select__input`, not just the field's own class:
+ * hello-elementor's `reset.css` (live theme, never present on local dev) ships
+ * `input[type=text],...{padding:.5rem 1rem;border:1px solid #666;width:100%}` at
+ * specificity 0,1,1 - a single class selector (0,1,0) loses that fight regardless of
+ * source order, so this box's own padding/border were silently being overridden by the
+ * theme's on kony-sabbat.net (width just happened to coincidentally match). Two classes
+ * (0,2,0) beats it cleanly. */
+.be-searchable-select .be-searchable-select__input {
+	/* No project-wide box-sizing reset exists - without this, the default content-box
+	 * model adds this padding + border on TOP of the 100% width, overflowing this
+	 * element past its own container by exactly that amount (confirmed live, 2026-09-09:
+	 * measured 332px inside a 314px column - the real cause of Abilities' "Add trait…"
+	 * input bleeding into the neighboring Backgrounds column). */
+	box-sizing: border-box;
+	width: 100%;
+	padding: 0.35rem 0.5rem;
+	border: 1px solid #999;
+	border-radius: 3px;
+}
+
+.be-searchable-select__list {
+	position: absolute;
+	z-index: 10;
+	top: 100%;
+	left: 0;
+	right: 0;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	background: #fff;
+	border: 1px solid #999;
+	border-top: none;
+	max-height: 280px;
+	overflow-y: auto;
+}
+
+.be-searchable-select__option {
+	padding: 0.35rem 0.5rem;
+	cursor: pointer;
+}
+
+.be-searchable-select__option--highlighted {
+	background: #e0e0e0;
+}
+
+.be-searchable-select__option--custom {
+	font-style: italic;
+	border-top: 1px solid #ddd;
+}

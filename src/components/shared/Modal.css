@@ -1,0 +1,62 @@
+.be-modal__backdrop {
+	position: fixed;
+	inset: 0;
+	background: rgba( 0, 0, 0, 0.5 );
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 100000;
+}
+
+.be-modal {
+	background: #fff;
+	border-radius: 6px;
+	box-shadow: 0 4px 24px rgba( 0, 0, 0, 0.25 );
+	width: 100%;
+	max-width: 28rem;
+	max-height: 85vh;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.be-modal__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.9rem 1.1rem;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.be-modal__title {
+	margin: 0;
+	font-size: 1rem;
+}
+
+.be-modal__close {
+	border: none;
+	background: none;
+	font-size: 1.4rem;
+	line-height: 1;
+	color: #666;
+	cursor: pointer;
+	padding: 0 0.25rem;
+}
+
+.be-modal__close:hover,
+.be-modal__close:focus-visible {
+	color: #000;
+}
+
+.be-modal__body {
+	padding: 1.1rem;
+	overflow-y: auto;
+}
+
+.be-modal__footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	padding: 0.9rem 1.1rem;
+	border-top: 1px solid #e0e0e0;
+}

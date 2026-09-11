@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+#
+# Build a deployable plugin artifact.
+#
+# The artifact carries build/ and vendor/ (which are gitignored) and excludes everything in
+# .distignore - the Grapevine source, the planning docs, tests and tooling.
+#
+# Leaves the working tree with dev dependencies reinstalled.
+#
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+# Prefer the PHP that matches production (8.2). Falls back to whatever is on PATH.
+PHP="${BE_PHP:-}"
+if [ -z "$PHP" ] && [ -x /opt/homebrew/opt/php@8.2/bin/php ]; then
+    PHP=/opt/homebrew/opt/php@8.2/bin/php
+fi
+[ -n "$PHP" ] || PHP="$(command -v php)"
+
+VERSION="$(grep -oE "BE_VERSION', '[^']+" beyond-elysium/beyond-elysium.php | cut -d"'" -f3)"
+if [ -z "$VERSION" ]; then
+    echo "Could not read BE_VERSION from beyond-elysium/beyond-elysium.php" >&2
+    exit 1
+fi
+
+OUT="dist/beyond-elysium"
+echo "==> building beyond-elysium $VERSION"
+
+echo "==> composer install --no-dev"
+composer install --no-dev --optimize-autoloader --quiet
+
+echo "==> npm run build"
+[ -d node_modules ] || npm install --silent
+npm run build --silent
+
+# Step 11d, workflow-0.9.md: generated here, after the build above, not committed - a .pot
+# built from source .tsx directly would miss every React string (wp i18n make-pot scans .js,
+# not .tsx; it does pick these up because webpack's own build/*.js output still carries each
+# __()/_n()/sprintf() call as readable text even minified). Generating it fresh on every
+# bin/dist run is what keeps the template from silently drifting out of date, rather than a
+# committed file nobody remembers to regenerate.
+WP_CLI="${BE_WP_CLI:-}"
+if [ -z "$WP_CLI" ] && [ -x /opt/homebrew/Cellar/wp-cli/2.12.0/bin/wp ]; then
+    WP_CLI=/opt/homebrew/Cellar/wp-cli/2.12.0/bin/wp
+fi
+[ -n "$WP_CLI" ] || WP_CLI="$(command -v wp)"
+
+echo "==> wp i18n make-pot"
+mkdir -p beyond-elysium/languages
+"$PHP" "$WP_CLI" i18n make-pot beyond-elysium beyond-elysium/languages/beyond-elysium.pot \
+    --domain=beyond-elysium \
+    --exclude=vendor \
+    --quiet
+
+echo "==> assembling"
+rm -rf dist
+mkdir -p "$OUT"
+rsync -a --exclude-from=.distignore beyond-elysium/ "$OUT/"
+
+# These must be present or the plugin fatals on activation.
+for required in "vendor/autoload.php" "build/index.js" "beyond-elysium.php" "includes/Core/Plugin.php"; do
+    if [ ! -f "$OUT/$required" ]; then
+        echo "MISSING from artifact: $required" >&2
+        exit 1
+    fi
+done
+
+# Not required for the plugin to run (a missing .pot just means no translator has anything
+# to work from yet - same graceful English-fallback as a missing .mo, Step 11e) - but its
+# absence here means make-pot silently failed above, worth catching now rather than as a
+# translator's own bug report months later.
+if [ ! -f "$OUT/languages/beyond-elysium.pot" ]; then
+    echo "MISSING from artifact: languages/beyond-elysium.pot" >&2
+    exit 1
+fi
+
+# These must NOT be present.
+for forbidden in "GV301Source" "BE_PROCESS" "tests" "node_modules" ".git" "pp-samples" "data-samples"; do
+    if [ -e "$OUT/$forbidden" ]; then
+        echo "LEAKED into artifact: $forbidden" >&2
+        exit 1
+    fi
+done
+
+echo "==> packaging"
+( cd dist && zip -qr "beyond-elysium-${VERSION}.zip" beyond-elysium )
+
+echo "==> restoring dev dependencies"
+composer install --quiet
+
+echo
+echo "  artifact : dist/beyond-elysium-${VERSION}.zip"
+echo "  unpacked : $(du -sh "$OUT" | cut -f1)"
+echo "  zipped   : $(du -h "dist/beyond-elysium-${VERSION}.zip" | cut -f1)"

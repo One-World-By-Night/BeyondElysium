@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "columns": 3,
+    "sections": [
+        { "block_slug": "identity", "column": 1, "order": 1, "title": "Identity", "display": null, "collapsed": false },
+        { "block_slug": "resources", "column": 1, "order": 2, "title": "Resources", "display": null, "collapsed": false },
+        { "block_slug": "abilities", "column": 2, "order": 1, "title": "Abilities", "display": null, "collapsed": false },
+        { "block_slug": "disciplines", "column": 3, "order": 1, "title": "Disciplines", "display": null, "collapsed": false },
+        { "block_slug": "merits", "column": 3, "order": 2, "title": "Merits", "display": null, "collapsed": false }
+    ]
+}
