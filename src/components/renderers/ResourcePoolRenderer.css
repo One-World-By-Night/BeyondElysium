@@ -1,0 +1,39 @@
+/*
+ * D26 follow-up: `flex-wrap: wrap` matters here, not just for looks. Without it, a long
+ * glyph string in a narrow column (the character sheet's own columns, workflow-0.3.md,
+ * are frequently this narrow) has nowhere to go but past this row's own right edge -
+ * `overflow: visible` is the default, so the text keeps painting instead of stopping,
+ * visually bleeding into whatever content sits nearby in the document. That looked
+ * exactly like the neighboring box itself was broken (confirmed live: DOM geometry via
+ * getBoundingClientRect() was clean the entire time - this was always a paint-only
+ * overflow, never a real layout collision). Wrapping keeps the glyphs inside this row's
+ * own box - worst case they drop to a second line under the label, which is a minor
+ * cosmetic compromise in a narrow column, not a rendering bug.
+ */
+.be-resource-pool__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.25rem 1rem;
+	padding: 0.2rem 0;
+}
+
+.be-resource-pool__label {
+	min-width: 8rem;
+	font-weight: 600;
+}
+
+/*
+ * displayTemper()'s glyphs (o/õ/ø) are a literal port of DisplayTemper's own on-screen
+ * characters (GV-SOURCEMAP.md "DisplayTemper"). The original app paired them with a
+ * custom Windows font that rendered 'o' as a filled dot; nothing web-side supplies that
+ * substitution, so without styling they read as literal letters run into the label.
+ * Letter-spacing plus a heavier weight is enough to read as pips without touching the
+ * glyph characters themselves - the glyph choice stays an exact, tested port.
+ */
+.be-resource-pool__glyphs {
+	letter-spacing: 0.15em;
+	font-weight: 700;
+	font-size: 1.1em;
+	overflow-wrap: anywhere;
+}

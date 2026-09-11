@@ -1,0 +1,40 @@
+.be-action-allocator__form {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+	flex-wrap: wrap;
+}
+
+.be-action-allocator__table {
+	width: 100%;
+	border-collapse: collapse;
+	margin-bottom: 1rem;
+}
+
+.be-action-allocator__table th,
+.be-action-allocator__table td {
+	text-align: left;
+	padding: 0.4rem 0.6rem;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.be-action-allocator__committed {
+	color: #1a6e2e;
+	font-weight: 600;
+}
+
+.be-action-allocator__error {
+	padding: 0.75rem;
+	border: 1px solid #b3261e;
+	background: #fdecea;
+	color: #611a15;
+	border-radius: 3px;
+	margin-bottom: 1rem;
+}
+
+/* Decision 055/D34: compound-class specificity beats hello-elementor's reset.css. */
+.be-action-allocator__form.be-action-allocator__form select {
+	width: auto;
+	box-sizing: border-box;
+	padding: 0.4rem 0.6rem;
+}

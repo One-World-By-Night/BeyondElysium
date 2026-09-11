@@ -1,0 +1,74 @@
+/* Decision 057. Tokens inherited from .be-plot-manager (PlotManager.css).
+   D34 throughout: compound-class specificity so hello-elementor's reset.css can't win. */
+
+.be-plot-list__new-button.be-plot-list__new-button {
+	margin-bottom: 1rem;
+}
+
+.be-plot-list__new-form.be-plot-list__new-form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	max-width: 34rem;
+	margin-bottom: 1.25rem;
+	padding: 0.85rem 1rem;
+	border: 1px solid var( --be-st-border-strong, #ccc );
+	border-radius: var( --be-st-radius, 4px );
+	background: var( --be-st-surface-alt, #f7f7f7 );
+}
+
+.be-plot-list__new-form.be-plot-list__new-form input,
+.be-plot-list__new-form.be-plot-list__new-form textarea,
+.be-plot-list__new-form.be-plot-list__new-form select {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.4rem 0.6rem;
+}
+
+.be-plot-list__new-form.be-plot-list__new-form textarea {
+	min-height: 4rem;
+	resize: vertical;
+}
+
+.be-plot-list__cover-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.be-plot-list__cover-preview {
+	width: 4rem;
+	height: 3rem;
+	object-fit: cover;
+	border-radius: 3px;
+	border: 1px solid var( --be-st-border-strong, #ccc );
+}
+
+.be-plot-list__new-form-actions {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.be-plot-list__filters {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+	flex-wrap: wrap;
+}
+
+.be-plot-list__filters.be-plot-list__filters select,
+.be-plot-list__filters.be-plot-list__filters input {
+	width: auto;
+	box-sizing: border-box;
+	padding: 0.35rem 0.55rem;
+}
+
+.be-plot-list__pagination {
+	display: flex;
+	gap: 0.75rem;
+	align-items: center;
+	margin-top: 1.25rem;
+	font-size: 0.85rem;
+	color: var( --be-st-faint, #777 );
+}

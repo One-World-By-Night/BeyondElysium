@@ -1,0 +1,29 @@
+{
+  "name": "beyond-elysium",
+  "version": "0.99.0",
+  "description": "Character management system for Mind's Eye Theatre LARP chronicles.",
+  "private": true,
+  "engines": {
+    "node": ">=18.12.0",
+    "npm": ">=8.19.2"
+  },
+  "scripts": {
+    "build": "wp-scripts build",
+    "start": "wp-scripts start",
+    "test": "wp-scripts test-unit-js",
+    "check-types": "tsc --noEmit",
+    "lint:js": "wp-scripts lint-js",
+    "lint:css": "wp-scripts lint-style"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@wordpress/scripts": "^30.0.0",
+    "typescript": "^5.5.0"
+  },
+  "dependencies": {
+    "@wordpress/api-fetch": "^7.0.0",
+    "@wordpress/element": "^6.0.0",
+    "marked": "^18.0.12",
+    "zustand": "^5.0.0"
+  }
+}

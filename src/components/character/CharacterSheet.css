@@ -1,0 +1,375 @@
+/*
+ * Decision 041: an approved override sets these custom properties inline
+ * (CharacterSheet.tsx), scoped to one character's own sheet - the defaults here are
+ * exactly the plugin's existing look, so a character with no override renders
+ * byte-identical to before this existed. Nothing below reads a color/font literal
+ * directly; every visual rule that should be overridable goes through one of these.
+ */
+.be-character-sheet {
+	--be-sheet-font: inherit;
+	--be-sheet-accent: #8b0000;
+	--be-sheet-bg: transparent;
+	--be-sheet-text: inherit;
+	--be-sheet-bg-image: none;
+
+	font-family: var( --be-sheet-font );
+	background-color: var( --be-sheet-bg );
+	background-image: var( --be-sheet-bg-image );
+	background-size: cover;
+	background-position: center;
+	color: var( --be-sheet-text );
+}
+
+.be-character-sheet__section-title {
+	color: var( --be-sheet-accent );
+}
+
+.be-character-sheet__section-graphic {
+	display: block;
+	max-width: 100%;
+	margin-bottom: 0.5rem;
+}
+
+.be-character-sheet__toolbar {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.75rem;
+	margin-bottom: 0.75rem;
+}
+
+.be-character-sheet__print,
+.be-character-sheet__edit-link,
+.be-character-sheet__style-toggle {
+	display: inline-block;
+	padding: 0.4rem 0.9rem;
+	border: 1px solid var( --be-sheet-accent );
+	border-radius: 3px;
+	background: transparent;
+	color: var( --be-sheet-accent );
+	font-size: 0.85rem;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.be-character-sheet__print:hover,
+.be-character-sheet__edit-link:hover,
+.be-character-sheet__style-toggle:hover {
+	background: var( --be-sheet-accent );
+	color: #fff;
+}
+
+.be-character-sheet__style-toggle[aria-expanded="true"] {
+	background: var( --be-sheet-accent );
+	color: #fff;
+}
+
+.be-character-sheet__print-options {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin-bottom: 0.75rem;
+	font-size: 0.85rem;
+	color: #555;
+}
+
+.be-character-sheet__print-options label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	cursor: pointer;
+}
+
+.be-character-sheet__prose {
+	margin-top: 1rem;
+	max-width: 60rem;
+	line-height: 1.5;
+}
+
+.be-character-sheet__prose p:first-child {
+	margin-top: 0;
+}
+
+.be-character-sheet__header-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 1rem;
+}
+
+.be-character-sheet__portrait {
+	width: 5rem;
+	height: 5rem;
+	object-fit: cover;
+	border-radius: 4px;
+	border: 1px solid #ccc;
+	flex: 0 0 auto;
+}
+
+.be-character-sheet__header {
+	display: flex;
+	flex: 1 1 auto;
+	flex-wrap: wrap;
+	gap: 1rem 2rem;
+	padding: 0.75rem 1rem;
+	margin-bottom: 1rem;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	background: #f7f7f7;
+}
+
+.be-character-sheet__header dt {
+	font-weight: 600;
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	color: #555;
+}
+
+.be-character-sheet__header dd {
+	margin: 0;
+}
+
+/*
+ * D26: neither CSS Grid auto-placement nor `columns: N` multi-column layout survived
+ * real-browser verification. Grid's auto-placement burns through many rows before
+ * column 2's items even start, given DOM order sorted by (column, order) - confirmed by
+ * actually rendering it. `columns: N` + `break-inside: avoid` looked right in isolation,
+ * but a narrow column forcing a phrase like "Graceful x2 ••" to wrap destabilized the
+ * browser's column-fragmentation height calculation badly enough that one section
+ * visually painted on top of the next section's box below it, even though
+ * getBoundingClientRect() reported clean, non-overlapping geometry for both - a real
+ * paint/geometry mismatch, reproduced at both 1280px and 1920px viewports, not a
+ * screenshot artifact and not fixed by more width alone.
+ *
+ * Each section already carries an explicit `column` number from the template layout
+ * (CharacterSheet.tsx buckets sections into real arrays, one per column, before
+ * rendering), so this is now three ordinary sibling `<div>` columns in normal block
+ * flow - no CSS fragmentation involved anywhere, so this class of bug cannot recur.
+ *
+ * Six tracks, not three: a section's own `width` (templateLayout.ts's spanFor()) spans
+ * 2 ('third'), 3 ('half'), or 6 ('full') of them, so three 'third' sections or two 'half'
+ * sections both fill one row exactly and the next section starts a fresh row beneath -
+ * real 50/50 and full-width rows (user report, 2026-09-09), not just three equal columns.
+ * `minmax(0, 1fr)` lets a track genuinely narrow with its container; the 768px breakpoint
+ * below handles the point where even that is no longer usable.
+ */
+.be-character-sheet__grid {
+	display: grid;
+	grid-template-columns: repeat( 6, minmax( 0, 1fr ) );
+	gap: 1rem;
+	align-items: start;
+}
+
+.be-character-sheet__section {
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	padding: 0.75rem;
+}
+
+/*
+ * Print-only Physical/Social/Mental 3-column grouping (see CharacterSheet.tsx's own doc
+ * comment for the full reasoning and the real print reference this matches). `contents`
+ * makes this wrapper invisible to the Grid layout algorithm on screen - each child
+ * participates directly in the outer `repeat(6,1fr)` grid via its own `width`, exactly as
+ * if this wrapper were not there at all. Only `@media print` below gives it real layout.
+ */
+.be-character-sheet__attributes {
+	display: contents;
+}
+
+.be-character-sheet__section-title {
+	margin: 0 0 0.5rem;
+	font-size: 0.9rem;
+	font-weight: 600;
+}
+
+.be-character-sheet__skeleton {
+	padding: 1rem;
+	color: #777;
+}
+
+.be-character-sheet__error {
+	padding: 1rem;
+	border: 1px solid #c00;
+	border-radius: 4px;
+	color: #c00;
+}
+
+@media ( max-width: 768px ) {
+	.be-character-sheet__grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/*
+ * Print output modeled on a real reference sheet (pp-samples/vampire-pc-print.html,
+ * reviewed 2026-09-09): dense, chrome-free, print.css applies at `print,screen` weight
+ * there but we only need `@media print` since the on-screen version already has its own
+ * (lighter) look. Their print body is a fixed 6.5in width, 8pt Verdana, minimal underlined
+ * section headers instead of boxed cards - a reference document, not a styled prop.
+ *
+ * The theme chrome hidden below (#wpadminbar/header/nav/footer) is WordPress/hello-elementor
+ * structure outside this component's own DOM - there is no cheap per-page way to scope this
+ * more narrowly (same reasoning Plugin.php gives for always enqueuing wp.media/wp.editor
+ * rather than detecting "this page has a BE widget" ahead of Elementor's meta-based render),
+ * and every page that mounts a character sheet is one this plugin controls the intent of.
+ */
+@media print {
+	#wpadminbar,
+	header,
+	.site-header,
+	nav,
+	footer,
+	.site-footer,
+	/* Real selector confirmed against kony-sabbat.net's live markup - the WP Dark Mode /
+	 * WP Dark Mode Ultimate plugins' floating toggle button, injected at the very end of
+	 * <body> outside any container this component controls (user report, 2026-09-09: "No
+	 * UI elements should be on the view including dark mode etc"). Any other floating
+	 * widget a theme/plugin adds later needs its own selector added here the same way -
+	 * there is no reliable CSS-only way to catch "anything fixed-position" in general,
+	 * since a plugin's own stylesheet (not an inline style) is what actually positions
+	 * most of them, and CSS attribute selectors can't match on computed style. */
+	.wp-dark-mode-floating-switch,
+	.wp-dark-mode-switch,
+	/* hello-elementor's own page-title chrome (confirmed against kony-sabbat.net's live
+	 * markup, 2026-09-09: `<div class="page-header"><h1 class="entry-title">Character
+	 * Sheet</h1></div>`, rendered above this component's own `<div data-be-widget>` mount -
+	 * the WordPress page's literal title, not anything `CharacterSheet.tsx` renders. Printed
+	 * at the theme's oversized default heading size, left-aligned, inside its own bordered/
+	 * backgrounded wrapper - user report, 2026-09-09: "massive letters, isn't centered, has
+	 * a box background." Same class of theme-chrome-doesn't-belong-on-a-printed-sheet
+	 * problem as the dark-mode toggle above - hidden outright, matching this block's own
+	 * "dense, chrome-free" print design intent, rather than restyled in place. */
+	.page-header {
+		display: none !important;
+	}
+
+	body {
+		margin: 0 !important;
+		background: #fff !important;
+	}
+
+	/* Reserved for interactive-only UI (edit controls, print options themselves) - never
+	 * the header info band or a section explicitly opted into printing, both of which are
+	 * content and must print. */
+	.be-character-sheet__chrome {
+		display: none !important;
+	}
+
+	.be-character-sheet {
+		width: 7.5in;
+		margin: 0 auto;
+		font-family: Georgia, 'Times New Roman', serif;
+		font-size: 9pt;
+		color: #000;
+		background: #fff !important;
+	}
+
+	.be-character-sheet__header {
+		border: none;
+		border-bottom: 1px solid #000;
+		border-radius: 0;
+		background: none;
+		padding: 0 0 0.4rem;
+	}
+
+	.be-character-sheet__portrait {
+		width: 0.9in;
+		height: 0.9in;
+		border-radius: 0;
+	}
+
+	/*
+	 * CSS multi-column, not the on-screen 6-track grid and not a single-column stack.
+	 *
+	 * Grid was the original bug: grid rows do not fragment across a print page break, so a
+	 * tall section (Hitchens' 69-entry Abilities) beside a short one left a whole page of
+	 * blank space next to it. Decision 059 fixed that by collapsing print to one column -
+	 * which removed the gaps but made a real sheet absurdly long. Measured, not estimated:
+	 * Hitchens printed to **7 pages** single-column versus **3** here.
+	 *
+	 * Two corrections to Decision 059's own record, both verified directly:
+	 *  - It claimed `pp-samples/vampire-pc-print.html` "was already a plain single-column
+	 *    flow the whole time." It is not, and never was: that reference buckets sections
+	 *    into `.section_group` wrappers of `float: left; width: 33%` - a 3-across float
+	 *    layout. Floats fragment across pages; grid does not. That is the real lesson.
+	 *  - `order: var(--be-print-order)` never did anything. Every seeded template section
+	 *    carries `column: 1` with a globally unique flat `order`, so the reordering was
+	 *    always a no-op, and `order` has no meaning at all outside flex/grid - which this
+	 *    rule is no longer either. Removed here and inline in CharacterSheet.tsx.
+	 *
+	 * Multi-column is what the grid should have been: it fragments correctly across both
+	 * columns and pages. Defect D26 recorded `columns: 3` painting sections on top of one
+	 * another on SCREEN - but D26 also found a second, independent cause wearing the same
+	 * symptom (ResourcePoolRenderer's letter-spaced glyph string overflowing its own box),
+	 * which was fixed separately and no longer exists. Verified empirically here rather
+	 * than argued from that history: a real 3-page PDF of Hitchens rendered under this
+	 * rule shows clean two-column flow with zero overlap.
+	 */
+	.be-character-sheet__grid {
+		display: block !important;
+		column-count: 2;
+		column-gap: 0.4in;
+	}
+
+	.be-character-sheet__section {
+		grid-column: auto !important;
+		width: 100%;
+		border: none;
+		border-radius: 0;
+		padding: 0;
+		/*
+		 * Deliberately NOT `avoid`. Abilities alone is taller than a printable page, so
+		 * "don't break me" is unsatisfiable and the browser pushes the whole section to
+		 * the next column instead - which measured as a completely empty right-hand column
+		 * on page 1 (4 pages instead of 3). Letting a long list flow is both denser and
+		 * what the print reference's own floats do.
+		 */
+		break-inside: auto;
+	}
+
+	/*
+	 * User report, 2026-09-10: "NOT TWO COLUMNS. For...Physical/Social/Mental, we should
+	 * have 3 columns." Confirmed against the real print reference
+	 * (pp-samples/vampire-pc-print.html) before building this: it wraps exactly these six
+	 * blocks in three `.attributes{float:left;width:33%}` columns, distinct from the rest
+	 * of the page's own column grouping - see CharacterSheet.tsx's own doc comment for
+	 * why this is floats, not the multi-column this stylesheet uses everywhere else (two
+	 * real multi-column failure modes, both confirmed against generated PDFs, ruled it
+	 * out for this specific "3 known, fixed groups" case).
+	 *
+	 * `column-span: all` pulls the wrapper out of the outer 2-column flow to span the
+	 * full print width; ordinary floats inside that full-width band then lay Physical/
+	 * Social/Mental side by side, each column a plain block holding both its positive and
+	 * negative halves stacked together, matching the reference exactly.
+	 */
+	.be-character-sheet__attributes {
+		display: block !important;
+		column-span: all;
+	}
+
+	.be-character-sheet__attribute-column {
+		float: left;
+		width: 33%;
+	}
+
+	/* Classic float clearfix - without it, the wrapper's own height collapses to zero
+	 * (floats don't contribute to a parent's height), and whatever prints next (Abilities
+	 * onward) would wrap up alongside the floated columns instead of starting cleanly
+	 * beneath them. */
+	.be-character-sheet__attributes::after {
+		content: '';
+		display: table;
+		clear: both;
+	}
+
+	.be-character-sheet__section-title {
+		font-size: 1em;
+		text-decoration: underline;
+		border: none;
+		/* Never strand a heading alone at the foot of a column. */
+		break-after: avoid;
+	}
+
+	.be-character-sheet__prose {
+		break-inside: avoid;
+	}
+}

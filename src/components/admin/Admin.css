@@ -1,0 +1,236 @@
+.be-admin {
+	max-width: 960px;
+	margin-top: 1rem;
+}
+
+.be-admin__error {
+	padding: 0.75rem 1rem;
+	margin-bottom: 1rem;
+	border: 1px solid #c00;
+	border-radius: 4px;
+	color: #c00;
+	background: #fff5f5;
+}
+
+.be-admin__game-scope-notice {
+	padding: 0.6rem 1rem;
+	margin-bottom: 1rem;
+	border: 1px solid #2271b1;
+	border-radius: 4px;
+	background: #f0f6fc;
+}
+
+.be-admin__table {
+	width: 100%;
+	border-collapse: collapse;
+	margin-bottom: 1rem;
+	background: #fff;
+}
+
+.be-admin__table th,
+.be-admin__table td {
+	text-align: left;
+	padding: 0.5rem 0.75rem;
+	border-bottom: 1px solid #e0e0e0;
+	vertical-align: top;
+}
+
+.be-admin__table td button {
+	margin-right: 0.5rem;
+}
+
+.be-admin__form {
+	max-width: 600px;
+	margin-top: 1rem;
+	padding: 1rem;
+	background: #fff;
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+}
+
+.be-admin__form label {
+	display: block;
+	margin-bottom: 0.75rem;
+	font-weight: 600;
+}
+
+.be-admin__form input[type='text'],
+.be-admin__form input[type='number'],
+.be-admin__form select,
+.be-admin__form textarea {
+	display: block;
+	width: 100%;
+	margin-top: 0.25rem;
+	padding: 0.4rem;
+	font-weight: normal;
+}
+
+.be-admin__form textarea {
+	min-height: 6rem;
+	font-family: Consolas, Monaco, monospace;
+	font-size: 0.85rem;
+}
+
+.be-admin__form-actions {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 1rem;
+}
+
+.be-admin__filters {
+	margin-bottom: 1rem;
+}
+
+.be-admin__tabs {
+	display: flex;
+	gap: 0.25rem;
+	margin-bottom: 1rem;
+	border-bottom: 1px solid #ccd0d4;
+}
+
+.be-admin__tab {
+	padding: 0.5rem 1rem;
+	background: none;
+	border: 1px solid transparent;
+	border-bottom: none;
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.be-admin__tab--active {
+	background: #fff;
+	border-color: #ccd0d4;
+	border-radius: 3px 3px 0 0;
+}
+
+.be-admin__filters select {
+	padding: 0.4rem;
+}
+
+.be-admin__json-error {
+	color: #c00;
+	font-size: 0.85rem;
+	margin-top: 0.25rem;
+}
+
+.be-admin__form--wide {
+	max-width: 100%;
+}
+
+.be-def-editor__section {
+	margin-bottom: 1rem;
+}
+
+.be-def-editor__section h3 {
+	margin: 1rem 0 0.5rem;
+}
+
+.be-def-editor__flags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1.5rem;
+	margin-bottom: 0.5rem;
+}
+
+.be-def-editor__flags label {
+	font-weight: normal;
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	white-space: nowrap;
+}
+
+.be-def-editor__flags input[type='number'] {
+	width: 5rem;
+	display: inline-block;
+}
+
+.be-def-editor__table {
+	width: 100%;
+	border-collapse: collapse;
+	margin-bottom: 0.5rem;
+}
+
+.be-def-editor__table th,
+.be-def-editor__table td {
+	border: 1px solid #e0e0e0;
+	padding: 0.35rem;
+}
+
+.be-def-editor__table input[type='text'],
+.be-def-editor__table input[type='number'],
+.be-def-editor__table select {
+	width: 100%;
+	margin: 0;
+	padding: 0.3rem;
+}
+
+.be-def-editor__power {
+	border: 1px solid #d0d0d0;
+	border-radius: 4px;
+	padding: 0.75rem;
+	margin-bottom: 0.75rem;
+	background: #fafafa;
+}
+
+.be-def-editor__power-header {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+
+.be-def-editor__power-header input {
+	flex: 1;
+	padding: 0.4rem;
+}
+
+.be-def-editor__raw-toggle {
+	margin-top: 1rem;
+}
+
+.be-def-editor__raw {
+	margin-top: 0.5rem;
+}
+
+.be-def-editor__raw textarea {
+	width: 100%;
+	font-family: Consolas, Monaco, monospace;
+	font-size: 0.8rem;
+}
+
+/* Decision 049: title_refs'/name_lookup's nested rows (TemplateLayoutEditor.tsx,
+ * SchemaBlockDefinitionEditor.tsx) sit inside a table cell that already carries
+ * `.be-def-editor__table input/select { width: 100% }` (specificity 0,2,0) - matching
+ * that exactly (`.be-def-editor__inline-row select`, also 0,2,0) would only win by
+ * source order, which is fragile. Scoped through both a nesting wrapper and the row
+ * itself (0,3,0) to win outright regardless of where either rule sits in the file - listed
+ * once per wrapper class rather than one compound selector, since either can contain a row
+ * without the other. */
+.be-def-editor__title-refs,
+.be-def-editor__name-lookup {
+	margin-top: 0.3rem;
+}
+
+.be-def-editor__inline-row {
+	display: flex;
+	gap: 0.3rem;
+	margin-bottom: 0.25rem;
+}
+
+.be-def-editor__title-refs .be-def-editor__inline-row select,
+.be-def-editor__name-lookup .be-def-editor__inline-row select {
+	width: 7rem;
+	flex: 0 0 auto;
+}
+
+.be-def-editor__title-refs .be-def-editor__inline-row input[type='text'],
+.be-def-editor__name-lookup .be-def-editor__inline-row input[type='text'] {
+	width: auto;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.be-def-editor__inline-row button {
+	flex: 0 0 auto;
+	padding: 0 0.4rem;
+}

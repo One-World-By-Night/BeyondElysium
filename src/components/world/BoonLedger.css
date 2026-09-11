@@ -1,0 +1,88 @@
+.be-boon-ledger__actions {
+	margin-bottom: 0.75rem;
+}
+
+.be-boon-ledger__form {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	margin-bottom: 1rem;
+}
+
+.be-boon-ledger__table {
+	width: 100%;
+	border-collapse: collapse;
+	margin-bottom: 1.5rem;
+}
+
+.be-boon-ledger__table th {
+	text-align: left;
+	border-bottom: 2px solid #ccc;
+	padding: 0.4rem 0.6rem;
+}
+
+.be-boon-ledger__table td {
+	padding: 0.4rem 0.6rem;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.be-boon-ledger__row--repaid {
+	color: #888;
+}
+
+.be-boon-ledger__error {
+	padding: 0.75rem;
+	border: 1px solid #b3261e;
+	background: #fdecea;
+	color: #611a15;
+	border-radius: 3px;
+	margin-bottom: 1rem;
+}
+
+/*
+ * Step 8e (workflow-0.9.md) - same treatment as CharacterList.css's own print block, same
+ * reasoning: a plain `<table>` needs none of CharacterSheet.css's multi-column tuning.
+ * `:last-child` is safe for the actions column here (unlike the roster's) - `BoonTable`'s
+ * trailing `<th />`/`<td>` is unconditional, never omitted for a non-manager viewer.
+ */
+@media print {
+	#wpadminbar,
+	header,
+	.site-header,
+	nav,
+	footer,
+	.site-footer,
+	.wp-dark-mode-floating-switch,
+	.wp-dark-mode-switch,
+	.page-header,
+	.be-boon-ledger__actions,
+	.be-boon-ledger__form {
+		display: none !important;
+	}
+
+	.be-boon-ledger__table th:last-child,
+	.be-boon-ledger__table td:last-child {
+		display: none !important;
+	}
+
+	body {
+		margin: 0 !important;
+		background: #fff !important;
+	}
+
+	.be-boon-ledger {
+		font-family: Georgia, 'Times New Roman', serif;
+		font-size: 9pt;
+		color: #000;
+	}
+
+	.be-boon-ledger__table th,
+	.be-boon-ledger__table td {
+		border-bottom: 1px solid #000;
+		padding: 0.25rem 0.4rem;
+	}
+
+	.be-boon-ledger__row--repaid {
+		color: #444;
+	}
+}

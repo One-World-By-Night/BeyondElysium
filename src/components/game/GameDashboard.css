@@ -1,0 +1,74 @@
+.be-game-dashboard__error {
+	padding: 0.75rem;
+	margin-bottom: 1rem;
+	border: 1px solid #b3261e;
+	background: #fdecea;
+	color: #611a15;
+	border-radius: 3px;
+}
+
+.be-game-dashboard__cards {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	margin-bottom: 1.5rem;
+}
+
+.be-game-dashboard__card {
+	flex: 1 1 180px;
+	padding: 1rem;
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+	background: #fafafa;
+}
+
+.be-game-dashboard__card-value {
+	display: block;
+	font-size: 2rem;
+	font-weight: 600;
+	line-height: 1.1;
+}
+
+.be-game-dashboard__card-label {
+	display: block;
+	margin-top: 0.25rem;
+	color: #555;
+}
+
+.be-game-dashboard__breakdown {
+	margin: 0.5rem 0 0;
+	padding: 0;
+	list-style: none;
+	font-size: 0.9rem;
+	color: #555;
+}
+
+.be-game-dashboard__links {
+	display: flex;
+	gap: 1rem;
+	flex-wrap: wrap;
+	margin-bottom: 1.5rem;
+}
+
+.be-game-dashboard__section {
+	margin-bottom: 1.5rem;
+}
+
+.be-game-dashboard__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.be-game-dashboard__list li {
+	padding: 0.4rem 0;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.be-game-dashboard__badge {
+	display: inline-block;
+	padding: 0.1rem 0.5rem;
+	border-radius: 10px;
+	background: #e8e8e8;
+	font-size: 0.8rem;
+}

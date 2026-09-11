@@ -1,0 +1,47 @@
+.be-my-plots__notice {
+	padding: 0.6rem 0.75rem;
+	background: #eef4ff;
+	border: 1px solid #a9c6f5;
+	border-radius: 3px;
+	margin-bottom: 1rem;
+	font-size: 0.9rem;
+}
+
+.be-my-plots__items {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.be-my-plots__item-button {
+	display: flex;
+	justify-content: space-between;
+	width: 100%;
+	text-align: left;
+	padding: 0.5rem 0.6rem;
+	border: none;
+	border-bottom: 1px solid #e0e0e0;
+	background: none;
+	cursor: pointer;
+}
+
+.be-my-plots__item-button:hover {
+	background: #f5f5f5;
+}
+
+.be-my-plots__back {
+	margin-bottom: 1rem;
+	background: none;
+	border: none;
+	color: #1a4f9c;
+	cursor: pointer;
+	padding: 0;
+}
+
+.be-my-plots__error {
+	padding: 0.75rem;
+	border: 1px solid #b3261e;
+	background: #fdecea;
+	color: #611a15;
+	border-radius: 3px;
+}

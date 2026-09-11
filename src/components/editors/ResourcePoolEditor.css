@@ -1,0 +1,11 @@
+.be-resource-pool-editor__row {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 0.35rem 0;
+}
+
+.be-resource-pool-editor__label {
+	min-width: 8rem;
+	font-weight: 600;
+}

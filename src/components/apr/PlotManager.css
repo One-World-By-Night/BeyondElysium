@@ -1,0 +1,321 @@
+/*
+ * Storyteller Toolkit (Decision 057).
+ *
+ * Design tokens are declared once here, on the shell, and inherited by every child
+ * component's own stylesheet (PlotList.css, PlotThread.css, ActionAllocator.css,
+ * EntryForm.css) through ordinary cascade - those files reference var(--be-st-*) rather
+ * than repeating literals. The values deliberately match CharacterSheet.css /
+ * CharacterEditor.css, which are this plugin's real, already-established front-end design
+ * language; the Toolkit is not a third look.
+ *
+ * D34 applies throughout: hello-elementor's reset.css ships `input[type=x]{width:100%}` at
+ * specificity (0,1,1) and a bare `button{...}` at (0,0,1), which beat any single plain
+ * class (0,1,0) regardless of source order. Every form-element rule below is written at
+ * two-class compound specificity for that reason.
+ */
+/*
+ * Declared on :root, not on .be-plot-manager - PlotThread.tsx is ALSO mounted by
+ * MyPlotsFeed.tsx (a player's own feed), which is not inside the Toolkit shell, and
+ * scoping the tokens to the shell would leave that surface unstyled.
+ */
+:root {
+	--be-st-accent: #8b0000;
+	--be-st-border: #ddd;
+	--be-st-border-strong: #ccc;
+	--be-st-muted: #555;
+	--be-st-faint: #777;
+	--be-st-surface: #fff;
+	--be-st-surface-alt: #f7f7f7;
+	--be-st-radius: 4px;
+}
+
+/* ST-only gate (Decision 057). Affordance only - the REST layer enforces the real rule. */
+.be-plot-manager__denied {
+	max-width: 34rem;
+	margin: 2rem auto;
+	padding: 1.25rem 1.5rem;
+	border: 1px solid var( --be-st-border-strong );
+	border-radius: var( --be-st-radius );
+	background: var( --be-st-surface-alt );
+	text-align: center;
+	color: var( --be-st-muted );
+}
+
+.be-plot-manager__denied h2 {
+	margin: 0 0 0.5rem;
+	font-size: 1.1rem;
+	color: var( --be-st-accent );
+}
+
+/* --- Shell ------------------------------------------------------------------ */
+
+.be-plot-manager__header {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+	padding-bottom: 0.6rem;
+	border-bottom: 1px solid var( --be-st-border );
+}
+
+.be-plot-manager__title {
+	margin: 0;
+	font-size: 1.25rem;
+	color: var( --be-st-accent );
+}
+
+.be-plot-manager__crumbs {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	flex-wrap: wrap;
+	font-size: 0.85rem;
+	color: var( --be-st-faint );
+}
+
+.be-plot-manager__crumbs.be-plot-manager__crumbs button {
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	color: var( --be-st-accent );
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.be-plot-manager__tools {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+/*
+ * The shared button look, matching CharacterSheet.css's print/edit/style buttons: flat,
+ * bordered, accent text on transparent, filling solid on hover.
+ */
+.be-st-button,
+button.be-st-button {
+	display: inline-block;
+	padding: 0.4rem 0.9rem;
+	border: 1px solid var( --be-st-accent );
+	border-radius: 3px;
+	background: transparent;
+	color: var( --be-st-accent );
+	font-size: 0.85rem;
+	line-height: 1.4;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.be-st-button:hover:not( :disabled ),
+button.be-st-button:hover:not( :disabled ) {
+	background: var( --be-st-accent );
+	color: #fff;
+}
+
+.be-st-button:disabled,
+button.be-st-button:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.be-st-button--quiet,
+button.be-st-button--quiet {
+	border-color: var( --be-st-border-strong );
+	color: var( --be-st-muted );
+}
+
+.be-st-button--quiet:hover:not( :disabled ),
+button.be-st-button--quiet:hover:not( :disabled ) {
+	background: var( --be-st-muted );
+	border-color: var( --be-st-muted );
+	color: #fff;
+}
+
+/* --- Overview: the card grid ------------------------------------------------ */
+
+.be-plot-manager__grid {
+	display: grid;
+	grid-template-columns: repeat( auto-fill, minmax( 15rem, 1fr ) );
+	gap: 1rem;
+	align-items: start;
+}
+
+.be-plot-card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.75rem;
+	border: 1px solid var( --be-st-border );
+	border-radius: var( --be-st-radius );
+	background: var( --be-st-surface );
+	text-align: left;
+	cursor: pointer;
+	font: inherit;
+	color: inherit;
+	width: 100%;
+}
+
+.be-plot-card:hover {
+	border-color: var( --be-st-accent );
+}
+
+.be-plot-card__cover {
+	width: 100%;
+	height: 7rem;
+	object-fit: cover;
+	border-radius: 3px;
+	border: 1px solid var( --be-st-border-strong );
+	display: block;
+}
+
+.be-plot-card__cover--empty {
+	width: 100%;
+	height: 7rem;
+	border-radius: 3px;
+	border: 1px dashed var( --be-st-border-strong );
+	background: var( --be-st-surface-alt );
+}
+
+.be-plot-card__title {
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.be-plot-card__meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: center;
+	font-size: 0.75rem;
+	color: var( --be-st-faint );
+}
+
+.be-st-badge {
+	display: inline-block;
+	padding: 0.1rem 0.45rem;
+	border: 1px solid var( --be-st-border-strong );
+	border-radius: 999px;
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: var( --be-st-muted );
+	background: var( --be-st-surface-alt );
+}
+
+.be-st-badge--category {
+	border-color: var( --be-st-accent );
+	color: var( --be-st-accent );
+	background: transparent;
+}
+
+.be-st-badge--pending {
+	color: #8a6d00;
+	border-color: #d9bf62;
+}
+
+.be-st-badge--active {
+	color: #1a6e2e;
+	border-color: #79b98a;
+}
+
+.be-st-badge--finished {
+	color: var( --be-st-faint );
+}
+
+.be-plot-manager__empty {
+	padding: 2rem 1rem;
+	text-align: center;
+	color: var( --be-st-faint );
+}
+
+/* --- Detail: the living scroll ---------------------------------------------- */
+
+.be-plot-manager__detail {
+	max-width: 60rem;
+	/*
+	 * A known `position: sticky; bottom: 0` gotcha: on a page shorter than the viewport,
+	 * the sticky action bar's "stuck" render position (pinned near the viewport bottom)
+	 * doesn't line up with the flow space it reserves at its natural DOM position right
+	 * after the last section - it visually floats up and overlaps that section instead of
+	 * sitting cleanly below it. Reserving real space below the last section fixes it on
+	 * both short and long plots; found live testing a freshly-created plot with only a
+	 * Cliffhanger section above the bar.
+	 */
+	padding-bottom: 4rem;
+}
+
+.be-st-section {
+	margin-bottom: 1rem;
+	padding: 0.85rem 1rem;
+	border: 1px solid var( --be-st-border );
+	border-radius: var( --be-st-radius );
+	background: var( --be-st-surface );
+}
+
+.be-st-section__title {
+	margin: 0 0 0.6rem;
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var( --be-st-accent );
+}
+
+/* --- Sticky action bar: the "run the game" surface -------------------------- */
+
+.be-plot-manager__actions {
+	position: sticky;
+	bottom: 0;
+	z-index: 5;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 1rem;
+	padding: 0.75rem 1rem;
+	border: 1px solid var( --be-st-border-strong );
+	border-radius: var( --be-st-radius );
+	background: var( --be-st-surface );
+	box-shadow: 0 -2px 6px rgba( 0, 0, 0, 0.06 );
+}
+
+/* --- Modal bodies (reusing shared/Modal.tsx from Decision 053) --------------- */
+
+.be-st-modal-body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+
+.be-st-modal-body.be-st-modal-body input,
+.be-st-modal-body.be-st-modal-body textarea,
+.be-st-modal-body.be-st-modal-body select {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.4rem 0.6rem;
+}
+
+.be-st-modal-body.be-st-modal-body textarea {
+	min-height: 5rem;
+	resize: vertical;
+}
+
+.be-plot-manager__error {
+	padding: 0.75rem;
+	margin-bottom: 1rem;
+	border: 1px solid #b3261e;
+	border-radius: 3px;
+	background: #fdecea;
+	color: #611a15;
+}
+
+@media ( max-width: 768px ) {
+	.be-plot-manager__grid {
+		grid-template-columns: 1fr;
+	}
+
+	.be-plot-manager__actions {
+		position: static;
+		box-shadow: none;
+	}
+}

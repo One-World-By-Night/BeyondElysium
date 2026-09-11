@@ -1,0 +1,44 @@
+/*
+ * Decision 057: this component never had real layout CSS - only a rule for the Timeline
+ * date input (added with that field, Decision 056). It rendered acceptably by accident on
+ * a bare admin page; inside the Toolkit's card layout the select/textarea/date row had no
+ * flex/gap rules at all and visually overlapped. Fixed properly now that it's visible.
+ * D34: compound-class specificity beats hello-elementor's reset.css.
+ */
+.be-entry-form.be-entry-form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.be-entry-form__row.be-entry-form__row {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	align-items: flex-start;
+}
+
+.be-entry-form.be-entry-form select {
+	flex: 0 0 auto;
+	box-sizing: border-box;
+	padding: 0.35rem 0.5rem;
+	align-self: flex-start;
+}
+
+.be-entry-form.be-entry-form textarea {
+	flex: 1 1 14rem;
+	box-sizing: border-box;
+	padding: 0.4rem 0.6rem;
+	resize: vertical;
+}
+
+.be-entry-form.be-entry-form input[type="date"] {
+	width: auto;
+	box-sizing: border-box;
+	padding: 0.3rem 0.5rem;
+	flex: 0 0 auto;
+}
+
+.be-entry-form.be-entry-form button[type="submit"] {
+	align-self: flex-start;
+}

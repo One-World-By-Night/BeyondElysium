@@ -1,0 +1,52 @@
+.be-query-tool__tabs {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.be-query-tool__tabs button {
+	padding: 0.5rem 0.85rem;
+	border: none;
+	background: none;
+	cursor: pointer;
+	border-bottom: 2px solid transparent;
+}
+
+.be-query-tool__tabs button.is-active {
+	border-bottom-color: #1a4f9c;
+	font-weight: 600;
+}
+
+.be-query-tool__run-row {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	margin: 1rem 0;
+}
+
+.be-query-tool__error {
+	padding: 0.75rem;
+	border: 1px solid #b3261e;
+	background: #fdecea;
+	color: #611a15;
+	border-radius: 3px;
+	margin-bottom: 1rem;
+}
+
+.be-query-tool__saved-list {
+	list-style: none;
+	padding: 0;
+}
+
+.be-query-tool__saved-list li {
+	display: flex;
+	gap: 0.75rem;
+	align-items: center;
+	padding: 0.4rem 0;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.be-query-tool__saved-list li span {
+	flex: 1;
+}

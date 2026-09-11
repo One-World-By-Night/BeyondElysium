@@ -1,0 +1,174 @@
+.be-character-editor__title {
+	margin-top: 0;
+}
+
+/* Decision 054 - a plain portrait/name header row; the image sits to the left at a fixed,
+ * modest size so a very large upload never dominates the editor the way an unconstrained
+ * <img> would. */
+.be-character-editor__header {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+.be-character-editor__portrait {
+	width: 4.5rem;
+	height: 4.5rem;
+	object-fit: cover;
+	border-radius: 4px;
+	border: 1px solid #ccc;
+	flex: 0 0 auto;
+}
+
+.be-character-editor__portrait-button {
+	padding: 0.2rem 0.6rem;
+	border: 1px solid #999;
+	border-radius: 3px;
+	background: transparent;
+	color: #333;
+	font-size: 0.8rem;
+	cursor: pointer;
+}
+
+.be-character-editor__portrait-button:hover:not( :disabled ),
+.be-character-editor__portrait-button:focus-visible:not( :disabled ) {
+	background: #eee;
+}
+
+.be-character-editor__field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin-bottom: 1rem;
+	max-width: 24rem;
+}
+
+.be-character-editor__section {
+	margin-bottom: 1.5rem;
+	padding-bottom: 1rem;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+/* Mirrors CharacterSheet.css's own grid exactly - six tracks, each section spanning 2/3/6
+   per its own `width` (templateLayout.ts), so a real 50/50 or full-width row lands
+   correctly instead of three forced-equal columns. */
+.be-character-editor__grid {
+	display: grid;
+	grid-template-columns: repeat( 6, minmax( 0, 1fr ) );
+	gap: 1rem;
+	align-items: start;
+}
+
+@media ( max-width: 768px ) {
+	.be-character-editor__grid {
+		grid-template-columns: 1fr;
+	}
+
+	/*
+	 * Step 8d (workflow-0.9.md) - a real bug, found live: each section carries its own
+	 * `grid-column: span N` INLINE style (CharacterEditor.tsx, N = 2/3/6 from the template's
+	 * desktop column width), and collapsing the parent to one explicit track above does
+	 * nothing to that inline style. CSS Grid then fabricates implicit columns to satisfy a
+	 * `span 2`/`span 3`/`span 6` request against a 1-column explicit grid, auto-sized to
+	 * their own min-content - confirmed live via computed styles, not guessed: this produced
+	 * six tracks, two of them a genuine 0px wide, and squeezed an entire trait-list section
+	 * into a 16px-wide box, wrapping every word letter-by-letter ("Graceful" as a vertical
+	 * G/r/a/c/e/f/u/l column). `!important` is the only way to beat an inline style from a
+	 * stylesheet - not a specificity workaround, the correct tool for this one case.
+	 */
+	.be-character-editor__section {
+		grid-column: 1 / -1 !important;
+	}
+}
+
+.be-character-editor__error {
+	padding: 0.75rem;
+	margin-bottom: 1rem;
+	border: 1px solid #b3261e;
+	background: #fdecea;
+	color: #611a15;
+	border-radius: 3px;
+}
+
+.be-character-editor__pending-notice {
+	padding: 0.75rem;
+	margin-bottom: 1rem;
+	border: 1px solid #b58900;
+	background: #fff8e1;
+	color: #6b5300;
+	border-radius: 3px;
+}
+
+.be-character-editor__draft-notice {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	flex-wrap: wrap;
+	padding: 0.75rem;
+	margin-bottom: 1rem;
+	border: 1px solid #2271b1;
+	background: #f0f6fc;
+	color: #0a4b78;
+	border-radius: 3px;
+}
+
+.be-character-editor__draft-notice p {
+	margin: 0;
+}
+
+.be-character-editor__draft-notice-actions {
+	display: flex;
+	gap: 0.5rem;
+	flex-shrink: 0;
+}
+
+.be-character-editor__readonly-note {
+	color: #777;
+	font-style: italic;
+}
+
+.be-character-editor__summary {
+	position: sticky;
+	bottom: 0;
+	background: #fff;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	padding: 1rem;
+	margin-top: 1.5rem;
+}
+
+.be-character-editor__totals {
+	font-weight: 600;
+}
+
+.be-character-editor__over-budget {
+	color: #b3261e;
+}
+
+.be-character-editor__actions {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 0.75rem;
+}
+
+.be-character-editor__header-text h4 {
+	margin-bottom: 0.35rem;
+}
+
+.be-character-editor__header-text h4:not( :first-child ) {
+	margin-top: 1.25rem;
+}
+
+.be-character-editor__header-text-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin-top: 0.75rem;
+}
+
+.be-character-editor__header-text-status {
+	color: #2e7d32;
+	font-size: 0.85rem;
+}

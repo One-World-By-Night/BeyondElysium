@@ -1,0 +1,205 @@
+/* Decision 057. Tokens inherited from .be-plot-manager (PlotManager.css).
+   D34 throughout: compound-class specificity so hello-elementor's reset.css can't win. */
+
+.be-plot-thread__header {
+	display: flex;
+	gap: 1rem;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	margin-bottom: 1rem;
+}
+
+.be-plot-thread__cover {
+	width: 12rem;
+	height: 8rem;
+	object-fit: cover;
+	border-radius: var( --be-st-radius, 4px );
+	border: 1px solid var( --be-st-border-strong, #ccc );
+	flex: 0 0 auto;
+}
+
+.be-plot-thread__cover--empty {
+	width: 12rem;
+	height: 8rem;
+	border-radius: var( --be-st-radius, 4px );
+	border: 1px dashed var( --be-st-border-strong, #ccc );
+	background: var( --be-st-surface-alt, #f7f7f7 );
+	flex: 0 0 auto;
+}
+
+.be-plot-thread__header-text {
+	flex: 1 1 18rem;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.5rem;
+}
+
+.be-plot-thread__title {
+	margin: 0;
+	font-size: 1.4rem;
+	line-height: 1.2;
+}
+
+.be-plot-thread__meta {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	align-items: center;
+	font-size: 0.8rem;
+	color: var( --be-st-muted, #555 );
+}
+
+.be-plot-thread__prose {
+	line-height: 1.6;
+	margin-bottom: 0.6rem;
+}
+
+.be-plot-thread__prose img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 3px;
+}
+
+.be-plot-thread__prose p:first-child {
+	margin-top: 0;
+}
+
+.be-plot-thread__placeholder {
+	color: var( --be-st-faint, #777 );
+	font-style: italic;
+	margin: 0 0 0.6rem;
+}
+
+.be-plot-thread__inline-actions {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	margin-top: 0.6rem;
+}
+
+.be-plot-thread__st-notes {
+	background: #fff7e0;
+	border-color: #e0c46c;
+}
+
+/* --- Children ---------------------------------------------------------------- */
+
+.be-plot-thread__children {
+	display: grid;
+	grid-template-columns: repeat( auto-fill, minmax( 12rem, 1fr ) );
+	gap: 0.6rem;
+}
+
+.be-plot-thread__child {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	padding: 0.5rem 0.6rem;
+	border: 1px solid var( --be-st-border, #ddd );
+	border-radius: 3px;
+	background: var( --be-st-surface, #fff );
+	text-align: left;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+}
+
+.be-plot-thread__child:hover {
+	border-color: var( --be-st-accent, #8b0000 );
+}
+
+.be-plot-thread__child img {
+	width: 100%;
+	height: 4rem;
+	object-fit: cover;
+	border-radius: 2px;
+}
+
+.be-plot-thread__child-title {
+	font-weight: 600;
+	font-size: 0.9rem;
+	line-height: 1.3;
+}
+
+/* --- Faction goals ----------------------------------------------------------- */
+
+.be-plot-thread__faction-goal {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+	flex-wrap: wrap;
+	align-items: center;
+}
+
+.be-plot-thread__faction-goal.be-plot-thread__faction-goal input {
+	flex: 1 1 9rem;
+	box-sizing: border-box;
+	padding: 0.35rem 0.55rem;
+}
+
+.be-plot-thread__cliffhanger.be-plot-thread__cliffhanger {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.4rem 0.6rem;
+	resize: vertical;
+}
+
+/* --- Timeline ---------------------------------------------------------------- */
+
+.be-plot-thread__entries {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 1rem 0;
+}
+
+.be-plot-thread__entry {
+	padding: 0.6rem 0;
+	border-bottom: 1px solid var( --be-st-border, #ddd );
+}
+
+.be-plot-thread__entry--note {
+	background: #f5f0ff;
+	padding-left: 0.6rem;
+	padding-right: 0.6rem;
+	border-radius: 3px;
+}
+
+.be-plot-thread__entry-meta {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	flex-wrap: wrap;
+	font-size: 0.75rem;
+	color: var( --be-st-faint, #777 );
+	margin-bottom: 0.25rem;
+}
+
+.be-plot-thread__entry-type {
+	text-transform: uppercase;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+}
+
+.be-plot-thread__entry-event-date {
+	color: var( --be-st-accent, #8b0000 );
+	font-weight: 600;
+}
+
+.be-plot-thread__entry-content img {
+	max-width: 100%;
+	height: auto;
+}
+
+.be-plot-thread__subaction-action,
+.be-plot-thread__subaction-result {
+	margin: 0.25rem 0 0 0;
+	font-size: 0.9rem;
+}
+
+@media ( max-width: 768px ) {
+	.be-plot-thread__cover,
+	.be-plot-thread__cover--empty {
+		width: 100%;
+	}
+}

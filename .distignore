@@ -1,0 +1,19 @@
+# Excluded from the deployed plugin artifact.
+#
+# Almost nothing belongs here any more. Since the Step 10h restructure the artifact is
+# built by copying the `beyond-elysium/` subfolder wholesale - what ships is a directory,
+# not the repo root minus forty exclusions. Everything that must never ship (the Grapevine
+# source archive, the planning docs, tests, tooling, sample data) simply lives outside that
+# subfolder and cannot reach the artifact by any path.
+#
+# That is the point of the restructure: `v0.9.15` shipped `pp-samples/` by accident because
+# it was untracked and therefore invisible to every check except this file, and `v0.21.29`
+# shipped the repo-root agent-instructions file for months because nothing here named it.
+# Neither class of mistake is reachable now.
+#
+# `build/` and `vendor/` live inside the subfolder and MUST ship - they are the compiled
+# bundle and the Composer autoloader, gitignored but required at runtime.
+
+# OS noise that can appear inside any directory, including the shippable one.
+.DS_Store
+Thumbs.db

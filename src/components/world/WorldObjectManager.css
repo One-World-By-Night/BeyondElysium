@@ -1,0 +1,19 @@
+.be-world-manager {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1.5rem;
+}
+
+@media ( max-width: 767px ) {
+	.be-world-manager {
+		grid-template-columns: 1fr;
+	}
+}
+
+.be-world-manager__list-pane button {
+	margin-bottom: 0.75rem;
+}
+
+.be-world-manager__error {
+	color: #c00;
+}

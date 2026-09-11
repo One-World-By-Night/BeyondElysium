@@ -1,0 +1,106 @@
+.be-dot-tracker {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.be-dot-tracker__row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.be-dot-tracker__row-label {
+	width: 0.9rem;
+	font-size: 0.7rem;
+	font-weight: 600;
+	color: #888;
+	text-align: center;
+}
+
+.be-dot-tracker__dots {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+	/* Visual summary only (Step 0.5's own decision) - the stepper is the real control now,
+	   this row is aria-hidden and carries no button semantics at all. */
+}
+
+.be-dot-tracker__dot {
+	/* Square = permanent, circle (.be-dot-tracker__dot--temp below) = temporary - shape
+	   carries the distinction so it survives at a glance, not just at a size difference. */
+	display: inline-block;
+	width: 1rem;
+	height: 1rem;
+	padding: 0;
+	border: 1px solid #888;
+	border-radius: 2px;
+	background: #fff;
+}
+
+.be-dot-tracker__dot--filled {
+	background: #333;
+	border-color: #333;
+}
+
+.be-dot-tracker__dot--spent {
+	background: #fff;
+	border-color: #888;
+}
+
+.be-dot-tracker__dot--overflow {
+	background: #b3261e;
+	border-color: #b3261e;
+}
+
+.be-dot-tracker__dot--empty {
+	background: #fff;
+	border-color: #ccc;
+}
+
+.be-dot-tracker__dot--temp {
+	width: 0.75rem;
+	height: 0.75rem;
+	border-radius: 50%;
+}
+
+.be-dot-tracker__stepper {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.be-dot-tracker__value {
+	min-width: 1.6rem;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+/* A bare class selector beats hello-elementor's `button{...}` reset (D34) without
+ * needing `!important` - matching `.be-tiered-power-editor__stepper-button`'s own
+ * precedent exactly, same live-theme collision, same fix. */
+.be-dot-tracker__stepper-button {
+	width: 1.6rem;
+	height: 1.6rem;
+	padding: 0;
+	border: 1px solid #999;
+	border-radius: 3px;
+	background: transparent;
+	color: #333;
+	font-size: 0.9rem;
+	line-height: 1;
+	text-align: center;
+	cursor: pointer;
+}
+
+.be-dot-tracker__stepper-button:disabled {
+	color: #ccc;
+	border-color: #ddd;
+	cursor: default;
+}
+
+.be-dot-tracker__stepper-button:not( :disabled ):hover,
+.be-dot-tracker__stepper-button:not( :disabled ):focus-visible {
+	background: #eee;
+}

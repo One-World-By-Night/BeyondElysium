@@ -1,0 +1,57 @@
+.be-world-card__name {
+	margin-bottom: 0.25rem;
+}
+
+.be-world-card__description {
+	color: #444;
+	margin-bottom: 1rem;
+}
+
+.be-world-card__properties {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 0.35rem 0.75rem;
+	margin: 0 0 1rem;
+}
+
+.be-world-card__property {
+	display: contents;
+}
+
+.be-world-card__property dt {
+	font-weight: 600;
+	color: #555;
+}
+
+.be-world-card__property dd {
+	margin: 0;
+}
+
+.be-world-card__trait-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.be-world-card__meta {
+	margin: 0.25rem 0;
+}
+
+.be-world-card__characters {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.be-world-card__character-label {
+	color: #777;
+	font-style: italic;
+}
+
+.be-world-card__error {
+	padding: 0.75rem;
+	border: 1px solid #b3261e;
+	background: #fdecea;
+	color: #611a15;
+	border-radius: 3px;
+}

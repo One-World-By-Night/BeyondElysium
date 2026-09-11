@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Bump the plugin version in all four places that carry it. Schema::DB_VERSION tracks the
+# release version exactly, not a separate counter, as of 2026-09-09 (user directive) - every
+# release bumps it, whether or not that release touches seeded data, so `be_db_version` and
+# the active plugin version never diverge again. maybe_upgrade()'s reseed/repair calls are
+# all idempotent, so an extra pass on a release that didn't need one is harmless.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+V="${1:?usage: bin/bump-version 0.3.1}"
+
+sed -i '' -E "s/^( \* Version: ).*/\1${V}/" beyond-elysium/beyond-elysium.php
+sed -i '' -E "s/(define\( 'BE_VERSION', ')[^']*(' \);)/\1${V}\2/" beyond-elysium/beyond-elysium.php
+sed -i '' -E "s/(\"version\": \")[^\"]*(\")/\1${V}\2/" package.json
+sed -i '' -E "s/(const DB_VERSION = ')[^']*(';)/\1${V}\2/" beyond-elysium/includes/Database/Schema.php
+
+grep -n "Version:\|BE_VERSION" beyond-elysium/beyond-elysium.php
+grep -n '"version"' package.json
+grep -n "DB_VERSION = " beyond-elysium/includes/Database/Schema.php

@@ -1,0 +1,42 @@
+.be-sheet-style-editor {
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	padding: 1rem;
+	margin-bottom: 1rem;
+}
+
+.be-sheet-style-editor__row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+
+.be-sheet-style-editor__row label,
+.be-sheet-style-editor__row > span {
+	min-width: 9rem;
+}
+
+.be-sheet-style-editor__preview {
+	max-width: 4rem;
+	max-height: 4rem;
+	object-fit: cover;
+	border-radius: 2px;
+}
+
+.be-sheet-style-editor__section-graphics ul {
+	list-style: none;
+	margin: 0.25rem 0 0;
+	padding: 0;
+}
+
+.be-sheet-style-editor__section-graphics li {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.25rem;
+}
+
+.be-sheet-style-editor__error {
+	color: #b00;
+}
