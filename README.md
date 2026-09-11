@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**Status:** 0.99.0 is released and running in production chronicles. The character engine, editor, Storyteller tools, world data, Grapevine import, and configurable approval rules are all built. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's left before 1.0.
+**Status:** 0.99.1 is released and running in production chronicles. The character engine, editor, Storyteller tools, world data, Grapevine import, and configurable approval rules are all built. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's left before 1.0.
 
 ## What It Does
 
@@ -22,7 +22,7 @@ Beyond the sheet itself:
 
 ## Installation
 
-Download `beyond-elysium-0.99.0.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
+Download `beyond-elysium-0.99.1.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
 
 That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder in this repository is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder straight into `wp-content/plugins/` will not work. To build it yourself:
 
@@ -33,7 +33,7 @@ npm install && npm run build
 ./bin/verify        # lint, static analysis, and the test suite
 ```
 
-Requires PHP 8.2 and WordPress 6.0 or newer. Tested against PHP 8.2.33, MySQL 8.4.6, and WordPress 7.1.
+Requires PHP 8.2, WordPress 6.0 or newer, and [Elementor](https://wordpress.org/plugins/elementor/) — the page builder this plugin registers its widgets into. On WordPress 6.5+ the dependency is declared in the plugin header, so WordPress will offer to install Elementor for you and will not activate this plugin without it. Tested against PHP 8.2.33, MySQL 8.4.6, and WordPress 7.1.
 
 ## How It Works
 
