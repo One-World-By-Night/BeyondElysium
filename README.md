@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**Status:** Heading toward public beta. The character engine, editor, Storyteller tools, world data, and Grapevine import are built and running in production. What's left is polish, a few configurable approval rules, and the release itself — see [Roadmap](#roadmap).
+**Status:** 0.99.0 is released and running in production chronicles. The character engine, editor, Storyteller tools, world data, Grapevine import, and configurable approval rules are all built. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's left before 1.0.
 
 ## What It Does
 
@@ -19,6 +19,21 @@ Beyond the sheet itself:
 - **Per-character sheet customization**, portraits, and print layout.
 - **Notifications and a game dashboard.** Players hear when a submission is approved or rejected; Storytellers get an aggregate view of the chronicle, players get their own.
 - **Internationalization scaffolding and an accessibility pass**, including ARIA labeling on key interactive components.
+
+## Installation
+
+Download `beyond-elysium-0.99.0.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
+
+That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder in this repository is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder straight into `wp-content/plugins/` will not work. To build it yourself:
+
+```bash
+composer install
+npm install && npm run build
+./bin/dist          # writes dist/beyond-elysium-<version>.zip
+./bin/verify        # lint, static analysis, and the test suite
+```
+
+Requires PHP 8.2 and WordPress 6.0 or newer. Tested against PHP 8.2.33, MySQL 8.4.6, and WordPress 7.1.
 
 ## How It Works
 
@@ -72,18 +87,18 @@ BeyondElysium ships in-app documentation, viewable inside the plugin's own admin
 | Internationalization scaffolding and accessibility pass | Complete |
 | In-app documentation — Storyteller, Admin, and Player guides, REST API reference | Complete |
 | Character-sheet defect pass, WCAG AA contrast, phone-width layout, print styles | Complete |
-| Configurable purchase-approval rules, in-memoriam page, NPC forms | Planned |
-| Release readiness and public beta | Planned |
+| Configurable purchase-approval rules, credits and in-memoriam, NPC forms | Complete |
+| Release readiness — packaging, upgrade and uninstall paths, public release | Complete |
 
 ## Roadmap
 
-Two things stand between here and 1.0.
+0.99.0 is the first public release. What remains before 1.0:
 
-**Feature rounding.** Granular, configurable purchase-approval rules, so a chronicle can set its own house rules on what needs Storyteller or coordinator-level review, plus an in-memoriam and credits page and NPC-specific character forms.
+**Bylaw-driven approval data.** Chronicles configure their own approval rules through the admin UI today. Importing OWBN's published Character Regulation Bylaws directly — 1,032 clauses — is researched and specified but deliberately not built: most clauses restrict character *concepts* rather than named traits, so it needs a review workflow rather than a straight import.
 
-**Release readiness.** Packaging, upgrade and rollback paths, and the public source release itself — the repository you're reading is that process.
+**Blood magic.** Thaumaturgy, Necromancy, and the wider blood-magic tradition taxonomy need their own catalog pass.
 
-This repository is a placeholder for the released plugin source until that last step. It doesn't contain code yet; active development happens elsewhere until the project reaches its public-beta milestone, at which point this repository becomes the released source.
+**Held for after 1.0, by choice.** Character sharing between players, coordinator-tier approval enforcement, and autosave-draft protection for plot and rumor forms are each specified and intentionally deferred.
 
 ## License
 
