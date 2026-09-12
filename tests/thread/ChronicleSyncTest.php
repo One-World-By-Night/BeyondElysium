@@ -39,6 +39,7 @@ class ChronicleSyncTest extends WP_UnitTestCase {
 		$game = Game::find_by_slug( 'thread-sync-newchron' );
 		$this->assertNotNull( $game );
 		$this->assertSame( 'Brand New Chronicle', $game->name );
+		$this->assertSame( $post_id, (int) $game->owbn_chronicle_post_id, 'a newly-created row must be correlated to the post from creation, not left for the backfill to find later' );
 	}
 
 	public function test_an_existing_chronicles_title_change_updates_the_games_name(): void {
@@ -69,24 +70,35 @@ class ChronicleSyncTest extends WP_UnitTestCase {
 
 	/**
 	 * Not a cascade test - `Chronicle_Sync` deliberately does not attempt one (see its own
-	 * class doc comment: no stable post-to-game correlation exists to detect a rename by,
-	 * and a naive attempt was built, found to silently duplicate rather than rename, and
-	 * removed). This documents the actual, accepted behavior if `chronicle_slug` were ever
-	 * changed despite the upstream immutability: a second, independent `be_games` row at
-	 * the new slug, old row untouched - not data loss, but not a rename either, and an
-	 * admin would see two similarly-named chronicles and need to investigate. Real
-	 * production risk is effectively zero given the confirmed upstream guarantee, but the
-	 * actual behavior should be tested and known, not assumed.
+	 * class doc comment: the deferred-rename branch is still not built, on purpose - CR-6's
+	 * drift detector is what makes leaving it deferred safe). Documents the actual, accepted
+	 * behavior if `chronicle_slug` were ever changed despite the upstream immutability: a
+	 * second, independent `be_games` row at the new slug, old row untouched.
+	 *
+	 * The assertion that matters most here, added with the owbn_chronicle_post_id column:
+	 * the OLD row keeps its correlation to the post, and the NEW row's correlation is left
+	 * NULL rather than also claiming the same post - proving the unique index's own
+	 * guarantee (one post, at most one games row) holds even in exactly the scenario that
+	 * would otherwise try to violate it twice in a row for the same post. This is the
+	 * assertion that proves the previously-removed rename attempt's failure mode - two rows
+	 * silently sharing one upstream identity - cannot recur, independent of how clever any
+	 * future lookup logic is: the storage layer itself refuses it.
 	 */
-	public function test_changing_the_slug_creates_a_second_row_rather_than_renaming(): void {
+	public function test_changing_the_slug_still_creates_a_second_row_and_the_unique_index_survives_it(): void {
 		$post_id = $this->chronicle( 'thread-sync-oldslug', 'Original Chronicle' );
 		Chronicle_Sync::sync( $post_id, get_post( $post_id ), false );
-		$this->assertNotNull( Game::find_by_slug( 'thread-sync-oldslug' ) );
+		$old_game = Game::find_by_slug( 'thread-sync-oldslug' );
+		$this->assertNotNull( $old_game );
+		$this->assertSame( $post_id, (int) $old_game->owbn_chronicle_post_id );
 
 		update_post_meta( $post_id, 'chronicle_slug', 'thread-sync-newslug' );
 		Chronicle_Sync::sync( $post_id, get_post( $post_id ), true );
 
 		$this->assertNotNull( Game::find_by_slug( 'thread-sync-oldslug' ), 'the old row is untouched, not renamed - this is the documented, accepted behavior' );
-		$this->assertNotNull( Game::find_by_slug( 'thread-sync-newslug' ), 'a second row is created at the new slug' );
+		$new_game = Game::find_by_slug( 'thread-sync-newslug' );
+		$this->assertNotNull( $new_game, 'a second row is created at the new slug' );
+
+		$this->assertNull( $new_game->owbn_chronicle_post_id, 'the new row must NOT also claim the post the old row already holds' );
+		$this->assertSame( $post_id, (int) Game::find_by_slug( 'thread-sync-oldslug' )->owbn_chronicle_post_id, 'the old row keeps its correlation, undisturbed by the second row being created' );
 	}
 }

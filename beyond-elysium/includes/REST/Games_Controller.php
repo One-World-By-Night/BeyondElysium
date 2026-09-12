@@ -144,8 +144,11 @@ class Games_Controller extends Base_Controller {
 
 	/**
 	 * Updates an existing game identified by slug with any of the recognized
-	 * fields present in the request body. Validates a changed slug against
-	 * existing games before writing, coerces notifications_enabled to 0/1,
+	 * fields present in the request body. A slug change is routed through
+	 * Game::rename() - the only path that cascades the change to every
+	 * character, schema-block fork, page, and Elementor widget that names
+	 * the old slug - rather than through the plain field update, which
+	 * cannot change the slug at all. Coerces notifications_enabled to 0/1,
 	 * and treats a request with no recognized fields as a no-op rather than
 	 * a failure.
 	 *
@@ -161,9 +164,43 @@ class Games_Controller extends Base_Controller {
 			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
 		}
 
+		$rename_report = null;
+		$requested_slug = $request->get_param( 'slug' );
+		if ( $requested_slug !== null && sanitize_title( $requested_slug ) !== $game->slug ) {
+			$result = Game::rename( (int) $game->id, $requested_slug );
+
+			if ( ! $result['changed'] ) {
+				if ( ( $result['error'] ?? '' ) === 'duplicate_slug' ) {
+					return $this->error( 'duplicate_slug', __( 'A game with this slug already exists.', 'beyond-elysium' ), 409 );
+				}
+				if ( ( $result['error'] ?? '' ) === 'fork_collision' ) {
+					$blocks = implode( ', ', $result['blocks'] ?? [] );
+					return $this->error(
+						'fork_collision',
+						sprintf(
+							/* translators: %s: comma-separated list of schema block slugs */
+							__( 'Cannot rename: a chronicle already using this slug left customized schema blocks behind (%s). Delete or rename that fork first, or choose a different slug.', 'beyond-elysium' ),
+							$blocks
+						),
+						409
+					);
+				}
+				return $this->error( 'rename_failed', __( 'Failed to rename game.', 'beyond-elysium' ), 500 );
+			}
+
+			$current_slug  = sanitize_title( $requested_slug );
+			$rename_report = [
+				'characters'    => $result['characters'],
+				'schema_blocks' => $result['schema_blocks'],
+				'pages'         => $result['pages'],
+				'elementor'     => $result['elementor'],
+			];
+		}
+
 		$data = [];
-		// Only fields present in the request are included in the update.
-		foreach ( [ 'name', 'slug', 'game_type', 'description', 'settings', 'asc_role_path', 'notifications_enabled' ] as $field ) {
+		// Only fields present in the request are included in the update. slug is handled
+		// above, through rename() - Game::update() cannot change it at all.
+		foreach ( [ 'name', 'game_type', 'description', 'settings', 'asc_role_path', 'notifications_enabled' ] as $field ) {
 			$value = $request->get_param( $field );
 			if ( $value !== null ) {
 				$data[ $field ] = $value;
@@ -175,14 +212,6 @@ class Games_Controller extends Base_Controller {
 			$data['notifications_enabled'] = $data['notifications_enabled'] ? 1 : 0;
 		}
 
-		// A changed slug that collides with a different existing game is rejected up front.
-		if ( isset( $data['slug'] ) && $data['slug'] !== $game->slug ) {
-			$existing = Game::find_by_slug( $data['slug'] );
-			if ( $existing && $existing->id !== $game->id ) {
-				return $this->error( 'duplicate_slug', __( 'A game with this slug already exists.', 'beyond-elysium' ), 409 );
-			}
-		}
-
 		// An empty $data set is treated as a no-op rather than a failure.
 		if ( ! empty( $data ) ) {
 			$ok = Game::update( $current_slug, $data );
@@ -191,8 +220,13 @@ class Games_Controller extends Base_Controller {
 			}
 		}
 
-		$updated_slug = $data['slug'] ?? $current_slug;
-		$updated = Game::find_by_slug( $updated_slug );
+		$updated = Game::find_by_slug( $current_slug );
+		if ( $rename_report !== null ) {
+			// stdClass from $wpdb->get_row() - a dynamic property here is not the PHP 8.2
+			// deprecation (that applies to declared classes only), and this is the one
+			// response the cascade report belongs on: the same request that triggered it.
+			$updated->rename_report = $rename_report;
+		}
 		return $this->success( $updated );
 	}
 

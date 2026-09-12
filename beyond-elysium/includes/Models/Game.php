@@ -4,6 +4,8 @@ namespace BeyondElysium\Models;
 
 use BeyondElysium\Database\Manager;
 use BeyondElysium\Database\Transaction;
+use BeyondElysium\Core\Game_Slug_References;
+use BeyondElysium\REST\Game_Stats_Controller;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -148,20 +150,29 @@ class Game {
 			'updated_at'  => current_time( 'mysql' ),
 		];
 
+		// Only set by Chronicle_Sync's create path and the correlation backfill - omitted
+		// here (rather than defaulted to null) so every other caller's insert is unaffected.
+		if ( array_key_exists( 'owbn_chronicle_post_id', $data ) ) {
+			$insert['owbn_chronicle_post_id'] = $data['owbn_chronicle_post_id'];
+		}
+
 		return Manager::insert( 'games', $insert );
 	}
 
 	/**
 	 * Update a game identified by slug. Writes only the fields present in
 	 * $data, JSON-encodes an array settings payload, and stamps updated_at
-	 * before writing the row.
+	 * before writing the row. Deliberately cannot change the slug - rename()
+	 * is the only path to that, since a slug change requires cascading to
+	 * every table and reference that names it, which this plain update
+	 * does not do.
 	 *
 	 * @param string $slug
 	 * @param array  $data Fields to update.
 	 * @return bool
 	 */
 	public static function update( string $slug, array $data ): bool {
-		$allowed = [ 'name', 'slug', 'game_type', 'description', 'settings', 'asc_role_path', 'notifications_enabled' ];
+		$allowed = [ 'name', 'game_type', 'description', 'settings', 'asc_role_path', 'notifications_enabled', 'owbn_chronicle_post_id' ];
 		$update = [];
 		foreach ( $allowed as $field ) {
 			if ( array_key_exists( $field, $data ) ) {
@@ -181,6 +192,105 @@ class Game {
 
 		$result = Manager::update( 'games', $update, [ 'slug' => $slug ] );
 		return $result !== false;
+	}
+
+	/**
+	 * Renames a chronicle: its own slug, every character's owner_slug, and
+	 * every schema-block fork's game_slug, atomically, keyed by numeric id
+	 * rather than by the slug that is changing. This is the only path that
+	 * changes a game's slug - update() cannot. Two conditions abort before
+	 * anything is written: a slug collision with a different game, or a
+	 * schema-block fork already sitting at the destination slug (which
+	 * would hit the forks table's own unique index). Page and Elementor
+	 * widget references are repaired after commit, individually, since
+	 * that repair calls wp_update_post() and must not run inside a
+	 * transaction that might roll back. See
+	 * BE_PROCESS/chronicle-rename-design.md §7.2 for the full reasoning.
+	 *
+	 * @param int    $game_id
+	 * @param string $new_slug
+	 * @return array{changed:bool,error?:string,message?:string,blocks?:string[],characters?:int,schema_blocks?:int,pages?:int,elementor?:int}
+	 */
+	public static function rename( int $game_id, string $new_slug ): array {
+		global $wpdb;
+
+		$new_slug = sanitize_title( $new_slug );
+		$game     = self::find( $game_id );
+		if ( ! $game ) {
+			return [ 'changed' => false, 'error' => 'not_found' ];
+		}
+
+		$old_slug = $game->slug;
+		if ( $old_slug === $new_slug ) {
+			return [ 'changed' => false ];
+		}
+
+		$games_table = Manager::table( 'games' );
+		$char_table  = Manager::table( 'characters' );
+		$block_table = Manager::table( 'schema_blocks' );
+
+		$savepoint = Transaction::begin( 'be_game_rename' );
+
+		$duplicate = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$games_table} WHERE slug = %s AND id <> %d",
+				$new_slug,
+				$game_id
+			)
+		);
+		if ( $duplicate ) {
+			Transaction::rollback( $savepoint );
+			return [ 'changed' => false, 'error' => 'duplicate_slug' ];
+		}
+
+		$colliding_blocks = $wpdb->get_col(
+			$wpdb->prepare( "SELECT slug FROM {$block_table} WHERE game_slug = %s", $new_slug )
+		);
+		if ( ! empty( $colliding_blocks ) ) {
+			Transaction::rollback( $savepoint );
+			return [ 'changed' => false, 'error' => 'fork_collision', 'blocks' => $colliding_blocks ];
+		}
+
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$games_table} SET slug = %s, updated_at = %s WHERE id = %d",
+				$new_slug,
+				current_time( 'mysql' ),
+				$game_id
+			)
+		);
+		$characters = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$char_table} SET owner_slug = %s WHERE owner_type = 'chronicle' AND owner_slug = %s",
+				$new_slug,
+				$old_slug
+			)
+		);
+		$schema_blocks = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$block_table} SET game_slug = %s WHERE game_slug = %s",
+				$new_slug,
+				$old_slug
+			)
+		);
+
+		if ( $wpdb->last_error ) {
+			Transaction::rollback( $savepoint );
+			return [ 'changed' => false, 'error' => 'write_failed', 'message' => $wpdb->last_error ];
+		}
+		Transaction::commit( $savepoint );
+
+		$reference_counts = Game_Slug_References::repair( $old_slug, $new_slug );
+		Game_Stats_Controller::invalidate( $old_slug );
+		Game_Stats_Controller::invalidate( $new_slug );
+
+		return [
+			'changed'       => true,
+			'characters'    => (int) $characters,
+			'schema_blocks' => (int) $schema_blocks,
+			'pages'         => $reference_counts['pages'],
+			'elementor'     => $reference_counts['elementor'],
+		];
 	}
 
 	/**

@@ -20,6 +20,15 @@
 	background: #f0f6fc;
 }
 
+.be-admin__field-warning {
+	margin: -0.5rem 0 1rem;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid #dba617;
+	border-radius: 4px;
+	background: #fcf9e8;
+	font-size: 0.85rem;
+}
+
 .be-admin__table {
 	width: 100%;
 	border-collapse: collapse;

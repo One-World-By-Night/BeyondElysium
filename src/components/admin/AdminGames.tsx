@@ -41,6 +41,7 @@ export function AdminGames() {
 	const [ form, setForm ] = useState( EMPTY_FORM );
 	const [ saving, setSaving ] = useState( false );
 	const [ creating, setCreating ] = useState( false );
+	const [ renameNotice, setRenameNotice ] = useState<string | null>( null );
 
 	/**
 	 * Fetches the list of chronicles from the API.
@@ -72,12 +73,14 @@ export function AdminGames() {
 			description: game.description ?? '',
 		} );
 		setCreating( false );
+		setRenameNotice( null );
 	}
 
 	function startCreate() {
 		setEditingSlug( null );
 		setForm( EMPTY_FORM );
 		setCreating( true );
+		setRenameNotice( null );
 	}
 
 	function cancel() {
@@ -98,6 +101,7 @@ export function AdminGames() {
 		}
 		setSaving( true );
 		setError( null );
+		setRenameNotice( null );
 		try {
 			if ( creating ) {
 				await api.games.create( {
@@ -107,12 +111,26 @@ export function AdminGames() {
 					description: form.description,
 				} );
 			} else if ( editingSlug ) {
-				await api.games.update( editingSlug, {
+				const updated = await api.games.update( editingSlug, {
 					name: form.name.trim(),
 					slug: form.slug.trim(),
 					game_type: form.game_type,
 					description: form.description,
 				} );
+				if ( updated.rename_report ) {
+					const r = updated.rename_report;
+					setRenameNotice(
+						sprintf(
+							// translators: 1: new slug, 2: character count, 3: schema block count, 4: page count, 5: Elementor widget count.
+							__( 'Renamed to "%1$s" - moved %2$d character(s), %3$d schema block fork(s), %4$d page reference(s), %5$d Elementor widget(s).', 'beyond-elysium' ),
+							updated.slug,
+							r.characters,
+							r.schema_blocks,
+							r.pages,
+							r.elementor
+						)
+					);
+				}
 			}
 			cancel();
 			load();
@@ -155,6 +173,11 @@ export function AdminGames() {
 			{ error && (
 				<div className="be-admin__error" role="alert">
 					{ error }
+				</div>
+			) }
+			{ renameNotice && (
+				<div className="be-admin__game-scope-notice" role="status">
+					{ renameNotice }
 				</div>
 			) }
 
@@ -221,6 +244,14 @@ export function AdminGames() {
 						{ __( 'Slug', 'beyond-elysium' ) } { creating && __( '(optional - derived from name if left blank)', 'beyond-elysium' ) }
 						<input type="text" value={ form.slug } onChange={ ( e ) => setForm( { ...form, slug: e.target.value } ) } />
 					</label>
+					{ editingSlug !== null && form.slug.trim() !== editingSlug && (
+						<p className="be-admin__field-warning">
+							{ __(
+								'Changing the slug renames this chronicle everywhere it is referenced - every character, any customized schema block, and every page or widget that names it. A slug already used by another chronicle, or one left behind by a deleted chronicle, is rejected before anything moves.',
+								'beyond-elysium'
+							) }
+						</p>
+					) }
 					<label>
 						{ __( 'Game Type', 'beyond-elysium' ) }
 						<input
