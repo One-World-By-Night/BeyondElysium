@@ -20,7 +20,7 @@ class Schema {
 	 * release version. Compared against the stored VERSION_OPTION value by
 	 * maybe_upgrade() to decide whether migrations need to run.
 	 */
-	const DB_VERSION = '0.99.3';
+	const DB_VERSION = '0.99.4';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -102,11 +102,13 @@ class Schema {
 			settings json DEFAULT NULL,
 			asc_role_path varchar(191) DEFAULT NULL,
 			notifications_enabled tinyint(1) NOT NULL DEFAULT 1,
+			owbn_chronicle_post_id bigint(20) unsigned DEFAULT NULL,
 			created_by bigint(20) unsigned NOT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			UNIQUE KEY slug (slug),
+			UNIQUE KEY owbn_chronicle_post (owbn_chronicle_post_id),
 			KEY game_type (game_type)
 		) $charset_collate;" );
 
@@ -387,6 +389,106 @@ class Schema {
 		// A pure structure change with no row-content reseed hazard, so it is safe to run here.
 		self::add_schema_block_game_scoping();
 		self::add_storyteller_only_to_schema_blocks();
+		self::add_owbn_chronicle_post_id();
+		self::backfill_owbn_chronicle_post_ids();
+	}
+
+	/**
+	 * Adds the owbn_chronicle_post_id column and its unique index to an
+	 * existing games table. Fresh installs get both from create_tables();
+	 * this brings an upgrade up to the same shape. Column and index are
+	 * each probed independently so a partially-applied prior run (e.g. the
+	 * column exists but the index add failed) still completes correctly.
+	 */
+	public static function add_owbn_chronicle_post_id(): void {
+		global $wpdb;
+
+		$table = self::table( 'games' );
+
+		$has_column = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM information_schema.columns
+				 WHERE table_schema = DATABASE() AND table_name = %s AND column_name = 'owbn_chronicle_post_id'",
+				$table
+			)
+		);
+		if ( (int) $has_column === 0 ) {
+			$wpdb->query( "ALTER TABLE {$table} ADD COLUMN owbn_chronicle_post_id bigint(20) unsigned DEFAULT NULL AFTER notifications_enabled" );
+			if ( $wpdb->last_error ) {
+				error_log( 'Beyond Elysium: failed to add owbn_chronicle_post_id to games: ' . $wpdb->last_error );
+				return;
+			}
+		}
+
+		$has_index = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM information_schema.statistics
+				 WHERE table_schema = DATABASE() AND table_name = %s AND index_name = 'owbn_chronicle_post'",
+				$table
+			)
+		);
+		if ( (int) $has_index === 0 ) {
+			$wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY owbn_chronicle_post (owbn_chronicle_post_id)" );
+			if ( $wpdb->last_error ) {
+				error_log( 'Beyond Elysium: failed to add owbn_chronicle_post index to games: ' . $wpdb->last_error );
+			}
+		}
+	}
+
+	/**
+	 * Correlates each games row with the owbn_chronicle post it corresponds
+	 * to, by exact slug match, wherever that correlation is not already
+	 * set. Every failure mode leaves the row NULL rather than guessing:
+	 * zero or more than one matching post, or a post already claimed by a
+	 * different row, are each skipped and logged rather than resolved by a
+	 * best guess. Runs on every upgrade (not one-time-guarded), so a
+	 * chronicle post that appears later gets correlated on the next
+	 * upgrade with no manual step - see
+	 * BE_PROCESS/chronicle-rename-design.md §8.2 for the full reasoning.
+	 */
+	public static function backfill_owbn_chronicle_post_ids(): void {
+		global $wpdb;
+
+		$games_table = self::table( 'games' );
+		$rows        = $wpdb->get_results( "SELECT id, slug FROM {$games_table} WHERE owbn_chronicle_post_id IS NULL" );
+
+		foreach ( $rows as $row ) {
+			$post_ids = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT p.ID FROM {$wpdb->posts} p
+					 INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = 'chronicle_slug'
+					 WHERE p.post_type = 'owbn_chronicle'
+					   AND p.post_status IN ('publish','private')
+					   AND pm.meta_value = %s",
+					$row->slug
+				)
+			);
+
+			if ( count( $post_ids ) !== 1 ) {
+				if ( count( $post_ids ) > 1 ) {
+					error_log( "Beyond Elysium: games.slug '{$row->slug}' matches " . count( $post_ids ) . ' owbn_chronicle posts - ambiguous, left uncorrelated.' );
+				}
+				continue;
+			}
+			$post_id = (int) $post_ids[0];
+
+			$already_claimed = (int) $wpdb->get_var(
+				$wpdb->prepare( "SELECT COUNT(*) FROM {$games_table} WHERE owbn_chronicle_post_id = %d", $post_id )
+			);
+			if ( $already_claimed > 0 ) {
+				error_log( "Beyond Elysium: owbn_chronicle post {$post_id} is already claimed by another games row - '{$row->slug}' left uncorrelated." );
+				continue;
+			}
+
+			// Re-checked in the WHERE, not just the initial read, so this can never re-point an already-correlated row.
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$games_table} SET owbn_chronicle_post_id = %d WHERE id = %d AND owbn_chronicle_post_id IS NULL",
+					$post_id,
+					$row->id
+				)
+			);
+		}
 	}
 
 	/**

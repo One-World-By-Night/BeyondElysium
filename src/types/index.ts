@@ -65,6 +65,20 @@ export interface Game {
     created_by: number;
     created_at: string;
     updated_at: string;
+    /** Present only on the response to a slug-changing update - counts of what the rename cascaded to. */
+    rename_report?: GameRenameReport;
+}
+
+/**
+ * Counts of every dependent record a slug rename (Game::rename()) moved to
+ * follow the new slug: characters and schema-block forks by direct ownership,
+ * pages and Elementor widgets by rewriting the slug embedded in their config.
+ */
+export interface GameRenameReport {
+    characters: number;
+    schema_blocks: number;
+    pages: number;
+    elementor: number;
 }
 
 /**

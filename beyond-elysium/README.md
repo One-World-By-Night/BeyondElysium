@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**Status:** `v0.99.2`, live on two production OWBN chronicles (kony-sabbat.net, Boston By Night). Working through a defined set of remaining items toward a 1.0 release.
+**Status:** `v0.99.4`, live on two production OWBN chronicles (kony-sabbat.net, Boston By Night). Working through a defined set of remaining items toward a 1.0 release.
 
 ## What It Does
 
@@ -51,19 +51,23 @@ Beyond Elysium runs standalone on plain, game-scoped WordPress capabilities, and
 | Internationalization, accessibility, documentation | Complete |
 | Release-readiness checklist — packaging, uninstall handling, security review | Complete |
 | Blood magic paths, downtime and rumor systems | Complete |
+| Chronicle rename — slug changes now cascade to characters, schema-block forks, and pages instead of orphaning them | Complete |
+| Mobile-first character sheet, phase 1 (phone-width layout fix) | Complete |
 
 ## What's Next
 
-Toward 1.0: a defined set of remaining items, each already scoped with its own design —
-letting characters travel between chronicles, signed/printable sheets, a background-use
-ledger and downtime settings, guided setup for a new chronicle, and a few others.
+Toward 1.0: an 11-item closed scope, each already given a full design pass. Two are now
+complete (chronicle rename; the read-only sheet's phone-width fix). What remains:
 
-The current phase is integration and polish — the last one before a 1.0 release candidate. Chronicle-scoped authorization, deferred decisions, notifications, and the game dashboard are all done and live. What remains:
-
-1. **Internationalization scaffolding** — every user-facing string translatable, no partial translation shipped
-2. **Accessibility** — keyboard navigation, ARIA labeling, contrast, phone-width layouts, print styles for rosters and the boon ledger
-3. **Documentation** — a REST API reference, a Storyteller guide, an admin guide, and Elementor widget descriptions
-4. **Release readiness** — clean artifact packaging, upgrade-path and rollback verification, a security review
+1. Print as a signed, verifiable PDF, plus the reports/cards/batch-output layer that shares its generator
+2. Query beyond characters
+3. A point calculator (in-editor XP cost preview)
+4. Export to Grapevine's exchange formats, a verification endpoint, and chronicle-to-chronicle character transfer
+5. A background-use ledger and APR (downtime action) settings UI
+6. The rest of the mobile-first sheet work beyond the phone-width fix already shipped
+7. Guided setup for a new chronicle
+8. Expanding the Mage rotes catalog from the published Grimoire compendium
+9. Bylaw-driven approval data — designed, pending a decision on the review workflow
 
 Full Grapevine 3.01 import is complete and verified against real chronicle data: binary and XML exchange files, and full game files with create-or-merge into an existing chronicle.
 

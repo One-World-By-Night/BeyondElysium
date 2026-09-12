@@ -4,6 +4,8 @@ namespace BeyondElysium\Tests\Thread;
 
 use WP_REST_Request;
 use WP_UnitTestCase;
+use BeyondElysium\Models\Character;
+use BeyondElysium\Models\Schema_Block;
 
 /**
  * Step 3a/3e audit findings, both around slug collisions:
@@ -69,8 +71,20 @@ class GamesControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 'Game thread-test-game-a', $still_there->name );
 	}
 
+	/**
+	 * This test used to certify the bug as working: a rename that only ever touched
+	 * be_games, leaving every character orphaned at the old owner_slug. Now asserts the
+	 * cascade actually moved the character - the single most likely way Game::rename()'s
+	 * fix could regress is exactly this assertion quietly being lost again.
+	 */
 	public function test_a_normal_rename_still_succeeds(): void {
 		$this->create_game( 'thread-test-rename-source' );
+		$character_id = Character::create( [
+			'name'       => 'Rename Test Character',
+			'stack_slug' => 'vampire',
+			'owner_type' => 'chronicle',
+			'owner_slug' => 'thread-test-rename-source',
+		] );
 
 		$request = new WP_REST_Request( 'PUT', '/be/v1/games/thread-test-rename-source' );
 		$request->set_param( 'slug', 'thread-test-rename-target' );
@@ -78,6 +92,35 @@ class GamesControllerTest extends WP_UnitTestCase {
 
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertSame( 'thread-test-rename-target', $response->get_data()->slug );
+
+		$moved = Character::find( (int) $character_id );
+		$this->assertSame( 'thread-test-rename-target', $moved->owner_slug, 'the character must follow the rename, not stay orphaned at the old slug' );
+		$this->assertCount( 1, Character::all_for_game( 'thread-test-rename-target' ) );
+		$this->assertCount( 0, Character::all_for_game( 'thread-test-rename-source' ) );
+	}
+
+	/**
+	 * Game::delete_with_content() never removes schema-block forks (a real, separate,
+	 * logged defect - BE_PROCESS/chronicle-rename-design.md §7.2), so a fork can outlive
+	 * its game and sit at a slug a later chronicle then tries to rename into. That must
+	 * abort with a named error, not silently merge or hit the forks table's own unique
+	 * index as a generic 500.
+	 */
+	public function test_renaming_into_a_slug_with_an_orphaned_schema_block_fork_is_rejected(): void {
+		$this->create_game( 'thread-test-fork-source' );
+		Schema_Block::find_or_create_fork_for_game( 'vampire-disciplines', 'thread-test-fork-target' );
+
+		$request = new WP_REST_Request( 'PUT', '/be/v1/games/thread-test-fork-source' );
+		$request->set_param( 'slug', 'thread-test-fork-target' );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 409, $response->get_status() );
+		$this->assertSame( 'fork_collision', $response->as_error()->get_error_code() );
+
+		// The orphaned fork itself must be untouched by the aborted rename.
+		$fork = Schema_Block::find_for_game( 'vampire-disciplines', 'thread-test-fork-target' );
+		$this->assertNotNull( $fork );
+		$this->assertSame( 'thread-test-fork-target', $fork->game_slug );
 	}
 
 	public function test_update_with_a_malformed_settings_payload_is_rejected(): void {
