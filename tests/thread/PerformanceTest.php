@@ -119,6 +119,22 @@ class PerformanceTest extends WP_UnitTestCase {
 		$this->assertLessThan( 300, $ms, "JSON-trait query took {$ms}ms, target <300ms." );
 	}
 
+	/**
+	 * find_matches() for a world-object inventory is a full-table SELECT *
+	 * evaluated in PHP, same as the character path (§7.3) - fine at today's
+	 * catalog sizes, but 0.99.X-Ideas.md schedules expanding the Mage rotes
+	 * catalog to 500-900+ entries, which puts real volume through this exact
+	 * path for the first time (query-beyond-characters-design.md §5.5/QB-10).
+	 */
+	public function test_world_object_query_under_300ms(): void {
+		$g  = self::GAME_SLUG;
+		$ms = $this->time_ms( fn() => $this->dispatch( 'POST', "/be/v1/{$g}/query", [
+			'inventory'  => 'item',
+			'conditions' => [ [ 'field' => 'level', 'operator' => 'at_least', 'value' => 0 ] ],
+		] ) );
+		$this->assertLessThan( 300, $ms, "World-object query took {$ms}ms, target <300ms." );
+	}
+
 	public function test_statistics_over_200_characters_under_1s(): void {
 		$g = self::GAME_SLUG;
 		$ms = $this->time_ms( fn() => $this->dispatch( 'POST', "/be/v1/{$g}/statistics", [

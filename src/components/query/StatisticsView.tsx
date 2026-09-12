@@ -47,7 +47,7 @@ export function StatisticsView( { fields, onRun, result, loading }: StatisticsVi
 	return (
 		<div className="be-statistics-view">
 			<form className="be-statistics-view__form" onSubmit={ run }>
-				<select value={ key } onChange={ ( e ) => setKey( e.target.value ) } aria-label={ __( 'Character field to generate statistics for', 'beyond-elysium' ) }>
+				<select value={ key } onChange={ ( e ) => setKey( e.target.value ) } aria-label={ __( 'Field to generate statistics for', 'beyond-elysium' ) }>
 					<option value="">{ __( 'Select a field…', 'beyond-elysium' ) }</option>
 					{ fields.map( ( f ) => (
 						<option key={ f.key } value={ f.key }>

@@ -3,6 +3,7 @@
 namespace BeyondElysium\Services;
 
 use BeyondElysium\Database\Manager;
+use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Schema_Block;
 
 defined( 'ABSPATH' ) || exit;
@@ -344,31 +345,39 @@ class Query_Engine {
 	private static array $section_type_cache = [];
 
 	/**
-	 * Resolve one field's value and type for one character, per `field-map.php`'s
-	 * `source` kind. Assumes the field was already validated (`validate_conditions()`)
-	 * - an unmapped or uncomputable-derived field reaching here is a programming error,
-	 * not a query-time condition to handle gracefully.
+	 * Resolve one field's value and type for one row, per that inventory's own
+	 * `source` kind - `field-map.php` for `char` (the default), or
+	 * `query-inventories.php`'s own map for anything else. Assumes the field
+	 * was already validated (`validate_conditions()`) - an unmapped or
+	 * uncomputable-derived field reaching here is a programming error, not a
+	 * query-time condition to handle gracefully.
 	 *
-	 * @param object $character Decoded character row (sheet_data already an array).
+	 * The `json` and `stack_relative_list` arms only ever run for the `char`
+	 * inventory: no world-object field-map entry declares either kind, so a
+	 * world-object row never reaches `$row->stack_slug`/`$row->owner_slug`,
+	 * neither of which it has. Enforced by the map data, not by a branch here
+	 * (query-beyond-characters-design.md §7.2).
+	 *
+	 * @param object $row       Decoded character or world-object row (its JSON column already an array).
 	 * @param string $field
+	 * @param string $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
 	 * @return array{type: string, value: mixed, atomic: bool}
 	 */
-	public static function resolve_value( object $character, string $field ): array {
-		$registry = Field_Registry::get( $field );
-		$map      = Field_Registry::map_for( $field );
-		$type     = $registry['type'] ?? 'field';
+	public static function resolve_value( object $row, string $field, string $inventory = 'char' ): array {
+		$map  = Field_Registry::map_for( $field, $inventory );
+		$type = Field_Registry::type_for( $field, $inventory );
 
 		$value  = null;
 		$atomic = false;
 
 		switch ( $map['source'] ?? '' ) {
 			case 'column':
-				$value = $character->{$map['column']} ?? null;
+				$value = $row->{$map['column']} ?? null;
 				break;
 
 			case 'json':
 				$block = $map['block'];
-				$data  = $character->sheet_data[ $block ] ?? null;
+				$data  = $row->sheet_data[ $block ] ?? null;
 				if ( $data !== null ) {
 					if ( isset( $map['field'] ) ) {
 						$value = $data[ $map['field'] ] ?? null;
@@ -376,7 +385,7 @@ class Query_Engine {
 						$value = $data[ $map['pool'] ][ $map['part'] ] ?? null;
 					} else {
 						$value  = self::normalize_list( $data, $block );
-						$atomic = self::block_is_atomic( $block, $character->owner_slug );
+						$atomic = self::block_is_atomic( $block, $row->owner_slug );
 					}
 				}
 				break;
@@ -390,15 +399,20 @@ class Query_Engine {
 
 			case 'stack_relative_list':
 				// e.g. 'influences': resolved per-character since the block slug depends on the character's own stack.
-				$block = str_replace( '{stack}', $character->stack_slug, $map['block_pattern'] );
-				$data  = $character->sheet_data[ $block ] ?? null;
+				$block = str_replace( '{stack}', $row->stack_slug, $map['block_pattern'] );
+				$data  = $row->sheet_data[ $block ] ?? null;
 				if ( $data !== null ) {
-					$sources = self::catalog_sources( $block, $character->owner_slug );
+					$sources = self::catalog_sources( $block, $row->owner_slug );
 					$value   = array_values( array_filter( $data, static function ( $item ) use ( $sources, $map ) {
 						return ( $sources[ $item['name'] ?? '' ] ?? '' ) === $map['filter_source'];
 					} ) );
-					$atomic  = self::block_is_atomic( $block, $character->owner_slug );
+					$atomic  = self::block_is_atomic( $block, $row->owner_slug );
 				}
+				break;
+
+			case 'properties':
+				$value  = $row->properties[ $map['property'] ] ?? null;
+				$atomic = ! empty( $map['atomic'] );
 				break;
 		}
 
@@ -476,15 +490,25 @@ class Query_Engine {
 	// Validation: rejects an unknown field, inapplicable operator, or missing required value.
 
 	/**
-	 * Validates a list of query conditions, checking that each field is known,
-	 * has a Beyond Elysium equivalent, is queryable, and that its operator
-	 * applies to the field's type with whatever `find`/`value` it requires.
-	 * Returns the first invalid condition found, naming the clause and reason.
+	 * Validates a list of query conditions, checking that each field is
+	 * known, applies to the given inventory, has a Beyond Elysium
+	 * equivalent, is queryable, and that its operator applies to the
+	 * field's type with whatever `find`/`value` it requires. Returns the
+	 * first invalid condition found, naming the clause and reason - GV's
+	 * `qtError` silently skipped an unqueryable clause and widened the
+	 * result set instead; a null-valued clause matching nothing looks
+	 * identical to "no such rows exist", which is exactly the wrong-answer
+	 * shape this design deliberately does not reproduce.
 	 *
 	 * @param array[] $conditions
+	 * @param string  $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
 	 * @return array{index: int, message: string}|null Null when every condition is valid.
 	 */
-	public static function validate_conditions( array $conditions ): ?array {
+	public static function validate_conditions( array $conditions, string $inventory = 'char' ): ?array {
+		if ( ! in_array( $inventory, Field_Registry::QUERYABLE_INVENTORIES, true ) ) {
+			return [ 'index' => 0, 'message' => "Unknown inventory \"{$inventory}\"." ];
+		}
+
 		foreach ( $conditions as $index => $condition ) {
 			$field = $condition['field'] ?? '';
 			if ( $field === '' ) {
@@ -495,17 +519,20 @@ class Query_Engine {
 			if ( $registry === null ) {
 				return [ 'index' => $index, 'message' => "Unknown field \"{$field}\"." ];
 			}
+			if ( ! array_key_exists( $field, Field_Registry::for_inventory( $inventory ) ) ) {
+				return [ 'index' => $index, 'message' => "Field \"{$field}\" does not apply to the \"{$inventory}\" inventory." ];
+			}
 
-			$map = Field_Registry::map_for( $field );
+			$map = Field_Registry::map_for( $field, $inventory );
 			if ( $map === null || $map['source'] === 'unmapped' ) {
 				return [ 'index' => $index, 'message' => "Field \"{$field}\" has no Beyond Elysium equivalent and cannot be queried." ];
 			}
 			if ( $map['source'] === 'derived' && $field !== 'random' ) {
-				return [ 'index' => $index, 'message' => "Field \"{$field}\" is not a stored per-character value and cannot be queried." ];
+				return [ 'index' => $index, 'message' => "Field \"{$field}\" is not a stored value and cannot be queried." ];
 			}
 
 			$operator = $condition['operator'] ?? '';
-			$type     = $registry['type'];
+			$type     = Field_Registry::type_for( $field, $inventory );
 			if ( $operator === '' || ! self::is_applicable( $type, $operator ) ) {
 				return [ 'index' => $index, 'message' => "Operator \"{$operator}\" does not apply to field \"{$field}\" (type {$type})." ];
 			}
@@ -551,27 +578,28 @@ class Query_Engine {
 	// Query execution.
 
 	/**
-	 * Runs a query against every character in a game, then sorts and
-	 * paginates the matches. Conditions are evaluated in PHP against decoded
-	 * `sheet_data` rather than expressed as SQL.
+	 * Runs a query against every row of an inventory in a game, then sorts
+	 * and paginates the matches. Conditions are evaluated in PHP against a
+	 * decoded JSON column rather than expressed as SQL.
 	 *
 	 * @param string $game_slug
 	 * @param array  $conditions
-	 * @param string $logic 'AND' or 'OR'.
-	 * @param array  $paging `{sort: {field, direction}, page, per_page}`.
+	 * @param string $logic     'AND' or 'OR'.
+	 * @param array  $paging    `{sort: {field, direction}, page, per_page}`.
+	 * @param string $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
 	 * @return array{results: object[], total: int}
 	 */
-	public static function execute( string $game_slug, array $conditions, string $logic, array $paging = [] ): array {
-		$matches = self::find_matches( $game_slug, $conditions, $logic );
+	public static function execute( string $game_slug, array $conditions, string $logic, array $paging = [], string $inventory = 'char' ): array {
+		$matches = self::find_matches( $game_slug, $conditions, $logic, $inventory );
 		$total   = count( $matches );
 
 		$sort = $paging['sort'] ?? null;
 		if ( $sort && ! empty( $sort['field'] ) ) {
 			$field     = $sort['field'];
 			$direction = ( $sort['direction'] ?? 'asc' ) === 'desc' ? -1 : 1;
-			usort( $matches, static function ( $a, $b ) use ( $field, $direction ) {
-				$av = self::resolve_value( $a, $field )['value'];
-				$bv = self::resolve_value( $b, $field )['value'];
+			usort( $matches, static function ( $a, $b ) use ( $field, $direction, $inventory ) {
+				$av = self::resolve_value( $a, $field, $inventory )['value'];
+				$bv = self::resolve_value( $b, $field, $inventory )['value'];
 				return $direction * ( $av <=> $bv );
 			} );
 		}
@@ -587,35 +615,32 @@ class Query_Engine {
 	 * Builds the unpaginated match set for a query, shared by `execute()`
 	 * (which sorts and pages it) and `statistics()` (which aggregates over
 	 * the whole set). Every statistic runs the query first, then aggregates
-	 * over the result.
+	 * over the result. Fetches rows via whichever of the two real storage
+	 * shapes the inventory declares - the clause-matching loop below is
+	 * otherwise identical regardless of which one supplied the rows.
 	 *
 	 * @param string $game_slug
 	 * @param array  $conditions
 	 * @param string $logic
+	 * @param string $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
 	 * @return object[]
 	 */
-	private static function find_matches( string $game_slug, array $conditions, string $logic ): array {
-		global $wpdb;
-		$table = Manager::table( 'characters' );
-		// A statement timeout guards against one bad query holding a connection open.
-		$sql = $wpdb->prepare(
-			"SELECT /*+ MAX_EXECUTION_TIME(5000) */ * FROM {$table} WHERE owner_type = 'chronicle' AND owner_slug = %s",
-			$game_slug
-		);
-		$rows = $wpdb->get_results( $sql ) ?: [];
+	private static function find_matches( string $game_slug, array $conditions, string $logic, string $inventory = 'char' ): array {
+		$descriptor = Field_Registry::inventory( $inventory );
+		$rows       = $descriptor['storage'] === 'world_objects'
+			? self::rows_for_world_objects( $game_slug, $descriptor['object_type'] )
+			: self::rows_for_characters( $game_slug );
 
 		$matches = [];
 		foreach ( $rows as $row ) {
-			$character = self::decode_character( $row );
-
 			$clause_results = [];
 			foreach ( $conditions as $condition ) {
-				$resolved         = self::resolve_value( $character, $condition['field'] );
+				$resolved         = self::resolve_value( $row, $condition['field'], $inventory );
 				$clause_results[] = self::evaluate_clause( $resolved['type'], $resolved['value'], $condition, $resolved['atomic'] );
 			}
 
 			if ( empty( $clause_results ) ) {
-				$matches[] = $character;
+				$matches[] = $row;
 				continue;
 			}
 
@@ -635,12 +660,74 @@ class Query_Engine {
 			}
 
 			if ( $is_match ) {
-				$character->match_reason = implode( ', ', $reasons );
-				$matches[]                = $character;
+				$row->match_reason = implode( ', ', $reasons );
+				$matches[]         = $row;
 			}
 		}
 
 		return $matches;
+	}
+
+	/**
+	 * Fetches every character row for a chronicle, decoded and ready for
+	 * clause evaluation. The `char` inventory's own row source, lifted
+	 * verbatim from `find_matches()`'s original character-only body.
+	 *
+	 * @param string $game_slug
+	 * @return object[]
+	 */
+	private static function rows_for_characters( string $game_slug ): array {
+		global $wpdb;
+		$table = Manager::table( 'characters' );
+		// A statement timeout guards against one bad query holding a connection open.
+		$sql = $wpdb->prepare(
+			"SELECT /*+ MAX_EXECUTION_TIME(5000) */ * FROM {$table} WHERE owner_type = 'chronicle' AND owner_slug = %s",
+			$game_slug
+		);
+		$rows = $wpdb->get_results( $sql ) ?: [];
+		return array_map( [ self::class, 'decode_character' ], $rows );
+	}
+
+	/**
+	 * Fetches every world-object row of one object_type for a chronicle,
+	 * decoded and ready for clause evaluation. A game_slug that does not
+	 * resolve to a real game returns an empty result set rather than a
+	 * fatal - the same defensive shape `rows_for_characters()`'s own query
+	 * degrades to on a chronicle with no rows at all.
+	 *
+	 * @param string $game_slug
+	 * @param string $object_type
+	 * @return object[]
+	 */
+	private static function rows_for_world_objects( string $game_slug, string $object_type ): array {
+		$game = Game::find_by_slug( $game_slug );
+		if ( ! $game ) {
+			return [];
+		}
+
+		global $wpdb;
+		$table = Manager::table( 'world_objects' );
+		$sql   = $wpdb->prepare(
+			"SELECT /*+ MAX_EXECUTION_TIME(5000) */ * FROM {$table} WHERE game_id = %d AND object_type = %s",
+			(int) $game->id,
+			$object_type
+		);
+		$rows = $wpdb->get_results( $sql ) ?: [];
+		return array_map( [ self::class, 'decode_world_object' ], $rows );
+	}
+
+	/**
+	 * Decodes a world-object row's `properties` JSON column into an array in
+	 * place, the same pattern `decode_character()` applies to `sheet_data`.
+	 *
+	 * @param object $row
+	 * @return object
+	 */
+	private static function decode_world_object( object $row ): object {
+		if ( is_string( $row->properties ) ) {
+			$row->properties = json_decode( $row->properties, true ) ?? [];
+		}
+		return $row;
 	}
 
 	// Statistics: port of QueryEngineClass.GetStatistics.
@@ -659,22 +746,24 @@ class Query_Engine {
 	 * @param string      $stat_type One of self::STATISTIC_TYPES.
 	 * @param bool        $ok_zero   Whether `0`/`"(none)"` buckets count - the two distribution types only (Step 5h).
 	 * @param string|null $trait     Named trait, required for `specific_distribution`.
+	 * @param string      $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
 	 * @return array{buckets: array<string,float>, match_sets: array<string,string[]>, total: float, maximum: float}
 	 */
-	public static function statistics( string $game_slug, array $conditions, string $logic, string $key, string $stat_type, bool $ok_zero = true, ?string $trait = null ): array {
-		$characters = self::find_matches( $game_slug, $conditions, $logic );
-		$registry   = Field_Registry::get( $key );
-		$type       = $registry['type'] ?? 'field';
+	public static function statistics( string $game_slug, array $conditions, string $logic, string $key, string $stat_type, bool $ok_zero = true, ?string $trait = null, string $inventory = 'char' ): array {
+		$rows     = self::find_matches( $game_slug, $conditions, $logic, $inventory );
+		$registry = Field_Registry::get( $key );
+		$type     = Field_Registry::type_for( $key, $inventory );
 
 		$resolved = [];
-		foreach ( $characters as $character ) {
+		foreach ( $rows as $row ) {
+			// $row->name exists on both storage shapes - a world object has one too.
 			$resolved[] = [
-				'name'  => $character->name,
-				'value' => self::resolve_value( $character, $key )['value'],
+				'name'  => $row->name,
+				'value' => self::resolve_value( $row, $key, $inventory )['value'],
 			];
 		}
 
-		return self::aggregate( $resolved, $type, $registry['title'] ?? $key, $stat_type, $ok_zero, $trait, count( $characters ) );
+		return self::aggregate( $resolved, $type, $registry['title'] ?? $key, $stat_type, $ok_zero, $trait, count( $rows ) );
 	}
 
 	/**
@@ -914,6 +1003,12 @@ class Query_Engine {
 	 * one-condition query. Memoized per request so that a feed of many plots
 	 * sharing the same query does not repeat the same full-game scan.
 	 *
+	 * Always resolves against the `char` inventory, explicitly rather than
+	 * by relying on `find_matches()`'s own default - a plot's target_query
+	 * targets characters by definition (a plot cannot target an item), so
+	 * this is pinned rather than threaded (query-beyond-characters-
+	 * design.md §7.5).
+	 *
 	 * @param string     $game_slug
 	 * @param array|null $target_query `{field, operator, value}` or null.
 	 * @return int[] Character IDs.
@@ -925,7 +1020,7 @@ class Query_Engine {
 		}
 
 		if ( $target_query === null ) {
-			$matches = self::find_matches( $game_slug, [], 'AND' );
+			$matches = self::find_matches( $game_slug, [], 'AND', 'char' );
 		} else {
 			$condition = [
 				'field'    => $target_query['field'],
@@ -933,7 +1028,7 @@ class Query_Engine {
 				'find'     => $target_query['value'] ?? '',
 				'value'    => $target_query['value'] ?? null,
 			];
-			$matches   = self::find_matches( $game_slug, [ $condition ], 'AND' );
+			$matches   = self::find_matches( $game_slug, [ $condition ], 'AND', 'char' );
 		}
 
 		$ids = array_map( static fn( $c ) => (int) $c->id, $matches );

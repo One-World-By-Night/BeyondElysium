@@ -33,7 +33,12 @@ class Query_Fields_Controller extends Base_Controller {
 				'args'                => [
 					'inventory' => [
 						'type' => 'string',
-						'enum' => [ 'char', 'player', 'item', 'loc', 'rote', 'plot', 'rumor', 'action' ],
+						// Narrowed from all eight qkdata inventories to the four the query
+						// builder actually offers - the other four (player, plot, rumor,
+						// action) can only ever return an empty field list: qkdata.gvd
+						// declares zero keys for plot/rumor/action, and there is no Player
+						// entity in Beyond Elysium (query-beyond-characters-design.md §5.5).
+						'enum' => Field_Registry::QUERYABLE_INVENTORIES,
 					],
 				],
 			],
@@ -55,12 +60,17 @@ class Query_Fields_Controller extends Base_Controller {
 		$rows = $inventory ? Field_Registry::for_inventory( $inventory ) : Field_Registry::all();
 
 		$items = array_values( array_map(
-			static function ( array $row ): array {
+			static function ( array $row ) use ( $inventory ): array {
+				// Falls back to 'char' only for the no-inventory ("every field") case;
+				// $inventory is otherwise always one of the four validated by the route's
+				// own enum. Without this, ?inventory=loc reported every location field as
+				// unmapped, since is_mapped() defaulted to reading the char-only map.
+				$scope = $inventory ?: 'char';
 				return [
 					'key'    => $row['key'],
 					'title'  => $row['title'],
-					'type'   => $row['type'],
-					'mapped' => Field_Registry::is_mapped( $row['key'] ),
+					'type'   => Field_Registry::type_for( $row['key'], $scope ),
+					'mapped' => Field_Registry::is_mapped( $row['key'], $scope ),
 				];
 			},
 			$rows

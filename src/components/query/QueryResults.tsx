@@ -12,13 +12,17 @@
  * `resolve_approval_level()`'s own manager-only default for `xp_earn`/`xp_adjust`.
  */
 import { __, sprintf } from '@wordpress/i18n';
-import { useState } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import api from '../../api/client';
 import type { QueryResultCharacter } from '../../types/query';
 import './QueryResults.css';
 
 export interface QueryResultsProps {
 	gameSlug: string;
+	/** One of Field_Registry::QUERYABLE_INVENTORIES - gates the bulk-XP-award form to 'char'. */
+	inventory: string;
+	/** This inventory's own result columns (query-inventories.php's result_columns), owned by the caller. */
+	columns: { key: string; label: string }[];
 	items: QueryResultCharacter[];
 	total: number;
 	page: number;
@@ -29,18 +33,34 @@ export interface QueryResultsProps {
 	sortDirection?: 'asc' | 'desc';
 }
 
-const COLUMNS: { key: string; label: string }[] = [
-	{ key: 'name', label: __( 'Name', 'beyond-elysium' ) },
-	{ key: 'stack_slug', label: __( 'Type', 'beyond-elysium' ) },
-	{ key: 'status', label: __( 'Status', 'beyond-elysium' ) },
-];
+/**
+ * Reads a column's display value off a result row. A world object's own
+ * columns (name, description/'notes') sit at the top level same as a
+ * character's; everything else queryable on it lives under its decoded
+ * `properties` object (item_type, level, and so on) - the same `properties`
+ * vs `column` split Query_Engine::resolve_value() reads server-side.
+ */
+function cellValue( item: QueryResultCharacter, key: string ): string {
+	const direct = item[ key ];
+	if ( direct !== undefined ) {
+		return String( direct ?? '' );
+	}
+	const properties = item.properties as Record<string, unknown> | undefined;
+	return String( properties?.[ key ] ?? '' );
+}
 
 /**
  * Renders a paginated table of query results with sortable columns and a per-row
  * match-reason column explaining why each character matched. Includes a CSV
- * export button and Previous/Next pagination controls.
+ * export button and Previous/Next pagination controls. The bulk-XP-award form
+ * is offered only for the `char` inventory: on any other inventory, `items`
+ * are addressed by `be_world_objects.id`, and awarding XP to whichever
+ * *characters* happen to share those primary keys would be silent data
+ * corruption behind a plausible success message
+ * (query-beyond-characters-design.md §9.3, the highest-severity risk in the
+ * whole feature).
  */
-export function QueryResults( { gameSlug, items, total, page, perPage, onPageChange, onSort, sortField, sortDirection }: QueryResultsProps ) {
+export function QueryResults( { gameSlug, inventory, columns, items, total, page, perPage, onPageChange, onSort, sortField, sortDirection }: QueryResultsProps ) {
 	const [ exporting, setExporting ] = useState( false );
 	const [ selected, setSelected ] = useState<Set<number>>( new Set() );
 	const [ awarding, setAwarding ] = useState( false );
@@ -48,7 +68,13 @@ export function QueryResults( { gameSlug, items, total, page, perPage, onPageCha
 	const [ reason, setReason ] = useState( '' );
 	const [ awardMessage, setAwardMessage ] = useState<string | null>( null );
 
-	const canManage = window.beyondElysium?.capabilities?.be_manage_characters ?? false;
+	// A selection built against one inventory's rows must never survive into another, where
+	// the same numeric ids would mean an entirely different set of entities.
+	useEffect( () => {
+		setSelected( new Set() );
+	}, [ inventory ] );
+
+	const canAwardXp = inventory === 'char' && ( window.beyondElysium?.capabilities?.be_manage_characters ?? false );
 
 	function toggleSelected( id: number ) {
 		setSelected( ( prev ) => {
@@ -108,9 +134,9 @@ export function QueryResults( { gameSlug, items, total, page, perPage, onPageCha
 	function exportCsv() {
 		setExporting( true );
 		try {
-			const header = [ ...COLUMNS.map( ( c ) => c.label ), __( 'Match Reason', 'beyond-elysium' ) ];
+			const header = [ ...columns.map( ( c ) => c.label ), __( 'Match Reason', 'beyond-elysium' ) ];
 			const rows   = items.map( ( item ) => [
-				...COLUMNS.map( ( c ) => String( item[ c.key ] ?? '' ) ),
+				...columns.map( ( c ) => cellValue( item, c.key ) ),
 				item.match_reason ?? '',
 			] );
 			const csv = [ header, ...rows ]
@@ -141,12 +167,12 @@ export function QueryResults( { gameSlug, items, total, page, perPage, onPageCha
 			</div>
 
 			{ items.length === 0 ? (
-				<p>{ __( 'No characters match this query.', 'beyond-elysium' ) }</p>
+				<p>{ __( 'Nothing matches this query.', 'beyond-elysium' ) }</p>
 			) : (
 				<table className="be-query-results__table">
 					<thead>
 						<tr>
-							{ canManage && (
+							{ canAwardXp && (
 								<th>
 									<input
 										type="checkbox"
@@ -156,7 +182,7 @@ export function QueryResults( { gameSlug, items, total, page, perPage, onPageCha
 									/>
 								</th>
 							) }
-							{ COLUMNS.map( ( col ) => (
+							{ columns.map( ( col ) => (
 								<th key={ col.key }>
 									<button type="button" className="be-query-results__sort" onClick={ () => toggleSort( col.key ) }>
 										{ col.label }
@@ -170,7 +196,7 @@ export function QueryResults( { gameSlug, items, total, page, perPage, onPageCha
 					<tbody>
 						{ items.map( ( item ) => (
 							<tr key={ item.id }>
-								{ canManage && (
+								{ canAwardXp && (
 									<td>
 										<input
 											type="checkbox"
@@ -180,8 +206,8 @@ export function QueryResults( { gameSlug, items, total, page, perPage, onPageCha
 										/>
 									</td>
 								) }
-								{ COLUMNS.map( ( col ) => (
-									<td key={ col.key }>{ String( item[ col.key ] ?? '' ) }</td>
+								{ columns.map( ( col ) => (
+									<td key={ col.key }>{ cellValue( item, col.key ) }</td>
 								) ) }
 								<td>{ item.match_reason }</td>
 							</tr>
@@ -190,7 +216,7 @@ export function QueryResults( { gameSlug, items, total, page, perPage, onPageCha
 				</table>
 			) }
 
-			{ canManage && selected.size > 0 && (
+			{ canAwardXp && selected.size > 0 && (
 				<form className="be-query-results__bulk-award" onSubmit={ submitBulkAward }>
 					<span>{ sprintf( __( '%d selected', 'beyond-elysium' ), selected.size ) }</span>
 					<input
