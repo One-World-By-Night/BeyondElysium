@@ -9,6 +9,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import type { Character } from '../../types/character';
 import type { Plot, Subaction } from '../../types/plot';
+import { BackgroundLedger } from './BackgroundLedger';
 import './ActionAllocator.css';
 
 export interface ActionAllocatorProps {
@@ -151,7 +152,7 @@ export function ActionAllocator( { gameSlug, defaultParentPlotId }: ActionAlloca
 						</thead>
 						<tbody>
 							{ subactions.map( ( s ) => (
-								<tr key={ s.name }>
+								<tr key={ s.name } className={ s.over_budget ? 'is-over-budget' : '' }>
 									<td>{ s.name }</td>
 									<td>{ s.level }</td>
 									<td>{ s.total }</td>
@@ -163,9 +164,18 @@ export function ActionAllocator( { gameSlug, defaultParentPlotId }: ActionAlloca
 					</table>
 
 					{ committedPlotId ? (
-						<p className="be-action-allocator__committed">
-							{ sprintf( __( 'Committed as plot #%d.', 'beyond-elysium' ), committedPlotId ) }
-						</p>
+						<>
+							<p className="be-action-allocator__committed">
+								{ sprintf( __( 'Committed as plot #%d.', 'beyond-elysium' ), committedPlotId ) }
+							</p>
+							<BackgroundLedger
+								gameSlug={ gameSlug }
+								characterId={ characterId as number }
+								gameDate={ gameDate }
+								subactions={ subactions }
+								canManage
+							/>
+						</>
 					) : (
 						<button type="button" onClick={ commit } disabled={ loading }>
 							{ __( 'Commit', 'beyond-elysium' ) }

@@ -6,6 +6,7 @@ use BeyondElysium\Core\Authorization;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Plot;
 use BeyondElysium\Models\Plot_Entry;
+use BeyondElysium\Services\Action_Allocator;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -71,9 +72,22 @@ class Entries_Controller extends Base_Controller {
 			return $plot;
 		}
 
-		$entries = Plot_Entry::for_plot( (int) $plot->id, [ 'entry_type' => $request->get_param( 'entry_type' ) ] );
+		// Chronicle-scoped, not a bare current_user_can(): a site editor who is only a
+		// plain player in this specific chronicle must not see its ST notes or another
+		// character's allocation, even though the capability alone would pass (§3.4/§5.8).
+		$can_manage = Authorization::check_request( 'be_manage_plots', $request );
 
-		if ( ! current_user_can( 'be_manage_plots' ) ) {
+		// Whether this plot is someone else's action-allocation - its entries disclose
+		// exact background dot ratings and are never visible past ownership (§3.4/§5.8).
+		$is_unowned_allocation = ! $can_manage
+			&& Action_Allocator::actor_character_id( (int) $plot->id ) !== null
+			&& ! Action_Allocator::is_actor_owned_by( (int) $plot->id, get_current_user_id() );
+
+		$entries = $is_unowned_allocation
+			? []
+			: Plot_Entry::for_plot( (int) $plot->id, [ 'entry_type' => $request->get_param( 'entry_type' ) ] );
+
+		if ( ! $can_manage ) {
 			$entries = array_values( array_filter( $entries, static function ( $entry ) {
 				return $entry->entry_type !== 'note';
 			} ) );
@@ -157,6 +171,14 @@ class Entries_Controller extends Base_Controller {
 			return $plot;
 		}
 
+		// An allocator budget row or a ledger spend is only ever edited through Apr_Controller's
+		// own routes, which know how to preserve its JSON marker - the generic PUT here would
+		// otherwise pass a plain string through wp_kses_post() and silently strip it, orphaning
+		// the entry (§5.1/§BL-12).
+		if ( self::is_apr_managed( $entry ) ) {
+			return $this->error( 'apr_managed', __( 'This entry is managed by the Action & Rumor system and cannot be edited here.', 'beyond-elysium' ), 409 );
+		}
+
 		$can_manage = current_user_can( 'be_manage_plots' );
 		if ( ! $can_manage ) {
 			if ( $entry->entry_type !== 'action' || (int) $entry->author_id !== get_current_user_id() ) {
@@ -203,8 +225,32 @@ class Entries_Controller extends Base_Controller {
 			return $plot;
 		}
 
+		// An allocator budget row or a ledger spend has its own deletion rules (a ledger
+		// use is always deletable via its own route; a budget row is only ever regenerated
+		// by persist(), never removed directly) - the generic route enforces neither (§BL-12).
+		if ( self::is_apr_managed( $entry ) ) {
+			return $this->error( 'apr_managed', __( 'This entry is managed by the Action & Rumor system and cannot be deleted here.', 'beyond-elysium' ), 409 );
+		}
+
 		Plot_Entry::delete( (int) $entry->id );
 		return $this->success( null, 204 );
+	}
+
+	/**
+	 * Reports whether a plot entry is managed by the action-allocation/
+	 * background-ledger system - marked `source: 'allocator'` or
+	 * `source: 'ledger'` in its JSON content - and therefore off-limits to
+	 * this controller's generic update/delete routes (§BL-12).
+	 *
+	 * @param object $entry
+	 * @return bool
+	 */
+	private static function is_apr_managed( $entry ): bool {
+		if ( $entry->entry_type !== 'action' ) {
+			return false;
+		}
+		$data = json_decode( (string) $entry->content, true );
+		return is_array( $data ) && in_array( $data['source'] ?? '', [ 'allocator', 'ledger' ], true );
 	}
 
 	/**

@@ -163,6 +163,17 @@ class Admin_Menu {
 			'beyond-elysium-approval-rules',
 			[ self::class, 'render_approval_rules' ]
 		);
+
+		// Grapevine's own frmGameInfo.frm caption. Edits the chronicle's action-allocation
+		// and rumor-generation configuration; be_manage_games cannot gate this (§3.5).
+		add_submenu_page(
+			'beyond-elysium',
+			__( 'Action & Rumor Settings', 'beyond-elysium' ),
+			__( 'Action & Rumor Settings', 'beyond-elysium' ),
+			'be_manage_apr',
+			'beyond-elysium-apr-settings',
+			[ self::class, 'render_apr_settings' ]
+		);
 	}
 
 	/**
@@ -285,6 +296,16 @@ class Admin_Menu {
 	}
 
 	/**
+	 * Renders the Action & Rumor Settings admin page. Outputs the mount
+	 * point for the admin-apr-settings widget, which edits a chronicle's
+	 * action-allocation and rumor-generation configuration, followed by the
+	 * shared memorial footer.
+	 */
+	public static function render_apr_settings(): void {
+		self::render_mount( 'admin-apr-settings' );
+	}
+
+	/**
 	 * Outputs the widget mount markup for one admin page: a wrapped div
 	 * carrying the given widget name as a data attribute, followed by the
 	 * memorial footer. The front-end router hydrates the div into the
@@ -363,6 +384,7 @@ class Admin_Menu {
 				// Gates AdminImport.tsx's two tabs independently.
 				'be_import'             => current_user_can( 'be_import' ),
 				'be_manage_games'       => current_user_can( 'be_manage_games' ),
+				'be_manage_apr'         => current_user_can( 'be_manage_apr' ),
 			],
 		] );
 

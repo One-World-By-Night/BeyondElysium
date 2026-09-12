@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Core\Authorization;
 use BeyondElysium\Core\Notifications;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
@@ -119,6 +120,11 @@ class Plots_Controller extends Base_Controller {
 			'per_page'     => $pagination['per_page'],
 			'offset'       => $pagination['offset'],
 		];
+		// A non-manager never sees another character's action-allocation plot in the list -
+		// its title alone already discloses who has one (§3.4/§5.8).
+		if ( ! $can_manage ) {
+			$args['exclude_actor_plots_not_owned_by'] = get_current_user_id();
+		}
 
 		$items = Plot::for_game( (int) $game->id, $args );
 		foreach ( $items as $item ) {
@@ -150,10 +156,19 @@ class Plots_Controller extends Base_Controller {
 			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
-		$can_manage = current_user_can( 'be_manage_plots' );
+		// Chronicle-scoped, not a bare current_user_can(): a site editor who is only a
+		// plain player in this specific chronicle must not see its ST notes or another
+		// character's allocation, even though the capability alone would pass (§3.4/§5.8).
+		$can_manage = Authorization::check_request( 'be_manage_plots', $request );
 		$this->prepare_plot( $plot, $can_manage );
 
-		$entries = Plot_Entry::for_plot( (int) $plot->id );
+		// Whether this plot is someone else's action-allocation - its entries disclose
+		// exact background dot ratings and are never visible past ownership (§3.4/§5.8).
+		$is_unowned_allocation = ! $can_manage
+			&& Action_Allocator::actor_character_id( (int) $plot->id ) !== null
+			&& ! Action_Allocator::is_actor_owned_by( (int) $plot->id, get_current_user_id() );
+
+		$entries = $is_unowned_allocation ? [] : Plot_Entry::for_plot( (int) $plot->id );
 		if ( ! $can_manage ) {
 			// Note entries are ST-only; excluded from the response, not just hidden client-side.
 			$entries = array_values( array_filter( $entries, static function ( $entry ) {

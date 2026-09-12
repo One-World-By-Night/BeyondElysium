@@ -39,6 +39,18 @@ function isAllocatorEntry( data: unknown ): data is AllocatorEntryData {
 	return typeof data === 'object' && data !== null && ( data as { source?: string } ).source === 'allocator';
 }
 
+interface LedgerEntryData {
+	source: 'ledger';
+	name: string;
+	cost: number;
+	text: string;
+	result: string;
+}
+
+function isLedgerEntry( data: unknown ): data is LedgerEntryData {
+	return typeof data === 'object' && data !== null && ( data as { source?: string } ).source === 'ledger';
+}
+
 /**
  * Renders one timeline entry's content. Entries created by the action allocator store
  * structured JSON describing a subaction, which is rendered as a formatted summary.
@@ -58,6 +70,18 @@ function renderEntryContent( content: string ) {
 						<span>{ sprintf( __( ' (+%d growth)', 'beyond-elysium' ), parsed.growth ) }</span>
 					) }
 					{ parsed.action && <p className="be-plot-thread__subaction-action">{ parsed.action }</p> }
+					{ parsed.result && <p className="be-plot-thread__subaction-result">{ parsed.result }</p> }
+				</div>
+			);
+		}
+		if ( isLedgerEntry( parsed ) ) {
+			return (
+				<div className="be-plot-thread__subaction">
+					{ createInterpolateElement(
+						sprintf( __( '<name/> used, cost %d', 'beyond-elysium' ), parsed.cost ),
+						{ name: <strong>{ parsed.name }</strong> }
+					) }
+					{ parsed.text && <p className="be-plot-thread__subaction-action">{ parsed.text }</p> }
 					{ parsed.result && <p className="be-plot-thread__subaction-result">{ parsed.result }</p> }
 				</div>
 			);

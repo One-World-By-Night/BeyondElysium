@@ -6,6 +6,7 @@ use BeyondElysium\Database\Manager;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Plot_Entry;
 use BeyondElysium\Services\Action_Allocator;
+use BeyondElysium\Services\Background_Ledger;
 use WP_UnitTestCase;
 
 /**
@@ -88,6 +89,36 @@ class ActionAllocatorThreadTest extends WP_UnitTestCase {
 		$this->assertCount( 3, $entries );
 	}
 
+	/**
+	 * The real risk persist() used to carry (§3.3): it deleted every `action` entry on
+	 * its plot before re-creating the allocator's own set, wiping out a player's free-
+	 * text post and any recorded Background_Ledger use in the same stroke. Both must
+	 * survive a re-allocation untouched, and the allocator's own subactions still get
+	 * refreshed exactly as before.
+	 */
+	public function test_persist_never_deletes_a_free_text_post_or_a_ledger_entry_on_re_allocation(): void {
+		$plot_id = Action_Allocator::persist( $this->character_id, '2026-01-01' );
+
+		$free_text_id = Plot_Entry::create( [
+			'plot_id' => $plot_id, 'author_id' => 1, 'entry_type' => 'action',
+			'content' => 'I spend Bureaucracy 2 to smooth over the paperwork.',
+		] );
+		$ledger_entry = Background_Ledger::record( $this->character_id, '2026-01-01', [ 'name' => 'Bureaucracy', 'text' => 'Called in a favor.' ] );
+
+		$again = Action_Allocator::persist( $this->character_id, '2026-01-01' );
+		$this->assertSame( $plot_id, $again );
+
+		$this->assertNotNull( Plot_Entry::find( $free_text_id ), 'the free-text post survives' );
+		$this->assertNotNull( Plot_Entry::find( (int) $ledger_entry['id'] ), 'the ledger entry survives' );
+
+		// The allocator's own subactions were still refreshed - exactly 3, not stale duplicates.
+		$allocator_entries = array_filter(
+			Plot_Entry::for_plot( $plot_id, [ 'entry_type' => 'action' ] ),
+			static fn( $e ) => strpos( $e->content, '"source":"allocator"' ) !== false
+		);
+		$this->assertCount( 3, $allocator_entries );
+	}
+
 	public function test_second_week_carries_unused_and_growth_from_the_first(): void {
 		Action_Allocator::persist( $this->character_id, '2026-01-01' );
 
@@ -132,17 +163,29 @@ class ActionAllocatorThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'Personal', $subactions[0]['name'] );
 	}
 
-	public function test_is_complete_is_false_until_every_subaction_has_action_and_result(): void {
+	/**
+	 * The allocator entry's own action/result fields (§2.3) can never carry this -
+	 * nothing writes them. Completion now means every budgeted subaction (Personal,
+	 * Bureaucracy, Resources - this fixture's character has all three per setUp())
+	 * has at least one Background_Ledger entry, and every one of those entries has
+	 * a non-empty result (§5.5).
+	 */
+	public function test_is_complete_requires_a_ledger_entry_with_a_result_for_every_budgeted_subaction(): void {
 		$plot_id = Action_Allocator::persist( $this->character_id, '2026-01-01' );
-		$this->assertFalse( Action_Allocator::is_complete( $plot_id ) );
+		$this->assertFalse( Action_Allocator::is_complete( $plot_id ), 'no ledger entries recorded yet' );
 
-		foreach ( Plot_Entry::for_plot( $plot_id, [ 'entry_type' => 'action' ] ) as $entry ) {
-			$data             = json_decode( $entry->content, true );
-			$data['action']   = 'did something';
-			$data['result']   = 'it worked';
-			Plot_Entry::update( (int) $entry->id, [ 'content' => wp_json_encode( $data ) ] );
+		$entries = [];
+		foreach ( [ Action_Allocator::PERSONAL_NAME, 'Bureaucracy', 'Resources' ] as $name ) {
+			$entries[ $name ] = Background_Ledger::record( $this->character_id, '2026-01-01', [ 'name' => $name ] );
 		}
+		$this->assertFalse( Action_Allocator::is_complete( $plot_id ), 'entries exist but none has a result yet' );
 
+		// Filling in every entry but one still leaves the plot incomplete.
+		Background_Ledger::update_entry( (int) $entries['Personal']['id'], [ 'result' => 'spent freely' ] );
+		Background_Ledger::update_entry( (int) $entries['Bureaucracy']['id'], [ 'result' => 'paperwork filed' ] );
+		$this->assertFalse( Action_Allocator::is_complete( $plot_id ), 'Resources has no result yet' );
+
+		Background_Ledger::update_entry( (int) $entries['Resources']['id'], [ 'result' => 'favor called in' ] );
 		$this->assertTrue( Action_Allocator::is_complete( $plot_id ) );
 	}
 

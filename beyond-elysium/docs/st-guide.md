@@ -139,7 +139,33 @@ actions submitted against it, allocate action slots, and generate rumors that di
 players via a saved query (see below) rather than by hand. Players see their own plot
 connections on the **My Plots & Rumors** page.
 
-## 9. Building and Running Queries
+## 9. Action & Rumor Settings and the Background-Use Ledger
+
+Under **Beyond Elysium → Action & Rumor Settings**, pick a chronicle to configure how many
+downtime actions a character receives each game date and which rumors generate
+automatically. The **Actions** tab sets personal actions per character, whether unused
+actions and growth carry forward week to week, whether Common Actions (from Influences and
+configured Backgrounds) are added automatically, an actions-per-level override table for
+specific dot ratings, and which Backgrounds grant an action at all — an Influence always
+does and is shown for reference only. The **Rumors** tab holds the eight rumor-generation
+toggles the Storyteller Toolkit's rumor generator reads; Group and Subgroup rumors are shown
+but not yet functional, since no character data exists to generate them from. A **Restore
+Grapevine defaults** button is available if you want the original 1998 values instead of
+Beyond Elysium's own (higher personal-action, carry-forward-on) defaults — it does not touch
+your rumor settings.
+
+Once a character's actions are allocated (in the Action Allocator, under Plots), each
+budgeted subaction — Personal, and any Influence or configured Background — gets its own
+**background-use ledger**: record what the character actually did with that action, and fill
+in the result once it's adjudicated. A background with no live budget can still have a use
+recorded against it (it shows under "Other backgrounds," with a note pointing back here) —
+recording is never blocked by a chronicle simply not having configured that background yet.
+**Clear all for this Character** and **Clear all for this Date** remove recorded uses only;
+they never touch a character's action budget itself. Players see and can record uses for
+their own characters directly from their character sheet's **Background uses** panel, and
+can clear their own use as long as no result has been recorded against it yet.
+
+## 10. Building and Running Queries
 
 Under **Beyond Elysium → Query Tool**, build a filter against the roster (by trait,
 creature type, status, and more) and either browse the results or run one of the five

@@ -67,6 +67,15 @@ import type {
     EntityType,
 } from '../types/plot';
 import type {
+    AprSettings,
+    AprSettingsRequest,
+    AprBackgroundOption,
+    SpendableBackground,
+    BackgroundUse,
+    RecordBackgroundUseRequest,
+    UpdateBackgroundUseRequest,
+} from '../types/apr';
+import type {
     QueryField,
     QueryResultCharacter,
     RunQueryRequest,
@@ -935,6 +944,66 @@ export const plots = ( gameSlug: string ) => ( {
 } );
 
 // ---------------------------------------------------------------------------
+// Action & Rumor settings and the background-use ledger (game-scoped)
+// ---------------------------------------------------------------------------
+
+/**
+ * REST client factory for a single chronicle's Action & Rumor
+ * configuration and its background-use ledger - one factory
+ * because they are one feature (the ledger tracks what a
+ * background spends, the settings decide what it grants).
+ */
+export const apr = ( gameSlug: string ) => ( {
+    /** Fetches the chronicle's full thirteen-knob configuration. */
+    getSettings: (): Promise<AprSettings> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/apr-settings` } ),
+
+    /** Updates any subset of the chronicle's knobs; untouched keys are preserved server-side. */
+    updateSettings: ( data: AprSettingsRequest ): Promise<AprSettings> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/apr-settings`, method: 'PUT', data: { apr: data } } ),
+
+    /** Fetches the fork-aware union of every background/influence name, for the background_actions picker. */
+    backgroundOptions: (): Promise<AprBackgroundOption[]> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/apr-settings/backgrounds` } ),
+
+    /** Fetches the backgrounds a character holds, each annotated with its live budget when one exists. */
+    spendable: ( characterId: number ): Promise<SpendableBackground[]> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/characters/${ characterId }/spendable` } ),
+
+    /** Fetches a character's recorded background uses for one game date. */
+    backgroundUses: ( characterId: number, gameDate: string ): Promise<BackgroundUse[]> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/characters/${ characterId }/background-uses?game_date=${ encodeURIComponent( gameDate ) }` } ),
+
+    /** Records one background use. */
+    recordUse: ( characterId: number, data: RecordBackgroundUseRequest ): Promise<BackgroundUse> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/characters/${ characterId }/background-uses`, method: 'POST', data } ),
+
+    /** Edits a use's text, result, or cost. */
+    updateUse: ( id: number, data: UpdateBackgroundUseRequest ): Promise<BackgroundUse> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/background-uses/${ id }`, method: 'PUT', data } ),
+
+    /** Deletes one use - Grapevine's "Clear this use". */
+    deleteUse: ( id: number ): Promise<void> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/background-uses/${ id }`, method: 'DELETE' } ),
+
+    /** Clears every use for one character, optionally bounded to a game-date range. */
+    clearForCharacter: ( characterId: number, from?: string, to?: string ): Promise<{ cleared: number }> =>
+        apiFetch( {
+            path: `${ BASE }/${ gameSlug }/characters/${ characterId }/background-uses/clear`,
+            method: 'POST',
+            data: { from, to },
+        } ),
+
+    /** Clears every use for one game date across the whole chronicle. */
+    clearForDate: ( gameDate: string ): Promise<{ cleared: number }> =>
+        apiFetch( {
+            path: `${ BASE }/${ gameSlug }/background-uses/clear-date`,
+            method: 'POST',
+            data: { game_date: gameDate },
+        } ),
+} );
+
+// ---------------------------------------------------------------------------
 // Plot Entries (game-scoped)
 // ---------------------------------------------------------------------------
 
@@ -1328,6 +1397,7 @@ const api = {
     sheetStyle,
     experience,
     plots,
+    apr,
     plotEntries,
     connections,
     queryFields,

@@ -44,6 +44,10 @@ class Capabilities {
 		// v0.21.20's be_import fix is the exact precedent: a game-scoped role grant alone
 		// is never enough on its own, both layers are required.
 		'be_manage_boons'          => [ 'administrator', 'editor', 'author', 'contributor', 'subscriber' ],
+		// Chronicle-scoped like be_manage_approval_rules: edits the chronicle's own
+		// action-allocation and rumor-generation configuration. be_manage_games is
+		// excluded from every chronicle role (see game-roles.php), so it cannot gate this.
+		'be_manage_apr'            => [ 'administrator', 'editor' ],
 	];
 
 	/**

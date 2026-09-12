@@ -67,6 +67,14 @@
 	color: #fff;
 }
 
+.be-character-sheet__ledger-date {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+	font-size: 0.85rem;
+}
+
 .be-character-sheet__print-options {
 	display: flex;
 	flex-wrap: wrap;

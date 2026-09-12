@@ -376,7 +376,7 @@ class Query_Engine {
 						$value = $data[ $map['pool'] ][ $map['part'] ] ?? null;
 					} else {
 						$value  = self::normalize_list( $data, $block );
-						$atomic = self::block_is_atomic( $block );
+						$atomic = self::block_is_atomic( $block, $character->owner_slug );
 					}
 				}
 				break;
@@ -393,11 +393,11 @@ class Query_Engine {
 				$block = str_replace( '{stack}', $character->stack_slug, $map['block_pattern'] );
 				$data  = $character->sheet_data[ $block ] ?? null;
 				if ( $data !== null ) {
-					$sources = self::catalog_sources( $block );
+					$sources = self::catalog_sources( $block, $character->owner_slug );
 					$value   = array_values( array_filter( $data, static function ( $item ) use ( $sources, $map ) {
 						return ( $sources[ $item['name'] ?? '' ] ?? '' ) === $map['filter_source'];
 					} ) );
-					$atomic  = self::block_is_atomic( $block );
+					$atomic  = self::block_is_atomic( $block, $character->owner_slug );
 				}
 				break;
 		}
@@ -442,36 +442,35 @@ class Query_Engine {
 
 	/**
 	 * Looks up whether a block's trait list is atomic, i.e. whether duplicate
-	 * entries of the same name are compared individually rather than collapsed.
+	 * entries of the same name are compared individually rather than collapsed,
+	 * resolved through this chronicle's own fork when one exists
+	 * (BE_PROCESS/background-ledger-apr-design.md §3.1) - this is a general
+	 * block lookup, used for any trait_list/tiered_power block a field-map
+	 * entry names, not only the backgrounds family Backgrounds_Catalog covers.
 	 * Returns false when the block has no definition or no `atomic` flag set.
 	 *
 	 * @param string $block
+	 * @param string $game_slug
 	 * @return bool
 	 */
-	private static function block_is_atomic( string $block ): bool {
-		$definition = Schema_Block::find_by_slug( $block );
+	private static function block_is_atomic( string $block, string $game_slug ): bool {
+		$definition = Schema_Block::find_for_game( $block, $game_slug );
 		return ! empty( $definition->definition->atomic ?? false );
 	}
 
 	/**
 	 * Builds a name -> source map (`'Influences'`, `'Backgrounds'`,
-	 * `'Backgrounds, <Type>'`) for every item a merged block's catalog knows
-	 * about. `Action_Allocator::catalog_sources()` and `Rumor_Generator` each
-	 * keep their own copy of this same lookup.
+	 * `'Backgrounds, <Type>'`) for every item in one merged backgrounds
+	 * block, resolved through this chronicle's own fork when one exists
+	 * (BE_PROCESS/background-ledger-apr-design.md §3.1). Delegates to the
+	 * shared lookup `Action_Allocator`/`Rumor_Generator` also use.
 	 *
 	 * @param string $block
+	 * @param string $game_slug
 	 * @return array<string,string>
 	 */
-	private static function catalog_sources( string $block ): array {
-		$definition = Schema_Block::find_by_slug( $block );
-		if ( ! $definition || empty( $definition->definition->items ) ) {
-			return [];
-		}
-		$by_name = [];
-		foreach ( $definition->definition->items as $item ) {
-			$by_name[ $item->name ] = $item->source ?? '';
-		}
-		return $by_name;
+	private static function catalog_sources( string $block, string $game_slug ): array {
+		return Backgrounds_Catalog::sources_for( $block, $game_slug );
 	}
 
 	// Validation: rejects an unknown field, inapplicable operator, or missing required value.
