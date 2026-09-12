@@ -283,6 +283,64 @@ class GEX_Parser {
 		];
 	}
 
+	/** @var array<string,array<string,mixed>>|null */
+	private static ?array $shape = null;
+
+	/**
+	 * Returns GX-1's shared field-order authority (`gv-exchange-shape.php`)
+	 * for one race - the ordered `scalars`/`trait_lists`/`tail` shape a
+	 * writer will also trust. Loaded once and cached for the process.
+	 *
+	 * @param string $race One of `RACE_TYPE_MAP`'s values.
+	 * @return array<string,mixed>
+	 * @see BE_PROCESS/gex-export-transfer-design.md GX-1, GX-2
+	 */
+	public static function shape( string $race ): array {
+		if ( self::$shape === null ) {
+			self::$shape = require __DIR__ . '/gv-exchange-shape.php';
+		}
+		return self::$shape[ $race ];
+	}
+
+	/**
+	 * Reads one race's full ordered run of trait lists, driven by the
+	 * shared shape table instead of a bare sequence of per-class `$add()`
+	 * calls (GX-2). A `min_version` row is skipped for an older file,
+	 * matching that class's own original read gate exactly. A parsed
+	 * list's name not matching the table's expected name is never fatal -
+	 * the reader already tolerates a differently-named list by keying on
+	 * the file's own name (Dialect C tolerance, gex-export-transfer-design.md
+	 * §2e); this loop preserves that, it does not tighten it.
+	 *
+	 * `$offset`/`$length` read only a slice of the race's ordered trait-list
+	 * run - needed for wraith, the one class whose real byte order genuinely
+	 * interleaves trait lists with free-text tail fields rather than reading
+	 * them as one contiguous run.
+	 *
+	 * @param GV_Binary_Reader $r
+	 * @param float            $version
+	 * @param string           $race
+	 * @param int              $offset
+	 * @param int|null         $length
+	 * @return array<string,array<string,mixed>> Keyed by each list's own parsed name.
+	 */
+	private static function read_trait_lists( GV_Binary_Reader $r, float $version, string $race, int $offset = 0, ?int $length = null ): array {
+		$specs = self::shape( $race )['trait_lists'];
+		if ( $length !== null || $offset > 0 ) {
+			$specs = array_slice( $specs, $offset, $length );
+		}
+
+		$trait_lists = [];
+		foreach ( $specs as $spec ) {
+			if ( isset( $spec['min_version'] ) && $version < $spec['min_version'] ) {
+				continue;
+			}
+			$tl                         = self::parse_trait_list( $r, $version );
+			$trait_lists[ $tl['name'] ] = $tl;
+		}
+		return $trait_lists;
+	}
+
 	/**
 	 * Determines whether a trait row is really a section-header row
 	 * rather than a held trait. Some third-party export tools insert a
@@ -1092,37 +1150,11 @@ class GEX_Parser {
 		$is_npc        = $r->bool();
 		$last_modified = $r->date();
 
-		$experience = self::parse_experience( $r, $version );
-
-		$trait_lists = [];
-		$add         = function () use ( $r, $version, &$trait_lists ) {
-			$tl = self::parse_trait_list( $r, $version );
-			$trait_lists[ $tl['name'] ] = $tl;
-			return $tl;
-		};
-
-		$physical = $add();
-		$social   = $add();
-		$mental   = $add();
-		$add(); // Negative Physical
-		$add(); // Negative Social
-		$add(); // Negative Mental
-		$add(); // Status
-		$add(); // Abilities
-		$add(); // Influences
-		$add(); // Backgrounds
-		$add(); // Health Levels
-		$add(); // Bonds
-		$add(); // Miscellaneous
-		$add(); // Derangements
-		$add(); // Disciplines
-		$add(); // Rituals
-		$add(); // Merits
-		$add(); // Flaws
-		$add(); // Equipment
-		if ( $version >= 2.395 ) {
-			$add(); // Hangouts
-		}
+		$experience  = self::parse_experience( $r, $version );
+		$trait_lists = self::read_trait_lists( $r, $version, 'vampire' );
+		$physical    = $trait_lists['Physical'];
+		$social      = $trait_lists['Social'];
+		$mental      = $trait_lists['Mental'];
 
 		$boons = [];
 		if ( $version >= 2.399 ) {
@@ -1267,37 +1299,11 @@ class GEX_Parser {
 		$is_npc        = $r->bool();
 		$last_modified = $r->date();
 
-		$experience = self::parse_experience( $r, $version );
-
-		$trait_lists = [];
-		$add         = function () use ( $r, $version, &$trait_lists ) {
-			$tl = self::parse_trait_list( $r, $version );
-			$trait_lists[ $tl['name'] ] = $tl;
-			return $tl;
-		};
-
-		$physical = $add();
-		$social   = $add();
-		$mental   = $add();
-		$add(); // Negative Physical
-		$add(); // Negative Social
-		$add(); // Negative Mental
-		$add(); // Abilities
-		$add(); // Influences
-		$add(); // Backgrounds
-		$add(); // Health Levels
-		$add(); // Features
-		$add(); // Gifts
-		$add(); // Rites
-		$add(); // Honor
-		$add(); // Glory
-		$add(); // Wisdom
-		$add(); // Merits
-		$add(); // Flaws
-		$add(); // Equipment
-		if ( $version >= 2.395 ) {
-			$add(); // Hangouts
-		}
+		$experience  = self::parse_experience( $r, $version );
+		$trait_lists = self::read_trait_lists( $r, $version, 'werewolf' );
+		$physical    = $trait_lists['Physical'];
+		$social      = $trait_lists['Social'];
+		$mental      = $trait_lists['Mental'];
 
 		$biography = $version >= 2.397 ? $r->string() : '';
 		$notes     = $r->string();
@@ -1410,35 +1416,11 @@ class GEX_Parser {
 		$is_npc        = $r->bool();
 		$last_modified = $r->date();
 
-		$experience = self::parse_experience( $r, $version );
-
-		$trait_lists = [];
-		$add         = function () use ( $r, $version, &$trait_lists ) {
-			$tl = self::parse_trait_list( $r, $version );
-			$trait_lists[ $tl['name'] ] = $tl;
-			return $tl;
-		};
-
-		$physical = $add();
-		$social   = $add();
-		$mental   = $add();
-		$add(); // Negative Physical
-		$add(); // Negative Social
-		$add(); // Negative Mental
-		$add(); // Abilities
-		$add(); // Influences
-		$add(); // Backgrounds
-		$add(); // Health Levels
-		$add(); // Resonance
-		$add(); // Reputation
-		$add(); // Spheres
-		$add(); // Rotes
-		$add(); // Merits
-		$add(); // Flaws
-		$add(); // Equipment
-		if ( $version >= 2.395 ) {
-			$add(); // Hangouts
-		}
+		$experience  = self::parse_experience( $r, $version );
+		$trait_lists = self::read_trait_lists( $r, $version, 'mage' );
+		$physical    = $trait_lists['Physical'];
+		$social      = $trait_lists['Social'];
+		$mental      = $trait_lists['Mental'];
 
 		$foci      = $r->string();
 		$biography = $version >= 2.397 ? $r->string() : '';
@@ -1542,34 +1524,11 @@ class GEX_Parser {
 		$is_npc        = $r->bool();
 		$last_modified = $r->date();
 
-		$experience = self::parse_experience( $r, $version );
-
-		$trait_lists = [];
-		$add         = function () use ( $r, $version, &$trait_lists ) {
-			$tl = self::parse_trait_list( $r, $version );
-			$trait_lists[ $tl['name'] ] = $tl;
-			return $tl;
-		};
-
-		$physical = $add();
-		$social   = $add();
-		$mental   = $add();
-		$add(); // Negative Physical
-		$add(); // Negative Social
-		$add(); // Negative Mental
-		$add(); // Abilities
-		$add(); // Influences
-		$add(); // Backgrounds
-		$add(); // Health Levels
-		$add(); // Status
-		$add(); // Arts
-		$add(); // Realms
-		$add(); // Merits
-		$add(); // Flaws
-		$add(); // Equipment
-		if ( $version >= 2.395 ) {
-			$add(); // Hangouts
-		}
+		$experience  = self::parse_experience( $r, $version );
+		$trait_lists = self::read_trait_lists( $r, $version, 'changeling' );
+		$physical    = $trait_lists['Physical'];
+		$social      = $trait_lists['Social'];
+		$mental      = $trait_lists['Mental'];
 
 		$oaths     = $r->string();
 		$biography = $version >= 2.397 ? $r->string() : '';
@@ -1683,23 +1642,13 @@ class GEX_Parser {
 
 		$experience = self::parse_experience( $r, $version );
 
-		$trait_lists = [];
-		$add         = function () use ( $r, $version, &$trait_lists ) {
-			$tl = self::parse_trait_list( $r, $version );
-			$trait_lists[ $tl['name'] ] = $tl;
-			return $tl;
-		};
-
-		$physical = $add();
-		$social   = $add();
-		$mental   = $add();
-		$add(); // Negative Physical
-		$add(); // Negative Social
-		$add(); // Negative Mental
-		$add(); // Abilities
-		$add(); // Backgrounds
-		$add(); // Status
-		$add(); // Influences
+		// Wraith's own byte order genuinely interleaves trait lists with free-text
+		// fields - read in the shape table's own order, sliced at each interleave
+		// point (Physical..Influences, then Arcanoi..Locations, then Thorns alone).
+		$trait_lists = self::read_trait_lists( $r, $version, 'wraith', 0, 10 );
+		$physical    = $trait_lists['Physical'];
+		$social      = $trait_lists['Social'];
+		$mental      = $trait_lists['Mental'];
 
 		$passions = $r->string();
 		$fetters  = $r->string();
@@ -1708,16 +1657,10 @@ class GEX_Parser {
 		$haunt    = $r->string();
 		$regret   = $r->string();
 
-		$add(); // Arcanoi
-		$add(); // Merits
-		$add(); // Flaws
-		$add(); // Equipment
-		if ( $version >= 2.395 ) {
-			$add(); // Hangouts
-		}
+		$trait_lists += self::read_trait_lists( $r, $version, 'wraith', 10, 5 );
 
 		$dark_passions = $r->string();
-		$add(); // Thorns
+		$trait_lists  += self::read_trait_lists( $r, $version, 'wraith', 15, 1 );
 
 		$notes = $r->string();
 
@@ -1839,34 +1782,11 @@ class GEX_Parser {
 		$is_npc        = $r->bool();
 		$last_modified = $r->date();
 
-		$experience = self::parse_experience( $r, $version );
-
-		$trait_lists = [];
-		$add         = function () use ( $r, $version, &$trait_lists ) {
-			$tl = self::parse_trait_list( $r, $version );
-			$trait_lists[ $tl['name'] ] = $tl;
-			return $tl;
-		};
-
-		$physical = $add();
-		$social   = $add();
-		$mental   = $add();
-		$add(); // Negative Physical
-		$add(); // Negative Social
-		$add(); // Negative Mental
-		$add(); // Abilities
-		$add(); // Influences
-		$add(); // Backgrounds
-		$add(); // Health Levels
-		$add(); // Humanity
-		$add(); // Derangements
-		$add(); // Numina
-		$add(); // Merits
-		$add(); // Flaws
-		$add(); // Equipment
-		if ( $version >= 2.395 ) {
-			$add(); // Hangouts
-		}
+		$experience  = self::parse_experience( $r, $version );
+		$trait_lists = self::read_trait_lists( $r, $version, 'mortal' );
+		$physical    = $trait_lists['Physical'];
+		$social      = $trait_lists['Social'];
+		$mental      = $trait_lists['Mental'];
 
 		$other     = $r->string();
 		$biography = $version >= 2.397 ? $r->string() : '';
@@ -1990,36 +1910,11 @@ class GEX_Parser {
 		$is_npc        = $r->bool();
 		$last_modified = $r->date();
 
-		$experience = self::parse_experience( $r, $version );
-
-		$trait_lists = [];
-		$add         = function () use ( $r, $version, &$trait_lists ) {
-			$tl = self::parse_trait_list( $r, $version );
-			$trait_lists[ $tl['name'] ] = $tl;
-			return $tl;
-		};
-
-		$physical = $add();
-		$social   = $add();
-		$mental   = $add();
-		$add(); // Negative Physical
-		$add(); // Negative Social
-		$add(); // Negative Mental
-		$add(); // Abilities
-		$add(); // Influences
-		$add(); // Humanity
-		$add(); // Status
-		$add(); // Backgrounds
-		$add(); // Health Levels
-		$add(); // Hekau
-		$add(); // Spells
-		$add(); // Rituals
-		$add(); // Merits
-		$add(); // Flaws
-		$add(); // Equipment
-		if ( $version >= 2.395 ) {
-			$add(); // Hangouts
-		}
+		$experience  = self::parse_experience( $r, $version );
+		$trait_lists = self::read_trait_lists( $r, $version, 'mummy' );
+		$physical    = $trait_lists['Physical'];
+		$social      = $trait_lists['Social'];
+		$mental      = $trait_lists['Mental'];
 
 		$inheritance = $r->string();
 		$biography   = $version >= 2.397 ? $r->string() : '';
@@ -2141,35 +2036,11 @@ class GEX_Parser {
 		$is_npc        = $r->bool();
 		$last_modified = $r->date();
 
-		$experience = self::parse_experience( $r, $version );
-
-		$trait_lists = [];
-		$add         = function () use ( $r, $version, &$trait_lists ) {
-			$tl = self::parse_trait_list( $r, $version );
-			$trait_lists[ $tl['name'] ] = $tl;
-			return $tl;
-		};
-
-		$physical = $add();
-		$social   = $add();
-		$mental   = $add();
-		$add(); // Negative Physical
-		$add(); // Negative Social
-		$add(); // Negative Mental
-		$add(); // Status
-		$add(); // Abilities
-		$add(); // Influences
-		$add(); // Backgrounds
-		$add(); // Health Levels
-		$add(); // Guanxi
-		$add(); // Disciplines
-		$add(); // Rites
-		$add(); // Merits
-		$add(); // Flaws
-		$add(); // Equipment
-		if ( $version >= 2.395 ) {
-			$add(); // Hangouts
-		}
+		$experience  = self::parse_experience( $r, $version );
+		$trait_lists = self::read_trait_lists( $r, $version, 'kueijin' );
+		$physical    = $trait_lists['Physical'];
+		$social      = $trait_lists['Social'];
+		$mental      = $trait_lists['Mental'];
 
 		$biography = $version >= 2.397 ? $r->string() : '';
 		$notes     = $r->string();
@@ -2302,37 +2173,11 @@ class GEX_Parser {
 		$is_npc        = $r->bool();
 		$last_modified = $r->date();
 
-		$experience = self::parse_experience( $r, $version );
-
-		$trait_lists = [];
-		$add         = function () use ( $r, $version, &$trait_lists ) {
-			$tl = self::parse_trait_list( $r, $version );
-			$trait_lists[ $tl['name'] ] = $tl;
-			return $tl;
-		};
-
-		$physical = $add();
-		$social   = $add();
-		$mental   = $add();
-		$add(); // Negative Physical
-		$add(); // Negative Social
-		$add(); // Negative Mental
-		$add(); // Abilities
-		$add(); // Influences
-		$add(); // Backgrounds
-		$add(); // Health Levels
-		$add(); // Features
-		$add(); // Gifts
-		$add(); // Rites
-		$add(); // Honor
-		$add(); // Glory
-		$add(); // Wisdom
-		$add(); // Merits
-		$add(); // Flaws
-		$add(); // Equipment
-		if ( $version >= 2.395 ) {
-			$add(); // Hangouts
-		}
+		$experience  = self::parse_experience( $r, $version );
+		$trait_lists = self::read_trait_lists( $r, $version, 'fera' );
+		$physical    = $trait_lists['Physical'];
+		$social      = $trait_lists['Social'];
+		$mental      = $trait_lists['Mental'];
 
 		$biography = $version >= 2.397 ? $r->string() : '';
 		$notes     = $r->string();
@@ -2429,32 +2274,11 @@ class GEX_Parser {
 		$is_npc        = $r->bool();
 		$last_modified = $r->date();
 
-		$experience = self::parse_experience( $r, $version );
-
-		$trait_lists = [];
-		$add         = function () use ( $r, $version, &$trait_lists ) {
-			$tl = self::parse_trait_list( $r, $version );
-			$trait_lists[ $tl['name'] ] = $tl;
-			return $tl;
-		};
-
-		$add(); // Tempers
-
-		$physical = $add();
-		$social   = $add();
-		$mental   = $add();
-		$add(); // Negative Physical
-		$add(); // Negative Social
-		$add(); // Negative Mental
-		$add(); // Abilities
-		$add(); // Influences
-		$add(); // Backgrounds
-		$add(); // Health Levels
-		$add(); // Powers
-		$add(); // Equipment
-		if ( $version >= 2.395 ) {
-			$add(); // Hangouts
-		}
+		$experience  = self::parse_experience( $r, $version );
+		$trait_lists = self::read_trait_lists( $r, $version, 'various' );
+		$physical    = $trait_lists['Physical'];
+		$social      = $trait_lists['Social'];
+		$mental      = $trait_lists['Mental'];
 
 		$other     = $r->string();
 		$biography = $version >= 2.397 ? $r->string() : '';
@@ -2533,31 +2357,8 @@ class GEX_Parser {
 		$is_npc     = $r->bool();
 		$last_modified = $r->date();
 
-		$experience = self::parse_experience( $r, $version );
-
-		$trait_lists = [];
-		$add         = function () use ( $r, $version, &$trait_lists ) {
-			$tl = self::parse_trait_list( $r, $version );
-			$trait_lists[ $tl['name'] ] = $tl;
-			return $tl;
-		};
-
-		$add(); // Physical
-		$add(); // Social
-		$add(); // Mental
-		$add(); // Negative Physical
-		$add(); // Negative Social
-		$add(); // Negative Mental
-		$add(); // Abilities
-		$add(); // Influences
-		$add(); // Backgrounds
-		$add(); // Health Levels
-		$add(); // Derangements
-		$add(); // Edges
-		$add(); // Merits
-		$add(); // Flaws
-		$add(); // Equipment
-		$add(); // Hangouts (unconditional for this class)
+		$experience  = self::parse_experience( $r, $version );
+		$trait_lists = self::read_trait_lists( $r, $version, 'hunter' );
 
 		$biography = $version >= 2.397 ? $r->string() : '';
 		$notes     = $r->string();
@@ -2640,31 +2441,8 @@ class GEX_Parser {
 		$is_npc     = $r->bool();
 		$last_modified = $r->date();
 
-		$experience = self::parse_experience( $r, $version );
-
-		$trait_lists = [];
-		$add         = function () use ( $r, $version, &$trait_lists ) {
-			$tl = self::parse_trait_list( $r, $version );
-			$trait_lists[ $tl['name'] ] = $tl;
-			return $tl;
-		};
-
-		$add(); // Physical
-		$add(); // Social
-		$add(); // Mental
-		$add(); // Negative Physical
-		$add(); // Negative Social
-		$add(); // Negative Mental
-		$add(); // Abilities
-		$add(); // Influences
-		$add(); // Backgrounds
-		$add(); // Health Levels
-		$add(); // Lores
-		$add(); // Apocalyptic Form (VisageList)
-		$add(); // Merits
-		$add(); // Flaws
-		$add(); // Equipment
-		$add(); // Hangouts (unconditional for this class)
+		$experience  = self::parse_experience( $r, $version );
+		$trait_lists = self::read_trait_lists( $r, $version, 'demon' );
 
 		$biography = $version >= 2.397 ? $r->string() : '';
 		$notes     = $r->string();
