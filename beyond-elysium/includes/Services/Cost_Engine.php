@@ -231,6 +231,32 @@ class Cost_Engine {
 		$sequential = ! empty( $definition->sequential );
 		$modifier   = $in_type ? 0 : (int) ( $definition->out_of_type_cost_modifier ?? 0 );
 
+		$power_name = $trait['power_name'] ?? null;
+
+		// An Elder-and-above pick (Decision 037: no numbered ladder position, matched by
+		// name within the tier instead) is identified by (family, power_name) together,
+		// never by a numbered level - a family can hold several distinct Elder+ picks at
+		// once (0.99.2-workflow.md: "you can have multiple powers at those levels"), so
+		// adding one never touches whatever else the family already holds, priced as a
+		// flat per-pick transaction rather than a sequential ladder step.
+		if ( $power_name !== null ) {
+			$already_held = self::find_held_power( $sheet_data, $block_slug, $name, $power_name ) !== null;
+			$cost         = self::elder_tier_cost( $power, $power_name ) + $modifier;
+
+			if ( 'remove_trait' === $change_type ) {
+				return $already_held ? -$cost : 0;
+			}
+			if ( 'add_trait' === $change_type ) {
+				// Defensive: the UI never re-offers an already-held pick, so this is
+				// reachable only via a malformed or replayed request.
+				return $already_held ? 0 : $cost;
+			}
+			// modify_trait reaches here only for a metadata edit (e.g. tradition) on an
+			// already-identified pick - the pick itself isn't being bought or sold.
+			return 0;
+		}
+
+		// Numbered-ladder pricing: one plain holding per family, identified by name alone.
 		$held      = self::find_held_power( $sheet_data, $block_slug, $name );
 		$old_level = $held['level'] ?? 0;
 		$new_level = $old_level;
@@ -407,18 +433,71 @@ class Cost_Engine {
 
 	/**
 	 * Finds a character's currently held instance of a power within a
-	 * block. Scans the block's stored items for one whose name matches,
-	 * returning its level, or null when the character does not hold the
-	 * power.
+	 * block. A family holds at most one plain numbered entry (no
+	 * `power_name` of its own) - pass `$power_name` as null to find that
+	 * one. It may also hold several distinct Elder-and-above picks at once
+	 * (Decision 037), each identified by its own `power_name` - pass the
+	 * specific one to find that pick and no other, so adding or removing
+	 * one Elder+ pick never matches a sibling pick under the same family.
 	 *
-	 * @return array{level: int}|null
+	 * @return array{level: int, power_name: ?string}|null
 	 */
-	private static function find_held_power( array $sheet_data, string $block_slug, string $name ): ?array {
+	private static function find_held_power( array $sheet_data, string $block_slug, string $name, ?string $power_name = null ): ?array {
 		foreach ( ( $sheet_data[ $block_slug ] ?? [] ) as $item ) {
-			if ( ( $item['name'] ?? null ) === $name ) {
-				return [ 'level' => (int) ( $item['level'] ?? 0 ) ];
+			if ( ( $item['name'] ?? null ) !== $name ) {
+				continue;
+			}
+			$item_power_name = ( $item['power_name'] ?? '' ) !== '' ? $item['power_name'] : null;
+			if ( $power_name !== null ) {
+				if ( $item_power_name === $power_name ) {
+					return [ 'level' => (int) ( $item['level'] ?? 0 ), 'power_name' => $item_power_name ];
+				}
+				continue;
+			}
+			if ( $item_power_name === null ) {
+				return [ 'level' => (int) ( $item['level'] ?? 0 ), 'power_name' => null ];
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Real MET tier ladder cost (met-mechanics.csv, confirmed against the
+	 * real Celerity/Elder/Master rows: Basic 3, Intermediate 6, Advanced 9,
+	 * Elder 12, Master 15 - Ascended 18 and Methuselah 21 continue the same
+	 * +3-per-tier progression but have no priced catalog example in the CSV
+	 * to confirm directly). Used only as a fallback when a level has no
+	 * explicit `cost` of its own.
+	 */
+	const TIER_COSTS = [
+		'innate'       => 0,
+		'basic'        => 3,
+		'intermediate' => 6,
+		'advanced'     => 9,
+		'elder'        => 12,
+		'master'       => 15,
+		'ascended'     => 18,
+		'methuselah'   => 21,
+	];
+
+	/**
+	 * Looks up the base cost of one Elder-and-above power pick by name
+	 * within a tiered_power power's `levels` list. Prefers the level's own
+	 * `cost` (present for the specific powers met-mechanics.csv prices
+	 * directly), falling back to TIER_COSTS by the level's `tier` for the
+	 * many real Elder+ catalog entries that carry a tier label but no
+	 * individually priced cost. Returns 0 when the name matches nothing.
+	 */
+	private static function elder_tier_cost( $power, string $power_name ): int {
+		foreach ( ( $power->levels ?? [] ) as $power_level ) {
+			if ( ( $power_level->power_name ?? '' ) !== $power_name ) {
+				continue;
+			}
+			if ( isset( $power_level->cost ) ) {
+				return self::price_item_cost( (string) $power_level->cost, null );
+			}
+			return self::TIER_COSTS[ strtolower( (string) ( $power_level->tier ?? '' ) ) ] ?? 0;
+		}
+		return 0;
 	}
 }

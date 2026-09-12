@@ -185,6 +185,77 @@ describe( 'computeChanges — tiered_power', () => {
 		const [ change ] = computeChanges( original, current, blocks );
 		expect( change.change_data.trait ).not.toHaveProperty( 'tradition' );
 	} );
+
+	// Elder-and-above picks (Decision 037) are matched by power_name within the tier,
+	// not by numbered level - Cost_Engine::price_tiered_power_change() prices these
+	// via power_name instead of level (0.99.2-workflow.md "Cost_Engine cannot price
+	// an Elder-tier purchase").
+	it( 'produces an add_trait carrying power_name for a new Elder-and-above pick', () => {
+		const current: SheetData = { disciplines: [ { name: 'Celerity', power_name: 'Precision' } ] };
+
+		expect( computeChanges( {}, current, blocks ) ).toEqual( [
+			{
+				change_type: 'add_trait',
+				category: 'disciplines',
+				change_data: { block_slug: 'disciplines', trait: { name: 'Celerity', power_name: 'Precision' } },
+			},
+		] );
+	} );
+
+	// A family can hold several distinct Elder-and-above picks at once
+	// (0.99.2-workflow.md: "you can have multiple powers at those levels"), identified by
+	// (name, power_name) together - swapping Precision for Projectile is therefore two
+	// independent facts changing, not one row's power_name changing in place.
+	it( 'treats swapping one Elder pick for another as a remove plus an add, not a modify', () => {
+		const original: SheetData = { disciplines: [ { name: 'Celerity', power_name: 'Precision' } ] };
+		const current: SheetData = { disciplines: [ { name: 'Celerity', power_name: 'Projectile' } ] };
+
+		const changes = computeChanges( original, current, blocks );
+		expect( changes ).toHaveLength( 2 );
+		expect( changes ).toContainEqual( {
+			change_type: 'remove_trait',
+			category: 'disciplines',
+			change_data: { block_slug: 'disciplines', trait: { name: 'Celerity', power_name: 'Precision' } },
+		} );
+		expect( changes ).toContainEqual( {
+			change_type: 'add_trait',
+			category: 'disciplines',
+			change_data: { block_slug: 'disciplines', trait: { name: 'Celerity', power_name: 'Projectile' } },
+		} );
+	} );
+
+	it( 'holding two Elder picks at once and removing one leaves the other alone', () => {
+		const original: SheetData = { disciplines: [
+			{ name: 'Celerity', power_name: 'Precision' },
+			{ name: 'Celerity', power_name: 'Projectile' },
+		] };
+		const current: SheetData = { disciplines: [ { name: 'Celerity', power_name: 'Projectile' } ] };
+
+		expect( computeChanges( original, current, blocks ) ).toEqual( [
+			{
+				change_type: 'remove_trait',
+				category: 'disciplines',
+				change_data: { block_slug: 'disciplines', trait: { name: 'Celerity', power_name: 'Precision' } },
+			},
+		] );
+	} );
+
+	it( 'no-ops when two Elder picks are both held unchanged, even though they share a name', () => {
+		const sheet: SheetData = { disciplines: [
+			{ name: 'Celerity', power_name: 'Precision' },
+			{ name: 'Celerity', power_name: 'Projectile' },
+		] };
+
+		expect( computeChanges( sheet, sheet, blocks ) ).toEqual( [] );
+	} );
+
+	it( 'omits power_name entirely for an ordinary numbered pick', () => {
+		const original: SheetData = { disciplines: [ { name: 'Celerity', level: 1 } ] };
+		const current: SheetData = { disciplines: [ { name: 'Celerity', level: 2 } ] };
+
+		const [ change ] = computeChanges( original, current, blocks );
+		expect( change.change_data.trait ).not.toHaveProperty( 'power_name' );
+	} );
 } );
 
 describe( 'computeChanges — resource_pool', () => {

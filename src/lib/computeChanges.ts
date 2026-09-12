@@ -107,28 +107,54 @@ function diffTraitList( blockSlug: string, original: EditableTrait[], current: E
 }
 
 /**
+ * Identity key for one held tiered-power row: the family name alone for a plain
+ * numbered holding (at most one per family), or name+power_name for an Elder-and-above
+ * pick (Decision 037) - a family can hold several distinct Elder+ picks at once
+ * (0.99.2-workflow.md: "you can have multiple powers at those levels"), so power_name
+ * must be part of the identity rather than colliding on the shared family name. The
+ * NUL separator can't appear in either field, so no real name can collide with it.
+ */
+function tieredPowerKey( row: EditableHeldPower ): string {
+	return row.power_name ? `${ row.name }\u0000${ row.power_name }` : row.name;
+}
+
+/**
  * Diffs an original and current tiered-power list into add/remove/modify change
- * requests, matching entries by name. A power's tradition is compared alongside its
- * level, and clearing a tradition is emitted as an explicit empty string rather than an
- * omitted key so the change is applied rather than dropped as a no-op.
+ * requests, matching entries by tieredPowerKey() rather than name alone - two rows
+ * sharing a family name but naming different Elder-and-above picks are two independent
+ * entries, never a "swap" of one into the other. A power's tradition is compared
+ * alongside its level, and clearing a tradition is emitted as an explicit empty string
+ * rather than an omitted key so the change is applied rather than dropped as a no-op.
  */
 function diffTieredPower( blockSlug: string, original: EditableHeldPower[], current: EditableHeldPower[] ): ChangeRequest[] {
 	const changes: ChangeRequest[] = [];
 	const effectiveCurrent = current.filter( ( row ) => ! row._removed );
 
-	const origByName = new Map( original.map( ( row ) => [ row.name, row ] ) );
-	const curByName = new Map( effectiveCurrent.map( ( row ) => [ row.name, row ] ) );
-	const allNames = new Set( [ ...origByName.keys(), ...curByName.keys() ] );
+	const origByKey = new Map( original.map( ( row ) => [ tieredPowerKey( row ), row ] ) );
+	const curByKey = new Map( effectiveCurrent.map( ( row ) => [ tieredPowerKey( row ), row ] ) );
+	const allKeys = new Set( [ ...origByKey.keys(), ...curByKey.keys() ] );
 
-	// Tradition is carried through verbatim and omitted when absent; it is compared like any other field.
-	const traitOf = ( row: EditableHeldPower ) =>
-		row.tradition
-			? { name: row.name, level: row.level, tradition: row.tradition }
-			: { name: row.name, level: row.level };
+	// Tradition is carried through verbatim and omitted when absent; power_name is always
+	// included when present - it identifies which specific Elder-and-above pick this row
+	// is, not a value that changes on an already-matched row (two different power_names
+	// are two different keys above, never one row's power_name changing in place).
+	const traitOf = ( row: EditableHeldPower ) => {
+		const trait: { name: string; level?: number; power_name?: string; tradition?: string } = {
+			name: row.name,
+			level: row.level,
+		};
+		if ( row.power_name ) {
+			trait.power_name = row.power_name;
+		}
+		if ( row.tradition ) {
+			trait.tradition = row.tradition;
+		}
+		return trait;
+	};
 
-	for ( const name of allNames ) {
-		const o = origByName.get( name );
-		const c = curByName.get( name );
+	for ( const key of allKeys ) {
+		const o = origByKey.get( key );
+		const c = curByKey.get( key );
 
 		if ( o && c ) {
 			if ( o.level !== c.level || o.tradition !== c.tradition ) {
@@ -154,10 +180,17 @@ function diffTieredPower( blockSlug: string, original: EditableHeldPower[], curr
 				change_data: { block_slug: blockSlug, trait: traitOf( c ) },
 			} );
 		} else if ( o ) {
+			// A removal must name which specific pick is leaving when the family holds
+			// more than one - {name} alone (correct for a plain numbered holding) would
+			// be ambiguous for an Elder-and-above pick with siblings under the same name.
+			const trait: { name: string; power_name?: string } = { name: o.name };
+			if ( o.power_name ) {
+				trait.power_name = o.power_name;
+			}
 			changes.push( {
 				change_type: 'remove_trait',
 				category: blockSlug,
-				change_data: { block_slug: blockSlug, trait: { name } },
+				change_data: { block_slug: blockSlug, trait },
 			} );
 		}
 	}

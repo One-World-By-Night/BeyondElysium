@@ -57,7 +57,7 @@ export interface CharacterSheetProps {
 function buildPrintUrl(
 	characterId: number,
 	gameSlug: string,
-	options: { background: boolean; notes: boolean; xpHistory: boolean }
+	options: { background: boolean; notes: boolean; xpHistory: boolean; fullPowerNames: boolean }
 ): string {
 	const params = new URLSearchParams( {
 		character_id: String( characterId ),
@@ -72,6 +72,9 @@ function buildPrintUrl(
 	}
 	if ( options.xpHistory ) {
 		params.set( 'print_xp_history', '1' );
+	}
+	if ( options.fullPowerNames ) {
+		params.set( 'print_full_power_names', '1' );
 	}
 	return `${ window.location.origin }/character-sheet-print/?${ params.toString() }`;
 }
@@ -103,6 +106,7 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 	const [ state, setState ] = useState<SheetState>( { status: 'loading' } );
 	const [ style, setStyle ] = useState<SheetStyle>( NO_STYLE );
 	const [ showStyleEditor, setShowStyleEditor ] = useState( false );
+	const [ showHistory, setShowHistory ] = useState( false );
 
 	// This same component also renders the dedicated print-canvas page, using these URL params.
 	const urlParams = new URLSearchParams( window.location.search );
@@ -112,6 +116,11 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 	const [ printBackground, setPrintBackground ] = useState( () => urlParams.get( 'print_background' ) === '1' );
 	const [ printNotes, setPrintNotes ] = useState( () => urlParams.get( 'print_notes' ) === '1' );
 	const [ printXpHistory, setPrintXpHistory ] = useState( () => urlParams.get( 'print_xp_history' ) === '1' );
+	// Every tiered_power section switches from "Celerity 3" to listing each named rung up
+	// to the held level (or the one specific power for an Elder-and-above pick) - nothing
+	// else in the app currently ever sets `displayMode`, so this is the only source of
+	// "named" mode today, on-screen or printed.
+	const [ printFullPowerNames, setPrintFullPowerNames ] = useState( () => urlParams.get( 'print_full_power_names' ) === '1' );
 
 	useEffect( () => {
 		let cancelled = false;
@@ -234,6 +243,7 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 					definition={ block.definition }
 					data={ character.sheet_data[ section.block_slug ] }
 					display={ section.display }
+					displayMode={ printFullPowerNames && block.section_type === 'tiered_power' ? 'named' : undefined }
 					sheetData={ character.sheet_data }
 				/>
 			</div>
@@ -259,6 +269,7 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 										background: printBackground,
 										notes: printNotes,
 										xpHistory: printXpHistory,
+										fullPowerNames: printFullPowerNames,
 									} ),
 									'_blank'
 								)
@@ -286,6 +297,14 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 									: __( 'Customize appearance', 'beyond-elysium' ) }
 							</button>
 						) }
+						<button
+							type="button"
+							className="be-character-sheet__history-toggle"
+							aria-expanded={ showHistory }
+							onClick={ () => setShowHistory( ( v ) => ! v ) }
+						>
+							{ showHistory ? __( 'Hide history', 'beyond-elysium' ) : __( 'View history', 'beyond-elysium' ) }
+						</button>
 					</div>
 
 					{ /* Controls, not content - never part of the printed output themselves, only what they turn on is. */ }
@@ -303,6 +322,10 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 							<input type="checkbox" checked={ printXpHistory } onChange={ ( e ) => setPrintXpHistory( e.target.checked ) } />
 							{ __( 'XP History', 'beyond-elysium' ) }
 						</label>
+						<label>
+							<input type="checkbox" checked={ printFullPowerNames } onChange={ ( e ) => setPrintFullPowerNames( e.target.checked ) } />
+							{ __( 'Full power names', 'beyond-elysium' ) }
+						</label>
 					</div>
 				</>
 			) }
@@ -315,6 +338,15 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 						blockSlugs={ blockSlugs }
 						onChange={ setStyle }
 					/>
+				</div>
+			) }
+
+			{ /* On-screen history, independent of "include when printing" below - that toggle
+			    only controls what the exported/printed sheet carries, not whether this view
+			    can see it at all. 0.99.X-Ideas.md "Character audit trail" / "Player-facing XP history". */ }
+			{ ! isPrintCanvas && showHistory && (
+				<div className="be-character-sheet__chrome">
+					<ChangeHistory characterId={ characterId } gameSlug={ gameSlug } />
 				</div>
 			) }
 

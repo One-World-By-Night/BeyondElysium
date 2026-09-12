@@ -183,6 +183,10 @@ class GameImportControllerTest extends WP_UnitTestCase {
 		$character = Character::find_by_name_in_game( 'Ian Kincaid II', $game->slug );
 		$this->assertNotNull( $character );
 		$this->assertSame( 'vampire', $character->stack_slug );
+		// "Imported health levels are silently discarded" (0.99.2-workflow.md) - the file's
+		// own extended_health flag (true for this fixture, per GameFileParserTest) must
+		// survive onto the new chronicle instead of being parsed and dropped.
+		$this->assertTrue( $game->settings->extended_health );
 
 		// A blocked or failed create_new attempt must never leave a phantom chronicle -
 		// re-committing the SAME already-succeeded job must not create a second one.

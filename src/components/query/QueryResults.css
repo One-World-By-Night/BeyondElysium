@@ -31,3 +31,32 @@
 	align-items: center;
 	margin-top: 1rem;
 }
+
+.be-query-results__bulk-award {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	flex-wrap: wrap;
+	margin-top: 0.75rem;
+	padding: 0.5rem;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+}
+
+/* Two-class compound selector, not a bare input - D34/Decision 045: the live
+   hello-elementor theme's own reset ships at the same (0,1,1) specificity and would win on
+   source order alone. */
+.be-query-results .be-query-results__bulk-award input[type="number"] {
+	width: 6rem;
+	box-sizing: border-box;
+}
+
+.be-query-results .be-query-results__bulk-award input[type="text"] {
+	width: 16rem;
+	box-sizing: border-box;
+}
+
+.be-query-results__award-message {
+	margin-top: 0.5rem;
+	font-style: italic;
+}

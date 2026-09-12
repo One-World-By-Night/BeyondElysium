@@ -47,9 +47,11 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 	 * A minimal vampire character record, shaped exactly like
 	 * `GEX_Parser::parse_character_vampire()`'s real return array. `$merit_trait_name` is
 	 * injected as the sole entry of the "Merits" trait list so each test can control
-	 * whether it resolves cleanly.
+	 * whether it resolves cleanly. `$extra_trait_lists` merges in additional named lists
+	 * (keyed by GV list name, same shape as "Merits" below) for tests exercising
+	 * non-sheet_block classifications (preserve_as_note, needs_design, ...).
 	 */
-	private function synthetic_character( string $merit_trait_name ): array {
+	private function synthetic_character( string $merit_trait_name, array $extra_trait_lists = [] ): array {
 		return [
 			'race'         => 'vampire',
 			'name'         => 'Synthetic Test Character',
@@ -81,14 +83,14 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 			'notes'        => '',
 			'status'       => 'Active',
 			'experience'   => [ 'earned' => 12.0, 'unspent' => 5.0, 'history' => [] ],
-			'trait_lists'  => [
+			'trait_lists'  => array_merge( [
 				'Merits' => [
 					'name'   => 'Merits',
 					'traits' => [
 						[ 'name' => $merit_trait_name, 'total' => '3', 'note' => '' ],
 					],
 				],
-			],
+			], $extra_trait_lists ),
 		];
 	}
 
@@ -196,6 +198,54 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$changes = \BeyondElysium\Models\Change::for_character( (int) $character->id );
 		$import_notes = array_filter( $changes, static fn( $c ) => $c->change_type === 'import_note' );
 		$this->assertCount( 1, $import_notes );
+	}
+
+	/**
+	 * "Imported health levels are silently discarded" (0.99.2-workflow.md): a
+	 * `preserve_as_note`-classified list (Health Levels, Bonds - BE has no schema block for
+	 * either) must survive into the import_note's raw_record instead of being stripped
+	 * along with the sheet_block lists that really were fully resolved elsewhere.
+	 */
+	public function test_preserve_as_note_trait_lists_survive_into_the_import_note(): void {
+		wp_set_current_user( $this->admin_id );
+
+		$character = $this->synthetic_character( 'Iron Will', [
+			'Health Levels' => [
+				'name'   => 'Health Levels',
+				'traits' => [
+					[ 'name' => 'Bruised', 'total' => '3', 'note' => '' ],
+					[ 'name' => 'Wounded', 'total' => '2', 'note' => '' ],
+				],
+			],
+			'Bonds' => [
+				'name'   => 'Bonds',
+				'traits' => [
+					[ 'name' => 'Sire', 'total' => '5', 'note' => '' ],
+				],
+			],
+		] );
+		$job_id = $this->inject_job( $this->synthetic_parsed( [ $character ] ) );
+
+		$response = $this->dispatch( $this->commit_request( $job_id ) );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+
+		$found_character = Character::find( (int) $response->get_data()['characters'][0]['id'] );
+		$changes         = \BeyondElysium\Models\Change::for_character( (int) $found_character->id );
+		$import_note     = current( array_filter( $changes, static fn( $c ) => $c->change_type === 'import_note' ) );
+		$this->assertNotFalse( $import_note );
+
+		$preserved = $import_note->change_data['raw_record']['trait_lists'] ?? null;
+		$this->assertNotNull( $preserved, 'preserve_as_note lists must not be stripped from the raw_record.' );
+		$preserved_names = array_column( $preserved, 'name' );
+		$this->assertContains( 'Health Levels', $preserved_names );
+		$this->assertContains( 'Bonds', $preserved_names );
+		// Merits is sheet_block-classified and already lives in sheet_data - it must not
+		// also be duplicated into the preserved note.
+		$this->assertNotContains( 'Merits', $preserved_names );
+
+		$health_levels = current( array_filter( $preserved, static fn( $l ) => $l['name'] === 'Health Levels' ) );
+		$this->assertSame( 'Bruised', $health_levels['traits'][0]['name'] );
+		$this->assertSame( '3', $health_levels['traits'][0]['total'] );
 	}
 
 	/**

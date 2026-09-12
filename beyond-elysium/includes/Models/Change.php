@@ -234,6 +234,36 @@ class Change {
 	}
 
 	/**
+	 * Overwrites a still-pending change's own submitted content in place, re-stamping
+	 * `submitted_at` as though it were a fresh submission. Used when a player resubmits an
+	 * edit to the same trait/field before a Storyteller has reviewed the first one
+	 * (BE_PROCESS/0.99.2-workflow.md, "Resubmitting creates duplicate pending changes") -
+	 * updates the one existing row rather than leaving a second, indistinguishable pending
+	 * row in the queue. Never touches `status`, `submitted_by`, `character_id`, or anything
+	 * review-related - only what a fresh submit() call would have set.
+	 *
+	 * @param int   $id
+	 * @param array $data change_type, category, change_data, xp_cost, notes, reason - same
+	 *                     shape create() accepts.
+	 * @return bool
+	 */
+	public static function update_pending_data( int $id, array $data ): bool {
+		$update = [
+			'change_type' => $data['change_type'],
+			'category'    => $data['category'] ?? null,
+			'change_data' => is_array( $data['change_data'] ?? null )
+				? wp_json_encode( $data['change_data'] )
+				: ( $data['change_data'] ?? '{}' ),
+			'xp_cost'     => isset( $data['xp_cost'] ) ? (float) $data['xp_cost'] : 0,
+			'submitted_at' => current_time( 'mysql' ),
+			'notes'       => $data['notes'] ?? null,
+			'reason'      => $data['reason'] ?? null,
+		];
+
+		return Manager::update( 'character_changes', $update, [ 'id' => $id, 'status' => 'pending' ] ) !== false;
+	}
+
+	/**
 	 * Update a change record's review outcome. Sets status, reviewed_by, and notes,
 	 * and stamps reviewed_at with the current time; used when a storyteller
 	 * approves or rejects a pending change.

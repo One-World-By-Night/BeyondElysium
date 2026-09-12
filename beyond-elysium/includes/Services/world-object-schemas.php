@@ -61,5 +61,8 @@ return [
 		'terms'       => 'text',
 		'status'      => 'string',
 		'repaid_date' => 'date',
+		// How the boon was actually settled, optional (BE_PROCESS/0.99.2-workflow.md) -
+		// "removed" is not a separate concept, a boon is repaid with this as the how.
+		'repaid_note' => 'text',
 	],
 ];

@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**Status:** Live on two production OWBN chronicles (kony-sabbat.net, Boston By Night). In the integration-and-polish phase before a public 1.0 release.
+**Status:** `v0.99.2`, live on two production OWBN chronicles (kony-sabbat.net, Boston By Night). Working through a defined set of remaining items toward a 1.0 release.
 
 ## What It Does
 
@@ -48,10 +48,15 @@ Beyond Elysium runs standalone on plain, game-scoped WordPress capabilities, and
 | Permissions audit, performance pass, error-handling audit | Complete |
 | Chronicle-scoped authorization | Complete |
 | Notifications and game dashboard | Complete |
-| Internationalization, accessibility, documentation | In progress |
-| Release readiness and public beta | Not started |
+| Internationalization, accessibility, documentation | Complete |
+| Release-readiness checklist — packaging, uninstall handling, security review | Complete |
+| Blood magic paths, downtime and rumor systems | Complete |
 
 ## What's Next
+
+Toward 1.0: a defined set of remaining items, each already scoped with its own design —
+letting characters travel between chronicles, signed/printable sheets, a background-use
+ledger and downtime settings, guided setup for a new chronicle, and a few others.
 
 The current phase is integration and polish — the last one before a 1.0 release candidate. Chronicle-scoped authorization, deferred decisions, notifications, and the game dashboard are all done and live. What remains:
 

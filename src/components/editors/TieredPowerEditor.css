@@ -7,6 +7,7 @@
 .be-tiered-power-editor__row {
 	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
 	gap: 0.5rem;
 	padding: 0.25rem 0;
 }
@@ -39,6 +40,17 @@
 .be-tiered-power-editor__tradition-text {
 	font-size: 0.9em;
 	opacity: 0.8;
+}
+
+/* Blood magic: a power with no tradition chosen yet - same compound-selector
+   discipline as the rule above (D34/Decision 045), for the same reason. */
+.be-tiered-power-editor__row .be-tiered-power-editor__tradition--required {
+	border-color: #b32d2e;
+}
+
+.be-tiered-power-editor__row--needs-tradition .be-tiered-power-editor__name::after {
+	content: ' *';
+	color: #b32d2e;
 }
 
 .be-tiered-power-editor__stepper {
@@ -106,4 +118,41 @@
 .be-tiered-power-editor__row--removed .be-tiered-power-editor__remove {
 	color: #666;
 	font-weight: 600;
+}
+
+/* Same bare-class safety as the stepper buttons above (hello-elementor's element-selector reset). */
+.be-tiered-power-editor__view-toggle {
+	flex: 0 0 auto;
+	padding: 0.1rem 0.4rem;
+	border: 1px solid #999;
+	border-radius: 3px;
+	background: transparent;
+	color: #555;
+	font-size: 0.75rem;
+	cursor: pointer;
+}
+
+.be-tiered-power-editor__view-toggle:hover,
+.be-tiered-power-editor__view-toggle:focus-visible {
+	background: #eee;
+}
+
+/* flex-basis 100% forces this onto its own line below the name/toggle - the row's own
+   flex-wrap (above) is what lets it actually drop there instead of overflowing. */
+.be-tiered-power-editor__checklist {
+	display: flex;
+	flex: 1 1 100%;
+	flex-wrap: wrap;
+	gap: 0.15rem 0.75rem;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.be-tiered-power-editor__checklist label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-size: 0.85em;
+	white-space: nowrap;
 }

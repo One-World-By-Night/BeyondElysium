@@ -302,6 +302,57 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 		updatePower( powerIndex, { levels: power.levels.filter( ( _, i ) => i !== levelIndex ) } );
 	}
 
+	// Blood magic (BE_PROCESS/0.99.2-workflow.md): the block-level list a player's
+	// Tradition picker offers - see TieredPowerEditor.tsx's traditionOptionsFor(), which
+	// narrows further to a specific power's own offering traditions when it has one.
+	const traditions = definition.traditions ?? [];
+
+	function updateTradition( index: number, value: string ) {
+		updateFlag( 'traditions', traditions.map( ( t, i ) => ( i === index ? value : t ) ) );
+	}
+
+	function addTradition() {
+		updateFlag( 'traditions', [ ...traditions, '' ] );
+	}
+
+	function removeTradition( index: number ) {
+		updateFlag( 'traditions', traditions.filter( ( _, i ) => i !== index ) );
+	}
+
+	// A power's own traditions map (Record<tradition, alternate-name|null>) is edited as
+	// an ordered array of [tradition, alternate] pairs, then reduced back to the object
+	// shape on every change - simpler to render as a list than an object whose own keys
+	// are being renamed live.
+	function powerTraditionPairs( power: TieredPower ): Array<[ string, string | null ]> {
+		return Object.entries( power.traditions ?? {} );
+	}
+
+	function setPowerTraditionPairs( powerIndex: number, pairs: Array<[ string, string | null ]> ) {
+		const asRecord = Object.fromEntries( pairs ) as Record<string, string | null>;
+		updatePower( powerIndex, { traditions: Object.keys( asRecord ).length ? asRecord : undefined } );
+	}
+
+	function addPowerTradition( powerIndex: number ) {
+		setPowerTraditionPairs( powerIndex, [ ...powerTraditionPairs( powers[ powerIndex ] ), [ '', null ] ] );
+	}
+
+	function updatePowerTraditionName( powerIndex: number, pairIndex: number, name: string ) {
+		const pairs = powerTraditionPairs( powers[ powerIndex ] );
+		pairs[ pairIndex ] = [ name, pairs[ pairIndex ][ 1 ] ];
+		setPowerTraditionPairs( powerIndex, pairs );
+	}
+
+	function updatePowerTraditionAlternate( powerIndex: number, pairIndex: number, alternate: string ) {
+		const pairs = powerTraditionPairs( powers[ powerIndex ] );
+		pairs[ pairIndex ] = [ pairs[ pairIndex ][ 0 ], alternate || null ];
+		setPowerTraditionPairs( powerIndex, pairs );
+	}
+
+	function removePowerTradition( powerIndex: number, pairIndex: number ) {
+		const pairs = powerTraditionPairs( powers[ powerIndex ] );
+		setPowerTraditionPairs( powerIndex, pairs.filter( ( _, i ) => i !== pairIndex ) );
+	}
+
 	return (
 		<div className="be-def-editor__section">
 			<h3>{ __( 'Global settings', 'beyond-elysium' ) }</h3>
@@ -318,7 +369,42 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 						onChange={ ( e ) => updateFlag( 'out_of_type_cost_modifier', e.target.value ? Number( e.target.value ) : undefined ) }
 					/>
 				</label>
+				<label>
+					<input
+						type="checkbox"
+						checked={ !! definition.blood_magic }
+						onChange={ ( e ) => updateFlag( 'blood_magic', e.target.checked ) }
+					/>
+					{ ' ' }{ __( 'Blood magic (taking a power prompts for a Tradition)', 'beyond-elysium' ) }
+				</label>
 			</div>
+
+			{ definition.blood_magic && (
+				<div className="be-def-editor__traditions">
+					<h4>{ sprintf( __( 'Traditions (%d)', 'beyond-elysium' ), traditions.length ) }</h4>
+					<p className="description">
+						{ __( 'Every real tradition this block offers. A specific power narrows further to just the traditions that offer it, edited on that power itself below.', 'beyond-elysium' ) }
+					</p>
+					<ul className="be-def-editor__tradition-list">
+						{ traditions.map( ( tradition, ti ) => (
+							<li key={ ti }>
+								<input
+									type="text"
+									aria-label={ sprintf( __( 'Tradition %d', 'beyond-elysium' ), ti + 1 ) }
+									value={ tradition }
+									onChange={ ( e ) => updateTradition( ti, e.target.value ) }
+								/>
+								<button type="button" onClick={ () => removeTradition( ti ) }>
+									{ __( 'Remove', 'beyond-elysium' ) }
+								</button>
+							</li>
+						) ) }
+					</ul>
+					<button type="button" onClick={ addTradition }>
+						{ __( '+ Add tradition', 'beyond-elysium' ) }
+					</button>
+				</div>
+			) }
 
 			<h3>{ sprintf( __( 'Powers (%d)', 'beyond-elysium' ), powers.length ) }</h3>
 			{ powers.map( ( power, pi ) => (
@@ -344,6 +430,56 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 							{ __( 'Remove power', 'beyond-elysium' ) }
 						</button>
 					</div>
+
+					{ definition.blood_magic && (
+						<div className="be-def-editor__power-blood-magic">
+							<label>
+								{ __( 'Restriction (caste/covenant, not an alternate name — leave blank for none)', 'beyond-elysium' ) }
+								<input
+									type="text"
+									aria-label={ sprintf( __( 'Restriction for %s', 'beyond-elysium' ), power.name ) }
+									value={ power.restriction ?? '' }
+									placeholder={ __( 'e.g. Sabbat, Warrior Only', 'beyond-elysium' ) }
+									onChange={ ( e ) => updatePower( pi, { restriction: e.target.value || undefined } ) }
+								/>
+							</label>
+
+							<p className="description">
+								{ __( 'Which traditions offer this path, and its alternate name under each one (leave blank when it has none).', 'beyond-elysium' ) }
+							</p>
+							<ul className="be-def-editor__power-tradition-list">
+								{ powerTraditionPairs( power ).map( ( [ name, alternate ], ti ) => (
+									<li key={ ti }>
+										<input
+											type="text"
+											aria-label={ sprintf( __( 'Offering tradition %d for %s', 'beyond-elysium' ), ti + 1, power.name ) }
+											value={ name }
+											placeholder={ __( 'Tradition', 'beyond-elysium' ) }
+											list={ `be-def-editor__traditions-${ pi }` }
+											onChange={ ( e ) => updatePowerTraditionName( pi, ti, e.target.value ) }
+										/>
+										<input
+											type="text"
+											aria-label={ sprintf( __( 'Alternate name %d for %s', 'beyond-elysium' ), ti + 1, power.name ) }
+											value={ alternate ?? '' }
+											placeholder={ __( 'Alternate name (optional)', 'beyond-elysium' ) }
+											onChange={ ( e ) => updatePowerTraditionAlternate( pi, ti, e.target.value ) }
+										/>
+										<button type="button" onClick={ () => removePowerTradition( pi, ti ) }>
+											{ __( 'Remove', 'beyond-elysium' ) }
+										</button>
+									</li>
+								) ) }
+							</ul>
+							<datalist id={ `be-def-editor__traditions-${ pi }` }>
+								{ traditions.map( ( t ) => <option key={ t } value={ t } /> ) }
+							</datalist>
+							<button type="button" onClick={ () => addPowerTradition( pi ) }>
+								{ __( '+ Add offering tradition', 'beyond-elysium' ) }
+							</button>
+						</div>
+					) }
+
 					<table className="be-def-editor__table">
 						<thead>
 							<tr>

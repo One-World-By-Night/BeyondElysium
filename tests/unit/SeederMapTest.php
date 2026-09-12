@@ -415,13 +415,36 @@ class SeederMapTest extends TestCase {
 	}
 
 	/**
-	 * mage-rotes has no GVM source at all; it must say so rather than pretend.
+	 * mage-rotes has no GVM source at all - GVM's menu set genuinely has no Rotes menu, so
+	 * the block map correctly says so rather than pretend. This no longer means the built
+	 * block ships empty (see test_mage_rotes_is_no_longer_empty below,
+	 * BE_PROCESS/0.99.2-workflow.md "`mage-rotes` ships as an empty catalog") - the seeder
+	 * special-cases this slug in build_mapped_blocks() to source real content from
+	 * data/Rotes.gex instead, a source GVM's own menu set has no equivalent of.
 	 */
-	public function test_rotes_are_explicitly_deferred(): void {
+	public function test_rotes_have_no_gvm_source(): void {
 		$entry = Seeder::block_map()['mage-rotes'];
 
 		$this->assertSame( 'none', $entry['source'] );
-		$this->assertNotEmpty( $entry['deferred_to'] );
+	}
+
+	/**
+	 * The defect this closes: every Mage character showed a Rotes section with nothing in
+	 * it, despite the data (Rotes.gex, 201 real rotes) and the reader (GEX_Xml_Parser, tests
+	 * already passing against this exact file) both already existing.
+	 */
+	public function test_mage_rotes_is_no_longer_empty(): void {
+		$ref    = new \ReflectionMethod( Seeder::class, 'build_mapped_blocks' );
+		$ref->setAccessible( true );
+		$blocks = $ref->invoke( null, self::$gvm );
+
+		$mage_rotes = current( array_filter( $blocks, static fn( $b ) => $b['slug'] === 'mage-rotes' ) );
+		$this->assertNotFalse( $mage_rotes );
+		$this->assertCount( 201, $mage_rotes['definition']['items'] );
+		$this->assertArrayNotHasKey( 'deferred_to', $mage_rotes['definition'], 'no longer deferred - the flag must not survive into the built block' );
+
+		$sample = current( array_filter( $mage_rotes['definition']['items'], static fn( $i ) => $i['name'] === 'Access This' ) );
+		$this->assertSame( 'Level 2, One Scene or Hour', $sample['note'] );
 	}
 
 	/**

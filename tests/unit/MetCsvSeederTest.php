@@ -111,45 +111,44 @@ class MetCsvSeederTest extends TestCase {
 	/**
 	 * Measured against the real shipped CSV. A change here means the source file changed -
 	 * re-measure, don't just widen the assertion.
+	 *
+	 * vampire-disciplines dropped from 281 to 68 when Blood Magic paths (every Discipline
+	 * row with a real Group value) moved to their own block - see
+	 * BE_PROCESS/0.99.2-workflow.md's "Blood magic" section and BloodMagicSeederTest for the
+	 * block that content moved to. Combo count is untouched: Combination rows were never
+	 * part of that split either way.
 	 */
 	public function test_discipline_and_combo_counts(): void {
-		$this->assertCount( 281, self::$blocks['vampire-disciplines']['definition']['powers'] );
+		$this->assertCount( 68, self::$blocks['vampire-disciplines']['definition']['powers'] );
 		$this->assertCount( 384, self::$blocks['vampire-combo-disciplines']['definition']['items'] );
 	}
 
 	/**
-	 * "Path of Blood" is a Group value offered identically (same 5 item names) by five
-	 * unrelated traditions (Akhu, Bacaban, Hermetic-Camarilla, Necromancy, Wanga) AND is
-	 * separately GVM's own bare-named family (8 items - it carries 3 more than any single
-	 * CSV tradition has). Because all five traditions tie for the best match against GVM's
-	 * family, none of them is arbitrarily absorbed into it (see
-	 * build_met_discipline_powers()'s tie-handling) - GVM's "Path of Blood" stands on its
-	 * own, and every tradition keeps its own separately offerable, clearly labeled entry, the
-	 * same rule already established for vampire-rituals (a Setite and a Tremere player both
-	 * see "their own" Path of Blood, not one merged, mislabeled option).
+	 * "Path of Blood" used to be five separately-labeled tradition-prefixed entries
+	 * (Akhu/Bacaban/Thaumaturgy (Camarilla)/Necromancy/Wanga) plus GVM's own bare "Path of
+	 * Blood" family standing apart because the five tied for the best match against it - the
+	 * exact duplication the Blood Magic redesign exists to remove (see
+	 * BloodMagicSeederTest::test_path_of_blood_collapses_to_one_tradition_agnostic_path for
+	 * where it lives and how it is now modeled). None of that may survive in
+	 * vampire-disciplines: not bare, not under any tradition prefix.
 	 */
-	public function test_path_of_blood_disambiguates_by_tradition(): void {
+	public function test_path_of_blood_no_longer_lives_in_ordinary_disciplines(): void {
 		$names = array_column( self::$blocks['vampire-disciplines']['definition']['powers'], 'name' );
 
-		$this->assertContains( 'Path of Blood', $names, "GVM's own family must survive standalone when the tradition match is ambiguous" );
-		$this->assertContains( 'Akhu: Path of Blood', $names );
-		$this->assertContains( 'Wanga: Path of Blood', $names );
-		$this->assertContains( 'Thaumaturgy (Camarilla): Path of Blood', $names );
-		$this->assertContains( 'Necromancy: Path of Blood', $names );
-		$this->assertContains( 'Bacaban: Path of Blood', $names );
+		$this->assertNotContains( 'Path of Blood', $names );
+		foreach ( [ 'Akhu', 'Bacaban', 'Thaumaturgy (Camarilla)', 'Necromancy', 'Wanga' ] as $tradition ) {
+			$this->assertNotContains( "{$tradition}: Path of Blood", $names, "{$tradition}: Path of Blood must have moved to vampire-blood-magic" );
+		}
 	}
 
 	/**
-	 * A tie among candidates must not let any of them silently merge - regression guard for
-	 * the exact defect test_path_of_blood_disambiguates_by_tradition caught: a naive
-	 * first-wins tie-break absorbed "Akhu: Path of Blood" into GVM's bare family and made it
-	 * vanish as a separate, tradition-labeled option.
+	 * Every Discipline row this class routes to vampire-blood-magic (any row with a real
+	 * Group value) must actually be gone from here - the two blocks partition the CSV's
+	 * Discipline rows, they do not both draw from the same pool.
 	 */
-	public function test_no_tradition_silently_vanishes_into_an_ambiguous_match(): void {
-		$names = array_column( self::$blocks['vampire-disciplines']['definition']['powers'], 'name' );
-
-		foreach ( [ 'Akhu', 'Bacaban', 'Necromancy', 'Wanga' ] as $tradition ) {
-			$this->assertContains( "{$tradition}: Path of Blood", $names );
+	public function test_no_tradition_prefixed_name_survives_in_ordinary_disciplines(): void {
+		foreach ( array_column( self::$blocks['vampire-disciplines']['definition']['powers'], 'name' ) as $name ) {
+			$this->assertStringNotContainsString( ':', $name, "'{$name}' looks tradition-prefixed and belongs in vampire-blood-magic instead" );
 		}
 	}
 
@@ -173,16 +172,20 @@ class MetCsvSeederTest extends TestCase {
 		foreach ( self::$blocks['vampire-combo-disciplines']['definition']['items'] as $item ) {
 			$this->assertArrayNotHasKey( 'description', $item );
 		}
-		foreach ( self::$blocks['vampire-disciplines']['definition']['powers'] as $power ) {
-			foreach ( $power['levels'] as $level ) {
-				$this->assertArrayNotHasKey( 'description', $level );
+		foreach ( [ 'vampire-disciplines', 'vampire-blood-magic' ] as $slug ) {
+			foreach ( self::$blocks[ $slug ]['definition']['powers'] as $power ) {
+				foreach ( $power['levels'] as $level ) {
+					$this->assertArrayNotHasKey( 'description', $level );
+				}
 			}
 		}
 	}
 
 	public function test_no_duplicate_power_or_combo_names(): void {
-		$power_names = array_column( self::$blocks['vampire-disciplines']['definition']['powers'], 'name' );
-		$this->assertSame( count( $power_names ), count( array_unique( $power_names ) ), 'duplicate power family name' );
+		foreach ( [ 'vampire-disciplines', 'vampire-blood-magic' ] as $slug ) {
+			$power_names = array_column( self::$blocks[ $slug ]['definition']['powers'], 'name' );
+			$this->assertSame( count( $power_names ), count( array_unique( $power_names ) ), "duplicate power family name in {$slug}" );
+		}
 
 		$combo_names = array_column( self::$blocks['vampire-combo-disciplines']['definition']['items'], 'name' );
 		$this->assertSame( count( $combo_names ), count( array_unique( $combo_names ) ), 'duplicate combo discipline name' );
@@ -193,9 +196,11 @@ class MetCsvSeederTest extends TestCase {
 	 * seeded as a real, costless, level-less catalog entry.
 	 */
 	public function test_ref_placeholders_are_excluded(): void {
-		foreach ( self::$blocks['vampire-disciplines']['definition']['powers'] as $power ) {
-			foreach ( $power['levels'] as $level ) {
-				$this->assertNotSame( 'Ref', $level['tier'] );
+		foreach ( [ 'vampire-disciplines', 'vampire-blood-magic' ] as $slug ) {
+			foreach ( self::$blocks[ $slug ]['definition']['powers'] as $power ) {
+				foreach ( $power['levels'] as $level ) {
+					$this->assertNotSame( 'Ref', $level['tier'] );
+				}
 			}
 		}
 	}
@@ -204,6 +209,8 @@ class MetCsvSeederTest extends TestCase {
 	 * vampire-disciplines keeps its atomic flag (Query_Engine::block_is_atomic()) across the
 	 * CSV overlay - D14: atomic is a hand-curated per-creature-class constant, not menu/CSV
 	 * data, and must not silently disappear just because the content source changed.
+	 * vampire-blood-magic is atomic for the same reason (it is a split of the same
+	 * originally-atomic Disciplines menu) - see BloodMagicSeederTest for its own coverage.
 	 */
 	public function test_vampire_disciplines_stays_atomic(): void {
 		$this->assertTrue( self::$blocks['vampire-disciplines']['definition']['atomic'] ?? false );

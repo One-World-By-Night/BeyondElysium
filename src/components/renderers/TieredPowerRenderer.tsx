@@ -26,8 +26,12 @@ export interface HeldPower {
 	tradition?: string;
 }
 
-/** Prefix a rendered label with the entry's tradition, when it carries one. */
-function withTradition( held: HeldPower, label: string ): string {
+/**
+ * Prefix a rendered label with the entry's tradition, when it carries one - Blood Magic's
+ * own display rule (BE_PROCESS/0.99.2-workflow.md: "Tradition: PathName"). A plain power
+ * with no tradition renders exactly as it always has.
+ */
+export function withTradition( held: HeldPower, label: string ): string {
 	return held.tradition ? `${ held.tradition }: ${ label }` : label;
 }
 
@@ -91,11 +95,30 @@ export function namedLabel( definition: TieredPowerDefinition, held: HeldPower, 
 }
 
 /**
+ * Builds the label list "named" mode shows for one held power: the single label for an
+ * Elder-and-above pick (Decision 037) - it's already the one specific power chosen, there
+ * is no stack beneath it to expand - or one label per rung from 1 up to the held level for
+ * a plain numbered holding. Decision 037 governs pricing cumulativeness, not display: a
+ * player who wants every named rung listed sees the whole stack either way, sequential
+ * block or not.
+ */
+export function namedModeRows( definition: TieredPowerDefinition, held: HeldPower ): string[] {
+	if ( held.power_name ) {
+		return [ namedLabel( definition, held, held.level ) ];
+	}
+	const rows: string[] = [];
+	for ( let level = 1; level <= ( held.level ?? 0 ); level++ ) {
+		rows.push( namedLabel( definition, held, level ) );
+	}
+	return rows;
+}
+
+/**
  * Renders the powers a character holds for a tiered_power block. Numeric
  * mode always shows a single total per power, e.g. "Celerity 3". Named
- * mode lists every level's name for a `sequential` block (where holding
- * level 3 implies levels 1 and 2 are also held), or the one held power's
- * name for a non-sequential block. Renders "None" when nothing is held.
+ * mode lists every named rung up to the held level for a plain numbered
+ * holding, or the one specific power's name for an Elder-and-above pick.
+ * Renders "None" when nothing is held.
  */
 export function TieredPowerRenderer( { blockSlug, data, definition, displayMode }: TieredPowerRendererProps ) {
 	const mode = displayMode ?? 'numeric';
@@ -112,30 +135,12 @@ export function TieredPowerRenderer( { blockSlug, data, definition, displayMode 
 		<div className="be-tiered-power" data-block-slug={ blockSlug }>
 			<ul className="be-tiered-power__items">
 				{ data.map( ( held, index ) => {
-					if ( mode === 'numeric' ) {
-						return (
-							<li key={ `${ held.name }-${ index }` }>
-								{ withTradition( held, numericLabel( definition, held ) ) }
-							</li>
-						);
-					}
-
-					// A sequential block has no Elder-and-above concept, so `held.level` is always numeric here.
-					if ( definition.sequential ) {
-						const rows: string[] = [];
-						for ( let level = 1; level <= ( held.level ?? 0 ); level++ ) {
-							rows.push( namedLabel( definition, held, level ) );
-						}
-						return (
-							<li key={ `${ held.name }-${ index }` }>
-								{ withTradition( held, rows.join( ', ' ) ) }
-							</li>
-						);
-					}
-
+					const label = mode === 'numeric'
+						? numericLabel( definition, held )
+						: namedModeRows( definition, held ).join( ', ' );
 					return (
 						<li key={ `${ held.name }-${ index }` }>
-							{ withTradition( held, namedLabel( definition, held, held.level ) ) }
+							{ withTradition( held, label ) }
 						</li>
 					);
 				} ) }

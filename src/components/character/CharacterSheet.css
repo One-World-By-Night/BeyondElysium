@@ -39,7 +39,8 @@
 
 .be-character-sheet__print,
 .be-character-sheet__edit-link,
-.be-character-sheet__style-toggle {
+.be-character-sheet__style-toggle,
+.be-character-sheet__history-toggle {
 	display: inline-block;
 	padding: 0.4rem 0.9rem;
 	border: 1px solid var( --be-sheet-accent );
@@ -53,12 +54,14 @@
 
 .be-character-sheet__print:hover,
 .be-character-sheet__edit-link:hover,
-.be-character-sheet__style-toggle:hover {
+.be-character-sheet__style-toggle:hover,
+.be-character-sheet__history-toggle:hover {
 	background: var( --be-sheet-accent );
 	color: #fff;
 }
 
-.be-character-sheet__style-toggle[aria-expanded="true"] {
+.be-character-sheet__style-toggle[aria-expanded="true"],
+.be-character-sheet__history-toggle[aria-expanded="true"] {
 	background: var( --be-sheet-accent );
 	color: #fff;
 }

@@ -159,6 +159,45 @@ class BoonTest extends WP_UnitTestCase {
 		$this->assertCount( 1, $ledger, 'a repaid boon stays in the ledger, it is not deleted' );
 	}
 
+	/**
+	 * BE_PROCESS/0.99.2-workflow.md: "Removed == repaid with a text as how" - there is no
+	 * separate delete/void concept. The note is optional (a boon paid normally may have
+	 * nothing to say); "entered in error" is not a special case, it is repaid with that
+	 * text as the how.
+	 */
+	public function test_repaying_records_how_it_was_settled(): void {
+		$admin = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		wp_set_current_user( $admin );
+
+		$create = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/boons" );
+		$create->set_param( 'owed_by_character_id', $this->debtor_id );
+		$create->set_param( 'owed_to_character_id', $this->creditor_id );
+		$create->set_param( 'boon_level', 'minor' );
+		$boon = $this->dispatch( $create )->get_data();
+
+		$repay_req = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/boons/{$boon['id']}/repay" );
+		$repay_req->set_param( 'repaid_note', 'Entered in error' );
+		$repaid = $this->dispatch( $repay_req )->get_data();
+
+		$this->assertSame( 'Entered in error', $repaid->properties['repaid_note'] );
+	}
+
+	public function test_repaying_with_no_note_leaves_it_unset(): void {
+		$admin = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		wp_set_current_user( $admin );
+
+		$create = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/boons" );
+		$create->set_param( 'owed_by_character_id', $this->debtor_id );
+		$create->set_param( 'owed_to_character_id', $this->creditor_id );
+		$create->set_param( 'boon_level', 'minor' );
+		$boon = $this->dispatch( $create )->get_data();
+
+		$repay_req = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/boons/{$boon['id']}/repay" );
+		$repaid    = $this->dispatch( $repay_req )->get_data();
+
+		$this->assertArrayNotHasKey( 'repaid_note', $repaid->properties );
+	}
+
 	public function test_player_can_view_but_not_create_boons(): void {
 		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		// Step 1.5: the GET below now also needs chronicle membership, not just
@@ -175,5 +214,48 @@ class BoonTest extends WP_UnitTestCase {
 
 		$ledger_req = new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/boons" );
 		$this->assertSame( 200, $this->dispatch( $ledger_req )->get_status() );
+	}
+
+	/**
+	 * BE_PROCESS/0.99.2-workflow.md, "A fifth chronicle role, boons": the whole point of a
+	 * narrower be_manage_boons capability is that this role can run the ledger without the
+	 * Storyteller powers be_manage_world_objects also carries - proven both directions here,
+	 * not just asserted.
+	 */
+	public function test_a_boons_role_holder_can_create_and_repay_a_boon(): void {
+		$holder = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		\BeyondElysium\Models\Game_Member::set_role( $this->game_id, $holder, 'boons' );
+		wp_set_current_user( $holder );
+
+		$create = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/boons" );
+		$create->set_param( 'owed_by_character_id', $this->debtor_id );
+		$create->set_param( 'owed_to_character_id', $this->creditor_id );
+		$create->set_param( 'boon_level', 'minor' );
+		$response = $this->dispatch( $create );
+		$this->assertSame( 201, $response->get_status(), wp_json_encode( $response->get_data() ) );
+
+		$boon_id = $response->get_data()['id'];
+		$repay   = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/boons/{$boon_id}/repay" );
+		$repay->set_param( 'repaid_note', 'Cash, in person' );
+		$repay_response = $this->dispatch( $repay );
+		$this->assertSame( 200, $repay_response->get_status() );
+		$this->assertSame( 'Cash, in person', $repay_response->get_data()->properties['repaid_note'] );
+	}
+
+	/**
+	 * The negative half of the same guarantee: a boons-role holder must not be able to
+	 * touch the rest of the world-object catalog (items, locations, rotes) - that catalog
+	 * is exactly what be_manage_world_objects governs, and this role deliberately does not
+	 * hold it.
+	 */
+	public function test_a_boons_role_holder_cannot_manage_other_world_objects(): void {
+		$holder = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		\BeyondElysium\Models\Game_Member::set_role( $this->game_id, $holder, 'boons' );
+		wp_set_current_user( $holder );
+
+		$create = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/world-objects" );
+		$create->set_param( 'object_type', 'item' );
+		$create->set_param( 'name', 'A Sword' );
+		$this->assertSame( 403, $this->dispatch( $create )->get_status() );
 	}
 }

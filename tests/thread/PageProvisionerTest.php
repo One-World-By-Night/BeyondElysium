@@ -88,6 +88,27 @@ class PageProvisionerTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'thread-test-dashboard-provisioner-game', $dashboard->post_content );
 	}
 
+	/**
+	 * BE_PROCESS/0.99.2-workflow.md, "Shipped code that cannot be reached": both widgets
+	 * existed and worked with no page to mount on, the same class of gap this class already
+	 * closed for my-plots (Decision 046) and game-dashboard (Step 7c).
+	 */
+	public function test_provisions_the_approval_queue_and_boon_ledger_pages(): void {
+		Game::create( [ 'name' => 'Approval Queue Provisioner Test Game', 'slug' => 'thread-test-approval-queue-provisioner-game' ] );
+
+		Page_Provisioner::maybe_provision();
+
+		$approval_queue = get_page_by_path( 'approval-queue', OBJECT, 'page' );
+		$boon_ledger    = get_page_by_path( 'boon-ledger', OBJECT, 'page' );
+
+		$this->assertNotNull( $approval_queue );
+		$this->assertNotNull( $boon_ledger );
+		$this->assertStringContainsString( 'data-be-widget="approval-queue"', $approval_queue->post_content );
+		$this->assertStringContainsString( 'data-be-widget="boon-ledger"', $boon_ledger->post_content );
+		$this->assertStringContainsString( 'thread-test-approval-queue-provisioner-game', $approval_queue->post_content );
+		$this->assertStringContainsString( 'thread-test-approval-queue-provisioner-game', $boon_ledger->post_content );
+	}
+
 	public function test_the_characters_page_links_to_the_real_sheet_page(): void {
 		Game::create( [ 'name' => 'Link Test Game', 'slug' => 'thread-test-link-game' ] );
 		Page_Provisioner::maybe_provision();

@@ -279,6 +279,177 @@ class CostEngineTest extends TestCase {
 	}
 
 	// -----------------------------------------------------------------------
+	// price_tiered_power_change - Elder-and-above picks (Decision 037,
+	// BE_PROCESS/0.99.2-workflow.md "Cost_Engine cannot price an Elder-tier
+	// purchase"). Matched by power_name within the tier, not by numbered level -
+	// real met-mechanics.csv data confirms multiple distinct named powers can
+	// share one tier (e.g. Celerity's own Basic tier: Alacrity and Swiftness
+	// both cost 3), the same is true above the numbered ladder.
+	// -----------------------------------------------------------------------
+
+	private function elder_power_block( array $levels ): object {
+		return self::definition( [
+			'sequential' => true,
+			'out_of_type_cost_modifier' => 2,
+			'powers' => [
+				[ 'name' => 'Celerity', 'levels' => $levels ],
+			],
+		] );
+	}
+
+	public function test_elder_pick_with_an_explicit_cost_prices_that_cost(): void {
+		$definition = $this->elder_power_block( [
+			[ 'power_name' => 'Precision', 'tier' => 'elder', 'cost' => '12' ],
+		] );
+		$change_data = [ 'block_slug' => 'disciplines', 'trait' => [ 'name' => 'Celerity', 'power_name' => 'Precision' ] ];
+
+		$this->assertSame(
+			12,
+			Cost_Engine::price_tiered_power_change( [], $definition, 'add_trait', $change_data, true )
+		);
+	}
+
+	/**
+	 * Real met-mechanics.csv rows: lNum 6 ("Elder") prices at 12 XP with no
+	 * per-power cost of its own on many entries (most Elder+ catalog rows are
+	 * NPC-only or otherwise uncosted in the source) - confirmed 2026-09-12.
+	 */
+	public function test_elder_pick_with_no_explicit_cost_falls_back_to_the_tier_ladder(): void {
+		$definition = $this->elder_power_block( [
+			[ 'power_name' => 'Projectile', 'tier' => 'elder' ],
+		] );
+		$change_data = [ 'block_slug' => 'disciplines', 'trait' => [ 'name' => 'Celerity', 'power_name' => 'Projectile' ] ];
+
+		$this->assertSame(
+			12,
+			Cost_Engine::price_tiered_power_change( [], $definition, 'add_trait', $change_data, true )
+		);
+	}
+
+	/** @dataProvider tierLadderProvider */
+	public function test_tier_ladder_fallback_prices_each_real_tier( string $tier, int $expected_cost ): void {
+		$definition = $this->elder_power_block( [
+			[ 'power_name' => 'Untitled Power', 'tier' => $tier ],
+		] );
+		$change_data = [ 'block_slug' => 'disciplines', 'trait' => [ 'name' => 'Celerity', 'power_name' => 'Untitled Power' ] ];
+
+		$this->assertSame(
+			$expected_cost,
+			Cost_Engine::price_tiered_power_change( [], $definition, 'add_trait', $change_data, true )
+		);
+	}
+
+	/**
+	 * innate/basic/intermediate/advanced/elder/master are each confirmed directly
+	 * against a real priced met-mechanics.csv row. ascended/methuselah continue the
+	 * same +3-per-tier progression but have no priced catalog example to confirm
+	 * independently - both real MET convention and the project owner's own
+	 * clarification (2026-09-12) place them there.
+	 */
+	public function tierLadderProvider(): array {
+		return [
+			'innate'       => [ 'innate', 0 ],
+			'basic'        => [ 'basic', 3 ],
+			'intermediate' => [ 'intermediate', 6 ],
+			'advanced'     => [ 'advanced', 9 ],
+			'elder'        => [ 'elder', 12 ],
+			'master'       => [ 'master', 15 ],
+			'ascended'     => [ 'ascended', 18 ],
+			'methuselah'   => [ 'methuselah', 21 ],
+		];
+	}
+
+	public function test_removing_an_elder_pick_refunds_its_tier_cost(): void {
+		$definition = $this->elder_power_block( [
+			[ 'power_name' => 'Precision', 'tier' => 'elder', 'cost' => '12' ],
+		] );
+		$sheet       = [ 'disciplines' => [ [ 'name' => 'Celerity', 'power_name' => 'Precision' ] ] ];
+		// A removal must name which specific pick is leaving - a family can hold several
+		// at once, so `{name}` alone (correct for the numbered-ladder path) is ambiguous here.
+		$change_data = [ 'block_slug' => 'disciplines', 'trait' => [ 'name' => 'Celerity', 'power_name' => 'Precision' ] ];
+
+		$this->assertSame(
+			-12,
+			Cost_Engine::price_tiered_power_change( $sheet, $definition, 'remove_trait', $change_data, true )
+		);
+	}
+
+	/**
+	 * A family can hold several distinct Elder-and-above picks at once
+	 * (0.99.2-workflow.md: "you can have multiple powers at those levels") - removing
+	 * one refunds only that one, leaving a sibling pick under the same family untouched.
+	 */
+	public function test_removing_one_elder_pick_does_not_affect_a_sibling_pick_in_the_same_family(): void {
+		$definition = $this->elder_power_block( [
+			[ 'power_name' => 'Precision', 'tier' => 'elder', 'cost' => '12' ],
+			[ 'power_name' => 'Jaws of the Dragon', 'tier' => 'master', 'cost' => '15' ],
+		] );
+		$sheet = [ 'disciplines' => [
+			[ 'name' => 'Celerity', 'power_name' => 'Precision' ],
+			[ 'name' => 'Celerity', 'power_name' => 'Jaws of the Dragon' ],
+		] ];
+
+		$remove_change = [ 'block_slug' => 'disciplines', 'trait' => [ 'name' => 'Celerity', 'power_name' => 'Precision' ] ];
+		$this->assertSame(
+			-12,
+			Cost_Engine::price_tiered_power_change( $sheet, $definition, 'remove_trait', $remove_change, true )
+		);
+	}
+
+	public function test_buying_a_second_elder_pick_in_the_same_family_prices_its_own_full_cost(): void {
+		$definition = $this->elder_power_block( [
+			[ 'power_name' => 'Precision', 'tier' => 'elder', 'cost' => '12' ],
+			[ 'power_name' => 'Jaws of the Dragon', 'tier' => 'master', 'cost' => '15' ],
+		] );
+		$sheet       = [ 'disciplines' => [ [ 'name' => 'Celerity', 'power_name' => 'Precision' ] ] ];
+		$change_data = [ 'block_slug' => 'disciplines', 'trait' => [ 'name' => 'Celerity', 'power_name' => 'Jaws of the Dragon' ] ];
+
+		// Not 3 (a "swap" delta) - Precision is untouched and still held, so this is a
+		// genuinely new, independent purchase at its own full 15 XP.
+		$this->assertSame(
+			15,
+			Cost_Engine::price_tiered_power_change( $sheet, $definition, 'add_trait', $change_data, true )
+		);
+	}
+
+	public function test_editing_metadata_on_an_already_held_elder_pick_prices_as_zero(): void {
+		$definition = $this->elder_power_block( [
+			[ 'power_name' => 'Precision', 'tier' => 'elder', 'cost' => '12' ],
+		] );
+		$sheet       = [ 'disciplines' => [ [ 'name' => 'Celerity', 'power_name' => 'Precision' ] ] ];
+		$change_data = [ 'block_slug' => 'disciplines', 'trait' => [ 'name' => 'Celerity', 'power_name' => 'Precision', 'tradition' => 'Necromancy' ] ];
+
+		// The pick itself isn't being bought or sold - only a tradition tag is changing.
+		$this->assertSame(
+			0,
+			Cost_Engine::price_tiered_power_change( $sheet, $definition, 'modify_trait', $change_data, true )
+		);
+	}
+
+	public function test_an_elder_pick_out_of_clan_adds_the_modifier_once_not_per_step(): void {
+		$definition = $this->elder_power_block( [
+			[ 'power_name' => 'Precision', 'tier' => 'elder', 'cost' => '12' ],
+		] );
+		$change_data = [ 'block_slug' => 'disciplines', 'trait' => [ 'name' => 'Celerity', 'power_name' => 'Precision' ] ];
+
+		// A flat per-pick transaction, unlike a numbered ladder's summed per-step modifier.
+		$this->assertSame(
+			14,
+			Cost_Engine::price_tiered_power_change( [], $definition, 'add_trait', $change_data, false )
+		);
+	}
+
+	public function test_a_numbered_pick_is_unaffected_by_the_elder_pricing_path(): void {
+		$definition = $this->sequential_power_block();
+		$change_data = [ 'block_slug' => 'disciplines', 'trait' => [ 'name' => 'Celerity', 'level' => 1 ] ];
+
+		$this->assertSame(
+			3,
+			Cost_Engine::price_tiered_power_change( [], $definition, 'add_trait', $change_data, true )
+		);
+	}
+
+	// -----------------------------------------------------------------------
 	// is_in_type_pure
 	// -----------------------------------------------------------------------
 

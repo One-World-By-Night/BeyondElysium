@@ -55,6 +55,22 @@ class WorldObjectSchemaTest extends TestCase {
 		$this->assertNull( $error );
 	}
 
+	/**
+	 * BE_PROCESS/0.99.2-workflow.md: real bug found building it -
+	 * Boons_Controller::repay() passing `repaid_note` alongside `status`/`repaid_date`
+	 * silently no-op'd the ENTIRE update (validate_properties() rejects the whole set on any
+	 * one unrecognized key, and World_Object::update() returns false rather than partially
+	 * applying), not just the note. Regression guard now that the boon schema recognizes it.
+	 */
+	public function test_boon_accepts_a_repaid_note(): void {
+		$error = World_Object::validate_properties( 'boon', [
+			'status'      => 'repaid',
+			'repaid_date' => '2026-09-11',
+			'repaid_note' => 'Entered in error',
+		] );
+		$this->assertNull( $error );
+	}
+
 	public function test_another_types_properties_are_rejected(): void {
 		// 'item_type' is not a location property.
 		$error = World_Object::validate_properties( 'location', [ 'item_type' => 'Weapon' ] );

@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Core\Notifications;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
@@ -468,7 +469,13 @@ class Plots_Controller extends Base_Controller {
 	/**
 	 * Generates (or, when commit is set, persists) the standard rumor
 	 * set for a game date, with each rumor's recipient count resolved
-	 * via the query engine. Preview mode never writes to the database.
+	 * via the query engine. Preview mode never writes to the database
+	 * and never sends mail - only a committed generation notifies each
+	 * matched player once by email that a new rumor reaches one of their
+	 * characters (APREngineClass::PrepareRecipients computed recipients
+	 * and stopped one step short of delivering; the "Rumor delivery"
+	 * idea in 0.99.X-Ideas.md). A player with several matching characters,
+	 * or several new rumors in one pass, still gets one summary email.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -487,11 +494,25 @@ class Plots_Controller extends Base_Controller {
 		$commit = (bool) $request->get_param( 'commit' );
 		$rumors = Rumor_Generator::generate( (int) $game->id, $game_date, $commit );
 
-		// Resolves each rumor's real recipient count via the same engine /my/plots uses.
 		foreach ( $rumors as &$rumor ) {
-			$rumor['recipient_count'] = count( Query_Engine::resolve_target_query( $request['game_slug'], $rumor['target_query'] ) );
+			$character_ids            = Query_Engine::resolve_target_query( $request['game_slug'], $rumor['target_query'] );
+			$rumor['recipient_count'] = count( $character_ids );
+
+			if ( $commit ) {
+				foreach ( $character_ids as $character_id ) {
+					$character  = Character::find( $character_id );
+					$wp_user_id = (int) ( $character->wp_user_id ?? 0 );
+					if ( $wp_user_id ) {
+						Notifications::enqueue_rumor( $wp_user_id, $game, $rumor['title'] );
+					}
+				}
+			}
 		}
 		unset( $rumor );
+
+		if ( $commit ) {
+			Notifications::flush_rumors();
+		}
 
 		return $this->success( [
 			'rumors'    => $rumors,

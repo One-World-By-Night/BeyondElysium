@@ -1,4 +1,4 @@
-import { elderLabel, numericLabel, namedLabel } from './TieredPowerRenderer';
+import { elderLabel, numericLabel, namedLabel, namedModeRows, withTradition } from './TieredPowerRenderer';
 import type { TieredPowerDefinition } from '../../types';
 
 const DEFINITION: TieredPowerDefinition = {
@@ -58,5 +58,58 @@ describe( 'elderLabel/numericLabel/namedLabel (Decision 074)', () => {
 
 	it( 'namedLabel: an ordinary numbered rung looks up the real power_name for that level', () => {
 		expect( namedLabel( DEFINITION, { name: 'Celerity', level: 1 }, 1 ) ).toBe( 'Alacrity' );
+	} );
+} );
+
+describe( 'withTradition (0.99.2 Blood magic, BM-5)', () => {
+	it( 'prefixes "Tradition: " onto a rendered label when the held pick carries one', () => {
+		const held = { name: 'Path of Blood', level: 3, tradition: 'Necromancy' };
+		expect( withTradition( held, numericLabel( DEFINITION, held ) ) ).toBe( 'Necromancy: Path of Blood 3' );
+	} );
+
+	it( 'renders unchanged when the held pick carries no tradition - every ordinary discipline', () => {
+		const held = { name: 'Celerity', level: 3 };
+		expect( withTradition( held, numericLabel( DEFINITION, held ) ) ).toBe( 'Celerity 3' );
+	} );
+
+	it( 'named mode shows the specific level name, still tradition-prefixed - a player sees the flavor name, not just the bare path', () => {
+		const held = { name: 'Celerity', level: 1, tradition: 'Sadhana' };
+		expect( withTradition( held, namedLabel( DEFINITION, held, 1 ) ) ).toBe( 'Sadhana: Alacrity' );
+	} );
+} );
+
+// "I want all power levels listed in printout, full names for all levels" - named mode's
+// whole point is listing every named rung a player holds, not just the current one.
+// Decision 037 governs pricing cumulativeness (whether buying level 3 is priced as summed
+// steps or a flat lookup), not what "named" display mode shows - a player who wants the
+// full stack sees it regardless of whether the block happens to be sequential.
+describe( 'namedModeRows (0.99.2, "Query beyond characters" sibling ask: full stack listed)', () => {
+	it( 'lists every named rung from 1 up to the held level for a plain numbered holding', () => {
+		expect( namedModeRows( DEFINITION, { name: 'Celerity', level: 3 } ) ).toEqual( [
+			'Alacrity',
+			'Rapid Reflexes',
+			'Fleetness',
+		] );
+	} );
+
+	it( 'lists nothing for a held level of 0', () => {
+		expect( namedModeRows( DEFINITION, { name: 'Celerity', level: 0 } ) ).toEqual( [] );
+	} );
+
+	it( 'lists only the one specific power for an Elder-and-above pick - there is no stack beneath it', () => {
+		expect( namedModeRows( DEFINITION, { name: 'Celerity', power_name: 'Blink' } ) ).toEqual( [ 'Celerity: Blink (elder)' ] );
+	} );
+
+	it( 'a non-sequential block still expands the full stack, not just the current rung', () => {
+		// DEFINITION carries no `sequential` flag at all (non-sequential, matching
+		// vampire-disciplines' own real shape, Decision 037) - the old behavior showed
+		// only "Lightning Reflexes" here; the fix lists the whole held stack instead.
+		expect( namedModeRows( DEFINITION, { name: 'Celerity', level: 5 } ) ).toEqual( [
+			'Alacrity',
+			'Rapid Reflexes',
+			'Fleetness',
+			'Blurred Motion',
+			'Lightning Reflexes',
+		] );
 	} );
 } );

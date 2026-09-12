@@ -161,9 +161,16 @@ class Trait_Mapper {
 			[ $tradition, $family_name ] = $tradition_split;
 			$result = self::resolve_numbered_power( $family_name, $raw_total, $powers, $block->slug );
 			if ( in_array( $result['outcome'], [ 'exact', 'normalized' ], true ) ) {
-				$result['tradition'] = $tradition;
+				$result['tradition'] = self::normalize_blood_magic_tradition( $tradition, $block );
 			}
 			return $result;
+		}
+
+		if ( $block->definition->blood_magic ?? false ) {
+			$alt = self::resolve_blood_magic_alternate_prefix( $raw_name, $raw_total, $powers, $block );
+			if ( $alt !== null ) {
+				return $alt;
+			}
 		}
 
 		$named = self::parse_named_power( $raw_name, $powers );
@@ -240,6 +247,89 @@ class Trait_Mapper {
 	}
 
 	/**
+	 * Splits `"{Tradition}: {AlternateName}"` for a blood-magic block only, where
+	 * `{AlternateName}` is that specific tradition's own name for a canonical path (the
+	 * per-power `traditions` map), not the block's bare canonical name -
+	 * `split_tradition_prefix()` already covers the bare-name case and is always tried
+	 * first. Confirmed against a real `.gex` file (Chase Ashford, 2026-09-11):
+	 * `"Dur-An-Ki: Path of Spirit"` for the catalog's own bare `"Rego Manes"` - Dur An Ki's
+	 * own name for that path, per the CSV's `"Rego Manes / Path of Spirit"` Group value.
+	 *
+	 * The tradition prefix is normalized first (so `"Dur-An-Ki"` matches the `"Dur An Ki"`
+	 * key the `traditions` map actually uses), then only that one tradition's own
+	 * alternate name is checked against the suffix - a coincidentally-similar alternate
+	 * name belonging to a DIFFERENT tradition must never match.
+	 *
+	 * @param string   $raw_name Already export-decoration-stripped.
+	 * @param string   $raw_total
+	 * @param object[] $powers
+	 * @param object   $block Decoded tiered_power Schema_Block, blood_magic-flagged.
+	 * @return array{outcome:string,block_slug?:string,family?:string,level?:int,power_name?:string,tier?:string,tradition?:string,suggestions?:string[]}|null Null when the raw name has no "X: Y" shape at all, or Y matches no tradition's alternate name.
+	 */
+	private static function resolve_blood_magic_alternate_prefix( string $raw_name, string $raw_total, array $powers, $block ): ?array {
+		if ( ! preg_match( '/^([^:]+):\s*(.+)$/', $raw_name, $m ) ) {
+			return null;
+		}
+		$tradition = self::normalize_blood_magic_tradition( trim( $m[1] ), $block );
+		$needle    = Fuzzy_Matcher::normalize( trim( $m[2] ) );
+
+		foreach ( $powers as $power ) {
+			$alt = ( (array) ( $power->traditions ?? [] ) )[ $tradition ] ?? null;
+			if ( $alt !== null && Fuzzy_Matcher::normalize( (string) $alt ) === $needle ) {
+				$result = self::resolve_numbered_power( (string) $power->name, $raw_total, $powers, $block->slug );
+				if ( in_array( $result['outcome'], [ 'exact', 'normalized' ], true ) ) {
+					$result['tradition'] = $tradition;
+				}
+				return $result;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Resolves a raw tradition label against a blood-magic block's own known
+	 * tradition list, real .gex exports being nowhere near consistent about
+	 * spelling one (confirmed against a real file, 2026-09-11: "Dur-An-Ki",
+	 * "Sadhanna", "Eastern Necromancy" and "Hermetic Thaumaturgy" all appear
+	 * for what a chronicle's own catalog spells "Dur An Ki", "Sadhana" and
+	 * "Thaumaturgy (Camarilla|Anarch)").
+	 *
+	 * Two tiers, deliberately not three: an exact match once case, whitespace
+	 * and punctuation are normalized (catches "Dur-An-Ki" against "Dur An
+	 * Ki" - the hyphen becomes a space either way); then a fuzzy match, but
+	 * only when it is the single unambiguous candidate within the edit-
+	 * distance threshold (catches "Sadhanna" against "Sadhana", one stray
+	 * letter). A label matching neither - "Eastern Necromancy" and "Hermetic
+	 * Thaumaturgy" both fail on first letter and length alone - is left
+	 * exactly as the source file wrote it rather than guessed at: the power
+	 * and level this raw name resolved against are real either way, and a
+	 * wrong tradition GUESS is worse than an unnormalized but honest one a
+	 * human can still recognize and correct.
+	 *
+	 * A no-op (returns $raw unchanged) for a block that is not blood-magic
+	 * flagged, or carries no traditions list - ordinary tiered_power blocks
+	 * have no such list to normalize against.
+	 *
+	 * @param string $raw
+	 * @param object $block Decoded tiered_power Schema_Block.
+	 */
+	private static function normalize_blood_magic_tradition( string $raw, $block ): string {
+		$known = (array) ( $block->definition->traditions ?? [] );
+		if ( ! ( $block->definition->blood_magic ?? false ) || $known === [] ) {
+			return $raw;
+		}
+
+		foreach ( $known as $tradition ) {
+			if ( Fuzzy_Matcher::normalize( $raw ) === Fuzzy_Matcher::normalize( (string) $tradition ) ) {
+				return (string) $tradition;
+			}
+		}
+
+		$suggestions = Fuzzy_Matcher::suggest( $raw, $known );
+		return count( $suggestions ) === 1 ? $suggestions[0] : $raw;
+	}
+
+	/**
 	 * Applies an ST's explicitly chosen resolution for a `fuzzy` match,
 	 * re-entering the same lookup an exact match would take but using the
 	 * chosen name in place of the raw one.
@@ -269,7 +359,7 @@ class Trait_Mapper {
 			if ( $tradition_split !== null ) {
 				$result = self::resolve_numbered_power( $chosen_name, $raw_total, $powers, $block->slug );
 				if ( in_array( $result['outcome'], [ 'exact', 'normalized' ], true ) ) {
-					$result['tradition'] = $tradition_split[0];
+					$result['tradition'] = self::normalize_blood_magic_tradition( $tradition_split[0], $block );
 				}
 				return $result;
 			}

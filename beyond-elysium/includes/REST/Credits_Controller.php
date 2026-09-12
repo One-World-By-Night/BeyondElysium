@@ -21,17 +21,20 @@ class Credits_Controller extends Base_Controller {
 	const DEFAULT_CREDITS = 'Beyond Elysium was created by Greg Hacke for One World by Night.';
 
 	/** The starting in-memoriam list, seeded once; freely editable from there. */
+	// Alphabetical by first name - owner ruling, 2026-09-12.
 	const DEFAULT_MEMORIAM = [
 		[ 'name' => 'Arielle M.', 'note' => '' ],
-		[ 'name' => 'Stephen Page', 'note' => '' ],
-		[ 'name' => 'Scott Little', 'note' => '' ],
-		[ 'name' => 'Jamison', 'note' => '' ],
-		[ 'name' => 'Travis Dunn', 'note' => '' ],
-		[ 'name' => 'Carl Gosline', 'note' => '' ],
-		[ 'name' => 'Gary "House" Williams', 'note' => '' ],
 		[ 'name' => 'Ash White', 'note' => '' ],
-		[ 'name' => 'Sarah Gabbey', 'note' => '' ],
+		[ 'name' => 'Carl Gosline', 'note' => '' ],
+		[ 'name' => 'Douglas Alexander', 'note' => '' ],
+		[ 'name' => 'Gary "House" Williams', 'note' => '' ],
 		[ 'name' => 'J. T. Nielsen', 'note' => '' ],
+		[ 'name' => 'Jamison', 'note' => '' ],
+		[ 'name' => 'Sarah Gabbey', 'note' => '' ],
+		[ 'name' => 'Scott Little', 'note' => '' ],
+		[ 'name' => 'Stephen Page', 'note' => '' ],
+		[ 'name' => 'Tim "Ando" Anderson', 'note' => '' ],
+		[ 'name' => 'Travis Dunn', 'note' => '' ],
 	];
 
 	/**

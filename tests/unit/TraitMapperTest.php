@@ -108,9 +108,11 @@ class TraitMapperTest extends TestCase {
 		$this->assertSame( 'werewolf-backgrounds', $backgrounds['block_slug'] );
 	}
 
-	public function test_health_levels_is_discarded_as_derived(): void {
+	public function test_health_levels_has_no_be_model_and_is_preserved_not_dropped(): void {
+		// Real per-character box-count data (confirmed against a real .gex sample) - BE has
+		// no health resource_pool block yet, so this must not be discard_derived.
 		$result = Trait_Mapper::classify_list( 'vampire', 'Health Levels' );
-		$this->assertSame( 'discard_derived', $result['outcome'] );
+		$this->assertSame( 'preserve_as_note', $result['outcome'] );
 	}
 
 	public function test_equipment_and_locations_route_to_world_objects(): void {
@@ -430,6 +432,92 @@ class TraitMapperTest extends TestCase {
 		$result = Trait_Mapper::resolve_tiered_power_trait( 'Sadhana: The Green Path', '1', $block );
 		$this->assertSame( 'exact', $result['outcome'] );
 		$this->assertSame( 'The Green Path', $result['family'] );
+	}
+
+	// -------------------------------------------------------------------------
+	// Blood magic (BE_PROCESS/0.99.2-workflow.md, BM-7) - tradition-label normalization
+	// -------------------------------------------------------------------------
+
+	/**
+	 * @return object A tiered_power block shaped like the real vampire-blood-magic - flagged
+	 *                 blood_magic with a real tradition list, one bare canonical path.
+	 */
+	private function blood_magic_block(): object {
+		return (object) [
+			'slug'         => 'vampire-blood-magic',
+			'section_type' => 'tiered_power',
+			'definition'   => (object) [
+				'blood_magic' => true,
+				'traditions'  => [ 'Akhu', 'Bacaban', 'Dur An Ki', 'Necromancy', 'Sadhana', 'Wanga' ],
+				'powers'      => [
+					(object) [
+						'name'       => 'Path of Blood',
+						'traditions' => (object) [ 'Dur An Ki' => "Path of Life's Water", 'Sadhana' => 'Path of Kali' ],
+						'levels'     => [
+							(object) [ 'level' => 1, 'tier' => 'basic', 'power_name' => 'Taste for Blood' ],
+							(object) [ 'level' => 2, 'tier' => 'basic', 'power_name' => 'Blood Rage' ],
+						],
+					],
+				],
+			],
+		];
+	}
+
+	/**
+	 * Confirmed against a real .gex export (Chase Ashford, 2026-09-11): the file spells the
+	 * tradition "Dur-An-Ki" throughout, never "Dur An Ki" - a hyphen where the catalog uses a
+	 * space. Case/whitespace/punctuation-insensitive normalization resolves this exactly,
+	 * with no fuzzy matching needed.
+	 */
+	public function test_a_hyphenated_tradition_spelling_normalizes_to_the_catalog_form(): void {
+		$result = Trait_Mapper::resolve_tiered_power_trait( 'Dur-An-Ki: Path of Blood', '1', $this->blood_magic_block() );
+
+		$this->assertSame( 'exact', $result['outcome'] );
+		$this->assertSame( 'Dur An Ki', $result['tradition'] );
+	}
+
+	/**
+	 * Confirmed against the same real file: "Sadhanna" (one stray letter) for what the
+	 * catalog spells "Sadhana". A single, unambiguous fuzzy match against the known
+	 * tradition list is trusted; nothing else in a 6-item list is anywhere close to it.
+	 */
+	public function test_a_single_letter_typo_in_a_tradition_name_fuzzy_normalizes(): void {
+		$result = Trait_Mapper::resolve_tiered_power_trait( 'Sadhanna: Path of Blood', '1', $this->blood_magic_block() );
+
+		$this->assertSame( 'exact', $result['outcome'] );
+		$this->assertSame( 'Sadhana', $result['tradition'] );
+	}
+
+	/**
+	 * Confirmed against the same real file: "Eastern Necromancy" for what the catalog
+	 * simply calls "Necromancy" - a genuinely different phrasing, not a typo, failing both
+	 * the normalized-exact check and the fuzzy check's own first-letter/length window. The
+	 * power and level this raw name resolves against are real either way, so the trait
+	 * still resolves - but its tradition is stored exactly as the source file wrote it
+	 * rather than silently guessed at, since a wrong guess is worse than an honest,
+	 * human-correctable one.
+	 */
+	public function test_an_unrecognized_tradition_phrasing_is_kept_verbatim_not_guessed(): void {
+		$result = Trait_Mapper::resolve_tiered_power_trait( 'Eastern Necromancy: Path of Blood', '1', $this->blood_magic_block() );
+
+		$this->assertSame( 'exact', $result['outcome'], 'the path and level are real regardless of the tradition label' );
+		$this->assertSame( 'Eastern Necromancy', $result['tradition'] );
+	}
+
+	/**
+	 * A block that is not blood-magic flagged (every tiered_power block before this
+	 * feature, and every other creature type's Discipline-shaped list today) must never
+	 * have its tradition text touched - normalize_blood_magic_tradition() is a no-op there.
+	 * Regression guard: this is exactly the ordinary-discipline shape
+	 * test_a_tradition_prefixed_family_resolves_as_a_numbered_rung_not_an_unresolved_named_pick
+	 * already covers, asserted here explicitly against a deliberately mis-cased/hyphenated
+	 * label that WOULD normalize if the block were blood-magic flagged.
+	 */
+	public function test_tradition_normalization_never_runs_against_a_non_blood_magic_block(): void {
+		$result = Trait_Mapper::resolve_tiered_power_trait( 'thau-maturgy: Fortitude', '3', $this->tiered_power_block() );
+
+		$this->assertSame( 'exact', $result['outcome'] );
+		$this->assertSame( 'thau-maturgy', $result['tradition'], 'an ordinary tiered_power block never normalizes a tradition label' );
 	}
 
 	/**
