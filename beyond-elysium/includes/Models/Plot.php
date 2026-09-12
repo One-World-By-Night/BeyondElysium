@@ -106,7 +106,7 @@ class Plot {
 	 *
 	 * @param int   $game_id
 	 * @param array $args Filters: status, initiated_by, search, date_from, date_to,
-	 *                    per_page, offset, orderby, order.
+	 *                    exclude_actor_plots_not_owned_by, per_page, offset, orderby, order.
 	 * @return array
 	 */
 	public static function for_game( int $game_id, array $args = [] ): array {
@@ -142,7 +142,14 @@ class Plot {
 			$values[] = $args['date_to'];
 		}
 
-		$sql = 'SELECT * FROM ' . $table . ' WHERE ' . implode( ' AND ', $where );
+		if ( ! empty( $args['exclude_actor_plots_not_owned_by'] ) ) {
+			[ $clause, $clause_values ] = self::actor_ownership_exclusion( (int) $args['exclude_actor_plots_not_owned_by'] );
+			$where[]                    = $clause;
+			array_push( $values, ...$clause_values );
+		}
+
+		// Aliased as p: actor_ownership_exclusion()'s NOT EXISTS clause correlates against p.id.
+		$sql = 'SELECT p.* FROM ' . $table . ' p WHERE ' . implode( ' AND ', $where );
 
 		$orderby = in_array( $args['orderby'] ?? 'updated_at', [ 'title', 'status', 'created_at', 'updated_at' ], true )
 			? ( $args['orderby'] ?? 'updated_at' )
@@ -197,9 +204,51 @@ class Plot {
 			$values[] = $args['date_to'];
 		}
 
-		$sql = 'SELECT COUNT(*) FROM ' . $table . ' WHERE ' . implode( ' AND ', $where );
+		if ( ! empty( $args['exclude_actor_plots_not_owned_by'] ) ) {
+			[ $clause, $clause_values ] = self::actor_ownership_exclusion( (int) $args['exclude_actor_plots_not_owned_by'] );
+			$where[]                    = $clause;
+			array_push( $values, ...$clause_values );
+		}
+
+		// Aliased as p: actor_ownership_exclusion()'s NOT EXISTS clause correlates against p.id.
+		$sql = 'SELECT COUNT(*) FROM ' . $table . ' p WHERE ' . implode( ' AND ', $where );
 		$sql = $wpdb->prepare( $sql, $values );
 		return (int) $wpdb->get_var( $sql );
+	}
+
+	/**
+	 * Builds the WHERE clause fragment (and its bound values) that excludes
+	 * any plot whose `apr_actor` connection targets a character not owned
+	 * by the given user - including an NPC's allocation, whose character
+	 * has no wp_user_id at all. A plot with no `apr_actor` connection (an
+	 * ordinary plot or rumor) is never excluded by this clause.
+	 *
+	 * Applied at the SQL level, not by filtering the fetched rows in PHP,
+	 * so a non-manager's X-WP-Total header always matches what for_game()
+	 * actually returns for them
+	 * (BE_PROCESS/background-ledger-apr-design.md §3.4/§5.8 - an allocation
+	 * plot's title alone already discloses who has one, and its entries
+	 * disclose a character's exact background dot ratings).
+	 *
+	 * @param int $wp_user_id
+	 * @return array{0:string,1:array} [clause, bound values]
+	 */
+	private static function actor_ownership_exclusion( int $wp_user_id ): array {
+		$connections_table = Manager::table( 'connections' );
+		$characters_table  = Manager::table( 'characters' );
+
+		// 'apr_actor' - must match Services\Action_Allocator::ACTOR_LABEL exactly. Not
+		// imported: Models does not depend on Services in this codebase, so the label is
+		// duplicated here rather than reversing that dependency for one string constant.
+		$clause = "NOT EXISTS (
+			SELECT 1 FROM {$connections_table} c
+			LEFT JOIN {$characters_table} ch ON ch.id = c.target_id
+			WHERE c.source_type = 'plot' AND c.source_id = p.id
+			  AND c.target_type = 'character' AND c.label = %s
+			  AND ( ch.wp_user_id IS NULL OR ch.wp_user_id != %d )
+		)";
+
+		return [ $clause, [ 'apr_actor', $wp_user_id ] ];
 	}
 
 	/**

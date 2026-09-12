@@ -1,0 +1,65 @@
+.be-apr-settings__saved {
+	padding: 0.5rem 1rem;
+	margin-bottom: 1rem;
+	border: 1px solid #00a32a;
+	border-radius: 4px;
+	background: #edfaef;
+	color: #00701e;
+}
+
+.be-apr-settings__tabs {
+	display: flex;
+	gap: 0.5rem;
+	margin: 1rem 0;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.be-apr-settings__tabs button {
+	padding: 0.5rem 1rem;
+	border: none;
+	background: none;
+	cursor: pointer;
+	border-bottom: 2px solid transparent;
+}
+
+.be-apr-settings__tabs button.is-active {
+	border-bottom-color: #2271b1;
+	font-weight: 600;
+}
+
+.be-apr-settings__panel {
+	max-width: 640px;
+}
+
+.be-apr-settings__hint {
+	color: #646970;
+	font-size: 0.85rem;
+	margin-top: -0.5rem;
+}
+
+.be-apr-settings__checkbox {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin: 0.5rem 0;
+}
+
+.be-apr-settings__checkbox.is-disabled {
+	color: #787c82;
+}
+
+.be-apr-settings__background-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	max-height: 320px;
+	overflow-y: auto;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	padding: 0.5rem 0.75rem;
+}
+
+.be-apr-settings__stacks {
+	color: #787c82;
+	font-size: 0.8rem;
+}

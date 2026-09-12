@@ -270,7 +270,9 @@ export interface UpdateConnectionRequest {
  * A single subaction produced by allocating a character's actions
  * across their held powers. Reports the power's name, its level,
  * how many actions it received in total, how many went unused,
- * and how much it grew.
+ * and how much it grew. unused already reflects any
+ * Background_Ledger spends debited against it; spent/over_budget
+ * report that debit explicitly.
  */
 export interface Subaction {
 	name: string;
@@ -278,6 +280,8 @@ export interface Subaction {
 	total: number;
 	unused: number;
 	growth: number;
+	spent?: number;
+	over_budget?: boolean;
 }
 
 /**

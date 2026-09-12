@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for One World by Night (https://www.owbn.net/).
 
-Status: v0.99.4, live on two production OWBN chronicles (kony-sabbat.net, Boston By Night). Working through a defined set of remaining items toward a 1.0 release.
+Status: v0.99.5, live on two production OWBN chronicles (kony-sabbat.net, Boston By Night). Working through a defined set of remaining items toward a 1.0 release.
 
 ## What It Does
 
@@ -49,10 +49,11 @@ Release-readiness checklist -- packaging, uninstall handling, security review: C
 Blood magic paths, downtime and rumor systems: Complete
 Chronicle rename -- slug changes now cascade to characters, schema-block forks, and pages instead of orphaning them: Complete
 Mobile-first character sheet, phase 1 (phone-width layout fix): Complete
+Background-use ledger and Action & Rumor settings -- what a downtime action grants, and what a character spent it on: Complete
 
 ## What's Next
 
-Toward 1.0: an 11-item closed scope, each already given a full design pass. Two are now complete (chronicle rename; the read-only sheet's phone-width fix). What remains: a signed/verifiable PDF plus the reports/cards/batch-output layer that shares its generator, query beyond characters, a point calculator, export/verification/transfer for Grapevine's exchange formats, a background-use ledger and APR settings UI, the rest of the mobile-first sheet work, guided chronicle setup, expanding the Mage rotes catalog from the published Grimoire compendium, and bylaw-driven approval data pending a review-workflow decision.
+Toward 1.0: an 11-item closed scope, each already given a full design pass. Three are now complete (chronicle rename; the read-only sheet's phone-width fix; the background-use ledger and its settings). What remains: a signed/verifiable PDF plus the reports/cards/batch-output layer that shares its generator, query beyond characters, a point calculator, export/verification/transfer for Grapevine's exchange formats, the rest of the mobile-first sheet work, guided chronicle setup, expanding the Mage rotes catalog from the published Grimoire compendium, and bylaw-driven approval data pending a review-workflow decision.
 
 Full Grapevine 3.01 import is complete and verified against real chronicle data: binary and XML exchange files, and full game files with create-or-merge into an existing chronicle.
 

@@ -8,7 +8,6 @@ use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Plot;
 use BeyondElysium\Models\Plot_Entry;
-use BeyondElysium\Models\Schema_Block;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -46,11 +45,17 @@ class Action_Allocator {
 	 * Computes the subaction set for a character on a game date, without
 	 * persisting it. Builds the Personal subaction and, when the game's
 	 * APR config enables it, resolves one subaction per qualifying
-	 * Influence or Background trait on the character's sheet.
+	 * Influence or Background trait on the character's sheet, then debits
+	 * against each subaction any Background_Ledger entries already recorded
+	 * for this exact (character, date) pair - so a preview, a commit, and a
+	 * later re-fetch of the same allocation all show the same spent/unused
+	 * numbers (BE_PROCESS/background-ledger-apr-design.md §5.4). A date with
+	 * no ledger entries yet is unaffected: every subaction's `spent` is 0
+	 * and `unused` is unchanged.
 	 *
 	 * @param int    $character_id
 	 * @param string $game_date `Y-m-d`.
-	 * @return array[] Each: name, level, total, unused, growth.
+	 * @return array[] Each: name, level, total, unused, growth, spent, over_budget.
 	 */
 	public static function allocate( int $character_id, string $game_date ): array {
 		$character = Character::find( $character_id );
@@ -69,14 +74,15 @@ class Action_Allocator {
 		if ( $apr['add_common'] ) {
 			$backgrounds_slug = "{$character->stack_slug}-backgrounds";
 			$chosen           = $character->sheet_data[ $backgrounds_slug ] ?? [];
-			$source_by_name   = self::catalog_sources( $backgrounds_slug );
+			$source_by_name   = self::catalog_sources( $backgrounds_slug, $character->owner_slug );
 
 			foreach ( self::resolve_common_subactions( $chosen, $source_by_name, $apr, $prior ) as $subaction ) {
 				$subactions[] = $subaction;
 			}
 		}
 
-		return $subactions;
+		$ledger_entries = Background_Ledger::for_character_date( $character_id, $game_date );
+		return Background_Ledger::apply_spends( $subactions, $ledger_entries )['subactions'];
 	}
 
 	/**
@@ -199,24 +205,15 @@ class Action_Allocator {
 
 	/**
 	 * Builds a map of catalog item name to source label for the merged
-	 * backgrounds block. Reads the block's definition and collects each
-	 * item's `source` value ('Influences', 'Backgrounds', 'Backgrounds,
-	 * <Type>'), keyed by item name.
+	 * backgrounds block, resolved through this chronicle's own fork when
+	 * one exists (BE_PROCESS/background-ledger-apr-design.md §3.1).
 	 *
 	 * @param string $backgrounds_slug
+	 * @param string $game_slug
 	 * @return array<string,string>
 	 */
-	private static function catalog_sources( string $backgrounds_slug ): array {
-		$block = Schema_Block::find_by_slug( $backgrounds_slug );
-		if ( ! $block || empty( $block->definition->items ) ) {
-			return [];
-		}
-
-		$by_name = [];
-		foreach ( $block->definition->items as $item ) {
-			$by_name[ $item->name ] = $item->source ?? '';
-		}
-		return $by_name;
+	private static function catalog_sources( string $backgrounds_slug, string $game_slug ): array {
+		return Backgrounds_Catalog::sources_for( $backgrounds_slug, $game_slug );
 	}
 
 	/**
@@ -251,6 +248,46 @@ class Action_Allocator {
 	 * @param string $game_date `Y-m-d`.
 	 * @return array<string,array{total:int,unused:int,growth:int}>
 	 */
+	/**
+	 * Returns the character id an allocation plot's `apr_actor` connection
+	 * targets, or null when the plot has no such connection - either it is
+	 * not an allocator plot at all, or its connection is missing. Used by
+	 * the REST layer to decide whether a non-manager viewer may see this
+	 * plot's action entries at all (BE_PROCESS/background-ledger-apr-design.md
+	 * §3.4/§5.8: an allocation plot's contents disclose a character's exact
+	 * background dot ratings and are not public).
+	 *
+	 * @param int $plot_id
+	 * @return int|null
+	 */
+	public static function actor_character_id( int $plot_id ): ?int {
+		foreach ( Connection::for_entity( 'plot', $plot_id ) as $connection ) {
+			if ( $connection->label === self::ACTOR_LABEL && $connection->target_type === 'character' ) {
+				return (int) $connection->target_id;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Reports whether the given user owns the character an allocation plot's
+	 * `apr_actor` connection targets. A plot with no such connection (not an
+	 * allocator plot) is not viewable through this check - callers only use
+	 * it to decide visibility for allocator plots specifically.
+	 *
+	 * @param int $plot_id
+	 * @param int $wp_user_id
+	 * @return bool
+	 */
+	public static function is_actor_owned_by( int $plot_id, int $wp_user_id ): bool {
+		$character_id = self::actor_character_id( $plot_id );
+		if ( $character_id === null ) {
+			return false;
+		}
+		$character = Character::find( $character_id );
+		return $character && (int) $character->wp_user_id === $wp_user_id;
+	}
+
 	private static function most_recent_allocation( int $character_id, string $game_date ): array {
 		$plot_id = self::find_prior_plot_id( $character_id, $game_date );
 		if ( ! $plot_id ) {
@@ -320,9 +357,13 @@ class Action_Allocator {
 
 		if ( $existing_plot_id ) {
 			$plot_id = $existing_plot_id;
-			// Replace this plot's action entries wholesale with the freshly computed set.
+			// Replace only the allocator's own budget entries with the freshly computed set -
+			// never a player's free-text action post, and never a ledger spend (§3.3/§5.1:
+			// a re-allocation must not erase either one).
 			foreach ( Plot_Entry::for_plot( $plot_id, [ 'entry_type' => 'action' ] ) as $entry ) {
-				Plot_Entry::delete( (int) $entry->id );
+				if ( self::decode_allocator_entry( $entry->content ) !== null ) {
+					Plot_Entry::delete( (int) $entry->id );
+				}
 			}
 		} else {
 			// Title format: game date followed by the character's name.
@@ -360,13 +401,14 @@ class Action_Allocator {
 	/**
 	 * Finds the ID of this character's own allocation plot for an exact
 	 * game date, if one already exists. Used by `persist()` to decide
-	 * whether to update an existing plot or create a new one.
+	 * whether to update an existing plot or create a new one, and by
+	 * `Background_Ledger` to find the plot a use should debit against.
 	 *
 	 * @param int    $character_id
 	 * @param string $game_date
 	 * @return int|null
 	 */
-	private static function find_own_plot_id( int $character_id, string $game_date ): ?int {
+	public static function find_own_plot_id( int $character_id, string $game_date ): ?int {
 		global $wpdb;
 		$plots_table       = Manager::table( 'plots' );
 		$connections_table = Manager::table( 'connections' );
@@ -386,24 +428,88 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Determines whether an allocation plot is complete. True only when
-	 * every subaction entry for the plot has both a non-empty `action`
-	 * and a non-empty `result`; false when the plot has no action entries
-	 * at all.
+	 * Finds the ID of a character's single most recent allocation plot, with
+	 * no date constraint - what `Background_Ledger::spendable_for()` reads to
+	 * annotate which held backgrounds currently have a live budget, independent
+	 * of which date the ledger panel happens to be viewing.
+	 *
+	 * @param int $character_id
+	 * @return int|null
+	 */
+	public static function latest_plot_id( int $character_id ): ?int {
+		global $wpdb;
+		$plots_table       = Manager::table( 'plots' );
+		$connections_table = Manager::table( 'connections' );
+
+		$id = $wpdb->get_var( $wpdb->prepare(
+			"SELECT p.id FROM {$plots_table} p
+			 INNER JOIN {$connections_table} c ON c.source_type = 'plot' AND c.source_id = p.id
+			 WHERE c.target_type = 'character' AND c.target_id = %d AND c.label = %s
+			   AND p.game_date IS NOT NULL
+			 ORDER BY p.game_date DESC
+			 LIMIT 1",
+			$character_id,
+			self::ACTOR_LABEL
+		) );
+
+		return $id ? (int) $id : null;
+	}
+
+	/**
+	 * Decodes a plot's allocator-managed subactions into a name -> subaction
+	 * map, the same decoding `most_recent_allocation()` applies, exposed for
+	 * `Background_Ledger` to read a specific plot's live budget.
+	 *
+	 * @param int $plot_id
+	 * @return array<string,array{name:string,level:int,total:int,unused:int,growth:int,action:string,result:string}>
+	 */
+	public static function subactions_for_plot( int $plot_id ): array {
+		$by_name = [];
+		foreach ( Plot_Entry::for_plot( $plot_id, [ 'entry_type' => 'action' ] ) as $entry ) {
+			$data = self::decode_allocator_entry( $entry->content );
+			if ( $data !== null ) {
+				$by_name[ $data['name'] ] = $data;
+			}
+		}
+		return $by_name;
+	}
+
+	/**
+	 * Determines whether an allocation plot is complete: every budgeted
+	 * subaction has at least one Background_Ledger entry recorded against
+	 * it, and every one of those entries has a non-empty `result` - the
+	 * meaning `frmAction.frm`'s own Action/Result fields carried before the
+	 * ledger's write path existed to fill them
+	 * (BE_PROCESS/background-ledger-apr-design.md §5.5). False when the plot
+	 * has no subactions at all.
+	 *
+	 * This replaces the original "action and result on the allocator entry
+	 * itself" rule, which nothing had ever written to and which could
+	 * therefore never return true for a real allocation (§2.3).
 	 *
 	 * @param int $plot_id
 	 * @return bool
 	 */
 	public static function is_complete( int $plot_id ): bool {
-		$entries = Plot_Entry::for_plot( $plot_id, [ 'entry_type' => 'action' ] );
-		if ( empty( $entries ) ) {
+		$subactions = self::subactions_for_plot( $plot_id );
+		if ( empty( $subactions ) ) {
 			return false;
 		}
 
-		foreach ( $entries as $entry ) {
-			$data = self::decode_allocator_entry( $entry->content );
-			if ( $data === null || $data['action'] === '' || $data['result'] === '' ) {
+		$ledger_by_name = [];
+		foreach ( Background_Ledger::entries_for_plot( $plot_id ) as $entry ) {
+			$ledger_by_name[ $entry['name'] ?? '' ][] = $entry;
+		}
+
+		foreach ( array_keys( $subactions ) as $name ) {
+			$uses = $ledger_by_name[ $name ] ?? [];
+			if ( empty( $uses ) ) {
 				return false;
+			}
+			foreach ( $uses as $use ) {
+				if ( ( $use['result'] ?? '' ) === '' ) {
+					return false;
+				}
 			}
 		}
 		return true;

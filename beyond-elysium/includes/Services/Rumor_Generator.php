@@ -8,7 +8,6 @@ use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Plot;
-use BeyondElysium\Models\Schema_Block;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -180,16 +179,16 @@ class Rumor_Generator {
 	 * @return string[]
 	 */
 	private static function character_influences( $character ): array {
-		$slug  = "{$character->stack_slug}-backgrounds";
-		$block = Schema_Block::find_by_slug( $slug );
-		if ( ! $block || empty( $block->definition->items ) ) {
+		$slug     = "{$character->stack_slug}-backgrounds";
+		$sources  = Backgrounds_Catalog::sources_for( $slug, $character->owner_slug );
+		if ( empty( $sources ) ) {
 			return [];
 		}
 
 		$influence_names = [];
-		foreach ( $block->definition->items as $item ) {
-			if ( ( $item->source ?? '' ) === 'Influences' ) {
-				$influence_names[ $item->name ] = true;
+		foreach ( $sources as $name => $source ) {
+			if ( $source === 'Influences' ) {
+				$influence_names[ $name ] = true;
 			}
 		}
 

@@ -35,7 +35,13 @@ class ActionAllocatorTest extends TestCase {
 	// apr_config() defaults
 	// -------------------------------------------------------------------------
 
-	public function test_apr_config_falls_back_to_gv_defaults_when_unset(): void {
+	/**
+	 * Four of these five values are Beyond Elysium's own choice, not Grapevine's -
+	 * this test's own name used to claim otherwise (BE_PROCESS/background-ledger-
+	 * apr-design.md §1.8). See test_gv_defaults_differ_from_bes_own_below for the
+	 * real APREngineClass.cls:69-84 values this used to be mislabeled against.
+	 */
+	public function test_apr_config_falls_back_to_bes_own_defaults_when_unset(): void {
 		$game   = (object) [ 'settings' => (object) [] ];
 		$config = Action_Allocator::apr_config( $game );
 
@@ -44,6 +50,34 @@ class ActionAllocatorTest extends TestCase {
 		$this->assertTrue( $config['add_common'] );
 		$this->assertSame( [], $config['background_actions'] );
 		$this->assertSame( [], $config['actions_per_level'] );
+	}
+
+	/**
+	 * Grapevine's real defaults (APREngineClass::Initialize(), APREngineClass.cls:60-90),
+	 * transcribed directly rather than assumed. Four of five diverge from Beyond
+	 * Elysium's own chosen defaults above - PersonalActions is declared but never
+	 * assigned in Initialize(), which VB6 leaves at the type's zero value.
+	 */
+	public function test_gv_defaults_differ_from_bes_own(): void {
+		$gv_defaults = [
+			'personal_actions'   => 0,                            // APREngineClass.cls:23, never assigned
+			'carry_unused'       => false,                        // APREngineClass.cls:84
+			'add_common'         => false,                        // APREngineClass.cls:83
+			'background_actions' => [ 'Contacts', 'Resources' ],  // APREngineClass.cls:69-70
+		];
+
+		$config = $this->apr( $gv_defaults );
+
+		$this->assertSame( 0, $config['personal_actions'] );
+		$this->assertFalse( $config['carry_unused'] );
+		$this->assertFalse( $config['add_common'] );
+		$this->assertSame( [ 'Contacts', 'Resources' ], $config['background_actions'] );
+
+		$bes_defaults = Action_Allocator::apr_config( (object) [ 'settings' => (object) [] ] );
+		$this->assertNotSame( $gv_defaults['personal_actions'], $bes_defaults['personal_actions'] );
+		$this->assertNotSame( $gv_defaults['carry_unused'], $bes_defaults['carry_unused'] );
+		$this->assertNotSame( $gv_defaults['add_common'], $bes_defaults['add_common'] );
+		$this->assertNotSame( $gv_defaults['background_actions'], $bes_defaults['background_actions'] );
 	}
 
 	// -------------------------------------------------------------------------

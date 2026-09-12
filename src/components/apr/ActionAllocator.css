@@ -23,6 +23,10 @@
 	font-weight: 600;
 }
 
+.be-action-allocator__table tr.is-over-budget td {
+	background: #fdecea;
+}
+
 .be-action-allocator__error {
 	padding: 0.75rem;
 	border: 1px solid #b3261e;

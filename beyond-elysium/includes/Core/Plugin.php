@@ -139,6 +139,7 @@ class Plugin {
 			new \BeyondElysium\REST\Credits_Controller(),
 			new \BeyondElysium\REST\Approval_Rules_Controller(),
 			new \BeyondElysium\REST\Data_Management_Controller(),
+			new \BeyondElysium\REST\Apr_Controller(),
 		];
 		foreach ( $controllers as $controller ) {
 			$controller->register_routes();

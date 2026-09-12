@@ -12,6 +12,7 @@ import BlockRenderer from '../renderers/BlockRenderer';
 import SheetStyleEditor from './SheetStyleEditor';
 import ChangeHistory from '../changes/ChangeHistory';
 import { ConnectionManager } from '../apr/ConnectionManager';
+import { BackgroundLedger } from '../apr/BackgroundLedger';
 import { spanFor, sortedForFlow } from '../../lib/templateLayout';
 import { resolveSectionTitle } from '../../lib/resolveCrossBlockRef';
 import type { ResolvedStack, TemplateResolveResponse } from '../../types';
@@ -107,6 +108,8 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 	const [ style, setStyle ] = useState<SheetStyle>( NO_STYLE );
 	const [ showStyleEditor, setShowStyleEditor ] = useState( false );
 	const [ showHistory, setShowHistory ] = useState( false );
+	const [ showLedger, setShowLedger ] = useState( false );
+	const [ ledgerDate, setLedgerDate ] = useState( () => new Date().toISOString().slice( 0, 10 ) );
 
 	// This same component also renders the dedicated print-canvas page, using these URL params.
 	const urlParams = new URLSearchParams( window.location.search );
@@ -305,6 +308,14 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 						>
 							{ showHistory ? __( 'Hide history', 'beyond-elysium' ) : __( 'View history', 'beyond-elysium' ) }
 						</button>
+						<button
+							type="button"
+							className="be-character-sheet__history-toggle"
+							aria-expanded={ showLedger }
+							onClick={ () => setShowLedger( ( v ) => ! v ) }
+						>
+							{ showLedger ? __( 'Hide background uses', 'beyond-elysium' ) : __( 'Background uses', 'beyond-elysium' ) }
+						</button>
 					</div>
 
 					{ /* Controls, not content - never part of the printed output themselves, only what they turn on is. */ }
@@ -347,6 +358,25 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 			{ ! isPrintCanvas && showHistory && (
 				<div className="be-character-sheet__chrome">
 					<ChangeHistory characterId={ characterId } gameSlug={ gameSlug } />
+				</div>
+			) }
+
+			{ /* Background_Ledger: what a background was used for and what it still has left to
+			    spend. Ownership is enforced server-side (Apr_Controller); a non-owning, non-
+			    managing viewer can never reach this component in the first place, since the
+			    character fetch above already 403s for them (D33). */ }
+			{ ! isPrintCanvas && showLedger && (
+				<div className="be-character-sheet__chrome">
+					<label className="be-character-sheet__ledger-date">
+						{ __( 'Game date', 'beyond-elysium' ) }
+						<input type="date" value={ ledgerDate } onChange={ ( e ) => setLedgerDate( e.target.value ) } />
+					</label>
+					<BackgroundLedger
+						gameSlug={ gameSlug }
+						characterId={ characterId }
+						gameDate={ ledgerDate }
+						canManage={ window.beyondElysium?.capabilities?.be_manage_characters ?? false }
+					/>
 				</div>
 			) }
 
