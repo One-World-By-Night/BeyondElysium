@@ -16,15 +16,20 @@ use PHPUnit\Framework\TestCase;
  *   GV301Source/Code/Fetishes and Talens.gex    version 2.397 - has the section (all
  *                                               three counts happen to be 0 in this file)
  *
- * Neither real `.gex` file in this repo (nor `Dark Ages Arsenal.gex`, also real GVBE
- * binary, version 2.399) contains any character records - all three are pure item
- * exchanges. `Artifacts and Devices.gex` and `Rotes.gex` also carry the `.gex`
+ * None of `New Game Items.gex`, `Fetishes and Talens.gex`, or `Dark Ages Arsenal.gex`
+ * (also real GVBE binary, version 2.399) contains any character records - all three are
+ * pure item exchanges. `Artifacts and Devices.gex` and `Rotes.gex` also carry the `.gex`
  * extension but are actually XML (`<?xml` header, not `GVBE`), out of scope for this
- * binary parser. The character-record dispatch tests below therefore use hand-built
- * synthetic byte buffers, clearly marked as such - per workflow-0.8.md Step 2h's
- * "real fixtures, not mocks" rule, synthetic bytes are used here only because no real
- * fixture with character data exists in this repo, not as a substitute for one that
- * does.
+ * binary parser.
+ *
+ * `data-samples/Sabbat.gex` (added 2026-09-10, GVBE binary, version 3.0) closes the gap
+ * this docblock used to describe as permanent: it is a real character-bearing binary
+ * exchange - 1 vampire ("Ian Kincaid II", 20 trait lists), 1 item, 1 location, 1 player -
+ * and is used below as the real fixture for the binary character-record path. The
+ * remaining hand-built synthetic byte buffers cover cases this one real file doesn't
+ * reach (other races, other version-gated branches) - per workflow-0.8.md Step 2h's "real
+ * fixtures, not mocks" rule, synthetic bytes are used only where no real fixture exists,
+ * not as a substitute for one that does.
  *
  * @see BE_PROCESS/workflow-0.8.md Step 2
  */
@@ -37,6 +42,39 @@ class GexParserTest extends TestCase {
 	// -------------------------------------------------------------------------
 	// Real files
 	// -------------------------------------------------------------------------
+
+	/**
+	 * The first, and only, real character-bearing binary exchange file in this repo
+	 * (added 2026-09-10). Version 3.0 - exactly what a writer emits (GX-1/GX-2) - with all
+	 * 20 vampire trait lists present, in exactly `VampireClass.Initialize()`'s declared
+	 * order, giving GX-1's shape table a byte-exact real fixture to prove itself against
+	 * before any writer trusts a row of it.
+	 */
+	public function test_sabbat_gex_parses_a_real_binary_vampire_with_all_20_trait_lists(): void {
+		$data = GEX_Parser::parse_file( $this->path( 'data-samples/Sabbat.gex' ) );
+
+		$this->assertSame( 3.0, $data['version'] );
+		$this->assertCount( 1, $data['characters'] );
+		$this->assertCount( 1, $data['items'] );
+		$this->assertCount( 1, $data['locations'] );
+		$this->assertCount( 1, $data['players'] );
+
+		$character = $data['characters'][0];
+		$this->assertSame( 'vampire', $character['race'] );
+		$this->assertSame( 'Ian Kincaid II', $character['name'] );
+		$this->assertFalse( $character['is_npc'] );
+		$this->assertSame( [], $character['boons'] );
+
+		$this->assertSame(
+			[
+				'Physical', 'Social', 'Mental', 'Negative Physical', 'Negative Social',
+				'Negative Mental', 'Status', 'Abilities', 'Influences', 'Backgrounds',
+				'Health Levels', 'Bonds', 'Miscellaneous', 'Derangements', 'Disciplines',
+				'Rituals', 'Merits', 'Flaws', 'Equipment', 'Locations',
+			],
+			array_keys( $character['trait_lists'] )
+		);
+	}
 
 	public function test_new_game_items_parses_to_46_items(): void {
 		$data = GEX_Parser::parse_file( $this->path( 'GV301Source/Code/New Game Items.gex' ) );

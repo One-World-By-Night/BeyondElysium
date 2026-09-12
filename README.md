@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**Status:** `v0.99.6` is released and running in production chronicles. The character engine, editor, Storyteller tools, world data, Grapevine import, configurable approval rules, and blood magic paths are all built; renaming a chronicle's slug is a safe, cascading operation; a chronicle's downtime actions have both a real settings screen and a use-by-use ledger; and the query engine now searches items, locations, and rotes, not just characters. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's left before 1.0.
+**Status:** `v0.99.7` is released and running in production chronicles. The character engine, editor, Storyteller tools, world data, Grapevine import, configurable approval rules, and blood magic paths are all built; renaming a chronicle's slug is a safe, cascading operation; a chronicle's downtime actions have both a real settings screen and a use-by-use ledger; the query engine now searches items, locations, and rotes, not just characters; and a real Grapevine exchange-file import bug (single-dot traits silently zeroed) is fixed. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's left before 1.0.
 
 ## What It Does
 
@@ -22,7 +22,7 @@ Beyond the sheet itself:
 
 ## Installation
 
-Download `beyond-elysium-0.99.6.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
+Download `beyond-elysium-0.99.7.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
 
 That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder in this repository is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder straight into `wp-content/plugins/` will not work. To build it yourself:
 
@@ -93,6 +93,7 @@ BeyondElysium ships in-app documentation, viewable inside the plugin's own admin
 | Chronicle rename — slug changes cascade transactionally to characters, schema-block forks, and page/widget references instead of orphaning them | Complete |
 | Background-use ledger and Action & Rumor settings — what a downtime action grants, and a use-by-use record of what a character spent it on | Complete |
 | Query engine extended to items, locations, and rotes — not just characters | Complete |
+| Grapevine exchange-file import fix (single-dot traits no longer zero on import) and the field-order groundwork for character export | Complete |
 
 ## Roadmap
 
