@@ -4,6 +4,7 @@ namespace BeyondElysium\REST;
 
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Saved_Query;
+use BeyondElysium\Services\Field_Registry;
 use BeyondElysium\Services\Query_Engine;
 use BeyondElysium\Services\St_Filter;
 
@@ -25,11 +26,17 @@ class Query_Controller extends Base_Controller {
 	 * routes are scoped to a game slug and require be_run_queries.
 	 */
 	public function register_routes(): void {
+		// An unvalidated 'inventory' previously reached Saved_Query::save_recent() and
+		// be_queries.inventory directly (query-beyond-characters-design.md §5.4/§8) - this
+		// enum is what closes that, on every route that accepts the field.
+		$inventory_arg = [ 'type' => 'string', 'enum' => Field_Registry::QUERYABLE_INVENTORIES ];
+
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/query', [
 			[
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'run_query' ],
 				'permission_callback' => $this->permission( 'be_run_queries' ),
+				'args'                => [ 'inventory' => $inventory_arg ],
 			],
 		] );
 
@@ -38,6 +45,7 @@ class Query_Controller extends Base_Controller {
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'run_statistics' ],
 				'permission_callback' => $this->permission( 'be_run_queries' ),
+				'args'                => [ 'inventory' => $inventory_arg ],
 			],
 		] );
 
@@ -51,6 +59,7 @@ class Query_Controller extends Base_Controller {
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'create_item' ],
 				'permission_callback' => $this->permission( 'be_run_queries' ),
+				'args'                => [ 'inventory' => $inventory_arg ],
 			],
 		] );
 
@@ -59,6 +68,7 @@ class Query_Controller extends Base_Controller {
 				'methods'             => 'PUT',
 				'callback'            => [ $this, 'update_item' ],
 				'permission_callback' => $this->permission( 'be_run_queries' ),
+				'args'                => [ 'inventory' => $inventory_arg ],
 			],
 			[
 				'methods'             => 'DELETE',
@@ -69,10 +79,11 @@ class Query_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Runs a filtered query against a game's characters. Validates every
-	 * condition against the field registry before execution and returns a
-	 * 400 error naming the offending clause when a condition is invalid.
-	 * Strips ST-only fields from the results before returning them.
+	 * Runs a filtered query against one inventory of a game's data.
+	 * Validates every condition against the field registry before
+	 * execution and returns a 400 error naming the offending clause when a
+	 * condition is invalid. Strips ST-only fields from a `char` result
+	 * before returning it.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -83,10 +94,11 @@ class Query_Controller extends Base_Controller {
 			return $game;
 		}
 
+		$inventory  = (string) ( $request->get_param( 'inventory' ) ?: 'char' );
 		$conditions = (array) $request->get_param( 'conditions' );
 		$logic      = strtoupper( (string) ( $request->get_param( 'logic' ) ?: 'AND' ) );
 
-		$error = Query_Engine::validate_conditions( $conditions );
+		$error = Query_Engine::validate_conditions( $conditions, $inventory );
 		if ( $error !== null ) {
 			return $this->error( 'invalid_condition', sprintf( __( 'Clause %1$d: %2$s', 'beyond-elysium' ), $error['index'], $error['message'] ), 400 );
 		}
@@ -97,16 +109,22 @@ class Query_Controller extends Base_Controller {
 			'per_page' => $request->get_param( 'per_page' ),
 		];
 
-		$result = Query_Engine::execute( $request['game_slug'], $conditions, $logic, $paging );
+		$result = Query_Engine::execute( $request['game_slug'], $conditions, $logic, $paging, $inventory );
 
-		// Strips rp_notes and other ST-only fields from each result character.
-		foreach ( $result['results'] as $character ) {
-			unset( $character->rp_notes );
-			$character->biography = St_Filter::strip_for_game( (string) $character->biography, $game->settings ?? null );
-			$character->notes     = St_Filter::strip_for_game( (string) $character->notes, $game->settings ?? null );
+		// ST-text redaction only applies to characters. A world object has no rp_notes/
+		// biography/notes properties at all - writing them unconditionally onto every row
+		// (the pre-fix behavior) raised a PHP 8.2 "undefined property" warning per field per
+		// row AND fabricated two empty properties on every result (query-beyond-characters-
+		// design.md §8 point 3).
+		if ( $inventory === 'char' ) {
+			foreach ( $result['results'] as $character ) {
+				unset( $character->rp_notes );
+				$character->biography = St_Filter::strip_for_game( (string) $character->biography, $game->settings ?? null );
+				$character->notes     = St_Filter::strip_for_game( (string) $character->notes, $game->settings ?? null );
+			}
 		}
 
-		Saved_Query::save_recent( (int) $game->id, get_current_user_id(), (string) $request->get_param( 'inventory' ) ?: 'char', $logic === 'AND', $conditions );
+		Saved_Query::save_recent( (int) $game->id, get_current_user_id(), $inventory, $logic === 'AND', $conditions );
 
 		$response = $this->success( $result['results'] );
 		return $this->paginate( $response, $result['total'], (int) ( $paging['per_page'] ?: 20 ), (int) ( $paging['page'] ?: 1 ) );
@@ -127,6 +145,7 @@ class Query_Controller extends Base_Controller {
 			return $game;
 		}
 
+		$inventory  = (string) ( $request->get_param( 'inventory' ) ?: 'char' );
 		$conditions = (array) $request->get_param( 'conditions' );
 		$logic      = strtoupper( (string) ( $request->get_param( 'logic' ) ?: 'AND' ) );
 		$key        = (string) $request->get_param( 'key' );
@@ -140,7 +159,7 @@ class Query_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'specific_distribution requires "trait".', 'beyond-elysium' ), 400 );
 		}
 
-		$error = Query_Engine::validate_conditions( $conditions );
+		$error = Query_Engine::validate_conditions( $conditions, $inventory );
 		if ( $error !== null ) {
 			return $this->error( 'invalid_condition', sprintf( __( 'Clause %1$d: %2$s', 'beyond-elysium' ), $error['index'], $error['message'] ), 400 );
 		}
@@ -153,7 +172,8 @@ class Query_Controller extends Base_Controller {
 			$key,
 			$stat_type,
 			$ok_zero === null ? true : (bool) $ok_zero,
-			$trait ? (string) $trait : null
+			$trait ? (string) $trait : null,
+			$inventory
 		);
 
 		return $this->success( $result );
@@ -195,8 +215,9 @@ class Query_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'Missing required field: name.', 'beyond-elysium' ), 400 );
 		}
 
+		$inventory  = (string) ( $request->get_param( 'inventory' ) ?: 'char' );
 		$conditions = (array) $request->get_param( 'conditions' );
-		$error      = Query_Engine::validate_conditions( $conditions );
+		$error      = Query_Engine::validate_conditions( $conditions, $inventory );
 		if ( $error !== null ) {
 			return $this->error( 'invalid_condition', sprintf( __( 'Clause %1$d: %2$s', 'beyond-elysium' ), $error['index'], $error['message'] ), 400 );
 		}
@@ -204,7 +225,7 @@ class Query_Controller extends Base_Controller {
 		$id = Saved_Query::create( [
 			'game_id'        => (int) $game->id,
 			'name'           => sanitize_text_field( $name ),
-			'inventory'      => $request->get_param( 'inventory' ) ?: 'char',
+			'inventory'      => $inventory,
 			'match_all'      => strtoupper( (string) ( $request->get_param( 'logic' ) ?: 'AND' ) ) === 'AND',
 			'conditions'     => $conditions,
 			'sort_key'       => $request->get_param( 'sort_key' ),
@@ -245,8 +266,12 @@ class Query_Controller extends Base_Controller {
 			$data['match_all'] = strtoupper( (string) $request->get_param( 'logic' ) ) === 'AND';
 		}
 		if ( $request->get_param( 'conditions' ) !== null ) {
+			// Validated against the inventory this same request is setting, if any -
+			// otherwise the query's own already-stored inventory. Either way, conditions
+			// are never validated against a stale or wrong inventory.
+			$inventory  = (string) ( $data['inventory'] ?? $query->inventory );
 			$conditions = (array) $request->get_param( 'conditions' );
-			$error      = Query_Engine::validate_conditions( $conditions );
+			$error      = Query_Engine::validate_conditions( $conditions, $inventory );
 			if ( $error !== null ) {
 				return $this->error( 'invalid_condition', sprintf( __( 'Clause %1$d: %2$s', 'beyond-elysium' ), $error['index'], $error['message'] ), 400 );
 			}

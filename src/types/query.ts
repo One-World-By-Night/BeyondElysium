@@ -161,6 +161,7 @@ export type StatisticType = 'distribution' | 'distinct_distribution' | 'specific
  * and trait to aggregate and which kind of statistic to compute.
  */
 export interface RunStatisticsRequest {
+	inventory?: string;
 	conditions: QueryCondition[];
 	logic: QueryLogic;
 	key: string;

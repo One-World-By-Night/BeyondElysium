@@ -5,39 +5,29 @@
  * narrows automatically to whatever the chosen field's data type supports.
  */
 import { __ } from '@wordpress/i18n';
-import { useEffect, useState } from '@wordpress/element';
-import api from '../../api/client';
+import { useState } from '@wordpress/element';
 import type { QueryCondition, QueryField, QueryLogic, QueryOperator } from '../../types/query';
 import { FIND_OPERATORS, OPERATOR_LABELS, OPERATORS_BY_TYPE, VALUE_OPERATORS, describeCondition } from '../../types/query';
 import './QueryBuilder.css';
 
 export interface QueryBuilderProps {
+	/** Fetched and filtered to mapped fields by the caller, which also owns the active inventory. */
+	fields: QueryField[];
 	conditions: QueryCondition[];
 	logic: QueryLogic;
 	onChange: ( conditions: QueryCondition[], logic: QueryLogic ) => void;
 }
 
 /**
- * Renders the clause editor for a saved-character query: add or remove clauses,
- * choose AND/OR match logic, and pick a field, operator, and value per clause.
- * The operator list for each clause is filtered to what its chosen field's type
- * actually supports, so the UI never offers an operator the server would reject.
+ * Renders the clause editor for a saved query against whichever inventory
+ * the caller is currently showing: add or remove clauses, choose AND/OR
+ * match logic, and pick a field, operator, and value per clause. The
+ * operator list for each clause is filtered to what its chosen field's type
+ * actually supports, so the UI never offers an operator the server would
+ * reject.
  */
-export function QueryBuilder( { conditions, logic, onChange }: QueryBuilderProps ) {
-	const [ fields, setFields ] = useState<QueryField[]>( [] );
+export function QueryBuilder( { fields, conditions, logic, onChange }: QueryBuilderProps ) {
 	const [ search, setSearch ] = useState( '' );
-	const [ error, setError ] = useState<string | null>( null );
-
-	useEffect( () => {
-		api.queryFields
-			.list( 'char' )
-			.then( ( all ) => setFields( all.filter( ( f ) => f.mapped ) ) )
-			.catch( () => {
-				// Shows an explicit error instead of an empty list indistinguishable from "no fields yet."
-				setFields( [] );
-				setError( __( 'Failed to load the field list. Try refreshing the page.', 'beyond-elysium' ) );
-			} );
-	}, [] );
 
 	const filteredFields = search
 		? fields.filter( ( f ) => f.title.toLowerCase().includes( search.toLowerCase() ) || f.key.toLowerCase().includes( search.toLowerCase() ) )
@@ -68,12 +58,6 @@ export function QueryBuilder( { conditions, logic, onChange }: QueryBuilderProps
 
 	return (
 		<div className="be-query-builder">
-			{ error && (
-				<p className="be-query-builder__error" role="alert">
-					{ error }
-				</p>
-			) }
-
 			<div className="be-query-builder__logic">
 				<label>
 					<input type="radio" checked={ logic === 'AND' } onChange={ () => onChange( conditions, 'AND' ) } />
@@ -104,7 +88,7 @@ export function QueryBuilder( { conditions, logic, onChange }: QueryBuilderProps
 
 					return (
 						<li key={ index } className="be-query-builder__clause">
-							<select value={ condition.field } onChange={ ( e ) => onFieldChange( index, e.target.value ) } aria-label={ __( 'Character field for this clause', 'beyond-elysium' ) }>
+							<select value={ condition.field } onChange={ ( e ) => onFieldChange( index, e.target.value ) } aria-label={ __( 'Field for this clause', 'beyond-elysium' ) }>
 								<option value="">{ __( 'Select a field…', 'beyond-elysium' ) }</option>
 								{ filteredFields.map( ( f ) => (
 									<option key={ f.key } value={ f.key }>

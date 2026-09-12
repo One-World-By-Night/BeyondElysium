@@ -28,11 +28,20 @@ class Field_Registry {
 	/** Field-storage map: where each key lives in BE. */
 	const MAP_FILE = __DIR__ . '/field-map.php';
 
+	/** Per-inventory storage descriptors and field maps for everything beyond `char`. */
+	const INVENTORIES_FILE = __DIR__ . '/query-inventories.php';
+
+	/** The inventories the query builder actually offers - see query-beyond-characters-design.md §5.5. */
+	const QUERYABLE_INVENTORIES = [ 'char', 'item', 'loc', 'rote' ];
+
 	/** @var array<string,array{key:string,title:string,type:string,inventories:string[]}>|null */
 	private static ?array $rows = null;
 
 	/** @var array<string,array>|null */
 	private static ?array $map = null;
+
+	/** @var array<string,array>|null */
+	private static ?array $inventories = null;
 
 	/**
 	 * Returns every registry row, keyed by Grapevine field key. Parses the
@@ -96,28 +105,72 @@ class Field_Registry {
 	}
 
 	/**
-	 * Returns the field-storage entry for one key. Looks the key up in
-	 * the field-storage map and returns null when the key is not present
-	 * in the registry.
+	 * Returns the field-storage entry for one key, for the given inventory.
+	 * `char` (the default) reads `field-map.php`, unchanged. Any other
+	 * inventory reads its own map in `query-inventories.php`; a `char` key
+	 * looked up under a non-char inventory that does not declare it
+	 * returns null, never falling back to the char map - the two
+	 * inventories' storage is genuinely different (query-beyond-characters-
+	 * design.md §3b/§4a).
 	 *
 	 * @param string $key
+	 * @param string $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
 	 * @return array<string,mixed>|null
 	 */
-	public static function map_for( string $key ): ?array {
-		return self::map()[ $key ] ?? null;
+	public static function map_for( string $key, string $inventory = 'char' ): ?array {
+		if ( $inventory === 'char' ) {
+			return self::map()[ $key ] ?? null;
+		}
+		return self::inventory( $inventory )['fields'][ $key ] ?? null;
 	}
 
 	/**
 	 * Returns whether a key resolves to a real Beyond Elysium storage
-	 * location. True when the key has a field-storage entry and that
-	 * entry's source is not `unmapped`.
+	 * location for the given inventory. True when the key has a field-
+	 * storage entry and that entry's source is not `unmapped`.
 	 *
 	 * @param string $key
+	 * @param string $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
 	 * @return bool
 	 */
-	public static function is_mapped( string $key ): bool {
-		$entry = self::map_for( $key );
+	public static function is_mapped( string $key, string $inventory = 'char' ): bool {
+		$entry = self::map_for( $key, $inventory );
 		return $entry !== null && $entry['source'] !== 'unmapped';
+	}
+
+	/**
+	 * Returns the value type to validate and resolve a key against for a
+	 * given inventory: the map entry's own `type` override when it
+	 * declares one (only `item.powers` does today, per §4d), otherwise the
+	 * registry's own declared type. Used by validation, value resolution,
+	 * and the field list so all three cannot disagree about a key whose
+	 * storage cannot hold what the registry says it is.
+	 *
+	 * @param string $key
+	 * @param string $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
+	 * @return string
+	 */
+	public static function type_for( string $key, string $inventory = 'char' ): string {
+		$override = self::map_for( $key, $inventory )['type'] ?? null;
+		return $override ?? ( self::get( $key )['type'] ?? 'field' );
+	}
+
+	/**
+	 * Returns one inventory's storage descriptor: which table it queries
+	 * (`storage`), the object_type to filter on when it is world-object-
+	 * backed, the columns a result list displays, and its field map (null
+	 * for `char`, meaning "field-map.php"). Loads and caches
+	 * query-inventories.php on first call, the same static-cache pattern
+	 * World_Object::schemas() uses for its own per-type data file.
+	 *
+	 * @param string $inventory
+	 * @return array{storage:string,object_type?:string,result_columns:string[],fields:array|null}|null
+	 */
+	public static function inventory( string $inventory ): ?array {
+		if ( self::$inventories === null ) {
+			self::$inventories = require self::INVENTORIES_FILE;
+		}
+		return self::$inventories[ $inventory ] ?? null;
 	}
 
 	/**

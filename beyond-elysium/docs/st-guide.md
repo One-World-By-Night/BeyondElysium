@@ -167,12 +167,23 @@ can clear their own use as long as no result has been recorded against it yet.
 
 ## 10. Building and Running Queries
 
-Under **Beyond Elysium → Query Tool**, build a filter against the roster (by trait,
-creature type, status, and more) and either browse the results or run one of the five
-built-in roster statistics. A query can be saved and reused, and a saved query is also what
-a rumor's target audience is defined by — build the query once, point the rumor at it, and
-it recalculates who's in scope every time it runs rather than freezing a player list at
-creation time.
+Under **Beyond Elysium → Query Tool**, pick which of four inventories to search —
+**Characters**, **Items**, **Locations**, or **Rotes** — with a tab strip at the top of the
+tool. Each inventory offers its own field list (a location's Gauntlet rating and Security
+Level, an item's Type and Concealability, a rote's Level and Sphere prerequisites, and so
+on), build a filter against it, and either browse the results or run one of the five
+built-in statistics. Switching inventories clears the clauses on screen, since a clause
+built against one inventory's fields has no meaning on another's.
+
+A query can be saved and reused; the Saved Queries list shows which inventory each one
+searches, and loading one switches back to that inventory automatically. A saved query is
+also what a rumor's target audience is defined by (**Characters** queries only) — build the
+query once, point the rumor at it, and it recalculates who's in scope every time it runs
+rather than freezing a player list at creation time.
+
+Bulk XP award is available only on **Characters** results, for the same reason a rumor can
+only target characters: an Item, Location, or Rote result isn't a character, and the tool
+never offers an action that would only make sense as one.
 
 ## Roles Reference
 
