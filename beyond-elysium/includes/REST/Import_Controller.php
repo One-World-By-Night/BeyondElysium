@@ -460,8 +460,12 @@ class Import_Controller extends Base_Controller {
 			}
 		}
 
+		$preserved_lists = [];
 		foreach ( $character['trait_lists'] ?? [] as $list ) {
 			$classification = Trait_Mapper::classify_list( $stack_slug, $list['name'] );
+			if ( in_array( $classification['outcome'], [ 'preserve_as_note', 'needs_design' ], true ) ) {
+				$preserved_lists[] = $list;
+			}
 			if ( $classification['outcome'] !== 'sheet_block' ) {
 				continue;
 			}
@@ -479,50 +483,46 @@ class Import_Controller extends Base_Controller {
 				$target_slug = $target_block->slug;
 				self::require_clean_resolution( $result, $trait['name'], $target_slug );
 
-				if ( $block->section_type === 'tiered_power' ) {
-
-					if ( $target_block === $block ) {
-						if ( $result['outcome'] === 'custom' ) {
-							// level is set only when a real numbered holding was derived from the raw value.
-							$entry = [
-								'name'       => $result['family'],
-								'power_name' => $result['power_name'],
-								'tier'       => $result['tier'],
-								'custom'     => true,
-							];
-							if ( isset( $result['level'] ) ) {
-								$entry['level'] = $result['level'];
-							}
-							$fuzzy_or_custom[] = [ 'block' => $target_slug, 'name' => $trait['name'], 'reason' => 'custom' ];
-						} else {
-							// A numbered rung carries level; an Elder-and-above pick carries power_name instead, never both.
-							$entry = isset( $result['power_name'] )
-								? [ 'name' => $result['family'], 'power_name' => $result['power_name'] ]
-								: [ 'name' => $result['family'], 'level' => $result['level'] ];
-							// Carries a named tradition through onto the stored entry when the raw file states one.
-							if ( isset( $result['tradition'] ) ) {
-								$entry['tradition'] = $result['tradition'];
-							}
+				// Branches on the block actually resolved against, not the originally
+				// classified one: a tiered_power list can now resolve against the
+				// blood-magic sibling (also tiered_power-shaped) as well as the primary
+				// block, and either can fall back further to the combo/ritae sibling
+				// (trait_list-shaped) - what shape to store never depends on which of
+				// those it was, only on the target block's own section_type.
+				if ( $target_block->section_type === 'tiered_power' ) {
+					if ( $result['outcome'] === 'custom' ) {
+						// level is set only when a real numbered holding was derived from the raw value.
+						$entry = [
+							'name'       => $result['family'],
+							'power_name' => $result['power_name'],
+							'tier'       => $result['tier'],
+							'custom'     => true,
+						];
+						if ( isset( $result['level'] ) ) {
+							$entry['level'] = $result['level'];
 						}
+						$fuzzy_or_custom[] = [ 'block' => $target_slug, 'name' => $trait['name'], 'reason' => 'custom' ];
 					} else {
-						// Resolved against the combo/ritae sibling block instead, which is trait_list-shaped.
-						$entry = [ 'name' => $result['matched_name'] ?? $trait['name'], 'count' => (int) $trait['total'] ];
-						if ( $trait['note'] !== '' ) {
-							$entry['note'] = $trait['note'];
-						}
-						if ( $result['outcome'] === 'custom' ) {
-							$entry['custom'] = true;
-							$fuzzy_or_custom[] = [ 'block' => $target_slug, 'name' => $trait['name'], 'reason' => 'custom' ];
+						// A numbered rung carries level; an Elder-and-above pick carries power_name instead, never both.
+						$entry = isset( $result['power_name'] )
+							? [ 'name' => $result['family'], 'power_name' => $result['power_name'] ]
+							: [ 'name' => $result['family'], 'level' => $result['level'] ];
+						// Carries a named tradition through onto the stored entry when the raw file states one.
+						if ( isset( $result['tradition'] ) ) {
+							$entry['tradition'] = $result['tradition'];
 						}
 					}
 				} else {
+					// Resolved against a trait_list-shaped block: either the list was
+					// classified trait_list to begin with, or a tiered_power resolution
+					// fell back to its combo/ritae sibling.
 					$entry = [ 'name' => $result['matched_name'] ?? $trait['name'], 'count' => (int) $trait['total'] ];
 					if ( $trait['note'] !== '' ) {
 						$entry['note'] = $trait['note'];
 					}
 					if ( $result['outcome'] === 'custom' ) {
 						$entry['custom'] = true;
-						$fuzzy_or_custom[] = [ 'block' => $block_slug, 'name' => $trait['name'], 'reason' => 'custom' ];
+						$fuzzy_or_custom[] = [ 'block' => $target_slug, 'name' => $trait['name'], 'reason' => 'custom' ];
 					}
 				}
 
@@ -593,8 +593,17 @@ class Import_Controller extends Base_Controller {
 		}
 
 		// Records one import_note change per character carrying the source file and raw data not resolved into sheet_data.
+		// trait_lists is replaced with only the preserve_as_note/needs_design lists (e.g. Health
+		// Levels, Bonds) - sheet_block ones are already in sheet_data above, and discard_derived/
+		// world_object ones are intentionally not kept here either (rederivable, or already a
+		// be_world_objects row). Dropped entirely rather than kept as `[]` when there's nothing
+		// to preserve, so a character with no such lists gets the same shape as before this fix.
 		$raw_record = $character;
-		unset( $raw_record['trait_lists'] ); // Already resolved into sheet_data above.
+		if ( $preserved_lists ) {
+			$raw_record['trait_lists'] = $preserved_lists;
+		} else {
+			unset( $raw_record['trait_lists'] );
+		}
 
 		Change_Engine::submit(
 			$character_id,
@@ -640,24 +649,36 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Resolves one trait against a tiered_power block, falling back to
-	 * its combo/ritae sibling trait_list block when the primary
-	 * resolution comes back unresolved. A held Combo Discipline or Ritae
-	 * power appears as a flat entry in the same raw list as an ordinary
-	 * power, distinguished only by matching a name in the sibling
-	 * catalog.
+	 * Resolves one trait against a tiered_power block, falling back to a
+	 * blood-magic sibling tiered_power block and then a combo/ritae
+	 * sibling trait_list block when the primary resolution comes back
+	 * unresolved. A raw "{Tradition}: {Path}" name (Blood Magic moved out
+	 * of vampire-disciplines, BE_PROCESS/0.99.2-workflow.md) or a held
+	 * Combo Discipline/Ritae power appears as a flat entry in the same raw
+	 * list as an ordinary power, distinguished only by matching a name in
+	 * the sibling catalog.
 	 *
 	 * @param array<string,mixed> $trait
 	 * @param object              $block          Decoded tiered_power Schema_Block.
 	 * @param array<string,mixed> $classification `Trait_Mapper::classify_list()`'s result.
 	 * @param string              $game_slug      workflow-0.9.md Step 0.5e-3 - prefers this
-	 *                                             chronicle's own fork of the combo/ritae
-	 *                                             sibling block, if it has customized it.
+	 *                                             chronicle's own fork of a sibling block, if
+	 *                                             it has customized it.
 	 * @return array{0:array<string,mixed>,1:object} The resolution result and whichever
 	 *                                                 block it actually resolved against.
 	 */
-	private static function resolve_tiered_power_with_combo_fallback( array $trait, $block, array $classification, string $game_slug = '' ): array {
+	private static function resolve_tiered_power_with_fallbacks( array $trait, $block, array $classification, string $game_slug = '' ): array {
 		$result = Trait_Mapper::resolve_tiered_power_trait( $trait['name'], $trait['total'], $block );
+
+		if ( $result['outcome'] === 'unresolved' && isset( $classification['blood_magic_block_slug'] ) ) {
+			$blood_magic_block = Schema_Block::find_for_game( $classification['blood_magic_block_slug'], $game_slug );
+			if ( $blood_magic_block ) {
+				$blood_magic_result = Trait_Mapper::resolve_tiered_power_trait( $trait['name'], $trait['total'], $blood_magic_block );
+				if ( in_array( $blood_magic_result['outcome'], [ 'exact', 'normalized' ], true ) ) {
+					return [ $blood_magic_result, $blood_magic_block ];
+				}
+			}
+		}
 
 		if ( $result['outcome'] === 'unresolved' && isset( $classification['combo_block_slug'] ) ) {
 			$combo_block = Schema_Block::find_for_game( $classification['combo_block_slug'], $game_slug );
@@ -694,7 +715,7 @@ class Import_Controller extends Base_Controller {
 		$is_tiered = $block->section_type === 'tiered_power';
 
 		[ $result, $resolved_block ] = $is_tiered
-			? self::resolve_tiered_power_with_combo_fallback( $trait, $block, $classification, $game_slug )
+			? self::resolve_tiered_power_with_fallbacks( $trait, $block, $classification, $game_slug )
 			: [ Trait_Mapper::resolve_trait( $trait['name'], [ $block ] ), $block ];
 
 		if ( ! in_array( $result['outcome'], [ 'fuzzy', 'unresolved', 'ambiguous' ], true ) ) {

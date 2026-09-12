@@ -30,6 +30,24 @@
 	color: #888;
 }
 
+.be-boon-ledger__repaid-note {
+	font-style: italic;
+}
+
+.be-boon-ledger__repay-control {
+	display: inline-flex;
+	gap: 0.35rem;
+	align-items: center;
+}
+
+/* Two-class compound selector, not a bare input[type=text] - D34/Decision 045: the live
+   hello-elementor theme's own reset ships at the same (0,1,1) specificity and would win on
+   source order alone. */
+.be-boon-ledger .be-boon-ledger__repay-control input {
+	width: 12rem;
+	box-sizing: border-box;
+}
+
 .be-boon-ledger__error {
 	padding: 0.75rem;
 	border: 1px solid #b3261e;

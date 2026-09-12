@@ -1,0 +1,1699 @@
+<?xml version="1.0"?>
+<grapevine version="2.396">
+  <rote name="Access This" level="2" duration="One Scene or Hour" lastmodified="11/20/2002 12:13:04 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Initiate" val="3" note="basic"/>
+      <trait name="Forces: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion p. 137]]>
+    </description>
+  </rote>
+  <rote name="Activate Next Clone" level="5" duration="One Month" lastmodified="11/20/2002 12:16:56 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Master" val="9" note="adv."/>
+      <trait name="Mind: Master" val="9" note="adv."/>
+      <trait name="Prime: Adept" val="6" note="int."/>
+      <trait name="Spirit: Adept" val="6" note="int."/>
+      <trait name="Time: Adept" val="6" note="int."/>
+      <trait name="Correspondence: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion p. 137]]>
+    </description>
+  </rote>
+  <rote name="Affix Gauntlet" level="4" duration="One Scene or Hour" lastmodified="10/30/2002 2:24:02 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Spirit: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 166]]>
+    </description>
+  </rote>
+  <rote name="Akashic Cliffs Notes" level="1" lastmodified="11/20/2002 12:17:58 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion p. 138]]>
+    </description>
+  </rote>
+  <rote name="Alloy" level="4" duration="Permanent" lastmodified="10/30/2002 2:13:47 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 157]]>
+    </description>
+  </rote>
+  <rote name="Alter Simple Creature" level="2" duration="Instantaneous" lastmodified="10/30/2002 2:09:16 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 153]]>
+    </description>
+  </rote>
+  <rote name="Alter Weight" level="5" duration="One Minute or Conflict" lastmodified="10/24/2002 3:12:11 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 157]]>
+    </description>
+  </rote>
+  <rote name="Analyze Substance" level="1" duration="One Minute or Conflict" lastmodified="10/24/2002 3:06:36 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 155]]>
+    </description>
+  </rote>
+  <rote name="Animal Form" level="5" duration="One Minute or Conflict" lastmodified="10/24/2002 3:06:00 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 155]]>
+    </description>
+  </rote>
+  <rote name="Animate the Dead" level="2" duration="One Scene or Hour" lastmodified="10/30/2002 2:22:31 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Spirit: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 169]]>
+    </description>
+  </rote>
+  <rote name="Apportation" level="2" duration="One Turn" lastmodified="10/30/2002 2:00:58 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 144]]>
+    </description>
+  </rote>
+  <rote name="Astral Projection" level="5" duration="One Scene or Hour" lastmodified="10/30/2002 2:17:44 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 160]]>
+    </description>
+  </rote>
+  <rote name="Avatar Form" level="3" duration="One Turn" lastmodified="11/20/2002 5:19:00 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Disciple" val="6" note="int."/>
+      <trait name="Mind: Disciple" val="6" note="int."/>
+      <trait name="Prime: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.123]]>
+    </description>
+  </rote>
+  <rote name="Awaken the Inanimate" level="3" duration="See Description" lastmodified="10/30/2002 2:23:36 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Spirit: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 166]]>
+    </description>
+  </rote>
+  <rote name="Ball of Abysmal Flame" level="5" lastmodified="11/20/2002 1:14:32 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Master" val="9" note="adv."/>
+      <trait name="Prime: Master" val="9" note="adv."/>
+      <trait name="Time: Adept" val="6" note="int."/>
+      <trait name="Matter: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.138]]>
+    </description>
+  </rote>
+  <rote name="Battery Man" level="4" duration="One Scene or Hour" lastmodified="11/20/2002 1:16:38 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Adept" val="6" note="int."/>
+      <trait name="Forces: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.138]]>
+    </description>
+  </rote>
+  <rote name="Be Cool" level="2" duration="One Scene or Hour" lastmodified="11/20/2002 1:18:29 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.139]]>
+    </description>
+  </rote>
+  <rote name="Bean" level="1" lastmodified="11/20/2002 1:17:55 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.139]]>
+    </description>
+  </rote>
+  <rote name="Beginner's Luck" level="2" duration="See Description" lastmodified="10/30/2002 2:03:18 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Apprentice" val="3" note="basic"/>
+      <trait name="Entropy: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 147]]>
+    </description>
+  </rote>
+  <rote name="Bending Willow" level="4" duration="One Turn" lastmodified="11/20/2002 1:22:34 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.139]]>
+    </description>
+  </rote>
+  <rote name="Better Body" level="3" duration="One Minute or Conflict" lastmodified="10/24/2002 3:03:15 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 153]]>
+    </description>
+  </rote>
+  <rote name="Binding Oath" level="5" duration="One Scene or Hour" lastmodified="10/30/2002 2:04:58 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 149]]>
+    </description>
+  </rote>
+  <rote name="Blight of Aging" level="4" duration="One Minute or Conflict" lastmodified="10/24/2002 2:50:30 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 148]]>
+    </description>
+  </rote>
+  <rote name="Block Magical Energy" level="2" duration="One Minute or Conflict" lastmodified="10/24/2002 3:39:55 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 170]]>
+    </description>
+  </rote>
+  <rote name="Body of Light" level="2" duration="See Description" lastmodified="10/30/2002 2:19:01 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 162]]>
+    </description>
+  </rote>
+  <rote name="Bond of Blood" level="3" duration="Instantaneous" lastmodified="10/30/2002 2:19:45 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 162]]>
+    </description>
+  </rote>
+  <rote name="Breach the Gauntlet" level="4" duration="One Turn" lastmodified="10/30/2002 2:24:16 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Spirit: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 167]]>
+    </description>
+  </rote>
+  <rote name="Break the Dreamshell" level="5" duration="Instantaneous" lastmodified="10/30/2002 2:24:26 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Spirit: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 167]]>
+    </description>
+  </rote>
+  <rote name="Bubble of Reality" level="4" duration="One Turn" lastmodified="10/30/2002 2:02:05 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 145]]>
+    </description>
+  </rote>
+  <rote name="Butcher's Disguise" level="3" duration="One Minute or Conflict" lastmodified="11/20/2002 5:22:32 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.121]]>
+    </description>
+  </rote>
+  <rote name="Call Spirit" level="2" duration="See Description" lastmodified="10/30/2002 2:22:54 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Spirit: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 165]]>
+    </description>
+  </rote>
+  <rote name="Call the Tempest" level="4" duration="One Scene or Hour" lastmodified="11/20/2002 1:33:14 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Adept" val="6" note="int."/>
+      <trait name="Entropy: Disciple" val="6" note="int."/>
+      <trait name="Spirit: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.139]]>
+    </description>
+  </rote>
+  <rote name="Camouflage Field Generator" level="3" duration="One Minute or Conflict" lastmodified="11/20/2002 5:24:02 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.121]]>
+    </description>
+  </rote>
+  <rote name="Chain" level="3" duration="One Scene or Hour" lastmodified="10/30/2002 2:01:13 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 145]]>
+    </description>
+  </rote>
+  <rote name="Change the Flow of the Masses" level="4" duration="One Minute or Conflict" lastmodified="11/20/2002 1:42:07 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Initiate" val="3" note="basic"/>
+      <trait name="Entropy: Adept" val="6" note="int."/>
+      <trait name="Time: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.140]]>
+    </description>
+  </rote>
+  <rote name="Circle Ward" level="2" duration="One Scene or Hour" lastmodified="11/20/2002 1:48:24 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Spirit: Initiate" val="3" note="basic"/>
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+      <trait name="Mind: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.141]]>
+    </description>
+  </rote>
+  <rote name="Cleansing Penance" level="3" lastmodified="11/20/2002 1:46:31 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Disciple" val="6" note="int."/>
+      <trait name="Entropy: Disciple" val="6" note="int."/>
+      <trait name="Life: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.141]]>
+    </description>
+  </rote>
+  <rote name="Co-Location" level="5" duration="One Turn" lastmodified="10/30/2002 2:02:34 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 146]]>
+    </description>
+  </rote>
+  <rote name="Code: FIDA" level="5" duration="Instantaneous" lastmodified="11/20/2002 2:06:49 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Dimensional Science: Master" val="9" note="adv."/>
+      <trait name="Mind: Adept" val="6" note="int."/>
+      <trait name="Life: Disciple" val="6" note="int."/>
+      <trait name="Correspondence: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.142]]>
+    </description>
+  </rote>
+  <rote name="Command the Summoned Beast" level="5" lastmodified="11/20/2002 2:10:00 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Master" val="9" note="adv."/>
+      <trait name="Spirit: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.142]]>
+    </description>
+  </rote>
+  <rote name="Commune" level="2" duration="One Scene or Hour" lastmodified="11/20/2002 2:12:26 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Spirit: Initiate" val="3" note="basic"/>
+      <trait name="Time: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.143]]>
+    </description>
+  </rote>
+  <rote name="Consecration" level="1" duration="Permanent" lastmodified="10/30/2002 2:18:19 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 161]]>
+    </description>
+  </rote>
+  <rote name="Contingent Effect" level="4" duration="See Description" lastmodified="10/30/2002 2:26:28 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Time: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 168]]>
+    </description>
+  </rote>
+  <rote name="Correspondence Sensing" level="2" duration="One Minute or Conflict" lastmodified="10/30/2002 1:59:26 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 144]]>
+    </description>
+  </rote>
+  <rote name="Cracks in the Conscience" level="2" duration="One Scene or Hour" lastmodified="11/20/2002 2:16:56 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Apprentice" val="3" note="basic"/>
+      <trait name="Mind: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.143]]>
+    </description>
+  </rote>
+  <rote name="Create Mind" level="5" duration="Permanent" lastmodified="10/30/2002 2:17:48 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 161]]>
+    </description>
+  </rote>
+  <rote name="Create Normal Item" level="2" duration="One Minute or Conflict" lastmodified="10/24/2002 3:41:03 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Initiate" val="3" note="basic"/>
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 170]]>
+    </description>
+  </rote>
+  <rote name="Create Talismans and Artifacts" level="4" duration="Permanent" lastmodified="10/30/2002 2:20:15 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 163]]>
+    </description>
+  </rote>
+  <rote name="Curse of Luck" level="4" duration="One Turn" lastmodified="11/20/2002 2:27:36 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Adept" val="6" note="int."/>
+      <trait name="Mind: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.143]]>
+    </description>
+  </rote>
+  <rote name="Darksight" level="1" duration="One Minute or Conflict" lastmodified="10/24/2002 2:54:42 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 150]]>
+    </description>
+  </rote>
+  <rote name="Decrepify" level="4" duration="Instantaneous" lastmodified="10/30/2002 2:04:53 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 170]]>
+    </description>
+  </rote>
+  <rote name="Decrypt Thoughts" level="3" lastmodified="11/20/2002 2:29:48 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Disciple" val="6" note="int."/>
+      <trait name="Mind: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.143]]>
+    </description>
+  </rote>
+  <rote name="Deep Umbra Travel" level="5" duration="One Scene or Hour" lastmodified="10/30/2002 2:24:31 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Spirit: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 167]]>
+    </description>
+  </rote>
+  <rote name="Deflect Bullets [Forces]" level="2" duration="One Minute or Conflict" lastmodified="10/24/2002 3:43:21 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 170]]>
+    </description>
+  </rote>
+  <rote name="Deflect Bullets [Matter]" level="3" duration="One Minute or Conflict" lastmodified="10/24/2002 3:43:52 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 170]]>
+    </description>
+  </rote>
+  <rote name="Destroy Structures" level="3" duration="Instantaneous" lastmodified="10/30/2002 2:13:15 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 156]]>
+    </description>
+  </rote>
+  <rote name="Detect Possession" level="1" duration="One Minute or Conflict" lastmodified="10/24/2002 3:27:56 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Spirit: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 165]]>
+    </description>
+  </rote>
+  <rote name="Discordant Sanctum" level="2" lastmodified="11/20/2002 2:33:20 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Initiate" val="3" note="basic"/>
+      <trait name="Mind: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.144]]>
+    </description>
+  </rote>
+  <rote name="Distort Time" level="3" duration="One Turn" lastmodified="10/30/2002 2:25:42 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Time: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 168]]>
+    </description>
+  </rote>
+  <rote name="Divinations" level="2" duration="See Description" lastmodified="10/30/2002 2:25:02 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Time: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 168]]>
+    </description>
+  </rote>
+  <rote name="Duct Tape and WD-40" level="1" duration="One Scene or Hour" lastmodified="11/20/2002 2:42:02 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Apprentice" val="3" note="basic"/>
+      <trait name="Matter: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.144]]>
+    </description>
+  </rote>
+  <rote name="Electrical Chaos" level="2" duration="One Turn" lastmodified="10/30/2002 2:05:53 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 150]]>
+    </description>
+  </rote>
+  <rote name="Embracing the Earth Mother" level="4" duration="One Minute or Conflict" lastmodified="10/24/2002 2:58:40 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 151]]>
+    </description>
+  </rote>
+  <rote name="Empathic Projection" level="2" duration="Instantaneous" lastmodified="10/30/2002 2:14:55 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 159]]>
+    </description>
+  </rote>
+  <rote name="Enchant Life" level="3" duration="One Minute or Conflict" lastmodified="10/24/2002 3:23:21 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 163]]>
+    </description>
+  </rote>
+  <rote name="Enchant Weapon" level="2" duration="One Minute or Conflict" lastmodified="10/24/2002 3:21:46 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 162]]>
+    </description>
+  </rote>
+  <rote name="Encrypt Thoughts" level="2" lastmodified="11/20/2002 2:44:20 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Apprentice" val="3" note="basic"/>
+      <trait name="Life: Apprentice" val="3" note="basic"/>
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.144]]>
+    </description>
+  </rote>
+  <rote name="Energy Shield" level="2" duration="One Turn" lastmodified="10/30/2002 2:06:13 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 150]]>
+    </description>
+  </rote>
+  <rote name="Enhance Weapon" level="3" duration="One Minute or Conflict" lastmodified="10/24/2002 3:44:34 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Disciple" val="6" note="int."/>
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 170]]>
+    </description>
+  </rote>
+  <rote name="Fall Upon Thy Knees" level="4" lastmodified="11/20/2002 2:49:14 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Adept" val="6" note="int."/>
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.144]]>
+    </description>
+  </rote>
+  <rote name="Faux Curse" level="2" duration="See Description" lastmodified="11/20/2002 2:58:55 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.145]]>
+    </description>
+  </rote>
+  <rote name="Feng Shui" level="3" lastmodified="11/20/2002 3:05:02 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Disciple" val="6" note="int."/>
+      <trait name="Prime: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.145]]>
+    </description>
+  </rote>
+  <rote name="Filter All-Space" level="3" duration="One Minute or Conflict" lastmodified="10/30/2002 2:00:00 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 145]]>
+    </description>
+  </rote>
+  <rote name="Find Reality Flaws" level="1" lastmodified="11/20/2002 3:07:00 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Apprentice" val="3" note="basic"/>
+      <trait name="Prime: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.145]]>
+    </description>
+  </rote>
+  <rote name="Flames of Purification" level="4" duration="Instantaneous" lastmodified="10/30/2002 2:20:44 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 164]]>
+    </description>
+  </rote>
+  <rote name="Fly" level="2" duration="One Minute or Conflict" lastmodified="10/24/2002 3:45:28 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 170]]>
+    </description>
+  </rote>
+  <rote name="Fount of Paradise" level="5" duration="Instantaneous" lastmodified="10/30/2002 2:21:52 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 164]]>
+    </description>
+  </rote>
+  <rote name="Fragments of Dream" level="1" duration="One Minute or Conflict" lastmodified="10/24/2002 3:07:46 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 156]]>
+    </description>
+  </rote>
+  <rote name="Friction Curse" level="3" duration="One Turn" lastmodified="10/30/2002 2:06:44 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 151]]>
+    </description>
+  </rote>
+  <rote name="Games of Luck" level="2" duration="See Description" lastmodified="10/30/2002 2:03:34 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 147]]>
+    </description>
+  </rote>
+  <rote name="Got a Hunch" level="2" lastmodified="11/20/2002 3:07:48 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Initiate" val="3" note="basic"/>
+      <trait name="Spirit: Initiate" val="3" note="basic"/>
+      <trait name="Time: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.145]]>
+    </description>
+  </rote>
+  <rote name="Gremlins" level="3" duration="One Scene or Hour" lastmodified="11/20/2002 3:13:18 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Spirit: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.146]]>
+    </description>
+  </rote>
+  <rote name="Guilty Whispers" level="4" duration="One Scene or Hour" lastmodified="11/20/2002 3:14:57 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Initiate" val="3" note="basic"/>
+      <trait name="Mind: Adept" val="6" note="int."/>
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.146]]>
+    </description>
+  </rote>
+  <rote name="Head of a Pin" level="2" lastmodified="11/20/2002 3:17:57 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.147]]>
+    </description>
+  </rote>
+  <rote name="Heal Self" level="2" duration="Instantaneous" lastmodified="10/30/2002 2:09:33 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 153]]>
+    </description>
+  </rote>
+  <rote name="Heal Wounds" level="2" duration="One Minute or Conflict" lastmodified="10/24/2002 3:46:03 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 170]]>
+    </description>
+  </rote>
+  <rote name="Heart's Blood" level="1" duration="Instantaneous" lastmodified="10/30/2002 2:18:26 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 161]]>
+    </description>
+  </rote>
+  <rote name="Hello, my name is..." level="4" duration="One Minute or Conflict" lastmodified="11/20/2002 5:25:42 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.120]]>
+    </description>
+  </rote>
+  <rote name="Hermes Portal" level="4" duration="One Turn" lastmodified="10/30/2002 2:02:13 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 145]]>
+    </description>
+  </rote>
+  <rote name="Historic Editing" level="5" lastmodified="11/20/2002 3:20:08 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Master" val="9" note="adv."/>
+      <trait name="Time: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.147]]>
+    </description>
+  </rote>
+  <rote name="Holy Stroke" level="2" duration="See Description" lastmodified="10/30/2002 2:19:21 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 162]]>
+    </description>
+  </rote>
+  <rote name="Hungarian Phrase Book" level="5" lastmodified="11/20/2002 3:20:52 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.147]]>
+    </description>
+  </rote>
+  <rote name="Hurl Elemental Attacks" level="3" duration="Instantaneous" lastmodified="10/30/2002 2:07:43 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Disciple" val="6" note="int."/>
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 171]]>
+    </description>
+  </rote>
+  <rote name="Imbue the Living Vessel" level="3" duration="One Day" lastmodified="11/20/2002 3:26:18 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Disciple" val="6" note="int."/>
+      <trait name="Prime: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.148]]>
+    </description>
+  </rote>
+  <rote name="Improve Senses" level="2" duration="One Minute or Conflict" lastmodified="10/24/2002 3:47:09 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 171]]>
+    </description>
+  </rote>
+  <rote name="Inferno" level="5" duration="Instantaneous" lastmodified="10/30/2002 2:08:48 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 152]]>
+    </description>
+  </rote>
+  <rote name="Influence Emotions" level="2" duration="One Minute or Conflict" lastmodified="10/24/2002 3:47:44 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 171]]>
+    </description>
+  </rote>
+  <rote name="Information Glut" level="3" duration="One Scene or Hour" lastmodified="11/20/2002 3:27:47 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Initiate" val="3" note="basic"/>
+      <trait name="Mind: Disciple" val="6" note="int."/>
+      <trait name="Time: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.148]]>
+    </description>
+  </rote>
+  <rote name="Instant Karma" level="4" duration="One Day" lastmodified="11/20/2002 3:31:16 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Disciple" val="6" note="int."/>
+      <trait name="Entropy: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.148]]>
+    </description>
+  </rote>
+  <rote name="Iron Avatar" level="3" duration="One Turn" lastmodified="11/20/2002 5:16:54 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Disciple" val="6" note="int."/>
+      <trait name="Mind: Initiate" val="3" note="basic"/>
+      <trait name="Spirit: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.123]]>
+    </description>
+  </rote>
+  <rote name="Knock Out" level="3" duration="One Turn" lastmodified="11/20/2002 3:33:31 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Disciple" val="6" note="int."/>
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.149]]>
+    </description>
+  </rote>
+  <rote name="Know the Lepers Mind" level="3" duration="One Scene or Hour" lastmodified="11/20/2002 3:36:03 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Initiate" val="3" note="basic"/>
+      <trait name="Spirit: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.149]]>
+    </description>
+  </rote>
+  <rote name="Lambs to the Slaughter" level="3" duration="Instantaneous" lastmodified="10/30/2002 2:20:10 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 163]]>
+    </description>
+  </rote>
+  <rote name="Landscape of the Mind" level="1" duration="One Minute or Conflict" lastmodified="10/30/2002 1:57:51 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 144]]>
+    </description>
+  </rote>
+  <rote name="Life Scan" level="1" duration="One Minute or Conflict" lastmodified="10/24/2002 3:01:50 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 153]]>
+    </description>
+  </rote>
+  <rote name="Like Clockwork" level="3" duration="One Scene or Hour" lastmodified="10/30/2002 2:03:43 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 148]]>
+    </description>
+  </rote>
+  <rote name="Locate Disorder and Weakness" level="1" duration="One Minute or Conflict" lastmodified="10/24/2002 2:45:08 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 147]]>
+    </description>
+  </rote>
+  <rote name="Manipulate Memory" level="4" duration="See Description" lastmodified="10/30/2002 2:16:52 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 160]]>
+    </description>
+  </rote>
+  <rote name="Manna from Heaven" level="2" lastmodified="11/20/2002 3:41:12 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Initiate" val="3" note="basic"/>
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.150]]>
+    </description>
+  </rote>
+  <rote name="Masochism Tango" level="3" duration="One Minute or Conflict" lastmodified="11/20/2002 3:42:12 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Disciple" val="6" note="int."/>
+      <trait name="Mind: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.150]]>
+    </description>
+  </rote>
+  <rote name="Master's Enchantment" level="5" duration="See Description" lastmodified="10/30/2002 2:22:03 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 164]]>
+    </description>
+  </rote>
+  <rote name="Matter Association" level="5" duration="One Minute or Conflict" lastmodified="10/24/2002 3:12:51 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 158]]>
+    </description>
+  </rote>
+  <rote name="Melt and Reform" level="2" duration="One Turn" lastmodified="10/30/2002 2:12:26 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 156]]>
+    </description>
+  </rote>
+  <rote name="Midwife's Blessing" level="4" duration="One Minute or Conflict" lastmodified="10/24/2002 2:51:21 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 148]]>
+    </description>
+  </rote>
+  <rote name="Mimir's Head" level="5" duration="One Day" lastmodified="11/20/2002 3:46:02 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Master" val="9" note="adv."/>
+      <trait name="Spirit: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.150]]>
+    </description>
+  </rote>
+  <rote name="Mind Empowerment" level="1" duration="One Minute or Conflict" lastmodified="10/24/2002 3:13:11 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 158]]>
+    </description>
+  </rote>
+  <rote name="Mind GREP" level="3" duration="One Minute or Conflict" lastmodified="11/20/2002 3:47:09 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.151]]>
+    </description>
+  </rote>
+  <rote name="Moment of Inspiration" level="1" lastmodified="11/20/2002 3:49:35 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Spirit: Apprentice" val="3" note="basic"/>
+      <trait name="Time: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.151]]>
+    </description>
+  </rote>
+  <rote name="Mr. Fusion's Clean Burning Fuel Fabrication Formula" level="3" lastmodified="11/20/2002 3:50:52 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.151]]>
+    </description>
+  </rote>
+  <rote name="Multiple Action [Life]" level="2" duration="See Description" lastmodified="10/30/2002 2:10:14 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 171]]>
+    </description>
+  </rote>
+  <rote name="Multiple Action [Time]" level="3" duration="See Description" lastmodified="10/30/2002 2:25:32 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Time: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 171]]>
+    </description>
+  </rote>
+  <rote name="Murder of Crows" level="3" duration="One Scene or Hour" lastmodified="11/20/2002 3:52:11 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Disciple" val="6" note="int."/>
+      <trait name="Mind: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.151]]>
+    </description>
+  </rote>
+  <rote name="Mutate Ephemera" level="5" duration="See Description" lastmodified="10/30/2002 2:05:11 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 149]]>
+    </description>
+  </rote>
+  <rote name="Mutate Form" level="4" duration="One Minute or Conflict" lastmodified="10/24/2002 3:06:45 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 154]]>
+    </description>
+  </rote>
+  <rote name="My God can Beat up your God" level="3" duration="One Minute or Conflict" lastmodified="11/20/2002 3:56:00 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Disciple" val="6" note="int."/>
+      <trait name="Spirit: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.152]]>
+    </description>
+  </rote>
+  <rote name="Mystic Tag" level="2" lastmodified="11/20/2002 3:57:29 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+      <trait name="Spirit: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.152]]>
+    </description>
+  </rote>
+  <rote name="Nice Boots, Wanna Fuck?" level="3" lastmodified="11/20/2002 4:00:46 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Disciple" val="6" note="int."/>
+      <trait name="Mind: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.152]]>
+    </description>
+  </rote>
+  <rote name="No-Mind" level="1" duration="One Minute or Conflict" lastmodified="10/24/2002 3:13:32 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 158]]>
+    </description>
+  </rote>
+  <rote name="Paradox Ward" level="5" duration="See Description" lastmodified="10/30/2002 2:22:14 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 164]]>
+    </description>
+  </rote>
+  <rote name="Paralyze Opponent [Forces]" level="2" duration="One Turn" lastmodified="10/30/2002 2:07:00 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 171]]>
+    </description>
+  </rote>
+  <rote name="Paralyze Opponent [Life]" level="3" duration="One Turn" lastmodified="10/30/2002 2:10:20 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 171]]>
+    </description>
+  </rote>
+  <rote name="Paralyze Opponent [Matter]" level="3" duration="One Turn" lastmodified="10/30/2002 2:13:19 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 171]]>
+    </description>
+  </rote>
+  <rote name="Parma Magica" level="3" lastmodified="11/20/2002 4:19:56 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.152]]>
+    </description>
+  </rote>
+  <rote name="Perfect Metamorphosis" level="5" duration="One Minute or Conflict" lastmodified="10/24/2002 3:05:55 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 155]]>
+    </description>
+  </rote>
+  <rote name="Perfect Time" level="1" duration="One Minute or Conflict" lastmodified="10/24/2002 3:32:39 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Time: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 167]]>
+    </description>
+  </rote>
+  <rote name="Physiological Emotion Control" level="4" duration="One Minute or Conflict" lastmodified="10/24/2002 3:04:40 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 154]]>
+    </description>
+  </rote>
+  <rote name="Place in the Dance" level="1" lastmodified="11/20/2002 4:21:29 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.153]]>
+    </description>
+  </rote>
+  <rote name="Plastic Body" level="4" duration="One Turn" lastmodified="11/20/2002 4:22:41 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Adept" val="6" note="int."/>
+      <trait name="Life: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.153]]>
+    </description>
+  </rote>
+  <rote name="Polyappearance" level="4" duration="One Minute or Conflict" lastmodified="10/24/2002 2:43:00 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 146]]>
+    </description>
+  </rote>
+  <rote name="Portal's Herald" level="3" lastmodified="11/20/2002 4:24:24 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Initiate" val="3" note="basic"/>
+      <trait name="Life: Apprentice" val="3" note="basic"/>
+      <trait name="Spirit: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.153]]>
+    </description>
+  </rote>
+  <rote name="Possession" level="4" duration="One Turn" lastmodified="10/30/2002 2:17:02 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 160]]>
+    </description>
+  </rote>
+  <rote name="Praise Asphalta" level="3" duration="Instantaneous" lastmodified="11/20/2002 4:25:24 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Disciple" val="6" note="int."/>
+      <trait name="Spirit: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.154]]>
+    </description>
+  </rote>
+  <rote name="Prayer of Healing Revelation" level="1" duration="One Minute or Conflict" lastmodified="10/24/2002 3:01:44 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 153]]>
+    </description>
+  </rote>
+  <rote name="Precipitate the Summoned Form" level="4" duration="One Scene or Hour" lastmodified="11/20/2002 4:34:11 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Adept" val="6" note="int."/>
+      <trait name="Spirit: Disciple" val="6" note="int."/>
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.154]]>
+    </description>
+  </rote>
+  <rote name="Probe Thoughts" level="3" duration="See Description" lastmodified="10/30/2002 2:16:30 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 159]]>
+    </description>
+  </rote>
+  <rote name="Programmed Event" level="4" duration="One Scene or Hour" lastmodified="10/30/2002 2:26:37 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Time: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 169]]>
+    </description>
+  </rote>
+  <rote name="Psychic Attack" level="2" duration="Instantaneous" lastmodified="10/30/2002 2:15:31 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 171]]>
+    </description>
+  </rote>
+  <rote name="Psychic Impression" level="2" duration="One Scene or Hour" lastmodified="10/30/2002 2:15:37 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 159]]>
+    </description>
+  </rote>
+  <rote name="Pyro Manos" level="2" duration="Instantaneous" lastmodified="11/20/2002 4:29:00 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.154]]>
+    </description>
+  </rote>
+  <rote name="Quantify Energy" level="1" duration="One Minute or Conflict" lastmodified="10/24/2002 2:54:58 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 150]]>
+    </description>
+  </rote>
+  <rote name="Re-live Experience" level="3" duration="One Minute or Conflict" lastmodified="11/20/2002 4:32:51 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Apprentice" val="3" note="basic"/>
+      <trait name="Time: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.155]]>
+    </description>
+  </rote>
+  <rote name="Red Ones Go Faster" level="2" duration="One Scene or Hour" lastmodified="11/20/2002 4:29:54 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.154]]>
+    </description>
+  </rote>
+  <rote name="Release the Red Death" level="4" lastmodified="11/20/2002 4:30:54 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Adept" val="6" note="int."/>
+      <trait name="Spirit: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.155]]>
+    </description>
+  </rote>
+  <rote name="Remove Divine Favor" level="3" duration="Instantaneous" lastmodified="11/20/2002 4:40:24 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.155]]>
+    </description>
+  </rote>
+  <rote name="Reveal the Holy Path" level="3" lastmodified="11/20/2002 4:39:01 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Disciple" val="6" note="int."/>
+      <trait name="Prime: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.155]]>
+    </description>
+  </rote>
+  <rote name="Ring of Truth" level="1" duration="One Minute or Conflict" lastmodified="10/24/2002 2:45:58 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 147]]>
+    </description>
+  </rote>
+  <rote name="Ringing Strike" level="3" duration="Instantaneous" lastmodified="11/20/2002 4:42:35 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.156]]>
+    </description>
+  </rote>
+  <rote name="Sanctify Sacred Relic" level="2" lastmodified="11/20/2002 4:44:03 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Apprentice" val="3" note="basic"/>
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.156]]>
+    </description>
+  </rote>
+  <rote name="Sculpture" level="3" duration="One Turn" lastmodified="10/30/2002 2:13:32 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 157]]>
+    </description>
+  </rote>
+  <rote name="See the Tainted Soul" level="1" lastmodified="11/20/2002 4:45:27 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Apprentice" val="3" note="basic"/>
+      <trait name="Prime: Apprentice" val="3" note="basic"/>
+      <trait name="Spirit: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.156]]>
+    </description>
+  </rote>
+  <rote name="Semi-Auto Cad-Cam" level="5" duration="One Turn" lastmodified="11/20/2002 4:48:32 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Master" val="9" note="adv."/>
+      <trait name="Matter: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.157]]>
+    </description>
+  </rote>
+  <rote name="Sense Connection" level="1" duration="One Minute or Conflict" lastmodified="10/30/2002 1:57:55 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 143]]>
+    </description>
+  </rote>
+  <rote name="Sense Lies" level="2" duration="One Turn" lastmodified="10/30/2002 2:16:11 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 171]]>
+    </description>
+  </rote>
+  <rote name="Sense the Fleeting Moment" level="1" lastmodified="11/20/2002 4:49:39 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Time: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.157]]>
+    </description>
+  </rote>
+  <rote name="Seven-League Stride" level="3" duration="One Minute or Conflict" lastmodified="10/24/2002 2:38:42 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 145]]>
+    </description>
+  </rote>
+  <rote name="Sharing the Experience" level="3" duration="One Minute" lastmodified="11/20/2002 4:51:50 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Initiate" val="3" note="basic"/>
+      <trait name="Mind: Disciple" val="6" note="int."/>
+      <trait name="Time: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.157]]>
+    </description>
+  </rote>
+  <rote name="Sidestep Time" level="5" duration="See Description" lastmodified="10/30/2002 2:27:05 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Time: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 169]]>
+    </description>
+  </rote>
+  <rote name="Slay Machine" level="3" duration="Instantaneous" lastmodified="10/30/2002 2:04:03 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 148]]>
+    </description>
+  </rote>
+  <rote name="Solomon's Binding" level="3" lastmodified="11/20/2002 4:54:09 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Disciple" val="6" note="int."/>
+      <trait name="Spirit: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.158]]>
+    </description>
+  </rote>
+  <rote name="Spatial Mutations" level="5" duration="One Turn" lastmodified="10/30/2002 2:02:45 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 146]]>
+    </description>
+  </rote>
+  <rote name="Spirit Cloak" level="2" duration="One Scene or Hour" lastmodified="11/20/2002 4:55:08 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Initiate" val="3" note="basic"/>
+      <trait name="Spirit: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.158]]>
+    </description>
+  </rote>
+  <rote name="Spirit Sight" level="1" duration="One Minute or Conflict" lastmodified="10/24/2002 3:28:07 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Spirit: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 165]]>
+    </description>
+  </rote>
+  <rote name="Spirit's Caress" level="2" duration="One Turn" lastmodified="10/30/2002 2:23:03 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Spirit: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 166]]>
+    </description>
+  </rote>
+  <rote name="Spoliato Posterus ad Pensio Nam Nunc" level="2" lastmodified="11/20/2002 4:58:44 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Apprentice" val="3" note="basic"/>
+      <trait name="Prime: Apprentice" val="3" note="basic"/>
+      <trait name="Time: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.158]]>
+    </description>
+  </rote>
+  <rote name="Stepping Sideways" level="3" duration="Instantaneous" lastmodified="10/30/2002 2:23:54 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Spirit: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 166]]>
+    </description>
+  </rote>
+  <rote name="Storm Watch" level="4" duration="One Minute or Conflict" lastmodified="10/24/2002 2:59:11 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 151]]>
+    </description>
+  </rote>
+  <rote name="Straw into Gold" level="2" duration="One Turn" lastmodified="10/30/2002 2:12:40 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 156]]>
+    </description>
+  </rote>
+  <rote name="Surprise, You're Dead!" level="5" lastmodified="11/20/2002 5:01:11 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Entropy: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.158]]>
+    </description>
+  </rote>
+  <rote name="Taliesin's Song" level="3" duration="One Minute or Conflict" lastmodified="11/20/2002 5:03:54 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Disciple" val="6" note="int."/>
+      <trait name="Prime: Initiate" val="3" note="basic"/>
+      <trait name="Spirit: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.159]]>
+    </description>
+  </rote>
+  <rote name="Telekinesis" level="3" duration="One Turn" lastmodified="10/30/2002 2:07:56 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 151]]>
+    </description>
+  </rote>
+  <rote name="Telepathy" level="3" duration="One Minute or Conflict" lastmodified="10/24/2002 3:16:12 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 160]]>
+    </description>
+  </rote>
+  <rote name="Tempest in a Teapot" level="5" duration="One Turn" lastmodified="10/30/2002 2:08:51 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 152]]>
+    </description>
+  </rote>
+  <rote name="Time Sense" level="1" duration="One Minute or Conflict" lastmodified="10/24/2002 3:33:47 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Time: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 168]]>
+    </description>
+  </rote>
+  <rote name="Time Travel" level="5" duration="Instantaneous" lastmodified="10/30/2002 2:27:21 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Time: Master" val="9" note="adv."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 169]]>
+    </description>
+  </rote>
+  <rote name="Time Ward" level="2" duration="One Scene or Hour" lastmodified="10/30/2002 2:25:27 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Time: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 168]]>
+    </description>
+  </rote>
+  <rote name="Time Warp" level="3" duration="See Description" lastmodified="10/30/2002 2:26:19 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Time: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 168]]>
+    </description>
+  </rote>
+  <rote name="Transformers" level="4" duration="One Minute or Conflict" lastmodified="10/24/2002 3:11:27 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 157]]>
+    </description>
+  </rote>
+  <rote name="Trick Shot" level="1" lastmodified="11/20/2002 5:05:32 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Apprentice" val="3" note="basic"/>
+      <trait name="Entropy: Apprentice" val="3" note="basic"/>
+      <trait name="Forces: Apprentice" val="3" note="basic"/>
+      <trait name="Time: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.159]]>
+    </description>
+  </rote>
+  <rote name="Trippy Light Show" level="2" duration="One Scene or Hour" lastmodified="11/20/2002 5:07:21 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.159]]>
+    </description>
+  </rote>
+  <rote name="Turn Invisible [Forces]" level="2" duration="One Minute or Conflict" lastmodified="10/29/2002 12:14:11 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Forces: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 171]]>
+    </description>
+  </rote>
+  <rote name="Turn Invisible [Life]" level="2" duration="One Minute or Conflict" lastmodified="10/29/2002 12:15:14 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 171]]>
+    </description>
+  </rote>
+  <rote name="Turn Invisible [Mind]" level="3" duration="One Minute or Conflict" lastmodified="10/29/2002 12:12:51 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Mind: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 171]]>
+    </description>
+  </rote>
+  <rote name="Undying Endurance" level="3" duration="One Day" lastmodified="11/20/2002 5:08:07 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.160]]>
+    </description>
+  </rote>
+  <rote name="Void Strike" level="4" lastmodified="11/20/2002 5:09:07 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Initiate" val="3" note="basic"/>
+      <trait name="Spirit: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.160]]>
+    </description>
+  </rote>
+  <rote name="Ward" level="2" duration="One Scene or Hour" lastmodified="10/30/2002 2:01:02 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 144]]>
+    </description>
+  </rote>
+  <rote name="Ward the Inner Sanctum" level="3" duration="One Scene or Hour" lastmodified="11/20/2002 5:12:28 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Disciple" val="6" note="int."/>
+      <trait name="Life: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.160]]>
+    </description>
+  </rote>
+  <rote name="Watch the Weaving" level="1" duration="One Minute or Conflict" lastmodified="10/24/2002 3:19:52 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 161]]>
+    </description>
+  </rote>
+  <rote name="Wellspring" level="4" duration="Instantaneous" lastmodified="10/30/2002 2:21:08 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Prime: Adept" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 164]]>
+    </description>
+  </rote>
+  <rote name="Whereami?" level="1" duration="One Minute or Conflict" lastmodified="10/30/2002 1:57:58 PM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Correspondence: Apprentice" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension, p. 144]]>
+    </description>
+  </rote>
+  <rote name="Woad Warrior" level="3" duration="See Description" lastmodified="11/20/2002 5:14:37 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Life: Disciple" val="6" note="int."/>
+      <trait name="Mind: Initiate" val="3" note="basic"/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.161]]>
+    </description>
+  </rote>
+  <rote name="Work or Else" level="3" lastmodified="11/20/2002 5:15:15 AM">
+    <traitlist name="Spheres" abc="no" atomic="yes" display="5">
+      <trait name="Matter: Disciple" val="6" note="int."/>
+      <trait name="Spirit: Disciple" val="6" note="int."/>
+    </traitlist>
+    <description>
+      <![CDATA[Laws of Ascension Companion, p.161]]>
+    </description>
+  </rote>
+</grapevine>

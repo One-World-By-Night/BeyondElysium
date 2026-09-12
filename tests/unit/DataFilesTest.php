@@ -28,6 +28,9 @@ class DataFilesTest extends TestCase {
 		return [
 			'GVM menu XML' => [ 'Grapevine Menus XML.gvm', 'GV301Source/Code/Grapevine Menus XML.gvm' ],
 			'query keys'   => [ 'qkdata.gvd', 'GV301Source/Code/qkdata.gvd' ],
+			// BE_PROCESS/0.99.2-workflow.md, "mage-rotes ships as an empty catalog": the
+			// data and the reader both already existed, nothing had ever joined them.
+			'mage rotes'   => [ 'Rotes.gex', 'GV301Source/Code/Rotes.gex' ],
 		];
 	}
 

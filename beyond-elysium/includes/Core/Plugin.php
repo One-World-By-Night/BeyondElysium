@@ -95,6 +95,8 @@ class Plugin {
 				'be_manage_schemas'     => current_user_can( 'be_manage_schemas' ),
 				// Gates whether WorldObjectCard.tsx shows the full connection manager or a read-only list.
 				'be_manage_connections' => current_user_can( 'be_manage_connections' ),
+				// Gates BoonLedger.tsx's record/repay controls (the `boons` chronicle role).
+				'be_manage_boons'       => current_user_can( 'be_manage_boons' ),
 			],
 		] );
 

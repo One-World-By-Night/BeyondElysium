@@ -28,7 +28,7 @@ function errorMessage( error: unknown ): string {
 	return __( 'Something went wrong.', 'beyond-elysium' );
 }
 
-const ROLES: GameMemberRole[] = [ 'hst', 'ast', 'narrator', 'player' ];
+const ROLES: GameMemberRole[] = [ 'hst', 'ast', 'narrator', 'boons', 'player' ];
 const SEARCH_DEBOUNCE_MS = 300;
 
 /**

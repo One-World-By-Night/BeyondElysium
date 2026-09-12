@@ -221,7 +221,14 @@ class Game_Import_Controller extends Base_Controller {
 				if ( $name === '' ) {
 					$name = 'Imported Chronicle';
 				}
-				$new_game_id = Game::create( [ 'name' => $name ] );
+				// extended_health (the file's own 7-vs-10 health-level track choice) has no
+				// BE resource_pool/UI to drive yet - stored so a real import file's value
+				// survives rather than being silently discarded (0.99.2-workflow.md, "Imported
+				// health levels are silently discarded"), not yet acted on anywhere.
+				$new_game_id = Game::create( [
+					'name'     => $name,
+					'settings' => [ 'extended_health' => (bool) ( $parsed['extended_health'] ?? false ) ],
+				] );
 				if ( ! $new_game_id ) {
 					throw new \RuntimeException( 'Could not create the new chronicle.' );
 				}

@@ -61,6 +61,21 @@ class Change_Engine {
 			'reason'       => $resolved['reason'],
 		];
 
+		// A still-pending resubmission of the same trait/field overwrites the one existing
+		// row instead of leaving a second, indistinguishable one in the queue (BE_PROCESS/
+		// 0.99.2-workflow.md, "Resubmitting creates duplicate pending changes"). Only applies
+		// when this submission would itself be pending - an auto-approved change is already a
+		// done deal, never a "duplicate pending" concern.
+		if ( $status === 'pending' ) {
+			$duplicate_key = self::pending_duplicate_key( $change_data['change_type'], (array) ( $change_data['change_data'] ?? [] ) );
+			if ( $duplicate_key !== null ) {
+				$existing_id = self::find_pending_duplicate( $character_id, $change_data['change_type'], $duplicate_key );
+				if ( $existing_id !== null ) {
+					return Change::update_pending_data( $existing_id, $insert ) ? $existing_id : 0;
+				}
+			}
+		}
+
 		$change_id = Change::create( $insert );
 		if ( ! $change_id ) {
 			return 0;
@@ -72,6 +87,61 @@ class Change_Engine {
 		}
 
 		return $change_id;
+	}
+
+	/**
+	 * The field(s) that identify WHICH trait/resource/identity-field a change targets,
+	 * joined into one comparison key - two submissions with the same key are the same
+	 * submission resubmitted, not two different edits. Returns null for a change_type this
+	 * guard deliberately never applies to: `xp_earn`/`xp_adjust` (an ST awarding XP twice may
+	 * be entirely intentional) and `import_note` (each import is its own real event).
+	 *
+	 * @param string               $change_type
+	 * @param array<string,mixed>  $inner_data change_data's own nested payload (block_slug plus a trait/values/fields key).
+	 */
+	private static function pending_duplicate_key( string $change_type, array $inner_data ): ?string {
+		$block_slug = $inner_data['block_slug'] ?? null;
+		if ( ! is_string( $block_slug ) || $block_slug === '' ) {
+			return null;
+		}
+
+		switch ( $change_type ) {
+			case 'add_trait':
+			case 'remove_trait':
+			case 'modify_trait':
+				$name = $inner_data['trait']['name'] ?? null;
+				return is_string( $name ) && $name !== '' ? "{$block_slug}:{$name}" : null;
+
+			case 'modify_resource':
+				$keys = array_keys( (array) ( $inner_data['values'] ?? [] ) );
+				return $keys !== [] ? "{$block_slug}:" . implode( ',', $keys ) : null;
+
+			case 'modify_identity':
+				$keys = array_keys( (array) ( $inner_data['fields'] ?? [] ) );
+				return $keys !== [] ? "{$block_slug}:" . implode( ',', $keys ) : null;
+
+			default:
+				return null;
+		}
+	}
+
+	/**
+	 * Finds this character's own existing pending change targeting the same
+	 * block/trait-or-field, if one exists. Scoped to the same change_type first (a cheap
+	 * database filter) and the exact identity key second (computed the same way for the
+	 * candidate as for the incoming submission, in PHP - change_data has no index to filter
+	 * this by directly).
+	 *
+	 * @return int|null The existing change's id, or null when there is no duplicate.
+	 */
+	private static function find_pending_duplicate( int $character_id, string $change_type, string $duplicate_key ): ?int {
+		foreach ( Change::for_character( $character_id, [ 'status' => 'pending', 'change_type' => $change_type ] ) as $candidate ) {
+			$candidate_key = self::pending_duplicate_key( $change_type, (array) ( $candidate->change_data ?? [] ) );
+			if ( $candidate_key === $duplicate_key ) {
+				return (int) $candidate->id;
+			}
+		}
+		return null;
 	}
 
 	/**

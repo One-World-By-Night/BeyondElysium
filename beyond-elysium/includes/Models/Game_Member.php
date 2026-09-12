@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
 class Game_Member {
 
 	/** @var string[] Valid `role` values - must match game-roles.php's keys exactly. */
-	public const VALID_ROLES = [ 'hst', 'ast', 'narrator', 'player' ];
+	public const VALID_ROLES = [ 'hst', 'ast', 'narrator', 'boons', 'player' ];
 
 	/**
 	 * Return every membership row for one game, ordered oldest first.

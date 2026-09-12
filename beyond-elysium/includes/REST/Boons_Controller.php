@@ -41,7 +41,7 @@ class Boons_Controller extends Base_Controller {
 			[
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'create_item' ],
-				'permission_callback' => $this->permission( 'be_manage_world_objects' ),
+				'permission_callback' => $this->permission( 'be_manage_boons' ),
 			],
 		] );
 
@@ -49,7 +49,7 @@ class Boons_Controller extends Base_Controller {
 			[
 				'methods'             => 'PUT',
 				'callback'            => [ $this, 'repay' ],
-				'permission_callback' => $this->permission( 'be_manage_world_objects' ),
+				'permission_callback' => $this->permission( 'be_manage_boons' ),
 			],
 		] );
 	}
@@ -254,9 +254,16 @@ class Boons_Controller extends Base_Controller {
 			return $this->error( 'not_found', __( 'Boon not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
-		$properties               = (array) $boon->properties;
-		$properties['status']     = 'repaid';
+		$properties                = (array) $boon->properties;
+		$properties['status']      = 'repaid';
 		$properties['repaid_date'] = current_time( 'Y-m-d' );
+
+		// Optional: how the boon was actually settled - "entered in error" is not a special
+		// case, it is repaid with that as the how (owner's ruling, BE_PROCESS/0.99.2-workflow.md).
+		$note = $request->get_param( 'repaid_note' );
+		if ( $note !== null && $note !== '' ) {
+			$properties['repaid_note'] = sanitize_textarea_field( (string) $note );
+		}
 
 		World_Object::update( (int) $boon->id, [ 'properties' => $properties ] );
 		return $this->success( World_Object::find( (int) $boon->id ) );

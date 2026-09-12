@@ -100,7 +100,10 @@ class Changes_Controller extends Base_Controller {
 	 *
 	 * Resolves the game and character from the URL, then returns a
 	 * paginated, filterable list of that character's change records ordered
-	 * by the requested sort direction.
+	 * by the requested sort direction. be_view_characters is a broad,
+	 * site-wide/game-role capability, not per-row (same D33 class of gap
+	 * Characters_Controller::get_item() already closes) - a non-manager may
+	 * only list one character's own change history, never another player's.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -114,6 +117,10 @@ class Changes_Controller extends Base_Controller {
 		$character = $this->resolve_character( (int) $request['character_id'], $request['game_slug'] );
 		if ( is_wp_error( $character ) ) {
 			return $character;
+		}
+
+		if ( ! current_user_can( 'be_manage_characters' ) && (int) $character->wp_user_id !== get_current_user_id() ) {
+			return $this->error( 'ownership_denied', __( 'You do not have permission to view this character\'s change history.', 'beyond-elysium' ), 403 );
 		}
 
 		$pagination = $this->get_pagination( $request );

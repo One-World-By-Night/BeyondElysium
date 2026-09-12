@@ -6,6 +6,7 @@ use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Template;
 use BeyondElysium\Services\GVM_Parser;
+use BeyondElysium\Services\GEX_Xml_Parser;
 use BeyondElysium\Services\Layout_Generator;
 use BeyondElysium\Services\MET_CSV_Parser;
 
@@ -38,6 +39,16 @@ class Seeder {
 	 * falls back to hardcoded_blocks().
 	 */
 	const MET_CSV_PATH = __DIR__ . '/../../data/met-mechanics.csv';
+
+	/**
+	 * Path to the real Mage Rotes exchange file, relative to this file. Closes the
+	 * BE_PROCESS/0.99.2-workflow.md "`mage-rotes` ships as an empty catalog" defect - the
+	 * data (201 real rotes) and the reader (Services\GEX_Xml_Parser, already tested against
+	 * this exact file) both already existed; nothing had ever joined them. Missing or
+	 * malformed falls back to the pre-existing empty catalog, same graceful-degradation
+	 * style as a missing GVM/CSV file.
+	 */
+	const MAGE_ROTES_PATH = __DIR__ . '/../../data/Rotes.gex';
 
 	// ---------------------------------------------------------------------------
 	// PUBLIC ENTRY POINTS
@@ -276,11 +287,11 @@ class Seeder {
 	}
 
 	/**
-	 * Returns the Subtype-label and Background-routing tables for the
-	 * MET-Mechanics CSV overlay, read from met-csv-map.php. Used by
-	 * apply_met_csv_overrides() and its helpers.
+	 * Returns the Subtype-label, Background-routing, and Blood Magic
+	 * tradition-configuration tables for the MET-Mechanics CSV overlay, read
+	 * from met-csv-map.php. Used by apply_met_csv_overrides() and its helpers.
 	 *
-	 * @return array{discipline_labels:array<string,string>,ritual_labels:array<string,string>,background_routing:array<string,string[]>}
+	 * @return array{discipline_labels:array<string,string>,ritual_labels:array<string,string>,background_routing:array<string,string[]>,blood_magic:array{excluded_subtypes:string[],restriction_keywords:string[]}}
 	 */
 	public static function met_csv_map(): array {
 		return require __DIR__ . '/met-csv-map.php';
@@ -756,19 +767,23 @@ class Seeder {
 	}
 
 	/**
-	 * Builds vampire-disciplines (tiered_power) and vampire-combo-disciplines
-	 * (trait_list) from the CSV's Discipline rows.
+	 * Builds vampire-disciplines (tiered_power), vampire-combo-disciplines
+	 * (trait_list), and vampire-blood-magic (tiered_power) from the CSV's
+	 * Discipline rows.
 	 *
-	 * "Combination" rows go to vampire-combo-disciplines as a flat list.
-	 * Every other row is grouped into one power family per Subtype, or per
-	 * (Subtype, Group) pair for tradition/path disciplines, since the bare
-	 * Group value alone can repeat identically across several traditions.
+	 * "Combination" rows go to vampire-combo-disciplines as a flat list. Every
+	 * other row with an empty Group is an ordinary discipline (Celerity,
+	 * Thaumaturgy, Necromancy, ...); every row with a real Group value is a
+	 * Blood Magic path (Path of Blood, Lure of Flames, ...) and is routed to
+	 * vampire-blood-magic instead - see build_met_blood_magic_powers() and
+	 * BE_PROCESS/0.99.2-workflow.md's "Blood magic" section for why paths
+	 * live apart from disciplines rather than staying prefixed by tradition.
 	 *
 	 * @param array $csv MET_CSV_Parser::parse_file()'s return.
 	 * @param array $map Seeder::met_csv_map()'s return.
 	 * @param array $gvm Parsed GVM menus - vampire-disciplines merges against GVM's own
 	 *                   existing resolution rather than replacing it outright.
-	 * @return array{"vampire-disciplines":array,"vampire-combo-disciplines":array}
+	 * @return array{"vampire-disciplines":array,"vampire-combo-disciplines":array,"vampire-blood-magic":array}
 	 */
 	private static function build_met_disciplines( array $csv, array $map, array $gvm ): array {
 		$rows = array_values( array_filter(
@@ -781,9 +796,21 @@ class Seeder {
 		$combos = array_values( array_filter( $rows, static fn( $row ) => $row['Subtype'] === 'Combination' ) );
 		$powers = array_values( array_filter( $rows, static fn( $row ) => $row['Subtype'] !== 'Combination' ) );
 
+		$ordinary   = array_values( array_filter( $powers, static fn( $row ) => $row['Group'] === '' ) );
+		$blood_rows = array_values( array_filter( $powers, static fn( $row ) => $row['Group'] !== '' ) );
+
+		$gvm_families = self::resolve_block_source( $gvm, 'vampire-disciplines', self::block_map()['vampire-disciplines'] )['powers'];
+		$blood_magic  = self::build_met_blood_magic_powers( $blood_rows, $gvm_families );
+
 		return [
-			'vampire-disciplines'       => self::build_met_discipline_powers( $powers, $map['discipline_labels'], $gvm ),
+			'vampire-disciplines'       => self::build_met_discipline_powers(
+				$ordinary,
+				$map['discipline_labels'],
+				$gvm_families,
+				$blood_magic['excluded_gvm_names']
+			),
 			'vampire-combo-disciplines' => self::build_met_combo_disciplines( $combos ),
+			'vampire-blood-magic'       => $blood_magic['block'],
 		];
 	}
 
@@ -802,6 +829,35 @@ class Seeder {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Deduplicates a blood-magic path's rows by (Name, lNum) rather than
+	 * Name alone. Verified 2026-09-11 against the real catalog: seven paths
+	 * (e.g. Judicium's "Path of Mercury", five levels costing 3/3/6/6/9) give
+	 * every level the identical Name text, reserving the distinct name for
+	 * the path itself rather than each rung of it - dedupe_met_rows_by_name()
+	 * would collapse all five into one, discarding four real levels. This
+	 * pattern does not occur in any ordinary (Group-less) discipline family,
+	 * so this stays local to blood magic rather than changing the shared
+	 * helper's behavior for its many other, unaffected callers.
+	 *
+	 * @param array<int,array<string,string>> $rows
+	 * @return array<int,array<string,string>>
+	 */
+	private static function dedupe_met_rows_for_ladder( array $rows ): array {
+		$by_key = [];
+		foreach ( $rows as $row ) {
+			$key = $row['Name'] . "\x1f" . $row['lNum'];
+			if ( ! isset( $by_key[ $key ] ) ) {
+				$by_key[ $key ] = $row;
+				continue;
+			}
+			if ( $by_key[ $key ]['Cost'] === '' && $row['Cost'] !== '' ) {
+				$by_key[ $key ] = $row;
+			}
+		}
+		return array_values( $by_key );
 	}
 
 	/**
@@ -897,8 +953,8 @@ class Seeder {
 	}
 
 	/**
-	 * Merges the CSV's Discipline rows into GVM's own existing
-	 * vampire-disciplines resolution, rather than replacing it.
+	 * Merges the CSV's ordinary-discipline rows (empty Group) into GVM's own
+	 * existing vampire-disciplines resolution, rather than replacing it.
 	 *
 	 * Matches each GVM power family to its CSV equivalent by comparing a
 	 * candidate CSV family's Subtype or Group against the GVM family name,
@@ -907,13 +963,21 @@ class Seeder {
 	 * not already present by name. An unmatched CSV family becomes a new
 	 * power family; an unmatched GVM family passes through unchanged.
 	 *
-	 * @param array<int,array<string,string>> $rows   Non-Combination Discipline rows.
-	 * @param array<string,string>            $labels Subtype -> pretty display label.
-	 * @param array                           $gvm    Parsed GVM menus.
+	 * @param array<int,array<string,string>> $rows              Non-Combination Discipline rows with an empty Group.
+	 * @param array<string,string>            $labels            Subtype -> pretty display label.
+	 * @param array                           $gvm_families      resolve_block_source()'s 'powers' for vampire-disciplines.
+	 * @param string[]                        $exclude_gvm_names GVM family names build_met_blood_magic_powers() has
+	 *                                                            already claimed (a bare duplicate of a real path,
+	 *                                                            e.g. "Path of Blood") - must not also pass through here.
 	 * @return array
 	 */
-	private static function build_met_discipline_powers( array $rows, array $labels, array $gvm ): array {
-		$gvm_families = self::resolve_block_source( $gvm, 'vampire-disciplines', self::block_map()['vampire-disciplines'] )['powers'];
+	private static function build_met_discipline_powers( array $rows, array $labels, array $gvm_families, array $exclude_gvm_names = [] ): array {
+		if ( $exclude_gvm_names !== [] ) {
+			$gvm_families = array_values( array_filter(
+				$gvm_families,
+				static fn( $family ) => ! in_array( $family['name'], $exclude_gvm_names, true )
+			) );
+		}
 
 		$by_key = [];
 		foreach ( $rows as $row ) {
@@ -1019,6 +1083,270 @@ class Seeder {
 		}
 
 		return self::make_tiered_power_block( 'vampire-disciplines', 'Disciplines', $powers_in, [ 'atomic' => true ] );
+	}
+
+	/**
+	 * Builds vampire-blood-magic from the CSV's tradition/path Discipline
+	 * rows (every non-Combination row with a real Group value), collapsing
+	 * each canonical path to a single power regardless of how many
+	 * traditions teach it.
+	 *
+	 * A raw Group value is "Canonical", "Canonical / Alternate", or
+	 * "Canonical / Alternate / Restriction" - the trailing segment is a
+	 * restriction only when it matches a configured caste/covenant keyword
+	 * (met_csv_map()'s 'blood_magic'.'restriction_keywords'), never an
+	 * alternate name. Two Group values fold to the same canonical path once
+	 * a curly apostrophe is straightened and a leading "a/an/the" is
+	 * stripped - see blood_magic_path_key().
+	 *
+	 * See BE_PROCESS/0.99.2-workflow.md's "Blood magic" section and
+	 * BE_PROCESS/blood-magic-paradigm.md for the design this implements and
+	 * the measurements behind every rule here.
+	 *
+	 * @param array<int,array<string,string>> $rows         Non-Combination Discipline rows with a non-empty Group.
+	 * @param array                           $gvm_families resolve_block_source()'s 'powers' for vampire-disciplines -
+	 *                                                       a handful of paths exist there too as empty, unlabelled
+	 *                                                       duplicate families (verified 2026-09-11: every one found
+	 *                                                       was empty), which must not survive as a second copy in
+	 *                                                       vampire-disciplines once this method has claimed the path.
+	 * @return array{block:array,excluded_gvm_names:string[]}
+	 */
+	private static function build_met_blood_magic_powers( array $rows, array $gvm_families ): array {
+		$config            = self::met_csv_map()['blood_magic'];
+		$excluded_subtypes = $config['excluded_subtypes'];
+		$restriction_words = array_map( 'strtolower', $config['restriction_keywords'] );
+		$labels            = self::met_csv_map()['discipline_labels'];
+
+		$rows = array_values( array_filter(
+			$rows,
+			static fn( $row ) => ! in_array( $row['Subtype'], $excluded_subtypes, true )
+		) );
+
+		// Group into (Subtype, Group) families first, exactly like the ordinary-discipline
+		// merge does, since the same bare Group text recurs identically across traditions.
+		$families = [];
+		foreach ( $rows as $row ) {
+			$key                          = $row['Subtype'] . "\x1f" . $row['Group'];
+			$families[ $key ]['subtype'] = $row['Subtype'];
+			$families[ $key ]['group']   = $row['Group'];
+			$families[ $key ]['rows'][]  = $row;
+		}
+
+		$paths = [];
+		foreach ( $families as $family ) {
+			$label    = $labels[ $family['subtype'] ] ?? $family['subtype'];
+			$segments = array_map(
+				static fn( $segment ) => self::straighten_blood_magic_text( $segment ),
+				explode( ' / ', $family['group'] )
+			);
+
+			$restriction = null;
+			if ( count( $segments ) > 1 && in_array( strtolower( end( $segments ) ), $restriction_words, true ) ) {
+				$restriction = array_pop( $segments );
+			}
+			$canonical = $segments[0];
+			$alternate = $segments[1] ?? null;
+			$path_key  = self::blood_magic_path_key( $canonical );
+
+			$items = self::dedupe_met_rows_for_ladder( $family['rows'] );
+			usort(
+				$items,
+				static function ( $a, $b ) {
+					return self::met_lnum_sort_key( $a['lNum'] ) <=> self::met_lnum_sort_key( $b['lNum'] );
+				}
+			);
+			// A single row whose own Name is just the path's name again carries no real
+			// level data (e.g. Mortis's one-row "Mastery of the Mortal Shell") - the
+			// tradition still offers the path, but this row must not seed a fake level.
+			// This only fires for a genuine one-row family: dedupe_met_rows_for_ladder()
+			// keeps every distinct level even when several share that same Name text
+			// (e.g. Judicium's real five-level "Path of Mercury").
+			$is_stub = count( $items ) === 1 && self::blood_magic_path_key( $items[0]['Name'] ) === $path_key;
+
+			if ( ! isset( $paths[ $path_key ] ) ) {
+				// A leading "A/An/The" is stripped from the display name unconditionally, not
+				// only on a collision between two spellings - a real .gex import (Chase
+				// Ashford, 2026-09-11) carries "Dur-An-Ki: Hunter's Wind" with no article at
+				// all, matching neither "The Hunter's Wind" nor "Hunter's Wind" being treated
+				// as two different things would leave. One consistent article-free spelling
+				// means the same match logic that already prefers this for a genuine
+				// two-spelling collision (e.g. "Snake Inside" / "The Snake Inside") applies
+				// uniformly, and the importer never has to guess which form to try first.
+				$paths[ $path_key ] = [
+					'display'     => (string) preg_replace( '/^(a|an|the)\s+/i', '', $canonical ),
+					'traditions'  => [],
+					'restriction' => null,
+					'candidates'  => [],
+				];
+			}
+
+			$paths[ $path_key ]['traditions'][ $label ] = $alternate;
+			if ( $restriction !== null ) {
+				$paths[ $path_key ]['restriction'] = $restriction;
+			}
+			if ( ! $is_stub ) {
+				$paths[ $path_key ]['candidates'][] = [
+					'items' => array_map(
+						static function ( $row ) {
+							$item = [
+								'name' => $row['Name'],
+								'note' => $row['Control'] !== '' ? "{$row['lName']} ({$row['Control']})" : $row['lName'],
+							];
+							$cost = Seeder::normalize_met_cost( $row['Cost'] );
+							if ( $cost !== '' ) {
+								$item['cost'] = $cost;
+							}
+							return $item;
+						},
+						$items
+					),
+				];
+			}
+		}
+
+		// Fold in any GVM family that duplicates a canonical path under no tradition at
+		// all, and claim its name so build_met_discipline_powers() excludes it - verified
+		// 2026-09-11 that every such family is empty, but a future GVM update contributing
+		// real items must still be picked up here rather than silently duplicated there.
+		$excluded_gvm_names = [];
+		foreach ( $gvm_families as $gvm_family ) {
+			$path_key = self::blood_magic_path_key( $gvm_family['name'] );
+			if ( ! isset( $paths[ $path_key ] ) ) {
+				continue;
+			}
+			$excluded_gvm_names[] = $gvm_family['name'];
+			if ( ! empty( $gvm_family['items'] ) ) {
+				$paths[ $path_key ]['candidates'][] = [ 'items' => $gvm_family['items'] ];
+			}
+		}
+
+		$powers = [];
+		foreach ( $paths as $path ) {
+			$power = [
+				'name'       => $path['display'],
+				'items'      => self::pick_blood_magic_ladder( $path['candidates'] ),
+				'traditions' => $path['traditions'],
+			];
+			if ( $path['restriction'] !== null ) {
+				$power['restriction'] = $path['restriction'];
+			}
+			$powers[] = $power;
+		}
+		usort( $powers, static fn( $a, $b ) => strcasecmp( $a['name'], $b['name'] ) );
+
+		$traditions = [];
+		foreach ( $powers as $power ) {
+			foreach ( array_keys( $power['traditions'] ) as $label ) {
+				$traditions[ $label ] = true;
+			}
+		}
+		$traditions = array_keys( $traditions );
+		sort( $traditions );
+
+		return [
+			'block'              => self::make_tiered_power_block(
+				'vampire-blood-magic',
+				'Blood Magic',
+				$powers,
+				[
+					'atomic'      => true,
+					'blood_magic' => true,
+					'traditions'  => $traditions,
+				]
+			),
+			'excluded_gvm_names' => $excluded_gvm_names,
+		];
+	}
+
+	/**
+	 * Picks the most complete ladder among a canonical path's candidate item
+	 * lists (one per non-stub offering tradition, plus a possible GVM-sourced
+	 * list with no tradition of its own), then merges in any other
+	 * candidate's items not already present by name - the same "protected
+	 * base, net-new only" rule Decision 043 established for merging GVM
+	 * against the CSV, applied here across traditions instead.
+	 *
+	 * @param array<int,array{items:array[]}> $candidates
+	 * @return array[]
+	 */
+	private static function pick_blood_magic_ladder( array $candidates ): array {
+		if ( $candidates === [] ) {
+			return [];
+		}
+
+		// Only an "informative" candidate (every level named distinctly) ever merges
+		// with another - see is_blood_magic_candidate_informative() for why a
+		// placeholder candidate must be used alone or not at all, never merged.
+		$informative = array_values( array_filter( $candidates, [ self::class, 'is_blood_magic_candidate_informative' ] ) );
+		$pool        = $informative !== [] ? $informative : $candidates;
+
+		usort( $pool, static fn( $a, $b ) => count( $b['items'] ) <=> count( $a['items'] ) );
+
+		$items = $pool[0]['items'];
+
+		// A pool of only placeholder candidates (no informative one exists for this
+		// path) has nothing merge can use to tell one candidate's levels apart from
+		// another's - take the fullest one alone, matching what a single candidate
+		// (e.g. Judicium's own "Path of Mercury") already does by definition.
+		if ( $pool === $informative ) {
+			$have = array_map( [ self::class, 'met_name_comparison_key' ], array_column( $items, 'name' ) );
+			foreach ( array_slice( $pool, 1 ) as $candidate ) {
+				foreach ( $candidate['items'] as $item ) {
+					$item_key = self::met_name_comparison_key( $item['name'] );
+					if ( ! in_array( $item_key, $have, true ) ) {
+						$items[] = $item;
+						$have[]  = $item_key;
+					}
+				}
+			}
+		}
+		return $items;
+	}
+
+	/**
+	 * An "informative" candidate names every level distinctly. A "placeholder"
+	 * candidate repeats the same name across two or more levels (e.g.
+	 * Judicium's five-level "Path of Mercury", or Sadhana's five-level "Path
+	 * of Blood Nectar", both real ladders whose source material never gave
+	 * the individual rungs their own names).
+	 *
+	 * Merging a placeholder candidate by name is wrong in both directions:
+	 * verified 2026-09-11 against two real paths in the seeded catalog.
+	 * "Path of Blood Nectar" (Sadhana's five identically-named levels plus
+	 * Hermetic Anarch's five identically-named levels, same 3/3/6/6/9 cost
+	 * progression in both) collapsed to only one merged extra level instead
+	 * of the intended five, because every one of the second candidate's
+	 * repeated-name items looked identical to name-comparison after the
+	 * first was merged in. "Path of Woe" (Wanga names all five levels;
+	 * Sadhana repeats "Path of Woe" for all five, same costs) went the other
+	 * way - none of Wanga's real names matched Sadhana's placeholder text, so
+	 * naive merging inflated the result to ten levels instead of five.
+	 *
+	 * @param array{items:array[]} $candidate
+	 */
+	private static function is_blood_magic_candidate_informative( array $candidate ): bool {
+		$names = array_column( $candidate['items'], 'name' );
+		return count( array_unique( $names ) ) === count( $names );
+	}
+
+	/**
+	 * Comparison-only key for a blood-magic path or power name: straightens
+	 * a curly apostrophe and applies the same leading-article strip
+	 * met_name_comparison_key() uses, so "The Green Path" (a bare GVM family
+	 * name) and "Green Path" (the CSV's own canonical spelling) resolve to
+	 * the same path. Never used for display.
+	 */
+	private static function blood_magic_path_key( string $name ): string {
+		return self::met_name_comparison_key( self::straighten_blood_magic_text( $name ) );
+	}
+
+	/**
+	 * Folds curly quote characters to their straight ASCII equivalent and
+	 * collapses whitespace - the MET-Mechanics CSV mixes both apostrophe
+	 * forms for what is otherwise the same name (e.g. "Neptune's Might").
+	 */
+	private static function straighten_blood_magic_text( string $text ): string {
+		return trim( (string) preg_replace( '/\s+/', ' ', str_replace( [ "\u{2019}", "\u{2018}" ], "'", $text ) ) );
 	}
 
 	/**
@@ -1365,6 +1693,14 @@ class Seeder {
 				continue;
 			}
 
+			// No longer deferred (BE_PROCESS/0.99.2-workflow.md) - the block map still marks
+			// this 'source' => 'none', but a real source now exists outside the GVM menu set.
+			if ( $slug === 'mage-rotes' ) {
+				unset( $extra['deferred_to'] );
+				$blocks[] = self::make_trait_list_block( $slug, $label, self::build_mage_rotes_items(), $extra );
+				continue;
+			}
+
 			if ( $slug === 'met-abilities' ) {
 				$extra['has_specializations'] = true;
 			}
@@ -1387,6 +1723,57 @@ class Seeder {
 		}
 
 		return $blocks;
+	}
+
+	/**
+	 * Builds mage-rotes' real catalog from data/Rotes.gex - 201 real Mage rotes, each with
+	 * its own sphere prerequisites and duration. Missing or malformed falls back to an empty
+	 * list, the same graceful-degradation style parse_gvm()/parse_met_csv() already use for
+	 * their own source files, so a corrupt copy degrades to the pre-existing empty catalog
+	 * rather than fataling the whole seed.
+	 *
+	 * The catalog does not model sphere prerequisites as a real dependency - the note just
+	 * states them, matching how this codebase already treats a Merit's or Discipline's own
+	 * requirement text elsewhere (readable, not enforced). Cost is never set: MET rotes are
+	 * not separately priced - the sphere levels they require are what actually cost XP.
+	 *
+	 * @return array<int,array{name:string,note:string}>
+	 */
+	private static function build_mage_rotes_items(): array {
+		if ( ! file_exists( self::MAGE_ROTES_PATH ) ) {
+			error_log( 'Beyond Elysium: Mage Rotes source not found at ' . self::MAGE_ROTES_PATH . ' - mage-rotes seeded empty.' );
+			return [];
+		}
+
+		try {
+			$data = GEX_Xml_Parser::parse_file( self::MAGE_ROTES_PATH );
+		} catch ( \Throwable $e ) {
+			error_log( 'Beyond Elysium: Mage Rotes source failed to parse - mage-rotes seeded empty. ' . $e->getMessage() );
+			return [];
+		}
+
+		$items = [];
+		foreach ( $data['rotes'] ?? [] as $rote ) {
+			$name = (string) ( $rote['name'] ?? '' );
+			if ( $name === '' ) {
+				continue;
+			}
+
+			$level    = $rote['level'] ?? null;
+			$duration = trim( (string) ( $rote['duration'] ?? '' ) );
+			$note     = $level !== null ? "Level {$level}" : '';
+			if ( $duration !== '' ) {
+				$note = $note !== '' ? "{$note}, {$duration}" : $duration;
+			}
+
+			$item = [ 'name' => $name ];
+			if ( $note !== '' ) {
+				$item['note'] = $note;
+			}
+			$items[] = $item;
+		}
+
+		return self::dedupe_built_items_by_name( $items );
 	}
 
 	/**
@@ -1751,7 +2138,9 @@ class Seeder {
 				[ 'name' => 'Essence',   'field_type' => 'select', 'required' => false ],
 			] ),
 			self::make_tiered_power_block( 'mage-spheres',    'Mage Spheres',  [], [ 'sequential' => true, 'atomic' => true ] ),
-			self::make_trait_list_block(   'mage-rotes',      'Mage Rotes',    [], [ 'atomic' => true ] ),
+			// Real catalog even on this total-GVM-failure fallback path - build_mage_rotes_items()
+			// reads data/Rotes.gex directly and has no dependency on $gvm.
+			self::make_trait_list_block(   'mage-rotes',      'Mage Rotes',    self::build_mage_rotes_items(), [ 'atomic' => true ] ),
 			self::make_resource_block( 'mage-resources', 'Mage Resources', [
 				[ 'name' => 'Arete',        'value_type' => 'integer', 'default_start' => 1, 'max' => 10 ],
 				[ 'name' => 'Quintessence', 'value_type' => 'integer', 'default_start' => 1, 'max' => 20 ],
@@ -2218,7 +2607,11 @@ class Seeder {
 	 * @param string $slug
 	 * @param string $name
 	 * @param array  $powers_in Resolved powers: each with 'name', 'source' and 'items',
-	 *                          or a bare name string from the hardcoded fallback.
+	 *                          or a bare name string from the hardcoded fallback. Any
+	 *                          other key (e.g. blood magic's per-power 'traditions'
+	 *                          map or 'restriction') rides through onto the built
+	 *                          power unchanged - this function has no opinion on
+	 *                          what a power carries beyond its own level data.
 	 * @param array  $extra     Extra definition keys.
 	 * @return array
 	 */
@@ -2267,11 +2660,18 @@ class Seeder {
 				$levels[] = $level;
 			}
 
-			$powers[] = [
+			$built = [
 				'name'   => $power['name'],
 				'source' => $power['source'] ?? $power['name'],
 				'levels' => $levels,
 			];
+			// Pass through any additional per-power field unchanged (blood magic's
+			// 'traditions' map and 'restriction' are the only current users).
+			$passthrough = array_diff_key( $power, [ 'name' => true, 'source' => true, 'items' => true ] );
+			if ( $passthrough !== [] ) {
+				$built += $passthrough;
+			}
+			$powers[] = $built;
 		}
 		return [
 			'slug'         => $slug,
@@ -2549,6 +2949,7 @@ class Seeder {
 			[ 'met-physical-traits-neg', 'third', null ], [ 'met-social-traits-neg', 'third', null ], [ 'met-mental-traits-neg', 'third', null ],
 			[ 'met-abilities', 'half', $dot ], [ 'vampire-backgrounds', 'half', $dot ],
 			[ 'vampire-disciplines', 'full', null ],
+			[ 'vampire-blood-magic', 'full', null ],
 			[ 'vampire-combo-disciplines', 'full', null ],
 			[ 'vampire-rituals', 'half', null ], [ 'vampire-ritae', 'half', null ],
 			[ 'vampire-statuses', 'full', $dot ],

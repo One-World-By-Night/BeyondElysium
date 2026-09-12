@@ -103,7 +103,7 @@ export interface UpdateGameRequest {
  * The role a WordPress user holds within a single chronicle: head
  * storyteller, assistant storyteller, narrator, or player.
  */
-export type GameMemberRole = 'hst' | 'ast' | 'narrator' | 'player';
+export type GameMemberRole = 'hst' | 'ast' | 'narrator' | 'boons' | 'player';
 
 /**
  * One user's membership record within a chronicle, recording
@@ -241,6 +241,16 @@ export interface TieredPower {
     source?: string;
     levels: PowerLevel[];
     approval_override?: ApprovalLevel;
+    /**
+     * Blood magic only (`TieredPowerDefinition.blood_magic`): which of the
+     * block's traditions offer this specific path, keyed by tradition name,
+     * valued by that tradition's own alternate name for it or `null` when it
+     * has none. Restricts a Tradition picker to real options rather than the
+     * block's full tradition list - not every tradition offers every path.
+     */
+    traditions?: Record<string, string | null>;
+    /** Blood magic only: a caste/covenant restriction on who may take this path (e.g. "Sabbat", "Warrior Only"), not an alternate name. */
+    restriction?: string | null;
 }
 
 /**
@@ -255,6 +265,10 @@ export interface TieredPowerDefinition {
     approval_rules?: ApprovalRules;
     /** Whether a homebrew power outside the seeded catalog may still be added. */
     allow_custom?: boolean;
+    /** Flags this block as Blood Magic: taking a power prompts for a Tradition, stored per held pick rather than baked into the catalog name. */
+    blood_magic?: boolean;
+    /** The real traditions this block offers, for the Tradition picker - only meaningful when `blood_magic` is true. */
+    traditions?: string[];
 }
 
 // --- resource_pool ---

@@ -191,6 +191,7 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 					</div>
 
 					<QueryResults
+						gameSlug={ gameSlug }
 						items={ results }
 						total={ total }
 						page={ page }

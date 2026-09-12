@@ -19,8 +19,17 @@
  * declared once under 'shared' and merged in; stack-specific entries
  * override on name collision.
  *
+ * A `sheet_block` entry for a `tiered_power` list may also carry
+ * `blood_magic_block_slug` and/or `combo_block_slug`: sibling blocks
+ * Import_Controller::resolve_tiered_power_with_fallbacks() tries in that
+ * order when the primary block's own resolution is unresolved - a raw
+ * "{Tradition}: {Path}" name may belong to the blood-magic sibling instead
+ * of the primary (still tiered_power-shaped), and a bare combo/ritae name
+ * may belong to that sibling (trait_list-shaped).
+ *
  * @see BE_PROCESS/DECISIONLOG.md Decision 036
  * @see BE_PROCESS/workflow-0.8.md Step 4
+ * @see BE_PROCESS/0.99.2-workflow.md Blood magic section (BM-7)
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -42,7 +51,10 @@ return [
 		// Influences and Backgrounds are two separate GV lists that fold into one BE block per stack.
 		'Influences'        => [ 'outcome' => 'sheet_block', 'block_slug' => '{stack}-backgrounds' ],
 		'Backgrounds'       => [ 'outcome' => 'sheet_block', 'block_slug' => '{stack}-backgrounds' ],
-		'Health Levels'     => [ 'outcome' => 'discard_derived' ],
+		// Real per-character box-count data (e.g. Bruised:3, Wounded:2 - confirmed against a
+		// real .gex sample), not a rederivable value - BE has no health resource_pool block
+		// yet (0.99.2-workflow.md), so this is preserved rather than discarded.
+		'Health Levels'     => [ 'outcome' => 'preserve_as_note' ],
 		'Equipment'         => [ 'outcome' => 'world_object', 'object_type' => 'item' ],
 		// FeraClass alone spells this singular ("Location"); everyone else pluralizes it.
 		'Locations'         => [ 'outcome' => 'world_object', 'object_type' => 'location' ],
@@ -52,7 +64,12 @@ return [
 	'vampire' => [
 		'Status'      => [ 'outcome' => 'sheet_block', 'block_slug' => 'vampire-statuses' ],
 		// Combo Disciplines/Ritae are not separate GEX lists; combo_block_slug names the sibling block Import_Controller falls back to when unresolved.
-		'Disciplines' => [ 'outcome' => 'sheet_block', 'block_slug' => 'vampire-disciplines', 'combo_block_slug' => 'vampire-combo-disciplines' ],
+		// blood_magic_block_slug is tried before combo_block_slug when the primary
+		// resolution against vampire-disciplines comes back unresolved - a raw
+		// "{Tradition}: {Path}" name (Blood Magic moved out of vampire-disciplines,
+		// BE_PROCESS/0.99.2-workflow.md) is still tiered_power-shaped, unlike the
+		// combo/ritae fallback, which is trait_list-shaped.
+		'Disciplines' => [ 'outcome' => 'sheet_block', 'block_slug' => 'vampire-disciplines', 'blood_magic_block_slug' => 'vampire-blood-magic', 'combo_block_slug' => 'vampire-combo-disciplines' ],
 		'Rituals'     => [ 'outcome' => 'sheet_block', 'block_slug' => 'vampire-rituals', 'combo_block_slug' => 'vampire-ritae' ],
 		'Bonds'       => [ 'outcome' => 'preserve_as_note' ],
 		'Miscellaneous' => [ 'outcome' => 'preserve_as_note' ],

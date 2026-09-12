@@ -50,6 +50,19 @@ class Page_Provisioner {
 			'title'  => 'Dashboard',
 			'widget' => 'game-dashboard',
 		],
+		// Auto-provisioned per the "Shipped code that cannot be reached" defect
+		// (BE_PROCESS/0.99.2-workflow.md) - both existed and worked with no page to place
+		// their widget on. The real access gate for both is server-side, same as every REST
+		// route in this plugin; a viewer without the right capability sees a fetch error
+		// rather than the queue/ledger contents, not a client-side redirect or blank state.
+		'approval-queue'   => [
+			'title'  => 'Approval Queue',
+			'widget' => 'approval-queue',
+		],
+		'boon-ledger'      => [
+			'title'  => 'Boon Ledger',
+			'widget' => 'boon-ledger',
+		],
 	];
 
 	/**

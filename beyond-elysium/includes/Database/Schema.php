@@ -20,7 +20,7 @@ class Schema {
 	 * release version. Compared against the stored VERSION_OPTION value by
 	 * maybe_upgrade() to decide whether migrations need to run.
 	 */
-	const DB_VERSION = '0.99.1';
+	const DB_VERSION = '0.99.2';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -421,6 +421,73 @@ class Schema {
 	}
 
 	/**
+	 * Adds the `vampire-blood-magic` section to vampire's own `sheet_full` template for
+	 * every install that seeded it before Blood Magic existed (BE_PROCESS/0.99.2-workflow.md
+	 * BM-9) - the layout-repair counterpart to add_missing_combo_disciplines() above, which
+	 * does the same for a catalog rather than a layout. Deliberately its own narrow,
+	 * one-off function rather than a generalization of repair_stale_default_layouts()'s
+	 * width-based staleness check: VampireTemplateRepairTest::
+	 * test_a_template_already_on_the_new_shape_is_left_untouched establishes that a template
+	 * genuinely missing sections the current code defines is not, on that basis alone, stale
+	 * - an admin's own deliberate trim via the structured editor looks identical. Only a
+	 * chronicle's own customized (`is_system = 0`) template is left untouched here too,
+	 * matching that same established rule.
+	 *
+	 * Every section shares `column: 1` (Seeder::build_layout_sections()'s "single flowing
+	 * sequence" convention - visual placement comes from `order` + `width` alone), so
+	 * inserting means shifting every later section's `order` up by one.
+	 *
+	 * Must run after Seeder::seed_schema_blocks() has seeded vampire-blood-magic, and before
+	 * repair_stale_npc_layouts(), which propagates this same addition into npc_full.
+	 * Idempotent: a template that already has the section is left untouched.
+	 */
+	public static function add_missing_blood_magic_template_section(): void {
+		foreach ( \BeyondElysium\Models\Template::globals( [ 'stack_slug' => 'vampire', 'template_type' => 'sheet_full' ] ) as $template ) {
+			/** @var object{id:int,is_system:int,layout:array} $template */
+			if ( empty( $template->is_system ) ) {
+				continue;
+			}
+
+			$sections = $template->layout['sections'] ?? [];
+			if ( in_array( 'vampire-blood-magic', array_column( $sections, 'block_slug' ), true ) ) {
+				continue; // Already has it.
+			}
+
+			$anchor_index = null;
+			foreach ( $sections as $i => $section ) {
+				if ( $section['block_slug'] === 'vampire-disciplines' ) {
+					$anchor_index = $i;
+					break;
+				}
+			}
+			$insert_at = $anchor_index !== null ? $anchor_index + 1 : count( $sections );
+
+			array_splice( $sections, $insert_at, 0, [
+				[
+					'block_slug' => 'vampire-blood-magic',
+					'column'     => 1,
+					'order'      => 0, // Renumbered below.
+					'title'      => 'Blood Magic',
+					'display'    => null,
+					'collapsed'  => false,
+					'width'      => 'full',
+				],
+			] );
+			foreach ( $sections as $i => &$section ) {
+				$section['order'] = $i + 1;
+			}
+			unset( $section );
+
+			$layout             = $template->layout;
+			$layout['sections'] = $sections;
+
+			if ( ! \BeyondElysium\Models\Template::update( (int) $template->id, [ 'layout' => $layout ] ) ) {
+				error_log( 'Beyond Elysium: failed to add vampire-blood-magic to sheet_full template id ' . (int) $template->id );
+			}
+		}
+	}
+
+	/**
 	 * Removes the duplicate "Awakening of the Steel" power family from
 	 * vampire-disciplines, keeping the tradition-prefixed "Dur An Ki:
 	 * Awakening the Steel" entry, and rewrites any character's held pick
@@ -686,6 +753,264 @@ class Schema {
 	}
 
 	/**
+	 * The four Assamite caste names Blood Magic deliberately excludes from tradition
+	 * splitting everywhere - Seeder.php's met-csv-map.php config, this migration, and
+	 * migrate_blood_magic_held_picks() all agree on this exact literal list. A caste name
+	 * happens to contain ": "-adjacent punctuation of its own kind but is never a
+	 * tradition prefix - the same trap D39 avoided populating vampire-clan-disciplines.php.
+	 *
+	 * @return string[]
+	 */
+	private static function blood_magic_excluded_power_names(): array {
+		return [
+			'Quietus, Cruscitus / Warrior', 'Quietus, Hematus / Vizier',
+			'Quietus, Minhit Dume / Vizier', 'Quietus, Sorcerer',
+		];
+	}
+
+	/**
+	 * Splits a stale, pre-Blood-Magic chronicle fork of vampire-disciplines (a
+	 * game-scoped copy made before the Blood Magic redesign, BE_PROCESS/0.99.2-workflow.md)
+	 * the same way Seeder::build_met_blood_magic_powers() already split the global row: any
+	 * power whose name is "{Tradition}: {Path}" - excluding the four Assamite caste names,
+	 * see blood_magic_excluded_power_names() - moves to that same game's own
+	 * vampire-blood-magic fork, created via Schema_Block::find_or_create_fork_for_game() if
+	 * the chronicle has no fork of it yet.
+	 *
+	 * Deliberately does NOT re-run the CSV-driven canonical-path/ladder-merge logic against
+	 * a fork's own content - a fork may not carry every sibling tradition's data to merge
+	 * against, and this must never lose or alter a chronicle's real customization. Each
+	 * power is transplanted one-to-one, reshaped to the new field convention (name split on
+	 * the first ": ", tradition recorded in a one-entry `traditions` map) - UNLESS a power
+	 * of that same bare name already exists in the target vampire-blood-magic fork (the
+	 * common case: find_or_create_fork_for_game() seeds a brand-new fork from the already-
+	 * correct global 111-path catalog), in which case only the tradition entry is merged
+	 * into the existing power rather than adding a duplicate.
+	 *
+	 * Idempotent: a fork already free of colon-prefixed powers is left untouched.
+	 */
+	public static function migrate_blood_magic_schema_forks(): void {
+		global $wpdb;
+		$table    = self::table( 'schema_blocks' );
+		$excluded = self::blood_magic_excluded_power_names();
+
+		$forks = $wpdb->get_results(
+			"SELECT game_slug FROM {$table} WHERE slug = 'vampire-disciplines' AND game_slug IS NOT NULL AND game_slug != ''",
+			ARRAY_A
+		);
+
+		foreach ( $forks as $row ) {
+			$game_slug = (string) $row['game_slug'];
+			$fork      = \BeyondElysium\Models\Schema_Block::find_for_game( 'vampire-disciplines', $game_slug );
+			if ( ! $fork || ( $fork->game_slug ?? '' ) !== $game_slug ) {
+				continue; // Only ever operate on a real fork row, never the global one.
+			}
+
+			$powers      = is_array( $fork->definition->powers ?? null ) ? $fork->definition->powers : [];
+			$ordinary    = [];
+			$blood_magic = [];
+
+			foreach ( $powers as $power ) {
+				$power = (array) $power;
+				$name  = (string) ( $power['name'] ?? '' );
+				$colon = strpos( $name, ': ' );
+
+				if ( $colon === false || in_array( $name, $excluded, true ) ) {
+					$ordinary[] = $power;
+					continue;
+				}
+
+				$tradition           = trim( substr( $name, 0, $colon ) );
+				$power['name']       = trim( substr( $name, $colon + 2 ) );
+				$power['traditions'] = [ $tradition => null ];
+				$blood_magic[]       = $power;
+			}
+
+			if ( $blood_magic === [] ) {
+				continue; // Already clean - nothing colon-prefixed to migrate.
+			}
+
+			$fork_definition           = (array) $fork->definition;
+			$fork_definition['powers'] = $ordinary;
+			\BeyondElysium\Models\Schema_Block::update( 'vampire-disciplines', [ 'definition' => (object) $fork_definition ], $game_slug );
+
+			$bm_fork = \BeyondElysium\Models\Schema_Block::find_or_create_fork_for_game( 'vampire-blood-magic', $game_slug );
+			if ( ! $bm_fork ) {
+				continue; // vampire-blood-magic does not exist globally yet - nothing to fork into.
+			}
+
+			$bm_definition         = (array) $bm_fork->definition;
+			$bm_powers             = is_array( $bm_definition['powers'] ?? null ) ? $bm_definition['powers'] : [];
+			$bm_traditions         = is_array( $bm_definition['traditions'] ?? null ) ? $bm_definition['traditions'] : [];
+
+			foreach ( $blood_magic as $transplant ) {
+				$matched_index = null;
+				foreach ( $bm_powers as $i => $existing ) {
+					$existing_name = (string) ( is_array( $existing ) ? ( $existing['name'] ?? '' ) : ( $existing->name ?? '' ) );
+					if ( strcasecmp( $existing_name, $transplant['name'] ) === 0 ) {
+						$matched_index = $i;
+						break;
+					}
+				}
+
+				$tradition_key = array_key_first( $transplant['traditions'] );
+				if ( $matched_index !== null ) {
+					$existing                          = (array) $bm_powers[ $matched_index ];
+					$existing['traditions']             = array_merge( (array) ( $existing['traditions'] ?? [] ), $transplant['traditions'] );
+					$bm_powers[ $matched_index ]        = $existing;
+				} else {
+					$bm_powers[] = $transplant;
+				}
+				$bm_traditions[] = $tradition_key;
+			}
+
+			$bm_definition['powers']     = $bm_powers;
+			$bm_definition['traditions'] = array_values( array_unique( $bm_traditions ) );
+			sort( $bm_definition['traditions'] );
+
+			\BeyondElysium\Models\Schema_Block::update( 'vampire-blood-magic', [ 'definition' => (object) $bm_definition ], $game_slug );
+		}
+	}
+
+	/**
+	 * Moves a character's own held vampire-disciplines pick to vampire-blood-magic when its
+	 * stored name identifies it as a pre-Blood-Magic tradition-prefixed pick, splitting the
+	 * name into the bare canonical path plus a `tradition` field. Covers both real shapes a
+	 * character can hold:
+	 *
+	 *   - A catalog-matched pick stored as "{Tradition}: {Path}" - the ordinary case, its
+	 *     tradition text already canonically spelled since it came from an exact catalog
+	 *     match rather than raw free text.
+	 *   - A keep_custom pick from before Blood Magic existed (D41/Decision 074), stored
+	 *     with the tradition in `name` and the actual path in `power_name` - Chase
+	 *     Ashford's own real committed import (data-samples/1506_chase_ashford_.gex) is
+	 *     exactly this shape. Real .gex exports spell a tradition inconsistently (verified
+	 *     2026-09-11 - "Dur-An-Ki", "Sadhanna"), so `name` is matched against the real
+	 *     tradition list the same normalized-then-single-unambiguous-fuzzy way
+	 *     Trait_Mapper::normalize_blood_magic_tradition() matches on import - and, same as
+	 *     that method, a `name` matching neither is left alone rather than guessed at,
+	 *     since it may simply be some other, unrelated keep_custom pick.
+	 *
+	 * Must run after Seeder::seed_schema_blocks() has seeded vampire-blood-magic and after
+	 * migrate_blood_magic_schema_forks(), for the same "reshape, never re-derive" reasoning
+	 * that migration follows - see its own docblock.
+	 *
+	 * Idempotent: a character with nothing to migrate is never written to. Processes
+	 * characters in batches, matching migrate_held_gift_names_to_grouped_fields()'s pattern.
+	 */
+	public static function migrate_blood_magic_held_picks(): void {
+		global $wpdb;
+		$table    = self::table( 'characters' );
+		$excluded = self::blood_magic_excluded_power_names();
+
+		// The real, curated 14-tradition list (Seeder::build_met_blood_magic_powers()) -
+		// duplicated here rather than read from the seeded catalog, since a character's
+		// own stored data must migrate consistently regardless of what any one chronicle's
+		// catalog fork currently contains.
+		$known_traditions = [
+			'Akhu', 'Bacaban', 'Dark Thaumaturgy', 'Dur An Ki', 'Judicium', 'Koldunism', 'Mortis',
+			'Nahuallotl', 'Necromancy', 'Sadhana', 'Sielanic', 'Thaumaturgy (Anarch)', 'Thaumaturgy (Camarilla)', 'Wanga',
+		];
+
+		$last_id = 0;
+		do {
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT id, sheet_data FROM {$table}
+					 WHERE id > %d
+					   AND JSON_CONTAINS_PATH( sheet_data, 'one', '$.\"vampire-disciplines\"' )
+					 ORDER BY id ASC
+					 LIMIT 200",
+					$last_id
+				),
+				ARRAY_A
+			);
+
+			foreach ( $rows as $row ) {
+				$last_id = (int) $row['id'];
+				$sheet   = json_decode( $row['sheet_data'], true );
+				$changed = false;
+
+				$held = is_array( $sheet['vampire-disciplines'] ?? null ) ? $sheet['vampire-disciplines'] : [];
+				$stay = [];
+				$move = [];
+
+				foreach ( $held as $entry ) {
+					if ( ! is_array( $entry ) || ! isset( $entry['name'] ) ) {
+						$stay[] = $entry;
+						continue;
+					}
+					$name  = (string) $entry['name'];
+					$colon = strpos( $name, ': ' );
+
+					if ( $colon !== false && ! in_array( $name, $excluded, true ) ) {
+						$entry['tradition'] = trim( substr( $name, 0, $colon ) );
+						$entry['name']      = trim( substr( $name, $colon + 2 ) );
+						$move[]             = $entry;
+						$changed            = true;
+						continue;
+					}
+
+					$tradition_match = ( ! empty( $entry['custom'] ) && isset( $entry['power_name'] ) )
+						? self::match_known_blood_magic_tradition( $name, $known_traditions )
+						: null;
+					if ( $tradition_match !== null ) {
+						$entry['tradition'] = $tradition_match;
+						$entry['name']      = $entry['power_name'];
+						unset( $entry['power_name'] );
+						$move[]  = $entry;
+						$changed = true;
+						continue;
+					}
+
+					$stay[] = $entry;
+				}
+
+				if ( ! $changed ) {
+					continue;
+				}
+
+				$sheet['vampire-disciplines'] = $stay;
+				$sheet['vampire-blood-magic'] = array_merge(
+					is_array( $sheet['vampire-blood-magic'] ?? null ) ? $sheet['vampire-blood-magic'] : [],
+					$move
+				);
+
+				$wpdb->update(
+					$table,
+					[ 'sheet_data' => wp_json_encode( $sheet ) ],
+					[ 'id' => (int) $row['id'] ],
+					[ '%s' ],
+					[ '%d' ]
+				);
+			}
+		} while ( count( $rows ) === 200 );
+	}
+
+	/**
+	 * Matches a raw string (e.g. a keep_custom pick's `name` field, which pre-Blood-Magic
+	 * held a tradition rather than a power name) against the real tradition list: an exact
+	 * match once case/whitespace/punctuation is normalized, then a fuzzy match only when it
+	 * is the single unambiguous candidate - the same two-tier rule
+	 * Trait_Mapper::normalize_blood_magic_tradition() applies on import, duplicated here in
+	 * miniature since this is one-off migration code with no reason to depend on the
+	 * Services layer. Returns null (never the raw text) when nothing matches confidently -
+	 * for this migration, null means "this probably isn't a tradition at all", not "keep it
+	 * as typed", since an unmatched name here decides whether the whole entry moves.
+	 *
+	 * @param string[] $known_traditions
+	 */
+	private static function match_known_blood_magic_tradition( string $raw, array $known_traditions ): ?string {
+		foreach ( $known_traditions as $tradition ) {
+			if ( \BeyondElysium\Services\Fuzzy_Matcher::normalize( $raw ) === \BeyondElysium\Services\Fuzzy_Matcher::normalize( $tradition ) ) {
+				return $tradition;
+			}
+		}
+		$suggestions = \BeyondElysium\Services\Fuzzy_Matcher::suggest( $raw, $known_traditions );
+		return count( $suggestions ) === 1 ? $suggestions[0] : null;
+	}
+
+	/**
 	 * Assigns a UUIDv7 to every character row that does not already have one.
 	 *
 	 * Processes rows in batches so a large chronicle does not exhaust memory
@@ -901,7 +1226,16 @@ class Schema {
 					$fresh_by_slug[ $fresh_section['block_slug'] ] = $fresh_section;
 				}
 
-				// Detects a renamed or removed block_slug that a plain field-presence check would miss.
+				// Detects a renamed or removed block_slug that a plain field-presence check
+				// would miss. Deliberately one-directional only (stored minus fresh, never
+				// the reverse) - VampireTemplateRepairTest::test_a_template_already_on_the_new_shape_is_left_untouched
+				// establishes that an is_system template genuinely missing sections the
+				// current code defines (an admin's own deliberate trim via the structured
+				// editor is exactly this) must NOT be treated as stale on that basis alone.
+				// Adding a brand-new default section (e.g. vampire-blood-magic,
+				// BE_PROCESS/0.99.2-workflow.md BM-9) to an already-current, already-seeded
+				// template needs its own dedicated, narrowly-scoped repair instead - see
+				// Seeder::add_missing_template_section().
 				$has_renamed_slug = (bool) array_diff( array_column( $sections, 'block_slug' ), array_keys( $fresh_by_slug ) );
 
 				$up_to_date = ! empty( $sections ) && ! $has_renamed_slug && ! array_filter(
@@ -920,6 +1254,75 @@ class Schema {
 
 				if ( ! \BeyondElysium\Models\Template::update( (int) $template->id, [ 'layout' => $layout ] ) ) {
 					error_log( 'Beyond Elysium: failed to repair ' . $stack->slug . ' template id ' . (int) $template->id );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Repairs an existing, already-seeded `npc_full` template whose section list has
+	 * fallen behind its stack's current `sheet_full` - the same class of drift
+	 * repair_stale_default_layouts() fixes for `sheet_full` itself, needed separately
+	 * because Seeder::seed_npc_templates() only ever builds `npc_full` once (guarded by
+	 * "already exists? skip") and never revisits it afterward. Blood Magic's own new
+	 * `vampire-blood-magic` section (BE_PROCESS/0.99.2-workflow.md BM-9) would otherwise
+	 * reach a fresh `sheet_full` but never an already-seeded `npc_full`.
+	 *
+	 * Merges rather than rebuilds from scratch: every section `sheet_full` currently has
+	 * that `npc_full` is missing is appended (in `sheet_full`'s own order/column
+	 * position), and the `npc-roleplaying-notes` section - always last, full-width - is
+	 * moved to the end again rather than left stranded in the middle. A section
+	 * `npc_full` already has is left exactly as it is, so a chronicle would never lose
+	 * npc_full-specific fields this way (none exist today, but this must not assume that
+	 * stays true forever).
+	 *
+	 * Must run after repair_stale_default_layouts(), which is what makes the `sheet_full`
+	 * this reads from correct in the first place.
+	 */
+	public static function repair_stale_npc_layouts(): void {
+		foreach ( \BeyondElysium\Models\Creature_Stack::all() as $stack ) {
+			foreach ( \BeyondElysium\Models\Template::globals( [
+				'stack_slug'    => $stack->slug,
+				'template_type' => 'npc_full',
+			] ) as $template ) {
+				/** @var object{id:int,is_system:int,layout:array} $template */
+				if ( empty( $template->is_system ) ) {
+					continue;
+				}
+
+				$sheet_full = \BeyondElysium\Models\Template::resolve( $stack->slug, 'sheet_full', null );
+				$fresh_sections = $sheet_full->layout['sections'] ?? [];
+				if ( ! $fresh_sections ) {
+					continue;
+				}
+
+				$sections    = $template->layout['sections'] ?? [];
+				$have_slugs  = array_column( $sections, 'block_slug' );
+				$missing     = array_values( array_filter(
+					$fresh_sections,
+					static fn( $section ) => ! in_array( $section['block_slug'], $have_slugs, true )
+				) );
+				if ( ! $missing ) {
+					continue; // Already has every section sheet_full does.
+				}
+
+				// The notes section must stay last, full-width, regardless of where the
+				// newly-appended sheet_full sections land.
+				$notes = array_values( array_filter( $sections, static fn( $s ) => $s['block_slug'] === 'npc-roleplaying-notes' ) );
+				$rest  = array_values( array_filter( $sections, static fn( $s ) => $s['block_slug'] !== 'npc-roleplaying-notes' ) );
+
+				// $missing is already confirmed non-empty above, so this list always has at least one order value.
+				$next_order = 1 + max( array_column( array_merge( $rest, $missing ), 'order' ) );
+				foreach ( $notes as &$note_section ) {
+					$note_section['order'] = $next_order++;
+				}
+				unset( $note_section );
+
+				$layout             = $template->layout;
+				$layout['sections'] = array_merge( $rest, $missing, $notes );
+
+				if ( ! \BeyondElysium\Models\Template::update( (int) $template->id, [ 'layout' => $layout ] ) ) {
+					error_log( 'Beyond Elysium: failed to repair npc_full for ' . $stack->slug . ' template id ' . (int) $template->id );
 				}
 			}
 		}
@@ -1006,6 +1409,12 @@ class Schema {
 		// Must run after seed_schema_blocks() has refreshed the werewolf-gifts/fera-gifts catalogs.
 		self::migrate_held_gift_names_to_grouped_fields();
 
+		// Blood magic (BE_PROCESS/0.99.2-workflow.md, BM-8): must run after
+		// seed_schema_blocks() has seeded the global vampire-blood-magic catalog, and the
+		// schema-fork split must run before the held-picks migration reads it.
+		self::migrate_blood_magic_schema_forks();
+		self::migrate_blood_magic_held_picks();
+
 		Seeder::seed_creature_stacks();
 		Seeder::reconcile_stack_blocks();
 		Seeder::seed_default_templates();
@@ -1015,6 +1424,14 @@ class Schema {
 
 		// Must run after seed_schema_blocks(), since a rebuilt layout can reference a new block slug.
 		self::repair_stale_default_layouts();
+
+		// Must run after seed_schema_blocks() has seeded vampire-blood-magic, and before
+		// repair_stale_npc_layouts(), which propagates this same addition into npc_full.
+		self::add_missing_blood_magic_template_section();
+
+		// Must run after repair_stale_default_layouts() and the call above, which are what
+		// make the sheet_full layout this reads from correct in the first place.
+		self::repair_stale_npc_layouts();
 
 		// Idempotent demo data, safe to re-run on every upgrade.
 		Seeder::seed_demo_characters();

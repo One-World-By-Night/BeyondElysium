@@ -34,6 +34,16 @@ class Capabilities {
 		'be_customize_sheet'     => [ 'administrator', 'editor' ],
 		// Chronicle-scoped like be_manage_characters: create/edit/delete approval overrides.
 		'be_manage_approval_rules' => [ 'administrator', 'editor' ],
+		// A fifth chronicle role, `boons` (BE_PROCESS/0.99.2-workflow.md), needs a
+		// narrower capability than be_manage_world_objects, which also covers items,
+		// locations and rotes - granting that would hand a Harpy everything, not just boons.
+		// Authorization::check_request() gates on the SITE-WIDE grant here first, then
+		// narrows further by the game-scoped role - so this must include every WP role a
+		// Harpy could plausibly be (a plain player, not necessarily WP staff), the same
+		// breadth be_view_characters/be_edit_own_characters/be_submit_actions already use.
+		// v0.21.20's be_import fix is the exact precedent: a game-scoped role grant alone
+		// is never enough on its own, both layers are required.
+		'be_manage_boons'          => [ 'administrator', 'editor', 'author', 'contributor', 'subscriber' ],
 	];
 
 	/**

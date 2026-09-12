@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for One World by Night (https://www.owbn.net/).
 
-Status: Live on two production OWBN chronicles (kony-sabbat.net, Boston By Night). In the integration-and-polish phase before a public 1.0 release.
+Status: v0.99.2, live on two production OWBN chronicles (kony-sabbat.net, Boston By Night). Working through a defined set of remaining items toward a 1.0 release.
 
 ## What It Does
 
@@ -44,17 +44,13 @@ Per-character sheet customization, portraits, print layout: Complete
 Permissions audit, performance pass, error-handling audit: Complete
 Chronicle-scoped authorization: Complete
 Notifications and game dashboard: Complete
-Internationalization, accessibility, documentation: In progress
-Release readiness and public beta: Not started
+Internationalization, accessibility, documentation: Complete
+Release-readiness checklist -- packaging, uninstall handling, security review: Complete
+Blood magic paths, downtime and rumor systems: Complete
 
 ## What's Next
 
-The current phase is integration and polish -- the last one before a 1.0 release candidate. Chronicle-scoped authorization, deferred decisions, notifications, and the game dashboard are all done and live. What remains:
-
-1. Internationalization scaffolding -- every user-facing string translatable, no partial translation shipped
-2. Accessibility -- keyboard navigation, ARIA labeling, contrast, phone-width layouts, print styles for rosters and the boon ledger
-3. Documentation -- a REST API reference, a Storyteller guide, an admin guide, and Elementor widget descriptions
-4. Release readiness -- clean artifact packaging, upgrade-path and rollback verification, a security review
+Toward 1.0: a defined set of remaining items, each already scoped with its own design -- letting characters travel between chronicles, signed/printable sheets, a background-use ledger and downtime settings, guided setup for a new chronicle, and a few others.
 
 Full Grapevine 3.01 import is complete and verified against real chronicle data: binary and XML exchange files, and full game files with create-or-merge into an existing chronicle.
 
