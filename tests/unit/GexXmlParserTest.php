@@ -14,9 +14,12 @@ use PHPUnit\Framework\TestCase;
  * Three more real samples arrived 2026-09-10 (Decision 068), all character-bearing - two
  * `<vampire>`, one `<werewolf>` - closing the gap the class's own history records: no
  * character-bearing XML sample existed when it originally shipped, so it only ever
- * implemented `<item>`/`<rote>`. The refusal path for every OTHER root element (still no
- * real sample for the other 10 `RaceType`s) is exercised against a hand-built document,
- * not a real one - matching `GexParserTest`'s own honesty about its synthetic fixtures.
+ * implemented `<item>`/`<rote>`. GX-2 (gex-export-transfer-design.md) added the other ten
+ * `RaceType`s, driven by `gv-exchange-shape.php` rather than hand-written per class - see
+ * `GexXmlParserGenericRaceTest` for their own coverage, still against synthetic documents
+ * only, since no real sample exists for any of them - matching `GexParserTest`'s own
+ * honesty about its synthetic fixtures. The refusal path here covers only a genuinely
+ * unrecognized element name, not any real `RaceType`.
  *
  * @see BE_PROCESS/workflow-0.8.md Step 9
  * @see BE_PROCESS/DECISIONLOG.md Decision 068

@@ -16,17 +16,22 @@ defined( 'ABSPATH' ) || exit;
  * Returns the identical array shape `GEX_Parser::parse_binary()` returns,
  * so every downstream consumer needs no branch past `sniff_format()`.
  *
- * Supports `<item>`, `<rote>`, `<vampire>`, and `<werewolf>` root
- * elements; any other root element throws, naming it. A small number of
- * fields that do not appear in the XML format at all (`appearance`/`notes`
- * on an item, `grades` on a rote) are emitted as `''` rather than omitted,
- * so downstream code can index every key regardless of which parser
- * produced the record. Only the vampire and werewolf character races are
- * supported; the other `RaceType` classes the binary reader supports are
- * not implemented here.
+ * Supports `<item>`, `<rote>`, and all 12 character races (GX-2,
+ * gex-export-transfer-design.md); any other root element throws, naming it.
+ * A small number of fields that do not appear in the XML format at all
+ * (`appearance`/`notes` on an item, `grades` on a rote) are emitted as `''`
+ * rather than omitted, so downstream code can index every key regardless of
+ * which parser produced the record.
+ *
+ * `vampire`/`werewolf` go through their own hand-written methods, carrying
+ * GX-0's seven reader-defect fixes. The other ten races go through
+ * `parse_character_generic()`, driven entirely by `gv-exchange-shape.php`
+ * (GX-1) rather than eleven more hand-written near-duplicates - there was no
+ * existing XML support for any of them before GX-2.
  *
  * @see BE_PROCESS/workflow-0.8.md Step 9
  * @see BE_PROCESS/DECISIONLOG.md Decision 068
+ * @see BE_PROCESS/gex-export-transfer-design.md GX-2
  */
 class GEX_Xml_Parser {
 
@@ -85,6 +90,18 @@ class GEX_Xml_Parser {
 					break;
 				case 'werewolf':
 					$characters[] = self::parse_character_werewolf( $child );
+					break;
+				case 'mortal':
+				case 'changeling':
+				case 'wraith':
+				case 'mage':
+				case 'fera':
+				case 'various':
+				case 'mummy':
+				case 'kueijin':
+				case 'hunter':
+				case 'demon':
+					$characters[] = self::parse_character_generic( $child, $name );
 					break;
 				default:
 					throw new \RuntimeException(
@@ -253,6 +270,82 @@ class GEX_Xml_Parser {
 			'biography'      => trim( (string) $el->biography ),
 			'notes'          => trim( (string) $el->notes ),
 		];
+	}
+
+	/**
+	 * Maps any of the ten character races GX-1's shape table describes but
+	 * this parser previously had no XML support for at all (`mortal`,
+	 * `changeling`, `wraith`, `mage`, `fera`, `various`, `mummy`, `kueijin`,
+	 * `hunter`, `demon`) to the identical shape their binary counterpart in
+	 * `GEX_Parser` produces - driven entirely by `gv-exchange-shape.php`
+	 * (GX-2), rather than eleven more hand-written near-duplicates of
+	 * `parse_character_vampire()`/`parse_character_werewolf()`.
+	 *
+	 * `vampire`/`werewolf` deliberately keep their own existing hand-written
+	 * methods above rather than being folded into this one: both already
+	 * carry GX-0's fixes and real test coverage, and there is no working
+	 * behaviour here to preserve for the other ten - a fresh, table-driven
+	 * implementation is the lower-risk choice for races that have never had
+	 * XML support before.
+	 *
+	 * `physical_max`/`social_max`/`mental_max` are always backfilled from
+	 * trait-list counts, the same as every hand-written method above -
+	 * these three are never actually present in the XML format for any
+	 * race, whatever the shape table's own `scalars` entry says.
+	 *
+	 * @param \SimpleXMLElement $el
+	 * @param string            $race
+	 * @return array<string,mixed>
+	 */
+	private static function parse_character_generic( \SimpleXMLElement $el, string $race ): array {
+		$shape    = GEX_Parser::shape( $race );
+		$resolved = [ 'race' => $race ];
+
+		foreach ( $shape['scalars'] as $scalar ) {
+			if ( isset( $scalar['xml_omit_if'] ) && array_key_exists( $scalar['xml_omit_if'], $resolved ) ) {
+				$fallback = (string) $resolved[ $scalar['xml_omit_if'] ];
+			} elseif ( array_key_exists( 'xml_omit', $scalar ) ) {
+				$fallback = is_bool( $scalar['xml_omit'] ) ? ( $scalar['xml_omit'] ? 'yes' : 'no' ) : (string) $scalar['xml_omit'];
+			} else {
+				$fallback = '';
+			}
+
+			$raw = self::xml_attr_or( $el, $scalar['xml'], $fallback );
+
+			if ( isset( $scalar['xml_enum'] ) ) {
+				$value                        = array_search( $raw, $scalar['xml_enum'], true );
+				$resolved[ $scalar['key'] ]   = $value === false ? 0 : $value;
+				continue;
+			}
+
+			$resolved[ $scalar['key'] ] = match ( $scalar['type'] ) {
+				'int16', 'int32' => (int) $raw,
+				'single'         => (float) $raw,
+				'bool'           => $raw === 'yes',
+				'date'           => self::parse_date( $raw ),
+				default          => $raw,
+			};
+		}
+
+		$trait_lists = self::trait_lists_by_name( $el );
+		$physical    = $trait_lists['Physical'] ?? self::empty_trait_list( 'Physical' );
+		$social      = $trait_lists['Social'] ?? self::empty_trait_list( 'Social' );
+		$mental      = $trait_lists['Mental'] ?? self::empty_trait_list( 'Mental' );
+		[ $resolved['physical_max'], $resolved['social_max'], $resolved['mental_max'] ] =
+			GEX_Parser::backfill_pool_max( 0, $physical, $social, $mental );
+
+		$resolved['experience']  = self::parse_experience( $el->experience );
+		$resolved['trait_lists'] = $trait_lists;
+
+		if ( $shape['boons'] ) {
+			$resolved['boons'] = self::parse_boons( $el );
+		}
+
+		foreach ( $shape['tail'] as $row ) {
+			$resolved[ $row['key'] ] = trim( (string) $el->{ $row['xml_cdata'] } );
+		}
+
+		return $resolved;
 	}
 
 	/**
