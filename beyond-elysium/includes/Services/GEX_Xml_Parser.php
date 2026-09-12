@@ -116,17 +116,18 @@ class GEX_Xml_Parser {
 	/**
 	 * Maps a `<vampire>` element to the identical shape
 	 * `GEX_Parser::parse_character_vampire()`'s binary reader produces.
-	 * `coterie`, `id`, `narrator`, `aura`, `aura_bonus`, `player`,
-	 * `is_npc`, and `boons` do not exist in the XML format and are
-	 * emitted as the same empty/zero/false defaults the binary reader
-	 * uses when those fields are absent, rather than omitted.
+	 * `coterie`, `narrator`, and `player` do not exist in the XML format
+	 * and are emitted as the same empty defaults the binary reader uses
+	 * when those fields are absent, rather than omitted.
 	 *
-	 * Each `temp_*` field mirrors its permanent value, matching the
-	 * binary reader's own fallback for a source with no separate temp
-	 * value. `physical_max`/`social_max`/`mental_max` are backfilled
-	 * through `GEX_Parser::backfill_pool_max()` for the same reason: the
-	 * XML format never carries them either. `is_npc` always defaults to
-	 * `false`, since nothing in the XML format signals otherwise.
+	 * `id`, `npc`, `biography`, `aura`/`aurabonus`, `<boon>` children, and
+	 * every `temp_*` field are real GV XML attributes/elements this parser
+	 * previously dropped (GX-0 defects 2-7) - each is now read from the
+	 * source element, falling back to the same default the binary reader
+	 * would use only when the attribute is genuinely absent.
+	 * `physical_max`/`social_max`/`mental_max` are backfilled through
+	 * `GEX_Parser::backfill_pool_max()` since the XML format never
+	 * carries them either.
 	 *
 	 * @param \SimpleXMLElement $el
 	 * @return array<string,mixed>
@@ -153,34 +154,38 @@ class GEX_Xml_Parser {
 			'generation'        => (int) $el['generation'],
 			'title'             => (string) $el['title'],
 			'blood'             => (int) $el['blood'],
-			'temp_blood'        => (int) $el['blood'],
+			'temp_blood'        => (int) self::xml_attr_or( $el, 'tempblood', $el['blood'] ),
 			'willpower'         => (int) $el['willpower'],
-			'temp_willpower'    => (int) $el['willpower'],
+			'temp_willpower'    => (int) self::xml_attr_or( $el, 'tempwillpower', $el['willpower'] ),
 			'conscience'        => (int) $el['conscience'],
-			'temp_conscience'   => (int) $el['conscience'],
+			'temp_conscience'   => (int) self::xml_attr_or( $el, 'tempconscience', $el['conscience'] ),
 			'self_control'      => (int) $el['selfcontrol'],
-			'temp_self_control' => (int) $el['selfcontrol'],
+			'temp_self_control' => (int) self::xml_attr_or( $el, 'tempselfcontrol', $el['selfcontrol'] ),
 			'courage'           => (int) $el['courage'],
-			'temp_courage'      => (int) $el['courage'],
+			'temp_courage'      => (int) self::xml_attr_or( $el, 'tempcourage', $el['courage'] ),
 			'path'              => (string) $el['path'],
 			'path_traits'       => (int) $el['pathtraits'],
-			'temp_path_traits'  => (int) $el['pathtraits'],
-			'aura'              => '',
-			'aura_bonus'        => '',
+			'temp_path_traits'  => (int) self::xml_attr_or( $el, 'temppathtraits', $el['pathtraits'] ),
+			// Real Grapevine writes 'aura' twice (once for Aura, once for AuraBonus with the
+			// 'aurabonus' attribute name never actually reaching the file - VampireClass.cls:375-376),
+			// which is malformed XML no parser here can read. Support the corrected shape: 'aura'
+			// for Aura, a genuine 'aurabonus' attribute for AuraBonus, defaulting to '+0' when absent.
+			'aura'              => (string) $el['aura'],
+			'aura_bonus'        => self::xml_attr_or( $el, 'aurabonus', '+0' ),
 			'physical_max'      => $physical_max,
 			'social_max'        => $social_max,
 			'mental_max'        => $mental_max,
 			'player'            => '',
 			'status'            => (string) $el['status'],
-			'id'                => '',
+			'id'                => (string) $el['id'],
 			'start_date'        => self::parse_date( (string) $el['startdate'] ),
 			'narrator'          => '',
-			'is_npc'            => false,
+			'is_npc'            => (string) $el['npc'] === 'yes',
 			'last_modified'     => self::parse_date( (string) $el['lastmodified'] ),
 			'experience'        => $experience,
 			'trait_lists'       => $trait_lists,
-			'boons'             => [],
-			'biography'         => '',
+			'boons'             => self::parse_boons( $el ),
+			'biography'         => trim( (string) $el->biography ),
 			'notes'             => trim( (string) $el->notes ),
 		];
 	}
@@ -189,9 +194,10 @@ class GEX_Xml_Parser {
 	 * Maps a `<werewolf>` element to the identical shape
 	 * `GEX_Parser::parse_character_werewolf()`'s binary reader produces,
 	 * following the same field-mapping discipline as the vampire parser
-	 * above. A missing `wisdom` attribute and an empty one both resolve
-	 * to `0` through `(int) $el['wisdom']`, so no special-casing is
-	 * needed for either case.
+	 * above (GX-0 defects 2, 3, 5, 7 - no boon list or aura fields exist
+	 * on this race). A missing `wisdom` attribute and an empty one both
+	 * resolve to `0` through `(int) $el['wisdom']`, so no special-casing
+	 * is needed for either case.
 	 *
 	 * @param \SimpleXMLElement $el
 	 * @return array<string,mixed>
@@ -221,30 +227,30 @@ class GEX_Xml_Parser {
 			'position'       => (string) $el['position'],
 			'notoriety'      => (int) $el['notoriety'],
 			'rage'           => (int) $el['rage'],
-			'temp_rage'      => (int) $el['rage'],
+			'temp_rage'      => (int) self::xml_attr_or( $el, 'temprage', $el['rage'] ),
 			'gnosis'         => (int) $el['gnosis'],
-			'temp_gnosis'    => (int) $el['gnosis'],
+			'temp_gnosis'    => (int) self::xml_attr_or( $el, 'tempgnosis', $el['gnosis'] ),
 			'willpower'      => (int) $el['willpower'],
-			'temp_willpower' => (int) $el['willpower'],
+			'temp_willpower' => (int) self::xml_attr_or( $el, 'tempwillpower', $el['willpower'] ),
 			'honor'          => (int) $el['honor'],
 			'glory'          => (int) $el['glory'],
 			'wisdom'         => (int) $el['wisdom'],
-			'temp_honor'     => (float) $el['honor'],
-			'temp_glory'     => (float) $el['glory'],
-			'temp_wisdom'    => (float) $el['wisdom'],
+			'temp_honor'     => (float) self::xml_attr_or( $el, 'temphonor', $el['honor'] ),
+			'temp_glory'     => (float) self::xml_attr_or( $el, 'tempglory', $el['glory'] ),
+			'temp_wisdom'    => (float) self::xml_attr_or( $el, 'tempwisdom', $el['wisdom'] ),
 			'physical_max'   => $physical_max,
 			'social_max'     => $social_max,
 			'mental_max'     => $mental_max,
 			'player'         => '',
 			'status'         => (string) $el['status'],
-			'id'             => '',
+			'id'             => (string) $el['id'],
 			'start_date'     => self::parse_date( (string) $el['startdate'] ),
 			'narrator'       => '',
-			'is_npc'         => false,
+			'is_npc'         => (string) $el['npc'] === 'yes',
 			'last_modified'  => self::parse_date( (string) $el['lastmodified'] ),
 			'experience'     => $experience,
 			'trait_lists'    => $trait_lists,
-			'biography'      => '',
+			'biography'      => trim( (string) $el->biography ),
 			'notes'          => trim( (string) $el->notes ),
 		];
 	}
@@ -277,6 +283,36 @@ class GEX_Xml_Parser {
 			'earned'  => (float) $experience_el['earned'],
 			'history' => $history,
 		];
+	}
+
+	/**
+	 * Maps every `<boon>` child of a `<vampire>` element to the identical
+	 * shape `GEX_Parser::parse_boon()`'s binary reader produces. Only
+	 * vampire writes a boon list (`BoonClass.OutputToFile`, called from
+	 * `VampireClass.cls:418-424`); no other race's `OutputToFile` calls it.
+	 *
+	 * `BoonDate` is a plain VB6 Date field (`BoonClass.cls`), written the
+	 * same generic way as `StartDate`/`LastModified` rather than the
+	 * date-only `<entry date>` convention `parse_date_only()` handles - so
+	 * it is parsed with `parse_date()`. Inferred, not tested against a real
+	 * sample: no boon-carrying `.gex` exists in this repo (see the
+	 * export/transfer design doc's risk ledger).
+	 *
+	 * @param \SimpleXMLElement $el
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function parse_boons( \SimpleXMLElement $el ): array {
+		$boons = [];
+		foreach ( $el->boon as $boon ) {
+			$boons[] = [
+				'boon_type'   => (string) $boon['type'],
+				'char_name'   => (string) $boon['partner'],
+				'is_owed'     => (string) $boon['owed'] === 'yes',
+				'boon_date'   => self::parse_date( (string) $boon['date'] ),
+				'description' => trim( (string) $boon->description ),
+			];
+		}
+		return $boons;
 	}
 
 	/**
@@ -369,10 +405,22 @@ class GEX_Xml_Parser {
 		$traits  = [];
 		$section = null;
 		foreach ( $traitlist->trait as $trait ) {
+			// A string even though it holds a number, matching the binary reader's Total field.
+			// An absent val defaults to '1' (LinkedTraitList.cls:833's WriteAttribute omits it
+			// when Total is 1 - GX-0 defect 1). A real production file (a Dialect B web-tool
+			// export, gex-export-transfer-design.md §2e) showed this reaches the file as a
+			// present-but-empty val="" instead of a fully omitted attribute for the same
+			// no-real-count case - confirmed on kony-sabbat.net/Boston, where every affected
+			// trait sat in a note-only, atomic list (Rituals, Merits, Derangements) that has
+			// no real "0" state: a ritual or merit is either held or it isn't. Both shapes are
+			// treated identically here, since neither carries a real recorded value.
+			$total = (string) ( $trait['val'] ?? '1' );
+			if ( $total === '' ) {
+				$total = '1';
+			}
 			$parsed = [
 				'name'  => (string) $trait['name'],
-				// A string even though it holds a number, matching the binary reader's Total field.
-				'total' => (string) $trait['val'],
+				'total' => $total,
 				'note'  => (string) $trait['note'],
 			];
 			// Reuses GEX_Parser::is_section_divider()/divider_label() rather than duplicating the logic.
@@ -413,6 +461,23 @@ class GEX_Xml_Parser {
 			'display'      => 0,
 			'traits'       => [],
 		];
+	}
+
+	/**
+	 * Reads an attribute if the source element actually carries it,
+	 * falling back to a caller-supplied default otherwise. Used for every
+	 * `temp*` field and `aurabonus`: real Grapevine omits these when they
+	 * equal their non-temp/default counterpart (`XMLWriterClass.cls`'s
+	 * `WriteAttribute` omit rule), so an absent attribute means "same as
+	 * the fallback", not "zero" (GX-0 defect 7).
+	 *
+	 * @param \SimpleXMLElement $el
+	 * @param string            $attr
+	 * @param mixed             $fallback
+	 * @return string
+	 */
+	private static function xml_attr_or( \SimpleXMLElement $el, string $attr, $fallback ): string {
+		return isset( $el[ $attr ] ) ? (string) $el[ $attr ] : (string) $fallback;
 	}
 
 	/**

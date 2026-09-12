@@ -120,16 +120,43 @@ class GexXmlParserTest extends TestCase {
 		$this->assertSame( 1, $claws['damage_amount'] );
 	}
 
-	public function test_a_trait_with_no_val_or_note_attribute_reads_as_empty_strings(): void {
+	public function test_a_trait_with_no_val_attribute_defaults_total_to_one(): void {
 		// Real data, not a guess: <trait name="Technocracy"/> in the real file has
-		// neither val= nor note= at all.
+		// neither val= nor note= at all. GX-0 defect 1: real Grapevine omits val when a
+		// trait's Total is 1 (LinkedTraitList.cls:833), so an absent attribute means "1",
+		// not "0" - the old '' default silently zeroed every single-dot trait on import.
 		$data  = GEX_Xml_Parser::parse_file( $this->path( 'GV301Source/Code/Artifacts and Devices.gex' ) );
 		$claws = current( array_filter( $data['items'], static fn( $i ) => $i['name'] === 'Claws' ) );
 
 		$this->assertSame(
-			[ 'name' => 'Technocracy', 'total' => '', 'note' => '' ],
+			[ 'name' => 'Technocracy', 'total' => '1', 'note' => '' ],
 			$claws['availability']['traits'][0]
 		);
+	}
+
+	/**
+	 * GX-0 defect 1, at real scale. Verified directly against this file's own raw XML
+	 * (not the design doc's retelling of it): 27 real `<trait>` elements total, 21 of them
+	 * carry no `val` attribute at all, and the literal string `val="1"` appears zero times
+	 * anywhere in the file. Since no trait in this file explicitly writes `val="1"`, every
+	 * parsed trait reading `total === '1'` must be one of those 21 defaulted ones - a
+	 * whole-file invariant, not a single cherry-picked example.
+	 */
+	public function test_no_val_attribute_across_the_real_file_now_defaults_to_one_for_all_21(): void {
+		$data = GEX_Xml_Parser::parse_file( $this->path( 'GV301Source/Code/Artifacts and Devices.gex' ) );
+
+		$ones = 0;
+		foreach ( $data['items'] as $item ) {
+			foreach ( [ 'temper_list', 'ability_list', 'negative_list', 'availability' ] as $list_key ) {
+				foreach ( $item[ $list_key ]['traits'] as $trait ) {
+					if ( $trait['total'] === '1' ) {
+						$ones++;
+					}
+				}
+			}
+		}
+
+		$this->assertSame( 21, $ones );
 	}
 
 	// -------------------------------------------------------------------------
@@ -275,6 +302,175 @@ class GexXmlParserTest extends TestCase {
 		// carry no `section` at all, not an empty string or a stale value from elsewhere.
 		$this->assertArrayNotHasKey( 'section', $by_name['Fortitude'] ?? [ 'section' => null ] );
 		$this->assertArrayNotHasKey( 'section', $by_name['Watcher Valeren'] ?? [ 'section' => null ] );
+	}
+
+	// -------------------------------------------------------------------------
+	// GX-0 defects 2-7 - no real aura/NPC/boon-carrying file exists in this repo
+	// (export/transfer design doc's risk ledger), so these are hand-built against
+	// VampireClass.OutputToFile's exact real attribute names (VampireClass.cls:360-427).
+	// -------------------------------------------------------------------------
+
+	private function vampire_xml( string $attributes, string $body = '' ): string {
+		return '<?xml version="1.0"?><grapevine version="2.399">' .
+			'<vampire name="Defect Fixture" clan="Toreador" sect="Camarilla" ' .
+			'blood="10" willpower="7" conscience="3" selfcontrol="3" courage="3" ' .
+			'pathtraits="7" physicalmax="5" socialmax="5" mentalmax="5" ' . $attributes . '>' .
+			'<experience unspent="0" earned="0"></experience>' . $body .
+			'</vampire></grapevine>';
+	}
+
+	public function test_npc_yes_reads_as_a_true_is_npc(): void {
+		$data = GEX_Xml_Parser::parse_string( $this->vampire_xml( 'npc="yes"' ) );
+		$this->assertTrue( $data['characters'][0]['is_npc'] );
+	}
+
+	public function test_npc_absent_still_reads_as_false(): void {
+		$data = GEX_Xml_Parser::parse_string( $this->vampire_xml( '' ) );
+		$this->assertFalse( $data['characters'][0]['is_npc'] );
+	}
+
+	public function test_id_attribute_is_read_not_hardcoded_empty(): void {
+		$data = GEX_Xml_Parser::parse_string(
+			$this->vampire_xml( 'id="https://kony-sabbat.net/be-verify/K3F7-QM2P"' )
+		);
+		$this->assertSame( 'https://kony-sabbat.net/be-verify/K3F7-QM2P', $data['characters'][0]['id'] );
+	}
+
+	public function test_biography_cdata_is_read_not_hardcoded_empty(): void {
+		$data = GEX_Xml_Parser::parse_string(
+			$this->vampire_xml( '', '<biography><![CDATA[A brief history.]]></biography>' )
+		);
+		$this->assertSame( 'A brief history.', $data['characters'][0]['biography'] );
+	}
+
+	public function test_aura_and_aurabonus_are_read_as_separate_attributes(): void {
+		// The corrected shape (export/transfer design doc §2d): our writer will emit a
+		// genuine 'aurabonus' attribute rather than reproducing real Grapevine's malformed
+		// duplicate-'aura' output, so the reader supports that corrected shape.
+		$data = GEX_Xml_Parser::parse_string( $this->vampire_xml( 'aura="Serene" aurabonus="+2"' ) );
+		$this->assertSame( 'Serene', $data['characters'][0]['aura'] );
+		$this->assertSame( '+2', $data['characters'][0]['aura_bonus'] );
+	}
+
+	public function test_aurabonus_absent_defaults_to_the_same_plus_zero_the_writer_will_omit(): void {
+		$data = GEX_Xml_Parser::parse_string( $this->vampire_xml( 'aura="Serene"' ) );
+		$this->assertSame( '+0', $data['characters'][0]['aura_bonus'] );
+	}
+
+	public function test_a_boon_child_is_read_into_the_binary_readers_boon_shape(): void {
+		$data = GEX_Xml_Parser::parse_string( $this->vampire_xml(
+			'',
+			'<boon type="Life" partner="Marcus Vitel" owed="yes" date="6/1/2026 12:00:00 AM">' .
+			'<description><![CDATA[Saved from the Sabbat.]]></description></boon>'
+		) );
+
+		$this->assertSame(
+			[
+				'boon_type'   => 'Life',
+				'char_name'   => 'Marcus Vitel',
+				'is_owed'     => true,
+				'boon_date'   => '2026-06-01 00:00:00',
+				'description' => 'Saved from the Sabbat.',
+			],
+			$data['characters'][0]['boons'][0]
+		);
+	}
+
+	/**
+	 * Real production data, not a synthetic guess: kony-sabbat.net's "Chase Ashford" and
+	 * Boston's "Laslo Throndsen" both carry val="" (present but empty) rather than a fully
+	 * omitted val attribute, on real note-only atomic lists (Rituals, Merits, Derangements)
+	 * where a "0" state has no meaning - a character either holds the ritual/merit/flaw or
+	 * doesn't. This is a Dialect B web-tool export quirk (gex-export-transfer-design.md §2e:
+	 * "empty attributes written as attr=\"\""), not desktop Grapevine's own omit-by-default
+	 * behaviour, but produces the identical GX-0 defect 1 corruption via a different byte
+	 * shape - both must default to '1', not just the fully-absent case.
+	 */
+	public function test_an_explicitly_empty_val_defaults_to_one_same_as_an_absent_val(): void {
+		$data = GEX_Xml_Parser::parse_string(
+			'<?xml version="1.0"?><grapevine version="2.396">' .
+			'<rote name="Empty Val" level="1" duration="Instant">' .
+			'<traitlist name="Spheres" abc="no" atomic="yes" display="5">' .
+			'<trait name="Correspondence: Initiate" val="" note="basic"/>' .
+			'</traitlist></rote></grapevine>'
+		);
+
+		$this->assertSame( '1', $data['rotes'][0]['sphere_list']['traits'][0]['total'] );
+	}
+
+	/**
+	 * The other half of the same real production finding: a genuinely explicit val="0" -
+	 * confirmed live on kony-sabbat.net as a deliberately zeroed "REMOVED" merit - is a real,
+	 * intentional value and must never be touched by the val=""/absent-val default.
+	 */
+	public function test_an_explicit_val_of_zero_is_never_defaulted_to_one(): void {
+		$data = GEX_Xml_Parser::parse_string(
+			'<?xml version="1.0"?><grapevine version="2.396">' .
+			'<rote name="Explicit Zero" level="1" duration="Instant">' .
+			'<traitlist name="Spheres" abc="no" atomic="yes" display="5">' .
+			'<trait name="Correspondence: Initiate" val="0" note="removed"/>' .
+			'</traitlist></rote></grapevine>'
+		);
+
+		$this->assertSame( '0', $data['rotes'][0]['sphere_list']['traits'][0]['total'] );
+	}
+
+	public function test_no_boon_children_still_reads_as_an_empty_array(): void {
+		$data = GEX_Xml_Parser::parse_string( $this->vampire_xml( '' ) );
+		$this->assertSame( [], $data['characters'][0]['boons'] );
+	}
+
+	public function test_temp_attributes_are_read_when_present_and_differ_from_permanent(): void {
+		$data = GEX_Xml_Parser::parse_string( $this->vampire_xml(
+			'tempblood="6" tempwillpower="4" tempconscience="1" tempselfcontrol="2" ' .
+			'tempcourage="0" temppathtraits="3"'
+		) );
+		$character = $data['characters'][0];
+
+		$this->assertSame( 10, $character['blood'] );
+		$this->assertSame( 6, $character['temp_blood'] );
+		$this->assertSame( 7, $character['willpower'] );
+		$this->assertSame( 4, $character['temp_willpower'] );
+		$this->assertSame( 3, $character['conscience'] );
+		$this->assertSame( 1, $character['temp_conscience'] );
+		$this->assertSame( 3, $character['self_control'] );
+		$this->assertSame( 2, $character['temp_self_control'] );
+		$this->assertSame( 3, $character['courage'] );
+		$this->assertSame( 0, $character['temp_courage'] );
+		$this->assertSame( 7, $character['path_traits'] );
+		$this->assertSame( 3, $character['temp_path_traits'] );
+	}
+
+	public function test_temp_attributes_absent_still_mirror_permanent(): void {
+		// The pre-existing, correct fallback for a source with no separate temp value
+		// (matching the binary reader's own behaviour) - must survive the fix untouched.
+		$data      = GEX_Xml_Parser::parse_string( $this->vampire_xml( '' ) );
+		$character = $data['characters'][0];
+
+		$this->assertSame( $character['blood'], $character['temp_blood'] );
+		$this->assertSame( $character['willpower'], $character['temp_willpower'] );
+		$this->assertSame( $character['conscience'], $character['temp_conscience'] );
+		$this->assertSame( $character['self_control'], $character['temp_self_control'] );
+		$this->assertSame( $character['courage'], $character['temp_courage'] );
+		$this->assertSame( $character['path_traits'], $character['temp_path_traits'] );
+	}
+
+	public function test_werewolf_temp_honor_glory_wisdom_are_read_when_present(): void {
+		$data = GEX_Xml_Parser::parse_string(
+			'<?xml version="1.0"?><grapevine version="2.399">' .
+			'<werewolf name="Defect Fixture" tribe="Fianna" breed="Homid" auspice="Galliard" ' .
+			'rage="6" temprage="4" gnosis="6" tempgnosis="5" willpower="6" ' .
+			'honor="3" temphonor="1" glory="3" tempglory="2" wisdom="3" tempwisdom="0">' .
+			'<experience unspent="0" earned="0"></experience>' .
+			'</werewolf></grapevine>'
+		);
+		$character = $data['characters'][0];
+
+		$this->assertSame( 4, $character['temp_rage'] );
+		$this->assertSame( 5, $character['temp_gnosis'] );
+		$this->assertSame( 1.0, $character['temp_honor'] );
+		$this->assertSame( 2.0, $character['temp_glory'] );
+		$this->assertSame( 0.0, $character['temp_wisdom'] );
 	}
 
 	// -------------------------------------------------------------------------
