@@ -32,6 +32,7 @@
 
 .be-character-sheet__toolbar {
 	display: flex;
+	flex-wrap: wrap;
 	justify-content: flex-end;
 	gap: 0.75rem;
 	margin-bottom: 0.75rem;
@@ -68,6 +69,7 @@
 
 .be-character-sheet__print-options {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 1rem;
 	margin-bottom: 0.75rem;
@@ -199,6 +201,18 @@
 @media ( max-width: 768px ) {
 	.be-character-sheet__grid {
 		grid-template-columns: 1fr;
+	}
+
+	/*
+	 * Every section carries a desktop `gridColumn: span N` inline style (CharacterSheet.tsx),
+	 * the same construction CharacterEditor.css:68-79 already had to override for the same
+	 * reason (v0.21.21 Step 8d) - a collapsed 1fr grid still honors an inline `span N`, which
+	 * fabricates near-zero-width implicit tracks instead of a single full-width column.
+	 * `!important` is the only way to beat an inline style from a stylesheet; not a
+	 * specificity workaround, the correct tool for this one case.
+	 */
+	.be-character-sheet__section {
+		grid-column: 1 / -1 !important;
 	}
 }
 

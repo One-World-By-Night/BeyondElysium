@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**Status:** `v0.99.2` is released and running in production chronicles. The character engine, editor, Storyteller tools, world data, Grapevine import, configurable approval rules, and blood magic paths are all built. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's left before 1.0.
+**Status:** `v0.99.3` is released and running in production chronicles. The character engine, editor, Storyteller tools, world data, Grapevine import, configurable approval rules, and blood magic paths are all built. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's left before 1.0.
 
 ## What It Does
 
@@ -22,7 +22,7 @@ Beyond the sheet itself:
 
 ## Installation
 
-Download `beyond-elysium-0.99.2.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
+Download `beyond-elysium-0.99.3.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
 
 That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder in this repository is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder straight into `wp-content/plugins/` will not work. To build it yourself:
 

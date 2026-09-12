@@ -1737,7 +1737,16 @@ class Seeder {
 	 * requirement text elsewhere (readable, not enforced). Cost is never set: MET rotes are
 	 * not separately priced - the sphere levels they require are what actually cost XP.
 	 *
-	 * @return array<int,array{name:string,note:string}>
+	 * `Rotes.gex` also carries, per rote, a `sphere_list` of `{Sphere}: {Rank}` trait names
+	 * and a `description` that is actually a source citation (`"Laws of Ascension, p. 166"`,
+	 * `"Laws of Ascension Companion p. 137"`) - both already parsed by `GEX_Xml_Parser` and
+	 * both previously discarded here despite this docblock's own claim that the catalog
+	 * carries "its own sphere prerequisites." Appended to `note`/`source` below. `source` is
+	 * validated against the real citation shape before being written, so a future edit that
+	 * grows a real prose description on this field can't silently ship as though it were a
+	 * citation.
+	 *
+	 * @return array<int,array{name:string,note:string,source?:string}>
 	 */
 	private static function build_mage_rotes_items(): array {
 		if ( ! file_exists( self::MAGE_ROTES_PATH ) ) {
@@ -1766,10 +1775,35 @@ class Seeder {
 				$note = $note !== '' ? "{$note}, {$duration}" : $duration;
 			}
 
+			// Sphere prerequisites: real trait names ("Correspondence: Initiate"), kept in
+			// source order (Rotes.gex orders them meaningfully) and never deduped within a
+			// rote - a rote legitimately usable at either of two ranks lists both.
+			$sphere_names = [];
+			foreach ( $rote['sphere_list']['traits'] ?? [] as $trait ) {
+				$sphere_name = trim( (string) ( $trait['name'] ?? '' ) );
+				if ( $sphere_name !== '' ) {
+					$sphere_names[] = $sphere_name;
+				}
+			}
+			if ( ! empty( $sphere_names ) ) {
+				$spheres = implode( ', ', $sphere_names );
+				$note    = $note !== '' ? "{$note} — {$spheres}" : $spheres;
+			}
+
 			$item = [ 'name' => $name ];
 			if ( $note !== '' ) {
 				$item['note'] = $note;
 			}
+
+			// The <description> element is actually a source citation on every real rote,
+			// never prose - checked against the real shape rather than trusted, so a
+			// malformed or grown value degrades to "omitted" rather than shipping as though
+			// it were a citation.
+			$source = trim( (string) ( $rote['description'] ?? '' ) );
+			if ( $source !== '' && preg_match( '/^Laws of Ascension( Companion)?,? p\.? ?\d+$/', $source ) === 1 ) {
+				$item['source'] = $source;
+			}
+
 			$items[] = $item;
 		}
 
