@@ -432,6 +432,12 @@ class SeederMapTest extends TestCase {
 	 * The defect this closes: every Mage character showed a Rotes section with nothing in
 	 * it, despite the data (Rotes.gex, 201 real rotes) and the reader (GEX_Xml_Parser, tests
 	 * already passing against this exact file) both already existing.
+	 *
+	 * `note`/`source` assertions updated for the backfill added the same release
+	 * (`BE_PROCESS/mage-rotes-grimoire-design.md` §5.4): `Rotes.gex` was already parsed for
+	 * its 289 real sphere prerequisites and 201 real source citations, and the seeder was
+	 * discarding both. 201 is still the right count here - the ~880 net-new rotes extracted
+	 * from the Grimoire PDF are a separate, larger, not-yet-built item (MR-4 onward).
 	 */
 	public function test_mage_rotes_is_no_longer_empty(): void {
 		$ref    = new \ReflectionMethod( Seeder::class, 'build_mapped_blocks' );
@@ -444,7 +450,22 @@ class SeederMapTest extends TestCase {
 		$this->assertArrayNotHasKey( 'deferred_to', $mage_rotes['definition'], 'no longer deferred - the flag must not survive into the built block' );
 
 		$sample = current( array_filter( $mage_rotes['definition']['items'], static fn( $i ) => $i['name'] === 'Access This' ) );
-		$this->assertSame( 'Level 2, One Scene or Hour', $sample['note'] );
+		$this->assertSame( 'Level 2, One Scene or Hour — Correspondence: Initiate, Forces: Initiate', $sample['note'] );
+		$this->assertSame( 'Laws of Ascension Companion p. 137', $sample['source'] );
+		$this->assertArrayNotHasKey( 'cost', $sample, 'rotes are never separately priced - the sphere levels they require are what cost XP' );
+
+		// Beginner's Luck legitimately works at either of two ranks - both must survive, not deduped.
+		$dual = current( array_filter( $mage_rotes['definition']['items'], static fn( $i ) => $i['name'] === "Beginner's Luck" ) );
+		$this->assertNotFalse( $dual );
+		$this->assertSame( 'Level 2, See Description — Entropy: Apprentice, Entropy: Initiate', $dual['note'] );
+		$this->assertSame( 'Laws of Ascension, p. 147', $dual['source'] );
+
+		// No item's `note` should ever be silently missing its sphere prerequisites -
+		// Rotes.gex confirms 0 of 289 sphere traits are empty, so every one of the 201
+		// items must show a spaced em-dash section in its note.
+		foreach ( $mage_rotes['definition']['items'] as $item ) {
+			$this->assertStringContainsString( ' — ', $item['note'], "{$item['name']} is missing its sphere-prerequisite suffix" );
+		}
 	}
 
 	/**
