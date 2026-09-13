@@ -204,9 +204,42 @@ export type SectionType = 'trait_list' | 'tiered_power' | 'resource_pool' | 'ide
  * its cost, and any prerequisites or approval override that apply
  * to taking it.
  */
+/**
+ * One row of a per-value approval schedule - "reaching 4 or 5 needs
+ * Storyteller approval" - on a trait_list item's count or a resource_pool's
+ * permanent value. `from`/`to` are inclusive. Resolved against the
+ * RESULTING value only (never a diff against the character's prior value) -
+ * the same state-based approach every other approval check in this engine
+ * already uses.
+ */
+export interface ApprovalRange {
+    from: number;
+    to: number;
+    approval: ApprovalLevel;
+    /** Citation naming the real-world approval authority, shown to the reviewing Storyteller. */
+    reason?: string;
+}
+
+/**
+ * A site-wide (global-admin-editable, never per-chronicle by default),
+ * sanitized-server-side rich-text note on a catalog item, tiered_power
+ * level, or tiered_power family - a house rule, a page/document reference,
+ * or a general note, kept in their own separate sections rather than run
+ * together in one blob. Each present section is HTML: formatting, lists,
+ * and tables survive sanitization; images and anything else don't. Never
+ * populated by any seeder, never read or written by Grapevine import/export.
+ * `source` here is a separate concept from a catalog item's own top-level
+ * `source` citation string.
+ */
+export interface CatalogDescription {
+    reference?: string;
+    description?: string;
+    source?: string;
+}
+
 export interface TraitListItem {
     name: string;
-    description?: string;
+    description?: CatalogDescription;
     source?: string;
     /** Free-text cost expression, not always a plain integer, e.g. "1", "1 or 3", "1-7". */
     cost?: string;
@@ -214,6 +247,8 @@ export interface TraitListItem {
     approval?: ApprovalLevel;
     /** Citation naming the real-world approval authority, shown to the reviewing Storyteller. */
     reason?: string;
+    /** Per-count approval schedule, e.g. Occult 1-3 auto, 4-5 st. Checked before the flat `approval` above; `approval`/`reason` apply only when no range covers the submitted count. */
+    approval_by_value?: ApprovalRange[];
     prerequisites?: Prerequisite[];
     /** Grouping label, such as a tribe or breed, used to cluster related items together. */
     group?: string;
@@ -258,9 +293,11 @@ export interface PowerLevel {
     level: number | null;
     tier: 'innate' | 'basic' | 'intermediate' | 'advanced' | 'elder' | 'master' | 'ascended' | 'methuselah' | string;
     power_name: string;
-    description?: string;
+    description?: CatalogDescription;
     /** Free-text cost expression, in the same shape as TraitListItem's own cost field. */
     cost?: string;
+    /** Approval override for reaching this specific level - each level is already its own catalog row, so no range is needed the way a bare-number trait_list item or resource_pool needs one. Combines (strictest wins) with the power family's own `approval_override`, never replaces it. */
+    approval?: ApprovalLevel;
     /** Citation naming the real-world approval authority, shown to the reviewing Storyteller. */
     reason?: string;
 }
@@ -275,6 +312,7 @@ export interface TieredPower {
     source?: string;
     levels: PowerLevel[];
     approval_override?: ApprovalLevel;
+    description?: CatalogDescription;
     /**
      * Blood magic only (`TieredPowerDefinition.blood_magic`): which of the
      * block's traditions offer this specific path, keyed by tradition name,
@@ -345,6 +383,8 @@ export interface ResourcePool {
     cost_per_dot?: number;
     /** Dots granted free before cost_per_dot applies - ported per-race from Grapevine's own point estimator, see Seeder.php's citations. */
     free_dots?: number;
+    /** Per-value approval schedule, keyed on the pool's own PERMANENT value (never temporary - spending/regaining a point of Willpower in play never needs approval; permanently raising it via XP might). */
+    approval_by_value?: ApprovalRange[];
 }
 
 /**
@@ -376,6 +416,8 @@ export interface IdentityField {
     default?: string | number;
     /** select only: allows a free-text value alongside the fixed option list. */
     allow_custom?: boolean;
+    /** Per-option approval schedule, e.g. picking "Antediluvian" needs Coordinator approval while every other option is auto. Keyed by the exact option string; a multiselect's every selected value is checked, strictest wins. */
+    approval_by_option?: Record<string, { approval: ApprovalLevel; reason?: string }>;
 }
 
 /**

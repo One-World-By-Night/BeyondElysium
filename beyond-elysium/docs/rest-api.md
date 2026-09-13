@@ -39,8 +39,17 @@ capability plus their row in `be_game_members` for that chronicle. See the
 | GET | `/schema-blocks` | `be_view_characters` | List blocks |
 | POST | `/schema-blocks` | `be_manage_schemas` | Create a block |
 | GET | `/schema-blocks/{slug}` | `be_view_characters` | Get one block; `?game_slug=` substitutes a chronicle's own fork if it has one |
-| PUT | `/schema-blocks/{slug}` | `be_manage_schemas` | Update, or auto-fork per-game if `game_slug` is present and no fork exists yet |
+| PUT | `/schema-blocks/{slug}` | `be_manage_schemas` | Update, or auto-fork per-game if `game_slug` is present and no fork exists yet. Any `description` object (`{reference, description, source}`, each HTML) on an item/power/level is sanitized server-side — formatting/lists/tables survive, images and scripts don't — regardless of what the caller submits. |
 | DELETE | `/schema-blocks/{slug}` | `be_manage_schemas` | Delete |
+
+An item, tiered-power level/family, resource pool, or identity field's `definition` entry may
+also carry an approval schedule beyond its flat `approval`: `approval_by_value` (trait_list
+items and resource_pool pools — an array of `{from, to, approval, reason?}` ranges resolved
+against the resulting value, a pool's schedule checked against its permanent rating only), a
+plain `approval` on a tiered_power level (each level is already its own row), or
+`approval_by_option` (identity_field — `{optionValue: {approval, reason?}}`, every value in a
+multiselect checked, strictest wins). See the
+[Admin Guide](admin-guide.md#approval-by-value-and-approval-by-option) for the editing UI.
 
 ## Creature Stacks
 

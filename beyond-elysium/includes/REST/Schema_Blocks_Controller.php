@@ -3,6 +3,7 @@
 namespace BeyondElysium\REST;
 
 use BeyondElysium\Models\Schema_Block;
+use BeyondElysium\Services\Rich_Text_Sanitizer;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -166,6 +167,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 			if ( $validation_error ) {
 				return $validation_error;
 			}
+			$definition = $this->sanitize_definition( $section_type, $definition );
 		} else {
 			$definition = $this->default_definition( $section_type );
 		}
@@ -228,6 +230,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 			if ( $validation_error ) {
 				return $validation_error;
 			}
+			$data['definition'] = $this->sanitize_definition( $section_type, $data['definition'] );
 		}
 
 		Schema_Block::update( $request['slug'], $data, $game_slug );
@@ -370,6 +373,26 @@ class Schema_Blocks_Controller extends Base_Controller {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Normalizes a definition (a JSON string, stdClass, or already-plain
+	 * array) to a plain array and narrows every `description` field inside
+	 * it through Rich_Text_Sanitizer. Called only after validate_definition()
+	 * has already confirmed the required shape for section_type - this
+	 * method reshapes nothing else and validates nothing else.
+	 *
+	 * @param string $section_type
+	 * @param mixed  $definition
+	 * @return array<string,mixed>
+	 */
+	private function sanitize_definition( string $section_type, $definition ): array {
+		if ( is_string( $definition ) ) {
+			$definition = json_decode( $definition, true );
+		} elseif ( is_object( $definition ) ) {
+			$definition = json_decode( wp_json_encode( $definition ), true );
+		}
+		return Rich_Text_Sanitizer::sanitize_definition( (array) $definition, $section_type );
 	}
 
 	/**

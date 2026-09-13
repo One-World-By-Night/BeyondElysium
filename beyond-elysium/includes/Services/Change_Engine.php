@@ -329,7 +329,9 @@ class Change_Engine {
 			return [ 'level' => 'st', 'reason' => null ];
 		}
 
-		$level  = 'st'; // Safe default.
+		// Unset, not 'st' - see strictest()'s own docblock for why. Coalesced to the
+		// 'st' safe default right before the game-level auto-approve check below.
+		$level  = null;
 		$reason = null;
 
 		if ( $block_slug ) {
@@ -344,6 +346,20 @@ class Change_Engine {
 				if ( $trait_name && ! empty( $definition->items ) ) {
 					foreach ( $definition->items as $item ) {
 						if ( ( $item->name ?? null ) === $trait_name ) {
+							// Per-count schedule ("Occult 1-3 auto, 4-5 st") is more specific than
+							// the flat approval below - checked first, and short-circuits the same
+							// way a flat approval match already does when a range actually covers
+							// the submitted count. No matching range falls through to the flat check.
+							if ( ! empty( $item->approval_by_value ) ) {
+								$new_count = $change_data['trait']['count'] ?? null;
+								$range     = self::find_approval_range( $item->approval_by_value, $new_count );
+								if ( $range ) {
+									if ( ! empty( $range->reason ) ) {
+										$reason = $range->reason;
+									}
+									return [ 'level' => self::strictest( $level, $range->approval ), 'reason' => $reason ];
+								}
+							}
 							if ( ! empty( $item->reason ) ) {
 								$reason = $item->reason;
 								$level  = self::strictest( $level, 'st' );
@@ -368,9 +384,70 @@ class Change_Engine {
 							$level = self::strictest( $level, $power->approval_override );
 						}
 						foreach ( $power->levels ?? [] as $rung ) {
-							if ( ( $rung->level ?? null ) === $held_level && ! empty( $rung->reason ) ) {
+							if ( ( $rung->level ?? null ) !== $held_level ) {
+								continue;
+							}
+							if ( ! empty( $rung->reason ) ) {
 								$reason = $rung->reason;
 								$level  = self::strictest( $level, 'st' );
+							}
+							// Each level is already its own catalog row - a flat override per rung,
+							// never a range, since there's no gap between rows to span.
+							if ( isset( $rung->approval ) ) {
+								$level = self::strictest( $level, $rung->approval );
+							}
+						}
+						break;
+					}
+				}
+
+				// Check the matched resource pool's own per-value schedule (Willpower, Blood,
+				// Rage...) - resource_pool changes never populate change_data['trait'] at all,
+				// so this reads change_data['values'] instead, keyed on the pool's PERMANENT
+				// value (spending/regaining a temporary point in play never needs approval;
+				// permanently raising it via XP might).
+				if ( ! empty( $change_data['values'] ) && ! empty( $definition->pools ) ) {
+					$pool_name = array_key_first( $change_data['values'] );
+					$new_value = $change_data['values'][ $pool_name ];
+					$permanent = is_array( $new_value ) ? ( $new_value['permanent'] ?? null ) : $new_value;
+					foreach ( $definition->pools as $pool ) {
+						if ( ( $pool->name ?? null ) !== $pool_name || empty( $pool->approval_by_value ) ) {
+							continue;
+						}
+						$range = self::find_approval_range( $pool->approval_by_value, $permanent );
+						if ( $range ) {
+							if ( ! empty( $range->reason ) ) {
+								$reason = $range->reason;
+							}
+							$level = self::strictest( $level, $range->approval );
+						}
+						break;
+					}
+				}
+
+				// Check the matched identity field's own per-option schedule (a specific Clan,
+				// a specific Generation background...) - identity_field changes populate
+				// change_data['fields'], never change_data['trait']. A multiselect's every
+				// selected value is checked; strictest wins across all of them.
+				if ( ! empty( $change_data['fields'] ) && ! empty( $definition->fields ) ) {
+					$field_name = array_key_first( $change_data['fields'] );
+					$new_value  = $change_data['fields'][ $field_name ];
+					$selected   = is_array( $new_value ) ? $new_value : [ $new_value ];
+					foreach ( $definition->fields as $field ) {
+						if ( ( $field->name ?? null ) !== $field_name || empty( $field->approval_by_option ) ) {
+							continue;
+						}
+						$schedule = (array) $field->approval_by_option;
+						foreach ( $selected as $option ) {
+							if ( ! isset( $schedule[ $option ] ) ) {
+								continue;
+							}
+							$entry = $schedule[ $option ];
+							if ( ! empty( $entry->reason ) ) {
+								$reason = $entry->reason;
+							}
+							if ( isset( $entry->approval ) ) {
+								$level = self::strictest( $level, $entry->approval );
 							}
 						}
 						break;
@@ -392,6 +469,9 @@ class Change_Engine {
 				}
 			}
 		}
+
+		// Nothing above ever produced a real signal - the actual safe default.
+		$level = $level ?? 'st';
 
 		// Check game-level auto-approve settings. Never used to wave through a change
 		// carrying a real-world approval citation, regardless of what level it resolved to.
@@ -449,14 +529,51 @@ class Change_Engine {
 	 * ranks at least as strict as the other, treating an unrecognized
 	 * level as equivalent to 'st'.
 	 *
-	 * @param string $a
-	 * @param string $b
+	 * `$a` is nullable and means "no signal has applied yet" - not the same
+	 * thing as an explicit 'st'. Before this distinction existed, the running
+	 * accumulator started hardcoded at the string 'st', which meant an
+	 * item's own `approval: 'auto'` (or a family's `approval_override:
+	 * 'auto'`, or a matched approval_by_value/approval_by_option range's
+	 * 'auto') could never actually win - strictest('st', 'auto') is 'st' by
+	 * this same ranking. A genuine, previously-undetected bug: an explicit
+	 * 'auto' override has never once resolved to auto anywhere in this
+	 * method's history, only ever to 'st'. Found writing a real test for the
+	 * per-value approval schedule, not assumed.
+	 *
+	 * @param ?string $a Null means "nothing has applied yet" - returns `$b` outright.
+	 * @param string  $b
 	 * @return string
 	 */
-	private static function strictest( string $a, string $b ): string {
+	private static function strictest( ?string $a, string $b ): string {
+		if ( $a === null ) {
+			return $b;
+		}
 		$order = [ 'auto' => 0, 'st' => 1, 'coordinator' => 2 ];
 		$a_val = $order[ $a ] ?? 1;
 		$b_val = $order[ $b ] ?? 1;
 		return $a_val >= $b_val ? $a : $b;
+	}
+
+	/**
+	 * Finds the first `{from, to, approval, reason?}` range covering `$value`
+	 * (inclusive both ends) in an `approval_by_value` schedule. Returns null
+	 * when `$value` is null/non-numeric or no range covers it - the caller
+	 * falls back to whatever flat approval the item/pool/block otherwise
+	 * carries, never guesses a range for an uncovered value.
+	 *
+	 * @param array<int,object> $ranges
+	 * @param mixed             $value
+	 * @return object|null
+	 */
+	private static function find_approval_range( array $ranges, $value ): ?object {
+		if ( ! is_numeric( $value ) ) {
+			return null;
+		}
+		foreach ( $ranges as $range ) {
+			if ( isset( $range->from, $range->to, $range->approval ) && $value >= $range->from && $value <= $range->to ) {
+				return $range;
+			}
+		}
+		return null;
 	}
 }

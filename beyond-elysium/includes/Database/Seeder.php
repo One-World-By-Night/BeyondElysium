@@ -85,9 +85,99 @@ class Seeder {
 
 			// System blocks are refreshed from the GVM source; a chronicle's own edited blocks (is_system = 0) are never touched.
 			if ( (int) $existing->is_system === 1 ) {
+				$block = self::preserve_admin_descriptions( $block, $existing->definition );
 				Schema_Block::update( $block['slug'], $block );
 			}
 		}
+	}
+
+	/**
+	 * Carries a system block's admin-added `description` object (its
+	 * `reference`/`description`/`source` sections, whichever are set) forward
+	 * across a reseed, matched by name. `Schema_Block::update()` above replaces
+	 * a system block's entire `definition` on every version bump (R5) - the
+	 * correct behavior for everything sourced from GVM/CSV data, but
+	 * `description` is the one field on a catalog item that is never sourced
+	 * from anywhere; it exists only because a site admin typed into it (a
+	 * house rule, a page reference). Without this, that text would be
+	 * silently destroyed the next time this plugin updates, which defeats the
+	 * entire point of the field.
+	 *
+	 * Matched by exact name - `trait_list` items by `name`, a `tiered_power`
+	 * family by its own `name`, and a level within it by `power_name` scoped
+	 * to that same family. A renamed source item legitimately loses its old
+	 * note rather than guessing which new item it belongs to now (Decision
+	 * 043's tie rule, applied to a rename instead of a merge).
+	 *
+	 * @param array<string,mixed> $new_block
+	 * @param object              $old_definition
+	 * @return array<string,mixed>
+	 */
+	private static function preserve_admin_descriptions( array $new_block, object $old_definition ): array {
+		$section_type = $new_block['section_type'] ?? null;
+
+		if ( $section_type === 'trait_list' ) {
+			$old_by_name = [];
+			foreach ( $old_definition->items ?? [] as $raw_item ) {
+				// Cast to array: $old_definition decodes as nested stdClass (a generic
+				// `object` PHPStan can't know the shape of), and a plain array read
+				// avoids the "access to an undefined property" false positive that comes
+				// with reading a property PHPStan has no declared shape for.
+				$item = (array) $raw_item;
+				// isset(), not empty() - description decodes as a stdClass (however few
+				// keys it holds), and PHP's empty() never treats an object as empty.
+				if ( isset( $item['description'] ) ) {
+					$old_by_name[ $item['name'] ] = $item['description'];
+				}
+			}
+			if ( $old_by_name === [] ) {
+				return $new_block;
+			}
+			foreach ( $new_block['definition']['items'] as &$item ) {
+				if ( isset( $old_by_name[ $item['name'] ] ) ) {
+					$item['description'] = $old_by_name[ $item['name'] ];
+				}
+			}
+			unset( $item );
+			return $new_block;
+		}
+
+		if ( $section_type === 'tiered_power' ) {
+			$old_power_desc = [];
+			$old_level_desc = [];
+			foreach ( $old_definition->powers ?? [] as $raw_power ) {
+				// Same array-cast reasoning as the trait_list branch above.
+				$power = (array) $raw_power;
+				// isset(), not empty() - same reasoning as the trait_list branch above.
+				if ( isset( $power['description'] ) ) {
+					$old_power_desc[ $power['name'] ] = $power['description'];
+				}
+				foreach ( $power['levels'] ?? [] as $raw_level ) {
+					$level = (array) $raw_level;
+					if ( isset( $level['description'] ) ) {
+						$old_level_desc[ $power['name'] ][ $level['power_name'] ] = $level['description'];
+					}
+				}
+			}
+			if ( $old_power_desc === [] && $old_level_desc === [] ) {
+				return $new_block;
+			}
+			foreach ( $new_block['definition']['powers'] as &$power ) {
+				if ( isset( $old_power_desc[ $power['name'] ] ) ) {
+					$power['description'] = $old_power_desc[ $power['name'] ];
+				}
+				foreach ( $power['levels'] as &$level ) {
+					if ( isset( $old_level_desc[ $power['name'] ][ $level['power_name'] ] ) ) {
+						$level['description'] = $old_level_desc[ $power['name'] ][ $level['power_name'] ];
+					}
+				}
+				unset( $level );
+			}
+			unset( $power );
+			return $new_block;
+		}
+
+		return $new_block;
 	}
 
 	/**

@@ -17,6 +17,8 @@ export interface HtmlEditorProps {
 	rows?: number;
 	/** Shows WordPress's "Add Media" button in the toolbar when true. Off by default. */
 	mediaButtons?: boolean;
+	/** Loads TinyMCE's table plugin and toolbar button when true. Off by default - biography/notes/plot fields don't need it; a field whose sanitizer allows `<table>` should pass this. */
+	tables?: boolean;
 }
 
 /**
@@ -28,7 +30,7 @@ export interface HtmlEditorProps {
  * entirely when `readOnly` is true. Tears down the TinyMCE instance on
  * unmount.
  */
-export function HtmlEditor( { id, defaultValue, onChange, readOnly, rows = 8, mediaButtons = false }: HtmlEditorProps ) {
+export function HtmlEditor( { id, defaultValue, onChange, readOnly, rows = 8, mediaButtons = false, tables = false }: HtmlEditorProps ) {
 	const onChangeRef = useRef( onChange );
 	onChangeRef.current = onChange;
 
@@ -40,8 +42,10 @@ export function HtmlEditor( { id, defaultValue, onChange, readOnly, rows = 8, me
 		wp.editor.initialize( id, {
 			tinymce: {
 				wpautop: true,
-				plugins: 'lists link paste',
-				toolbar1: 'bold italic bullist numlist link unlink removeformat undo redo',
+				plugins: tables ? 'lists link paste table' : 'lists link paste',
+				toolbar1: tables
+					? 'bold italic bullist numlist link unlink removeformat table undo redo'
+					: 'bold italic bullist numlist link unlink removeformat undo redo',
 				menubar: false,
 				statusbar: false,
 				height: rows * 24,
@@ -60,7 +64,7 @@ export function HtmlEditor( { id, defaultValue, onChange, readOnly, rows = 8, me
 		};
 		// Mounts once per id; remount with a new id/key to load different content.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ id, readOnly, mediaButtons ] );
+	}, [ id, readOnly, mediaButtons, tables ] );
 
 	return (
 		<textarea

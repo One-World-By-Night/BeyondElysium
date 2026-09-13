@@ -193,6 +193,20 @@
 	padding: 0.4rem;
 }
 
+.be-def-editor__description-trigger {
+	white-space: nowrap;
+}
+
+.be-def-editor__description-section {
+	margin-bottom: 1rem;
+}
+
+.be-def-editor__description-section label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 0.25rem;
+}
+
 .be-def-editor__raw-toggle {
 	margin-top: 1rem;
 }

@@ -24,6 +24,54 @@ Storyteller Guide) without ever touching the shared version every other chronicl
 Under **Beyond Elysium → Creature Stacks**, each stack lists which blocks it uses and in
 what section/column they render.
 
+## Descriptions and Approval Schedules on Catalog Items
+
+Beyond its basic name/cost/approval, any catalog entry — a trait list item, a tiered power
+level, a tiered power family, a resource pool, or an identity field — can carry a
+**Description** and a finer-grained **approval schedule**, both edited from the same
+**Beyond Elysium → Schema Blocks** screen the item already lives on.
+
+### Description
+
+A **Description** button next to an item, power level, or power family opens a small editor
+with three separate rich-text sections:
+
+- **Reference** — a page or document citation.
+- **Description** — a general note or house rule.
+- **Source** — where this ruling came from (a separate idea from the item's own printed
+  sourcebook citation, which is a plain field elsewhere on the same row).
+
+Each section keeps formatting, lists, and tables; images and anything else are stripped when
+saved. This is a **site-wide** field, not per-chronicle — a chronicle can still fork the
+block to write its own note, but an edit made here (with no chronicle selected) is visible to
+every chronicle immediately. It also survives every future plugin update: a system block's
+catalog data (cost, sphere requirements, and so on) refreshes from the shipped source on
+every version bump, but a description an admin has written is carried forward untouched.
+
+### Approval by Value and Approval by Option
+
+An item's flat approval setting ("this whole item needs Storyteller approval") can be
+sharpened to depend on what a player is actually raising it to:
+
+- **Trait list items and resource pools** — an **Approval by value** button opens a small
+  table of ranges (`From` / `To` / `Approval` / `Reason`), for example Occult 1-3
+  auto-approved, 4-5 needing Storyteller review. This resolves against the value a player is
+  submitting, never a comparison against what they held before — reaching level 4 needs
+  review however the character got there. A resource pool's schedule checks its **permanent**
+  rating only; spending or regaining points in play never triggers it.
+- **Tiered power levels** (Disciplines, Gifts, Spheres, …) — each level is already its own
+  row, so it gets a plain **Approval** dropdown directly, with no range to configure.
+- **Identity fields** (Nature, Clan, Generation, …) — an **Approval by option** button lists
+  every option the field offers with its own approval dropdown, for example requiring
+  Coordinator approval to pick "Antediluvian" while every other option stays at the block's
+  default. A multiselect field checks every value a player picks and the strictest
+  requirement applies.
+
+A value or option with no schedule entry falls back to the item's own flat `approval`
+setting, which in turn falls back to the block's overall default — see the
+[Storyteller Guide's approval section](st-guide.md#4-running-the-approval-queue) for how a
+resolved approval level reaches the queue.
+
 ## Adding a Creature Type Without Code
 
 This is the point of the schema-driven design: a new creature type is configuration, every

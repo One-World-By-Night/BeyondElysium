@@ -11,6 +11,8 @@ import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import type {
 	ApprovalLevel,
+	ApprovalRange,
+	CatalogDescription,
 	CrossBlockRef,
 	IdentityField,
 	IdentityFieldDefinition,
@@ -23,9 +25,341 @@ import type {
 	TraitListDefinition,
 	TraitListItem,
 } from '../../types';
+import Modal from '../shared/Modal';
+import HtmlEditor from '../shared/HtmlEditor';
 
 const APPROVAL_LEVELS: ApprovalLevel[] = [ 'auto', 'st', 'coordinator' ];
 import './Admin.css';
+
+/** Empty check across all three CatalogDescription sections, for the trigger button's "(set)" indicator. */
+function hasAnyDescriptionSection( value?: CatalogDescription ): boolean {
+	return !! ( value?.reference || value?.description || value?.source );
+}
+
+/**
+ * A per-row trigger that opens a modal rich-text editor for one catalog
+ * item's/power's/level's `description` - a site-wide (global-admin-editable,
+ * never per-chronicle by default), sanitized-server-side note divided into
+ * three independent sections (reference, description, source) rather than
+ * one blob. A modal rather than an inline editor deliberately: a block like
+ * `vampire-rituals` or `mage-rotes` renders hundreds of rows at once, and
+ * mounting live TinyMCE instances per row would be a real performance
+ * problem - only one modal, and therefore only three TinyMCE instances at
+ * most, is ever mounted at a time.
+ */
+function DescriptionEditorButton( { label, value, onSave }: { label: string; value?: CatalogDescription; onSave: ( value: CatalogDescription ) => void } ) {
+	const [ isOpen, setIsOpen ] = useState( false );
+	const [ draft, setDraft ] = useState<CatalogDescription>( value ?? {} );
+
+	function open() {
+		setDraft( value ?? {} );
+		setIsOpen( true );
+	}
+
+	function save() {
+		onSave( draft );
+		setIsOpen( false );
+	}
+
+	return (
+		<>
+			<button type="button" className="be-def-editor__description-trigger" onClick={ open }>
+				{ hasAnyDescriptionSection( value ) ? __( 'Description (set)', 'beyond-elysium' ) : __( 'Description', 'beyond-elysium' ) }
+			</button>
+			{ isOpen && (
+				<Modal
+					title={ sprintf( __( 'Description - %s', 'beyond-elysium' ), label ) }
+					onClose={ () => setIsOpen( false ) }
+					footer={
+						<>
+							<button type="button" onClick={ () => setIsOpen( false ) }>
+								{ __( 'Cancel', 'beyond-elysium' ) }
+							</button>
+							<button type="button" onClick={ save }>
+								{ __( 'Save', 'beyond-elysium' ) }
+							</button>
+						</>
+					}
+				>
+					<p className="description">
+						{ __( 'Formatting, lists, and tables are kept in each section. Images and anything else are stripped when saved.', 'beyond-elysium' ) }
+					</p>
+
+					<div className="be-def-editor__description-section">
+						<label htmlFor="be-def-editor-description-reference">{ __( 'Reference', 'beyond-elysium' ) }</label>
+						<HtmlEditor
+							id="be-def-editor-description-reference"
+							defaultValue={ draft.reference ?? '' }
+							onChange={ ( html ) => setDraft( { ...draft, reference: html } ) }
+							tables
+							rows={ 5 }
+						/>
+					</div>
+
+					<div className="be-def-editor__description-section">
+						<label htmlFor="be-def-editor-description-body">{ __( 'Description', 'beyond-elysium' ) }</label>
+						<HtmlEditor
+							id="be-def-editor-description-body"
+							defaultValue={ draft.description ?? '' }
+							onChange={ ( html ) => setDraft( { ...draft, description: html } ) }
+							tables
+							rows={ 5 }
+						/>
+					</div>
+
+					<div className="be-def-editor__description-section">
+						<label htmlFor="be-def-editor-description-source">{ __( 'Source', 'beyond-elysium' ) }</label>
+						<HtmlEditor
+							id="be-def-editor-description-source"
+							defaultValue={ draft.source ?? '' }
+							onChange={ ( html ) => setDraft( { ...draft, source: html } ) }
+							tables
+							rows={ 5 }
+						/>
+					</div>
+				</Modal>
+			) }
+		</>
+	);
+}
+
+/**
+ * A per-row trigger that opens a modal editor for a numeric per-value
+ * approval schedule ("reaching 4 or 5 needs Storyteller approval") - used by
+ * both trait_list items (keyed on count) and resource_pool pools (keyed on
+ * the permanent value). A modal for the same row-count reason
+ * DescriptionEditorButton uses one.
+ */
+function ApprovalByValueEditorButton( { label, value, onSave }: { label: string; value?: ApprovalRange[]; onSave: ( ranges: ApprovalRange[] ) => void } ) {
+	const [ isOpen, setIsOpen ] = useState( false );
+	const [ draft, setDraft ] = useState<ApprovalRange[]>( value ?? [] );
+
+	function open() {
+		setDraft( value ?? [] );
+		setIsOpen( true );
+	}
+
+	function save() {
+		onSave( draft.filter( ( r ) => r.approval ) );
+		setIsOpen( false );
+	}
+
+	function updateRange( i: number, patch: Partial<ApprovalRange> ) {
+		setDraft( draft.map( ( r, ri ) => ( ri === i ? { ...r, ...patch } : r ) ) );
+	}
+
+	function addRange() {
+		setDraft( [ ...draft, { from: 1, to: 1, approval: 'auto' } ] );
+	}
+
+	function removeRange( i: number ) {
+		setDraft( draft.filter( ( _, ri ) => ri !== i ) );
+	}
+
+	return (
+		<>
+			<button type="button" className="be-def-editor__description-trigger" onClick={ open }>
+				{ value?.length ? sprintf( __( 'Approval by value (%d)', 'beyond-elysium' ), value.length ) : __( 'Approval by value', 'beyond-elysium' ) }
+			</button>
+			{ isOpen && (
+				<Modal
+					title={ sprintf( __( 'Approval by value - %s', 'beyond-elysium' ), label ) }
+					onClose={ () => setIsOpen( false ) }
+					footer={
+						<>
+							<button type="button" onClick={ () => setIsOpen( false ) }>
+								{ __( 'Cancel', 'beyond-elysium' ) }
+							</button>
+							<button type="button" onClick={ save }>
+								{ __( 'Save', 'beyond-elysium' ) }
+							</button>
+						</>
+					}
+				>
+					<p className="description">
+						{ __( 'Resolved against the resulting value only, whichever range covers it. A value covered by no range falls back to the flat approval above.', 'beyond-elysium' ) }
+					</p>
+					<table className="be-def-editor__table">
+						<thead>
+							<tr>
+								<th>{ __( 'From', 'beyond-elysium' ) }</th>
+								<th>{ __( 'To', 'beyond-elysium' ) }</th>
+								<th>{ __( 'Approval', 'beyond-elysium' ) }</th>
+								<th>{ __( 'Reason', 'beyond-elysium' ) }</th>
+								<th />
+							</tr>
+						</thead>
+						<tbody>
+							{ draft.map( ( range, i ) => (
+								<tr key={ i }>
+									<td>
+										<input
+											type="number"
+											aria-label={ sprintf( __( 'From, row %d', 'beyond-elysium' ), i + 1 ) }
+											value={ range.from }
+											onChange={ ( e ) => updateRange( i, { from: Number( e.target.value ) } ) }
+										/>
+									</td>
+									<td>
+										<input
+											type="number"
+											aria-label={ sprintf( __( 'To, row %d', 'beyond-elysium' ), i + 1 ) }
+											value={ range.to }
+											onChange={ ( e ) => updateRange( i, { to: Number( e.target.value ) } ) }
+										/>
+									</td>
+									<td>
+										<select
+											aria-label={ sprintf( __( 'Approval, row %d', 'beyond-elysium' ), i + 1 ) }
+											value={ range.approval }
+											onChange={ ( e ) => updateRange( i, { approval: e.target.value as ApprovalLevel } ) }
+										>
+											{ APPROVAL_LEVELS.map( ( level ) => (
+												<option key={ level } value={ level }>{ level }</option>
+											) ) }
+										</select>
+									</td>
+									<td>
+										<input
+											type="text"
+											aria-label={ sprintf( __( 'Reason, row %d', 'beyond-elysium' ), i + 1 ) }
+											value={ range.reason ?? '' }
+											onChange={ ( e ) => updateRange( i, { reason: e.target.value || undefined } ) }
+										/>
+									</td>
+									<td>
+										<button type="button" onClick={ () => removeRange( i ) }>
+											{ __( 'Remove', 'beyond-elysium' ) }
+										</button>
+									</td>
+								</tr>
+							) ) }
+						</tbody>
+					</table>
+					<button type="button" onClick={ addRange }>
+						{ __( '+ Add range', 'beyond-elysium' ) }
+					</button>
+				</Modal>
+			) }
+		</>
+	);
+}
+
+/**
+ * A per-row trigger that opens a modal editor for a per-option approval
+ * schedule on an identity_field (e.g. picking "Antediluvian" needs
+ * Coordinator approval) - one row per option the field currently declares,
+ * so the schedule can never carry an orphaned key for an option that no
+ * longer exists.
+ */
+function ApprovalByOptionEditorButton( {
+	label,
+	options,
+	value,
+	onSave,
+}: {
+	label: string;
+	options: string[];
+	value?: Record<string, { approval: ApprovalLevel; reason?: string }>;
+	onSave: ( value: Record<string, { approval: ApprovalLevel; reason?: string }> ) => void;
+} ) {
+	const [ isOpen, setIsOpen ] = useState( false );
+	const [ draft, setDraft ] = useState<Record<string, { approval: ApprovalLevel; reason?: string }>>( value ?? {} );
+
+	function open() {
+		setDraft( value ?? {} );
+		setIsOpen( true );
+	}
+
+	function save() {
+		onSave( draft );
+		setIsOpen( false );
+	}
+
+	function setOverride( option: string, approval: ApprovalLevel | '' ) {
+		const next = { ...draft };
+		if ( approval === '' ) {
+			delete next[ option ];
+		} else {
+			next[ option ] = { approval, reason: draft[ option ]?.reason };
+		}
+		setDraft( next );
+	}
+
+	function setReason( option: string, reason: string ) {
+		if ( ! draft[ option ] ) {
+			return;
+		}
+		setDraft( { ...draft, [ option ]: { ...draft[ option ], reason: reason || undefined } } );
+	}
+
+	const overrideCount = Object.keys( value ?? {} ).length;
+
+	return (
+		<>
+			<button type="button" className="be-def-editor__description-trigger" onClick={ open } disabled={ options.length === 0 }>
+				{ overrideCount ? sprintf( __( 'Approval by option (%d)', 'beyond-elysium' ), overrideCount ) : __( 'Approval by option', 'beyond-elysium' ) }
+			</button>
+			{ isOpen && (
+				<Modal
+					title={ sprintf( __( 'Approval by option - %s', 'beyond-elysium' ), label ) }
+					onClose={ () => setIsOpen( false ) }
+					footer={
+						<>
+							<button type="button" onClick={ () => setIsOpen( false ) }>
+								{ __( 'Cancel', 'beyond-elysium' ) }
+							</button>
+							<button type="button" onClick={ save }>
+								{ __( 'Save', 'beyond-elysium' ) }
+							</button>
+						</>
+					}
+				>
+					<p className="description">
+						{ __( 'An option left at "Block default" carries no override at all. A multiselect checks every value the player picks; the strictest applies.', 'beyond-elysium' ) }
+					</p>
+					<table className="be-def-editor__table">
+						<thead>
+							<tr>
+								<th>{ __( 'Option', 'beyond-elysium' ) }</th>
+								<th>{ __( 'Approval', 'beyond-elysium' ) }</th>
+								<th>{ __( 'Reason', 'beyond-elysium' ) }</th>
+							</tr>
+						</thead>
+						<tbody>
+							{ options.map( ( option ) => (
+								<tr key={ option }>
+									<td>{ option }</td>
+									<td>
+										<select
+											aria-label={ sprintf( __( 'Approval for %s', 'beyond-elysium' ), option ) }
+											value={ draft[ option ]?.approval ?? '' }
+											onChange={ ( e ) => setOverride( option, e.target.value as ApprovalLevel | '' ) }
+										>
+											<option value="">{ __( 'Block default', 'beyond-elysium' ) }</option>
+											{ APPROVAL_LEVELS.map( ( level ) => (
+												<option key={ level } value={ level }>{ level }</option>
+											) ) }
+										</select>
+									</td>
+									<td>
+										<input
+											type="text"
+											aria-label={ sprintf( __( 'Reason for %s', 'beyond-elysium' ), option ) }
+											value={ draft[ option ]?.reason ?? '' }
+											disabled={ ! draft[ option ] }
+											onChange={ ( e ) => setReason( option, e.target.value ) }
+										/>
+									</td>
+								</tr>
+							) ) }
+						</tbody>
+					</table>
+				</Modal>
+			) }
+		</>
+	);
+}
 
 export interface SchemaBlockDefinitionEditorProps {
 	sectionType: SectionType;
@@ -179,6 +513,7 @@ function TraitListEditor( { definition, onChange }: { definition: TraitListDefin
 						<th>{ __( 'Description', 'beyond-elysium' ) }</th>
 						<th>{ __( 'Approval', 'beyond-elysium' ) }</th>
 						<th>{ __( 'Reason', 'beyond-elysium' ) }</th>
+						<th>{ __( 'Approval by value', 'beyond-elysium' ) }</th>
 						<th />
 					</tr>
 				</thead>
@@ -211,11 +546,10 @@ function TraitListEditor( { definition, onChange }: { definition: TraitListDefin
 								/>
 							</td>
 							<td>
-								<input
-									type="text"
-									aria-label={ sprintf( __( 'Description for %s', 'beyond-elysium' ), item.name ) }
-									value={ item.description ?? '' }
-									onChange={ ( e ) => updateItem( i, { description: e.target.value } ) }
+								<DescriptionEditorButton
+									label={ item.name }
+									value={ item.description }
+									onSave={ ( value ) => updateItem( i, { description: value } ) }
 								/>
 							</td>
 							<td>
@@ -237,6 +571,13 @@ function TraitListEditor( { definition, onChange }: { definition: TraitListDefin
 									value={ item.reason ?? '' }
 									placeholder={ __( 'Requires Tremere Coordinator approval…', 'beyond-elysium' ) }
 									onChange={ ( e ) => updateItem( i, { reason: e.target.value || undefined } ) }
+								/>
+							</td>
+							<td>
+								<ApprovalByValueEditorButton
+									label={ item.name }
+									value={ item.approval_by_value }
+									onSave={ ( ranges ) => updateItem( i, { approval_by_value: ranges.length ? ranges : undefined } ) }
 								/>
 							</td>
 							<td>
@@ -426,6 +767,11 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 								<option key={ level } value={ level }>{ level }</option>
 							) ) }
 						</select>
+						<DescriptionEditorButton
+							label={ power.name }
+							value={ power.description }
+							onSave={ ( value ) => updatePower( pi, { description: value } ) }
+						/>
 						<button type="button" onClick={ () => removePower( pi ) }>
 							{ __( 'Remove power', 'beyond-elysium' ) }
 						</button>
@@ -487,7 +833,9 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 								<th>{ __( 'Tier', 'beyond-elysium' ) }</th>
 								<th>{ __( 'Power name', 'beyond-elysium' ) }</th>
 								<th>{ __( 'Cost', 'beyond-elysium' ) }</th>
+								<th>{ __( 'Approval', 'beyond-elysium' ) }</th>
 								<th>{ __( 'Approval reason', 'beyond-elysium' ) }</th>
+								<th>{ __( 'Description', 'beyond-elysium' ) }</th>
 								<th />
 							</tr>
 						</thead>
@@ -534,6 +882,23 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 										/>
 									</td>
 									<td>
+										<select
+											aria-label={ sprintf(
+												/* translators: 1: power family name, 2: level row position number */
+												__( 'Approval for %1$s, level %2$d', 'beyond-elysium' ),
+												power.name,
+												li + 1
+											) }
+											value={ level.approval ?? '' }
+											onChange={ ( e ) => updateLevel( pi, li, { approval: ( e.target.value || undefined ) as ApprovalLevel | undefined } ) }
+										>
+											<option value="">{ __( 'Block default', 'beyond-elysium' ) }</option>
+											{ APPROVAL_LEVELS.map( ( lvl ) => (
+												<option key={ lvl } value={ lvl }>{ lvl }</option>
+											) ) }
+										</select>
+									</td>
+									<td>
 										<input
 											type="text"
 											aria-label={ sprintf(
@@ -545,6 +910,13 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 											value={ level.reason ?? '' }
 											placeholder={ __( 'Requires Giovanni Coordinator approval…', 'beyond-elysium' ) }
 											onChange={ ( e ) => updateLevel( pi, li, { reason: e.target.value || undefined } ) }
+										/>
+									</td>
+									<td>
+										<DescriptionEditorButton
+											label={ sprintf( '%s, level %d', power.name, li + 1 ) }
+											value={ level.description }
+											onSave={ ( value ) => updateLevel( pi, li, { description: value } ) }
 										/>
 									</td>
 									<td>
@@ -647,6 +1019,7 @@ function ResourcePoolEditor( { definition, onChange }: { definition: ResourcePoo
 						<th>{ __( 'Min', 'beyond-elysium' ) }</th>
 						<th>{ __( 'Max', 'beyond-elysium' ) }</th>
 						<th>{ __( 'Step', 'beyond-elysium' ) }</th>
+						<th>{ __( 'Approval by value', 'beyond-elysium' ) }</th>
 						<th />
 					</tr>
 				</thead>
@@ -758,6 +1131,13 @@ function ResourcePoolEditor( { definition, onChange }: { definition: ResourcePoo
 								/>
 							</td>
 							<td>
+								<ApprovalByValueEditorButton
+									label={ pool.name }
+									value={ pool.approval_by_value }
+									onSave={ ( ranges ) => updatePool( i, { approval_by_value: ranges.length ? ranges : undefined } ) }
+								/>
+							</td>
+							<td>
 								<button type="button" onClick={ () => removePool( i ) }>
 									{ __( 'Remove', 'beyond-elysium' ) }
 								</button>
@@ -813,6 +1193,7 @@ function IdentityFieldEditorAdmin( { definition, onChange }: { definition: Ident
 						<th>{ __( 'Type', 'beyond-elysium' ) }</th>
 						<th>{ __( 'Required', 'beyond-elysium' ) }</th>
 						<th>{ __( 'Options (comma-separated)', 'beyond-elysium' ) }</th>
+						<th>{ __( 'Approval by option', 'beyond-elysium' ) }</th>
 						<th />
 					</tr>
 				</thead>
@@ -855,6 +1236,14 @@ function IdentityFieldEditorAdmin( { definition, onChange }: { definition: Ident
 									value={ ( field.options ?? [] ).join( ', ' ) }
 									onChange={ ( e ) => updateOptions( i, e.target.value ) }
 									disabled={ field.field_type !== 'select' && field.field_type !== 'multiselect' }
+								/>
+							</td>
+							<td>
+								<ApprovalByOptionEditorButton
+									label={ field.name }
+									options={ field.options ?? [] }
+									value={ field.approval_by_option }
+									onSave={ ( value ) => updateField( i, { approval_by_option: Object.keys( value ).length ? value : undefined } ) }
 								/>
 							</td>
 							<td>
