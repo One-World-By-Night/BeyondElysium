@@ -224,6 +224,101 @@ class Creature_Stack {
 	}
 
 	/**
+	 * Narrows every `identity_field` option list in an already-resolved
+	 * stack down to this game's `settings.enabled_factions.{stack_slug}`
+	 * restriction - "Vampire yes, but no Sabbat," beneath `enabled_stacks`'
+	 * own whole-stack toggle. A field absent from the restriction, or with
+	 * an empty list, is left fully unrestricted (every option) - the exact
+	 * "absent/empty means all" convention `all_for_game()` itself already
+	 * uses for `enabled_stacks`, so an empty array can never be mistaken for
+	 * "no options allowed."
+	 *
+	 * Creation-time only, by design: callers choose when to call this - it
+	 * is never invoked from `resolve()` itself, so viewing or editing an
+	 * already-existing character (whose held value may since have been
+	 * restricted) is never affected. Mirrors `enabled_stacks`' own binding
+	 * rule (Decision 092) applied to a second, finer-grained axis.
+	 *
+	 * @param array{stack:object,blocks:array<string,object>} $resolved
+	 * @return array{stack:object,blocks:array<string,object>}
+	 */
+	public static function narrow_for_creation( array $resolved, string $stack_slug, string $game_slug ): array {
+		if ( $game_slug === '' ) {
+			return $resolved;
+		}
+
+		$game = \BeyondElysium\Models\Game::find_by_slug( $game_slug );
+		if ( $game === null ) {
+			return $resolved;
+		}
+
+		$restrictions = (array) ( $game->settings->enabled_factions->$stack_slug ?? [] );
+		if ( $restrictions === [] ) {
+			return $resolved;
+		}
+
+		foreach ( $resolved['blocks'] as $block ) {
+			if ( $block->section_type !== 'identity_field' || empty( $block->definition->fields ) ) {
+				continue;
+			}
+			foreach ( $block->definition->fields as $field ) {
+				$allowed = $restrictions[ $field->name ] ?? null;
+				if ( ! is_array( $allowed ) || $allowed === [] || empty( $field->options ) ) {
+					continue;
+				}
+				$field->options = array_values( array_intersect( (array) $field->options, $allowed ) );
+			}
+		}
+
+		return $resolved;
+	}
+
+	/**
+	 * Finds the first catalog-item value submitted in `$sheet_data` that
+	 * this game's `enabled_factions` restriction disallows, for a
+	 * creature stack's own identity fields. The real enforcement point
+	 * (`narrow_for_creation()`'s picker narrowing is an affordance, this is
+	 * the control - the same relationship `all_for_game()`/`create_item()`'s
+	 * own `enabled_stacks` check already has). Absent restriction, or an
+	 * absent/empty per-field list, means every value is allowed.
+	 *
+	 * @param array<string,mixed>   $sheet_data Keyed by block_slug, as a character's own sheet_data is shaped.
+	 * @param array<string,object>  $blocks     Keyed by block_slug, as resolve()['blocks'] returns.
+	 * @return array{block:string,field:string,value:string}|null
+	 */
+	public static function find_disallowed_identity_value( string $stack_slug, array $sheet_data, array $blocks, string $game_slug ): ?array {
+		$game = \BeyondElysium\Models\Game::find_by_slug( $game_slug );
+		if ( $game === null ) {
+			return null;
+		}
+
+		$restrictions = (array) ( $game->settings->enabled_factions->$stack_slug ?? [] );
+		if ( $restrictions === [] ) {
+			return null;
+		}
+
+		foreach ( $sheet_data as $block_slug => $values ) {
+			$block = $blocks[ $block_slug ] ?? null;
+			if ( ! $block || $block->section_type !== 'identity_field' || ! is_array( $values ) ) {
+				continue;
+			}
+			foreach ( $values as $field_name => $value ) {
+				$allowed = $restrictions[ $field_name ] ?? null;
+				if ( ! is_array( $allowed ) || $allowed === [] ) {
+					continue;
+				}
+				foreach ( is_array( $value ) ? $value : [ $value ] as $one ) {
+					if ( $one !== '' && $one !== null && ! in_array( $one, $allowed, true ) ) {
+						return [ 'block' => (string) $block_slug, 'field' => (string) $field_name, 'value' => (string) $one ];
+					}
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Insert a new creature stack. Sanitizes the slug, JSON-encodes
 	 * stack_definition and creation_rules, and defaults game_line to 'met' when
 	 * not supplied.

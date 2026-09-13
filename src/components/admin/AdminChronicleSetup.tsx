@@ -10,6 +10,7 @@ import { __, sprintf, _n } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
 import api from '../../api/client';
 import EnabledStacksPicker from './EnabledStacksPicker';
+import FactionRestrictionsPicker from './FactionRestrictionsPicker';
 import type { Game, SetupStatus, SetupStatusItem } from '../../types';
 import './AdminChronicleSetup.css';
 
@@ -104,6 +105,26 @@ export function AdminChronicleSetup() {
 		setSavingRow( 'require_new_character_approval' );
 		api.games
 			.update( gameSlug, { settings: { require_new_character_approval: required } } )
+			.then( () => {
+				setSavingRow( null );
+				reload();
+			} )
+			.catch( () => setSavingRow( null ) );
+	}
+
+	function saveFactionRestriction( stackSlug: string, fieldName: string, allowed: string[] ) {
+		const key = `faction:${ stackSlug }:${ fieldName }`;
+		setSavingRow( key );
+		const existing = ( currentGame?.settings?.enabled_factions as Record<string, Record<string, string[]>> | undefined ) ?? {};
+		api.games
+			.update( gameSlug, {
+				settings: {
+					enabled_factions: {
+						...existing,
+						[ stackSlug ]: { ...( existing[ stackSlug ] ?? {} ), [ fieldName ]: allowed },
+					},
+				},
+			} )
 			.then( () => {
 				setSavingRow( null );
 				reload();
@@ -224,6 +245,18 @@ export function AdminChronicleSetup() {
 					</tbody>
 				</table>
 			) }
+
+			<h2>{ __( 'Sub-Faction Restrictions', 'beyond-elysium' ) }</h2>
+			<p className="description">
+				{ __( 'Beneath the whole-creature-type toggle above: narrow a real catalog field within an enabled creature type - a Vampire Sect or Clan, a Werewolf Tribe, and similar. Absent or fully-checked means every option stays open, same as the toggle above.', 'beyond-elysium' ) }
+			</p>
+			<FactionRestrictionsPicker
+				gameSlug={ gameSlug }
+				enabledStacks={ ( currentGame?.settings?.enabled_stacks as string[] | undefined ) ?? null }
+				restrictions={ ( currentGame?.settings?.enabled_factions as Record<string, Record<string, string[]>> | undefined ) ?? {} }
+				onSave={ saveFactionRestriction }
+				savingKey={ savingRow?.startsWith( 'faction:' ) ? savingRow.slice( 'faction:'.length ) : null }
+			/>
 		</div>
 	);
 }

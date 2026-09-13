@@ -148,10 +148,13 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 	}, [ isCreateMode, stackSlug ] );
 
 	// Create mode: resolve the chosen stack for rendering its block editors.
+	// forCreation narrows any restricted identity field's options (a Vampire
+	// Clan/Sect subset, say) - safe only here, never for viewing/editing an
+	// already-existing character.
 	useEffect( () => {
 		if ( isCreateMode && chosenStackSlug ) {
 			api.creatureStacks
-				.resolve( chosenStackSlug, gameSlug )
+				.resolve( chosenStackSlug, gameSlug, true )
 				.then( setCreateStack )
 				.catch( () => {
 					setCreateStack( null );

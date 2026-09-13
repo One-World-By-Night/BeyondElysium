@@ -12,14 +12,47 @@ A **game** (chronicle) is the top-level container everything else belongs to —
 plots, changes, and queries are all scoped to one game and never visible from another.
 
 1. In wp-admin, go to **Beyond Elysium → Games**.
-2. Click **Add Game**, give it a name, and save. The plugin generates a URL-safe slug from
-   the name automatically (or set one explicitly).
+2. Click **+ New Game**, give it a name, and save. The plugin generates a URL-safe slug from
+   the name automatically (or set one explicitly). You are automatically made this
+   chronicle's HST the moment it's created — no separate step needed.
 3. If this chronicle also has an `owbn_chronicle` post (via `owbn-chronicle-manager`), the
    two stay in sync automatically once both plugins are active — publishing or renaming the
    chronicle post keeps the game's name current. A slug change on the chronicle side does
    not rename the existing game row; it is a known, accepted limitation (see the plugin's
    own `Chronicle_Sync` class comment) since the upstream plugin does not allow a chronicle's
    slug to change through its own UI anyway.
+
+### Chronicle Setup: what's left to configure
+
+Right under Games is **Chronicle Setup** — a checklist for the chronicle you just created,
+not a one-time wizard. Every row's status is computed live from what actually exists: pick
+your chronicle from the dropdown and it shows exactly what still needs doing (creature
+types, a Storyteller besides you, new-character approval, front-end pages, at least one
+character) alongside informational rows about what's already using Beyond Elysium's own
+defaults (approval rules, catalog and template customisation, downtime/rumor settings).
+Nothing here is a one-time setup you complete and forget — if an AST leaves and nobody
+replaces them, that row goes back to amber on its own, on your very next visit. A row you
+can't act on (because you're an HST, not a site administrator) still shows its real status,
+greyed rather than hidden, so you know what to ask for and from whom.
+
+The one control worth calling out: **Creature types**. By default every chronicle offers
+all eleven World of Darkness creature types when creating a character. Most real OWBN
+chronicles run one or two — narrowing this list here is what actually shrinks the "Choose a
+type" dropdown players see, without touching any character your chronicle already has (a
+retired Wraith stays fully readable, exportable, and approvable even if you later drop
+Wraith from the list — narrowing this only changes what a *new* character can be, never what
+an existing one is).
+
+**Sub-Faction Restrictions**, right below the checklist, goes one level finer: within a
+creature type you've already enabled, you can narrow a real catalog field to only the values
+your chronicle runs — a Vampire Sect or Clan, a Werewolf Tribe, and similarly shaped fields on
+any other type. "Vampire yes, but no Sabbat" is exactly this. It's built the same way as
+Creature types above: absent or fully-checked means every option stays open, and narrowing it
+only ever changes what a *new* character can pick — a character who already held a now-
+restricted value (a Sabbat vampire from before you added the restriction) keeps that value and
+can still be viewed, edited, and approved normally. Every field offered here is read live from
+your chronicle's own catalog, so a custom field you've added to a schema block shows up
+automatically; nothing needs to be told about it by name.
 
 ### accessSchema and chronicle roles
 
@@ -184,6 +217,98 @@ rather than freezing a player list at creation time.
 Bulk XP award is available only on **Characters** results, for the same reason a rumor can
 only target characters: an Item, Location, or Rote result isn't a character, and the tool
 never offers an action that would only make sense as one.
+
+## 11. Signed Character Sheets
+
+Every printed sheet is a digitally signed PDF, generated on your own site rather than
+captured from the browser — a Storyteller who receives one can be sure the trait values on
+it have not been edited after the fact. This replaces the old browser print entirely; there
+is only the one Print button now.
+
+**Before anyone can print, your chronicle's host needs a signing certificate.** This is a
+one-time setup per site (not per chronicle), done by whoever has SSH/hosting access — if
+that isn't you, this section is what to hand them. If it isn't set up yet, the Print button
+tells the player so instead of failing silently, and an admin notice on every wp-admin page
+names exactly what's missing.
+
+**Generating the certificate:**
+
+```bash
+BE_KEYPASS='choose-a-real-passphrase' openssl req -x509 -newkey rsa:4096 -days 3650 \
+  -cipher aes-256-cbc -passout env:BE_KEYPASS \
+  -subj "/CN=Beyond Elysium Signing" \
+  -keyout be-signing.key -out be-signing.crt
+```
+
+Place both files **above the webroot** (a sibling of `public_html`, never inside it) with
+the key at permissions `0600`. Then add three constants to `wp-config.php`, above the line
+that says `/* That's all, stop editing! */`:
+
+```php
+define( 'BE_PDF_SIGNING_CERT', '/full/path/above/webroot/be-signing.crt' );
+define( 'BE_PDF_SIGNING_KEY',  '/full/path/above/webroot/be-signing.key' );
+define( 'BE_PDF_SIGNING_PASSPHRASE', 'the same passphrase you chose above' );
+```
+
+**Why a passphrase at all, if the site has to be able to read it anyway?** It protects
+against exactly one real, common leak mode — the key file escaping on its own (an accidental
+commit, a stray backup, a directory listing) without the passphrase escaping with it. It is
+not protection against the site itself being compromised; nothing about local file
+permissions is. If you already have an unencrypted key from an older setup, leave the
+passphrase constant undefined — Beyond Elysium treats "no passphrase set" as "this key has
+none," not as a misconfiguration.
+
+**What a signature means, and what it doesn't.** A self-signed certificate makes PDF readers
+report "signature valid, signer not trusted" rather than a plain green checkmark — that's
+expected, not a problem to fix. Trusting the certificate once (most PDF readers let you do
+this from the signature panel) makes it read as fully valid afterward. The signature proves
+the document hasn't changed since it was generated; it does not prove the sheet is still
+*current* — a character could have changed since. If your printed sheet is more than a
+session or two old, treat it as a record of that moment, not a live view.
+
+## 12. Reports, Cards, and Batch Output
+
+Beyond Elysium's Reports page (under the plugin's admin menu) generates every one of
+Grapevine's 19 remaining reports as a signed PDF, sharing the same signing setup as the
+character sheet (§11) — if signing isn't configured yet, a report can't be generated either,
+for the same reason. Character Roster, Player Roster, Sign-In Sheet, Experience History,
+Player Point History, item/location/rote Cards, Plot Report, Master Action/Rumor Report,
+Action and Rumor Report, Search Report, Statistics Report, Vampire Status Report, Merits and
+Flaws Report, Influence Report, and Character Equipment. Pick a chronicle, pick a report, and
+Generate PDF — cards print several to a page, and any `table`-shaped report can be scoped to
+a saved query's own results instead of the whole chronicle, which is what "batch output"
+means here: one PDF for a chosen set of characters or objects, not a new mechanism to learn.
+
+**Game Calendar always renders empty right now.** Beyond Elysium doesn't yet model a
+chronicle's own game-date schedule, so this one report is an honest placeholder rather than
+invented data — it will populate once that feature exists.
+
+**House Rules is the 20th report, and the only one with no Grapevine counterpart.** It lists
+every catalog item, tiered power level, or tiered power family carrying a description (see the
+[Admin Guide](admin-guide.md#descriptions-and-approval-schedules-on-catalog-items)), grouped by
+schema block, and generates as the same signed PDF every other report does. Unlike the other
+nineteen, it can *also* be dropped directly onto a front-end page — as an Elementor widget
+("House Rules" in the Beyond Elysium widget category) or the `[be_house_rules game="chronicle-slug"]`
+shortcode — for a live, always-current view players can browse without waiting for a
+Storyteller to generate anything, since `be_view_reports` already reaches every real chronicle
+role including plain players.
+
+## 13. The Point Audit
+
+Opening a character's sheet as a Storyteller shows a **Point audit** toggle beside View
+history and Transfer. It lists every trait, power, resource, and identity field the
+character holds, priced against the exact same rules the purchase flow charges — never a
+second, independently-guessed number.
+
+**This is not a bill, and it cannot be one.** A large share of what a real sheet holds has no
+cost recorded anywhere in the catalog yet — every MET attribute trait (Physical, Social,
+Mental), most identity fields, and any resource pool without a set XP rate. The audit lists
+every one of those lines too, marked with a plain reason ("catalog item has no cost", "no
+pricing rule exists for this yet") rather than silently showing 0 XP or leaving the line off
+the report. The coverage line ("Priced N of M lines") and the note beneath the total are
+there for exactly this reason — read them before treating the total as an answer. A large gap
+between the total and a character's own recorded XP is normal today, not a sign the player
+owes you anything.
 
 ## Roles Reference
 

@@ -265,10 +265,17 @@ export const creatureStacks = {
      * record for every block its sections reference. When gameSlug
      * is given, prefers that chronicle's own customized fork of a
      * block over the global one wherever it has forked it.
+     *
+     * `forCreation` additionally narrows every identity_field's `options`
+     * to this chronicle's `enabled_factions` restriction (a Vampire Clan
+     * or Sect subset, say) - pass it only for a brand-new character's own
+     * picker, never when viewing/editing an existing one, whose already-held
+     * value must always resolve in full regardless of a restriction added
+     * since.
      */
-    resolve: ( slug: string, gameSlug?: string ): Promise<ResolvedStack> =>
+    resolve: ( slug: string, gameSlug?: string, forCreation?: boolean ): Promise<ResolvedStack> =>
         apiFetch( {
-            path: `${ BASE }/creature-stacks/${ slug }?resolve=true${ gameSlug ? `&game_slug=${ encodeURIComponent( gameSlug ) }` : '' }`,
+            path: `${ BASE }/creature-stacks/${ slug }?resolve=true${ gameSlug ? `&game_slug=${ encodeURIComponent( gameSlug ) }` : '' }${ forCreation ? '&for_creation=true' : '' }`,
         } ),
 
     /**

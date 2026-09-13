@@ -391,6 +391,25 @@ class Characters_Controller extends Base_Controller {
 					400
 				);
 			}
+
+			// The real enforcement point for a sub-faction restriction ("Vampire yes,
+			// but no Sabbat") beneath the whole-stack enabled_stacks check above -
+			// Creature_Stacks_Controller's for_creation narrowing is the picker
+			// affordance, this is the control. Absent/empty restriction means every
+			// value is allowed, same convention as enabled_stacks itself.
+			$disallowed = Creature_Stack::find_disallowed_identity_value( $stack_slug, $sheet_data, $resolved['blocks'], $request['game_slug'] );
+			if ( $disallowed ) {
+				return $this->error(
+					'invalid_param',
+					sprintf(
+						/* translators: 1: identity field name, 2: the disallowed value submitted */
+						__( '%1$s "%2$s" is not allowed by this chronicle.', 'beyond-elysium' ),
+						$disallowed['field'],
+						$disallowed['value']
+					),
+					400
+				);
+			}
 		}
 
 		$data = [

@@ -119,6 +119,13 @@ class Creature_Stacks_Controller extends Base_Controller {
 			if ( ! $resolved ) {
 				return $this->error( 'not_found', __( 'Creature stack not found.', 'beyond-elysium' ), 404 );
 			}
+			// Opt-in only, and never inside resolve() itself - viewing/editing an
+			// already-existing character must always see every real option,
+			// even one this chronicle has since restricted (Decision 092's own
+			// "never a data filter" rule, applied to this second axis).
+			if ( $request->get_param( 'for_creation' ) ) {
+				$resolved = Creature_Stack::narrow_for_creation( $resolved, $slug, $game_slug );
+			}
 			return $this->success( $resolved );
 		}
 
