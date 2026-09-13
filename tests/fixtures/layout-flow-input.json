@@ -1,0 +1,26 @@
+{
+    "spanFor": [
+        { "name": "unset width (null) defaults to third", "width": null },
+        { "name": "third", "width": "third" },
+        { "name": "half", "width": "half" },
+        { "name": "full", "width": "full" }
+    ],
+    "sortedForFlow": [
+        {
+            "name": "sorts by column then order, matching real row-reading order",
+            "sections": [
+                { "block_slug": "c", "column": 1, "order": 2, "title": "C", "display": null, "collapsed": false },
+                { "block_slug": "a", "column": 1, "order": 1, "title": "A", "display": null, "collapsed": false },
+                { "block_slug": "b", "column": 2, "order": 1, "title": "B", "display": null, "collapsed": false }
+            ]
+        },
+        {
+            "name": "stable for equal column and order - original relative order survives",
+            "sections": [
+                { "block_slug": "first", "column": 1, "order": 1, "title": "First", "display": null, "collapsed": false },
+                { "block_slug": "second", "column": 1, "order": 1, "title": "Second", "display": null, "collapsed": false },
+                { "block_slug": "third-entry", "column": 1, "order": 1, "title": "Third", "display": null, "collapsed": false }
+            ]
+        }
+    ]
+}

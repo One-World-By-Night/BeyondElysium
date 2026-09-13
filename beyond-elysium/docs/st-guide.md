@@ -185,6 +185,54 @@ Bulk XP award is available only on **Characters** results, for the same reason a
 only target characters: an Item, Location, or Rote result isn't a character, and the tool
 never offers an action that would only make sense as one.
 
+## 11. Signed Character Sheets
+
+Every printed sheet is a digitally signed PDF, generated on your own site rather than
+captured from the browser — a Storyteller who receives one can be sure the trait values on
+it have not been edited after the fact. This replaces the old browser print entirely; there
+is only the one Print button now.
+
+**Before anyone can print, your chronicle's host needs a signing certificate.** This is a
+one-time setup per site (not per chronicle), done by whoever has SSH/hosting access — if
+that isn't you, this section is what to hand them. If it isn't set up yet, the Print button
+tells the player so instead of failing silently, and an admin notice on every wp-admin page
+names exactly what's missing.
+
+**Generating the certificate:**
+
+```bash
+BE_KEYPASS='choose-a-real-passphrase' openssl req -x509 -newkey rsa:4096 -days 3650 \
+  -cipher aes-256-cbc -passout env:BE_KEYPASS \
+  -subj "/CN=Beyond Elysium Signing" \
+  -keyout be-signing.key -out be-signing.crt
+```
+
+Place both files **above the webroot** (a sibling of `public_html`, never inside it) with
+the key at permissions `0600`. Then add three constants to `wp-config.php`, above the line
+that says `/* That's all, stop editing! */`:
+
+```php
+define( 'BE_PDF_SIGNING_CERT', '/full/path/above/webroot/be-signing.crt' );
+define( 'BE_PDF_SIGNING_KEY',  '/full/path/above/webroot/be-signing.key' );
+define( 'BE_PDF_SIGNING_PASSPHRASE', 'the same passphrase you chose above' );
+```
+
+**Why a passphrase at all, if the site has to be able to read it anyway?** It protects
+against exactly one real, common leak mode — the key file escaping on its own (an accidental
+commit, a stray backup, a directory listing) without the passphrase escaping with it. It is
+not protection against the site itself being compromised; nothing about local file
+permissions is. If you already have an unencrypted key from an older setup, leave the
+passphrase constant undefined — Beyond Elysium treats "no passphrase set" as "this key has
+none," not as a misconfiguration.
+
+**What a signature means, and what it doesn't.** A self-signed certificate makes PDF readers
+report "signature valid, signer not trusted" rather than a plain green checkmark — that's
+expected, not a problem to fix. Trusting the certificate once (most PDF readers let you do
+this from the signature panel) makes it read as fully valid afterward. The signature proves
+the document hasn't changed since it was generated; it does not prove the sheet is still
+*current* — a character could have changed since. If your printed sheet is more than a
+session or two old, treat it as a record of that moment, not a live view.
+
 ## Roles Reference
 
 | Role | Access |

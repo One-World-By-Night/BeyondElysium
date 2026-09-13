@@ -51,36 +51,6 @@ export interface CharacterSheetProps {
 	templateType?: string;
 }
 
-/**
- * Builds the URL for the dedicated print-canvas page, carrying the character,
- * game, and "include when printing" choices as query parameters so the freshly
- * loaded print page can reconstruct them with no React state to inherit from.
- */
-function buildPrintUrl(
-	characterId: number,
-	gameSlug: string,
-	options: { background: boolean; notes: boolean; xpHistory: boolean; fullPowerNames: boolean }
-): string {
-	const params = new URLSearchParams( {
-		character_id: String( characterId ),
-		game_slug: gameSlug,
-		print: '1',
-	} );
-	if ( options.background ) {
-		params.set( 'print_background', '1' );
-	}
-	if ( options.notes ) {
-		params.set( 'print_notes', '1' );
-	}
-	if ( options.xpHistory ) {
-		params.set( 'print_xp_history', '1' );
-	}
-	if ( options.fullPowerNames ) {
-		params.set( 'print_full_power_names', '1' );
-	}
-	return `${ window.location.origin }/character-sheet-print/?${ params.toString() }`;
-}
-
 interface RestError {
 	code?: string;
 	message?: string;
@@ -107,6 +77,9 @@ function isRestError( error: unknown ): error is RestError {
 export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_full' }: CharacterSheetProps ) {
 	const [ state, setState ] = useState<SheetState>( { status: 'loading' } );
 	const [ style, setStyle ] = useState<SheetStyle>( NO_STYLE );
+	// null while the preflight hasn't resolved yet - treated as "assume available" so the
+	// button isn't hidden for the entire loading window on every ordinary page view.
+	const [ pdfAvailability, setPdfAvailability ] = useState<{ ok: boolean; code: string } | null>( null );
 	const [ showStyleEditor, setShowStyleEditor ] = useState( false );
 	const [ showHistory, setShowHistory ] = useState( false );
 	const [ showLedger, setShowLedger ] = useState( false );
@@ -152,6 +125,18 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 					.then( ( loaded ) => {
 						if ( ! cancelled ) {
 							setStyle( loaded );
+						}
+					} )
+					.catch( () => undefined );
+
+				// Best-effort preflight: an availability-check failure leaves pdfAvailability
+				// null, which the Print button treats as "assume available" rather than hiding
+				// a working button over a transient network blip.
+				api.sheets( gameSlug )
+					.availability()
+					.then( ( loaded ) => {
+						if ( ! cancelled ) {
+							setPdfAvailability( loaded );
 						}
 					} )
 					.catch( () => undefined );
@@ -309,9 +294,10 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 						<button
 							type="button"
 							className="be-character-sheet__print"
+							disabled={ pdfAvailability !== null && ! pdfAvailability.ok }
 							onClick={ () =>
 								window.open(
-									buildPrintUrl( characterId, gameSlug, {
+									api.sheets( gameSlug ).pdfUrl( [ characterId ], {
 										background: printBackground,
 										notes: printNotes,
 										xpHistory: printXpHistory,
@@ -323,6 +309,11 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 						>
 							{ __( 'Print / Export', 'beyond-elysium' ) }
 						</button>
+						{ pdfAvailability !== null && ! pdfAvailability.ok && (
+							<span className="be-character-sheet__print-unavailable" role="status">
+								{ __( 'This chronicle has not set up sheet signing yet - ask your Storyteller.', 'beyond-elysium' ) }
+							</span>
+						) }
 						{ character.can_edit && (
 							<a
 								className="be-character-sheet__edit-link"

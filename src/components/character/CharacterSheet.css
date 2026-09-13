@@ -54,7 +54,7 @@
 	cursor: pointer;
 }
 
-.be-character-sheet__print:hover,
+.be-character-sheet__print:hover:not( :disabled ),
 .be-character-sheet__edit-link:hover,
 .be-character-sheet__style-toggle:hover,
 .be-character-sheet__history-toggle:hover,
@@ -63,9 +63,16 @@
 	color: #fff;
 }
 
+.be-character-sheet__print:disabled,
 .be-character-sheet__gex-export:disabled {
 	opacity: 0.6;
 	cursor: default;
+}
+
+.be-character-sheet__print-unavailable {
+	font-size: 0.85rem;
+	font-style: italic;
+	opacity: 0.8;
 }
 
 .be-character-sheet__export-notice {

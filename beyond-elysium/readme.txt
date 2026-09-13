@@ -73,4 +73,7 @@ Requires PHP 8.2+, WordPress 7.x and MySQL 8.4, matching OWBN production.
 
 ## License
 
-GPL-2.0-or-later
+GPL-2.0-or-later. Signed-PDF export bundles `tecnickcom/tcpdf` (LGPL-3.0-or-later), which is
+GPLv3-compatible but not GPLv2-compatible — distributing the combination means electing this
+plugin's own "or later" clause, so the combined work ships under GPLv3 terms rather than
+GPLv2 alone. Nothing else about this plugin's own license changes.

@@ -1,0 +1,106 @@
+<?php
+
+namespace BeyondElysium\Services\Display;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Resolves `CrossBlockRef` lookups against a character's resolved sheet data: reading a
+ * value from another block/field pair, building a section's title from its configured
+ * title refs, and resolving a resource pool's display name from a keyed lookup table.
+ *
+ * A TypeScript twin (src/lib/resolveCrossBlockRef.ts) drives the on-screen character
+ * sheet and must stay in exact parity with this implementation, so the signed PDF export
+ * renders the same section titles and pool names the player already sees on screen; see
+ * tests/unit/Display/CrossBlockRefParityTest.php.
+ */
+class Cross_Block_Ref {
+
+	/**
+	 * Reads the value at `$ref->block_slug`/`$ref->field` from a character's sheet data
+	 * and returns it as a string. Handles both shapes block data can take: an identity
+	 * field's plain string or number, and a resource pool's `{permanent, temporary}`
+	 * pair, from which only `permanent` is read.
+	 *
+	 * @param object $ref        Has `block_slug` and `field` string properties.
+	 * @param array  $sheet_data Character sheet data (Character::decode_row() shape),
+	 *                           keyed by block slug.
+	 * @return string|null The resolved value as a string, or null if the block/field
+	 *                      isn't present or hasn't been set yet (e.g. no Morality Path
+	 *                      chosen).
+	 */
+	public static function resolve_cross_block_value( object $ref, array $sheet_data ): ?string {
+		$block_data = $sheet_data[ $ref->block_slug ] ?? null;
+		if ( ! is_array( $block_data ) || array_is_list( $block_data ) ) {
+			return null;
+		}
+
+		$value = $block_data[ $ref->field ] ?? null;
+		if ( $value === null || $value === '' ) {
+			return null;
+		}
+
+		if ( is_array( $value ) && array_key_exists( 'permanent', $value ) ) {
+			return (string) $value['permanent'];
+		}
+
+		return (string) $value;
+	}
+
+	/**
+	 * Builds a section's displayed title. Returns `$section->title` alone when
+	 * `title_refs` is unset or any referenced value fails to resolve; otherwise returns
+	 * `title` followed by every resolved ref's value, space-joined.
+	 *
+	 * @param object $section    Has a `title` string and an optional `title_refs` array
+	 *                           of ref objects (each with `block_slug`/`field`).
+	 * @param array  $sheet_data Character sheet data, keyed by block slug.
+	 * @return string
+	 */
+	public static function resolve_section_title( object $section, array $sheet_data ): string {
+		$title      = (string) $section->title;
+		$title_refs = $section->title_refs ?? [];
+
+		if ( empty( $title_refs ) ) {
+			return $title;
+		}
+
+		$parts = [ $title ];
+		foreach ( $title_refs as $ref ) {
+			$value = self::resolve_cross_block_value( $ref, $sheet_data );
+			if ( $value === null ) {
+				return $title;
+			}
+			$parts[] = $value;
+		}
+
+		return implode( ' ', $parts );
+	}
+
+	/**
+	 * Resolves a resource pool's displayed name: returns `$pool->name` unless
+	 * `name_lookup` maps the current value of its `keyed_by` reference to an entry in
+	 * `table`. Only the displayed name changes - the pool's storage key (`$pool->name`
+	 * itself) is never affected.
+	 *
+	 * @param object $pool       Has a `name` string and an optional `name_lookup`
+	 *                           object (a `keyed_by` ref plus a string=>string `table`).
+	 * @param array  $sheet_data Character sheet data, keyed by block slug.
+	 * @return string
+	 */
+	public static function resolve_pool_name( object $pool, array $sheet_data ): string {
+		$name = (string) $pool->name;
+
+		if ( empty( $pool->name_lookup ) ) {
+			return $name;
+		}
+
+		$key = self::resolve_cross_block_value( $pool->name_lookup->keyed_by, $sheet_data );
+		if ( $key === null ) {
+			return $name;
+		}
+
+		$table = (array) $pool->name_lookup->table;
+		return (string) ( $table[ $key ] ?? $name );
+	}
+}

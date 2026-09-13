@@ -1,4 +1,6 @@
 import { describeChange } from './describeChange';
+import changeDescriptionInput from '../../tests/fixtures/change-description-input.json';
+import changeDescriptionExpected from '../../tests/fixtures/change-description-expected.json';
 
 describe( 'describeChange', () => {
 	it( 'shows a true before/after for a tiered_power level change', () => {
@@ -43,5 +45,20 @@ describe( 'describeChange', () => {
 
 	it( 'describes XP earn with a reason', () => {
 		expect( describeChange( 'xp_earn', { amount: 3, reason: 'Game attendance' } ) ).toBe( '+3 XP (Game attendance)' );
+	} );
+} );
+
+/**
+ * Same fixture, same expected output as
+ * `tests/unit/Display/ChangeDescriptionParityTest.php` - this is the TypeScript
+ * half of proving the two renderers agree.
+ */
+describe( 'describeChange — parity with Change_Description.php', () => {
+	changeDescriptionInput.forEach( ( testCase, i ) => {
+		it( `matches the shared fixture: ${ testCase.name }`, () => {
+			expect(
+				describeChange( testCase.change_type as Parameters<typeof describeChange>[ 0 ], testCase.change_data )
+			).toBe( changeDescriptionExpected[ i ].output );
+		} );
 	} );
 } );

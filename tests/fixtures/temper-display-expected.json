@@ -1,0 +1,50 @@
+[
+    {
+        "name": "a full pool with no temp/perm split renders filled dots",
+        "output": "ooo"
+    },
+    {
+        "name": "zero pool renders empty",
+        "output": ""
+    },
+    {
+        "name": "temporary below permanent renders spent glyphs for the difference",
+        "output": "ooøøø"
+    },
+    {
+        "name": "temporary above permanent renders overflow glyphs, not clamped",
+        "output": "oooõõ"
+    },
+    {
+        "name": "temporary equal to permanent renders no overflow or spent glyphs",
+        "output": "oooo"
+    },
+    {
+        "name": "exactly 10 glyphs does not trigger compression",
+        "output": "oooooooooo"
+    },
+    {
+        "name": "exactly 11 filled glyphs collapses the leftmost run of five, leaving 6 remaining plus the capital",
+        "output": "Ooooooo"
+    },
+    {
+        "name": "a 15-point pool (e.g. Blood) collapses twice down to two capitals plus the remainder",
+        "output": "OOooooo"
+    },
+    {
+        "name": "a large uniform pool stops compressing once at or under 10 characters",
+        "output": "Oooooooooo"
+    },
+    {
+        "name": "spent runs collapse from the right, leaving the uncollapsed remainder on the left",
+        "output": "øøøøøøøØ"
+    },
+    {
+        "name": "overflow runs collapse from the right, leaving the uncollapsed remainder on the left",
+        "output": "õõõõõõõÕ"
+    },
+    {
+        "name": "spent is collapsed before filled when both are present",
+        "output": "ooooooøØ"
+    }
+]

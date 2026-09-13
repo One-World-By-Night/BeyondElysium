@@ -1,0 +1,133 @@
+[
+	{
+		"name": "simple: name only, note suppressed",
+		"trait": { "name": "Celerity", "total": 3, "note": "Fast" },
+		"mode": "simple"
+	},
+	{
+		"name": "multiplier: name, x{total}, then note",
+		"trait": { "name": "Celerity", "total": 3, "note": "Fast" },
+		"mode": "multiplier"
+	},
+	{
+		"name": "multiplier_dot: name, x{total}, dots, note",
+		"trait": { "name": "Celerity", "total": 3, "note": "Fast" },
+		"mode": "multiplier_dot"
+	},
+	{
+		"name": "dot: name, dots, note",
+		"trait": { "name": "Celerity", "total": 3, "note": "Fast" },
+		"mode": "dot"
+	},
+	{
+		"name": "cost: name ({total}, {note})",
+		"trait": { "name": "Celerity", "total": 3, "note": "Fast" },
+		"mode": "cost"
+	},
+	{
+		"name": "note_only: name ({note})",
+		"trait": { "name": "Celerity", "total": 3, "note": "Fast" },
+		"mode": "note_only"
+	},
+	{
+		"name": "cost_only: name ({total}), note excluded",
+		"trait": { "name": "Celerity", "total": 3, "note": "Fast" },
+		"mode": "cost_only"
+	},
+	{
+		"name": "dot_separate: name+note repeated total times, dot-joined",
+		"trait": { "name": "Celerity", "total": 3, "note": "Fast" },
+		"mode": "dot_separate"
+	},
+	{
+		"name": "simple_dots: dots only, name dropped",
+		"trait": { "name": "Celerity", "total": 3, "note": "Fast" },
+		"mode": "simple_dots"
+	},
+	{
+		"name": "simple_number: total only",
+		"trait": { "name": "Celerity", "total": 3, "note": "Fast" },
+		"mode": "simple_number"
+	},
+	{
+		"name": "simple_note: note only",
+		"trait": { "name": "Celerity", "total": 3, "note": "Fast" },
+		"mode": "simple_note"
+	},
+	{
+		"name": "multiplier hides x1",
+		"trait": { "name": "Fortitude", "total": 1 },
+		"mode": "multiplier"
+	},
+	{
+		"name": "multiplier_dot does NOT hide x1",
+		"trait": { "name": "Fortitude", "total": 1 },
+		"mode": "multiplier_dot"
+	},
+	{
+		"name": "total 0 renders no dots but the mode still runs — dot",
+		"trait": { "name": "Flaw", "total": 0 },
+		"mode": "dot"
+	},
+	{
+		"name": "total 0 renders no dots but the mode still runs — simple_dots",
+		"trait": { "name": "Flaw", "total": 0 },
+		"mode": "simple_dots"
+	},
+	{
+		"name": "total 0 renders no dots but the mode still runs — simple_number",
+		"trait": { "name": "Flaw", "total": 0 },
+		"mode": "simple_number"
+	},
+	{
+		"name": "dot_separate emits the name once for total 0",
+		"trait": { "name": "X", "total": 0 },
+		"mode": "dot_separate"
+	},
+	{
+		"name": "dot_separate emits the name once for total 1",
+		"trait": { "name": "X", "total": 1 },
+		"mode": "dot_separate"
+	},
+	{
+		"name": "dot_separate emits X•X for total 2",
+		"trait": { "name": "X", "total": 2 },
+		"mode": "dot_separate"
+	},
+	{
+		"name": "non-numeric total parses via leading-integer Val() semantics — 3 (borrowed)",
+		"trait": { "name": "X", "total": "3 (borrowed)" },
+		"mode": "simple_number"
+	},
+	{
+		"name": "non-numeric total parses via leading-integer Val() semantics — borrowed defaults to 0",
+		"trait": { "name": "X", "total": "borrowed" },
+		"mode": "simple_number"
+	},
+	{
+		"name": "empty note behaves like a missing note — dot",
+		"trait": { "name": "X", "total": 3, "note": "" },
+		"mode": "dot"
+	},
+	{
+		"name": "empty note behaves like a missing note — note_only",
+		"trait": { "name": "X", "total": 3, "note": "" },
+		"mode": "note_only"
+	},
+	{
+		"name": "missing note behaves the same as empty note — cost",
+		"trait": { "name": "X", "total": 3 },
+		"mode": "cost"
+	},
+	{
+		"name": "missing note behaves the same as empty note — dot_separate",
+		"trait": { "name": "X", "total": 3 },
+		"mode": "dot_separate"
+	},
+	{
+		"name": "a custom dot glyph is honored",
+		"trait": { "name": "Celerity", "total": 3, "note": "Fast" },
+		"mode": "dot",
+		"dot": "o"
+	}
+]

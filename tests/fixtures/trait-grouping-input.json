@@ -1,0 +1,107 @@
+{
+    "toTraits": [
+        { "case": "count_present", "data": [ { "name": "Occult", "count": 3 } ] },
+        { "case": "total_present", "data": [ { "name": "Occult", "total": 5 } ] },
+        { "case": "both_present_total_wins", "data": [ { "name": "Occult", "total": 5, "count": 3 } ] },
+        { "case": "note_preserved", "data": [ { "name": "Occult", "count": 2, "note": "Specializes in wards" } ] },
+        { "case": "specialization_folded_into_note", "data": [ { "name": "Melee", "count": 2, "specialization": "Sword" } ] },
+        { "case": "specialization_and_note_combined", "data": [ { "name": "Melee", "count": 2, "specialization": "Sword", "note": "borrowed" } ] },
+        { "case": "neither_key_present", "data": [ { "name": "Iron Will" } ] },
+        { "case": "empty_array", "data": [] },
+        { "case": "null_input", "data": null },
+        { "case": "object_input_not_array", "data": {} }
+    ],
+    "groupTraitsByField": [
+        {
+            "case": "no_group_field_returns_null",
+            "definition": {
+                "items": [
+                    { "name": "Alertness", "category": "Talents" },
+                    { "name": "Occult", "category": "Knowledges" }
+                ]
+            },
+            "data": [ { "name": "Alertness" }, { "name": "Occult" } ]
+        },
+        {
+            "case": "groups_and_subgroups_sorted_alphabetically",
+            "definition": {
+                "items": [
+                    { "name": "Potence", "group": "Physical", "subgroup": "Common" },
+                    { "name": "Celerity", "group": "Physical", "subgroup": "Common" },
+                    { "name": "Auspex", "group": "Mental", "subgroup": "Rare" },
+                    { "name": "Obfuscate", "group": "Mental" }
+                ]
+            },
+            "data": [
+                { "name": "Potence" },
+                { "name": "Celerity" },
+                { "name": "Auspex" },
+                { "name": "Obfuscate" }
+            ]
+        },
+        {
+            "case": "unmatched_row_falls_back_to_other",
+            "definition": {
+                "items": [
+                    { "name": "Potence", "group": "Physical" }
+                ]
+            },
+            "data": [
+                { "name": "Potence" },
+                { "name": "Custom Homebrew Trait" }
+            ]
+        }
+    ],
+    "resolveDisplay": [
+        { "case": "section_override_wins", "sectionDisplay": "dot", "blockDisplay": "simple" },
+        { "case": "falls_back_to_block_default", "sectionDisplay": null, "blockDisplay": "cost" },
+        { "case": "falls_back_to_simple_when_neither_set", "sectionDisplay": null, "blockDisplay": null }
+    ],
+    "groupByCategory": [
+        {
+            "case": "no_categories_defined_returns_flat",
+            "definition": { "items": [ { "name": "Occult" } ] },
+            "data": [ { "name": "Occult", "total": 2 } ]
+        },
+        {
+            "case": "categorized_with_other_bucket_trailing",
+            "definition": {
+                "items": [
+                    { "name": "Alertness", "category": "Talents" },
+                    { "name": "Occult", "category": "Knowledges" }
+                ],
+                "categories": [ "Talents", "Knowledges" ]
+            },
+            "data": [
+                { "name": "Occult", "total": 2 },
+                { "name": "Alertness", "total": 1 },
+                { "name": "Homebrew Skill", "total": 3 }
+            ]
+        }
+    ],
+    "sortIfAlphabetized": [
+        {
+            "case": "alphabetizes_when_true",
+            "alphabetize": true,
+            "traits": [
+                { "name": "Occult", "total": 2 },
+                { "name": "Alertness", "total": 1 }
+            ]
+        },
+        {
+            "case": "preserves_order_when_false",
+            "alphabetize": false,
+            "traits": [
+                { "name": "Occult", "total": 2 },
+                { "name": "Alertness", "total": 1 }
+            ]
+        },
+        {
+            "case": "preserves_order_when_absent",
+            "traits": [
+                { "name": "Occult", "total": 2 },
+                { "name": "Alertness", "total": 1 }
+            ]
+        }
+    ]
+}

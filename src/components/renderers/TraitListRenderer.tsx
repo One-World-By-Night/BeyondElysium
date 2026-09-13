@@ -23,7 +23,7 @@ interface TraitGroup {
 }
 
 /** Resolves the display mode: the template section's override, then the block's own default, then 'simple'. */
-function resolveDisplay( sectionDisplay: DisplayType | null, blockDisplay: DisplayType | undefined ): DisplayType {
+export function resolveDisplay( sectionDisplay: DisplayType | null, blockDisplay: DisplayType | undefined ): DisplayType {
 	return sectionDisplay ?? blockDisplay ?? 'simple';
 }
 
@@ -33,7 +33,7 @@ function resolveDisplay( sectionDisplay: DisplayType | null, blockDisplay: Displ
  * unrecognized-category traits land in a trailing "Other" bucket rather than vanishing.
  * A block with no `categories` renders flat.
  */
-function groupByCategory( data: Trait[], definition: TraitListDefinition ): TraitGroup[] {
+export function groupByCategory( data: Trait[], definition: TraitListDefinition ): TraitGroup[] {
 	if ( ! definition.categories || definition.categories.length === 0 ) {
 		return [ { label: null, traits: data } ];
 	}
@@ -64,7 +64,7 @@ function groupByCategory( data: Trait[], definition: TraitListDefinition ): Trai
 	return groups;
 }
 
-function sortIfAlphabetized( traits: Trait[], alphabetize?: boolean ): Trait[] {
+export function sortIfAlphabetized( traits: Trait[], alphabetize?: boolean ): Trait[] {
 	if ( ! alphabetize ) {
 		return traits;
 	}

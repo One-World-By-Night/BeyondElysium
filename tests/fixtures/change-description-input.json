@@ -1,0 +1,20 @@
+[
+  { "name": "true before/after for a tiered_power level change", "change_type": "modify_trait", "change_data": { "trait": { "name": "Celerity", "level": 4 }, "previous": { "name": "Celerity", "level": 2 } } },
+  { "name": "degrades to only the new value when previous is absent", "change_type": "modify_trait", "change_data": { "trait": { "name": "Celerity", "level": 4 } } },
+  { "name": "true before/after for a trait_list count change", "change_type": "modify_trait", "change_data": { "trait": { "name": "Boon", "count": 3 }, "previous": { "name": "Boon", "count": 1 } } },
+  { "name": "modify_trait with neither level nor count", "change_type": "modify_trait", "change_data": { "trait": { "name": "Something" } } },
+  { "name": "adding a new tiered power", "change_type": "add_trait", "change_data": { "trait": { "name": "Fortitude", "level": 1 } } },
+  { "name": "adding a trait_list item with a specialization", "change_type": "add_trait", "change_data": { "trait": { "name": "Contacts", "count": 1, "specialization": "Police" } } },
+  { "name": "adding a trait_list item with count > 1 and no specialization", "change_type": "add_trait", "change_data": { "trait": { "name": "Occult", "count": 3 } } },
+  { "name": "removing a trait", "change_type": "remove_trait", "change_data": { "trait": { "name": "Potence" } } },
+  { "name": "a resource pool change", "change_type": "modify_resource", "change_data": { "values": { "Blood": { "permanent": 10, "temporary": 8 } } } },
+  { "name": "modify_resource with no values", "change_type": "modify_resource", "change_data": {} },
+  { "name": "an identity field change", "change_type": "modify_identity", "change_data": { "fields": { "Clan": "Toreador" } } },
+  { "name": "modify_identity with no fields", "change_type": "modify_identity", "change_data": {} },
+  { "name": "XP earn with a reason", "change_type": "xp_earn", "change_data": { "amount": 3, "reason": "Game attendance" } },
+  { "name": "XP earn with no reason", "change_type": "xp_earn", "change_data": { "amount": 5 } },
+  { "name": "XP adjust with a reason", "change_type": "xp_adjust", "change_data": { "amount": -2, "reason": "ST correction" } },
+  { "name": "an imported note with a reason", "change_type": "import_note", "change_data": { "reason": "Migrated from legacy sheet" } },
+  { "name": "an imported note with no reason", "change_type": "import_note", "change_data": {} },
+  { "name": "an unrecognized change type", "change_type": "something_else", "change_data": {} }
+]

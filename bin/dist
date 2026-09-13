@@ -57,6 +57,31 @@ rm -rf dist
 mkdir -p "$OUT"
 rsync -a --exclude-from=.distignore beyond-elysium/ "$OUT/"
 
+# Signed-PDF (SP-2): TCPDF's fonts/ ships 165 files, ~24 MB, for font families this plugin
+# never selects. Base-14 (helvetica/times/courier/symbol/zapfdingbats - no embedded font
+# program, every PDF reader already has them) plus DejaVu Sans (the one Unicode-capable
+# family Pdf_Writer actually uses, so non-Latin-1 chronicle/player/trait names print
+# correctly instead of mojibake) is everything real output needs.
+TCPDF_FONTS="$OUT/vendor/tecnickcom/tcpdf/fonts"
+if [ -d "$TCPDF_FONTS" ]; then
+    find "$TCPDF_FONTS" -maxdepth 1 -type f ! \( \
+        -name 'helvetica*.php' -o \
+        -name 'times*.php' -o \
+        -name 'courier*.php' -o \
+        -name 'symbol.php' -o \
+        -name 'zapfdingbats.php' -o \
+        -name 'dejavusans.*' -o \
+        -name 'dejavusansb.*' -o \
+        -name 'dejavusansi.*' -o \
+        -name 'dejavusansbi.*' \
+    \) -delete
+    # TCPDF also ships per-family source/license subdirectories alongside fonts/ itself
+    # (ae_fonts_2.0, dejavu-fonts-ttf-2.3x, freefont-*) - the file-level prune above never
+    # touches these since find -type f skips directories, and none of the kept families
+    # loads anything from them at runtime (TCPDF reads only the flat .php/.z/.ctg.z files).
+    find "$TCPDF_FONTS" -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} +
+fi
+
 # These must be present or the plugin fatals on activation.
 for required in "vendor/autoload.php" "build/index.js" "beyond-elysium.php" "includes/Core/Plugin.php"; do
     if [ ! -f "$OUT/$required" ]; then
@@ -64,6 +89,26 @@ for required in "vendor/autoload.php" "build/index.js" "beyond-elysium.php" "inc
         exit 1
     fi
 done
+
+# The font prune above must keep exactly these and nothing else - present-and-absent,
+# matching this script's own existing pattern, not just "the directory got smaller."
+for required_font in helvetica helveticab helveticabi helveticai times timesb timesbi timesi \
+    courier courierb courierbi courieri symbol zapfdingbats dejavusans dejavusansb dejavusansi dejavusansbi; do
+    if [ ! -f "$TCPDF_FONTS/${required_font}.php" ]; then
+        echo "MISSING required TCPDF font: ${required_font}.php" >&2
+        exit 1
+    fi
+done
+for forbidden_font in dejavusanscondensed dejavusansmono dejavusansextralight; do
+    if [ -f "$TCPDF_FONTS/${forbidden_font}.php" ]; then
+        echo "LEAKED unused TCPDF font family into artifact: ${forbidden_font}" >&2
+        exit 1
+    fi
+done
+if [ -n "$(find "$TCPDF_FONTS" -mindepth 1 -maxdepth 1 -type d)" ]; then
+    echo "LEAKED TCPDF font source/license subdirectory into artifact" >&2
+    exit 1
+fi
 
 # Not required for the plugin to run (a missing .pot just means no translator has anything
 # to work from yet - same graceful English-fallback as a missing .mo, Step 11e) - but its

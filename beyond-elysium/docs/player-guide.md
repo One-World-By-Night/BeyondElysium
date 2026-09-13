@@ -83,3 +83,23 @@ against it yet; once your Storyteller adjudicates it, it's locked.
 If your chronicle has granted you sheet customization, you can set your own font, colors,
 background image, and section graphics from the character editor — this is purely visual
 and never changes what your character can do.
+
+## 8. Printing Your Sheet
+
+**Print / Export** on your character's page generates a signed PDF rather than printing the
+page directly — it's the one way to get a copy of your sheet, whether you're keeping a
+record, handing a printout to a visiting chronicle's Storyteller, or bringing a copy to a
+game with spotty wifi. Three checkboxes control what's included: your background, your
+notes, and your full XP history; a fourth switches tiered powers (Disciplines, Gifts, and
+the like) from a single number to every named rung you've earned.
+
+Opening the PDF, you may see your reader report something like "signature valid, signer not
+trusted" rather than a plain green checkmark. That's expected, not a problem — it means the
+PDF genuinely hasn't been altered since your chronicle generated it, verified against a
+certificate that reader just hasn't been told to trust yet, the same way a new website's
+certificate looks different the very first time. It does **not** mean anything is wrong with
+your sheet.
+
+If Print is disabled or tells you the chronicle hasn't set up sheet signing yet, that's a
+one-time setup step your Storyteller's host needs to complete — nothing you did, and nothing
+you can fix from your own account.

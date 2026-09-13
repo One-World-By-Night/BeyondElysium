@@ -1,0 +1,101 @@
+{
+    "definition": {
+        "powers": [
+            {
+                "name": "Celerity",
+                "levels": [
+                    { "level": 1, "tier": "basic", "power_name": "Alacrity" },
+                    { "level": 2, "tier": "basic", "power_name": "Rapid Reflexes" },
+                    { "level": 3, "tier": "intermediate", "power_name": "Fleetness" },
+                    { "level": 4, "tier": "intermediate", "power_name": "Blurred Motion" },
+                    { "level": 5, "tier": "advanced", "power_name": "Lightning Reflexes" },
+                    { "level": null, "tier": "elder", "power_name": "Blink" },
+                    { "level": null, "tier": "elder", "power_name": "Unerring Aim" }
+                ]
+            }
+        ]
+    },
+    "cases": [
+        {
+            "name": "a genuine catalog-matched Elder+ pick shows its real catalog tier",
+            "method": "elder_label",
+            "held": { "name": "Celerity", "power_name": "Blink" }
+        },
+        {
+            "name": "a keep_custom power with a real derived level shows that level, not \"(elder)\"",
+            "method": "elder_label",
+            "held": { "name": "Dur-An-Ki", "power_name": "Awakening of the Steel", "level": 5 }
+        },
+        {
+            "name": "a keep_custom power with no derivable level falls back to its own stored tier text, not the hardcoded default",
+            "method": "elder_label",
+            "held": { "name": "Dur-An-Ki", "power_name": "Something Unrecognizable", "tier": "unmatched, imported as-is" }
+        },
+        {
+            "name": "a keep_custom power with neither a level nor a stored tier still falls back to \"elder\", never undefined",
+            "method": "elder_label",
+            "held": { "name": "Dur-An-Ki", "power_name": "Something Unrecognizable" }
+        },
+        {
+            "name": "numericLabel: an ordinary numbered rung with no power_name just shows the level",
+            "method": "numeric_label",
+            "held": { "name": "Celerity", "level": 3 }
+        },
+        {
+            "name": "numericLabel: a power_name entry defers to elderLabel even in numeric mode",
+            "method": "numeric_label",
+            "held": { "name": "Dur-An-Ki", "power_name": "Awakening of the Steel", "level": 5 }
+        },
+        {
+            "name": "namedLabel: a power_name entry defers to elderLabel regardless of the level argument",
+            "method": "named_label",
+            "held": { "name": "Dur-An-Ki", "power_name": "Awakening of the Steel", "level": 5 },
+            "level": 5
+        },
+        {
+            "name": "namedLabel: an ordinary numbered rung looks up the real power_name for that level",
+            "method": "named_label",
+            "held": { "name": "Celerity", "level": 1 },
+            "level": 1
+        },
+        {
+            "name": "prefixes \"Tradition: \" onto a rendered label when the held pick carries one",
+            "method": "with_tradition",
+            "label_method": "numeric_label",
+            "held": { "name": "Path of Blood", "level": 3, "tradition": "Necromancy" }
+        },
+        {
+            "name": "renders unchanged when the held pick carries no tradition - every ordinary discipline",
+            "method": "with_tradition",
+            "label_method": "numeric_label",
+            "held": { "name": "Celerity", "level": 3 }
+        },
+        {
+            "name": "named mode shows the specific level name, still tradition-prefixed - a player sees the flavor name, not just the bare path",
+            "method": "with_tradition",
+            "label_method": "named_label",
+            "level": 1,
+            "held": { "name": "Celerity", "level": 1, "tradition": "Sadhana" }
+        },
+        {
+            "name": "lists every named rung from 1 up to the held level for a plain numbered holding",
+            "method": "named_mode_rows",
+            "held": { "name": "Celerity", "level": 3 }
+        },
+        {
+            "name": "lists nothing for a held level of 0",
+            "method": "named_mode_rows",
+            "held": { "name": "Celerity", "level": 0 }
+        },
+        {
+            "name": "lists only the one specific power for an Elder-and-above pick - there is no stack beneath it",
+            "method": "named_mode_rows",
+            "held": { "name": "Celerity", "power_name": "Blink" }
+        },
+        {
+            "name": "a non-sequential block still expands the full stack, not just the current rung",
+            "method": "named_mode_rows",
+            "held": { "name": "Celerity", "level": 5 }
+        }
+    ]
+}

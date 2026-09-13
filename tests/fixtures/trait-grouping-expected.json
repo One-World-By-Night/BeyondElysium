@@ -1,0 +1,50 @@
+{
+    "toTraits": [
+        [ { "name": "Occult", "total": 3, "note": null } ],
+        [ { "name": "Occult", "total": 5, "note": null } ],
+        [ { "name": "Occult", "total": 5, "note": null } ],
+        [ { "name": "Occult", "total": 2, "note": "Specializes in wards" } ],
+        [ { "name": "Melee", "total": 2, "note": "Sword" } ],
+        [ { "name": "Melee", "total": 2, "note": "Sword, borrowed" } ],
+        [ { "name": "Iron Will", "total": null, "note": null } ],
+        [],
+        [],
+        []
+    ],
+    "groupTraitsByField": [
+        null,
+        [
+            {
+                "group": "Mental",
+                "subgroups": [
+                    { "subgroup": null, "items": [ { "name": "Obfuscate" } ] },
+                    { "subgroup": "Rare", "items": [ { "name": "Auspex" } ] }
+                ]
+            },
+            {
+                "group": "Physical",
+                "subgroups": [
+                    { "subgroup": "Common", "items": [ { "name": "Potence" }, { "name": "Celerity" } ] }
+                ]
+            }
+        ],
+        [
+            { "group": "Other", "subgroups": [ { "subgroup": null, "items": [ { "name": "Custom Homebrew Trait" } ] } ] },
+            { "group": "Physical", "subgroups": [ { "subgroup": null, "items": [ { "name": "Potence" } ] } ] }
+        ]
+    ],
+    "resolveDisplay": [ "dot", "cost", "simple" ],
+    "groupByCategory": [
+        [ { "label": null, "traits": [ { "name": "Occult", "total": 2 } ] } ],
+        [
+            { "label": "Talents", "traits": [ { "name": "Alertness", "total": 1 } ] },
+            { "label": "Knowledges", "traits": [ { "name": "Occult", "total": 2 } ] },
+            { "label": "Other", "traits": [ { "name": "Homebrew Skill", "total": 3 } ] }
+        ]
+    ],
+    "sortIfAlphabetized": [
+        [ { "name": "Alertness", "total": 1 }, { "name": "Occult", "total": 2 } ],
+        [ { "name": "Occult", "total": 2 }, { "name": "Alertness", "total": 1 } ],
+        [ { "name": "Occult", "total": 2 }, { "name": "Alertness", "total": 1 } ]
+    ]
+}

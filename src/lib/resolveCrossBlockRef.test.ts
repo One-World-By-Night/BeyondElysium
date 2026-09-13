@@ -1,5 +1,7 @@
 import { resolveCrossBlockValue, resolveSectionTitle, resolvePoolName } from './resolveCrossBlockRef';
-import type { TemplateLayoutSection, ResourcePool } from '../types';
+import type { TemplateLayoutSection, ResourcePool, CrossBlockRef } from '../types';
+import input from '../../tests/fixtures/cross-block-ref-input.json';
+import expected from '../../tests/fixtures/cross-block-ref-expected.json';
 
 function section( overrides: Partial<TemplateLayoutSection> ): TemplateLayoutSection {
 	return {
@@ -126,5 +128,42 @@ describe( 'resolvePoolName', () => {
 		resolvePoolName( withLookup, sheetData );
 
 		expect( withLookup.name ).toBe( 'Conscience' );
+	} );
+} );
+
+/**
+ * Same fixture, same expected output as
+ * `tests/unit/Display/CrossBlockRefParityTest.php` - this is the TypeScript half of
+ * proving the two implementations agree.
+ */
+describe( 'resolveCrossBlockRef — parity with Cross_Block_Ref.php', () => {
+	it( 'resolveCrossBlockValue matches the shared fixture exactly', () => {
+		input.resolveCrossBlockValue.forEach( ( testCase, i ) => {
+			const actual = resolveCrossBlockValue(
+				testCase.ref as CrossBlockRef,
+				testCase.sheetData as Record<string, unknown>
+			);
+			expect( actual ).toBe( expected.resolveCrossBlockValue[ i ] );
+		} );
+	} );
+
+	it( 'resolveSectionTitle matches the shared fixture exactly', () => {
+		input.resolveSectionTitle.forEach( ( testCase, i ) => {
+			const actual = resolveSectionTitle(
+				testCase.section as unknown as TemplateLayoutSection,
+				testCase.sheetData as Record<string, unknown>
+			);
+			expect( actual ).toBe( expected.resolveSectionTitle[ i ] );
+		} );
+	} );
+
+	it( 'resolvePoolName matches the shared fixture exactly', () => {
+		input.resolvePoolName.forEach( ( testCase, i ) => {
+			const actual = resolvePoolName(
+				testCase.pool as unknown as ResourcePool,
+				testCase.sheetData as Record<string, unknown>
+			);
+			expect( actual ).toBe( expected.resolvePoolName[ i ] );
+		} );
 	} );
 } );

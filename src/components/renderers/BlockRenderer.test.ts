@@ -1,4 +1,6 @@
 import { toTraits } from './BlockRenderer';
+import fixtureInput from '../../../tests/fixtures/trait-grouping-input.json';
+import fixtureExpected from '../../../tests/fixtures/trait-grouping-expected.json';
 
 describe( 'toTraits (D25)', () => {
 	it( 'maps a stored entry\'s "count" field onto Trait.total', () => {
@@ -48,6 +50,32 @@ describe( 'toTraits (D25)', () => {
 			expect( toTraits( [ { name: 'Occult', count: 2, note: 'wards' } ] ) ).toEqual( [
 				{ name: 'Occult', total: 2, note: 'wards' },
 			] );
+		} );
+	} );
+} );
+
+/**
+ * Same fixture, same expected output as `tests/unit/Display/TraitGroupingParityTest.php`'s
+ * `test_to_traits_reads_count_falling_back_to_total()` - the highest-value single
+ * assertion in the signed-PDF porting effort (signed-pdf-design.md Section 2d, SP-3).
+ * This is the TypeScript half of proving `toTraits()` and `Trait_Grouping::to_traits()`
+ * agree, on top of the hand-written cases above.
+ */
+describe( 'toTraits — parity with Trait_Grouping::to_traits() (D25)', () => {
+	fixtureInput.toTraits.forEach( ( testCase, i ) => {
+		it( `matches the shared fixture: ${ testCase.case }`, () => {
+			const result = toTraits( testCase.data );
+
+			// `toTraits()` genuinely returns `undefined` for a missing total/note (asserted
+			// above); a JSON fixture can only represent that as `null`. Normalizing here
+			// bridges that JS-only distinction without changing `toTraits()` itself.
+			const normalized = result.map( ( trait ) => ( {
+				name: trait.name,
+				total: trait.total ?? null,
+				note: trait.note ?? null,
+			} ) );
+
+			expect( normalized ).toEqual( fixtureExpected.toTraits[ i ] );
 		} );
 	} );
 } );

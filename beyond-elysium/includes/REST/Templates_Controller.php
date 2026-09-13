@@ -3,9 +3,9 @@
 namespace BeyondElysium\REST;
 
 use BeyondElysium\Models\Game;
-use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\Template;
 use BeyondElysium\Services\Layout_Generator;
+use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -180,34 +180,6 @@ class Templates_Controller extends Base_Controller {
 	// Game scope
 
 	/**
-	 * Removes every section backed by a Storyteller-only block from a
-	 * resolved layout, for a viewer without `be_manage_characters`. Returns
-	 * the layout untouched for a manager, and for any layout with no
-	 * sections array to filter.
-	 *
-	 * @param array $layout
-	 * @return array
-	 */
-	private static function strip_storyteller_only_sections( array $layout ): array {
-		if ( current_user_can( 'be_manage_characters' ) || ! isset( $layout['sections'] ) || ! is_array( $layout['sections'] ) ) {
-			return $layout;
-		}
-
-		$hidden = Schema_Block::storyteller_only_slugs();
-		if ( empty( $hidden ) ) {
-			return $layout;
-		}
-
-		// array_values keeps sections a JSON array rather than a keyed object.
-		$layout['sections'] = array_values( array_filter(
-			$layout['sections'],
-			static fn( $section ) => ! in_array( $section['block_slug'] ?? '', $hidden, true )
-		) );
-
-		return $layout;
-	}
-
-	/**
 	 * Resolves the effective template for a creature stack and template
 	 * type: a game-specific override when one exists, otherwise the
 	 * global template, otherwise a freshly generated fallback layout.
@@ -235,7 +207,7 @@ class Templates_Controller extends Base_Controller {
 					'name'          => $template->name,
 					'stack_slug'    => $template->stack_slug,
 					'template_type' => $template->template_type,
-					'layout'        => self::strip_storyteller_only_sections( $template->layout ),
+					'layout'        => St_Visibility::filter_layout( $template->layout, current_user_can( 'be_manage_characters' ) ),
 				],
 			] );
 		}
@@ -245,7 +217,7 @@ class Templates_Controller extends Base_Controller {
 			return $this->error( 'stack_not_found', __( 'Creature stack not found.', 'beyond-elysium' ), 404 );
 		}
 
-		$layout = self::strip_storyteller_only_sections( $layout );
+		$layout = St_Visibility::filter_layout( $layout, current_user_can( 'be_manage_characters' ) );
 
 		return $this->success( [
 			'resolved_from' => 'generated',

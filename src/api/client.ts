@@ -833,6 +833,49 @@ export const sheetStyle = ( gameSlug: string ) => ( {
         apiFetch( { path: `${ BASE }/${ gameSlug }/characters/${ characterId }/sheet-style`, method: 'DELETE' } ),
 } );
 
+/**
+ * REST client factory for a chronicle's signed-PDF character sheets. `pdfUrl()`
+ * builds a direct download link rather than fetching - the route returns raw
+ * PDF bytes, not JSON, and `window.open()` on a nonce-bearing query URL is how
+ * a plain link authenticates without needing an XHR (signed-pdf-design.md
+ * Section 4c). `availability()` is the one call here that goes through the
+ * normal apiFetch/JSON path, since it's a preflight check, not a download.
+ */
+export const sheets = ( gameSlug: string ) => ( {
+    /**
+     * Builds the signed-PDF download URL for one or more characters. Reads
+     * the REST root and nonce from `window.beyondElysium` - the same global
+     * `@wordpress/api-fetch` itself rides on for every other request, exposed
+     * here because a direct link can't carry apiFetch's own header-based nonce.
+     */
+    pdfUrl: (
+        characterIds: number[],
+        options: { background?: boolean; notes?: boolean; xpHistory?: boolean; fullPowerNames?: boolean } = {}
+    ): string => {
+        const params = new URLSearchParams( { character_ids: characterIds.join( ',' ) } );
+        if ( options.background ) {
+            params.set( 'background', '1' );
+        }
+        if ( options.notes ) {
+            params.set( 'notes', '1' );
+        }
+        if ( options.xpHistory ) {
+            params.set( 'xp_history', '1' );
+        }
+        if ( options.fullPowerNames ) {
+            params.set( 'full_power_names', '1' );
+        }
+        params.set( '_wpnonce', window.beyondElysium?.nonce ?? '' );
+
+        const root = window.beyondElysium?.restUrl ?? `${ window.location.origin }/wp-json/be/v1/`;
+        return `${ root }${ gameSlug }/sheets/pdf?${ params.toString() }`;
+    },
+
+    /** Preflight: is this chronicle's sheet signing actually configured? */
+    availability: (): Promise<{ ok: boolean; code: string }> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/sheets/availability` } ),
+} );
+
 // ---------------------------------------------------------------------------
 // Experience (game-scoped)
 // ---------------------------------------------------------------------------
@@ -1472,6 +1515,7 @@ const api = {
     changes,
     snapshots,
     sheetStyle,
+    sheets,
     experience,
     plots,
     apr,

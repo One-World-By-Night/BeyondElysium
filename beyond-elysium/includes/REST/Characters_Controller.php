@@ -7,7 +7,7 @@ use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\Transfer;
-use BeyondElysium\Services\St_Filter;
+use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -179,15 +179,10 @@ class Characters_Controller extends Base_Controller {
 			self::apply_computed_player_fields( $item, $can_manage );
 		}
 
-		if ( ! current_user_can( 'be_manage_characters' ) ) {
-			// Looked up once for the whole page rather than per character.
-			$hidden = Schema_Block::storyteller_only_slugs();
-			foreach ( $items as $item ) {
-				unset( $item->rp_notes );
-				$item->biography = St_Filter::strip_for_game( (string) $item->biography, $game->settings ?? null );
-				$item->notes     = St_Filter::strip_for_game( (string) $item->notes, $game->settings ?? null );
-				self::strip_storyteller_only_blocks( $item, $hidden );
-			}
+		// Looked up once for the whole page rather than once per character.
+		$hidden = $can_manage ? [] : Schema_Block::storyteller_only_slugs();
+		foreach ( $items as $item ) {
+			St_Visibility::filter_character( $item, $game, $can_manage, $hidden );
 		}
 
 		$total    = Character::count_for_game( $request['game_slug'], $args );
@@ -222,22 +217,18 @@ class Characters_Controller extends Base_Controller {
 			return $this->error( 'character_not_found', __( 'Character not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
+		$can_manage = current_user_can( 'be_manage_characters' );
+
 		// A non-manager may only view their own character.
-		if ( ! current_user_can( 'be_manage_characters' ) && (int) $character->wp_user_id !== get_current_user_id() ) {
+		if ( ! $can_manage && (int) $character->wp_user_id !== get_current_user_id() ) {
 			return $this->error( 'ownership_denied', __( 'You do not have permission to view this character.', 'beyond-elysium' ), 403 );
 		}
 
-		// Strips rp_notes and ST-only text for viewers without management capability.
-		if ( ! current_user_can( 'be_manage_characters' ) ) {
-			unset( $character->rp_notes );
-			$character->biography = St_Filter::strip_for_game( (string) $character->biography, $game->settings ?? null );
-			$character->notes     = St_Filter::strip_for_game( (string) $character->notes, $game->settings ?? null );
-			self::strip_storyteller_only_blocks( $character, Schema_Block::storyteller_only_slugs() );
-		}
+		St_Visibility::filter_character( $character, $game, $can_manage );
 
 		// Computed permission flags so the client can decide whether to render an editor or a read-only sheet.
 		$character->can_edit   = $this->can_edit_character( $character );
-		$character->can_manage = current_user_can( 'be_manage_characters' );
+		$character->can_manage = $can_manage;
 		// A separate capability from can_manage, kept distinct for future finer-grained permissions.
 		$character->can_customize_sheet = current_user_can( 'be_customize_sheet' );
 
@@ -249,7 +240,7 @@ class Characters_Controller extends Base_Controller {
 		// The sheet's own travelling notice and warning-styled edit affordance (§8.4) key off this.
 		$character->travelling_status = Transfer::open_states_for_game( $request['game_slug'] )[ $character->uuid ] ?? null;
 
-		self::apply_computed_player_fields( $character, current_user_can( 'be_manage_characters' ) );
+		self::apply_computed_player_fields( $character, $can_manage );
 
 		return $this->success( $character );
 	}
@@ -272,38 +263,15 @@ class Characters_Controller extends Base_Controller {
 
 		$items      = Character::find_for_user( get_current_user_id(), $request['game_slug'] );
 		$can_manage = current_user_can( 'be_manage_characters' );
-		// Looked up once for the whole page rather than per character.
+		// Looked up once for the whole page rather than once per character.
 		$hidden     = $can_manage ? [] : Schema_Block::storyteller_only_slugs();
 
 		foreach ( $items as $item ) {
 			$item->image_url = $item->image_id ? wp_get_attachment_image_url( (int) $item->image_id, 'thumbnail' ) : null;
-			if ( ! $can_manage ) {
-				unset( $item->rp_notes );
-				$item->biography = St_Filter::strip_for_game( (string) $item->biography, $game->settings ?? null );
-				$item->notes     = St_Filter::strip_for_game( (string) $item->notes, $game->settings ?? null );
-				self::strip_storyteller_only_blocks( $item, $hidden );
-			}
+			St_Visibility::filter_character( $item, $game, $can_manage, $hidden );
 		}
 
 		return $this->success( $items );
-	}
-
-	/**
-	 * Removes every Storyteller-only block's stored values from a
-	 * character's sheet_data. Dropping the section from a resolved template
-	 * layout does not cover this on its own, since the block's own data
-	 * would still ship inside the character payload.
-	 *
-	 * @param object $character
-	 */
-	private static function strip_storyteller_only_blocks( $character, array $hidden ): void {
-		if ( ! is_array( $character->sheet_data ?? null ) ) {
-			return;
-		}
-
-		foreach ( $hidden as $slug ) {
-			unset( $character->sheet_data[ $slug ] );
-		}
 	}
 
 	/**

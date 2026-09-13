@@ -1,5 +1,8 @@
 import { elderLabel, numericLabel, namedLabel, namedModeRows, withTradition } from './TieredPowerRenderer';
+import type { HeldPower } from './TieredPowerRenderer';
 import type { TieredPowerDefinition } from '../../types';
+import input from '../../../tests/fixtures/power-display-input.json';
+import expected from '../../../tests/fixtures/power-display-expected.json';
 
 const DEFINITION: TieredPowerDefinition = {
 	powers: [
@@ -111,5 +114,57 @@ describe( 'namedModeRows (0.99.2, "Query beyond characters" sibling ask: full st
 			'Blurred Motion',
 			'Lightning Reflexes',
 		] );
+	} );
+} );
+
+/**
+ * Same fixture, same expected output as `tests/unit/Display/PowerDisplayParityTest.php` -
+ * this is the TypeScript half of proving the two label-formatting implementations agree.
+ * Every case is transcribed 1:1 from this file's own tests above, per SP-3
+ * (BE_PROCESS/signed-pdf-design.md).
+ */
+describe( 'label helpers — parity with Power_Display.php', () => {
+	interface FixtureCase {
+		name: string;
+		method: 'with_tradition' | 'elder_label' | 'numeric_label' | 'named_label' | 'named_mode_rows';
+		label_method?: 'numeric_label' | 'named_label';
+		level?: number;
+		held: HeldPower;
+	}
+
+	interface ExpectedCase {
+		name: string;
+		output: string | string[];
+	}
+
+	const definition = input.definition as TieredPowerDefinition;
+	const cases = input.cases as unknown as FixtureCase[];
+	const expectedCases = expected as unknown as ExpectedCase[];
+
+	function run( fixtureCase: FixtureCase ): string | string[] {
+		switch ( fixtureCase.method ) {
+			case 'with_tradition': {
+				const label = fixtureCase.label_method === 'named_label'
+					? namedLabel( definition, fixtureCase.held, fixtureCase.level )
+					: numericLabel( definition, fixtureCase.held );
+				return withTradition( fixtureCase.held, label );
+			}
+			case 'elder_label':
+				return elderLabel( definition, fixtureCase.held );
+			case 'numeric_label':
+				return numericLabel( definition, fixtureCase.held );
+			case 'named_label':
+				return namedLabel( definition, fixtureCase.held, fixtureCase.level );
+			case 'named_mode_rows':
+				return namedModeRows( definition, fixtureCase.held );
+			default:
+				throw new Error( `Unknown fixture method: ${ String( ( fixtureCase as FixtureCase ).method ) }` );
+		}
+	}
+
+	cases.forEach( ( fixtureCase, index ) => {
+		it( `matches the shared fixture: ${ fixtureCase.name }`, () => {
+			expect( run( fixtureCase ) ).toEqual( expectedCases[ index ].output );
+		} );
 	} );
 } );

@@ -1,0 +1,12 @@
+{
+    "spanFor": [
+        { "name": "unset width (null) defaults to third", "span": 2 },
+        { "name": "third", "span": 2 },
+        { "name": "half", "span": 3 },
+        { "name": "full", "span": 6 }
+    ],
+    "sortedForFlow": [
+        { "name": "sorts by column then order, matching real row-reading order", "block_slugs": [ "a", "c", "b" ] },
+        { "name": "stable for equal column and order - original relative order survives", "block_slugs": [ "first", "second", "third-entry" ] }
+    ]
+}

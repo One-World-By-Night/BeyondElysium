@@ -1,0 +1,20 @@
+[
+  { "name": "true before/after for a tiered_power level change", "output": "Celerity 2 → 4" },
+  { "name": "degrades to only the new value when previous is absent", "output": "Celerity → level 4" },
+  { "name": "true before/after for a trait_list count change", "output": "Boon x1 → x3" },
+  { "name": "modify_trait with neither level nor count", "output": "Something updated" },
+  { "name": "adding a new tiered power", "output": "Added Fortitude 1" },
+  { "name": "adding a trait_list item with a specialization", "output": "Added Contacts (Police)" },
+  { "name": "adding a trait_list item with count > 1 and no specialization", "output": "Added Occult x3" },
+  { "name": "removing a trait", "output": "Removed Potence" },
+  { "name": "a resource pool change", "output": "Blood: 10 perm / 8 temp" },
+  { "name": "modify_resource with no values", "output": "Resource updated" },
+  { "name": "an identity field change", "output": "Clan → Toreador" },
+  { "name": "modify_identity with no fields", "output": "Identity updated" },
+  { "name": "XP earn with a reason", "output": "+3 XP (Game attendance)" },
+  { "name": "XP earn with no reason", "output": "+5 XP" },
+  { "name": "XP adjust with a reason", "output": "XP adjusted by -2 (ST correction)" },
+  { "name": "an imported note with a reason", "output": "Migrated from legacy sheet" },
+  { "name": "an imported note with no reason", "output": "Imported note" },
+  { "name": "an unrecognized change type", "output": "Unknown change" }
+]

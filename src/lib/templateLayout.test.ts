@@ -1,5 +1,7 @@
 import { spanFor, sortedForFlow, LAYOUT_GRID_UNITS } from './templateLayout';
 import type { TemplateLayoutSection } from '../types';
+import input from '../../tests/fixtures/layout-flow-input.json';
+import expected from '../../tests/fixtures/layout-flow-expected.json';
 
 function section( overrides: Partial<TemplateLayoutSection> ): TemplateLayoutSection {
 	return {
@@ -44,5 +46,30 @@ describe( 'sortedForFlow', () => {
 		sortedForFlow( sections );
 
 		expect( sections ).toEqual( original );
+	} );
+} );
+
+/**
+ * Same fixture, same expected output as `tests/unit/Display/Layout_FlowTest.php` - this is
+ * the TypeScript half of proving spanFor()/sortedForFlow() and their PHP twin, Layout_Flow,
+ * agree.
+ */
+describe( 'templateLayout — parity with Layout_Flow.php', () => {
+	it( 'spanFor matches the shared fixture for every case', () => {
+		expect( input.spanFor.length ).toBe( expected.spanFor.length );
+
+		input.spanFor.forEach( ( testCase, i ) => {
+			const width = testCase.width as unknown as TemplateLayoutSection[ 'width' ];
+			expect( spanFor( width ) ).toBe( expected.spanFor[ i ].span );
+		} );
+	} );
+
+	it( 'sortedForFlow matches the shared fixture for every case, including stability', () => {
+		expect( input.sortedForFlow.length ).toBe( expected.sortedForFlow.length );
+
+		input.sortedForFlow.forEach( ( testCase, i ) => {
+			const flowed = sortedForFlow( testCase.sections as TemplateLayoutSection[] );
+			expect( flowed.map( ( s ) => s.block_slug ) ).toEqual( expected.sortedForFlow[ i ].block_slugs );
+		} );
 	} );
 } );

@@ -1,4 +1,6 @@
-import { displayTrait, type Trait } from './displayTrait';
+import { displayTrait, type Trait, type DisplayType } from './displayTrait';
+import input from '../../tests/fixtures/trait-display-input.json';
+import expected from '../../tests/fixtures/trait-display-expected.json';
 
 const CELERITY: Trait = { name: 'Celerity', total: 3, note: 'Fast' };
 
@@ -88,5 +90,38 @@ describe( 'displayTrait — edge cases', () => {
 
 	it( 'a custom dot glyph is honored', () => {
 		expect( displayTrait( CELERITY, 'dot', 'o' ) ).toBe( 'Celerity ooo (Fast)' );
+	} );
+} );
+
+interface TraitDisplayFixtureCase {
+	name: string;
+	trait: Trait;
+	mode: DisplayType;
+	dot?: string;
+}
+
+interface TraitDisplayFixtureExpected {
+	name: string;
+	output: string;
+}
+
+/**
+ * Same fixture, same expected output as `tests/unit/Display/TraitDisplayParityTest.php`
+ * - this is the TypeScript half of proving the two renderers agree.
+ */
+describe( 'displayTrait — parity with Trait_Display.php', () => {
+	it( 'matches every shared fixture case', () => {
+		const cases = input as TraitDisplayFixtureCase[];
+		const expectedCases = expected as TraitDisplayFixtureExpected[];
+
+		expect( cases.length ).toBe( expectedCases.length );
+
+		cases.forEach( ( testCase, i ) => {
+			const expectedCase = expectedCases[ i ];
+			expect( testCase.name ).toBe( expectedCase.name );
+			expect(
+				displayTrait( testCase.trait, testCase.mode, testCase.dot ?? '•' )
+			).toBe( expectedCase.output );
+		} );
 	} );
 } );

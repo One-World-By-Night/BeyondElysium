@@ -1,4 +1,6 @@
 import { displayTemper } from './displayTemper';
+import temperInput from '../../tests/fixtures/temper-display-input.json';
+import temperExpected from '../../tests/fixtures/temper-display-expected.json';
 
 describe( 'displayTemper', () => {
 	it( 'a full pool with no temp/perm split renders filled dots', () => {
@@ -54,5 +56,19 @@ describe( 'displayTemper', () => {
 		// run of 5 collapses first, leaving 6 filled + 1 spent + 1 capital = 8 chars,
 		// already under the limit - filled never needs to collapse at all.
 		expect( displayTemper( { permanent: 12, temporary: 6 } ) ).toBe( 'o'.repeat( 6 ) + 'ø' + 'Ø' );
+	} );
+} );
+
+/**
+ * Same fixture, same expected output as `tests/unit/Display/TemperDisplayParityTest.php`
+ * - this is the TypeScript half of proving the two renderers agree.
+ */
+describe( 'displayTemper — parity with Temper_Display.php', () => {
+	temperInput.forEach( ( testCase, i ) => {
+		it( `matches the shared fixture: ${ testCase.name }`, () => {
+			expect(
+				displayTemper( { permanent: testCase.permanent, temporary: testCase.temporary } )
+			).toBe( temperExpected[ i ].output );
+		} );
 	} );
 } );
