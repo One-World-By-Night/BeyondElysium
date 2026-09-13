@@ -50,6 +50,8 @@ import type {
     SheetStyle,
     SheetStyleInput,
     WpUserSummary,
+    ExportCharacterOptions,
+    ExportCharacterResponse,
 } from '../types/character';
 import type {
     Plot,
@@ -508,6 +510,19 @@ export const characters = ( gameSlug: string ) => ( {
      */
     myCharacters: (): Promise<Character[]> =>
         apiFetch( { path: `${ BASE }/${ gameSlug }/my/characters` } ),
+
+    /**
+     * Exports a character to a Grapevine `.gex` XML document.
+     * Returns the document text plus any degradation warnings and
+     * ASCII-transliteration substitutions the Storyteller should
+     * see before relying on the file.
+     */
+    export: ( id: number, options: ExportCharacterOptions = {} ): Promise<ExportCharacterResponse> =>
+        apiFetch( {
+            path: `${ BASE }/${ gameSlug }/characters/${ id }/export`,
+            method: 'POST',
+            data: { format: 'gex-xml', ...options },
+        } ),
 } );
 
 /**

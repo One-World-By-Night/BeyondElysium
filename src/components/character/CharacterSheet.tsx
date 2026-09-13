@@ -109,6 +109,8 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 	const [ showStyleEditor, setShowStyleEditor ] = useState( false );
 	const [ showHistory, setShowHistory ] = useState( false );
 	const [ showLedger, setShowLedger ] = useState( false );
+	const [ exportNotice, setExportNotice ] = useState<string | null>( null );
+	const [ exporting, setExporting ] = useState( false );
 	const [ ledgerDate, setLedgerDate ] = useState( () => new Date().toISOString().slice( 0, 10 ) );
 
 	// This same component also renders the dedicated print-canvas page, using these URL params.
@@ -200,6 +202,40 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 	}
 
 	const { character, stack, resolved } = state;
+
+	/**
+	 * Exports this character to a Grapevine `.gex` file and offers it as a
+	 * browser download. `hide_st` mirrors what a non-manager already sees
+	 * elsewhere on this sheet - a manager gets the full record, a player
+	 * gets their own character with ST-only text stripped the same way.
+	 */
+	const handleExport = async () => {
+		setExporting( true );
+		setExportNotice( null );
+		try {
+			const result = await api.characters( gameSlug ).export( characterId, { hide_st: ! character.can_manage } );
+			const blob = new Blob( [ result.xml ], { type: 'application/xml' } );
+			const url = URL.createObjectURL( blob );
+			const link = document.createElement( 'a' );
+			link.href = url;
+			link.download = `${ character.name.replace( /[^a-z0-9]+/gi, '_' ) }.gex`;
+			document.body.appendChild( link );
+			link.click();
+			document.body.removeChild( link );
+			URL.revokeObjectURL( url );
+
+			const notes = [ ...result.warnings, ...result.transliterations ];
+			setExportNotice(
+				notes.length > 0
+					? sprintf( __( 'Exported with %d note(s) - see below.', 'beyond-elysium' ), notes.length ) + ' ' + notes.join( ' | ' )
+					: __( 'Exported.', 'beyond-elysium' )
+			);
+		} catch ( error ) {
+			setExportNotice( __( 'Export failed. Please try again.', 'beyond-elysium' ) );
+		} finally {
+			setExporting( false );
+		}
+	};
 
 	// Sections flow in (column, order) reading order into a repeat(6, 1fr) CSS Grid, each spanning 2/6, 3/6, or 6/6 per its own width.
 	const sections = sortedForFlow( resolved.template.layout.sections );
@@ -316,7 +352,20 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 						>
 							{ showLedger ? __( 'Hide background uses', 'beyond-elysium' ) : __( 'Background uses', 'beyond-elysium' ) }
 						</button>
+						<button
+							type="button"
+							className="be-character-sheet__gex-export"
+							disabled={ exporting }
+							onClick={ handleExport }
+						>
+							{ exporting ? __( 'Exporting…', 'beyond-elysium' ) : __( 'Export to Grapevine (.gex)', 'beyond-elysium' ) }
+						</button>
 					</div>
+					{ exportNotice && (
+						<div className="be-character-sheet__chrome be-character-sheet__export-notice" role="status">
+							{ exportNotice }
+						</div>
+					) }
 
 					{ /* Controls, not content - never part of the printed output themselves, only what they turn on is. */ }
 					<div className="be-character-sheet__chrome be-character-sheet__print-options">
