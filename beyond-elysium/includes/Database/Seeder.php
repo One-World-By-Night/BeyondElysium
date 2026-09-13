@@ -9,6 +9,7 @@ use BeyondElysium\Services\GVM_Parser;
 use BeyondElysium\Services\GEX_Xml_Parser;
 use BeyondElysium\Services\Layout_Generator;
 use BeyondElysium\Services\MET_CSV_Parser;
+use BeyondElysium\Services\Grimoire_CSV_Parser;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -49,6 +50,17 @@ class Seeder {
 	 * style as a missing GVM/CSV file.
 	 */
 	const MAGE_ROTES_PATH = __DIR__ . '/../../data/Rotes.gex';
+
+	/**
+	 * Path to the extracted Enlightened Grimoire rotes CSV (~880 net-new rotes plus
+	 * category data for the ~140 that overlap the existing 201 GEX rotes), relative to
+	 * this file. Generated once, offline, by `tools/grimoire/` (repo root, outside this
+	 * shippable subfolder) - never a runtime PDF read. See
+	 * BE_PROCESS/mage-rotes-grimoire-design.md §8. Missing or malformed falls back to the
+	 * pre-existing base catalog unchanged, same graceful-degradation style as every other
+	 * seeded source file.
+	 */
+	const GRIMOIRE_ROTES_PATH = __DIR__ . '/../../data/grimoire-rotes.csv';
 
 	// ---------------------------------------------------------------------------
 	// PUBLIC ENTRY POINTS
@@ -1717,7 +1729,7 @@ class Seeder {
 			// this 'source' => 'none', but a real source now exists outside the GVM menu set.
 			if ( $slug === 'mage-rotes' ) {
 				unset( $extra['deferred_to'] );
-				$blocks[] = self::make_trait_list_block( $slug, $label, self::build_mage_rotes_items(), $extra );
+				$blocks[] = self::make_trait_list_block( $slug, $label, self::merge_grimoire_rotes( self::build_mage_rotes_items() ), $extra );
 				continue;
 			}
 
@@ -1828,6 +1840,177 @@ class Seeder {
 		}
 
 		return self::dedupe_built_items_by_name( $items );
+	}
+
+	/**
+	 * Every comparison key a rote name can plausibly match under, per
+	 * mage-rotes-grimoire-design.md §5.3: met_name_comparison_key() as the base,
+	 * K1 (a bare trailing-s plural on the final word alone - "Ball of Abysmal
+	 * Flame" vs "...Flames" are the same rote) and K2 (a slash-joined dual name -
+	 * "Blight/Farmer's Favor" - yields one key per side, plus the whole string,
+	 * since the Grimoire writes dual names the GEX writes as one).
+	 *
+	 * @return array<int,string>
+	 */
+	private static function grimoire_match_keys( string $name ): array {
+		$variants = [ $name ];
+		if ( strpos( $name, '/' ) !== false ) {
+			foreach ( explode( '/', $name ) as $side ) {
+				$side = trim( $side );
+				if ( $side !== '' ) {
+					$variants[] = $side;
+				}
+			}
+		}
+
+		$keys = [];
+		foreach ( $variants as $variant ) {
+			$key    = self::met_name_comparison_key( $variant );
+			$keys[] = $key;
+
+			// K1: trailing-s equivalence, the final word only.
+			$words = explode( ' ', $key );
+			$last  = array_pop( $words );
+			if ( $last === '' ) {
+				continue;
+			}
+			if ( strlen( $last ) > 1 && substr( $last, -1 ) === 's' ) {
+				$keys[] = implode( ' ', array_merge( $words, [ substr( $last, 0, -1 ) ] ) );
+			} else {
+				$keys[] = implode( ' ', array_merge( $words, [ $last . 's' ] ) );
+			}
+		}
+
+		return array_values( array_unique( $keys ) );
+	}
+
+	/**
+	 * Merges data/grimoire-rotes.csv (~880 net-new rotes, plus category data for
+	 * the ~140 that overlap the existing 201 GEX rotes) into $base -
+	 * build_mage_rotes_items()'s output, the protected base per Decision 043.
+	 * $base is never altered except to backfill `group`/`subgroup` onto a
+	 * matched item that has none; sphere/citation stay whichever system
+	 * originally supplied that item, never overwritten by the other (§6.2 - the
+	 * two rules systems' sphere numbers are not interchangeable). A genuine tie
+	 * (a Grimoire name matching more than one base item under §5.3's key set)
+	 * is left unmerged and logged, never guessed - the same tie rule Decision
+	 * 043 already established for the MET CSV merge.
+	 *
+	 * Missing or malformed CSV -> error_log and return $base unchanged, the same
+	 * graceful-degradation style build_mage_rotes_items()/parse_gvm() use.
+	 *
+	 * @param array<int,array<string,mixed>> $base
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function merge_grimoire_rotes( array $base ): array {
+		if ( ! file_exists( self::GRIMOIRE_ROTES_PATH ) ) {
+			error_log( 'Beyond Elysium: Grimoire rotes source not found at ' . self::GRIMOIRE_ROTES_PATH . ' - mage-rotes seeded from Rotes.gex only.' );
+			return $base;
+		}
+
+		try {
+			$rows = Grimoire_CSV_Parser::parse_file( self::GRIMOIRE_ROTES_PATH );
+		} catch ( \Throwable $e ) {
+			error_log( 'Beyond Elysium: Grimoire rotes CSV failed to parse - mage-rotes seeded from Rotes.gex only. ' . $e->getMessage() );
+			return $base;
+		}
+
+		return self::merge_grimoire_rows( $base, $rows );
+	}
+
+	/**
+	 * The pure merge core behind merge_grimoire_rotes(), split out so it can
+	 * be exercised directly (MageRotesMergeTest) against constructed rows
+	 * without a real CSV file on disk. See merge_grimoire_rotes()'s own
+	 * docblock for the merge rules; this method assumes $rows is already
+	 * parsed and valid.
+	 *
+	 * @param array<int,array<string,mixed>>                                        $base
+	 * @param array<int,array{name:string,note:string,source:string,group:string,subgroup:string}> $rows
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function merge_grimoire_rows( array $base, array $rows ): array {
+		$merged     = $base;
+		$key_to_idx = [];
+		foreach ( $merged as $i => $item ) {
+			foreach ( self::grimoire_match_keys( $item['name'] ) as $key ) {
+				$key_to_idx[ $key ][] = $i;
+			}
+		}
+
+		$added           = 0;
+		$skipped_matched = 0;
+		$ambiguous       = 0;
+		$categorized     = 0;
+
+		foreach ( $rows as $row ) {
+			$keys = self::grimoire_match_keys( $row['name'] );
+
+			$hit_indexes = [];
+			foreach ( $keys as $key ) {
+				foreach ( $key_to_idx[ $key ] ?? [] as $idx ) {
+					$hit_indexes[ $idx ] = true;
+				}
+			}
+			$hit_indexes = array_keys( $hit_indexes );
+
+			if ( count( $hit_indexes ) > 1 ) {
+				// Decision 043's tie rule: a genuine tie is left unmerged, never guessed.
+				$ambiguous++;
+				continue;
+			}
+
+			if ( count( $hit_indexes ) === 1 ) {
+				$idx = $hit_indexes[0];
+				$skipped_matched++;
+				if ( empty( $merged[ $idx ]['group'] ) && $row['group'] !== '' ) {
+					$merged[ $idx ]['group'] = $row['group'];
+					if ( $row['subgroup'] !== '' ) {
+						$merged[ $idx ]['subgroup'] = $row['subgroup'];
+					}
+					$categorized++;
+				}
+				continue;
+			}
+
+			// Net-new.
+			$item = [
+				'name'   => $row['name'],
+				'note'   => $row['note'],
+				'source' => $row['source'],
+			];
+			if ( $row['group'] !== '' ) {
+				$item['group'] = $row['group'];
+			}
+			if ( $row['subgroup'] !== '' ) {
+				$item['subgroup'] = $row['subgroup'];
+			}
+
+			$new_idx    = count( $merged );
+			$merged[]   = $item;
+			foreach ( $keys as $key ) {
+				// So a second Grimoire row that normalizes the same way lands on
+				// this one instead of being added again.
+				$key_to_idx[ $key ][] = $new_idx;
+			}
+			$added++;
+		}
+
+		// Only a genuine tie is worth logging on every ordinary seed - matching
+		// build_mapped_blocks()'s own "$unresolved" convention (log anomalies, not
+		// routine successful counts). Decision 043's tie rule means an ambiguous row
+		// is real, silently-dropped information an admin should be able to notice.
+		if ( $ambiguous > 0 ) {
+			error_log( sprintf(
+				'Beyond Elysium: Grimoire rotes merge - %d added, %d matched (%d newly categorized), %d ambiguous (left unmerged)',
+				$added,
+				$skipped_matched,
+				$categorized,
+				$ambiguous
+			) );
+		}
+
+		return self::dedupe_built_items_by_name( $merged );
 	}
 
 	/**
@@ -2205,7 +2388,7 @@ class Seeder {
 			self::make_tiered_power_block( 'mage-spheres',    'Mage Spheres',  [], [ 'sequential' => true, 'atomic' => true ] ),
 			// Real catalog even on this total-GVM-failure fallback path - build_mage_rotes_items()
 			// reads data/Rotes.gex directly and has no dependency on $gvm.
-			self::make_trait_list_block(   'mage-rotes',      'Mage Rotes',    self::build_mage_rotes_items(), [ 'atomic' => true ] ),
+			self::make_trait_list_block(   'mage-rotes',      'Mage Rotes',    self::merge_grimoire_rotes( self::build_mage_rotes_items() ), [ 'atomic' => true ] ),
 			self::make_resource_block( 'mage-resources', 'Mage Resources', [
 				[ 'name' => 'Arete',        'value_type' => 'integer', 'default_start' => 1, 'max' => 10 ],
 				[ 'name' => 'Quintessence', 'value_type' => 'integer', 'default_start' => 1, 'max' => 20 ],

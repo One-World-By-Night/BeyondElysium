@@ -16,6 +16,12 @@ seeder and the field registry read it on activation and at request time.
 | `qkdata.gvd` | `BeyondElysium\Services\Field_Registry` (0.3) | The 231 query/template field keys |
 | `met-mechanics.csv` | `BeyondElysium\Services\MET_CSV_Parser` (0.10) | 5227 Discipline/Ritual/Archetype/Merit/Flaw/Background/Ability/Clan-Bloodline/Path/Revenant rows, layered on top of the GVM-sourced blocks it covers - see `BE_PROCESS/workflow-0.10.md` |
 | `Rotes.gex` | `BeyondElysium\Database\Seeder` (via `Services\GEX_Xml_Parser`) | 201 real Mage rotes seeded into `mage-rotes` - see `BE_PROCESS/0.99.2-workflow.md`'s "`mage-rotes` ships as an empty catalog" |
+| `grimoire-rotes.csv` | `BeyondElysium\Database\Seeder` (via `Services\Grimoire_CSV_Parser`) | ~670 rows extracted once, offline, from a Storytellers Vault compendium (`tools/grimoire/`, repo root) - merged into `mage-rotes` alongside `Rotes.gex`'s 201, contributing category data to the overlap and ~500 net-new rotes to the rest. See `BE_PROCESS/mage-rotes-grimoire-design.md` |
 
-**Do not edit these.** They are copies. `tests/unit/DataFilesTest.php` asserts the Grapevine
-trio stays byte-identical to their `GV301Source/` originals, so drift fails the build.
+**Do not edit `Grapevine Menus XML.gvm`, `qkdata.gvd`, `Rotes.gex`, or `met-mechanics.csv`.**
+They are copies. `tests/unit/DataFilesTest.php` asserts the Grapevine trio stays byte-identical
+to their `GV301Source/` originals, so drift fails the build. `grimoire-rotes.csv` is different:
+it has no pristine original to diff against - it is *generated*, by `tools/grimoire/`, from a
+source PDF that never enters this repository at all (R7). `tests/unit/GrimoireCsvTest.php` is
+its own, stronger guard: header shape, row count, closed vocabularies, and the absence of any
+sixth column or leaked prose cell.

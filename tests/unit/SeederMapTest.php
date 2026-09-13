@@ -439,8 +439,13 @@ class SeederMapTest extends TestCase {
 	 * `note`/`source` assertions updated for the backfill added the same release
 	 * (`BE_PROCESS/mage-rotes-grimoire-design.md` §5.4): `Rotes.gex` was already parsed for
 	 * its 289 real sphere prerequisites and 201 real source citations, and the seeder was
-	 * discarding both. 201 is still the right count here - the ~880 net-new rotes extracted
-	 * from the Grimoire PDF are a separate, larger, not-yet-built item (MR-4 onward).
+	 * discarding both.
+	 *
+	 * 201 grew to 804 in v0.99.17 (`merge_grimoire_rotes()`, §8.4) - the 201 GEX rotes plus
+	 * every net-new rote `data/grimoire-rotes.csv` contributes, both real, measured numbers
+	 * rather than the design doc's own ~880/~1,070 estimates (`MageRotesMergeTest` covers the
+	 * merge logic itself against constructed fixtures; this assertion is the count on real
+	 * seeded data).
 	 */
 	public function test_mage_rotes_is_no_longer_empty(): void {
 		$ref    = new \ReflectionMethod( Seeder::class, 'build_mapped_blocks' );
@@ -449,7 +454,7 @@ class SeederMapTest extends TestCase {
 
 		$mage_rotes = current( array_filter( $blocks, static fn( $b ) => $b['slug'] === 'mage-rotes' ) );
 		$this->assertNotFalse( $mage_rotes );
-		$this->assertCount( 201, $mage_rotes['definition']['items'] );
+		$this->assertCount( 804, $mage_rotes['definition']['items'] );
 		$this->assertArrayNotHasKey( 'deferred_to', $mage_rotes['definition'], 'no longer deferred - the flag must not survive into the built block' );
 
 		$sample = current( array_filter( $mage_rotes['definition']['items'], static fn( $i ) => $i['name'] === 'Access This' ) );
@@ -463,10 +468,18 @@ class SeederMapTest extends TestCase {
 		$this->assertSame( 'Level 2, See Description — Entropy: Apprentice, Entropy: Initiate', $dual['note'] );
 		$this->assertSame( 'Laws of Ascension, p. 147', $dual['source'] );
 
-		// No item's `note` should ever be silently missing its sphere prerequisites -
-		// Rotes.gex confirms 0 of 289 sphere traits are empty, so every one of the 201
-		// items must show a spaced em-dash section in its note.
-		foreach ( $mage_rotes['definition']['items'] as $item ) {
+		// No GEX-sourced item's `note` should ever be silently missing its sphere
+		// prerequisites - Rotes.gex confirms 0 of 289 sphere traits are empty, so every
+		// one of the 201 `Laws of Ascension`-cited items must show a spaced em-dash
+		// section in its note. The 603 Grimoire-merged items use a different note shape
+		// entirely (the printed sphere line verbatim, e.g. "Entropy 2 or 3") and are
+		// covered by MageRotesMergeTest/GrimoireCsvTest instead, not this assertion.
+		$gex_items = array_filter(
+			$mage_rotes['definition']['items'],
+			static fn( $i ) => str_contains( $i['source'] ?? '', 'Laws of Ascension' )
+		);
+		$this->assertCount( 201, $gex_items );
+		foreach ( $gex_items as $item ) {
 			$this->assertStringContainsString( ' — ', $item['note'], "{$item['name']} is missing its sphere-prerequisite suffix" );
 		}
 	}

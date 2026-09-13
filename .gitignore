@@ -23,6 +23,10 @@ Thumbs.db
 # Test tooling
 .phpunit.result.cache
 
+# Working output of tools/grimoire/'s offline extractor (raw pdftotext dumps, intermediate
+# JSON) - reproducible from data-samples/Enlightened_Grimoire.pdf, never tracked.
+tools/grimoire/out/
+
 # Reference material dropped into the working tree ad hoc (a saved third-party site capture,
 # not authored here, not runtime data) - never tracked, never shipped.
 pp-samples/

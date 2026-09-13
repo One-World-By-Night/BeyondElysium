@@ -260,8 +260,9 @@ class Schema_Block {
 	 * Same merge behavior as all_for_game(), for one or more section types
 	 * at once, in no particular order.
 	 *
-	 * A handful of real system blocks (the Fera/Werewolf gift catalogs) run
-	 * hundreds of KB each. Any ORDER BY here - even by the primary key -
+	 * A handful of real system blocks (the Fera/Werewolf gift catalogs,
+	 * `mage-rotes` since the Enlightened Grimoire expansion) run hundreds of
+	 * KB each. Any ORDER BY here - even by the primary key -
 	 * measurably fails with "Out of sort memory" once section_type is also
 	 * filtered: EXPLAIN shows MySQL choosing the section_type index as its
 	 * access path, which does not return primary-key order, so an explicit
