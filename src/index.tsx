@@ -47,6 +47,7 @@ const widgetRegistry: Record<string, () => Promise<{ default: React.ComponentTyp
 	'admin-docs': () => import( './components/admin/AdminDocs' ),
 	'admin-approval-rules': () => import( './components/admin/AdminApprovalRules' ),
 	'admin-apr-settings': () => import( './components/admin/AdminAprSettings' ),
+	'admin-reports': () => import( './components/admin/AdminReports' ),
 };
 
 /**

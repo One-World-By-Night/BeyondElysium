@@ -174,6 +174,18 @@ class Admin_Menu {
 			'beyond-elysium-apr-settings',
 			[ self::class, 'render_apr_settings' ]
 		);
+
+		// The 19 GV301 reports/cards/batch output (reports-cards-batch-design.md §3.6).
+		// be_view_reports is the same broad grant be_view_characters uses - row-level
+		// visibility is enforced inside Report_Document/Query_Engine, not by this gate.
+		add_submenu_page(
+			'beyond-elysium',
+			__( 'Reports', 'beyond-elysium' ),
+			__( 'Reports', 'beyond-elysium' ),
+			'be_view_reports',
+			'beyond-elysium-reports',
+			[ self::class, 'render_reports' ]
+		);
 	}
 
 	/**
@@ -303,6 +315,15 @@ class Admin_Menu {
 	 */
 	public static function render_apr_settings(): void {
 		self::render_mount( 'admin-apr-settings' );
+	}
+
+	/**
+	 * Renders the Reports admin page. Outputs the mount point for the
+	 * admin-reports widget, which lists the 19 GV301 reports and generates a
+	 * signed PDF for one, followed by the shared memorial footer.
+	 */
+	public static function render_reports(): void {
+		self::render_mount( 'admin-reports' );
 	}
 
 	/**

@@ -48,6 +48,11 @@ class Capabilities {
 		// action-allocation and rumor-generation configuration. be_manage_games is
 		// excluded from every chronicle role (see game-roles.php), so it cannot gate this.
 		'be_manage_apr'            => [ 'administrator', 'editor' ],
+		// Same breadth as be_view_characters: a player printing a Sign-In Sheet at a
+		// live game is an ordinary use, not a Storyteller-only one. Row-level
+		// visibility (NPC hiding, [ST]-marked text) is enforced inside
+		// Report_Document/Query_Engine, not by narrowing this grant.
+		'be_view_reports'          => [ 'administrator', 'editor', 'author', 'contributor', 'subscriber' ],
 	];
 
 	/**

@@ -1,0 +1,165 @@
+<?php
+
+namespace BeyondElysium\REST;
+
+use BeyondElysium\Services\Pdf_Signer;
+use BeyondElysium\Services\Report_Document;
+use BeyondElysium\Services\Report_Writer;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * REST controller for the 19 reports: `GET /{game_slug}/reports` (the
+ * registry, for the Reports admin page) and `GET /{game_slug}/reports/{report_key}/pdf`.
+ *
+ * `be_view_reports` gates both routes the same broad way `be_view_characters`
+ * gates `Sheets_Controller` - every real chronicle role holds it
+ * (reports-cards-batch-design.md §4). Row-level visibility (NPC hiding,
+ * `[ST]`-marked text) still runs inside `Report_Document`/`Query_Engine`
+ * exactly as it does for the character list and the signed sheet.
+ *
+ * @see BE_PROCESS/reports-cards-batch-design.md §3.5
+ */
+class Reports_Controller extends Base_Controller {
+
+	protected $rest_base = 'reports';
+
+	public function register_routes(): void {
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/reports', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_items' ],
+				'permission_callback' => $this->permission( 'be_view_reports' ),
+			],
+		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/reports/(?P<report_key>[a-z0-9\-]+)/pdf', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_pdf' ],
+				'permission_callback' => $this->permission( 'be_view_reports' ),
+				'args'                => [
+					'conditions' => [ 'type' => 'string', 'required' => false ],
+					'logic'      => [ 'type' => 'string', 'default' => 'AND' ],
+					'stat_field' => [ 'type' => 'string', 'required' => false ],
+					'stat_type'  => [ 'type' => 'string', 'required' => false ],
+				],
+			],
+		] );
+
+		add_filter( 'rest_pre_serve_request', [ $this, 'serve_pdf_bytes' ], 10, 4 );
+	}
+
+	/**
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_items( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$rows = [];
+		foreach ( Report_Document::registry() as $key => $report ) {
+			$rows[] = [
+				'key'    => $key,
+				'title'  => $report['title'],
+				'shape'  => $report['shape'],
+				'entity' => $report['entity'] ?? null,
+			];
+		}
+
+		return $this->success( $rows );
+	}
+
+	/**
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_pdf( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$availability = Pdf_Signer::availability();
+		if ( ! $availability['ok'] ) {
+			return $this->error(
+				'signing_unavailable',
+				__( 'This chronicle has not set up sheet signing yet - ask your Storyteller.', 'beyond-elysium' ),
+				503
+			);
+		}
+
+		$report_key = (string) $request['report_key'];
+		if ( ! array_key_exists( $report_key, Report_Document::registry() ) ) {
+			return $this->error( 'report_not_found', __( 'Report not found.', 'beyond-elysium' ), 404 );
+		}
+
+		$raw_conditions = (string) $request->get_param( 'conditions' );
+		$conditions     = $raw_conditions !== '' ? json_decode( $raw_conditions, true ) : [];
+		if ( ! is_array( $conditions ) ) {
+			return $this->error( 'invalid_request', __( 'conditions must be valid JSON.', 'beyond-elysium' ), 400 );
+		}
+
+		$document = Report_Document::build(
+			$report_key,
+			$request['game_slug'],
+			[ 'conditions' => $conditions, 'logic' => (string) $request->get_param( 'logic' ) ],
+			[
+				'can_manage' => current_user_can( 'be_manage_characters' ),
+				'stat_field' => (string) $request->get_param( 'stat_field' ),
+				'stat_type'  => (string) $request->get_param( 'stat_type' ),
+			]
+		);
+
+		if ( $document === null ) {
+			return $this->error( 'report_not_found', __( 'Report not found.', 'beyond-elysium' ), 404 );
+		}
+
+		$bytes    = Report_Writer::write( $document, $game );
+		$filename = sanitize_file_name( $request['game_slug'] . '-' . $report_key ) . '.pdf';
+
+		return $this->success( [ 'bytes' => $bytes, 'filename' => $filename ] );
+	}
+
+	/**
+	 * Same interception pattern as `Sheets_Controller::serve_pdf_bytes()`,
+	 * matched by callback identity so no other route is affected.
+	 *
+	 * @param bool              $served
+	 * @param \WP_REST_Response $result
+	 * @param \WP_REST_Request  $request
+	 * @param \WP_REST_Server   $server
+	 * @return bool
+	 */
+	public function serve_pdf_bytes( $served, $result, $request, $server ) {
+		$attributes = $request->get_attributes();
+		if ( ( $attributes['callback'] ?? null ) !== [ $this, 'get_pdf' ] ) {
+			return $served;
+		}
+
+		$data = $result->get_data();
+		if ( ! is_array( $data ) || ! isset( $data['bytes'], $data['filename'] ) ) {
+			return $served;
+		}
+
+		header( 'Content-Type: application/pdf' );
+		header( 'Content-Disposition: attachment; filename="' . $data['filename'] . '"' );
+		echo $data['bytes']; // phpcs:ignore -- raw binary PDF bytes, not HTML output.
+		return true;
+	}
+
+	/**
+	 * @param string $game_slug
+	 * @return object|\WP_Error
+	 */
+	protected function resolve_game( string $game_slug ) {
+		$game = \BeyondElysium\Models\Game::find_by_slug( $game_slug );
+		if ( ! $game ) {
+			return $this->error( 'game_not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
+		}
+		return $game;
+	}
+}

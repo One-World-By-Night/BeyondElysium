@@ -876,6 +876,35 @@ export const sheets = ( gameSlug: string ) => ( {
         apiFetch( { path: `${ BASE }/${ gameSlug }/sheets/availability` } ),
 } );
 
+/**
+ * REST client factory for the 19 GV301 reports (reports-cards-batch-design.md).
+ * `pdfUrl()` mirrors `sheets().pdfUrl()` exactly - a direct nonce-bearing
+ * download link, since the route returns raw PDF bytes, not JSON.
+ */
+export const reports = ( gameSlug: string ) => ( {
+    /** The report registry: key, title, shape, entity - for the Reports admin page's list. */
+    list: (): Promise<Array<{ key: string; title: string; shape: string; entity: string | null }>> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/reports` } ),
+
+    /** Builds the signed-PDF download URL for one report. */
+    pdfUrl: (
+        reportKey: string,
+        options: { statField?: string; statType?: string } = {}
+    ): string => {
+        const params = new URLSearchParams();
+        if ( options.statField ) {
+            params.set( 'stat_field', options.statField );
+        }
+        if ( options.statType ) {
+            params.set( 'stat_type', options.statType );
+        }
+        params.set( '_wpnonce', window.beyondElysium?.nonce ?? '' );
+
+        const root = window.beyondElysium?.restUrl ?? `${ window.location.origin }/wp-json/be/v1/`;
+        return `${ root }${ gameSlug }/reports/${ reportKey }/pdf?${ params.toString() }`;
+    },
+} );
+
 // ---------------------------------------------------------------------------
 // Experience (game-scoped)
 // ---------------------------------------------------------------------------
@@ -1516,6 +1545,7 @@ const api = {
     snapshots,
     sheetStyle,
     sheets,
+    reports,
     experience,
     plots,
     apr,
