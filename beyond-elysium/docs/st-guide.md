@@ -48,11 +48,11 @@ creature type you've already enabled, you can narrow a real catalog field to onl
 your chronicle runs — a Vampire Sect or Clan, a Werewolf Tribe, and similarly shaped fields on
 any other type. "Vampire yes, but no Sabbat" is exactly this. It's built the same way as
 Creature types above: absent or fully-checked means every option stays open, and narrowing it
-only ever changes what a *new* character can pick — a character who already held a now-
-restricted value (a Sabbat vampire from before you added the restriction) keeps that value and
-can still be viewed, edited, and approved normally. Every field offered here is read live from
-your chronicle's own catalog, so a custom field you've added to a schema block shows up
-automatically; nothing needs to be told about it by name.
+only ever changes what a *new* character can pick — a character who already held a value
+that's since been restricted (a Sabbat vampire from before you added the restriction) keeps
+that value and can still be viewed, edited, and approved normally. Every field offered here is
+read live from your chronicle's own catalog, so a custom field you've added to a schema block
+shows up automatically; nothing needs to be told about it by name.
 
 ### accessSchema and chronicle roles
 

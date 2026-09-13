@@ -57,7 +57,7 @@ multiselect checked, strictest wins). See the
 |---|---|---|---|
 | GET | `/creature-stacks` | `be_view_characters` | List stacks |
 | POST | `/creature-stacks` | `be_manage_schemas` | Create a stack |
-| GET | `/creature-stacks/{slug}` | `be_view_characters` | Get one stack, resolved (blocks assembled) |
+| GET | `/creature-stacks/{slug}` | `be_view_characters` | Get one stack, resolved (blocks assembled) with `?resolve=true`. Add `?game_slug=` for a chronicle's own forked blocks, and `&for_creation=true` to also narrow identity-field options to that chronicle's `enabled_factions` restriction — the character-creation picker only; never applied when viewing or editing an existing character |
 | PUT | `/creature-stacks/{slug}` | `be_manage_schemas` | Update |
 | DELETE | `/creature-stacks/{slug}` | `be_manage_schemas` | Delete |
 
@@ -232,11 +232,12 @@ multiselect checked, strictest wins). See the
 | GET | `/{game_slug}/sheets/pdf` | `be_view_characters` | Returns signed PDF bytes for one or more characters (`character_ids`, comma-separated, max 50). A manager may request any character in the chronicle; a non-manager only their own — one denied or missing id fails the whole request. `503 signing_unavailable` when the chronicle hasn't configured a signing certificate. Optional `full_power_names`, `background`, `notes`, `xp_history` |
 | GET | `/{game_slug}/sheets/availability` | `be_view_characters` | Preflight: is signing configured for this chronicle right now |
 
-## Reports (the 19 GV301 reports, cards, and batch output)
+## Reports (the 20 GV301-plus reports, cards, and batch output)
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
 | GET | `/{game_slug}/reports` | `be_view_reports` | Lists the report registry: key, title, shape, entity |
+| GET | `/{game_slug}/reports/{report_key}` | `be_view_reports` | Returns the resolved report as plain JSON — no signing, no PDF. Built for a live front-end view (House Rules' own widget/shortcode use it); works for any report in the registry, not just House Rules |
 | GET | `/{game_slug}/reports/{report_key}/pdf` | `be_view_reports` | Returns signed PDF bytes for one report. `conditions`/`logic` scope a `table`/`card` report the same way the query builder does (an empty `conditions` means everyone in scope); `stat_field`/`stat_type` parameterize the generic Statistics Report. `404 report_not_found` for an unknown key; `503 signing_unavailable` when signing isn't configured — every report shares the signed sheet's own signing pipeline |
 
 ## Point Audit
