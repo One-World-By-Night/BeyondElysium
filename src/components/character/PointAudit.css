@@ -1,0 +1,91 @@
+.be-point-audit__summary {
+	margin-bottom: 1rem;
+	padding-bottom: 0.75rem;
+	border-bottom: 2px solid #333;
+}
+
+.be-point-audit__totals {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	margin-bottom: 0.5rem;
+}
+
+.be-point-audit__coverage {
+	font-size: 0.9rem;
+	color: #555;
+}
+
+.be-point-audit__caveat {
+	font-style: italic;
+	color: #555;
+	margin: 0.35rem 0 0;
+}
+
+.be-point-audit__section {
+	margin-bottom: 1rem;
+}
+
+.be-point-audit__section-title {
+	margin: 0 0 0.35rem;
+	font-size: 0.95rem;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	color: #666;
+}
+
+.be-point-audit__lines {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.be-point-audit__line {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	padding: 0.3rem 0.5rem;
+	border-left: 3px solid transparent;
+}
+
+.be-point-audit__line--priced {
+	border-left-color: #2e7d32;
+}
+
+.be-point-audit__line--unpriced {
+	border-left-color: #c9a600;
+	background: rgba(201, 166, 0, 0.08);
+}
+
+.be-point-audit__line-label {
+	flex: 1;
+}
+
+.be-point-audit__line-xp {
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.be-point-audit__line-modifier {
+	font-size: 0.85rem;
+	color: #555;
+}
+
+.be-point-audit__line-reason {
+	font-size: 0.85rem;
+	font-style: italic;
+	color: #7a6400;
+	white-space: nowrap;
+}
+
+.be-point-audit__line-flag {
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	color: #b3261e;
+	white-space: nowrap;
+}
+
+.be-point-audit__status {
+	color: #555;
+	font-style: italic;
+}

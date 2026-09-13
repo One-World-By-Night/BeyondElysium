@@ -8,17 +8,26 @@ use BeyondElysium\Models\Creature_Stack;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Derives the XP cost of a proposed character change.
+ * Derives the XP cost of a proposed character change - and, since PC-1
+ * (point-calculator-design.md), the XP value of a character's already-held
+ * state, for `Services\Point_Audit`'s itemised report. Both read the same
+ * catalog through the same rules: pricing lives in exactly one place, so a
+ * previewed cost, an approved cost, and an audit line can never disagree.
  *
  * A trait holds only its name and level; this class computes its price at
  * runtime from the block and stack definitions plus the character's
- * current identity, every time it is asked. Pricing lives in exactly one
- * place, so a previewed cost and an approved cost can never disagree.
+ * current identity, every time it is asked.
  *
  * `cost_for_change()` and `is_in_type()` are `$wpdb`-touching wrappers
  * around pure, database-free logic: `price_trait_list_change()`,
- * `price_tiered_power_change()`, and `is_in_type_pure()` do the actual
- * pricing and can be tested without a database.
+ * `price_tiered_power_change()`, `price_resource_pool_change()`, and
+ * `is_in_type_pure()` price a proposed *change*; `price_held_trait_list_item()`,
+ * `price_held_tiered_power()`, and `price_held_resource_pool()` price an
+ * already-*held* state for the audit. All are pure and directly unit-tested.
+ * `Point_Audit` (not this class) owns the report itself - resolving blocks,
+ * walking held entries, and assembling the envelope are report construction,
+ * not pricing, and belong in a class whose own scope is "the XP cost of a
+ * proposed change."
  */
 class Cost_Engine {
 
@@ -62,8 +71,11 @@ class Cost_Engine {
 				$in_type    = $trait_name !== '' ? self::is_in_type( $character, $block_slug, $trait_name ) : true;
 				return self::price_tiered_power_change( $sheet_data, $block->definition, $change_type, $change_data, $in_type );
 
+			case 'resource_pool':
+				return self::price_resource_pool_change( $sheet_data, $block->definition, $block_slug, $change_data );
+
 			default:
-				// resource_pool and identity_field changes carry no XP cost.
+				// identity_field changes carry no XP cost.
 				return 0;
 		}
 	}
@@ -277,6 +289,236 @@ class Cost_Engine {
 		$old_cost = $old_level > 0 ? self::level_base_cost( $power, $old_level ) + $modifier : 0;
 		$new_cost = $new_level > 0 ? self::level_base_cost( $power, $new_level ) + $modifier : 0;
 		return $new_cost - $old_cost;
+	}
+
+	/**
+	 * Prices a `modify_resource` change against a resource_pool block - the
+	 * purchase-flow half of PC-9 (`point-calculator-design.md` §4.3). A
+	 * single change can touch several pools at once (`Change_Engine.php`
+	 * merges the whole `values` map), so this sums each pool's own delta
+	 * rather than pricing one pool per call. A pool with no `cost_per_dot`
+	 * (`werewolf-renown`, awarded not bought; wraith `Angst`; changeling
+	 * `Banality`, a penalty track) contributes zero - free, not unpriced,
+	 * since a purchase that touches no priced pool genuinely costs nothing.
+	 * Never refunds below a pool's own `free_dots` baseline.
+	 */
+	public static function price_resource_pool_change( array $sheet_data, $definition, string $block_slug, array $change_data ): int {
+		$values = (array) ( $change_data['values'] ?? [] );
+		$total  = 0;
+
+		foreach ( $values as $pool_name => $new_value ) {
+			$pool_def = self::find_pool( $definition, (string) $pool_name );
+			if ( $pool_def === null || ! isset( $pool_def->cost_per_dot ) ) {
+				continue;
+			}
+
+			$free          = (int) ( $pool_def->free_dots ?? 0 );
+			$old_value     = $sheet_data[ $block_slug ][ $pool_name ] ?? null;
+			$old_permanent = self::pool_permanent_value( $old_value, (int) ( $pool_def->default_start ?? 0 ) );
+			$new_permanent = self::pool_permanent_value( $new_value, $old_permanent );
+
+			$old_chargeable = max( 0, $old_permanent - $free );
+			$new_chargeable = max( 0, $new_permanent - $free );
+
+			$total += ( $new_chargeable - $old_chargeable ) * (int) $pool_def->cost_per_dot;
+		}
+
+		return $total;
+	}
+
+	/**
+	 * Reads a resource pool's permanent rating from its stored value, which
+	 * is either `{permanent, temporary}` or a bare int in an older/simpler
+	 * shape - matching `Sheet_Document::resource_pool_rows()`'s own reading
+	 * of the same data.
+	 */
+	private static function pool_permanent_value( $value, int $default ): int {
+		if ( is_array( $value ) ) {
+			return (int) ( $value['permanent'] ?? $default );
+		}
+		return $value === null ? $default : (int) $value;
+	}
+
+	/**
+	 * Finds a pool definition by name within a resource_pool block
+	 * definition. Scans the definition's `pools` list for an entry whose
+	 * name matches exactly, returning null when no match is found.
+	 */
+	private static function find_pool( $definition, string $name ) {
+		foreach ( ( $definition->pools ?? [] ) as $pool ) {
+			if ( ( $pool->name ?? null ) === $name ) {
+				return $pool;
+			}
+		}
+		return null;
+	}
+
+	// Held-state pricing: prices what a character currently holds, not a proposed change.
+	// Used by Services\Point_Audit - never by the purchase flow, which always prices a
+	// delta via the price_*_change() functions above. Pure, DB-free, under the same
+	// banner as the rest of this section (point-calculator-design.md §5.1): every number
+	// Point_Audit prints comes from here, so a previewed purchase and an audit line can
+	// never disagree.
+
+	/**
+	 * Prices one held `trait_list` entry. Never `0` for something merely
+	 * unpriced - returns `xp: null` plus a machine-readable
+	 * `unpriced_reason` instead, so a caller can tell "free" from "no rule
+	 * exists to price this" (point-calculator-design.md §4.1, the governing
+	 * rule of the whole item).
+	 *
+	 * @param array $held One entry from `sheet_data[block_slug]`: `name`, `count?`, `chosen_cost?`, `custom?`.
+	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
+	 */
+	public static function price_held_trait_list_item( $definition, array $held ): array {
+		$name = $held['name'] ?? null;
+		if ( $name === null ) {
+			return [ 'xp' => null, 'basis' => 'catalog_cost', 'unpriced_reason' => 'held_block_not_in_catalog' ];
+		}
+
+		if ( ! empty( $held['custom'] ) ) {
+			if ( array_key_exists( 'chosen_cost', $held ) && $held['chosen_cost'] !== null ) {
+				$count = max( 1, (int) ( $held['count'] ?? 1 ) );
+				$sign  = ! empty( $definition->negative ) ? -1 : 1;
+				return [ 'xp' => $sign * (int) $held['chosen_cost'] * $count, 'basis' => 'chosen_cost', 'unpriced_reason' => null ];
+			}
+			return [ 'xp' => null, 'basis' => 'catalog_cost', 'unpriced_reason' => 'custom_no_catalog_entry' ];
+		}
+
+		$item = self::find_item( $definition, $name );
+		if ( $item === null ) {
+			return [ 'xp' => null, 'basis' => 'catalog_cost', 'unpriced_reason' => 'name_not_in_catalog' ];
+		}
+		if ( ! isset( $item->cost ) || (string) $item->cost === '' ) {
+			return [ 'xp' => null, 'basis' => 'catalog_cost', 'unpriced_reason' => 'catalog_item_has_no_cost' ];
+		}
+
+		$cost_string = (string) $item->cost;
+		$rule        = self::parse_cost_rule( $cost_string );
+		$chosen      = $held['chosen_cost'] ?? null;
+		$unit_cost   = self::price_item_cost( $cost_string, $chosen );
+		$count       = max( 1, (int) ( $held['count'] ?? 1 ) );
+		$sign        = ! empty( $definition->negative ) ? -1 : 1;
+
+		$basis = 'catalog_cost';
+		if ( in_array( $rule['type'], [ 'set', 'range' ], true ) ) {
+			$basis = $chosen !== null ? 'chosen_cost' : 'rule_floor';
+		}
+
+		return [ 'xp' => $sign * $unit_cost * $count, 'basis' => $basis, 'unpriced_reason' => null ];
+	}
+
+	/**
+	 * Prices one held `tiered_power` entry. Mirrors
+	 * `price_tiered_power_change()`'s three-way dispatch (§4.2) exactly, but
+	 * against a held state rather than a before/after pair: a flat
+	 * `elder_tier_cost()` per named pick, `sequential_step_cost( $power, 0,
+	 * $level, $modifier )` for a sequential block, or one flat
+	 * `level_base_cost()` - **never summed** - for a non-sequential one,
+	 * where a cumulative sum would inflate Animalism 5 sevenfold (§4.2c).
+	 *
+	 * @param array $held One entry from `sheet_data[block_slug]`: `name`, `level?`, `power_name?`, `custom?`/`keep_custom?`, `chosen_cost?`.
+	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
+	 */
+	public static function price_held_tiered_power( $definition, array $held, bool $in_type ): array {
+		$name = $held['name'] ?? null;
+		if ( $name === null ) {
+			return [ 'xp' => null, 'basis' => 'flat_level', 'unpriced_reason' => 'held_block_not_in_catalog' ];
+		}
+
+		if ( ! empty( $held['custom'] ) || ! empty( $held['keep_custom'] ) ) {
+			if ( array_key_exists( 'chosen_cost', $held ) && $held['chosen_cost'] !== null ) {
+				return [ 'xp' => (int) $held['chosen_cost'], 'basis' => 'chosen_cost', 'unpriced_reason' => null ];
+			}
+			return [ 'xp' => null, 'basis' => 'flat_level', 'unpriced_reason' => 'custom_no_catalog_entry' ];
+		}
+
+		$power = self::find_power( $definition, $name );
+		if ( $power === null ) {
+			return [ 'xp' => null, 'basis' => 'flat_level', 'unpriced_reason' => 'family_not_in_catalog' ];
+		}
+
+		$modifier   = $in_type ? 0 : (int) ( $definition->out_of_type_cost_modifier ?? 0 );
+		$power_name = ( $held['power_name'] ?? '' ) !== '' ? $held['power_name'] : null;
+
+		if ( $power_name !== null ) {
+			$level_entry = self::find_power_level_by_name( $power, $power_name );
+			if ( $level_entry === null ) {
+				return [ 'xp' => null, 'basis' => 'elder_pick', 'unpriced_reason' => 'family_not_in_catalog' ];
+			}
+			$tier = strtolower( (string) ( $level_entry->tier ?? '' ) );
+			if ( $tier === 'innate' && ! isset( $level_entry->cost ) ) {
+				return [ 'xp' => 0, 'basis' => 'innate_free', 'unpriced_reason' => null ];
+			}
+			$cost  = self::elder_tier_cost( $power, $power_name ) + $modifier;
+			$basis = isset( $level_entry->cost ) ? 'elder_pick' : 'tier_fallback';
+			return [ 'xp' => $cost, 'basis' => $basis, 'unpriced_reason' => null ];
+		}
+
+		$level = (int) ( $held['level'] ?? 0 );
+		if ( $level <= 0 ) {
+			return [ 'xp' => null, 'basis' => 'flat_level', 'unpriced_reason' => 'level_has_no_cost' ];
+		}
+
+		$level_entry = self::find_power_level( $power, $level );
+		if ( $level_entry === null || ! isset( $level_entry->cost ) ) {
+			return [ 'xp' => null, 'basis' => 'flat_level', 'unpriced_reason' => 'level_has_no_cost' ];
+		}
+
+		if ( ! empty( $definition->sequential ) ) {
+			return [ 'xp' => self::sequential_step_cost( $power, 0, $level, $modifier ), 'basis' => 'sequential_sum', 'unpriced_reason' => null ];
+		}
+
+		return [ 'xp' => self::level_base_cost( $power, $level ) + $modifier, 'basis' => 'flat_level', 'unpriced_reason' => null ];
+	}
+
+	/**
+	 * Prices one held `resource_pool` rating (PC-9). Excluded from every
+	 * total until a pool declares `cost_per_dot` (§4.3) - pricing it in the
+	 * audit alone, ahead of the purchase flow, would bill a Storyteller for
+	 * something the character editor gives away free.
+	 *
+	 * @param mixed $value Raw `sheet_data[block_slug][pool_name]` value - `{permanent,temporary}` or a bare int.
+	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
+	 */
+	public static function price_held_resource_pool( $definition, string $pool, $value ): array {
+		$pool_def = self::find_pool( $definition, $pool );
+		if ( $pool_def === null ) {
+			return [ 'xp' => null, 'basis' => 'catalog_cost', 'unpriced_reason' => 'held_block_not_in_catalog' ];
+		}
+		if ( ! isset( $pool_def->cost_per_dot ) ) {
+			return [ 'xp' => null, 'basis' => 'catalog_cost', 'unpriced_reason' => 'resource_pool_no_pricing_rule' ];
+		}
+
+		$permanent  = self::pool_permanent_value( $value, (int) ( $pool_def->default_start ?? 0 ) );
+		$free       = (int) ( $pool_def->free_dots ?? 0 );
+		$chargeable = max( 0, $permanent - $free );
+
+		return [ 'xp' => $chargeable * (int) $pool_def->cost_per_dot, 'basis' => 'catalog_cost', 'unpriced_reason' => null ];
+	}
+
+	/**
+	 * Finds a tiered_power level entry by its numbered `level`.
+	 */
+	private static function find_power_level( $power, int $level ) {
+		foreach ( ( $power->levels ?? [] ) as $power_level ) {
+			if ( (int) ( $power_level->level ?? 0 ) === $level ) {
+				return $power_level;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Finds a tiered_power level entry by its Elder-and-above `power_name`.
+	 */
+	private static function find_power_level_by_name( $power, string $power_name ) {
+		foreach ( ( $power->levels ?? [] ) as $power_level ) {
+			if ( ( $power_level->power_name ?? '' ) === $power_name ) {
+				return $power_level;
+			}
+		}
+		return null;
 	}
 
 	/**

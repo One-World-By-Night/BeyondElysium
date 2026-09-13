@@ -1556,17 +1556,28 @@ class Seeder {
 		$entry = self::block_map()[ $slug ];
 		$base  = self::resolve_block_source( $gvm, $slug, $entry )['items'];
 
-		$existing_keys = array_map( [ self::class, 'met_name_comparison_key' ], array_column( $base, 'name' ) );
+		$existing_keys     = array_map( [ self::class, 'met_name_comparison_key' ], array_column( $base, 'name' ) );
+		$base_index_by_key = array_flip( $existing_keys );
 
 		$rows      = self::dedupe_met_rows_by_name( $csv['by_type'][ $csv_type ] ?? [] );
 		$new_items = [];
 		foreach ( $rows as $row ) {
-			$key = self::met_name_comparison_key( $row['Name'] );
-			if ( in_array( $key, $existing_keys, true ) ) {
+			$key  = self::met_name_comparison_key( $row['Name'] );
+			$cost = self::normalize_met_cost( $row['Cost'] );
+
+			if ( isset( $base_index_by_key[ $key ] ) ) {
+				// The GVM base already has this name (`met_name_comparison_key()` matched) -
+				// backfill the CSV's own cost onto it when it has none of its own (PC-3:
+				// point-calculator-design.md §3.3), and never overwrite a cost the base
+				// already carries.
+				$base_index = $base_index_by_key[ $key ];
+				if ( $cost !== '' && empty( $base[ $base_index ]['cost'] ) ) {
+					$base[ $base_index ]['cost'] = $cost;
+				}
 				continue;
 			}
+
 			$item = [ 'name' => $row['Name'] ];
-			$cost = self::normalize_met_cost( $row['Cost'] );
 			if ( $cost !== '' ) {
 				$item['cost'] = $cost;
 			}
@@ -1609,18 +1620,27 @@ class Seeder {
 			if ( ! isset( $by_slug[ $slug ] ) ) {
 				continue;
 			}
-			$base          = $by_slug[ $slug ]['definition']['items'] ?? [];
-			$existing_keys = array_map( [ self::class, 'met_name_comparison_key' ], array_column( $base, 'name' ) );
+			$base              = $by_slug[ $slug ]['definition']['items'] ?? [];
+			$existing_keys     = array_map( [ self::class, 'met_name_comparison_key' ], array_column( $base, 'name' ) );
+			$base_index_by_key = array_flip( $existing_keys );
 
 			$rows      = self::dedupe_met_rows_by_name( $rows );
 			$new_items = [];
 			foreach ( $rows as $row ) {
-				$key = self::met_name_comparison_key( $row['Name'] );
-				if ( in_array( $key, $existing_keys, true ) ) {
+				$key  = self::met_name_comparison_key( $row['Name'] );
+				$cost = self::normalize_met_cost( $row['Cost'] );
+
+				if ( isset( $base_index_by_key[ $key ] ) ) {
+					// Same PC-3 backfill rule as build_met_merge_trait_list(): fill a missing
+					// cost, never overwrite an existing one.
+					$base_index = $base_index_by_key[ $key ];
+					if ( $cost !== '' && empty( $base[ $base_index ]['cost'] ) ) {
+						$base[ $base_index ]['cost'] = $cost;
+					}
 					continue;
 				}
+
 				$item = [ 'name' => $row['Name'] ];
-				$cost = self::normalize_met_cost( $row['Cost'] );
 				if ( $cost !== '' ) {
 					$item['cost'] = $cost;
 				}
@@ -1946,8 +1966,14 @@ class Seeder {
 		], [ 'clan_disciplines' => require __DIR__ . '/vampire-clan-disciplines.php' ] );
 
 		$blocks[] = self::make_resource_block( 'vampire-resources', 'Vampire Resources', [
+			// Blood is never a priced pool (PC-10 owner ruling, 2026-09-13): Grapevine's own
+			// point estimator (VampireClass.cls's CompleteEstimateList) has no
+			// Estimate.Append qkBlood line at all - it scales with Generation, not a
+			// purchased dot. Left with no cost_per_dot, deliberately.
 			[ 'name' => 'Blood',     'value_type' => 'integer', 'default_start' => 10, 'max' => 20 ],
-			[ 'name' => 'Willpower', 'value_type' => 'integer', 'default_start' => 3,  'max' => 20 ],
+			// VampireClass.cls:258 - Estimate.Append qkWillpower, "3", "2".
+			[ 'name' => 'Willpower', 'value_type' => 'integer', 'default_start' => 3,  'max' => 20, 'cost_per_dot' => 3, 'free_dots' => 2 ],
+			// Morality has no Grapevine estimator citation at all - unpriced.
 			[ 'name' => 'Morality',  'value_type' => 'integer', 'default_start' => 7,  'max' => 10 ],
 		] );
 
@@ -1971,9 +1997,10 @@ class Seeder {
 		] );
 
 		$blocks[] = self::make_resource_block( 'werewolf-resources', 'Werewolf Resources', [
-			[ 'name' => 'Rage',      'value_type' => 'integer', 'default_start' => 1, 'max' => 10 ],
-			[ 'name' => 'Gnosis',    'value_type' => 'integer', 'default_start' => 1, 'max' => 10 ],
-			[ 'name' => 'Willpower', 'value_type' => 'integer', 'default_start' => 3, 'max' => 20 ],
+			// WerewolfClass.cls:249-251 - Estimate.Append qkRage/qkWillpower/qkGnosis, all "3", "3".
+			[ 'name' => 'Rage',      'value_type' => 'integer', 'default_start' => 1, 'max' => 10, 'cost_per_dot' => 3, 'free_dots' => 3 ],
+			[ 'name' => 'Gnosis',    'value_type' => 'integer', 'default_start' => 1, 'max' => 10, 'cost_per_dot' => 3, 'free_dots' => 3 ],
+			[ 'name' => 'Willpower', 'value_type' => 'integer', 'default_start' => 3, 'max' => 20, 'cost_per_dot' => 3, 'free_dots' => 3 ],
 		] );
 
 		$blocks[] = self::make_resource_block( 'werewolf-renown', 'Werewolf Renown', [
@@ -1992,10 +2019,11 @@ class Seeder {
 		] );
 
 		$blocks[] = self::make_resource_block( 'mage-resources', 'Mage Resources', [
-			[ 'name' => 'Arete',       'value_type' => 'integer', 'default_start' => 1, 'max' => 10 ],
+			// MageClass.cls:223-224 - Estimate.Append qkArete, "4", "1"; qkWillpower, "3", "5".
+			[ 'name' => 'Arete',       'value_type' => 'integer', 'default_start' => 1, 'max' => 10, 'cost_per_dot' => 4, 'free_dots' => 1 ],
 			[ 'name' => 'Quintessence','value_type' => 'integer', 'default_start' => 1, 'max' => 20 ],
 			[ 'name' => 'Paradox',     'value_type' => 'integer', 'default_start' => 0, 'max' => 20 ],
-			[ 'name' => 'Willpower',   'value_type' => 'integer', 'default_start' => 3, 'max' => 20 ],
+			[ 'name' => 'Willpower',   'value_type' => 'integer', 'default_start' => 3, 'max' => 20, 'cost_per_dot' => 3, 'free_dots' => 5 ],
 		] );
 
 		// --- Changeling ---
@@ -2009,9 +2037,12 @@ class Seeder {
 		] );
 
 		$blocks[] = self::make_resource_block( 'changeling-resources', 'Changeling Resources', [
-			[ 'name' => 'Glamour',   'value_type' => 'integer', 'default_start' => 3, 'max' => 10 ],
+			// ChangelingClass.cls:215-216 - Estimate.Append qkGlamour, "3", "4"; qkWillpower, "3", "3".
+			[ 'name' => 'Glamour',   'value_type' => 'integer', 'default_start' => 3, 'max' => 10, 'cost_per_dot' => 3, 'free_dots' => 4 ],
+			// Banality rises as a penalty, never bought (ChangelingClass.cls:217's own
+			// self-cancelling allotment) - unpriced.
 			[ 'name' => 'Banality',  'value_type' => 'integer', 'default_start' => 3, 'max' => 10 ],
-			[ 'name' => 'Willpower', 'value_type' => 'integer', 'default_start' => 3, 'max' => 20 ],
+			[ 'name' => 'Willpower', 'value_type' => 'integer', 'default_start' => 3, 'max' => 20, 'cost_per_dot' => 3, 'free_dots' => 3 ],
 		] );
 
 		// --- Wraith ---
@@ -2296,10 +2327,16 @@ class Seeder {
 						$shared_sections,
 						[
 							[ 'block_slug' => 'vampire-backgrounds',       'label' => 'Backgrounds',      'display_order' => 40, 'required' => false ],
-							[ 'block_slug' => 'vampire-disciplines',       'label' => 'Disciplines',      'display_order' => 60, 'required' => true,  'in_type_source' => 'identity.Clan' ],
-							[ 'block_slug' => 'vampire-combo-disciplines', 'label' => 'Combo Disciplines','display_order' => 61, 'required' => false ],
-							[ 'block_slug' => 'vampire-rituals',           'label' => 'Rituals',          'display_order' => 62, 'required' => false ],
-							[ 'block_slug' => 'vampire-ritae',             'label' => 'Ritae',            'display_order' => 63, 'required' => false ],
+							[ 'block_slug' => 'vampire-disciplines',       'label' => 'Disciplines',      'display_order' => 60, 'required' => true,  'in_type_source' => 'vampire-identity.Clan' ],
+							// PC-4 (point-calculator-design.md §3.2): BM-9 added this block to the
+							// sheet_full/npc_full *templates* but never to the stack's own sections -
+							// resolve() never returned it, so a resolve()-only walk (the point audit
+							// included) silently priced every held blood-magic path at zero, and
+							// create_item() 400'd on a hand-created character carrying it at all.
+							[ 'block_slug' => 'vampire-blood-magic',       'label' => 'Blood Magic',      'display_order' => 61, 'required' => false ],
+							[ 'block_slug' => 'vampire-combo-disciplines', 'label' => 'Combo Disciplines','display_order' => 62, 'required' => false ],
+							[ 'block_slug' => 'vampire-rituals',           'label' => 'Rituals',          'display_order' => 63, 'required' => false ],
+							[ 'block_slug' => 'vampire-ritae',             'label' => 'Ritae',            'display_order' => 64, 'required' => false ],
 							[ 'block_slug' => 'vampire-statuses',          'label' => 'Status',           'display_order' => 70, 'required' => false ],
 							[ 'block_slug' => 'vampire-resources',         'label' => 'Resources',        'display_order' => 80, 'required' => true  ],
 							[ 'block_slug' => 'vampire-virtues',           'label' => 'Virtues',          'display_order' => 81, 'required' => true  ],

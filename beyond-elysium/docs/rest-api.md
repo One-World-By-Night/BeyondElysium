@@ -215,3 +215,23 @@ capability plus their row in `be_game_members` for that chronicle. See the
 | Method | Path | Capability | Notes |
 |---|---|---|---|
 | GET | `/{game_slug}/stats` | `be_manage_characters` | The ST dashboard's aggregate numbers — character counts, pending changes, active plots, recent activity. Cached one minute; a review action invalidates the cache for its own chronicle immediately |
+
+## Sheets (signed character-sheet PDF)
+
+| Method | Path | Capability | Notes |
+|---|---|---|---|
+| GET | `/{game_slug}/sheets/pdf` | `be_view_characters` | Returns signed PDF bytes for one or more characters (`character_ids`, comma-separated, max 50). A manager may request any character in the chronicle; a non-manager only their own — one denied or missing id fails the whole request. `503 signing_unavailable` when the chronicle hasn't configured a signing certificate. Optional `full_power_names`, `background`, `notes`, `xp_history` |
+| GET | `/{game_slug}/sheets/availability` | `be_view_characters` | Preflight: is signing configured for this chronicle right now |
+
+## Reports (the 19 GV301 reports, cards, and batch output)
+
+| Method | Path | Capability | Notes |
+|---|---|---|---|
+| GET | `/{game_slug}/reports` | `be_view_reports` | Lists the report registry: key, title, shape, entity |
+| GET | `/{game_slug}/reports/{report_key}/pdf` | `be_view_reports` | Returns signed PDF bytes for one report. `conditions`/`logic` scope a `table`/`card` report the same way the query builder does (an empty `conditions` means everyone in scope); `stat_field`/`stat_type` parameterize the generic Statistics Report. `404 report_not_found` for an unknown key; `503 signing_unavailable` when signing isn't configured — every report shares the signed sheet's own signing pipeline |
+
+## Point Audit
+
+| Method | Path | Capability | Notes |
+|---|---|---|---|
+| GET | `/{game_slug}/characters/{id}/point-audit` | `be_manage_characters` | The itemised point audit for one character — every held line, priced or explicitly marked unpriced with a machine-readable reason. Never `be_view_characters`/`be_edit_own_characters`: a grand total computed across a Storyteller-only block would leak its stored values arithmetically, so a non-manager gets `403`, never a reduced total. `complete` is always `false` — this is not a bill, see [st-guide.md](../docs/st-guide.md) |

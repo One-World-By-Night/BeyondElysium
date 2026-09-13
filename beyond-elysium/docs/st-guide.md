@@ -233,6 +233,40 @@ the document hasn't changed since it was generated; it does not prove the sheet 
 *current* — a character could have changed since. If your printed sheet is more than a
 session or two old, treat it as a record of that moment, not a live view.
 
+## 12. Reports, Cards, and Batch Output
+
+Beyond Elysium's Reports page (under the plugin's admin menu) generates every one of
+Grapevine's 19 remaining reports as a signed PDF, sharing the same signing setup as the
+character sheet (§11) — if signing isn't configured yet, a report can't be generated either,
+for the same reason. Character Roster, Player Roster, Sign-In Sheet, Experience History,
+Player Point History, item/location/rote Cards, Plot Report, Master Action/Rumor Report,
+Action and Rumor Report, Search Report, Statistics Report, Vampire Status Report, Merits and
+Flaws Report, Influence Report, and Character Equipment. Pick a chronicle, pick a report, and
+Generate PDF — cards print several to a page, and any `table`-shaped report can be scoped to
+a saved query's own results instead of the whole chronicle, which is what "batch output"
+means here: one PDF for a chosen set of characters or objects, not a new mechanism to learn.
+
+**Game Calendar always renders empty right now.** Beyond Elysium doesn't yet model a
+chronicle's own game-date schedule, so this one report is an honest placeholder rather than
+invented data — it will populate once that feature exists.
+
+## 13. The Point Audit
+
+Opening a character's sheet as a Storyteller shows a **Point audit** toggle beside View
+history and Transfer. It lists every trait, power, resource, and identity field the
+character holds, priced against the exact same rules the purchase flow charges — never a
+second, independently-guessed number.
+
+**This is not a bill, and it cannot be one.** A large share of what a real sheet holds has no
+cost recorded anywhere in the catalog yet — every MET attribute trait (Physical, Social,
+Mental), most identity fields, and any resource pool without a set XP rate. The audit lists
+every one of those lines too, marked with a plain reason ("catalog item has no cost", "no
+pricing rule exists for this yet") rather than silently showing 0 XP or leaving the line off
+the report. The coverage line ("Priced N of M lines") and the note beneath the total are
+there for exactly this reason — read them before treating the total as an answer. A large gap
+between the total and a character's own recorded XP is normal today, not a sign the player
+owes you anything.
+
 ## Roles Reference
 
 | Role | Access |

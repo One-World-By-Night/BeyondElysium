@@ -11,6 +11,7 @@ import api from '../../api/client';
 import BlockRenderer from '../renderers/BlockRenderer';
 import SheetStyleEditor from './SheetStyleEditor';
 import ChangeHistory from '../changes/ChangeHistory';
+import PointAudit from './PointAudit';
 import { ConnectionManager } from '../apr/ConnectionManager';
 import { BackgroundLedger } from '../apr/BackgroundLedger';
 import { TransferPanel } from './TransferPanel';
@@ -84,6 +85,7 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 	const [ showHistory, setShowHistory ] = useState( false );
 	const [ showLedger, setShowLedger ] = useState( false );
 	const [ showTransfer, setShowTransfer ] = useState( false );
+	const [ showPointAudit, setShowPointAudit ] = useState( false );
 	const [ exportNotice, setExportNotice ] = useState<string | null>( null );
 	const [ exporting, setExporting ] = useState( false );
 	// Off by default - mints a fresh, real attestation row on every export, so it is not free to leave on.
@@ -360,6 +362,16 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 								{ showTransfer ? __( 'Hide transfer', 'beyond-elysium' ) : __( 'Transfer', 'beyond-elysium' ) }
 							</button>
 						) }
+						{ character.can_manage && (
+							<button
+								type="button"
+								className="be-character-sheet__history-toggle"
+								aria-expanded={ showPointAudit }
+								onClick={ () => setShowPointAudit( ( v ) => ! v ) }
+							>
+								{ showPointAudit ? __( 'Hide point audit', 'beyond-elysium' ) : __( 'Point audit', 'beyond-elysium' ) }
+							</button>
+						) }
 						<label className="be-character-sheet__verify-toggle">
 							<input
 								type="checkbox"
@@ -423,6 +435,15 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 			{ ! isPrintCanvas && showHistory && (
 				<div className="be-character-sheet__chrome">
 					<ChangeHistory characterId={ characterId } gameSlug={ gameSlug } />
+				</div>
+			) }
+
+			{ /* be_manage_characters-gated server-side (point-calculator-design.md §5.5) - the
+			    toolbar button above already hides this from anyone but a manager, but the
+			    route itself is the real control. */ }
+			{ ! isPrintCanvas && showPointAudit && character.can_manage && (
+				<div className="be-character-sheet__chrome">
+					<PointAudit characterId={ characterId } gameSlug={ gameSlug } />
 				</div>
 			) }
 

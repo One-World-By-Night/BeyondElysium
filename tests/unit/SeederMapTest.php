@@ -383,8 +383,11 @@ class SeederMapTest extends TestCase {
 	 * against the seeder's output directly, so it needs no database.
 	 */
 	public function test_every_stack_block_reference_is_built(): void {
-		$blocks = new \ReflectionMethod( Seeder::class, 'build_blocks_from_gvm' );
-		$built = array_column( $blocks->invoke( null, self::$gvm ), 'slug' );
+		// The complete seeder output, not just its GVM-derived subset -
+		// vampire-blood-magic (PC-4, point-calculator-design.md §3.2) is built by the
+		// CSV-overlay path (apply_met_csv_overrides()), not build_blocks_from_gvm() alone,
+		// and a stack is free to reference either kind.
+		$built = array_column( Seeder::get_blocks_to_seed(), 'slug' );
 
 		$stacks = new \ReflectionMethod( Seeder::class, 'get_stacks_to_seed' );
 

@@ -52,6 +52,7 @@ import type {
     WpUserSummary,
     ExportCharacterOptions,
     ExportCharacterResponse,
+    PointAudit,
 } from '../types/character';
 import type {
     Plot,
@@ -525,6 +526,14 @@ export const characters = ( gameSlug: string ) => ( {
             method: 'POST',
             data: { format: 'gex-xml', ...options },
         } ),
+
+    /**
+     * Fetches the itemised point audit for one character
+     * (point-calculator-design.md). `be_manage_characters`-gated
+     * server-side; a non-manager gets a 403, never a reduced report.
+     */
+    pointAudit: ( id: number ): Promise<PointAudit> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/characters/${ id }/point-audit` } ),
 } );
 
 /**

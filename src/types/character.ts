@@ -430,3 +430,52 @@ export interface ExportCharacterResponse {
     warnings: string[];
     transliterations: string[];
 }
+
+/**
+ * One priced or unpriced holding on the point audit (point-calculator-design.md
+ * §5.4). `xp` is `null` when the line is unpriced - never `0` as a stand-in
+ * for "free"; check `unpriced_reason` instead of treating a null xp as an error.
+ */
+export interface PointAuditLine {
+    block_slug: string;
+    section_label: string;
+    section_type: 'trait_list' | 'tiered_power' | 'resource_pool' | 'identity_field' | null;
+    label: string;
+    xp: number | null;
+    direction: 'spent' | 'earned';
+    basis:
+        | 'catalog_cost'
+        | 'chosen_cost'
+        | 'rule_floor'
+        | 'flat_level'
+        | 'sequential_sum'
+        | 'elder_pick'
+        | 'tier_fallback'
+        | 'innate_free'
+        | null;
+    unpriced_reason: string | null;
+    modifier: number | null;
+    undeclared_by_stack: boolean;
+}
+
+/**
+ * The point audit envelope. `complete` is always `false` - no state of the
+ * data can make a full-sheet total complete (§4.5) - so a caller must never
+ * display `net_total` without `coverage` and `caveat` alongside it.
+ */
+export interface PointAudit {
+    character_id: number;
+    lines: PointAuditLine[];
+    spent_total: number;
+    earned_total: number;
+    net_total: number;
+    coverage: {
+        priced_lines: number;
+        unpriced_lines: number;
+        unpriced_by_reason: Record<string, number>;
+    };
+    xp_spent_of_record: number;
+    variance: number;
+    complete: false;
+    caveat: string;
+}

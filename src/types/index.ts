@@ -318,6 +318,13 @@ export interface ResourcePool {
         keyed_by: CrossBlockRef;
         table: Record<string, string>;
     };
+    /**
+     * XP cost per dot above free_dots (PC-9/PC-10, point-calculator-design.md §4.3).
+     * Absent means "no pricing rule exists" - the pool stays unpriced, never free.
+     */
+    cost_per_dot?: number;
+    /** Dots granted free before cost_per_dot applies - ported per-race from Grapevine's own point estimator, see Seeder.php's citations. */
+    free_dots?: number;
 }
 
 /**

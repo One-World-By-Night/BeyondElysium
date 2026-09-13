@@ -145,6 +145,7 @@ class Plugin {
 			new \BeyondElysium\REST\Transfers_Controller(),
 			new \BeyondElysium\REST\Sheets_Controller(),
 			new \BeyondElysium\REST\Reports_Controller(),
+			new \BeyondElysium\REST\Point_Audit_Controller(),
 		];
 		foreach ( $controllers as $controller ) {
 			$controller->register_routes();

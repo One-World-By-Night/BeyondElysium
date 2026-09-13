@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**Status:** `v0.99.14` is released and running in production chronicles. The character engine, editor, Storyteller tools, world data, Grapevine import, configurable approval rules, and blood magic paths are all built; renaming a chronicle's slug is a safe, cascading operation; a chronicle's downtime actions have both a real settings screen and a use-by-use ledger; the query engine now searches items, locations, and rotes, not just characters; a real Grapevine exchange-file import bug (single-dot traits silently zeroed) is fixed; a character can be exported to a real Grapevine `.gex` XML file with a public verification code so another chronicle can confirm it's genuine and still current; a character can now travel between chronicles outright, verified end to end against two real, separate production installations; a character sheet now prints as a cryptographically signed PDF, verifiable by anyone against the same public verification endpoint; and a chronicle can now generate every remaining Grapevine report - rosters, sign-in sheets, item/location/rote cards, plot and action/rumor reports, and statistics - as that same signed PDF. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's left before 1.0.
+**Status:** `v0.99.15` is released and running in production chronicles. The character engine, editor, Storyteller tools, world data, Grapevine import, configurable approval rules, and blood magic paths are all built; renaming a chronicle's slug is a safe, cascading operation; a chronicle's downtime actions have both a real settings screen and a use-by-use ledger; the query engine now searches items, locations, and rotes, not just characters; a real Grapevine exchange-file import bug (single-dot traits silently zeroed) is fixed; a character can be exported to a real Grapevine `.gex` XML file with a public verification code so another chronicle can confirm it's genuine and still current; a character can now travel between chronicles outright, verified end to end against two real, separate production installations; a character sheet now prints as a cryptographically signed PDF, verifiable by anyone against the same public verification endpoint; a chronicle can now generate every remaining Grapevine report - rosters, sign-in sheets, item/location/rote cards, plot and action/rumor reports, and statistics - as that same signed PDF; and a Storyteller can now open an itemised point audit on any character, showing exactly which held traits and powers are priced against the ruleset and which aren't, rather than a single trusted-but-unverifiable total. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's left before 1.0.
 
 ## What It Does
 
@@ -22,7 +22,7 @@ Beyond the sheet itself:
 
 ## Installation
 
-Download `beyond-elysium-0.99.14.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
+Download `beyond-elysium-0.99.15.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
 
 That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder in this repository is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder straight into `wp-content/plugins/` will not work. To build it yourself:
 
@@ -99,10 +99,11 @@ BeyondElysium ships in-app documentation, viewable inside the plugin's own admin
 | Chronicle-to-chronicle character transfer, online and offline, with the travelling/visiting badge | Complete |
 | Signed, cryptographically verifiable character-sheet PDF, replacing browser printing, checked against the same public verification endpoint as Grapevine export | Complete |
 | The remaining 19 Grapevine reports - rosters, sign-in sheets, item/location/rote cards, plot and action/rumor reports, statistics - and batch output, sharing the signed-PDF generator | Complete |
+| Point audit - an itemised, line-by-line report of what a character sheet is worth in XP, honestly marking what can't be priced yet instead of guessing | Complete |
 
 ## Roadmap
 
-`v0.99.0` was the first public release. The path to 1.0 is now a closed scope, each item already given a full architecture pass before any of it is built: letting a character travel between chronicles (export, verification, transfer, a signed, verifiable PDF, and every remaining Grapevine report/card sharing that same PDF generator are done; a binary export option is what's left), an itemized XP audit for a sheet, the rest of a phone-first pass on the character sheet (the read-only sheet's own phone-width layout bug is already fixed), a guided first-run setup for a new chronicle, and expanding the Rote catalog from a published compendium.
+`v0.99.0` was the first public release. The path to 1.0 is now a closed scope, each item already given a full architecture pass before any of it is built: letting a character travel between chronicles (export, verification, transfer, a signed, verifiable PDF, and every remaining Grapevine report/card sharing that same PDF generator are done; a binary export option is what's left), an itemized point audit for a sheet (done), the rest of a phone-first pass on the character sheet (the read-only sheet's own phone-width layout bug is already fixed), a guided first-run setup for a new chronicle, and expanding the Rote catalog from a published compendium.
 
 **Bylaw-driven approval data.** Chronicles configure their own approval rules through the admin UI today. Importing OWBN's published Character Regulation Bylaws directly — 1,032 clauses — is researched and specified but deliberately not built: most clauses restrict character *concepts* rather than named traits, so it needs a review workflow rather than a straight import.
 
