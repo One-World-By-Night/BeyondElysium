@@ -12,14 +12,36 @@ A **game** (chronicle) is the top-level container everything else belongs to —
 plots, changes, and queries are all scoped to one game and never visible from another.
 
 1. In wp-admin, go to **Beyond Elysium → Games**.
-2. Click **Add Game**, give it a name, and save. The plugin generates a URL-safe slug from
-   the name automatically (or set one explicitly).
+2. Click **+ New Game**, give it a name, and save. The plugin generates a URL-safe slug from
+   the name automatically (or set one explicitly). You are automatically made this
+   chronicle's HST the moment it's created — no separate step needed.
 3. If this chronicle also has an `owbn_chronicle` post (via `owbn-chronicle-manager`), the
    two stay in sync automatically once both plugins are active — publishing or renaming the
    chronicle post keeps the game's name current. A slug change on the chronicle side does
    not rename the existing game row; it is a known, accepted limitation (see the plugin's
    own `Chronicle_Sync` class comment) since the upstream plugin does not allow a chronicle's
    slug to change through its own UI anyway.
+
+### Chronicle Setup: what's left to configure
+
+Right under Games is **Chronicle Setup** — a checklist for the chronicle you just created,
+not a one-time wizard. Every row's status is computed live from what actually exists: pick
+your chronicle from the dropdown and it shows exactly what still needs doing (creature
+types, a Storyteller besides you, new-character approval, front-end pages, at least one
+character) alongside informational rows about what's already using Beyond Elysium's own
+defaults (approval rules, catalog and template customisation, downtime/rumor settings).
+Nothing here is a one-time setup you complete and forget — if an AST leaves and nobody
+replaces them, that row goes back to amber on its own, on your very next visit. A row you
+can't act on (because you're an HST, not a site administrator) still shows its real status,
+greyed rather than hidden, so you know what to ask for and from whom.
+
+The one control worth calling out: **Creature types**. By default every chronicle offers
+all eleven World of Darkness creature types when creating a character. Most real OWBN
+chronicles run one or two — narrowing this list here is what actually shrinks the "Choose a
+type" dropdown players see, without touching any character your chronicle already has (a
+retired Wraith stays fully readable, exportable, and approvable even if you later drop
+Wraith from the list — narrowing this only changes what a *new* character can be, never what
+an existing one is).
 
 ### accessSchema and chronicle roles
 

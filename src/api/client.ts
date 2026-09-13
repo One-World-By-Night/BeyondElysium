@@ -29,6 +29,7 @@ import type {
     GameMemberRole,
     AuthorizationSettings,
     GameStats,
+    SetupStatus,
 } from '../types';
 import type {
     Character,
@@ -168,11 +169,13 @@ export const games = {
 
     /**
      * Deletes a game/chronicle by slug. Resolves with no content
-     * on success; the server is responsible for cascading or
-     * blocking deletion of dependent records.
+     * on success. `withContent` cascades to the chronicle's own
+     * characters, plots, world objects, and connections (GS-11's
+     * demo-chronicle delete action); omitted, the row alone is
+     * removed and its content becomes unreachable.
      */
-    delete: ( slug: string ): Promise<void> =>
-        apiFetch( { path: `${ BASE }/games/${ slug }`, method: 'DELETE' } ),
+    delete: ( slug: string, withContent = false ): Promise<void> =>
+        apiFetch( { path: `${ BASE }/games/${ slug }${ withContent ? '?with_content=1' : '' }`, method: 'DELETE' } ),
 };
 
 // ---------------------------------------------------------------------------
@@ -697,6 +700,14 @@ export const gameStats = ( gameSlug: string ) => ( {
      * and recent activity.
      */
     get: (): Promise<GameStats> => apiFetch( { path: `${ BASE }/${ gameSlug }/stats` } ),
+} );
+
+/**
+ * REST client factory for the Chronicle Setup checklist (GS-4). Always
+ * computed live server-side - never cached here either.
+ */
+export const setupStatus = ( gameSlug: string ) => ( {
+    get: (): Promise<SetupStatus> => apiFetch( { path: `${ BASE }/${ gameSlug }/setup-status` } ),
 } );
 
 // ---------------------------------------------------------------------------
@@ -1573,6 +1584,7 @@ const api = {
     authorizationSettings,
     dataManagement,
     gameStats,
+    setupStatus,
     docs,
     credits,
 };

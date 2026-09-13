@@ -74,6 +74,23 @@ If accessSchema is off, not installed, or unreachable for a given request, every
 check falls back to this membership table automatically — a chronicle can run entirely on
 plain WordPress capabilities with no OWBN plugin stack present at all.
 
+## What an HST Can and Cannot Do
+
+An HST is a WordPress `editor`, not an `administrator`, and three pages stay
+administrator-only regardless of chronicle role: **Games** (create a chronicle, rename or
+delete one), **Chronicle Access** (assign HST/AST/Narrator/Player), and any settings scoped
+to `be_manage_games`. This is deliberate — `game-roles.php` excludes `be_manage_games` from
+every chronicle role by name, so no HST can appoint their own AST even for their own
+chronicle.
+
+An HST *can* now (as of `v0.99.16`) reach **Schema Blocks**, **Creature Stacks**, and
+**Templates** for their own chronicle's own customization — forking a block or a template
+for a chronicle they hold `hst`/`ast` membership in. This needs both of two things to be
+true: the site-wide capability (`be_manage_schemas`/`be_manage_templates`, granted to
+`editor` since `v0.99.16`) and a real membership row in that specific chronicle. Holding the
+capability alone, with no membership row, still gets a `403` — it is not a bare
+site-wide grant, the same two-layer check every chronicle-scoped route in this plugin uses.
+
 ## Import
 
 Under **Beyond Elysium → Import**, an admin (not just a Storyteller) can import a full

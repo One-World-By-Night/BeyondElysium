@@ -54,6 +54,36 @@ class Schema_Blocks_Controller extends Base_Controller {
 				'permission_callback' => $this->permission( 'be_manage_schemas' ),
 			],
 		] );
+
+		// GS-1 (guided-chronicle-setup-design.md §6): game-scoped write routes, identical
+		// callbacks to the ones above - update_item()/create_item() already read game_slug
+		// from the request to resolve a chronicle's own fork (find_or_create_fork_for_game()),
+		// but only a URL path param reaches Authorization::check_request()'s membership
+		// layer (Authorization.php:79-80 reads get_url_params() only, never a query/body
+		// param). Without this route, be_manage_schemas becoming editor-grantable would let
+		// any editor on the site write to any chronicle's fork - both halves of GS-1 or
+		// neither, per the design doc's own explicit warning.
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base, [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'create_item' ],
+				'permission_callback' => $this->permission( 'be_manage_schemas' ),
+				'args'                => $this->get_create_params(),
+			],
+		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base . '/(?P<slug>[a-z0-9\-_]+)', [
+			[
+				'methods'             => 'PUT',
+				'callback'            => [ $this, 'update_item' ],
+				'permission_callback' => $this->permission( 'be_manage_schemas' ),
+			],
+			[
+				'methods'             => 'DELETE',
+				'callback'            => [ $this, 'delete_item' ],
+				'permission_callback' => $this->permission( 'be_manage_schemas' ),
+			],
+		] );
 	}
 
 	/**
@@ -213,7 +243,11 @@ class Schema_Blocks_Controller extends Base_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function delete_item( $request ) {
-		$block = Schema_Block::find_by_slug( $request['slug'] );
+		// Reached via the URL's own game_slug (GS-1) this deletes only that chronicle's
+		// fork, exact-match, never the global row a game-scoped route has no business
+		// touching - Schema_Block::delete()'s own exact-match query enforces this.
+		$game_slug = (string) ( $request->get_param( 'game_slug' ) ?? '' );
+		$block     = Schema_Block::find_for_game( $request['slug'], $game_slug );
 		if ( ! $block ) {
 			return $this->error( 'not_found', __( 'Schema block not found.', 'beyond-elysium' ), 404 );
 		}
@@ -222,7 +256,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 			return $this->error( 'cannot_delete', __( 'Cannot delete a system schema block.', 'beyond-elysium' ), 403 );
 		}
 
-		Schema_Block::delete( $request['slug'] );
+		Schema_Block::delete( $request['slug'], $game_slug );
 		return $this->success( null, 204 );
 	}
 

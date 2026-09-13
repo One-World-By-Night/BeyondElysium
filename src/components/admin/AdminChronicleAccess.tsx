@@ -68,9 +68,19 @@ export function AdminChronicleAccess() {
 			.list()
 			.then( ( result ) => {
 				setGames( result );
-				if ( ! selectedSlug && result.length > 0 ) {
-					setSelectedSlug( result[ 0 ].slug );
+				if ( selectedSlug || result.length === 0 ) {
+					return;
 				}
+				// §6.7/§3.4: a URL-supplied chronicle wins outright (a setup-checklist deep
+				// link); otherwise prefer any real chronicle over "Beyond Elysium Demo",
+				// which sorts first alphabetically on both production sites today and would
+				// otherwise silently become the thing an administrator edits by default.
+				const fromUrl = new URLSearchParams( window.location.search ).get( 'game' );
+				const preselect =
+					result.find( ( g ) => g.slug === fromUrl ) ??
+					result.find( ( g ) => g.slug !== 'be-demo' ) ??
+					result[ 0 ];
+				setSelectedSlug( preselect.slug );
 			} )
 			.catch( ( err: unknown ) => setError( errorMessage( err ) ) );
 	}

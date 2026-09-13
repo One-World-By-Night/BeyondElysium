@@ -138,7 +138,7 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 	useEffect( () => {
 		if ( isCreateMode && ! stackSlug ) {
 			api.creatureStacks
-				.list()
+				.list( { game_slug: gameSlug } )
 				.then( setAvailableStacks )
 				.catch( () => {
 					setAvailableStacks( [] );

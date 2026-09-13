@@ -104,6 +104,48 @@ class Creature_Stack {
 	}
 
 	/**
+	 * Filters all() by the given chronicle's own `settings.enabled_stacks`
+	 * (GS-2, guided-chronicle-setup-design.md §6.1) - a plain array of stack
+	 * slugs, absent or empty meaning "all eleven," an unknown slug in the
+	 * list simply ignored rather than erroring. `be_creature_stacks` itself
+	 * has no `game_slug` column and never will (R1) - enablement is a
+	 * property of the chronicle, read from `be_games.settings`, not of the
+	 * stack.
+	 *
+	 * BINDING RULE (§6.2): this method is a **creation and picker filter,
+	 * never a data filter**. It exists to narrow `Creature_Stacks_Controller`'s
+	 * collection response and the character-creation picker it feeds -
+	 * nothing else may call it. `Character::all_for_game()`, `Character::find()`,
+	 * `Creature_Stack::resolve()`, `Template::resolve()`, the sheet, the
+	 * editor, the query engine, GEX export, and the approval queue all stay
+	 * on `Creature_Stack::find_by_slug()`/`resolve()` directly and are never
+	 * touched by this method or by what a chronicle has since disabled. A
+	 * chronicle that drops Wraith still owes its retired wraiths a readable
+	 * sheet - `EnabledStacksFilterTest` is the acceptance gate for that rule.
+	 *
+	 * @param string $game_slug
+	 * @param array  $args Same filters as all().
+	 * @return array
+	 */
+	public static function all_for_game( string $game_slug, array $args = [] ): array {
+		$stacks = self::all( $args );
+
+		$game = \BeyondElysium\Models\Game::find_by_slug( $game_slug );
+		if ( $game === null ) {
+			return $stacks;
+		}
+
+		$enabled = $game->settings->enabled_stacks ?? null;
+		if ( ! is_array( $enabled ) || empty( $enabled ) ) {
+			return $stacks;
+		}
+
+		return array_values( array_filter( $stacks, static function ( $stack ) use ( $enabled ) {
+			return in_array( $stack->slug, $enabled, true );
+		} ) );
+	}
+
+	/**
 	 * Count creature stacks matching the given filters. Accepts the same
 	 * game_line, is_system, and search filters as all(), without pagination,
 	 * and returns a plain integer total.

@@ -60,9 +60,17 @@ export function AdminApprovalRules() {
 			.list()
 			.then( ( found ) => {
 				setGames( found );
-				if ( ! gameSlug && found.length > 0 ) {
-					setGameSlug( found[ 0 ].slug );
+				if ( gameSlug || found.length === 0 ) {
+					return;
 				}
+				// §6.7/§3.4: same precedence as Chronicle Access - a URL-supplied chronicle,
+				// else any real chronicle over the alphabetically-first demo fixture.
+				const fromUrl = new URLSearchParams( window.location.search ).get( 'game' );
+				const preselect =
+					found.find( ( g ) => g.slug === fromUrl ) ??
+					found.find( ( g ) => g.slug !== 'be-demo' ) ??
+					found[ 0 ];
+				setGameSlug( preselect.slug );
 			} )
 			.catch( ( err: unknown ) => setError( errorMessage( err ) ) );
 		// eslint-disable-next-line react-hooks/exhaustive-deps

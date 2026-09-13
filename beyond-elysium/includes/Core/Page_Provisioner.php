@@ -112,6 +112,41 @@ class Page_Provisioner {
 	}
 
 	/**
+	 * GS-8 (guided-chronicle-setup-design.md §2.3, §5.3): an explicit
+	 * per-chronicle provisioning entry point, for a chronicle other than the
+	 * first on the install - `maybe_provision()`'s own first-chronicle-only
+	 * behaviour on upgrade is untouched, so nothing changes for a
+	 * single-chronicle site (both real production sites, today). Page slugs
+	 * are chronicle-qualified (`characters-<slug>`) so a second chronicle's
+	 * pages never collide with the first's plain slugs `maybe_provision()`
+	 * already created.
+	 *
+	 * @param string $game_slug
+	 * @return array<string,int> slug => created page id, for every page this call actually created.
+	 */
+	public static function provision_for_game( string $game_slug ): array {
+		$game = Game::find_by_slug( $game_slug );
+		if ( ! $game ) {
+			return [];
+		}
+
+		$created = [];
+		foreach ( self::PAGES as $slug => $page ) {
+			$qualified_slug = $slug . '-' . $game_slug;
+			$id             = self::create_if_missing( $qualified_slug, $page['title'] . ' (' . $game->name . ')', $page['widget'], $game_slug );
+			if ( $id ) {
+				$created[ $slug ] = $id;
+			}
+		}
+
+		if ( ! empty( $created['characters'] ) && ! empty( $created['character-sheet'] ) ) {
+			self::wire_sheet_link( (int) $created['characters'], (int) $created['character-sheet'], $game_slug );
+		}
+
+		return $created;
+	}
+
+	/**
 	 * Creates one front-end page with the given slug, title, and widget,
 	 * pointed at the given game. Does nothing if a page already exists at
 	 * that slug.

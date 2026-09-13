@@ -1,0 +1,52 @@
+.be-chronicle-setup__summary {
+	font-weight: 600;
+}
+
+.be-chronicle-setup__table td {
+	vertical-align: top;
+	padding: 0.6rem 0.75rem;
+}
+
+.be-chronicle-setup__table td p {
+	margin: 0.15rem 0 0;
+	color: #555;
+	font-size: 0.9rem;
+}
+
+.be-chronicle-setup__row--attention {
+	background: rgba(201, 166, 0, 0.06);
+}
+
+.be-chronicle-setup__pill {
+	display: inline-block;
+	padding: 0.15rem 0.6rem;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.be-chronicle-setup__row--attention .be-chronicle-setup__pill {
+	background: #c9a600;
+	color: #fff;
+}
+
+.be-chronicle-setup__row--ok .be-chronicle-setup__pill {
+	background: #2e7d32;
+	color: #fff;
+}
+
+.be-chronicle-setup__row--info .be-chronicle-setup__pill {
+	background: #e0e0e0;
+	color: #333;
+}
+
+.be-chronicle-setup__not-actionable {
+	opacity: 0.5;
+}
+
+.be-chronicle-setup__approval-toggle {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}

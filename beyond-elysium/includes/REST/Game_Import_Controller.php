@@ -233,6 +233,14 @@ class Game_Import_Controller extends Base_Controller {
 					throw new \RuntimeException( 'Could not create the new chronicle.' );
 				}
 				$game = Game::find( (int) $new_game_id );
+
+				// GS-7: this path also wrote no membership row, and never fired
+				// be_after_upgrade, so an imported chronicle got no front-end pages either
+				// (guided-chronicle-setup-design.md §2.1).
+				$importer_id = get_current_user_id();
+				if ( $importer_id > 0 ) {
+					\BeyondElysium\Models\Game_Member::set_role( (int) $game->id, $importer_id, 'hst' );
+				}
 			}
 
 			$result = Import_Controller::apply_import( (int) $game->id, $game->slug, $parsed, (string) $job['source_file'], $resolutions );
@@ -242,6 +250,13 @@ class Game_Import_Controller extends Base_Controller {
 		}
 
 		$wpdb->query( $nested ? 'RELEASE SAVEPOINT be_game_import_commit' : 'COMMIT' );
+
+		// GS-8/GS-7: fires only for a genuinely new chronicle, after the transaction that
+		// created it has actually committed - runs Page_Provisioner (and anything else
+		// hooked here) now that the row and its membership both exist for it to act on.
+		if ( $action === 'create_new' ) {
+			do_action( 'be_after_upgrade' );
+		}
 
 		$result['game'] = [
 			'id'      => (int) $game->id,

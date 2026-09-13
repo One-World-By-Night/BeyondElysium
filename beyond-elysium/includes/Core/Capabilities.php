@@ -18,8 +18,16 @@ class Capabilities {
 	 */
 	private const CAPS = [
 		'be_manage_games'        => [ 'administrator' ],
-		'be_manage_schemas'      => [ 'administrator' ],
-		'be_manage_templates'    => [ 'administrator' ],
+		// GS-1 (guided-chronicle-setup-design.md §10 Q1, owner ruling 2026-09-13): an HST is
+		// a WordPress editor and needs both, so they can fork their own chronicle's catalog
+		// and templates through the setup checklist - v0.21.20's be_import precedent exactly.
+		// Both-or-neither with the game-scoped write routes added to Schema_Blocks_Controller
+		// in the same release: granting this site-wide alone, with no chronicle-scoped second
+		// layer to narrow it, would let any editor on the site edit the global catalog every
+		// chronicle shares (Authorization::check_request() only reaches the be_game_members
+		// layer when the route itself carries a game_slug URL param).
+		'be_manage_schemas'      => [ 'administrator', 'editor' ],
+		'be_manage_templates'    => [ 'administrator', 'editor' ],
 		'be_manage_characters'   => [ 'administrator', 'editor' ],
 		'be_edit_own_characters' => [ 'administrator', 'editor', 'author', 'contributor', 'subscriber' ],
 		'be_view_characters'     => [ 'administrator', 'editor', 'author', 'contributor', 'subscriber' ],

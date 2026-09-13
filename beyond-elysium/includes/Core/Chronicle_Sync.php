@@ -87,7 +87,15 @@ class Chronicle_Sync {
 			if ( $post_id_for_new_row !== null ) {
 				$insert['owbn_chronicle_post_id'] = $post_id_for_new_row;
 			}
-			Game::create( $insert );
+			$new_id = Game::create( $insert );
+
+			// GS-7: this path's payload is name/slug only (§2.1) - no membership row.
+			// Keyed to the post's own author, guarded against a save with no real user
+			// (a WP-CLI import or cron save has no post author worth trusting as 0).
+			$author_id = (int) $post->post_author;
+			if ( $new_id && $author_id > 0 ) {
+				\BeyondElysium\Models\Game_Member::set_role( (int) $new_id, $author_id, 'hst' );
+			}
 			return;
 		}
 

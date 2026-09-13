@@ -1,0 +1,14 @@
+.be-enabled-stacks-picker__list {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+	gap: 0.35rem 1rem;
+	list-style: none;
+	margin: 0 0 0.75rem;
+	padding: 0;
+}
+
+.be-enabled-stacks-picker__warning {
+	color: #b3261e;
+	font-size: 0.85rem;
+	margin: 0 0 0.5rem;
+}

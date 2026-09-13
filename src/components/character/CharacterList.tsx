@@ -85,14 +85,16 @@ export function CharacterList( {
 	}, [ searchInput ] );
 
 	useEffect( () => {
+		// GS-3: narrows the filter to this chronicle's own enabled stacks - a filter
+		// dropdown should not offer a splat the chronicle doesn't run.
 		api.creatureStacks
-			.list()
+			.list( { game_slug: gameSlug } )
 			.then( setStacks )
 			.catch( () => {
 				setStacks( [] );
 				setError( __( 'Failed to load character types for the filter list.', 'beyond-elysium' ) );
 			} );
-	}, [] );
+	}, [ gameSlug ] );
 
 	useEffect( () => {
 		let cancelled = false;

@@ -333,6 +333,22 @@ class Characters_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'Missing required field: stack_slug.', 'beyond-elysium' ), 400 );
 		}
 
+		// GS-3 (guided-chronicle-setup-design.md §6.2): the real enforcement point for
+		// enabled_stacks - the client-side picker filter is an affordance, this is the
+		// control. Absent/empty enabled_stacks means every stack is allowed, unchanged.
+		$allowed_stacks = array_column( Creature_Stack::all_for_game( $request['game_slug'] ), 'slug' );
+		if ( ! in_array( $stack_slug, $allowed_stacks, true ) ) {
+			return $this->error(
+				'invalid_param',
+				sprintf(
+					/* translators: %s: comma-separated list of stack slugs this chronicle allows */
+					__( 'stack_slug must be one of the creature types this chronicle allows: %s.', 'beyond-elysium' ),
+					implode( ', ', $allowed_stacks )
+				),
+				400
+			);
+		}
+
 		$is_manager = current_user_can( 'be_manage_characters' );
 
 		// A non-manager's wp_user_id is always forced to their own id, never taken from the request.

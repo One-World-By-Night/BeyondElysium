@@ -165,6 +165,26 @@ export interface GameStats {
     recent_activity: ActivityChange[];
 }
 
+/**
+ * One row of the Chronicle Setup checklist (GS-4,
+ * guided-chronicle-setup-design.md §6.3). `status` is always derived live -
+ * never stored - and `actionable` is `current_user_can()` on the row's own
+ * capability, computed server-side.
+ */
+export interface SetupStatusItem {
+    id: string;
+    status: 'attention' | 'ok' | 'info';
+    title: string;
+    detail: string;
+    fix: { kind: 'inline' | 'link'; href?: string; capability: string };
+    actionable: boolean;
+}
+
+export interface SetupStatus {
+    items: SetupStatusItem[];
+    summary: { attention: number; ok: number; info: number };
+}
+
 // ---------------------------------------------------------------------------
 // Schema Block — definition types per section_type
 // ---------------------------------------------------------------------------
@@ -688,4 +708,6 @@ export interface CreatureStackCollectionParams extends CollectionParams {
     game_line?: string;
     is_system?: 0 | 1;
     search?: string;
+    /** Narrows to this chronicle's own settings.enabled_stacks (GS-3); omitted, every stack is offered. */
+    game_slug?: string;
 }

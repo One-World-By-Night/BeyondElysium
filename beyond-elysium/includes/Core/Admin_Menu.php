@@ -24,10 +24,11 @@ class Admin_Menu {
 
 	/**
 	 * Adds the top-level "Beyond Elysium" admin menu and its submenu pages:
-	 * Games, Characters, NPC Roster, Schema Blocks, Creature Stacks,
-	 * Templates, Plots, Query Tool, Items & Locations, Import, Chronicle
-	 * Access, and Docs. Each submenu page is gated on its own capability
-	 * and renders a mount point for the matching admin widget.
+	 * Games, Chronicle Setup, Characters, NPC Roster, Schema Blocks, Creature
+	 * Stacks, Templates, Plots, Query Tool, Items & Locations, Import,
+	 * Chronicle Access, Docs, Approval Rules, Action & Rumor Settings, and
+	 * Reports. Each submenu page is gated on its own capability and renders
+	 * a mount point for the matching admin widget.
 	 */
 	public static function add_pages(): void {
 		add_menu_page(
@@ -47,6 +48,20 @@ class Admin_Menu {
 			'be_manage_games',
 			'beyond-elysium',
 			[ self::class, 'render_games' ]
+		);
+
+		// GS-5 (guided-chronicle-setup-design.md §6.4): positioned second, directly under
+		// Games - the checklist an HST reaches next after a chronicle exists.
+		// be_view_characters is the widest capability that still requires a real user; the
+		// route itself reports each row's own actionable flag so a read-only HST can see
+		// the checklist under today's permissions.
+		add_submenu_page(
+			'beyond-elysium',
+			__( 'Chronicle Setup', 'beyond-elysium' ),
+			__( 'Chronicle Setup', 'beyond-elysium' ),
+			'be_view_characters',
+			'beyond-elysium-chronicle-setup',
+			[ self::class, 'render_chronicle_setup' ]
 		);
 
 		add_submenu_page(
@@ -195,6 +210,21 @@ class Admin_Menu {
 	 */
 	public static function render_games(): void {
 		self::render_mount( 'admin-games' );
+	}
+
+	/**
+	 * Renders the Chronicle Setup admin page. Outputs the mount point for
+	 * the admin-chronicle-setup widget, the checklist of what a new
+	 * chronicle still needs, followed by the shared memorial footer.
+	 */
+	public static function render_chronicle_setup(): void {
+		// GS-8's fix link for row 4 (Setup_Status_Controller::row_front_end_pages()) - a
+		// plain admin-page link rather than a REST call, matching this row's own "link,
+		// not duplicated UI" shape (§6.7). Capability-gated the same as the page itself.
+		if ( isset( $_GET['provision_pages'], $_GET['game'] ) && current_user_can( 'be_manage_games' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- idempotent, capability-gated GET action, matching this project's other admin-link fixes.
+			\BeyondElysium\Core\Page_Provisioner::provision_for_game( sanitize_title( wp_unslash( $_GET['game'] ) ) );
+		}
+		self::render_mount( 'admin-chronicle-setup' );
 	}
 
 	/**

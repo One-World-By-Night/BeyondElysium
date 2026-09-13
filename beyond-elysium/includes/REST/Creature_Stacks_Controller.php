@@ -87,8 +87,13 @@ class Creature_Stacks_Controller extends Base_Controller {
 			'offset'    => $pagination['offset'],
 		];
 
-		$items = Creature_Stack::all( $args );
-		$total = Creature_Stack::count( $args );
+		// Optional; when omitted, every stack is offered, unchanged. When present, narrows
+		// to the chronicle's own settings.enabled_stacks (GS-3, guided-chronicle-setup-design.md
+		// §6.2) - a creation/picker filter only, never applied to any read path that already
+		// holds a character of a since-disabled stack.
+		$game_slug = (string) ( $request->get_param( 'game_slug' ) ?? '' );
+		$items     = $game_slug !== '' ? Creature_Stack::all_for_game( $game_slug, $args ) : Creature_Stack::all( $args );
+		$total     = $game_slug !== '' ? count( $items ) : Creature_Stack::count( $args );
 
 		$response = $this->success( $items );
 		return $this->paginate( $response, $total, $pagination['per_page'], $pagination['page'] );
@@ -244,6 +249,10 @@ class Creature_Stacks_Controller extends Base_Controller {
 			'game_line' => [
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
+			],
+			'game_slug' => [
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_title',
 			],
 			'is_system' => [
 				'type' => 'integer',

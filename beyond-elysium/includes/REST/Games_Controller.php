@@ -135,6 +135,14 @@ class Games_Controller extends Base_Controller {
 			return $this->error( 'create_failed', __( 'Failed to create game.', 'beyond-elysium' ), 500 );
 		}
 
+		// GS-7 (guided-chronicle-setup-design.md §2.1, §3.3): this path writes no
+		// membership row today, and the one-time backfill can never run again - a
+		// chronicle created here would otherwise start with zero members forever.
+		$creator_id = get_current_user_id();
+		if ( $creator_id > 0 ) {
+			\BeyondElysium\Models\Game_Member::set_role( (int) $id, $creator_id, 'hst' );
+		}
+
 		// Runs upgrade-time provisioning now that a game exists for it to act on.
 		do_action( 'be_after_upgrade' );
 
@@ -207,6 +215,16 @@ class Games_Controller extends Base_Controller {
 			}
 		}
 
+		// Merge, never replace: `settings` is a shared bag (enabled_stacks, apr.*,
+		// require_new_character_approval, auto_approve, ...) and Game::update() writes the
+		// column wholesale (R6) - a caller sending only `enabled_stacks` must not silently
+		// erase kony's own real `apr` object. Same hazard background-ledger-apr-design.md
+		// flags for the Apr_Controller editor; one shared merge here covers both (GS-2/GS-6).
+		if ( isset( $data['settings'] ) ) {
+			$existing         = (array) ( $game->settings ?? new \stdClass() );
+			$data['settings'] = array_merge( $existing, (array) $data['settings'] );
+		}
+
 		// Normalizes a boolean notifications_enabled value to 0/1 for the tinyint column.
 		if ( isset( $data['notifications_enabled'] ) ) {
 			$data['notifications_enabled'] = $data['notifications_enabled'] ? 1 : 0;
@@ -244,7 +262,15 @@ class Games_Controller extends Base_Controller {
 			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
 		}
 
-		Game::delete( $request['slug'] );
+		// GS-11: opt-in, since Game::delete()'s narrower "row only, content becomes
+		// unreachable" behavior (Game.php's own doc comment) is what every existing
+		// caller of this route already expects. The Setup checklist's demo-chronicle
+		// delete action is the one real caller that needs the cascade.
+		if ( $request->get_param( 'with_content' ) ) {
+			Game::delete_with_content( $request['slug'] );
+		} else {
+			Game::delete( $request['slug'] );
+		}
 		return $this->success( null, 204 );
 	}
 

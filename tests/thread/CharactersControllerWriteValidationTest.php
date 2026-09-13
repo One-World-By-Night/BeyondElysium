@@ -38,7 +38,7 @@ class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters" );
 		$request->set_param( 'name', 'Sneaky NPC Attempt' );
-		$request->set_param( 'stack_slug', 'test-stack' );
+		$request->set_param( 'stack_slug', 'vampire' ); // a real registered stack - stack_slug is now validated against the catalog (GS-3)
 		$request->set_param( 'is_npc', true );
 		$data = rest_get_server()->dispatch( $request )->get_data();
 
@@ -80,7 +80,7 @@ class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters" );
 		$request->set_param( 'name', 'Bad Status Character' );
-		$request->set_param( 'stack_slug', 'test-stack' );
+		$request->set_param( 'stack_slug', 'vampire' ); // a real registered stack - stack_slug is now validated against the catalog (GS-3)
 		$request->set_param( 'status', 'deceased-but-fabulous' );
 		$response = rest_get_server()->dispatch( $request );
 
