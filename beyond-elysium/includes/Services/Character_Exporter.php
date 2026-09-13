@@ -53,7 +53,13 @@ class Character_Exporter {
 	 * confirmed safe by the reference reader's missing `Case Else`).
 	 *
 	 * @param int   $character_id
-	 * @param array $options `hide_st` (bool, default false), `as_transfer` (bool, default false, reserved for GX-8), `verify` (bool, default false).
+	 * @param array $options `hide_st` (bool, default false), `verify` (bool, default false),
+	 *                       `as_transfer` (bool, default false, GX-8) - a transfer document
+	 *                       always carries verification (the receiving chronicle's callback
+	 *                       has nothing to check without it) and its `<verification>` element
+	 *                       additionally carries `character_uuid`, which `GEX_Xml_Parser`
+	 *                       reads back on the receiving side (GX-9) to identify a returning
+	 *                       or already-known character with certainty rather than by name.
 	 * @return array{xml:string,warnings:array<int,string>,transliterations:array<int,string>}
 	 * @throws \RuntimeException If the character does not exist.
 	 */
@@ -63,10 +69,12 @@ class Character_Exporter {
 			throw new \RuntimeException( "Character #{$character_id} not found." );
 		}
 
-		$hide_st = ! empty( $options['hide_st'] );
+		$hide_st      = ! empty( $options['hide_st'] );
+		$as_transfer  = ! empty( $options['as_transfer'] );
+		$needs_verify = $as_transfer || ! empty( $options['verify'] );
 
-		if ( empty( $options['verify'] ) ) {
-			return self::build( $character, $hide_st, null );
+		if ( ! $needs_verify ) {
+			return self::build( $character, $hide_st, null, null );
 		}
 
 		// Hashed with hide_st forced false regardless of the caller's own choice: `sheet_hash`
@@ -76,15 +84,41 @@ class Character_Exporter {
 		// caller's real hide_st instead, every player-initiated verified export (hide_st true,
 		// since a non-manager exporting their own sheet is the primary real-world case here)
 		// would permanently fail to match itself, with nothing having actually changed.
-		$canonical  = self::build( $character, false, null );
-		$sheet_hash = hash( 'sha256', $canonical['xml'] );
-		$attestation = Attestation::issue( $character, 'gex', $sheet_hash );
+		$canonical   = self::build( $character, false, null, null );
+		$sheet_hash  = hash( 'sha256', $canonical['xml'] );
+		$attestation = Attestation::issue( $character, $as_transfer ? 'transfer' : 'gex', $sheet_hash );
 		// VerifyCharacter.tsx reads ?code= off the URL (same convention as every other
 		// widget's own URL param, e.g. CharacterSheet.tsx's ?character_id=) - never a path
 		// segment, since be-verify is a plain provisioned WP page, not a rewrite rule.
 		$url = home_url( '/be-verify/?code=' . rawurlencode( $attestation->short_code ) );
 
-		return self::build( $character, $hide_st, $url );
+		return self::build( $character, $hide_st, $url, $as_transfer ? $character->uuid : null );
+	}
+
+	/**
+	 * Reconstructs the canonical (no verification URL, no `<verification>`
+	 * element) document from an `as_transfer` payload someone else sent us -
+	 * the exact inverse of what `build()` adds when `$verification_url` is
+	 * given. Needed because the receiving side has no live `Character` row
+	 * of its own to re-export from yet (unlike `Verify_Controller::
+	 * still_matches()`, which always re-exports fresh); reconstructing the
+	 * canonical form from the received text is the only way to compare it
+	 * against `attested.sheet_hash`, which was always hashed from that same
+	 * canonical form (`gex-export-transfer-design.md` §8.2's "sha256
+	 * (canonicalize(payload))").
+	 *
+	 * Safe because both edits `build()` makes are exact and singular: the
+	 * one `id="..."` attribute on the race tag's own opening line, and one
+	 * whole appended `<verification .../>` line, four spaces deep (a direct
+	 * child of the race tag, itself two spaces deep under `<grapevine>`) -
+	 * `GEX_Xml_Writer::render()`'s indentation is fixed and deterministic.
+	 *
+	 * @param string $xml
+	 * @return string
+	 */
+	public static function canonicalize_transfer_payload( string $xml ): string {
+		$xml = preg_replace( '/ id="[^"]*"/', ' id=""', $xml, 1 );
+		return preg_replace( '/^ {4}<verification\b[^>]*\/>\r?\n/m', '', $xml, 1 );
 	}
 
 	/**
@@ -92,9 +126,12 @@ class Character_Exporter {
 	 * @param bool        $hide_st
 	 * @param string|null $verification_url When given, written into the `id` scalar and an
 	 *                                       optional `<verification>` child; when null, `id` is empty.
+	 * @param string|null $transfer_uuid     When given (only for an `as_transfer` export), written
+	 *                                       as the `<verification>` element's own `character_uuid`
+	 *                                       attribute, alongside `$verification_url`.
 	 * @return array{xml:string,warnings:array<int,string>,transliterations:array<int,string>}
 	 */
-	private static function build( object $character, bool $hide_st, ?string $verification_url ): array {
+	private static function build( object $character, bool $hide_st, ?string $verification_url, ?string $transfer_uuid ): array {
 		$game        = Game::find_by_slug( $character->owner_slug );
 		$game_slug   = $game->slug ?? $character->owner_slug;
 		$stack_slug  = (string) $character->stack_slug;
@@ -146,8 +183,11 @@ class Character_Exporter {
 		if ( $verification_url !== null ) {
 			$writer->begin_tag( 'verification' )
 				->write_attribute( 'url', $verification_url )
-				->write_attribute( 'issued', gmdate( 'n/j/Y g:i:s A' ) )
-				->end_tag();
+				->write_attribute( 'issued', gmdate( 'n/j/Y g:i:s A' ) );
+			if ( $transfer_uuid !== null ) {
+				$writer->write_attribute( 'character_uuid', $transfer_uuid );
+			}
+			$writer->end_tag();
 		}
 
 		$writer->end_tag(); // race tag

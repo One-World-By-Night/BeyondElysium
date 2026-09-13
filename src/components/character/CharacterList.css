@@ -70,6 +70,19 @@
 	color: #2271b1;
 }
 
+/* .be-st-badge itself is defined once in PlotManager.css and reused plugin-wide. */
+.be-st-badge--travelling {
+	margin-left: 0.4rem;
+	color: #8a6d00;
+	border-color: #d9bf62;
+}
+
+.be-st-badge--visiting {
+	margin-left: 0.4rem;
+	color: #1a4f9c;
+	border-color: #a9c6f5;
+}
+
 .be-character-list__pending-email {
 	margin-top: 1rem;
 	font-size: 0.85rem;

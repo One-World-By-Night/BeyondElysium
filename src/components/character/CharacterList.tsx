@@ -262,7 +262,23 @@ export function CharacterList( {
 										/>
 									) }
 								</td>
-								<td>{ link ? <a href={ link }>{ character.name }</a> : character.name }</td>
+								<td>
+									{ link ? <a href={ link }>{ character.name }</a> : character.name }
+									{ character.travelling_status && (
+										<span
+											className={ `be-st-badge be-st-badge--${ character.travelling_status.direction === 'outbound' ? 'travelling' : 'visiting' }` }
+											title={ sprintf(
+												/* translators: %s: the other chronicle's name */
+												character.travelling_status.direction === 'outbound'
+													? __( 'Travelling - %s', 'beyond-elysium' )
+													: __( 'Visiting from %s', 'beyond-elysium' ),
+												character.travelling_status.chronicle ?? __( 'no host confirmed yet', 'beyond-elysium' )
+											) }
+										>
+											{ character.travelling_status.direction === 'outbound' ? __( 'Travelling', 'beyond-elysium' ) : __( 'Visiting', 'beyond-elysium' ) }
+										</span>
+									) }
+								</td>
 								<td>{ character.stack_slug }</td>
 								<td>{ character.status }</td>
 								<td>{ character.xp_earned }</td>

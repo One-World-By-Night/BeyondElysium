@@ -142,6 +142,7 @@ class Plugin {
 			new \BeyondElysium\REST\Apr_Controller(),
 			new \BeyondElysium\REST\Export_Controller(),
 			new \BeyondElysium\REST\Verify_Controller(),
+			new \BeyondElysium\REST\Transfers_Controller(),
 		];
 		foreach ( $controllers as $controller ) {
 			$controller->register_routes();

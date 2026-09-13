@@ -20,7 +20,7 @@ class Schema {
 	 * release version. Compared against the stored VERSION_OPTION value by
 	 * maybe_upgrade() to decide whether migrations need to run.
 	 */
-	const DB_VERSION = '0.99.10';
+	const DB_VERSION = '0.99.11';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -50,6 +50,7 @@ class Schema {
 		'character_sheet_styles',
 		'game_members',
 		'character_attestations',
+		'character_transfers',
 	];
 
 	/**
@@ -241,6 +242,39 @@ class Schema {
 			UNIQUE KEY uq_short (short_code),
 			KEY idx_uuid (character_uuid),
 			KEY idx_game (game_slug, issued_at)
+		) $charset_collate;" );
+
+		// be_character_transfers: chronicle-to-chronicle travel state (GX-8/9). Not
+		// be_connections - a transfer is a fact about one character's relationship to two
+		// chronicles across two WordPress installs, not a relationship between two BE
+		// records on this one (gex-export-transfer-design.md §2h). One row per leg of a
+		// journey; the newest non-terminal row for a uuid+direction is the authoritative
+		// travel state (§7.3) - enforced in Models/Transfer.php, not by a unique index,
+		// since a composite unique index would fight its own in-place state transitions.
+		dbDelta( "CREATE TABLE {$prefix}character_transfers (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			character_uuid char(36) NOT NULL,
+			character_id bigint(20) unsigned DEFAULT NULL,
+			direction varchar(10) NOT NULL,
+			state varchar(20) NOT NULL,
+			home_slug varchar(100) NOT NULL,
+			home_site varchar(191) NOT NULL,
+			home_chronicle varchar(255) NOT NULL,
+			host_slug varchar(100) DEFAULT NULL,
+			host_site varchar(191) DEFAULT NULL,
+			host_chronicle varchar(255) DEFAULT NULL,
+			attestation_id bigint(20) unsigned DEFAULT NULL,
+			snapshot_id bigint(20) unsigned DEFAULT NULL,
+			payload_hash char(64) NOT NULL,
+			initiated_by bigint(20) unsigned NOT NULL,
+			initiated_at datetime NOT NULL,
+			acknowledged_at datetime DEFAULT NULL,
+			returned_at datetime DEFAULT NULL,
+			notes text,
+			PRIMARY KEY  (id),
+			KEY idx_uuid_state (character_uuid, state),
+			KEY idx_home (home_slug, state),
+			KEY idx_host (host_slug, state)
 		) $charset_collate;" );
 
 		// be_plots: storyline records, optionally nested under a parent plot.

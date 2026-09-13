@@ -6,6 +6,7 @@ use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Schema_Block;
+use BeyondElysium\Models\Transfer;
 use BeyondElysium\Services\St_Filter;
 
 defined( 'ABSPATH' ) || exit;
@@ -167,9 +168,14 @@ class Characters_Controller extends Base_Controller {
 
 		$items = Character::all_for_game( $request['game_slug'], $args );
 
+		// One extra query for the whole page rather than an N+1 (§7.3) - the newest open
+		// transfer per uuid, from either side this chronicle is party to.
+		$travel_states = Transfer::open_states_for_game( $request['game_slug'] );
+
 		foreach ( $items as $item ) {
 			// Uses the thumbnail size since a roster renders many of these per page.
 			$item->image_url = $item->image_id ? wp_get_attachment_image_url( (int) $item->image_id, 'thumbnail' ) : null;
+			$item->travelling_status = $travel_states[ $item->uuid ] ?? null;
 			self::apply_computed_player_fields( $item, $can_manage );
 		}
 
@@ -239,6 +245,9 @@ class Characters_Controller extends Base_Controller {
 		$character->image_url = $character->image_id
 			? wp_get_attachment_image_url( (int) $character->image_id, 'medium' )
 			: null;
+
+		// The sheet's own travelling notice and warning-styled edit affordance (§8.4) key off this.
+		$character->travelling_status = Transfer::open_states_for_game( $request['game_slug'] )[ $character->uuid ] ?? null;
 
 		self::apply_computed_player_fields( $character, current_user_can( 'be_manage_characters' ) );
 

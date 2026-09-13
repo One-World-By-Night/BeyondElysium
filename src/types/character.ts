@@ -6,6 +6,7 @@
  * sheet style overrides.
  */
 import type { ApprovalLevel } from './index';
+import type { TravellingStatus } from './transfer';
 
 /**
  * A character's full set of sheet block values, keyed by block
@@ -66,6 +67,8 @@ export interface Character {
     can_manage?: boolean;
     /** Whether the current user may customize this character's sheet style; its own be_customize_sheet capability, not derived from can_manage. */
     can_customize_sheet?: boolean;
+    /** Set only while an open transfer, either direction, touches this character (GX-8/9). */
+    travelling_status?: TravellingStatus | null;
     sheet_data: SheetData;
     created_by: number;
     created_at: string;
