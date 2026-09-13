@@ -106,12 +106,16 @@ BeyondElysium ships in-app documentation, viewable inside the plugin's own admin
 | Per-value and per-option approval scheduling - a trait or resource pool can require different approval at different point values, a specific power level or identity-field option can require its own approval level | Complete |
 | House Rules report - every catalog description gathered into one signed PDF, and the first report embeddable live on a front-end page via an Elementor widget or shortcode | Complete |
 | Sub-faction restriction - narrow a real catalog field (Vampire Sect or Clan, a Werewolf Tribe, and similar) within an already-enabled creature type, beneath the whole-creature-type toggle | Complete |
+| Mobile-first character sheet - real touch targets, information priority, and a responsive table mechanism, not just a desktop layout that survives a phone | Planning |
+| Health-level tracker - the classic 7-box or Laws of the Night Revised's 10-box wound track, modeled and editable rather than tracked on paper | Planning |
+| Bulk session maintenance - reset Willpower/Blood-style pools, or update several characters' status at once, from a saved query's own results | Planning |
+| Roster health indicator - see at a glance which players have no active character, or whose only character has gone inactive | Planning |
 
 ## Roadmap
 
-`v0.99.0` was the first public release; the 1.0 closed scope shipped in full as of `v0.99.17`. Development continues past 1.0 on real, requested work rather than a fixed list — see the project's own backlog for what's under consideration next.
+`v0.99.0` was the first public release; the 1.0 closed scope shipped in full as of `v0.99.17`. Development continues past 1.0 on real, requested work rather than a fixed list — see the four "Planning" rows above for what's designed and next in line, or the project's own backlog for everything under consideration.
 
-**Bylaw-driven approval data.** Chronicles configure their own approval rules through the admin UI today. Importing OWBN's published Character Regulation Bylaws directly — 1,032 clauses — is researched and specified but deliberately not built: most clauses restrict character *concepts* rather than named traits, so it needs a review workflow rather than a straight import.
+**Bylaw-driven approval data.** Chronicles configure their own approval rules through the admin UI today. Importing OWBN's published Character Regulation Bylaws directly — 1,032 clauses — is fully designed, including the review workflow for the roughly 900 clauses automatic matching can't place with confidence (most restrict character *concepts* rather than named traits). Deliberately not built yet - a simpler, hand-managed approval-rules engine shipped instead as a stopgap, and this remains on the shelf for when the fuller version is wanted.
 
 **Held, by choice.** Character sharing between players, coordinator-tier approval enforcement, and autosave-draft protection for plot and rumor forms are each specified and intentionally deferred.
 
