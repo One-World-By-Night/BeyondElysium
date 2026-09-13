@@ -299,4 +299,16 @@ return [
 		'entity'     => 'none',
 		'empty_note' => 'Beyond Elysium does not yet model a chronicle game-date schedule - this report will populate once that data exists.',
 	],
+
+	// -- house_rules (Decision 094's own catalog-item description field, added
+	// v0.99.18 - every schema block's items/tiered_power levels/families that
+	// carry one, gathered into one report; not entity-scoped like every other
+	// report above, since it reads the whole catalog rather than one row per
+	// character/plot/etc.) ------------------------------------------------------------
+
+	'house-rules' => [
+		'title'  => 'House Rules',
+		'shape'  => 'house_rules',
+		'entity' => 'none',
+	],
 ];

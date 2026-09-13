@@ -906,6 +906,10 @@ export const reports = ( gameSlug: string ) => ( {
     list: (): Promise<Array<{ key: string; title: string; shape: string; entity: string | null }>> =>
         apiFetch( { path: `${ BASE }/${ gameSlug }/reports` } ),
 
+    /** The plain JSON form of one resolved report - for a live front-end widget/shortcode, never signed. */
+    document: ( reportKey: string ): Promise<Record<string, unknown>> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/reports/${ reportKey }` } ),
+
     /** Builds the signed-PDF download URL for one report. */
     pdfUrl: (
         reportKey: string,

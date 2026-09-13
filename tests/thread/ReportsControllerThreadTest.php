@@ -76,11 +76,11 @@ class ReportsControllerThreadTest extends WP_UnitTestCase {
 		return rest_get_server()->dispatch( $request );
 	}
 
-	public function test_get_items_lists_all_nineteen_reports(): void {
+	public function test_get_items_lists_all_twenty_reports(): void {
 		$response = $this->dispatch( '/be/v1/' . $this->game_slug . '/reports' );
 
 		$this->assertSame( 200, $response->get_status() );
-		$this->assertCount( 19, $response->get_data() );
+		$this->assertCount( 20, $response->get_data() );
 	}
 
 	public function test_character_roster_generates_real_signed_pdf_bytes(): void {
@@ -202,5 +202,76 @@ class ReportsControllerThreadTest extends WP_UnitTestCase {
 		$response = rest_get_server()->dispatch( $request );
 
 		$this->assertSame( 200, $response->get_status() );
+	}
+
+	// -------------------------------------------------------------------------
+	// house-rules (v0.99.19, Decision 094) - the first report with no
+	// Grapevine counterpart, and the first to read the whole catalog rather
+	// than one entity.
+	// -------------------------------------------------------------------------
+
+	public function test_house_rules_pdf_renders_a_real_description(): void {
+		Schema_Block::create( [
+			'slug'         => 'rc-house-rule-block',
+			'name'         => 'RC House Rule Block',
+			'section_type' => 'trait_list',
+			'definition'   => [ 'items' => [ [
+				'name'        => 'Occult',
+				'description' => [ 'description' => '<p>House rule text</p>' ],
+			] ] ],
+			'is_system'    => 0,
+		] );
+
+		$response = $this->dispatch( '/be/v1/' . $this->game_slug . '/reports/house-rules/pdf' );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertStringStartsWith( '%PDF-', $response->get_data()['bytes'] );
+	}
+
+	public function test_house_rules_pdf_renders_the_honest_empty_state_when_no_catalog_item_has_a_description(): void {
+		$response = $this->dispatch( '/be/v1/' . $this->game_slug . '/reports/house-rules/pdf' );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertStringStartsWith( '%PDF-', $response->get_data()['bytes'] );
+	}
+
+	public function test_get_document_returns_the_plain_json_form_for_a_live_widget(): void {
+		Schema_Block::create( [
+			'slug'         => 'rc-house-rule-block-json',
+			'name'         => 'RC House Rule Block JSON',
+			'section_type' => 'trait_list',
+			'definition'   => [ 'items' => [ [
+				'name'        => 'Occult',
+				'description' => [ 'reference' => '<p>Book, p.42</p>' ],
+			] ] ],
+			'is_system'    => 0,
+		] );
+
+		$response = $this->dispatch( '/be/v1/' . $this->game_slug . '/reports/house-rules' );
+
+		$this->assertSame( 200, $response->get_status() );
+		$data  = $response->get_data();
+		$group = current( array_filter( $data['groups'], fn( $g ) => $g['block_name'] === 'RC House Rule Block JSON' ) );
+		$this->assertNotFalse( $group, 'the JSON form must include the real block group, not just the PDF form' );
+		$this->assertSame( '<p>Book, p.42</p>', $group['entries'][0]['sections']['reference'] );
+	}
+
+	public function test_get_document_never_returns_pdf_bytes(): void {
+		$response = $this->dispatch( '/be/v1/' . $this->game_slug . '/reports/house-rules' );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertArrayNotHasKey( 'bytes', (array) $response->get_data(), 'the JSON route must never carry PDF bytes or need signing configured' );
+	}
+
+	public function test_a_player_role_can_reach_the_house_rules_document_route(): void {
+		$player_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::ensure_player( (int) Game::find_by_slug( $this->game_slug )->id, $player_id );
+
+		wp_set_current_user( $player_id );
+		$request = new WP_REST_Request( 'GET', '/be/v1/' . $this->game_slug . '/reports/house-rules' );
+		$request->set_url_params( [ 'game_slug' => $this->game_slug ] );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status(), 'the whole point of this report is that a plain player can see it' );
 	}
 }

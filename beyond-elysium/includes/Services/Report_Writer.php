@@ -64,6 +64,9 @@ class Report_Writer {
 			case 'calendar':
 				self::draw_calendar( $pdf, $document );
 				break;
+			case 'house_rules':
+				self::draw_house_rules( $pdf, $document );
+				break;
 			default:
 				$pdf->Cell( 0, 6, sprintf( '[unknown report shape "%s"]', (string) ( $document['shape'] ?? '?' ) ), 0, 1 );
 		}
@@ -242,5 +245,55 @@ class Report_Writer {
 	private static function draw_calendar( \TCPDF $pdf, array $document ): void {
 		$pdf->setFont( self::FONT, 'I', self::BODY_SIZE );
 		$pdf->MultiCell( 0, 0, (string) ( $document['note'] ?? '' ), 0, 'L' );
+	}
+
+	/**
+	 * The only shape that renders actual rich HTML (tables, lists,
+	 * formatting) rather than a plain string - every `description` section
+	 * is re-sanitized through `Rich_Text_Sanitizer::sanitize()` immediately
+	 * before `writeHTML()`, the same defense-in-depth discipline
+	 * `Pdf_Writer::sanitize_prose()` already uses for biography/notes:
+	 * content already sanitized at write time should never reach TCPDF
+	 * unsanitized a second time, regardless of how it got into the row.
+	 *
+	 * @param array<string,mixed> $document
+	 */
+	private static function draw_house_rules( \TCPDF $pdf, array $document ): void {
+		$groups = is_array( $document['groups'] ?? null ) ? $document['groups'] : [];
+		if ( empty( $groups ) ) {
+			$pdf->setFont( self::FONT, 'I', self::BODY_SIZE );
+			$pdf->Cell( 0, 6, __( 'No house rules are set on this catalog yet.', 'beyond-elysium' ), 0, 1 );
+			return;
+		}
+
+		$section_labels = [
+			'reference'   => __( 'Reference', 'beyond-elysium' ),
+			'description' => __( 'Description', 'beyond-elysium' ),
+			'source'      => __( 'Source', 'beyond-elysium' ),
+		];
+
+		foreach ( $groups as $group ) {
+			$pdf->setFont( self::FONT, 'B', self::HEAD_SIZE + 1 );
+			$pdf->Cell( 0, 7, (string) $group['block_name'], 0, 1 );
+
+			foreach ( (array) $group['entries'] as $entry ) {
+				$pdf->setFont( self::FONT, 'B', self::BODY_SIZE );
+				$pdf->Cell( 0, 5, '  ' . (string) $entry['name'], 0, 1 );
+
+				foreach ( (array) $entry['sections'] as $section_key => $html ) {
+					if ( $html === '' || $html === null ) {
+						continue;
+					}
+					$pdf->setFont( self::FONT, 'I', self::BODY_SIZE - 1 );
+					$pdf->Cell( 0, 4, '    ' . ( $section_labels[ $section_key ] ?? $section_key ) . ':', 0, 1 );
+
+					$pdf->setFont( self::FONT, '', self::BODY_SIZE );
+					$pdf->setX( $pdf->getX() + 4 );
+					$pdf->writeHTML( Rich_Text_Sanitizer::sanitize( (string) $html ), true, false, true, false, '' );
+				}
+				$pdf->Ln( 2 );
+			}
+			$pdf->Ln( 3 );
+		}
 	}
 }

@@ -1,0 +1,55 @@
+.be-house-rules__group {
+	margin-bottom: 1.5rem;
+}
+
+.be-house-rules__group-title {
+	border-bottom: 1px solid #e0e0e0;
+	padding-bottom: 0.3rem;
+	margin-bottom: 0.75rem;
+}
+
+.be-house-rules__entry {
+	margin-bottom: 1rem;
+	padding-left: 0.75rem;
+	border-left: 2px solid #e0e0e0;
+}
+
+.be-house-rules__entry-name {
+	margin: 0 0 0.4rem;
+}
+
+.be-house-rules__section {
+	margin-bottom: 0.5rem;
+}
+
+.be-house-rules__section-label {
+	display: block;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: #666;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	margin-bottom: 0.15rem;
+}
+
+.be-house-rules__section-body table {
+	border-collapse: collapse;
+}
+
+.be-house-rules__section-body table td,
+.be-house-rules__section-body table th {
+	border: 1px solid #ddd;
+	padding: 0.3rem 0.5rem;
+}
+
+.be-house-rules__empty {
+	font-style: italic;
+	color: #666;
+}
+
+.be-house-rules__error {
+	padding: 0.6rem 0.75rem;
+	background: #fdecea;
+	border: 1px solid #f5c6c0;
+	border-radius: 3px;
+}

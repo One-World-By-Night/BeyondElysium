@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
  */
 class ReportRegistryTest extends TestCase {
 
-	private const KNOWN_SHAPES = [ 'table', 'card', 'statistics', 'narrative', 'calendar' ];
+	private const KNOWN_SHAPES = [ 'table', 'card', 'statistics', 'narrative', 'calendar', 'house_rules' ];
 
 	/** @var array<string,array<string,mixed>> */
 	private static array $registry;
@@ -24,8 +24,12 @@ class ReportRegistryTest extends TestCase {
 		self::$registry = include BE_PLUGIN_DIR . 'includes/Database/report-registry.php';
 	}
 
-	public function test_registry_has_exactly_nineteen_reports(): void {
-		$this->assertCount( 19, self::$registry, 'GV-SOURCEMAP.md counts 19 GV301 reports besides the 12 character sheets.' );
+	public function test_registry_has_exactly_twenty_reports(): void {
+		$this->assertCount(
+			20,
+			self::$registry,
+			'GV-SOURCEMAP.md counts 19 GV301 reports besides the 12 character sheets; House Rules (v0.99.19, Decision 094) is the first report with no Grapevine counterpart at all.'
+		);
 	}
 
 	public function test_every_report_has_a_known_shape(): void {
@@ -119,7 +123,7 @@ class ReportRegistryTest extends TestCase {
 			'game-calendar', 'plot-report', 'master-action-report', 'master-rumor-report',
 			'action-and-rumor-report', 'search-report', 'statistics-report',
 			'vampire-status-report', 'merits-and-flaws-report', 'influence-report',
-			'character-equipment',
+			'character-equipment', 'house-rules',
 		];
 		foreach ( $expected as $key ) {
 			$this->assertArrayHasKey( $key, self::$registry, "Expected report \"{$key}\" is missing from the registry." );

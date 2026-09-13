@@ -33,6 +33,20 @@ class Reports_Controller extends Base_Controller {
 			],
 		] );
 
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/reports/(?P<report_key>[a-z0-9\-]+)', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_document' ],
+				'permission_callback' => $this->permission( 'be_view_reports' ),
+				'args'                => [
+					'conditions' => [ 'type' => 'string', 'required' => false ],
+					'logic'      => [ 'type' => 'string', 'default' => 'AND' ],
+					'stat_field' => [ 'type' => 'string', 'required' => false ],
+					'stat_type'  => [ 'type' => 'string', 'required' => false ],
+				],
+			],
+		] );
+
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/reports/(?P<report_key>[a-z0-9\-]+)/pdf', [
 			[
 				'methods'             => 'GET',
@@ -74,6 +88,30 @@ class Reports_Controller extends Base_Controller {
 	}
 
 	/**
+	 * Plain JSON form of a report's resolved document - what a front-end
+	 * widget (an Elementor drop-in, a shortcode) renders live on a page,
+	 * as opposed to `get_pdf()`'s signed, downloadable form of the same
+	 * data. No `Pdf_Signer` involvement at all; this route never touches
+	 * signing.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_document( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$document = $this->build_document_from_request( $request );
+		if ( is_wp_error( $document ) ) {
+			return $document;
+		}
+
+		return $this->success( $document );
+	}
+
+	/**
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -92,6 +130,25 @@ class Reports_Controller extends Base_Controller {
 			);
 		}
 
+		$document = $this->build_document_from_request( $request );
+		if ( is_wp_error( $document ) ) {
+			return $document;
+		}
+
+		$bytes    = Report_Writer::write( $document, $game );
+		$filename = sanitize_file_name( $request['game_slug'] . '-' . (string) $request['report_key'] ) . '.pdf';
+
+		return $this->success( [ 'bytes' => $bytes, 'filename' => $filename ] );
+	}
+
+	/**
+	 * Shared build step behind `get_document()` and `get_pdf()` - validates
+	 * the report key, parses `conditions`, and resolves the document.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return array<string,mixed>|\WP_Error
+	 */
+	private function build_document_from_request( $request ) {
 		$report_key = (string) $request['report_key'];
 		if ( ! array_key_exists( $report_key, Report_Document::registry() ) ) {
 			return $this->error( 'report_not_found', __( 'Report not found.', 'beyond-elysium' ), 404 );
@@ -118,10 +175,7 @@ class Reports_Controller extends Base_Controller {
 			return $this->error( 'report_not_found', __( 'Report not found.', 'beyond-elysium' ), 404 );
 		}
 
-		$bytes    = Report_Writer::write( $document, $game );
-		$filename = sanitize_file_name( $request['game_slug'] . '-' . $report_key ) . '.pdf';
-
-		return $this->success( [ 'bytes' => $bytes, 'filename' => $filename ] );
+		return $document;
 	}
 
 	/**

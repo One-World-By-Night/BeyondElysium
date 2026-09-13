@@ -13,6 +13,7 @@ use BeyondElysium\Elementor\Widgets\World_Objects;
 use BeyondElysium\Elementor\Widgets\Boon_Ledger;
 use BeyondElysium\Elementor\Widgets\Import_Tool;
 use BeyondElysium\Elementor\Widgets\Game_Dashboard;
+use BeyondElysium\Elementor\Widgets\House_Rules;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -79,5 +80,6 @@ class Init {
 		$widgets_manager->register( new Boon_Ledger() );
 		$widgets_manager->register( new Import_Tool() );
 		$widgets_manager->register( new Game_Dashboard() );
+		$widgets_manager->register( new House_Rules() );
 	}
 }

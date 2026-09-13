@@ -272,6 +272,16 @@ means here: one PDF for a chosen set of characters or objects, not a new mechani
 chronicle's own game-date schedule, so this one report is an honest placeholder rather than
 invented data — it will populate once that feature exists.
 
+**House Rules is the 20th report, and the only one with no Grapevine counterpart.** It lists
+every catalog item, tiered power level, or tiered power family carrying a description (see the
+[Admin Guide](admin-guide.md#descriptions-and-approval-schedules-on-catalog-items)), grouped by
+schema block, and generates as the same signed PDF every other report does. Unlike the other
+nineteen, it can *also* be dropped directly onto a front-end page — as an Elementor widget
+("House Rules" in the Beyond Elysium widget category) or the `[be_house_rules game="chronicle-slug"]`
+shortcode — for a live, always-current view players can browse without waiting for a
+Storyteller to generate anything, since `be_view_reports` already reaches every real chronicle
+role including plain players.
+
 ## 13. The Point Audit
 
 Opening a character's sheet as a Storyteller shows a **Point audit** toggle beside View

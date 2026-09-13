@@ -32,6 +32,7 @@ class Plugin {
 		Page_Provisioner::register();
 		Print_Canvas::register();
 		Chronicle_Sync::register();
+		Shortcodes::register();
 
 		// Cleans up be_game_members rows when a user is deleted, single-site or multisite.
 		add_action( 'deleted_user', [ '\BeyondElysium\Models\Game_Member', 'remove_user_everywhere' ] );

@@ -9,6 +9,7 @@ use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Plot;
 use BeyondElysium\Models\Plot_Entry;
+use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Services\Display\Change_Description;
 
 defined( 'ABSPATH' ) || exit;
@@ -61,6 +62,8 @@ class Report_Document {
 				return self::build_narrative( $report, $game );
 			case 'calendar':
 				return self::build_calendar( $report, $game );
+			case 'house_rules':
+				return self::build_house_rules( $report, $game );
 			default:
 				return null;
 		}
@@ -265,6 +268,76 @@ class Report_Document {
 			'rows'  => [],
 			'note'  => $report['empty_note'] ?? '',
 			'game'  => $game->name,
+		];
+	}
+
+	/**
+	 * Gathers every `description` (Decision 094 - the rich-text
+	 * reference/description/source note) actually set anywhere in this
+	 * chronicle's catalog, grouped by the schema block it lives on. Not
+	 * entity-scoped like every report above - this reads the whole catalog
+	 * (`Schema_Block::all_for_game()`, preferring a chronicle's own fork over
+	 * the shared global block, same as every other consumer) rather than one
+	 * row per character/plot/etc.
+	 *
+	 * Only `trait_list` items, `tiered_power` levels, and `tiered_power`
+	 * families carry a `description` today - `resource_pool` pools and
+	 * `identity_field` options only ever gained an approval schedule
+	 * (Decision 095), never a note field, so they contribute nothing here by
+	 * design, not by omission.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function build_house_rules( array $report, object $game ): array {
+		// all_for_game_by_types(), never all_for_game() - the latter's underlying
+		// all() sorts (`ORDER BY name`), which measurably overflows MySQL's sort
+		// buffer once the real catalog is this large (Schema_Block.php's own
+		// docblock: the Fera/Werewolf gift blocks, mage-rotes since v0.99.17).
+		// Only trait_list and tiered_power can carry a `description` at all, so
+		// this is also a tighter, cheaper read than fetching every block.
+		$blocks = Schema_Block::all_for_game_by_types( [ 'trait_list', 'tiered_power' ], (string) $game->slug );
+		$groups = [];
+
+		foreach ( $blocks as $block ) {
+			$definition = $block->definition;
+			$entries    = [];
+
+			if ( $block->section_type === 'trait_list' ) {
+				// Cast to array: $definition decodes as nested stdClass (a generic
+				// `object` PHPStan can't know the shape of), and a plain array read
+				// avoids the "access to an undefined property" false positive.
+				foreach ( $definition->items ?? [] as $raw_item ) {
+					$item = (array) $raw_item;
+					if ( ! empty( $item['description'] ) ) {
+						$entries[] = [ 'name' => $item['name'], 'sections' => (array) $item['description'] ];
+					}
+				}
+			} elseif ( $block->section_type === 'tiered_power' ) {
+				foreach ( $definition->powers ?? [] as $raw_power ) {
+					$power = (array) $raw_power;
+					if ( ! empty( $power['description'] ) ) {
+						$entries[] = [ 'name' => $power['name'], 'sections' => (array) $power['description'] ];
+					}
+					foreach ( $power['levels'] ?? [] as $raw_level ) {
+						$level = (array) $raw_level;
+						if ( ! empty( $level['description'] ) ) {
+							$label     = $power['name'] . ' — ' . ( $level['power_name'] ?? sprintf( 'Level %s', $level['level'] ?? '' ) );
+							$entries[] = [ 'name' => $label, 'sections' => (array) $level['description'] ];
+						}
+					}
+				}
+			}
+
+			if ( $entries !== [] ) {
+				$groups[] = [ 'block_name' => $block->name, 'entries' => $entries ];
+			}
+		}
+
+		return [
+			'title'  => $report['title'],
+			'shape'  => 'house_rules',
+			'groups' => $groups,
+			'game'   => $game->name,
 		];
 	}
 

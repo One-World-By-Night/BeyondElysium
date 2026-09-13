@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**Status:** `v0.99.18` is released and running in production chronicles. The 1.0 closed scope shipped in full as of `v0.99.17` — character engine, editor, Storyteller tools, world data, Grapevine import/export/transfer, signed PDFs, the full Grapevine report set, point audit, guided chronicle setup, and an expanded Mage rote catalog. Development continues past 1.0 on real, requested work: any catalog item, tiered-power level or family, resource pool, or identity field can now carry a rich-text note (a house rule, a page reference, a general clarification, kept in three separate sections rather than run together) that's global by default and survives every future update; and approval can now be scheduled per value or per option — "Occult 1-3 auto-approved, 4-5 needs Storyteller review," a specific Discipline level requiring Coordinator sign-off, or one specific Clan/option needing extra review — rather than one flat setting per item. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's next.
+**Status:** `v0.99.19` is released and running in production chronicles. The 1.0 closed scope shipped in full as of `v0.99.17` — character engine, editor, Storyteller tools, world data, Grapevine import/export/transfer, signed PDFs, the full Grapevine report set, point audit, guided chronicle setup, and an expanded Mage rote catalog. Development continues past 1.0 on real, requested work: any catalog item, tiered-power level or family, resource pool, or identity field can carry a rich-text note (a house rule, a page reference, a general clarification, kept in three separate sections) that's global by default and survives every future update; approval can be scheduled per value or per option rather than one flat setting per item; and a new "House Rules" report — the first with no Grapevine counterpart at all — gathers every one of those notes into a signed PDF, and can also be dropped directly onto a front-end page as an Elementor widget or a shortcode, live and player-visible. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's next.
 
 ## What It Does
 
@@ -22,7 +22,7 @@ Beyond the sheet itself:
 
 ## Installation
 
-Download `beyond-elysium-0.99.18.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
+Download `beyond-elysium-0.99.19.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
 
 That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder in this repository is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder straight into `wp-content/plugins/` will not work. To build it yourself:
 
@@ -104,10 +104,11 @@ BeyondElysium ships in-app documentation, viewable inside the plugin's own admin
 | Mage rote catalog expanded from a published rote compendium - 201 rotes to 804, organised into real chapters | Complete |
 | Rich-text descriptions (reference/description/source) on any catalog item, tiered-power level or family, resource pool, or identity field - global by default, survives every future update | Complete |
 | Per-value and per-option approval scheduling - a trait or resource pool can require different approval at different point values, a specific power level or identity-field option can require its own approval level | Complete |
+| House Rules report - every catalog description gathered into one signed PDF, and the first report embeddable live on a front-end page via an Elementor widget or shortcode | Complete |
 
 ## Roadmap
 
-`v0.99.0` was the first public release; the 1.0 closed scope shipped in full as of `v0.99.17`. Development continues past 1.0 on real, requested work rather than a fixed list — see the project's own backlog for what's under consideration next, including a generated "house rules" report pulling every catalog note into one page, and restricting a chronicle to specific sub-factions (a Vampire Sect or Clan, a Werewolf Tribe, and similar) beneath the existing whole-creature-type toggle.
+`v0.99.0` was the first public release; the 1.0 closed scope shipped in full as of `v0.99.17`. Development continues past 1.0 on real, requested work rather than a fixed list — see the project's own backlog for what's under consideration next, including restricting a chronicle to specific sub-factions (a Vampire Sect or Clan, a Werewolf Tribe, and similar) beneath the existing whole-creature-type toggle.
 
 **Bylaw-driven approval data.** Chronicles configure their own approval rules through the admin UI today. Importing OWBN's published Character Regulation Bylaws directly — 1,032 clauses — is researched and specified but deliberately not built: most clauses restrict character *concepts* rather than named traits, so it needs a review workflow rather than a straight import.
 
