@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**Status:** `v0.99.8`, live on two production OWBN chronicles (kony-sabbat.net, Boston By Night). Working through a defined set of remaining items toward a 1.0 release.
+**Status:** `v0.99.9`, live on two production OWBN chronicles (kony-sabbat.net, Boston By Night). Working through a defined set of remaining items toward a 1.0 release.
 
 ## What It Does
 
@@ -56,6 +56,7 @@ Beyond Elysium runs standalone on plain, game-scoped WordPress capabilities, and
 | Background-use ledger and Action & Rumor settings — what a downtime action grants, and what a character spent it on | Complete |
 | Query engine extended to items, locations, and rotes — not just characters | Complete |
 | Grapevine exchange-file import fix (single-dot traits no longer zero on import) and the field-order groundwork for character export | Complete |
+| Export a character to a real Grapevine `.gex` XML file, from the character sheet | Complete |
 
 ## What's Next
 
@@ -65,7 +66,7 @@ and its settings; query beyond characters). What remains:
 
 1. Print as a signed, verifiable PDF, plus the reports/cards/batch-output layer that shares its generator
 2. A point calculator (in-editor XP cost preview)
-3. Export to Grapevine's exchange formats, a verification endpoint, and chronicle-to-chronicle character transfer
+3. A verification endpoint and chronicle-to-chronicle character transfer, plus a binary (`.gex`) export option — XML export itself already shipped
 4. The rest of the mobile-first sheet work beyond the phone-width fix already shipped
 5. Guided setup for a new chronicle
 6. Expanding the Mage rotes catalog from the published Grimoire compendium

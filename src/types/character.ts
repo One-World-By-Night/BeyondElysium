@@ -398,3 +398,27 @@ export interface BulkXPResponse {
     amount: number;
     reason: string;
 }
+
+/**
+ * Request body for exporting a character to a Grapevine exchange
+ * file. hide_st strips [ST]...[/ST]-marked text the same way a
+ * non-manager's own view of the sheet already does; as_transfer is
+ * reserved for the chronicle-to-chronicle transfer flow and has no
+ * effect on the document itself yet.
+ */
+export interface ExportCharacterOptions {
+    hide_st?: boolean;
+    as_transfer?: boolean;
+}
+
+/**
+ * Response from exporting a character: the exchange document text,
+ * plus anything the Storyteller should see before relying on it -
+ * a trait list with nowhere real to come from, and every ASCII
+ * substitution made to non-English text.
+ */
+export interface ExportCharacterResponse {
+    xml: string;
+    warnings: string[];
+    transliterations: string[];
+}
