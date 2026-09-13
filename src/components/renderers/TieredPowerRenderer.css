@@ -1,0 +1,17 @@
+/**
+ * This component's first stylesheet - the tiered-power sibling of
+ * TraitListRenderer.css. Same finding (mobile-sheet-design.md §3.9/§5.6):
+ * a bare <ul> with no CSS of its own inherited the theme's list-indent and
+ * markers instead of this plugin's own, and the same two-class-compound
+ * fix (D34's precedent) applies for the same reason.
+ */
+.be-tiered-power .be-tiered-power__items {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.be-tiered-power .be-tiered-power__items li {
+	padding: 0.15rem 0;
+	line-height: 1.35;
+}

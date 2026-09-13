@@ -8,6 +8,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import CharacterList from '../character/CharacterList';
+import { pluginPageUrl, PLUGIN_PAGE_SLUGS } from '../../lib/pluginPages';
 import type { Game } from '../../types';
 import './Admin.css';
 
@@ -35,7 +36,7 @@ export function AdminNpcRoster() {
 			.catch( () => setLoading( false ) );
 	}, [] );
 
-	const sheetUrl = `${ window.location.origin }/character-sheet/`;
+	const sheetUrl = pluginPageUrl( PLUGIN_PAGE_SLUGS.characterSheet );
 
 	return (
 		<div className="be-admin">

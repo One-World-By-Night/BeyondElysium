@@ -44,3 +44,62 @@
 	align-items: center;
 	margin-top: 1rem;
 }
+
+/* Desktop: plain columns, no disclosure - the toggle cell only exists for phone width. */
+.be-approval-queue__detail-toggle {
+	display: none;
+}
+
+/*
+ * Column priority at phone width (mobile-sheet-design.md §5.5): an ST triaging between
+ * scenes needs Character, Change, XP, Approval Reason, Actions first - not nine stacked
+ * labelled rows per pending change, which is no better than the horizontal scroll this
+ * replaces. Level/Submitted by/When move behind one native <details> disclosure per card,
+ * and Approve/Reject move to the top of the card (order: -1) - they were the 9th column
+ * only because desktop reads left-to-right, an ordering with no meaning once stacked.
+ */
+@media ( max-width: 768px ) {
+	.be-approval-queue__table.be-responsive-table tbody tr {
+		display: flex;
+		flex-direction: column;
+	}
+
+	/* Two-class compounds beat the shared .be-responsive-table td rule (0,2,0) - a bare
+	 * single class here (0,1,0) would lose that fight regardless of source order, D34's
+	 * exact failure mode. */
+	.be-approval-queue__table .be-approval-queue__detail-column {
+		display: none;
+	}
+
+	.be-approval-queue__table .be-approval-queue__detail-toggle {
+		display: block;
+		order: 2;
+	}
+
+	.be-approval-queue__detail-toggle summary {
+		cursor: pointer;
+		font-weight: 600;
+		color: #555;
+	}
+
+	.be-approval-queue__detail-list {
+		margin: 0.5rem 0 0;
+		display: grid;
+		grid-template-columns: auto 1fr;
+		gap: 0.25rem 0.75rem;
+	}
+
+	.be-approval-queue__detail-list dt {
+		font-weight: 600;
+		color: #555;
+	}
+
+	.be-approval-queue__detail-list dd {
+		margin: 0;
+	}
+
+	.be-approval-queue__actions {
+		order: -1;
+		flex-wrap: wrap;
+	}
+}

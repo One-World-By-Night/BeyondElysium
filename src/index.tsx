@@ -11,6 +11,7 @@
 import { createRoot } from '@wordpress/element';
 import ErrorBoundary from './components/ErrorBoundary';
 import PoweredByFooter from './components/shared/PoweredByFooter';
+import './styles/breakpoints.css';
 
 /**
  * Maps each data-be-widget attribute value to a lazy loader for
@@ -100,6 +101,14 @@ function parseConfig( el: HTMLElement ): Record<string, unknown> {
  * boundary.
  */
 async function hydrateWidgets(): Promise<void> {
+	// Zero-risk detection, never injection - this plugin owns only the DOM
+	// subtree under [data-be-widget], never the page's own <head> (mobile-sheet-
+	// design.md §2.8). A missing viewport meta tag turns every phone-width fix
+	// in breakpoints.css into a silent no-op; this at least makes that diagnosable.
+	if ( ! document.querySelector( 'meta[name="viewport"]' ) ) {
+		console.warn( '[BE] No <meta name="viewport"> found on this page - phone-width layout will not apply correctly.' );
+	}
+
 	const mountPoints = document.querySelectorAll<HTMLElement>( '[data-be-widget]' );
 
 	for ( const el of mountPoints ) {

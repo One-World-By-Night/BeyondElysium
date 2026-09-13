@@ -215,7 +215,7 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 			) : visible.length === 0 ? (
 				<p>{ __( 'Nothing pending.', 'beyond-elysium' ) }</p>
 			) : (
-				<table className="be-approval-queue__table">
+				<table className="be-approval-queue__table be-responsive-table">
 					<thead>
 						<tr>
 							<th />
@@ -232,24 +232,42 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 					<tbody>
 						{ visible.map( ( item ) => (
 							<tr key={ item.id }>
-								<td>
+								<td data-label={ __( 'Select', 'beyond-elysium' ) }>
 									<input
 										type="checkbox"
 										checked={ selected.has( item.id ) }
 										onChange={ () => toggleSelected( item.id ) }
 									/>
 								</td>
-								<td>{ item.character_name ?? `#${ item.character_id }` }</td>
-								<td>{ describeChange( item.change_type, item.change_data ) }</td>
-								<td>
+								<td data-label={ __( 'Character', 'beyond-elysium' ) }>{ item.character_name ?? `#${ item.character_id }` }</td>
+								<td data-label={ __( 'Change', 'beyond-elysium' ) }>{ describeChange( item.change_type, item.change_data ) }</td>
+								<td data-label={ __( 'XP', 'beyond-elysium' ) }>
 									{ item.xp_cost >= 0 ? '+' : '' }
 									{ item.xp_cost }
 								</td>
-								<td>{ item.approval_level }</td>
-								<td className="be-approval-queue__reason">{ item.reason }</td>
-								<td>{ item.submitted_by }</td>
-								<td>{ item.submitted_at }</td>
-								<td className="be-approval-queue__actions">
+								{ /* Level/Submitted by/When: real information, but not what an ST triaging between
+								 * scenes needs first (mobile-sheet-design.md §5.5) - collapsed behind one native
+								 * disclosure per card at phone width rather than three more stacked rows. Desktop
+								 * keeps them as plain columns; .be-approval-queue__detail-toggle only renders at
+								 * phone width (Admin.css-style: display:none by default, shown in the media query). */}
+								<td className="be-approval-queue__detail-toggle" data-label="">
+									<details>
+										<summary>{ __( 'Details', 'beyond-elysium' ) }</summary>
+										<dl className="be-approval-queue__detail-list">
+											<dt>{ __( 'Level', 'beyond-elysium' ) }</dt>
+											<dd>{ item.approval_level }</dd>
+											<dt>{ __( 'Submitted by', 'beyond-elysium' ) }</dt>
+											<dd>{ item.submitted_by }</dd>
+											<dt>{ __( 'When', 'beyond-elysium' ) }</dt>
+											<dd>{ item.submitted_at }</dd>
+										</dl>
+									</details>
+								</td>
+								<td data-label={ __( 'Level', 'beyond-elysium' ) } className="be-approval-queue__detail-column">{ item.approval_level }</td>
+								<td className="be-approval-queue__reason" data-label={ __( 'Approval Reason', 'beyond-elysium' ) }>{ item.reason }</td>
+								<td data-label={ __( 'Submitted by', 'beyond-elysium' ) } className="be-approval-queue__detail-column">{ item.submitted_by }</td>
+								<td data-label={ __( 'When', 'beyond-elysium' ) } className="be-approval-queue__detail-column">{ item.submitted_at }</td>
+								<td className="be-approval-queue__actions" data-label={ __( 'Actions', 'beyond-elysium' ) }>
 									<button type="button" onClick={ () => approveOne( item.id ) }>
 										{ __( 'Approve', 'beyond-elysium' ) }
 									</button>

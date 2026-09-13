@@ -54,9 +54,9 @@ class Plugin {
 	/**
 	 * Enqueues the front-end React bundle, its translations, and its
 	 * stylesheet unconditionally on every page. Localizes REST connection
-	 * details and capability flags for the bundle, then enqueues the
-	 * media and editor scripts the character editor and sheet customizer
-	 * depend on.
+	 * details and capability flags for the bundle, then, for a logged-in
+	 * visitor only, enqueues the media and editor scripts the character
+	 * editor and sheet customizer depend on.
 	 */
 	public static function enqueue_frontend(): void {
 		$asset_file = BE_PLUGIN_DIR . 'build/index.asset.php';
@@ -101,11 +101,20 @@ class Plugin {
 			],
 		] );
 
-		// Backs the sheet customizer's image picker (wp.media()).
-		wp_enqueue_media();
+		// Both back editor-only affordances (the sheet customizer's image picker, the
+		// character editor's rich-text Background/Notes fields) that an anonymous visitor
+		// can never reach - gating on is_user_logged_in() saves ~760KB of TinyMCE/media
+		// assets on every anonymous page load site-wide (mobile-sheet-design.md §3.11/§9.1).
+		// A tighter, widget-aware gate isn't reliably knowable this early in the request -
+		// CharacterSheet.css's own print-block comment documents the same difficulty for a
+		// different reason - so this is the conservative version, not a guess at the precise one.
+		if ( is_user_logged_in() ) {
+			// Backs the sheet customizer's image picker (wp.media()).
+			wp_enqueue_media();
 
-		// Backs the character editor's rich-text Background and Notes fields (TinyMCE).
-		wp_enqueue_editor();
+			// Backs the character editor's rich-text Background and Notes fields (TinyMCE).
+			wp_enqueue_editor();
+		}
 	}
 
 	/**

@@ -17,6 +17,7 @@ import { BackgroundLedger } from '../apr/BackgroundLedger';
 import { TransferPanel } from './TransferPanel';
 import { spanFor, sortedForFlow } from '../../lib/templateLayout';
 import { resolveSectionTitle } from '../../lib/resolveCrossBlockRef';
+import { characterEditorUrl, isPrintCanvasPath } from '../../lib/pluginPages';
 import type { ResolvedStack, TemplateResolveResponse } from '../../types';
 import type { Character, SheetStyle } from '../../types/character';
 import './CharacterSheet.css';
@@ -86,6 +87,11 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 	const [ showLedger, setShowLedger ] = useState( false );
 	const [ showTransfer, setShowTransfer ] = useState( false );
 	const [ showPointAudit, setShowPointAudit ] = useState( false );
+	// Phone width only (mobile-sheet-design.md §4.4) - these are settings for the Print
+	// action, rendered permanently above the content they configure; collapsed behind the
+	// button on a phone, where they cost 54px of the first screen. Desktop always shows
+	// them regardless of this state - see CharacterSheet.css's own media query.
+	const [ showPrintOptions, setShowPrintOptions ] = useState( false );
 	const [ exportNotice, setExportNotice ] = useState<string | null>( null );
 	const [ exporting, setExporting ] = useState( false );
 	// Off by default - mints a fresh, real attestation row on every export, so it is not free to leave on.
@@ -94,7 +100,7 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 
 	// This same component also renders the dedicated print-canvas page, using these URL params.
 	const urlParams = new URLSearchParams( window.location.search );
-	const isPrintCanvas = window.location.pathname.includes( '/character-sheet-print' );
+	const isPrintCanvas = isPrintCanvasPath( window.location.pathname );
 
 	// What to include when printing/exporting; off by default and shown only when asked for.
 	const [ printBackground, setPrintBackground ] = useState( () => urlParams.get( 'print_background' ) === '1' );
@@ -311,6 +317,19 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 						>
 							{ __( 'Print / Export', 'beyond-elysium' ) }
 						</button>
+						{ /* Phone width only - see the showPrintOptions declaration above and
+						 * CharacterSheet.css's media query. A no-op on desktop, where the row
+						 * below always shows regardless of this button. */ }
+						<button
+							type="button"
+							className="be-character-sheet__print-options-toggle"
+							aria-expanded={ showPrintOptions }
+							onClick={ () => setShowPrintOptions( ( v ) => ! v ) }
+						>
+							{ showPrintOptions
+								? __( 'Hide print options', 'beyond-elysium' )
+								: __( 'Print options', 'beyond-elysium' ) }
+						</button>
 						{ pdfAvailability !== null && ! pdfAvailability.ok && (
 							<span className="be-character-sheet__print-unavailable" role="status">
 								{ __( 'This chronicle has not set up sheet signing yet - ask your Storyteller.', 'beyond-elysium' ) }
@@ -319,7 +338,7 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 						{ character.can_edit && (
 							<a
 								className="be-character-sheet__edit-link"
-								href={ `${ window.location.origin }/character-editor/?character_id=${ characterId }&game_slug=${ encodeURIComponent( gameSlug ) }` }
+								href={ characterEditorUrl( characterId, gameSlug ) }
 							>
 								{ __( 'Edit this character', 'beyond-elysium' ) }
 							</a>
@@ -396,7 +415,12 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 					) }
 
 					{ /* Controls, not content - never part of the printed output themselves, only what they turn on is. */ }
-					<div className="be-character-sheet__chrome be-character-sheet__print-options">
+					<div
+						className={
+							'be-character-sheet__chrome be-character-sheet__print-options' +
+							( showPrintOptions ? ' be-character-sheet__print-options--open' : '' )
+						}
+					>
 						<span>{ __( 'Include when printing:', 'beyond-elysium' ) }</span>
 						<label>
 							<input type="checkbox" checked={ printBackground } onChange={ ( e ) => setPrintBackground( e.target.checked ) } />

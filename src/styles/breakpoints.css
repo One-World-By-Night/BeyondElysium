@@ -1,0 +1,107 @@
+/**
+ * The one breakpoint system for this plugin's front-end widgets and
+ * editors. `max-width: 768px` is the only width-based media query
+ * `src/**\/*.css` may use (see breakpointConsistency.test.ts) - not
+ * WordPress core's 782px, since these are front-end widgets in a
+ * theme's own layout, not wp-admin panels, and 768 already matched
+ * five of the six files that had a breakpoint before this existed.
+ *
+ * mobile-sheet-design.md §5.1-§5.2.
+ */
+
+:root {
+	--be-tap: 44px;            /* WCAG 2.5.5 AAA; 2.5.8 AA is 24 */
+	--be-tap-min: 32px;        /* dense contexts; still clears 2.5.8 with margin */
+	--be-input-font-min: 16px; /* iOS focus-zoom threshold */
+}
+
+/*
+ * Touch-target floor, applied once. `min-height`/`min-width`, never
+ * `height`/`width` - a 26x26 button grows to 44x44, nothing shrinks.
+ * A bare-class/attribute selector beats hello-elementor's `button{...}`
+ * element reset without `!important` (same reasoning as DotTracker.css
+ * and TieredPowerEditor.css's own documented fixes for the identical
+ * collision).
+ */
+@media ( max-width: 768px ) {
+	[class^="be-"] button,
+	[class*=" be-"] button,
+	button[class^="be-"],
+	a[class^="be-"],
+	.be-searchable-select__input,
+	.be-searchable-select__option {
+		min-height: var( --be-tap );
+		min-width: var( --be-tap );
+	}
+
+	/* min-height/min-width have no effect on a default `display: inline` element - a
+	 * <button> already defaults to inline-block (or block) in every real browser, but an
+	 * <a> defaults to plain inline, so the rule above silently no-ops on any plugin link
+	 * without this. Found live measuring PoweredByFooter's own link at 81x17 after the
+	 * floor above was already shipped and should have caught it.
+	 *
+	 * `.be-powered-by__link` is deliberately excluded: it is one word inline inside the
+	 * sentence "Powered by BeyondElysium", not a game control this item is scoped to
+	 * (mobile-sheet-design.md §4.1's three real mobile users are all inside the
+	 * character sheet/editor/approval queue) - forcing it to 44px would paint an
+	 * oversized tap zone around 12px text, mid-sentence, which is a worse result than
+	 * the small-target problem it would fix. A real, deliberate exception, not an
+	 * oversight - if a future plugin link needs the floor, this selector already
+	 * covers it once `:not()` is dropped. */
+	a[class^="be-"]:not( .be-powered-by__link ) {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.be-searchable-select__input,
+	[class^="be-"] input,
+	[class^="be-"] select,
+	[class^="be-"] textarea {
+		font-size: var( --be-input-font-min );
+	}
+}
+
+/*
+ * Shared table-to-card mechanism (§5.5). Each <td> renders
+ * data-label={columnTitle}; this is the only CSS that pattern needs.
+ * Used by ApprovalQueue, CharacterList, and BoonLedger - never
+ * QueryResults, whose columns are user-selected and unbounded and so
+ * get a plain overflow-x wrapper instead (§4.6).
+ */
+@media ( max-width: 768px ) {
+	.be-responsive-table thead {
+		display: none;
+	}
+
+	.be-responsive-table tbody,
+	.be-responsive-table tr,
+	.be-responsive-table td {
+		display: block;
+		width: 100%;
+	}
+
+	.be-responsive-table tr {
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		margin-bottom: 0.75rem;
+		padding: 0.5rem;
+	}
+
+	.be-responsive-table td {
+		display: flex;
+		gap: 0.5rem;
+		border-bottom: none;
+	}
+
+	.be-responsive-table td::before {
+		content: attr( data-label );
+		flex: 0 0 8rem;
+		font-weight: 600;
+		color: #555;
+	}
+
+	.be-responsive-table td:empty {
+		display: none;
+	}
+}

@@ -156,3 +156,53 @@
 	font-size: 0.85em;
 	white-space: nowrap;
 }
+
+/* Desktop: the tradition field and remove button stay inline exactly as before; the
+ * modal trigger below is never shown. Same field styling as TraitListEditor's own modal
+ * (mobile-sheet-design.md §4.5(4)). */
+.be-tiered-power-editor__row-detail {
+	display: contents;
+}
+
+.be-tiered-power-editor__details-toggle {
+	display: none;
+}
+
+.be-tiered-power-editor__modal-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin-bottom: 0.75rem;
+}
+
+.be-tiered-power-editor__modal-field label {
+	font-weight: 600;
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	color: #555;
+}
+
+/*
+ * Phone width (§4.5(4)): the tradition field and remove action - a six-control inline
+ * row that survived only by wrapping raggedly - collapse behind one "Details" trigger
+ * per row, the same summary-row-plus-modal shape Decision 053 already established for
+ * TraitListEditor. The stepper stays inline: it is the primary interaction, not a rare
+ * one, unlike tradition/remove.
+ */
+@media ( max-width: 768px ) {
+	.be-tiered-power-editor__row-detail {
+		display: none;
+	}
+
+	.be-tiered-power-editor__details-toggle {
+		display: inline-block;
+		flex: 0 0 auto;
+		padding: 0.15rem 0.5rem;
+		border: 1px solid #999;
+		border-radius: 3px;
+		background: transparent;
+		color: #555;
+		font-size: 0.8rem;
+		cursor: pointer;
+	}
+}

@@ -8,6 +8,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import CharacterList from '../character/CharacterList';
+import { pluginPageUrl, PLUGIN_PAGE_SLUGS } from '../../lib/pluginPages';
 import type { Game } from '../../types';
 import './Admin.css';
 
@@ -37,7 +38,7 @@ export function AdminCharacters() {
 	}, [] );
 
 	// URL of the read-only character sheet page that each roster row links to.
-	const sheetUrl = `${ window.location.origin }/character-sheet/`;
+	const sheetUrl = pluginPageUrl( PLUGIN_PAGE_SLUGS.characterSheet );
 
 	return (
 		<div className="be-admin">

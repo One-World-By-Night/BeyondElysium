@@ -103,3 +103,17 @@ your sheet.
 If Print is disabled or tells you the chronicle hasn't set up sheet signing yet, that's a
 one-time setup step your Storyteller's host needs to complete — nothing you did, and nothing
 you can fix from your own account.
+
+## 9. Using Your Sheet on a Phone
+
+Reading your own character sheet at a live game is a first-class phone experience — your
+identity and traits come before any of the print/edit/customize controls, which collapse
+below the content instead of sitting above it. Every control on the editor meets a real
+touch-target size, and a picker with a long catalog (a big Gifts or Rituals list, say) no
+longer misaligns as you scroll it.
+
+Editing on a phone works, but it isn't the polished experience reading is — a rare, tolerant
+session rather than a frequent one, so a few controls (a power's tradition field, removing a
+held power) move behind a **Details** button instead of sitting inline in an already-full
+row. Building a multi-clause query or editing a chronicle's schema blocks is desk work and
+stays that way; those tools don't reflow for a phone at all, by design.

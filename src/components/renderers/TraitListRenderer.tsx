@@ -8,6 +8,7 @@ import { __ } from '@wordpress/i18n';
 import { displayTrait, type Trait, type DisplayType } from '../../lib/displayTrait';
 import { groupTraitsByField } from '../../lib/groupTraitsByField';
 import type { TraitListDefinition } from '../../types';
+import './TraitListRenderer.css';
 
 export interface TraitListRendererProps {
 	blockSlug: string;

@@ -14,7 +14,12 @@
 	box-shadow: 0 4px 24px rgba( 0, 0, 0, 0.25 );
 	width: 100%;
 	max-width: 28rem;
+	/* vh first as a fallback for browsers without dvh support; dvh resolves against the
+	 * visible viewport on mobile Safari (vh resolves against the large viewport, browser
+	 * chrome hidden, so 85vh can exceed what's actually visible - mobile-sheet-design.md
+	 * §3.8). The second declaration wins wherever dvh is supported. */
 	max-height: 85vh;
+	max-height: 85dvh;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;

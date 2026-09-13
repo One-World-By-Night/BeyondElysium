@@ -14,6 +14,7 @@ import HtmlEditor from '../shared/HtmlEditor';
 import { spanFor, sortedForFlow } from '../../lib/templateLayout';
 import { resolveSectionTitle } from '../../lib/resolveCrossBlockRef';
 import { pickMediaImage } from '../../lib/pickMediaImage';
+import { characterSheetUrl } from '../../lib/pluginPages';
 import type { CreatureStack, ResolvedStack, TemplateLayoutSection, TemplateResolveResponse } from '../../types';
 import type { SubmitResult } from '../../store/characterEditorStore';
 import './CharacterEditor.css';
@@ -544,7 +545,7 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 				onConfirm={ () => {
 					// Navigates back to the sheet so the discard's effect is visible, not just a silent state reset.
 					store.reset();
-					window.location.href = `${ window.location.origin }/character-sheet/?character_id=${ characterId }&game_slug=${ encodeURIComponent( gameSlug ) }`;
+					window.location.href = characterSheetUrl( effectiveCharacterId, gameSlug );
 				} }
 				onCancel={ () => setConfirmingReset( false ) }
 			/>

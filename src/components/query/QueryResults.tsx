@@ -169,8 +169,9 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 			{ items.length === 0 ? (
 				<p>{ __( 'Nothing matches this query.', 'beyond-elysium' ) }</p>
 			) : (
-				<table className="be-query-results__table">
-					<thead>
+				<div className="be-query-results__table-scroll">
+					<table className="be-query-results__table">
+						<thead>
 						<tr>
 							{ canAwardXp && (
 								<th>
@@ -214,6 +215,7 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 						) ) }
 					</tbody>
 				</table>
+				</div>
 			) }
 
 			{ canAwardXp && selected.size > 0 && (

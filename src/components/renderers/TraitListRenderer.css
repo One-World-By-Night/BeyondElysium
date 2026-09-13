@@ -1,0 +1,24 @@
+/**
+ * This component's first stylesheet (mobile-sheet-design.md §3.9/§5.6). Every
+ * `.be-trait-list__items` was a bare <ul> with no CSS of its own, so its
+ * 40px list-indent, disc markers, and default line-height all came straight
+ * from whichever theme the chronicle happened to run - 10.7% of a 375px
+ * phone's width, on the element that renders the majority of a character
+ * sheet's content, dictated by the theme rather than this plugin.
+ *
+ * Two-class compound selectors, not a single class and not `!important` -
+ * `.be-trait-list__items` alone is (0,1,0) and loses to a theme rule like
+ * `.entry-content ul` (0,2,0), exactly D34's failure mode. This wins outright
+ * by specificity instead, matching SearchableSelect.css's own documented
+ * precedent for the identical collision.
+ */
+.be-trait-list .be-trait-list__items {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.be-trait-list .be-trait-list__items li {
+	padding: 0.15rem 0;
+	line-height: 1.35;
+}

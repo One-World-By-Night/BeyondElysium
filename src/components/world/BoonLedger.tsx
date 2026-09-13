@@ -144,7 +144,7 @@ function BoonTable( {
 		return <p>{ __( 'None.', 'beyond-elysium' ) }</p>;
 	}
 	return (
-		<table className="be-boon-ledger__table">
+		<table className="be-boon-ledger__table be-responsive-table">
 			<thead>
 				<tr>
 					<th>{ __( 'Owed By', 'beyond-elysium' ) }</th>
@@ -162,19 +162,19 @@ function BoonTable( {
 					const repaidNote = boon.properties.repaid_note as string | undefined;
 					return (
 						<tr key={ boon.id } className={ status === 'repaid' ? 'be-boon-ledger__row--repaid' : '' }>
-							<td>{ boon.owed_by.name }</td>
-							<td>{ boon.owed_to.name }</td>
-							<td>{ String( boon.properties.boon_level ?? '—' ) }</td>
-							<td>{ String( boon.properties.boon_date ?? '—' ) }</td>
-							<td>
+							<td data-label={ __( 'Owed By', 'beyond-elysium' ) }>{ boon.owed_by.name }</td>
+							<td data-label={ __( 'Owed To', 'beyond-elysium' ) }>{ boon.owed_to.name }</td>
+							<td data-label={ __( 'Level', 'beyond-elysium' ) }>{ String( boon.properties.boon_level ?? '—' ) }</td>
+							<td data-label={ __( 'Date', 'beyond-elysium' ) }>{ String( boon.properties.boon_date ?? '—' ) }</td>
+							<td data-label={ __( 'Status', 'beyond-elysium' ) }>
 								{ status }
 								{ status === 'repaid' && repaidNote && (
 									<span className="be-boon-ledger__repaid-note"> — { repaidNote }</span>
 								) }
 							</td>
-							<td>{ String( boon.properties.terms ?? '' ) }</td>
+							<td data-label={ __( 'Terms', 'beyond-elysium' ) }>{ String( boon.properties.terms ?? '' ) }</td>
 							{ canManage && (
-								<td>
+								<td data-label={ __( 'Actions', 'beyond-elysium' ) }>
 									{ status !== 'repaid' && repayingId !== boon.id && (
 										<button type="button" onClick={ () => setRepayingId( boon.id ) }>
 											{ __( 'Mark repaid', 'beyond-elysium' ) }

@@ -5,6 +5,14 @@
 	margin-bottom: 0.5rem;
 }
 
+/* Columns are user-selected and unbounded, so at narrow widths this table used to
+ * overflow its own widget box into the theme's layout rather than scrolling within
+ * itself (mobile-sheet-design.md §4.6). Containment, not a card collapse - a saved
+ * query's column set has no fixed priority order to collapse into. */
+.be-query-results__table-scroll {
+	overflow-x: auto;
+}
+
 .be-query-results__table {
 	width: 100%;
 	border-collapse: collapse;

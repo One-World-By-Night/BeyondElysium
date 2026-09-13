@@ -40,6 +40,25 @@
 	overflow-y: auto;
 }
 
+/* Portaled to document.body (mobile-sheet-design.md §3.8/§5.4) so a modal's own
+ * `overflow: auto`/`hidden` ancestors can never clip it - two full option rows were
+ * already invisible inside the trait-picker modal before this, with no keyboard even
+ * raised. `top`/`left`/`width` (or `bottom` when opening upward) are set inline per
+ * instance from the real input rect; `position: fixed` here just documents that the
+ * component, not the theme or a parent's layout, owns this element's placement now.
+ *
+ * z-index must clear Modal.css's 100000: found live opening this inside the trait-add
+ * modal - the base class's z-index: 10 rendered the list visibly on top of the modal's
+ * own dialog box (which doesn't cover the full screen) but *behind* the modal's own
+ * full-screen backdrop (position: fixed; inset: 0, same 100000), so every option was
+ * visible but genuinely unclickable - Playwright's own click reported the backdrop's
+ * z-index-100000 label intercepting the pointer event at that exact position. */
+.be-searchable-select__list--portaled {
+	right: auto;
+	border-top: 1px solid #999;
+	z-index: 100001;
+}
+
 .be-searchable-select__option {
 	padding: 0.35rem 0.5rem;
 	cursor: pointer;

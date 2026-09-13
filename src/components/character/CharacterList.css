@@ -110,19 +110,15 @@
 	border-bottom: 1px solid #eee;
 }
 
-@media ( max-width: 768px ) {
-	.be-character-list__table thead {
-		display: none;
-	}
-
-	.be-character-list__table,
-	.be-character-list__table tbody,
-	.be-character-list__table tr,
-	.be-character-list__table td {
-		display: block;
-		width: 100%;
-	}
-}
+/*
+ * The phone-width card collapse itself lives in src/styles/breakpoints.css's shared
+ * .be-responsive-table mechanism (mobile-sheet-design.md §5.5) - this table used to carry
+ * its own local block here, which collapsed the layout correctly but rendered every cell
+ * with no header ("55" then "5" with nothing saying which was XP Earned and which was XP
+ * Unspent). Two implementations of a card collapse is how this codebase ended up with two
+ * different stepper buttons (D34) - the shared mechanism plus this component's own
+ * data-label={columnTitle} on each <td> is the one place this pattern lives now.
+ */
 
 /*
  * Step 8e (workflow-0.9.md) - the roster had no print treatment at all, unlike the

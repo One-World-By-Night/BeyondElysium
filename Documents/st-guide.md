@@ -91,6 +91,9 @@ edited in place.
 Adding an entirely new creature type (one this catalog doesn't already cover) is an admin
 task — see the [Admin Guide](admin-guide.md).
 
+**This is desk work too.** Schema Blocks and Creature Stacks don't reflow for a phone — a
+catalog edit wants a keyboard, the same as building a query.
+
 ## 3. Making Characters
 
 Storytellers create characters two ways:
@@ -126,6 +129,10 @@ chronicle has placed it.
   per-chronicle one) is flagged as such in the queue, but coordinator-tier enforcement itself
   is not yet built — any Storyteller can currently approve any tier. This is a known,
   deliberately-unbuilt gap, not an oversight.
+
+**This queue works on a phone.** Triaging pending changes between scenes is a real phone
+surface, not just a desktop one — each pending change is a card with Approve/Reject at the
+top, the rest (level, submitted by, when) behind a **Details** disclosure.
 
 ## 5. Importing from Grapevine
 
@@ -217,6 +224,9 @@ rather than freezing a player list at creation time.
 Bulk XP award is available only on **Characters** results, for the same reason a rumor can
 only target characters: an Item, Location, or Rote result isn't a character, and the tool
 never offers an action that would only make sense as one.
+
+**This is desk work.** A multi-clause query with a results grid of arbitrary columns doesn't
+reflow for a phone, and isn't meant to — build queries and read reports at a keyboard.
 
 ## 11. Signed Character Sheets
 

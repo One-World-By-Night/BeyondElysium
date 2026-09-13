@@ -33,6 +33,11 @@ const COLUMNS: Array<{ key: SortableColumn; label: string }> = [
 	{ key: 'player_name', label: __( 'Player', 'beyond-elysium' ) },
 ];
 
+/** Looks up a column's display label by key, for the phone-width `data-label` on each `<td>`. */
+function labelFor( key: SortableColumn ): string {
+	return COLUMNS.find( ( c ) => c.key === key )?.label ?? '';
+}
+
 // 'pending' is only ever assigned server-side, when a game requires approval for new characters.
 const STATUS_OPTIONS = [ 'active', 'inactive', 'retired', 'dead', 'pending' ];
 
@@ -223,7 +228,7 @@ export function CharacterList( {
 				/>
 			</div>
 
-			<table className="be-character-list__table">
+			<table className="be-character-list__table be-responsive-table">
 				<thead>
 					<tr>
 						{ /* Not part of COLUMNS - a thumbnail column has no orderby key to sort by. */ }
@@ -264,7 +269,7 @@ export function CharacterList( {
 										/>
 									) }
 								</td>
-								<td>
+								<td data-label={ labelFor( 'name' ) }>
 									{ link ? <a href={ link }>{ character.name }</a> : character.name }
 									{ character.travelling_status && (
 										<span
@@ -281,11 +286,11 @@ export function CharacterList( {
 										</span>
 									) }
 								</td>
-								<td>{ character.stack_slug }</td>
-								<td>{ character.status }</td>
-								<td>{ character.xp_earned }</td>
-								<td>{ character.xp_unspent }</td>
-								<td>
+								<td data-label={ labelFor( 'stack_slug' ) }>{ character.stack_slug }</td>
+								<td data-label={ labelFor( 'status' ) }>{ character.status }</td>
+								<td data-label={ labelFor( 'xp_earned' ) }>{ character.xp_earned }</td>
+								<td data-label={ labelFor( 'xp_unspent' ) }>{ character.xp_unspent }</td>
+								<td data-label={ labelFor( 'player_name' ) }>
 									{ character.player_name ?? '—' }
 									{ /* wp_user_id is the real account link; player_name is only ever a free-text label. */ }
 									{ character.wp_user_id == null && (
@@ -311,7 +316,7 @@ export function CharacterList( {
 									) }
 								</td>
 								{ canManageCharacters && (
-									<td className="be-character-list__actions-cell">
+									<td className="be-character-list__actions-cell" data-label={ __( 'Actions', 'beyond-elysium' ) }>
 										<button
 											type="button"
 											className="be-character-list__assign"

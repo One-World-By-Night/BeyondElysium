@@ -129,6 +129,13 @@
 	cursor: pointer;
 }
 
+/* Desktop: the print-options row below always shows regardless of showPrintOptions state
+ * (mobile-sheet-design.md §4.4) - this toggle only does anything at phone width. */
+.be-character-sheet__print-options-toggle {
+	display: none;
+}
+
+
 .be-character-sheet__prose {
 	margin-top: 1rem;
 	max-width: 60rem;
@@ -258,6 +265,37 @@
 	 */
 	.be-character-sheet__section {
 		grid-column: 1 / -1 !important;
+	}
+
+	/*
+	 * Information priority (§4.4): identity and traits first, chrome after. Making the
+	 * sheet's own root a flex column lets `order` push the toolbar and print-options row -
+	 * 154px of Print/Edit/Customize controls that sit above the character's own name today -
+	 * below everything else, without disturbing any other panel's relative position (each
+	 * keeps its default order: 0, same as before). The four "Include when printing"
+	 * checkboxes are settings for an action, not content, so they additionally collapse
+	 * behind the toggle button above rather than just moving down.
+	 */
+	.be-character-sheet {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.be-character-sheet__toolbar,
+	.be-character-sheet__print-options {
+		order: 10;
+	}
+
+	.be-character-sheet__print-options-toggle {
+		display: inline-block;
+	}
+
+	.be-character-sheet__print-options {
+		display: none;
+	}
+
+	.be-character-sheet__print-options.be-character-sheet__print-options--open {
+		display: flex;
 	}
 }
 

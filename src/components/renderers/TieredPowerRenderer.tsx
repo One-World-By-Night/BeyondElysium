@@ -7,6 +7,7 @@
  */
 import { __ } from '@wordpress/i18n';
 import type { TieredPowerDefinition, TieredPower, PowerLevel } from '../../types';
+import './TieredPowerRenderer.css';
 
 /**
  * One tiered power a character holds. A numeric level 1-5 holding sets
