@@ -11,6 +11,7 @@ use BeyondElysium\Services\GEX_Parser;
 use BeyondElysium\Services\GEX_Xml_Parser;
 use BeyondElysium\Services\GV_Binary_Reader;
 use BeyondElysium\Services\Trait_Mapper;
+use BeyondElysium\Utils\Uuid;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -218,10 +219,15 @@ class Import_Controller extends Base_Controller {
 			];
 		}
 
-		// A real duplicate character must have an explicit skip/overwrite/import_as_new choice.
+		// A real duplicate character must have an explicit skip/overwrite/import_as_new choice -
+		// except a uuid match, which is certain identity rather than a guess and always resolves
+		// to overwrite on its own (match_existing_character()), so it never needs to block on one.
 		$duplicate_actions = (array) ( $resolutions['duplicates'] ?? [] );
 		$unaddressed       = [];
 		foreach ( $preview['duplicates'] as $dup ) {
+			if ( ( $dup['matched_by'] ?? null ) === 'uuid' ) {
+				continue;
+			}
 			$action = $duplicate_actions[ $dup['character'] ] ?? null;
 			if ( ! in_array( $action, [ 'skip', 'overwrite', 'import_as_new' ], true ) ) {
 				$unaddressed[] = $dup['character'];
@@ -358,8 +364,11 @@ class Import_Controller extends Base_Controller {
 
 		foreach ( $parsed['characters'] as $character ) {
 			$char_name = self::character_display_name( $character );
-			$existing  = ( $character['name'] ?? '' ) !== '' ? Character::find_by_name_in_game( $character['name'], $game_slug ) : null;
-			$action    = $existing ? ( $duplicate_actions[ $char_name ] ?? '' ) : '';
+			$match     = self::match_existing_character( $character, $game_slug );
+			$existing  = $match['existing'];
+			// A uuid match is certain identity - always overwrite, no resolution needed; a name
+			// match stays ambiguous and needs the caller's explicit per-character choice.
+			$action = $existing ? ( $match['matched_by'] === 'uuid' ? 'overwrite' : ( $duplicate_actions[ $char_name ] ?? '' ) ) : '';
 
 			if ( $existing && $action === 'skip' ) {
 				$created['characters'][] = [ 'id' => (int) $existing->id, 'name' => $char_name, 'action' => 'skipped' ];
@@ -428,6 +437,38 @@ class Import_Controller extends Base_Controller {
 			throw new \RuntimeException( "Failed to import {$object_type} \"{$name}\"." );
 		}
 		return [ 'id' => (int) $id, 'name' => $name, 'action' => 'created' ];
+	}
+
+	/**
+	 * Finds the local character a parsed record refers to, if any - by its
+	 * carried `uuid` first (only a transfer-marked export carries one at
+	 * all, per GX-8/9), falling back to a same-chronicle name match for
+	 * every ordinary file, which never carries a uuid. A `uuid` match is
+	 * definitive identity, not a guess - unlike a name match, which can be
+	 * two unrelated characters sharing a name and always needs a human's
+	 * explicit skip/overwrite/import_as_new choice (`blocking_reason()`).
+	 * Deliberately not game-scoped for the uuid lookup: if this uuid exists
+	 * anywhere on the install, that is the same character regardless of
+	 * which chronicle currently holds it (`gex-export-transfer-design.md` §8.3).
+	 *
+	 * @param array<string,mixed> $character
+	 * @param string              $game_slug
+	 * @return array{existing:object|null,matched_by:string|null} `matched_by` is 'uuid', 'name', or null when nothing matched.
+	 */
+	private static function match_existing_character( array $character, string $game_slug ): array {
+		$uuid = ( ! empty( $character['uuid'] ) && Uuid::is_valid( (string) $character['uuid'] ) )
+			? strtolower( (string) $character['uuid'] )
+			: null;
+
+		if ( $uuid !== null ) {
+			$existing = Character::find_by_uuid( $uuid );
+			if ( $existing !== null ) {
+				return [ 'existing' => $existing, 'matched_by' => 'uuid' ];
+			}
+		}
+
+		$existing = ( $character['name'] ?? '' ) !== '' ? Character::find_by_name_in_game( $character['name'], $game_slug ) : null;
+		return [ 'existing' => $existing, 'matched_by' => $existing !== null ? 'name' : null ];
 	}
 
 	/**
@@ -572,6 +613,12 @@ class Import_Controller extends Base_Controller {
 				'stack_slug'  => $stack_slug,
 				'owner_type'  => 'chronicle',
 				'owner_slug'  => $game_slug,
+				// A transfer-marked export carries the character's real, permanent uuid
+				// (INTEROP-UUID.md) - preserved rather than reassigned, so it survives the
+				// move. Character::create() ignores this key entirely (falls through to
+				// generating a fresh one) unless it's both present and a syntactically
+				// valid uuid, so an ordinary file with no uuid at all is unaffected.
+				'uuid'        => $character['uuid'] ?? null,
 				'wp_user_id'  => $wp_user_id,
 				'player_name' => ( ! $wp_user_id && $player_name !== '' ) ? $player_name : null,
 				// status is a free-text column, normalized to lowercase to match every other write path.
@@ -1219,12 +1266,16 @@ class Import_Controller extends Base_Controller {
 			$stack_slug = $character['race'];
 			$char_name  = self::character_display_name( $character );
 
-			$existing = ( $character['name'] ?? '' ) !== '' ? Character::find_by_name_in_game( $character['name'], $game_slug ) : null;
+			$match    = self::match_existing_character( $character, $game_slug );
+			$existing = $match['existing'];
 			if ( $existing ) {
 				$duplicates[] = [
 					'character'     => $char_name,
 					'existing_id'   => (int) $existing->id,
 					'existing_uuid' => $existing->uuid,
+					// 'uuid' means certain identity - the UI/caller never needs to ask a human
+					// to resolve this one; 'name' is the ordinary ambiguous case.
+					'matched_by'    => $match['matched_by'],
 				];
 			}
 

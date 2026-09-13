@@ -13,6 +13,7 @@ import SheetStyleEditor from './SheetStyleEditor';
 import ChangeHistory from '../changes/ChangeHistory';
 import { ConnectionManager } from '../apr/ConnectionManager';
 import { BackgroundLedger } from '../apr/BackgroundLedger';
+import { TransferPanel } from './TransferPanel';
 import { spanFor, sortedForFlow } from '../../lib/templateLayout';
 import { resolveSectionTitle } from '../../lib/resolveCrossBlockRef';
 import type { ResolvedStack, TemplateResolveResponse } from '../../types';
@@ -109,6 +110,7 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 	const [ showStyleEditor, setShowStyleEditor ] = useState( false );
 	const [ showHistory, setShowHistory ] = useState( false );
 	const [ showLedger, setShowLedger ] = useState( false );
+	const [ showTransfer, setShowTransfer ] = useState( false );
 	const [ exportNotice, setExportNotice ] = useState<string | null>( null );
 	const [ exporting, setExporting ] = useState( false );
 	// Off by default - mints a fresh, real attestation row on every export, so it is not free to leave on.
@@ -357,6 +359,16 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 						>
 							{ showLedger ? __( 'Hide background uses', 'beyond-elysium' ) : __( 'Background uses', 'beyond-elysium' ) }
 						</button>
+						{ character.can_manage && (
+							<button
+								type="button"
+								className="be-character-sheet__history-toggle"
+								aria-expanded={ showTransfer }
+								onClick={ () => setShowTransfer( ( v ) => ! v ) }
+							>
+								{ showTransfer ? __( 'Hide transfer', 'beyond-elysium' ) : __( 'Transfer', 'beyond-elysium' ) }
+							</button>
+						) }
 						<label className="be-character-sheet__verify-toggle">
 							<input
 								type="checkbox"
@@ -439,6 +451,39 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 						gameDate={ ledgerDate }
 						canManage={ window.beyondElysium?.capabilities?.be_manage_characters ?? false }
 					/>
+				</div>
+			) }
+
+			{ ! isPrintCanvas && showTransfer && character.can_manage && (
+				<div className="be-character-sheet__chrome be-character-sheet__section">
+					<h4 className="be-character-sheet__section-title">{ __( 'Chronicle Transfer', 'beyond-elysium' ) }</h4>
+					<TransferPanel
+						gameSlug={ gameSlug }
+						characterId={ characterId }
+						characterUuid={ character.uuid }
+						travellingStatus={ character.travelling_status ?? null }
+					/>
+				</div>
+			) }
+
+			{ /* §8.4: a travelling/visiting notice, always shown regardless of the Transfer panel's own
+			    toggle state - a manager editing this sheet needs to see this without an extra click,
+			    excluded from print the same way every other .be-character-sheet__chrome element is. */ }
+			{ ! isPrintCanvas && character.travelling_status && (
+				<div className="be-character-sheet__chrome be-character-sheet__travelling-notice" role="status">
+					{ character.travelling_status.direction === 'outbound'
+						? sprintf(
+								/* translators: 1: the other chronicle's name, 2: the date the transfer started */
+								__( 'Travelling — %1$s since %2$s. Edits are discouraged while this character is away.', 'beyond-elysium' ),
+								character.travelling_status.chronicle ?? __( 'no host confirmed yet', 'beyond-elysium' ),
+								character.travelling_status.since
+						  )
+						: sprintf(
+								/* translators: 1: the home chronicle's name, 2: the date the transfer started */
+								__( 'Visiting from %1$s since %2$s.', 'beyond-elysium' ),
+								character.travelling_status.chronicle ?? __( 'no host confirmed yet', 'beyond-elysium' ),
+								character.travelling_status.since
+						  ) }
 				</div>
 			) }
 

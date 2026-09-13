@@ -2,6 +2,8 @@
 
 namespace BeyondElysium\Services;
 
+use BeyondElysium\Utils\Uuid;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -86,10 +88,10 @@ class GEX_Xml_Parser {
 					$rotes[] = self::parse_rote( $child );
 					break;
 				case 'vampire':
-					$characters[] = self::parse_character_vampire( $child );
+					$characters[] = self::with_transfer_uuid( self::parse_character_vampire( $child ), $child );
 					break;
 				case 'werewolf':
-					$characters[] = self::parse_character_werewolf( $child );
+					$characters[] = self::with_transfer_uuid( self::parse_character_werewolf( $child ), $child );
 					break;
 				case 'mortal':
 				case 'changeling':
@@ -101,7 +103,7 @@ class GEX_Xml_Parser {
 				case 'kueijin':
 				case 'hunter':
 				case 'demon':
-					$characters[] = self::parse_character_generic( $child, $name );
+					$characters[] = self::with_transfer_uuid( self::parse_character_generic( $child, $name ), $child );
 					break;
 				default:
 					throw new \RuntimeException(
@@ -571,6 +573,29 @@ class GEX_Xml_Parser {
 	 */
 	private static function xml_attr_or( \SimpleXMLElement $el, string $attr, $fallback ): string {
 		return isset( $el[ $attr ] ) ? (string) $el[ $attr ] : (string) $fallback;
+	}
+
+	/**
+	 * Merges the character's own permanent uuid into its parsed record when
+	 * the document carries one. Only a transfer-marked export ever does
+	 * (`Character_Exporter`'s `as_transfer` option, GX-8) - `<verification
+	 * character_uuid="...">` is a Beyond Elysium extension no real Grapevine
+	 * document has ever written, silently ignored everywhere else in this
+	 * method the same way the reference reader ignores it (`VampireClass.cls
+	 * :488-530`'s missing `Case Else`). A missing or malformed uuid leaves
+	 * the record exactly as parsed - the ordinary case for every real
+	 * Grapevine-authored file and every non-transfer export of our own.
+	 *
+	 * @param array<string,mixed> $character
+	 * @param \SimpleXMLElement   $el
+	 * @return array<string,mixed>
+	 */
+	private static function with_transfer_uuid( array $character, \SimpleXMLElement $el ): array {
+		$uuid = (string) $el->verification['character_uuid'];
+		if ( $uuid !== '' && Uuid::is_valid( $uuid ) ) {
+			$character['uuid'] = strtolower( $uuid );
+		}
+		return $character;
 	}
 
 	/**

@@ -104,6 +104,7 @@ import type {
     GameImportCommitResult,
 } from '../types/import';
 import type { VerifyResponse } from '../types/verify';
+import type { Transfer, InitiateTransferResponse } from '../types/transfer';
 
 const BASE = '/be/v1';
 
@@ -1392,6 +1393,50 @@ export const gameImport = () => ( {
 } );
 
 // ---------------------------------------------------------------------------
+// Transfers — GX-8/9's chronicle-to-chronicle character travel
+// ---------------------------------------------------------------------------
+
+/**
+ * REST client for one chronicle's own outbound transfer actions and
+ * its combined transfer list. Scoped to the sending/managing
+ * chronicle - the inbound receiving route has no client method here,
+ * since it is only ever called chronicle-to-chronicle, never from
+ * this plugin's own front end.
+ */
+export const transfers = ( gameSlug: string ) => ( {
+    /**
+     * Lists every transfer row touching this chronicle, either
+     * direction, newest first.
+     */
+    list: (): Promise<Transfer[]> => apiFetch( { path: `${ BASE }/${ gameSlug }/transfers` } ),
+
+    /**
+     * Initiates an outbound transfer for one character. Omit
+     * hostSite/hostSlug for the offline carrier (download and email
+     * the returned document); given both, also POSTs directly to
+     * the host chronicle and reflects what it reported.
+     */
+    initiate: ( characterId: number, hostSite?: string, hostSlug?: string ): Promise<InitiateTransferResponse> =>
+        apiFetch( {
+            path: `${ BASE }/${ gameSlug }/transfers/outbound`,
+            method: 'POST',
+            data: { character_id: characterId, host_site: hostSite ?? '', host_slug: hostSlug ?? '' },
+        } ),
+
+    /** Home ST manually marks a still-pending transfer as received abroad. */
+    acknowledge: ( transferId: number ): Promise<Transfer> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/transfers/${ transferId }/acknowledge`, method: 'POST' } ),
+
+    /** Home ST permanently gives the character up - a real move, not travel. */
+    release: ( transferId: number ): Promise<Transfer> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/transfers/${ transferId }/release`, method: 'POST' } ),
+
+    /** Home ST cancels a still-pending transfer. */
+    decline: ( transferId: number ): Promise<Transfer> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/transfers/${ transferId }/decline`, method: 'POST' } ),
+} );
+
+// ---------------------------------------------------------------------------
 // Verification — GX-7's public, unauthenticated code lookup
 // ---------------------------------------------------------------------------
 
@@ -1439,6 +1484,7 @@ const api = {
     gexImport,
     gameImport,
     verification,
+    transfers,
     wpUsers,
     gameMembers,
     authorizationSettings,
