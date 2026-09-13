@@ -404,11 +404,16 @@ export interface BulkXPResponse {
  * file. hide_st strips [ST]...[/ST]-marked text the same way a
  * non-manager's own view of the sheet already does; as_transfer is
  * reserved for the chronicle-to-chronicle transfer flow and has no
- * effect on the document itself yet.
+ * effect on the document itself yet. verify mints a fresh
+ * attestation (GX-7) and embeds its verification URL into the
+ * document's own id field (and, for XML, an added <verification>
+ * element) - each call issues a new code, so this is not free to
+ * call repeatedly for the same download.
  */
 export interface ExportCharacterOptions {
     hide_st?: boolean;
     as_transfer?: boolean;
+    verify?: boolean;
 }
 
 /**

@@ -30,6 +30,7 @@ const widgetRegistry: Record<string, () => Promise<{ default: React.ComponentTyp
 	'boon-ledger': () => import( './components/world/BoonLedger' ),
 	'import-tool': () => import( './components/import/ImportTool' ),
 	'game-dashboard': () => import( './components/game/GameDashboard' ),
+	'verify-character': () => import( './components/character/VerifyCharacter' ),
 
 	// wp-admin pages, mounted the same way as a front-end Elementor widget.
 	'admin-games': () => import( './components/admin/AdminGames' ),

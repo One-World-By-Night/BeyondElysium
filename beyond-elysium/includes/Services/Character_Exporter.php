@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\Services;
 
+use BeyondElysium\Models\Attestation;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
@@ -41,8 +42,18 @@ class Character_Exporter {
 	 * degradation warnings (a trait list or field with nowhere real to
 	 * come from) and every ASCII transliteration the writer had to make.
 	 *
+	 * When `verify` is requested, the canonical document (the same one this
+	 * method would otherwise return, with the `id` field empty) is built
+	 * once to compute its hash - a verification URL can't attest to a
+	 * document that already contains that same URL - then a fresh
+	 * `Attestation::issue()` mints a code, and the document is built again
+	 * with that code's URL in the `id` field (§6.4: GV's own `ID` field,
+	 * unused by BE's own importer, confirmed present on all 12 character
+	 * classes) and, for XML, the optional `<verification>` child (§6.4:
+	 * confirmed safe by the reference reader's missing `Case Else`).
+	 *
 	 * @param int   $character_id
-	 * @param array $options `hide_st` (bool, default false), `as_transfer` (bool, default false, reserved for GX-8).
+	 * @param array $options `hide_st` (bool, default false), `as_transfer` (bool, default false, reserved for GX-8), `verify` (bool, default false).
 	 * @return array{xml:string,warnings:array<int,string>,transliterations:array<int,string>}
 	 * @throws \RuntimeException If the character does not exist.
 	 */
@@ -52,9 +63,40 @@ class Character_Exporter {
 			throw new \RuntimeException( "Character #{$character_id} not found." );
 		}
 
+		$hide_st = ! empty( $options['hide_st'] );
+
+		if ( empty( $options['verify'] ) ) {
+			return self::build( $character, $hide_st, null );
+		}
+
+		// Hashed with hide_st forced false regardless of the caller's own choice: `sheet_hash`
+		// answers "has the underlying character changed" (currency - §6.5), a question the
+		// ST-redaction toggle is orthogonal to. `Verify_Controller::still_matches()` always
+		// re-exports with default options (hide_st false) to compare - if this hashed the
+		// caller's real hide_st instead, every player-initiated verified export (hide_st true,
+		// since a non-manager exporting their own sheet is the primary real-world case here)
+		// would permanently fail to match itself, with nothing having actually changed.
+		$canonical  = self::build( $character, false, null );
+		$sheet_hash = hash( 'sha256', $canonical['xml'] );
+		$attestation = Attestation::issue( $character, 'gex', $sheet_hash );
+		// VerifyCharacter.tsx reads ?code= off the URL (same convention as every other
+		// widget's own URL param, e.g. CharacterSheet.tsx's ?character_id=) - never a path
+		// segment, since be-verify is a plain provisioned WP page, not a rewrite rule.
+		$url = home_url( '/be-verify/?code=' . rawurlencode( $attestation->short_code ) );
+
+		return self::build( $character, $hide_st, $url );
+	}
+
+	/**
+	 * @param object      $character
+	 * @param bool        $hide_st
+	 * @param string|null $verification_url When given, written into the `id` scalar and an
+	 *                                       optional `<verification>` child; when null, `id` is empty.
+	 * @return array{xml:string,warnings:array<int,string>,transliterations:array<int,string>}
+	 */
+	private static function build( object $character, bool $hide_st, ?string $verification_url ): array {
 		$game        = Game::find_by_slug( $character->owner_slug );
 		$game_slug   = $game->slug ?? $character->owner_slug;
-		$hide_st     = ! empty( $options['hide_st'] );
 		$stack_slug  = (string) $character->stack_slug;
 		$map_slug    = self::STACK_FALLBACK[ $stack_slug ] ?? $stack_slug;
 		$race        = $stack_slug; // Every real BE creature stack slug matches a RACE_TYPE_MAP value exactly.
@@ -68,6 +110,9 @@ class Character_Exporter {
 		$writer->begin_tag( $shape['xml_tag'] );
 
 		$raw = self::build_raw_scalars( $character, $map_slug, $game_slug, $sheet );
+		if ( $verification_url !== null ) {
+			$raw['id'] = $verification_url;
+		}
 
 		// physical_max/social_max/mental_max are derived, never stored (field-map.php) -
 		// computed the same way the reader backfills them, from live Physical/Social/Mental
@@ -96,6 +141,13 @@ class Character_Exporter {
 				$text = St_Filter::strip_for_game( $text, $game->settings ?? null );
 			}
 			$writer->write_cdata_tag( $row['xml_cdata'], $text );
+		}
+
+		if ( $verification_url !== null ) {
+			$writer->begin_tag( 'verification' )
+				->write_attribute( 'url', $verification_url )
+				->write_attribute( 'issued', gmdate( 'n/j/Y g:i:s A' ) )
+				->end_tag();
 		}
 
 		$writer->end_tag(); // race tag

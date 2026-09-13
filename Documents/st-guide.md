@@ -139,14 +139,51 @@ actions submitted against it, allocate action slots, and generate rumors that di
 players via a saved query (see below) rather than by hand. Players see their own plot
 connections on the **My Plots & Rumors** page.
 
-## 9. Building and Running Queries
+## 9. Action & Rumor Settings and the Background-Use Ledger
 
-Under **Beyond Elysium → Query Tool**, build a filter against the roster (by trait,
-creature type, status, and more) and either browse the results or run one of the five
-built-in roster statistics. A query can be saved and reused, and a saved query is also what
-a rumor's target audience is defined by — build the query once, point the rumor at it, and
-it recalculates who's in scope every time it runs rather than freezing a player list at
-creation time.
+Under **Beyond Elysium → Action & Rumor Settings**, pick a chronicle to configure how many
+downtime actions a character receives each game date and which rumors generate
+automatically. The **Actions** tab sets personal actions per character, whether unused
+actions and growth carry forward week to week, whether Common Actions (from Influences and
+configured Backgrounds) are added automatically, an actions-per-level override table for
+specific dot ratings, and which Backgrounds grant an action at all — an Influence always
+does and is shown for reference only. The **Rumors** tab holds the eight rumor-generation
+toggles the Storyteller Toolkit's rumor generator reads; Group and Subgroup rumors are shown
+but not yet functional, since no character data exists to generate them from. A **Restore
+Grapevine defaults** button is available if you want the original 1998 values instead of
+Beyond Elysium's own (higher personal-action, carry-forward-on) defaults — it does not touch
+your rumor settings.
+
+Once a character's actions are allocated (in the Action Allocator, under Plots), each
+budgeted subaction — Personal, and any Influence or configured Background — gets its own
+**background-use ledger**: record what the character actually did with that action, and fill
+in the result once it's adjudicated. A background with no live budget can still have a use
+recorded against it (it shows under "Other backgrounds," with a note pointing back here) —
+recording is never blocked by a chronicle simply not having configured that background yet.
+**Clear all for this Character** and **Clear all for this Date** remove recorded uses only;
+they never touch a character's action budget itself. Players see and can record uses for
+their own characters directly from their character sheet's **Background uses** panel, and
+can clear their own use as long as no result has been recorded against it yet.
+
+## 10. Building and Running Queries
+
+Under **Beyond Elysium → Query Tool**, pick which of four inventories to search —
+**Characters**, **Items**, **Locations**, or **Rotes** — with a tab strip at the top of the
+tool. Each inventory offers its own field list (a location's Gauntlet rating and Security
+Level, an item's Type and Concealability, a rote's Level and Sphere prerequisites, and so
+on), build a filter against it, and either browse the results or run one of the five
+built-in statistics. Switching inventories clears the clauses on screen, since a clause
+built against one inventory's fields has no meaning on another's.
+
+A query can be saved and reused; the Saved Queries list shows which inventory each one
+searches, and loading one switches back to that inventory automatically. A saved query is
+also what a rumor's target audience is defined by (**Characters** queries only) — build the
+query once, point the rumor at it, and it recalculates who's in scope every time it runs
+rather than freezing a player list at creation time.
+
+Bulk XP award is available only on **Characters** results, for the same reason a rumor can
+only target characters: an Item, Location, or Rote result isn't a character, and the tool
+never offers an action that would only make sense as one.
 
 ## Roles Reference
 

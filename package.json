@@ -1,6 +1,6 @@
 {
   "name": "beyond-elysium",
-  "version": "0.99.9",
+  "version": "0.99.10",
   "description": "Character management system for Mind's Eye Theatre LARP chronicles.",
   "private": true,
   "engines": {

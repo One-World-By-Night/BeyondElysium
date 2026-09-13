@@ -103,6 +103,7 @@ import type {
     GameImportTarget,
     GameImportCommitResult,
 } from '../types/import';
+import type { VerifyResponse } from '../types/verify';
 
 const BASE = '/be/v1';
 
@@ -1391,6 +1392,22 @@ export const gameImport = () => ( {
 } );
 
 // ---------------------------------------------------------------------------
+// Verification — GX-7's public, unauthenticated code lookup
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolves a short verification code (minted by exporting a
+ * character with the `verify` option) to what was attested at
+ * issue time, plus whether it still matches the character today.
+ * Not scoped to any game - the route carries no chronicle in its
+ * path, since a bare code must be enough to resolve it on its own.
+ */
+export const verification = () => ( {
+    resolve: ( code: string ): Promise<VerifyResponse> =>
+        apiFetch( { path: `${ BASE }/verify/${ encodeURIComponent( code ) }` } ),
+} );
+
+// ---------------------------------------------------------------------------
 // Default export: grouped API object
 // ---------------------------------------------------------------------------
 
@@ -1421,6 +1438,7 @@ const api = {
     boons,
     gexImport,
     gameImport,
+    verification,
     wpUsers,
     gameMembers,
     authorizationSettings,

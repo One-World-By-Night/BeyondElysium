@@ -111,6 +111,8 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 	const [ showLedger, setShowLedger ] = useState( false );
 	const [ exportNotice, setExportNotice ] = useState<string | null>( null );
 	const [ exporting, setExporting ] = useState( false );
+	// Off by default - mints a fresh, real attestation row on every export, so it is not free to leave on.
+	const [ includeVerification, setIncludeVerification ] = useState( false );
 	const [ ledgerDate, setLedgerDate ] = useState( () => new Date().toISOString().slice( 0, 10 ) );
 
 	// This same component also renders the dedicated print-canvas page, using these URL params.
@@ -213,7 +215,10 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 		setExporting( true );
 		setExportNotice( null );
 		try {
-			const result = await api.characters( gameSlug ).export( characterId, { hide_st: ! character.can_manage } );
+			const result = await api.characters( gameSlug ).export( characterId, {
+				hide_st: ! character.can_manage,
+				verify: includeVerification,
+			} );
 			const blob = new Blob( [ result.xml ], { type: 'application/xml' } );
 			const url = URL.createObjectURL( blob );
 			const link = document.createElement( 'a' );
@@ -352,6 +357,14 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 						>
 							{ showLedger ? __( 'Hide background uses', 'beyond-elysium' ) : __( 'Background uses', 'beyond-elysium' ) }
 						</button>
+						<label className="be-character-sheet__verify-toggle">
+							<input
+								type="checkbox"
+								checked={ includeVerification }
+								onChange={ ( e ) => setIncludeVerification( e.target.checked ) }
+							/>
+							{ __( 'Include verification code', 'beyond-elysium' ) }
+						</label>
 						<button
 							type="button"
 							className="be-character-sheet__gex-export"
