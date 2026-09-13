@@ -54,7 +54,7 @@ return [
 	// Every creature stack's Influence entries live inside its own {stack_slug}-backgrounds block, resolved per-character by stack_slug.
 	'influences'   => [ 'source' => 'stack_relative_list', 'block_pattern' => '{stack}-backgrounds', 'filter_source' => 'Influences' ],
 	'backgrounds'  => [ 'source' => 'unmapped', 'note' => 'block is {stack_slug}-backgrounds, not a fixed slug; importer must resolve it by stack' ],
-	'healthlevels' => [ 'source' => 'unmapped', 'note' => 'not modeled as a block; see creature_stacks.stack_definition.display_preferences.health_levels' ],
+	'healthlevels' => [ 'source' => 'unmapped', 'note' => 'block is {stack_slug}-health (not a fixed slug, and not present on wraith); stack_relative_list has no whole-block form yet, only filter_source' ],
 	'merits'       => [ 'source' => 'json', 'block' => 'met-merits' ],
 	'flaws'        => [ 'source' => 'json', 'block' => 'met-flaws' ],
 	'equipment'    => [ 'source' => 'unmapped', 'note' => 'world objects (items) are workflow-0.7.md; not yet linked to characters' ],

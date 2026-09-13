@@ -2259,6 +2259,8 @@ class Seeder {
 			]
 		) );
 
+		$blocks[] = self::make_health_block( 'vampire', self::health_composition( 'Torpor' ) );
+
 		// --- Werewolf ---
 		$blocks[] = self::make_identity_block( 'werewolf-identity', 'Werewolf Identity', [
 			[ 'name' => 'Tribe',   'field_type' => 'select', 'required' => true,  'options' => self::resolve_identity_options( $gvm, 'Tribe' ) ],
@@ -2282,6 +2284,8 @@ class Seeder {
 			[ 'name' => 'Wisdom', 'value_type' => 'decimal', 'step' => 0.1, 'default_start' => 0 ],
 		] );
 
+		$blocks[] = self::make_health_block( 'werewolf', self::health_composition( 'Mortally Wounded' ) );
+
 		// --- Mage ---
 		$blocks[] = self::make_identity_block( 'mage-identity', 'Mage Identity', [
 			[ 'name' => 'Tradition', 'field_type' => 'select', 'required' => true,  'options' => self::resolve_identity_options( $gvm, 'Tradition, Mage', true ) ],
@@ -2298,6 +2302,8 @@ class Seeder {
 			[ 'name' => 'Paradox',     'value_type' => 'integer', 'default_start' => 0, 'max' => 20 ],
 			[ 'name' => 'Willpower',   'value_type' => 'integer', 'default_start' => 3, 'max' => 20, 'cost_per_dot' => 3, 'free_dots' => 5 ],
 		] );
+
+		$blocks[] = self::make_health_block( 'mage', self::health_composition( 'Mortally Wounded' ) );
 
 		// --- Changeling ---
 		$blocks[] = self::make_identity_block( 'changeling-identity', 'Changeling Identity', [
@@ -2317,6 +2323,8 @@ class Seeder {
 			[ 'name' => 'Banality',  'value_type' => 'integer', 'default_start' => 3, 'max' => 10 ],
 			[ 'name' => 'Willpower', 'value_type' => 'integer', 'default_start' => 3, 'max' => 20, 'cost_per_dot' => 3, 'free_dots' => 3 ],
 		] );
+
+		$blocks[] = self::make_health_block( 'changeling', self::health_composition( 'Mortally Wounded' ) );
 
 		// --- Wraith ---
 		$blocks[] = self::make_identity_block( 'wraith-identity', 'Wraith Identity', [
@@ -2347,6 +2355,8 @@ class Seeder {
 			[ 'name' => 'Willpower', 'value_type' => 'integer', 'default_start' => 3, 'max' => 20 ],
 		] );
 
+		$blocks[] = self::make_health_block( 'demon', self::health_composition( 'Mortally Wounded' ) );
+
 		// --- Mummy ---
 		$blocks[] = self::make_identity_block( 'mummy-identity', 'Mummy Identity', [
 			[ 'name' => 'Amenti', 'field_type' => 'text', 'required' => false ],
@@ -2357,6 +2367,8 @@ class Seeder {
 			[ 'name' => 'Balance',   'value_type' => 'integer', 'default_start' => 5, 'max' => 10 ],
 			[ 'name' => 'Willpower', 'value_type' => 'integer', 'default_start' => 3, 'max' => 20 ],
 		] );
+
+		$blocks[] = self::make_health_block( 'mummy', self::health_composition( 'Mortally Wounded', [ [ 'name' => 'Dead', 'count' => 2 ] ] ) );
 
 		// --- Kuei-Jin ---
 		$blocks[] = self::make_identity_block( 'kueijin-identity', 'Kuei-Jin Identity', [
@@ -2374,6 +2386,8 @@ class Seeder {
 			[ 'name' => 'Demon Chi', 'value_type' => 'integer', 'default_start' => 0, 'max' => 10 ],
 		] );
 
+		$blocks[] = self::make_health_block( 'kueijin', self::health_composition( 'Torpor' ) );
+
 		// --- Mortal ---
 		$blocks[] = self::make_identity_block( 'mortal-identity', 'Mortal Identity', [
 			[ 'name' => 'Motivation',  'field_type' => 'text', 'required' => false ],
@@ -2388,6 +2402,8 @@ class Seeder {
 			[ 'name' => 'True Faith', 'value_type' => 'integer', 'default_start' => 0, 'max' => 10 ],
 			[ 'name' => 'Humanity',   'value_type' => 'integer', 'default_start' => 7, 'max' => 10 ],
 		] );
+
+		$blocks[] = self::make_health_block( 'mortal', self::health_composition( 'Mortally Wounded' ) );
 
 		// --- Fera (same structure as werewolf but distinct identity) ---
 		$blocks[] = self::make_identity_block( 'fera-identity', 'Fera Identity', [
@@ -2453,6 +2469,7 @@ class Seeder {
 				[ 'name' => 'Self-Control', 'value_type' => 'integer', 'default_start' => 1, 'max' => 5 ],
 				[ 'name' => 'Courage',      'value_type' => 'integer', 'default_start' => 1, 'max' => 5 ],
 			] ),
+			self::make_health_block( 'vampire', self::health_composition( 'Torpor' ) ),
 			self::make_identity_block(    'werewolf-identity',    'Werewolf Identity', [
 				[ 'name' => 'Tribe',   'field_type' => 'select', 'required' => true  ],
 				[ 'name' => 'Breed',   'field_type' => 'select', 'required' => true  ],
@@ -2471,6 +2488,7 @@ class Seeder {
 				[ 'name' => 'Glory',  'value_type' => 'decimal', 'step' => 0.1, 'default_start' => 0 ],
 				[ 'name' => 'Wisdom', 'value_type' => 'decimal', 'step' => 0.1, 'default_start' => 0 ],
 			] ),
+			self::make_health_block( 'werewolf', self::health_composition( 'Mortally Wounded' ) ),
 			self::make_identity_block(    'mage-identity',    'Mage Identity', [
 				[ 'name' => 'Tradition', 'field_type' => 'select', 'required' => true  ],
 				[ 'name' => 'Essence',   'field_type' => 'select', 'required' => false ],
@@ -2485,6 +2503,7 @@ class Seeder {
 				[ 'name' => 'Paradox',      'value_type' => 'integer', 'default_start' => 0, 'max' => 20 ],
 				[ 'name' => 'Willpower',    'value_type' => 'integer', 'default_start' => 3, 'max' => 20 ],
 			] ),
+			self::make_health_block( 'mage', self::health_composition( 'Mortally Wounded' ) ),
 			self::make_identity_block(    'changeling-identity', 'Changeling Identity', [
 				[ 'name' => 'Kith',    'field_type' => 'select', 'required' => true  ],
 				[ 'name' => 'Seeming', 'field_type' => 'select', 'required' => true  ],
@@ -2497,6 +2516,7 @@ class Seeder {
 				[ 'name' => 'Banality',  'value_type' => 'integer', 'default_start' => 3, 'max' => 10 ],
 				[ 'name' => 'Willpower', 'value_type' => 'integer', 'default_start' => 3, 'max' => 20 ],
 			] ),
+			self::make_health_block( 'changeling', self::health_composition( 'Mortally Wounded' ) ),
 			self::make_identity_block( 'wraith-identity', 'Wraith Identity', [
 				[ 'name' => 'Guild',   'field_type' => 'select', 'required' => false ],
 				[ 'name' => 'Legion',  'field_type' => 'text',   'required' => false ],
@@ -2519,6 +2539,7 @@ class Seeder {
 				[ 'name' => 'Torment',   'value_type' => 'integer', 'default_start' => 0, 'max' => 10 ],
 				[ 'name' => 'Willpower', 'value_type' => 'integer', 'default_start' => 3, 'max' => 20 ],
 			] ),
+			self::make_health_block( 'demon', self::health_composition( 'Mortally Wounded' ) ),
 			self::make_identity_block( 'mummy-identity', 'Mummy Identity', [
 				[ 'name' => 'Amenti', 'field_type' => 'text', 'required' => false ],
 			] ),
@@ -2528,6 +2549,7 @@ class Seeder {
 				[ 'name' => 'Balance',   'value_type' => 'integer', 'default_start' => 5, 'max' => 10 ],
 				[ 'name' => 'Willpower', 'value_type' => 'integer', 'default_start' => 3, 'max' => 20 ],
 			] ),
+			self::make_health_block( 'mummy', self::health_composition( 'Mortally Wounded', [ [ 'name' => 'Dead', 'count' => 2 ] ] ) ),
 			self::make_identity_block( 'kueijin-identity', 'Kuei-Jin Identity', [
 				[ 'name' => 'Dharma',  'field_type' => 'select', 'required' => true  ],
 				[ 'name' => 'Station', 'field_type' => 'text',   'required' => false ],
@@ -2540,6 +2562,7 @@ class Seeder {
 				[ 'name' => 'Yang Chi',  'value_type' => 'integer', 'default_start' => 3, 'max' => 10 ],
 				[ 'name' => 'Demon Chi', 'value_type' => 'integer', 'default_start' => 0, 'max' => 10 ],
 			] ),
+			self::make_health_block( 'kueijin', self::health_composition( 'Torpor' ) ),
 			self::make_identity_block( 'mortal-identity', 'Mortal Identity', [
 				[ 'name' => 'Motivation',  'field_type' => 'text', 'required' => false ],
 				[ 'name' => 'Association', 'field_type' => 'text', 'required' => false ],
@@ -2551,6 +2574,7 @@ class Seeder {
 				[ 'name' => 'True Faith', 'value_type' => 'integer', 'default_start' => 0, 'max' => 10 ],
 				[ 'name' => 'Humanity',   'value_type' => 'integer', 'default_start' => 7, 'max' => 10 ],
 			] ),
+			self::make_health_block( 'mortal', self::health_composition( 'Mortally Wounded' ) ),
 			self::make_identity_block( 'fera-identity', 'Fera Identity', [
 				[ 'name' => 'Fera Type', 'field_type' => 'select', 'required' => true  ],
 				[ 'name' => 'Breed',     'field_type' => 'select', 'required' => true  ],
@@ -2613,9 +2637,10 @@ class Seeder {
 							[ 'block_slug' => 'vampire-statuses',          'label' => 'Status',           'display_order' => 70, 'required' => false ],
 							[ 'block_slug' => 'vampire-resources',         'label' => 'Resources',        'display_order' => 80, 'required' => true  ],
 							[ 'block_slug' => 'vampire-virtues',           'label' => 'Virtues',          'display_order' => 81, 'required' => true  ],
+							[ 'block_slug' => 'vampire-health',            'label' => 'Health',           'display_order' => 82, 'required' => false ],
 						]
 					),
-					'display_preferences' => [ 'discipline_display' => 'named', 'health_levels' => 7 ],
+					'display_preferences' => [ 'discipline_display' => 'named' ],
 				],
 				'creation_rules' => [
 					'steps' => [
@@ -2643,6 +2668,7 @@ class Seeder {
 							[ 'block_slug' => 'werewolf-rites',     'label' => 'Rites',     'display_order' => 61, 'required' => false ],
 							[ 'block_slug' => 'werewolf-resources', 'label' => 'Resources', 'display_order' => 80, 'required' => true  ],
 							[ 'block_slug' => 'werewolf-renown',    'label' => 'Renown',    'display_order' => 81, 'required' => true  ],
+							[ 'block_slug' => 'werewolf-health',    'label' => 'Health',    'display_order' => 82, 'required' => false ],
 						]
 					),
 				],
@@ -2664,6 +2690,7 @@ class Seeder {
 							[ 'block_slug' => 'mage-spheres',    'label' => 'Spheres',    'display_order' => 60, 'required' => true  ],
 							[ 'block_slug' => 'mage-rotes',      'label' => 'Rotes',      'display_order' => 61, 'required' => false ],
 							[ 'block_slug' => 'mage-resources',  'label' => 'Resources',  'display_order' => 80, 'required' => true  ],
+							[ 'block_slug' => 'mage-health',     'label' => 'Health',     'display_order' => 82, 'required' => false ],
 						]
 					),
 				],
@@ -2685,6 +2712,7 @@ class Seeder {
 							[ 'block_slug' => 'changeling-arts',      'label' => 'Arts',      'display_order' => 60, 'required' => true  ],
 							[ 'block_slug' => 'changeling-realms',    'label' => 'Realms',    'display_order' => 61, 'required' => true  ],
 							[ 'block_slug' => 'changeling-resources', 'label' => 'Resources', 'display_order' => 80, 'required' => true  ],
+							[ 'block_slug' => 'changeling-health',    'label' => 'Health',    'display_order' => 82, 'required' => false ],
 						]
 					),
 				],
@@ -2725,6 +2753,7 @@ class Seeder {
 							[ 'block_slug' => 'demon-backgrounds', 'label' => 'Backgrounds', 'display_order' => 40, 'required' => false ],
 							[ 'block_slug' => 'demon-lores',     'label' => 'Lores',     'display_order' => 60, 'required' => true  ],
 							[ 'block_slug' => 'demon-resources', 'label' => 'Resources', 'display_order' => 80, 'required' => true  ],
+							[ 'block_slug' => 'demon-health',    'label' => 'Health',    'display_order' => 82, 'required' => false ],
 						]
 					),
 				],
@@ -2745,6 +2774,7 @@ class Seeder {
 							[ 'block_slug' => 'mummy-backgrounds', 'label' => 'Backgrounds', 'display_order' => 40, 'required' => false ],
 							[ 'block_slug' => 'mummy-hekau',     'label' => 'Hekau',     'display_order' => 60, 'required' => true  ],
 							[ 'block_slug' => 'mummy-resources', 'label' => 'Resources', 'display_order' => 80, 'required' => true  ],
+							[ 'block_slug' => 'mummy-health',    'label' => 'Health',    'display_order' => 82, 'required' => false ],
 						]
 					),
 				],
@@ -2765,6 +2795,7 @@ class Seeder {
 							[ 'block_slug' => 'kueijin-backgrounds', 'label' => 'Backgrounds', 'display_order' => 40, 'required' => false ],
 							[ 'block_slug' => 'kueijin-disciplines', 'label' => 'Disciplines', 'display_order' => 60, 'required' => true  ],
 							[ 'block_slug' => 'kueijin-resources',   'label' => 'Resources',   'display_order' => 80, 'required' => true  ],
+							[ 'block_slug' => 'kueijin-health',      'label' => 'Health',      'display_order' => 82, 'required' => false ],
 						]
 					),
 				],
@@ -2785,6 +2816,7 @@ class Seeder {
 							[ 'block_slug' => 'mortal-backgrounds', 'label' => 'Backgrounds', 'display_order' => 40, 'required' => false ],
 							[ 'block_slug' => 'mortal-numina',    'label' => 'Numina',    'display_order' => 60, 'required' => false ],
 							[ 'block_slug' => 'mortal-resources', 'label' => 'Resources', 'display_order' => 80, 'required' => true  ],
+							[ 'block_slug' => 'mortal-health',    'label' => 'Health',    'display_order' => 82, 'required' => false ],
 						]
 					),
 				],
@@ -2807,6 +2839,7 @@ class Seeder {
 							[ 'block_slug' => 'werewolf-rites',     'label' => 'Rites',     'display_order' => 61, 'required' => false ],
 							[ 'block_slug' => 'werewolf-resources', 'label' => 'Resources', 'display_order' => 80, 'required' => true  ],
 							[ 'block_slug' => 'werewolf-renown',    'label' => 'Renown',    'display_order' => 81, 'required' => true  ],
+							[ 'block_slug' => 'werewolf-health',    'label' => 'Health',    'display_order' => 82, 'required' => false ],
 						]
 					),
 				],
@@ -2829,6 +2862,7 @@ class Seeder {
 							[ 'block_slug' => 'werewolf-rites',     'label' => 'Rites',     'display_order' => 61, 'required' => false ],
 							[ 'block_slug' => 'werewolf-resources', 'label' => 'Resources', 'display_order' => 80, 'required' => true  ],
 							[ 'block_slug' => 'werewolf-renown',    'label' => 'Renown',    'display_order' => 81, 'required' => true  ],
+							[ 'block_slug' => 'werewolf-health',    'label' => 'Health',    'display_order' => 82, 'required' => false ],
 						]
 					),
 				],
@@ -2903,6 +2937,56 @@ class Seeder {
 			'is_system'    => 1,
 			'created_by'   => 0,
 		];
+	}
+
+	/**
+	 * Real Grapevine "extended" Health Levels composition (every *Class.cls's
+	 * HealthList.Initialize/.Append sequence: hlStdHealth0..3 are identical
+	 * across every race that has one - Healthy(2), Bruised(3), Wounded(2),
+	 * Incapacitated(1) - only the terminal box(es) differ). Wraith has no
+	 * HealthList at all (uses its own Corpus resource pool, already modeled);
+	 * every other stack gets one of these three shapes. Old/standard Health is
+	 * deliberately not offered - Grapevine chronicles play Extended.
+	 *
+	 * @param string $terminal       Name of the final box (`Mortally Wounded` or `Torpor`).
+	 * @param array  $extra_terminal Additional trailing boxes past the terminal one (Mummy's two `Dead`).
+	 * @return array<int,array{name:string,count:int}>
+	 */
+	private static function health_composition( string $terminal, array $extra_terminal = [] ): array {
+		return array_merge(
+			[
+				[ 'name' => 'Healthy',       'count' => 2 ],
+				[ 'name' => 'Bruised',       'count' => 3 ],
+				[ 'name' => 'Wounded',       'count' => 2 ],
+				[ 'name' => 'Incapacitated', 'count' => 1 ],
+				[ 'name' => $terminal,       'count' => 1 ],
+			],
+			$extra_terminal
+		);
+	}
+
+	/**
+	 * Builds a stack's `{stack}-health` block: an ordinary, unpriced `trait_list`
+	 * (Grapevine's own HealthList is a plain LinkedTraitList, same construct as
+	 * Merits - confirmed against pp-samples/*-pc-print.html and a real .gex export).
+	 * `default_held` is read by `Characters_Controller::create_item()` to populate
+	 * a new character's sheet_data automatically; it is never priced (no `cost` key
+	 * on any item, matching Grapevine's own estimator having no Health entry at all).
+	 *
+	 * @param string $stack_slug
+	 * @param array  $composition health_composition()'s return value.
+	 * @return array
+	 */
+	private static function make_health_block( string $stack_slug, array $composition ): array {
+		return self::make_trait_list_block(
+			"{$stack_slug}-health",
+			'Health',
+			array_map( static fn( array $c ): string => $c['name'], $composition ),
+			[
+				'allow_custom' => false,
+				'default_held' => $composition,
+			]
+		);
 	}
 
 	/**

@@ -201,22 +201,17 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * "Imported health levels are silently discarded" (0.99.2-workflow.md): a
-	 * `preserve_as_note`-classified list (Health Levels, Bonds - BE has no schema block for
-	 * either) must survive into the import_note's raw_record instead of being stripped
-	 * along with the sheet_block lists that really were fully resolved elsewhere.
+	 * "Imported health levels are silently discarded" (0.99.2-workflow.md) is fixed - Health
+	 * Levels now resolves to the stack's own `{stack}-health` sheet_block, same as
+	 * Influences/Backgrounds. Bonds still has no BE model and remains the real example of a
+	 * `preserve_as_note`-classified list surviving into the import_note's raw_record instead
+	 * of being stripped along with the sheet_block lists that really were fully resolved
+	 * elsewhere.
 	 */
 	public function test_preserve_as_note_trait_lists_survive_into_the_import_note(): void {
 		wp_set_current_user( $this->admin_id );
 
 		$character = $this->synthetic_character( 'Iron Will', [
-			'Health Levels' => [
-				'name'   => 'Health Levels',
-				'traits' => [
-					[ 'name' => 'Bruised', 'total' => '3', 'note' => '' ],
-					[ 'name' => 'Wounded', 'total' => '2', 'note' => '' ],
-				],
-			],
 			'Bonds' => [
 				'name'   => 'Bonds',
 				'traits' => [
@@ -237,24 +232,60 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$preserved = $import_note->change_data['raw_record']['trait_lists'] ?? null;
 		$this->assertNotNull( $preserved, 'preserve_as_note lists must not be stripped from the raw_record.' );
 		$preserved_names = array_column( $preserved, 'name' );
-		$this->assertContains( 'Health Levels', $preserved_names );
 		$this->assertContains( 'Bonds', $preserved_names );
-		// Merits is sheet_block-classified and already lives in sheet_data - it must not
-		// also be duplicated into the preserved note.
+		// Merits and Health Levels are both sheet_block-classified and already live in
+		// sheet_data - neither may also be duplicated into the preserved note.
 		$this->assertNotContains( 'Merits', $preserved_names );
-
-		$health_levels = current( array_filter( $preserved, static fn( $l ) => $l['name'] === 'Health Levels' ) );
-		$this->assertSame( 'Bruised', $health_levels['traits'][0]['name'] );
-		$this->assertSame( '3', $health_levels['traits'][0]['total'] );
+		$this->assertNotContains( 'Health Levels', $preserved_names );
 	}
 
 	/**
-	 * Every real trait_list block seeded today has `allow_custom: true` (already noted
-	 * live at workflow-0.4.md V14's verification: "no real seeded block has ever set
-	 * that to false"), so an unrecognized *trait_list* trait always resolves `custom`,
-	 * never `unresolved`. `tiered_power` blocks have no `allow_custom` concept at all
-	 * (Trait_Mapper's own doc comment), so a discipline family that plainly doesn't
-	 * exist is the real, reachable unresolved case today.
+	 * The real fix: an imported character's "Health Levels" list lands in
+	 * `{stack}-health` sheet_data exactly like any other trait_list import (Merits'
+	 * own path), carrying the real per-character box counts instead of being discarded.
+	 */
+	public function test_health_levels_imports_into_the_stacks_own_health_block(): void {
+		wp_set_current_user( $this->admin_id );
+
+		$character = $this->synthetic_character( 'Iron Will', [
+			'Health Levels' => [
+				'name'   => 'Health Levels',
+				'traits' => [
+					[ 'name' => 'Healthy', 'total' => '2', 'note' => '' ],
+					[ 'name' => 'Bruised', 'total' => '3', 'note' => '' ],
+					[ 'name' => 'Wounded', 'total' => '2', 'note' => '' ],
+					[ 'name' => 'Incapacitated', 'total' => '1', 'note' => '' ],
+					[ 'name' => 'Torpor', 'total' => '1', 'note' => '' ],
+				],
+			],
+		] );
+		$job_id = $this->inject_job( $this->synthetic_parsed( [ $character ] ) );
+
+		$response = $this->dispatch( $this->commit_request( $job_id ) );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+
+		$found_character = Character::find( (int) $response->get_data()['characters'][0]['id'] );
+		$health          = $found_character->sheet_data['vampire-health'] ?? null;
+		$this->assertNotNull( $health, 'Health Levels must land in vampire-health sheet_data.' );
+
+		$by_name = [];
+		foreach ( $health as $item ) {
+			$by_name[ $item['name'] ] = $item['count'];
+		}
+		$this->assertSame(
+			[ 'Healthy' => 2, 'Bruised' => 3, 'Wounded' => 2, 'Incapacitated' => 1, 'Torpor' => 1 ],
+			$by_name
+		);
+	}
+
+	/**
+	 * Every open-catalog trait_list block (Merits, Backgrounds, and so on) seeds with
+	 * `allow_custom: true`, so an unrecognized trait in one of those always resolves
+	 * `custom`, never `unresolved`. The `{stack}-health` blocks are the one deliberate
+	 * exception (a fixed, closed set of real Grapevine box names), but `tiered_power`
+	 * blocks have no `allow_custom` concept at all (Trait_Mapper's own doc comment), so a
+	 * discipline family that plainly doesn't exist is the real, reachable unresolved case
+	 * exercised here.
 	 */
 	public function test_commit_is_refused_while_a_tiered_power_trait_is_unresolved(): void {
 		wp_set_current_user( $this->admin_id );

@@ -15,14 +15,15 @@ use WP_UnitTestCase;
  * GX-3/GX-4: `Character_Exporter` against a real vampire character with real
  * `sheet_data` set against this install's own already-seeded global MET
  * catalog (`vampire-identity`, `vampire-resources`, `met-merits`,
- * `vampire-backgrounds` - every install ships these pre-seeded, per the
- * Storyteller Guide; this suite deliberately does not insert its own
- * competing schema_blocks/creature_stacks rows, since the real ones already
- * exist globally and a same-slug insert collides), a real `be_connections`
- * item, a real approved XP history, and a real `import_note` change carrying
- * a `preserve_as_note` list - proving every routing outcome
- * `gex-trait-list-map.php` defines at once, then confirming the whole
- * document round-trips through our own `GEX_Xml_Parser` cleanly.
+ * `vampire-backgrounds`, `vampire-health` - every install ships these
+ * pre-seeded, per the Storyteller Guide; this suite deliberately does not
+ * insert its own competing schema_blocks/creature_stacks rows, since the
+ * real ones already exist globally and a same-slug insert collides), a real
+ * `be_connections` item, a real approved XP history, and a real
+ * `import_note` change carrying a `preserve_as_note` list (Bonds, which has
+ * no live BE model) - proving every routing outcome `gex-trait-list-map.php`
+ * defines at once, then confirming the whole document round-trips through
+ * our own `GEX_Xml_Parser` cleanly.
  *
  * `Toreador`/`Camarilla`/`Humanity`/`Bureaucracy` (Influences)/`Allies`
  * (Backgrounds) are confirmed real entries in the seeded catalog, not
@@ -66,6 +67,10 @@ class CharacterExporterThreadTest extends WP_UnitTestCase {
 					[ 'name' => 'Allies', 'count' => 3 ],
 					[ 'name' => 'Bureaucracy', 'count' => 2 ],
 				],
+				'vampire-health'      => [
+					[ 'name' => 'Bruised', 'count' => 3 ],
+					[ 'name' => 'Wounded', 'count' => 2 ],
+				],
 			],
 		] );
 
@@ -97,15 +102,14 @@ class CharacterExporterThreadTest extends WP_UnitTestCase {
 			'target_type' => 'world_object', 'target_id' => $item_id, 'created_by' => 1,
 		] );
 
-		// A real import_note change, for the preserve_as_note (Health Levels) backfill path.
+		// A real import_note change, for the preserve_as_note (Bonds - no live BE model) backfill path.
 		Change_Engine::submit( $this->character_id, [
 			'change_type' => 'import_note', 'category' => 'import',
 			'change_data' => [
 				'source_file' => 'test.gex', 'imported_at' => current_time( 'mysql' ), 'action' => 'created',
 				'raw_record'  => [ 'trait_lists' => [
-					[ 'name' => 'Health Levels', 'traits' => [
-						[ 'name' => 'Bruised', 'total' => '3', 'note' => '' ],
-						[ 'name' => 'Wounded', 'total' => '2', 'note' => '' ],
+					[ 'name' => 'Bonds', 'traits' => [
+						[ 'name' => 'Sire', 'total' => '5', 'note' => '' ],
 					] ],
 				] ],
 			],
@@ -168,11 +172,19 @@ class CharacterExporterThreadTest extends WP_UnitTestCase {
 		$this->assertSame( [ 'Kevlar Vest' ], array_column( $equipment, 'name' ) );
 	}
 
-	public function test_health_levels_is_backfilled_from_the_import_note_raw_record(): void {
+	public function test_health_levels_exports_as_an_ordinary_sheet_block_trait_list(): void {
 		$result = GEX_Xml_Parser::parse_string( Character_Exporter::export( $this->character_id )['xml'] );
 		$health = $result['characters'][0]['trait_lists']['Health Levels']['traits'];
 
 		$this->assertSame( [ 'Bruised', 'Wounded' ], array_column( $health, 'name' ) );
+		$this->assertSame( [ '3', '2' ], array_column( $health, 'total' ) );
+	}
+
+	public function test_bonds_is_backfilled_from_the_import_note_raw_record(): void {
+		$result = GEX_Xml_Parser::parse_string( Character_Exporter::export( $this->character_id )['xml'] );
+		$bonds  = $result['characters'][0]['trait_lists']['Bonds']['traits'];
+
+		$this->assertSame( [ 'Sire' ], array_column( $bonds, 'name' ) );
 	}
 
 	public function test_xp_totals_and_history_reflect_the_real_approved_earn(): void {

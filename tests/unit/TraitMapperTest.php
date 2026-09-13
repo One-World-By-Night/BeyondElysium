@@ -108,11 +108,16 @@ class TraitMapperTest extends TestCase {
 		$this->assertSame( 'werewolf-backgrounds', $backgrounds['block_slug'] );
 	}
 
-	public function test_health_levels_has_no_be_model_and_is_preserved_not_dropped(): void {
-		// Real per-character box-count data (confirmed against a real .gex sample) - BE has
-		// no health resource_pool block yet, so this must not be discard_derived.
-		$result = Trait_Mapper::classify_list( 'vampire', 'Health Levels' );
-		$this->assertSame( 'preserve_as_note', $result['outcome'] );
+	public function test_health_levels_resolves_to_the_stacks_own_health_block(): void {
+		// HealthList is a plain LinkedTraitList in Grapevine's own source, same construct
+		// as Influences/Backgrounds - routes the same way, not preserved as a note.
+		$vampire  = Trait_Mapper::classify_list( 'vampire', 'Health Levels' );
+		$werewolf = Trait_Mapper::classify_list( 'werewolf', 'Health Levels' );
+
+		$this->assertSame( 'sheet_block', $vampire['outcome'] );
+		$this->assertSame( 'vampire-health', $vampire['block_slug'] );
+		$this->assertSame( 'sheet_block', $werewolf['outcome'] );
+		$this->assertSame( 'werewolf-health', $werewolf['block_slug'] );
 	}
 
 	public function test_equipment_and_locations_route_to_world_objects(): void {

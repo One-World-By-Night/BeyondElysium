@@ -377,12 +377,17 @@ class Characters_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'sheet_data must be an object.', 'beyond-elysium' ), 400 );
 		}
 		$sheet_data = $sheet_data ?: [];
+
+		// Resolved unconditionally, even on a bare create with no hand-entered sheet_data -
+		// needed below to apply each block's own default_held starting template (e.g. a new
+		// vampire's Health Levels), not only to validate sheet_data the caller supplied.
+		// Resolves against the game's own customized blocks, not just the base catalog.
+		$resolved = Creature_Stack::resolve( $stack_slug, $request['game_slug'] );
+		if ( ! $resolved ) {
+			return $this->error( 'invalid_param', __( 'stack_slug does not resolve to a real creature stack.', 'beyond-elysium' ), 400 );
+		}
+
 		if ( ! empty( $sheet_data ) ) {
-			// Resolves against the game's own customized blocks, not just the base catalog.
-			$resolved = Creature_Stack::resolve( $stack_slug, $request['game_slug'] );
-			if ( ! $resolved ) {
-				return $this->error( 'invalid_param', __( 'stack_slug does not resolve to a real creature stack.', 'beyond-elysium' ), 400 );
-			}
 			$unknown_blocks = array_diff( array_keys( $sheet_data ), array_keys( $resolved['blocks'] ) );
 			if ( $unknown_blocks ) {
 				return $this->error(
@@ -409,6 +414,20 @@ class Characters_Controller extends Base_Controller {
 					),
 					400
 				);
+			}
+		}
+
+		// A block that ships its own starting template (trait_list's `default_held`, e.g.
+		// Health Levels) is applied automatically here, the same way Grapevine itself
+		// pre-fills a fresh character's health boxes - never overwriting a block the
+		// caller already supplied a value for.
+		foreach ( $resolved['blocks'] as $block_slug => $block ) {
+			if ( array_key_exists( $block_slug, $sheet_data ) ) {
+				continue;
+			}
+			$default_held = $block->definition->default_held ?? null;
+			if ( $default_held ) {
+				$sheet_data[ $block_slug ] = $default_held;
 			}
 		}
 

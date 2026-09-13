@@ -52,9 +52,12 @@ return [
 		'Influences'        => [ 'outcome' => 'sheet_block', 'block_slug' => '{stack}-backgrounds' ],
 		'Backgrounds'       => [ 'outcome' => 'sheet_block', 'block_slug' => '{stack}-backgrounds' ],
 		// Real per-character box-count data (e.g. Bruised:3, Wounded:2 - confirmed against a
-		// real .gex sample), not a rederivable value - BE has no health resource_pool block
-		// yet (0.99.2-workflow.md), so this is preserved rather than discarded.
-		'Health Levels'     => [ 'outcome' => 'preserve_as_note' ],
+		// real .gex sample). HealthList is a plain LinkedTraitList in Grapevine's own source
+		// (every *Class.cls's HealthList.Initialize/.Append), same construct as Merits/
+		// Backgrounds - routes through the ordinary trait_list path like those. Wraith has
+		// no HealthList at all (uses Corpus instead), so no wraith-health block exists; a
+		// real Wraith export never carries this list name.
+		'Health Levels'     => [ 'outcome' => 'sheet_block', 'block_slug' => '{stack}-health' ],
 		'Equipment'         => [ 'outcome' => 'world_object', 'object_type' => 'item' ],
 		// FeraClass alone spells this singular ("Location"); everyone else pluralizes it.
 		'Locations'         => [ 'outcome' => 'world_object', 'object_type' => 'location' ],
