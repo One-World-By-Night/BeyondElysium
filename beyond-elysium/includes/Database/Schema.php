@@ -20,7 +20,7 @@ class Schema {
 	 * release version. Compared against the stored VERSION_OPTION value by
 	 * maybe_upgrade() to decide whether migrations need to run.
 	 */
-	const DB_VERSION = '0.99.9';
+	const DB_VERSION = '0.99.10';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -49,6 +49,7 @@ class Schema {
 		'queries',
 		'character_sheet_styles',
 		'game_members',
+		'character_attestations',
 	];
 
 	/**
@@ -213,6 +214,33 @@ class Schema {
 			PRIMARY KEY  (id),
 			KEY idx_character (character_id),
 			KEY idx_change (change_id)
+		) $charset_collate;" );
+
+		// be_character_attestations: per-issuance verification tokens (GX-7). Keyed by a
+		// random per-issuance token/short_code, never the character's own UUID - a UUIDv7
+		// is partly a timestamp and is published as the permanent cross-plugin key
+		// (INTEROP-UUID.md), so it must never double as a revocable, rotatable public key.
+		dbDelta( "CREATE TABLE {$prefix}character_attestations (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			character_uuid char(36) NOT NULL,
+			character_id bigint(20) unsigned DEFAULT NULL,
+			game_slug varchar(100) NOT NULL,
+			token char(43) NOT NULL,
+			short_code varchar(12) NOT NULL,
+			kind varchar(10) NOT NULL,
+			sheet_hash char(64) NOT NULL,
+			attested json NOT NULL,
+			issued_at datetime NOT NULL,
+			issued_by bigint(20) unsigned NOT NULL,
+			expires_at datetime DEFAULT NULL,
+			revoked_at datetime DEFAULT NULL,
+			last_checked_at datetime DEFAULT NULL,
+			check_count int(10) unsigned NOT NULL DEFAULT 0,
+			PRIMARY KEY  (id),
+			UNIQUE KEY uq_token (token),
+			UNIQUE KEY uq_short (short_code),
+			KEY idx_uuid (character_uuid),
+			KEY idx_game (game_slug, issued_at)
 		) $charset_collate;" );
 
 		// be_plots: storyline records, optionally nested under a parent plot.

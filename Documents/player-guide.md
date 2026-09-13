@@ -66,7 +66,19 @@ that's reached you. Open one to read the full thread and, if it calls for a resp
 submit your action directly from there — the same review process as any other change
 applies to plot actions your Storyteller needs to approve.
 
-## 6. Sheet Customization
+## 6. Recording Background Uses
+
+Once your Storyteller has allocated actions for a game date, your character sheet's
+**Background uses** panel (pick the game date you want, at the top of the panel) lets you
+record what you actually did with each one — Personal actions, any Influence, and any
+Background your chronicle has configured to grant an action. Type what happened and hit
+**Record a use**; your Storyteller fills in the result once it's adjudicated. You can record
+a use against a Background that has no action budget too — it's shown separately, with a
+note that your Storyteller hasn't configured it to grant an action yet, but the use is still
+recorded either way. You can clear your own use as long as no result has been recorded
+against it yet; once your Storyteller adjudicates it, it's locked.
+
+## 7. Sheet Customization
 
 If your chronicle has granted you sheet customization, you can set your own font, colors,
 background image, and section graphics from the character editor — this is purely visual

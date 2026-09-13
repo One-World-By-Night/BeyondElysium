@@ -194,4 +194,45 @@ class CharacterExporterThreadTest extends WP_UnitTestCase {
 		$full = Character_Exporter::export( $this->character_id, [ 'hide_st' => false ] );
 		$this->assertStringContainsString( 'secret ST-only notes', $full['xml'] );
 	}
+
+	public function test_without_verify_the_id_field_is_always_empty(): void {
+		$xml       = Character_Exporter::export( $this->character_id )['xml'];
+		$character = GEX_Xml_Parser::parse_string( $xml )['characters'][0];
+
+		$this->assertSame( '', $character['id'] );
+		$this->assertStringNotContainsString( '<verification', $xml );
+	}
+
+	public function test_verify_embeds_a_working_code_and_a_verification_element(): void {
+		$xml = Character_Exporter::export( $this->character_id, [ 'verify' => true ] )['xml'];
+
+		$character = GEX_Xml_Parser::parse_string( $xml )['characters'][0];
+		$this->assertNotSame( '', $character['id'], 'the id field must carry the verification URL' );
+		$this->assertStringContainsString( 'be-verify', $character['id'] );
+
+		$this->assertMatchesRegularExpression( '#<verification url="[^"]+" issued="[^"]+"/>#', $xml );
+
+		preg_match( '/code=([A-Za-z0-9-]+)/', $character['id'], $m );
+		$this->assertNotEmpty( $m[1] ?? null );
+		$this->assertNotNull( \BeyondElysium\Models\Attestation::resolve( $m[1] ), 'the embedded code must resolve to a real attestation' );
+	}
+
+	public function test_verify_mints_a_fresh_code_on_every_call(): void {
+		$first  = Character_Exporter::export( $this->character_id, [ 'verify' => true ] )['xml'];
+		$second = Character_Exporter::export( $this->character_id, [ 'verify' => true ] )['xml'];
+
+		preg_match( '/code=([A-Za-z0-9-]+)/', $first, $m1 );
+		preg_match( '/code=([A-Za-z0-9-]+)/', $second, $m2 );
+
+		$this->assertNotSame( $m1[1], $m2[1] );
+	}
+
+	public function test_verify_still_produces_a_document_that_parses_back_through_our_own_reader(): void {
+		$xml       = Character_Exporter::export( $this->character_id, [ 'verify' => true ] )['xml'];
+		$character = GEX_Xml_Parser::parse_string( $xml )['characters'][0];
+
+		// Everything else in the document is unaffected by verify - same identity, same trait lists.
+		$this->assertSame( 'Export Test Vampire', $character['name'] );
+		$this->assertSame( 'Toreador', $character['clan'] );
+	}
 }

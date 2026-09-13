@@ -36,6 +36,7 @@ class Export_Controller extends Base_Controller {
 					'format'      => [ 'type' => 'string', 'enum' => [ 'gex-xml' ], 'default' => 'gex-xml' ],
 					'hide_st'     => [ 'type' => 'boolean', 'default' => false ],
 					'as_transfer' => [ 'type' => 'boolean', 'default' => false ],
+					'verify'      => [ 'type' => 'boolean', 'default' => false ],
 				],
 			],
 		] );
@@ -68,6 +69,7 @@ class Export_Controller extends Base_Controller {
 		$result = Character_Exporter::export( (int) $character->id, [
 			'hide_st'     => (bool) $request->get_param( 'hide_st' ),
 			'as_transfer' => (bool) $request->get_param( 'as_transfer' ),
+			'verify'      => (bool) $request->get_param( 'verify' ),
 		] );
 
 		return $this->success( $result );

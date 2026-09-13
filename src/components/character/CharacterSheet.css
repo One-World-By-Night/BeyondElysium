@@ -74,6 +74,14 @@
 	color: var( --be-sheet-accent );
 }
 
+.be-character-sheet__verify-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	font-size: 0.85rem;
+	cursor: pointer;
+}
+
 .be-character-sheet__style-toggle[aria-expanded="true"],
 .be-character-sheet__history-toggle[aria-expanded="true"] {
 	background: var( --be-sheet-accent );

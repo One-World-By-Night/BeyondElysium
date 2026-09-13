@@ -63,6 +63,13 @@ class Page_Provisioner {
 			'title'  => 'Boon Ledger',
 			'widget' => 'boon-ledger',
 		],
+		// Public, unauthenticated (GX-7) - VerifyCharacter.tsx reads its own ?code=
+		// URL param rather than anything in data-be-config, so this page needs no
+		// per-game wiring at all beyond existing.
+		'be-verify'        => [
+			'title'  => 'Verify Character',
+			'widget' => 'verify-character',
+		],
 	];
 
 	/**

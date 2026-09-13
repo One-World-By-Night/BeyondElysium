@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**Status:** `v0.99.9` is released and running in production chronicles. The character engine, editor, Storyteller tools, world data, Grapevine import, configurable approval rules, and blood magic paths are all built; renaming a chronicle's slug is a safe, cascading operation; a chronicle's downtime actions have both a real settings screen and a use-by-use ledger; the query engine now searches items, locations, and rotes, not just characters; a real Grapevine exchange-file import bug (single-dot traits silently zeroed) is fixed; and a character can now be exported to a real Grapevine `.gex` XML file. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's left before 1.0.
+**Status:** `v0.99.10` is released and running in production chronicles. The character engine, editor, Storyteller tools, world data, Grapevine import, configurable approval rules, and blood magic paths are all built; renaming a chronicle's slug is a safe, cascading operation; a chronicle's downtime actions have both a real settings screen and a use-by-use ledger; the query engine now searches items, locations, and rotes, not just characters; a real Grapevine exchange-file import bug (single-dot traits silently zeroed) is fixed; a character can be exported to a real Grapevine `.gex` XML file; and that export can now carry a public verification code, so another chronicle can confirm it's genuine and still current. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's left before 1.0.
 
 ## What It Does
 
@@ -22,7 +22,7 @@ Beyond the sheet itself:
 
 ## Installation
 
-Download `beyond-elysium-0.99.9.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
+Download `beyond-elysium-0.99.10.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
 
 That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder in this repository is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder straight into `wp-content/plugins/` will not work. To build it yourself:
 
@@ -95,10 +95,11 @@ BeyondElysium ships in-app documentation, viewable inside the plugin's own admin
 | Query engine extended to items, locations, and rotes — not just characters | Complete |
 | Grapevine exchange-file import fix (single-dot traits no longer zero on import) and the field-order groundwork for character export | Complete |
 | Export a character to a real Grapevine `.gex` XML file, from the character sheet | Complete |
+| A public verification endpoint for an exported character, with a human-facing check page | Complete |
 
 ## Roadmap
 
-`v0.99.0` was the first public release. The path to 1.0 is now a closed scope, each item already given a full architecture pass before any of it is built: letting a character travel between chronicles (export/import plus a signed, verifiable sheet), an itemized XP audit for a sheet, the rest of a phone-first pass on the character sheet (the read-only sheet's own phone-width layout bug is already fixed), a guided first-run setup for a new chronicle, and expanding the Rote catalog from a published compendium.
+`v0.99.0` was the first public release. The path to 1.0 is now a closed scope, each item already given a full architecture pass before any of it is built: letting a character travel between chronicles (export and a public verification check are done; import and a signed, verifiable PDF are what's left), an itemized XP audit for a sheet, the rest of a phone-first pass on the character sheet (the read-only sheet's own phone-width layout bug is already fixed), a guided first-run setup for a new chronicle, and expanding the Rote catalog from a published compendium.
 
 **Bylaw-driven approval data.** Chronicles configure their own approval rules through the admin UI today. Importing OWBN's published Character Regulation Bylaws directly — 1,032 clauses — is researched and specified but deliberately not built: most clauses restrict character *concepts* rather than named traits, so it needs a review workflow rather than a straight import.
 
