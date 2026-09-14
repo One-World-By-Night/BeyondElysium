@@ -7,28 +7,39 @@ management instead, see the [Storyteller Guide](st-guide.md).
 
 ## The wp-admin Menu
 
-Everything below lives under one top-level **Beyond Elysium** menu in wp-admin, itself
-gated `be_manage_games` (administrator-only). Its sixteen submenus, each with its own
-capability:
+Everything below lives under one top-level **Beyond Elysium** menu in wp-admin. Clicking the
+top-level label itself lands on a real dashboard - an about/what's-where reference, the
+Elementor widgets & shortcodes inventory, and a "Create your first chronicle" call-to-action
+that's prominent only while no real chronicle exists yet. Sixteen flat submenus were
+consolidated into 8 tabbed groups; a tab hides itself individually when the viewer lacks its
+own capability, so a page stays reachable even for a viewer who can't see every tab on it:
 
-| Submenu | Capability | Covered in this guide |
+| Submenu | Tabs (each its own capability) | Covered in this guide |
 |---|---|---|
-| Games | `be_manage_games` | Chronicle-Scoped Access, below |
-| Chronicle Setup | `be_view_characters` | — a live checklist for a chronicle's own setup; see the [Storyteller Guide](st-guide.md) |
-| Characters | `be_manage_characters` | — the staff-facing character roster across every chronicle |
-| NPC Roster | `be_manage_characters` | — the same roster, filtered to NPCs only |
-| Schema Blocks | `be_manage_schemas` | Schema Blocks and Creature Stacks, below |
-| Creature Stacks | `be_manage_schemas` | Schema Blocks and Creature Stacks, below |
-| Templates | `be_manage_templates` | Templates, below |
-| Plots | `be_manage_plots` | — the same plot/action/rumor tooling as the Storyteller Toolkit page, from wp-admin |
-| Query Tool | `be_run_queries` | — the same query builder as the front-end Query Tool, from wp-admin |
-| Items & Locations | `be_manage_world_objects` | — the catalog of world objects a character can be connected to |
-| Import | `be_import` | Import, below |
-| Chronicle Access | `be_manage_games` | Chronicle-Scoped Access, below |
-| Docs | `be_view_characters` | — this guide and its three siblings, rendered in-plugin |
-| Approval Rules | `be_manage_approval_rules` | Descriptions and Approval Schedules, below |
-| Action & Rumor Settings | `be_manage_apr` | — per-chronicle downtime-action and rumor-generation configuration |
-| Reports | `be_view_reports` | — the 20-report/cards/batch-output layer |
+| Characters | — (single page; the NPC/player toggle replaces the old separate NPC Roster page) | — the staff-facing character roster across every chronicle, plus "+ New Character" and NPC flagging, below |
+| Plots | — (single page) | — the same plot/action/rumor tooling as the Storyteller Toolkit page, from wp-admin |
+| Items & Locations | — (single page) | — the catalog of world objects a character can be connected to |
+| Query Tool | Query Tool (`be_run_queries`), Reports (`be_view_reports`) | — the same query builder as the front-end Query Tool, plus the 20-report/cards/batch-output layer |
+| Import | — (single page) | Import, below |
+| Chronicle Setup | Chronicle Setup (`be_view_characters`), Chronicle Access (`be_manage_games`), Action & Rumor Settings (`be_manage_apr`) | Chronicle-Scoped Access, below; Chronicle Setup itself is a live checklist for a chronicle's own setup, see the [Storyteller Guide](st-guide.md) |
+| System Config | Games (`be_manage_games`), Schema Blocks (`be_manage_schemas`), Creature Stacks (`be_manage_schemas`), Templates (`be_manage_templates`), Approval Rules (`be_manage_approval_rules`) | Schema Blocks and Creature Stacks, Templates, and Descriptions and Approval Schedules, all below |
+| Docs | — (single page, `be_view_characters`) | — this guide and its three siblings, rendered in-plugin |
+
+Two related pages live on the front end instead, not in wp-admin at all: the **Game
+Dashboard** (roster stats, roster health, upcoming plots) is the Dashboard tab on both the
+Storyteller Toolkit page (staff) and My Chronicle (players, their own stats only), and
+**Notifications** is a per-chronicle on/off switch on Chronicle Setup → Chronicle Access,
+with each player able to opt out individually on their own WordPress Profile page. The
+landing dashboard's own "What's where" reference links to both.
+
+### Creating or Flagging an NPC
+
+The Characters page's "+ New Character" button opens the same character-creation form a
+player uses (front end, My Chronicle's Edit tab) for the currently-selected chronicle. A
+viewer holding `be_manage_characters` additionally sees a "This is an NPC" checkbox there -
+never shown to a player - which resolves the richer NPC sheet template (voice, mannerisms,
+plot hooks) immediately. The same checkbox appears in edit mode for an already-existing
+character, so flagging or un-flagging NPC status later needs no separate action.
 
 ## Schema Blocks and Creature Stacks
 
@@ -41,12 +52,12 @@ render time from two kinds of catalog entries:
 - **Creature stacks** — an ordered assembly of blocks that makes up one creature type's
   complete sheet.
 
-Under **Beyond Elysium → Schema Blocks**, each block shows its section type, whether it's a
+Under **Beyond Elysium → System Config → Schema Blocks**, each block shows its section type, whether it's a
 system block (part of the shipped catalog) or a chronicle's own fork, and its full
 definition. A system block can be forked per-chronicle from the Storyteller side (see the
 Storyteller Guide) without ever touching the shared version every other chronicle uses.
 
-Under **Beyond Elysium → Creature Stacks**, each stack lists which blocks it uses and in
+Under **Beyond Elysium → System Config → Creature Stacks**, each stack lists which blocks it uses and in
 what section/column they render.
 
 ## Descriptions and Approval Schedules on Catalog Items
@@ -54,7 +65,7 @@ what section/column they render.
 Beyond its basic name/cost/approval, any catalog entry — a trait list item, a tiered power
 level, a tiered power family, a resource pool, or an identity field — can carry a
 **Description** and a finer-grained **approval schedule**, both edited from the same
-**Beyond Elysium → Schema Blocks** screen the item already lives on.
+**Beyond Elysium → System Config → Schema Blocks** screen the item already lives on.
 
 ### Description
 
@@ -105,7 +116,7 @@ time, not a code change.
 1. **Build or reuse schema blocks.** If the new type needs traits nothing else uses yet
    (its own power list, its own resource pool), create those blocks first under **Schema
    Blocks → Add Block**, picking the right section type for each.
-2. **Create the creature stack.** Under **Creature Stacks → Add Stack**, give it a slug and
+2. **Create the creature stack.** Under **System Config → Creature Stacks → Add Stack**, give it a slug and
    name, then assemble it from existing and new blocks — set each block's column and
    display order.
 3. **Set creation rules**, if the type needs any (a starting dot allocation, a required
@@ -125,7 +136,7 @@ which blocks go in which column, in what order, and under what section heading. 
 creature stack gets a sensible default template automatically; templates only need editing
 when a chronicle wants a different visual arrangement than the default.
 
-Under **Beyond Elysium → Templates**, a template names a creature stack, a set of section
+Under **Beyond Elysium → System Config → Templates**, a template names a creature stack, a set of section
 groupings, and per-block column/width/title overrides. A template can also reference another
 block's field for cross-block display (`title_refs`) or resolve a display name through a
 lookup block (`name_lookup`) — both used for cases like showing a power's governing Sphere
@@ -136,7 +147,7 @@ shared, and a chronicle that wants its own layout forks it without affecting any
 
 ## Chronicle-Scoped Access
 
-Under **Beyond Elysium → Chronicle Access**, an admin controls:
+Under **Beyond Elysium → Chronicle Setup → Chronicle Access**, an admin controls:
 
 - The site-wide accessSchema toggle (on/off), and whether a real accessSchema client is
   actually detected on this install.
@@ -162,7 +173,7 @@ scoped to `be_manage_games`. This is deliberate — `game-roles.php` excludes `b
 from every chronicle role by name, so no HST can appoint their own AST even for their own
 chronicle.
 
-An HST *can* now (as of `v0.99.16`) reach **Schema Blocks**, **Creature Stacks**, and
+An HST *can* now (as of `v0.99.16`) reach **System Config**'s **Schema Blocks**, **Creature Stacks**, and
 **Templates** for their own chronicle's own customization — forking a block or a template
 for a chronicle they hold `hst`/`ast` membership in. This needs both of two things to be
 true: the site-wide capability (`be_manage_schemas`/`be_manage_templates`, granted to
