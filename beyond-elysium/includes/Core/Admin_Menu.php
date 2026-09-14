@@ -23,45 +23,48 @@ class Admin_Menu {
 	}
 
 	/**
-	 * Adds the top-level "Beyond Elysium" admin menu and its submenu pages:
-	 * Games, Chronicle Setup, Characters, NPC Roster, Schema Blocks, Creature
-	 * Stacks, Templates, Plots, Query Tool, Items & Locations, Import,
-	 * Chronicle Access, Docs, Approval Rules, Action & Rumor Settings, and
-	 * Reports. Each submenu page is gated on its own capability and renders
-	 * a mount point for the matching admin widget.
+	 * Adds the top-level "Beyond Elysium" admin menu (now a real landing
+	 * dashboard, not an alias for Games) and its 8 group submenu pages:
+	 * Characters, Plots, Items & Locations, Query Tool (+ Reports), Import,
+	 * Chronicle Setup (+ Chronicle Access + Action & Rumor Settings), System
+	 * Config (Games + Schema Blocks + Creature Stacks + Templates + Approval
+	 * Rules), and Docs - 9 visible rows in total, the Dashboard row being
+	 * what the top-level label itself links to (see the comment on that
+	 * add_submenu_page() call for why it stays visible rather than hidden).
+	 * admin-menu-consolidation-design.md collapsed 16 flat pages down to
+	 * these 9. Each hub page is gated on the broadest capability among its
+	 * own tabs, since a tab hides itself individually when its own capability
+	 * is absent (StorytellerToolkitPage's established client-side pattern).
 	 */
 	public static function add_pages(): void {
 		add_menu_page(
 			__( 'Beyond Elysium', 'beyond-elysium' ),
 			__( 'Beyond Elysium', 'beyond-elysium' ),
-			'be_manage_games',
+			'be_view_characters',
 			'beyond-elysium',
-			[ self::class, 'render_games' ],
+			[ self::class, 'render_dashboard' ],
 			'dashicons-groups',
 			30
 		);
 
+		// Registered with the parent's own slug so admin.php?page=beyond-elysium (what
+		// the top-level label itself links to) renders the dashboard rather than
+		// WordPress's own auto-duplicated first-submenu fallback. Deliberately left
+		// visible as a normal "Dashboard" row rather than hidden via
+		// remove_submenu_page(): WordPress core builds the top-level label's own href
+		// from the first REMAINING $submenu entry for this parent, not the slug
+		// add_menu_page() was originally given - hiding this row silently repoints the
+		// top-level click at whatever became the new first entry instead (confirmed
+		// live; this is why "Characters" briefly became that entry during development).
+		// 9 visible rows including this one, not 8, is the honest tradeoff for a
+		// top-level click that reliably lands on the dashboard.
 		add_submenu_page(
 			'beyond-elysium',
-			__( 'Games', 'beyond-elysium' ),
-			__( 'Games', 'beyond-elysium' ),
-			'be_manage_games',
-			'beyond-elysium',
-			[ self::class, 'render_games' ]
-		);
-
-		// GS-5 (guided-chronicle-setup-design.md §6.4): positioned second, directly under
-		// Games - the checklist an HST reaches next after a chronicle exists.
-		// be_view_characters is the widest capability that still requires a real user; the
-		// route itself reports each row's own actionable flag so a read-only HST can see
-		// the checklist under today's permissions.
-		add_submenu_page(
-			'beyond-elysium',
-			__( 'Chronicle Setup', 'beyond-elysium' ),
-			__( 'Chronicle Setup', 'beyond-elysium' ),
+			__( 'Beyond Elysium', 'beyond-elysium' ),
+			__( 'Dashboard', 'beyond-elysium' ),
 			'be_view_characters',
-			'beyond-elysium-chronicle-setup',
-			[ self::class, 'render_chronicle_setup' ]
+			'beyond-elysium',
+			[ self::class, 'render_dashboard' ]
 		);
 
 		add_submenu_page(
@@ -73,44 +76,6 @@ class Admin_Menu {
 			[ self::class, 'render_characters' ]
 		);
 
-		// NPC Roster is a separate page from the Characters page's inline NPC toggle.
-		add_submenu_page(
-			'beyond-elysium',
-			__( 'NPC Roster', 'beyond-elysium' ),
-			__( 'NPC Roster', 'beyond-elysium' ),
-			'be_manage_characters',
-			'beyond-elysium-npc-roster',
-			[ self::class, 'render_npc_roster' ]
-		);
-
-		add_submenu_page(
-			'beyond-elysium',
-			__( 'Schema Blocks', 'beyond-elysium' ),
-			__( 'Schema Blocks', 'beyond-elysium' ),
-			'be_manage_schemas',
-			'beyond-elysium-schema-blocks',
-			[ self::class, 'render_schema_blocks' ]
-		);
-
-		add_submenu_page(
-			'beyond-elysium',
-			__( 'Creature Stacks', 'beyond-elysium' ),
-			__( 'Creature Stacks', 'beyond-elysium' ),
-			'be_manage_schemas',
-			'beyond-elysium-creature-stacks',
-			[ self::class, 'render_creature_stacks' ]
-		);
-
-		add_submenu_page(
-			'beyond-elysium',
-			__( 'Templates', 'beyond-elysium' ),
-			__( 'Templates', 'beyond-elysium' ),
-			'be_manage_templates',
-			'beyond-elysium-templates',
-			[ self::class, 'render_templates' ]
-		);
-
-		// Plots and Query Tool pages, each gated on its own capability.
 		add_submenu_page(
 			'beyond-elysium',
 			__( 'Plots', 'beyond-elysium' ),
@@ -118,15 +83,6 @@ class Admin_Menu {
 			'be_manage_plots',
 			'beyond-elysium-plots',
 			[ self::class, 'render_plots' ]
-		);
-
-		add_submenu_page(
-			'beyond-elysium',
-			__( 'Query Tool', 'beyond-elysium' ),
-			__( 'Query Tool', 'beyond-elysium' ),
-			'be_run_queries',
-			'beyond-elysium-query',
-			[ self::class, 'render_query' ]
 		);
 
 		// Mounts the world-object manager widget, gated on be_manage_world_objects.
@@ -139,6 +95,17 @@ class Admin_Menu {
 			[ self::class, 'render_world_objects' ]
 		);
 
+		// Query Tool + Reports (owner's call: "fold into Query Tool"). Gated on the
+		// broader of the two tabs' capabilities; each tab hides itself individually.
+		add_submenu_page(
+			'beyond-elysium',
+			__( 'Query Tool', 'beyond-elysium' ),
+			__( 'Query Tool', 'beyond-elysium' ),
+			'be_run_queries',
+			'beyond-elysium-query-hub',
+			[ self::class, 'render_query_hub' ]
+		);
+
 		// One page with two tabs (character import and game-file import), gated on be_import.
 		add_submenu_page(
 			'beyond-elysium',
@@ -149,14 +116,28 @@ class Admin_Menu {
 			[ self::class, 'render_import' ]
 		);
 
-		// Manages accessSchema settings, per-game role path, and chronicle membership.
+		// Chronicle Setup + Chronicle Access + Action & Rumor Settings - all three are
+		// "configure this one chronicle." be_view_characters (Chronicle Setup's own tab)
+		// is the widest capability among the three, so the page itself is reachable even
+		// when the other two tabs hide themselves for a read-only viewer.
 		add_submenu_page(
 			'beyond-elysium',
-			__( 'Chronicle Access', 'beyond-elysium' ),
-			__( 'Chronicle Access', 'beyond-elysium' ),
-			'be_manage_games',
-			'beyond-elysium-chronicle-access',
-			[ self::class, 'render_chronicle_access' ]
+			__( 'Chronicle Setup', 'beyond-elysium' ),
+			__( 'Chronicle Setup', 'beyond-elysium' ),
+			'be_view_characters',
+			'beyond-elysium-chronicle-setup-hub',
+			[ self::class, 'render_chronicle_setup_hub' ]
+		);
+
+		// Games + Schema Blocks + Creature Stacks + Templates + Approval Rules - all
+		// global, cross-chronicle admin. be_manage_schemas is the widest of the five.
+		add_submenu_page(
+			'beyond-elysium',
+			__( 'System Config', 'beyond-elysium' ),
+			__( 'System Config', 'beyond-elysium' ),
+			'be_manage_schemas',
+			'beyond-elysium-system-config',
+			[ self::class, 'render_system_config_hub' ]
 		);
 
 		// Renders the Storyteller/admin/REST guides, gated on be_view_characters.
@@ -168,111 +149,28 @@ class Admin_Menu {
 			'beyond-elysium-docs',
 			[ self::class, 'render_docs' ]
 		);
-
-		// Create/edit/delete approval overrides on a chronicle's own trait_list items and tiered_power powers/levels.
-		add_submenu_page(
-			'beyond-elysium',
-			__( 'Approval Rules', 'beyond-elysium' ),
-			__( 'Approval Rules', 'beyond-elysium' ),
-			'be_manage_approval_rules',
-			'beyond-elysium-approval-rules',
-			[ self::class, 'render_approval_rules' ]
-		);
-
-		// Grapevine's own frmGameInfo.frm caption. Edits the chronicle's action-allocation
-		// and rumor-generation configuration; be_manage_games cannot gate this (§3.5).
-		add_submenu_page(
-			'beyond-elysium',
-			__( 'Action & Rumor Settings', 'beyond-elysium' ),
-			__( 'Action & Rumor Settings', 'beyond-elysium' ),
-			'be_manage_apr',
-			'beyond-elysium-apr-settings',
-			[ self::class, 'render_apr_settings' ]
-		);
-
-		// The 19 GV301 reports/cards/batch output (reports-cards-batch-design.md §3.6).
-		// be_view_reports is the same broad grant be_view_characters uses - row-level
-		// visibility is enforced inside Report_Document/Query_Engine, not by this gate.
-		add_submenu_page(
-			'beyond-elysium',
-			__( 'Reports', 'beyond-elysium' ),
-			__( 'Reports', 'beyond-elysium' ),
-			'be_view_reports',
-			'beyond-elysium-reports',
-			[ self::class, 'render_reports' ]
-		);
 	}
 
 	/**
-	 * Renders the Games admin page. Outputs the mount point for the
-	 * admin-games widget, which lists and manages this plugin's games,
-	 * followed by the shared memorial footer.
+	 * Renders the top-level "Beyond Elysium" landing page. Outputs the mount
+	 * point for the admin-dashboard widget: an about/what's-where reference,
+	 * the widgets & shortcodes inventory, and a call-to-action that's
+	 * prominent only while no real chronicle exists yet
+	 * (admin-menu-consolidation-design.md).
 	 */
-	public static function render_games(): void {
-		self::render_mount( 'admin-games' );
-	}
-
-	/**
-	 * Renders the Chronicle Setup admin page. Outputs the mount point for
-	 * the admin-chronicle-setup widget, the checklist of what a new
-	 * chronicle still needs, followed by the shared memorial footer.
-	 */
-	public static function render_chronicle_setup(): void {
-		// GS-8's fix link for row 4 (Setup_Status_Controller::row_front_end_pages()) - a
-		// plain admin-page link rather than a REST call, matching this row's own "link,
-		// not duplicated UI" shape (§6.7). Capability-gated the same as the page itself.
-		// page-consolidation-design.md: the four fixed pages are chronicle-independent, so
-		// this no longer takes a &game= param - it just re-runs the same provisioning
-		// be_after_upgrade already does.
-		if ( isset( $_GET['provision_pages'] ) && current_user_can( 'be_manage_games' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- idempotent, capability-gated GET action, matching this project's other admin-link fixes.
-			\BeyondElysium\Core\Page_Provisioner::maybe_provision();
-		}
-		self::render_mount( 'admin-chronicle-setup' );
+	public static function render_dashboard(): void {
+		self::render_mount( 'admin-dashboard' );
 	}
 
 	/**
 	 * Renders the Characters admin page. Outputs the mount point for the
-	 * admin-characters widget, which lists and manages player characters,
-	 * followed by the shared memorial footer.
+	 * admin-characters widget, which lists and manages player characters
+	 * and NPCs (NPC Roster folded in - the same page's own NPC/player
+	 * toggle already made a separate page redundant), followed by the
+	 * shared memorial footer.
 	 */
 	public static function render_characters(): void {
 		self::render_mount( 'admin-characters' );
-	}
-
-	/**
-	 * Renders the NPC Roster admin page. Outputs the mount point for the
-	 * admin-npc-roster widget, which lists and manages NPC characters,
-	 * followed by the shared memorial footer.
-	 */
-	public static function render_npc_roster(): void {
-		self::render_mount( 'admin-npc-roster' );
-	}
-
-	/**
-	 * Renders the Schema Blocks admin page. Outputs the mount point for
-	 * the admin-schema-blocks widget, which manages schema block
-	 * definitions, followed by the shared memorial footer.
-	 */
-	public static function render_schema_blocks(): void {
-		self::render_mount( 'admin-schema-blocks' );
-	}
-
-	/**
-	 * Renders the Creature Stacks admin page. Outputs the mount point for
-	 * the admin-creature-stacks widget, which manages creature stack
-	 * definitions, followed by the shared memorial footer.
-	 */
-	public static function render_creature_stacks(): void {
-		self::render_mount( 'admin-creature-stacks' );
-	}
-
-	/**
-	 * Renders the Templates admin page. Outputs the mount point for the
-	 * admin-templates widget, which manages character sheet templates,
-	 * followed by the shared memorial footer.
-	 */
-	public static function render_templates(): void {
-		self::render_mount( 'admin-templates' );
 	}
 
 	/**
@@ -285,21 +183,22 @@ class Admin_Menu {
 	}
 
 	/**
-	 * Renders the Query Tool admin page. Outputs the mount point for the
-	 * admin-query widget, which runs ad hoc queries across game data,
-	 * followed by the shared memorial footer.
-	 */
-	public static function render_query(): void {
-		self::render_mount( 'admin-query' );
-	}
-
-	/**
 	 * Renders the Items & Locations admin page. Outputs the mount point
 	 * for the admin-world-objects widget, which manages world objects,
 	 * followed by the shared memorial footer.
 	 */
 	public static function render_world_objects(): void {
 		self::render_mount( 'admin-world-objects' );
+	}
+
+	/**
+	 * Renders the Query Tool hub admin page. Outputs the mount point for
+	 * the admin-query-hub widget, a tabbed shell over Query Tool and
+	 * Reports - each tab hides itself independently by capability
+	 * (admin-menu-consolidation-design.md).
+	 */
+	public static function render_query_hub(): void {
+		self::render_mount( 'admin-query-hub' );
 	}
 
 	/**
@@ -312,13 +211,32 @@ class Admin_Menu {
 	}
 
 	/**
-	 * Renders the Chronicle Access admin page. Outputs the mount point for
-	 * the admin-chronicle-access widget, which manages accessSchema
-	 * settings and chronicle membership, followed by the shared memorial
-	 * footer.
+	 * Renders the Chronicle Setup hub admin page. Outputs the mount point
+	 * for the admin-chronicle-setup-hub widget, a tabbed shell over
+	 * Chronicle Setup, Chronicle Access, and Action & Rumor Settings - all
+	 * three "configure this one chronicle" (admin-menu-consolidation-design.md).
 	 */
-	public static function render_chronicle_access(): void {
-		self::render_mount( 'admin-chronicle-access' );
+	public static function render_chronicle_setup_hub(): void {
+		// GS-8's fix link for row 4 (Setup_Status_Controller::row_front_end_pages()) - a
+		// plain admin-page link rather than a REST call, matching this row's own "link,
+		// not duplicated UI" shape (§6.7). Capability-gated the same as the page itself.
+		// page-consolidation-design.md: the four fixed pages are chronicle-independent, so
+		// this no longer takes a &game= param - it just re-runs the same provisioning
+		// be_after_upgrade already does.
+		if ( isset( $_GET['provision_pages'] ) && current_user_can( 'be_manage_games' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- idempotent, capability-gated GET action, matching this project's other admin-link fixes.
+			\BeyondElysium\Core\Page_Provisioner::maybe_provision();
+		}
+		self::render_mount( 'admin-chronicle-setup-hub' );
+	}
+
+	/**
+	 * Renders the System Config hub admin page. Outputs the mount point
+	 * for the admin-system-config-hub widget, a tabbed shell over Games,
+	 * Schema Blocks, Creature Stacks, Templates, and Approval Rules - all
+	 * global, cross-chronicle admin (admin-menu-consolidation-design.md).
+	 */
+	public static function render_system_config_hub(): void {
+		self::render_mount( 'admin-system-config-hub' );
 	}
 
 	/**
@@ -328,35 +246,6 @@ class Admin_Menu {
 	 */
 	public static function render_docs(): void {
 		self::render_mount( 'admin-docs' );
-	}
-
-	/**
-	 * Renders the Approval Rules admin page. Outputs the mount point for
-	 * the admin-approval-rules widget, which lets a Storyteller create,
-	 * edit, and delete approval overrides for a chronicle, followed by the
-	 * shared memorial footer.
-	 */
-	public static function render_approval_rules(): void {
-		self::render_mount( 'admin-approval-rules' );
-	}
-
-	/**
-	 * Renders the Action & Rumor Settings admin page. Outputs the mount
-	 * point for the admin-apr-settings widget, which edits a chronicle's
-	 * action-allocation and rumor-generation configuration, followed by the
-	 * shared memorial footer.
-	 */
-	public static function render_apr_settings(): void {
-		self::render_mount( 'admin-apr-settings' );
-	}
-
-	/**
-	 * Renders the Reports admin page. Outputs the mount point for the
-	 * admin-reports widget, which lists the 19 GV301 reports and generates a
-	 * signed PDF for one, followed by the shared memorial footer.
-	 */
-	public static function render_reports(): void {
-		self::render_mount( 'admin-reports' );
 	}
 
 	/**
@@ -432,16 +321,23 @@ class Admin_Menu {
 			// not per-user (i18n-pt-br-design.md, Decision 106).
 			'locale'  => get_locale(),
 			'capabilities' => [
-				'be_manage_plots'       => current_user_can( 'be_manage_plots' ),
-				'be_manage_characters'  => current_user_can( 'be_manage_characters' ),
+				'be_manage_plots'          => current_user_can( 'be_manage_plots' ),
+				'be_manage_characters'     => current_user_can( 'be_manage_characters' ),
 				// Gates the import wizard's "also add to catalog" checkbox.
-				'be_manage_schemas'     => current_user_can( 'be_manage_schemas' ),
+				'be_manage_schemas'        => current_user_can( 'be_manage_schemas' ),
 				// Gates whether WorldObjectCard.tsx shows the full connection manager or a read-only list.
-				'be_manage_connections' => current_user_can( 'be_manage_connections' ),
+				'be_manage_connections'    => current_user_can( 'be_manage_connections' ),
 				// Gates AdminImport.tsx's two tabs independently.
-				'be_import'             => current_user_can( 'be_import' ),
-				'be_manage_games'       => current_user_can( 'be_manage_games' ),
-				'be_manage_apr'         => current_user_can( 'be_manage_apr' ),
+				'be_import'                => current_user_can( 'be_import' ),
+				'be_manage_games'          => current_user_can( 'be_manage_games' ),
+				'be_manage_apr'            => current_user_can( 'be_manage_apr' ),
+				// admin-menu-consolidation-design.md: each of these now gates one tab inside a
+				// shared hub page rather than an entire wp-admin submenu of its own.
+				'be_manage_world_objects'  => current_user_can( 'be_manage_world_objects' ),
+				'be_run_queries'           => current_user_can( 'be_run_queries' ),
+				'be_view_reports'          => current_user_can( 'be_view_reports' ),
+				'be_manage_templates'      => current_user_can( 'be_manage_templates' ),
+				'be_manage_approval_rules' => current_user_can( 'be_manage_approval_rules' ),
 			],
 		] );
 

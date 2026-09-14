@@ -510,9 +510,17 @@ class Character {
 	}
 
 	/**
-	 * Decode a row's sheet_data JSON field into an array in place. Passes null
-	 * rows through unchanged, and normalizes an unparseable or absent value to an
-	 * empty array so callers never see a raw JSON string.
+	 * Decode a row's sheet_data JSON field into an array in place, and cast
+	 * is_npc to a real boolean. Passes null rows through unchanged, and
+	 * normalizes an unparseable or absent sheet_data value to an empty array
+	 * so callers never see a raw JSON string.
+	 *
+	 * is_npc is stored as tinyint(1) and $wpdb always returns column values as
+	 * strings regardless of their SQL type - every consumer of this row was
+	 * getting the literal string "0" for a non-NPC, which is truthy in both
+	 * PHP and JavaScript. Cast once here, at the one place every row-returning
+	 * method in this class already funnels through, rather than requiring
+	 * every future reader to remember to coerce it correctly itself.
 	 *
 	 * @param object|null $row Row from the database, or null when the query found nothing.
 	 * @return object|null The same row, or null when null was passed in.
@@ -523,6 +531,9 @@ class Character {
 			if ( $row->sheet_data === null ) {
 				$row->sheet_data = [];
 			}
+		}
+		if ( $row && isset( $row->is_npc ) ) {
+			$row->is_npc = (bool) $row->is_npc;
 		}
 		return $row;
 	}

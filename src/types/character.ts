@@ -49,7 +49,7 @@ export interface Character {
     /** A matching real WP account found server-side, awaiting manager confirmation before linking. */
     pending_match?: { id: number; display_name: string } | null;
     status: 'active' | 'inactive' | 'retired' | 'dead' | 'pending' | string;
-    is_npc: 0 | 1;
+    is_npc: boolean;
     narrator: string | null;
     start_date: string | null;
     xp_earned: number;

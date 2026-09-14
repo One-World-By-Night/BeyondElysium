@@ -126,7 +126,7 @@ class Setup_Status_Controller extends Base_Controller {
 			'detail'     => $has_leader
 				? __( 'At least one Head or Assistant Storyteller is assigned.', 'beyond-elysium' )
 				: __( 'No Storyteller is assigned to this chronicle yet.', 'beyond-elysium' ),
-			'fix'        => [ 'kind' => 'link', 'href' => 'admin.php?page=beyond-elysium-chronicle-access&game=' . rawurlencode( $game->slug ), 'capability' => 'be_manage_games' ],
+			'fix'        => [ 'kind' => 'link', 'href' => 'admin.php?page=beyond-elysium-chronicle-setup-hub&tab=access&game=' . rawurlencode( $game->slug ), 'capability' => 'be_manage_games' ],
 			'actionable' => current_user_can( 'be_manage_games' ),
 		];
 	}
@@ -173,7 +173,7 @@ class Setup_Status_Controller extends Base_Controller {
 			'detail'     => empty( $missing )
 				? __( 'My Chronicle, Storyteller Toolkit, and the print/verify pages are all provisioned.', 'beyond-elysium' )
 				: sprintf( /* translators: %s: comma-separated list of missing page titles */ __( 'Missing: %s.', 'beyond-elysium' ), implode( ', ', $missing ) ),
-			'fix'        => [ 'kind' => 'link', 'href' => 'admin.php?page=beyond-elysium-chronicle-setup&provision_pages=1', 'capability' => 'be_manage_games' ],
+			'fix'        => [ 'kind' => 'link', 'href' => 'admin.php?page=beyond-elysium-chronicle-setup-hub&tab=setup&provision_pages=1', 'capability' => 'be_manage_games' ],
 			'actionable' => current_user_can( 'be_manage_games' ),
 		];
 	}
@@ -205,7 +205,7 @@ class Setup_Status_Controller extends Base_Controller {
 			'status'     => 'info',
 			'title'      => __( 'Approval rules', 'beyond-elysium' ),
 			'detail'     => __( 'Everything requires Storyteller approval until a rule says otherwise.', 'beyond-elysium' ),
-			'fix'        => [ 'kind' => 'link', 'href' => 'admin.php?page=beyond-elysium-approval-rules&game=' . rawurlencode( $game->slug ), 'capability' => 'be_manage_approval_rules' ],
+			'fix'        => [ 'kind' => 'link', 'href' => 'admin.php?page=beyond-elysium-system-config&tab=approval-rules&game=' . rawurlencode( $game->slug ), 'capability' => 'be_manage_approval_rules' ],
 			'actionable' => current_user_can( 'be_manage_approval_rules' ),
 		];
 	}
@@ -228,7 +228,7 @@ class Setup_Status_Controller extends Base_Controller {
 			'detail'     => $count > 0
 				? sprintf( /* translators: %d: number of forked schema blocks */ __( '%d schema block(s) are customised for this chronicle.', 'beyond-elysium' ), $count )
 				: __( 'This chronicle uses the shared catalog with no customisation.', 'beyond-elysium' ),
-			'fix'        => [ 'kind' => 'link', 'href' => 'admin.php?page=beyond-elysium-schema-blocks&game_slug=' . rawurlencode( $game->slug ), 'capability' => 'be_manage_schemas' ],
+			'fix'        => [ 'kind' => 'link', 'href' => 'admin.php?page=beyond-elysium-system-config&tab=schema-blocks&game_slug=' . rawurlencode( $game->slug ), 'capability' => 'be_manage_schemas' ],
 			'actionable' => current_user_can( 'be_manage_schemas' ),
 		];
 	}
@@ -248,7 +248,7 @@ class Setup_Status_Controller extends Base_Controller {
 			'detail'     => $count > 0
 				? sprintf( /* translators: %d: number of overridden templates */ __( '%d template(s) are overridden for this chronicle.', 'beyond-elysium' ), $count )
 				: __( 'This chronicle uses the shared templates. Editing a template today changes it for every chronicle on this site.', 'beyond-elysium' ),
-			'fix'        => [ 'kind' => 'link', 'href' => 'admin.php?page=beyond-elysium-templates', 'capability' => 'be_manage_templates' ],
+			'fix'        => [ 'kind' => 'link', 'href' => 'admin.php?page=beyond-elysium-system-config&tab=templates', 'capability' => 'be_manage_templates' ],
 			'actionable' => current_user_can( 'be_manage_templates' ),
 		];
 	}
@@ -266,7 +266,7 @@ class Setup_Status_Controller extends Base_Controller {
 			'detail'     => $apr !== null
 				? __( 'This chronicle has its own downtime and rumor settings.', 'beyond-elysium' )
 				: __( 'Using Beyond Elysium\'s default downtime and rumor settings.', 'beyond-elysium' ),
-			'fix'        => [ 'kind' => 'link', 'href' => 'admin.php?page=beyond-elysium-apr-settings&game=' . rawurlencode( $game->slug ), 'capability' => 'be_manage_apr' ],
+			'fix'        => [ 'kind' => 'link', 'href' => 'admin.php?page=beyond-elysium-chronicle-setup-hub&tab=apr&game=' . rawurlencode( $game->slug ), 'capability' => 'be_manage_apr' ],
 			'actionable' => current_user_can( 'be_manage_apr' ),
 		];
 	}

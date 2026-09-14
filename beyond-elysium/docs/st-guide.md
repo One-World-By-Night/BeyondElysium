@@ -11,7 +11,7 @@ all this instead? See the [Player Guide](player-guide.md).
 A **game** (chronicle) is the top-level container everything else belongs to — characters,
 plots, changes, and queries are all scoped to one game and never visible from another.
 
-1. In wp-admin, go to **Beyond Elysium → Games**.
+1. In wp-admin, go to **Beyond Elysium → System Config → Games**.
 2. Click **+ New Game**, give it a name, and save. The plugin generates a URL-safe slug from
    the name automatically (or set one explicitly). You are automatically made this
    chronicle's HST the moment it's created — no separate step needed.
@@ -56,7 +56,7 @@ shows up automatically; nothing needs to be told about it by name.
 
 ### accessSchema and chronicle roles
 
-Under **Beyond Elysium → Chronicle Access**, you can:
+Under **Beyond Elysium → Chronicle Setup → Chronicle Access**, you can:
 
 - Turn accessSchema role-path checking on or off, site-wide.
 - Set a chronicle's `asc_role_path` (its accessSchema path prefix, e.g. `Chronicle/KONY`) if
@@ -82,8 +82,8 @@ Willpower, identity fields like Nature and Demeanor). **Creature stacks** assemb
 into a complete sheet for one creature type — Vampire, Werewolf, Mage, and so on.
 
 Every install ships with the full MET-mechanics catalog already seeded — you do not need to
-build these from scratch. Under **Beyond Elysium → Schema Blocks** and **Beyond Elysium →
-Creature Stacks** you can review what exists and, if your chronicle needs a house rule or a
+build these from scratch. Under **Beyond Elysium → System Config → Schema Blocks** and
+**→ Creature Stacks** you can review what exists and, if your chronicle needs a house rule or a
 homebrew trait, fork just that block for your own game without touching the shared catalog
 other chronicles use. A forked block is scoped to your game only; the base catalog is never
 edited in place.
@@ -98,7 +98,7 @@ catalog edit wants a keyboard, the same as building a query.
 
 Storytellers create characters two ways:
 
-- **By hand**, under **Beyond Elysium → Characters → Add Character** — pick a creature
+- **By hand**, under **Beyond Elysium → Characters → + New Character** — pick a creature
   stack, fill in identity fields, and assign traits directly. Useful for NPCs and for
   entering a character on a player's behalf.
 - **By import** (see [Importing from Grapevine](#5-importing-from-grapevine) below) — the
@@ -106,6 +106,15 @@ Storytellers create characters two ways:
 
 Players can also create their own characters from **My Chronicle**'s **Characters** tab,
 subject to whatever approval rules your chronicle's schema blocks define.
+
+### Creating or flagging an NPC
+
+A Storyteller (anyone holding `be_manage_characters`) sees a "This is an NPC" checkbox on
+the creation form - never shown to a player. Checking it immediately switches the character
+onto the richer NPC sheet template, which adds a Storyteller-only section for voice,
+mannerisms, and plot hooks that never appears on an ordinary player character's sheet. The
+same checkbox is available in edit mode too, so a character created as a player character
+can be flagged as an NPC later, or the reverse, with no separate "convert" action needed.
 
 Every character needs a linked WordPress account (`wp_user_id`) to be playable by someone.
 If a character is imported or entered before its player has an account, use the **Assign
@@ -200,7 +209,7 @@ see their own plot connections on **My Chronicle**'s own **My Plots & Rumors** t
 
 ## 9. Action & Rumor Settings and the Background-Use Ledger
 
-Under **Beyond Elysium → Action & Rumor Settings**, pick a chronicle to configure how many
+Under **Beyond Elysium → Chronicle Setup → Action & Rumor Settings**, pick a chronicle to configure how many
 downtime actions a character receives each game date and which rumors generate
 automatically. The **Actions** tab sets personal actions per character, whether unused
 actions and growth carry forward week to week, whether Common Actions (from Influences and

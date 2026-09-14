@@ -41,9 +41,13 @@ const widgetRegistry: Record<string, () => Promise<{ default: React.ComponentTyp
 	'storyteller-toolkit-page': () => import( './components/pages/StorytellerToolkitPage' ),
 
 	// wp-admin pages, mounted the same way as a front-end Elementor widget.
+	// admin-menu-consolidation-design.md: 16 flat pages collapsed to 8 - the individual
+	// widget entries below stay registered (some Admin.php render_* methods removed, but
+	// the hub components still import and render these same components directly), plus
+	// four new hub entries and the new landing dashboard.
+	'admin-dashboard': () => import( './components/admin/AdminDashboard' ),
 	'admin-games': () => import( './components/admin/AdminGames' ),
 	'admin-characters': () => import( './components/admin/AdminCharacters' ),
-	'admin-npc-roster': () => import( './components/admin/AdminNpcRoster' ),
 	'admin-schema-blocks': () => import( './components/admin/AdminSchemaBlocks' ),
 	'admin-creature-stacks': () => import( './components/admin/AdminCreatureStacks' ),
 	'admin-templates': () => import( './components/admin/AdminTemplates' ),
@@ -57,6 +61,9 @@ const widgetRegistry: Record<string, () => Promise<{ default: React.ComponentTyp
 	'admin-apr-settings': () => import( './components/admin/AdminAprSettings' ),
 	'admin-reports': () => import( './components/admin/AdminReports' ),
 	'admin-chronicle-setup': () => import( './components/admin/AdminChronicleSetup' ),
+	'admin-query-hub': () => import( './components/admin/hubs/QueryHub' ),
+	'admin-chronicle-setup-hub': () => import( './components/admin/hubs/ChronicleSetupHub' ),
+	'admin-system-config-hub': () => import( './components/admin/hubs/SystemConfigHub' ),
 };
 
 /**

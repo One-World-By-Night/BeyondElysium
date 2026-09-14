@@ -58,6 +58,16 @@ export function characterEditorUrl( characterId: number, gameSlug: string ): str
 	return `${ playerTabUrl( PLAYER_TABS.edit ) }&character_id=${ characterId }&game_slug=${ encodeURIComponent( gameSlug ) }`;
 }
 
+/**
+ * The character creation URL for one chronicle - the My Chronicle page's Edit
+ * tab with no character_id, which CharacterEditor already treats as create
+ * mode (admin-menu-consolidation-design.md's wp-admin "+ New Character" entry
+ * point reuses this same front-end path rather than duplicating the editor).
+ */
+export function newCharacterUrl( gameSlug: string ): string {
+	return `${ playerTabUrl( PLAYER_TABS.edit ) }&game_slug=${ encodeURIComponent( gameSlug ) }`;
+}
+
 /** True when `pathname` is the print-canvas page, which renders with no chrome and prints itself automatically. */
 export function isPrintCanvasPath( pathname: string ): boolean {
 	return pathname.includes( `/${ PLUGIN_PAGE_SLUGS.characterSheetPrint }` );

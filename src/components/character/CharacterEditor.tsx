@@ -66,6 +66,9 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 	const [ draftSheetData, setDraftSheetData ] = useState<Record<string, unknown>>( {} );
 	const [ creating, setCreating ] = useState( false );
 	const [ createError, setCreateError ] = useState<string | null>( null );
+	// admin-menu-consolidation-design.md: Storyteller-only, never shown to a player.
+	const [ createIsNpc, setCreateIsNpc ] = useState( false );
+	const canFlagNpc = !! window.beyondElysium?.capabilities?.be_manage_characters;
 
 	// ---- shared ----
 	const [ template, setTemplate ] = useState<TemplateResolveResponse | null>( null );
@@ -104,6 +107,26 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 	// A WP attachment ID/URL, same picker pattern as SheetStyleEditor; local state so the image updates immediately.
 	const [ portraitUrl, setPortraitUrl ] = useState<string | null>( null );
 	const [ savingPortrait, setSavingPortrait ] = useState( false );
+
+	// admin-menu-consolidation-design.md: flagging an existing character as an NPC (or
+	// back) after creation - Storyteller-only, never shown to a player.
+	const [ savingNpc, setSavingNpc ] = useState( false );
+
+	async function toggleNpc( nextIsNpc: boolean ) {
+		if ( ! effectiveCharacterId ) {
+			return;
+		}
+		setSavingNpc( true );
+		try {
+			await api.characters( gameSlug ).update( effectiveCharacterId, { is_npc: nextIsNpc } );
+			// Reloads so the template re-resolves (sheet_full <-> npc_full follows is_npc directly).
+			await store.loadCharacter( effectiveCharacterId, gameSlug );
+		} catch ( err: unknown ) {
+			setHeaderSaveError( errorMessage( err ) );
+		} finally {
+			setSavingNpc( false );
+		}
+	}
 
 	async function pickPortrait() {
 		if ( ! effectiveCharacterId ) {
@@ -167,7 +190,7 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 	// Both modes resolve the template once a stack_slug is known, matching the read-only sheet exactly.
 	const activeStackSlug = isCreateMode ? chosenStackSlug : store.stackSlug;
 	// An NPC gets the NPC sheet, which adds the Storyteller-only sections.
-	const isNpc = ! isCreateMode && !! store.character?.is_npc;
+	const isNpc = isCreateMode ? createIsNpc : !! store.character?.is_npc;
 	useEffect( () => {
 		if ( activeStackSlug ) {
 			api
@@ -217,6 +240,7 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 				name: draftName.trim(),
 				stack_slug: chosenStackSlug,
 				sheet_data: draftSheetData,
+				...( canFlagNpc ? { is_npc: createIsNpc } : {} ),
 			} );
 
 			setCreatedId( character.id );
@@ -269,6 +293,20 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 								</option>
 							) ) }
 						</select>
+					</div>
+				) }
+
+				{ canFlagNpc && (
+					<div className="be-character-editor__field">
+						<label htmlFor="be-character-editor-is-npc">
+							<input
+								id="be-character-editor-is-npc"
+								type="checkbox"
+								checked={ createIsNpc }
+								onChange={ ( e ) => setCreateIsNpc( e.target.checked ) }
+							/>{ ' ' }
+							{ __( 'This is an NPC', 'beyond-elysium' ) }
+						</label>
 					</div>
 				) }
 
@@ -386,6 +424,17 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 								? __( 'Change portrait…', 'beyond-elysium' )
 								: __( 'Add a portrait…', 'beyond-elysium' ) }
 						</button>
+					) }
+					{ canFlagNpc && canManage && (
+						<label className="be-character-editor__npc-toggle">
+							<input
+								type="checkbox"
+								checked={ isNpc }
+								disabled={ savingNpc }
+								onChange={ ( e ) => toggleNpc( e.target.checked ) }
+							/>{ ' ' }
+							{ __( 'This is an NPC', 'beyond-elysium' ) }
+						</label>
 					) }
 				</div>
 			</div>

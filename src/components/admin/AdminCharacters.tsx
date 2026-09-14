@@ -8,7 +8,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import CharacterList from '../character/CharacterList';
-import { playerTabUrl, PLAYER_TABS } from '../../lib/pluginPages';
+import { playerTabUrl, PLAYER_TABS, newCharacterUrl } from '../../lib/pluginPages';
 import type { Game } from '../../types';
 import './Admin.css';
 
@@ -66,6 +66,11 @@ export function AdminCharacters() {
 							<input type="checkbox" checked={ showNpcs } onChange={ ( e ) => setShowNpcs( e.target.checked ) } />
 							{ ' ' }{ __( 'Show NPCs instead of player characters', 'beyond-elysium' ) }
 						</label>
+						{ gameSlug && (
+							<a className="button button-primary" href={ newCharacterUrl( gameSlug ) }>
+								{ __( '+ New Character', 'beyond-elysium' ) }
+							</a>
+						) }
 					</div>
 
 					{ gameSlug && <CharacterList gameSlug={ gameSlug } showNpcs={ showNpcs } sheetPageUrl={ sheetUrl } /> }

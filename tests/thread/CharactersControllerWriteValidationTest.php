@@ -75,6 +75,37 @@ class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 		$this->assertSame( 1, (int) $data->is_npc, 'A manager must still be able to set is_npc - only non-managers are blocked.' );
 	}
 
+	/**
+	 * admin-menu-consolidation-design.md: $wpdb always returns column values as strings
+	 * regardless of SQL type, so an unset tinyint(1) came back over REST as the literal
+	 * string "0" - truthy in both PHP and JavaScript, which made the client-side NPC
+	 * checkbox (and, before this fix, CharacterSheet.tsx's own npc_full/sheet_full
+	 * template choice) permanently stuck reading every character as an NPC. Fixed once in
+	 * Character::decode_sheet(), the one place every row-returning method in that class
+	 * already funnels through.
+	 */
+	public function test_is_npc_is_a_real_boolean_over_rest_not_a_truthy_string(): void {
+		$admin_id     = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$character_id = Character::create( [
+			'name' => 'Boolean Shape Character', 'stack_slug' => 'test-stack',
+			'owner_type' => 'chronicle', 'owner_slug' => $this->game_slug, 'is_npc' => 0,
+		] );
+
+		wp_set_current_user( $admin_id );
+		$get_request = new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/characters/{$character_id}" );
+		$data        = rest_get_server()->dispatch( $get_request )->get_data();
+
+		$this->assertIsBool( $data->is_npc, 'is_npc must be a real bool, not the truthy string "0" that $wpdb returns for every tinyint column.' );
+		$this->assertFalse( $data->is_npc );
+
+		$update_request = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/characters/{$character_id}" );
+		$update_request->set_param( 'is_npc', true );
+		$updated = rest_get_server()->dispatch( $update_request )->get_data();
+
+		$this->assertIsBool( $updated->is_npc );
+		$this->assertTrue( $updated->is_npc );
+	}
+
 	public function test_an_invalid_status_is_rejected_on_create(): void {
 		wp_set_current_user( $this->player_id );
 
