@@ -127,6 +127,8 @@ BeyondElysium ships in-app documentation, viewable inside the plugin's own admin
 
 ## Dark Pack
 
+<img src="Documents/dark-pack-logo.png" alt="Dark Pack logo" width="160">
+
 BeyondElysium is a non-commercial community project, not official World of Darkness material.
 
 Portions of the materials are the copyrights and trademarks of Paradox Interactive AB, and are used with permission. All rights reserved. For more information please visit worldofdarkness.com.
