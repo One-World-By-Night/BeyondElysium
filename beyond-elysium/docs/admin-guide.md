@@ -5,6 +5,31 @@ chronicle's day-to-day play: schema blocks, creature stacks, adding a new creatu
 without writing code, and templates. If you're looking for day-to-day chronicle
 management instead, see the [Storyteller Guide](st-guide.md).
 
+## The wp-admin Menu
+
+Everything below lives under one top-level **Beyond Elysium** menu in wp-admin, itself
+gated `be_manage_games` (administrator-only). Its sixteen submenus, each with its own
+capability:
+
+| Submenu | Capability | Covered in this guide |
+|---|---|---|
+| Games | `be_manage_games` | Chronicle-Scoped Access, below |
+| Chronicle Setup | `be_view_characters` | — a live checklist for a chronicle's own setup; see the [Storyteller Guide](st-guide.md) |
+| Characters | `be_manage_characters` | — the staff-facing character roster across every chronicle |
+| NPC Roster | `be_manage_characters` | — the same roster, filtered to NPCs only |
+| Schema Blocks | `be_manage_schemas` | Schema Blocks and Creature Stacks, below |
+| Creature Stacks | `be_manage_schemas` | Schema Blocks and Creature Stacks, below |
+| Templates | `be_manage_templates` | Templates, below |
+| Plots | `be_manage_plots` | — the same plot/action/rumor tooling as the Storyteller Toolkit page, from wp-admin |
+| Query Tool | `be_run_queries` | — the same query builder as the front-end Query Tool, from wp-admin |
+| Items & Locations | `be_manage_world_objects` | — the catalog of world objects a character can be connected to |
+| Import | `be_import` | Import, below |
+| Chronicle Access | `be_manage_games` | Chronicle-Scoped Access, below |
+| Docs | `be_view_characters` | — this guide and its three siblings, rendered in-plugin |
+| Approval Rules | `be_manage_approval_rules` | Descriptions and Approval Schedules, below |
+| Action & Rumor Settings | `be_manage_apr` | — per-chronicle downtime-action and rumor-generation configuration |
+| Reports | `be_view_reports` | — the 20-report/cards/batch-output layer |
+
 ## Schema Blocks and Creature Stacks
 
 Beyond Elysium never has creature-specific code. Every character sheet is assembled at
@@ -88,9 +113,10 @@ time, not a code change.
 4. The new type is immediately available everywhere a creature stack is selectable —
    character creation, the roster filter, query building — with no further wiring.
 
-Every one of the eleven Storyteller-facing widgets (character sheet, editor, roster,
-approval queue, and the rest) reads the same schema-block/creature-stack definitions at
-render time. There is nowhere else in the plugin a creature type needs to be registered.
+Every one of the plugin's front-end widgets (character sheet, editor, roster, approval
+queue, dashboard, and the rest — fifteen in total, `src/index.tsx`'s widget registry) reads
+the same schema-block/creature-stack definitions at render time. There is nowhere else in
+the plugin a creature type needs to be registered.
 
 ## Templates
 
@@ -115,8 +141,13 @@ Under **Beyond Elysium → Chronicle Access**, an admin controls:
 - The site-wide accessSchema toggle (on/off), and whether a real accessSchema client is
   actually detected on this install.
 - Each chronicle's `asc_role_path` — its accessSchema path prefix.
-- Chronicle membership and role for every user (HST, AST, Narrator, Player).
+- Chronicle membership and role for every user — **five** roles, not four: **HST**, **AST**,
+  **Narrator**, **Boons** (a Harpy — runs the boon ledger only, no Storyteller powers over
+  characters or plots), and **Player**.
 - The per-chronicle notification toggle.
+- **Data Management** (site-wide, not per-chronicle): whether uninstalling the plugin also
+  deletes its data, and a one-click full JSON export of every plugin table for a backup or a
+  migration.
 
 If accessSchema is off, not installed, or unreachable for a given request, every permission
 check falls back to this membership table automatically — a chronicle can run entirely on
@@ -126,9 +157,9 @@ plain WordPress capabilities with no OWBN plugin stack present at all.
 
 An HST is a WordPress `editor`, not an `administrator`, and three pages stay
 administrator-only regardless of chronicle role: **Games** (create a chronicle, rename or
-delete one), **Chronicle Access** (assign HST/AST/Narrator/Player), and any settings scoped
-to `be_manage_games`. This is deliberate — `game-roles.php` excludes `be_manage_games` from
-every chronicle role by name, so no HST can appoint their own AST even for their own
+delete one), **Chronicle Access** (assign HST/AST/Narrator/Boons/Player), and any settings
+scoped to `be_manage_games`. This is deliberate — `game-roles.php` excludes `be_manage_games`
+from every chronicle role by name, so no HST can appoint their own AST even for their own
 chronicle.
 
 An HST *can* now (as of `v0.99.16`) reach **Schema Blocks**, **Creature Stacks**, and
@@ -138,6 +169,23 @@ true: the site-wide capability (`be_manage_schemas`/`be_manage_templates`, grant
 `editor` since `v0.99.16`) and a real membership row in that specific chronicle. Holding the
 capability alone, with no membership row, still gets a `403` — it is not a bare
 site-wide grant, the same two-layer check every chronicle-scoped route in this plugin uses.
+
+## Front-End Pages
+
+Four WordPress pages, created automatically the first time the plugin runs (or updates),
+carry every front-end widget: **My Chronicle** (`be-player`), **Storyteller Toolkit**
+(`be-storyteller`), **Character Sheet (Print)** (`character-sheet-print`), and **Verify
+Character** (`be-verify`). Fixed at four regardless of how many chronicles this site hosts —
+My Chronicle and Storyteller Toolkit each carry a chronicle switcher rather than being tied
+to one chronicle at creation time; see the [Storyteller Guide](st-guide.md#7-the-game-dashboard)
+for what lives on each.
+
+If one of these pages is ever deleted by mistake, it is **not** recreated automatically on
+its own — a page, once created at a given slug, is never overwritten or replaced. Recover it
+from **Beyond Elysium → Chronicle Setup**: the **Front-end pages** checklist row turns red
+when any of the four is missing, with a **Fix** link that re-runs the same provisioning
+step (`?provision_pages=1`, `be_manage_games`-gated) the plugin already ran once
+automatically.
 
 ## Import
 

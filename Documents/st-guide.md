@@ -61,8 +61,8 @@ Under **Beyond Elysium → Chronicle Access**, you can:
 - Turn accessSchema role-path checking on or off, site-wide.
 - Set a chronicle's `asc_role_path` (its accessSchema path prefix, e.g. `Chronicle/KONY`) if
   the wider OWBN plugin stack is present.
-- Add and remove chronicle members and set their role: **HST**, **AST**, **Narrator**, or
-  **Player**.
+- Add and remove chronicle members and set their role: **HST**, **AST**, **Narrator**,
+  **Boons** (Harpy), or **Player**.
 - Turn the per-chronicle "email a player when their change is reviewed" notification on or
   off (see [Notifications](#6-notifications) below).
 
@@ -104,14 +104,25 @@ Storytellers create characters two ways:
 - **By import** (see [Importing from Grapevine](#5-importing-from-grapevine) below) — the
   fastest path for a player who already has a Grapevine character file.
 
-Players can also create their own characters from the front-end **Characters** page, subject
-to whatever approval rules your chronicle's schema blocks define.
+Players can also create their own characters from **My Chronicle**'s **Characters** tab,
+subject to whatever approval rules your chronicle's schema blocks define.
 
 Every character needs a linked WordPress account (`wp_user_id`) to be playable by someone.
 If a character is imported or entered before its player has an account, use the **Assign
 Player** control on the character's row in the roster — search by name or email and attach
 the account once it exists. Until then the character is visible but not editable by anyone
 but a Storyteller.
+
+**Health Levels are pre-filled automatically, not something you or the player has to build.**
+Every applicable creature type's sheet includes a Health section — the Laws of the Night
+Revised Extended track (`Healthy ×2, Bruised ×3, Wounded ×2, Incapacitated ×1`, plus one
+terminal box: `Torpor` for Vampire and Kuei-Jin, `Mortally Wounded` for everything else,
+with Mummy adding two further `Dead` boxes past that). It's seeded the moment the character
+is created, exactly like Grapevine itself pre-fills a fresh character's health boxes — never
+overwriting a hand-built starting sheet that already specifies its own Health values. Wraith
+has none — it tracks Corpus instead, the same as Grapevine. It's an ordinary trait list like
+Merits, not a special mechanism, so it edits and imports/exports the same way any other held
+trait does.
 
 ## 4. Running the Approval Queue
 
@@ -341,10 +352,11 @@ owes you anything.
 | HST | Everything — characters, plots, queries, schema and template customization, importing, chronicle membership. The one exception is deleting or editing the chronicle itself (renaming it, changing its slug); that's a site-administrator act, not a chronicle-level one, by design. |
 | AST | Everything HST can do within the chronicle, including importing — the only difference from HST is that an AST cannot delete or edit the chronicle itself. |
 | Narrator | Plots — creating and running them, responding to player actions, generating rumors, and the roster queries that plot work depends on. Not full character management. |
+| Boons (Harpy) | The boon ledger only — recording and repaying boons. No Storyteller powers over characters or plots. Can still look characters up (needed to know who owes whom) and view reports. |
 | Player | Creates and submits their own characters, and edits their own sheet — every edit still goes through the same approval process everyone else's does. Nothing outside their own characters, changes, and plot connections. |
 
 This is the plugin's own chronicle-scoped role model (`be_game_members.role`, one of
-`hst`/`ast`/`narrator`/`player`), checked in addition to whatever your underlying WordPress
-account can already do — both have to allow an action for it to go through. If your
+`hst`/`ast`/`narrator`/`boons`/`player`), checked in addition to whatever your underlying
+WordPress account can already do — both have to allow an action for it to go through. If your
 chronicle runs accessSchema, its own role paths are checked first and can grant access this
 table doesn't cover; this table describes the fallback every chronicle has regardless.

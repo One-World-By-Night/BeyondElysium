@@ -19,6 +19,10 @@ If a Storyteller entered your character for you (from a Grapevine import or by h
 not be linked to your WordPress account yet. Ask them to use **Assign Player** on your
 character's row — until then, you can see the character but can't edit it.
 
+Your new character's **Health** section comes pre-filled — this isn't something you buy
+with your starting build. It's the standard Laws of the Night Revised Extended wound track
+for your creature type, already there the moment the character is created.
+
 ## 2. Editing Your Sheet
 
 Open your character from **Characters** (or go straight to the **Edit** tab). Every section
