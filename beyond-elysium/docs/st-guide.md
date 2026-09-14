@@ -168,7 +168,8 @@ The **Dashboard** page (auto-created for every chronicle) shows different things
 on who's looking:
 
 - **Storytellers** see character counts by creature type and status, the pending-change
-  count, the active-plot count, and a feed of recent activity across the whole chronicle.
+  count, the active-plot count, a roster-health count of players with no active character
+  (click it to see who), and a feed of recent activity across the whole chronicle.
 - **Players** see their own characters, their own pending changes, and their own plots —
   nothing from anyone else's sheet.
 

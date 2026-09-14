@@ -35,6 +35,18 @@
 	color: #555;
 }
 
+.be-game-dashboard__card-toggle {
+	display: block;
+	width: 100%;
+	padding: 0;
+	border: none;
+	background: none;
+	text-align: left;
+	cursor: pointer;
+	font: inherit;
+	color: inherit;
+}
+
 .be-game-dashboard__breakdown {
 	margin: 0.5rem 0 0;
 	padding: 0;

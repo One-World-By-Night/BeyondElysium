@@ -22,7 +22,7 @@ Beyond the sheet itself:
 
 ## Installation
 
-Download `beyond-elysium-0.99.24.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
+Download `beyond-elysium-0.99.25.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
 
 That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder in this repository is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder straight into `wp-content/plugins/` will not work. To build it yourself:
 
@@ -109,7 +109,8 @@ BeyondElysium ships in-app documentation, viewable inside the plugin's own admin
 | Mobile-first character sheet, editor, and Approval Queue - real touch targets, information priority, and a shared table-to-card mechanism, not a desktop layout that just avoids breaking | Complete |
 | Health-level tracker - Laws of the Night Revised's Extended wound track, modeled per creature type and applied automatically when a character is created | Complete |
 | Bulk session maintenance - reset Willpower/Blood-style pools, or update several characters' status at once, from a saved query's own results | Complete |
-| Roster health indicator - see at a glance which players have no active character, or whose only character has gone inactive | Planning |
+| Roster health indicator - see at a glance which players have no active character, or whose only character has gone inactive | Complete |
+| Player-printable item cards - print cards for the items a character already carries, not just the chronicle-wide catalog view | Planning |
 
 ## Roadmap
 

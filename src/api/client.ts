@@ -29,6 +29,7 @@ import type {
     GameMemberRole,
     AuthorizationSettings,
     GameStats,
+    PlayerWithoutActiveCharacter,
     SetupStatus,
 } from '../types';
 import type {
@@ -724,9 +725,18 @@ export const gameStats = ( gameSlug: string ) => ( {
     /**
      * Fetches the aggregate dashboard numbers for this chronicle:
      * character counts, pending change count, active plot count,
-     * and recent activity.
+     * recent activity, and the roster-health count.
      */
     get: (): Promise<GameStats> => apiFetch( { path: `${ BASE }/${ gameSlug }/stats` } ),
+
+    /**
+     * Fetches the actual player list behind
+     * `players_without_active_character`'s count. Not part of the
+     * main stats call - fetched only when a Storyteller opens the
+     * roster-health card.
+     */
+    playersWithoutActiveCharacter: (): Promise<PlayerWithoutActiveCharacter[]> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/stats/players-without-active-character` } ),
 } );
 
 /**

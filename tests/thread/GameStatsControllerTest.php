@@ -4,6 +4,7 @@ namespace BeyondElysium\Tests\Thread;
 
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Plot;
 use WP_REST_Request;
 use WP_UnitTestCase;
@@ -171,5 +172,142 @@ class GameStatsControllerTest extends WP_UnitTestCase {
 
 		$after = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/stats" ) )->get_data();
 		$this->assertSame( 0, $after['pending_changes'] );
+	}
+
+	// -------------------------------------------------------------------------
+	// Roster health (queryable-player-inventory-design.md) - "no active character"
+	// and "only character has gone inactive" are the same condition: zero characters
+	// with status 'active'.
+	// -------------------------------------------------------------------------
+
+	public function test_players_without_active_character_covers_both_real_cases(): void {
+		// No characters at all.
+		$no_characters = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( $this->game_id, $no_characters, 'player' );
+
+		// Only character is inactive.
+		$only_inactive = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( $this->game_id, $only_inactive, 'player' );
+		Character::create( [
+			'name' => 'Only Inactive', 'stack_slug' => 'vampire',
+			'owner_type' => 'chronicle', 'owner_slug' => $this->game_slug,
+			'wp_user_id' => $only_inactive, 'status' => 'inactive',
+		] );
+
+		// Has a real active character - must not appear.
+		$has_active = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( $this->game_id, $has_active, 'player' );
+		Character::create( [
+			'name' => 'Has Active', 'stack_slug' => 'vampire',
+			'owner_type' => 'chronicle', 'owner_slug' => $this->game_slug,
+			'wp_user_id' => $has_active, 'status' => 'active',
+		] );
+
+		$ids = Game_Member::ids_without_active_character( $this->game_id, $this->game_slug );
+
+		$this->assertContains( $no_characters, $ids );
+		$this->assertContains( $only_inactive, $ids );
+		$this->assertNotContains( $has_active, $ids );
+	}
+
+	public function test_a_player_with_one_active_and_one_inactive_character_is_not_counted(): void {
+		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( $this->game_id, $player, 'player' );
+		Character::create( [
+			'name' => 'Active One', 'stack_slug' => 'vampire',
+			'owner_type' => 'chronicle', 'owner_slug' => $this->game_slug,
+			'wp_user_id' => $player, 'status' => 'active',
+		] );
+		Character::create( [
+			'name' => 'Retired One', 'stack_slug' => 'werewolf',
+			'owner_type' => 'chronicle', 'owner_slug' => $this->game_slug,
+			'wp_user_id' => $player, 'status' => 'retired',
+		] );
+
+		$ids = Game_Member::ids_without_active_character( $this->game_id, $this->game_slug );
+		$this->assertNotContains( $player, $ids );
+	}
+
+	public function test_a_player_with_two_non_active_characters_is_counted_once_not_twice(): void {
+		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( $this->game_id, $player, 'player' );
+		Character::create( [
+			'name' => 'Retired One', 'stack_slug' => 'vampire',
+			'owner_type' => 'chronicle', 'owner_slug' => $this->game_slug,
+			'wp_user_id' => $player, 'status' => 'retired',
+		] );
+		Character::create( [
+			'name' => 'Dead One', 'stack_slug' => 'werewolf',
+			'owner_type' => 'chronicle', 'owner_slug' => $this->game_slug,
+			'wp_user_id' => $player, 'status' => 'dead',
+		] );
+
+		$ids = Game_Member::ids_without_active_character( $this->game_id, $this->game_slug );
+		$this->assertCount( 1, array_filter( $ids, fn( $id ) => $id === $player ) );
+	}
+
+	public function test_non_player_roles_are_never_counted(): void {
+		$st = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( $this->game_id, $st, 'hst' );
+		// No characters at all - would qualify if role filtering were missing.
+
+		$ids = Game_Member::ids_without_active_character( $this->game_id, $this->game_slug );
+		$this->assertNotContains( $st, $ids );
+	}
+
+	public function test_an_active_character_in_a_different_chronicle_does_not_count_here(): void {
+		$other_slug = 'thread-test-stats-other-game';
+		global $wpdb;
+		$wpdb->insert( $wpdb->prefix . 'be_games', [
+			'slug' => $other_slug, 'name' => 'Thread Test Stats Other Game',
+			'created_by' => 1, 'created_at' => current_time( 'mysql' ), 'updated_at' => current_time( 'mysql' ),
+		] );
+
+		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( $this->game_id, $player, 'player' );
+		// Active, but in the OTHER chronicle - must not satisfy this game's own check.
+		Character::create( [
+			'name' => 'Active Elsewhere', 'stack_slug' => 'vampire',
+			'owner_type' => 'chronicle', 'owner_slug' => $other_slug,
+			'wp_user_id' => $player, 'status' => 'active',
+		] );
+
+		$ids = Game_Member::ids_without_active_character( $this->game_id, $this->game_slug );
+		$this->assertContains( $player, $ids );
+	}
+
+	public function test_stats_includes_the_players_without_active_character_count(): void {
+		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( $this->game_id, $player, 'player' );
+
+		wp_set_current_user( $this->st_id );
+		$data = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/stats" ) )->get_data();
+
+		$this->assertSame( 1, $data['players_without_active_character'] );
+	}
+
+	public function test_players_without_active_character_detail_route_resolves_display_names(): void {
+		$player = self::factory()->user->create( [ 'role' => 'subscriber', 'display_name' => 'Roster Health Test Player' ] );
+		Game_Member::set_role( $this->game_id, $player, 'player' );
+
+		wp_set_current_user( $this->st_id );
+		$request  = new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/stats/players-without-active-character" );
+		$response = $this->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertCount( 1, $data );
+		$this->assertSame( $player, $data[0]['wp_user_id'] );
+		$this->assertSame( 'Roster Health Test Player', $data[0]['display_name'] );
+	}
+
+	public function test_players_without_active_character_detail_route_is_denied_to_a_plain_player(): void {
+		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		wp_set_current_user( $player );
+
+		$request  = new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/stats/players-without-active-character" );
+		$response = $this->dispatch( $request );
+
+		$this->assertSame( 403, $response->get_status() );
 	}
 }

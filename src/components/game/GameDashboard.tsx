@@ -9,7 +9,7 @@ import { useEffect, useState } from '@wordpress/element';
 import api from '../../api/client';
 import { describeChange } from '../../lib/describeChange';
 import { PlayerDashboard } from './PlayerDashboard';
-import type { GameStats } from '../../types';
+import type { GameStats, PlayerWithoutActiveCharacter } from '../../types';
 import './GameDashboard.css';
 
 export interface GameDashboardProps {
@@ -52,6 +52,20 @@ export function GameDashboard( { gameSlug, sheetPageUrl, approvalQueueUrl, roste
 	const [ stats, setStats ] = useState<GameStats | null>( null );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState<string | null>( null );
+
+	const [ rosterHealthOpen, setRosterHealthOpen ] = useState( false );
+	const [ rosterHealthPlayers, setRosterHealthPlayers ] = useState<PlayerWithoutActiveCharacter[] | null>( null );
+
+	function toggleRosterHealth() {
+		if ( rosterHealthOpen ) {
+			setRosterHealthOpen( false );
+			return;
+		}
+		setRosterHealthOpen( true );
+		if ( rosterHealthPlayers === null ) {
+			api.gameStats( gameSlug ).playersWithoutActiveCharacter().then( setRosterHealthPlayers ).catch( () => setRosterHealthPlayers( [] ) );
+		}
+	}
 
 	useEffect( () => {
 		if ( ! canManage ) {
@@ -126,6 +140,31 @@ export function GameDashboard( { gameSlug, sheetPageUrl, approvalQueueUrl, roste
 									</li>
 								) ) }
 							</ul>
+						</div>
+
+						<div className="be-game-dashboard__card">
+							<button
+								type="button"
+								className="be-game-dashboard__card-toggle"
+								onClick={ toggleRosterHealth }
+								aria-expanded={ rosterHealthOpen }
+							>
+								<span className="be-game-dashboard__card-value">{ stats.players_without_active_character }</span>
+								<span className="be-game-dashboard__card-label">{ __( 'Players Without an Active Character', 'beyond-elysium' ) }</span>
+							</button>
+							{ rosterHealthOpen && (
+								stats.players_without_active_character === 0 ? (
+									<p>{ __( 'Everyone has an active character.', 'beyond-elysium' ) }</p>
+								) : rosterHealthPlayers === null ? (
+									<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
+								) : (
+									<ul className="be-game-dashboard__breakdown">
+										{ rosterHealthPlayers.map( ( player ) => (
+											<li key={ player.wp_user_id }>{ player.display_name ?? `#${ player.wp_user_id }` }</li>
+										) ) }
+									</ul>
+								)
+							) }
 						</div>
 					</div>
 

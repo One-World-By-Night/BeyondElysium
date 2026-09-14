@@ -123,6 +123,42 @@ class Game_Member {
 	}
 
 	/**
+	 * Returns the `wp_user_id` of every `player`-role member of a game who holds
+	 * zero `active` characters in it - "no active character" and "only character
+	 * has gone inactive" are the same condition, not two (queryable-player-
+	 * inventory-design.md). A player with no characters at all and a player whose
+	 * only character is retired/dead/pending both count: neither has an `active`
+	 * one. `owner_type = 'chronicle'` matches every other per-game character
+	 * count in this codebase (`Character::counts_by_stack_for_game()`, etc.).
+	 *
+	 * @param int    $game_id
+	 * @param string $game_slug
+	 * @return int[]
+	 */
+	public static function ids_without_active_character( int $game_id, string $game_slug ): array {
+		global $wpdb;
+		$members_table    = Manager::table( 'game_members' );
+		$characters_table = Manager::table( 'characters' );
+
+		$sql = $wpdb->prepare(
+			"SELECT gm.wp_user_id
+			FROM {$members_table} gm
+			LEFT JOIN {$characters_table} c
+				ON c.wp_user_id = gm.wp_user_id
+				AND c.owner_type = 'chronicle'
+				AND c.owner_slug = %s
+				AND c.status = 'active'
+			WHERE gm.game_id = %d AND gm.role = 'player'
+			GROUP BY gm.wp_user_id
+			HAVING COUNT(c.id) = 0",
+			$game_slug,
+			$game_id
+		);
+
+		return array_map( 'intval', $wpdb->get_col( $sql ) );
+	}
+
+	/**
 	 * Remove a user's membership row for one game entirely, deleting whatever
 	 * role - hst, ast, narrator, or player - they held. Does not affect their
 	 * membership in any other game.

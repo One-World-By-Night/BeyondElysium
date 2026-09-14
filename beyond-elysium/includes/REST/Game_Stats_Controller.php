@@ -5,6 +5,7 @@ namespace BeyondElysium\REST;
 use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Plot;
 
 defined( 'ABSPATH' ) || exit;
@@ -35,6 +36,15 @@ class Game_Stats_Controller extends Base_Controller {
 			[
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'get_stats' ],
+				'permission_callback' => $this->permission( 'be_manage_characters' ),
+			],
+		] );
+
+		// The roster-health detail behind `players_without_active_character`'s count.
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/stats/players-without-active-character', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_players_without_active_character' ],
 				'permission_callback' => $this->permission( 'be_manage_characters' ),
 			],
 		] );
@@ -75,16 +85,48 @@ class Game_Stats_Controller extends Base_Controller {
 		}
 
 		$stats = [
-			'characters_by_stack'  => Character::counts_by_stack_for_game( $game->slug ),
-			'characters_by_status' => Character::counts_by_status_for_game( $game->slug ),
-			'pending_changes'      => Change::count_for_game( $game->slug, [ 'status' => 'pending' ] ),
-			'active_plots'         => Plot::count_for_game( (int) $game->id, [ 'status' => 'active' ] ),
-			'recent_activity'      => $recent_activity,
+			'characters_by_stack'               => Character::counts_by_stack_for_game( $game->slug ),
+			'characters_by_status'              => Character::counts_by_status_for_game( $game->slug ),
+			'pending_changes'                   => Change::count_for_game( $game->slug, [ 'status' => 'pending' ] ),
+			'active_plots'                      => Plot::count_for_game( (int) $game->id, [ 'status' => 'active' ] ),
+			'recent_activity'                   => $recent_activity,
+			'players_without_active_character'  => count( Game_Member::ids_without_active_character( (int) $game->id, $game->slug ) ),
 		];
 
 		set_transient( $cache_key, $stats, self::CACHE_TTL );
 
 		return $this->success( $stats );
+	}
+
+	/**
+	 * Returns the actual player list behind `players_without_active_character`'s
+	 * count - every player-role member of this game with zero active characters,
+	 * resolved to a display name. Not itself cached; the count on the main stats
+	 * endpoint is what's cheap to poll, this detail is fetched only when a
+	 * Storyteller actually opens the roster-health card.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_players_without_active_character( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$ids     = Game_Member::ids_without_active_character( (int) $game->id, $game->slug );
+		$players = array_map(
+			static function ( int $id ): array {
+				$user = get_userdata( $id );
+				return [
+					'wp_user_id'   => $id,
+					'display_name' => $user ? $user->display_name : null,
+				];
+			},
+			$ids
+		);
+
+		return $this->success( $players );
 	}
 
 	/**

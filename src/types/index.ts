@@ -163,6 +163,14 @@ export interface GameStats {
     pending_changes: number;
     active_plots: number;
     recent_activity: ActivityChange[];
+    /** Roster health: players with zero `active` characters - none at all, or only a retired/dead/pending one. */
+    players_without_active_character: number;
+}
+
+/** One player behind `GameStats.players_without_active_character`'s count. */
+export interface PlayerWithoutActiveCharacter {
+    wp_user_id: number;
+    display_name: string | null;
 }
 
 /**
