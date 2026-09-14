@@ -20,7 +20,11 @@ export interface WorldObjectManagerProps {
 	showEditor?: boolean;
 }
 
-type View = { mode: 'list' } | { mode: 'create'; type: ObjectType } | { mode: 'edit'; id: number };
+type View =
+	| { mode: 'list' }
+	| { mode: 'create'; type: ObjectType }
+	| { mode: 'edit'; id: number }
+	| { mode: 'duplicate'; id: number };
 
 /**
  * Renders the world object catalog in a list pane alongside a detail
@@ -84,13 +88,31 @@ export function WorldObjectManager( { gameSlug, defaultType, showEditor }: World
 					/>
 				) }
 
+				{ view.mode === 'duplicate' && (
+					<DuplicateWrapper
+						gameSlug={ gameSlug }
+						id={ view.id }
+						onSaved={ ( saved ) => {
+							setSelected( saved.id );
+							setView( { mode: 'list' } );
+							refresh();
+						} }
+						onCancel={ () => setView( { mode: 'list' } ) }
+					/>
+				) }
+
 				{ view.mode === 'list' && selected !== null && (
 					<>
 						<WorldObjectCard gameSlug={ gameSlug } objectId={ selected } />
 						{ showEditor && (
-							<button type="button" onClick={ () => setView( { mode: 'edit', id: selected } ) }>
-								{ __( 'Edit', 'beyond-elysium' ) }
-							</button>
+							<div className="be-world-manager__actions">
+								<button type="button" onClick={ () => setView( { mode: 'edit', id: selected } ) }>
+									{ __( 'Edit', 'beyond-elysium' ) }
+								</button>
+								<button type="button" onClick={ () => setView( { mode: 'duplicate', id: selected } ) }>
+									{ __( 'Duplicate', 'beyond-elysium' ) }
+								</button>
+							</div>
 						) }
 					</>
 				) }
@@ -149,6 +171,60 @@ function EditWrapper( {
 			gameSlug={ gameSlug }
 			objectType={ object.object_type }
 			object={ object }
+			onSaved={ onSaved }
+			onCancel={ onCancel }
+		/>
+	);
+}
+
+/**
+ * Loads the object being duplicated by ID, then renders a create-mode
+ * editor pre-filled from it - same load pattern as `EditWrapper`, but the
+ * loaded object is passed as `duplicateFrom` rather than `object`, so the
+ * editor always submits a create.
+ */
+function DuplicateWrapper( {
+	gameSlug,
+	id,
+	onSaved,
+	onCancel,
+}: {
+	gameSlug: string;
+	id: number;
+	onSaved: ( saved: WorldObject ) => void;
+	onCancel: () => void;
+} ) {
+	const [ object, setObject ] = useState<WorldObject | null>( null );
+	const [ error, setError ] = useState<string | null>( null );
+
+	useEffect( () => {
+		setError( null );
+		api
+			.worldObjects( gameSlug )
+			.get( id )
+			.then( setObject )
+			.catch( () => {
+				setError( __( 'Failed to load this item. Try again.', 'beyond-elysium' ) );
+			} );
+	}, [ gameSlug, id ] );
+
+	if ( error ) {
+		return (
+			<p className="be-world-manager__error" role="alert">
+				{ error }
+			</p>
+		);
+	}
+
+	if ( ! object ) {
+		return <p>{ __( 'Loading…', 'beyond-elysium' ) }</p>;
+	}
+
+	return (
+		<WorldObjectEditor
+			gameSlug={ gameSlug }
+			objectType={ object.object_type }
+			duplicateFrom={ object }
 			onSaved={ onSaved }
 			onCancel={ onCancel }
 		/>

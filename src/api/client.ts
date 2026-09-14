@@ -972,7 +972,7 @@ export const reports = ( gameSlug: string ) => ( {
     /** Builds the signed-PDF download URL for one report. */
     pdfUrl: (
         reportKey: string,
-        options: { statField?: string; statType?: string } = {}
+        options: { statField?: string; statType?: string; characterId?: number } = {}
     ): string => {
         const params = new URLSearchParams();
         if ( options.statField ) {
@@ -980,6 +980,9 @@ export const reports = ( gameSlug: string ) => ( {
         }
         if ( options.statType ) {
             params.set( 'stat_type', options.statType );
+        }
+        if ( options.characterId ) {
+            params.set( 'character_id', String( options.characterId ) );
         }
         params.set( '_wpnonce', window.beyondElysium?.nonce ?? '' );
 

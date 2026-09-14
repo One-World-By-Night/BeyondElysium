@@ -17,3 +17,9 @@
 .be-world-manager__error {
 	color: #c00;
 }
+
+.be-world-manager__actions {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 0.75rem;
+}

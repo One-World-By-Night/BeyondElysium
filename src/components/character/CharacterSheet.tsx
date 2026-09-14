@@ -317,6 +317,19 @@ export function CharacterSheet( { characterId, gameSlug, templateType = 'sheet_f
 						>
 							{ __( 'Print / Export', 'beyond-elysium' ) }
 						</button>
+						<button
+							type="button"
+							className="be-character-sheet__print"
+							disabled={ pdfAvailability !== null && ! pdfAvailability.ok }
+							onClick={ () =>
+								window.open(
+									api.reports( gameSlug ).pdfUrl( 'item-cards', { characterId } ),
+									'_blank'
+								)
+							}
+						>
+							{ __( 'Print My Items', 'beyond-elysium' ) }
+						</button>
 						{ /* Phone width only - see the showPrintOptions declaration above and
 						 * CharacterSheet.css's media query. A no-op on desktop, where the row
 						 * below always shows regardless of this button. */ }

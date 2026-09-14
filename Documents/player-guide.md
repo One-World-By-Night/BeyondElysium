@@ -114,6 +114,11 @@ If Print is disabled or tells you the chronicle hasn't set up sheet signing yet,
 one-time setup step your Storyteller's host needs to complete — nothing you did, and nothing
 you can fix from your own account.
 
+If a Storyteller has connected an item to your character — a weapon, a talisman, anything
+your character actually carries — a **Print My Items** button appears beside Print / Export.
+It generates the same kind of signed PDF, but only for the items connected to that character,
+so you can bring a real, signed prop card to the table for what your character is holding.
+
 ## 9. Using Your Sheet on a Phone
 
 Reading your own character sheet at a live game is a first-class phone experience — your

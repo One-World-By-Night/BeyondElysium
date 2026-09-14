@@ -328,6 +328,21 @@ shortcode — for a live, always-current view players can browse without waiting
 Storyteller to generate anything, since `be_view_reports` already reaches every real chronicle
 role including plain players.
 
+**Item Cards can be scoped to one character's own held items.** A character sheet's
+Connections section (visible to anyone holding `be_manage_connections`) lets a Storyteller
+link a world-object item to a character — search for it by name, optionally add a note (shown
+under the connection once saved), and it's connected. The Item Cards report normally prints
+every item in the chronicle's catalog; add `character_id` to the request (the character
+sheet's own "Print My Items" button does this automatically) to print only that character's
+connected items instead, signed the same way every other report is.
+
+A World Objects catalog entry can be shared across as many characters as hold one — connecting
+"the pistol" to fifty enforcers is fifty ordinary connections to the same item, not fifty
+copies. When one character's item needs to be genuinely unique (an heirloom, something that
+gets damaged or renamed), use **Duplicate** on that item in the World Objects editor instead of
+**New** — it opens a fresh create form pre-filled from the original so you're editing a
+starting point rather than typing it from scratch, and never changes the original item.
+
 ## 13. The Point Audit
 
 Opening a character's sheet as a Storyteller shows a **Point audit** toggle beside View

@@ -18,6 +18,13 @@ export interface WorldObjectEditorProps {
 	objectType: ObjectType;
 	/** When set, edits this object instead of creating a new one. */
 	object?: WorldObject | null;
+	/**
+	 * When set (and `object` is not), pre-fills a fresh create form from an
+	 * existing object's fields - "Duplicate" rather than "New" - so a
+	 * Storyteller making a one-off variant doesn't retype it from a blank
+	 * form. Still submits as a create; the source object is never touched.
+	 */
+	duplicateFrom?: WorldObject | null;
 	onSaved?: ( object: WorldObject ) => void;
 	onCancel?: () => void;
 }
@@ -31,16 +38,20 @@ type PropertyValue = string | number | Array<{ name: string; count?: number; not
  * properties get a free-text repeatable-row editor rather than a
  * catalog picker, since world-object trait lists have no fixed catalog.
  */
-export function WorldObjectEditor( { gameSlug, objectType, object, onSaved, onCancel }: WorldObjectEditorProps ) {
+export function WorldObjectEditor( { gameSlug, objectType, object, duplicateFrom, onSaved, onCancel }: WorldObjectEditorProps ) {
 	const schema = WORLD_OBJECT_SCHEMAS[ objectType ] ?? {};
+	// Duplicating pre-fills the same fields editing would show, but only ever backs a create -
+	// `object` itself stays unset here, so `submit()` below takes the create path, never update.
+	const source = object ?? duplicateFrom;
+	const isDuplicating = ! object && !! duplicateFrom;
 
-	const [ name, setName ] = useState( object?.name ?? '' );
-	const [ description, setDescription ] = useState( object?.description ?? '' );
-	const [ rarity, setRarity ] = useState( object?.rarity ?? '' );
-	const [ cost, setCost ] = useState( object?.cost ?? '' );
-	const [ limitations, setLimitations ] = useState( object?.limitations ?? '' );
+	const [ name, setName ] = useState( isDuplicating ? __( 'Copy of ', 'beyond-elysium' ) + ( source?.name ?? '' ) : source?.name ?? '' );
+	const [ description, setDescription ] = useState( source?.description ?? '' );
+	const [ rarity, setRarity ] = useState( source?.rarity ?? '' );
+	const [ cost, setCost ] = useState( source?.cost ?? '' );
+	const [ limitations, setLimitations ] = useState( source?.limitations ?? '' );
 	const [ properties, setProperties ] = useState<Record<string, PropertyValue>>(
-		( object?.properties as Record<string, PropertyValue> ) ?? {}
+		( source?.properties as Record<string, PropertyValue> ) ?? {}
 	);
 	const [ saving, setSaving ] = useState( false );
 	const [ error, setError ] = useState<string | null>( null );

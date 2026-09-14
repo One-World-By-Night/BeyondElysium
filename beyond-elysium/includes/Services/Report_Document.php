@@ -181,8 +181,14 @@ class Report_Document {
 			$report['entity']
 		);
 
+		$rows = $result['results'];
+
+		if ( ! empty( $filters['character_id'] ) ) {
+			$rows = self::filter_rows_connected_to_character( $rows, (int) $filters['character_id'] );
+		}
+
 		$cards = [];
-		foreach ( $result['results'] as $row ) {
+		foreach ( $rows as $row ) {
 			$card = [];
 			foreach ( $report['columns'] as [ $label, $key, $source ] ) {
 				$card[] = [ $label, self::resolve_one( $key, $source, $row, $game, $report['entity'] ) ];
@@ -196,6 +202,31 @@ class Report_Document {
 			'cards' => $cards,
 			'game'  => $game->name,
 		];
+	}
+
+	/**
+	 * Narrows an already-fetched card-report row set to only those connected
+	 * to the given character - the same `character -> world_object` read
+	 * `Character_Exporter.php`'s Equipment export already uses, applied here
+	 * instead of inventing a `conditions` pseudo-field (item-cards-design.md
+	 * §2). Runs after `conditions`/`logic` have already narrowed `$rows`, so a
+	 * request can still combine "this character's items" with "...of type
+	 * Weapon" for free.
+	 *
+	 * @param array<int,object> $rows
+	 * @return array<int,object>
+	 */
+	private static function filter_rows_connected_to_character( array $rows, int $character_id ): array {
+		$connected_ids = [];
+		foreach ( Connection::for_source( 'character', $character_id ) as $connection ) {
+			if ( ( $connection->target_type ?? '' ) === 'world_object' ) {
+				$connected_ids[ (int) $connection->target_id ] = true;
+			}
+		}
+
+		return array_values( array_filter( $rows, static function ( $row ) use ( $connected_ids ) {
+			return isset( $connected_ids[ (int) ( $row->id ?? 0 ) ] );
+		} ) );
 	}
 
 	/**

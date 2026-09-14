@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Models\Character;
 use BeyondElysium\Services\Pdf_Signer;
 use BeyondElysium\Services\Report_Document;
 use BeyondElysium\Services\Report_Writer;
@@ -39,10 +40,11 @@ class Reports_Controller extends Base_Controller {
 				'callback'            => [ $this, 'get_document' ],
 				'permission_callback' => $this->permission( 'be_view_reports' ),
 				'args'                => [
-					'conditions' => [ 'type' => 'string', 'required' => false ],
-					'logic'      => [ 'type' => 'string', 'default' => 'AND' ],
-					'stat_field' => [ 'type' => 'string', 'required' => false ],
-					'stat_type'  => [ 'type' => 'string', 'required' => false ],
+					'conditions'   => [ 'type' => 'string', 'required' => false ],
+					'logic'        => [ 'type' => 'string', 'default' => 'AND' ],
+					'stat_field'   => [ 'type' => 'string', 'required' => false ],
+					'stat_type'    => [ 'type' => 'string', 'required' => false ],
+					'character_id' => [ 'type' => 'integer', 'required' => false ],
 				],
 			],
 		] );
@@ -53,10 +55,11 @@ class Reports_Controller extends Base_Controller {
 				'callback'            => [ $this, 'get_pdf' ],
 				'permission_callback' => $this->permission( 'be_view_reports' ),
 				'args'                => [
-					'conditions' => [ 'type' => 'string', 'required' => false ],
-					'logic'      => [ 'type' => 'string', 'default' => 'AND' ],
-					'stat_field' => [ 'type' => 'string', 'required' => false ],
-					'stat_type'  => [ 'type' => 'string', 'required' => false ],
+					'conditions'   => [ 'type' => 'string', 'required' => false ],
+					'logic'        => [ 'type' => 'string', 'default' => 'AND' ],
+					'stat_field'   => [ 'type' => 'string', 'required' => false ],
+					'stat_type'    => [ 'type' => 'string', 'required' => false ],
+					'character_id' => [ 'type' => 'integer', 'required' => false ],
 				],
 			],
 		] );
@@ -160,12 +163,31 @@ class Reports_Controller extends Base_Controller {
 			return $this->error( 'invalid_request', __( 'conditions must be valid JSON.', 'beyond-elysium' ), 400 );
 		}
 
+		$can_manage = current_user_can( 'be_manage_characters' );
+		$filters    = [ 'conditions' => $conditions, 'logic' => (string) $request->get_param( 'logic' ) ];
+
+		$character_id = $request->get_param( 'character_id' );
+		if ( $character_id !== null && $character_id !== '' ) {
+			$character = Character::find( (int) $character_id );
+			if ( ! $character || $character->owner_slug !== $request['game_slug'] ) {
+				return $this->error( 'character_not_found', __( 'Character not found in this game.', 'beyond-elysium' ), 404 );
+			}
+			if ( ! $can_manage && (int) $character->wp_user_id !== get_current_user_id() ) {
+				return $this->error(
+					'ownership_denied',
+					__( 'You do not have permission to view this character.', 'beyond-elysium' ),
+					403
+				);
+			}
+			$filters['character_id'] = (int) $character_id;
+		}
+
 		$document = Report_Document::build(
 			$report_key,
 			$request['game_slug'],
-			[ 'conditions' => $conditions, 'logic' => (string) $request->get_param( 'logic' ) ],
+			$filters,
 			[
-				'can_manage' => current_user_can( 'be_manage_characters' ),
+				'can_manage' => $can_manage,
 				'stat_field' => (string) $request->get_param( 'stat_field' ),
 				'stat_type'  => (string) $request->get_param( 'stat_type' ),
 			]
