@@ -55,8 +55,11 @@ export function AdminTemplates() {
 	 */
 	function load() {
 		setLoading( true );
+		// per_page: 100 is the REST route's own hard cap - without it this call silently
+		// truncated to the route's default of 20, hiding whichever templates sorted past
+		// that point (same defect class as AdminSchemaBlocks.tsx's own fix).
 		api.templatesGlobal
-			.list()
+			.list( { per_page: 100 } )
 			.then( ( result ) => {
 				setTemplates( result );
 				setLoading( false );

@@ -292,42 +292,52 @@ and every request sends only one short field's own text - realistic usage for oc
 biography/plot polishing runs to cents, not a real budget line.
 
 Under **Beyond Elysium → System Config → AI Assist** (`be_manage_games`, administrator-only),
-set a site-wide default provider and that API key. This key is used directly for every
-catalog-level field (Schema Block descriptions, Credits text — neither belongs to any one
-chronicle), and as the fallback for any chronicle that opts in without supplying a key of its
-own.
+a single **Provider** dropdown offers three options — only one is ever configured at a time,
+and only that one's fields are shown:
+
+- **OpenAI (ChatGPT)** — the real OpenAI API, needing just an API key.
+- **Claude** — the real Anthropic API, needing just an API key.
+- **Self-Hosted (OpenAI-compatible)** — see below.
+
+Whichever is selected becomes the site-wide default, used directly for every catalog-level
+field (Schema Block descriptions, Credits text — neither belongs to any one chronicle), and
+as the fallback for any chronicle that opts in without supplying its own.
 
 Under **Beyond Elysium → Chronicle Setup → AI Assist** (`be_manage_apr` — the same access
 tier as Action & Rumor Settings, reachable by an HST with no site-administrator access),
-enable the feature for one chronicle and optionally give it its own key, overriding the
-site-wide one for that chronicle's own character/plot/rumor/world-object fields.
+enable the feature for one chronicle and pick from the same three-option dropdown to
+optionally give it its own configuration, overriding the site-wide one for that chronicle's
+own character/plot/rumor/world-object fields.
 
 **A key is never shown again once saved.** Every settings screen displays only whether a key
-is configured (a plain "configured" indicator, never the value), whether it was entered here
-or inherited from the site-wide default — re-enter a key to change it, or use **Clear** to
-remove it. Every key is encrypted at rest.
+is configured (a plain "configured" indicator, never the value) — re-enter a key to change
+it, or use **Clear** to remove it. Every key is encrypted at rest.
 
 ### Using your own server instead (self-hosted / OpenAI-compatible)
 
-Both settings screens also accept an optional **Custom API base URL** and **Model override**
-per provider. Leave both blank to use the real OpenAI/Anthropic API — this is the default and
-what most chronicles want. Set the base URL to point this feature at any self-hosted server
-that speaks the same request/response shape (Ollama, LM Studio, vLLM, LocalAI, or a similar
-OpenAI-compatible Chat Completions endpoint) instead of the metered public API, and the model
-field to name whichever model that server is running. Neither field is a secret — both are
-shown in plain text, unlike the key.
+Choosing **Self-Hosted (OpenAI-compatible)** from the Provider dropdown reveals three fields:
+an **API base URL**, a **Model** name, and an API key. Point the base URL at any self-hosted
+server that speaks the same request/response shape as OpenAI's own Chat Completions API —
+Ollama, LM Studio, vLLM, LocalAI, or similar — and name whichever model that server is
+running. This isn't a fourth wire protocol: under the hood it's the same OpenAI request shape
+at a different URL, since every common self-hosted option already speaks it; there's no
+comparably common self-hosted equivalent for Claude's own API, so it isn't offered as a
+separate self-hosted flavor. The API key field is still required even for a server with no
+real authentication of its own — many accept any placeholder value (check your server's own
+docs for what it expects, if anything).
 
 This is the practical way to eliminate per-request API cost entirely: a self-hosted model has
 no metered billing, at the cost of running (and paying for) the server yourself. A chronicle
-using its own key also gets to set its own endpoint/model, independent of the site-wide
-default; a chronicle that falls back to the site-wide key also inherits the site-wide
-endpoint/model override, so the two never mismatch.
+configuring its own Self-Hosted entry is independent of the site-wide default; a chronicle
+that falls back to the site-wide key also inherits the site-wide server, so the two never
+mismatch.
 
-**Test Connection** — next to each provider's key field — sends a minimal request using
-whatever you've currently typed (key, base URL, and model, whether saved yet or not) and
-reports success or a specific failure, so a typo'd URL or an expired key is caught before you
-rely on it in the field. It never tests an already-saved key silently; a key is never sent
-back to this page once saved, so testing it means re-entering it first.
+**Test Connection** — inside whichever fieldset is currently showing — sends a minimal
+request using whatever you've currently typed (key, and base URL/model for Self-Hosted,
+whether saved yet or not) and reports success or a specific failure, so a typo'd URL or an
+expired key is caught before you rely on it in the field. It never tests an already-saved key
+silently; a key is never sent back to this page once saved, so testing it means re-entering
+it first.
 
 ## REST API
 

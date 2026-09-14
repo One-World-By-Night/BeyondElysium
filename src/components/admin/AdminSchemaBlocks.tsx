@@ -70,8 +70,12 @@ export function AdminSchemaBlocks() {
 	 */
 	function load() {
 		setLoading( true );
+		// per_page: 100 is the REST route's own hard cap (Schema_Blocks_Controller's
+		// get_collection_params()) - without it this call silently truncated to the
+		// route's default of 20, hiding every block whose display name sorted past
+		// that point (D38's own defect class, in a third call site D38 never touched).
 		api.schemaBlocks
-			.list( gameSlug ? { game_slug: gameSlug } : {} )
+			.list( { ...( gameSlug ? { game_slug: gameSlug } : {} ), per_page: 100 } )
 			.then( ( result ) => {
 				setBlocks( result );
 				setLoading( false );

@@ -5,6 +5,16 @@
  * any chronicle that opts in without supplying its own key. be_manage_games
  * only - an administrator's own call, since this key is billed to whoever
  * supplies it and used across every chronicle on the site by default.
+ *
+ * A clear three-way choice - OpenAI, Claude, or Self-Hosted (OpenAI-
+ * compatible) - only one of which is ever shown at a time. "Self-Hosted"
+ * is not a third wire protocol: it stores as provider `openai` with a
+ * base URL/model override, since every common self-hosted option (Ollama,
+ * LM Studio, vLLM, LocalAI) speaks the same Chat Completions shape OpenAI's
+ * own API does. There is no self-hosted equivalent for Claude's own
+ * Messages API in common use, so that option isn't offered as a fourth
+ * choice - a chronicle wanting a self-hosted server always gets it via
+ * this option, regardless of which provider the button itself is labeled.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -24,19 +34,19 @@ function errorMessage( error: unknown ): string {
 }
 
 type Provider = 'openai' | 'claude';
+type DisplayProvider = 'openai' | 'claude' | 'self_hosted';
 
 export function AdminAiAssistSite() {
 	const [ settings, setSettings ] = useState<AiAssistSiteSettings | null>( null );
-	const [ provider, setProvider ] = useState<Provider>( 'openai' );
+	const [ display, setDisplay ] = useState<DisplayProvider>( 'openai' );
 	const [ openaiKey, setOpenaiKey ] = useState( '' );
 	const [ claudeKey, setClaudeKey ] = useState( '' );
+	const [ selfHostedKey, setSelfHostedKey ] = useState( '' );
 	const [ openaiBaseUrl, setOpenaiBaseUrl ] = useState( '' );
 	const [ openaiModel, setOpenaiModel ] = useState( '' );
-	const [ claudeBaseUrl, setClaudeBaseUrl ] = useState( '' );
-	const [ claudeModel, setClaudeModel ] = useState( '' );
 	const [ saving, setSaving ] = useState( false );
-	const [ testing, setTesting ] = useState<Provider | null>( null );
-	const [ testResult, setTestResult ] = useState<{ which: Provider; ok: boolean; message: string } | null>( null );
+	const [ testing, setTesting ] = useState<DisplayProvider | null>( null );
+	const [ testResult, setTestResult ] = useState<{ which: DisplayProvider; ok: boolean; message: string } | null>( null );
 	const [ message, setMessage ] = useState<string | null>( null );
 	const [ error, setError ] = useState<string | null>( null );
 
@@ -45,11 +55,12 @@ export function AdminAiAssistSite() {
 			.getSettings()
 			.then( ( result ) => {
 				setSettings( result );
-				setProvider( result.provider );
 				setOpenaiBaseUrl( result.openai_base_url );
 				setOpenaiModel( result.openai_model );
-				setClaudeBaseUrl( result.claude_base_url );
-				setClaudeModel( result.claude_model );
+				// A saved OpenAI-slot base URL means this was configured as self-hosted -
+				// the two share one storage slot (provider `openai` either way).
+				const isSelfHosted = result.provider === 'openai' && ( result.openai_base_url !== '' || result.openai_model !== '' );
+				setDisplay( isSelfHosted ? 'self_hosted' : result.provider );
 			} )
 			.catch( ( err: unknown ) => setError( errorMessage( err ) ) );
 	}, [] );
@@ -65,17 +76,27 @@ export function AdminAiAssistSite() {
 			const data: Partial<{
 				provider: string; openai_key: string; claude_key: string;
 				openai_base_url: string; openai_model: string; claude_base_url: string; claude_model: string;
-			}> = { provider, openai_base_url: openaiBaseUrl, openai_model: openaiModel, claude_base_url: claudeBaseUrl, claude_model: claudeModel };
-			if ( openaiKey !== '' ) {
+			}> = {
+				provider: display === 'claude' ? 'claude' : 'openai',
+				openai_base_url: display === 'self_hosted' ? openaiBaseUrl : '',
+				openai_model: display === 'self_hosted' ? openaiModel : '',
+				claude_base_url: '',
+				claude_model: '',
+			};
+			if ( display === 'openai' && openaiKey !== '' ) {
 				data.openai_key = openaiKey;
 			}
-			if ( claudeKey !== '' ) {
+			if ( display === 'self_hosted' && selfHostedKey !== '' ) {
+				data.openai_key = selfHostedKey;
+			}
+			if ( display === 'claude' && claudeKey !== '' ) {
 				data.claude_key = claudeKey;
 			}
 			const updated = await api.aiAssistSite.updateSettings( data );
 			setSettings( updated );
 			setOpenaiKey( '' );
 			setClaudeKey( '' );
+			setSelfHostedKey( '' );
 			setMessage( __( 'Saved.', 'beyond-elysium' ) );
 		} catch ( err ) {
 			setError( errorMessage( err ) );
@@ -84,7 +105,7 @@ export function AdminAiAssistSite() {
 		}
 	}
 
-	async function clearKey( which: Provider ) {
+	async function clearKey( which: 'openai' | 'claude' ) {
 		setSaving( true );
 		setError( null );
 		try {
@@ -99,24 +120,24 @@ export function AdminAiAssistSite() {
 		}
 	}
 
-	async function testConnection( which: Provider ) {
-		const key = which === 'openai' ? openaiKey : claudeKey;
+	async function testConnection() {
+		const key = display === 'claude' ? claudeKey : display === 'self_hosted' ? selfHostedKey : openaiKey;
 		if ( key === '' ) {
-			setTestResult( { which, ok: false, message: __( 'Type the key above first - a saved key is never sent back to this page, so it has to be re-entered to test it.', 'beyond-elysium' ) } );
+			setTestResult( { which: display, ok: false, message: __( 'Type the key above first - a saved key is never sent back to this page, so it has to be re-entered to test it.', 'beyond-elysium' ) } );
 			return;
 		}
-		setTesting( which );
+		setTesting( display );
 		setTestResult( null );
 		try {
 			const response = await api.aiAssistSite.testConnection( {
-				provider: which,
+				provider: display === 'claude' ? 'claude' : 'openai',
 				key,
-				base_url: which === 'openai' ? openaiBaseUrl : claudeBaseUrl,
-				model: which === 'openai' ? openaiModel : claudeModel,
+				base_url: display === 'self_hosted' ? openaiBaseUrl : '',
+				model: display === 'self_hosted' ? openaiModel : '',
 			} );
-			setTestResult( { which, ok: true, message: response.message } );
+			setTestResult( { which: display, ok: true, message: response.message } );
 		} catch ( err ) {
-			setTestResult( { which, ok: false, message: errorMessage( err ) } );
+			setTestResult( { which: display, ok: false, message: errorMessage( err ) } );
 		} finally {
 			setTesting( null );
 		}
@@ -147,106 +168,130 @@ export function AdminAiAssistSite() {
 
 			<form className="be-admin__form" onSubmit={ save }>
 				<label>
-					{ __( 'Default provider', 'beyond-elysium' ) }
-					<select value={ provider } onChange={ ( e ) => setProvider( e.target.value as Provider ) }>
-						<option value="openai">OpenAI</option>
-						<option value="claude">Claude</option>
+					{ __( 'Provider', 'beyond-elysium' ) }
+					<select value={ display } onChange={ ( e ) => setDisplay( e.target.value as DisplayProvider ) }>
+						<option value="openai">{ __( 'OpenAI (ChatGPT)', 'beyond-elysium' ) }</option>
+						<option value="claude">{ __( 'Claude', 'beyond-elysium' ) }</option>
+						<option value="self_hosted">{ __( 'Self-Hosted (OpenAI-compatible)', 'beyond-elysium' ) }</option>
 					</select>
 				</label>
+				<p className="description">
+					{ __( 'Only the selected option’s settings are shown below.', 'beyond-elysium' ) }
+				</p>
 
-				<fieldset className="be-admin__fieldset">
-					<legend>{ __( 'OpenAI', 'beyond-elysium' ) }</legend>
-					<label>
-						{ __( 'API key', 'beyond-elysium' ) }
-						<input
-							type="password"
-							value={ openaiKey }
-							onChange={ ( e ) => setOpenaiKey( e.target.value ) }
-							placeholder={ settings.has_openai_key ? __( '•••••••• (configured - leave blank to keep)', 'beyond-elysium' ) : __( 'sk-…', 'beyond-elysium' ) }
-						/>
-						{ settings.has_openai_key && (
-							<button type="button" onClick={ () => clearKey( 'openai' ) } disabled={ saving }>
-								{ __( 'Clear', 'beyond-elysium' ) }
+				{ display === 'openai' && (
+					<fieldset className="be-admin__fieldset">
+						<legend>{ __( 'OpenAI', 'beyond-elysium' ) }</legend>
+						<label>
+							{ __( 'API key', 'beyond-elysium' ) }
+							<input
+								type="password"
+								value={ openaiKey }
+								onChange={ ( e ) => setOpenaiKey( e.target.value ) }
+								placeholder={ settings.has_openai_key ? __( '•••••••• (configured - leave blank to keep)', 'beyond-elysium' ) : __( 'sk-…', 'beyond-elysium' ) }
+							/>
+							{ settings.has_openai_key && (
+								<button type="button" onClick={ () => clearKey( 'openai' ) } disabled={ saving }>
+									{ __( 'Clear', 'beyond-elysium' ) }
+								</button>
+							) }
+							<button type="button" onClick={ testConnection } disabled={ testing !== null }>
+								{ testing === 'openai' ? __( 'Testing…', 'beyond-elysium' ) : __( 'Test Connection', 'beyond-elysium' ) }
 							</button>
+						</label>
+						{ testResult?.which === 'openai' && (
+							<p className={ testResult.ok ? undefined : 'be-admin__error' } role={ testResult.ok ? 'status' : 'alert' }>
+								{ testResult.message }
+							</p>
 						) }
-						<button type="button" onClick={ () => testConnection( 'openai' ) } disabled={ testing !== null }>
-							{ testing === 'openai' ? __( 'Testing…', 'beyond-elysium' ) : __( 'Test Connection', 'beyond-elysium' ) }
-						</button>
-					</label>
-					{ testResult?.which === 'openai' && (
-						<p className={ testResult.ok ? undefined : 'be-admin__error' } role={ testResult.ok ? 'status' : 'alert' }>
-							{ testResult.message }
-						</p>
-					) }
-					<label>
-						{ __( 'Custom API base URL (optional)', 'beyond-elysium' ) }
-						<input
-							type="text"
-							value={ openaiBaseUrl }
-							onChange={ ( e ) => setOpenaiBaseUrl( e.target.value ) }
-							placeholder="https://api.openai.com/v1/chat/completions"
-						/>
-					</label>
-					<p className="description">
-						{ __(
-							'Leave blank for the real OpenAI API. Set this to point at a self-hosted or otherwise-compatible server instead (Ollama, LM Studio, vLLM, LocalAI, ...) - anything that speaks the same Chat Completions request/response shape at its own URL.',
-							'beyond-elysium'
-						) }
-					</p>
-					<label>
-						{ __( 'Model override (optional)', 'beyond-elysium' ) }
-						<input
-							type="text"
-							value={ openaiModel }
-							onChange={ ( e ) => setOpenaiModel( e.target.value ) }
-							placeholder="gpt-4o-mini"
-						/>
-					</label>
-				</fieldset>
+					</fieldset>
+				) }
 
-				<fieldset className="be-admin__fieldset">
-					<legend>{ __( 'Claude', 'beyond-elysium' ) }</legend>
-					<label>
-						{ __( 'API key', 'beyond-elysium' ) }
-						<input
-							type="password"
-							value={ claudeKey }
-							onChange={ ( e ) => setClaudeKey( e.target.value ) }
-							placeholder={ settings.has_claude_key ? __( '•••••••• (configured - leave blank to keep)', 'beyond-elysium' ) : __( 'sk-ant-…', 'beyond-elysium' ) }
-						/>
-						{ settings.has_claude_key && (
-							<button type="button" onClick={ () => clearKey( 'claude' ) } disabled={ saving }>
-								{ __( 'Clear', 'beyond-elysium' ) }
+				{ display === 'claude' && (
+					<fieldset className="be-admin__fieldset">
+						<legend>{ __( 'Claude', 'beyond-elysium' ) }</legend>
+						<label>
+							{ __( 'API key', 'beyond-elysium' ) }
+							<input
+								type="password"
+								value={ claudeKey }
+								onChange={ ( e ) => setClaudeKey( e.target.value ) }
+								placeholder={ settings.has_claude_key ? __( '•••••••• (configured - leave blank to keep)', 'beyond-elysium' ) : __( 'sk-ant-…', 'beyond-elysium' ) }
+							/>
+							{ settings.has_claude_key && (
+								<button type="button" onClick={ () => clearKey( 'claude' ) } disabled={ saving }>
+									{ __( 'Clear', 'beyond-elysium' ) }
+								</button>
+							) }
+							<button type="button" onClick={ testConnection } disabled={ testing !== null }>
+								{ testing === 'claude' ? __( 'Testing…', 'beyond-elysium' ) : __( 'Test Connection', 'beyond-elysium' ) }
 							</button>
+						</label>
+						{ testResult?.which === 'claude' && (
+							<p className={ testResult.ok ? undefined : 'be-admin__error' } role={ testResult.ok ? 'status' : 'alert' }>
+								{ testResult.message }
+							</p>
 						) }
-						<button type="button" onClick={ () => testConnection( 'claude' ) } disabled={ testing !== null }>
-							{ testing === 'claude' ? __( 'Testing…', 'beyond-elysium' ) : __( 'Test Connection', 'beyond-elysium' ) }
-						</button>
-					</label>
-					{ testResult?.which === 'claude' && (
-						<p className={ testResult.ok ? undefined : 'be-admin__error' } role={ testResult.ok ? 'status' : 'alert' }>
-							{ testResult.message }
+					</fieldset>
+				) }
+
+				{ display === 'self_hosted' && (
+					<fieldset className="be-admin__fieldset">
+						<legend>{ __( 'Self-Hosted (OpenAI-compatible)', 'beyond-elysium' ) }</legend>
+						<p className="description">
+							{ __(
+								'Anything that speaks the same Chat Completions request/response shape at its own URL - Ollama, LM Studio, vLLM, LocalAI, and similar.',
+								'beyond-elysium'
+							) }
 						</p>
-					) }
-					<label>
-						{ __( 'Custom API base URL (optional)', 'beyond-elysium' ) }
-						<input
-							type="text"
-							value={ claudeBaseUrl }
-							onChange={ ( e ) => setClaudeBaseUrl( e.target.value ) }
-							placeholder="https://api.anthropic.com/v1/messages"
-						/>
-					</label>
-					<label>
-						{ __( 'Model override (optional)', 'beyond-elysium' ) }
-						<input
-							type="text"
-							value={ claudeModel }
-							onChange={ ( e ) => setClaudeModel( e.target.value ) }
-							placeholder="claude-haiku-4-5-20251001"
-						/>
-					</label>
-				</fieldset>
+						<label>
+							{ __( 'API base URL', 'beyond-elysium' ) }
+							<input
+								type="text"
+								value={ openaiBaseUrl }
+								onChange={ ( e ) => setOpenaiBaseUrl( e.target.value ) }
+								placeholder="http://localhost:11434/v1/chat/completions"
+							/>
+						</label>
+						<label>
+							{ __( 'Model', 'beyond-elysium' ) }
+							<input
+								type="text"
+								value={ openaiModel }
+								onChange={ ( e ) => setOpenaiModel( e.target.value ) }
+								placeholder="llama3"
+							/>
+						</label>
+						<label>
+							{ __( 'API key', 'beyond-elysium' ) }
+							<input
+								type="password"
+								value={ selfHostedKey }
+								onChange={ ( e ) => setSelfHostedKey( e.target.value ) }
+								placeholder={ settings.has_openai_key ? __( '•••••••• (configured - leave blank to keep)', 'beyond-elysium' ) : __( 'many self-hosted servers accept any value here', 'beyond-elysium' ) }
+							/>
+							{ settings.has_openai_key && (
+								<button type="button" onClick={ () => clearKey( 'openai' ) } disabled={ saving }>
+									{ __( 'Clear', 'beyond-elysium' ) }
+								</button>
+							) }
+							<button type="button" onClick={ testConnection } disabled={ testing !== null }>
+								{ testing === 'self_hosted' ? __( 'Testing…', 'beyond-elysium' ) : __( 'Test Connection', 'beyond-elysium' ) }
+							</button>
+						</label>
+						<p className="description">
+							{ __(
+								"A value is still required even if your server doesn't check it - check your server's own docs for whether any string works (e.g. \"not-needed\") or it expects a real token.",
+								'beyond-elysium'
+							) }
+						</p>
+						{ testResult?.which === 'self_hosted' && (
+							<p className={ testResult.ok ? undefined : 'be-admin__error' } role={ testResult.ok ? 'status' : 'alert' }>
+								{ testResult.message }
+							</p>
+						) }
+					</fieldset>
+				) }
 
 				<div className="be-admin__form-actions">
 					<button type="submit" disabled={ saving }>

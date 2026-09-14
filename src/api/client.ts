@@ -345,8 +345,8 @@ export const templatesGlobal = {
      * records, not resolved against any particular stack or
      * chronicle.
      */
-    list: (): Promise<Template[]> =>
-        apiFetch( { path: `${ BASE }/templates` } ),
+    list: ( params: { per_page?: number } = {} ): Promise<Template[]> =>
+        apiFetch( { path: `${ BASE }/templates${ toQuery( params as Record<string, unknown> ) }` } ),
 
     /**
      * Fetches a single global template by its numeric id.
