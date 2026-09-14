@@ -88,6 +88,11 @@ class Plugin {
 			'restUrl'  => rest_url( 'be/v1/' ),
 			'nonce'    => wp_create_nonce( 'wp_rest' ),
 			'version'  => BE_VERSION,
+			// Per-install, not per-user (i18n-pt-br-design.md, Decision 106) - the site's own
+			// language, matching how load_plugin_textdomain()/wp_set_script_translations()
+			// already resolve the UI-chrome strings. Drives which catalog item name a
+			// renderer shows (name vs name_pt); never the value stored or matched against.
+			'locale'   => get_locale(),
 			// UI affordance only; every REST route enforces its own capability check server-side.
 			'capabilities' => [
 				'be_manage_plots'       => current_user_can( 'be_manage_plots' ),

@@ -7,7 +7,8 @@
 import { __ } from '@wordpress/i18n';
 import { displayTrait, type Trait, type DisplayType } from '../../lib/displayTrait';
 import { groupTraitsByField } from '../../lib/groupTraitsByField';
-import type { TraitListDefinition } from '../../types';
+import { localizedItemName } from '../../lib/localizeName';
+import type { TraitListDefinition, TraitListItem } from '../../types';
 import './TraitListRenderer.css';
 
 export interface TraitListRendererProps {
@@ -73,6 +74,19 @@ export function sortIfAlphabetized( traits: Trait[], alphabetize?: boolean ): Tr
 }
 
 /**
+ * Swaps a held trait's display name for its catalog translation, when the site is
+ * Portuguese and one exists (i18n-pt-br-design.md) - a display-only copy, never mutating
+ * the trait's own `name` (still the canonical value every sort/key/lookup above uses).
+ */
+function localizeTraitForDisplay( trait: Trait, catalogByName: Map<string, TraitListItem> ): Trait {
+	const catalogItem = catalogByName.get( trait.name );
+	if ( ! catalogItem?.name_pt ) {
+		return trait;
+	}
+	return { ...trait, name: localizedItemName( catalogItem ) };
+}
+
+/**
  * Renders a trait_list section. Every trait goes through `displayTrait()` at the
  * resolved display mode. An empty list still renders its "None" placeholder rather than
  * disappearing - a blank Merits section is information, not nothing.
@@ -82,6 +96,7 @@ export function sortIfAlphabetized( traits: Trait[], alphabetize?: boolean ): Tr
 export function TraitListRenderer( { blockSlug, data, definition, display }: TraitListRendererProps ) {
 	const mode = resolveDisplay( display, definition.display );
 	const nested = groupTraitsByField( data, definition );
+	const catalogByName = new Map( definition.items.map( ( item ) => [ item.name, item ] ) );
 
 	if ( data.length === 0 ) {
 		return (
@@ -102,7 +117,7 @@ export function TraitListRenderer( { blockSlug, data, definition, display }: Tra
 								{ subgroup && <h5 className="be-trait-list__subcategory">{ subgroup }</h5> }
 								<ul className="be-trait-list__items">
 									{ sortIfAlphabetized( items, definition.alphabetize ).map( ( trait, i ) => (
-										<li key={ `${ trait.name }-${ i }` }>{ displayTrait( trait, mode ) }</li>
+										<li key={ `${ trait.name }-${ i }` }>{ displayTrait( localizeTraitForDisplay( trait, catalogByName ), mode ) }</li>
 									) ) }
 								</ul>
 							</div>
@@ -122,7 +137,7 @@ export function TraitListRenderer( { blockSlug, data, definition, display }: Tra
 					{ group.label && <h4 className="be-trait-list__category">{ group.label }</h4> }
 					<ul className="be-trait-list__items">
 						{ sortIfAlphabetized( group.traits, definition.alphabetize ).map( ( trait, i ) => (
-							<li key={ `${ trait.name }-${ i }` }>{ displayTrait( trait, mode ) }</li>
+							<li key={ `${ trait.name }-${ i }` }>{ displayTrait( localizeTraitForDisplay( trait, catalogByName ), mode ) }</li>
 						) ) }
 					</ul>
 				</div>

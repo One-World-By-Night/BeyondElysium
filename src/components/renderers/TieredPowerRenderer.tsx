@@ -6,6 +6,7 @@
  * held entry.
  */
 import { __ } from '@wordpress/i18n';
+import { localizedPowerName } from '../../lib/localizeName';
 import type { TieredPowerDefinition, TieredPower, PowerLevel } from '../../types';
 import './TieredPowerRenderer.css';
 
@@ -63,12 +64,17 @@ function findByPowerName( power: TieredPower | undefined, powerName: string ): P
  * numbered level instead.
  */
 export function elderLabel( definition: TieredPowerDefinition, held: HeldPower ): string {
-	if ( held.level != null ) {
-		return `${ held.name }: ${ held.power_name } ${ held.level }`;
-	}
-	// Prefers a fresh catalog tier lookup, then the entry's own stored tier, then 'elder'.
+	// Prefers a fresh catalog tier lookup, then the entry's own stored tier, then 'elder' -
+	// the same lookup also backs the localized power name below (i18n-pt-br-design.md); the
+	// family name (held.name, e.g. "Celerity") has no translation in this pass and is never
+	// swapped, only the specific power's own name.
 	const found = findByPowerName( findPower( definition, held.name ), held.power_name as string );
-	return `${ held.name }: ${ held.power_name } (${ found?.tier ?? held.tier ?? 'elder' })`;
+	const powerName = found ? localizedPowerName( found ) : held.power_name;
+
+	if ( held.level != null ) {
+		return `${ held.name }: ${ powerName } ${ held.level }`;
+	}
+	return `${ held.name }: ${ powerName } (${ found?.tier ?? held.tier ?? 'elder' })`;
 }
 
 /**
@@ -92,7 +98,7 @@ export function namedLabel( definition: TieredPowerDefinition, held: HeldPower, 
 	}
 
 	const powerLevel = level != null ? findLevel( findPower( definition, held.name ), level ) : undefined;
-	return powerLevel ? powerLevel.power_name : numericLabel( definition, held );
+	return powerLevel ? localizedPowerName( powerLevel ) : numericLabel( definition, held );
 }
 
 /**

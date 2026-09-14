@@ -442,4 +442,74 @@ class MetCsvSeederTest extends TestCase {
 	public function test_no_bete_backgrounds_block_is_ever_built(): void {
 		$this->assertArrayNotHasKey( 'bete-backgrounds', self::$blocks );
 	}
+
+	// -------------------------------------------------------------------------
+	// name_pt (i18n-pt-br-design.md) - a real bug class, not a hypothetical: every
+	// trait_list-shaped builder threaded name_pt onto its own $item array correctly, but
+	// make_trait_list_block() - the single shared final-assembly function every one of them
+	// funnels through - built a fresh allowlisted object per item with no name_pt case at
+	// all, silently discarding it for every trait_list catalog (measured live against a
+	// real reseed before the fix: 0 of 427 Merits, 0 of 414 Flaws, 0 of 1291 Ritual rows
+	// carried it through; only vampire-blood-magic, whose own builder never round-trips
+	// through make_trait_list_block()'s allowlist, was unaffected). These are real,
+	// measured minimum-coverage floors against the shipped CSV data, not just "greater than
+	// zero" - a regression that silently drops the field again would still likely clear a
+	// bare non-zero check.
+	// -------------------------------------------------------------------------
+
+	public function test_name_pt_survives_make_trait_list_block_for_every_trait_list_catalog(): void {
+		$minimums = [
+			'met-merits'                => 419,
+			'met-flaws'                 => 391,
+			'met-abilities'             => 44,
+			'vampire-rituals'           => 1185,
+			'vampire-combo-disciplines' => 384,
+		];
+		foreach ( $minimums as $slug => $minimum ) {
+			$with_pt = 0;
+			foreach ( self::$blocks[ $slug ]['definition']['items'] as $item ) {
+				if ( ! empty( $item['name_pt'] ) ) {
+					$with_pt++;
+				}
+			}
+			$this->assertGreaterThanOrEqual( $minimum, $with_pt, "{$slug}: expected at least {$minimum} items with name_pt" );
+		}
+	}
+
+	public function test_name_pt_survives_make_tiered_power_block_for_tiered_power_catalogs(): void {
+		// Both vampire-disciplines and vampire-blood-magic route through make_tiered_power_block(),
+		// which never stripped name_pt the way make_trait_list_block() did - real, measured floors.
+		$minimums = [
+			'vampire-disciplines' => 146,
+			'vampire-blood-magic' => 530,
+		];
+		foreach ( $minimums as $slug => $minimum ) {
+			$with_pt = 0;
+			foreach ( self::$blocks[ $slug ]['definition']['powers'] as $power ) {
+				foreach ( $power['levels'] as $level ) {
+					if ( ! empty( $level['power_name_pt'] ) ) {
+						$with_pt++;
+					}
+				}
+			}
+			$this->assertGreaterThanOrEqual( $minimum, $with_pt, "{$slug}: expected at least {$minimum} levels with power_name_pt" );
+		}
+	}
+
+	/**
+	 * A real, specific, human-checkable case rather than only a count - Celerity's first
+	 * level is a GVM-sourced item (not a CSV-only survivor), so this also proves the
+	 * GVM-item backfill in build_met_discipline_powers() actually reaches the seeded block.
+	 */
+	public function test_alacrity_has_the_real_drafted_portuguese_translation(): void {
+		foreach ( self::$blocks['vampire-disciplines']['definition']['powers'] as $power ) {
+			foreach ( $power['levels'] as $level ) {
+				if ( $level['power_name'] === 'Alacrity' ) {
+					$this->assertSame( 'Presteza', $level['power_name_pt'] ?? null );
+					return;
+				}
+			}
+		}
+		$this->fail( 'Alacrity not found in vampire-disciplines - has the real catalog changed?' );
+	}
 }

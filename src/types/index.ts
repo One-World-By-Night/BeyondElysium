@@ -274,6 +274,8 @@ export interface CatalogDescription {
 
 export interface TraitListItem {
     name: string;
+    /** Drafted Portuguese (Brazil) translation, display-only - see src/lib/localizeName.ts. Never the value stored, matched, or sent to the server; `name` alone remains canonical. */
+    name_pt?: string;
     description?: CatalogDescription;
     source?: string;
     /** Free-text cost expression, not always a plain integer, e.g. "1", "1 or 3", "1-7". */
@@ -328,6 +330,8 @@ export interface PowerLevel {
     level: number | null;
     tier: 'innate' | 'basic' | 'intermediate' | 'advanced' | 'elder' | 'master' | 'ascended' | 'methuselah' | string;
     power_name: string;
+    /** Drafted Portuguese (Brazil) translation of power_name, display-only - see src/lib/localizeName.ts. */
+    power_name_pt?: string;
     description?: CatalogDescription;
     /** Free-text cost expression, in the same shape as TraitListItem's own cost field. */
     cost?: string;

@@ -428,6 +428,9 @@ class Admin_Menu {
 			'restUrl' => rest_url( 'be/v1/' ),
 			'nonce'   => wp_create_nonce( 'wp_rest' ),
 			'version' => BE_VERSION,
+			// See Plugin::enqueue_frontend()'s identical field for why this is site locale,
+			// not per-user (i18n-pt-br-design.md, Decision 106).
+			'locale'  => get_locale(),
 			'capabilities' => [
 				'be_manage_plots'       => current_user_can( 'be_manage_plots' ),
 				'be_manage_characters'  => current_user_can( 'be_manage_characters' ),

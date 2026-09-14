@@ -73,6 +73,8 @@ interface BeyondElysiumGlobal {
 	version: string;
 	/** UI affordance only; every REST route re-checks the real capability server-side. */
 	capabilities?: Record< string, boolean >;
+	/** The site's own WordPress locale (e.g. "pt_BR"), never per-user - see src/lib/localizeName.ts. */
+	locale?: string;
 }
 
 /**
