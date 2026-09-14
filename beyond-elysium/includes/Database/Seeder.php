@@ -1113,6 +1113,9 @@ class Seeder {
 							// Control (a clan/bloodline restriction) rides alongside the tier rather than replacing it.
 							'note' => $row['Control'] !== '' ? "{$row['lName']} ({$row['Control']})" : $row['lName'],
 						];
+						if ( ! empty( $row['Name-PT'] ) ) {
+							$item['name_pt'] = $row['Name-PT'];
+						}
 						$cost = Seeder::normalize_met_cost( $row['Cost'] );
 						if ( $cost !== '' ) {
 							$item['cost'] = $cost;
@@ -1294,6 +1297,9 @@ class Seeder {
 								'name' => $row['Name'],
 								'note' => $row['Control'] !== '' ? "{$row['lName']} ({$row['Control']})" : $row['lName'],
 							];
+							if ( ! empty( $row['Name-PT'] ) ) {
+								$item['name_pt'] = $row['Name-PT'];
+							}
 							$cost = Seeder::normalize_met_cost( $row['Cost'] );
 							if ( $cost !== '' ) {
 								$item['cost'] = $cost;
@@ -1465,6 +1471,9 @@ class Seeder {
 		$built = array_map(
 			static function ( $row ) {
 				$item = [ 'name' => $row['Name'] ];
+				if ( ! empty( $row['Name-PT'] ) ) {
+					$item['name_pt'] = $row['Name-PT'];
+				}
 
 				$cost = Seeder::normalize_met_cost( $row['Cost'] );
 				if ( $cost !== '' ) {
@@ -1544,6 +1553,9 @@ class Seeder {
 			$item = [
 				'name' => $tier !== '' ? "{$label}: {$row['Name']} ({$tier})" : "{$label}: {$row['Name']}",
 			];
+			if ( ! empty( $row['Name-PT'] ) ) {
+				$item['name_pt'] = $tier !== '' ? "{$label}: {$row['Name-PT']} ({$tier})" : "{$label}: {$row['Name-PT']}";
+			}
 			$cost = Seeder::normalize_met_cost( $row['Cost'] );
 			if ( $cost !== '' ) {
 				$item['cost'] = $cost;
@@ -1680,6 +1692,9 @@ class Seeder {
 			}
 
 			$item = [ 'name' => $row['Name'] ];
+			if ( ! empty( $row['Name-PT'] ) ) {
+				$item['name_pt'] = $row['Name-PT'];
+			}
 			if ( $cost !== '' ) {
 				$item['cost'] = $cost;
 			}
@@ -1743,6 +1758,9 @@ class Seeder {
 				}
 
 				$item = [ 'name' => $row['Name'] ];
+				if ( ! empty( $row['Name-PT'] ) ) {
+					$item['name_pt'] = $row['Name-PT'];
+				}
 				if ( $cost !== '' ) {
 					$item['cost'] = $cost;
 				}

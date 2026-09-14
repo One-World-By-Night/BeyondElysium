@@ -52,6 +52,20 @@ mkdir -p beyond-elysium/languages
     --exclude=vendor \
     --quiet
 
+# Real translation files (.po), unlike the .pot above, are committed content, not regenerated
+# here - i18n-pt-br-design.md. Compile each into what WordPress actually loads at runtime:
+# a .mo for load_plugin_textdomain() (PHP/gettext strings) and per-script-handle .json files
+# for wp_set_script_translations() (the React-side strings, registered for both the
+# 'beyond-elysium' and 'beyond-elysium-admin' handles in Plugin.php/Admin_Menu.php). A locale
+# with no .po yet is skipped silently - same graceful English-fallback as no translation at all.
+for po in beyond-elysium/languages/*.po; do
+    [ -e "$po" ] || continue
+    locale="$(basename "$po" .po | sed 's/^beyond-elysium-//')"
+    echo "==> wp i18n make-mo/make-json ($locale)"
+    "$PHP" "$WP_CLI" i18n make-mo "$po" beyond-elysium/languages/ --quiet
+    "$PHP" "$WP_CLI" i18n make-json "$po" beyond-elysium/languages/ --no-purge --quiet
+done
+
 echo "==> assembling"
 rm -rf dist
 mkdir -p "$OUT"

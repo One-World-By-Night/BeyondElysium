@@ -21,16 +21,17 @@ class MET_CSV_Parser {
 
 	/**
 	 * Header columns this parser keeps. The source file also carries a
-	 * Portuguese translation column for most of these and one blank-named
-	 * column between lName and Cost; both are read so fgetcsv() stays aligned,
-	 * then discarded.
+	 * Portuguese translation column for most of these (only `Name-PT` is
+	 * kept - see i18n-pt-br-design.md) and one blank-named column between
+	 * lName and Cost; both are read so fgetcsv() stays aligned, then
+	 * discarded except for `Name-PT`.
 	 *
 	 * Description is never kept: it holds full sourcebook rules text and is
 	 * already blanked in the source file. A block's own `description` field
 	 * stays empty and editable for a chronicle admin to fill in.
 	 */
 	const KEPT_COLUMNS = [
-		'Name', 'Type', 'Subtype', 'Group', 'Control', 'Rtg', 'lNum', 'lName',
+		'Name', 'Name-PT', 'Type', 'Subtype', 'Group', 'Control', 'Rtg', 'lNum', 'lName',
 		'Cost', 'Source', 'Prerequsites', 'House Rules', 'OrgRef',
 	];
 

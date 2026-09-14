@@ -41,19 +41,44 @@ class MetCsvParserTest extends TestCase {
 	}
 
 	/**
-	 * PT (Portuguese) columns and the source file's one literally-blank-named column exist
-	 * in the real header but are out of scope until a future i18n phase - confirm they never
-	 * reach a parsed row. Description is excluded for a different reason (see KEPT_COLUMNS'
-	 * own doc comment) - confirmed separately below.
+	 * Every `-PT` column except `Name-PT` (i18n-pt-br-design.md - the one column with
+	 * meaningful drafted content) and the source file's one literally-blank-named column
+	 * exist in the real header but are out of scope - confirm they never reach a parsed row.
+	 * Description is excluded for a different reason (see KEPT_COLUMNS' own doc comment) -
+	 * confirmed separately below.
 	 */
-	public function test_translation_and_blank_columns_are_not_carried(): void {
+	public function test_only_name_pt_survives_of_the_translation_columns(): void {
 		$parsed = MET_CSV_Parser::parse_file( $this->real_csv() );
 		$row    = $parsed['rows'][0];
 
+		$this->assertArrayHasKey( 'Name-PT', $row );
 		foreach ( array_keys( $row ) as $column ) {
+			if ( $column === 'Name-PT' ) {
+				continue;
+			}
 			$this->assertStringEndsNotWith( '-PT', $column );
 		}
 		$this->assertArrayNotHasKey( '', $row );
+	}
+
+	/**
+	 * Real, load-bearing case measured against the shipped file: every Discipline/Ritual/
+	 * Merit/Flaw row now has a real Portuguese translation drafted (i18n-pt-br-design.md),
+	 * confirming the merge that filled `data/met-mechanics.csv`'s `Name-PT` column actually
+	 * reached the file the parser reads, not just the research CSV it was drafted against.
+	 */
+	public function test_name_pt_is_populated_for_the_major_catalog_types(): void {
+		$parsed = MET_CSV_Parser::parse_file( $this->real_csv() );
+
+		foreach ( [ 'Discipline', 'Ritual', 'Merit', 'Flaw' ] as $type ) {
+			$rows           = $parsed['by_type'][ $type ] ?? [];
+			$without_pt     = array_filter( $rows, static fn( $row ) => $row['Name-PT'] === '' );
+			$this->assertSame(
+				0,
+				count( $without_pt ),
+				sprintf( 'every %s row should have a Name-PT value; found rows without one', $type )
+			);
+		}
 	}
 
 	/**

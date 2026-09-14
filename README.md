@@ -112,10 +112,13 @@ BeyondElysium ships in-app documentation, viewable inside the plugin's own admin
 | Roster health indicator - see at a glance which players have no active character, or whose only character has gone inactive | Complete |
 | Front-end page consolidation - ten pages that used to duplicate per chronicle collapsed to two fixed, tabbed, chronicle-switchable pages | Complete |
 | Player-printable item cards - print cards for the items a character already carries, not just the chronicle-wide catalog view | Complete |
+| Portuguese (Brazil) localization - a chronicle can switch its site language and every button, label, and message in the interface renders in Portuguese | Complete (UI) - catalog item names are translated in the data but not yet shown; see Roadmap |
 
 ## Roadmap
 
 `v0.99.0` was the first public release; the 1.0 closed scope shipped in full as of `v0.99.17`. Development continues past 1.0 on real, requested work rather than a fixed list — see the "Planning" row above for what's designed and next in line, or the project's own backlog for everything under consideration.
+
+**Catalog-name display in Portuguese.** ~4,150 World of Darkness catalog terms (Disciplines, Rituals, Merits, Flaws, and more) already have a drafted Portuguese translation stored in the data; a chronicle running in `pt_BR` still sees catalog item names in English today, since the display layer doesn't read the translated name yet. Scoped and next in line for the localization effort - the UI-chrome half above is already fully live.
 
 **Bylaw-driven approval data.** Chronicles configure their own approval rules through the admin UI today. Importing OWBN's published Character Regulation Bylaws directly — 1,032 clauses — is fully designed, including the review workflow for the roughly 900 clauses automatic matching can't place with confidence (most restrict character *concepts* rather than named traits). Deliberately not built yet - a simpler, hand-managed approval-rules engine shipped instead as a stopgap, and this remains on the shelf for when the fuller version is wanted.
 
