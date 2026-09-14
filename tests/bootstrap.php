@@ -12,7 +12,7 @@
 define( 'BE_TESTS_DIR', __DIR__ );
 
 // The repository root. Reference material a test reads directly - GV301Source/,
-// data-samples/, tests/fixtures/ - lives here, outside the shippable plugin.
+// samples/, tests/fixtures/ - lives here, outside the shippable plugin.
 define( 'BE_PLUGIN_ROOT', dirname( __DIR__ ) );
 
 // The plugin itself, which since the Step 10h restructure is a subfolder of the repo

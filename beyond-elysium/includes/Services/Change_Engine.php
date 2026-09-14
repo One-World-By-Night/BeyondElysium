@@ -470,17 +470,19 @@ class Change_Engine {
 			}
 		}
 
-		// Nothing above ever produced a real signal - the actual safe default.
-		$level = $level ?? 'st';
-
-		// Check game-level auto-approve settings. Never used to wave through a change
-		// carrying a real-world approval citation, regardless of what level it resolved to.
+		// Nothing above ever produced a real signal - fall back to the chronicle's own
+		// configured default (Decision 109): 'auto-approve unless a rule says otherwise'
+		// when settings.auto_approve is true, the existing safe 'st' default otherwise.
+		// This must be a null-coalesce onto whatever $level already is, never a check run
+		// afterward against the resolved value - a granular rule that itself resolved to
+		// 'st' (a power's approval_override, a matched pool/field schedule entry, none of
+		// which set $reason) is indistinguishable from "nothing fired" if checked by value
+		// after the fact, which is exactly the bug this replaces: those rules used to be
+		// silently washed out to 'auto' by a chronicle-wide auto_approve flag despite being
+		// an explicit, granular 'st' requirement.
 		$game = \BeyondElysium\Models\Game::find_by_slug( $character->owner_slug );
-		if ( $game && isset( $game->settings->auto_approve ) && $game->settings->auto_approve === true ) {
-			if ( $level === 'st' && $reason === null ) {
-				$level = 'auto';
-			}
-		}
+		$chronicle_default = ( $game && ( $game->settings->auto_approve ?? false ) === true ) ? 'auto' : 'st';
+		$level = $level ?? $chronicle_default;
 
 		return [ 'level' => $level, 'reason' => $reason ];
 	}

@@ -406,13 +406,17 @@ export const templates = ( gameSlug: string ) => ( {
 // Approval Rules (game-scoped)
 // ---------------------------------------------------------------------------
 
+export type ApprovalRuleTargetType = 'item' | 'power' | 'level' | 'item_range' | 'pool_range' | 'field_option';
+
 export interface ApprovalRule {
     id: string;
     block_slug: string;
     block_name: string;
-    target_type: 'item' | 'power' | 'level';
+    target_type: ApprovalRuleTargetType;
     target_name: string;
     level: number | null;
+    /** item_range/pool_range: [from, to]. field_option: the option string. Otherwise null. */
+    extra: [ number, number ] | string | null;
     approval: string | null;
     reason: string | null;
 }
@@ -424,9 +428,15 @@ export interface ApprovalRuleOptions {
 
 export interface ApprovalRuleRequest {
     block_slug: string;
-    target_type: 'item' | 'power' | 'level';
+    target_type: ApprovalRuleTargetType;
     target_name: string;
     level?: number;
+    /** Required for item_range/pool_range targets. */
+    from?: number;
+    /** Required for item_range/pool_range targets. */
+    to?: number;
+    /** Required for field_option targets. */
+    option?: string;
     approval?: string;
     reason?: string;
 }

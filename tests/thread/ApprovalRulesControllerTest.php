@@ -68,6 +68,26 @@ class ApprovalRulesControllerTest extends WP_UnitTestCase {
 			] ],
 			'is_system'    => 0,
 		] );
+
+		Schema_Block::create( [
+			'slug'         => 'ar-test-resources',
+			'name'         => 'AR Test Resources',
+			'section_type' => 'resource_pool',
+			'definition'   => [ 'pools' => [
+				[ 'name' => 'Willpower', 'value_type' => 'integer', 'default_start' => 1 ],
+			] ],
+			'is_system'    => 0,
+		] );
+
+		Schema_Block::create( [
+			'slug'         => 'ar-test-identity',
+			'name'         => 'AR Test Identity',
+			'section_type' => 'identity_field',
+			'definition'   => [ 'fields' => [
+				[ 'name' => 'Clan', 'field_type' => 'select', 'required' => true, 'options' => [ 'Brujah', 'Ravnos', 'Antediluvian' ] ],
+			] ],
+			'is_system'    => 0,
+		] );
 	}
 
 	private function dispatch( WP_REST_Request $request ) {
@@ -220,6 +240,149 @@ class ApprovalRulesControllerTest extends WP_UnitTestCase {
 		$level5 = current( array_filter( $power->levels, fn( $l ) => $l->level === 5 ) );
 		$this->assertEmpty( $level1->reason ?? null, 'a rule on one level must not leak onto another level of the same power' );
 		$this->assertSame( 'Tremere Coordinator Approval', $level5->reason );
+	}
+
+	// --- item_range target (trait_list per-value schedule) ---
+
+	public function test_creating_an_item_range_rule_adds_a_new_range_entry(): void {
+		wp_set_current_user( $this->admin_id );
+		$response = $this->create_rule( [
+			'block_slug' => 'ar-test-merits', 'target_type' => 'item_range', 'target_name' => 'Common Sense',
+			'from' => 1, 'to' => 3, 'approval' => 'auto',
+		] );
+
+		$this->assertSame( 201, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertSame( [ 1, 3 ], $data['extra'] );
+		$this->assertSame( 'auto', $data['approval'] );
+
+		$fork = Schema_Block::find_for_game( 'ar-test-merits', 'approval-rules-test' );
+		$item = current( array_filter( $fork->definition->items, fn( $i ) => $i->name === 'Common Sense' ) );
+		$this->assertCount( 1, $item->approval_by_value );
+		$this->assertSame( 1, $item->approval_by_value[0]->from );
+		$this->assertSame( 3, $item->approval_by_value[0]->to );
+	}
+
+	public function test_editing_an_item_range_rule_updates_the_same_entry_not_a_second_one(): void {
+		wp_set_current_user( $this->admin_id );
+		$created = $this->create_rule( [
+			'block_slug' => 'ar-test-merits', 'target_type' => 'item_range', 'target_name' => 'Common Sense',
+			'from' => 1, 'to' => 3, 'approval' => 'auto',
+		] )->get_data();
+
+		$request = new WP_REST_Request( 'PUT', '/be/v1/approval-rules-test/approval-rules/' . $created['id'] );
+		$request->set_url_params( [ 'game_slug' => 'approval-rules-test', 'id' => $created['id'] ] );
+		$request->set_body_params( [ 'approval' => 'st', 'reason' => 'Now needs review' ] );
+		$response = $this->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'st', $response->get_data()['approval'] );
+
+		$fork = Schema_Block::find_for_game( 'ar-test-merits', 'approval-rules-test' );
+		$item = current( array_filter( $fork->definition->items, fn( $i ) => $i->name === 'Common Sense' ) );
+		$this->assertCount( 1, $item->approval_by_value, 'editing an existing range must update it in place, not append a duplicate' );
+	}
+
+	public function test_deleting_an_item_range_rule_removes_only_that_range(): void {
+		wp_set_current_user( $this->admin_id );
+		$this->create_rule( [
+			'block_slug' => 'ar-test-merits', 'target_type' => 'item_range', 'target_name' => 'Common Sense',
+			'from' => 1, 'to' => 2, 'approval' => 'auto',
+		] );
+		$second = $this->create_rule( [
+			'block_slug' => 'ar-test-merits', 'target_type' => 'item_range', 'target_name' => 'Common Sense',
+			'from' => 3, 'to' => 5, 'approval' => 'st',
+		] )->get_data();
+
+		$request = new WP_REST_Request( 'DELETE', '/be/v1/approval-rules-test/approval-rules/' . $second['id'] );
+		$request->set_url_params( [ 'game_slug' => 'approval-rules-test', 'id' => $second['id'] ] );
+		$this->assertSame( 204, $this->dispatch( $request )->get_status() );
+
+		$fork = Schema_Block::find_for_game( 'ar-test-merits', 'approval-rules-test' );
+		$item = current( array_filter( $fork->definition->items, fn( $i ) => $i->name === 'Common Sense' ) );
+		$this->assertCount( 1, $item->approval_by_value );
+		$this->assertSame( 1, $item->approval_by_value[0]->from, 'the surviving range must be the one not deleted' );
+	}
+
+	// --- pool_range target (resource_pool) ---
+
+	public function test_a_pool_range_rule(): void {
+		wp_set_current_user( $this->admin_id );
+		$response = $this->create_rule( [
+			'block_slug' => 'ar-test-resources', 'target_type' => 'pool_range', 'target_name' => 'Willpower',
+			'from' => 8, 'to' => 10, 'approval' => 'coordinator', 'reason' => 'Grapevine cap review',
+		] );
+
+		$this->assertSame( 201, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertSame( [ 8, 10 ], $data['extra'] );
+		$this->assertSame( 'coordinator', $data['approval'] );
+
+		$fork = Schema_Block::find_for_game( 'ar-test-resources', 'approval-rules-test' );
+		$pool = current( array_filter( $fork->definition->pools, fn( $p ) => $p->name === 'Willpower' ) );
+		$this->assertSame( 'coordinator', $pool->approval_by_value[0]->approval );
+	}
+
+	public function test_a_pool_target_against_a_trait_list_block_is_rejected(): void {
+		wp_set_current_user( $this->admin_id );
+		$response = $this->create_rule( [
+			'block_slug' => 'ar-test-merits', 'target_type' => 'pool_range', 'target_name' => 'True Faith',
+			'from' => 1, 'to' => 2, 'approval' => 'st',
+		] );
+		$this->assertSame( 400, $response->get_status() );
+	}
+
+	// --- field_option target (identity_field) ---
+
+	public function test_a_field_option_rule(): void {
+		wp_set_current_user( $this->admin_id );
+		$response = $this->create_rule( [
+			'block_slug' => 'ar-test-identity', 'target_type' => 'field_option', 'target_name' => 'Clan',
+			'option' => 'Antediluvian', 'approval' => 'coordinator', 'reason' => 'Elder-generation vampire',
+		] );
+
+		$this->assertSame( 201, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertSame( 'Antediluvian', $data['extra'] );
+		$this->assertSame( 'coordinator', $data['approval'] );
+
+		$fork  = Schema_Block::find_for_game( 'ar-test-identity', 'approval-rules-test' );
+		$field = current( array_filter( $fork->definition->fields, fn( $f ) => $f->name === 'Clan' ) );
+		$this->assertSame( 'coordinator', $field->approval_by_option->Antediluvian->approval );
+
+		// A second, unrelated option on the same field must never be touched.
+		$this->assertObjectNotHasProperty( 'Brujah', $field->approval_by_option );
+	}
+
+	public function test_a_field_option_target_naming_a_nonexistent_option_is_a_404(): void {
+		wp_set_current_user( $this->admin_id );
+		$response = $this->create_rule( [
+			'block_slug' => 'ar-test-identity', 'target_type' => 'field_option', 'target_name' => 'Clan',
+			'option' => 'Nosferatu', 'approval' => 'st',
+		] );
+		$this->assertSame( 404, $response->get_status() );
+	}
+
+	public function test_deleting_a_field_option_rule_clears_only_that_option(): void {
+		wp_set_current_user( $this->admin_id );
+		$this->create_rule( [
+			'block_slug' => 'ar-test-identity', 'target_type' => 'field_option', 'target_name' => 'Clan',
+			'option' => 'Antediluvian', 'approval' => 'coordinator',
+		] );
+		$second = $this->create_rule( [
+			'block_slug' => 'ar-test-identity', 'target_type' => 'field_option', 'target_name' => 'Clan',
+			'option' => 'Ravnos', 'approval' => 'st',
+		] )->get_data();
+
+		$request = new WP_REST_Request( 'DELETE', '/be/v1/approval-rules-test/approval-rules/' . $second['id'] );
+		$request->set_url_params( [ 'game_slug' => 'approval-rules-test', 'id' => $second['id'] ] );
+		$this->assertSame( 204, $this->dispatch( $request )->get_status() );
+
+		$fork  = Schema_Block::find_for_game( 'ar-test-identity', 'approval-rules-test' );
+		$field = current( array_filter( $fork->definition->fields, fn( $f ) => $f->name === 'Clan' ) );
+		$schedule = (array) $field->approval_by_option;
+		$this->assertArrayHasKey( 'Antediluvian', $schedule );
+		$this->assertArrayNotHasKey( 'Ravnos', $schedule );
 	}
 
 	// --- validation ---

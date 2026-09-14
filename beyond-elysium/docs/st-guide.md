@@ -137,7 +137,10 @@ trait does.
 
 Every trait purchase, XP award, or sheet change a player submits becomes a **pending
 change** unless your schema's approval rules mark it auto-approved. The queue lives on the
-**Storyteller Toolkit** page's **Approval Queue** tab.
+**Storyteller Toolkit** page's **Approval Queue** tab. Your chronicle's own baseline
+("Pending by default" vs "Auto-approve by default") and every specific exception to it are
+set under **Beyond Elysium → System Config → Approval Rules** - see the
+[Admin Guide's Approval Rules section](admin-guide.md#approval-rules).
 
 - Filter by character, change type, or approval level.
 - Approve or reject one at a time, with an optional note (a note is required on reject).

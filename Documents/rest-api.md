@@ -62,16 +62,31 @@ multiselect checked, strictest wins). See the
 ## Approval Rules
 
 The editing surface for the schedules described just above — one rule per catalog
-item/power/level/option that carries an approval override or a reason, across this
-chronicle's own trait_list and tiered_power blocks.
+item/power/level/value-range/option that carries an approval override or a reason, across
+this chronicle's own trait_list, tiered_power, resource_pool, and identity_field blocks. A
+rule's `target_type` is one of `item`, `item_range`, `power`, `level`, `pool_range`, or
+`field_option`; `item_range`/`pool_range` address one `{from, to}` entry in the target's own
+`approval_by_value` array (both fields required on create/update), `field_option` addresses
+one option in the target field's `approval_by_option` map (`option` required), and `level`
+addresses one power level by its `level` number. A rule's response/list shape carries this as
+`extra` (`[from, to]`, the option string, or `null`) alongside the existing `level` field.
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
 | GET | `/{game_slug}/approval-rules` | `be_manage_approval_rules` | List every rule currently set, this chronicle's own fork where one exists, the global block otherwise |
-| POST | `/{game_slug}/approval-rules` | `be_manage_approval_rules` | Set (create or overwrite) one rule on a catalog item, power, or power level — forks the block for this chronicle if not already forked |
+| POST | `/{game_slug}/approval-rules` | `be_manage_approval_rules` | Set (create or overwrite) one rule on a catalog item, item value-range, power, power level, pool value-range, or identity field option — forks the block for this chronicle if not already forked |
 | GET | `/{game_slug}/approval-rules/options` | `be_manage_approval_rules` | The fixed vocabulary the create/edit form offers: real approval levels, and reason-tier presets |
 | PUT | `/{game_slug}/approval-rules/{id}` | `be_manage_approval_rules` | Update one rule |
 | DELETE | `/{game_slug}/approval-rules/{id}` | `be_manage_approval_rules` | Clear one rule, back to no override |
+
+**Default Approval Policy.** A chronicle's own baseline — used only when nothing above (an
+item, a power, a level, a value range, a field option, or the owning block's own
+`approval_rules.default`) resolved a level at all — is the plain `settings.auto_approve`
+boolean on the game itself (`false`/absent: everything needs `st` review by default; `true`:
+everything is `auto` by default), read and written through the existing
+[`PUT /games/{slug}`](#games) route's own `settings` merge, not a route of its own. A
+granular rule always wins over this default in either direction, in both the `resolve_approval_level()`
+resolution logic and by construction of the merge itself.
 
 ## Creature Stacks
 

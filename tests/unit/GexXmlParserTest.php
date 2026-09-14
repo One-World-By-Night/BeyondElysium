@@ -167,7 +167,7 @@ class GexXmlParserTest extends TestCase {
 	// -------------------------------------------------------------------------
 
 	public function test_a_real_vampire_export_matches_the_binary_readers_shape(): void {
-		$data      = GEX_Xml_Parser::parse_file( $this->path( 'data-samples/laslo_throndsen-vampire.gex' ) );
+		$data      = GEX_Xml_Parser::parse_file( $this->path( 'samples/data/laslo_throndsen-vampire.gex' ) );
 		$character = $data['characters'][0];
 
 		$this->assertCount( 1, $data['characters'] );
@@ -206,7 +206,7 @@ class GexXmlParserTest extends TestCase {
 	}
 
 	public function test_a_real_werewolf_export_matches_the_binary_readers_shape(): void {
-		$data      = GEX_Xml_Parser::parse_file( $this->path( 'data-samples/carrick_macdounagh-werewolf.gex' ) );
+		$data      = GEX_Xml_Parser::parse_file( $this->path( 'samples/data/carrick_macdounagh-werewolf.gex' ) );
 		$character = $data['characters'][0];
 
 		$this->assertSame( 'werewolf', $character['race'] );
@@ -234,7 +234,7 @@ class GexXmlParserTest extends TestCase {
 		// choice between two conflicting source figures." This real .gex export matches
 		// that figure exactly, independent corroboration this parser reads the real value
 		// correctly, not just that it doesn't crash.
-		$data      = GEX_Xml_Parser::parse_file( $this->path( 'data-samples/hitchens-vampire.gex' ) );
+		$data      = GEX_Xml_Parser::parse_file( $this->path( 'samples/data/hitchens-vampire.gex' ) );
 		$character = $data['characters'][0];
 
 		$this->assertSame( 'Hitchens', $character['name'] );
@@ -250,14 +250,14 @@ class GexXmlParserTest extends TestCase {
 
 	/**
 	 * Decision 074: a real PuppetPrince export (a third-party MET character tracker,
-	 * confirmed against this same character's own printed sheet, `data-samples/Chase
+	 * confirmed against this same character's own printed sheet, `samples/data/Chase
 	 * Ashford.pdf`) inserts zero-value, em-dash-wrapped pseudo-traits into a long
 	 * Disciplines list purely to group it for a human reader - `"——Blood Magic——"`,
 	 * `"——Combination Disciplines——"` - with no game-mechanical meaning at all. Before
 	 * this fix both rows surfaced as real traits needing an ST's manual review.
 	 */
 	public function test_a_real_export_with_section_divider_rows_does_not_surface_them_as_traits(): void {
-		$data        = GEX_Xml_Parser::parse_file( $this->path( 'data-samples/1506_chase_ashford_.gex' ) );
+		$data        = GEX_Xml_Parser::parse_file( $this->path( 'samples/data/1506_chase_ashford_.gex' ) );
 		$character   = $data['characters'][0];
 		$disciplines = $character['trait_lists']['Disciplines']['traits'];
 
@@ -287,7 +287,7 @@ class GexXmlParserTest extends TestCase {
 	 * level-derivation heuristic it came from a combo section rather than a real ladder.
 	 */
 	public function test_traits_carry_the_section_they_actually_sat_under(): void {
-		$data        = GEX_Xml_Parser::parse_file( $this->path( 'data-samples/1506_chase_ashford_.gex' ) );
+		$data        = GEX_Xml_Parser::parse_file( $this->path( 'samples/data/1506_chase_ashford_.gex' ) );
 		$disciplines = $data['characters'][0]['trait_lists']['Disciplines']['traits'];
 		$by_name     = [];
 		foreach ( $disciplines as $trait ) {

@@ -27,7 +27,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	protected $rest_base = 'approval-rules';
 
 	/** Section types that can carry an approval rule at all. */
-	const APPLICABLE_SECTION_TYPES = [ 'trait_list', 'tiered_power' ];
+	const APPLICABLE_SECTION_TYPES = [ 'trait_list', 'tiered_power', 'resource_pool', 'identity_field' ];
 
 	/**
 	 * Registers the approval rules routes: the game-scoped collection
@@ -238,6 +238,14 @@ class Approval_Rules_Controller extends Base_Controller {
 				if ( ! empty( $item->approval ) || ! empty( $item->reason ) ) {
 					$rules[] = self::rule_shape( $block, [ 'target_type' => 'item', 'target_name' => $item->name ?? '' ], $item->approval ?? null, $item->reason ?? null );
 				}
+				foreach ( $item->approval_by_value ?? [] as $range ) {
+					$rules[] = self::rule_shape(
+						$block,
+						[ 'target_type' => 'item_range', 'target_name' => $item->name ?? '', 'extra' => [ $range->from ?? null, $range->to ?? null ] ],
+						$range->approval ?? null,
+						$range->reason ?? null
+					);
+				}
 			}
 		}
 
@@ -259,6 +267,32 @@ class Approval_Rules_Controller extends Base_Controller {
 			}
 		}
 
+		if ( $block->section_type === 'resource_pool' ) {
+			foreach ( $definition->pools ?? [] as $pool ) {
+				foreach ( $pool->approval_by_value ?? [] as $range ) {
+					$rules[] = self::rule_shape(
+						$block,
+						[ 'target_type' => 'pool_range', 'target_name' => $pool->name ?? '', 'extra' => [ $range->from ?? null, $range->to ?? null ] ],
+						$range->approval ?? null,
+						$range->reason ?? null
+					);
+				}
+			}
+		}
+
+		if ( $block->section_type === 'identity_field' ) {
+			foreach ( $definition->fields ?? [] as $field ) {
+				foreach ( (array) ( $field->approval_by_option ?? [] ) as $option => $entry ) {
+					$rules[] = self::rule_shape(
+						$block,
+						[ 'target_type' => 'field_option', 'target_name' => $field->name ?? '', 'extra' => $option ],
+						$entry->approval ?? null,
+						$entry->reason ?? null
+					);
+				}
+			}
+		}
+
 		return $rules;
 	}
 
@@ -267,7 +301,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	 * context (block, target, current values) to display and edit it.
 	 *
 	 * @param object     $block
-	 * @param array      $target {target_type, target_name, level?}
+	 * @param array      $target {target_type, target_name, level?, extra?}
 	 * @param string|null $approval
 	 * @param string|null $reason
 	 * @return array
@@ -280,6 +314,8 @@ class Approval_Rules_Controller extends Base_Controller {
 			'target_type' => $target['target_type'],
 			'target_name' => $target['target_name'],
 			'level'       => $target['level'] ?? null,
+			// item_range/pool_range: [from, to]. field_option: the option string. Otherwise null.
+			'extra'       => $target['extra'] ?? null,
 			'approval'    => $approval,
 			'reason'      => $reason,
 		];
@@ -310,7 +346,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	 * for a target that has no row id of its own.
 	 *
 	 * @param string $block_slug
-	 * @param array  $target {target_type, target_name, level?}
+	 * @param array  $target {target_type, target_name, level?, extra?}
 	 * @return string
 	 */
 	private static function encode_id( string $block_slug, array $target ): string {
@@ -319,23 +355,28 @@ class Approval_Rules_Controller extends Base_Controller {
 			$target['target_type'],
 			$target['target_name'],
 			$target['level'] ?? null,
+			$target['extra'] ?? null,
 		] ) ), '+/', '-_' ), '=' );
 	}
 
 	/**
 	 * Decodes an opaque rule id back into its block slug and target.
 	 * Returns a 400 error for a malformed id rather than letting a decode
-	 * failure surface as a confusing 404 further down.
+	 * failure surface as a confusing 404 further down. Accepts both the
+	 * current 5-element shape and the 4-element shape ids issued before
+	 * item_range/pool_range/field_option targets existed carried no fifth
+	 * (extra) element - so an id a client bookmarked or cached across an
+	 * upgrade still decodes rather than 400ing.
 	 *
 	 * @param string $id
-	 * @return array|\WP_Error {block_slug, target_type, target_name, level}
+	 * @return array|\WP_Error {block_slug, target_type, target_name, level, extra}
 	 */
 	private static function decode_id( string $id ) {
 		$padded  = strtr( $id, '-_', '+/' );
 		$padded .= str_repeat( '=', ( 4 - strlen( $padded ) % 4 ) % 4 );
 		$decoded = json_decode( (string) base64_decode( $padded, true ), true );
 
-		if ( ! is_array( $decoded ) || count( $decoded ) !== 4 ) {
+		if ( ! is_array( $decoded ) || ! in_array( count( $decoded ), [ 4, 5 ], true ) ) {
 			return new \WP_Error( 'invalid_id', __( 'That approval rule id is not valid.', 'beyond-elysium' ), [ 'status' => 400 ] );
 		}
 
@@ -345,17 +386,21 @@ class Approval_Rules_Controller extends Base_Controller {
 			'target_type' => $target_type,
 			'target_name' => $target_name,
 			'level'       => $level,
+			'extra'       => $decoded[4] ?? null,
 		];
 	}
 
+	/** Target types addressing a range (a [from, to] pair as their `extra`). */
+	const RANGE_TARGET_TYPES = [ 'item_range', 'pool_range' ];
+
 	/**
 	 * Reads and validates a create request's target fields: which block,
-	 * and which item, power, or power level within it. Existence of the
-	 * named target on the block is checked later, once the block (and its
-	 * chronicle fork) has been resolved.
+	 * and which item, power, power level, value range, or field option
+	 * within it. Existence of the named target on the block is checked
+	 * later, once the block (and its chronicle fork) has been resolved.
 	 *
 	 * @param \WP_REST_Request $request
-	 * @return array|\WP_Error {block_slug, target_type, target_name, level}
+	 * @return array|\WP_Error {block_slug, target_type, target_name, level, extra}
 	 */
 	private static function parse_target( \WP_REST_Request $request ) {
 		$block_slug  = (string) $request->get_param( 'block_slug' );
@@ -366,11 +411,29 @@ class Approval_Rules_Controller extends Base_Controller {
 		if ( $block_slug === '' || $target_name === '' ) {
 			return new \WP_Error( 'invalid_param', __( 'block_slug and target_name are required.', 'beyond-elysium' ), [ 'status' => 400 ] );
 		}
-		if ( ! in_array( $target_type, [ 'item', 'power', 'level' ], true ) ) {
-			return new \WP_Error( 'invalid_param', __( 'target_type must be item, power, or level.', 'beyond-elysium' ), [ 'status' => 400 ] );
+		$valid_types = [ 'item', 'power', 'level', 'item_range', 'pool_range', 'field_option' ];
+		if ( ! in_array( $target_type, $valid_types, true ) ) {
+			return new \WP_Error( 'invalid_param', __( 'target_type must be item, power, level, item_range, pool_range, or field_option.', 'beyond-elysium' ), [ 'status' => 400 ] );
 		}
 		if ( $target_type === 'level' && $level === null ) {
 			return new \WP_Error( 'invalid_param', __( 'A level target requires a level number.', 'beyond-elysium' ), [ 'status' => 400 ] );
+		}
+
+		$extra = null;
+		if ( in_array( $target_type, self::RANGE_TARGET_TYPES, true ) ) {
+			$from = $request->get_param( 'from' );
+			$to   = $request->get_param( 'to' );
+			if ( $from === null || $to === null ) {
+				return new \WP_Error( 'invalid_param', __( 'A value-range target requires from and to.', 'beyond-elysium' ), [ 'status' => 400 ] );
+			}
+			$extra = [ (int) $from, (int) $to ];
+		}
+		if ( $target_type === 'field_option' ) {
+			$option = (string) $request->get_param( 'option' );
+			if ( $option === '' ) {
+				return new \WP_Error( 'invalid_param', __( 'A field_option target requires an option.', 'beyond-elysium' ), [ 'status' => 400 ] );
+			}
+			$extra = $option;
 		}
 
 		return [
@@ -378,17 +441,19 @@ class Approval_Rules_Controller extends Base_Controller {
 			'target_type' => $target_type,
 			'target_name' => $target_name,
 			'level'       => $level !== null ? (int) $level : null,
+			'extra'       => $extra,
 		];
 	}
 
 	/**
 	 * Writes a rule's approval and/or reason fields onto the matched item,
-	 * power, or power level within a block's (already-decoded) definition,
-	 * mutating it in place. Validates the target type against the block's
-	 * actual section_type and that the named target really exists on it.
+	 * power, power level, value range, or field option within a block's
+	 * (already-decoded) definition, mutating it in place. Validates the
+	 * target type against the block's actual section_type and that the
+	 * named target really exists on it.
 	 *
 	 * @param object            $block  Decoded block; its definition is mutated in place.
-	 * @param array             $target {block_slug, target_type, target_name, level}
+	 * @param array             $target {block_slug, target_type, target_name, level, extra}
 	 * @param \WP_REST_Request  $request
 	 * @return true|\WP_Error
 	 */
@@ -403,12 +468,15 @@ class Approval_Rules_Controller extends Base_Controller {
 			$reason = sanitize_textarea_field( $reason );
 		}
 
-		if ( $target['target_type'] === 'item' ) {
+		if ( $target['target_type'] === 'item' || $target['target_type'] === 'item_range' ) {
 			if ( $block->section_type !== 'trait_list' ) {
 				return new \WP_Error( 'invalid_target', __( 'An item target requires a trait_list block.', 'beyond-elysium' ), [ 'status' => 400 ] );
 			}
 			foreach ( $block->definition->items ?? [] as $item ) {
-				if ( $item->name === $target['target_name'] ) {
+				if ( $item->name !== $target['target_name'] ) {
+					continue;
+				}
+				if ( $target['target_type'] === 'item' ) {
 					if ( $approval !== null ) {
 						$item->approval = $approval ?: null;
 					}
@@ -417,8 +485,58 @@ class Approval_Rules_Controller extends Base_Controller {
 					}
 					return true;
 				}
+				// target_type === 'item_range': a per-value schedule entry on this item.
+				if ( ! isset( $item->approval_by_value ) ) {
+					$item->approval_by_value = [];
+				}
+				return self::apply_range( $item->approval_by_value, $target['extra'], $approval, $reason );
 			}
 			return new \WP_Error( 'target_not_found', __( 'No item with that name on this block.', 'beyond-elysium' ), [ 'status' => 404 ] );
+		}
+
+		if ( $target['target_type'] === 'pool_range' ) {
+			if ( $block->section_type !== 'resource_pool' ) {
+				return new \WP_Error( 'invalid_target', __( 'A pool target requires a resource_pool block.', 'beyond-elysium' ), [ 'status' => 400 ] );
+			}
+			foreach ( $block->definition->pools ?? [] as $pool ) {
+				if ( $pool->name !== $target['target_name'] ) {
+					continue;
+				}
+				if ( ! isset( $pool->approval_by_value ) ) {
+					$pool->approval_by_value = [];
+				}
+				return self::apply_range( $pool->approval_by_value, $target['extra'], $approval, $reason );
+			}
+			return new \WP_Error( 'target_not_found', __( 'No pool with that name on this block.', 'beyond-elysium' ), [ 'status' => 404 ] );
+		}
+
+		if ( $target['target_type'] === 'field_option' ) {
+			if ( $block->section_type !== 'identity_field' ) {
+				return new \WP_Error( 'invalid_target', __( 'A field target requires an identity_field block.', 'beyond-elysium' ), [ 'status' => 400 ] );
+			}
+			foreach ( $block->definition->fields ?? [] as $field ) {
+				if ( $field->name !== $target['target_name'] ) {
+					continue;
+				}
+				if ( ! in_array( $target['extra'], $field->options ?? [], true ) ) {
+					return new \WP_Error( 'target_not_found', __( 'That option no longer exists on this field.', 'beyond-elysium' ), [ 'status' => 404 ] );
+				}
+				if ( ! isset( $field->approval_by_option ) ) {
+					$field->approval_by_option = new \stdClass();
+				}
+				$schedule = (array) $field->approval_by_option;
+				$entry    = $schedule[ $target['extra'] ] ?? new \stdClass();
+				if ( $approval !== null ) {
+					$entry->approval = $approval ?: null;
+				}
+				if ( $reason !== null ) {
+					$entry->reason = $reason ?: null;
+				}
+				$schedule[ $target['extra'] ]   = $entry;
+				$field->approval_by_option      = (object) $schedule;
+				return true;
+			}
+			return new \WP_Error( 'target_not_found', __( 'No field with that name on this block.', 'beyond-elysium' ), [ 'status' => 404 ] );
 		}
 
 		if ( $block->section_type !== 'tiered_power' ) {
@@ -453,13 +571,52 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
+	 * Writes (creating if absent) one [from, to] range entry's approval and
+	 * reason within a trait_list item's or resource_pool pool's own
+	 * approval_by_value array, mutating it in place. Matches an existing
+	 * entry by its exact from/to pair, matching how a level target matches
+	 * by its exact level number - two ranges with the same bounds are the
+	 * same rule, never two.
+	 *
+	 * @param array        $ranges Array of {from, to, approval, reason?} objects, mutated in place.
+	 * @param array        $bounds [from, to]
+	 * @param string|null  $approval
+	 * @param string|null  $reason
+	 * @return true
+	 */
+	private static function apply_range( array &$ranges, array $bounds, ?string $approval, ?string $reason ) {
+		[ $from, $to ] = $bounds;
+		foreach ( $ranges as $range ) {
+			if ( ( $range->from ?? null ) === $from && ( $range->to ?? null ) === $to ) {
+				if ( $approval !== null ) {
+					$range->approval = $approval ?: null;
+				}
+				if ( $reason !== null ) {
+					$range->reason = $reason ?: null;
+				}
+				return true;
+			}
+		}
+		// No existing entry for this exact range - create one.
+		$new_range           = new \stdClass();
+		$new_range->from     = $from;
+		$new_range->to       = $to;
+		$new_range->approval = $approval ?: 'auto';
+		if ( $reason ) {
+			$new_range->reason = $reason;
+		}
+		$ranges[] = $new_range;
+		return true;
+	}
+
+	/**
 	 * Clears a rule's override fields back to unset, the inverse of
 	 * apply_target(). Returns false when the target no longer exists on
 	 * the block rather than throwing, since a delete against an
 	 * already-gone target is not itself an error worth surfacing loudly.
 	 *
 	 * @param object $block  Decoded block; its definition is mutated in place.
-	 * @param array  $target {block_slug, target_type, target_name, level}
+	 * @param array  $target {block_slug, target_type, target_name, level, extra}
 	 * @return bool
 	 */
 	private static function clear_target( $block, array $target ): bool {
@@ -469,6 +626,42 @@ class Approval_Rules_Controller extends Base_Controller {
 					unset( $item->approval, $item->reason );
 					return true;
 				}
+			}
+			return false;
+		}
+
+		if ( $target['target_type'] === 'item_range' && $block->section_type === 'trait_list' ) {
+			foreach ( $block->definition->items ?? [] as $item ) {
+				if ( $item->name !== $target['target_name'] || ! isset( $item->approval_by_value ) ) {
+					continue;
+				}
+				return self::clear_range( $item->approval_by_value, $target['extra'] );
+			}
+			return false;
+		}
+
+		if ( $target['target_type'] === 'pool_range' && $block->section_type === 'resource_pool' ) {
+			foreach ( $block->definition->pools ?? [] as $pool ) {
+				if ( $pool->name !== $target['target_name'] || ! isset( $pool->approval_by_value ) ) {
+					continue;
+				}
+				return self::clear_range( $pool->approval_by_value, $target['extra'] );
+			}
+			return false;
+		}
+
+		if ( $target['target_type'] === 'field_option' && $block->section_type === 'identity_field' ) {
+			foreach ( $block->definition->fields ?? [] as $field ) {
+				if ( $field->name !== $target['target_name'] ) {
+					continue;
+				}
+				$schedule = (array) ( $field->approval_by_option ?? [] );
+				if ( ! array_key_exists( $target['extra'], $schedule ) ) {
+					return false;
+				}
+				unset( $schedule[ $target['extra'] ] );
+				$field->approval_by_option = (object) $schedule;
+				return true;
 			}
 			return false;
 		}
@@ -492,6 +685,30 @@ class Approval_Rules_Controller extends Base_Controller {
 			}
 		}
 
+		return false;
+	}
+
+	/**
+	 * Removes one [from, to] range entry from a trait_list item's or
+	 * resource_pool pool's approval_by_value array, matched by its exact
+	 * bounds - the inverse of apply_range(). Takes the array by reference,
+	 * same as apply_range(), since PHP arrays are value types - a caller
+	 * passing $item->approval_by_value here needs the removal to reach that
+	 * actual object property, not a disposable local copy.
+	 *
+	 * @param array $ranges Mutated in place.
+	 * @param array $bounds [from, to]
+	 * @return bool
+	 */
+	private static function clear_range( array &$ranges, array $bounds ): bool {
+		[ $from, $to ] = $bounds;
+		foreach ( $ranges as $i => $range ) {
+			if ( ( $range->from ?? null ) === $from && ( $range->to ?? null ) === $to ) {
+				unset( $ranges[ $i ] );
+				$ranges = array_values( $ranges );
+				return true;
+			}
+		}
 		return false;
 	}
 

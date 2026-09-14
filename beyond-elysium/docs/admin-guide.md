@@ -22,7 +22,7 @@ own capability, so a page stays reachable even for a viewer who can't see every 
 | Query Tool | Query Tool (`be_run_queries`), Reports (`be_view_reports`) | — the same query builder as the front-end Query Tool, plus the 20-report/cards/batch-output layer |
 | Import | — (single page) | Import, below |
 | Chronicle Setup | Chronicle Setup (`be_view_characters`), Chronicle Access (`be_manage_games`), Action & Rumor Settings (`be_manage_apr`) | Chronicle-Scoped Access, below; Chronicle Setup itself is a live checklist for a chronicle's own setup, see the [Storyteller Guide](st-guide.md) |
-| System Config | Games (`be_manage_games`), Schema Blocks (`be_manage_schemas`), Creature Stacks (`be_manage_schemas`), Templates (`be_manage_templates`), Approval Rules (`be_manage_approval_rules`) | Schema Blocks and Creature Stacks, Templates, and Descriptions and Approval Schedules, all below |
+| System Config | Games (`be_manage_games`), Schema Blocks (`be_manage_schemas`), Creature Stacks (`be_manage_schemas`), Templates (`be_manage_templates`), Approval Rules (`be_manage_approval_rules`) | Schema Blocks and Creature Stacks, Templates, Descriptions and Approval Schedules, and Approval Rules, all below |
 | Docs | — (single page, `be_view_characters`) | — this guide and its three siblings, rendered in-plugin |
 
 Two related pages live on the front end instead, not in wp-admin at all: the **Game
@@ -104,9 +104,52 @@ sharpened to depend on what a player is actually raising it to:
   requirement applies.
 
 A value or option with no schedule entry falls back to the item's own flat `approval`
-setting, which in turn falls back to the block's overall default — see the
+setting, which in turn falls back to the block's overall default, which in turn falls back to
+the chronicle's own **default approval policy** - see [Approval Rules](#approval-rules)
+below - and see the
 [Storyteller Guide's approval section](st-guide.md#4-running-the-approval-queue) for how a
 resolved approval level reaches the queue.
+
+## Approval Rules
+
+Under **Beyond Elysium → System Config → Approval Rules**, one page lists every approval
+override currently set anywhere in a chronicle's catalog - the exact same underlying data the
+Schema Blocks screen's own Description/Approval editors write, just gathered into one flat,
+addressable list instead of scattered across whichever block each rule happens to live on.
+Anything set here shows up there too, and vice versa; edit whichever is more convenient for
+the moment - in context while already editing a block's other fields, or here for a quick
+scan of everything a chronicle currently requires review for.
+
+Picking a block offers the matching target picker for its section type:
+
+- **Trait list** (Merits, Backgrounds, …) - an item, then a choice between "the whole item"
+  (its flat approval) or "a specific value range" (an `Approval by value` entry, addressed by
+  its exact `From`/`To` bounds).
+- **Tiered power** (Disciplines, Gifts, Spheres, …) - a power, then a choice between "the
+  whole power" (its `approval_override`) or "one level only" (that level's own `reason` -
+  see the note above about why a level's flat approval is set on its own catalog row instead,
+  not duplicated here).
+- **Resource pool** (Blood, Willpower, Gnosis, …) - a pool, always addressed by an exact
+  `From`/`To` range on its **permanent** value, same rule as the Schema Blocks editor's own
+  version of this control.
+- **Identity field** (Clan, Sect, …) - a field (only ones that actually offer real options),
+  then one of its options.
+
+### Default Approval Policy
+
+The same page also carries the chronicle's own baseline: **Pending by default** (today's
+long-standing behavior - everything needs Storyteller review unless a rule below says
+`auto`) or **Auto-approve by default** (the reverse - everything is waved through unless a
+rule below says `st` or `coordinator`). This is a two-way switch, not a third tier alongside
+`auto`/`st`/`coordinator` - a granular rule can still ask for any of the three regardless of
+which way the chronicle's own default is set.
+
+A granular rule **always** wins over this default, in either direction - the default only
+ever applies when nothing more specific (an item, a power, a level, a value range, a field
+option, or the owning block's own `approval_rules.default`) had an opinion at all. This
+matters concretely: switching a chronicle from Pending to Auto-approve never silently
+approves something a Storyteller had explicitly flagged as needing review, even a flag with
+no reason text attached to it.
 
 ## Adding a Creature Type Without Code
 

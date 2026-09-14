@@ -160,7 +160,7 @@ class BloodMagicMigrationTest extends WP_UnitTestCase {
 
 	/**
 	 * D41/Decision 074's real keep_custom shape - the tradition sits in `name`, the path in
-	 * `power_name`. Chase Ashford's own real committed import (data-samples/1506_chase_ashford_.gex)
+	 * `power_name`. Chase Ashford's own real committed import (samples/data/1506_chase_ashford_.gex)
 	 * is exactly this. Spelling variance ("Dur-An-Ki") is folded to the canonical form
 	 * during the move, the same as Trait_Mapper does on import.
 	 */

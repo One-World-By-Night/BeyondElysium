@@ -135,7 +135,7 @@ class HealthLevelSeederTest extends TestCase {
 	}
 
 	public function test_totals_match_the_real_grapevine_math(): void {
-		// Confirmed against pp-samples/mage-pc-print.html: 2+3+2+1+1 = 9.
+		// Confirmed against samples/pp-samples/mage-pc-print.html: 2+3+2+1+1 = 9.
 		foreach ( [ 'vampire', 'werewolf', 'mage', 'changeling', 'demon', 'kueijin', 'mortal' ] as $stack ) {
 			$total = array_sum( array_column( self::$blocks[ "{$stack}-health" ]['definition']['default_held'], 'count' ) );
 			$this->assertSame( 9, $total, "{$stack}-health" );

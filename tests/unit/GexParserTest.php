@@ -22,7 +22,7 @@ use PHPUnit\Framework\TestCase;
  * extension but are actually XML (`<?xml` header, not `GVBE`), out of scope for this
  * binary parser.
  *
- * `data-samples/Sabbat.gex` (added 2026-09-10, GVBE binary, version 3.0) closes the gap
+ * `samples/data/Sabbat.gex` (added 2026-09-10, GVBE binary, version 3.0) closes the gap
  * this docblock used to describe as permanent: it is a real character-bearing binary
  * exchange - 1 vampire ("Ian Kincaid II", 20 trait lists), 1 item, 1 location, 1 player -
  * and is used below as the real fixture for the binary character-record path. The
@@ -51,7 +51,7 @@ class GexParserTest extends TestCase {
 	 * before any writer trusts a row of it.
 	 */
 	public function test_sabbat_gex_parses_a_real_binary_vampire_with_all_20_trait_lists(): void {
-		$data = GEX_Parser::parse_file( $this->path( 'data-samples/Sabbat.gex' ) );
+		$data = GEX_Parser::parse_file( $this->path( 'samples/data/Sabbat.gex' ) );
 
 		$this->assertSame( 3.0, $data['version'] );
 		$this->assertCount( 1, $data['characters'] );

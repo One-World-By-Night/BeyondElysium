@@ -60,6 +60,13 @@ class ChangeEngineBylawReasonTest extends WP_UnitTestCase {
 							[ 'level' => 5, 'tier' => 'advanced', 'power_name' => 'Level Five', 'reason' => 'Requires Giovanni Coordinator approval.' ],
 						],
 					],
+					[
+						'name'              => 'Obfuscate',
+						'approval_override' => 'st',
+						'levels'            => [
+							[ 'level' => 1, 'tier' => 'basic', 'power_name' => 'Level One' ],
+						],
+					],
 				],
 			],
 			'is_system'    => 1,
@@ -197,5 +204,36 @@ class ChangeEngineBylawReasonTest extends WP_UnitTestCase {
 			'change_data' => [ 'block_slug' => $this->trait_list_slug, 'trait' => [ 'name' => 'Plain Item' ] ],
 		] );
 		$this->assertSame( 'auto', $plain['level'] );
+	}
+
+	/**
+	 * Decision 109's own real bug: the old game-level auto_approve check ran AFTER
+	 * resolve_approval_level() had already settled on a level, and could only tell "nothing
+	 * fired" from "something fired" by checking whether $reason was null - but a power's own
+	 * explicit approval_override (or a matched pool/field schedule entry) resolves to 'st'
+	 * with no reason attached just as often as "nothing fired at all" does. Obfuscate's
+	 * approval_override='st' here carries no reason, so under the old code a chronicle-wide
+	 * auto_approve=true would have silently waved it through to 'auto' despite being an
+	 * explicit, granular Storyteller-review requirement - exactly the bug this test guards.
+	 */
+	public function test_an_explicit_granular_st_override_survives_chronicle_wide_auto_approve(): void {
+		$game_slug = 'thread-test-granular-st-survives-auto-approve';
+		Game::create( [
+			'slug'     => $game_slug,
+			'name'     => 'Granular St Survives Auto-Approve Test Game',
+			'settings' => [ 'auto_approve' => true ],
+		] );
+		$character = $this->make_character( $game_slug );
+
+		$resolved = Change_Engine::resolve_approval_level( $character, (object) [
+			'change_type' => 'add_trait',
+			'change_data' => [ 'block_slug' => $this->tiered_power_slug, 'trait' => [ 'name' => 'Obfuscate', 'level' => 1 ] ],
+		] );
+
+		$this->assertSame(
+			'st',
+			$resolved['level'],
+			'a power\'s own explicit approval_override must never be washed out to auto by the chronicle-wide setting, reason or no reason'
+		);
 	}
 }

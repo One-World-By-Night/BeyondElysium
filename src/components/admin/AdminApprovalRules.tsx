@@ -1,14 +1,17 @@
 /**
  * Admin page for a chronicle's approval rules.
- * Lists every override currently set on that chronicle's trait_list
- * items and tiered_power powers/levels, and lets a Storyteller
- * create, edit, and delete one against a picked catalog target.
+ * Lists every override currently set on that chronicle's trait_list items
+ * (flat or per-value-range), tiered_power powers/levels, resource_pool
+ * pools (per-value-range), and identity_field fields (per-option), and lets
+ * a Storyteller create, edit, and delete one against a picked catalog
+ * target. Also carries the chronicle's own default approval policy - what
+ * happens when nothing below has an opinion.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
-import type { ApprovalRule, ApprovalRuleOptions, ApprovalRuleRequest } from '../../api/client';
-import type { Game, SchemaBlock, TieredPower, TraitListItem } from '../../types';
+import type { ApprovalRule, ApprovalRuleOptions, ApprovalRuleRequest, ApprovalRuleTargetType } from '../../api/client';
+import type { Game, IdentityField, ResourcePool, SchemaBlock, TieredPower, TraitListItem } from '../../types';
 import './Admin.css';
 
 interface RestError {
@@ -35,11 +38,35 @@ const EMPTY_FORM: ApprovalRuleRequest = {
 	reason: '',
 };
 
+/** True for the two section types whose rules are always addressed by a [from, to] range. */
+function isRangeType( type: ApprovalRuleTargetType ): boolean {
+	return type === 'item_range' || type === 'pool_range';
+}
+
+/**
+ * Renders one rule's target column: the plain name for a flat item or
+ * power, "name (level N)" for a tiered_power level, "name (from-to)" for a
+ * value-range rule, and "name: option" for a field option rule.
+ */
+function describeTarget( rule: ApprovalRule ): string {
+	if ( rule.level !== null ) {
+		return `${ rule.target_name } (${ __( 'level', 'beyond-elysium' ) } ${ rule.level })`;
+	}
+	if ( isRangeType( rule.target_type ) && Array.isArray( rule.extra ) ) {
+		return `${ rule.target_name } (${ rule.extra[ 0 ] }–${ rule.extra[ 1 ] })`;
+	}
+	if ( rule.target_type === 'field_option' && typeof rule.extra === 'string' ) {
+		return `${ rule.target_name }: ${ rule.extra }`;
+	}
+	return rule.target_name;
+}
+
 /**
  * Renders the Approval Rules admin screen: a chronicle picker, the
- * flat list of every rule currently set for it, and a create/edit
- * form whose target pickers (block, then item or power, then level)
- * cascade against that block's real catalog rather than free text.
+ * chronicle's own default approval policy, the flat list of every rule
+ * currently set for it, and a create/edit form whose target pickers
+ * (block, then item/power/pool/field, then level/range/option) cascade
+ * against that block's real catalog rather than free text.
  */
 export function AdminApprovalRules() {
 	const [ games, setGames ] = useState<Game[]>( [] );
@@ -51,6 +78,7 @@ export function AdminApprovalRules() {
 	const [ loading, setLoading ] = useState( false );
 	const [ error, setError ] = useState<string | null>( null );
 	const [ saving, setSaving ] = useState( false );
+	const [ savingDefault, setSavingDefault ] = useState( false );
 
 	const [ editingId, setEditingId ] = useState<string | null>( null );
 	const [ form, setForm ] = useState<ApprovalRuleRequest>( EMPTY_FORM );
@@ -89,7 +117,11 @@ export function AdminApprovalRules() {
 			.then( ( [ ruleList, opts, blockList ] ) => {
 				setRules( ruleList );
 				setOptions( opts );
-				setBlocks( blockList.filter( ( b ) => b.section_type === 'trait_list' || b.section_type === 'tiered_power' ) );
+				setBlocks(
+					blockList.filter( ( b ) =>
+						[ 'trait_list', 'tiered_power', 'resource_pool', 'identity_field' ].includes( b.section_type )
+					)
+				);
 				setError( null );
 			} )
 			.catch( ( err: unknown ) => setError( errorMessage( err ) ) )
@@ -120,14 +152,47 @@ export function AdminApprovalRules() {
 			target_type: rule.target_type,
 			target_name: rule.target_name,
 			level: rule.level ?? undefined,
+			from: isRangeType( rule.target_type ) && Array.isArray( rule.extra ) ? rule.extra[ 0 ] : undefined,
+			to: isRangeType( rule.target_type ) && Array.isArray( rule.extra ) ? rule.extra[ 1 ] : undefined,
+			option: rule.target_type === 'field_option' && typeof rule.extra === 'string' ? rule.extra : undefined,
 			approval: rule.approval ?? '',
 			reason: rule.reason ?? '',
 		} );
 	}
 
+	const currentGame = games.find( ( g ) => g.slug === gameSlug ) ?? null;
+	const autoApproveByDefault = !! currentGame?.settings?.auto_approve;
+
+	/**
+	 * Saves the chronicle-wide default approval policy: auto-approve unless
+	 * a rule below says otherwise, or the existing safe default (everything
+	 * needs Storyteller review unless a rule says auto). Merges into
+	 * settings same as every other per-chronicle toggle - never replaces it.
+	 */
+	async function saveDefaultPolicy( auto: boolean ) {
+		if ( ! gameSlug ) {
+			return;
+		}
+		setSavingDefault( true );
+		try {
+			const updated = await api.games.update( gameSlug, { settings: { auto_approve: auto } } );
+			setGames( ( prev ) => prev.map( ( g ) => ( g.slug === gameSlug ? updated : g ) ) );
+		} catch ( err ) {
+			setError( errorMessage( err ) );
+		} finally {
+			setSavingDefault( false );
+		}
+	}
+
 	async function save( e: React.FormEvent ) {
 		e.preventDefault();
 		if ( ! form.block_slug || ! form.target_name ) {
+			return;
+		}
+		if ( isRangeType( form.target_type ) && ( form.from === undefined || form.to === undefined ) ) {
+			return;
+		}
+		if ( form.target_type === 'field_option' && ! form.option ) {
 			return;
 		}
 		setSaving( true );
@@ -162,14 +227,22 @@ export function AdminApprovalRules() {
 
 	const items: TraitListItem[] = activeBlock?.section_type === 'trait_list' ? ( activeBlock.definition as { items: TraitListItem[] } ).items ?? [] : [];
 	const powers: TieredPower[] = activeBlock?.section_type === 'tiered_power' ? ( activeBlock.definition as { powers: TieredPower[] } ).powers ?? [] : [];
+	const pools: ResourcePool[] = activeBlock?.section_type === 'resource_pool' ? ( activeBlock.definition as { pools: ResourcePool[] } ).pools ?? [] : [];
+	const fields: IdentityField[] = activeBlock?.section_type === 'identity_field' ? ( activeBlock.definition as { fields: IdentityField[] } ).fields ?? [] : [];
 	const selectedPower = powers.find( ( p ) => p.name === form.target_name );
+	const selectedField = fields.find( ( f ) => f.name === form.target_name );
+
+	// Whether the current block/target combination shows an "Approval level" dropdown at
+	// all - a bare level target reads its approval from the level's own catalog row
+	// instead (matching the pre-existing rule for tiered_power levels).
+	const showsApprovalDropdown = form.target_type !== 'level';
 
 	return (
 		<div className="be-admin">
 			<h1>{ __( 'Approval Rules', 'beyond-elysium' ) }</h1>
 			<p>
 				{ __(
-					'Flag a specific trait, power, or power level as needing Storyteller (or higher) review, and name the real-world authority a player still needs to satisfy.',
+					'Flag a specific trait, power, power level, resource pool value, or identity field option as needing Storyteller (or higher) review, and name the real-world authority a player still needs to satisfy.',
 					'beyond-elysium'
 				) }
 			</p>
@@ -184,6 +257,38 @@ export function AdminApprovalRules() {
 					) ) }
 				</select>
 			</label>
+
+			{ gameSlug && (
+				<div className="be-admin__form">
+					<h2>{ __( 'Default Approval Policy', 'beyond-elysium' ) }</h2>
+					<p className="description">
+						{ __(
+							'What happens when nothing below has an opinion. Rules always win over this default, in either direction.',
+							'beyond-elysium'
+						) }
+					</p>
+					<label>
+						<input
+							type="radio"
+							name="default-approval-policy"
+							checked={ ! autoApproveByDefault }
+							disabled={ savingDefault }
+							onChange={ () => saveDefaultPolicy( false ) }
+						/>{ ' ' }
+						{ __( 'Pending by default - a rule below can mark something Auto', 'beyond-elysium' ) }
+					</label>
+					<label>
+						<input
+							type="radio"
+							name="default-approval-policy"
+							checked={ autoApproveByDefault }
+							disabled={ savingDefault }
+							onChange={ () => saveDefaultPolicy( true ) }
+						/>{ ' ' }
+						{ __( 'Auto-approve by default - a rule below can require Storyteller (or Coordinator) review', 'beyond-elysium' ) }
+					</label>
+				</div>
+			) }
 
 			{ loading ? (
 				<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
@@ -202,10 +307,7 @@ export function AdminApprovalRules() {
 						{ rules.map( ( rule ) => (
 							<tr key={ rule.id }>
 								<td>{ rule.block_name }</td>
-								<td>
-									{ rule.target_name }
-									{ rule.level !== null && ` (${ __( 'level', 'beyond-elysium' ) } ${ rule.level })` }
-								</td>
+								<td>{ describeTarget( rule ) }</td>
 								<td>{ rule.approval ?? '—' }</td>
 								<td>{ rule.reason ?? '—' }</td>
 								<td>
@@ -229,7 +331,9 @@ export function AdminApprovalRules() {
 					<select
 						value={ form.block_slug }
 						disabled={ !! editingId }
-						onChange={ ( e ) => setForm( { ...form, block_slug: e.target.value, target_name: '', level: undefined } ) }
+						onChange={ ( e ) =>
+							setForm( { ...form, block_slug: e.target.value, target_name: '', level: undefined, from: undefined, to: undefined, option: undefined } )
+						}
 						required
 					>
 						<option value="">{ __( 'Choose a block…', 'beyond-elysium' ) }</option>
@@ -240,20 +344,139 @@ export function AdminApprovalRules() {
 				</label>
 
 				{ activeBlock?.section_type === 'trait_list' && (
-					<label>
-						{ __( 'Item', 'beyond-elysium' ) }
-						<select
-							value={ form.target_name }
-							disabled={ !! editingId }
-							onChange={ ( e ) => setForm( { ...form, target_type: 'item', target_name: e.target.value } ) }
-							required
-						>
-							<option value="">{ __( 'Choose an item…', 'beyond-elysium' ) }</option>
-							{ items.map( ( item ) => (
-								<option key={ item.name } value={ item.name }>{ item.name }</option>
-							) ) }
-						</select>
-					</label>
+					<>
+						<label>
+							{ __( 'Item', 'beyond-elysium' ) }
+							<select
+								value={ form.target_name }
+								disabled={ !! editingId }
+								onChange={ ( e ) => setForm( { ...form, target_type: 'item', target_name: e.target.value, from: undefined, to: undefined } ) }
+								required
+							>
+								<option value="">{ __( 'Choose an item…', 'beyond-elysium' ) }</option>
+								{ items.map( ( item ) => (
+									<option key={ item.name } value={ item.name }>{ item.name }</option>
+								) ) }
+							</select>
+						</label>
+
+						{ form.target_name && (
+							<label>
+								{ __( 'Scope', 'beyond-elysium' ) }
+								<select
+									value={ form.target_type }
+									disabled={ !! editingId }
+									onChange={ ( e ) => setForm( { ...form, target_type: e.target.value as ApprovalRuleTargetType } ) }
+								>
+									<option value="item">{ __( 'The whole item', 'beyond-elysium' ) }</option>
+									<option value="item_range">{ __( 'A specific value range', 'beyond-elysium' ) }</option>
+								</select>
+							</label>
+						) }
+
+						{ form.target_type === 'item_range' && (
+							<>
+								<label>
+									{ __( 'From', 'beyond-elysium' ) }
+									<input
+										type="number"
+										value={ form.from ?? '' }
+										disabled={ !! editingId }
+										onChange={ ( e ) => setForm( { ...form, from: Number( e.target.value ) } ) }
+										required
+									/>
+								</label>
+								<label>
+									{ __( 'To', 'beyond-elysium' ) }
+									<input
+										type="number"
+										value={ form.to ?? '' }
+										disabled={ !! editingId }
+										onChange={ ( e ) => setForm( { ...form, to: Number( e.target.value ) } ) }
+										required
+									/>
+								</label>
+							</>
+						) }
+					</>
+				) }
+
+				{ activeBlock?.section_type === 'resource_pool' && (
+					<>
+						<label>
+							{ __( 'Pool', 'beyond-elysium' ) }
+							<select
+								value={ form.target_name }
+								disabled={ !! editingId }
+								onChange={ ( e ) => setForm( { ...form, target_type: 'pool_range', target_name: e.target.value } ) }
+								required
+							>
+								<option value="">{ __( 'Choose a pool…', 'beyond-elysium' ) }</option>
+								{ pools.map( ( pool ) => (
+									<option key={ pool.name } value={ pool.name }>{ pool.name }</option>
+								) ) }
+							</select>
+						</label>
+						{ form.target_name && (
+							<>
+								<label>
+									{ __( 'From (permanent value)', 'beyond-elysium' ) }
+									<input
+										type="number"
+										value={ form.from ?? '' }
+										disabled={ !! editingId }
+										onChange={ ( e ) => setForm( { ...form, from: Number( e.target.value ) } ) }
+										required
+									/>
+								</label>
+								<label>
+									{ __( 'To (permanent value)', 'beyond-elysium' ) }
+									<input
+										type="number"
+										value={ form.to ?? '' }
+										disabled={ !! editingId }
+										onChange={ ( e ) => setForm( { ...form, to: Number( e.target.value ) } ) }
+										required
+									/>
+								</label>
+							</>
+						) }
+					</>
+				) }
+
+				{ activeBlock?.section_type === 'identity_field' && (
+					<>
+						<label>
+							{ __( 'Field', 'beyond-elysium' ) }
+							<select
+								value={ form.target_name }
+								disabled={ !! editingId }
+								onChange={ ( e ) => setForm( { ...form, target_type: 'field_option', target_name: e.target.value, option: undefined } ) }
+								required
+							>
+								<option value="">{ __( 'Choose a field…', 'beyond-elysium' ) }</option>
+								{ fields.filter( ( f ) => ( f.options ?? [] ).length > 0 ).map( ( field ) => (
+									<option key={ field.name } value={ field.name }>{ field.name }</option>
+								) ) }
+							</select>
+						</label>
+						{ selectedField && (
+							<label>
+								{ __( 'Option', 'beyond-elysium' ) }
+								<select
+									value={ form.option ?? '' }
+									disabled={ !! editingId }
+									onChange={ ( e ) => setForm( { ...form, option: e.target.value } ) }
+									required
+								>
+									<option value="">{ __( 'Choose an option…', 'beyond-elysium' ) }</option>
+									{ ( selectedField.options ?? [] ).map( ( option ) => (
+										<option key={ option } value={ option }>{ option }</option>
+									) ) }
+								</select>
+							</label>
+						) }
+					</>
 				) }
 
 				{ activeBlock?.section_type === 'tiered_power' && (
@@ -279,7 +502,7 @@ export function AdminApprovalRules() {
 								<select
 									value={ form.target_type }
 									disabled={ !! editingId }
-									onChange={ ( e ) => setForm( { ...form, target_type: e.target.value as ApprovalRuleRequest[ 'target_type' ] } ) }
+									onChange={ ( e ) => setForm( { ...form, target_type: e.target.value as ApprovalRuleTargetType } ) }
 								>
 									<option value="power">{ __( 'The whole power', 'beyond-elysium' ) }</option>
 									<option value="level">{ __( 'One level only', 'beyond-elysium' ) }</option>
@@ -310,7 +533,7 @@ export function AdminApprovalRules() {
 					</>
 				) }
 
-				{ form.target_type !== 'level' && (
+				{ showsApprovalDropdown && (
 					<label>
 						{ __( 'Approval level', 'beyond-elysium' ) }
 						<select value={ form.approval } onChange={ ( e ) => setForm( { ...form, approval: e.target.value } ) }>

@@ -179,7 +179,7 @@ class GvmParserTest extends TestCase {
 		return [
 			'standard'  => [ 'GV301Source/Code/Grapevine Menus.gvm', 756 ],
 			'dark ages' => [ 'GV301Source/Code/Dark Ages Menus.gvm', 735 ],
-			'community' => [ 'grapevine-samples/Grapevine Menus.gvm', 817 ],
+			'community' => [ 'samples/grapevine-samples/Grapevine Menus.gvm', 817 ],
 		];
 	}
 

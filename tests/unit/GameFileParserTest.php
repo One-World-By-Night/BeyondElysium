@@ -8,9 +8,9 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * GVBG binary game-file parsing (workflow-0.8.md Step 9f), against the one real `.gv3`
- * sample this repo has - `data-samples/personal-chron.gv3` (21,074 bytes, `Version = 3.0`).
+ * sample this repo has - `samples/data/personal-chron.gv3` (21,074 bytes, `Version = 3.0`).
  *
- * `data-samples/` is `.distignore`d (excluded from the shipped artifact), so this fixture
+ * `samples/data/` is `.distignore`d (excluded from the shipped artifact), so this fixture
  * is real but not guaranteed present in every checkout - matching `GexParserTest`'s own
  * discipline for `GV301Source/Code/` fixtures.
  *
@@ -25,7 +25,7 @@ class GameFileParserTest extends TestCase {
 
 	/** @return array<string,mixed> */
 	private function real_sample(): array {
-		return Game_File_Parser::parse_file( $this->path( 'data-samples/personal-chron.gv3' ) );
+		return Game_File_Parser::parse_file( $this->path( 'samples/data/personal-chron.gv3' ) );
 	}
 
 	public function test_the_real_sample_parses_to_exactly_eof_with_the_right_entity_count(): void {

@@ -10,7 +10,7 @@ use WP_UnitTestCase;
 
 /**
  * The non-game-scoped `/import/game/...` routes (workflow-0.8.md Step 9d-9f), against the
- * one real `.gv3` sample this repo has - `data-samples/personal-chron.gv3` (chronicle
+ * one real `.gv3` sample this repo has - `samples/data/personal-chron.gv3` (chronicle
  * "Personal", 1 vampire character "Ian Kincaid II", 48 items, 1 location, 18 queries, 0
  * rotes/actions/plots/rumors). Dispatched through the real REST server, exercising the
  * actual permission gate, transient job store, and transaction - not a direct
@@ -38,7 +38,7 @@ class GameImportControllerTest extends WP_UnitTestCase {
 	}
 
 	private function upload_request(): WP_REST_Request {
-		$file    = $this->path( 'data-samples/personal-chron.gv3' );
+		$file    = $this->path( 'samples/data/personal-chron.gv3' );
 		$request = new WP_REST_Request( 'POST', '/be/v1/import/game/parse' );
 		$request->set_file_params( [
 			'file' => [
