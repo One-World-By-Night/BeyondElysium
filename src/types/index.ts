@@ -82,6 +82,33 @@ export interface GameRenameReport {
 }
 
 /**
+ * One chronicle the current user actually holds a real membership row
+ * in, from `GET /my/games` - the data source for an in-page chronicle
+ * switcher, never the full `games` collection (which lists every
+ * chronicle on the install to any logged-in user).
+ */
+export interface MyGame {
+    slug: string;
+    name: string;
+    role: string;
+}
+
+/**
+ * What the current user can actually do in one specific chronicle,
+ * from `GET /{game_slug}/my/capabilities` - resolved per chronicle
+ * through `Authorization::check_request()`, distinct from the
+ * site-wide, chronicle-blind snapshot `window.beyondElysium.capabilities`
+ * carries on every page load.
+ */
+export interface MyCapabilities {
+    be_manage_characters: boolean;
+    be_manage_plots: boolean;
+    be_manage_schemas: boolean;
+    be_manage_connections: boolean;
+    be_manage_boons: boolean;
+}
+
+/**
  * Request body for creating a new game/chronicle. Only name is
  * required; slug, type, description, and settings are optional
  * and take server-side defaults when omitted.

@@ -9,6 +9,8 @@
 import apiFetch from '@wordpress/api-fetch';
 import type {
     Game,
+    MyGame,
+    MyCapabilities,
     SchemaBlock,
     CreatureStack,
     ResolvedStack,
@@ -181,6 +183,26 @@ export const games = {
      */
     delete: ( slug: string, withContent = false ): Promise<void> =>
         apiFetch( { path: `${ BASE }/games/${ slug }${ withContent ? '?with_content=1' : '' }`, method: 'DELETE' } ),
+
+    /**
+     * Fetches every chronicle the current user actually holds a real
+     * membership row in, each with the role they hold there - the
+     * real data source for a chronicle switcher. Never falls back to
+     * the full collection, so a player can never see a chronicle they
+     * hold no membership in.
+     */
+    mine: (): Promise<MyGame[]> =>
+        apiFetch( { path: `${ BASE }/my/games` } ),
+
+    /**
+     * Fetches what the current user can actually do in one specific
+     * chronicle, resolved per chronicle rather than read from the
+     * site-wide `window.beyondElysium.capabilities` snapshot. A game
+     * slug the user has no real relationship to still resolves - every
+     * flag comes back false rather than an error.
+     */
+    myCapabilities: ( slug: string ): Promise<{ capabilities: MyCapabilities }> =>
+        apiFetch( { path: `${ BASE }/${ slug }/my/capabilities` } ),
 };
 
 // ---------------------------------------------------------------------------

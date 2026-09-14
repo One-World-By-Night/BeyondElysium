@@ -155,24 +155,25 @@ class Setup_Status_Controller extends Base_Controller {
 	 * @return array<string,mixed>
 	 */
 	private function row_front_end_pages( object $game ): array {
-		global $wpdb;
-		// Page_Provisioner::create_if_missing() runs its JSON config through esc_attr()
-		// before embedding it in the data-be-config HTML attribute, so the real stored
-		// post_content carries HTML entities (&quot;), never literal quotes - a literal
-		// '"gameSlug":"..."' search here would never match a single real provisioned page.
-		$count = (int) $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_content LIKE %s",
-			'%' . $wpdb->esc_like( '&quot;gameSlug&quot;:&quot;' . $game->slug . '&quot;' ) . '%'
-		) );
+		// page-consolidation-design.md: the four fixed pages are chronicle-independent
+		// (each resolves its own chronicle via a switcher, not a baked gameSlug), so this
+		// checks their real existence directly rather than counting per-chronicle content -
+		// the old LIKE-on-post_content check has nothing left to count under this model.
+		$missing = [];
+		foreach ( \BeyondElysium\Core\Page_Provisioner::PAGES as $slug => $page ) {
+			if ( ! get_page_by_path( $slug, OBJECT, 'page' ) ) {
+				$missing[] = $page['title'];
+			}
+		}
 
 		return [
 			'id'         => 'front_end_pages',
-			'status'     => $count > 0 ? 'ok' : 'attention',
+			'status'     => empty( $missing ) ? 'ok' : 'attention',
 			'title'      => __( 'Front-end pages', 'beyond-elysium' ),
-			'detail'     => $count > 0
-				? sprintf( /* translators: %d: number of pages */ __( '%d page(s) are provisioned for this chronicle.', 'beyond-elysium' ), $count )
-				: __( 'No front-end pages are provisioned for this chronicle yet.', 'beyond-elysium' ),
-			'fix'        => [ 'kind' => 'link', 'href' => 'admin.php?page=beyond-elysium-chronicle-setup&game=' . rawurlencode( $game->slug ) . '&provision_pages=1', 'capability' => 'be_manage_games' ],
+			'detail'     => empty( $missing )
+				? __( 'My Chronicle, Storyteller Toolkit, and the print/verify pages are all provisioned.', 'beyond-elysium' )
+				: sprintf( /* translators: %s: comma-separated list of missing page titles */ __( 'Missing: %s.', 'beyond-elysium' ), implode( ', ', $missing ) ),
+			'fix'        => [ 'kind' => 'link', 'href' => 'admin.php?page=beyond-elysium-chronicle-setup&provision_pages=1', 'capability' => 'be_manage_games' ],
 			'actionable' => current_user_can( 'be_manage_games' ),
 		];
 	}

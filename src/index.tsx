@@ -33,6 +33,12 @@ const widgetRegistry: Record<string, () => Promise<{ default: React.ComponentTyp
 	'game-dashboard': () => import( './components/game/GameDashboard' ),
 	'verify-character': () => import( './components/character/VerifyCharacter' ),
 	'house-rules': () => import( './components/game/HouseRules' ),
+	// page-consolidation-design.md's two fixed, tabbed pages - replace the ten
+	// per-chronicle-duplicated pages below with a shell each, wrapping the same
+	// inner widgets (still registered here too, since Elementor may still place
+	// any of them individually).
+	'my-chronicle': () => import( './components/pages/MyChroniclePage' ),
+	'storyteller-toolkit-page': () => import( './components/pages/StorytellerToolkitPage' ),
 
 	// wp-admin pages, mounted the same way as a front-end Elementor widget.
 	'admin-games': () => import( './components/admin/AdminGames' ),

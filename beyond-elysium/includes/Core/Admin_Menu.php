@@ -221,8 +221,11 @@ class Admin_Menu {
 		// GS-8's fix link for row 4 (Setup_Status_Controller::row_front_end_pages()) - a
 		// plain admin-page link rather than a REST call, matching this row's own "link,
 		// not duplicated UI" shape (§6.7). Capability-gated the same as the page itself.
-		if ( isset( $_GET['provision_pages'], $_GET['game'] ) && current_user_can( 'be_manage_games' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- idempotent, capability-gated GET action, matching this project's other admin-link fixes.
-			\BeyondElysium\Core\Page_Provisioner::provision_for_game( sanitize_title( wp_unslash( $_GET['game'] ) ) );
+		// page-consolidation-design.md: the four fixed pages are chronicle-independent, so
+		// this no longer takes a &game= param - it just re-runs the same provisioning
+		// be_after_upgrade already does.
+		if ( isset( $_GET['provision_pages'] ) && current_user_can( 'be_manage_games' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- idempotent, capability-gated GET action, matching this project's other admin-link fixes.
+			\BeyondElysium\Core\Page_Provisioner::maybe_provision();
 		}
 		self::render_mount( 'admin-chronicle-setup' );
 	}

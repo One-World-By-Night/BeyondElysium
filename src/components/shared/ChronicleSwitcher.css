@@ -1,0 +1,17 @@
+.be-chronicle-switcher {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-weight: 600;
+}
+
+.be-chronicle-switcher__select {
+	font-weight: normal;
+	min-height: var( --be-tap-min, 32px );
+	font-size: max( 16px, var( --be-input-font-min, 1rem ) );
+}
+
+.be-chronicle-switcher__status {
+	font-style: italic;
+	color: #555;
+}

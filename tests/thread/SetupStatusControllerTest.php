@@ -80,13 +80,25 @@ class SetupStatusControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 'ok', $row['status'] );
 	}
 
-	public function test_a_provisioned_page_turns_the_front_end_pages_row_green(): void {
-		\BeyondElysium\Core\Page_Provisioner::provision_for_game( $this->game_slug );
+	public function test_front_end_pages_row_is_attention_before_provisioning(): void {
+		$response = $this->dispatch( $this->admin_id );
+		$row      = $this->row( $response->get_data()['items'], 'front_end_pages' );
+
+		$this->assertSame( 'attention', $row['status'] );
+	}
+
+	/**
+	 * page-consolidation-design.md: the four fixed pages are chronicle-independent -
+	 * provisioning them once turns this row green for every chronicle on the install,
+	 * not just the one that happened to trigger it.
+	 */
+	public function test_provisioning_the_fixed_pages_turns_the_front_end_pages_row_green_for_every_chronicle(): void {
+		\BeyondElysium\Core\Page_Provisioner::maybe_provision();
 
 		$response = $this->dispatch( $this->admin_id );
 		$row      = $this->row( $response->get_data()['items'], 'front_end_pages' );
 
-		$this->assertSame( 'ok', $row['status'], 'the real stored post_content is HTML-entity-escaped, not literal quotes - this is the regression guard for that' );
+		$this->assertSame( 'ok', $row['status'] );
 	}
 
 	public function test_a_character_turns_the_characters_row_green(): void {

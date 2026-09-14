@@ -4,9 +4,13 @@ This guide covers what a player does day to day: creating a character, editing i
 tracking experience, and following plots. If you're running a chronicle instead, see the
 [Storyteller Guide](st-guide.md).
 
+Everything a player does lives on one page, **My Chronicle**, with a **Chronicle** picker at
+the top if you play in more than one — pick the right one first, then use the tabs below it
+to move between your dashboard, roster, sheet, editor, and plots.
+
 ## 1. Your Characters
 
-The **Characters** page shows the chronicle's full roster. Look for your own character's
+The **Characters** tab shows the chronicle's full roster. Look for your own character's
 name, or use **Add Character** to create one if you don't have one yet — pick a creature
 type, fill in your identity fields, and spend your starting build the same way you'll spend
 experience later.
@@ -17,7 +21,8 @@ character's row — until then, you can see the character but can't edit it.
 
 ## 2. Editing Your Sheet
 
-Open your character and use **Edit**. Every section of the sheet — traits, powers, resource
+Open your character from **Characters** (or go straight to the **Edit** tab). Every section
+of the sheet — traits, powers, resource
 pools, identity fields — is editable from the same page. Changes aren't written to your
 sheet the instant you make them locally; they're queued until you click **Submit Changes**.
 
@@ -56,12 +61,13 @@ your own personal setting; a Storyteller doesn't need to be involved.
 
 ## 4. Your Dashboard
 
-The **Dashboard** page shows a player-facing summary: your own characters, your own pending
-changes (the ones still awaiting review), and your own plots — never anyone else's data.
+**My Chronicle**'s **Dashboard** tab (the first one, and where you land by default) shows a
+player-facing summary: your own characters, your own pending changes (the ones still
+awaiting review), and your own plots — never anyone else's data.
 
 ## 5. Plots and Rumors
 
-The **My Plots & Rumors** page shows every plot thread you're connected to, plus any rumor
+The **My Plots & Rumors** tab shows every plot thread you're connected to, plus any rumor
 that's reached you. Open one to read the full thread and, if it calls for a response,
 submit your action directly from there — the same review process as any other change
 applies to plot actions your Storyteller needs to approve.

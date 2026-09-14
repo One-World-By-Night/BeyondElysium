@@ -2,7 +2,9 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Core\Authorization;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Game_Member;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -23,6 +25,33 @@ class Games_Controller extends Base_Controller {
 	 * capability.
 	 */
 	public function register_routes(): void {
+		// The current user's own real chronicle memberships - page-consolidation-design.md's
+		// chronicle switcher (unlike GET /games, which lists every chronicle on the install
+		// to any logged-in user) reads this, never the full collection, so a player can never
+		// see a chronicle they hold no membership in.
+		register_rest_route( $this->namespace, '/my/games', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_my_games' ],
+				'permission_callback' => $this->permission( 'be_view_characters' ),
+			],
+		] );
+
+		// What the current user can actually do in one specific chronicle - answers
+		// with every flag false for a user with no real relationship to this chronicle
+		// rather than a 403, so a switcher can render "no access here" instead of failing
+		// outright; open to any logged-in user rather than gated by a capability this
+		// route's own job is to determine.
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/my/capabilities', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_my_capabilities' ],
+				'permission_callback' => static function () {
+					return is_user_logged_in();
+				},
+			],
+		] );
+
 		register_rest_route( $this->namespace, '/' . $this->rest_base, [
 			[
 				'methods'             => 'GET',
@@ -81,6 +110,66 @@ class Games_Controller extends Base_Controller {
 
 		$response = $this->success( $items );
 		return $this->paginate( $response, $total, $pagination['per_page'], $pagination['page'] );
+	}
+
+	/**
+	 * Returns every chronicle the current user actually holds a membership row
+	 * in, each with the role they hold there - the real data source for an
+	 * in-page chronicle switcher (page-consolidation-design.md), as opposed to
+	 * get_items()'s full collection, which lists every chronicle on the install
+	 * to any logged-in user and must never back a front-end picker.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response
+	 */
+	public function get_my_games( $request ) {
+		$memberships = Game_Member::for_user( get_current_user_id() );
+
+		$games = [];
+		foreach ( $memberships as $membership ) {
+			$game = Game::find( (int) $membership->game_id );
+			if ( ! $game ) {
+				// A membership row surviving a game's own row-only delete (Game::delete()'s
+				// documented "row only, content becomes unreachable" behavior) - skipped
+				// rather than surfaced as a broken entry in the switcher.
+				continue;
+			}
+			$games[] = [
+				'slug' => $game->slug,
+				'name' => $game->name,
+				'role' => $membership->role,
+			];
+		}
+
+		return $this->success( $games );
+	}
+
+	/**
+	 * Returns what the current user can actually do in one specific chronicle -
+	 * the same five flags `Plugin::enqueue_frontend()` localizes site-wide, but
+	 * resolved per chronicle through `Authorization::check_request()` instead
+	 * of a single `current_user_can()` snapshot computed before any chronicle
+	 * is known. A game slug that doesn't resolve still returns every flag
+	 * false rather than a 404 or 403, so a switcher can render "no access
+	 * here" instead of a hard failure.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response
+	 */
+	public function get_my_capabilities( $request ) {
+		$capability_list = [
+			'be_manage_characters',
+			'be_manage_plots',
+			'be_manage_schemas',
+			'be_manage_connections',
+			'be_manage_boons',
+		];
+
+		if ( ! Game::find_by_slug( $request['game_slug'] ) ) {
+			return $this->success( [ 'capabilities' => array_fill_keys( $capability_list, false ) ] );
+		}
+
+		return $this->success( [ 'capabilities' => Authorization::capabilities_for_request( $capability_list, $request ) ] );
 	}
 
 	/**

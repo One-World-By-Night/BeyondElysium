@@ -117,8 +117,7 @@ but a Storyteller.
 
 Every trait purchase, XP award, or sheet change a player submits becomes a **pending
 change** unless your schema's approval rules mark it auto-approved. The queue lives on the
-**Storyteller Toolkit** front-end page, or in the approval queue widget wherever your
-chronicle has placed it.
+**Storyteller Toolkit** page's **Approval Queue** tab.
 
 - Filter by character, change type, or approval level.
 - Approve or reject one at a time, with an optional note (a note is required on reject).
@@ -164,21 +163,29 @@ checkbox.
 
 ## 7. The Game Dashboard
 
-The **Dashboard** page (auto-created for every chronicle) shows different things depending
-on who's looking:
+Every chronicle has a fixed **My Chronicle** page and a fixed **Storyteller Toolkit** page —
+the same two pages regardless of how many chronicles this site hosts, each with a
+**Chronicle** switcher at the top to pick which one you're looking at.
 
-- **Storytellers** see character counts by creature type and status, the pending-change
-  count, the active-plot count, a roster-health count of players with no active character
-  (click it to see who), and a feed of recent activity across the whole chronicle.
-- **Players** see their own characters, their own pending changes, and their own plots —
-  nothing from anyone else's sheet.
+**My Chronicle**'s **Dashboard** tab shows your own characters, your own pending changes,
+and your own plots — nothing from anyone else's sheet. Its **Characters**, **Sheet**, and
+**Edit** tabs are the character roster, read-only sheet view, and character editor; **My
+Plots & Rumors** is your own plot feed.
+
+**Storyteller Toolkit** is Storyteller-only: its tabs (Dashboard, Approval Queue, Plots &
+Rumors, Boon Ledger) only appear when you actually hold a Storyteller-level role *in the
+chronicle currently selected in the switcher* — an AST who only narrates one chronicle sees
+fewer tabs there than in one they HST. Its own **Dashboard** tab shows character counts by
+creature type and status, the pending-change count, the active-plot count, a roster-health
+count of players with no active character (click it to see who), and a feed of recent
+activity across the whole chronicle.
 
 ## 8. Plots, Actions, and Rumors
 
-The **Storyteller Toolkit** page is where plots live: create a plot, respond to player
-actions submitted against it, allocate action slots, and generate rumors that distribute to
-players via a saved query (see below) rather than by hand. Players see their own plot
-connections on the **My Plots & Rumors** page.
+The **Storyteller Toolkit** page's **Plots & Rumors** tab is where plots live: create a
+plot, respond to player actions submitted against it, allocate action slots, and generate
+rumors that distribute to players via a saved query (see below) rather than by hand. Players
+see their own plot connections on **My Chronicle**'s own **My Plots & Rumors** tab.
 
 ## 9. Action & Rumor Settings and the Background-Use Ledger
 

@@ -12,8 +12,9 @@ use WP_UnitTestCase;
 /**
  * The remaining guided-chronicle-setup work-order items not already covered
  * by their own dedicated test file: GS-1 (the permission fix), GS-7
- * (membership bootstrap on create), GS-8 (per-chronicle page provisioning),
- * and GS-11 (cascading demo-chronicle delete).
+ * (membership bootstrap on create), GS-8 (page provisioning - originally
+ * per-chronicle-qualified slugs, superseded by page-consolidation-design.md's
+ * chronicle-independent fixed pages), and GS-11 (cascading demo-chronicle delete).
  *
  * @see BE_PROCESS/guided-chronicle-setup-design.md
  */
@@ -108,22 +109,22 @@ class GuidedChronicleSetupTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// GS-8: per-chronicle page provisioning, chronicle-qualified slugs.
+	// GS-8: page provisioning is chronicle-independent (page-consolidation-design.md
+	// superseded the original per-chronicle-qualified-slug design) - a second, third,
+	// or fourth chronicle existing must never create a duplicate page.
 	// -------------------------------------------------------------------------
 
-	public function test_gs8_provisions_chronicle_qualified_pages_with_no_collision(): void {
-		$created = Page_Provisioner::provision_for_game( $this->game_slug );
+	public function test_a_second_chronicle_never_gets_its_own_duplicate_pages(): void {
+		Page_Provisioner::maybe_provision();
+		$before = get_posts( [ 'post_type' => 'page', 'name' => Page_Provisioner::PLAYER_SLUG, 'post_status' => 'publish', 'numberposts' => -1 ] );
 
-		$this->assertNotEmpty( $created );
-		$page = get_page_by_path( 'characters-' . $this->game_slug, OBJECT, 'page' );
-		$this->assertNotNull( $page );
-		// create_if_missing() runs the JSON config through esc_attr() before embedding it in
-		// the HTML attribute, so the stored content carries HTML entities, not literal quotes.
-		$this->assertStringContainsString( '&quot;gameSlug&quot;:&quot;' . $this->game_slug . '&quot;', $page->post_content );
+		Game::create( [ 'name' => 'Second Chronicle', 'slug' => 'guided-setup-second-chronicle' ] );
+		Page_Provisioner::maybe_provision();
 
-		// Calling it again must not create duplicates (create_if_missing()'s existing guard).
-		$second_pass = Page_Provisioner::provision_for_game( $this->game_slug );
-		$this->assertEmpty( $second_pass );
+		$after = get_posts( [ 'post_type' => 'page', 'name' => Page_Provisioner::PLAYER_SLUG, 'post_status' => 'publish', 'numberposts' => -1 ] );
+		$this->assertCount( 1, $before );
+		$this->assertCount( 1, $after, 'a second chronicle existing must not create a second My Chronicle page' );
+		$this->assertNull( get_page_by_path( Page_Provisioner::PLAYER_SLUG . '-guided-setup-second-chronicle', OBJECT, 'page' ), 'no chronicle-qualified slug should ever be created under the new model' );
 	}
 
 	// -------------------------------------------------------------------------

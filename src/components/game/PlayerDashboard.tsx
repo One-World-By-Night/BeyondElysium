@@ -18,16 +18,19 @@ export interface PlayerDashboardProps {
 }
 
 /**
- * Builds the character sheet URL for one character, appending its id as a query
- * parameter to the configured sheet page URL. Returns null when no sheet page URL is
- * configured, so callers can render a plain label instead of a link.
+ * Builds the character sheet URL for one character, appending its id and chronicle
+ * as query parameters to the configured sheet page URL. Returns null when no sheet
+ * page URL is configured, so callers can render a plain label instead of a link.
+ * Omitting game_slug here was a real latent bug (page-consolidation-design.md) -
+ * harmless while every chronicle had its own dedicated sheet page to fall back on,
+ * load-bearing now that one shared page resolves its chronicle from this param.
  */
-function sheetLink( sheetPageUrl: string | undefined, characterId: number ): string | null {
+function sheetLink( sheetPageUrl: string | undefined, characterId: number, gameSlug: string ): string | null {
 	if ( ! sheetPageUrl ) {
 		return null;
 	}
 	const separator = sheetPageUrl.includes( '?' ) ? '&' : '?';
-	return `${ sheetPageUrl }${ separator }character_id=${ characterId }`;
+	return `${ sheetPageUrl }${ separator }character_id=${ characterId }&game_slug=${ encodeURIComponent( gameSlug ) }`;
 }
 
 /**
@@ -73,7 +76,7 @@ export function PlayerDashboard( { gameSlug, sheetPageUrl }: PlayerDashboardProp
 				) : (
 					<ul className="be-game-dashboard__list">
 						{ characters.map( ( c ) => {
-							const link = sheetLink( sheetPageUrl, c.id );
+							const link = sheetLink( sheetPageUrl, c.id, gameSlug );
 							return (
 								<li key={ c.id }>
 									{ link ? (

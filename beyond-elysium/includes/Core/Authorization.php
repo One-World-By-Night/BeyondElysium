@@ -113,6 +113,28 @@ class Authorization {
 	}
 
 	/**
+	 * Resolves which of the given capabilities the current user actually holds
+	 * for one chronicle - runs check_request() once per capability, reusing its
+	 * exact resolution order (accessSchema, the be_manage_games override,
+	 * membership rows) rather than duplicating any of it. Backs the per-chronicle
+	 * capabilities REST endpoint (page-consolidation-design.md): a client-side
+	 * chronicle switcher needs "what can I actually do in THIS chronicle," not
+	 * the site-wide, chronicle-blind snapshot `Plugin::enqueue_frontend()`
+	 * already localizes on every page regardless of which chronicle it names.
+	 *
+	 * @param string[]         $capabilities
+	 * @param \WP_REST_Request $request      Must carry `game_slug` among its URL params.
+	 * @return array<string,bool>
+	 */
+	public static function capabilities_for_request( array $capabilities, \WP_REST_Request $request ): array {
+		$result = [];
+		foreach ( $capabilities as $capability ) {
+			$result[ $capability ] = self::check_request( $capability, $request );
+		}
+		return $result;
+	}
+
+	/**
 	 * Checks one email against one accessSchema role path, memoizing the
 	 * result for the rest of the request. Returns false immediately if the
 	 * accessSchema integration is not available.

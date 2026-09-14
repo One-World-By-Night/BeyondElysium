@@ -5,6 +5,7 @@ namespace BeyondElysium\Tests\Thread;
 use WP_REST_Request;
 use WP_UnitTestCase;
 use BeyondElysium\Models\Character;
+use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Schema_Block;
 
 /**
@@ -150,5 +151,137 @@ class GamesControllerTest extends WP_UnitTestCase {
 
 		$refetched = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/be/v1/games/thread-test-asc-role-path-game' ) )->get_data();
 		$this->assertSame( 'Chronicle/KONY', $refetched->asc_role_path );
+	}
+
+	// -------------------------------------------------------------------------
+	// GET /my/games (page-consolidation-design.md) - the real chronicle-switcher
+	// data source, never the full collection.
+	// -------------------------------------------------------------------------
+
+	public function test_my_games_returns_only_real_memberships_with_the_real_role(): void {
+		$game_a = $this->create_game( 'thread-test-my-games-a' )->get_data();
+		$game_b = $this->create_game( 'thread-test-my-games-b' )->get_data();
+		// A third real chronicle the test player holds no membership in at all.
+		$this->create_game( 'thread-test-my-games-c' );
+
+		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( (int) $game_a->id, $player, 'hst' );
+		Game_Member::set_role( (int) $game_b->id, $player, 'player' );
+
+		wp_set_current_user( $player );
+		$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/be/v1/my/games' ) );
+		$this->assertSame( 200, $response->get_status() );
+
+		$games = $response->get_data();
+		$this->assertCount( 2, $games, 'the third, no-membership chronicle must not appear' );
+
+		$by_slug = [];
+		foreach ( $games as $g ) {
+			$by_slug[ $g['slug'] ] = $g['role'];
+		}
+		$this->assertSame( 'hst', $by_slug['thread-test-my-games-a'] );
+		$this->assertSame( 'player', $by_slug['thread-test-my-games-b'] );
+	}
+
+	public function test_my_games_is_empty_for_a_user_with_no_memberships_not_every_chronicle(): void {
+		$this->create_game( 'thread-test-my-games-lonely' );
+
+		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		wp_set_current_user( $player );
+
+		$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/be/v1/my/games' ) );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( [], $response->get_data(), 'must never fall back to the full games collection' );
+	}
+
+	public function test_my_games_works_for_a_plain_subscriber_not_just_a_manager(): void {
+		$game = $this->create_game( 'thread-test-my-games-subscriber' )->get_data();
+
+		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( (int) $game->id, $player, 'player' );
+		wp_set_current_user( $player );
+
+		$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/be/v1/my/games' ) );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertCount( 1, $response->get_data() );
+	}
+
+	// -------------------------------------------------------------------------
+	// GET /{game_slug}/my/capabilities (page-consolidation-design.md) - the exact
+	// scenario a chronicle switcher exists to make safe: an HST in one chronicle,
+	// nothing at all in another.
+	// -------------------------------------------------------------------------
+
+	public function test_capabilities_reflect_hst_in_one_chronicle_and_nothing_in_another(): void {
+		$hst_chronicle     = $this->create_game( 'thread-test-caps-hst-game' )->get_data();
+		$stranger_chronicle = $this->create_game( 'thread-test-caps-stranger-game' )->get_data();
+
+		// A real HST needs both layers: a WP role that actually holds the raw
+		// be_manage_characters/be_manage_plots capability (Capabilities.php grants those
+		// to editor+ only, never subscriber), plus the chronicle-scoped 'hst' membership
+		// row that Authorization::check_request() uses to decide WHICH chronicle it
+		// applies to. A subscriber can never pass regardless of their game_members role -
+		// this is the real two-layer model, not a test bug to work around.
+		$user = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( (int) $hst_chronicle->id, $user, 'hst' );
+		wp_set_current_user( $user );
+
+		$hst_response = rest_get_server()->dispatch(
+			new WP_REST_Request( 'GET', "/be/v1/{$hst_chronicle->slug}/my/capabilities" )
+		);
+		$this->assertSame( 200, $hst_response->get_status() );
+		$hst_caps = $hst_response->get_data()['capabilities'];
+		$this->assertTrue( $hst_caps['be_manage_characters'] );
+		$this->assertTrue( $hst_caps['be_manage_plots'] );
+
+		$stranger_response = rest_get_server()->dispatch(
+			new WP_REST_Request( 'GET', "/be/v1/{$stranger_chronicle->slug}/my/capabilities" )
+		);
+		$this->assertSame( 200, $stranger_response->get_status() );
+		$stranger_caps = $stranger_response->get_data()['capabilities'];
+		$this->assertFalse( $stranger_caps['be_manage_characters'], 'an HST in one chronicle must not be treated as one in another' );
+		$this->assertFalse( $stranger_caps['be_manage_plots'] );
+	}
+
+	public function test_capabilities_for_a_boons_only_role_are_narrow(): void {
+		$game = $this->create_game( 'thread-test-caps-boons-game' )->get_data();
+
+		$harpy = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( (int) $game->id, $harpy, 'boons' );
+		wp_set_current_user( $harpy );
+
+		$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$game->slug}/my/capabilities" ) );
+		$caps     = $response->get_data()['capabilities'];
+
+		$this->assertTrue( $caps['be_manage_boons'] );
+		$this->assertFalse( $caps['be_manage_characters'] );
+		$this->assertFalse( $caps['be_manage_plots'] );
+	}
+
+	public function test_capabilities_for_an_unresolvable_game_slug_are_all_false_not_an_error(): void {
+		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		wp_set_current_user( $player );
+
+		$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/be/v1/not-a-real-chronicle/my/capabilities' ) );
+		$this->assertSame( 200, $response->get_status() );
+
+		foreach ( $response->get_data()['capabilities'] as $can ) {
+			$this->assertFalse( $can );
+		}
+	}
+
+	public function test_capabilities_route_denies_a_logged_out_visitor_outright(): void {
+		// The route's own gate is a bare is_user_logged_in(), not a specific capability -
+		// its whole job is to determine capabilities, so it can't be gated by one of them.
+		// A fully anonymous visitor is denied at that gate before Authorization::
+		// check_request() ever runs, distinct from the "resolvable route, no real
+		// relationship to this chronicle" case above, which always answers 200 with every
+		// flag false.
+		$game = $this->create_game( 'thread-test-caps-logged-out-game' )->get_data();
+		$slug = $game->slug;
+
+		wp_set_current_user( 0 );
+		$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$slug}/my/capabilities" ) );
+		$this->assertSame( 401, $response->get_status(), 'is_user_logged_in() gate on the route itself denies an anonymous visitor' );
 	}
 }
