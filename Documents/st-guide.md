@@ -221,9 +221,15 @@ also what a rumor's target audience is defined by (**Characters** queries only) 
 query once, point the rumor at it, and it recalculates who's in scope every time it runs
 rather than freezing a player list at creation time.
 
-Bulk XP award is available only on **Characters** results, for the same reason a rumor can
-only target characters: an Item, Location, or Rote result isn't a character, and the tool
-never offers an action that would only make sense as one.
+Three bulk actions are available only on **Characters** results, for the same reason a rumor
+can only target characters: an Item, Location, or Rote result isn't a character, and the
+tool never offers an action that would only make sense as one. Select a set of rows to award
+XP, reset a resource pool's temporary rating back to its permanent one (the ordinary
+end-of-session "everyone's Willpower/Blood refills" chore, across the whole selection at
+once instead of one character at a time), or set the same status on every selected
+character — retiring a batch, or marking a group inactive at once. A bad or stale character
+ID in a selection never touches another chronicle's character; it's reported as failed
+rather than silently ignored or acted on.
 
 **This is desk work.** A multi-clause query with a results grid of arbitrary columns doesn't
 reflow for a phone, and isn't meant to — build queries and read reports at a keyboard.

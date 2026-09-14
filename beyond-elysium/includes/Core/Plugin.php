@@ -132,6 +132,7 @@ class Plugin {
 			new \BeyondElysium\REST\Snapshots_Controller(),
 			new \BeyondElysium\REST\Sheet_Style_Controller(),
 			new \BeyondElysium\REST\Experience_Controller(),
+			new \BeyondElysium\REST\Resource_Pools_Controller(),
 			new \BeyondElysium\REST\Query_Fields_Controller(),
 			new \BeyondElysium\REST\Templates_Controller(),
 			new \BeyondElysium\REST\Plots_Controller(),

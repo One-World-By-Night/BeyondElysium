@@ -24,8 +24,12 @@ class Characters_Controller extends Base_Controller {
 
 	protected $rest_base = 'characters';
 
-	/** Valid character status values; "pending" applies only when a game requires approval for new characters. */
-	const STATUSES = [ 'active', 'inactive', 'retired', 'dead', 'pending' ];
+	/**
+	 * Valid character status values; "pending" applies only when a game requires
+	 * approval for new characters. Kept as a local alias of `Character::STATUSES`
+	 * (Decision 102) so every existing `self::STATUSES` call site here needs no change.
+	 */
+	const STATUSES = Character::STATUSES;
 
 	/**
 	 * Registers the character routes.
@@ -57,6 +61,25 @@ class Characters_Controller extends Base_Controller {
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'get_my_characters' ],
 				'permission_callback' => $this->permission( 'be_view_characters' ),
+			],
+		] );
+
+		// The fixed status vocabulary, for a bulk-status picker to source from rather
+		// than hardcoding the list a second time client-side.
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/statuses', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_statuses' ],
+				'permission_callback' => $this->permission( 'be_manage_characters' ),
+			],
+		] );
+
+		// Sets the same status on a batch of characters at once (bulk-operations-design.md).
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/bulk-status', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'bulk_status' ],
+				'permission_callback' => $this->permission( 'be_manage_characters' ),
 			],
 		] );
 
@@ -119,6 +142,50 @@ class Characters_Controller extends Base_Controller {
 			static fn( $u ) => [ 'id' => $u->ID, 'display_name' => $u->display_name, 'email' => $u->user_email ],
 			$users
 		) );
+	}
+
+	/**
+	 * Returns the fixed status vocabulary a bulk-status picker offers.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function get_statuses() {
+		return $this->success( [ 'statuses' => self::STATUSES ] );
+	}
+
+	/**
+	 * Sets the same status on a batch of characters at once.
+	 *
+	 * Validates the character ID list and the requested status against
+	 * `Character::STATUSES`, then delegates to `Character::bulk_update_status()`,
+	 * which checks each ID against this game before writing and returns a
+	 * per-ID result rather than an all-or-nothing transaction.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function bulk_status( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$character_ids = $request->get_param( 'character_ids' );
+		if ( empty( $character_ids ) || ! is_array( $character_ids ) ) {
+			return $this->error( 'invalid_param', __( 'character_ids must be a non-empty array of integers.', 'beyond-elysium' ), 400 );
+		}
+
+		$status = $request->get_param( 'status' );
+		if ( ! in_array( $status, self::STATUSES, true ) ) {
+			return $this->error( 'invalid_param', sprintf( __( 'status must be one of: %s.', 'beyond-elysium' ), implode( ', ', self::STATUSES ) ), 400 );
+		}
+
+		$results = Character::bulk_update_status( array_map( 'intval', $character_ids ), $status, $request['game_slug'] );
+
+		return $this->success( [
+			'results' => $results,
+			'updated' => count( array_filter( $results, static fn( $r ) => $r['success'] ) ),
+		] );
 	}
 
 	/**

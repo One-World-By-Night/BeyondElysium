@@ -402,6 +402,63 @@ export interface BulkXPResponse {
     reason: string;
 }
 
+// ---------------------------------------------------------------------------
+// Bulk resource-pool reset
+// ---------------------------------------------------------------------------
+
+/**
+ * Request body for resetting one named resource pool's temporary
+ * rating back to its permanent one across a group of characters at
+ * once.
+ */
+export interface BulkPoolResetRequest {
+    character_ids: number[];
+    block_slug: string;
+    pool_name: string;
+}
+
+/**
+ * Response from a bulk pool reset. Reports how many characters were
+ * actually touched (a character who doesn't hold the named pool, or
+ * who belongs to a different chronicle, is not counted).
+ */
+export interface BulkPoolResetResponse {
+    reset: number;
+    block_slug: string;
+    pool_name: string;
+}
+
+// ---------------------------------------------------------------------------
+// Bulk character status
+// ---------------------------------------------------------------------------
+
+/**
+ * Request body for setting the same status on a group of characters
+ * at once.
+ */
+export interface BulkStatusRequest {
+    character_ids: number[];
+    status: string;
+}
+
+/** One character's own outcome within a bulk-status request. */
+export interface BulkStatusResult {
+    id: number;
+    success: boolean;
+    error?: string;
+}
+
+/**
+ * Response from a bulk status update. `updated` counts only the
+ * characters actually changed; `results` carries a per-character
+ * outcome so a partial failure (an id outside this chronicle, say)
+ * is visible rather than silently absorbed into the count.
+ */
+export interface BulkStatusResponse {
+    results: BulkStatusResult[];
+    updated: number;
+}
+
 /**
  * Request body for exporting a character to a Grapevine exchange
  * file. hide_st strips [ST]...[/ST]-marked text the same way a

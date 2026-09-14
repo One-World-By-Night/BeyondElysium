@@ -41,6 +41,10 @@ import type {
     ChangeReviewRequest,
     BulkXPRequest,
     BulkXPResponse,
+    BulkPoolResetRequest,
+    BulkPoolResetResponse,
+    BulkStatusRequest,
+    BulkStatusResponse,
     CharacterCollectionParams,
     ChangeCollectionParams,
     SnapshotCollectionParams,
@@ -525,6 +529,22 @@ export const characters = ( gameSlug: string ) => ( {
         apiFetch( { path: `${ BASE }/${ gameSlug }/my/characters` } ),
 
     /**
+     * Fetches the fixed status vocabulary, for a bulk-status picker
+     * to source from rather than hardcoding the list a second time.
+     */
+    statuses: (): Promise<{ statuses: string[] }> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/characters/statuses` } ),
+
+    /**
+     * Sets the same status on a group of characters at once.
+     * Returns a per-character result alongside the total actually
+     * updated, since a bad id in the batch fails only that one
+     * character rather than the whole request.
+     */
+    bulkStatus: ( data: BulkStatusRequest ): Promise<BulkStatusResponse> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/characters/bulk-status`, method: 'POST', data } ),
+
+    /**
      * Exports a character to a Grapevine `.gex` XML document.
      * Returns the document text plus any degradation warnings and
      * ASCII-transliteration substitutions the Storyteller should
@@ -952,6 +972,27 @@ export const experience = ( gameSlug: string ) => ( {
      */
     bulkAward: ( data: BulkXPRequest ): Promise<BulkXPResponse> =>
         apiFetch( { path: `${ BASE }/${ gameSlug }/experience/bulk-award`, method: 'POST', data } ),
+} );
+
+// ---------------------------------------------------------------------------
+// Resource pools (game-scoped)
+// ---------------------------------------------------------------------------
+
+/**
+ * REST client factory for a single chronicle's resource-pool bulk
+ * maintenance.
+ */
+export const resourcePools = ( gameSlug: string ) => ( {
+    /**
+     * Resets one named resource pool's temporary rating back to its
+     * permanent one, across a group of characters at once - the
+     * ordinary end-of-session "everyone's Willpower/Blood refills"
+     * action. A character who doesn't hold the named pool, or who
+     * belongs to a different chronicle, is silently skipped rather
+     * than treated as an error.
+     */
+    bulkReset: ( data: BulkPoolResetRequest ): Promise<BulkPoolResetResponse> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/resource-pools/bulk-reset`, method: 'POST', data } ),
 } );
 
 // ---------------------------------------------------------------------------
@@ -1578,6 +1619,7 @@ const api = {
     sheets,
     reports,
     experience,
+    resourcePools,
     plots,
     apr,
     plotEntries,

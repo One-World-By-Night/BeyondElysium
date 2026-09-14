@@ -20,6 +20,13 @@ defined( 'ABSPATH' ) || exit;
 class Character {
 
 	/**
+	 * The full set of valid character statuses. Was `Characters_Controller::STATUSES`
+	 * until Decision 102 promoted it here so `bulk_update_status()` and the controller's
+	 * own single-character validation can't drift onto two different lists.
+	 */
+	const STATUSES = [ 'active', 'inactive', 'retired', 'dead', 'pending' ];
+
+	/**
 	 * Look up a single character by its primary key. Returns the row with its
 	 * sheet_data field decoded into an array, or null when no character with that
 	 * ID exists.
@@ -344,6 +351,67 @@ class Character {
 		];
 		$result = Manager::update( 'characters', $update, [ 'id' => $id ] );
 		return $result !== false;
+	}
+
+	/**
+	 * Resets one held resource pool's temporary rating back to its permanent one -
+	 * the ordinary end-of-session "Willpower/Blood refills" maintenance action,
+	 * bulk-operations-design.md's Item 1. Writes directly to sheet_data, never
+	 * routed through Change_Engine/character_changes, matching this project's own
+	 * convention that an ST-initiated direct correction is not an approvable
+	 * "change" (`Characters_Controller::create_item()`'s starting-sheet write is the
+	 * same principle). A character who doesn't hold the named pool at all, or whose
+	 * pool is stored as a bare scalar (the older shape - a single number with no
+	 * separate temporary to reset), is a no-op success, not a failure.
+	 *
+	 * @param int    $id
+	 * @param string $block_slug
+	 * @param string $pool_name
+	 * @return bool False only when the character itself does not exist.
+	 */
+	public static function reset_pool_to_permanent( int $id, string $block_slug, string $pool_name ): bool {
+		$character = self::find( $id );
+		if ( ! $character ) {
+			return false;
+		}
+
+		$sheet_data = $character->sheet_data;
+		$pool       = $sheet_data[ $block_slug ][ $pool_name ] ?? null;
+
+		if ( ! is_array( $pool ) || ! array_key_exists( 'permanent', $pool ) ) {
+			return true;
+		}
+
+		$sheet_data[ $block_slug ][ $pool_name ]['temporary'] = $pool['permanent'];
+		return self::update_sheet_data( $id, $sheet_data );
+	}
+
+	/**
+	 * Sets the same status on a batch of characters at once - bulk-operations-design.md's
+	 * Item 2. Every ID is checked against `$game_slug` before writing (the same
+	 * ownership check `Characters_Controller::update_item()` already applies to a single
+	 * character), so a bad or foreign ID in the list can never reach another
+	 * chronicle's character. Collects a result per ID instead of an all-or-nothing
+	 * transaction, matching `computeChanges.ts`'s own "collect every failure instead of
+	 * abandoning on the first" precedent from the character editor's submit path.
+	 *
+	 * @param int[]  $ids
+	 * @param string $status     Validated by the caller against `self::STATUSES`.
+	 * @param string $game_slug
+	 * @return array<int,array{id:int,success:bool,error?:string}>
+	 */
+	public static function bulk_update_status( array $ids, string $status, string $game_slug ): array {
+		$results = [];
+		foreach ( $ids as $id ) {
+			$id        = (int) $id;
+			$character = self::find( $id );
+			if ( ! $character || $character->owner_slug !== $game_slug ) {
+				$results[] = [ 'id' => $id, 'success' => false, 'error' => 'not_found' ];
+				continue;
+			}
+			$results[] = [ 'id' => $id, 'success' => self::update_header( $id, [ 'status' => $status ] ) ];
+		}
+		return $results;
 	}
 
 	/**

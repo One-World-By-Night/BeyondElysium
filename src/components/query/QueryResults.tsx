@@ -10,11 +10,17 @@
  * exactly the "a group of characters" the endpoint was built for, so the award action lives
  * here rather than as a new screen. Gated on `be_manage_characters`, matching
  * `resolve_approval_level()`'s own manager-only default for `xp_earn`/`xp_adjust`.
+ *
+ * Two more bulk actions (bulk-operations-design.md) share the exact same shape: resetting
+ * a resource pool's temporary rating back to its permanent one, and setting the same status
+ * on every selected character. Neither needed new mechanism - both are ordinary desktop
+ * query-result actions, gated and selected the same way the bulk-XP-award form already is.
  */
 import { __, sprintf } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
 import api from '../../api/client';
 import type { QueryResultCharacter } from '../../types/query';
+import type { SchemaBlock, ResourcePoolDefinition } from '../../types';
 import './QueryResults.css';
 
 export interface QueryResultsProps {
@@ -68,13 +74,46 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 	const [ reason, setReason ] = useState( '' );
 	const [ awardMessage, setAwardMessage ] = useState<string | null>( null );
 
+	const [ resourcePoolBlocks, setResourcePoolBlocks ] = useState<SchemaBlock[]>( [] );
+	const [ poolBlockSlug, setPoolBlockSlug ] = useState( '' );
+	const [ poolName, setPoolName ] = useState( '' );
+	const [ resetting, setResetting ] = useState( false );
+	const [ resetMessage, setResetMessage ] = useState<string | null>( null );
+
+	const [ statusOptions, setStatusOptions ] = useState<string[]>( [] );
+	const [ bulkStatus, setBulkStatus ] = useState( '' );
+	const [ settingStatus, setSettingStatus ] = useState( false );
+	const [ statusMessage, setStatusMessage ] = useState<string | null>( null );
+
 	// A selection built against one inventory's rows must never survive into another, where
 	// the same numeric ids would mean an entirely different set of entities.
 	useEffect( () => {
 		setSelected( new Set() );
 	}, [ inventory ] );
 
-	const canAwardXp = inventory === 'char' && ( window.beyondElysium?.capabilities?.be_manage_characters ?? false );
+	const canBulkManage = inventory === 'char' && ( window.beyondElysium?.capabilities?.be_manage_characters ?? false );
+
+	// Sourced from the server rather than hardcoded a second time client-side - the same
+	// "options" pattern Approval_Rules_Controller's own vocabulary route already established.
+	useEffect( () => {
+		if ( ! canBulkManage ) {
+			return;
+		}
+		api.schemaBlocks
+			.list( { section_type: 'resource_pool', game_slug: gameSlug, per_page: 100 } )
+			.then( setResourcePoolBlocks )
+			.catch( () => setResourcePoolBlocks( [] ) );
+		api.characters( gameSlug )
+			.statuses()
+			.then( ( { statuses } ) => setStatusOptions( statuses ) )
+			.catch( () => setStatusOptions( [] ) );
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ canBulkManage, gameSlug ] );
+
+	const activePoolBlock = resourcePoolBlocks.find( ( b ) => b.slug === poolBlockSlug );
+	const poolsForActiveBlock = activePoolBlock
+		? ( activePoolBlock.definition as ResourcePoolDefinition ).pools
+		: [];
 
 	function toggleSelected( id: number ) {
 		setSelected( ( prev ) => {
@@ -126,6 +165,70 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 		}
 	}
 
+	async function submitBulkReset( e: React.FormEvent ) {
+		e.preventDefault();
+		if ( selected.size === 0 || ! poolBlockSlug || ! poolName ) {
+			return;
+		}
+		setResetting( true );
+		setResetMessage( null );
+		try {
+			const result = await api.resourcePools( gameSlug ).bulkReset( {
+				character_ids: Array.from( selected ),
+				block_slug: poolBlockSlug,
+				pool_name: poolName,
+			} );
+			setResetMessage(
+				sprintf(
+					/* translators: 1: pool name, 2: number of characters reset */
+					__( 'Reset %1$s to permanent for %2$d character(s).', 'beyond-elysium' ),
+					result.pool_name,
+					result.reset
+				)
+			);
+			setSelected( new Set() );
+		} catch {
+			setResetMessage( __( 'Failed to reset the pool. Nothing was changed.', 'beyond-elysium' ) );
+		} finally {
+			setResetting( false );
+		}
+	}
+
+	async function submitBulkStatus( e: React.FormEvent ) {
+		e.preventDefault();
+		if ( selected.size === 0 || ! bulkStatus ) {
+			return;
+		}
+		setSettingStatus( true );
+		setStatusMessage( null );
+		try {
+			const result = await api.characters( gameSlug ).bulkStatus( {
+				character_ids: Array.from( selected ),
+				status: bulkStatus,
+			} );
+			const failed = result.results.filter( ( r ) => ! r.success ).length;
+			setStatusMessage(
+				failed > 0
+					? sprintf(
+						/* translators: 1: number of characters updated, 2: number that failed */
+						__( 'Updated %1$d character(s); %2$d could not be updated.', 'beyond-elysium' ),
+						result.updated,
+						failed
+					)
+					: sprintf(
+						/* translators: %d: number of characters updated */
+						__( 'Updated %d character(s).', 'beyond-elysium' ),
+						result.updated
+					)
+			);
+			setSelected( new Set() );
+		} catch {
+			setStatusMessage( __( 'Failed to update status. Nothing was changed.', 'beyond-elysium' ) );
+		} finally {
+			setSettingStatus( false );
+		}
+	}
+
 	function toggleSort( key: string ) {
 		const nextDirection = sortField === key && sortDirection === 'asc' ? 'desc' : 'asc';
 		onSort( key, nextDirection );
@@ -173,7 +276,7 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 					<table className="be-query-results__table">
 						<thead>
 						<tr>
-							{ canAwardXp && (
+							{ canBulkManage && (
 								<th>
 									<input
 										type="checkbox"
@@ -197,7 +300,7 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 					<tbody>
 						{ items.map( ( item ) => (
 							<tr key={ item.id }>
-								{ canAwardXp && (
+								{ canBulkManage && (
 									<td>
 										<input
 											type="checkbox"
@@ -218,7 +321,7 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 				</div>
 			) }
 
-			{ canAwardXp && selected.size > 0 && (
+			{ canBulkManage && selected.size > 0 && (
 				<form className="be-query-results__bulk-award" onSubmit={ submitBulkAward }>
 					<span>{ sprintf( __( '%d selected', 'beyond-elysium' ), selected.size ) }</span>
 					<input
@@ -243,6 +346,63 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 				</form>
 			) }
 			{ awardMessage && <p className="be-query-results__award-message" role="status">{ awardMessage }</p> }
+
+			{ canBulkManage && selected.size > 0 && resourcePoolBlocks.length > 0 && (
+				<form className="be-query-results__bulk-award" onSubmit={ submitBulkReset }>
+					<span>{ sprintf( __( '%d selected', 'beyond-elysium' ), selected.size ) }</span>
+					<select
+						value={ poolBlockSlug }
+						onChange={ ( e ) => {
+							setPoolBlockSlug( e.target.value );
+							setPoolName( '' );
+						} }
+						aria-label={ __( 'Resource pool block', 'beyond-elysium' ) }
+						required
+					>
+						<option value="">{ __( 'Pool block…', 'beyond-elysium' ) }</option>
+						{ resourcePoolBlocks.map( ( block ) => (
+							<option key={ block.slug } value={ block.slug }>{ block.name }</option>
+						) ) }
+					</select>
+					<select
+						value={ poolName }
+						onChange={ ( e ) => setPoolName( e.target.value ) }
+						aria-label={ __( 'Pool', 'beyond-elysium' ) }
+						disabled={ ! poolBlockSlug }
+						required
+					>
+						<option value="">{ __( 'Pool…', 'beyond-elysium' ) }</option>
+						{ poolsForActiveBlock.map( ( pool ) => (
+							<option key={ pool.name } value={ pool.name }>{ pool.name }</option>
+						) ) }
+					</select>
+					<button type="submit" disabled={ resetting }>
+						{ __( 'Reset temporary to permanent', 'beyond-elysium' ) }
+					</button>
+				</form>
+			) }
+			{ resetMessage && <p className="be-query-results__award-message" role="status">{ resetMessage }</p> }
+
+			{ canBulkManage && selected.size > 0 && statusOptions.length > 0 && (
+				<form className="be-query-results__bulk-award" onSubmit={ submitBulkStatus }>
+					<span>{ sprintf( __( '%d selected', 'beyond-elysium' ), selected.size ) }</span>
+					<select
+						value={ bulkStatus }
+						onChange={ ( e ) => setBulkStatus( e.target.value ) }
+						aria-label={ __( 'New status', 'beyond-elysium' ) }
+						required
+					>
+						<option value="">{ __( 'Set status…', 'beyond-elysium' ) }</option>
+						{ statusOptions.map( ( status ) => (
+							<option key={ status } value={ status }>{ status }</option>
+						) ) }
+					</select>
+					<button type="submit" disabled={ settingStatus }>
+						{ __( 'Set status for selected', 'beyond-elysium' ) }
+					</button>
+				</form>
+			) }
+			{ statusMessage && <p className="be-query-results__award-message" role="status">{ statusMessage }</p> }
 
 			<div className="be-query-results__pagination">
 				<button type="button" disabled={ page <= 1 } onClick={ () => onPageChange( page - 1 ) }>
