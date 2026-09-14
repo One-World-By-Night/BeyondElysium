@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**Status:** `v0.99.21` is released and running in production chronicles. The 1.0 closed scope shipped in full as of `v0.99.17` — character engine, editor, Storyteller tools, world data, Grapevine import/export/transfer, signed PDFs, the full Grapevine report set, point audit, guided chronicle setup, and an expanded Mage rote catalog. Development continues past 1.0 on real, requested work: any catalog item, tiered-power level or family, resource pool, or identity field can carry a rich-text note that's global by default and survives every future update; approval can be scheduled per value or per option rather than one flat setting per item; a "House Rules" report — the first with no Grapevine counterpart at all — gathers every one of those notes into a signed PDF, and can also be dropped directly onto a front-end page as an Elementor widget or a shortcode; a chronicle can restrict a real catalog field within an already-enabled creature type, beneath the existing whole-creature-type toggle; and the character sheet, editor, and Approval Queue are now built for a phone screen — real touch targets, information priority, and a shared table-to-card mechanism, not a desktop layout that just avoids breaking. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's next.
+**Status:** `v0.99.33` is released and running in production chronicles. The 1.0 closed scope shipped in full as of `v0.99.17` — character engine, editor, Storyteller tools, world data, Grapevine import/export/transfer, signed PDFs, the full Grapevine report set, point audit, guided chronicle setup, and an expanded Mage rote catalog. Development continues past 1.0 on real, requested work: the wp-admin menu was consolidated into 8 tabbed pages plus a landing dashboard, with NPC creation added directly to the character editor; purchase-approval rules now cover every override mechanism in the schema (not just trait lists and tiered powers), alongside a real global default-approval policy; and a Storyteller-only AI writing-assist button now sits next to every long-form text field in the plugin — biographies, plot descriptions, rumors, world-object text — using a real OpenAI or Anthropic API key (or a self-hosted OpenAI-compatible server) an administrator or Storyteller supplies, never a default generator, and never visible to a plain player. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's next.
 
 ## What It Does
 
@@ -22,7 +22,7 @@ Beyond the sheet itself:
 
 ## Installation
 
-Download `beyond-elysium-0.99.32.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
+Download `beyond-elysium-0.99.33.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
 
 That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder in this repository is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder straight into `wp-content/plugins/` will not work. To build it yourself:
 
@@ -113,6 +113,9 @@ BeyondElysium ships in-app documentation, viewable inside the plugin's own admin
 | Front-end page consolidation - ten pages that used to duplicate per chronicle collapsed to two fixed, tabbed, chronicle-switchable pages | Complete |
 | Player-printable item cards - print cards for the items a character already carries, not just the chronicle-wide catalog view | Complete |
 | Portuguese (Brazil) localization - a chronicle can switch its site language and both the interface and most catalog item names (Disciplines, Rituals, Merits, Flaws, and more) render in Portuguese | Complete |
+| wp-admin menu consolidation - 16 flat submenus collapsed into 8 tabbed pages plus a landing dashboard, and NPC character creation/flagging added to the admin UI | Complete |
+| Purchase-approval rules extended to every override mechanism in the schema (per-value and per-option ranges, not just flat trait/tiered-power settings), plus a real global default approval policy | Complete |
+| AI writing-assist tool - a Storyteller-only button on every long-form text field that drafts or polishes it, using a real OpenAI or Anthropic API key an administrator or Storyteller supplies (or a self-hosted OpenAI-compatible server instead), never a default generator and never visible to a plain player | Complete |
 
 ## Roadmap
 

@@ -5,6 +5,7 @@ namespace BeyondElysium\REST;
 use BeyondElysium\Core\Authorization;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
+use BeyondElysium\Services\Ai_Assist;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -106,6 +107,11 @@ class Games_Controller extends Base_Controller {
 		];
 
 		$items = Game::all( $args );
+		foreach ( $items as $item ) {
+			if ( isset( $item->settings ) && $item->settings instanceof \stdClass ) {
+				Ai_Assist::redact_settings_read( $item->settings );
+			}
+		}
 		$total = Game::count( $args );
 
 		$response = $this->success( $items );
@@ -185,6 +191,9 @@ class Games_Controller extends Base_Controller {
 		if ( ! $game ) {
 			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
 		}
+		if ( isset( $game->settings ) && $game->settings instanceof \stdClass ) {
+			Ai_Assist::redact_settings_read( $game->settings );
+		}
 		return $this->success( $game );
 	}
 
@@ -211,12 +220,19 @@ class Games_Controller extends Base_Controller {
 			return $this->error( 'duplicate_slug', __( 'A game with this slug already exists.', 'beyond-elysium' ), 409 );
 		}
 
+		$settings = $request->get_param( 'settings' );
+		if ( is_array( $settings ) ) {
+			// A create request is very unlikely to carry an AI key, but if one ever does,
+			// it must never be stored in plaintext - same encrypt/clear rule as an update.
+			$settings = Ai_Assist::merge_settings_write( $settings, [] );
+		}
+
 		$data = [
 			'name'        => $name,
 			'slug'        => $slug,
 			'game_type'   => $request->get_param( 'game_type' ) ?: 'met',
 			'description' => $request->get_param( 'description' ) ?: '',
-			'settings'    => $request->get_param( 'settings' ),
+			'settings'    => $settings,
 		];
 
 		$id = Game::create( $data );
@@ -236,6 +252,9 @@ class Games_Controller extends Base_Controller {
 		do_action( 'be_after_upgrade' );
 
 		$game = Game::find( $id );
+		if ( isset( $game->settings ) && $game->settings instanceof \stdClass ) {
+			Ai_Assist::redact_settings_read( $game->settings );
+		}
 		return $this->success( $game, 201 );
 	}
 
@@ -311,7 +330,7 @@ class Games_Controller extends Base_Controller {
 		// flags for the Apr_Controller editor; one shared merge here covers both (GS-2/GS-6).
 		if ( isset( $data['settings'] ) ) {
 			$existing         = (array) ( $game->settings ?? new \stdClass() );
-			$data['settings'] = array_merge( $existing, (array) $data['settings'] );
+			$data['settings'] = Ai_Assist::merge_settings_write( (array) $data['settings'], $existing );
 		}
 
 		// Normalizes a boolean notifications_enabled value to 0/1 for the tinyint column.
@@ -328,6 +347,9 @@ class Games_Controller extends Base_Controller {
 		}
 
 		$updated = Game::find_by_slug( $current_slug );
+		if ( isset( $updated->settings ) && $updated->settings instanceof \stdClass ) {
+			Ai_Assist::redact_settings_read( $updated->settings );
+		}
 		if ( $rename_report !== null ) {
 			// stdClass from $wpdb->get_row() - a dynamic property here is not the PHP 8.2
 			// deprecation (that applies to declared classes only), and this is the one

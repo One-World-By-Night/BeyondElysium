@@ -10,6 +10,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { pickMediaImage } from '../../lib/pickMediaImage';
 import HtmlEditor from '../shared/HtmlEditor';
+import AiAssistButton from '../shared/AiAssistButton';
 import type { FactionGoal, Plot } from '../../types/plot';
 import { EntryForm } from './EntryForm';
 import './PlotThread.css';
@@ -252,6 +253,7 @@ export function PlotThread( { gameSlug, plotId, onSelectChild, expandedEnabled, 
 							} }
 							mediaButtons
 							rows={ 10 }
+							aiAssist={ { capability: 'be_manage_plots', fieldContext: 'plot_description', gameSlug } }
 						/>
 						<div className="be-plot-thread__inline-actions">
 							<button type="button" className="be-st-button" onClick={ saveOverview } disabled={ saving }>
@@ -422,6 +424,13 @@ export function PlotThread( { gameSlug, plotId, onSelectChild, expandedEnabled, 
 						onChange={ ( e ) => setCliffhanger( e.target.value ) }
 						placeholder={ __( "What's left unresolved…", 'beyond-elysium' ) }
 						rows={ 2 }
+					/>
+					<AiAssistButton
+						capability="be_manage_plots"
+						fieldContext="plot_cliffhanger"
+						gameSlug={ gameSlug }
+						currentValue={ cliffhanger }
+						onAccept={ setCliffhanger }
 					/>
 					<div className="be-plot-thread__inline-actions">
 						<button

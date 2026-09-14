@@ -10,6 +10,7 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
+import AiAssistButton from '../shared/AiAssistButton';
 import type { ApprovalRule, ApprovalRuleOptions, ApprovalRuleRequest, ApprovalRuleTargetType } from '../../api/client';
 import type { Game, IdentityField, ResourcePool, SchemaBlock, TieredPower, TraitListItem } from '../../types';
 import './Admin.css';
@@ -568,6 +569,13 @@ export function AdminApprovalRules() {
 						value={ form.reason }
 						placeholder={ __( 'e.g. Coordinator Approval — Tremere', 'beyond-elysium' ) }
 						onChange={ ( e ) => setForm( { ...form, reason: e.target.value } ) }
+					/>
+					<AiAssistButton
+						capability="be_manage_approval_rules"
+						fieldContext="approval_reason"
+						gameSlug={ gameSlug }
+						currentValue={ form.reason ?? '' }
+						onAccept={ ( reason ) => setForm( { ...form, reason } ) }
 					/>
 				</label>
 

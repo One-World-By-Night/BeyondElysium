@@ -5,6 +5,7 @@
  * Supports a read-only mode that skips TinyMCE entirely.
  */
 import { useEffect, useRef } from '@wordpress/element';
+import AiAssistButton from './AiAssistButton';
 import './HtmlEditor.css';
 
 // window.wp.editor's type is declared in types/wp-media.d.ts, alongside window.wp.media.
@@ -19,6 +20,8 @@ export interface HtmlEditorProps {
 	mediaButtons?: boolean;
 	/** Loads TinyMCE's table plugin and toolbar button when true. Off by default - biography/notes/plot fields don't need it; a field whose sanitizer allows `<table>` should pass this. */
 	tables?: boolean;
+	/** Adds an AI Assist button above the editor (ai-writing-assist-design.md). Omit for a field with no field_context yet. */
+	aiAssist?: { capability: string; fieldContext: string; gameSlug?: string };
 }
 
 /**
@@ -30,7 +33,7 @@ export interface HtmlEditorProps {
  * entirely when `readOnly` is true. Tears down the TinyMCE instance on
  * unmount.
  */
-export function HtmlEditor( { id, defaultValue, onChange, readOnly, rows = 8, mediaButtons = false, tables = false }: HtmlEditorProps ) {
+export function HtmlEditor( { id, defaultValue, onChange, readOnly, rows = 8, mediaButtons = false, tables = false, aiAssist }: HtmlEditorProps ) {
 	const onChangeRef = useRef( onChange );
 	onChangeRef.current = onChange;
 
@@ -67,13 +70,30 @@ export function HtmlEditor( { id, defaultValue, onChange, readOnly, rows = 8, me
 	}, [ id, readOnly, mediaButtons, tables ] );
 
 	return (
-		<textarea
-			id={ id }
-			className="be-html-editor__textarea"
-			defaultValue={ defaultValue }
-			readOnly={ readOnly }
-			rows={ rows }
-		/>
+		<>
+			{ aiAssist && ! readOnly && (
+				<AiAssistButton
+					capability={ aiAssist.capability }
+					fieldContext={ aiAssist.fieldContext }
+					gameSlug={ aiAssist.gameSlug }
+					// TinyMCE owns this field's real content after mount - a plain defaultValue
+					// snapshot would go stale the moment someone types, so read the live editor
+					// instance when one exists rather than trusting a render-time prop.
+					currentValue={ () => tinymce?.get( id )?.getContent() ?? defaultValue }
+					onAccept={ ( suggestion ) => {
+						tinymce?.get( id )?.setContent( suggestion );
+						onChange( suggestion );
+					} }
+				/>
+			) }
+			<textarea
+				id={ id }
+				className="be-html-editor__textarea"
+				defaultValue={ defaultValue }
+				readOnly={ readOnly }
+				rows={ rows }
+			/>
+		</>
 	);
 }
 

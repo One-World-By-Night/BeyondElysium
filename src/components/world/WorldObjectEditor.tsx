@@ -8,6 +8,7 @@
 import { useId, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
+import AiAssistButton from '../shared/AiAssistButton';
 import { WORLD_OBJECT_SCHEMAS } from '../../types/world';
 import type { ObjectType, WorldObject } from '../../types/world';
 import './WorldObjectEditor.css';
@@ -108,6 +109,13 @@ export function WorldObjectEditor( { gameSlug, objectType, object, duplicateFrom
 				<span>{ __( 'Description', 'beyond-elysium' ) }</span>
 				<textarea value={ description } onChange={ ( e ) => setDescription( e.target.value ) } />
 			</label>
+			<AiAssistButton
+				capability="be_manage_world_objects"
+				fieldContext="world_object_description"
+				gameSlug={ gameSlug }
+				currentValue={ description }
+				onAccept={ setDescription }
+			/>
 
 			<div className="be-world-editor__row">
 				<label className="be-world-editor__field">
@@ -124,6 +132,13 @@ export function WorldObjectEditor( { gameSlug, objectType, object, duplicateFrom
 				<span>{ __( 'Limitations', 'beyond-elysium' ) }</span>
 				<textarea value={ limitations } onChange={ ( e ) => setLimitations( e.target.value ) } />
 			</label>
+			<AiAssistButton
+				capability="be_manage_world_objects"
+				fieldContext="world_object_limitations"
+				gameSlug={ gameSlug }
+				currentValue={ limitations }
+				onAccept={ setLimitations }
+			/>
 
 			<h4>{ __( 'Properties', 'beyond-elysium' ) }</h4>
 			{ Object.entries( schema ).map( ( [ key, type ] ) => (
@@ -133,6 +148,7 @@ export function WorldObjectEditor( { gameSlug, objectType, object, duplicateFrom
 					type={ type }
 					value={ properties[ key ] }
 					onChange={ ( value ) => setProperty( key, value ) }
+					gameSlug={ gameSlug }
 				/>
 			) ) }
 
@@ -160,11 +176,13 @@ function PropertyField( {
 	type,
 	value,
 	onChange,
+	gameSlug,
 }: {
 	fieldKey: string;
 	type: 'string' | 'text' | 'int' | 'date' | 'trait_list';
 	value: PropertyValue | undefined;
 	onChange: ( value: PropertyValue ) => void;
+	gameSlug: string;
 } ) {
 	const fieldId = useId();
 	const label = fieldKey
@@ -186,10 +204,18 @@ function PropertyField( {
 	}
 
 	if ( type === 'text' ) {
+		const textValue = ( value as string ) ?? '';
 		return (
 			<label className="be-world-editor__field">
 				<span>{ label }</span>
-				<textarea value={ ( value as string ) ?? '' } onChange={ ( e ) => onChange( e.target.value ) } />
+				<textarea value={ textValue } onChange={ ( e ) => onChange( e.target.value ) } />
+				<AiAssistButton
+					capability="be_manage_world_objects"
+					fieldContext="world_object_property"
+					gameSlug={ gameSlug }
+					currentValue={ textValue }
+					onAccept={ onChange }
+				/>
 			</label>
 		);
 	}

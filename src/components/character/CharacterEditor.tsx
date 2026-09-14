@@ -331,6 +331,7 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 										data={ draftSheetData[ section.block_slug ] }
 										onChange={ ( slug, data ) => setDraftSheetData( ( prev ) => ( { ...prev, [ slug ]: data } ) ) }
 										sheetData={ draftSheetData }
+										gameSlug={ gameSlug }
 									/>
 								</div>
 							);
@@ -452,6 +453,7 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 					defaultValue={ biographyDraft.current }
 					onChange={ ( html ) => ( biographyDraft.current = html ) }
 					readOnly={ readOnly }
+					aiAssist={ { capability: 'be_manage_characters', fieldContext: 'character_biography', gameSlug } }
 				/>
 
 				<h4>{ __( 'Notes', 'beyond-elysium' ) }</h4>
@@ -460,6 +462,7 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 					defaultValue={ notesDraft.current }
 					onChange={ ( html ) => ( notesDraft.current = html ) }
 					readOnly={ readOnly }
+					aiAssist={ { capability: 'be_manage_characters', fieldContext: 'character_notes', gameSlug } }
 				/>
 
 				{ ! readOnly && (
@@ -498,6 +501,7 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 								onChange={ store.setBlockData }
 								readOnly={ readOnly }
 								sheetData={ store.sheetData }
+								gameSlug={ gameSlug }
 							/>
 						</div>
 					);

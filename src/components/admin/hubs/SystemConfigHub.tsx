@@ -13,9 +13,10 @@ import AdminSchemaBlocks from '../AdminSchemaBlocks';
 import AdminCreatureStacks from '../AdminCreatureStacks';
 import AdminTemplates from '../AdminTemplates';
 import AdminApprovalRules from '../AdminApprovalRules';
+import AdminAiAssistSite from '../AdminAiAssistSite';
 import type { Tab } from '../../shared/TabStrip';
 
-const TABS = { games: 'games', schemaBlocks: 'schema-blocks', creatureStacks: 'creature-stacks', templates: 'templates', approvalRules: 'approval-rules' };
+const TABS = { games: 'games', schemaBlocks: 'schema-blocks', creatureStacks: 'creature-stacks', templates: 'templates', approvalRules: 'approval-rules', aiAssist: 'ai-assist' };
 
 export function SystemConfigHub() {
 	const [ tab, setTab ] = useState( () => readTabFromUrl( TABS.games ) );
@@ -31,6 +32,7 @@ export function SystemConfigHub() {
 		capabilities?.be_manage_schemas && { key: TABS.creatureStacks, label: __( 'Creature Stacks', 'beyond-elysium' ) },
 		capabilities?.be_manage_templates && { key: TABS.templates, label: __( 'Templates', 'beyond-elysium' ) },
 		capabilities?.be_manage_approval_rules && { key: TABS.approvalRules, label: __( 'Approval Rules', 'beyond-elysium' ) },
+		capabilities?.be_manage_games && { key: TABS.aiAssist, label: __( 'AI Assist', 'beyond-elysium' ) },
 	].filter( Boolean ) as Tab[];
 
 	useEffect( () => {
@@ -52,6 +54,7 @@ export function SystemConfigHub() {
 			{ tab === TABS.creatureStacks && <AdminCreatureStacks /> }
 			{ tab === TABS.templates && <AdminTemplates /> }
 			{ tab === TABS.approvalRules && <AdminApprovalRules /> }
+			{ tab === TABS.aiAssist && <AdminAiAssistSite /> }
 		</div>
 	);
 }

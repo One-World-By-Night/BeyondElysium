@@ -10,6 +10,7 @@ import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import type { CreditsResponse, InMemoriamEntry } from '../../api/client';
 import Modal from './Modal';
+import AiAssistButton from './AiAssistButton';
 import './PoweredByFooter.css';
 
 /**
@@ -112,6 +113,12 @@ function CreditsModal( { onClose }: { onClose: () => void } ) {
 					<label>
 						{ __( 'Credits text', 'beyond-elysium' ) }
 						<textarea value={ draftText } onChange={ ( e ) => setDraftText( e.target.value ) } />
+						<AiAssistButton
+							capability="be_manage_games"
+							fieldContext="credits_text"
+							currentValue={ draftText }
+							onAccept={ setDraftText }
+						/>
 					</label>
 
 					<h4>{ __( 'In Memoriam', 'beyond-elysium' ) }</h4>

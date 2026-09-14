@@ -8,6 +8,7 @@ import { useId } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import type { IdentityField, IdentityFieldDefinition } from '../../types';
 import SearchableSelect from '../shared/SearchableSelect';
+import AiAssistButton from '../shared/AiAssistButton';
 import './IdentityFieldEditor.css';
 
 export type IdentityFieldValue = string | number | string[] | null | undefined;
@@ -18,6 +19,8 @@ export interface IdentityFieldEditorProps {
 	definition: IdentityFieldDefinition;
 	onChange: ( blockSlug: string, nextData: Record<string, IdentityFieldValue> ) => void;
 	readOnly?: boolean;
+	/** Only used by a textarea field's AI Assist button (ai-writing-assist-design.md). */
+	gameSlug?: string;
 }
 
 /** Returns a field's resolved list of selectable options, or an empty array if none. */
@@ -31,7 +34,7 @@ function resolveOptions( field: IdentityField, _definition: IdentityFieldDefinit
  * textarea, or text input otherwise. Reports every field change through onChange;
  * it never recalculates derived values itself.
  */
-export function IdentityFieldEditor( { blockSlug, data, definition, onChange, readOnly }: IdentityFieldEditorProps ) {
+export function IdentityFieldEditor( { blockSlug, data, definition, onChange, readOnly, gameSlug }: IdentityFieldEditorProps ) {
 	const baseId = useId();
 	const setField = ( name: string, value: IdentityFieldValue ) => {
 		onChange( blockSlug, { ...data, [ name ]: value } );
@@ -143,15 +146,25 @@ export function IdentityFieldEditor( { blockSlug, data, definition, onChange, re
 				}
 
 				if ( field.field_type === 'textarea' ) {
+					const textValue = typeof value === 'string' ? value : '';
 					return (
 						<div className="be-identity-field-editor__row" key={ field.name }>
 							<label className="be-identity-field-editor__label" htmlFor={ fieldId }>{ field.name }</label>
 							<textarea
 								id={ fieldId }
-								value={ typeof value === 'string' ? value : '' }
+								value={ textValue }
 								disabled={ readOnly }
 								onChange={ ( e ) => setField( field.name, e.target.value ) }
 							/>
+							{ ! readOnly && (
+								<AiAssistButton
+									capability="be_manage_characters"
+									fieldContext="npc_roleplaying_notes"
+									gameSlug={ gameSlug }
+									currentValue={ textValue }
+									onAccept={ ( suggestion ) => setField( field.name, suggestion ) }
+								/>
+							) }
 						</div>
 					);
 				}

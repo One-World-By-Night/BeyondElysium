@@ -249,6 +249,86 @@ file (`.gex`) the same way a Storyteller would from the chronicle side. See the
 [Storyteller Guide's import section](st-guide.md#5-importing-from-grapevine) for the
 duplicate-detection and merge behavior, which is identical from either surface.
 
+## AI Writing Assist
+
+A small **AI Assist** button sits next to every long-form free-text field in the plugin —
+character Biography/Notes, the NPC Roleplaying Notes block, plot descriptions/cliffhangers/
+timeline entries, rumor descriptions, World Object Description/Limitations/text properties,
+Schema Block catalog Reference/Description/Source, an Approval Rule's Reason, a chronicle's
+own Description, and the Credits text. Clicking it opens a small popover: an empty field asks
+what to write about, a field with existing text offers to polish it. Nothing is ever saved
+automatically — a suggestion only reaches the field after an explicit **Accept**, and the
+field's own normal Save button is still what actually persists it.
+
+**ST-only, by design.** The button is gated on the same management-tier capability that
+already governs that field's own area (`be_manage_characters`, `be_manage_plots`,
+`be_manage_world_objects`, `be_manage_schemas`, `be_manage_approval_rules`, or
+`be_manage_games`) — never the plain edit-tier capability a field's own save route accepts.
+A player editing their own character's Biography, for example, never sees this button at all,
+even though they can otherwise save that field themselves.
+
+**Two providers, deliberately chosen**: OpenAI first, Claude second — Gemini was considered
+and dropped. Each request sends only that one field's own current text (or a short one-line
+prompt for an empty field); nothing else about the character, chronicle, or other players
+ever leaves the site.
+
+### Configuring it
+
+**This requires a real API key from OpenAI or Anthropic — not a ChatGPT Plus or Claude Pro
+login.** There is no way to connect this feature to either provider using a regular
+consumer subscription login instead; neither provider offers that as an option, for this
+plugin or for anyone else. The two are different products with different billing:
+
+| | Consumer subscription (ChatGPT Plus / Claude Pro) | API key (what this feature actually needs) |
+|---|---|---|
+| Where you get it | chatgpt.com / claude.ai | platform.openai.com / console.anthropic.com |
+| Billing | Flat monthly fee | Pay only for what's actually used - no monthly minimum |
+| Works with this feature? | **No - cannot be used here at all** | **Yes - this is the only supported option** |
+
+Getting a key: create a developer account at the API console (not the consumer site) for
+whichever provider you want, add a payment method there, and generate a key. The models this
+feature uses by default (`gpt-4o-mini` / `claude-haiku-4-5`) are each provider's cheap tier,
+and every request sends only one short field's own text - realistic usage for occasional
+biography/plot polishing runs to cents, not a real budget line.
+
+Under **Beyond Elysium → System Config → AI Assist** (`be_manage_games`, administrator-only),
+set a site-wide default provider and that API key. This key is used directly for every
+catalog-level field (Schema Block descriptions, Credits text — neither belongs to any one
+chronicle), and as the fallback for any chronicle that opts in without supplying a key of its
+own.
+
+Under **Beyond Elysium → Chronicle Setup → AI Assist** (`be_manage_apr` — the same access
+tier as Action & Rumor Settings, reachable by an HST with no site-administrator access),
+enable the feature for one chronicle and optionally give it its own key, overriding the
+site-wide one for that chronicle's own character/plot/rumor/world-object fields.
+
+**A key is never shown again once saved.** Every settings screen displays only whether a key
+is configured (a plain "configured" indicator, never the value), whether it was entered here
+or inherited from the site-wide default — re-enter a key to change it, or use **Clear** to
+remove it. Every key is encrypted at rest.
+
+### Using your own server instead (self-hosted / OpenAI-compatible)
+
+Both settings screens also accept an optional **Custom API base URL** and **Model override**
+per provider. Leave both blank to use the real OpenAI/Anthropic API — this is the default and
+what most chronicles want. Set the base URL to point this feature at any self-hosted server
+that speaks the same request/response shape (Ollama, LM Studio, vLLM, LocalAI, or a similar
+OpenAI-compatible Chat Completions endpoint) instead of the metered public API, and the model
+field to name whichever model that server is running. Neither field is a secret — both are
+shown in plain text, unlike the key.
+
+This is the practical way to eliminate per-request API cost entirely: a self-hosted model has
+no metered billing, at the cost of running (and paying for) the server yourself. A chronicle
+using its own key also gets to set its own endpoint/model, independent of the site-wide
+default; a chronicle that falls back to the site-wide key also inherits the site-wide
+endpoint/model override, so the two never mismatch.
+
+**Test Connection** — next to each provider's key field — sends a minimal request using
+whatever you've currently typed (key, base URL, and model, whether saved yet or not) and
+reports success or a specific failure, so a typo'd URL or an expired key is caught before you
+rely on it in the field. It never tests an already-saved key silently; a key is never sent
+back to this page once saved, so testing it means re-entering it first.
+
 ## REST API
 
 Every read and write in the plugin goes through its REST API (`be/v1` namespace), which

@@ -23,6 +23,8 @@ export interface BlockEditorProps {
 	readOnly?: boolean;
 	/** The character's full sheet_data, used to resolve a pool's display name from another block's value. */
 	sheetData?: Record<string, unknown>;
+	/** Only consumed by identity_field's own textarea fields, for their AI Assist button (ai-writing-assist-design.md). */
+	gameSlug?: string;
 }
 
 /**
@@ -31,7 +33,7 @@ export interface BlockEditorProps {
  * onChange, and readOnly to whichever editor component handles that type.
  * An unrecognized section_type renders a read-only warning instead of a blank editor.
  */
-export function BlockEditor( { blockSlug, sectionType, definition, data, onChange, costFor, readOnly, sheetData }: BlockEditorProps ) {
+export function BlockEditor( { blockSlug, sectionType, definition, data, onChange, costFor, readOnly, sheetData, gameSlug }: BlockEditorProps ) {
 	switch ( sectionType ) {
 		case 'trait_list':
 			return (
@@ -76,6 +78,7 @@ export function BlockEditor( { blockSlug, sectionType, definition, data, onChang
 					definition={ definition as IdentityFieldDefinition }
 					onChange={ onChange as ( blockSlug: string, nextData: Record<string, IdentityFieldValue> ) => void }
 					readOnly={ readOnly }
+					gameSlug={ gameSlug }
 				/>
 			);
 

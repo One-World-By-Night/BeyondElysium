@@ -65,6 +65,7 @@
 
 .be-admin__form input[type='text'],
 .be-admin__form input[type='number'],
+.be-admin__form input[type='password'],
 .be-admin__form select,
 .be-admin__form textarea {
 	display: block;
@@ -72,6 +73,24 @@
 	margin-top: 0.25rem;
 	padding: 0.4rem;
 	font-weight: normal;
+}
+
+.be-admin__block-label {
+	display: block;
+	margin-bottom: 0.75rem;
+	font-weight: 600;
+}
+
+.be-admin__fieldset {
+	margin: 1rem 0;
+	padding: 0.75rem 1rem 0.5rem;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+}
+
+.be-admin__fieldset legend {
+	font-weight: 600;
+	padding: 0 0.4rem;
 }
 
 .be-admin__form textarea {

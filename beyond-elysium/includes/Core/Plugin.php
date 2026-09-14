@@ -95,14 +95,21 @@ class Plugin {
 			'locale'   => get_locale(),
 			// UI affordance only; every REST route enforces its own capability check server-side.
 			'capabilities' => [
-				'be_manage_plots'       => current_user_can( 'be_manage_plots' ),
-				'be_manage_characters'  => current_user_can( 'be_manage_characters' ),
+				'be_manage_plots'         => current_user_can( 'be_manage_plots' ),
+				'be_manage_characters'    => current_user_can( 'be_manage_characters' ),
 				// Gates the import wizard's "also add to catalog" checkbox.
-				'be_manage_schemas'     => current_user_can( 'be_manage_schemas' ),
+				'be_manage_schemas'       => current_user_can( 'be_manage_schemas' ),
 				// Gates whether WorldObjectCard.tsx shows the full connection manager or a read-only list.
-				'be_manage_connections' => current_user_can( 'be_manage_connections' ),
+				'be_manage_connections'   => current_user_can( 'be_manage_connections' ),
 				// Gates BoonLedger.tsx's record/repay controls (the `boons` chronicle role).
-				'be_manage_boons'       => current_user_can( 'be_manage_boons' ),
+				'be_manage_boons'         => current_user_can( 'be_manage_boons' ),
+				// Gates the AI Assist button on WorldObjectManager/WorldObjectEditor's own
+				// front-end widget (ai-writing-assist-design.md).
+				'be_manage_world_objects' => current_user_can( 'be_manage_world_objects' ),
+				// Gates the AI Assist button on PoweredByFooter's Credits editor, which - unlike
+				// every other admin-only surface this capability gates - is mounted on ordinary
+				// front-end pages too (every non-admin widget carries the footer).
+				'be_manage_games'         => current_user_can( 'be_manage_games' ),
 			],
 		] );
 
@@ -163,6 +170,7 @@ class Plugin {
 			new \BeyondElysium\REST\Reports_Controller(),
 			new \BeyondElysium\REST\Point_Audit_Controller(),
 			new \BeyondElysium\REST\Setup_Status_Controller(),
+			new \BeyondElysium\REST\Ai_Assist_Controller(),
 		];
 		foreach ( $controllers as $controller ) {
 			$controller->register_routes();

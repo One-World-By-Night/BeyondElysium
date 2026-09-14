@@ -59,6 +59,10 @@ interface Window {
 		};
 	};
 	beyondElysium?: BeyondElysiumGlobal;
+	/** The raw TinyMCE library global (distinct from wp.editor, its WordPress wrapper) - used by AiAssistButton to write an accepted suggestion into an otherwise-uncontrolled HtmlEditor instance. */
+	tinymce?: {
+		get: ( id: string ) => { setContent: ( html: string ) => void; getContent: () => string } | null;
+	};
 }
 
 /**
@@ -83,3 +87,6 @@ interface BeyondElysiumGlobal {
  * anything, matching how WordPress itself exposes it as a global.
  */
 declare const wp: Window[ 'wp' ];
+
+/** The raw TinyMCE global, as declared on Window above. */
+declare const tinymce: Window[ 'tinymce' ];

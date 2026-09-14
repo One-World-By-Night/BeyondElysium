@@ -93,6 +93,7 @@ function DescriptionEditorButton( { label, value, onSave }: { label: string; val
 							onChange={ ( html ) => setDraft( { ...draft, reference: html } ) }
 							tables
 							rows={ 5 }
+							aiAssist={ { capability: 'be_manage_schemas', fieldContext: 'schema_item_reference' } }
 						/>
 					</div>
 
@@ -104,6 +105,7 @@ function DescriptionEditorButton( { label, value, onSave }: { label: string; val
 							onChange={ ( html ) => setDraft( { ...draft, description: html } ) }
 							tables
 							rows={ 5 }
+							aiAssist={ { capability: 'be_manage_schemas', fieldContext: 'schema_item_description' } }
 						/>
 					</div>
 
@@ -115,6 +117,7 @@ function DescriptionEditorButton( { label, value, onSave }: { label: string; val
 							onChange={ ( html ) => setDraft( { ...draft, source: html } ) }
 							tables
 							rows={ 5 }
+							aiAssist={ { capability: 'be_manage_schemas', fieldContext: 'schema_item_source' } }
 						/>
 					</div>
 				</Modal>

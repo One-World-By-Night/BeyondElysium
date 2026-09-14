@@ -1,0 +1,20 @@
+.be-ai-assist-button {
+	font-size: 12px;
+	padding: 0.2rem 0.6rem;
+	margin-left: 0.5rem;
+}
+
+.be-ai-assist-button__suggestion-text {
+	white-space: pre-wrap;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	padding: 0.75rem;
+	margin-top: 0.5rem;
+	max-height: 320px;
+	overflow-y: auto;
+}
+
+.be-ai-assist-button__error {
+	color: #d63638;
+}

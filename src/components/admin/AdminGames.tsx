@@ -7,6 +7,7 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
+import AiAssistButton from '../shared/AiAssistButton';
 import type { Game } from '../../types';
 import './Admin.css';
 
@@ -266,6 +267,16 @@ export function AdminGames() {
 							value={ form.description }
 							onChange={ ( e ) => setForm( { ...form, description: e.target.value } ) }
 						/>
+						{ /* No chronicle exists yet during creation for a chronicle-scoped AI request to target. */ }
+						{ editingSlug !== null && (
+							<AiAssistButton
+								capability="be_manage_games"
+								fieldContext="chronicle_description"
+								gameSlug={ editingSlug }
+								currentValue={ form.description }
+								onAccept={ ( description ) => setForm( { ...form, description } ) }
+							/>
+						) }
 					</label>
 					<div className="be-admin__form-actions">
 						<button type="submit" disabled={ saving }>

@@ -7,6 +7,7 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
+import AiAssistButton from '../shared/AiAssistButton';
 import type { GenerateRumorsResponse, Plot } from '../../types/plot';
 import './RumorPanel.css';
 
@@ -128,6 +129,13 @@ export function RumorPanel( { gameSlug, defaultParentPlotId }: RumorPanelProps )
 						placeholder={ __( "What's being whispered…", 'beyond-elysium' ) }
 						value={ newDescription }
 						onChange={ ( e ) => setNewDescription( e.target.value ) }
+					/>
+					<AiAssistButton
+						capability="be_manage_plots"
+						fieldContext="rumor_description"
+						gameSlug={ gameSlug }
+						currentValue={ newDescription }
+						onAccept={ setNewDescription }
 					/>
 					<select
 						value={ newParentId }

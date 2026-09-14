@@ -470,6 +470,87 @@ export const approvalRules = ( gameSlug: string ) => ( {
 } );
 
 // ---------------------------------------------------------------------------
+// AI Assist (ai-writing-assist-design.md) - a site-wide pair for fields that
+// belong to no chronicle, and a chronicle-scoped pair for everything else.
+// ---------------------------------------------------------------------------
+
+export interface AiAssistGenerateRequest {
+    field_context: string;
+    current_text: string;
+    instruction: string;
+}
+
+export interface AiAssistGenerateResponse {
+    suggestion: string;
+}
+
+export interface AiAssistSiteSettings {
+    provider: 'openai' | 'claude';
+    has_openai_key: boolean;
+    has_claude_key: boolean;
+    /** Not secrets - a self-hosted/otherwise-compatible endpoint override. Empty string means "use the built-in default". */
+    openai_base_url: string;
+    openai_model: string;
+    claude_base_url: string;
+    claude_model: string;
+}
+
+export interface AiAssistChronicleSettings {
+    enabled: boolean;
+    provider: 'openai' | 'claude';
+    has_openai_key: boolean;
+    has_claude_key: boolean;
+    openai_base_url: string;
+    openai_model: string;
+    claude_base_url: string;
+    claude_model: string;
+}
+
+export interface AiAssistTestRequest {
+    provider: 'openai' | 'claude';
+    /** The value to test, which may not be saved yet. */
+    key: string;
+    base_url?: string;
+    model?: string;
+}
+
+export interface AiAssistTestResponse {
+    message: string;
+}
+
+/** Site-wide AI assist: settings that belong to no chronicle (Schema Block descriptions, Credits). */
+export const aiAssistSite = {
+    generate: ( data: AiAssistGenerateRequest ): Promise<AiAssistGenerateResponse> =>
+        apiFetch( { path: `${ BASE }/ai-assist`, method: 'POST', data } ),
+
+    getSettings: (): Promise<AiAssistSiteSettings> =>
+        apiFetch( { path: `${ BASE }/ai-assist/settings` } ),
+
+    /** A key field left out of data entirely is untouched; an explicit empty string clears it. */
+    updateSettings: ( data: Partial<{ provider: string; openai_key: string; claude_key: string; openai_base_url: string; openai_model: string; claude_base_url: string; claude_model: string }> ): Promise<AiAssistSiteSettings> =>
+        apiFetch( { path: `${ BASE }/ai-assist/settings`, method: 'PUT', data } ),
+
+    /** Tests a provider/key/endpoint combination directly, independent of what (if anything) is currently saved. */
+    testConnection: ( data: AiAssistTestRequest ): Promise<AiAssistTestResponse> =>
+        apiFetch( { path: `${ BASE }/ai-assist/test`, method: 'POST', data } ),
+};
+
+/** Chronicle-scoped AI assist: everything else (character/plot/rumor/world-object text). */
+export const aiAssist = ( gameSlug: string ) => ( {
+    generate: ( data: AiAssistGenerateRequest ): Promise<AiAssistGenerateResponse> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/ai-assist`, method: 'POST', data } ),
+
+    getSettings: (): Promise<AiAssistChronicleSettings> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/ai-assist/settings` } ),
+
+    updateSettings: ( data: Partial<{ enabled: boolean; provider: string; openai_key: string; claude_key: string; openai_base_url: string; openai_model: string; claude_base_url: string; claude_model: string }> ): Promise<AiAssistChronicleSettings> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/ai-assist/settings`, method: 'PUT', data } ),
+
+    testConnection: ( data: AiAssistTestRequest ): Promise<AiAssistTestResponse> =>
+        apiFetch( { path: `${ BASE }/${ gameSlug }/ai-assist/test`, method: 'POST', data } ),
+} );
+
+// ---------------------------------------------------------------------------
 // Characters (game-scoped)
 // ---------------------------------------------------------------------------
 
@@ -1685,5 +1766,7 @@ const api = {
     setupStatus,
     docs,
     credits,
+    aiAssist,
+    aiAssistSite,
 };
 export default api;

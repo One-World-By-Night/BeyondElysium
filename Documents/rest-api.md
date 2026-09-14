@@ -203,6 +203,25 @@ once rather than one character at a time.
 | PUT | `/{game_slug}/apr-settings` | `be_manage_apr` | Update it |
 | GET | `/{game_slug}/apr-settings/backgrounds` | `be_manage_apr` | The catalog of Backgrounds available to configure as action-granting |
 
+## AI Assist
+
+Server-side AI writing-assist integration (Admin Guide's "AI Writing Assist" section). Two
+route pairs, both handled the same way: a site-wide pair for fields that belong to no
+chronicle, and a chronicle-scoped pair for everything else. The generate route's own required
+capability is resolved server-side from the request's `field_context`, never trusted from the
+client.
+
+| Method | Path | Capability | Notes |
+|---|---|---|---|
+| POST | `/ai-assist` | Resolved per `field_context` | Generate a suggestion for a site-wide field (Schema Block catalog descriptions, Credits text) |
+| GET | `/ai-assist/settings` | `be_manage_games` | The site-wide provider, key-configured flags, and custom base URL/model overrides — never the key itself |
+| PUT | `/ai-assist/settings` | `be_manage_games` | Update the site-wide provider, key (empty string clears it), base URL, or model |
+| POST | `/ai-assist/test` | `be_manage_games` | Test a provider/key/base URL/model combination directly from the request body — never a saved key |
+| POST | `/{game_slug}/ai-assist` | Resolved per `field_context` | Generate a suggestion for a chronicle-scoped field (character, plot, rumor, world-object) |
+| GET | `/{game_slug}/ai-assist/settings` | `be_manage_apr` | This chronicle's own opt-in, provider, key-configured flags, and base URL/model overrides |
+| PUT | `/{game_slug}/ai-assist/settings` | `be_manage_apr` | Update this chronicle's own AI Assist settings |
+| POST | `/{game_slug}/ai-assist/test` | `be_manage_apr` | Test a provider/key/base URL/model combination for this chronicle, before saving |
+
 ## Background Uses
 
 Recording what a player actually did with an allocated downtime action, and an ST adjudicating it.

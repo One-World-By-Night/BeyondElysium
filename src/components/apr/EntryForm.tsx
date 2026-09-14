@@ -7,6 +7,7 @@
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
+import AiAssistButton from '../shared/AiAssistButton';
 import type { EntryType } from '../../types/plot';
 import './EntryForm.css';
 
@@ -91,6 +92,16 @@ export function EntryForm( { gameSlug, plotId, canManage, onCreated, expandedEna
 					}
 					rows={ 3 }
 				/>
+				{ /* action entries are player-authored - AI assist stays ST-only, only offered for the other three types canManage already gates. */ }
+				{ canManage && entryType !== 'action' && (
+					<AiAssistButton
+						capability="be_manage_plots"
+						fieldContext="plot_entry"
+						gameSlug={ gameSlug }
+						currentValue={ content }
+						onAccept={ setContent }
+					/>
+				) }
 				{ expandedEnabled && (
 					<input
 						type="date"

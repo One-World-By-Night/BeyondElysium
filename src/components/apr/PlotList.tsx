@@ -8,6 +8,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { pickMediaImage } from '../../lib/pickMediaImage';
+import AiAssistButton from '../shared/AiAssistButton';
 import type { InitiatedBy, Plot, PlotCategory, PlotStatus } from '../../types/plot';
 import './PlotList.css';
 
@@ -155,6 +156,13 @@ export function PlotList( { gameSlug, onSelect, defaultStatus, onCreated, expand
 						placeholder={ __( 'What is this about…', 'beyond-elysium' ) }
 						value={ newDescription }
 						onChange={ ( e ) => setNewDescription( e.target.value ) }
+					/>
+					<AiAssistButton
+						capability="be_manage_plots"
+						fieldContext="plot_description"
+						gameSlug={ gameSlug }
+						currentValue={ newDescription }
+						onAccept={ setNewDescription }
 					/>
 
 					<div className="be-plot-list__cover-row">

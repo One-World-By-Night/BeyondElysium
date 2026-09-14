@@ -116,6 +116,12 @@ mannerisms, and plot hooks that never appears on an ordinary player character's 
 same checkbox is available in edit mode too, so a character created as a player character
 can be flagged as an NPC later, or the reverse, with no separate "convert" action needed.
 
+**Stuck on a blank Biography or NPC notes field?** An "AI Assist" button sits next to it (and
+every other long-form text field in the plugin) once your chronicle has opted in — see the
+[Admin Guide's AI Writing Assist section](admin-guide.md#ai-writing-assist). Never shown to a
+player, and never saves anything on its own - you review and Accept before it ever touches
+the field.
+
 Every character needs a linked WordPress account (`wp_user_id`) to be playable by someone.
 If a character is imported or entered before its player has an account, use the **Assign
 Player** control on the character's row in the roster — search by name or email and attach
