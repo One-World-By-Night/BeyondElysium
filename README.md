@@ -125,6 +125,12 @@ BeyondElysium ships in-app documentation, viewable inside the plugin's own admin
 
 **Held, by choice.** Character sharing between players, coordinator-tier approval enforcement, and autosave-draft protection for plot and rumor forms are each specified and intentionally deferred.
 
+## Dark Pack
+
+BeyondElysium is a non-commercial community project, not official World of Darkness material.
+
+Portions of the materials are the copyrights and trademarks of Paradox Interactive AB, and are used with permission. All rights reserved. For more information please visit worldofdarkness.com.
+
 ## License
 
 GPL-2.0-or-later
