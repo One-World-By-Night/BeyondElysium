@@ -386,6 +386,10 @@ class Game {
 		if ( $row && isset( $row->settings ) && is_string( $row->settings ) ) {
 			$row->settings = json_decode( $row->settings );
 		}
+		// Same "0"-is-truthy-in-JavaScript hazard as Schema_Block::decode_definition() (D53).
+		if ( $row && isset( $row->notifications_enabled ) ) {
+			$row->notifications_enabled = (int) $row->notifications_enabled;
+		}
 		return $row;
 	}
 }

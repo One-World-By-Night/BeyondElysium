@@ -413,6 +413,10 @@ class Creature_Stack {
 				$row->$field = json_decode( $row->$field );
 			}
 		}
+		// Same "0"-is-truthy-in-JavaScript hazard as Schema_Block::decode_definition() (D53).
+		if ( isset( $row->is_system ) ) {
+			$row->is_system = (int) $row->is_system;
+		}
 		return $row;
 	}
 

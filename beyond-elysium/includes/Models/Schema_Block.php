@@ -522,9 +522,9 @@ class Schema_Block {
 	}
 
 	/**
-	 * Decode a row's definition JSON field into an object in place. Passes
-	 * null rows through unchanged, and leaves a non-string definition value
-	 * untouched.
+	 * Decode a row's definition JSON field into an object in place, and cast
+	 * its tinyint flags to real integers. Passes null rows through unchanged,
+	 * and leaves a non-string definition value untouched.
 	 *
 	 * @param object|null $row
 	 * @return object|null
@@ -532,6 +532,13 @@ class Schema_Block {
 	private static function decode_definition( $row ) {
 		if ( $row && isset( $row->definition ) && is_string( $row->definition ) ) {
 			$row->definition = json_decode( $row->definition );
+		}
+		// $wpdb returns "0"/"1" strings, and "0" is truthy in JavaScript - uncast, the Schema
+		// Blocks editor saved every block it opened as storyteller_only (D53, D51's class).
+		foreach ( [ 'is_system', 'storyteller_only' ] as $flag ) {
+			if ( $row && isset( $row->$flag ) ) {
+				$row->$flag = (int) $row->$flag;
+			}
 		}
 		return $row;
 	}

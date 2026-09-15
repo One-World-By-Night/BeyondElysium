@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**Status:** `v0.99.33` is released and running in production chronicles. The 1.0 closed scope shipped in full as of `v0.99.17` — character engine, editor, Storyteller tools, world data, Grapevine import/export/transfer, signed PDFs, the full Grapevine report set, point audit, guided chronicle setup, and an expanded Mage rote catalog. Development continues past 1.0 on real, requested work: the wp-admin menu was consolidated into 8 tabbed pages plus a landing dashboard, with NPC creation added directly to the character editor; purchase-approval rules now cover every override mechanism in the schema (not just trait lists and tiered powers), alongside a real global default-approval policy; and a Storyteller-only AI writing-assist button now sits next to every long-form text field in the plugin — biographies, plot descriptions, rumors, world-object text — using a real OpenAI or Anthropic API key (or a self-hosted OpenAI-compatible server) an administrator or Storyteller supplies, never a default generator, and never visible to a plain player. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's next.
+**Status:** `v0.99.34` is released and running in production chronicles. The 1.0 closed scope shipped in full as of `v0.99.17` — character engine, editor, Storyteller tools, world data, Grapevine import/export/transfer, signed PDFs, the full Grapevine report set, point audit, guided chronicle setup, and an expanded Mage rote catalog. Development continues past 1.0 on real, requested work: the wp-admin menu was consolidated into 8 tabbed pages plus a landing dashboard, with NPC creation added directly to the character editor; purchase-approval rules now cover every override mechanism in the schema (not just trait lists and tiered powers), alongside a real global default-approval policy; and a Storyteller-only AI writing-assist button now sits next to every long-form text field in the plugin — biographies, plot descriptions, rumors, world-object text — using a real OpenAI or Anthropic API key (or a self-hosted OpenAI-compatible server) an administrator or Storyteller supplies, never a default generator, and never visible to a plain player. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's next.
 
 ## What It Does
 
@@ -22,7 +22,7 @@ Beyond the sheet itself:
 
 ## Installation
 
-Download `beyond-elysium-0.99.33.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
+Download `beyond-elysium-0.99.34.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
 
 That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder in this repository is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder straight into `wp-content/plugins/` will not work. To build it yourself:
 
