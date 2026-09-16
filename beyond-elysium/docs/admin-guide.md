@@ -377,6 +377,35 @@ expired key is caught before you rely on it in the field. It never tests an alre
 silently; a key is never sent back to this page once saved, so testing it means re-entering
 it first.
 
+## Multisite
+
+Beyond Elysium runs on a WordPress multisite network. Each site keeps its own characters,
+catalog, chronicles, settings and roles, entirely separate from every other site on the
+network - that is not a mode you switch on, it is simply how the plugin stores things.
+
+Install it network-wide and leave it **not** network-activated, and each site turns it on
+for itself. Network-activating instead would build a full schema and catalog on every site,
+whether that site wants it or not.
+
+To let site administrators activate it themselves, enable **Network Admin → Settings → Menu
+Settings → Plugins**. That lets them activate and deactivate plugins on their own site only;
+installing, updating and deleting plugins stay super-admin-only on a network regardless, and
+network-activated plugins never appear on their screen at all.
+
+Deleting a site takes its Beyond Elysium tables with it, and deleting the plugin cleans up
+every site that turned on "delete data on uninstall" for itself - a site that never asked for
+deletion keeps everything, even if another site did.
+
+**One caveat.** WordPress only loads a plugin on sites where it is active, so the table
+cleanup runs only when Beyond Elysium is loaded in that request. If you delete a site from
+Network Admin while the plugin is not active on the site you are working from, its tables are
+left behind. They are inert, and nothing else is affected, but you may want to drop them -
+they are named with that site's own table prefix followed by `be_`:
+
+```sql
+SHOW TABLES LIKE 'yni_12_be\_%';
+```
+
 ## Secure Printing
 
 **Beyond Elysium → System Config → Secure Printing.**
