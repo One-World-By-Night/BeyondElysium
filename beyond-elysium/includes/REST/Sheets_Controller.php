@@ -127,7 +127,9 @@ class Sheets_Controller extends Base_Controller {
 			'xp_history'       => (bool) $request->get_param( 'xp_history' ),
 		] );
 
-		$signed   = Pdf_Signer::availability()['ok'];
+		// Signed only when an administrator switched secure printing on AND a usable
+		// certificate is configured (1.0.1 C2). Either missing prints UNSIGNED, never refuses.
+		$signed   = Pdf_Signer::should_sign()['ok'];
 		$bytes    = Pdf_Writer::write( $documents, $game, $signed );
 		$filename = ( count( $documents ) === 1
 			? sanitize_file_name( (string) $documents[0]['title'] )
@@ -146,7 +148,10 @@ class Sheets_Controller extends Base_Controller {
 			return $game;
 		}
 
-		return $this->success( Pdf_Signer::availability() );
+		// The preflight answers "will this print be signed", which since 1.0.1 C2 is the
+		// opt-in AND the certificate - not the certificate alone. The `code` distinguishes
+		// them (`secure_printing_off` vs `cert_not_configured`) so the sheet can say which.
+		return $this->success( Pdf_Signer::should_sign() );
 	}
 
 	/**

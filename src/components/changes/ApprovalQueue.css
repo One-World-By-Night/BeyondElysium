@@ -69,7 +69,7 @@
  * and Approve/Reject move to the top of the card (order: -1) - they were the 9th column
  * only because desktop reads left-to-right, an ordering with no meaning once stacked.
  */
-@container be-table ( max-width: 960px ) {
+@container be-table ( width < 960px ) {
 
 	.be-approval-queue__table.be-responsive-table tbody tr {
 		display: flex;

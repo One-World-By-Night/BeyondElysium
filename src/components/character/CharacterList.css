@@ -111,7 +111,7 @@
 }
 
 /* In a card, the buttons say what they do - no "Actions" label beside them. */
-@container be-table ( max-width: 960px ) {
+@container be-table ( width < 960px ) {
 
 	.be-character-list__table .be-character-list__actions-cell::before {
 		display: none;

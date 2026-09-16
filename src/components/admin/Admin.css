@@ -1,5 +1,15 @@
+/*
+ * 1600px, not 960px. The old 960 cap predated the container-query table mechanism and
+ * collided with it exactly: `@container be-table ( max-width: 960px )` matches *at* 960, so
+ * every wp-admin table - Characters, the Approval Queue, query results - pinned itself to the
+ * cap and then stacked every row into a card, on every desktop, since 1.0.0. The boundary is
+ * exclusive now as well, so this no longer sits on a knife edge either way.
+ *
+ * A cap is still worth having so prose doesn't run the full width of an ultrawide monitor;
+ * 1600px is simply past any table this admin renders.
+ */
 .be-admin {
-	max-width: 960px;
+	max-width: 1600px;
 	margin-top: 1rem;
 }
 

@@ -7,6 +7,7 @@ use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Plot;
 use BeyondElysium\Models\Plot_Entry;
 use BeyondElysium\Services\Action_Allocator;
+use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -87,8 +88,15 @@ class Entries_Controller extends Base_Controller {
 
 		if ( ! $can_manage ) {
 			$entries = array_values( array_filter( $entries, static function ( $entry ) {
-				return $entry->entry_type !== 'note';
+				return $entry->entry_type !== "note";
 			} ) );
+
+			// A note-type entry is dropped wholesale above; every other entry is ordinary
+			// rich text a Storyteller may have marked with [ST] mid-sentence.
+			$game = Game::find_by_slug( (string) $request["game_slug"] );
+			foreach ( $entries as $entry ) {
+				St_Visibility::filter_entry( $entry, $game, false );
+			}
 		}
 
 		return $this->success( $entries );

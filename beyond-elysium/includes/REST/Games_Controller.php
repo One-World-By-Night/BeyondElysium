@@ -6,6 +6,7 @@ use BeyondElysium\Core\Authorization;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Services\Ai_Assist;
+use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -128,10 +129,16 @@ class Games_Controller extends Base_Controller {
 		];
 
 		$items = Game::all( $args );
+		// Deliberately conservative. A chronicle description is a short blurb shown in
+		// pickers and lists, and this route has no single chronicle to scope a role check
+		// against, so anyone without the site-wide capability has it stripped. Over-filtering
+		// a blurb costs nothing; under-filtering leaks.
+		$can_manage = current_user_can( 'be_manage_games' );
 		foreach ( $items as $item ) {
 			if ( isset( $item->settings ) && $item->settings instanceof \stdClass ) {
 				Ai_Assist::redact_settings_read( $item->settings );
 			}
+			St_Visibility::filter_game( $item, $can_manage );
 		}
 		$total = Game::count( $args );
 
@@ -190,6 +197,10 @@ class Games_Controller extends Base_Controller {
 			'be_manage_schemas',
 			'be_manage_connections',
 			'be_manage_boons',
+			// Added for the Storyteller Toolkit's World Objects tab (1.0.1 D2). The catalog
+			// existed only in wp-admin before that, so no front-end screen had ever needed
+			// this capability resolved per chronicle.
+			'be_manage_world_objects',
 		];
 
 		if ( ! Game::find_by_slug( $request['game_slug'] ) ) {
@@ -215,6 +226,7 @@ class Games_Controller extends Base_Controller {
 		if ( isset( $game->settings ) && $game->settings instanceof \stdClass ) {
 			Ai_Assist::redact_settings_read( $game->settings );
 		}
+		St_Visibility::filter_game( $game, Authorization::check_request( 'be_manage_games', $request ) );
 		return $this->success( $game );
 	}
 
@@ -594,9 +606,11 @@ class Games_Controller extends Base_Controller {
 				'default' => 'met',
 				'sanitize_callback' => 'sanitize_text_field',
 			],
+			// Rich text, same allowlist as post content - matches biography/notes and
+			// every plot free-text field (1.0.1 D1).
 			'description' => [
 				'type'              => 'string',
-				'sanitize_callback' => 'sanitize_textarea_field',
+				'sanitize_callback' => 'wp_kses_post',
 			],
 			'settings' => [
 				'type' => 'object',
@@ -626,9 +640,10 @@ class Games_Controller extends Base_Controller {
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			],
+			// Rich text - see the note on the same field in get_create_params().
 			'description' => [
 				'type'              => 'string',
-				'sanitize_callback' => 'sanitize_textarea_field',
+				'sanitize_callback' => 'wp_kses_post',
 			],
 			'settings' => [
 				'type' => 'object',

@@ -85,15 +85,21 @@ class St_Filter {
 	 * every one of them a rich-text field this filter already ran against before it could
 	 * hold HTML). `strip()` cuts by byte offset with no notion of tag boundaries, so a
 	 * marker placed across a paragraph break or inline formatting can leave a dangling
-	 * unclosed tag in what's left over. Re-running the result through `wp_kses_post()`
-	 * costs nothing when nothing was cut mid-tag, and only ever narrows the output
-	 * otherwise - it cannot reintroduce the secret text `strip()` already removed.
+	 * unclosed tag in what's left over.
+	 *
+	 * Two passes, and both are needed. `wp_kses_post()` re-narrows the markup - it costs
+	 * nothing when nothing was cut mid-tag and cannot reintroduce the secret text `strip()`
+	 * already removed. But it does **not** balance tags, which this function claimed it did
+	 * until 1.0.1 D1's own test measured it: a marker opening inside `<em>` and closing
+	 * after `</em>` takes the closing tag with it, and `wp_kses_post()` hands back the
+	 * unclosed `<em>` untouched, leaving it to swallow the rest of the page's formatting.
+	 * `force_balance_tags()` is WordPress's own function for exactly that and closes it.
 	 *
 	 * @param string      $html
 	 * @param object|null $game_settings Decoded `be_games.settings`, or null.
 	 * @return string
 	 */
 	public static function strip_html_for_game( string $html, $game_settings ): string {
-		return wp_kses_post( self::strip_for_game( $html, $game_settings ) );
+		return force_balance_tags( wp_kses_post( self::strip_for_game( $html, $game_settings ) ) );
 	}
 }

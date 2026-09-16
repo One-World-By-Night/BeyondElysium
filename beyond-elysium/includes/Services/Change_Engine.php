@@ -8,6 +8,9 @@ use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Snapshot;
 use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\Creature_Stack;
+use BeyondElysium\Models\Connection;
+use BeyondElysium\Models\Game;
+use BeyondElysium\Models\World_Object;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -184,6 +187,23 @@ class Change_Engine {
 			return false;
 		}
 
+		// A proposed catalog item is not sheet data: approving it writes a be_world_objects row
+		// and connects it to the proposing character (1.0.1 D3). Inside the same savepoint as
+		// everything else, so a failure to connect cannot leave an orphaned catalog entry
+		// behind a change still marked pending.
+		if ( $change->change_type === 'propose_world_object' ) {
+			if ( ! self::create_proposed_object( $character, $change ) ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			if ( ! Change::update_status( $change_id, 'approved', $reviewed_by, $notes ) ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			Transaction::commit( $savepoint );
+			return true;
+		}
+
 		// Apply change to sheet_data.
 		$new_sheet = self::apply_to_sheet( $character, $change );
 		$written   = Character::update_sheet_data( (int) $character->id, $new_sheet );
@@ -276,6 +296,53 @@ class Change_Engine {
 	 * @param object $change    Change row with decoded change_data.
 	 * @return array Updated sheet_data.
 	 */
+	/**
+	 * Writes an approved player proposal into the catalog and ties it to the character that
+	 * proposed it (1.0.1 D3).
+	 *
+	 * Both halves or neither. The player asked for their character to have the thing, so a
+	 * catalog row without the connection is only half of what was approved - and the caller's
+	 * savepoint covers this, so a failure here rolls the change back to pending rather than
+	 * leaving an orphan in the catalog.
+	 *
+	 * @param object $character The proposing character.
+	 * @param object $change
+	 * @return bool
+	 */
+	private static function create_proposed_object( $character, $change ): bool {
+		$data = is_array( $change->change_data ) ? $change->change_data : [];
+
+		$game = Game::find_by_slug( (string) $character->owner_slug );
+		if ( ! $game ) {
+			return false;
+		}
+
+		$object_id = World_Object::create( [
+			'game_id'     => (int) $game->id,
+			'object_type' => $data['object_type'] ?? '',
+			'name'        => $data['name'] ?? '',
+			'description' => $data['description'] ?? null,
+			'limitations' => $data['limitations'] ?? null,
+			'rarity'      => $data['rarity'] ?? null,
+			'cost'        => $data['cost'] ?? null,
+			'properties'  => is_array( $data['properties'] ?? null ) ? $data['properties'] : [],
+			'created_by'  => (int) ( $change->submitted_by ?? 0 ),
+		] );
+
+		if ( ! $object_id ) {
+			return false;
+		}
+
+		return (bool) Connection::create( [
+			'game_id'     => (int) $game->id,
+			'source_type' => 'character',
+			'source_id'   => (int) $character->id,
+			'target_type' => 'world_object',
+			'target_id'   => (int) $object_id,
+			'label'       => 'owns',
+		] );
+	}
+
 	public static function apply_to_sheet( $character, $change ): array {
 		$sheet       = is_array( $character->sheet_data ) ? $character->sheet_data : [];
 		$change_data = is_array( $change->change_data ) ? $change->change_data : [];

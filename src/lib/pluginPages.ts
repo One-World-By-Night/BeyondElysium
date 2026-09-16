@@ -25,6 +25,7 @@ export const PLAYER_TABS = {
 	plots: 'plots',
 	reports: 'reports',
 	sendFile: 'send-file',
+	proposeItem: 'propose-item',
 } as const;
 
 /** Tab keys for the Storyteller Toolkit page. */
@@ -33,6 +34,7 @@ export const STORYTELLER_TABS = {
 	approvalQueue: 'approval-queue',
 	plots: 'plots',
 	boonLedger: 'boon-ledger',
+	worldObjects: 'world-objects',
 } as const;
 
 /** Builds the absolute URL of a provisioned plugin page from its slug. */

@@ -14,6 +14,7 @@ import AdminCreatureStacks from '../AdminCreatureStacks';
 import AdminTemplates from '../AdminTemplates';
 import AdminApprovalRules from '../AdminApprovalRules';
 import AdminAiAssistSite from '../AdminAiAssistSite';
+import AdminSecurePrinting from '../AdminSecurePrinting';
 import type { Tab } from '../../shared/TabStrip';
 
 const TABS = {
@@ -23,6 +24,7 @@ const TABS = {
 	templates: 'templates',
 	approvalRules: 'approval-rules',
 	aiAssist: 'ai-assist',
+	securePrinting: 'secure-printing',
 };
 
 export function SystemConfigHub() {
@@ -60,6 +62,10 @@ export function SystemConfigHub() {
 			key: TABS.aiAssist,
 			label: __( 'AI Assist', 'beyond-elysium' ),
 		},
+		capabilities?.be_manage_games && {
+			key: TABS.securePrinting,
+			label: __( 'Secure Printing', 'beyond-elysium' ),
+		},
 	].filter( Boolean ) as Tab[];
 
 	useEffect( () => {
@@ -89,6 +95,7 @@ export function SystemConfigHub() {
 			{ tab === TABS.templates && <AdminTemplates /> }
 			{ tab === TABS.approvalRules && <AdminApprovalRules /> }
 			{ tab === TABS.aiAssist && <AdminAiAssistSite /> }
+			{ tab === TABS.securePrinting && <AdminSecurePrinting /> }
 		</div>
 	);
 }

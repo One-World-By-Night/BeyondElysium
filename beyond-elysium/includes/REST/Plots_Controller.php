@@ -10,6 +10,7 @@ use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Plot;
 use BeyondElysium\Models\Plot_Entry;
+use BeyondElysium\Services\St_Visibility;
 use BeyondElysium\Services\Action_Allocator;
 use BeyondElysium\Services\Query_Engine;
 use BeyondElysium\Services\Rumor_Generator;
@@ -131,7 +132,7 @@ class Plots_Controller extends Base_Controller {
 
 		$items = Plot::for_game( (int) $game->id, $args );
 		foreach ( $items as $item ) {
-			$this->prepare_plot( $item, $can_manage, 'thumbnail' );
+			$this->prepare_plot( $item, $can_manage, "thumbnail", $game );
 		}
 
 		$total    = Plot::count_for_game( (int) $game->id, $args );
@@ -170,7 +171,7 @@ class Plots_Controller extends Base_Controller {
 		if ( ! $can_manage && self::is_unowned_allocation( (int) $plot->id ) ) {
 			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
 		}
-		$this->prepare_plot( $plot, $can_manage );
+		$this->prepare_plot( $plot, $can_manage, "medium", $game );
 
 		$entries = Plot_Entry::for_plot( (int) $plot->id );
 		if ( ! $can_manage ) {
@@ -189,7 +190,7 @@ class Plots_Controller extends Base_Controller {
 			static fn( $child ) => $can_manage || ! self::is_unowned_allocation( (int) $child->id )
 		) );
 		foreach ( $plot->children as $child ) {
-			$this->prepare_plot( $child, $can_manage, 'thumbnail' );
+			$this->prepare_plot( $child, $can_manage, "thumbnail", $game );
 		}
 
 		return $this->success( $plot );
@@ -251,7 +252,7 @@ class Plots_Controller extends Base_Controller {
 		$plots = array_values( $by_id );
 		usort( $plots, static fn( $a, $b ) => strcmp( $b->updated_at, $a->updated_at ) );
 		foreach ( $plots as $plot ) {
-			$this->prepare_plot( $plot, $can_manage );
+			$this->prepare_plot( $plot, $can_manage, "medium", $game );
 		}
 
 		return $this->success( [
@@ -346,7 +347,7 @@ class Plots_Controller extends Base_Controller {
 		if ( ! $plot ) {
 			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
 		}
-		$this->prepare_plot( $plot, $can_manage );
+		$this->prepare_plot( $plot, $can_manage, "medium", $game );
 		return $this->success( $plot, 201 );
 	}
 
@@ -585,10 +586,13 @@ class Plots_Controller extends Base_Controller {
 	 * @param bool   $can_manage
 	 * @return void
 	 */
-	private function prepare_plot( $plot, bool $can_manage, string $image_size = 'medium' ): void {
+	private function prepare_plot( $plot, bool $can_manage, string $image_size = "medium", ?object $game = null ): void {
 		if ( ! $can_manage ) {
 			unset( $plot->st_notes );
 		}
+		// description and cliffhanger are ordinary rich text a Storyteller may mark with
+		// [ST]; st_notes above is Storyteller-only in full, so it is removed, not stripped.
+		St_Visibility::filter_plot( $plot, $game, $can_manage );
 		$plot->derived_status = Plot::derive_status( $plot );
 		// Cover image is resolved server-side to a URL rather than stored.
 		$plot->image_url = ! empty( $plot->image_id )

@@ -8,7 +8,7 @@
 /* Columns are user-selected and unbounded. In a narrow box each result stacks into a card listing
  * every column (breakpoints.css `.be-table-box`) instead of scrolling sideways on a phone
  * (1.0.0-review F-019); the sort buttons and select-all stay visible above the cards. */
-@container be-table ( max-width: 960px ) {
+@container be-table ( width < 960px ) {
 
 	.be-query-results__table.be-responsive-table thead {
 		display: block;

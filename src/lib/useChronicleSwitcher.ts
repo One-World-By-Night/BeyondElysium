@@ -17,6 +17,7 @@ const EMPTY_CAPABILITIES: MyCapabilities = {
 	be_manage_schemas: false,
 	be_manage_connections: false,
 	be_manage_boons: false,
+	be_manage_world_objects: false,
 };
 
 /** Reads the current `?game_slug=` from the URL. Exported for testing without a hook-rendering dependency. */

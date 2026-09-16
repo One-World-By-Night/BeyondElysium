@@ -61,7 +61,7 @@ export interface Game {
 	/** Access-control role path prefix associated with this chronicle. */
 	asc_role_path: string | null;
 	/** Per-chronicle switch for the change approved/rejected notification email. */
-	notifications_enabled: 0 | 1;
+	notifications_enabled: boolean;
 	created_by: number;
 	created_at: string;
 	updated_at: string;
@@ -124,6 +124,7 @@ export interface MyCapabilities {
 	be_manage_schemas: boolean;
 	be_manage_connections: boolean;
 	be_manage_boons: boolean;
+	be_manage_world_objects: boolean;
 }
 
 /**
@@ -543,9 +544,9 @@ export interface SchemaBlock {
 	name: string;
 	section_type: SectionType;
 	definition: BlockDefinition;
-	is_system: 0 | 1;
+	is_system: boolean;
 	/** Hides the block's section and its stored values from anyone without be_manage_characters. */
-	storyteller_only?: 0 | 1;
+	storyteller_only?: boolean;
 	version: number;
 	created_by: number;
 	created_at: string;
@@ -562,7 +563,7 @@ export interface CreateSchemaBlockRequest {
 	name: string;
 	section_type: SectionType;
 	definition?: BlockDefinition;
-	storyteller_only?: 0 | 1;
+	storyteller_only?: boolean;
 }
 
 /**
@@ -574,7 +575,7 @@ export interface UpdateSchemaBlockRequest {
 	name?: string;
 	section_type?: SectionType;
 	definition?: BlockDefinition;
-	storyteller_only?: 0 | 1;
+	storyteller_only?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -639,7 +640,7 @@ export interface CreatureStack {
 	game_line: string;
 	stack_definition: StackDefinition;
 	creation_rules: CreationRules;
-	is_system: 0 | 1;
+	is_system: boolean;
 	created_by: number;
 	created_at: string;
 	updated_at: string;
@@ -749,7 +750,7 @@ export interface Template {
 	name: string;
 	template_type: string;
 	layout: TemplateLayout;
-	is_system: 0 | 1;
+	is_system: boolean;
 	created_by: number;
 	created_at: string;
 	updated_at: string;
@@ -824,7 +825,7 @@ export interface GameCollectionParams extends CollectionParams {
  */
 export interface SchemaBlockCollectionParams extends CollectionParams {
 	section_type?: SectionType;
-	is_system?: 0 | 1;
+	is_system?: boolean;
 	search?: string;
 	/** Substitutes this chronicle's own fork of a block in place of the global one, where one exists. */
 	game_slug?: string;
@@ -837,7 +838,7 @@ export interface SchemaBlockCollectionParams extends CollectionParams {
  */
 export interface CreatureStackCollectionParams extends CollectionParams {
 	game_line?: string;
-	is_system?: 0 | 1;
+	is_system?: boolean;
 	search?: string;
 	/** Narrows to this chronicle's own settings.enabled_stacks (GS-3); omitted, every stack is offered. */
 	game_slug?: string;

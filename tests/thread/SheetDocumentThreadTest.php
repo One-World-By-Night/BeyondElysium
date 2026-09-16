@@ -213,6 +213,30 @@ class SheetDocumentThreadTest extends WP_UnitTestCase {
 		$this->assertSame( [ 'Hook: Working for the Sabbat' ], $sections['sheetdoc-secret']['rows'] );
 	}
 
+	/**
+	 * `Hook` is a `textarea` identity field, which became rich text in 1.0.1 D1 - but these
+	 * rows are drawn as plain text, so the markup has to be flattened here or a signed sheet
+	 * prints literal `<p>` tags at a player. Two paragraphs must also not run together into
+	 * one unreadable line.
+	 */
+	public function test_a_rich_text_identity_field_is_flattened_not_printed_as_tags(): void {
+		Character::update_sheet_data( $this->character_id, [
+			'sheetdoc-secret' => [
+				'Hook' => '<p>Working for the Sabbat.</p><p>Reports to <strong>Vykos</strong>.</p>',
+			],
+		] );
+
+		$document = $this->document( [ 'can_manage' => true ] );
+		$sections = array_column( $document['sections'], null, 'block_slug' );
+		$row      = $sections['sheetdoc-secret']['rows'][0];
+
+		$this->assertStringNotContainsString( '<p>', $row, 'A signed sheet must not print tags.' );
+		$this->assertStringNotContainsString( '<strong>', $row );
+		$this->assertStringContainsString( 'Working for the Sabbat.', $row );
+		$this->assertStringContainsString( 'Vykos', $row );
+		$this->assertStringContainsString( "\n", $row, 'Two paragraphs must not run together.' );
+	}
+
 	public function test_a_non_manager_never_receives_the_storyteller_only_section(): void {
 		$document = $this->document( [ 'can_manage' => false ] );
 		$slugs    = array_column( $document['sections'], 'block_slug' );

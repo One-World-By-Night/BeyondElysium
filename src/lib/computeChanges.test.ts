@@ -14,7 +14,7 @@ function block(
 			sectionType === 'trait_list'
 				? { items: [] }
 				: ( {} as SchemaBlock[ 'definition' ] ),
-		is_system: 1,
+		is_system: true,
 		version: 1,
 		created_by: 1,
 		created_at: '',

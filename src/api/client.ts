@@ -782,6 +782,59 @@ export const aiAssistSite = {
 		apiFetch( { path: `${ BASE }/ai-assist/test`, method: 'POST', data } ),
 };
 
+export interface SigningConstant {
+	defined: boolean;
+	readable: boolean | null;
+}
+
+export interface SigningStatus {
+	/** The site-wide opt-in. */
+	enabled: boolean;
+	/** Whether a usable certificate is configured, independent of the opt-in. */
+	available: boolean;
+	code: string;
+	/** Both of the above: whether a print made right now would actually be signed. */
+	signing_now: boolean;
+	constants: Record< string, SigningConstant >;
+	can_generate: boolean;
+	openssl_extension: boolean;
+}
+
+export interface GeneratedCertificate {
+	certificate: string;
+	private_key: string;
+	common_name: string;
+	expires: string;
+}
+
+/**
+ * Secure printing. Reports how signing is configured and will mint a certificate, but never
+ * installs one - the key exists only in the response to `generateCertificate`, and asking
+ * again mints a different one.
+ */
+export const signing = {
+	status: (): Promise< SigningStatus > =>
+		apiFetch( { path: `${ BASE }/signing/status` } ),
+
+	updateSettings: ( enabled: boolean ): Promise< { enabled: boolean } > =>
+		apiFetch( {
+			path: `${ BASE }/signing/settings`,
+			method: 'PUT',
+			data: { enabled },
+		} ),
+
+	generateCertificate: ( data: {
+		passphrase: string;
+		common_name?: string;
+		days?: number;
+	} ): Promise< GeneratedCertificate > =>
+		apiFetch( {
+			path: `${ BASE }/signing/certificate`,
+			method: 'POST',
+			data,
+		} ),
+};
+
 /** Chronicle-scoped AI assist: everything else (character/plot/rumor/world-object text). */
 export const aiAssist = ( gameSlug: string ) => ( {
 	generate: (
@@ -2523,5 +2576,6 @@ const api = {
 	credits,
 	aiAssist,
 	aiAssistSite,
+	signing,
 };
 export default api;

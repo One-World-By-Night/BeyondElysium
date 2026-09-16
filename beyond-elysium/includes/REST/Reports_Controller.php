@@ -133,8 +133,9 @@ class Reports_Controller extends Base_Controller {
 			return $document;
 		}
 
-		// With no certificate a report still prints, stamped UNSIGNED (1.0.0-review F-042).
-		$signed   = Pdf_Signer::availability()['ok'];
+		// With no certificate, or with secure printing switched off (1.0.1 C2), a report still
+		// prints, stamped UNSIGNED (1.0.0-review F-042).
+		$signed   = Pdf_Signer::should_sign()['ok'];
 		$bytes    = Report_Writer::write( $document, $game, $signed );
 		$filename = sanitize_file_name( $request['game_slug'] . '-' . (string) $request['report_key'] ) . ( $signed ? '' : '-unsigned' ) . '.pdf';
 

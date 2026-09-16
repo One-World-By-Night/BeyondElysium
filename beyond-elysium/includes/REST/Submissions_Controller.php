@@ -16,6 +16,7 @@ use BeyondElysium\Services\GEX_Parser;
 use BeyondElysium\Services\GEX_Xml_Parser;
 use BeyondElysium\Services\GV_Binary_Reader;
 use BeyondElysium\Services\Sheet_Verification;
+use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -648,7 +649,18 @@ class Submissions_Controller extends Base_Controller {
 	 * @return \WP_REST_Response
 	 */
 	public function get_my_submissions( $request ) {
-		return $this->success( Submission::for_user( get_current_user_id() ) );
+		$rows = Submission::for_user( get_current_user_id() );
+
+		// Always filtered, never conditionally: this route is not chronicle-scoped, so there
+		// is no single chronicle to resolve `be_manage_characters` against - the same
+		// judgment the games list route makes for a chronicle description. A Storyteller
+		// reviewing a submission reads it through the be_import-gated /review route, which
+		// is unfiltered, so nothing a Storyteller actually needs is lost here.
+		foreach ( $rows as $row ) {
+			St_Visibility::filter_submission( $row, null, false );
+		}
+
+		return $this->success( $rows );
 	}
 
 	/**

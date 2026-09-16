@@ -122,17 +122,40 @@ certificate that reader just hasn't been told to trust yet, the same way a new w
 certificate looks different the very first time. It does **not** mean anything is wrong with
 your sheet.
 
-If your site hasn't set up a signing certificate yet, Print still works, but every page of
-the PDF is stamped UNSIGNED: nothing proves that copy wasn't edited, so another chronicle may
-not accept it. Setting up the certificate is a one-time step for your site's host — nothing
-you did, and nothing you can fix from your own account.
+If your site hasn't set up a signing certificate, or hasn't switched secure printing on,
+Print still works — every page of the PDF is simply stamped UNSIGNED. Nothing proves that copy
+wasn't edited, so another chronicle may not accept it as proof. Both are one-time steps for
+whoever runs your site: nothing you did, and nothing you can fix from your own account.
 
 If a Storyteller has connected an item to your character — a weapon, a talisman, anything
 your character actually carries — **Print My Items** appears in the same actions list as Print / Export.
 It generates the same kind of PDF, but only for the items connected to that character, so
 you can bring a real prop card to the table for what your character is holding.
 
-## 9. Using Your Sheet on a Phone
+## 9. Proposing an Item
+
+Your character made something, found something, or carries something that isn't in the
+chronicle's catalog yet. **My Chronicle → Propose an Item** is how you ask a Storyteller to
+make it real.
+
+Pick your character first — a proposal belongs to a character, not to you. Then choose what
+kind of thing it is (item, location, or rote for Mage characters), name it, and describe it.
+The fields underneath change to match the kind, because a location needs different details
+from a weapon.
+
+It goes into the same Approval Queue your Storytellers already work through for trait
+changes, so nobody has to remember to check a second list. If it's approved, two things
+happen together: the item joins your chronicle's catalog, and it is connected to your
+character — you asked for your character to have it, so approving gives you both. If it's
+rejected, nothing is written anywhere, and your Storyteller can say why.
+
+It costs no experience. An item isn't an XP purchase; if your chronicle wants a particular
+item to cost something, that's a separate change against your sheet.
+
+You can't edit an item after it's approved — it belongs to the chronicle's catalog then, and
+only a Storyteller edits that. Ask a Storyteller, or propose a replacement.
+
+## 10. Using Your Sheet on a Phone
 
 Reading your own character sheet at a live game is a first-class phone experience — your
 identity and traits come before any of the print/edit/customize controls, which collapse

@@ -467,3 +467,24 @@ This is the plugin's own chronicle-scoped role model (`be_game_members.role`, on
 WordPress account can already do — both have to allow an action for it to go through. If your
 chronicle runs accessSchema, its own role paths are checked first and can grant access this
 table doesn't cover; this table describes the fallback every chronicle has regardless.
+
+## Proposed Items
+
+Players can propose an item, location or rote for their own character. It arrives in the
+**Approval Queue** alongside trait changes rather than in a separate list, so there is nothing
+extra to remember to check.
+
+Approving one does two things in a single step: it adds the entry to your chronicle's catalog
+and connects it to the proposing character. The player asked for their character to have the
+thing, so approving gives them both. Rejecting writes nothing at all — leave a note saying
+why, especially if the chronicle already has something close.
+
+Approving needs catalog rights as well as character rights. An HST and an AST have both. If
+you can see a proposal but the approve action refuses, you hold character-approval rights
+without item and location rights — you can still reject it, and any HST or AST can approve.
+
+An item costs no experience. If your chronicle wants one to cost something, handle that as a
+separate change against the character's sheet.
+
+Players cannot edit an item once it is approved; it belongs to the catalog then. Edit it
+yourself from [Items & Locations](help/world-objects.md).

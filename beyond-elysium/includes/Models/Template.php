@@ -400,7 +400,7 @@ class Template {
 
 		$row->layout    = $layout;
 		$row->game_id   = $row->game_id !== null ? (int) $row->game_id : null;
-		$row->is_system = (int) $row->is_system;
+		$row->is_system = (bool) $row->is_system;
 
 		return $row;
 	}

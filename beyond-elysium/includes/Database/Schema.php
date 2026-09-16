@@ -20,7 +20,7 @@ class Schema {
 	 * release version. Compared against the stored VERSION_OPTION value by
 	 * maybe_upgrade() to decide whether migrations need to run.
 	 */
-	const DB_VERSION = '1.0.0';
+	const DB_VERSION = '1.0.1';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -515,6 +515,30 @@ class Schema {
 		// Before any reseed, so an old copy's own changes are told apart from the update's (F-034).
 		self::record_fork_changes();
 		self::seed_character_plots();
+		self::preserve_existing_signing_choice();
+	}
+
+	/**
+	 * Secure printing became an opt-in in 1.0.1 (C2), defaulting off. For a *new* install that
+	 * is right. For a site that was already signing, flipping it off at upgrade would silently
+	 * stop signing sheets that chronicles rely on being signed - a behaviour change nobody
+	 * asked for, announced nowhere, discovered the next time someone printed.
+	 *
+	 * So: an install that already has a working certificate at upgrade time keeps signing. A
+	 * site with no certificate gets the documented default of off, and ticking the box is a
+	 * deliberate act either way.
+	 *
+	 * Found by 1.0.1's own pre-deploy trace, not by reading the design - the local install has
+	 * a certificate configured and stopped signing the moment the option landed.
+	 *
+	 * Idempotent: writes only when the option has never been set.
+	 */
+	private static function preserve_existing_signing_choice(): void {
+		if ( get_option( \BeyondElysium\Services\Pdf_Signer::OPT_IN_OPTION, null ) !== null ) {
+			return;
+		}
+
+		add_option( \BeyondElysium\Services\Pdf_Signer::OPT_IN_OPTION, \BeyondElysium\Services\Pdf_Signer::availability()['ok'] );
 	}
 
 	/**

@@ -8,7 +8,7 @@ import { useId } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import type { IdentityField, IdentityFieldDefinition } from '../../types';
 import SearchableSelect from '../shared/SearchableSelect';
-import AiAssistButton from '../shared/AiAssistButton';
+import HtmlEditor from '../shared/HtmlEditor';
 import './IdentityFieldEditor.css';
 
 export type IdentityFieldValue = string | number | string[] | null | undefined;
@@ -236,25 +236,24 @@ export function IdentityFieldEditor( {
 							>
 								{ field.name }
 							</label>
-							<textarea
+							{ /* Rich text since 1.0.1 D1 - the one identity field type that is
+							     prose rather than a value. HtmlEditor carries the AI Assist
+							     button itself, reading live editor content rather than a
+							     render-time snapshot. */ }
+							<HtmlEditor
 								id={ fieldId }
-								value={ textValue }
-								disabled={ readOnly }
-								onChange={ ( e ) =>
-									setField( field.name, e.target.value )
+								defaultValue={ textValue }
+								readOnly={ readOnly }
+								rows={ 6 }
+								onChange={ ( html ) =>
+									setField( field.name, html )
 								}
+								aiAssist={ {
+									capability: 'be_manage_characters',
+									fieldContext: 'npc_roleplaying_notes',
+									gameSlug,
+								} }
 							/>
-							{ ! readOnly && (
-								<AiAssistButton
-									capability="be_manage_characters"
-									fieldContext="npc_roleplaying_notes"
-									gameSlug={ gameSlug }
-									currentValue={ textValue }
-									onAccept={ ( suggestion ) =>
-										setField( field.name, suggestion )
-									}
-								/>
-							) }
 						</div>
 					);
 				}

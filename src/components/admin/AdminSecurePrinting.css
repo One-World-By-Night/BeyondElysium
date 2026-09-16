@@ -1,0 +1,71 @@
+/**
+ * Secure printing settings screen (1.0.1 C4). Mostly leans on Admin.css; what is here is the
+ * PEM blocks and the status table, which need monospace and real wrapping.
+ */
+
+.be-secure-printing__status th {
+	text-align: left;
+	white-space: nowrap;
+	padding-right: 1rem;
+}
+
+.be-secure-printing__code {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	padding: 0.75rem;
+	overflow-x: auto;
+	font-size: 0.85rem;
+	line-height: 1.5;
+}
+
+.be-secure-printing__note {
+	color: #8a6d00;
+	background: #fff8e6;
+	border: 1px solid #b8860b;
+	border-radius: 3px;
+	padding: 0.6rem 0.75rem;
+	margin: 0.5rem 0;
+}
+
+.be-secure-printing__toggle {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin: 0.5rem 0;
+}
+
+.be-secure-printing__generated textarea {
+	width: 100%;
+	font-family: Menlo, Consolas, monospace;
+	font-size: 0.75rem;
+	white-space: pre;
+	overflow-wrap: normal;
+	overflow-x: auto;
+}
+
+/* The two PEM blocks and the wp-config lines are the only things here that can be wider than
+   a phone; everything else stacks on its own. */
+@media ( max-width: 768px ) {
+
+	.be-secure-printing__status,
+	.be-secure-printing__status tbody,
+	.be-secure-printing__status tr,
+	.be-secure-printing__status th,
+	.be-secure-printing__status td {
+		display: block;
+		width: 100%;
+	}
+
+	.be-secure-printing__status th {
+		white-space: normal;
+		padding-right: 0;
+		font-weight: 600;
+	}
+
+	.be-secure-printing__status tr {
+		border-bottom: 1px solid #dcdcde;
+		padding-bottom: 0.5rem;
+		margin-bottom: 0.5rem;
+	}
+}

@@ -90,7 +90,7 @@
  * buttons past the card's edge. A cell's content now wraps under its label when it doesn't fit
  * beside it.
  */
-@container be-table ( max-width: 960px ) {
+@container be-table ( width < 960px ) {
 
 	.be-responsive-table thead {
 		display: none;

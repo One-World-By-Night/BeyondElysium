@@ -67,6 +67,149 @@ class St_Visibility {
 	}
 
 	/**
+	 * Strips `[ST]...[/ST]`-marked text from a plot in place - its
+	 * `description`, `cliffhanger`, `resolution_details` and
+	 * `resolution_impact`, all four rich text - for anyone who isn't a
+	 * Storyteller of the chronicle. `st_notes` is not handled here:
+	 * `Plots_Controller` removes that field wholesale for a non-manager,
+	 * which is stronger than marker-stripping.
+	 *
+	 * The two resolution fields were missed by 1.0.1 A1 and found by A2's own
+	 * coverage guard - they are ordinary rich text on the same form, written
+	 * once a plot closes, and were reaching every player unfiltered.
+	 *
+	 * @param object      $plot       A decoded plot row.
+	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
+	 * @param bool        $can_manage
+	 */
+	public static function filter_plot( object $plot, ?object $game, bool $can_manage ): void {
+		if ( $can_manage ) {
+			return;
+		}
+
+		$settings = $game->settings ?? null;
+		foreach ( [ 'description', 'cliffhanger', 'resolution_details', 'resolution_impact' ] as $column ) {
+			if ( isset( $plot->$column ) && is_string( $plot->$column ) ) {
+				$plot->$column = St_Filter::strip_html_for_game( $plot->$column, $settings );
+			}
+		}
+	}
+
+	/**
+	 * Strips `[ST]...[/ST]`-marked text from a plot entry's `content` in
+	 * place - every timeline entry, action, response, note and resolution -
+	 * for anyone who isn't a Storyteller of the chronicle.
+	 *
+	 * @param object      $entry      A decoded plot-entry row.
+	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
+	 * @param bool        $can_manage
+	 */
+	public static function filter_entry( object $entry, ?object $game, bool $can_manage ): void {
+		if ( $can_manage ) {
+			return;
+		}
+
+		if ( isset( $entry->content ) && is_string( $entry->content ) ) {
+			$entry->content = St_Filter::strip_html_for_game( $entry->content, $game->settings ?? null );
+		}
+	}
+
+	/**
+	 * Strips `[ST]...[/ST]`-marked text from a chronicle's own
+	 * `description` in place, for anyone who isn't a Storyteller of it.
+	 *
+	 * Rich text since 1.0.1 D1 (`wp_kses_post`), so this uses the
+	 * dangling-tag-safe HTML strip. The byte-offset one it used while the
+	 * field was still `sanitize_textarea_field` would happily cut a marker
+	 * that opened inside `<em>` and closed outside it, leaving the tag
+	 * unbalanced.
+	 *
+	 * @param object $game       A decoded game row, also its own settings source.
+	 * @param bool   $can_manage
+	 */
+	public static function filter_game( object $game, bool $can_manage ): void {
+		if ( $can_manage ) {
+			return;
+		}
+
+		if ( isset( $game->description ) && is_string( $game->description ) ) {
+			$game->description = St_Filter::strip_html_for_game( $game->description, $game->settings ?? null );
+		}
+	}
+
+	/**
+	 * Strips `[ST]...[/ST]`-marked text from a connection's `notes` in
+	 * place - the free text a Storyteller writes when tying an item or a
+	 * location to a character - for anyone who isn't a Storyteller.
+	 *
+	 * Plain text, never rich, so the byte-offset strip is exact.
+	 *
+	 * @param object      $connection A decoded connection row.
+	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
+	 * @param bool        $can_manage
+	 */
+	public static function filter_connection( object $connection, ?object $game, bool $can_manage ): void {
+		if ( $can_manage ) {
+			return;
+		}
+
+		if ( isset( $connection->notes ) && is_string( $connection->notes ) ) {
+			$connection->notes = St_Filter::strip_for_game( $connection->notes, $game->settings ?? null );
+		}
+	}
+
+	/**
+	 * Strips `[ST]...[/ST]`-marked text from one change record in place - the
+	 * submitter's own `notes`, the reviewing Storyteller's `review_notes`, and
+	 * the `reason` an approval rule attached - for anyone who isn't a
+	 * Storyteller of the chronicle.
+	 *
+	 * A player reads their own change history, so all three are player-visible
+	 * by design. Two of them are written by a Storyteller, and `notes` is too
+	 * whenever a Storyteller submits a correction on a player's behalf - so all
+	 * three can carry a marker pasted in from Storyteller-only text. Plain
+	 * text, never rich, so the byte-offset strip is exact.
+	 *
+	 * @param object      $change     A change row.
+	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
+	 * @param bool        $can_manage
+	 */
+	public static function filter_change( object $change, ?object $game, bool $can_manage ): void {
+		if ( $can_manage ) {
+			return;
+		}
+
+		$settings = $game->settings ?? null;
+		foreach ( [ 'notes', 'review_notes', 'reason' ] as $column ) {
+			if ( isset( $change->$column ) && is_string( $change->$column ) ) {
+				$change->$column = St_Filter::strip_for_game( $change->$column, $settings );
+			}
+		}
+	}
+
+	/**
+	 * Strips `[ST]...[/ST]`-marked text from a submission's `answer_note` in
+	 * place - the Storyteller's written answer to a player's question about an
+	 * uploaded sheet - for anyone who isn't a Storyteller.
+	 *
+	 * The note is both returned over REST and mailed to the player
+	 * (`Notifications`), so a marker left in it leaks twice over.
+	 *
+	 * @param object      $submission A submission row.
+	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
+	 * @param bool        $can_manage
+	 */
+	public static function filter_submission( object $submission, ?object $game, bool $can_manage ): void {
+		if ( $can_manage ) {
+			return;
+		}
+
+		if ( isset( $submission->answer_note ) && is_string( $submission->answer_note ) ) {
+			$submission->answer_note = St_Filter::strip_for_game( $submission->answer_note, $game->settings ?? null );
+		}
+	}
+
+	/**
 	 * Strips `[ST]...[/ST]`-marked text from a world object in place - its
 	 * `description`, `limitations`, and every text or string property its
 	 * type declares (an item's powers, a location's security, a boon's

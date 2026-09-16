@@ -533,7 +533,7 @@ class Game {
 		}
 		// Same "0"-is-truthy-in-JavaScript hazard as Schema_Block::decode_definition() (D53).
 		if ( $row && isset( $row->notifications_enabled ) ) {
-			$row->notifications_enabled = (int) $row->notifications_enabled;
+			$row->notifications_enabled = (bool) $row->notifications_enabled;
 		}
 		return $row;
 	}

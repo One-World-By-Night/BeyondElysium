@@ -691,9 +691,11 @@ class Schema_Block {
 		}
 		// $wpdb returns "0"/"1" strings, and "0" is truthy in JavaScript - uncast, the Schema
 		// Blocks editor saved every block it opened as storyteller_only (D53, D51's class).
+		// Cast to a real bool, not 0/1: a JSON boolean cannot be a truthy "0", so the whole
+		// bug class stops being expressible (owner ruling 2026-09-16, 1.0.1-workflow.md B1).
 		foreach ( [ 'is_system', 'storyteller_only' ] as $flag ) {
 			if ( isset( $row->$flag ) ) {
-				$row->$flag = (int) $row->$flag;
+				$row->$flag = (bool) $row->$flag;
 			}
 		}
 		return $row;

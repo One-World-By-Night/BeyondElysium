@@ -45,14 +45,14 @@ class BooleanFlagTypesThreadTest extends WP_UnitTestCase {
 		return rest_get_server()->dispatch( $request );
 	}
 
-	public function test_schema_block_flags_are_integers_over_rest(): void {
+	public function test_schema_block_flags_are_booleans_over_rest(): void {
 		$block = (array) $this->get( '/be/v1/schema-blocks/thread-flag-plain-block' )->get_data();
 
-		$this->assertSame( 0, $block['storyteller_only'], 'storyteller_only must be integer 0, not the truthy string "0".' );
-		$this->assertSame( 0, $block['is_system'], 'is_system must be integer 0, not the truthy string "0".' );
+		$this->assertSame( false, $block["storyteller_only"], "storyteller_only must be boolean false - a JSON boolean cannot be a truthy \"0\"." );
+		$this->assertSame( false, $block["is_system"], "is_system must be boolean false, not the truthy string \"0\"." );
 	}
 
-	public function test_schema_block_flags_are_integers_in_list_responses(): void {
+	public function test_schema_block_flags_are_booleans_in_list_responses(): void {
 		$rows = $this->get( '/be/v1/schema-blocks', [ 'per_page' => 100, 'search' => 'Plain Block' ] )->get_data();
 		$row  = null;
 		foreach ( $rows as $candidate ) {
@@ -63,29 +63,29 @@ class BooleanFlagTypesThreadTest extends WP_UnitTestCase {
 		}
 
 		$this->assertNotNull( $row );
-		$this->assertSame( 0, $row['storyteller_only'] );
-		$this->assertSame( 0, $row['is_system'] );
+		$this->assertSame( false, $row["storyteller_only"] );
+		$this->assertSame( false, $row["is_system"] );
 	}
 
 	public function test_a_real_storyteller_only_block_still_reads_as_one(): void {
 		Schema_Block::update( 'thread-flag-plain-block', [ 'storyteller_only' => 1 ] );
 		$block = Schema_Block::find_by_slug( 'thread-flag-plain-block' );
 
-		$this->assertSame( 1, $block->storyteller_only );
+		$this->assertSame( true, $block->storyteller_only );
 	}
 
-	public function test_creature_stack_is_system_is_an_integer(): void {
+	public function test_creature_stack_is_system_is_a_boolean(): void {
 		$stacks = $this->get( '/be/v1/creature-stacks', [ 'per_page' => 1 ] )->get_data();
 		$this->assertNotEmpty( $stacks, 'The test install seeds creature stacks.' );
 
-		$this->assertIsInt( ( (array) $stacks[0] )['is_system'] );
-		$this->assertIsInt( Creature_Stack::find_by_slug( ( (array) $stacks[0] )['slug'] )->is_system );
+		$this->assertIsBool( ( (array) $stacks[0] )["is_system"] );
+		$this->assertIsBool( Creature_Stack::find_by_slug( ( (array) $stacks[0] )["slug"] )->is_system );
 	}
 
-	public function test_game_notifications_enabled_is_an_integer(): void {
+	public function test_game_notifications_enabled_is_a_boolean(): void {
 		$game = (array) $this->get( '/be/v1/games/' . $this->game_slug )->get_data();
 
-		$this->assertSame( 0, $game['notifications_enabled'], 'notifications_enabled must be integer 0 so a disabled chronicle does not render as enabled.' );
-		$this->assertSame( 0, Game::find_by_slug( $this->game_slug )->notifications_enabled );
+		$this->assertSame( false, $game["notifications_enabled"], "notifications_enabled must be boolean false so a disabled chronicle does not render as enabled." );
+		$this->assertSame( false, Game::find_by_slug( $this->game_slug )->notifications_enabled );
 	}
 }

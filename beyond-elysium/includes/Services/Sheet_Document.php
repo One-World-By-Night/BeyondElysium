@@ -313,6 +313,20 @@ class Sheet_Document {
 			if ( is_array( $value ) ) {
 				$value = implode( ', ', array_map( 'strval', $value ) );
 			}
+			// A textarea field is rich text since 1.0.1 D1, and these rows are drawn as plain
+			// text by `Pdf_Writer` - so flatten the markup rather than printing tags onto a
+			// signed sheet. Block ends become line breaks so two paragraphs don't run together.
+			// Scoped to the one field type that can hold markup: every other type is stored
+			// through `Change_Validator::text()`, which strips tags, so a literal "<" there is
+			// a real character someone typed and must survive.
+			if ( ( $field->field_type ?? '' ) === 'textarea' && is_string( $value ) && $value !== '' ) {
+				$broken = preg_replace( '#<br\s*/?>|</(?:p|div|li|h[1-6]|tr)>#i', "\n", $value );
+				$value  = trim( html_entity_decode(
+					wp_strip_all_tags( $broken ?? $value ),
+					ENT_QUOTES | ENT_HTML5,
+					'UTF-8'
+				) );
+			}
 			$display = ( $value === null || $value === '' ) ? '—' : (string) $value;
 			$rows[]  = $field->name . ': ' . $display;
 		}

@@ -177,6 +177,7 @@ class Plugin {
 			new \BeyondElysium\REST\Point_Audit_Controller(),
 			new \BeyondElysium\REST\Setup_Status_Controller(),
 			new \BeyondElysium\REST\Ai_Assist_Controller(),
+			new \BeyondElysium\REST\Signing_Controller(),
 		];
 		foreach ( $controllers as $controller ) {
 			$controller->register_routes();

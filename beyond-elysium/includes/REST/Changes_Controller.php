@@ -10,6 +10,7 @@ use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Services\Change_Engine;
 use BeyondElysium\Services\Change_Validator;
 use BeyondElysium\Services\Cost_Engine;
+use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -136,6 +137,7 @@ class Changes_Controller extends Base_Controller {
 
 		$items    = Change::for_character( (int) $request['character_id'], $args );
 		$total    = Change::count_for_character( (int) $request['character_id'], $args );
+		$this->redact_changes( $items, $game );
 		$response = $this->success( $items );
 		return $this->paginate( $response, $total, $pagination['per_page'], $pagination['page'] );
 	}
@@ -231,6 +233,9 @@ class Changes_Controller extends Base_Controller {
 		}
 
 		$change = Change::find( $change_id );
+		if ( $change ) {
+			$this->redact_changes( [ $change ], $game );
+		}
 		return $this->success( $change, 201 );
 	}
 
@@ -279,6 +284,10 @@ class Changes_Controller extends Base_Controller {
 		$result = false;
 
 		if ( $new_status === 'approved' ) {
+			$catalog_denied = $this->catalog_capability_denied( $change );
+			if ( $catalog_denied ) {
+				return $catalog_denied;
+			}
 			$result = Change_Engine::approve( (int) $request['id'], get_current_user_id(), $notes, $token );
 		} else {
 			$result = Change_Engine::reject( (int) $request['id'], get_current_user_id(), $notes, $token );
@@ -441,7 +450,52 @@ class Changes_Controller extends Base_Controller {
 			$item->approval_level = $resolved['level'];
 		}
 
+		$this->redact_changes( $items, $game );
 		return $this->success( $items );
+	}
+
+	/**
+	 * The sharp edge of 1.0.1 D3. The Approval Queue is gated on `be_manage_characters`, but
+	 * approving a `propose_world_object` change *writes the chronicle's catalog*. Without this,
+	 * a role holding character-approval rights but no catalog rights could create catalog
+	 * entries simply by approving them.
+	 *
+	 * An HST and an AST hold both capabilities and are unaffected. A reviewer without the
+	 * catalog capability still sees the row and can reject it - they just cannot approve it.
+	 *
+	 * @param object $change
+	 * @return \WP_Error|null Null when approval may proceed.
+	 */
+	private function catalog_capability_denied( $change ) {
+		if ( ( $change->change_type ?? '' ) !== 'propose_world_object' ) {
+			return null;
+		}
+		if ( \BeyondElysium\Core\Authorization::can( 'be_manage_world_objects' ) ) {
+			return null;
+		}
+
+		return $this->error(
+			'catalog_permission_denied',
+			__( 'Approving this adds an entry to the chronicle\'s catalog, which needs item and location rights. You can still reject it.', 'beyond-elysium' ),
+			403
+		);
+	}
+
+	/**
+	 * Strips `[ST]`-marked text from every change in a list for a non-manager.
+	 *
+	 * A player reads their own change history, and two of its three free-text
+	 * fields are written by a Storyteller - so this runs on every route a
+	 * non-manager can reach, never on the manager-only review queue.
+	 *
+	 * @param array<object> $changes
+	 * @param object        $game
+	 */
+	private function redact_changes( array $changes, object $game ): void {
+		$can_manage = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
+		foreach ( $changes as $change ) {
+			St_Visibility::filter_change( $change, $game, $can_manage );
+		}
 	}
 
 	/**
@@ -476,6 +530,13 @@ class Changes_Controller extends Base_Controller {
 			$change    = $this->resolve_change( $change_id, $request['game_slug'] );
 
 			if ( is_wp_error( $change ) || $change->status !== 'pending' ) {
+				$skipped[] = $change_id;
+				continue;
+			}
+
+			// A catalog-writing proposal in a batch is skipped, not silently approved, when the
+			// reviewer lacks catalog rights - the same gate the single-change route applies.
+			if ( $this->catalog_capability_denied( $change ) ) {
 				$skipped[] = $change_id;
 				continue;
 			}

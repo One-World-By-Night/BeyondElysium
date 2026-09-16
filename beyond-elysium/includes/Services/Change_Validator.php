@@ -2,6 +2,8 @@
 
 namespace BeyondElysium\Services;
 
+use BeyondElysium\Models\World_Object;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -23,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
 class Change_Validator {
 
 	/** Change types the REST route accepts. `import_note` is written by the importer itself, never submitted. */
-	const REST_CHANGE_TYPES = [ 'add_trait', 'remove_trait', 'modify_trait', 'modify_resource', 'modify_identity', 'xp_earn', 'xp_adjust' ];
+	const REST_CHANGE_TYPES = [ 'add_trait', 'remove_trait', 'modify_trait', 'modify_resource', 'modify_identity', 'xp_earn', 'xp_adjust', 'propose_world_object' ];
 
 	/** Keys a trait_list entry may carry. */
 	const TRAIT_LIST_KEYS = [ 'name', 'count', 'specialization', 'note', 'custom', 'chosen_cost' ];
@@ -62,6 +64,11 @@ class Change_Validator {
 
 		if ( $type === 'xp_earn' || $type === 'xp_adjust' ) {
 			return self::validate_xp( $data );
+		}
+
+		// A proposed catalog item is not sheet data, so it names no block (1.0.1 D3).
+		if ( $type === 'propose_world_object' ) {
+			return self::validate_proposed_object( $data );
 		}
 
 		$block_slug = $data['block_slug'] ?? null;
@@ -119,6 +126,61 @@ class Change_Validator {
 	 * @param array $data
 	 * @return array
 	 */
+	/**
+	 * A player's proposed catalog item, location or rote (1.0.1 D3).
+	 *
+	 * Validated here, on the way in, rather than trusted at approval time - a Storyteller
+	 * approving from the queue should be approving something already known to be well-formed,
+	 * not discovering at write time that the object type was invented. The per-type property
+	 * rules are `World_Object`'s own, never a second copy of them.
+	 *
+	 * @param array $data
+	 * @return array
+	 */
+	private static function validate_proposed_object( array $data ): array {
+		$object_type = $data['object_type'] ?? '';
+		if ( ! is_string( $object_type ) || ! in_array( $object_type, World_Object::valid_types(), true ) ) {
+			return self::fail( 'invalid_param', 'Choose what kind of thing this is.' );
+		}
+
+		$name = is_string( $data['name'] ?? null ) ? self::text( $data['name'], 200 ) : '';
+		if ( $name === '' ) {
+			return self::fail( 'invalid_param', 'Give it a name.' );
+		}
+
+		$properties = $data['properties'] ?? [];
+		if ( ! is_array( $properties ) ) {
+			return self::fail( 'invalid_param', 'properties must be an object.' );
+		}
+
+		$problem = World_Object::validate_properties( $object_type, $properties );
+		if ( $problem !== null ) {
+			return self::fail( 'invalid_param', $problem );
+		}
+
+		// Validated here, sanitized at write time by `World_Object::create()` - which every
+		// catalog write already goes through, so there is no second copy of those rules here.
+		$normalized = [
+			'object_type' => $object_type,
+			'name'        => $name,
+			'properties'  => $properties,
+		];
+
+		// Description is rich text, the same as the catalog editor's own field.
+		foreach ( [ 'description', 'limitations' ] as $rich ) {
+			if ( isset( $data[ $rich ] ) && is_string( $data[ $rich ] ) ) {
+				$normalized[ $rich ] = mb_substr( trim( wp_kses_post( $data[ $rich ] ) ), 0, self::MAX_TEXT );
+			}
+		}
+		foreach ( [ 'rarity', 'cost' ] as $plain ) {
+			if ( isset( $data[ $plain ] ) && is_string( $data[ $plain ] ) ) {
+				$normalized[ $plain ] = self::text( $data[ $plain ], 100 );
+			}
+		}
+
+		return [ 'ok' => true, 'change_data' => $normalized ];
+	}
+
 	private static function validate_xp( array $data ): array {
 		$amount = self::to_int( $data['amount'] ?? null );
 		if ( $amount === null || $amount === 0 ) {
@@ -413,6 +475,13 @@ class Change_Validator {
 				if ( $value === null ) {
 					return self::fail( 'unknown_option', '"%1$s" is not a choice for %2$s.', [ self::text( $raw, 200 ), $name ] );
 				}
+			} elseif ( $type === 'textarea' ) {
+				// The one identity field type that is long-form prose rather than a value, so
+				// the one that gets rich text (1.0.1 D1). `self::text()` runs strip_tags(), which
+				// is why an NPC's roleplaying notes could never hold so much as a line break's
+				// worth of markup before this. Same allowlist as biography/notes and every plot
+				// free-text field; the length cap is unchanged.
+				$value = mb_substr( trim( wp_kses_post( $raw ) ), 0, self::MAX_TEXT );
 			} else {
 				$value = self::text( $raw );
 			}

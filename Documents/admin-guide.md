@@ -377,6 +377,78 @@ expired key is caught before you rely on it in the field. It never tests an alre
 silently; a key is never sent back to this page once saved, so testing it means re-entering
 it first.
 
+## Secure Printing
+
+**Beyond Elysium → System Config → Secure Printing.**
+
+Printing never refuses. With secure printing off, with no certificate installed, or on a host
+that cannot sign at all, sheets and reports still print through the same typesetter and come
+out looking the same — every page stamped UNSIGNED. An unsigned print can never be mistaken
+for a signed one, and a chronicle that will never have a certificate is not locked out of
+printing.
+
+A print is signed only when **both** are true:
+
+1. A usable certificate is configured, through three `wp-config.php` constants.
+2. An administrator has ticked **Sign printed sheets and reports** on that screen.
+
+The switch is separate from the certificate deliberately. A certificate arriving on the
+server isn't the same as a decision to sign with it — you might be testing one, or have
+inherited one from whoever ran the site before you. It is site-wide rather than per
+chronicle, because the certificate is site-wide; a per-chronicle switch would imply
+per-chronicle certificates, which multiplies the one genuinely delicate thing here.
+
+### Installing a certificate
+
+The plugin never holds your private key. It is never uploaded through the browser, never
+written to the database, and never stored in the uploads folder. Put the two files outside the
+web root over SFTP and point three constants at them:
+
+```php
+define( 'BE_PDF_SIGNING_CERT', '/home/you/private/be-signing.crt' );
+define( 'BE_PDF_SIGNING_KEY', '/home/you/private/be-signing.key' );
+define( 'BE_PDF_SIGNING_PASSPHRASE', 'your passphrase' );
+```
+
+Leave the third out if the key has no passphrase — that's a real configuration, not a
+mistake. With shell access, this is the command both production chronicles used:
+
+```sh
+openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 \
+  -keyout be-signing.key -out be-signing.crt -cipher aes-256-cbc
+```
+
+### Hosts with no shell
+
+Plenty of shared hosting gives you no command line, so `openssl req` is unavailable — and
+that, not knowing where to put a file, is what locks a chronicle out of signed printing for
+good. The screen will mint a self-signed pair **in memory** and hand it to you once, with the
+constants to paste. Nothing is written to the server or saved in the database. Copy both files
+before leaving the page; asking again mints a different certificate.
+
+This needs PHP's `openssl` extension, which is not an extra requirement the feature invents:
+a PDF is signed through that same extension, so a host without it cannot sign a sheet no
+matter where the certificate came from. Where it's missing, the screen says so rather than
+offering a button that cannot work.
+
+See the [Secure Printing](help/secure-printing.md) help page for the full walkthrough.
+
+## Players Proposing Items
+
+A player can propose an item, location or rote for their own character from **My Chronicle →
+Propose an Item**. It arrives as an ordinary change in the Approval Queue rather than a
+separate list.
+
+Approving one writes the chronicle's catalog, so it needs **both** `be_manage_characters`
+(to work the queue at all) and `be_manage_world_objects` (to write the catalog). An HST and
+an AST hold both. A reviewer holding character rights but not catalog rights sees the row and
+can reject it, but not approve it — otherwise character-approval rights would quietly become
+catalog-write rights.
+
+Approval creates the catalog row and the character's connection to it in one transaction:
+the player asked for their character to have the thing, so a catalog entry without the
+connection would only be half of what was approved.
+
 ## REST API
 
 Every read and write in the plugin goes through its REST API (`be/v1` namespace), which

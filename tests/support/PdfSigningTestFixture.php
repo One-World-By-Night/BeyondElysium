@@ -27,6 +27,13 @@ namespace BeyondElysium\Tests\Support;
 class PdfSigningTestFixture {
 
 	public static function ensure(): void {
+		// Secure printing is an opt-in since 1.0.1 C2, and a certificate alone no longer
+		// signs anything. Every caller of this fixture wants signing to actually happen, so
+		// the switch belongs here with the certificate rather than repeated in each test.
+		// Set before the early return: the constants survive a whole process, the option does
+		// not - a test that deletes it would otherwise silently unsign every later class.
+		update_option( \BeyondElysium\Services\Pdf_Signer::OPT_IN_OPTION, true );
+
 		if ( defined( 'BE_PDF_SIGNING_CERT' ) ) {
 			return;
 		}

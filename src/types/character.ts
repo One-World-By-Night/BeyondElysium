@@ -175,7 +175,10 @@ export type ChangeType =
 	| 'modify_identity'
 	| 'xp_earn'
 	| 'xp_adjust'
-	| 'import_note';
+	| 'import_note'
+	// A player proposing a catalog item, location or rote for their own character (1.0.1 D3).
+	// Not sheet data: approving it writes a world object and connects it to the character.
+	| 'propose_world_object';
 
 /**
  * The data carried by a single character change. Its shape

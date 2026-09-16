@@ -18,6 +18,7 @@ import { GameDashboard } from '../game/GameDashboard';
 import { GameCalendar } from '../game/GameCalendar';
 import { ReportCards } from '../game/ReportCards';
 import { SendGrapevineFile } from '../character/SendGrapevineFile';
+import ProposeWorldObject from '../world/ProposeWorldObject';
 import {
 	newCharacterUrl,
 	playerTabUrl,
@@ -80,6 +81,10 @@ export function MyChroniclePage() {
 		{
 			key: PLAYER_TABS.reports,
 			label: __( 'Reports', 'beyond-elysium' ),
+		},
+		{
+			key: PLAYER_TABS.proposeItem,
+			label: __( 'Propose an Item', 'beyond-elysium' ),
 		},
 	];
 
@@ -146,6 +151,24 @@ export function MyChroniclePage() {
 					/>
 
 					{ tab === PLAYER_TABS.sendFile && <SendGrapevineFile /> }
+
+					{ /* A proposal is attached to a character - "my character made a thing" - so it
+					needs one picked, the same way Sheet and Edit do (1.0.1 D3). */ }
+					{ tab === PLAYER_TABS.proposeItem &&
+						( characterId ? (
+							<ProposeWorldObject
+								key={ `${ gameSlug }-${ characterId }` }
+								gameSlug={ gameSlug }
+								characterId={ characterId }
+							/>
+						) : (
+							<p>
+								{ __(
+									'Pick a character on the Characters tab first - an item is proposed for one of your characters.',
+									'beyond-elysium'
+								) }
+							</p>
+						) ) }
 
 					{ tab === PLAYER_TABS.dashboard && (
 						<GameDashboard

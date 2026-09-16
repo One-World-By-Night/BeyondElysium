@@ -21,6 +21,7 @@ describe( 'canIn', () => {
 		be_manage_schemas: false,
 		be_manage_connections: false,
 		be_manage_boons: false,
+		be_manage_world_objects: false,
 	};
 
 	beforeEach( () => {

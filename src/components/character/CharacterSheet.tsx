@@ -614,10 +614,16 @@ export function CharacterSheet( {
 												className="be-character-sheet__print-unsigned"
 												role="status"
 											>
-												{ __(
-													'This site has no signing certificate yet, so prints are marked UNSIGNED.',
-													'beyond-elysium'
-												) }
+												{ pdfAvailability.code ===
+												'secure_printing_off'
+													? __(
+															'Secure printing is switched off for this site, so prints are marked UNSIGNED.',
+															'beyond-elysium'
+													  )
+													: __(
+															'This site has no signing certificate yet, so prints are marked UNSIGNED.',
+															'beyond-elysium'
+													  ) }
 											</p>
 										) }
 									<button

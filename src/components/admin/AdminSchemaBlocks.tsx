@@ -57,7 +57,7 @@ const EMPTY_FORM = {
 	slug: '',
 	name: '',
 	section_type: 'trait_list' as SectionType,
-	storyteller_only: 0 as 0 | 1,
+	storyteller_only: false,
 	definition: DEFAULT_DEFINITION.trait_list,
 };
 
@@ -133,7 +133,7 @@ export function AdminSchemaBlocks() {
 			slug: block.slug,
 			name: block.name,
 			section_type: block.section_type,
-			storyteller_only: block.storyteller_only ? 1 : 0,
+			storyteller_only: !! block.storyteller_only,
 			definition: block.definition as unknown as Record<
 				string,
 				unknown
@@ -447,7 +447,7 @@ export function AdminSchemaBlocks() {
 							onChange={ ( e ) =>
 								setForm( {
 									...form,
-									storyteller_only: e.target.checked ? 1 : 0,
+									storyteller_only: e.target.checked,
 								} )
 							}
 						/>

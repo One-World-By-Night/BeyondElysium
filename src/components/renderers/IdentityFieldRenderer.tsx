@@ -30,14 +30,32 @@ export function IdentityFieldRenderer( {
 	return (
 		<dl className="be-identity-fields" data-block-slug={ blockSlug }>
 			{ definition.fields.map( ( field ) => {
+				const value = data[ field.name ];
 				const display =
-					identityValueText( data[ field.name ] ) ??
-					__( '—', 'beyond-elysium' );
+					identityValueText( value ) ?? __( '—', 'beyond-elysium' );
+
+				// A textarea field is rich text (1.0.1 D1) and has to render as markup or
+				// the reader sees escaped tags. Safe here for the same reason biography and
+				// notes are on the character sheet: the server stored it through
+				// wp_kses_post(), and St_Visibility strips [ST] text before it is ever sent.
+				const isRich =
+					field.field_type === 'textarea' &&
+					typeof value === 'string' &&
+					value !== '';
 
 				return (
 					<div className="be-identity-fields__row" key={ field.name }>
 						<dt>{ field.name }</dt>
-						<dd>{ display }</dd>
+						{ isRich ? (
+							<dd
+								className="be-identity-fields__prose"
+								dangerouslySetInnerHTML={ {
+									__html: value as string,
+								} }
+							/>
+						) : (
+							<dd>{ display }</dd>
+						) }
 					</div>
 				);
 			} ) }

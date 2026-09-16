@@ -8,7 +8,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { describeChronicleContent } from '../../lib/chronicleContent';
-import AiAssistButton from '../shared/AiAssistButton';
+import HtmlEditor from '../shared/HtmlEditor';
 import type { Game } from '../../types';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
@@ -330,30 +330,37 @@ export function AdminGames() {
 							}
 						/>
 					</label>
-					<label>
-						{ __( 'Description', 'beyond-elysium' ) }
-						<textarea
-							value={ form.description }
-							onChange={ ( e ) =>
-								setForm( {
-									...form,
-									description: e.target.value,
-								} )
+					{ /* Rich text since 1.0.1 D1. HtmlEditor is uncontrolled - TinyMCE owns the
+					     field after mount - so the id carries the chronicle being edited: switching
+					     rows remounts it rather than leaving the previous chronicle's prose behind. */ }
+					<div className="be-admin__form-field">
+						<span>{ __( 'Description', 'beyond-elysium' ) }</span>
+						<HtmlEditor
+							id={ `be-game-description-${
+								editingSlug ?? 'new'
+							}` }
+							defaultValue={ form.description }
+							onChange={ ( description ) =>
+								setForm( ( current ) => ( {
+									...current,
+									description,
+								} ) )
+							}
+							rows={ 6 }
+							// No chronicle exists yet during creation for a chronicle-scoped
+							// AI request to target.
+							aiAssist={
+								editingSlug !== null
+									? {
+											capability: 'be_manage_games',
+											fieldContext:
+												'chronicle_description',
+											gameSlug: editingSlug,
+									  }
+									: undefined
 							}
 						/>
-						{ /* No chronicle exists yet during creation for a chronicle-scoped AI request to target. */ }
-						{ editingSlug !== null && (
-							<AiAssistButton
-								capability="be_manage_games"
-								fieldContext="chronicle_description"
-								gameSlug={ editingSlug }
-								currentValue={ form.description }
-								onAccept={ ( description ) =>
-									setForm( { ...form, description } )
-								}
-							/>
-						) }
-					</label>
+					</div>
 					<div className="be-admin__form-actions">
 						<button type="submit" disabled={ saving }>
 							{ saving

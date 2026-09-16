@@ -203,7 +203,14 @@ class SheetsControllerThreadTest extends WP_UnitTestCase {
 		);
 	}
 
-	public function test_availability_route_reports_ok_when_signing_is_configured(): void {
+	/**
+	 * The route answers "will this print be signed", which since 1.0.1 C2 means the
+	 * site-wide opt-in as well as the certificate - so a configured site that has not
+	 * switched secure printing on correctly reports not-ok.
+	 */
+	public function test_availability_route_reports_ok_when_signing_is_configured_and_switched_on(): void {
+		update_option( \BeyondElysium\Services\Pdf_Signer::OPT_IN_OPTION, true );
+
 		wp_set_current_user( $this->player_id );
 		$request = new WP_REST_Request( 'GET', '/be/v1/sheets-controller-test/sheets/availability' );
 		$request->set_url_params( [ 'game_slug' => 'sheets-controller-test' ] );
@@ -211,6 +218,20 @@ class SheetsControllerThreadTest extends WP_UnitTestCase {
 
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertTrue( $response->get_data()['ok'] );
+
+		delete_option( \BeyondElysium\Services\Pdf_Signer::OPT_IN_OPTION );
+	}
+
+	public function test_availability_route_reports_not_ok_while_secure_printing_is_off(): void {
+		delete_option( \BeyondElysium\Services\Pdf_Signer::OPT_IN_OPTION );
+
+		wp_set_current_user( $this->player_id );
+		$request = new WP_REST_Request( 'GET', '/be/v1/sheets-controller-test/sheets/availability' );
+		$request->set_url_params( [ 'game_slug' => 'sheets-controller-test' ] );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertFalse( $response->get_data()['ok'] );
+		$this->assertSame( 'secure_printing_off', $response->get_data()['code'] );
 	}
 
 	public function test_more_than_fifty_character_ids_is_rejected(): void {

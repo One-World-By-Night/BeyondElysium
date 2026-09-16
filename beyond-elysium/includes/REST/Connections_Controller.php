@@ -2,11 +2,13 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Core\Authorization;
 use BeyondElysium\Database\Manager;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Plot;
+use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -80,6 +82,10 @@ class Connections_Controller extends Base_Controller {
 		$entity_type = $request->get_param( 'entity_type' );
 		$entity_id   = $request->get_param( 'entity_id' );
 
+		// A connection's notes are free text a Storyteller writes when tying an item or a
+		// location to a character, and may carry [ST] markers like any other prose field.
+		$can_manage = Authorization::check_request( 'be_manage_connections', $request );
+
 		if ( $entity_type && $entity_id ) {
 			$connections = array_values( array_filter(
 				Connection::for_entity( (string) $entity_type, (int) $entity_id ),
@@ -87,6 +93,9 @@ class Connections_Controller extends Base_Controller {
 					return (int) $connection->game_id === (int) $game->id;
 				}
 			) );
+			foreach ( $connections as $connection ) {
+				St_Visibility::filter_connection( $connection, $game, $can_manage );
+			}
 			return $this->success( $connections );
 		}
 
@@ -111,6 +120,10 @@ class Connections_Controller extends Base_Controller {
 			$connections = array_values( array_filter( $connections, static function ( $connection ) use ( $target_id ) {
 				return (int) $connection->target_id === (int) $target_id;
 			} ) );
+		}
+
+		foreach ( $connections as $connection ) {
+			St_Visibility::filter_connection( $connection, $game, $can_manage );
 		}
 
 		return $this->success( $connections );

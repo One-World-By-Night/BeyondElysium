@@ -1,7 +1,7 @@
 /**
  * The Storyteller-facing fixed page (page-consolidation-design.md): a chronicle
- * switcher plus tabs for Dashboard, Approval Queue, Plots & Rumors, and Boon
- * Ledger - replacing four separate pages that each used to duplicate per
+ * switcher plus tabs for Dashboard, Approval Queue, Plots & Rumors, Boon Ledger, and
+ * Items & Locations - replacing separate pages that each used to duplicate per
  * chronicle. Each tab hides itself when `useChronicleSwitcher()`'s per-chronicle
  * capabilities say the current user doesn't hold it in the currently selected
  * chronicle - an AST who only narrates one chronicle sees fewer tabs there than
@@ -17,6 +17,7 @@ import { GameDashboard } from '../game/GameDashboard';
 import { ApprovalQueue } from '../changes/ApprovalQueue';
 import { PlotManager } from '../apr/PlotManager';
 import { BoonLedger } from '../world/BoonLedger';
+import { WorldObjectManager } from '../world/WorldObjectManager';
 import {
 	playerTabUrl,
 	readTabFromUrl,
@@ -63,6 +64,10 @@ export function StorytellerToolkitPage() {
 		capabilities.be_manage_boons && {
 			key: STORYTELLER_TABS.boonLedger,
 			label: __( 'Boon Ledger', 'beyond-elysium' ),
+		},
+		capabilities.be_manage_world_objects && {
+			key: STORYTELLER_TABS.worldObjects,
+			label: __( 'Items & Locations', 'beyond-elysium' ),
 		},
 	].filter( Boolean ) as Tab[];
 
@@ -138,6 +143,13 @@ export function StorytellerToolkitPage() {
 								key={ gameSlug }
 								gameSlug={ gameSlug }
 								capabilities={ capabilities }
+							/>
+						) }
+
+						{ tab === STORYTELLER_TABS.worldObjects && (
+							<WorldObjectManager
+								key={ gameSlug }
+								gameSlug={ gameSlug }
 							/>
 						) }
 					</>

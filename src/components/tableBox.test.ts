@@ -72,7 +72,26 @@ test( 'cards follow the width of the table box, not the screen', () => {
 		/\.be-table-box\s*\{[^}]*container:\s*be-table\s*\/\s*inline-size/
 	);
 	expect( css ).toMatch(
-		/@container be-table \( max-width: 960px \) \{\s*\.be-responsive-table thead/
+		/@container be-table \( width < 960px \) \{\s*\.be-responsive-table thead/
 	);
 	expect( css ).not.toMatch( /@media[^{]*\{\s*\.be-responsive-table/ );
+} );
+
+/**
+ * The boundary is exclusive on purpose, and the admin cap must stay clear of it.
+ *
+ * `.be-admin` used to cap at exactly 960px while the card rule read `max-width: 960px`, which
+ * matches *at* 960 - so every wp-admin table pinned itself to the cap and then stacked every
+ * row into a card, on every desktop, for the whole of 1.0.0. Two independent changes keep that
+ * from recurring; this pins both.
+ */
+test( 'a wp-admin table is never pinned exactly to the card boundary', () => {
+	const adminCss = readFileSync(
+		join( __dirname, 'admin/Admin.css' ),
+		'utf8'
+	);
+
+	const cap = adminCss.match( /\.be-admin\s*\{[^}]*max-width:\s*(\d+)px/ );
+	expect( cap ).not.toBeNull();
+	expect( Number( cap![ 1 ] ) ).toBeGreaterThan( 960 );
 } );

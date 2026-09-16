@@ -72,6 +72,9 @@ npm run lint:css --silent
 echo "==> npm test"
 npm test --silent
 
+echo "==> doc links"
+node bin/check-doc-links.js
+
 echo "==> npm run build"
 npm run build --silent
 
