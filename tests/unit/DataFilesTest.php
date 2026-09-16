@@ -49,7 +49,7 @@ class DataFilesTest extends TestCase {
 	 */
 	public function test_runtime_copy_matches_the_original( string $name, string $origin ): void {
 		$copy     = BE_PLUGIN_PATH . '/data/' . $name;
-		$original = BE_PLUGIN_ROOT . '/' . $origin;
+		$original = be_reference_path( $origin );
 
 		if ( ! file_exists( $original ) ) {
 			$this->markTestSkipped( "Reference archive {$origin} is not present in this checkout." );
@@ -83,7 +83,7 @@ class DataFilesTest extends TestCase {
 		);
 
 		$this->assertDirectoryExists(
-			BE_PLUGIN_ROOT . '/GV301Source',
+			BE_REPO_ROOT . '/GV301Source',
 			'The reference archive should still exist at the repo root; only its location proves the exclusion.'
 		);
 	}

@@ -35,7 +35,7 @@ class ImportControllerThreadTest extends WP_UnitTestCase {
 	}
 
 	private function path( string $relative ): string {
-		return BE_PLUGIN_ROOT . '/' . $relative;
+		return be_reference_path( $relative );
 	}
 
 	private function upload_request( string $file_path ): WP_REST_Request {

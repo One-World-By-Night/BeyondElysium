@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 class GvmParserTest extends TestCase {
 
 	private function path( string $relative ): string {
-		return BE_PLUGIN_ROOT . '/' . $relative;
+		return be_reference_path( $relative );
 	}
 
 	// -------------------------------------------------------------------------

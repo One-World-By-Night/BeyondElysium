@@ -11,9 +11,24 @@
 
 define( 'BE_TESTS_DIR', __DIR__ );
 
-// The repository root. Reference material a test reads directly - GV301Source/,
-// samples/, tests/fixtures/ - lives here, outside the shippable plugin.
+// The code root - `code/`, everything that goes to the public repository and nothing else.
+// tests/fixtures/ lives here, as does src/ and the plugin itself.
 define( 'BE_PLUGIN_ROOT', dirname( __DIR__ ) );
+
+// The private repository root, one level above the code root. Reference material a test
+// reads directly but never ships - GV301Source/ and samples/ - lives here. In the public
+// repository there is nothing above the code root, so these paths simply do not exist and
+// the tests that read them skip, exactly as they already do when samples/ is absent.
+define( 'BE_REPO_ROOT', dirname( BE_PLUGIN_ROOT ) );
+
+/**
+ * Resolves a reference path a test reads directly. GV301Source/ and samples/ are private
+ * and sit above the code root; everything else is inside it.
+ */
+function be_reference_path( string $relative ): string {
+	$private = strpos( $relative, 'GV301Source/' ) === 0 || strpos( $relative, 'samples/' ) === 0;
+	return ( $private ? BE_REPO_ROOT : BE_PLUGIN_ROOT ) . '/' . $relative;
+}
 
 // The plugin itself, which since the Step 10h restructure is a subfolder of the repo
 // rather than the repo root. Everything that ships lives under this path.

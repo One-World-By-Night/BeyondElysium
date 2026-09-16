@@ -1,0 +1,12 @@
+# Level 8's null and false handling, held at zero (1.0.0-review F-020): a lookup, decode, or
+# encode whose null or false result is used as if it had answered. The rest of what levels 6-8
+# report - array value types, properties on plain row objects - is not gated here; that waits
+# for phpstan.neon's own level to rise.
+includes:
+    - phpstan.neon
+
+parameters:
+    level: 8
+    ignoreErrors:
+        - '#^(?!.*\b(?:null|false)\b)#s'
+    reportUnmatchedIgnoredErrors: false

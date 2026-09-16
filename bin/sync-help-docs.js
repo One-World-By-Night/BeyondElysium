@@ -32,25 +32,30 @@ const GUIDE_SLUGS = {
 	'rest-api': 'rest-api-reference',
 };
 
-function rewriteLinks(markdown, allSlugs) {
+/**
+ * Resolves a source file's own markdown links to live site URLs.
+ *
+ * The two document sets sit one directory apart, so the same link shape means opposite
+ * things depending on which set the file belongs to:
+ *   - in a help page:  `foo.md` is a sibling help page, `../foo.md` is a guide
+ *   - in a guide:      `foo.md` is a sibling guide,     `help/foo.md` is a help page
+ */
+function rewriteLinks(markdown, allSlugs, isGuide = false) {
 	const unresolved = [];
 	const rewritten = markdown.replace(
-		/\]\((\.\.\/)?([a-z0-9-]+)\.md(#[^)]*)?\)/g,
-		(full, upLevel, base, anchor) => {
+		/\]\((\.\.\/|help\/)?([a-z0-9-]+)\.md(#[^)]*)?\)/g,
+		(full, prefix, base, anchor) => {
 			anchor = anchor || '';
+			const wantsGuide = isGuide ? !prefix : prefix === '../';
 			let slug;
-			if (upLevel) {
+			if (wantsGuide) {
 				slug = GUIDE_SLUGS[base];
-				if (!slug) {
-					unresolved.push(full);
-					return full;
-				}
 			} else {
-				if (!allSlugs.has(base)) {
-					unresolved.push(full);
-					return full;
-				}
-				slug = base;
+				slug = allSlugs.has(base) ? base : undefined;
+			}
+			if (!slug) {
+				unresolved.push(full);
+				return full;
 			}
 			return `](${SITE}/docs/${slug}/${anchor})`;
 		}
@@ -125,6 +130,17 @@ function main() {
 			allUnresolved.push({ file, unresolved });
 		}
 		docs.push({ slug, title, content: convert(rewritten) });
+	}
+
+	// The four top-level guides, from one directory up, under their own live slugs.
+	for (const [ base, slug ] of Object.entries(GUIDE_SLUGS)) {
+		const file = `${base}.md`;
+		const raw = fs.readFileSync(path.join(HELP_DIR, '..', file), 'utf8');
+		const { rewritten, unresolved } = rewriteLinks(raw, allSlugs, true);
+		if (unresolved.length) {
+			allUnresolved.push({ file, unresolved });
+		}
+		docs.push({ slug, title: extractTitle(raw), content: convert(rewritten) });
 	}
 
 	fs.mkdirSync(path.dirname(OUT), { recursive: true });
