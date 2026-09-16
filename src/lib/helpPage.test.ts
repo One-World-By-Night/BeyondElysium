@@ -59,7 +59,7 @@ describe( 'helpTarget', () => {
 	} );
 
 	it( 'follows nothing it cannot open', () => {
-		expect( helpTarget( '../CLAUDE.md' ) ).toBeNull();
+		expect( helpTarget( '../README.md' ) ).toBeNull();
 		expect( helpTarget( '../../includes/Core/Plugin.php' ) ).toBeNull();
 		expect( helpTarget( 'sub/dir.md' ) ).toBeNull();
 	} );
