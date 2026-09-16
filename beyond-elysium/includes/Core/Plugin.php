@@ -40,6 +40,10 @@ class Plugin {
 		// Cleans up be_game_members rows when a user is deleted, single-site or multisite.
 		add_action( 'deleted_user', [ '\BeyondElysium\Models\Game_Member', 'remove_user_everywhere' ] );
 
+		// Tells WordPress which tables belong to this plugin, so deleting a subsite takes them
+		// with it (1.0.2). A no-op on a single-site install.
+		Multisite::register();
+
 		// Runs Schema::maybe_upgrade() on init, once the rewrite system is available.
 		add_action( 'init', [ '\BeyondElysium\Database\Schema', 'maybe_upgrade' ] );
 	}
