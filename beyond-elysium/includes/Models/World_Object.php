@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * keys are validated per type against the schema defined in
  * Services/world-object-schemas.php.
  *
- * @see BE_PROCESS/workflow-0.7.md Step 1
+ * @see BE_PROCESS/releases/workflow-0.7.md Step 1
  */
 class World_Object {
 

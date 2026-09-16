@@ -15,7 +15,7 @@ use WP_UnitTestCase;
  * verify-embedded one (the two necessarily differ, since each carries its
  * own unique code), and that no request here requires being logged in.
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-7, §6.3
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-7, §6.3
  */
 class VerifyControllerThreadTest extends WP_UnitTestCase {
 

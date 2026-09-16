@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
  * editing a demon character whose House/Faction showed as "-". Ground truth for every list
  * below came from GV301Source/Code/Grapevine Menus XML.gvm, not invented.
  *
- * @see BE_PROCESS/GV-SOURCEMAP.md
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md
  */
 class IdentityFieldOptionsTest extends TestCase {
 

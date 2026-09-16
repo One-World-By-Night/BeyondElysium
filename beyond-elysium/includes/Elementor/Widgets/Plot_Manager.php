@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  * and a default status filter, and renders a single mount-point <div> that
  * the front-end script hydrates with the PlotManager React component.
  *
- * @see BE_PROCESS/workflow-0.5.md Step 7a
+ * @see BE_PROCESS/releases/workflow-0.5.md Step 7a
  */
 class Plot_Manager extends Widget_Base {
 

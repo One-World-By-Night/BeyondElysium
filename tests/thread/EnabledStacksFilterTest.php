@@ -16,7 +16,7 @@ use WP_UnitTestCase;
  * sheet, and accept an approval against it - while the create picker offers
  * one option and a `werewolf` POST returns 400.
  *
- * @see BE_PROCESS/guided-chronicle-setup-design.md §6.2
+ * @see BE_PROCESS/design/guided-chronicle-setup-design.md §6.2
  */
 class EnabledStacksFilterTest extends WP_UnitTestCase {
 

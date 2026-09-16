@@ -26,7 +26,7 @@ defined( 'ABSPATH' ) || exit;
  * the same shape `Trait_Mapper` and `Power_Display` read: `items`, a list of objects
  * each optionally carrying `group`, `subgroup`, and `category`.
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 2d, Section 3, SP-3
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 2d, Section 3, SP-3
  */
 class Trait_Grouping {
 

@@ -12,9 +12,9 @@ defined( 'ABSPATH' ) || exit;
  * (Action_Allocator::catalog_sources(), Rumor_Generator::character_influences(),
  * Query_Engine::catalog_sources()/block_is_atomic()) that called
  * Schema_Block::find_by_slug() and were therefore blind to a chronicle's own
- * fork of the block - see BE_PROCESS/background-ledger-apr-design.md §3.1.
+ * fork of the block - see BE_PROCESS/design/background-ledger-apr-design.md §3.1.
  *
- * @see BE_PROCESS/background-ledger-apr-design.md §5.2-5.3
+ * @see BE_PROCESS/design/background-ledger-apr-design.md §5.2-5.3
  */
 class Backgrounds_Catalog {
 

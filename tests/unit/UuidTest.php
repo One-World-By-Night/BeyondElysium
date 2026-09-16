@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * UUIDv7 generation and validation (Decision 024, RFC 9562).
  *
- * @see BE_PROCESS/workflow-0.2.1.md Step 3
+ * @see BE_PROCESS/releases/workflow-0.2.1.md Step 3
  */
 class UuidTest extends TestCase {
 

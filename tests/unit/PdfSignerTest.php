@@ -38,7 +38,7 @@ use PHPUnit\Framework\TestCase;
  * (confirmed the hard way: annotating the class instead of each method here
  * let `BE_PDF_SIGNING_CERT` leak between methods again).
  *
- * @see BE_PROCESS/signed-pdf-design.md §3c, SP-6
+ * @see BE_PROCESS/design/signed-pdf-design.md §3c, SP-6
  */
 class PdfSignerTest extends TestCase {
 

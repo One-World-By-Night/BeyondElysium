@@ -10,7 +10,7 @@ use WP_UnitTestCase;
  * plot must not be able to set `initiated_by`, `status` or `st_notes` regardless of what
  * the request body sends (workflow-0.5.md Step 2c/2e).
  *
- * @see BE_PROCESS/workflow-0.5.md Step 2
+ * @see BE_PROCESS/releases/workflow-0.5.md Step 2
  */
 class PlotsControllerTest extends WP_UnitTestCase {
 

@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * component. The REST route behind it (`Reports_Controller::get_document()`)
  * enforces `be_view_reports`; this widget only places the mount point.
  *
- * @see BE_PROCESS/DECISIONLOG.md Decision 094
+ * @see BE_PROCESS/reference/DECISIONLOG.md Decision 094
  */
 class House_Rules extends Widget_Base {
 

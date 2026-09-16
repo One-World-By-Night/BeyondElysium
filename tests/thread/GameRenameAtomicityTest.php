@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
  * `autocommit = 0` for the life of every test it wraps, which is precisely the
  * condition that makes a broken nested-transaction pattern indistinguishable
  * from a correct one - both would take the SAVEPOINT branch regardless.
- * `Game::rename()`'s own atomicity claim (BE_PROCESS/chronicle-rename-design.md
+ * `Game::rename()`'s own atomicity claim (BE_PROCESS/design/chronicle-rename-design.md
  * §7.2: one `Transaction::begin()`, real rollback on failure) is only
  * provable under real `autocommit = 1`.
  *
@@ -34,7 +34,7 @@ class GameRenameAtomicityTest extends TestCase {
 
 	public static function setUpBeforeClass(): void {
 		if ( ! defined( 'BE_WP_TESTS_AVAILABLE' ) || ! BE_WP_TESTS_AVAILABLE ) {
-			self::markTestSkipped( 'WP_TESTS_DIR not configured - see BE_PROCESS/PLATFORM.md.' );
+			self::markTestSkipped( 'WP_TESTS_DIR not configured - see BE_PROCESS/now/PLATFORM.md.' );
 		}
 	}
 

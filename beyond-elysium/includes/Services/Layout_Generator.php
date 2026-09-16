@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * default-template seeder. A TypeScript equivalent covers the client-side path and
  * must stay in parity with this implementation; see tests/unit/LayoutGeneratorParityTest.php.
  *
- * @see BE_PROCESS/workflow-0.3.md Step 4f, 8b-ii
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 4f, 8b-ii
  */
 class Layout_Generator {
 

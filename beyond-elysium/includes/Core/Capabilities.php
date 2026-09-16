@@ -50,7 +50,7 @@ class Capabilities {
 		'be_customize_sheet'     => [ 'administrator', 'editor' ],
 		// Chronicle-scoped like be_manage_characters: create/edit/delete approval overrides.
 		'be_manage_approval_rules' => [ 'administrator', 'editor' ],
-		// A fifth chronicle role, `boons` (BE_PROCESS/0.99.2-workflow.md), needs a
+		// A fifth chronicle role, `boons` (BE_PROCESS/releases/0.99.2-workflow.md), needs a
 		// narrower capability than be_manage_world_objects, which also covers items,
 		// locations and rotes - granting that would hand a Harpy everything, not just boons.
 		// Authorization::check_request() gates on the SITE-WIDE grant here first, then

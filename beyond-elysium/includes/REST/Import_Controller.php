@@ -35,7 +35,7 @@ defined( 'ABSPATH' ) || exit;
  * the trait catalog does not cover. Re-committing an already-committed job
  * returns the original result rather than importing a second time.
  *
- * @see BE_PROCESS/workflow-0.8.md Step 6, Step 9
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 6, Step 9
  */
 class Import_Controller extends Base_Controller {
 
@@ -901,7 +901,7 @@ class Import_Controller extends Base_Controller {
 	 * blood-magic sibling tiered_power block and then a combo/ritae
 	 * sibling trait_list block when the primary resolution comes back
 	 * unresolved. A raw "{Tradition}: {Path}" name (Blood Magic moved out
-	 * of vampire-disciplines, BE_PROCESS/0.99.2-workflow.md) or a held
+	 * of vampire-disciplines, BE_PROCESS/releases/0.99.2-workflow.md) or a held
 	 * Combo Discipline/Ritae power appears as a flat entry in the same raw
 	 * list as an ordinary power, distinguished only by matching a name in
 	 * the sibling catalog.

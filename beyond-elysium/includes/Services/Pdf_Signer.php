@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
  * passphrase" (an `-nodes`/`-noenc`-generated key), not a misconfiguration -
  * so an existing unencrypted key keeps working rather than being stranded.
  *
- * @see BE_PROCESS/signed-pdf-design.md §3c
+ * @see BE_PROCESS/design/signed-pdf-design.md §3c
  */
 class Pdf_Signer {
 

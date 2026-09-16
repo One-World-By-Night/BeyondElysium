@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  * endpoint that finds the effective template for a creature stack and
  * template type, generating a fallback layout when neither exists.
  *
- * @see BE_PROCESS/workflow-0.3.md Step 2
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 2
  */
 class Templates_Controller extends Base_Controller {
 

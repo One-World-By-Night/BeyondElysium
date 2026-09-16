@@ -35,7 +35,7 @@ class Seeder {
 
 	/**
 	 * Path to the MET-Mechanics CSV, relative to this file. Layered on top of the GVM-sourced
-	 * blocks it covers - see apply_met_csv_overrides() and BE_PROCESS/workflow-0.10.md. Missing
+	 * blocks it covers - see apply_met_csv_overrides() and BE_PROCESS/releases/workflow-0.10.md. Missing
 	 * or malformed falls back to exactly today's GVM-only behavior, same as a missing GVM file
 	 * falls back to hardcoded_blocks().
 	 */
@@ -43,7 +43,7 @@ class Seeder {
 
 	/**
 	 * Path to the real Mage Rotes exchange file, relative to this file. Closes the
-	 * BE_PROCESS/0.99.2-workflow.md "`mage-rotes` ships as an empty catalog" defect - the
+	 * BE_PROCESS/releases/0.99.2-workflow.md "`mage-rotes` ships as an empty catalog" defect - the
 	 * data (201 real rotes) and the reader (Services\GEX_Xml_Parser, already tested against
 	 * this exact file) both already existed; nothing had ever joined them. Missing or
 	 * malformed falls back to the pre-existing empty catalog, same graceful-degradation
@@ -56,7 +56,7 @@ class Seeder {
 	 * plus category data for the 67 that match the existing 201 GEX rotes, as measured in
 	 * Decision 093), relative to this file. Generated once, offline, by `tools/grimoire/` (repo root, outside this
 	 * shippable subfolder) - never a runtime PDF read. See
-	 * BE_PROCESS/mage-rotes-grimoire-design.md §8. Missing or malformed falls back to the
+	 * BE_PROCESS/design/mage-rotes-grimoire-design.md §8. Missing or malformed falls back to the
 	 * pre-existing base catalog unchanged, same graceful-degradation style as every other
 	 * seeded source file.
 	 */
@@ -1032,7 +1032,7 @@ class Seeder {
 	 * Thaumaturgy, Necromancy, ...); every row with a real Group value is a
 	 * Blood Magic path (Path of Blood, Lure of Flames, ...) and is routed to
 	 * vampire-blood-magic instead - see build_met_blood_magic_powers() and
-	 * BE_PROCESS/0.99.2-workflow.md's "Blood magic" section for why paths
+	 * BE_PROCESS/releases/0.99.2-workflow.md's "Blood magic" section for why paths
 	 * live apart from disciplines rather than staying prefixed by tradition.
 	 *
 	 * @param array $csv MET_CSV_Parser::parse_file()'s return.
@@ -1378,8 +1378,8 @@ class Seeder {
 	 * a curly apostrophe is straightened and a leading "a/an/the" is
 	 * stripped - see blood_magic_path_key().
 	 *
-	 * See BE_PROCESS/0.99.2-workflow.md's "Blood magic" section and
-	 * BE_PROCESS/blood-magic-paradigm.md for the design this implements and
+	 * See BE_PROCESS/releases/0.99.2-workflow.md's "Blood magic" section and
+	 * BE_PROCESS/design/blood-magic-paradigm.md for the design this implements and
 	 * the measurements behind every rule here.
 	 *
 	 * @param array<int,array<string,string>> $rows         Non-Combination Discipline rows with a non-empty Group.
@@ -2028,7 +2028,7 @@ class Seeder {
 				continue;
 			}
 
-			// No longer deferred (BE_PROCESS/0.99.2-workflow.md) - the block map still marks
+			// No longer deferred (BE_PROCESS/releases/0.99.2-workflow.md) - the block map still marks
 			// this 'source' => 'none', but a real source now exists outside the GVM menu set.
 			if ( $slug === 'mage-rotes' ) {
 				unset( $extra['deferred_to'] );
@@ -3459,7 +3459,7 @@ class Seeder {
 	 * `sheet_full` template already exists, so a chronicle's customized
 	 * default is never clobbered on upgrade.
 	 *
-	 * @see BE_PROCESS/workflow-0.3.md Step 8
+	 * @see BE_PROCESS/releases/workflow-0.3.md Step 8
 	 */
 	public static function seed_default_templates(): void {
 		$ported = self::default_template_sections();

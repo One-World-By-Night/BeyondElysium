@@ -19,7 +19,7 @@ use WP_UnitTestCase;
  * established, since a single-process test can't make a genuine second-site
  * HTTP call.
  *
- * @see BE_PROCESS/player-grapevine-file-design.md §8
+ * @see BE_PROCESS/design/player-grapevine-file-design.md §8
  */
 class SheetVerificationThreadTest extends WP_UnitTestCase {
 

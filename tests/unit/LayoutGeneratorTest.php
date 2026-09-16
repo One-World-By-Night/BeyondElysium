@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
  * $wpdb-dependent lookup lives in generate_for_stack(), covered separately in the thread
  * layer.
  *
- * @see BE_PROCESS/workflow-0.3.md Step 4f, 8b-ii
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 4f, 8b-ii
  */
 class LayoutGeneratorTest extends TestCase {
 

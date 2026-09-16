@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
  * precedent (a composite unique index would fight `transition()`'s in-place
  * state changes).
  *
- * @see BE_PROCESS/player-grapevine-file-design.md §5
+ * @see BE_PROCESS/design/player-grapevine-file-design.md §5
  */
 class Submission {
 

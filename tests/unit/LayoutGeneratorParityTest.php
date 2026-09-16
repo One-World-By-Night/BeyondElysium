@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
  * same fixture and are checked against the same expected output; this half proves the
  * PHP side, `src/lib/generateLayout.test.ts` proves the TypeScript side.
  *
- * @see BE_PROCESS/workflow-0.3.md Step 4f, 8b-ii
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 4f, 8b-ii
  */
 class LayoutGeneratorParityTest extends TestCase {
 

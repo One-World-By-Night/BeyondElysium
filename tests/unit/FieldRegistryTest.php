@@ -13,8 +13,8 @@ use PHPUnit\Framework\TestCase;
  * on this being exactly right: 231 real keys, the upstream `level` typo normalized, and
  * every *mapped* key pointing at a column or block that actually exists.
  *
- * @see BE_PROCESS/GV-SOURCEMAP.md "qkdata.gvd - the 231-key registry"
- * @see BE_PROCESS/workflow-0.3.md Step 0
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "qkdata.gvd - the 231-key registry"
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 0
  */
 class FieldRegistryTest extends TestCase {
 

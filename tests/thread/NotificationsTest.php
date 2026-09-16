@@ -122,7 +122,7 @@ class NotificationsTest extends WP_UnitTestCase {
 	}
 
 	public function test_batch_approving_two_changes_for_the_same_player_sends_one_mail(): void {
-		// Two DIFFERENT traits - BE_PROCESS/0.99.2-workflow.md's "Resubmitting creates
+		// Two DIFFERENT traits - BE_PROCESS/releases/0.99.2-workflow.md's "Resubmitting creates
 		// duplicate pending changes" fix means two submissions of the exact same trait now
 		// collapse into one pending row, which this test must not rely on to get two ids.
 		$first  = $this->submit_change_as( $this->player_id, 'Iron Will' );

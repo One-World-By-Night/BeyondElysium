@@ -23,7 +23,7 @@ use PHPUnit\Framework\TestCase;
  * character races have no real character-bearing fixture in this repo at
  * all (gex-export-transfer-design.md §2a).
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-2
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-2
  */
 class GexParserShapeRoundTripTest extends TestCase {
 

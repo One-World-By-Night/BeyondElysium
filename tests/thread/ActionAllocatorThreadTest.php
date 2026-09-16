@@ -15,7 +15,7 @@ use WP_UnitTestCase;
  * the `IfDoneSetDone` completion rule read back from real entries. The pure computation
  * itself is covered without a database in `tests/unit/ActionAllocatorTest.php`.
  *
- * @see BE_PROCESS/workflow-0.5.md Step 4e/4f
+ * @see BE_PROCESS/releases/workflow-0.5.md Step 4e/4f
  */
 class ActionAllocatorThreadTest extends WP_UnitTestCase {
 

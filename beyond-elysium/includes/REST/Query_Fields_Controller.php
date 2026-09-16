@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
  * action) along with its display title, data type, and whether it is mapped
  * to a concrete schema field.
  *
- * @see BE_PROCESS/workflow-0.3.md Step 0d
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 0d
  */
 class Query_Fields_Controller extends Base_Controller {
 

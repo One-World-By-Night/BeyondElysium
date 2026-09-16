@@ -29,7 +29,7 @@ defined( 'ABSPATH' ) || exit;
  * genuinely new resolvers this item adds, since the query engine has never
  * dispatched to either (GV-SOURCEMAP.md's three-tier query table).
  *
- * @see BE_PROCESS/reports-cards-batch-design.md
+ * @see BE_PROCESS/design/reports-cards-batch-design.md
  */
 class Report_Document {
 

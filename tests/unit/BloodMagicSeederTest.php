@@ -7,12 +7,12 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * How vampire-blood-magic is built from the CSV's tradition/path Discipline rows (every
- * row with a real Group value). See BE_PROCESS/0.99.2-workflow.md's "Blood magic" section
- * for the design this implements and BE_PROCESS/blood-magic-paradigm.md for the original
+ * row with a real Group value). See BE_PROCESS/releases/0.99.2-workflow.md's "Blood magic" section
+ * for the design this implements and BE_PROCESS/design/blood-magic-paradigm.md for the original
  * measurement that motivated it. See MetCsvSeederTest for the ordinary-discipline side of
  * the same split (Group-less rows) and vampire-combo-disciplines (untouched by this split).
  *
- * @see BE_PROCESS/0.99.2-workflow.md
+ * @see BE_PROCESS/releases/0.99.2-workflow.md
  */
 class BloodMagicSeederTest extends TestCase {
 

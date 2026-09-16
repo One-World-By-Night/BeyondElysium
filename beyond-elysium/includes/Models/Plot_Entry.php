@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  * separate tables per type. Creating an entry also touches its parent plot's
  * updated_at so activity feeds stay current.
  *
- * @see BE_PROCESS/workflow-0.5.md Step 1.2
+ * @see BE_PROCESS/releases/workflow-0.5.md Step 1.2
  */
 class Plot_Entry {
 

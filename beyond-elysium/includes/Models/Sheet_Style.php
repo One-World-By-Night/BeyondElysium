@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * appearance for every character; a row here only ever layers cosmetic
  * overrides on top, so a missing row simply means no customization.
  *
- * @see BE_PROCESS/DECISIONLOG.md Decision 041
+ * @see BE_PROCESS/reference/DECISIONLOG.md Decision 041
  */
 class Sheet_Style {
 

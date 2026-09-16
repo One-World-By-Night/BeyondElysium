@@ -7,7 +7,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Parses `data/grimoire-rotes.csv` - a one-time, offline extraction from a
  * Storytellers Vault compendium (`tools/grimoire/`, repo root, unshippable by
- * construction; see BE_PROCESS/mage-rotes-grimoire-design.md §8). Exactly five
+ * construction; see BE_PROCESS/design/mage-rotes-grimoire-design.md §8). Exactly five
  * columns, no description column at all - not blank, absent, since the
  * Grimoire's prose is the commercial product being extracted, never OWBN's own
  * writing (Decision 043's same rule, applied with more force).

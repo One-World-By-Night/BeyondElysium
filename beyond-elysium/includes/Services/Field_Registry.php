@@ -13,9 +13,9 @@ defined( 'ABSPATH' ) || exit;
  * against this registry. Each row carries the key's title, value type, and
  * which inventories (character, player, item, and so on) it applies to.
  *
- * @see BE_PROCESS/GV-SOURCEMAP.md "qkdata.gvd - the 231-key registry"
- * @see BE_PROCESS/workflow-0.3.md Step 0
- * @see BE_PROCESS/workflow-0.6.md Step 1
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "qkdata.gvd - the 231-key registry"
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 0
+ * @see BE_PROCESS/releases/workflow-0.6.md Step 1
  */
 class Field_Registry {
 

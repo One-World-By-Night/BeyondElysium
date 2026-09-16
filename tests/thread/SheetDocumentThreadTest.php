@@ -23,7 +23,7 @@ use WP_UnitTestCase;
  * already guards), and a block whose `section_type` this version doesn't
  * recognize is still surfaced in `sections` rather than silently dropped.
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 3a, SP-5
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 3a, SP-5
  */
 class SheetDocumentThreadTest extends WP_UnitTestCase {
 

@@ -187,7 +187,7 @@ describe( 'namedModeRows (0.99.2, "Query beyond characters" sibling ask: full st
  * Same fixture, same expected output as `tests/unit/Display/PowerDisplayParityTest.php` -
  * this is the TypeScript half of proving the two label-formatting implementations agree.
  * Every case is transcribed 1:1 from this file's own tests above, per SP-3
- * (BE_PROCESS/signed-pdf-design.md).
+ * (BE_PROCESS/design/signed-pdf-design.md).
  */
 describe( 'label helpers — parity with Power_Display.php', () => {
 	interface FixtureCase {

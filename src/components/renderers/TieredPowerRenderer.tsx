@@ -34,7 +34,7 @@ export interface HeldPower {
 
 /**
  * Prefix a rendered label with the entry's tradition, when it carries one - Blood Magic's
- * own display rule (BE_PROCESS/0.99.2-workflow.md: "Tradition: PathName"). A plain power
+ * own display rule (BE_PROCESS/releases/0.99.2-workflow.md: "Tradition: PathName"). A plain power
  * with no tradition renders exactly as it always has.
  */
 export function withTradition( held: HeldPower, label: string ): string {

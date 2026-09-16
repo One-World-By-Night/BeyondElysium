@@ -10,7 +10,7 @@ use WP_UnitTestCase;
  * The REST layer around Query_Engine: validation 400s naming the offending clause,
  * the permission boundary, and real execution against real characters.
  *
- * @see BE_PROCESS/workflow-0.6.md Step 4
+ * @see BE_PROCESS/releases/workflow-0.6.md Step 4
  */
 class QueryControllerThreadTest extends WP_UnitTestCase {
 

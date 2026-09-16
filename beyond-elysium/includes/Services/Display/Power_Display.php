@@ -23,13 +23,13 @@ defined( 'ABSPATH' ) || exit;
  * Cost_Engine::find_power() reads: `powers`, a list of objects each with `name`
  * and `levels`; `levels` a list of objects each with `level`, `tier`, `power_name`.
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 2d, Section 3, SP-3
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 2d, Section 3, SP-3
  */
 class Power_Display {
 
 	/**
 	 * Prefixes a rendered label with the entry's tradition, when it carries one -
-	 * Blood Magic's own display rule (BE_PROCESS/0.99.2-workflow.md: "Tradition:
+	 * Blood Magic's own display rule (BE_PROCESS/releases/0.99.2-workflow.md: "Tradition:
 	 * PathName"). A plain power with no tradition renders exactly as it always has.
 	 *
 	 * @param array{name:string,level?:int,power_name?:string,tier?:string,tradition?:string} $held

@@ -27,9 +27,9 @@
  * of the primary (still tiered_power-shaped), and a bare combo/ritae name
  * may belong to that sibling (trait_list-shaped).
  *
- * @see BE_PROCESS/DECISIONLOG.md Decision 036
- * @see BE_PROCESS/workflow-0.8.md Step 4
- * @see BE_PROCESS/0.99.2-workflow.md Blood magic section (BM-7)
+ * @see BE_PROCESS/reference/DECISIONLOG.md Decision 036
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 4
+ * @see BE_PROCESS/releases/0.99.2-workflow.md Blood magic section (BM-7)
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -70,7 +70,7 @@ return [
 		// blood_magic_block_slug is tried before combo_block_slug when the primary
 		// resolution against vampire-disciplines comes back unresolved - a raw
 		// "{Tradition}: {Path}" name (Blood Magic moved out of vampire-disciplines,
-		// BE_PROCESS/0.99.2-workflow.md) is still tiered_power-shaped, unlike the
+		// BE_PROCESS/releases/0.99.2-workflow.md) is still tiered_power-shaped, unlike the
 		// combo/ritae fallback, which is trait_list-shaped.
 		'Disciplines' => [ 'outcome' => 'sheet_block', 'block_slug' => 'vampire-disciplines', 'blood_magic_block_slug' => 'vampire-blood-magic', 'combo_block_slug' => 'vampire-combo-disciplines' ],
 		'Rituals'     => [ 'outcome' => 'sheet_block', 'block_slug' => 'vampire-rituals', 'combo_block_slug' => 'vampire-ritae' ],

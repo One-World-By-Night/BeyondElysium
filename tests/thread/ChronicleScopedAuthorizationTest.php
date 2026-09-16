@@ -24,7 +24,7 @@ use WP_UnitTestCase;
  * exercised) - the four-state accessSchema matrix itself is Step 1.5f, which needs a
  * real accessSchema instance actually installed and active, not simulated here.
  *
- * @see BE_PROCESS/workflow-0.9.md Step 1.5
+ * @see BE_PROCESS/releases/workflow-0.9.md Step 1.5
  */
 class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 

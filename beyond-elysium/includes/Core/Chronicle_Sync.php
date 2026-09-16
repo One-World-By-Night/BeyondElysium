@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
  * Deliberately does NOT rewrite a be_games row's slug when the upstream
  * post's own chronicle_slug changes - an earlier version of this class
  * attempted that and was removed (see
- * BE_PROCESS/chronicle-rename-design.md §5 for the full history) because
+ * BE_PROCESS/design/chronicle-rename-design.md §5 for the full history) because
  * there was no stable, collision-proof way to tell "this post's slug
  * changed" from "a different chronicle now happens to share a slug" with
  * no correlation column to anchor on. owbn_chronicle_post_id is that

@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
  * GX-3: `GEX_Xml_Writer`, the PHP port of Grapevine's own `XMLWriterClass`.
  * Every behavior here is cited to `GV301Source/Code/XMLWriterClass.cls`.
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-3, GX-10
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-3, GX-10
  */
 class GexXmlWriterTest extends TestCase {
 

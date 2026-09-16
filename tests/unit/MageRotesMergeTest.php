@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
  * whole record, silently discarding a field. These tests assert the tally
  * makes that class of mistake visible rather than invisible in a `continue`.
  *
- * @see BE_PROCESS/mage-rotes-grimoire-design.md §5.5, §8.4
+ * @see BE_PROCESS/design/mage-rotes-grimoire-design.md §5.5, §8.4
  */
 class MageRotesMergeTest extends TestCase {
 

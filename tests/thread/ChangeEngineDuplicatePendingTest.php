@@ -10,7 +10,7 @@ use BeyondElysium\Services\Change_Engine;
 use WP_UnitTestCase;
 
 /**
- * BE_PROCESS/0.99.2-workflow.md, "Resubmitting creates duplicate pending changes": a player
+ * BE_PROCESS/releases/0.99.2-workflow.md, "Resubmitting creates duplicate pending changes": a player
  * who edits the same trait twice before a Storyteller reviews it used to leave two
  * identical pending rows in the queue. submit() now overwrites the one existing pending row
  * targeting the same block/trait-or-field instead of inserting a second.

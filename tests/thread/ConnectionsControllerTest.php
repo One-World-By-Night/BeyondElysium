@@ -11,7 +11,7 @@ use WP_UnitTestCase;
  * (workflow-0.5.md Step 3h) - a dangling or cross-game connection is invisible
  * corruption, not a validation nicety.
  *
- * @see BE_PROCESS/workflow-0.5.md Step 3.2
+ * @see BE_PROCESS/releases/workflow-0.5.md Step 3.2
  */
 class ConnectionsControllerTest extends WP_UnitTestCase {
 

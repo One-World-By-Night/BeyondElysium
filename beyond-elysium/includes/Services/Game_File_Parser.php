@@ -28,8 +28,8 @@ defined( 'ABSPATH' ) || exit;
  * Per-entity `InputFromBinary` readers are identical between the two
  * formats and are reused directly from `GEX_Parser`.
  *
- * @see BE_PROCESS/GV-SOURCEMAP.md "GVBG binary game-file shape"
- * @see BE_PROCESS/workflow-0.8.md Step 9f
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "GVBG binary game-file shape"
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 9f
  */
 class Game_File_Parser {
 

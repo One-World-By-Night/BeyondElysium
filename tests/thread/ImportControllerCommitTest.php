@@ -17,7 +17,7 @@ use WP_UnitTestCase;
  * same as `ChangesControllerBudgetTest`. This exercises everything downstream of parsing
  * without mocking any of it.
  *
- * @see BE_PROCESS/workflow-0.8.md Step 6
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 6
  */
 class ImportControllerCommitTest extends WP_UnitTestCase {
 

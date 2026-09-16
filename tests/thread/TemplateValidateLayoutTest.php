@@ -14,7 +14,7 @@ use WP_UnitTestCase;
  * `block_slug` has to exist in be_schema_blocks. TESTING.md is explicit that this kind of
  * check - "a template referencing a real block" - belongs here.
  *
- * @see BE_PROCESS/workflow-0.3.md Step 1h, 2d
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 1h, 2d
  */
 class TemplateValidateLayoutTest extends WP_UnitTestCase {
 

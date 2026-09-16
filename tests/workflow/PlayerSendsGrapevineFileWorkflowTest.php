@@ -18,7 +18,7 @@ use WP_UnitTestCase;
  * and accepts. The sender is now a player there, sees the character on their own list, and the
  * character itself is a real visit; the HST sends it home.
  *
- * @see BE_PROCESS/player-grapevine-file-design.md §14
+ * @see BE_PROCESS/design/player-grapevine-file-design.md §14
  */
 class PlayerSendsGrapevineFileWorkflowTest extends WP_UnitTestCase {
 

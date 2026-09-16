@@ -12,7 +12,7 @@ use WP_UnitTestCase;
  * hence thread layer, not unit) rather than a hand-built fixture, since the whole point
  * is that this matches Grapevine's real menu data, not an idealized shape.
  *
- * @see BE_PROCESS/DECISIONLOG.md Decision 037
+ * @see BE_PROCESS/reference/DECISIONLOG.md Decision 037
  */
 class TieredPowerLevelsThreadTest extends WP_UnitTestCase {
 

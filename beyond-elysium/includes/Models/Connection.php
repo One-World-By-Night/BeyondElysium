@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * records a source entity, a target entity (or a tag label with no target row),
  * an optional descriptive label, and notes.
  *
- * @see BE_PROCESS/workflow-0.5.md Step 1.3
+ * @see BE_PROCESS/releases/workflow-0.5.md Step 1.3
  */
 class Connection {
 

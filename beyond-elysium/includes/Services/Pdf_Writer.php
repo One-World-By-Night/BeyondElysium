@@ -36,7 +36,7 @@ defined( 'ABSPATH' ) || exit;
  * `'` U+2019, is one - not just non-Western scripts), and Helvetica's base-14
  * font program only covers WinAnsi encoding.
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 3a, 3b, SP-7
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 3a, 3b, SP-7
  */
 class Pdf_Writer {
 

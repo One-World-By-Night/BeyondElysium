@@ -49,7 +49,7 @@ defined( 'ABSPATH' ) || exit;
  *  - notes            bool  Include the character's notes as a prose entry.
  *  - xp_history       bool  Include the approved-change XP history table.
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 3a, SP-5
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 3a, SP-5
  */
 class Sheet_Document {
 

@@ -22,7 +22,7 @@ namespace BeyondElysium\Tests\Support;
  * OS in the ordinary course of things - throwaway self-signed test material,
  * nothing sensitive.
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 3c, SP-7, SP-8, SP-12
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 3c, SP-7, SP-8, SP-12
  */
 class PdfSigningTestFixture {
 

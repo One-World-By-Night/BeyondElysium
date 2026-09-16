@@ -25,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
  * a bounded set of block queries, and a stale audit next to a fresh sheet is
  * worse than a slow one.
  *
- * @see BE_PROCESS/point-calculator-design.md §5.5
+ * @see BE_PROCESS/design/point-calculator-design.md §5.5
  */
 class Point_Audit_Controller extends Base_Controller {
 

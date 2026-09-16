@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  * table or schema. Plots can nest under a parent_plot_id to form arcs,
  * subplots, seasons, and episodes.
  *
- * @see BE_PROCESS/workflow-0.5.md Step 1.1
+ * @see BE_PROCESS/releases/workflow-0.5.md Step 1.1
  */
 class Plot {
 
@@ -266,7 +266,7 @@ class Plot {
 	 * Applied at the SQL level, not by filtering the fetched rows in PHP,
 	 * so a non-manager's X-WP-Total header always matches what for_game()
 	 * actually returns for them
-	 * (BE_PROCESS/background-ledger-apr-design.md §3.4/§5.8 - an allocation
+	 * (BE_PROCESS/design/background-ledger-apr-design.md §3.4/§5.8 - an allocation
 	 * plot's title alone already discloses who has one, and its entries
 	 * disclose a character's exact background dot ratings).
 	 *

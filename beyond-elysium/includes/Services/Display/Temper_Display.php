@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
  * sheet and must match it character for character. Both sides read the same fixture;
  * see tests/unit/Display/TemperDisplayParityTest.php.
  *
- * @see BE_PROCESS/signed-pdf-design.md
+ * @see BE_PROCESS/design/signed-pdf-design.md
  */
 class Temper_Display {
 

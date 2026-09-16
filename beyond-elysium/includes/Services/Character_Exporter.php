@@ -33,7 +33,7 @@ defined( 'ABSPATH' ) || exit;
  * in practice, since no character of either stack can currently exist in
  * this codebase.
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-3, §4
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-3, §4
  */
 class Character_Exporter {
 

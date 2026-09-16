@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
  * resolve against `Field_Registry` for its report's own entity; every shape
  * must be one of the five `Report_Writer` actually draws.
  *
- * @see BE_PROCESS/reports-cards-batch-design.md
+ * @see BE_PROCESS/design/reports-cards-batch-design.md
  */
 class ReportRegistryTest extends TestCase {
 

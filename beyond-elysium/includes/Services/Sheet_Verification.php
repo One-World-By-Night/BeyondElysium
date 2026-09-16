@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
  * callback-based trust model `Transfers_Controller::verify_with_home()`
  * already uses for a transfer.
  *
- * @see BE_PROCESS/player-grapevine-file-design.md §8
+ * @see BE_PROCESS/design/player-grapevine-file-design.md §8
  */
 class Sheet_Verification {
 

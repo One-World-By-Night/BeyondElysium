@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
  * signed-pdf-design.md's Test Plan (`Display\Layout_FlowTest.php` - `spanFor(null) === 2`;
  * `sortedForFlow()` stable within equal `(column, order)`).
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 3b, SP-3
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 3b, SP-3
  */
 class Layout_FlowTest extends TestCase {
 

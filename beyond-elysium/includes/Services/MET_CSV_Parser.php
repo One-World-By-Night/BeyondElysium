@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  * BeyondElysium\Database\Seeder::apply_met_csv_overrides() for how the parsed
  * rows are interpreted.
  *
- * @see BE_PROCESS/workflow-0.10.md
+ * @see BE_PROCESS/releases/workflow-0.10.md
  */
 class MET_CSV_Parser {
 

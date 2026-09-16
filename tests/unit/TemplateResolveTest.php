@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
  * game_id-null-vs-zero distinction, is covered by tests/thread/TemplateResolveThreadTest.php
  * against a real table.
  *
- * @see BE_PROCESS/workflow-0.3.md Step 1b, 1j
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 1b, 1j
  */
 class TemplateResolveTest extends TestCase {
 

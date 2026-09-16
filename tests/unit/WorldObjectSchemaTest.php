@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
  * type's, and rejects unknown keys entirely (workflow-0.7.md Step 1f) - a typo'd
  * property that silently persists is a bug that surfaces months later in a report.
  *
- * @see BE_PROCESS/workflow-0.7.md Step 1
+ * @see BE_PROCESS/releases/workflow-0.7.md Step 1
  */
 class WorldObjectSchemaTest extends TestCase {
 
@@ -56,7 +56,7 @@ class WorldObjectSchemaTest extends TestCase {
 	}
 
 	/**
-	 * BE_PROCESS/0.99.2-workflow.md: real bug found building it -
+	 * BE_PROCESS/releases/0.99.2-workflow.md: real bug found building it -
 	 * Boons_Controller::repay() passing `repaid_note` alongside `status`/`repaid_date`
 	 * silently no-op'd the ENTIRE update (validate_properties() rejects the whole set on any
 	 * one unrecognized key, and World_Object::update() returns false rather than partially

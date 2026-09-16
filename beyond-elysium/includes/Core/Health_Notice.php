@@ -129,7 +129,7 @@ class Health_Notice {
 	 * Warns when a games row's owbn_chronicle_post_id points at a post
 	 * whose own chronicle_slug no longer matches the row's slug. This is
 	 * the one condition Chronicle_Sync's own deferred rename branch would
-	 * need to notice and does not (BE_PROCESS/chronicle-rename-design.md
+	 * need to notice and does not (BE_PROCESS/design/chronicle-rename-design.md
 	 * §5.3/CR-6) - surfacing it here means that gap is safe to leave
 	 * deferred, since an administrator finds out rather than the drift
 	 * silently persisting. Visible only to users who can activate plugins,

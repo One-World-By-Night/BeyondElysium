@@ -9,8 +9,8 @@
  * input), 'int', 'date', 'trait_list' (`[{name, count, note?}]`, the same
  * shape as a character sheet's, so the sheet renderers work on it unchanged).
  *
- * @see BE_PROCESS/workflow-0.7.md Step 1b
- * @see BE_PROCESS/GV-SOURCEMAP.md "World Objects"
+ * @see BE_PROCESS/releases/workflow-0.7.md Step 1b
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "World Objects"
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -61,7 +61,7 @@ return [
 		'terms'       => 'text',
 		'status'      => 'string',
 		'repaid_date' => 'date',
-		// How the boon was actually settled, optional (BE_PROCESS/0.99.2-workflow.md) -
+		// How the boon was actually settled, optional (BE_PROCESS/releases/0.99.2-workflow.md) -
 		// "removed" is not a separate concept, a boon is repaid with this as the how.
 		'repaid_note' => 'text',
 	],

@@ -18,8 +18,8 @@ defined( 'ABSPATH' ) || exit;
  * `sheet_data` rather than expressed as MySQL JSON functions, since the eleven
  * trait-list operators do not reduce to a single clean SQL expression.
  *
- * @see BE_PROCESS/workflow-0.6.md
- * @see BE_PROCESS/GV-SOURCEMAP.md "Query Engine"
+ * @see BE_PROCESS/releases/workflow-0.6.md
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "Query Engine"
  */
 class Query_Engine {
 
@@ -518,7 +518,7 @@ class Query_Engine {
 	 * Looks up whether a block's trait list is atomic, i.e. whether duplicate
 	 * entries of the same name are compared individually rather than collapsed,
 	 * resolved through this chronicle's own fork when one exists
-	 * (BE_PROCESS/background-ledger-apr-design.md §3.1) - this is a general
+	 * (BE_PROCESS/design/background-ledger-apr-design.md §3.1) - this is a general
 	 * block lookup, used for any trait_list/tiered_power block a field-map
 	 * entry names, not only the backgrounds family Backgrounds_Catalog covers.
 	 * Returns false when the block has no definition or no `atomic` flag set.
@@ -538,7 +538,7 @@ class Query_Engine {
 	 * Builds a name -> source map (`'Influences'`, `'Backgrounds'`,
 	 * `'Backgrounds, <Type>'`) for every item in one merged backgrounds
 	 * block, resolved through this chronicle's own fork when one exists
-	 * (BE_PROCESS/background-ledger-apr-design.md §3.1). Delegates to the
+	 * (BE_PROCESS/design/background-ledger-apr-design.md §3.1). Delegates to the
 	 * shared lookup `Action_Allocator`/`Rumor_Generator` also use.
 	 *
 	 * @param string $block

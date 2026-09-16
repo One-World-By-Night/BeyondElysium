@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  * BoonLedger React component. A character ID of 0 shows the whole
  * chronicle's ledger; a nonzero ID scopes it to one character.
  *
- * @see BE_PROCESS/workflow-0.7.md Step 5b
+ * @see BE_PROCESS/releases/workflow-0.7.md Step 5b
  */
 class Boon_Ledger extends Widget_Base {
 

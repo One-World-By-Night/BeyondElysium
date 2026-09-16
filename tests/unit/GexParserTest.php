@@ -31,7 +31,7 @@ use PHPUnit\Framework\TestCase;
  * fixtures, not mocks" rule, synthetic bytes are used only where no real fixture exists,
  * not as a substitute for one that does.
  *
- * @see BE_PROCESS/workflow-0.8.md Step 2
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 2
  */
 class GexParserTest extends TestCase {
 

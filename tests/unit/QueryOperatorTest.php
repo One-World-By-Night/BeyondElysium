@@ -12,8 +12,8 @@ use PHPUnit\Framework\TestCase;
  * `contains_less` presence rule, and an atomic list where only the second duplicate
  * satisfies the comparison.
  *
- * @see BE_PROCESS/workflow-0.6.md Step 2l
- * @see BE_PROCESS/GV-SOURCEMAP.md "Query Engine"
+ * @see BE_PROCESS/releases/workflow-0.6.md Step 2l
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "Query Engine"
  */
 class QueryOperatorTest extends TestCase {
 

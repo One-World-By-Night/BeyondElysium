@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
  * House Rules are open to every member (1.0.0-review F-047). The list shows a
  * caller only the reports they may run.
  *
- * @see BE_PROCESS/reports-cards-batch-design.md §3.5
+ * @see BE_PROCESS/design/reports-cards-batch-design.md §3.5
  */
 class Reports_Controller extends Base_Controller {
 

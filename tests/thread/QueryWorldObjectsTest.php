@@ -14,7 +14,7 @@ use WP_UnitTestCase;
  * storage asymmetry (a rote's description) that only shows up against real
  * rows.
  *
- * @see BE_PROCESS/query-beyond-characters-design.md §12
+ * @see BE_PROCESS/design/query-beyond-characters-design.md §12
  */
 class QueryWorldObjectsTest extends WP_UnitTestCase {
 

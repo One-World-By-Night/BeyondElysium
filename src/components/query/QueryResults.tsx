@@ -4,7 +4,7 @@
  * Search tab to display the output of a run query. The CSV export covers only
  * the currently loaded page of rows, not the full result set.
  *
- * Also the interface for `Change_Engine::bulk_award_xp()` (BE_PROCESS/0.99.2-workflow.md,
+ * Also the interface for `Change_Engine::bulk_award_xp()` (BE_PROCESS/releases/0.99.2-workflow.md,
  * "Bulk XP award has no interface") - the REST route and client method both already
  * existed and worked, with nothing in `src/` ever calling them. A query's result set is
  * exactly the "a group of characters" the endpoint was built for, so the award action lives

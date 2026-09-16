@@ -3,7 +3,7 @@
  * and its background-use ledger. The ledger tracks what a
  * background use spends; the settings decide what a background
  * grants to spend in the first place - see
- * BE_PROCESS/background-ledger-apr-design.md.
+ * BE_PROCESS/design/background-ledger-apr-design.md.
  */
 
 /**

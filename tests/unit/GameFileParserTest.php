@@ -14,8 +14,8 @@ use PHPUnit\Framework\TestCase;
  * is real but not guaranteed present in every checkout - matching `GexParserTest`'s own
  * discipline for `GV301Source/Code/` fixtures.
  *
- * @see BE_PROCESS/GV-SOURCEMAP.md "GVBG binary game-file shape - verified 2026-09-10"
- * @see BE_PROCESS/workflow-0.8.md Step 9f
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "GVBG binary game-file shape - verified 2026-09-10"
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 9f
  */
 class GameFileParserTest extends TestCase {
 

@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
  * budget, per the Grapevine migration that folded the standalone influence-
  * use pool into the action-point system in the first place.
  *
- * @see BE_PROCESS/background-ledger-apr-design.md §0, §4, §5
+ * @see BE_PROCESS/design/background-ledger-apr-design.md §0, §4, §5
  */
 class Background_Ledger {
 

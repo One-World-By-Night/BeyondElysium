@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
  * the result against the public catalog. `Reports_Controller`-style REST
  * gating is the control, not a filter inside this class.
  *
- * @see BE_PROCESS/point-calculator-design.md
+ * @see BE_PROCESS/design/point-calculator-design.md
  */
 class Point_Audit {
 

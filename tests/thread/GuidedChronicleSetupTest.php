@@ -16,7 +16,7 @@ use WP_UnitTestCase;
  * per-chronicle-qualified slugs, superseded by page-consolidation-design.md's
  * chronicle-independent fixed pages), and GS-11 (cascading demo-chronicle delete).
  *
- * @see BE_PROCESS/guided-chronicle-setup-design.md
+ * @see BE_PROCESS/design/guided-chronicle-setup-design.md
  */
 class GuidedChronicleSetupTest extends WP_UnitTestCase {
 

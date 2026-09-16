@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  * without breaking that separate contract. Revoking one issuance never
  * touches another.
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-7, §6.2
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-7, §6.2
  */
 class Attestation {
 

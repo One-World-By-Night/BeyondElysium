@@ -16,8 +16,8 @@ use WP_UnitTestCase;
  * actual permission gate, transient job store, and transaction - not a direct
  * `Game_File_Parser`/`Import_Controller` call.
  *
- * @see BE_PROCESS/GV-SOURCEMAP.md "GVBG binary game-file shape - verified 2026-09-10"
- * @see BE_PROCESS/workflow-0.8.md Step 9d-9f
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "GVBG binary game-file shape - verified 2026-09-10"
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 9d-9f
  */
 class GameImportControllerTest extends WP_UnitTestCase {
 

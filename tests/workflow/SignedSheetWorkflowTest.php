@@ -21,7 +21,7 @@ use WP_UnitTestCase;
  * character is denied. The first workflow-layer test this project has -
  * `tests/workflow/` held only a `.gitkeep` before this.
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 9, SP-12
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 9, SP-12
  */
 class SignedSheetWorkflowTest extends WP_UnitTestCase {
 

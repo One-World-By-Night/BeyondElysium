@@ -8,7 +8,7 @@ use BeyondElysium\Models\Schema_Block;
 use WP_UnitTestCase;
 
 /**
- * BE_PROCESS/chronicle-rename-design.md CR-8. A real chronicle rename, against real rows
+ * BE_PROCESS/design/chronicle-rename-design.md CR-8. A real chronicle rename, against real rows
  * in all three tables the cascade touches, is what proves the fix - not a unit test against
  * a mocked wpdb. The most important single assertion is the fork one: `find_for_game()`
  * must resolve the renamed fork through its own row, not silently fall back to the global

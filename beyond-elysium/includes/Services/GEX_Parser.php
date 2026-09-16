@@ -27,9 +27,9 @@ defined( 'ABSPATH' ) || exit;
  * container differs. Everything else, including all 12 race-specific
  * character readers, stays `private`.
  *
- * @see BE_PROCESS/GV-SOURCEMAP.md "GVBE binary exchange shape"
- * @see BE_PROCESS/GV-SOURCEMAP.md "GVBG binary game-file shape"
- * @see BE_PROCESS/workflow-0.8.md Step 2, Step 9f
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "GVBE binary exchange shape"
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "GVBG binary game-file shape"
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 2, Step 9f
  */
 class GEX_Parser {
 
@@ -322,7 +322,7 @@ class GEX_Parser {
 	 *
 	 * @param string $race One of `RACE_TYPE_MAP`'s values.
 	 * @return array<string,mixed>
-	 * @see BE_PROCESS/gex-export-transfer-design.md GX-1, GX-2
+	 * @see BE_PROCESS/design/gex-export-transfer-design.md GX-1, GX-2
 	 */
 	public static function shape( string $race ): array {
 		if ( self::$shape === null ) {

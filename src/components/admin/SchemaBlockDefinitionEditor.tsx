@@ -1084,7 +1084,7 @@ function TieredPowerEditor( {
 		} );
 	}
 
-	// Blood magic (BE_PROCESS/0.99.2-workflow.md): the block-level list a player's
+	// Blood magic (BE_PROCESS/releases/0.99.2-workflow.md): the block-level list a player's
 	// Tradition picker offers - see TieredPowerEditor.tsx's traditionOptionsFor(), which
 	// narrows further to a specific power's own offering traditions when it has one.
 	const traditions = definition.traditions ?? [];

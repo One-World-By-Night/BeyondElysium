@@ -18,7 +18,7 @@ use WP_UnitTestCase;
  * WordPress installations talking to each other, without faking either
  * side's actual response shape by hand.
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-8, GX-9, §8, §10
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-8, GX-9, §8, §10
  */
 class TransfersControllerThreadTest extends WP_UnitTestCase {
 

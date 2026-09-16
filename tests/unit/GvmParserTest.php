@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
  * Fixture tests, not mocks. The XML and binary menu sets are the same data written two
  * ways, which makes a parity check a free and very strong correctness test.
  *
- * @see BE_PROCESS/workflow-0.8.md Steps 1 and 3
+ * @see BE_PROCESS/releases/workflow-0.8.md Steps 1 and 3
  */
 class GvmParserTest extends TestCase {
 

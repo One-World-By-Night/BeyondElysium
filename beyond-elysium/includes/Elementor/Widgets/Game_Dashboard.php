@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  * view and a player-facing view based on the viewer's own capabilities;
  * every underlying route enforces its own capability checks server-side.
  *
- * @see BE_PROCESS/workflow-0.9.md Step 7c
+ * @see BE_PROCESS/releases/workflow-0.9.md Step 7c
  */
 class Game_Dashboard extends Widget_Base {
 

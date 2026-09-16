@@ -2145,7 +2145,7 @@ export const boons = ( gameSlug: string ) => ( {
 	/**
 	 * Marks a boon as repaid by id, with an optional note recording how it was
 	 * actually settled - a boon leaves the ledger only by being repaid
-	 * (BE_PROCESS/0.99.2-workflow.md), never deleted, so this note is the record of why/how
+	 * (BE_PROCESS/releases/0.99.2-workflow.md), never deleted, so this note is the record of why/how
 	 * for an entry that was, say, "entered in error". Returns the updated world object
 	 * record reflecting the new repayment status.
 	 */

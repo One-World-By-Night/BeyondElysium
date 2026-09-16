@@ -32,7 +32,7 @@ defined( 'ABSPATH' ) || exit;
  *   - Never returned, at any outcome: `sheet_data`, biography, notes, the
  *     UUID, `wp_user_id`, player identity, or the local numeric id.
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-7, §6.2, §6.3
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-7, §6.2, §6.3
  */
 class Verify_Controller extends Base_Controller {
 

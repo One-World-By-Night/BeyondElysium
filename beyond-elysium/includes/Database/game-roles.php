@@ -38,7 +38,7 @@ return [
 		'be_submit_actions',
 		'be_view_reports',
 	],
-	// A fifth role (BE_PROCESS/0.99.2-workflow.md): runs the boon ledger only - no
+	// A fifth role (BE_PROCESS/releases/0.99.2-workflow.md): runs the boon ledger only - no
 	// Storyteller powers over characters, plots, or the rest of the world-object catalog.
 	// be_view_characters is included deliberately: a Harpy needs to look up who owes whom.
 	'boons'    => [

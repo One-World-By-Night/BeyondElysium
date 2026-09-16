@@ -11,8 +11,8 @@ use PHPUnit\Framework\TestCase;
  * and `build_personal_subaction()` take plain arrays and touch no database, the same
  * pattern as `Cost_Engine::is_in_type_pure()` (CostEngineTest).
  *
- * @see BE_PROCESS/workflow-0.5.md Step 4g
- * @see BE_PROCESS/GV-SOURCEMAP.md "Action allocation"
+ * @see BE_PROCESS/releases/workflow-0.5.md Step 4g
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "Action allocation"
  */
 class ActionAllocatorTest extends TestCase {
 

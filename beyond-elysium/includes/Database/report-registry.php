@@ -35,7 +35,7 @@
  * reports are `be_manage_plots`; `null` opens a report to every member
  * (catalog cards, the calendar, House Rules).
  *
- * @see BE_PROCESS/reports-cards-batch-design.md
+ * @see BE_PROCESS/design/reports-cards-batch-design.md
  */
 
 defined( 'ABSPATH' ) || exit;

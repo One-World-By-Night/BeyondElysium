@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
  * source of numbers. Asserted against the real seeded catalog, not
  * synthetic fixtures, per the design doc's own instruction (§7 PC-1).
  *
- * @see BE_PROCESS/point-calculator-design.md
+ * @see BE_PROCESS/design/point-calculator-design.md
  */
 class CostEngineHeldPricingTest extends TestCase {
 

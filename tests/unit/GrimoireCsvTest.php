@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
  * sixth column or a leaked prose cell (§10 - the one thing that must never
  * ship, a commercial third party's own descriptive text).
  *
- * @see BE_PROCESS/mage-rotes-grimoire-design.md §8.2, §10
+ * @see BE_PROCESS/design/mage-rotes-grimoire-design.md §8.2, §10
  */
 class GrimoireCsvTest extends TestCase {
 

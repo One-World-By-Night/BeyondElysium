@@ -16,7 +16,7 @@ use WP_UnitTestCase;
  * still be recordable through (§4.1). apply_spends() itself is covered
  * without a database in tests/unit/BackgroundLedgerTest.php.
  *
- * @see BE_PROCESS/background-ledger-apr-design.md §5, §11 Trace 1
+ * @see BE_PROCESS/design/background-ledger-apr-design.md §5, §11 Trace 1
  */
 class BackgroundLedgerThreadTest extends WP_UnitTestCase {
 

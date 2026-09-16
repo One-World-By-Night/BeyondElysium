@@ -858,7 +858,7 @@ class Schema {
 	 * best guess. Runs on every upgrade (not one-time-guarded), so a
 	 * chronicle post that appears later gets correlated on the next
 	 * upgrade with no manual step - see
-	 * BE_PROCESS/chronicle-rename-design.md §8.2 for the full reasoning.
+	 * BE_PROCESS/design/chronicle-rename-design.md §8.2 for the full reasoning.
 	 */
 	public static function backfill_owbn_chronicle_post_ids(): void {
 		global $wpdb;
@@ -938,7 +938,7 @@ class Schema {
 
 	/**
 	 * Adds the `vampire-blood-magic` section to vampire's own `sheet_full` template for
-	 * every install that seeded it before Blood Magic existed (BE_PROCESS/0.99.2-workflow.md
+	 * every install that seeded it before Blood Magic existed (BE_PROCESS/releases/0.99.2-workflow.md
 	 * BM-9) - the layout-repair counterpart to add_missing_combo_disciplines() above, which
 	 * does the same for a catalog rather than a layout. Deliberately its own narrow,
 	 * one-off function rather than a generalization of repair_stale_default_layouts()'s
@@ -1286,7 +1286,7 @@ class Schema {
 
 	/**
 	 * Splits a stale, pre-Blood-Magic chronicle fork of vampire-disciplines (a
-	 * game-scoped copy made before the Blood Magic redesign, BE_PROCESS/0.99.2-workflow.md)
+	 * game-scoped copy made before the Blood Magic redesign, BE_PROCESS/releases/0.99.2-workflow.md)
 	 * the same way Seeder::build_met_blood_magic_powers() already split the global row: any
 	 * power whose name is "{Tradition}: {Path}" - excluding the four Assamite caste names,
 	 * see blood_magic_excluded_power_names() - moves to that same game's own
@@ -1749,7 +1749,7 @@ class Schema {
 				// current code defines (an admin's own deliberate trim via the structured
 				// editor is exactly this) must NOT be treated as stale on that basis alone.
 				// Adding a brand-new default section (e.g. vampire-blood-magic,
-				// BE_PROCESS/0.99.2-workflow.md BM-9) to an already-current, already-seeded
+				// BE_PROCESS/releases/0.99.2-workflow.md BM-9) to an already-current, already-seeded
 				// template needs its own dedicated, narrowly-scoped repair instead - see
 				// Seeder::add_missing_template_section().
 				$has_renamed_slug = (bool) array_diff( array_column( $sections, 'block_slug' ), array_keys( $fresh_by_slug ) );
@@ -1781,7 +1781,7 @@ class Schema {
 	 * repair_stale_default_layouts() fixes for `sheet_full` itself, needed separately
 	 * because Seeder::seed_npc_templates() only ever builds `npc_full` once (guarded by
 	 * "already exists? skip") and never revisits it afterward. Blood Magic's own new
-	 * `vampire-blood-magic` section (BE_PROCESS/0.99.2-workflow.md BM-9) would otherwise
+	 * `vampire-blood-magic` section (BE_PROCESS/releases/0.99.2-workflow.md BM-9) would otherwise
 	 * reach a fresh `sheet_full` but never an already-seeded `npc_full`.
 	 *
 	 * Merges rather than rebuilds from scratch: every section `sheet_full` currently has
@@ -1957,7 +1957,7 @@ class Schema {
 		// Must run after seed_schema_blocks() has refreshed the werewolf-gifts/fera-gifts catalogs.
 		self::migrate_held_gift_names_to_grouped_fields();
 
-		// Blood magic (BE_PROCESS/0.99.2-workflow.md, BM-8): must run after
+		// Blood magic (BE_PROCESS/releases/0.99.2-workflow.md, BM-8): must run after
 		// seed_schema_blocks() has seeded the global vampire-blood-magic catalog, and the
 		// schema-fork split must run before the held-picks migration reads it.
 		self::migrate_blood_magic_schema_forks();

@@ -14,7 +14,7 @@ use WP_UnitTestCase;
  * (`Boons_Controller::create_item()`), which TESTING.md defines as the thread layer's
  * boundary, the same correction already made for `ConnectionTest.php` in 0.5.
  *
- * @see BE_PROCESS/workflow-0.7.md Step 3
+ * @see BE_PROCESS/releases/workflow-0.7.md Step 3
  */
 class BoonTest extends WP_UnitTestCase {
 
@@ -160,7 +160,7 @@ class BoonTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * BE_PROCESS/0.99.2-workflow.md: "Removed == repaid with a text as how" - there is no
+	 * BE_PROCESS/releases/0.99.2-workflow.md: "Removed == repaid with a text as how" - there is no
 	 * separate delete/void concept. The note is optional (a boon paid normally may have
 	 * nothing to say); "entered in error" is not a special case, it is repaid with that
 	 * text as the how.
@@ -217,7 +217,7 @@ class BoonTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * BE_PROCESS/0.99.2-workflow.md, "A fifth chronicle role, boons": the whole point of a
+	 * BE_PROCESS/releases/0.99.2-workflow.md, "A fifth chronicle role, boons": the whole point of a
 	 * narrower be_manage_boons capability is that this role can run the ledger without the
 	 * Storyteller powers be_manage_world_objects also carries - proven both directions here,
 	 * not just asserted.

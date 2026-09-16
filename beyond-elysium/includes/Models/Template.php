@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * this class, in Layout_Generator) generated from the stack's own section
  * order when neither exists.
  *
- * @see BE_PROCESS/workflow-0.3.md Step 1
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 1
  */
 class Template {
 

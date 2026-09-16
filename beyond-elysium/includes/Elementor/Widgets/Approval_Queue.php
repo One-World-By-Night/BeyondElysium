@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  * route behind that component enforces its own capability checks; this
  * widget only places the mount point on the page.
  *
- * @see BE_PROCESS/workflow-0.4.md Step 7b
+ * @see BE_PROCESS/releases/workflow-0.4.md Step 7b
  */
 class Approval_Queue extends Widget_Base {
 

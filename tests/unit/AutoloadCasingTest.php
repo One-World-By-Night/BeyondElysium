@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
  * on-disk casing. Verified — an earlier version of this check passed against the broken
  * layout.
  *
- * @see BE_PROCESS/workflow-0.2.1.md Step 1
+ * @see BE_PROCESS/releases/workflow-0.2.1.md Step 1
  */
 class AutoloadCasingTest extends TestCase {
 

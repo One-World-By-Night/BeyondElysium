@@ -7,7 +7,7 @@ use BeyondElysium\Models\Game;
 use WP_UnitTestCase;
 
 /**
- * BE_PROCESS/chronicle-rename-design.md CR-8/§8.2. Every case here proves the same one
+ * BE_PROCESS/design/chronicle-rename-design.md CR-8/§8.2. Every case here proves the same one
  * property: a failure mode of the matching logic must leave a row NULL, never point it at
  * the wrong post. NULL is harmless and already the state of the world; a wrong post ID
  * would be silent corruption a later cascade could act on.

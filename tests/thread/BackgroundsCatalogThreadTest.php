@@ -9,7 +9,7 @@ use WP_UnitTestCase;
 /**
  * The single fork-aware backgrounds lookup that replaced three copies of
  * Schema_Block::find_by_slug(), which were blind to a chronicle's own fork
- * of a `{stack}-backgrounds` block (BE_PROCESS/background-ledger-apr-design.md
+ * of a `{stack}-backgrounds` block (BE_PROCESS/design/background-ledger-apr-design.md
  * §3.1). Placed in the thread layer rather than unit, unlike the design
  * doc's own file listing suggests - every method here resolves through
  * Schema_Block::find_for_game()/all_for_game_by_types(), which are real

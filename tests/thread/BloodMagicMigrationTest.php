@@ -8,7 +8,7 @@ use BeyondElysium\Models\Schema_Block;
 use WP_UnitTestCase;
 
 /**
- * BM-8 (BE_PROCESS/0.99.2-workflow.md): moving pre-Blood-Magic data onto the new shape.
+ * BM-8 (BE_PROCESS/releases/0.99.2-workflow.md): moving pre-Blood-Magic data onto the new shape.
  * Two separate concerns, two migration functions:
  *
  *   - Schema::migrate_blood_magic_schema_forks() - a chronicle's own game-scoped fork of

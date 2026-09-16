@@ -30,7 +30,7 @@ use WP_UnitTestCase;
  * separate PHP processes, so these constants can never leak into that file's
  * own run regardless.
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 3b, 3c, SP-7, SP-8
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 3b, 3c, SP-7, SP-8
  */
 class PdfWriterThreadTest extends WP_UnitTestCase {
 

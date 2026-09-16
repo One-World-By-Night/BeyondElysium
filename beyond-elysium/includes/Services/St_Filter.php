@@ -16,8 +16,8 @@ defined( 'ABSPATH' ) || exit;
  * ever reach a non-ST client. `src/lib/stripStSections.ts` is a second layer for
  * the sheet's own rendering, not a substitute for this one.
  *
- * @see BE_PROCESS/GV-SOURCEMAP.md "ST data filtering (GameClass.STFilter)"
- * @see BE_PROCESS/workflow-0.3.md Step 4g
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "ST data filtering (GameClass.STFilter)"
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 4g
  */
 class St_Filter {
 

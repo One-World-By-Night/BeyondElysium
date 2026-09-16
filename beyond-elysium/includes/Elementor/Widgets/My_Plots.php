@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * component enforces its own capability checks; this widget only places the
  * mount point on the page.
  *
- * @see BE_PROCESS/workflow-0.5.md Step 7b
+ * @see BE_PROCESS/releases/workflow-0.5.md Step 7b
  */
 class My_Plots extends Widget_Base {
 

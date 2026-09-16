@@ -271,7 +271,7 @@ class Change {
 	 * Overwrites a still-pending change's own submitted content in place, re-stamping
 	 * `submitted_at` as though it were a fresh submission. Used when a player resubmits an
 	 * edit to the same trait/field before a Storyteller has reviewed the first one
-	 * (BE_PROCESS/0.99.2-workflow.md, "Resubmitting creates duplicate pending changes") -
+	 * (BE_PROCESS/releases/0.99.2-workflow.md, "Resubmitting creates duplicate pending changes") -
 	 * updates the one existing row rather than leaving a second, indistinguishable pending
 	 * row in the queue. Never touches `status`, `submitted_by`, `character_id`, or anything
 	 * review-related - only what a fresh submit() call would have set.

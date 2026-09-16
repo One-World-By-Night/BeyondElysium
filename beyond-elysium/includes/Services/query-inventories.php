@@ -20,7 +20,7 @@
  * second implementation of the importer's own knowledge (verified against
  * it in QueryInventoryMapTest, not duplicated by hand a second time).
  *
- * @see BE_PROCESS/query-beyond-characters-design.md §6
+ * @see BE_PROCESS/design/query-beyond-characters-design.md §6
  * @see BeyondElysium\Services\Field_Registry
  */
 

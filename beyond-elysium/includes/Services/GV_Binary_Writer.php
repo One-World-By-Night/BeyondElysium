@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
  * primitive-reading method there, same field widths and byte order.
  *
  * @see BeyondElysium\Services\GV_Binary_Reader
- * @see BE_PROCESS/gex-export-transfer-design.md GX-5
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-5
  */
 class GV_Binary_Writer {
 

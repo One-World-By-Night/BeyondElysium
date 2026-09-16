@@ -11,7 +11,7 @@ use WP_UnitTestCase;
  * the file-sniffing, permission boundary, and job-storage/retrieval round trip are all
  * exercised for real (workflow-0.8.md Step 6).
  *
- * @see BE_PROCESS/workflow-0.8.md Step 6
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 6
  */
 class ImportControllerThreadTest extends WP_UnitTestCase {
 

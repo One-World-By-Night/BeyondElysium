@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * With no character ID set, the widget falls back to a character_id URL
  * query var, and with neither present it renders in create mode.
  *
- * @see BE_PROCESS/workflow-0.4.md Step 7a
+ * @see BE_PROCESS/releases/workflow-0.4.md Step 7a
  */
 class Character_Editor extends Widget_Base {
 

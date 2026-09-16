@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * REST controller for a chronicle's Action & Rumor configuration and its
  * background-use ledger - one controller because they are one feature
- * (BE_PROCESS/background-ledger-apr-design.md): the ledger tracks what a
+ * (BE_PROCESS/design/background-ledger-apr-design.md): the ledger tracks what a
  * background use spends, the settings decide what a background grants to
  * spend in the first place.
  */
@@ -421,7 +421,7 @@ class Apr_Controller extends Base_Controller {
 	 * Resolves the game and character named in a request, and checks the
 	 * ownership rule a read-only ledger route needs: a manager sees any
 	 * character, anyone else only their own
-	 * (BE_PROCESS/background-ledger-apr-design.md §3.4/§5.8).
+	 * (BE_PROCESS/design/background-ledger-apr-design.md §3.4/§5.8).
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return true|\WP_Error

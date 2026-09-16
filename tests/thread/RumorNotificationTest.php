@@ -16,7 +16,7 @@ use WP_UnitTestCase;
  * `pre_wp_mail` (WP 5.7+) short-circuits `wp_mail()` and hands back its args - real mail
  * is never attempted, matching NotificationsTest's own pattern.
  *
- * @see BE_PROCESS/0.99.2-workflow.md "Rumor delivery"
+ * @see BE_PROCESS/releases/0.99.2-workflow.md "Rumor delivery"
  */
 class RumorNotificationTest extends WP_UnitTestCase {
 

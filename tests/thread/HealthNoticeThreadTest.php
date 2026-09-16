@@ -20,7 +20,7 @@ use WP_UnitTestCase;
  * project's normal test database), which is exactly the case that used to
  * suppress them.
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 3c, SP-10
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 3c, SP-10
  */
 class HealthNoticeThreadTest extends WP_UnitTestCase {
 

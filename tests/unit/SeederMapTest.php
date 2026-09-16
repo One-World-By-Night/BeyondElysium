@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
  * Physical, Social and Mental attributes, referenced by all eleven creature stacks — were
  * never created. isset() fails silently. This test does not.
  *
- * @see BE_PROCESS/workflow-0.2.2.md
+ * @see BE_PROCESS/releases/workflow-0.2.2.md
  */
 class SeederMapTest extends TestCase {
 
@@ -421,7 +421,7 @@ class SeederMapTest extends TestCase {
 	 * mage-rotes has no GVM source at all - GVM's menu set genuinely has no Rotes menu, so
 	 * the block map correctly says so rather than pretend. This no longer means the built
 	 * block ships empty (see test_mage_rotes_is_no_longer_empty below,
-	 * BE_PROCESS/0.99.2-workflow.md "`mage-rotes` ships as an empty catalog") - the seeder
+	 * BE_PROCESS/releases/0.99.2-workflow.md "`mage-rotes` ships as an empty catalog") - the seeder
 	 * special-cases this slug in build_mapped_blocks() to source real content from
 	 * data/Rotes.gex instead, a source GVM's own menu set has no equivalent of.
 	 */
@@ -437,7 +437,7 @@ class SeederMapTest extends TestCase {
 	 * already passing against this exact file) both already existing.
 	 *
 	 * `note`/`source` assertions updated for the backfill added the same release
-	 * (`BE_PROCESS/mage-rotes-grimoire-design.md` §5.4): `Rotes.gex` was already parsed for
+	 * (`BE_PROCESS/design/mage-rotes-grimoire-design.md` §5.4): `Rotes.gex` was already parsed for
 	 * its 289 real sphere prerequisites and 201 real source citations, and the seeder was
 	 * discarding both.
 	 *

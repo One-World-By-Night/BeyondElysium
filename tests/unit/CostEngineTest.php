@@ -11,8 +11,8 @@ use PHPUnit\Framework\TestCase;
  * project's established fetch/decision split (see `TemplateResolveTest` for
  * `Template::resolve_from_rows()`).
  *
- * @see BE_PROCESS/workflow-0.4.md Step 3
- * @see BE_PROCESS/DECISIONLOG.md Decision 025 (range cost pricing)
+ * @see BE_PROCESS/releases/workflow-0.4.md Step 3
+ * @see BE_PROCESS/reference/DECISIONLOG.md Decision 025 (range cost pricing)
  */
 class CostEngineTest extends TestCase {
 
@@ -280,7 +280,7 @@ class CostEngineTest extends TestCase {
 
 	// -----------------------------------------------------------------------
 	// price_tiered_power_change - Elder-and-above picks (Decision 037,
-	// BE_PROCESS/0.99.2-workflow.md "Cost_Engine cannot price an Elder-tier
+	// BE_PROCESS/releases/0.99.2-workflow.md "Cost_Engine cannot price an Elder-tier
 	// purchase"). Matched by power_name within the tier, not by numbered level -
 	// real met-mechanics.csv data confirms multiple distinct named powers can
 	// share one tier (e.g. Celerity's own Basic tier: Alacrity and Swiftness

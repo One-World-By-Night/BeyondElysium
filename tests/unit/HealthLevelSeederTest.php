@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
  * Wounded(2), Incapacitated(1) are identical everywhere; only the terminal box(es) differ.
  * Extended health only - old/standard Health is not offered. Wraith has no HealthList at
  * all (uses its own Corpus resource pool) and gets no health block. See
- * BE_PROCESS/health-level-tracker-design.md.
+ * BE_PROCESS/design/health-level-tracker-design.md.
  */
 class HealthLevelSeederTest extends TestCase {
 

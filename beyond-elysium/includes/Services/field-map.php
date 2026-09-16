@@ -20,8 +20,8 @@
  *             reproduce (GV-SOURCEMAP.md).
  *
  * @see BeyondElysium\Services\Field_Registry
- * @see BE_PROCESS/workflow-0.3.md Step 0c
- * @see BE_PROCESS/workflow-0.6.md Step 1e
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 0c
+ * @see BE_PROCESS/releases/workflow-0.6.md Step 1e
  */
 
 defined( 'ABSPATH' ) || exit;

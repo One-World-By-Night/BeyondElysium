@@ -12,8 +12,8 @@ use PHPUnit\Framework\TestCase;
  * parse_gvm() silently returned [] and seeding fell back to a hardcoded minimal set. These
  * are fixture tests against real data, not mocks — the counts below were measured.
  *
- * @see BE_PROCESS/workflow-0.2.1.md Step 2
- * @see BE_PROCESS/GV-SOURCEMAP.md
+ * @see BE_PROCESS/releases/workflow-0.2.1.md Step 2
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md
  */
 class SeederGvmTest extends TestCase {
 
@@ -116,7 +116,7 @@ class SeederGvmTest extends TestCase {
 	 * This is defect D5 — the seeder reads ['items'] on these and gets nothing. The test
 	 * documents the real shape so the 0.2.2 fix has something to assert against.
 	 *
-	 * @see BE_PROCESS/workflow-0.2.2.md
+	 * @see BE_PROCESS/releases/workflow-0.2.2.md
 	 */
 	public function test_container_menus_expose_submenus_not_items(): void {
 		$menus = Seeder::parse_gvm();

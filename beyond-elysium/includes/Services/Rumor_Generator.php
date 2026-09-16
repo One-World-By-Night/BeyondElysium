@@ -22,8 +22,8 @@ defined( 'ABSPATH' ) || exit;
  * same way as any other plot, through `Entries_Controller` a level at a time
  * if they choose to.
  *
- * @see BE_PROCESS/workflow-0.5.md Step 5
- * @see BE_PROCESS/GV-SOURCEMAP.md "Rumor auto-generation"
+ * @see BE_PROCESS/releases/workflow-0.5.md Step 5
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "Rumor auto-generation"
  */
 class Rumor_Generator {
 

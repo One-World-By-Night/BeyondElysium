@@ -14,7 +14,7 @@ use WP_UnitTestCase;
  * real database character, matching ImportControllerThreadTest's own
  * established pattern, rather than hand-authoring XML fixtures.
  *
- * @see BE_PROCESS/player-grapevine-file-design.md §6
+ * @see BE_PROCESS/design/player-grapevine-file-design.md §6
  */
 class SubmissionsSendThreadTest extends WP_UnitTestCase {
 

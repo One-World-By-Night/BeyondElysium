@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
  * parser reads every scalar, trait list, and tail field back correctly,
  * including the omit-default fallbacks and wraith's `ethnos` enum mapping.
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-2
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-2
  */
 class GexXmlParserGenericRaceTest extends TestCase {
 

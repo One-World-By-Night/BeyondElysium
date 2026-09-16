@@ -12,7 +12,7 @@ use WP_UnitTestCase;
  * for specific destination states, and `open_states_for_game()` merging
  * both directions into one badge lookup without an N+1 (§7.3).
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-8, GX-9, §7.2, §7.3, §8.1
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-8, GX-9, §7.2, §7.3, §8.1
  */
 class TransferThreadTest extends WP_UnitTestCase {
 

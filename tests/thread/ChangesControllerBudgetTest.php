@@ -14,7 +14,7 @@ use WP_UnitTestCase;
  * real character and a real `met-merits` catalog cost ("Iron Will" is "3-5", defaulting
  * to 3 with no chosen_cost), not a mock.
  *
- * @see BE_PROCESS/workflow-0.9.md Planned-vs-Built Audit, item 1
+ * @see BE_PROCESS/releases/workflow-0.9.md Planned-vs-Built Audit, item 1
  */
 class ChangesControllerBudgetTest extends WP_UnitTestCase {
 

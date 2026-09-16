@@ -34,8 +34,8 @@ defined( 'ABSPATH' ) || exit;
  * bespoke envelope - one serializer for both the file download and the wire
  * transfer, and an ST can read what left (§8.2).
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-8, GX-9, §8
- * @see BE_PROCESS/1.0.0-review.md F-003, F-005, F-006
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-8, GX-9, §8
+ * @see BE_PROCESS/releases/1.0.0-review.md F-003, F-005, F-006
  */
 class Transfers_Controller extends Base_Controller {
 

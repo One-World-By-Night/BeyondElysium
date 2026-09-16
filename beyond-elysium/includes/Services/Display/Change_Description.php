@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
  * Operates only on plain data passed in as arguments - no database access; its
  * words go through `__()` so a translated chronicle reads its own language.
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 3a, SP-5
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 3a, SP-5
  */
 class Change_Description {
 

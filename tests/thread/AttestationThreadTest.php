@@ -13,7 +13,7 @@ use WP_UnitTestCase;
  * `last_checked_at` bookkeeping on every `resolve()` call regardless of
  * outcome, and expiry sweeping.
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-7, §6.2
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-7, §6.2
  */
 class AttestationThreadTest extends WP_UnitTestCase {
 

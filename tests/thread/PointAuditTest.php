@@ -13,7 +13,7 @@ use WP_UnitTestCase;
  * (point-calculator-design.md §7 PC-6) - never hand-built fixtures for the
  * catalog itself.
  *
- * @see BE_PROCESS/point-calculator-design.md
+ * @see BE_PROCESS/design/point-calculator-design.md
  */
 class PointAuditTest extends WP_UnitTestCase {
 

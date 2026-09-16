@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
  * `elements/categories_registered` and `widgets/register` actions, and each
  * callback is a no-op on any site where Elementor is not installed or active.
  *
- * @see BE_PROCESS/workflow-0.3.md Step 7
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 7
  */
 class Init {
 

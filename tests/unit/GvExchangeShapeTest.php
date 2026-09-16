@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
  * consistency; `QueryWorldObjectsTest`-style round-trip proof that the table
  * matches the real readers is GX-2's job once they're re-pointed at it.
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-1, GX-10
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-1, GX-10
  */
 class GvExchangeShapeTest extends TestCase {
 

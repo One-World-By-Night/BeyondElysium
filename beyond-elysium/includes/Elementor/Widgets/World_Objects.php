@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  * are shown, and renders a single mount-point <div> that the front-end
  * script hydrates with the WorldObjectManager React component.
  *
- * @see BE_PROCESS/workflow-0.7.md Step 5a
+ * @see BE_PROCESS/releases/workflow-0.7.md Step 5a
  */
 class World_Objects extends Widget_Base {
 

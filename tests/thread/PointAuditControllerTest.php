@@ -15,7 +15,7 @@ use WP_UnitTestCase;
  * requires - a Storyteller-only block must 403 a non-manager, never produce
  * a reduced total.
  *
- * @see BE_PROCESS/point-calculator-design.md §5.5, §7 PC-7
+ * @see BE_PROCESS/design/point-calculator-design.md §5.5, §7 PC-7
  */
 class PointAuditControllerTest extends WP_UnitTestCase {
 

@@ -16,7 +16,7 @@ use WP_UnitTestCase;
  * held pick onto the surviving, more-informative tradition-prefixed name.
  *
  * **This precondition can no longer occur naturally** since the Blood Magic redesign
- * (BE_PROCESS/0.99.2-workflow.md): every tradition-prefixed Discipline row, this one
+ * (BE_PROCESS/releases/0.99.2-workflow.md): every tradition-prefixed Discipline row, this one
  * included, moved out of `vampire-disciplines` into `vampire-blood-magic` under one bare
  * canonical name plus a `traditions` map - the exact class of duplication this one-off
  * migration existed to clean up is now prevented generically rather than fixed by hand

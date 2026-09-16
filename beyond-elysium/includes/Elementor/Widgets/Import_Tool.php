@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
  * control for the target game slug, and renders a single mount-point <div>
  * that the front-end script hydrates with the ImportTool React component.
  *
- * @see BE_PROCESS/workflow-0.8.md Step 8
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 8
  */
 class Import_Tool extends Widget_Base {
 

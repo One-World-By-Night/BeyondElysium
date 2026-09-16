@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  * thin permission/lookup/response layer every other controller in this
  * project already follows.
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-3, GX-4
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-3, GX-4
  */
 class Export_Controller extends Base_Controller {
 

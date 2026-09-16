@@ -30,7 +30,7 @@ defined( 'ABSPATH' ) || exit;
  * (`preview`, `create`, `withdraw`, `/my/submissions`) and a Storyteller's
  * review (`list`, `review`, `verification`, `accept`, `refuse`).
  *
- * @see BE_PROCESS/player-grapevine-file-design.md §6, §7
+ * @see BE_PROCESS/design/player-grapevine-file-design.md §6, §7
  */
 class Submissions_Controller extends Base_Controller {
 

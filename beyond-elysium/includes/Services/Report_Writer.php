@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * would; `Reports_Controller` passes `Pdf_Signer::availability()`, and an
  * unsigned report is stamped UNSIGNED on every page (1.0.0-review F-042).
  *
- * @see BE_PROCESS/reports-cards-batch-design.md §3.3
+ * @see BE_PROCESS/design/reports-cards-batch-design.md §3.3
  */
 class Report_Writer {
 

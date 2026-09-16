@@ -11,8 +11,8 @@ use PHPUnit\Framework\TestCase;
  * database - the persistence and existing-title lookups are covered at the thread
  * layer.
  *
- * @see BE_PROCESS/workflow-0.5.md Step 5g
- * @see BE_PROCESS/GV-SOURCEMAP.md "Rumor auto-generation"
+ * @see BE_PROCESS/releases/workflow-0.5.md Step 5g
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "Rumor auto-generation"
  */
 class RumorGeneratorTest extends TestCase {
 

@@ -21,8 +21,8 @@ use PHPUnit\Framework\TestCase;
  * honesty about its synthetic fixtures. The refusal path here covers only a genuinely
  * unrecognized element name, not any real `RaceType`.
  *
- * @see BE_PROCESS/workflow-0.8.md Step 9
- * @see BE_PROCESS/DECISIONLOG.md Decision 068
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 9
+ * @see BE_PROCESS/reference/DECISIONLOG.md Decision 068
  */
 class GexXmlParserTest extends TestCase {
 

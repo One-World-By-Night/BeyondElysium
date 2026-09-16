@@ -7,7 +7,7 @@ use BeyondElysium\Models\Template;
 use WP_UnitTestCase;
 
 /**
- * BM-9 (BE_PROCESS/0.99.2-workflow.md): getting `vampire-blood-magic` into an
+ * BM-9 (BE_PROCESS/releases/0.99.2-workflow.md): getting `vampire-blood-magic` into an
  * already-seeded install's templates. Two separate, narrowly-scoped functions, following
  * the project's own established "one-off migration per specific gap" pattern rather than
  * generalizing repair_stale_default_layouts()'s width-based staleness check - a real

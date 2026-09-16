@@ -9,8 +9,8 @@ use PHPUnit\Framework\TestCase;
  * Port of `QueryEngineClass.GetStatistics`. One fixture set, all five statistics,
  * hand-calculated expected values.
  *
- * @see BE_PROCESS/workflow-0.6.md Step 5j
- * @see BE_PROCESS/GV-SOURCEMAP.md "Statistics"
+ * @see BE_PROCESS/releases/workflow-0.6.md Step 5j
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "Statistics"
  */
 class StatisticsTest extends TestCase {
 

@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
  * Seeder. See tests/unit/MetCsvParserTest.php for parsing itself, tests/unit/SeederMapTest.php
  * for the GVM-only path this overlay sits on top of.
  *
- * @see BE_PROCESS/workflow-0.10.md
+ * @see BE_PROCESS/releases/workflow-0.10.md
  */
 class MetCsvSeederTest extends TestCase {
 
@@ -114,7 +114,7 @@ class MetCsvSeederTest extends TestCase {
 	 *
 	 * vampire-disciplines dropped from 281 to 68 when Blood Magic paths (every Discipline
 	 * row with a real Group value) moved to their own block - see
-	 * BE_PROCESS/0.99.2-workflow.md's "Blood magic" section and BloodMagicSeederTest for the
+	 * BE_PROCESS/releases/0.99.2-workflow.md's "Blood magic" section and BloodMagicSeederTest for the
 	 * block that content moved to. Combo count is untouched: Combination rows were never
 	 * part of that split either way.
 	 */

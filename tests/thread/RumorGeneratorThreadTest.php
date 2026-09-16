@@ -14,7 +14,7 @@ use WP_UnitTestCase;
  * `copy_previous`, and inactive characters excluded. The pure per-character candidate
  * logic is covered without a database in `tests/unit/RumorGeneratorTest.php`.
  *
- * @see BE_PROCESS/workflow-0.5.md Step 5g
+ * @see BE_PROCESS/releases/workflow-0.5.md Step 5g
  */
 class RumorGeneratorThreadTest extends WP_UnitTestCase {
 

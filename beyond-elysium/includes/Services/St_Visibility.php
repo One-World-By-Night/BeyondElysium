@@ -38,7 +38,7 @@ defined( 'ABSPATH' ) || exit;
  * characters compute the list once and pass it through instead - the
  * original optimization, kept where it always actually belonged.
  *
- * @see BE_PROCESS/signed-pdf-design.md §3d
+ * @see BE_PROCESS/design/signed-pdf-design.md §3d
  */
 class St_Visibility {
 

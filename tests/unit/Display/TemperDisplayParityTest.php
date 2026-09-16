@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
  * read the same fixture and are checked against the same expected output; this half
  * proves the PHP side, `src/lib/displayTemper.test.ts` proves the TypeScript side.
  *
- * @see BE_PROCESS/signed-pdf-design.md
+ * @see BE_PROCESS/design/signed-pdf-design.md
  */
 class TemperDisplayParityTest extends TestCase {
 

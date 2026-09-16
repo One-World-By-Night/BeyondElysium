@@ -9,9 +9,9 @@
  * real, selectable Blood Magic traditions. Read by
  * Seeder::apply_met_csv_overrides().
  *
- * @see BE_PROCESS/workflow-0.10.md
- * @see BE_PROCESS/0.99.2-workflow.md Blood magic section
- * @see BE_PROCESS/blood-magic-paradigm.md
+ * @see BE_PROCESS/releases/workflow-0.10.md
+ * @see BE_PROCESS/releases/0.99.2-workflow.md Blood magic section
+ * @see BE_PROCESS/design/blood-magic-paradigm.md
  */
 
 defined( 'ABSPATH' ) || exit;

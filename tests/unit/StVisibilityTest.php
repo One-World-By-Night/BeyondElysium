@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
  * that lesson is proven independently, then the "either one alone leaks" claim
  * itself.
  *
- * @see BE_PROCESS/signed-pdf-design.md §3d, SP-4
+ * @see BE_PROCESS/design/signed-pdf-design.md §3d, SP-4
  */
 class StVisibilityTest extends TestCase {
 

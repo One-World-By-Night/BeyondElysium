@@ -279,7 +279,7 @@ class Boons_Controller extends Base_Controller {
 		$properties['repaid_date'] = current_time( 'Y-m-d' );
 
 		// Optional: how the boon was actually settled - "entered in error" is not a special
-		// case, it is repaid with that as the how (owner's ruling, BE_PROCESS/0.99.2-workflow.md).
+		// case, it is repaid with that as the how (owner's ruling, BE_PROCESS/releases/0.99.2-workflow.md).
 		$note = $request->get_param( 'repaid_note' );
 		if ( $note !== null && $note !== '' ) {
 			$properties['repaid_note'] = sanitize_textarea_field( (string) $note );

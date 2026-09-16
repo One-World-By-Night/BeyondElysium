@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
  * the debit rule exactly as specified: base comes from unused, not total, so
  * carry_unused keeps working unchanged; over_budget is a flag, never a clamp.
  *
- * @see BE_PROCESS/background-ledger-apr-design.md §5.4
+ * @see BE_PROCESS/design/background-ledger-apr-design.md §5.4
  */
 class BackgroundLedgerTest extends TestCase {
 

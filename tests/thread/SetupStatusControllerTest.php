@@ -14,7 +14,7 @@ use WP_UnitTestCase;
  * from real rows, never stored, plus `actionable` for an administrator, an
  * editor, and a subscriber.
  *
- * @see BE_PROCESS/guided-chronicle-setup-design.md §6.3
+ * @see BE_PROCESS/design/guided-chronicle-setup-design.md §6.3
  */
 class SetupStatusControllerTest extends WP_UnitTestCase {
 

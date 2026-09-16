@@ -11,8 +11,8 @@ use PHPUnit\Framework\TestCase;
  * classification (workflow-0.8.md Step 4). Pure-function tests against hand-built
  * block fixtures - no DB, no real import data.
  *
- * @see BE_PROCESS/workflow-0.8.md Step 4
- * @see BE_PROCESS/DECISIONLOG.md Decision 036
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 4
+ * @see BE_PROCESS/reference/DECISIONLOG.md Decision 036
  */
 class TraitMapperTest extends TestCase {
 
@@ -454,7 +454,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Blood magic (BE_PROCESS/0.99.2-workflow.md, BM-7) - tradition-label normalization
+	// Blood magic (BE_PROCESS/releases/0.99.2-workflow.md, BM-7) - tradition-label normalization
 	// -------------------------------------------------------------------------
 
 	/**

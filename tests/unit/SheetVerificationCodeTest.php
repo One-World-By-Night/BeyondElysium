@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
  * pattern matches exactly what Character_Exporter::export() writes and
  * rejects everything else.
  *
- * @see BE_PROCESS/player-grapevine-file-design.md §8.2
+ * @see BE_PROCESS/design/player-grapevine-file-design.md §8.2
  */
 class SheetVerificationCodeTest extends TestCase {
 

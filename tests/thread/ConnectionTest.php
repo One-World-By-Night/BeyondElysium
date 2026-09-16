@@ -14,7 +14,7 @@ use WP_UnitTestCase;
  * model calls $wpdb directly (find_duplicate(), for_entity()), which TESTING.md
  * defines as the thread layer's boundary, not unit's.
  *
- * @see BE_PROCESS/workflow-0.5.md Step 1.3
+ * @see BE_PROCESS/releases/workflow-0.5.md Step 1.3
  */
 class ConnectionTest extends WP_UnitTestCase {
 

@@ -15,8 +15,8 @@ defined( 'ABSPATH' ) || exit;
  * Both front ends produce the same normalized structure: a map of menu name
  * to its category, items, submenus, includes, and display flags.
  *
- * @see BE_PROCESS/GV-SOURCEMAP.md "GVBM binary shape"
- * @see BE_PROCESS/workflow-0.8.md Step 3
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "GVBM binary shape"
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 3
  */
 class GVM_Parser {
 

@@ -22,7 +22,7 @@ use WP_UnitTestCase;
  * directly rather than needing the `rest_pre_serve_request` filter to fire
  * (Section 4c's own note on why this route shape stays testable).
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 4c, SP-9
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 4c, SP-9
  */
 class SheetsControllerThreadTest extends WP_UnitTestCase {
 

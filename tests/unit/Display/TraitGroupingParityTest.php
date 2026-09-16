@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
  * `src/lib/groupTraitsByField.test.ts`, `src/components/renderers/TraitListRenderer.test.ts`,
  * and `src/components/renderers/BlockRenderer.test.ts` for the TypeScript side.
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 2d, Section 3, SP-3
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 2d, Section 3, SP-3
  */
 class TraitGroupingParityTest extends TestCase {
 

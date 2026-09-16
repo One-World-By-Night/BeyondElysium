@@ -29,7 +29,7 @@ defined( 'ABSPATH' ) || exit;
  * an `-unsigned.pdf` filename (1.0.0-review F-042, owner ruling 2026-09-14);
  * it used to refuse with `503 signing_unavailable`.
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 4c, SP-9
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 4c, SP-9
  */
 class Sheets_Controller extends Base_Controller {
 

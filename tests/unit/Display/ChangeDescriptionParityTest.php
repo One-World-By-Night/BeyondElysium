@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
  * are checked against the same expected output; this half proves the PHP side,
  * `src/lib/describeChange.test.ts` proves the TypeScript side.
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 3a, SP-5
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 3a, SP-5
  */
 class ChangeDescriptionParityTest extends TestCase {
 

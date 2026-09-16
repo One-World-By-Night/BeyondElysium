@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
  * `GV_Binary_Reader`, proving the writer is a genuine byte-for-byte inverse
  * rather than merely "close enough."
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-5
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-5
  */
 class GvBinaryWriterTest extends TestCase {
 

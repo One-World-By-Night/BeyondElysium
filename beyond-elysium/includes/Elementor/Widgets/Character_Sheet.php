@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  * script hydrates with the CharacterSheet React component. With no character
  * ID set, the widget falls back to a character_id URL query var.
  *
- * @see BE_PROCESS/workflow-0.3.md Step 7c
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 7c
  */
 class Character_Sheet extends Widget_Base {
 

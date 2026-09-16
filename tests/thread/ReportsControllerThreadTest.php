@@ -19,7 +19,7 @@ use WP_UnitTestCase;
  * `Reports_Controller`'s two routes, dispatched as real REST requests -
  * mirrors `SheetsControllerThreadTest`'s own shape (reports-cards-batch-design.md).
  *
- * @see BE_PROCESS/reports-cards-batch-design.md §3.5
+ * @see BE_PROCESS/design/reports-cards-batch-design.md §3.5
  */
 class ReportsControllerThreadTest extends WP_UnitTestCase {
 

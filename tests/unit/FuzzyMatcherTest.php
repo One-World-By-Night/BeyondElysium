@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
  * `Fuzzy_Matcher` (workflow-0.8.md Step 5) - normalization, edit-distance thresholds,
  * and ranked suggestions, independent of any real import.
  *
- * @see BE_PROCESS/workflow-0.8.md Step 5
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 5
  */
 class FuzzyMatcherTest extends TestCase {
 

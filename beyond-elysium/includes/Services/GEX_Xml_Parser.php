@@ -31,9 +31,9 @@ defined( 'ABSPATH' ) || exit;
  * (GX-1) rather than eleven more hand-written near-duplicates - there was no
  * existing XML support for any of them before GX-2.
  *
- * @see BE_PROCESS/workflow-0.8.md Step 9
- * @see BE_PROCESS/DECISIONLOG.md Decision 068
- * @see BE_PROCESS/gex-export-transfer-design.md GX-2
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 9
+ * @see BE_PROCESS/reference/DECISIONLOG.md Decision 068
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-2
  */
 class GEX_Xml_Parser {
 

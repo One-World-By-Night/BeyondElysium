@@ -14,7 +14,7 @@ use WP_UnitTestCase;
  * F-122's review half: listing, reviewing, verifying, accepting, and
  * refusing a waiting submission through the real REST server.
  *
- * @see BE_PROCESS/player-grapevine-file-design.md §7
+ * @see BE_PROCESS/design/player-grapevine-file-design.md §7
  */
 class SubmissionsReviewThreadTest extends WP_UnitTestCase {
 

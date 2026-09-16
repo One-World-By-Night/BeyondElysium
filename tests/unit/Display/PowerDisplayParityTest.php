@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
  * here is transcribed 1:1 from `TieredPowerRenderer.test.ts`'s existing cases,
  * per SP-3.
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 2d, Section 3, SP-3
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 2d, Section 3, SP-3
  */
 class PowerDisplayParityTest extends TestCase {
 

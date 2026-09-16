@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * single mount-point <div> that the front-end script hydrates with the
  * CharacterList React component.
  *
- * @see BE_PROCESS/workflow-0.3.md Step 7d
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 7d
  */
 class Character_List extends Widget_Base {
 

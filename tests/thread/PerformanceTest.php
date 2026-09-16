@@ -28,7 +28,7 @@ use WP_UnitTestCase;
  * than seeding 220 characters inline on every run, which would make the numbers
  * measure fixture-creation cost, not the paths this step actually cares about.
  *
- * @see BE_PROCESS/workflow-0.9.md Step 2
+ * @see BE_PROCESS/releases/workflow-0.9.md Step 2
  */
 class PerformanceTest extends WP_UnitTestCase {
 

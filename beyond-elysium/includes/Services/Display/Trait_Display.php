@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  * Layout_Generator.
  *
  * @see src/lib/displayTrait.ts
- * @see BE_PROCESS/signed-pdf-design.md SP-3
+ * @see BE_PROCESS/design/signed-pdf-design.md SP-3
  */
 class Trait_Display {
 

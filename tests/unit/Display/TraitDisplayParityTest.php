@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
  * output; this half proves the PHP side, `src/lib/displayTrait.test.ts` proves the
  * TypeScript side.
  *
- * @see BE_PROCESS/signed-pdf-design.md SP-3
+ * @see BE_PROCESS/design/signed-pdf-design.md SP-3
  */
 class TraitDisplayParityTest extends TestCase {
 

@@ -20,8 +20,8 @@ defined( 'ABSPATH' ) || exit;
  *   Date     8 bytes, OLE Automation double, epoch 1899-12-30
  *   Enum     4 bytes, same width as Long
  *
- * @see BE_PROCESS/GV-SOURCEMAP.md "File Formats"
- * @see BE_PROCESS/workflow-0.8.md Step 1
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "File Formats"
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 1
  */
 class GV_Binary_Reader {
 

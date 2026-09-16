@@ -59,8 +59,8 @@
  * during GX-1's transcription. Every `trait_lists` row below uses the real,
  * on-the-wire name.
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-1
- * @see BE_PROCESS/GV-SOURCEMAP.md
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-1
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md
  */
 
 defined( 'ABSPATH' ) || exit;

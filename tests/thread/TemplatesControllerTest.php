@@ -16,7 +16,7 @@ use WP_UnitTestCase;
  * endpoint exercised end to end against a real database is exactly what belongs in
  * tests/thread/, so it lives here instead.
  *
- * @see BE_PROCESS/workflow-0.3.md Step 2g
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 2g
  */
 class TemplatesControllerTest extends WP_UnitTestCase {
 

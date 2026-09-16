@@ -33,7 +33,7 @@ defined( 'ABSPATH' ) || exit;
  * violated at build time: **no stored completion state of any kind.** Every
  * row's status is derived on read from the rows that actually exist.
  *
- * @see BE_PROCESS/guided-chronicle-setup-design.md §6.3, §6.4
+ * @see BE_PROCESS/design/guided-chronicle-setup-design.md §6.3, §6.4
  */
 class Setup_Status_Controller extends Base_Controller {
 

@@ -32,7 +32,7 @@ defined( 'ABSPATH' ) || exit;
  *     string `&#8217;` (§2f). Every substitution is reported back via
  *     `transliterations()` so the exporting Storyteller can see what changed.
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-3
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-3
  */
 class GEX_Xml_Writer {
 

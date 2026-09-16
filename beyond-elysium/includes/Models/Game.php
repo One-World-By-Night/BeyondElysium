@@ -239,7 +239,7 @@ class Game {
 	 * widget references are repaired after commit, individually, since
 	 * that repair calls wp_update_post() and must not run inside a
 	 * transaction that might roll back. See
-	 * BE_PROCESS/chronicle-rename-design.md §7.2 for the full reasoning.
+	 * BE_PROCESS/design/chronicle-rename-design.md §7.2 for the full reasoning.
 	 *
 	 * @param int    $game_id
 	 * @param string $new_slug

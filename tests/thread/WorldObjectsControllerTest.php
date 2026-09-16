@@ -12,7 +12,7 @@ use WP_UnitTestCase;
  * REST boundary, connected-character resolution and visibility filtering, cascading
  * delete, and the permission boundary (workflow-0.7.md Step 2).
  *
- * @see BE_PROCESS/workflow-0.7.md Step 2
+ * @see BE_PROCESS/releases/workflow-0.7.md Step 2
  */
 class WorldObjectsControllerTest extends WP_UnitTestCase {
 

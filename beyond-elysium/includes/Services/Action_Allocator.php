@@ -24,8 +24,8 @@ defined( 'ABSPATH' ) || exit;
  * in the `{stack}-backgrounds` block's definition to tell an
  * Influence-sourced entry apart from a Backgrounds-sourced one.
  *
- * @see BE_PROCESS/workflow-0.5.md Step 4
- * @see BE_PROCESS/GV-SOURCEMAP.md "Action allocation"
+ * @see BE_PROCESS/releases/workflow-0.5.md Step 4
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "Action allocation"
  */
 class Action_Allocator {
 
@@ -50,7 +50,7 @@ class Action_Allocator {
 	 * against each subaction any Background_Ledger entries already recorded
 	 * for this exact (character, date) pair - so a preview, a commit, and a
 	 * later re-fetch of the same allocation all show the same spent/unused
-	 * numbers (BE_PROCESS/background-ledger-apr-design.md §5.4). A date with
+	 * numbers (BE_PROCESS/design/background-ledger-apr-design.md §5.4). A date with
 	 * no ledger entries yet is unaffected: every subaction's `spent` is 0
 	 * and `unused` is unchanged.
 	 *
@@ -207,7 +207,7 @@ class Action_Allocator {
 	/**
 	 * Builds a map of catalog item name to source label for the merged
 	 * backgrounds block, resolved through this chronicle's own fork when
-	 * one exists (BE_PROCESS/background-ledger-apr-design.md §3.1).
+	 * one exists (BE_PROCESS/design/background-ledger-apr-design.md §3.1).
 	 *
 	 * @param string $backgrounds_slug
 	 * @param string $game_slug
@@ -254,7 +254,7 @@ class Action_Allocator {
 	 * targets, or null when the plot has no such connection - either it is
 	 * not an allocator plot at all, or its connection is missing. Used by
 	 * the REST layer to decide whether a non-manager viewer may see this
-	 * plot's action entries at all (BE_PROCESS/background-ledger-apr-design.md
+	 * plot's action entries at all (BE_PROCESS/design/background-ledger-apr-design.md
 	 * §3.4/§5.8: an allocation plot's contents disclose a character's exact
 	 * background dot ratings and are not public).
 	 *
@@ -526,7 +526,7 @@ class Action_Allocator {
 	 * it, and every one of those entries has a non-empty `result` - the
 	 * meaning `frmAction.frm`'s own Action/Result fields carried before the
 	 * ledger's write path existed to fill them
-	 * (BE_PROCESS/background-ledger-apr-design.md §5.5). False when the plot
+	 * (BE_PROCESS/design/background-ledger-apr-design.md §5.5). False when the plot
 	 * has no subactions at all.
 	 *
 	 * This replaces the original "action and result on the allocator entry

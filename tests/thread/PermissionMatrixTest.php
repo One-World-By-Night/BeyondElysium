@@ -38,7 +38,7 @@ use WP_UnitTestCase;
  * asserts: the permission boundary, not full business-logic correctness, which the
  * controller-specific thread tests already cover.
  *
- * @see BE_PROCESS/workflow-0.9.md Step 1
+ * @see BE_PROCESS/releases/workflow-0.9.md Step 1
  */
 class PermissionMatrixTest extends WP_UnitTestCase {
 

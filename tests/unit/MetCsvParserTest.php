@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
  * MET-Mechanics CSV parsing, against both the real shipped file and small hand-built
  * fixtures for the edge cases the real file doesn't reliably exercise.
  *
- * @see BE_PROCESS/workflow-0.10.md
+ * @see BE_PROCESS/releases/workflow-0.10.md
  */
 class MetCsvParserTest extends TestCase {
 

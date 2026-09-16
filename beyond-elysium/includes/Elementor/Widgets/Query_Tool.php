@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * routes behind that component enforce their own capability checks; this
  * widget only places the mount point on the page.
  *
- * @see BE_PROCESS/workflow-0.6.md Step 8g
+ * @see BE_PROCESS/releases/workflow-0.6.md Step 8g
  */
 class Query_Tool extends Widget_Base {
 

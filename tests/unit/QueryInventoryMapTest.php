@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
  * query that reads a property nothing writes, or a field list that omits a
  * real key.
  *
- * @see BE_PROCESS/query-beyond-characters-design.md §6, QB-3
+ * @see BE_PROCESS/design/query-beyond-characters-design.md §6, QB-3
  */
 class QueryInventoryMapTest extends TestCase {
 

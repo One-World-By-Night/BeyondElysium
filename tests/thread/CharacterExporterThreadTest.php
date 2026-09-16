@@ -31,7 +31,7 @@ use WP_UnitTestCase;
  * `vampire-identity`/`vampire-backgrounds` block definitions before writing
  * this test.
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-3, GX-4
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-3, GX-4
  */
 class CharacterExporterThreadTest extends WP_UnitTestCase {
 

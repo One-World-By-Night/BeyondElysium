@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
  * once a marked section is cut out - a marker with a space on both sides leaves both
  * spaces behind, doubled up. That is faithful VB behavior, not a bug to smooth over.
  *
- * @see BE_PROCESS/GV-SOURCEMAP.md "ST data filtering (GameClass.STFilter)"
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md "ST data filtering (GameClass.STFilter)"
  */
 class StFilterTest extends TestCase {
 

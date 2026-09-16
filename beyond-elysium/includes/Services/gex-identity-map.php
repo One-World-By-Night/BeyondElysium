@@ -19,8 +19,8 @@
  * A raw field with no destination BE field is intentionally absent below -
  * not every stack's resources/identity block defines every possible field.
  *
- * @see BE_PROCESS/workflow-0.8.md Step 4 (identity/resource mapping follow-up)
- * @see BE_PROCESS/DECISIONLOG.md Decision 039
+ * @see BE_PROCESS/releases/workflow-0.8.md Step 4 (identity/resource mapping follow-up)
+ * @see BE_PROCESS/reference/DECISIONLOG.md Decision 039
  */
 
 defined( 'ABSPATH' ) || exit;

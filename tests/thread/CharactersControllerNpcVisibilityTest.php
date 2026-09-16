@@ -11,7 +11,7 @@ use WP_UnitTestCase;
  * (workflow-0.3.md Step 6f). Found with no server-side enforcement at all while
  * building CharacterList - `is_npc` was a plain pass-through filter.
  *
- * @see BE_PROCESS/workflow-0.3.md Step 6f
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 6f
  */
 class CharactersControllerNpcVisibilityTest extends WP_UnitTestCase {
 

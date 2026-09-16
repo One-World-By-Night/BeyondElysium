@@ -14,8 +14,8 @@
  *   pattern    every menu whose name matches, optionally filtered by category
  *   none       no GVM source; the block seeds empty
  *
- * @see BE_PROCESS/workflow-0.2.2.md
- * @see BE_PROCESS/GV-SOURCEMAP.md
+ * @see BE_PROCESS/releases/workflow-0.2.2.md
+ * @see BE_PROCESS/reference/GV-SOURCEMAP.md
  */
 
 defined( 'ABSPATH' ) || exit;

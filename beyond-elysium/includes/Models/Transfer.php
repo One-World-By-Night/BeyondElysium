@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
  * transfers of one character out of, or into, the same chronicle take turns
  * (1.0.0-review F-110).
  *
- * @see BE_PROCESS/gex-export-transfer-design.md GX-8, GX-9, §7.2, §8.1
+ * @see BE_PROCESS/design/gex-export-transfer-design.md GX-8, GX-9, §7.2, §8.1
  */
 class Transfer {
 

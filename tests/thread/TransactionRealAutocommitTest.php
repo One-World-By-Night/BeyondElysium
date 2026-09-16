@@ -33,7 +33,7 @@ use PHPUnit\Framework\TestCase;
  * `@@autocommit` check demonstrably loses an outer row it should have been able to roll
  * back, then the real `Transaction` class is shown NOT to have that problem under the
  * identical sequence - matching this project's own testing rule that a guard must be shown
- * to actually fail before it's trusted (`BE_PROCESS/TESTING.md`, "a test that has never
+ * to actually fail before it's trusted (`BE_PROCESS/now/TESTING.md`, "a test that has never
  * failed has proven nothing").
  */
 class TransactionRealAutocommitTest extends TestCase {
@@ -45,7 +45,7 @@ class TransactionRealAutocommitTest extends TestCase {
 
 	public static function setUpBeforeClass(): void {
 		if ( ! defined( 'BE_WP_TESTS_AVAILABLE' ) || ! BE_WP_TESTS_AVAILABLE ) {
-			self::markTestSkipped( 'WP_TESTS_DIR not configured - see BE_PROCESS/PLATFORM.md.' );
+			self::markTestSkipped( 'WP_TESTS_DIR not configured - see BE_PROCESS/now/PLATFORM.md.' );
 		}
 	}
 

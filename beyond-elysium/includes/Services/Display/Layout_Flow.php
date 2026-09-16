@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * on-screen character sheet already renders and what every shipped Grapevine HTML character
  * sheet template uses.
  *
- * @see BE_PROCESS/signed-pdf-design.md Section 3b, SP-3
+ * @see BE_PROCESS/design/signed-pdf-design.md Section 3b, SP-3
  */
 class Layout_Flow {
 

@@ -6,7 +6,7 @@
  * test suite; when WP_TESTS_DIR is not set they are skipped rather than failed, so a fresh
  * clone can still run `vendor/bin/phpunit --testsuite unit`.
  *
- * See BE_PROCESS/TESTING.md.
+ * See BE_PROCESS/now/TESTING.md.
  */
 
 define( 'BE_TESTS_DIR', __DIR__ );

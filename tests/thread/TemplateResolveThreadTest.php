@@ -16,7 +16,7 @@ use WP_UnitTestCase;
  * happens to be 0, which is exactly the kind of thing that passes locally and breaks on a
  * chronicle whose game row id is 0-adjacent in some other query.
  *
- * @see BE_PROCESS/workflow-0.3.md Step 1b, 1j
+ * @see BE_PROCESS/releases/workflow-0.3.md Step 1b, 1j
  */
 class TemplateResolveThreadTest extends WP_UnitTestCase {
 

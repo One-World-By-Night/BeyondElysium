@@ -11,7 +11,7 @@ use WP_UnitTestCase;
  * file columns (and stamping `answered_at`) the moment a row leaves
  * `waiting`, and `expire_stale()`'s 60-day sweep.
  *
- * @see BE_PROCESS/player-grapevine-file-design.md §5
+ * @see BE_PROCESS/design/player-grapevine-file-design.md §5
  */
 class SubmissionModelThreadTest extends WP_UnitTestCase {
 

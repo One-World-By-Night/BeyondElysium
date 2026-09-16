@@ -319,7 +319,7 @@ function BoonTable( {
 /**
  * The inline "mark repaid" confirmation: an optional note on how it was actually settled
  * ("entered in error" is not a special case - a mistaken entry is repaid with that as the
- * how, BE_PROCESS/0.99.2-workflow.md), then Confirm or Cancel.
+ * how, BE_PROCESS/releases/0.99.2-workflow.md), then Confirm or Cancel.
  */
 function RepayControl( {
 	onConfirm,
