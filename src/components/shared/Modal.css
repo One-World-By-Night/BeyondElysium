@@ -1,7 +1,7 @@
 .be-modal__backdrop {
 	position: fixed;
 	inset: 0;
-	background: rgba( 0, 0, 0, 0.5 );
+	background: rgba(0, 0, 0, 0.5);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -11,9 +11,10 @@
 .be-modal {
 	background: #fff;
 	border-radius: 6px;
-	box-shadow: 0 4px 24px rgba( 0, 0, 0, 0.25 );
+	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
 	width: 100%;
 	max-width: 28rem;
+
 	/* vh first as a fallback for browsers without dvh support; dvh resolves against the
 	 * visible viewport on mobile Safari (vh resolves against the large viewport, browser
 	 * chrome hidden, so 85vh can exceed what's actually visible - mobile-sheet-design.md

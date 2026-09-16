@@ -5,6 +5,7 @@ namespace BeyondElysium\Tests\Thread;
 use BeyondElysium\Database\Seeder;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Schema_Block;
 use WP_UnitTestCase;
 
 /**
@@ -17,8 +18,9 @@ use WP_UnitTestCase;
  * seed_demo_characters() also runs once during the WordPress test suite's own bootstrap
  * (Schema::maybe_upgrade(), version-gated - fires outside any single test's transaction,
  * the same as on a real install), so be-demo can legitimately already exist before any
- * test method here runs. Removed in setUp() so every test gets a genuinely clean,
- * deterministic slate rather than depending on bootstrap timing.
+ * test method here runs. Removed in setUp() - with the seeded-once flag - so every test
+ * gets a genuinely clean, deterministic fresh-install slate rather than depending on
+ * bootstrap timing. What a non-fresh install does is in `ChronicleDeleteThreadTest`.
  */
 class SeedDemoCharactersTest extends WP_UnitTestCase {
 
@@ -27,12 +29,13 @@ class SeedDemoCharactersTest extends WP_UnitTestCase {
 		global $wpdb;
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}be_characters WHERE owner_slug = 'be-demo'" );
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}be_games WHERE slug = 'be-demo'" );
+		delete_option( Seeder::DEMO_SEEDED_OPTION );
 	}
 
 	public function test_creates_the_demo_game_if_it_does_not_exist(): void {
 		$this->assertNull( Game::find_by_slug( 'be-demo' ) );
 
-		Seeder::seed_demo_characters();
+		Seeder::seed_demo_characters( true );
 
 		$game = Game::find_by_slug( 'be-demo' );
 		$this->assertNotNull( $game );
@@ -40,7 +43,7 @@ class SeedDemoCharactersTest extends WP_UnitTestCase {
 	}
 
 	public function test_creates_all_22_characters_across_all_11_stacks(): void {
-		Seeder::seed_demo_characters();
+		Seeder::seed_demo_characters( true );
 
 		global $wpdb;
 		$table = $wpdb->prefix . 'be_characters';
@@ -56,7 +59,7 @@ class SeedDemoCharactersTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_real_character_has_its_full_sheet_data_and_xp(): void {
-		Seeder::seed_demo_characters();
+		Seeder::seed_demo_characters( true );
 
 		global $wpdb;
 		$row = $wpdb->get_row( $wpdb->prepare(
@@ -71,9 +74,46 @@ class SeedDemoCharactersTest extends WP_UnitTestCase {
 		$this->assertSame( 'Tremere', $sheet['vampire-identity']['Clan'] );
 	}
 
+	/**
+	 * 1.0.0-review F-049: the fixtures promised real catalog names and shipped Gifts under old
+	 * "Tribe: Gift (tier)" labels no catalog holds, a Blood Magic path filed under Disciplines,
+	 * and identity values no select offers - every one of them turned custom or moved blocks the
+	 * first time the character was exported and imported back.
+	 */
+	public function test_every_demo_trait_and_identity_value_is_a_real_catalog_entry(): void {
+		$problems = [];
+		foreach ( require BE_PLUGIN_PATH . '/includes/Database/demo-characters.php' as $fixture ) {
+			foreach ( $fixture['sheet_data'] as $slug => $held ) {
+				$block = Schema_Block::find_by_slug( $slug );
+				if ( ! $block ) {
+					$problems[] = "{$fixture['name']}: no block {$slug}";
+					continue;
+				}
+				$definition = $block->definition;
+				if ( $block->section_type === 'trait_list' || $block->section_type === 'tiered_power' ) {
+					$names = array_column( json_decode( wp_json_encode( $definition->items ?? $definition->powers ?? [] ), true ), 'name' );
+					foreach ( $held as $entry ) {
+						if ( ! in_array( $entry['name'], $names, true ) ) {
+							$problems[] = "{$fixture['name']}: {$slug} has no {$entry['name']}";
+						}
+					}
+				} elseif ( $block->section_type === 'identity_field' ) {
+					foreach ( (array) $definition->fields as $field ) {
+						$value = $held[ $field->name ] ?? null;
+						if ( $value !== null && $field->field_type === 'select' && ! empty( $field->options ) && ! in_array( $value, (array) $field->options, true ) ) {
+							$problems[] = "{$fixture['name']}: {$slug} {$field->name} offers no {$value}";
+						}
+					}
+				}
+			}
+		}
+
+		$this->assertSame( [], $problems );
+	}
+
 	public function test_running_it_twice_does_not_create_duplicates(): void {
-		Seeder::seed_demo_characters();
-		Seeder::seed_demo_characters();
+		Seeder::seed_demo_characters( true );
+		Seeder::seed_demo_characters( true );
 
 		global $wpdb;
 		$table = $wpdb->prefix . 'be_characters';
@@ -88,7 +128,7 @@ class SeedDemoCharactersTest extends WP_UnitTestCase {
 			'created_by' => 1, 'created_at' => current_time( 'mysql' ), 'updated_at' => current_time( 'mysql' ),
 		] );
 
-		Seeder::seed_demo_characters();
+		Seeder::seed_demo_characters( true );
 
 		$count = Character::count_for_game( 'thread-test-real-chronicle' );
 		$this->assertSame( 0, $count, 'Demo characters must only ever land in be-demo, never an existing real game.' );

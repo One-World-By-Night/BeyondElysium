@@ -22,7 +22,11 @@ export interface StackLike {
 export interface SchemaBlockLike {
 	slug: string;
 	name: string;
-	section_type: 'trait_list' | 'tiered_power' | 'resource_pool' | 'identity_field';
+	section_type:
+		| 'trait_list'
+		| 'tiered_power'
+		| 'resource_pool'
+		| 'identity_field';
 	definition: {
 		items?: unknown[];
 		powers?: unknown[];
@@ -63,7 +67,11 @@ interface Entry {
 }
 
 /** Builds one output layout section for a stack entry at the given column and order. */
-function buildSection( entry: Entry, column: number, order: number ): LayoutSection {
+function buildSection(
+	entry: Entry,
+	column: number,
+	order: number
+): LayoutSection {
 	return {
 		block_slug: entry.block.slug,
 		column,
@@ -80,7 +88,10 @@ function buildSection( entry: Entry, column: number, order: number ): LayoutSect
  * blocks across columns 2 and 3 by running item count so neither column grows
  * disproportionately heavier than the other.
  */
-export function generateLayout( stack: StackLike, blocks: Record<string, SchemaBlockLike> ): Layout {
+export function generateLayout(
+	stack: StackLike,
+	blocks: Record< string, SchemaBlockLike >
+): Layout {
 	const sections = [ ...stack.stack_definition.sections ].sort(
 		( a, b ) => ( a.display_order ?? 0 ) - ( b.display_order ?? 0 )
 	);
@@ -113,8 +124,8 @@ export function generateLayout( stack: StackLike, blocks: Record<string, SchemaB
 	}
 
 	// Balance columns 2 and 3 by running item count, assigning in stack section order.
-	const colOrder: Record<2 | 3, number> = { 2: 1, 3: 1 };
-	const colLoad: Record<2 | 3, number> = { 2: 0, 3: 0 };
+	const colOrder: Record< 2 | 3, number > = { 2: 1, 3: 1 };
+	const colLoad: Record< 2 | 3, number > = { 2: 0, 3: 0 };
 
 	for ( const entry of distributable ) {
 		const column: 2 | 3 = colLoad[ 2 ] <= colLoad[ 3 ] ? 2 : 3;

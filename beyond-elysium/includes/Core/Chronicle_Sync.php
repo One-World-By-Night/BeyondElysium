@@ -99,6 +99,13 @@ class Chronicle_Sync {
 			return;
 		}
 
+		// A row another chronicle post already holds is that chronicle, whatever this post's slug
+		// says: a duplicated post keeps the slug it was copied with. Left alone rather than renamed
+		// or claimed - the same call the slug-rewrite branch above makes (1.0.0-review F-082).
+		if ( ! empty( $existing->owbn_chronicle_post_id ) && (int) $existing->owbn_chronicle_post_id !== $post_id ) {
+			return;
+		}
+
 		if ( $existing->name !== $post->post_title ) {
 			Game::update( $chronicle_slug, [ 'name' => $post->post_title ] );
 		}

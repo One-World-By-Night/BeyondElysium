@@ -7,10 +7,11 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Repairs every stored reference to a chronicle's slug after Game::rename()
  * has already changed the slug on be_games, be_characters and
- * be_schema_blocks. Covers the two other places a slug is written into
+ * be_schema_blocks. Covers the three other places a slug is written into
  * content rather than a plugin table: a provisioned page's data-be-config
- * attribute, and an Elementor-built page's _elementor_data widget
- * settings. Idempotent - re-running against content that has already
+ * attribute, an Elementor-built page's _elementor_data widget settings, and
+ * a House Rules shortcode typed onto a page or into an Elementor widget.
+ * Idempotent - re-running against content that has already
  * been repaired (or never referenced the old slug at all) finds nothing
  * to change and reports zero. Never touches asc_role_path, which is
  * operator-entered text keyed to an external role tree and has no
@@ -32,9 +33,72 @@ class Game_Slug_References {
 	 */
 	public static function repair( string $old, string $new ): array {
 		return [
-			'pages'     => self::repair_pages( $old, $new ),
+			'pages'     => self::repair_pages( $old, $new ) + self::repair_shortcodes( $old, $new ),
 			'elementor' => self::repair_elementor( $old, $new ),
 		];
+	}
+
+	/**
+	 * Finds every post whose content holds a House Rules shortcode for the
+	 * old slug - `[be_house_rules game="kony"]`, typed onto any page - and
+	 * rewrites its `game` attribute. The shortcode stores the slug as plain
+	 * text, not in the widget markup `repair_pages()` reads, so a rename left
+	 * it asking for a chronicle that no longer exists (1.0.0-review F-083).
+	 *
+	 * @param string $old
+	 * @param string $new
+	 * @return int Number of posts updated.
+	 */
+	private static function repair_shortcodes( string $old, string $new ): int {
+		global $wpdb;
+
+		$candidates = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT ID, post_content FROM {$wpdb->posts}
+				 WHERE post_type != 'revision'
+				   AND post_status != 'trash'
+				   AND post_content LIKE %s
+				   AND post_content LIKE %s",
+				'%[be_house_rules%',
+				'%' . $wpdb->esc_like( $old ) . '%'
+			)
+		);
+
+		$updated = 0;
+		foreach ( $candidates as $post ) {
+			$content = self::rewrite_shortcodes( (string) $post->post_content, $old, $new );
+			if ( $content !== $post->post_content ) {
+				wp_update_post( [ 'ID' => $post->ID, 'post_content' => $content ] );
+				$updated++;
+			}
+		}
+
+		return $updated;
+	}
+
+	/**
+	 * Rewrites the `game` attribute of every House Rules shortcode in a piece
+	 * of text whose value is exactly the old slug - quoted either way or not
+	 * at all. A slug that merely starts with the old one, and the old slug in
+	 * ordinary prose, are left as they are.
+	 *
+	 * @param string $text
+	 * @param string $old
+	 * @param string $new
+	 * @return string
+	 */
+	private static function rewrite_shortcodes( string $text, string $old, string $new ): string {
+		return (string) preg_replace_callback(
+			'/\[be_house_rules\b[^\]]*\]/',
+			static function ( array $tag ) use ( $old, $new ) {
+				return (string) preg_replace_callback(
+					'/(\bgame\s*=\s*)(["\']?)' . preg_quote( $old, '/' ) . '\2(?=[\s\]\/])/',
+					static fn( array $m ) => $m[1] . $m[2] . $new . $m[2],
+					$tag[0]
+				);
+			},
+			$text
+		);
 	}
 
 	/**
@@ -166,6 +230,16 @@ class Game_Slug_References {
 			if ( isset( $element['settings']['game_slug'] ) && $element['settings']['game_slug'] === $old ) {
 				$element['settings']['game_slug'] = $new;
 				$changed                          = true;
+			}
+			// A House Rules shortcode placed in a shortcode or text widget (F-083).
+			foreach ( ( is_array( $element['settings'] ?? null ) ? $element['settings'] : [] ) as $key => $value ) {
+				if ( is_string( $value ) && str_contains( $value, '[be_house_rules' ) ) {
+					$rewritten = self::rewrite_shortcodes( $value, $old, $new );
+					if ( $rewritten !== $value ) {
+						$element['settings'][ $key ] = $rewritten;
+						$changed                     = true;
+					}
+				}
 			}
 			if ( isset( $element['elements'] ) && is_array( $element['elements'] ) ) {
 				$element['elements'] = self::rewrite_elements( $element['elements'], $old, $new, $changed );

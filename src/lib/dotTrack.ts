@@ -12,7 +12,11 @@ export type DotState = 'filled' | 'spent' | 'overflow' | 'empty';
  * track showing both a permanent and a temporary value. A temporary value above
  * permanent renders as overflow past the permanent mark rather than being clamped.
  */
-export function computeDotStates( permanent: number, temporary: number, max: number ): DotState[] {
+export function computeDotStates(
+	permanent: number,
+	temporary: number,
+	max: number
+): DotState[] {
 	const states: DotState[] = [];
 
 	for ( let i = 1; i <= max; i++ ) {
@@ -41,7 +45,10 @@ export function computeDotStates( permanent: number, temporary: number, max: num
  * `clicked`, unless `clicked` already equals the current value, in which case it clears
  * down to `clicked - 1` so a value can be reduced one dot at a time.
  */
-export function nextTrackValueOnClick( current: number, clicked: number ): number {
+export function nextTrackValueOnClick(
+	current: number,
+	clicked: number
+): number {
 	return current === clicked ? clicked - 1 : clicked;
 }
 
@@ -50,6 +57,10 @@ export function nextTrackValueOnClick( current: number, clicked: number ): numbe
  * the result to the range `[0, max]` so it can never fall below 0 or exceed the track's
  * maximum.
  */
-export function stepTrackValue( current: number, delta: 1 | -1, max: number ): number {
+export function stepTrackValue(
+	current: number,
+	delta: 1 | -1,
+	max: number
+): number {
 	return Math.max( 0, Math.min( max, current + delta ) );
 }

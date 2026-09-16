@@ -10,6 +10,7 @@ import api from '../../api/client';
 import { describeChange } from '../../lib/describeChange';
 import { MyPlotsFeed } from '../apr/MyPlotsFeed';
 import type { Character, QueueChange } from '../../types/character';
+import HelpButton from '../shared/HelpButton';
 import './GameDashboard.css';
 
 export interface PlayerDashboardProps {
@@ -25,12 +26,18 @@ export interface PlayerDashboardProps {
  * harmless while every chronicle had its own dedicated sheet page to fall back on,
  * load-bearing now that one shared page resolves its chronicle from this param.
  */
-function sheetLink( sheetPageUrl: string | undefined, characterId: number, gameSlug: string ): string | null {
+function sheetLink(
+	sheetPageUrl: string | undefined,
+	characterId: number,
+	gameSlug: string
+): string | null {
 	if ( ! sheetPageUrl ) {
 		return null;
 	}
 	const separator = sheetPageUrl.includes( '?' ) ? '&' : '?';
-	return `${ sheetPageUrl }${ separator }character_id=${ characterId }&game_slug=${ encodeURIComponent( gameSlug ) }`;
+	return `${ sheetPageUrl }${ separator }character_id=${ characterId }&game_slug=${ encodeURIComponent(
+		gameSlug
+	) }`;
 }
 
 /**
@@ -38,29 +45,41 @@ function sheetLink( sheetPageUrl: string | undefined, characterId: number, gameS
  * character's sheet, a list of their own pending changes, and their plot feed via
  * MyPlotsFeed.
  */
-export function PlayerDashboard( { gameSlug, sheetPageUrl }: PlayerDashboardProps ) {
-	const [ characters, setCharacters ] = useState<Character[]>( [] );
-	const [ myChanges, setMyChanges ] = useState<QueueChange[]>( [] );
+export function PlayerDashboard( {
+	gameSlug,
+	sheetPageUrl,
+}: PlayerDashboardProps ) {
+	const [ characters, setCharacters ] = useState< Character[] >( [] );
+	const [ myChanges, setMyChanges ] = useState< QueueChange[] >( [] );
 	const [ loading, setLoading ] = useState( true );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
 
 	useEffect( () => {
 		setLoading( true );
 		setError( null );
-		Promise.all( [ api.characters( gameSlug ).myCharacters(), api.changes( gameSlug ).myChanges() ] )
+		Promise.all( [
+			api.characters( gameSlug ).myCharacters(),
+			api.changes( gameSlug ).myChanges(),
+		] )
 			.then( ( [ myCharacters, pending ] ) => {
 				setCharacters( myCharacters );
 				setMyChanges( pending );
 				setLoading( false );
 			} )
 			.catch( () => {
-				setError( __( 'Failed to load your dashboard.', 'beyond-elysium' ) );
+				setError(
+					__( 'Failed to load your dashboard.', 'beyond-elysium' )
+				);
 				setLoading( false );
 			} );
 	}, [ gameSlug ] );
 
 	return (
 		<div className="be-game-dashboard be-game-dashboard--player">
+			<div className="be-help-heading">
+				<h2>{ __( 'Dashboard', 'beyond-elysium' ) }</h2>
+				<HelpButton helpKey="player-dashboard" />
+			</div>
 			{ error && (
 				<div className="be-game-dashboard__error" role="alert">
 					{ error }
@@ -72,11 +91,20 @@ export function PlayerDashboard( { gameSlug, sheetPageUrl }: PlayerDashboardProp
 				{ loading ? (
 					<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
 				) : characters.length === 0 ? (
-					<p>{ __( 'You have no characters in this chronicle yet.', 'beyond-elysium' ) }</p>
+					<p>
+						{ __(
+							'You have no characters in this chronicle yet.',
+							'beyond-elysium'
+						) }
+					</p>
 				) : (
 					<ul className="be-game-dashboard__list">
 						{ characters.map( ( c ) => {
-							const link = sheetLink( sheetPageUrl, c.id, gameSlug );
+							const link = sheetLink(
+								sheetPageUrl,
+								c.id,
+								gameSlug
+							);
 							return (
 								<li key={ c.id }>
 									{ link ? (
@@ -103,9 +131,16 @@ export function PlayerDashboard( { gameSlug, sheetPageUrl }: PlayerDashboardProp
 					<ul className="be-game-dashboard__list">
 						{ myChanges.map( ( change ) => (
 							<li key={ change.id }>
-								{ change.character_name ?? `#${ change.character_id }` } —{ ' ' }
-								{ describeChange( change.change_type, change.change_data ) }{ ' ' }
-								<span className="be-game-dashboard__badge">{ change.approval_level }</span>
+								{ change.character_name ??
+									`#${ change.character_id }` }{ ' ' }
+								—{ ' ' }
+								{ describeChange(
+									change.change_type,
+									change.change_data
+								) }{ ' ' }
+								<span className="be-game-dashboard__badge">
+									{ change.approval_level }
+								</span>
 							</li>
 						) ) }
 					</ul>

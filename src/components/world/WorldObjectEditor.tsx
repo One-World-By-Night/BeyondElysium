@@ -5,10 +5,10 @@
  * code per type. Submits a create or update request depending on
  * whether an existing object was passed in.
  */
-import { useId, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { useId, useRef, useState } from '@wordpress/element';
+import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
-import AiAssistButton from '../shared/AiAssistButton';
+import HtmlEditor from '../shared/HtmlEditor';
 import { WORLD_OBJECT_SCHEMAS } from '../../types/world';
 import type { ObjectType, WorldObject } from '../../types/world';
 import './WorldObjectEditor.css';
@@ -30,7 +30,10 @@ export interface WorldObjectEditorProps {
 	onCancel?: () => void;
 }
 
-type PropertyValue = string | number | Array<{ name: string; count?: number; note?: string }>;
+type PropertyValue =
+	| string
+	| number
+	| Array< { name: string; count?: number; note?: string } >;
 
 /**
  * Renders a create/edit form generated from the object type's property
@@ -39,23 +42,41 @@ type PropertyValue = string | number | Array<{ name: string; count?: number; not
  * properties get a free-text repeatable-row editor rather than a
  * catalog picker, since world-object trait lists have no fixed catalog.
  */
-export function WorldObjectEditor( { gameSlug, objectType, object, duplicateFrom, onSaved, onCancel }: WorldObjectEditorProps ) {
+export function WorldObjectEditor( {
+	gameSlug,
+	objectType,
+	object,
+	duplicateFrom,
+	onSaved,
+	onCancel,
+}: WorldObjectEditorProps ) {
 	const schema = WORLD_OBJECT_SCHEMAS[ objectType ] ?? {};
 	// Duplicating pre-fills the same fields editing would show, but only ever backs a create -
 	// `object` itself stays unset here, so `submit()` below takes the create path, never update.
 	const source = object ?? duplicateFrom;
 	const isDuplicating = ! object && !! duplicateFrom;
 
-	const [ name, setName ] = useState( isDuplicating ? __( 'Copy of ', 'beyond-elysium' ) + ( source?.name ?? '' ) : source?.name ?? '' );
-	const [ description, setDescription ] = useState( source?.description ?? '' );
+	const [ name, setName ] = useState(
+		isDuplicating
+			? sprintf(
+					/* translators: %s: name of the world object being duplicated */
+					__( 'Copy of %s', 'beyond-elysium' ),
+					source?.name ?? ''
+			  )
+			: source?.name ?? ''
+	);
+	const descriptionDraft = useRef( source?.description ?? '' );
 	const [ rarity, setRarity ] = useState( source?.rarity ?? '' );
 	const [ cost, setCost ] = useState( source?.cost ?? '' );
-	const [ limitations, setLimitations ] = useState( source?.limitations ?? '' );
-	const [ properties, setProperties ] = useState<Record<string, PropertyValue>>(
-		( source?.properties as Record<string, PropertyValue> ) ?? {}
-	);
+	const limitationsDraft = useRef( source?.limitations ?? '' );
+	// Duplicating never carries the source's own database id, so 'new' is unique per
+	// duplicate too - not just per genuine create.
+	const editorKey = object?.id ?? 'new';
+	const [ properties, setProperties ] = useState<
+		Record< string, PropertyValue >
+	>( ( source?.properties as Record< string, PropertyValue > ) ?? {} );
 	const [ saving, setSaving ] = useState( false );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
 
 	function setProperty( key: string, value: PropertyValue ) {
 		setProperties( ( prev ) => ( { ...prev, [ key ]: value } ) );
@@ -73,20 +94,26 @@ export function WorldObjectEditor( { gameSlug, objectType, object, duplicateFrom
 
 		const payload = {
 			name: name.trim(),
-			description: description || undefined,
+			description: descriptionDraft.current.trim() || undefined,
 			rarity: rarity || undefined,
 			cost: cost || undefined,
-			limitations: limitations || undefined,
+			limitations: limitationsDraft.current.trim() || undefined,
 			properties,
 		};
 
 		try {
 			const saved = object
-				? await api.worldObjects( gameSlug ).update( object.id, payload )
-				: await api.worldObjects( gameSlug ).create( { object_type: objectType, ...payload } );
+				? await api
+						.worldObjects( gameSlug )
+						.update( object.id, payload )
+				: await api
+						.worldObjects( gameSlug )
+						.create( { object_type: objectType, ...payload } );
 			onSaved?.( saved );
 		} catch {
-			setError( __( 'Failed to save this world object.', 'beyond-elysium' ) );
+			setError(
+				__( 'Failed to save this world object.', 'beyond-elysium' )
+			);
 		} finally {
 			setSaving( false );
 		}
@@ -102,43 +129,67 @@ export function WorldObjectEditor( { gameSlug, objectType, object, duplicateFrom
 
 			<label className="be-world-editor__field">
 				<span>{ __( 'Name', 'beyond-elysium' ) }</span>
-				<input type="text" value={ name } onChange={ ( e ) => setName( e.target.value ) } required />
+				<input
+					type="text"
+					maxLength={ 255 }
+					value={ name }
+					onChange={ ( e ) => setName( e.target.value ) }
+					required
+				/>
 			</label>
 
-			<label className="be-world-editor__field">
+			<div className="be-world-editor__field">
 				<span>{ __( 'Description', 'beyond-elysium' ) }</span>
-				<textarea value={ description } onChange={ ( e ) => setDescription( e.target.value ) } />
-			</label>
-			<AiAssistButton
-				capability="be_manage_world_objects"
-				fieldContext="world_object_description"
-				gameSlug={ gameSlug }
-				currentValue={ description }
-				onAccept={ setDescription }
-			/>
+				<HtmlEditor
+					id={ `be-world-object-description-${ editorKey }` }
+					defaultValue={ descriptionDraft.current }
+					onChange={ ( html ) => {
+						descriptionDraft.current = html;
+					} }
+					aiAssist={ {
+						capability: 'be_manage_world_objects',
+						fieldContext: 'world_object_description',
+						gameSlug,
+					} }
+				/>
+			</div>
 
 			<div className="be-world-editor__row">
 				<label className="be-world-editor__field">
 					<span>{ __( 'Rarity', 'beyond-elysium' ) }</span>
-					<input type="text" value={ rarity } onChange={ ( e ) => setRarity( e.target.value ) } />
+					<input
+						type="text"
+						maxLength={ 20 }
+						value={ rarity }
+						onChange={ ( e ) => setRarity( e.target.value ) }
+					/>
 				</label>
 				<label className="be-world-editor__field">
 					<span>{ __( 'Cost', 'beyond-elysium' ) }</span>
-					<input type="text" value={ cost } onChange={ ( e ) => setCost( e.target.value ) } />
+					<input
+						type="text"
+						maxLength={ 100 }
+						value={ cost }
+						onChange={ ( e ) => setCost( e.target.value ) }
+					/>
 				</label>
 			</div>
 
-			<label className="be-world-editor__field">
+			<div className="be-world-editor__field">
 				<span>{ __( 'Limitations', 'beyond-elysium' ) }</span>
-				<textarea value={ limitations } onChange={ ( e ) => setLimitations( e.target.value ) } />
-			</label>
-			<AiAssistButton
-				capability="be_manage_world_objects"
-				fieldContext="world_object_limitations"
-				gameSlug={ gameSlug }
-				currentValue={ limitations }
-				onAccept={ setLimitations }
-			/>
+				<HtmlEditor
+					id={ `be-world-object-limitations-${ editorKey }` }
+					defaultValue={ limitationsDraft.current }
+					onChange={ ( html ) => {
+						limitationsDraft.current = html;
+					} }
+					aiAssist={ {
+						capability: 'be_manage_world_objects',
+						fieldContext: 'world_object_limitations',
+						gameSlug,
+					} }
+				/>
+			</div>
 
 			<h4>{ __( 'Properties', 'beyond-elysium' ) }</h4>
 			{ Object.entries( schema ).map( ( [ key, type ] ) => (
@@ -154,10 +205,16 @@ export function WorldObjectEditor( { gameSlug, objectType, object, duplicateFrom
 
 			<div className="be-world-editor__actions">
 				<button type="submit" disabled={ saving }>
-					{ object ? __( 'Save Changes', 'beyond-elysium' ) : __( 'Create', 'beyond-elysium' ) }
+					{ object
+						? __( 'Save Changes', 'beyond-elysium' )
+						: __( 'Create', 'beyond-elysium' ) }
 				</button>
 				{ onCancel && (
-					<button type="button" onClick={ onCancel } disabled={ saving }>
+					<button
+						type="button"
+						onClick={ onCancel }
+						disabled={ saving }
+					>
 						{ __( 'Cancel', 'beyond-elysium' ) }
 					</button>
 				) }
@@ -195,7 +252,13 @@ function PropertyField( {
 			<div className="be-world-editor__field">
 				<span id={ fieldId }>{ label }</span>
 				<TraitListField
-					entries={ ( value as Array<{ name: string; count?: number; note?: string }> ) ?? [] }
+					entries={
+						( value as Array< {
+							name: string;
+							count?: number;
+							note?: string;
+						} > ) ?? []
+					}
 					onChange={ onChange }
 					labelId={ fieldId }
 				/>
@@ -206,17 +269,22 @@ function PropertyField( {
 	if ( type === 'text' ) {
 		const textValue = ( value as string ) ?? '';
 		return (
-			<label className="be-world-editor__field">
+			<div className="be-world-editor__field">
 				<span>{ label }</span>
-				<textarea value={ textValue } onChange={ ( e ) => onChange( e.target.value ) } />
-				<AiAssistButton
-					capability="be_manage_world_objects"
-					fieldContext="world_object_property"
-					gameSlug={ gameSlug }
-					currentValue={ textValue }
-					onAccept={ onChange }
+				{ /* Not fieldId: useId()'s colons are valid HTML but break wp.editor's own
+				 * jQuery-selector lookup ("Syntax error, unrecognized expression: #:r7:"),
+				 * found live. fieldKey is already a clean, page-unique identifier. */ }
+				<HtmlEditor
+					id={ `be-world-object-property-${ fieldKey }` }
+					defaultValue={ textValue }
+					onChange={ onChange }
+					aiAssist={ {
+						capability: 'be_manage_world_objects',
+						fieldContext: 'world_object_property',
+						gameSlug,
+					} }
 				/>
-			</label>
+			</div>
 		);
 	}
 
@@ -224,9 +292,21 @@ function PropertyField( {
 		<label className="be-world-editor__field">
 			<span>{ label }</span>
 			<input
-				type={ type === 'int' ? 'number' : type === 'date' ? 'date' : 'text' }
+				type={
+					type === 'int'
+						? 'number'
+						: type === 'date'
+						? 'date'
+						: 'text'
+				}
 				value={ ( value as string | number ) ?? '' }
-				onChange={ ( e ) => onChange( type === 'int' ? Number( e.target.value ) : e.target.value ) }
+				onChange={ ( e ) =>
+					onChange(
+						type === 'int'
+							? Number( e.target.value )
+							: e.target.value
+					)
+				}
 			/>
 		</label>
 	);
@@ -242,11 +322,16 @@ function TraitListField( {
 	onChange,
 	labelId,
 }: {
-	entries: Array<{ name: string; count?: number; note?: string }>;
-	onChange: ( entries: Array<{ name: string; count?: number; note?: string }> ) => void;
+	entries: Array< { name: string; count?: number; note?: string } >;
+	onChange: (
+		entries: Array< { name: string; count?: number; note?: string } >
+	) => void;
 	labelId: string;
 } ) {
-	function updateRow( index: number, patch: Partial<{ name: string; count?: number; note?: string }> ) {
+	function updateRow(
+		index: number,
+		patch: Partial< { name: string; count?: number; note?: string } >
+	) {
 		const next = [ ...entries ];
 		next[ index ] = { ...next[ index ], ...patch };
 		onChange( next );
@@ -263,27 +348,40 @@ function TraitListField( {
 	return (
 		<div className="be-world-editor__trait-list">
 			{ entries.map( ( entry, index ) => (
-				<div className="be-world-editor__trait-row" role="group" aria-labelledby={ labelId } key={ index }>
+				<div
+					className="be-world-editor__trait-row"
+					role="group"
+					aria-labelledby={ labelId }
+					key={ index }
+				>
 					<input
 						type="text"
 						placeholder={ __( 'Name', 'beyond-elysium' ) }
 						aria-label={ __( 'Name', 'beyond-elysium' ) }
 						value={ entry.name }
-						onChange={ ( e ) => updateRow( index, { name: e.target.value } ) }
+						onChange={ ( e ) =>
+							updateRow( index, { name: e.target.value } )
+						}
 					/>
 					<input
 						type="number"
 						placeholder={ __( 'Count', 'beyond-elysium' ) }
 						aria-label={ __( 'Count', 'beyond-elysium' ) }
 						value={ entry.count ?? 1 }
-						onChange={ ( e ) => updateRow( index, { count: Number( e.target.value ) } ) }
+						onChange={ ( e ) =>
+							updateRow( index, {
+								count: Number( e.target.value ),
+							} )
+						}
 					/>
 					<input
 						type="text"
 						placeholder={ __( 'Note', 'beyond-elysium' ) }
 						aria-label={ __( 'Note', 'beyond-elysium' ) }
 						value={ entry.note ?? '' }
-						onChange={ ( e ) => updateRow( index, { note: e.target.value } ) }
+						onChange={ ( e ) =>
+							updateRow( index, { note: e.target.value } )
+						}
 					/>
 					<button type="button" onClick={ () => removeRow( index ) }>
 						{ __( 'Remove', 'beyond-elysium' ) }

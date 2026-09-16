@@ -199,10 +199,14 @@ export interface UpdatePlotRequest {
 	image_id?: number | null;
 }
 
+/** The plot list's character filter. */
+export type CharacterPlotFilter = 'only' | 'exclude';
+
 /**
  * Query parameters accepted by the plots collection endpoint.
- * Supports pagination, ordering, filtering by status or
- * initiator, a free-text search, and a date range.
+ * Supports pagination, ordering, filtering by status, initiator,
+ * or whether a character is tied to the plot, a free-text search,
+ * and a date range.
  */
 export interface PlotCollectionParams {
 	status?: PlotStatus;
@@ -210,6 +214,8 @@ export interface PlotCollectionParams {
 	search?: string;
 	date_from?: string;
 	date_to?: string;
+	/** `only`: each character's own plot and its action rounds; `exclude`: every other plot. */
+	character_plots?: CharacterPlotFilter;
 	orderby?: 'title' | 'status' | 'created_at' | 'updated_at';
 	order?: 'ASC' | 'DESC';
 	page?: number;

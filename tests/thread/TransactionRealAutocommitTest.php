@@ -219,4 +219,51 @@ class TransactionRealAutocommitTest extends TestCase {
 			$this->assertSame( 0, $survived, "slug $slug must not survive the outer rollback" );
 		}
 	}
+
+	/**
+	 * 1.0.0-review F-004: an exception thrown inside a nested unit of work skips that unit's own
+	 * commit or rollback. The caller that catches it rolls back its outer unit - and that rollback
+	 * must still undo everything, and leave the next unit of work a real transaction, even though
+	 * the inner unit never closed. Before this, the leaked inner level turned the outer rollback
+	 * into `ROLLBACK TO SAVEPOINT` of a savepoint that never existed.
+	 */
+	public function test_an_inner_unit_left_open_by_an_exception_does_not_break_the_outer_rollback(): void {
+		global $wpdb;
+		$slug      = 'txn-leak-' . wp_generate_password( 8, false );
+		$next_slug = 'txn-leak-next-' . wp_generate_password( 8, false );
+		self::$cleanup_slugs[] = $slug;
+		self::$cleanup_slugs[] = $next_slug;
+
+		$insert = static function ( string $row_slug ) use ( $wpdb ): void {
+			$wpdb->insert( $wpdb->prefix . 'be_games', [
+				'slug'       => $row_slug,
+				'name'       => 'Leaked Inner Unit',
+				'created_by' => 1,
+				'created_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql' ),
+			] );
+		};
+		$count = static fn( string $row_slug ): int => (int) $wpdb->get_var( $wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->prefix}be_games WHERE slug = %s",
+			$row_slug
+		) );
+
+		$outer = Transaction::begin( 'txn_test_leak_outer' );
+		$insert( $slug );
+
+		try {
+			Transaction::begin( 'txn_test_leak_inner' );
+			throw new \RuntimeException( 'failed between begin and commit' );
+		} catch ( \RuntimeException $e ) {
+			Transaction::rollback( $outer );
+		}
+
+		$this->assertSame( 0, $count( $slug ), 'the outer rollback must undo the row even though an inner unit never closed' );
+
+		$next = Transaction::begin( 'txn_test_leak_next' );
+		$insert( $next_slug );
+		Transaction::rollback( $next );
+
+		$this->assertSame( 0, $count( $next_slug ), 'the next unit of work must be a real transaction again' );
+	}
 }

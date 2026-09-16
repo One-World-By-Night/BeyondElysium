@@ -9,7 +9,13 @@ import { useEffect, useState } from '@wordpress/element';
 import api from '../../api/client';
 import { describeChange } from '../../lib/describeChange';
 import { PlayerDashboard } from './PlayerDashboard';
-import type { GameStats, PlayerWithoutActiveCharacter } from '../../types';
+import { canIn } from '../../lib/chronicleCapabilities';
+import type {
+	GameStats,
+	MyCapabilities,
+	PlayerWithoutActiveCharacter,
+} from '../../types';
+import HelpButton from '../shared/HelpButton';
 import './GameDashboard.css';
 
 export interface GameDashboardProps {
@@ -18,6 +24,8 @@ export interface GameDashboardProps {
 	approvalQueueUrl?: string;
 	rosterUrl?: string;
 	plotsUrl?: string;
+	/** What the person can do in this chronicle, when the page resolved it; the site-wide snapshot otherwise (F-103). */
+	capabilities?: MyCapabilities;
 }
 
 interface RestError {
@@ -30,13 +38,17 @@ interface RestError {
  * always has something readable to display.
  */
 function errorMessage( error: unknown ): string {
-	if ( typeof error === 'object' && error !== null && ( error as RestError ).message ) {
+	if (
+		typeof error === 'object' &&
+		error !== null &&
+		( error as RestError ).message
+	) {
 		return ( error as RestError ).message as string;
 	}
 	return __( 'Failed to load the dashboard.', 'beyond-elysium' );
 }
 
-function sumCounts( counts: Record<string, number> ): number {
+function sumCounts( counts: Record< string, number > ): number {
 	return Object.values( counts ).reduce( ( total, n ) => total + n, 0 );
 }
 
@@ -46,15 +58,24 @@ function sumCounts( counts: Record<string, number> ): number {
  * else sees PlayerDashboard instead. The choice of view is a UI affordance only - each
  * underlying REST route enforces its own permission check independently.
  */
-export function GameDashboard( { gameSlug, sheetPageUrl, approvalQueueUrl, rosterUrl, plotsUrl }: GameDashboardProps ) {
-	const canManage = window.beyondElysium?.capabilities?.be_manage_characters ?? false;
+export function GameDashboard( {
+	gameSlug,
+	sheetPageUrl,
+	approvalQueueUrl,
+	rosterUrl,
+	plotsUrl,
+	capabilities,
+}: GameDashboardProps ) {
+	const canManage = canIn( 'be_manage_characters', capabilities );
 
-	const [ stats, setStats ] = useState<GameStats | null>( null );
+	const [ stats, setStats ] = useState< GameStats | null >( null );
 	const [ loading, setLoading ] = useState( true );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
 
 	const [ rosterHealthOpen, setRosterHealthOpen ] = useState( false );
-	const [ rosterHealthPlayers, setRosterHealthPlayers ] = useState<PlayerWithoutActiveCharacter[] | null>( null );
+	const [ rosterHealthPlayers, setRosterHealthPlayers ] = useState<
+		PlayerWithoutActiveCharacter[] | null
+	>( null );
 
 	function toggleRosterHealth() {
 		if ( rosterHealthOpen ) {
@@ -63,7 +84,10 @@ export function GameDashboard( { gameSlug, sheetPageUrl, approvalQueueUrl, roste
 		}
 		setRosterHealthOpen( true );
 		if ( rosterHealthPlayers === null ) {
-			api.gameStats( gameSlug ).playersWithoutActiveCharacter().then( setRosterHealthPlayers ).catch( () => setRosterHealthPlayers( [] ) );
+			api.gameStats( gameSlug )
+				.playersWithoutActiveCharacter()
+				.then( setRosterHealthPlayers )
+				.catch( () => setRosterHealthPlayers( [] ) );
 		}
 	}
 
@@ -72,8 +96,7 @@ export function GameDashboard( { gameSlug, sheetPageUrl, approvalQueueUrl, roste
 			return;
 		}
 		setLoading( true );
-		api
-			.gameStats( gameSlug )
+		api.gameStats( gameSlug )
 			.get()
 			.then( ( result ) => {
 				setStats( result );
@@ -86,17 +109,35 @@ export function GameDashboard( { gameSlug, sheetPageUrl, approvalQueueUrl, roste
 	}, [ gameSlug, canManage ] );
 
 	if ( ! canManage ) {
-		return <PlayerDashboard gameSlug={ gameSlug } sheetPageUrl={ sheetPageUrl } />;
+		return (
+			<PlayerDashboard
+				gameSlug={ gameSlug }
+				sheetPageUrl={ sheetPageUrl }
+			/>
+		);
 	}
 
 	const links = [
-		approvalQueueUrl && { label: __( 'Approval Queue', 'beyond-elysium' ), href: approvalQueueUrl },
-		rosterUrl && { label: __( 'Characters', 'beyond-elysium' ), href: rosterUrl },
-		plotsUrl && { label: __( 'Plots & Rumors', 'beyond-elysium' ), href: plotsUrl },
+		approvalQueueUrl && {
+			label: __( 'Approval Queue', 'beyond-elysium' ),
+			href: approvalQueueUrl,
+		},
+		rosterUrl && {
+			label: __( 'Characters', 'beyond-elysium' ),
+			href: rosterUrl,
+		},
+		plotsUrl && {
+			label: __( 'Plots & Rumors', 'beyond-elysium' ),
+			href: plotsUrl,
+		},
 	].filter( Boolean ) as { label: string; href: string }[];
 
 	return (
 		<div className="be-game-dashboard">
+			<div className="be-help-heading">
+				<h2>{ __( 'Dashboard', 'beyond-elysium' ) }</h2>
+				<HelpButton helpKey="game-dashboard" />
+			</div>
 			{ error && (
 				<div className="be-game-dashboard__error" role="alert">
 					{ error }
@@ -109,10 +150,16 @@ export function GameDashboard( { gameSlug, sheetPageUrl, approvalQueueUrl, roste
 				<>
 					<div className="be-game-dashboard__cards">
 						<div className="be-game-dashboard__card">
-							<span className="be-game-dashboard__card-value">{ sumCounts( stats.characters_by_stack ) }</span>
-							<span className="be-game-dashboard__card-label">{ __( 'Characters', 'beyond-elysium' ) }</span>
+							<span className="be-game-dashboard__card-value">
+								{ sumCounts( stats.characters_by_stack ) }
+							</span>
+							<span className="be-game-dashboard__card-label">
+								{ __( 'Characters', 'beyond-elysium' ) }
+							</span>
 							<ul className="be-game-dashboard__breakdown">
-								{ Object.entries( stats.characters_by_stack ).map( ( [ stack, count ] ) => (
+								{ Object.entries(
+									stats.characters_by_stack
+								).map( ( [ stack, count ] ) => (
 									<li key={ stack }>
 										{ stack }: { count }
 									</li>
@@ -121,20 +168,34 @@ export function GameDashboard( { gameSlug, sheetPageUrl, approvalQueueUrl, roste
 						</div>
 
 						<div className="be-game-dashboard__card">
-							<span className="be-game-dashboard__card-value">{ stats.pending_changes }</span>
-							<span className="be-game-dashboard__card-label">{ __( 'Pending Changes', 'beyond-elysium' ) }</span>
+							<span className="be-game-dashboard__card-value">
+								{ stats.pending_changes }
+							</span>
+							<span className="be-game-dashboard__card-label">
+								{ __( 'Pending Changes', 'beyond-elysium' ) }
+							</span>
 						</div>
 
 						<div className="be-game-dashboard__card">
-							<span className="be-game-dashboard__card-value">{ stats.active_plots }</span>
-							<span className="be-game-dashboard__card-label">{ __( 'Active Plots', 'beyond-elysium' ) }</span>
+							<span className="be-game-dashboard__card-value">
+								{ stats.active_plots }
+							</span>
+							<span className="be-game-dashboard__card-label">
+								{ __( 'Active Plots', 'beyond-elysium' ) }
+							</span>
 						</div>
 
 						<div className="be-game-dashboard__card">
-							<span className="be-game-dashboard__card-value">{ sumCounts( stats.characters_by_status ) }</span>
-							<span className="be-game-dashboard__card-label">{ __( 'By Status', 'beyond-elysium' ) }</span>
+							<span className="be-game-dashboard__card-value">
+								{ sumCounts( stats.characters_by_status ) }
+							</span>
+							<span className="be-game-dashboard__card-label">
+								{ __( 'By Status', 'beyond-elysium' ) }
+							</span>
 							<ul className="be-game-dashboard__breakdown">
-								{ Object.entries( stats.characters_by_status ).map( ( [ status, count ] ) => (
+								{ Object.entries(
+									stats.characters_by_status
+								).map( ( [ status, count ] ) => (
 									<li key={ status }>
 										{ status }: { count }
 									</li>
@@ -149,22 +210,41 @@ export function GameDashboard( { gameSlug, sheetPageUrl, approvalQueueUrl, roste
 								onClick={ toggleRosterHealth }
 								aria-expanded={ rosterHealthOpen }
 							>
-								<span className="be-game-dashboard__card-value">{ stats.players_without_active_character }</span>
-								<span className="be-game-dashboard__card-label">{ __( 'Players Without an Active Character', 'beyond-elysium' ) }</span>
+								<span className="be-game-dashboard__card-value">
+									{ stats.players_without_active_character }
+								</span>
+								<span className="be-game-dashboard__card-label">
+									{ __(
+										'Players Without an Active Character',
+										'beyond-elysium'
+									) }
+								</span>
 							</button>
-							{ rosterHealthOpen && (
-								stats.players_without_active_character === 0 ? (
-									<p>{ __( 'Everyone has an active character.', 'beyond-elysium' ) }</p>
+							{ rosterHealthOpen &&
+								( stats.players_without_active_character ===
+								0 ? (
+									<p>
+										{ __(
+											'Everyone has an active character.',
+											'beyond-elysium'
+										) }
+									</p>
 								) : rosterHealthPlayers === null ? (
-									<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
+									<p>
+										{ __( 'Loading…', 'beyond-elysium' ) }
+									</p>
 								) : (
 									<ul className="be-game-dashboard__breakdown">
-										{ rosterHealthPlayers.map( ( player ) => (
-											<li key={ player.wp_user_id }>{ player.display_name ?? `#${ player.wp_user_id }` }</li>
-										) ) }
+										{ rosterHealthPlayers.map(
+											( player ) => (
+												<li key={ player.wp_user_id }>
+													{ player.display_name ??
+														`#${ player.wp_user_id }` }
+												</li>
+											)
+										) }
 									</ul>
-								)
-							) }
+								) ) }
 						</div>
 					</div>
 
@@ -186,9 +266,16 @@ export function GameDashboard( { gameSlug, sheetPageUrl, approvalQueueUrl, roste
 							<ul className="be-game-dashboard__list">
 								{ stats.recent_activity.map( ( change ) => (
 									<li key={ change.id }>
-										{ change.character_name ?? `#${ change.character_id }` } —{ ' ' }
-										{ describeChange( change.change_type, change.change_data ) }{ ' ' }
-										<span className="be-game-dashboard__badge">{ change.status }</span>
+										{ change.character_name ??
+											`#${ change.character_id }` }{ ' ' }
+										—{ ' ' }
+										{ describeChange(
+											change.change_type,
+											change.change_data
+										) }{ ' ' }
+										<span className="be-game-dashboard__badge">
+											{ change.status }
+										</span>
 									</li>
 								) ) }
 							</ul>

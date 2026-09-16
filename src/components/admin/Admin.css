@@ -63,16 +63,16 @@
 	font-weight: 600;
 }
 
-.be-admin__form input[type='text'],
-.be-admin__form input[type='number'],
-.be-admin__form input[type='password'],
+.be-admin__form input[type="text"],
+.be-admin__form input[type="number"],
+.be-admin__form input[type="password"],
 .be-admin__form select,
 .be-admin__form textarea {
 	display: block;
 	width: 100%;
 	margin-top: 0.25rem;
 	padding: 0.4rem;
-	font-weight: normal;
+	font-weight: 400;
 }
 
 .be-admin__block-label {
@@ -161,14 +161,14 @@
 }
 
 .be-def-editor__flags label {
-	font-weight: normal;
+	font-weight: 400;
 	display: flex;
 	align-items: center;
 	gap: 0.35rem;
 	white-space: nowrap;
 }
 
-.be-def-editor__flags input[type='number'] {
+.be-def-editor__flags input[type="number"] {
 	width: 5rem;
 	display: inline-block;
 }
@@ -185,8 +185,8 @@
 	padding: 0.35rem;
 }
 
-.be-def-editor__table input[type='text'],
-.be-def-editor__table input[type='number'],
+.be-def-editor__table input[type="text"],
+.be-def-editor__table input[type="number"],
 .be-def-editor__table select {
 	width: 100%;
 	margin: 0;
@@ -265,8 +265,8 @@
 	flex: 0 0 auto;
 }
 
-.be-def-editor__title-refs .be-def-editor__inline-row input[type='text'],
-.be-def-editor__name-lookup .be-def-editor__inline-row input[type='text'] {
+.be-def-editor__title-refs .be-def-editor__inline-row input[type="text"],
+.be-def-editor__name-lookup .be-def-editor__inline-row input[type="text"] {
 	width: auto;
 	flex: 1 1 auto;
 	min-width: 0;

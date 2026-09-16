@@ -7,9 +7,16 @@
  * panel itself displays the server's own label directly rather than calling
  * this a second time - "one formatting authority", per the same section.
  */
-import { withTradition, type HeldPower } from '../components/renderers/TieredPowerRenderer';
+import {
+	withTradition,
+	type HeldPower,
+} from '../components/renderers/TieredPowerRenderer';
 
-export type SectionTypeForHolding = 'trait_list' | 'tiered_power' | 'resource_pool' | 'identity_field';
+export type SectionTypeForHolding =
+	| 'trait_list'
+	| 'tiered_power'
+	| 'resource_pool'
+	| 'identity_field';
 
 interface HeldTraitListEntry {
 	name: string;
@@ -49,7 +56,10 @@ export function describeTieredPowerHolding( held: HeldPower ): string {
 /**
  * Describes one held resource_pool rating: "Name (permanent)".
  */
-export function describeResourcePoolHolding( name: string, value: HeldPoolValue | number ): string {
+export function describeResourcePoolHolding(
+	name: string,
+	value: HeldPoolValue | number
+): string {
 	const permanent = typeof value === 'number' ? value : value.permanent ?? 0;
 	return `${ name } (${ permanent })`;
 }
@@ -58,8 +68,14 @@ export function describeResourcePoolHolding( name: string, value: HeldPoolValue 
  * Describes one held identity_field value: "Name: value", or "Name: —" when
  * unset - never omitted, matching §4.4's "never omit these lines" rule.
  */
-export function describeIdentityFieldHolding( name: string, value: unknown ): string {
-	const display = value === null || value === undefined || value === '' ? '—' : String( value );
+export function describeIdentityFieldHolding(
+	name: string,
+	value: unknown
+): string {
+	const display =
+		value === null || value === undefined || value === ''
+			? '—'
+			: String( value );
 	return `${ name }: ${ display }`;
 }
 
@@ -68,7 +84,10 @@ export function describeIdentityFieldHolding( name: string, value: unknown ): st
  * above. `held` is typed loosely since its real shape depends entirely on
  * `sectionType` - each branch narrows it before use.
  */
-export function describeHolding( sectionType: SectionTypeForHolding, held: unknown ): string {
+export function describeHolding(
+	sectionType: SectionTypeForHolding,
+	held: unknown
+): string {
 	switch ( sectionType ) {
 		case 'trait_list':
 			return describeTraitListHolding( held as HeldTraitListEntry );

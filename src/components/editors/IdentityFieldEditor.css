@@ -22,7 +22,7 @@
 	display: flex;
 	align-items: center;
 	gap: 0.25rem;
-	font-weight: normal;
+	font-weight: 400;
 	text-transform: none;
 }
 

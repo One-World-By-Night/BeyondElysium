@@ -16,7 +16,7 @@ export interface ChangeHistoryProps {
 	gameSlug: string;
 }
 
-const STATUS_LABEL: Record<CharacterChange[ 'status' ], string> = {
+const STATUS_LABEL: Record< CharacterChange[ 'status' ], string > = {
 	pending: __( 'Pending', 'beyond-elysium' ),
 	approved: __( 'Approved', 'beyond-elysium' ),
 	rejected: __( 'Rejected', 'beyond-elysium' ),
@@ -28,15 +28,14 @@ const STATUS_LABEL: Record<CharacterChange[ 'status' ], string> = {
  * reviewed it and when, and any reviewer note.
  */
 export function ChangeHistory( { characterId, gameSlug }: ChangeHistoryProps ) {
-	const [ items, setItems ] = useState<CharacterChange[]>( [] );
+	const [ items, setItems ] = useState< CharacterChange[] >( [] );
 	const [ loading, setLoading ] = useState( true );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
 
 	useEffect( () => {
 		setLoading( true );
 		setError( null );
-		api
-			.changes( gameSlug )
+		api.changes( gameSlug )
 			.list( characterId, { per_page: 100, order: 'DESC' } )
 			.then( ( result ) => {
 				setItems( result );
@@ -44,7 +43,9 @@ export function ChangeHistory( { characterId, gameSlug }: ChangeHistoryProps ) {
 			} )
 			.catch( () => {
 				// Sets an explicit error rather than leaving items empty, so a fetch failure isn't shown as an empty history.
-				setError( __( 'Failed to load change history.', 'beyond-elysium' ) );
+				setError(
+					__( 'Failed to load change history.', 'beyond-elysium' )
+				);
 				setLoading( false );
 			} );
 	}, [ characterId, gameSlug ] );
@@ -68,20 +69,54 @@ export function ChangeHistory( { characterId, gameSlug }: ChangeHistoryProps ) {
 	return (
 		<ul className="be-change-history">
 			{ items.map( ( item ) => (
-				<li key={ item.id } className={ `be-change-history__row be-change-history__row--${ item.status }` }>
-					<span className="be-change-history__status">{ STATUS_LABEL[ item.status ] }</span>
-					<span className="be-change-history__description">{ describeChange( item.change_type, item.change_data ) }</span>
+				<li
+					key={ item.id }
+					className={ `be-change-history__row be-change-history__row--${ item.status }` }
+				>
+					<span className="be-change-history__status">
+						{ STATUS_LABEL[ item.status ] }
+					</span>
+					<span className="be-change-history__description">
+						{ describeChange( item.change_type, item.change_data ) }
+					</span>
 					{ item.xp_cost !== 0 && (
 						<span className="be-change-history__cost">
 							{ item.xp_cost >= 0 ? '+' : '' }
-							{ sprintf( __( '%d XP', 'beyond-elysium' ), item.xp_cost ) }
+							{ sprintf(
+								/* translators: %d: the XP cost or refund for this change */
+								__( '%d XP', 'beyond-elysium' ),
+								item.xp_cost
+							) }
 						</span>
 					) }
 					<span className="be-change-history__meta">
-						{ sprintf( __( 'submitted %s', 'beyond-elysium' ), item.submitted_at ) }
-						{ item.reviewed_at && sprintf( __( ' · reviewed %s', 'beyond-elysium' ), item.reviewed_at ) }
+						{ sprintf(
+							/* translators: %s: date and time the change was submitted */
+							__( 'submitted %s', 'beyond-elysium' ),
+							item.submitted_at
+						) }
+						{ item.reviewed_at &&
+							' ' +
+								sprintf(
+									/* translators: %s: date and time the change was reviewed */
+									__( '· reviewed %s', 'beyond-elysium' ),
+									item.reviewed_at
+								) }
 					</span>
-					{ item.notes && <p className="be-change-history__notes">{ item.notes }</p> }
+					{ item.notes && (
+						<p className="be-change-history__notes">
+							{ item.notes }
+						</p>
+					) }
+					{ item.review_notes && (
+						<p className="be-change-history__notes">
+							{ sprintf(
+								// translators: %s: the Storyteller's note on this change.
+								__( 'Storyteller: %s', 'beyond-elysium' ),
+								item.review_notes
+							) }
+						</p>
+					) }
 				</li>
 			) ) }
 		</ul>

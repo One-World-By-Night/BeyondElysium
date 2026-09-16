@@ -18,12 +18,12 @@ interface WPMediaAttachment {
 /**
  * The media picker frame returned by wp.media(). Covers only the
  * subset of the real Backbone-based frame API this plugin calls:
- * opening it, listening for a selection, and reading back the
- * selected attachment.
+ * opening it, listening for a selection or for it closing, and
+ * reading back the selected attachment.
  */
 interface WPMediaFrame {
 	open(): void;
-	on( event: 'select', callback: () => void ): void;
+	on( event: 'select' | 'close', callback: () => void ): void;
 	state(): {
 		get( key: 'selection' ): {
 			first(): { toJSON(): WPMediaAttachment };
@@ -54,14 +54,20 @@ interface Window {
 		media: ( options?: WPMediaOptions ) => WPMediaFrame;
 		/** Classic TinyMCE editor helper, used by HtmlEditor.tsx. */
 		editor?: {
-			initialize: ( id: string, settings: Record<string, unknown> ) => void;
+			initialize: (
+				id: string,
+				settings: Record< string, unknown >
+			) => void;
 			remove: ( id: string ) => void;
 		};
 	};
 	beyondElysium?: BeyondElysiumGlobal;
 	/** The raw TinyMCE library global (distinct from wp.editor, its WordPress wrapper) - used by AiAssistButton to write an accepted suggestion into an otherwise-uncontrolled HtmlEditor instance. */
 	tinymce?: {
-		get: ( id: string ) => { setContent: ( html: string ) => void; getContent: () => string } | null;
+		get: ( id: string ) => {
+			setContent: ( html: string ) => void;
+			getContent: () => string;
+		} | null;
 	};
 }
 
@@ -79,6 +85,8 @@ interface BeyondElysiumGlobal {
 	capabilities?: Record< string, boolean >;
 	/** The site's own WordPress locale (e.g. "pt_BR"), never per-user - see src/lib/localizeName.ts. */
 	locale?: string;
+	/** The wp-admin Import page's own URL - the Approval Queue's waiting-sheets pointer links here (F-122). */
+	importPageUrl?: string;
 }
 
 /**

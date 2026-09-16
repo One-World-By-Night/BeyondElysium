@@ -1,6 +1,6 @@
 [
     {
-        "name": "a full pool with no temp/perm split renders filled dots",
+        "name": "a full pool renders one filled dot per point",
         "permanent": 3,
         "temporary": 3
     },
@@ -10,52 +10,52 @@
         "temporary": 0
     },
     {
-        "name": "temporary below permanent renders spent glyphs for the difference",
+        "name": "temporary below permanent renders an empty dot for each spent point",
         "permanent": 5,
         "temporary": 2
     },
     {
-        "name": "temporary above permanent renders overflow glyphs, not clamped",
+        "name": "temporary above permanent renders a ringed dot for each extra point, not clamped",
         "permanent": 3,
         "temporary": 5
     },
     {
-        "name": "temporary equal to permanent renders no overflow or spent glyphs",
+        "name": "temporary equal to permanent renders only filled dots",
         "permanent": 4,
         "temporary": 4
     },
     {
-        "name": "exactly 10 glyphs does not trigger compression",
+        "name": "ten points group into two fives",
         "permanent": 10,
         "temporary": 10
     },
     {
-        "name": "exactly 11 filled glyphs collapses the leftmost run of five, leaving 6 remaining plus the capital",
+        "name": "eleven points stay eleven dots of one size, never a capital",
         "permanent": 11,
         "temporary": 11
     },
     {
-        "name": "a 15-point pool (e.g. Blood) collapses twice down to two capitals plus the remainder",
+        "name": "a 15-point pool (e.g. Blood) is three groups of five",
         "permanent": 15,
         "temporary": 15
     },
     {
-        "name": "a large uniform pool stops compressing once at or under 10 characters",
-        "permanent": 14,
-        "temporary": 14
+        "name": "groups count every dot, whatever its state",
+        "permanent": 7,
+        "temporary": 3
     },
     {
-        "name": "spent runs collapse from the right, leaving the uncollapsed remainder on the left",
+        "name": "twelve spent points group in fives",
         "permanent": 12,
         "temporary": 0
     },
     {
-        "name": "overflow runs collapse from the right, leaving the uncollapsed remainder on the left",
+        "name": "twelve points above zero permanent group in fives",
         "permanent": 0,
         "temporary": 12
     },
     {
-        "name": "spent is collapsed before filled when both are present",
+        "name": "held and spent together group across the change",
         "permanent": 12,
         "temporary": 6
     }

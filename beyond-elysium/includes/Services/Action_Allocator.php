@@ -3,6 +3,7 @@
 namespace BeyondElysium\Services;
 
 use BeyondElysium\Database\Manager;
+use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
@@ -345,49 +346,39 @@ class Action_Allocator {
 	 * @param int|null $parent_plot_id Nests this action under a chosen plot.
 	 *                 Only applied when creating a new allocation plot - re-running for an
 	 *                 already-allocated character/date never silently reparents it.
-	 * @return int Plot ID.
+	 * All of it is written or none of it, and one allocation for a character
+	 * runs at a time, so two at once can't each make the date's plot
+	 * (1.0.0-review F-091).
+	 *
+	 * @return int Plot ID, or 0 when a write failed and nothing was kept.
 	 */
 	public static function persist( int $character_id, string $game_date, ?int $parent_plot_id = null ): int {
 		$character = Character::find( $character_id );
-		$game      = Game::find_by_slug( $character->owner_slug );
-
+		if ( ! $character ) {
+			return 0;
+		}
 		$subactions = self::allocate( $character_id, $game_date );
 
-		$existing_plot_id = self::find_own_plot_id( $character_id, $game_date );
+		$unit = Transaction::begin( 'be_allocation_persist' );
+		Character::lock( $character_id );
 
-		if ( $existing_plot_id ) {
-			$plot_id = $existing_plot_id;
+		$existing_plot_id = self::find_own_plot_id( $character_id, $game_date );
+		$plot_id          = $existing_plot_id ?? self::create_own_plot( $character, $game_date, $parent_plot_id );
+		$written          = $plot_id !== null;
+
+		if ( $written && $existing_plot_id ) {
 			// Replace only the allocator's own budget entries with the freshly computed set -
 			// never a player's free-text action post, and never a ledger spend (§3.3/§5.1:
 			// a re-allocation must not erase either one).
 			foreach ( Plot_Entry::for_plot( $plot_id, [ 'entry_type' => 'action' ] ) as $entry ) {
 				if ( self::decode_allocator_entry( $entry->content ) !== null ) {
-					Plot_Entry::delete( (int) $entry->id );
+					$written = $written && Plot_Entry::delete( (int) $entry->id );
 				}
 			}
-		} else {
-			// Title format: game date followed by the character's name.
-			$plot_id = Plot::create( [
-				'game_id'        => (int) $game->id,
-				'parent_plot_id' => $parent_plot_id,
-				'title'          => "{$game_date} {$character->name}",
-				'initiated_by'   => 'player',
-				'game_date'      => $game_date,
-				'created_by'     => get_current_user_id(),
-			] );
-			Connection::create( [
-				'game_id'     => (int) $game->id,
-				'source_type' => 'plot',
-				'source_id'   => $plot_id,
-				'target_type' => 'character',
-				'target_id'   => $character_id,
-				'label'       => self::ACTOR_LABEL,
-				'created_by'  => get_current_user_id(),
-			] );
 		}
 
 		foreach ( $subactions as $subaction ) {
-			Plot_Entry::create( [
+			$written = $written && Plot_Entry::create( [
 				'plot_id'    => $plot_id,
 				'author_id'  => get_current_user_id(),
 				'entry_type' => 'action',
@@ -395,7 +386,62 @@ class Action_Allocator {
 			] );
 		}
 
-		return $plot_id;
+		if ( ! $written ) {
+			Transaction::rollback( $unit );
+			return 0;
+		}
+
+		Transaction::commit( $unit );
+		return (int) $plot_id;
+	}
+
+	/**
+	 * Creates a character's bare allocation plot for a date, with the link
+	 * that marks it as theirs - the one thing that keeps it out of every
+	 * other member's plot list. Run inside a transaction holding the
+	 * character's row, after `find_own_plot_id()` found none, so the plot
+	 * and its link land together or not at all.
+	 *
+	 * @param object   $character
+	 * @param string   $game_date
+	 * @param int|null $parent_plot_id The plot a Storyteller nests the round under; the character's own plot when null.
+	 * @return int|null The new plot's ID, or null when a write failed or the character's chronicle doesn't exist.
+	 */
+	public static function create_own_plot( object $character, string $game_date, ?int $parent_plot_id = null ): ?int {
+		$game = Game::find_by_slug( (string) $character->owner_slug );
+		if ( ! $game ) {
+			return null;
+		}
+
+		// A round sits under the character's own plot, unless a Storyteller chose another (owner, 2026-09-15).
+		$parent_plot_id = $parent_plot_id ?? Character::ensure_plot( (int) $character->id );
+		if ( $parent_plot_id === null ) {
+			return null;
+		}
+
+		// Title format: game date followed by the character's name.
+		$plot_id = Plot::create( [
+			'game_id'        => (int) $game->id,
+			'parent_plot_id' => $parent_plot_id,
+			'title'          => "{$game_date} {$character->name}",
+			'initiated_by'   => 'player',
+			'game_date'      => $game_date,
+			'created_by'     => get_current_user_id(),
+		] );
+		if ( ! $plot_id ) {
+			return null;
+		}
+
+		$linked = Connection::create( [
+			'game_id'     => (int) $game->id,
+			'source_type' => 'plot',
+			'source_id'   => $plot_id,
+			'target_type' => 'character',
+			'target_id'   => (int) $character->id,
+			'label'       => self::ACTOR_LABEL,
+			'created_by'  => get_current_user_id(),
+		] );
+		return $linked ? (int) $plot_id : null;
 	}
 
 	/**

@@ -1,4 +1,10 @@
-import { elderLabel, numericLabel, namedLabel, namedModeRows, withTradition } from './TieredPowerRenderer';
+import {
+	elderLabel,
+	numericLabel,
+	namedLabel,
+	namedModeRows,
+	withTradition,
+} from './TieredPowerRenderer';
 import type { HeldPower } from './TieredPowerRenderer';
 import type { TieredPowerDefinition } from '../../types';
 import input from '../../../tests/fixtures/power-display-input.json';
@@ -12,8 +18,16 @@ const DEFINITION: TieredPowerDefinition = {
 				{ level: 1, tier: 'basic', power_name: 'Alacrity' },
 				{ level: 2, tier: 'basic', power_name: 'Rapid Reflexes' },
 				{ level: 3, tier: 'intermediate', power_name: 'Fleetness' },
-				{ level: 4, tier: 'intermediate', power_name: 'Blurred Motion' },
-				{ level: 5, tier: 'advanced', power_name: 'Lightning Reflexes' },
+				{
+					level: 4,
+					tier: 'intermediate',
+					power_name: 'Blurred Motion',
+				},
+				{
+					level: 5,
+					tier: 'advanced',
+					power_name: 'Lightning Reflexes',
+				},
 				{ level: null, tier: 'elder', power_name: 'Blink' },
 				{ level: null, tier: 'elder', power_name: 'Unerring Aim' },
 			],
@@ -24,60 +38,105 @@ const DEFINITION: TieredPowerDefinition = {
 describe( 'elderLabel/numericLabel/namedLabel (Decision 074)', () => {
 	it( 'a genuine catalog-matched Elder+ pick shows its real catalog tier', () => {
 		const held = { name: 'Celerity', power_name: 'Blink' };
-		expect( elderLabel( DEFINITION, held ) ).toBe( 'Celerity: Blink (elder)' );
+		expect( elderLabel( DEFINITION, held ) ).toBe(
+			'Celerity: Blink (elder)'
+		);
 	} );
 
 	it( 'a keep_custom power with a real derived level shows that level, not "(elder)"', () => {
 		// The exact shape a real Dur-An-Ki/Sadhanna path takes after import (real bug:
 		// 1506_chase_ashford_.gex's "Blood Magic" paths all rendered as generic "(elder)"
 		// despite holding a genuine numbered level 1-5).
-		const held = { name: 'Dur-An-Ki', power_name: 'Awakening of the Steel', level: 5 };
-		expect( elderLabel( DEFINITION, held ) ).toBe( 'Dur-An-Ki: Awakening of the Steel 5' );
+		const held = {
+			name: 'Dur-An-Ki',
+			power_name: 'Awakening of the Steel',
+			level: 5,
+		};
+		expect( elderLabel( DEFINITION, held ) ).toBe(
+			'Dur-An-Ki: Awakening of the Steel 5'
+		);
 	} );
 
 	it( 'a keep_custom power with no derivable level falls back to its own stored tier text, not the hardcoded default', () => {
-		const held = { name: 'Dur-An-Ki', power_name: 'Something Unrecognizable', tier: 'unmatched, imported as-is' };
-		expect( elderLabel( DEFINITION, held ) ).toBe( 'Dur-An-Ki: Something Unrecognizable (unmatched, imported as-is)' );
+		const held = {
+			name: 'Dur-An-Ki',
+			power_name: 'Something Unrecognizable',
+			tier: '***',
+		};
+		expect( elderLabel( DEFINITION, held ) ).toBe(
+			'Dur-An-Ki: Something Unrecognizable (***)'
+		);
 	} );
 
 	it( 'a keep_custom power with neither a level nor a stored tier still falls back to "elder", never undefined', () => {
-		const held = { name: 'Dur-An-Ki', power_name: 'Something Unrecognizable' };
-		expect( elderLabel( DEFINITION, held ) ).toBe( 'Dur-An-Ki: Something Unrecognizable (elder)' );
+		const held = {
+			name: 'Dur-An-Ki',
+			power_name: 'Something Unrecognizable',
+		};
+		expect( elderLabel( DEFINITION, held ) ).toBe(
+			'Dur-An-Ki: Something Unrecognizable (elder)'
+		);
 	} );
 
 	it( 'numericLabel: an ordinary numbered rung with no power_name just shows the level', () => {
-		expect( numericLabel( DEFINITION, { name: 'Celerity', level: 3 } ) ).toBe( 'Celerity 3' );
+		expect(
+			numericLabel( DEFINITION, { name: 'Celerity', level: 3 } )
+		).toBe( 'Celerity 3' );
 	} );
 
 	it( 'numericLabel: a power_name entry defers to elderLabel even in numeric mode', () => {
-		const held = { name: 'Dur-An-Ki', power_name: 'Awakening of the Steel', level: 5 };
-		expect( numericLabel( DEFINITION, held ) ).toBe( 'Dur-An-Ki: Awakening of the Steel 5' );
+		const held = {
+			name: 'Dur-An-Ki',
+			power_name: 'Awakening of the Steel',
+			level: 5,
+		};
+		expect( numericLabel( DEFINITION, held ) ).toBe(
+			'Dur-An-Ki: Awakening of the Steel 5'
+		);
 	} );
 
 	it( 'namedLabel: a power_name entry defers to elderLabel regardless of the level argument', () => {
-		const held = { name: 'Dur-An-Ki', power_name: 'Awakening of the Steel', level: 5 };
-		expect( namedLabel( DEFINITION, held, 5 ) ).toBe( 'Dur-An-Ki: Awakening of the Steel 5' );
+		const held = {
+			name: 'Dur-An-Ki',
+			power_name: 'Awakening of the Steel',
+			level: 5,
+		};
+		expect( namedLabel( DEFINITION, held, 5 ) ).toBe(
+			'Dur-An-Ki: Awakening of the Steel 5'
+		);
 	} );
 
 	it( 'namedLabel: an ordinary numbered rung looks up the real power_name for that level', () => {
-		expect( namedLabel( DEFINITION, { name: 'Celerity', level: 1 }, 1 ) ).toBe( 'Alacrity' );
+		expect(
+			namedLabel( DEFINITION, { name: 'Celerity', level: 1 }, 1 )
+		).toBe( 'Alacrity' );
 	} );
 } );
 
 describe( 'withTradition (0.99.2 Blood magic, BM-5)', () => {
 	it( 'prefixes "Tradition: " onto a rendered label when the held pick carries one', () => {
-		const held = { name: 'Path of Blood', level: 3, tradition: 'Necromancy' };
-		expect( withTradition( held, numericLabel( DEFINITION, held ) ) ).toBe( 'Necromancy: Path of Blood 3' );
+		const held = {
+			name: 'Path of Blood',
+			level: 3,
+			tradition: 'Necromancy',
+		};
+		expect( withTradition( held, numericLabel( DEFINITION, held ) ) ).toBe(
+			'Necromancy: Path of Blood 3'
+		);
 	} );
 
 	it( 'renders unchanged when the held pick carries no tradition - every ordinary discipline', () => {
 		const held = { name: 'Celerity', level: 3 };
-		expect( withTradition( held, numericLabel( DEFINITION, held ) ) ).toBe( 'Celerity 3' );
+		expect( withTradition( held, numericLabel( DEFINITION, held ) ) ).toBe(
+			'Celerity 3'
+		);
 	} );
 
 	it( 'named mode shows the specific level name, still tradition-prefixed - a player sees the flavor name, not just the bare path', () => {
 		const held = { name: 'Celerity', level: 1, tradition: 'Sadhana' };
-		expect( withTradition( held, namedLabel( DEFINITION, held, 1 ) ) ).toBe( 'Sadhana: Alacrity' );
+		expect( withTradition( held, namedLabel( DEFINITION, held, 1 ) ) ).toBe(
+			'Sadhana: Alacrity'
+		);
 	} );
 } );
 
@@ -88,26 +147,33 @@ describe( 'withTradition (0.99.2 Blood magic, BM-5)', () => {
 // full stack sees it regardless of whether the block happens to be sequential.
 describe( 'namedModeRows (0.99.2, "Query beyond characters" sibling ask: full stack listed)', () => {
 	it( 'lists every named rung from 1 up to the held level for a plain numbered holding', () => {
-		expect( namedModeRows( DEFINITION, { name: 'Celerity', level: 3 } ) ).toEqual( [
-			'Alacrity',
-			'Rapid Reflexes',
-			'Fleetness',
-		] );
+		expect(
+			namedModeRows( DEFINITION, { name: 'Celerity', level: 3 } )
+		).toEqual( [ 'Alacrity', 'Rapid Reflexes', 'Fleetness' ] );
 	} );
 
 	it( 'lists nothing for a held level of 0', () => {
-		expect( namedModeRows( DEFINITION, { name: 'Celerity', level: 0 } ) ).toEqual( [] );
+		expect(
+			namedModeRows( DEFINITION, { name: 'Celerity', level: 0 } )
+		).toEqual( [] );
 	} );
 
 	it( 'lists only the one specific power for an Elder-and-above pick - there is no stack beneath it', () => {
-		expect( namedModeRows( DEFINITION, { name: 'Celerity', power_name: 'Blink' } ) ).toEqual( [ 'Celerity: Blink (elder)' ] );
+		expect(
+			namedModeRows( DEFINITION, {
+				name: 'Celerity',
+				power_name: 'Blink',
+			} )
+		).toEqual( [ 'Celerity: Blink (elder)' ] );
 	} );
 
 	it( 'a non-sequential block still expands the full stack, not just the current rung', () => {
 		// DEFINITION carries no `sequential` flag at all (non-sequential, matching
 		// vampire-disciplines' own real shape, Decision 037) - the old behavior showed
 		// only "Lightning Reflexes" here; the fix lists the whole held stack instead.
-		expect( namedModeRows( DEFINITION, { name: 'Celerity', level: 5 } ) ).toEqual( [
+		expect(
+			namedModeRows( DEFINITION, { name: 'Celerity', level: 5 } )
+		).toEqual( [
 			'Alacrity',
 			'Rapid Reflexes',
 			'Fleetness',
@@ -126,7 +192,12 @@ describe( 'namedModeRows (0.99.2, "Query beyond characters" sibling ask: full st
 describe( 'label helpers — parity with Power_Display.php', () => {
 	interface FixtureCase {
 		name: string;
-		method: 'with_tradition' | 'elder_label' | 'numeric_label' | 'named_label' | 'named_mode_rows';
+		method:
+			| 'with_tradition'
+			| 'elder_label'
+			| 'numeric_label'
+			| 'named_label'
+			| 'named_mode_rows';
 		label_method?: 'numeric_label' | 'named_label';
 		level?: number;
 		held: HeldPower;
@@ -144,9 +215,14 @@ describe( 'label helpers — parity with Power_Display.php', () => {
 	function run( fixtureCase: FixtureCase ): string | string[] {
 		switch ( fixtureCase.method ) {
 			case 'with_tradition': {
-				const label = fixtureCase.label_method === 'named_label'
-					? namedLabel( definition, fixtureCase.held, fixtureCase.level )
-					: numericLabel( definition, fixtureCase.held );
+				const label =
+					fixtureCase.label_method === 'named_label'
+						? namedLabel(
+								definition,
+								fixtureCase.held,
+								fixtureCase.level
+						  )
+						: numericLabel( definition, fixtureCase.held );
 				return withTradition( fixtureCase.held, label );
 			}
 			case 'elder_label':
@@ -154,17 +230,27 @@ describe( 'label helpers — parity with Power_Display.php', () => {
 			case 'numeric_label':
 				return numericLabel( definition, fixtureCase.held );
 			case 'named_label':
-				return namedLabel( definition, fixtureCase.held, fixtureCase.level );
+				return namedLabel(
+					definition,
+					fixtureCase.held,
+					fixtureCase.level
+				);
 			case 'named_mode_rows':
 				return namedModeRows( definition, fixtureCase.held );
 			default:
-				throw new Error( `Unknown fixture method: ${ String( ( fixtureCase as FixtureCase ).method ) }` );
+				throw new Error(
+					`Unknown fixture method: ${ String(
+						( fixtureCase as FixtureCase ).method
+					) }`
+				);
 		}
 	}
 
 	cases.forEach( ( fixtureCase, index ) => {
 		it( `matches the shared fixture: ${ fixtureCase.name }`, () => {
-			expect( run( fixtureCase ) ).toEqual( expectedCases[ index ].output );
+			expect( run( fixtureCase ) ).toEqual(
+				expectedCases[ index ].output
+			);
 		} );
 	} );
 } );

@@ -10,6 +10,7 @@ import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import WorldObjectManager from '../world/WorldObjectManager';
 import type { Game } from '../../types';
+import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
 /**
@@ -20,7 +21,7 @@ import './Admin.css';
  * creation when none exist.
  */
 export function AdminWorldObjects() {
-	const [ games, setGames ] = useState<Game[]>( [] );
+	const [ games, setGames ] = useState< Game[] >( [] );
 	const [ gameSlug, setGameSlug ] = useState( '' );
 	const [ loading, setLoading ] = useState( true );
 
@@ -39,18 +40,31 @@ export function AdminWorldObjects() {
 
 	return (
 		<div className="be-admin">
-			<h1>{ __( 'Items & Locations', 'beyond-elysium' ) }</h1>
+			<div className="be-help-heading">
+				<h1>{ __( 'Items & Locations', 'beyond-elysium' ) }</h1>
+				<HelpButton helpKey="world-objects" />
+			</div>
 
 			{ loading ? (
 				<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
 			) : games.length === 0 ? (
-				<p>{ __( 'No games exist yet - create one under Beyond Elysium → Games first.', 'beyond-elysium' ) }</p>
+				<p>
+					{ __(
+						'No games exist yet - create one under Beyond Elysium → System Config → Games first.',
+						'beyond-elysium'
+					) }
+				</p>
 			) : (
 				<>
 					<div className="be-admin__filters">
 						<label>
 							{ __( 'Game', 'beyond-elysium' ) }{ ' ' }
-							<select value={ gameSlug } onChange={ ( e ) => setGameSlug( e.target.value ) }>
+							<select
+								value={ gameSlug }
+								onChange={ ( e ) =>
+									setGameSlug( e.target.value )
+								}
+							>
 								{ games.map( ( g ) => (
 									<option key={ g.slug } value={ g.slug }>
 										{ g.name }
@@ -61,7 +75,13 @@ export function AdminWorldObjects() {
 					</div>
 
 					{ /* key={gameSlug} remounts the manager so its internal state resets per game. */ }
-					{ gameSlug && <WorldObjectManager key={ gameSlug } gameSlug={ gameSlug } showEditor /> }
+					{ gameSlug && (
+						<WorldObjectManager
+							key={ gameSlug }
+							gameSlug={ gameSlug }
+							showEditor
+						/>
+					) }
 				</>
 			) }
 		</div>

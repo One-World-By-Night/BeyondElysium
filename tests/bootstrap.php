@@ -34,6 +34,13 @@ require_once BE_PLUGIN_PATH . '/vendor/autoload.php';
  */
 $be_wp_tests_dir = getenv( 'WP_TESTS_DIR' );
 
+// Several checkouts can run the suite at once when each points WordPress's own bootstrap at a
+// wp-tests-config.php with its own $table_prefix - it reads this constant, never the
+// environment, so it is carried across here before that bootstrap loads.
+if ( getenv( 'WP_TESTS_CONFIG_FILE_PATH' ) && ! defined( 'WP_TESTS_CONFIG_FILE_PATH' ) ) {
+	define( 'WP_TESTS_CONFIG_FILE_PATH', getenv( 'WP_TESTS_CONFIG_FILE_PATH' ) );
+}
+
 if ( $be_wp_tests_dir && file_exists( $be_wp_tests_dir . '/includes/functions.php' ) ) {
 
 	define( 'BE_WP_TESTS_AVAILABLE', true );
@@ -79,5 +86,22 @@ if ( $be_wp_tests_dir && file_exists( $be_wp_tests_dir . '/includes/functions.ph
 	}
 	if ( ! defined( 'BE_PLUGIN_URL' ) ) {
 		define( 'BE_PLUGIN_URL', 'http://localhost/wp-content/plugins/beyond-elysium/' );
+	}
+
+	// Pure display code wraps its words for translation; without WordPress they read as written.
+	if ( ! function_exists( '__' ) ) {
+		function __( string $text, string $domain = 'default' ): string { // phpcs:ignore
+			return $text;
+		}
+	}
+
+	// St_Filter::strip_html_for_game() re-sanitizes a cut string through this to close a
+	// dangling tag a byte-offset cut can leave open; every real caller passes plain text with
+	// no markup, so a pass-through is exact here, not an approximation of WordPress's own
+	// allowlist behavior.
+	if ( ! function_exists( 'wp_kses_post' ) ) {
+		function wp_kses_post( string $text ): string { // phpcs:ignore
+			return $text;
+		}
 	}
 }

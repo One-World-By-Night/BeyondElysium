@@ -9,6 +9,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { pickMediaImage } from '../../lib/pickMediaImage';
 import type { SheetStyle } from '../../types/character';
+import HelpButton from '../shared/HelpButton';
 import './SheetStyleEditor.css';
 
 export interface SheetStyleEditorProps {
@@ -23,13 +24,28 @@ export interface SheetStyleEditorProps {
 const FONT_CHOICES: { value: string; label: string }[] = [
 	{ value: '', label: __( 'Default', 'beyond-elysium' ) },
 	{ value: 'Georgia, serif', label: __( 'Georgia', 'beyond-elysium' ) },
-	{ value: "'Times New Roman', serif", label: __( 'Times New Roman', 'beyond-elysium' ) },
+	{
+		value: "'Times New Roman', serif",
+		label: __( 'Times New Roman', 'beyond-elysium' ),
+	},
 	{ value: "'Garamond', serif", label: __( 'Garamond', 'beyond-elysium' ) },
-	{ value: "'Trajan Pro', 'Cinzel', serif", label: __( 'Trajan Pro', 'beyond-elysium' ) },
-	{ value: "'Cormorant Garamond', serif", label: __( 'Cormorant Garamond', 'beyond-elysium' ) },
+	{
+		value: "'Trajan Pro', 'Cinzel', serif",
+		label: __( 'Trajan Pro', 'beyond-elysium' ),
+	},
+	{
+		value: "'Cormorant Garamond', serif",
+		label: __( 'Cormorant Garamond', 'beyond-elysium' ),
+	},
 	{ value: 'Arial, sans-serif', label: __( 'Arial', 'beyond-elysium' ) },
-	{ value: "'Helvetica Neue', sans-serif", label: __( 'Helvetica Neue', 'beyond-elysium' ) },
-	{ value: "'Segoe UI', sans-serif", label: __( 'Segoe UI', 'beyond-elysium' ) },
+	{
+		value: "'Helvetica Neue', sans-serif",
+		label: __( 'Helvetica Neue', 'beyond-elysium' ),
+	},
+	{
+		value: "'Segoe UI', sans-serif",
+		label: __( 'Segoe UI', 'beyond-elysium' ),
+	},
 ];
 
 /**
@@ -38,10 +54,15 @@ const FONT_CHOICES: { value: string; label: string }[] = [
  * per-section graphic picker for each block slug given. Each change saves
  * immediately through the sheet-style API.
  */
-export function SheetStyleEditor( { characterId, gameSlug, blockSlugs, onChange }: SheetStyleEditorProps ) {
-	const [ style, setStyle ] = useState<SheetStyle>( {} );
+export function SheetStyleEditor( {
+	characterId,
+	gameSlug,
+	blockSlugs,
+	onChange,
+}: SheetStyleEditorProps ) {
+	const [ style, setStyle ] = useState< SheetStyle >( {} );
 	const [ saving, setSaving ] = useState( false );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
 
 	useEffect( () => {
 		api.sheetStyle( gameSlug )
@@ -50,7 +71,14 @@ export function SheetStyleEditor( { characterId, gameSlug, blockSlugs, onChange 
 				setStyle( loaded );
 				onChange( loaded );
 			} )
-			.catch( () => setError( __( 'Failed to load the current sheet style.', 'beyond-elysium' ) ) );
+			.catch( () =>
+				setError(
+					__(
+						'Failed to load the current sheet style.',
+						'beyond-elysium'
+					)
+				)
+			);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ characterId, gameSlug ] );
 
@@ -69,7 +97,11 @@ export function SheetStyleEditor( { characterId, gameSlug, blockSlugs, onChange 
 			setStyle( saved );
 			onChange( saved );
 		} catch ( err: unknown ) {
-			setError( err instanceof Object && 'message' in err ? String( err.message ) : __( 'Failed to save.', 'beyond-elysium' ) );
+			setError(
+				err instanceof Object && 'message' in err
+					? String( err.message )
+					: __( 'Failed to save.', 'beyond-elysium' )
+			);
 		} finally {
 			setSaving( false );
 		}
@@ -91,25 +123,43 @@ export function SheetStyleEditor( { characterId, gameSlug, blockSlugs, onChange 
 	}
 
 	async function pickBackground() {
-		const attachment = await pickMediaImage( __( 'Choose a sheet background image', 'beyond-elysium' ) );
+		const attachment = await pickMediaImage(
+			__( 'Choose a sheet background image', 'beyond-elysium' )
+		);
 		if ( attachment ) {
-			save( { ...style, background_image_id: attachment.id, background_image_url: attachment.url } );
+			save( {
+				...style,
+				background_image_id: attachment.id,
+				background_image_url: attachment.url,
+			} );
 		}
 	}
 
 	async function pickSectionGraphic( blockSlug: string ) {
-		const attachment = await pickMediaImage( sprintf( __( 'Choose a graphic for "%s"', 'beyond-elysium' ), blockSlug ) );
+		const attachment = await pickMediaImage(
+			sprintf(
+				/* translators: %s: the schema block's slug this section graphic is for */
+				__( 'Choose a graphic for "%s"', 'beyond-elysium' ),
+				blockSlug
+			)
+		);
 		if ( attachment ) {
 			save( {
 				...style,
-				section_graphics: { ...( style.section_graphics ?? {} ), [ blockSlug ]: attachment.id },
+				section_graphics: {
+					...( style.section_graphics ?? {} ),
+					[ blockSlug ]: attachment.id,
+				},
 			} );
 		}
 	}
 
 	return (
 		<div className="be-sheet-style-editor">
-			<h4>{ __( 'Sheet Appearance', 'beyond-elysium' ) }</h4>
+			<div className="be-help-heading">
+				<h4>{ __( 'Sheet Appearance', 'beyond-elysium' ) }</h4>
+				<HelpButton helpKey="sheet-customize" />
+			</div>
 			{ error && (
 				<p className="be-sheet-style-editor__error" role="alert">
 					{ error }
@@ -117,12 +167,16 @@ export function SheetStyleEditor( { characterId, gameSlug, blockSlugs, onChange 
 			) }
 
 			<div className="be-sheet-style-editor__row">
-				<label htmlFor="be-sheet-style-font">{ __( 'Font', 'beyond-elysium' ) }</label>
+				<label htmlFor="be-sheet-style-font">
+					{ __( 'Font', 'beyond-elysium' ) }
+				</label>
 				<select
 					id="be-sheet-style-font"
 					value={ style.font_family ?? '' }
 					disabled={ saving }
-					onChange={ ( e ) => save( { ...style, font_family: e.target.value } ) }
+					onChange={ ( e ) =>
+						save( { ...style, font_family: e.target.value } )
+					}
 				>
 					{ FONT_CHOICES.map( ( f ) => (
 						<option key={ f.value } value={ f.value }>
@@ -133,48 +187,69 @@ export function SheetStyleEditor( { characterId, gameSlug, blockSlugs, onChange 
 			</div>
 
 			<div className="be-sheet-style-editor__row">
-				<label htmlFor="be-sheet-style-accent">{ __( 'Accent color', 'beyond-elysium' ) }</label>
+				<label htmlFor="be-sheet-style-accent">
+					{ __( 'Accent color', 'beyond-elysium' ) }
+				</label>
 				<input
 					id="be-sheet-style-accent"
 					type="color"
 					value={ style.accent_color ?? '#000000' }
 					disabled={ saving }
-					onChange={ ( e ) => save( { ...style, accent_color: e.target.value } ) }
+					onChange={ ( e ) =>
+						save( { ...style, accent_color: e.target.value } )
+					}
 				/>
 			</div>
 
 			<div className="be-sheet-style-editor__row">
-				<label htmlFor="be-sheet-style-bg-color">{ __( 'Background color', 'beyond-elysium' ) }</label>
+				<label htmlFor="be-sheet-style-bg-color">
+					{ __( 'Background color', 'beyond-elysium' ) }
+				</label>
 				<input
 					id="be-sheet-style-bg-color"
 					type="color"
 					value={ style.background_color ?? '#ffffff' }
 					disabled={ saving }
-					onChange={ ( e ) => save( { ...style, background_color: e.target.value } ) }
+					onChange={ ( e ) =>
+						save( { ...style, background_color: e.target.value } )
+					}
 				/>
 			</div>
 
 			<div className="be-sheet-style-editor__row">
-				<label htmlFor="be-sheet-style-text">{ __( 'Text color', 'beyond-elysium' ) }</label>
+				<label htmlFor="be-sheet-style-text">
+					{ __( 'Text color', 'beyond-elysium' ) }
+				</label>
 				<input
 					id="be-sheet-style-text"
 					type="color"
 					value={ style.text_color ?? '#000000' }
 					disabled={ saving }
-					onChange={ ( e ) => save( { ...style, text_color: e.target.value } ) }
+					onChange={ ( e ) =>
+						save( { ...style, text_color: e.target.value } )
+					}
 				/>
 			</div>
 
 			<div className="be-sheet-style-editor__row">
 				<span>{ __( 'Background image', 'beyond-elysium' ) }</span>
-				<button type="button" disabled={ saving } onClick={ pickBackground }>
-					{ style.background_image_url ? __( 'Change…', 'beyond-elysium' ) : __( 'Choose…', 'beyond-elysium' ) }
+				<button
+					type="button"
+					disabled={ saving }
+					onClick={ pickBackground }
+				>
+					{ style.background_image_url
+						? __( 'Change…', 'beyond-elysium' )
+						: __( 'Choose…', 'beyond-elysium' ) }
 				</button>
 				{ style.background_image_url && (
 					<img
 						className="be-sheet-style-editor__preview"
 						src={ style.background_image_url }
-						alt={ __( 'Sheet background preview', 'beyond-elysium' ) }
+						alt={ __(
+							'Sheet background preview',
+							'beyond-elysium'
+						) }
 					/>
 				) }
 			</div>
@@ -186,8 +261,14 @@ export function SheetStyleEditor( { characterId, gameSlug, blockSlugs, onChange 
 						{ blockSlugs.map( ( slug ) => (
 							<li key={ slug }>
 								{ slug }
-								<button type="button" disabled={ saving } onClick={ () => pickSectionGraphic( slug ) }>
-									{ style.section_graphic_urls?.[ slug ] ? __( 'Change…', 'beyond-elysium' ) : __( 'Choose…', 'beyond-elysium' ) }
+								<button
+									type="button"
+									disabled={ saving }
+									onClick={ () => pickSectionGraphic( slug ) }
+								>
+									{ style.section_graphic_urls?.[ slug ]
+										? __( 'Change…', 'beyond-elysium' )
+										: __( 'Choose…', 'beyond-elysium' ) }
 								</button>
 							</li>
 						) ) }

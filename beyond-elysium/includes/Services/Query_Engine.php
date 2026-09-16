@@ -3,6 +3,7 @@
 namespace BeyondElysium\Services;
 
 use BeyondElysium\Database\Manager;
+use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Schema_Block;
 
@@ -369,6 +370,9 @@ class Query_Engine {
 
 		$value  = null;
 		$atomic = false;
+		if ( $map === null ) {
+			return [ 'type' => $type, 'value' => $value, 'atomic' => $atomic ];
+		}
 
 		switch ( $map['source'] ?? '' ) {
 			case 'column':
@@ -376,15 +380,18 @@ class Query_Engine {
 				break;
 
 			case 'json':
-				$block = $map['block'];
-				$data  = $row->sheet_data[ $block ] ?? null;
+				// A field or pool named without a block lives on whichever block the character's
+				// own creature stack defines it on (field-map.php) - Willpower, Rank, Auspice. Read
+				// unconditionally until 1.0.0-review F-051, so each of those matched no one.
+				$block = $map['block'] ?? self::block_holding( $row, $map );
+				$data  = $block !== null ? ( $row->sheet_data[ $block ] ?? null ) : null;
 				if ( $data !== null ) {
 					if ( isset( $map['field'] ) ) {
 						$value = $data[ $map['field'] ] ?? null;
 					} elseif ( isset( $map['pool'] ) ) {
 						$value = $data[ $map['pool'] ][ $map['part'] ] ?? null;
 					} else {
-						$value  = self::normalize_list( $data, $block );
+						$value  = self::normalize_list( $data, $block, (string) $row->owner_slug );
 						$atomic = self::block_is_atomic( $block, $row->owner_slug );
 					}
 				}
@@ -427,10 +434,11 @@ class Query_Engine {
 	 *
 	 * @param array  $items
 	 * @param string $block
+	 * @param string $game_slug The character's chronicle, whose fork of the block wins.
 	 * @return array
 	 */
-	private static function normalize_list( array $items, string $block ): array {
-		if ( self::section_type( $block ) !== 'tiered_power' ) {
+	private static function normalize_list( array $items, string $block, string $game_slug = '' ): array {
+		if ( self::section_type( $block, $game_slug ) !== 'tiered_power' ) {
 			return $items;
 		}
 		return array_map( static function ( $item ) {
@@ -439,19 +447,71 @@ class Query_Engine {
 	}
 
 	/**
-	 * Looks up a block's `section_type` (e.g. `trait_list`, `tiered_power`),
-	 * defaulting to `trait_list` when the block has no explicit type set.
-	 * Caches the result per block slug for the lifetime of the request.
+	 * The block on a character's own creature stack that defines a field or
+	 * pool `field-map.php` names without a block, through the chronicle's own
+	 * forks - null when the stack has no such field or pool (a vampire has no
+	 * Auspice).
+	 *
+	 * @param object              $row
+	 * @param array<string,mixed> $map A `json` field-map entry with `field` or `pool` and no `block`.
+	 * @return string|null
+	 */
+	private static function block_holding( object $row, array $map ): ?string {
+		$list       = isset( $map['field'] ) ? 'fields' : 'pools';
+		$name       = (string) ( $map['field'] ?? $map['pool'] ?? '' );
+		$stack_slug = (string) ( $row->stack_slug ?? '' );
+		$game_slug  = (string) ( $row->owner_slug ?? '' );
+
+		return self::remembered( "holding|{$stack_slug}|{$game_slug}|{$list}|{$name}", static function () use ( $stack_slug, $game_slug, $list, $name ) {
+			$resolved = Creature_Stack::resolve( $stack_slug, $game_slug );
+			foreach ( (array) ( $resolved['blocks'] ?? [] ) as $block ) {
+				foreach ( (array) ( $block->definition->{ $list } ?? [] ) as $entry ) {
+					if ( ( $entry->name ?? null ) === $name ) {
+						return (string) $block->slug;
+					}
+				}
+			}
+			return null;
+		} );
+	}
+
+	/**
+	 * Resolves one field for many rows in a single query run, so the block
+	 * and catalog lookups behind each value are made once per stack rather
+	 * than once per row - for a caller outside `execute()`, such as rumor
+	 * generation reading every active character's Clan.
+	 *
+	 * @param object[] $rows
+	 * @param string   $field
+	 * @return array<int,mixed> Each row's value, in row order.
+	 */
+	public static function values_for( array $rows, string $field ): array {
+		$owns_run = self::begin_run();
+		try {
+			return array_map( static fn( $row ) => self::resolve_value( $row, $field )['value'], $rows );
+		} finally {
+			self::end_run( $owns_run );
+		}
+	}
+
+	/**
+	 * Looks up a block's `section_type` (e.g. `trait_list`, `tiered_power`)
+	 * through the chronicle's own fork when it has one (1.0.0-review F-013,
+	 * D43), defaulting to `trait_list` when the block has no explicit type
+	 * set. Caches the result per block and chronicle for the lifetime of the
+	 * request.
 	 *
 	 * @param string $block
+	 * @param string $game_slug
 	 * @return string
 	 */
-	private static function section_type( string $block ): string {
-		if ( ! array_key_exists( $block, self::$section_type_cache ) ) {
-			$definition                             = Schema_Block::find_by_slug( $block );
-			self::$section_type_cache[ $block ]     = $definition->section_type ?? 'trait_list';
+	private static function section_type( string $block, string $game_slug = '' ): string {
+		$key = $block . '|' . $game_slug;
+		if ( ! array_key_exists( $key, self::$section_type_cache ) ) {
+			$definition                      = Schema_Block::find_for_game( $block, $game_slug );
+			self::$section_type_cache[ $key ] = $definition->section_type ?? 'trait_list';
 		}
-		return self::$section_type_cache[ $block ];
+		return self::$section_type_cache[ $key ];
 	}
 
 	/**
@@ -468,8 +528,10 @@ class Query_Engine {
 	 * @return bool
 	 */
 	private static function block_is_atomic( string $block, string $game_slug ): bool {
-		$definition = Schema_Block::find_for_game( $block, $game_slug );
-		return ! empty( $definition->definition->atomic ?? false );
+		return (bool) self::remembered( "atomic|{$block}|{$game_slug}", static function () use ( $block, $game_slug ) {
+			$definition = Schema_Block::find_for_game( $block, $game_slug );
+			return ! empty( $definition->definition->atomic ?? false );
+		} );
 	}
 
 	/**
@@ -484,7 +546,7 @@ class Query_Engine {
 	 * @return array<string,string>
 	 */
 	private static function catalog_sources( string $block, string $game_slug ): array {
-		return Backgrounds_Catalog::sources_for( $block, $game_slug );
+		return (array) self::remembered( "sources|{$block}|{$game_slug}", static fn() => Backgrounds_Catalog::sources_for( $block, $game_slug ) );
 	}
 
 	// Validation: rejects an unknown field, inapplicable operator, or missing required value.
@@ -587,28 +649,77 @@ class Query_Engine {
 	 * @param string $logic     'AND' or 'OR'.
 	 * @param array  $paging    `{sort: {field, direction}, page, per_page}`.
 	 * @param string $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
+	 * @param array  $options   See find_matches(): `exclude_npcs`, `prepare_row`.
 	 * @return array{results: object[], total: int}
 	 */
-	public static function execute( string $game_slug, array $conditions, string $logic, array $paging = [], string $inventory = 'char' ): array {
-		$matches = self::find_matches( $game_slug, $conditions, $logic, $inventory );
-		$total   = count( $matches );
+	public static function execute( string $game_slug, array $conditions, string $logic, array $paging = [], string $inventory = 'char', array $options = [] ): array {
+		$owns_run = self::begin_run();
+		try {
+			$matches = self::find_matches( $game_slug, $conditions, $logic, $inventory, $options );
+			$total   = count( $matches );
 
-		$sort = $paging['sort'] ?? null;
-		if ( $sort && ! empty( $sort['field'] ) ) {
-			$field     = $sort['field'];
-			$direction = ( $sort['direction'] ?? 'asc' ) === 'desc' ? -1 : 1;
-			usort( $matches, static function ( $a, $b ) use ( $field, $direction, $inventory ) {
-				$av = self::resolve_value( $a, $field, $inventory )['value'];
-				$bv = self::resolve_value( $b, $field, $inventory )['value'];
-				return $direction * ( $av <=> $bv );
-			} );
+			$sort = $paging['sort'] ?? null;
+			if ( $sort && ! empty( $sort['field'] ) ) {
+				$field     = $sort['field'];
+				$direction = ( $sort['direction'] ?? 'asc' ) === 'desc' ? -1 : 1;
+				// Each row's sort value is resolved once, not on both sides of every comparison
+				// (1.0.0-review F-027).
+				$keyed = array_map( static fn( $row ) => [ self::resolve_value( $row, $field, $inventory )['value'], $row ], $matches );
+				usort( $keyed, static fn( $a, $b ) => $direction * ( $a[0] <=> $b[0] ) );
+				$matches = array_column( $keyed, 1 );
+			}
+
+			$per_page = min( 100, max( 1, (int) ( $paging['per_page'] ?? 20 ) ) );
+			$page     = max( 1, (int) ( $paging['page'] ?? 1 ) );
+			$paged    = array_slice( $matches, ( $page - 1 ) * $per_page, $per_page );
+
+			return [ 'results' => $paged, 'total' => $total ];
+		} finally {
+			self::end_run( $owns_run );
 		}
+	}
 
-		$per_page = min( 100, max( 1, (int) ( $paging['per_page'] ?? 20 ) ) );
-		$page     = max( 1, (int) ( $paging['page'] ?? 1 ) );
-		$paged    = array_slice( $matches, ( $page - 1 ) * $per_page, $per_page );
+	/**
+	 * Block lookups remembered for the length of one query run - null outside
+	 * one, so nothing outlives the run that filled it (a static cache that did
+	 * could hand a later request, or a later test, a stale definition).
+	 *
+	 * @var array<string,mixed>|null
+	 */
+	private static ?array $run_memo = null;
 
-		return [ 'results' => $paged, 'total' => $total ];
+	/** Starts a query run's memo, unless one is already running; returns whether this call owns it. */
+	private static function begin_run(): bool {
+		if ( self::$run_memo !== null ) {
+			return false;
+		}
+		self::$run_memo = [];
+		return true;
+	}
+
+	/** Ends the run's memo, when the caller is the one that started it. */
+	private static function end_run( bool $owns_run ): void {
+		if ( $owns_run ) {
+			self::$run_memo = null;
+		}
+	}
+
+	/**
+	 * Returns `$compute()`'s value, remembered under `$key` while a query run is
+	 * in progress.
+	 *
+	 * @param string   $key
+	 * @param callable $compute
+	 * @return mixed
+	 */
+	private static function remembered( string $key, callable $compute ) {
+		if ( self::$run_memo === null ) {
+			return $compute();
+		}
+		if ( ! array_key_exists( $key, self::$run_memo ) ) {
+			self::$run_memo[ $key ] = $compute();
+		}
+		return self::$run_memo[ $key ];
 	}
 
 	/**
@@ -619,20 +730,37 @@ class Query_Engine {
 	 * shapes the inventory declares - the clause-matching loop below is
 	 * otherwise identical regardless of which one supplied the rows.
 	 *
+	 * `$options` narrows what a viewer can reach before a single clause is
+	 * evaluated (1.0.0-review F-024): `exclude_npcs` drops NPC rows, and
+	 * `prepare_row` (a callable taking the row) redacts each row in place -
+	 * so a hidden value can neither be returned nor matched against, and a
+	 * condition on it cannot work as a yes/no oracle.
+	 *
 	 * @param string $game_slug
 	 * @param array  $conditions
 	 * @param string $logic
 	 * @param string $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
+	 * @param array  $options   `{exclude_npcs?: bool, prepare_row?: callable}`.
 	 * @return object[]
 	 */
-	private static function find_matches( string $game_slug, array $conditions, string $logic, string $inventory = 'char' ): array {
+	private static function find_matches( string $game_slug, array $conditions, string $logic, string $inventory = 'char', array $options = [] ): array {
 		$descriptor = Field_Registry::inventory( $inventory );
-		$rows       = $descriptor['storage'] === 'world_objects'
-			? self::rows_for_world_objects( $game_slug, $descriptor['object_type'] )
+		if ( $descriptor === null ) {
+			return [];
+		}
+		$rows = $descriptor['storage'] === 'world_objects'
+			? self::rows_for_world_objects( $game_slug, (string) ( $descriptor['object_type'] ?? '' ) )
 			: self::rows_for_characters( $game_slug );
 
 		$matches = [];
 		foreach ( $rows as $row ) {
+			if ( ! empty( $options['exclude_npcs'] ) && (int) ( $row->is_npc ?? 0 ) === 1 ) {
+				continue;
+			}
+			if ( isset( $options['prepare_row'] ) && is_callable( $options['prepare_row'] ) ) {
+				( $options['prepare_row'] )( $row );
+			}
+
 			$clause_results = [];
 			foreach ( $conditions as $condition ) {
 				$resolved         = self::resolve_value( $row, $condition['field'], $inventory );
@@ -747,23 +875,29 @@ class Query_Engine {
 	 * @param bool        $ok_zero   Whether `0`/`"(none)"` buckets count - the two distribution types only (Step 5h).
 	 * @param string|null $trait     Named trait, required for `specific_distribution`.
 	 * @param string      $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
+	 * @param array       $options   See find_matches(): `exclude_npcs`, `prepare_row`.
 	 * @return array{buckets: array<string,float>, match_sets: array<string,string[]>, total: float, maximum: float}
 	 */
-	public static function statistics( string $game_slug, array $conditions, string $logic, string $key, string $stat_type, bool $ok_zero = true, ?string $trait = null, string $inventory = 'char' ): array {
-		$rows     = self::find_matches( $game_slug, $conditions, $logic, $inventory );
-		$registry = Field_Registry::get( $key );
-		$type     = Field_Registry::type_for( $key, $inventory );
+	public static function statistics( string $game_slug, array $conditions, string $logic, string $key, string $stat_type, bool $ok_zero = true, ?string $trait = null, string $inventory = 'char', array $options = [] ): array {
+		$owns_run = self::begin_run();
+		try {
+			$rows     = self::find_matches( $game_slug, $conditions, $logic, $inventory, $options );
+			$registry = Field_Registry::get( $key );
+			$type     = Field_Registry::type_for( $key, $inventory );
 
-		$resolved = [];
-		foreach ( $rows as $row ) {
-			// $row->name exists on both storage shapes - a world object has one too.
-			$resolved[] = [
-				'name'  => $row->name,
-				'value' => self::resolve_value( $row, $key, $inventory )['value'],
-			];
+			$resolved = [];
+			foreach ( $rows as $row ) {
+				// $row->name exists on both storage shapes - a world object has one too.
+				$resolved[] = [
+					'name'  => $row->name,
+					'value' => self::resolve_value( $row, $key, $inventory )['value'],
+				];
+			}
+
+			return self::aggregate( $resolved, $type, $registry['title'] ?? $key, $stat_type, $ok_zero, $trait, count( $rows ) );
+		} finally {
+			self::end_run( $owns_run );
 		}
-
-		return self::aggregate( $resolved, $type, $registry['title'] ?? $key, $stat_type, $ok_zero, $trait, count( $rows ) );
 	}
 
 	/**

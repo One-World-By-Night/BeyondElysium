@@ -204,4 +204,31 @@ class WorldObjectsControllerTest extends WP_UnitTestCase {
 		$this->assertCount( 1, $data );
 		$this->assertSame( 'Excalibur', $data[0]->name );
 	}
+
+	/**
+	 * 1.0.0-review F-095 (Pass H intake `t3-content-controllers`): a list property - an item's
+	 * abilities, a rote's spheres - was compared as text, so filtering by one matched nothing and
+	 * warned "Array to string conversion".
+	 */
+	public function test_a_list_property_filters_by_an_entrys_name(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+
+		foreach ( [
+			'Hunting Rifle' => [ [ 'name' => 'Firearms', 'count' => 2 ] ],
+			'Lockpicks'     => [ [ 'name' => 'Security', 'count' => 1 ], [ 'name' => 'Larceny', 'count' => 1 ] ],
+		] as $name => $abilities ) {
+			$create = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/world-objects" );
+			$create->set_param( 'object_type', 'item' );
+			$create->set_param( 'name', $name );
+			$create->set_param( 'properties', [ 'abilities' => $abilities ] );
+			$this->assertSame( 201, $this->dispatch( $create )->get_status() );
+		}
+
+		$filtered = new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/world-objects" );
+		$filtered->set_param( 'object_type', 'item' );
+		$filtered->set_param( 'abilities', 'larceny' );
+		$data = $this->dispatch( $filtered )->get_data();
+
+		$this->assertSame( [ 'Lockpicks' ], array_map( static fn( $item ) => $item->name, $data ) );
+	}
 }

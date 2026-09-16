@@ -5,7 +5,11 @@
  * maximum. Can be rendered read-only.
  */
 import { __ } from '@wordpress/i18n';
-import { computeDotStates, stepTrackValue, type DotState } from '../../lib/dotTrack';
+import {
+	computeDotStates,
+	stepTrackValue,
+	type DotState,
+} from '../../lib/dotTrack';
 import './DotTracker.css';
 
 export interface DotTrackerValue {
@@ -21,7 +25,7 @@ export interface DotTrackerProps {
 	readOnly?: boolean;
 }
 
-const STATE_CLASS: Record<DotState, string> = {
+const STATE_CLASS: Record< DotState, string > = {
 	filled: 'be-dot-tracker__dot--filled',
 	spent: 'be-dot-tracker__dot--spent',
 	overflow: 'be-dot-tracker__dot--overflow',
@@ -37,7 +41,13 @@ const STATE_CLASS: Record<DotState, string> = {
  * operable, screen-reader-visible controls. `readOnly` disables both
  * steppers and marks the whole tracker `aria-disabled`.
  */
-export function DotTracker( { permanent, temporary, max, onChange, readOnly }: DotTrackerProps ) {
+export function DotTracker( {
+	permanent,
+	temporary,
+	max,
+	onChange,
+	readOnly,
+}: DotTrackerProps ) {
 	const states = computeDotStates( permanent, temporary, max );
 
 	const step = ( track: 'permanent' | 'temporary', delta: 1 | -1 ) => {
@@ -45,19 +55,33 @@ export function DotTracker( { permanent, temporary, max, onChange, readOnly }: D
 			return;
 		}
 		if ( track === 'permanent' ) {
-			onChange( { permanent: stepTrackValue( permanent, delta, max ), temporary } );
+			onChange( {
+				permanent: stepTrackValue( permanent, delta, max ),
+				temporary,
+			} );
 		} else {
-			onChange( { permanent, temporary: stepTrackValue( temporary, delta, max ) } );
+			onChange( {
+				permanent,
+				temporary: stepTrackValue( temporary, delta, max ),
+			} );
 		}
 	};
 
 	return (
-		<div className="be-dot-tracker" aria-disabled={ readOnly ? 'true' : undefined }>
+		<div
+			className="be-dot-tracker"
+			aria-disabled={ readOnly ? 'true' : undefined }
+		>
 			<div className="be-dot-tracker__row be-dot-tracker__row--permanent">
-				<span className="be-dot-tracker__row-label" aria-hidden="true">{ __( 'P', 'beyond-elysium' ) }</span>
+				<span className="be-dot-tracker__row-label" aria-hidden="true">
+					{ __( 'P', 'beyond-elysium' ) }
+				</span>
 				<div className="be-dot-tracker__dots" aria-hidden="true">
 					{ states.map( ( state, i ) => (
-						<span key={ `perm-${ i }` } className={ `be-dot-tracker__dot ${ STATE_CLASS[ state ] }` } />
+						<span
+							key={ `perm-${ i }` }
+							className={ `be-dot-tracker__dot ${ STATE_CLASS[ state ] }` }
+						/>
 					) ) }
 				</div>
 				<div className="be-dot-tracker__stepper">
@@ -65,7 +89,10 @@ export function DotTracker( { permanent, temporary, max, onChange, readOnly }: D
 						type="button"
 						className="be-dot-tracker__stepper-button"
 						disabled={ readOnly || permanent <= 0 }
-						aria-label={ __( 'Decrease permanent', 'beyond-elysium' ) }
+						aria-label={ __(
+							'Decrease permanent',
+							'beyond-elysium'
+						) }
 						onClick={ () => step( 'permanent', -1 ) }
 					>
 						−
@@ -75,7 +102,10 @@ export function DotTracker( { permanent, temporary, max, onChange, readOnly }: D
 						type="button"
 						className="be-dot-tracker__stepper-button"
 						disabled={ readOnly || permanent >= max }
-						aria-label={ __( 'Increase permanent', 'beyond-elysium' ) }
+						aria-label={ __(
+							'Increase permanent',
+							'beyond-elysium'
+						) }
 						onClick={ () => step( 'permanent', 1 ) }
 					>
 						+
@@ -83,10 +113,15 @@ export function DotTracker( { permanent, temporary, max, onChange, readOnly }: D
 				</div>
 			</div>
 			<div className="be-dot-tracker__row be-dot-tracker__row--temporary">
-				<span className="be-dot-tracker__row-label" aria-hidden="true">{ __( 'T', 'beyond-elysium' ) }</span>
+				<span className="be-dot-tracker__row-label" aria-hidden="true">
+					{ __( 'T', 'beyond-elysium' ) }
+				</span>
 				<div className="be-dot-tracker__dots" aria-hidden="true">
 					{ states.map( ( state, i ) => (
-						<span key={ `temp-${ i }` } className={ `be-dot-tracker__dot be-dot-tracker__dot--temp ${ STATE_CLASS[ state ] }` } />
+						<span
+							key={ `temp-${ i }` }
+							className={ `be-dot-tracker__dot be-dot-tracker__dot--temp ${ STATE_CLASS[ state ] }` }
+						/>
 					) ) }
 				</div>
 				<div className="be-dot-tracker__stepper">
@@ -94,7 +129,10 @@ export function DotTracker( { permanent, temporary, max, onChange, readOnly }: D
 						type="button"
 						className="be-dot-tracker__stepper-button"
 						disabled={ readOnly || temporary <= 0 }
-						aria-label={ __( 'Decrease temporary', 'beyond-elysium' ) }
+						aria-label={ __(
+							'Decrease temporary',
+							'beyond-elysium'
+						) }
 						onClick={ () => step( 'temporary', -1 ) }
 					>
 						−
@@ -104,7 +142,10 @@ export function DotTracker( { permanent, temporary, max, onChange, readOnly }: D
 						type="button"
 						className="be-dot-tracker__stepper-button"
 						disabled={ readOnly || temporary >= max }
-						aria-label={ __( 'Increase temporary', 'beyond-elysium' ) }
+						aria-label={ __(
+							'Increase temporary',
+							'beyond-elysium'
+						) }
 						onClick={ () => step( 'temporary', 1 ) }
 					>
 						+

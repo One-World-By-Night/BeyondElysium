@@ -10,6 +10,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import type { Game } from '../../types';
+import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
 interface ReportRow {
@@ -26,10 +27,10 @@ interface ReportRow {
  * Merits and Flaws/Influence) its statfield is chosen at generation time.
  */
 export function AdminReports() {
-	const [ games, setGames ] = useState<Game[]>( [] );
+	const [ games, setGames ] = useState< Game[] >( [] );
 	const [ gameSlug, setGameSlug ] = useState( '' );
 	const [ loading, setLoading ] = useState( true );
-	const [ reportList, setReportList ] = useState<ReportRow[]>( [] );
+	const [ reportList, setReportList ] = useState< ReportRow[] >( [] );
 	const [ statField, setStatField ] = useState( 'merits' );
 
 	useEffect( () => {
@@ -57,18 +58,31 @@ export function AdminReports() {
 
 	return (
 		<div className="be-admin">
-			<h1>{ __( 'Reports', 'beyond-elysium' ) }</h1>
+			<div className="be-help-heading">
+				<h1>{ __( 'Reports', 'beyond-elysium' ) }</h1>
+				<HelpButton helpKey="reports" />
+			</div>
 
 			{ loading ? (
 				<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
 			) : games.length === 0 ? (
-				<p>{ __( 'No games exist yet - create one under Beyond Elysium → Games first.', 'beyond-elysium' ) }</p>
+				<p>
+					{ __(
+						'No games exist yet - create one under Beyond Elysium → System Config → Games first.',
+						'beyond-elysium'
+					) }
+				</p>
 			) : (
 				<>
 					<div className="be-admin__filters">
 						<label>
 							{ __( 'Game', 'beyond-elysium' ) }{ ' ' }
-							<select value={ gameSlug } onChange={ ( e ) => setGameSlug( e.target.value ) }>
+							<select
+								value={ gameSlug }
+								onChange={ ( e ) =>
+									setGameSlug( e.target.value )
+								}
+							>
 								{ games.map( ( g ) => (
 									<option key={ g.slug } value={ g.slug }>
 										{ g.name }
@@ -92,15 +106,37 @@ export function AdminReports() {
 									<td>{ report.title }</td>
 									<td>{ report.shape }</td>
 									<td>
-										{ report.key === 'statistics-report' && (
+										{ report.key ===
+											'statistics-report' && (
 											<select
 												value={ statField }
-												onChange={ ( e ) => setStatField( e.target.value ) }
-												style={ { marginRight: '0.5rem' } }
+												onChange={ ( e ) =>
+													setStatField(
+														e.target.value
+													)
+												}
+												style={ {
+													marginRight: '0.5rem',
+												} }
 											>
-												<option value="merits">{ __( 'Merits', 'beyond-elysium' ) }</option>
-												<option value="flaws">{ __( 'Flaws', 'beyond-elysium' ) }</option>
-												<option value="influences">{ __( 'Influences', 'beyond-elysium' ) }</option>
+												<option value="merits">
+													{ __(
+														'Merits',
+														'beyond-elysium'
+													) }
+												</option>
+												<option value="flaws">
+													{ __(
+														'Flaws',
+														'beyond-elysium'
+													) }
+												</option>
+												<option value="influences">
+													{ __(
+														'Influences',
+														'beyond-elysium'
+													) }
+												</option>
 											</select>
 										) }
 										<a
@@ -109,12 +145,20 @@ export function AdminReports() {
 												.reports( gameSlug )
 												.pdfUrl(
 													report.key,
-													report.key === 'statistics-report'
-														? { statField, statType: 'distribution' }
+													report.key ===
+														'statistics-report'
+														? {
+																statField,
+																statType:
+																	'distribution',
+														  }
 														: {}
 												) }
 										>
-											{ __( 'Generate PDF', 'beyond-elysium' ) }
+											{ __(
+												'Generate PDF',
+												'beyond-elysium'
+											) }
 										</a>
 									</td>
 								</tr>

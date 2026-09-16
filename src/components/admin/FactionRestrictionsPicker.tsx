@@ -17,7 +17,7 @@ export interface FactionRestrictionsPickerProps {
 	gameSlug: string;
 	/** null means "every real creature stack" - `enabled_stacks`' own absent-means-all convention, never "none". */
 	enabledStacks: string[] | null;
-	restrictions: Record<string, Record<string, string[]>>;
+	restrictions: Record< string, Record< string, string[] > >;
 	onSave: ( stackSlug: string, fieldName: string, allowed: string[] ) => void;
 	savingKey?: string | null;
 }
@@ -31,18 +31,36 @@ interface RestrictableField {
 
 /** A field is restrictable when it's a real catalog pick, not free text or an empty/dynamic list. */
 function isRestrictable( field: IdentityField ): boolean {
-	return ( field.field_type === 'select' || field.field_type === 'multiselect' ) && ( field.options?.length ?? 0 ) > 0;
+	return (
+		( field.field_type === 'select' ||
+			field.field_type === 'multiselect' ) &&
+		( field.options?.length ?? 0 ) > 0
+	);
 }
 
-export function FactionRestrictionsPicker( { gameSlug, enabledStacks, restrictions, onSave, savingKey }: FactionRestrictionsPickerProps ) {
-	const [ fields, setFields ] = useState<RestrictableField[]>( [] );
+export function FactionRestrictionsPicker( {
+	gameSlug,
+	enabledStacks,
+	restrictions,
+	onSave,
+	savingKey,
+}: FactionRestrictionsPickerProps ) {
+	const [ fields, setFields ] = useState< RestrictableField[] >( [] );
 	const [ loading, setLoading ] = useState( true );
-	const [ drafts, setDrafts ] = useState<Record<string, Set<string>>>( {} );
+	const [ drafts, setDrafts ] = useState< Record< string, Set< string > > >(
+		{}
+	);
+	// The effect below runs again when the stacks listed change, not each time the parent
+	// passes a new array.
+	const stacksKey =
+		enabledStacks === null ? 'all' : enabledStacks.join( ',' );
 
 	useEffect( () => {
 		setLoading( true );
 
-		function fieldsForStack( slug: string ): Promise<RestrictableField[]> {
+		function fieldsForStack(
+			slug: string
+		): Promise< RestrictableField[] > {
 			return api.creatureStacks
 				.resolve( slug, gameSlug )
 				.then( ( resolved ) => {
@@ -52,9 +70,16 @@ export function FactionRestrictionsPicker( { gameSlug, enabledStacks, restrictio
 						if ( block.section_type !== 'identity_field' ) {
 							continue;
 						}
-						for ( const field of ( block.definition as { fields?: IdentityField[] } ).fields ?? [] ) {
+						for ( const field of (
+							block.definition as { fields?: IdentityField[] }
+						 ).fields ?? [] ) {
 							if ( isRestrictable( field ) ) {
-								found.push( { stackSlug: slug, stackName: stack.name, fieldName: field.name, options: field.options ?? [] } );
+								found.push( {
+									stackSlug: slug,
+									stackName: stack.name,
+									fieldName: field.name,
+									options: field.options ?? [],
+								} );
 							}
 						}
 					}
@@ -63,9 +88,11 @@ export function FactionRestrictionsPicker( { gameSlug, enabledStacks, restrictio
 				.catch( () => [] as RestrictableField[] );
 		}
 
-		const stacksPromise: Promise<string[]> =
+		const stacksPromise: Promise< string[] > =
 			enabledStacks === null
-				? api.creatureStacks.list().then( ( all ) => all.map( ( s ) => s.slug ) )
+				? api.creatureStacks
+						.list()
+						.then( ( all ) => all.map( ( s ) => s.slug ) )
 				: Promise.resolve( enabledStacks );
 
 		stacksPromise
@@ -74,14 +101,18 @@ export function FactionRestrictionsPicker( { gameSlug, enabledStacks, restrictio
 				setFields( results.flat() );
 				setLoading( false );
 			} );
-	}, [ enabledStacks === null ? 'all' : enabledStacks.join( ',' ), gameSlug ] );
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ stacksKey, gameSlug ] );
 
 	useEffect( () => {
-		const next: Record<string, Set<string>> = {};
+		const next: Record< string, Set< string > > = {};
 		for ( const field of fields ) {
 			const key = `${ field.stackSlug }:${ field.fieldName }`;
-			const restricted = restrictions[ field.stackSlug ]?.[ field.fieldName ];
-			next[ key ] = new Set( restricted && restricted.length > 0 ? restricted : field.options );
+			const restricted =
+				restrictions[ field.stackSlug ]?.[ field.fieldName ];
+			next[ key ] = new Set(
+				restricted && restricted.length > 0 ? restricted : field.options
+			);
 		}
 		setDrafts( next );
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -100,12 +131,17 @@ export function FactionRestrictionsPicker( { gameSlug, enabledStacks, restrictio
 	}
 
 	if ( loading ) {
-		return <p>{ __( 'Loading restrictable fields…', 'beyond-elysium' ) }</p>;
+		return (
+			<p>{ __( 'Loading restrictable fields…', 'beyond-elysium' ) }</p>
+		);
 	}
 	if ( fields.length === 0 ) {
 		return (
 			<p className="be-faction-restrictions__empty">
-				{ __( 'None of the currently enabled creature types have a restrictable sub-faction field (a Clan, Sect, Tribe, or similar).', 'beyond-elysium' ) }
+				{ __(
+					'None of the currently enabled creature types have a restrictable sub-faction field (a Clan, Sect, Tribe, or similar).',
+					'beyond-elysium'
+				) }
 			</p>
 		);
 	}
@@ -133,7 +169,13 @@ export function FactionRestrictionsPicker( { gameSlug, enabledStacks, restrictio
 										<input
 											type="checkbox"
 											checked={ checked.has( option ) }
-											onChange={ () => toggle( key, option, field.options ) }
+											onChange={ () =>
+												toggle(
+													key,
+													option,
+													field.options
+												)
+											}
 										/>
 										{ option }
 									</label>
@@ -142,16 +184,27 @@ export function FactionRestrictionsPicker( { gameSlug, enabledStacks, restrictio
 						</ul>
 						{ checked.size === 0 && (
 							<p className="be-faction-restrictions__warning">
-								{ __( 'At least one option must stay enabled - a real character creation could not otherwise pick a value here.', 'beyond-elysium' ) }
+								{ __(
+									'At least one option must stay enabled - a real character creation could not otherwise pick a value here.',
+									'beyond-elysium'
+								) }
 							</p>
 						) }
 						<button
 							type="button"
 							className="button button-secondary"
 							disabled={ checked.size === 0 || isSaving }
-							onClick={ () => onSave( field.stackSlug, field.fieldName, Array.from( checked ) ) }
+							onClick={ () =>
+								onSave(
+									field.stackSlug,
+									field.fieldName,
+									Array.from( checked )
+								)
+							}
 						>
-							{ isSaving ? __( 'Saving…', 'beyond-elysium' ) : __( 'Save', 'beyond-elysium' ) }
+							{ isSaving
+								? __( 'Saving…', 'beyond-elysium' )
+								: __( 'Save', 'beyond-elysium' ) }
 						</button>
 					</div>
 				);

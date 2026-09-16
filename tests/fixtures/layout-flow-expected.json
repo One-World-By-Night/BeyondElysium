@@ -3,7 +3,9 @@
         { "name": "unset width (null) defaults to third", "span": 2 },
         { "name": "third", "span": 2 },
         { "name": "half", "span": 3 },
-        { "name": "full", "span": 6 }
+        { "name": "full", "span": 6 },
+        { "name": "an unknown width reads as third", "span": 2 },
+        { "name": "an empty width reads as third", "span": 2 }
     ],
     "sortedForFlow": [
         { "name": "sorts by column then order, matching real row-reading order", "block_slugs": [ "a", "c", "b" ] },

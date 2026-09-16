@@ -105,4 +105,18 @@ class BackgroundLedgerTest extends TestCase {
 		$this->assertSame( 3, $by_name['Personal']['unused'], 'Personal is untouched' );
 		$this->assertSame( 2, $by_name['Bureaucracy']['unused'] );
 	}
+
+	/**
+	 * 1.0.0-review F-038: a stored cost below one - zero, or a forged negative - must never
+	 * hand uses back. Floored where it is read, not only where record() writes it.
+	 */
+	public function test_a_cost_below_one_counts_as_one_use(): void {
+		$subactions = [ $this->subaction( 'Bureaucracy', 4 ) ];
+		$entries    = [ [ 'name' => 'Bureaucracy', 'cost' => -50 ], [ 'name' => 'Bureaucracy', 'cost' => 0 ] ];
+
+		$result = Background_Ledger::apply_spends( $subactions, $entries );
+
+		$this->assertSame( 2, $result['subactions'][0]['unused'] );
+		$this->assertSame( 2, $result['subactions'][0]['spent'] );
+	}
 }

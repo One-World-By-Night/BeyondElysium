@@ -6,6 +6,7 @@ use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\World_Object;
+use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -75,15 +76,27 @@ class World_Objects_Controller extends Base_Controller {
 		}
 
 		$pagination = $this->get_pagination( $request );
+		$can_manage = \BeyondElysium\Core\Authorization::can( 'be_manage_world_objects' );
+		$search     = (string) $request->get_param( 'search' );
 		$args       = [
 			'object_type' => $request->get_param( 'object_type' ),
 			'rarity'      => $request->get_param( 'rarity' ),
-			'search'      => $request->get_param( 'search' ),
+			// For anyone but a Storyteller, search and property filters run on the redacted text below, so
+			// neither can confirm what Storyteller-only text says (F-046).
+			'search'      => $can_manage ? $search : '',
 			'orderby'     => $request->get_param( 'orderby' ) ?: 'name',
 			'order'       => $request->get_param( 'order' ) ?: 'ASC',
 		];
 
 		$items = World_Object::for_game( (int) $game->id, $args );
+		foreach ( $items as $item ) {
+			St_Visibility::filter_world_object( $item, $game, $can_manage );
+		}
+		if ( ! $can_manage && $search !== '' ) {
+			$items = array_values( array_filter( $items, static function ( $item ) use ( $search ) {
+				return stripos( (string) $item->name, $search ) !== false || stripos( (string) ( $item->description ?? '' ), $search ) !== false;
+			} ) );
+		}
 		$items = $this->apply_property_filters( $items, $request, (string) ( $args['object_type'] ?? '' ) );
 
 		$total    = count( $items );
@@ -141,7 +154,16 @@ class World_Objects_Controller extends Base_Controller {
 					return $operator === 'min' ? (int) $actual >= (int) $value
 						: ( $operator === 'max' ? (int) $actual <= (int) $value : (int) $actual === (int) $value );
 				}
-				return strcasecmp( (string) $actual, (string) $value ) === 0;
+				// A list - an item's abilities, a rote's spheres - matches by one entry's name (1.0.0-review F-095).
+				if ( $schema[ $key ] === 'trait_list' ) {
+					foreach ( is_array( $actual ) && $operator === 'eq' ? $actual : [] as $entry ) {
+						if ( strcasecmp( (string) ( ( (array) $entry )['name'] ?? '' ), (string) $value ) === 0 ) {
+							return true;
+						}
+					}
+					return false;
+				}
+				return is_scalar( $actual ) && strcasecmp( (string) $actual, (string) $value ) === 0;
 			} ) );
 		}
 
@@ -168,8 +190,10 @@ class World_Objects_Controller extends Base_Controller {
 			return $this->error( 'not_found', __( 'World object not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
+		St_Visibility::filter_world_object( $object, $game, \BeyondElysium\Core\Authorization::can( 'be_manage_world_objects' ) );
+
 		$connections = Connection::for_entity( 'world_object', (int) $object->id );
-		$can_manage  = current_user_can( 'be_manage_characters' );
+		$can_manage  = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
 
 		$characters = [];
 		foreach ( $connections as $connection ) {
@@ -211,6 +235,9 @@ class World_Objects_Controller extends Base_Controller {
 		if ( ! in_array( $object_type, World_Object::valid_types(), true ) ) {
 			return $this->error( 'invalid_param', sprintf( __( 'object_type must be one of: %s.', 'beyond-elysium' ), implode( ', ', World_Object::valid_types() ) ), 400 );
 		}
+		if ( $object_type === 'boon' ) {
+			return $this->boon_ledger_error();
+		}
 
 		$properties = (array) ( $request->get_param( 'properties' ) ?: [] );
 		$error      = World_Object::validate_properties( $object_type, $properties );
@@ -218,14 +245,19 @@ class World_Objects_Controller extends Base_Controller {
 			return $this->error( 'invalid_property', $error, 400 );
 		}
 
+		$fields = $this->text_fields( $request );
+		if ( is_wp_error( $fields ) ) {
+			return $fields;
+		}
+
 		$id = World_Object::create( [
 			'game_id'     => (int) $game->id,
 			'object_type' => $object_type,
-			'name'        => sanitize_text_field( $name ),
-			'description' => $request->get_param( 'description' ) ? wp_kses_post( $request->get_param( 'description' ) ) : null,
-			'rarity'      => $request->get_param( 'rarity' ),
-			'cost'        => $request->get_param( 'cost' ),
-			'limitations' => $request->get_param( 'limitations' ) ? wp_kses_post( $request->get_param( 'limitations' ) ) : null,
+			'name'        => $fields['name'],
+			'description' => ( $fields['description'] ?? '' ) !== '' ? $fields['description'] : null,
+			'rarity'      => $fields['rarity'] ?? null,
+			'cost'        => $fields['cost'] ?? null,
+			'limitations' => ( $fields['limitations'] ?? '' ) !== '' ? $fields['limitations'] : null,
 			'properties'  => $properties,
 			'created_by'  => get_current_user_id(),
 		] );
@@ -250,13 +282,14 @@ class World_Objects_Controller extends Base_Controller {
 		if ( is_wp_error( $object ) ) {
 			return $object;
 		}
+		if ( $object->object_type === 'boon' ) {
+			return $this->boon_ledger_error();
+		}
 
-		$data = [];
-		foreach ( [ 'name', 'description', 'rarity', 'cost', 'limitations' ] as $field ) {
-			$value = $request->get_param( $field );
-			if ( $value !== null ) {
-				$data[ $field ] = $value;
-			}
+		// Cleaned exactly as a create cleans them (1.0.0-review F-067).
+		$data = $this->text_fields( $request );
+		if ( is_wp_error( $data ) ) {
+			return $data;
 		}
 		if ( $request->get_param( 'properties' ) !== null ) {
 			$properties = (array) $request->get_param( 'properties' );
@@ -287,9 +320,57 @@ class World_Objects_Controller extends Base_Controller {
 		if ( is_wp_error( $object ) ) {
 			return $object;
 		}
+		if ( $object->object_type === 'boon' ) {
+			return $this->boon_ledger_error();
+		}
 
 		World_Object::delete( (int) $object->id );
 		return $this->success( null, 204 );
+	}
+
+	/**
+	 * The text fields a request sets, cleaned the same way for a create and
+	 * an edit: name, rarity, and cost as plain text within their column
+	 * lengths, description and limitations through `wp_kses_post()`. A field
+	 * the request leaves out is left out here too.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return array<string,string>|\WP_Error A 400 naming the first field over its length.
+	 */
+	private function text_fields( $request ) {
+		$fields = [];
+		foreach ( [ 'name' => 255, 'rarity' => 20, 'cost' => 100 ] as $field => $max ) {
+			$value = $request->get_param( $field );
+			if ( $value === null ) {
+				continue;
+			}
+			$value = sanitize_text_field( (string) $value );
+			if ( $field === 'name' && $value === '' ) {
+				return $this->error( 'invalid_param', __( 'Missing required field: name.', 'beyond-elysium' ), 400 );
+			}
+			if ( mb_strlen( $value ) > $max ) {
+				/* translators: 1: field name, 2: maximum number of characters */
+				return $this->error( 'invalid_param', sprintf( __( '%1$s can be at most %2$d characters.', 'beyond-elysium' ), ucfirst( $field ), $max ), 400 );
+			}
+			$fields[ $field ] = $value;
+		}
+		foreach ( [ 'description', 'limitations' ] as $field ) {
+			$value = $request->get_param( $field );
+			if ( $value !== null ) {
+				$fields[ $field ] = wp_kses_post( (string) $value );
+			}
+		}
+		return $fields;
+	}
+
+	/**
+	 * Refuses a boon on the generic routes: the Boon Ledger records, repays,
+	 * and keeps boons, and never deletes one (1.0.0-review F-068).
+	 *
+	 * @return \WP_Error
+	 */
+	private function boon_ledger_error(): \WP_Error {
+		return $this->error( 'use_boon_ledger', __( 'Boons are kept on the Boon Ledger and change only there.', 'beyond-elysium' ), 409 );
 	}
 
 	/**

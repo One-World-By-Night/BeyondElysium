@@ -33,7 +33,16 @@ export interface HtmlEditorProps {
  * entirely when `readOnly` is true. Tears down the TinyMCE instance on
  * unmount.
  */
-export function HtmlEditor( { id, defaultValue, onChange, readOnly, rows = 8, mediaButtons = false, tables = false, aiAssist }: HtmlEditorProps ) {
+export function HtmlEditor( {
+	id,
+	defaultValue,
+	onChange,
+	readOnly,
+	rows = 8,
+	mediaButtons = false,
+	tables = false,
+	aiAssist,
+}: HtmlEditorProps ) {
 	const onChangeRef = useRef( onChange );
 	onChangeRef.current = onChange;
 
@@ -52,7 +61,10 @@ export function HtmlEditor( { id, defaultValue, onChange, readOnly, rows = 8, me
 				menubar: false,
 				statusbar: false,
 				height: rows * 24,
-				setup: ( editor: { on: ( events: string, cb: () => void ) => void; getContent: () => string } ) => {
+				setup: ( editor: {
+					on: ( events: string, cb: () => void ) => void;
+					getContent: () => string;
+				} ) => {
 					editor.on( 'change input blur', () => {
 						onChangeRef.current( editor.getContent() );
 					} );
@@ -79,7 +91,9 @@ export function HtmlEditor( { id, defaultValue, onChange, readOnly, rows = 8, me
 					// TinyMCE owns this field's real content after mount - a plain defaultValue
 					// snapshot would go stale the moment someone types, so read the live editor
 					// instance when one exists rather than trusting a render-time prop.
-					currentValue={ () => tinymce?.get( id )?.getContent() ?? defaultValue }
+					currentValue={ () =>
+						tinymce?.get( id )?.getContent() ?? defaultValue
+					}
 					onAccept={ ( suggestion ) => {
 						tinymce?.get( id )?.setContent( suggestion );
 						onChange( suggestion );

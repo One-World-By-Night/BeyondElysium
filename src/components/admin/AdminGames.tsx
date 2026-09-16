@@ -7,8 +7,10 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
+import { describeChronicleContent } from '../../lib/chronicleContent';
 import AiAssistButton from '../shared/AiAssistButton';
 import type { Game } from '../../types';
+import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
 interface RestError {
@@ -21,7 +23,11 @@ interface RestError {
  * `message` property.
  */
 function errorMessage( error: unknown ): string {
-	if ( typeof error === 'object' && error !== null && ( error as RestError ).message ) {
+	if (
+		typeof error === 'object' &&
+		error !== null &&
+		( error as RestError ).message
+	) {
 		return ( error as RestError ).message as string;
 	}
 	return __( 'Something went wrong.', 'beyond-elysium' );
@@ -35,14 +41,14 @@ const EMPTY_FORM = { name: '', slug: '', game_type: 'met', description: '' };
  * edit, and delete them, independent of any single chronicle's scope.
  */
 export function AdminGames() {
-	const [ games, setGames ] = useState<Game[]>( [] );
+	const [ games, setGames ] = useState< Game[] >( [] );
 	const [ loading, setLoading ] = useState( true );
-	const [ error, setError ] = useState<string | null>( null );
-	const [ editingSlug, setEditingSlug ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
+	const [ editingSlug, setEditingSlug ] = useState< string | null >( null );
 	const [ form, setForm ] = useState( EMPTY_FORM );
 	const [ saving, setSaving ] = useState( false );
 	const [ creating, setCreating ] = useState( false );
-	const [ renameNotice, setRenameNotice ] = useState<string | null>( null );
+	const [ renameNotice, setRenameNotice ] = useState< string | null >( null );
 
 	/**
 	 * Fetches the list of chronicles from the API.
@@ -123,7 +129,10 @@ export function AdminGames() {
 					setRenameNotice(
 						sprintf(
 							// translators: 1: new slug, 2: character count, 3: schema block count, 4: page count, 5: Elementor widget count.
-							__( 'Renamed to "%1$s" - moved %2$d character(s), %3$d schema block fork(s), %4$d page reference(s), %5$d Elementor widget(s).', 'beyond-elysium' ),
+							__(
+								'Renamed to "%1$s" - moved %2$d character(s), %3$d schema block fork(s), %4$d page reference(s), %5$d Elementor widget(s).',
+								'beyond-elysium'
+							),
 							updated.slug,
 							r.characters,
 							r.schema_blocks,
@@ -143,25 +152,44 @@ export function AdminGames() {
 	}
 
 	/**
-	 * Deletes a chronicle after confirmation.
-	 * Prompts the viewer to confirm, then calls the API to delete the
-	 * chronicle and reloads the list.
+	 * Deletes a chronicle after one confirmation that names everything
+	 * stored in it, and deletes all of that with it - nothing is left
+	 * behind for a later chronicle to inherit (1.0.0-review F-036).
 	 */
 	async function remove( game: Game ) {
-		// eslint-disable-next-line no-alert
-		if (
-			! window.confirm(
-				sprintf(
-					// translators: %s: game/chronicle name.
-					__( 'Delete "%s"? This does not delete its characters, but they become unreachable through this game.', 'beyond-elysium' ),
-					game.name
-				)
-			)
-		) {
+		let holds: string;
+		try {
+			holds = describeChronicleContent(
+				await api.games.contentCounts( game.slug )
+			);
+		} catch ( err: unknown ) {
+			setError( errorMessage( err ) );
 			return;
 		}
+
+		const message =
+			holds === ''
+				? sprintf(
+						// translators: %s: game/chronicle name.
+						__( 'Delete "%s"?', 'beyond-elysium' ),
+						game.name
+				  )
+				: sprintf(
+						// translators: 1: game/chronicle name, 2: what it holds, e.g. "12 characters, 3 plots".
+						__(
+							'Delete "%1$s" and everything in it - %2$s? This cannot be undone.',
+							'beyond-elysium'
+						),
+						game.name,
+						holds
+				  );
+		// eslint-disable-next-line no-alert
+		if ( ! window.confirm( message ) ) {
+			return;
+		}
+
 		try {
-			await api.games.delete( game.slug );
+			await api.games.delete( game.slug, holds !== '' );
 			load();
 		} catch ( err: unknown ) {
 			setError( errorMessage( err ) );
@@ -170,7 +198,10 @@ export function AdminGames() {
 
 	return (
 		<div className="be-admin">
-			<h1>{ __( 'Games', 'beyond-elysium' ) }</h1>
+			<div className="be-help-heading">
+				<h1>{ __( 'Games', 'beyond-elysium' ) }</h1>
+				<HelpButton helpKey="games" />
+			</div>
 			{ error && (
 				<div className="be-admin__error" role="alert">
 					{ error }
@@ -198,7 +229,12 @@ export function AdminGames() {
 					<tbody>
 						{ games.length === 0 && (
 							<tr>
-								<td colSpan={ 5 }>{ __( 'No games yet. Create the first one below.', 'beyond-elysium' ) }</td>
+								<td colSpan={ 5 }>
+									{ __(
+										'No games yet. Create the first one below.',
+										'beyond-elysium'
+									) }
+								</td>
 							</tr>
 						) }
 						{ games.map( ( game ) => (
@@ -210,10 +246,16 @@ export function AdminGames() {
 								<td>{ game.game_type }</td>
 								<td>{ game.created_at }</td>
 								<td>
-									<button type="button" onClick={ () => startEdit( game ) }>
+									<button
+										type="button"
+										onClick={ () => startEdit( game ) }
+									>
 										{ __( 'Edit', 'beyond-elysium' ) }
 									</button>
-									<button type="button" onClick={ () => remove( game ) }>
+									<button
+										type="button"
+										onClick={ () => remove( game ) }
+									>
 										{ __( 'Delete', 'beyond-elysium' ) }
 									</button>
 								</td>
@@ -231,41 +273,73 @@ export function AdminGames() {
 
 			{ ( creating || editingSlug !== null ) && (
 				<form className="be-admin__form" onSubmit={ save }>
-					<h2>{ creating ? __( 'New Game', 'beyond-elysium' ) : sprintf( __( 'Edit %s', 'beyond-elysium' ), editingSlug as string ) }</h2>
+					<h2>
+						{ creating
+							? __( 'New Game', 'beyond-elysium' )
+							: sprintf(
+									/* translators: %s: the chronicle's slug being edited */
+									__( 'Edit %s', 'beyond-elysium' ),
+									editingSlug as string
+							  ) }
+					</h2>
 					<label>
 						{ __( 'Name', 'beyond-elysium' ) }
 						<input
 							type="text"
 							value={ form.name }
-							onChange={ ( e ) => setForm( { ...form, name: e.target.value } ) }
+							onChange={ ( e ) =>
+								setForm( { ...form, name: e.target.value } )
+							}
 							required
 						/>
 					</label>
 					<label>
-						{ __( 'Slug', 'beyond-elysium' ) } { creating && __( '(optional - derived from name if left blank)', 'beyond-elysium' ) }
-						<input type="text" value={ form.slug } onChange={ ( e ) => setForm( { ...form, slug: e.target.value } ) } />
-					</label>
-					{ editingSlug !== null && form.slug.trim() !== editingSlug && (
-						<p className="be-admin__field-warning">
-							{ __(
-								'Changing the slug renames this chronicle everywhere it is referenced - every character, any customized schema block, and every page or widget that names it. A slug already used by another chronicle, or one left behind by a deleted chronicle, is rejected before anything moves.',
+						{ __( 'Slug', 'beyond-elysium' ) }{ ' ' }
+						{ creating &&
+							__(
+								'(optional - derived from name if left blank)',
 								'beyond-elysium'
 							) }
-						</p>
-					) }
+						<input
+							type="text"
+							value={ form.slug }
+							onChange={ ( e ) =>
+								setForm( { ...form, slug: e.target.value } )
+							}
+						/>
+					</label>
+					{ editingSlug !== null &&
+						form.slug.trim() !== editingSlug && (
+							<p className="be-admin__field-warning">
+								{ __(
+									'Changing the slug renames this chronicle everywhere it is referenced - every character, any customized schema block, and every page or widget that names it. A slug already used by another chronicle, or one left behind by a deleted chronicle, is rejected before anything moves.',
+									'beyond-elysium'
+								) }
+							</p>
+						) }
 					<label>
 						{ __( 'Game Type', 'beyond-elysium' ) }
 						<input
 							type="text"
 							value={ form.game_type }
-							onChange={ ( e ) => setForm( { ...form, game_type: e.target.value } ) }
+							onChange={ ( e ) =>
+								setForm( {
+									...form,
+									game_type: e.target.value,
+								} )
+							}
 						/>
 					</label>
 					<label>
 						{ __( 'Description', 'beyond-elysium' ) }
 						<textarea
 							value={ form.description }
-							onChange={ ( e ) => setForm( { ...form, description: e.target.value } ) }
+							onChange={ ( e ) =>
+								setForm( {
+									...form,
+									description: e.target.value,
+								} )
+							}
 						/>
 						{ /* No chronicle exists yet during creation for a chronicle-scoped AI request to target. */ }
 						{ editingSlug !== null && (
@@ -274,13 +348,17 @@ export function AdminGames() {
 								fieldContext="chronicle_description"
 								gameSlug={ editingSlug }
 								currentValue={ form.description }
-								onAccept={ ( description ) => setForm( { ...form, description } ) }
+								onAccept={ ( description ) =>
+									setForm( { ...form, description } )
+								}
 							/>
 						) }
 					</label>
 					<div className="be-admin__form-actions">
 						<button type="submit" disabled={ saving }>
-							{ saving ? __( 'Saving…', 'beyond-elysium' ) : __( 'Save', 'beyond-elysium' ) }
+							{ saving
+								? __( 'Saving…', 'beyond-elysium' )
+								: __( 'Save', 'beyond-elysium' ) }
 						</button>
 						<button type="button" onClick={ cancel }>
 							{ __( 'Cancel', 'beyond-elysium' ) }

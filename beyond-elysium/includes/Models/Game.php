@@ -15,8 +15,9 @@ defined( 'ABSPATH' ) || exit;
  * Game is a Database\Manager CRUD model backed by the games table. Each row is
  * one chronicle - name, slug, game_type, a JSON settings blob, and ASC role
  * path/notification configuration. delete_with_content() additionally cascades
- * a deletion to every character, plot, world object, template, and saved query
- * that belongs to the chronicle.
+ * a deletion to everything stored under the chronicle, and nothing else creates,
+ * renames, or deletes a chronicle in a way that leaves that content for another
+ * chronicle to inherit (1.0.0-review F-036).
  */
 class Game {
 
@@ -34,6 +35,37 @@ class Game {
 			$slug
 		);
 		return $row ? self::decode_settings( $row ) : null;
+	}
+
+	/**
+	 * Hold a chronicle's row until the surrounding transaction ends, so two
+	 * writes that must not both pass the same check in one chronicle take
+	 * turns. False when the lock itself failed - a lock wait that timed out -
+	 * so the caller writes nothing unguarded. Must run inside a Transaction.
+	 *
+	 * @param string $slug
+	 * @return bool
+	 */
+	public static function lock( string $slug ): bool {
+		global $wpdb;
+		$wpdb->last_error = '';
+		Manager::get_var( 'SELECT id FROM ' . Manager::table( 'games' ) . ' WHERE slug = %s FOR UPDATE', $slug );
+		return $wpdb->last_error === '';
+	}
+
+	/**
+	 * Same as lock(), by primary key rather than slug - for a caller whose
+	 * own row is keyed on game_id specifically so a rename can't orphan it
+	 * (Models/Submission.php, F-122).
+	 *
+	 * @param int $id
+	 * @return bool
+	 */
+	public static function lock_by_id( int $id ): bool {
+		global $wpdb;
+		$wpdb->last_error = '';
+		Manager::get_var( 'SELECT id FROM ' . Manager::table( 'games' ) . ' WHERE id = %d FOR UPDATE', $id );
+		return $wpdb->last_error === '';
 	}
 
 	/**
@@ -196,12 +228,14 @@ class Game {
 
 	/**
 	 * Renames a chronicle: its own slug, every character's owner_slug, and
-	 * every schema-block fork's game_slug, atomically, keyed by numeric id
-	 * rather than by the slug that is changing. This is the only path that
-	 * changes a game's slug - update() cannot. Two conditions abort before
-	 * anything is written: a slug collision with a different game, or a
-	 * schema-block fork already sitting at the destination slug (which
-	 * would hit the forks table's own unique index). Page and Elementor
+	 * every schema-block fork's game_slug, its verification codes, and this
+	 * site's side of its transfers, atomically, keyed by numeric id rather
+	 * than by the slug that is changing. This is the only path that changes a
+	 * game's slug - update() cannot. Three conditions abort before anything
+	 * is written: a slug collision with a different game, a schema-block fork
+	 * already sitting at the destination slug (which would hit the forks
+	 * table's own unique index), or any other content a deleted chronicle
+	 * left at the destination, which this one would adopt. Page and Elementor
 	 * widget references are repaired after commit, individually, since
 	 * that repair calls wp_update_post() and must not run inside a
 	 * transaction that might roll back. See
@@ -209,7 +243,7 @@ class Game {
 	 *
 	 * @param int    $game_id
 	 * @param string $new_slug
-	 * @return array{changed:bool,error?:string,message?:string,blocks?:string[],characters?:int,schema_blocks?:int,pages?:int,elementor?:int}
+	 * @return array{changed:bool,error?:string,message?:string,blocks?:string[],orphans?:array<string,int>,characters?:int,schema_blocks?:int,attestations?:int,transfers?:int,pages?:int,elementor?:int}
 	 */
 	public static function rename( int $game_id, string $new_slug ): array {
 		global $wpdb;
@@ -225,9 +259,11 @@ class Game {
 			return [ 'changed' => false ];
 		}
 
-		$games_table = Manager::table( 'games' );
-		$char_table  = Manager::table( 'characters' );
-		$block_table = Manager::table( 'schema_blocks' );
+		$games_table       = Manager::table( 'games' );
+		$char_table        = Manager::table( 'characters' );
+		$block_table       = Manager::table( 'schema_blocks' );
+		$attestation_table = Manager::table( 'character_attestations' );
+		$transfer_table    = Manager::table( 'character_transfers' );
 
 		$savepoint = Transaction::begin( 'be_game_rename' );
 
@@ -249,6 +285,14 @@ class Game {
 		if ( ! empty( $colliding_blocks ) ) {
 			Transaction::rollback( $savepoint );
 			return [ 'changed' => false, 'error' => 'fork_collision', 'blocks' => $colliding_blocks ];
+		}
+
+		// Characters, verification codes, or transfers a deleted chronicle left at the
+		// destination would be silently adopted by this one.
+		$orphans = self::orphaned_content_counts( $new_slug );
+		if ( array_sum( $orphans ) > 0 ) {
+			Transaction::rollback( $savepoint );
+			return [ 'changed' => false, 'error' => 'orphan_collision', 'orphans' => $orphans ];
 		}
 
 		$wpdb->query(
@@ -273,6 +317,29 @@ class Game {
 				$old_slug
 			)
 		);
+		$attestations = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$attestation_table} SET game_slug = %s WHERE game_slug = %s",
+				$new_slug,
+				$old_slug
+			)
+		);
+		// Only this site's side of a transfer names this chronicle: home_slug on an outbound
+		// row, host_slug on an inbound one. The other slug belongs to the other site.
+		$transfers = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$transfer_table} SET home_slug = %s WHERE direction = 'outbound' AND home_slug = %s",
+				$new_slug,
+				$old_slug
+			)
+		);
+		$transfers += $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$transfer_table} SET host_slug = %s WHERE direction = 'inbound' AND host_slug = %s",
+				$new_slug,
+				$old_slug
+			)
+		);
 
 		if ( $wpdb->last_error ) {
 			Transaction::rollback( $savepoint );
@@ -288,77 +355,155 @@ class Game {
 			'changed'       => true,
 			'characters'    => (int) $characters,
 			'schema_blocks' => (int) $schema_blocks,
+			'attestations'  => (int) $attestations,
+			'transfers'     => (int) $transfers,
 			'pages'         => $reference_counts['pages'],
 			'elementor'     => $reference_counts['elementor'],
 		];
 	}
 
 	/**
-	 * Delete a game row by slug. Does not cascade to its characters, plots, or
-	 * other content - they remain in the database but become unreachable
-	 * through the deleted game's slug. See delete_with_content() for the
-	 * cascading variant.
+	 * Delete a chronicle that holds no content. Refuses (returns false) while
+	 * anything content_counts() counts is still stored under it: a row-only
+	 * delete used to leave that content keyed by the slug, where the next
+	 * chronicle created with the same name adopted it (1.0.0-review F-036).
+	 * Memberships and recent searches go with the row.
 	 *
 	 * @param string $slug
 	 * @return bool
 	 */
 	public static function delete( string $slug ): bool {
-		$result = Manager::delete( 'games', [ 'slug' => $slug ] );
-		return $result !== false;
+		$game = self::find_by_slug( $slug );
+		if ( ! $game || array_sum( self::content_counts( $game ) ) > 0 ) {
+			return false;
+		}
+		return self::delete_with_content( $slug );
 	}
 
 	/**
-	 * Delete a game and every piece of its content: characters, plots, world
-	 * objects, game-scoped templates, and saved queries. Each entity's own
-	 * delete() method is called so their own cascades (connections, and for
-	 * characters, changes/snapshots/sheet style) run too, and the whole
-	 * operation runs inside one transaction so a failure partway through leaves
-	 * nothing committed. Not wired to any route or UI control; callable
-	 * directly for one-off cleanup.
+	 * Delete a chronicle and everything stored under it: characters (with
+	 * their changes, snapshots, sheet styles, and connections), plots, world
+	 * objects, the chronicle's own templates and schema-block forks, saved
+	 * queries, verification codes, this site's side of its transfers, and
+	 * memberships. One transaction, so a failure partway through leaves
+	 * nothing deleted. Site-wide templates and blocks are never touched.
 	 *
 	 * @param string $slug
 	 * @return bool
 	 */
 	public static function delete_with_content( string $slug ): bool {
+		global $wpdb;
+
 		$game = self::find_by_slug( $slug );
-		if ( ! $game ) {
+		if ( ! $game || $slug === '' ) {
 			return false;
 		}
 		$game_id = (int) $game->id;
 
 		$savepoint = Transaction::begin( 'be_game_delete_with_content' );
+		$ok        = true;
 
 		foreach ( Character::all_for_game( $slug ) as $character ) {
-			Character::delete( (int) $character->id );
+			$ok = Character::delete( (int) $character->id ) && $ok;
 		}
 		foreach ( Plot::for_game( $game_id ) as $plot ) {
-			Plot::delete( (int) $plot->id );
+			$ok = Plot::delete( (int) $plot->id ) && $ok;
 		}
 		foreach ( World_Object::for_game( $game_id ) as $object ) {
-			World_Object::delete( (int) $object->id );
-		}
-		foreach ( Template::for_game( $game_id ) as $template ) {
-			Template::delete( (int) $template->id );
-		}
-		foreach ( Saved_Query::for_game( $game_id ) as $query ) {
-			Saved_Query::delete( (int) $query->id );
+			$ok = World_Object::delete( (int) $object->id ) && $ok;
 		}
 
-		$result = Manager::delete( 'games', [ 'slug' => $slug ] );
+		$transfer_table = Manager::table( 'character_transfers' );
+		$deletes        = [
+			// The chronicle's own template rows only: Template::for_game() merges in the
+			// site-wide templates, and deleting through it removed every custom one.
+			Manager::delete( 'templates', [ 'game_id' => $game_id ] ),
+			Manager::delete( 'queries', [ 'game_id' => $game_id ] ),
+			Manager::delete( 'schema_blocks', [ 'game_slug' => $slug ] ),
+			Manager::delete( 'character_attestations', [ 'game_slug' => $slug ] ),
+			$wpdb->query( $wpdb->prepare(
+				"DELETE FROM {$transfer_table} WHERE ( direction = 'outbound' AND home_slug = %s ) OR ( direction = 'inbound' AND host_slug = %s )",
+				$slug,
+				$slug
+			) ),
+			Manager::delete( 'connections', [ 'game_id' => $game_id ] ),
+			Manager::delete( 'game_members', [ 'game_id' => $game_id ] ),
+			Manager::delete( 'games', [ 'id' => $game_id ] ),
+		];
 
-		if ( $result === false ) {
+		if ( ! $ok || in_array( false, $deletes, true ) ) {
 			Transaction::rollback( $savepoint );
 			return false;
 		}
 
 		Transaction::commit( $savepoint );
+		Game_Stats_Controller::invalidate( $slug );
 		return true;
 	}
 
 	/**
-	 * Generate a slug guaranteed not to collide with an existing game.
-	 * Sanitizes the base string and appends an incrementing numeric suffix
-	 * until the result is unique.
+	 * Counts everything stored under a chronicle that deleting its row alone
+	 * would leave behind. Recent searches and memberships are not counted -
+	 * nobody would call them the chronicle's content - but they are deleted
+	 * with it.
+	 *
+	 * @param object $game A games row.
+	 * @return array{characters:int,plots:int,world_objects:int,templates:int,schema_blocks:int,saved_queries:int,attestations:int,transfers:int}
+	 */
+	public static function content_counts( object $game ): array {
+		$id   = (int) $game->id;
+		$slug = (string) $game->slug;
+
+		return [
+			'characters'    => self::count_rows( 'characters', "owner_type = 'chronicle' AND owner_slug = %s", $slug ),
+			'plots'         => self::count_rows( 'plots', 'game_id = %d', $id ),
+			'world_objects' => self::count_rows( 'world_objects', 'game_id = %d', $id ),
+			'templates'     => self::count_rows( 'templates', 'game_id = %d', $id ),
+			'schema_blocks' => self::count_rows( 'schema_blocks', 'game_slug = %s', $slug ),
+			'saved_queries' => self::count_rows( 'queries', 'game_id = %d AND is_recent_search = 0', $id ),
+			'attestations'  => self::count_rows( 'character_attestations', 'game_slug = %s', $slug ),
+			'transfers'     => self::count_rows( 'character_transfers', "( direction = 'outbound' AND home_slug = %s ) OR ( direction = 'inbound' AND host_slug = %s )", $slug, $slug ),
+		];
+	}
+
+	/**
+	 * Counts content stored under a slug that no chronicle holds - left by a
+	 * row-only delete before 1.0.0. A chronicle created or renamed onto such a
+	 * slug would adopt all of it, so neither is allowed to. Schema-block forks
+	 * are reported separately by rename()'s own fork_collision check and
+	 * counted here as well.
+	 *
+	 * @param string $slug
+	 * @return array{characters:int,schema_blocks:int,attestations:int,transfers:int}
+	 */
+	public static function orphaned_content_counts( string $slug ): array {
+		if ( $slug === '' || self::find_by_slug( $slug ) ) {
+			return [ 'characters' => 0, 'schema_blocks' => 0, 'attestations' => 0, 'transfers' => 0 ];
+		}
+
+		return [
+			'characters'    => self::count_rows( 'characters', "owner_type = 'chronicle' AND owner_slug = %s", $slug ),
+			'schema_blocks' => self::count_rows( 'schema_blocks', 'game_slug = %s', $slug ),
+			'attestations'  => self::count_rows( 'character_attestations', 'game_slug = %s', $slug ),
+			'transfers'     => self::count_rows( 'character_transfers', "( direction = 'outbound' AND home_slug = %s ) OR ( direction = 'inbound' AND host_slug = %s )", $slug, $slug ),
+		];
+	}
+
+	/**
+	 * Counts rows in one plugin table matching a prepared WHERE clause.
+	 *
+	 * @param string           $table Short table name.
+	 * @param string           $where
+	 * @param int|string       ...$args
+	 */
+	private static function count_rows( string $table, string $where, ...$args ): int {
+		return (int) Manager::get_var( 'SELECT COUNT(*) FROM ' . Manager::table( $table ) . " WHERE {$where}", ...$args );
+	}
+
+	/**
+	 * Generate a slug guaranteed not to collide with an existing game, or with
+	 * content a deleted chronicle left under a slug. Sanitizes the base string
+	 * and appends an incrementing numeric suffix until the result is free.
 	 *
 	 * @param string $base
 	 * @return string
@@ -367,7 +512,7 @@ class Game {
 		$slug = sanitize_title( $base );
 		$original = $slug;
 		$i = 2;
-		while ( self::find_by_slug( $slug ) ) {
+		while ( self::find_by_slug( $slug ) || array_sum( self::orphaned_content_counts( $slug ) ) > 0 ) {
 			$slug = $original . '-' . $i;
 			$i++;
 		}

@@ -1,0 +1,33 @@
+.be-send-grapevine-file {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	max-width: 40rem;
+}
+
+.be-send-grapevine-file__field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	align-items: flex-start;
+}
+
+.be-send-grapevine-file__field select,
+.be-send-grapevine-file__field input[type="text"] {
+	width: 100%;
+	max-width: 28rem;
+}
+
+.be-send-grapevine-file__characters,
+.be-send-grapevine-file__arrival {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	padding: 0.75rem;
+}
+
+.be-send-grapevine-file__disallowed {
+	color: #a00;
+}

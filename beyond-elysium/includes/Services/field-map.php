@@ -103,7 +103,7 @@ return [
 
 	// -- Werewolf / Fera ---------------------------------------------------------------
 	'tribe'      => [ 'source' => 'json', 'block' => 'werewolf-identity', 'field' => 'Tribe' ],
-	'fera'       => [ 'source' => 'unmapped', 'note' => 'superseded by fera-identity.Fera Type' ],
+	'fera'       => [ 'source' => 'json', 'block' => 'fera-identity', 'field' => 'Fera Type' ],
 	'breed'      => [ 'source' => 'json', 'field' => 'Breed' ],
 	'auspice'    => [ 'source' => 'json', 'field' => 'Auspice' ],
 	'pack'       => [ 'source' => 'json', 'field' => 'Pack' ],

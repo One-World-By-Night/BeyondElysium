@@ -30,6 +30,16 @@ class GvExchangeShapeTest extends TestCase {
 		);
 	}
 
+	/** 1.0.0-review F-048: a stack that travels as another race travels as one this table knows. */
+	public function test_every_stack_exchange_race_is_a_race_with_a_shape(): void {
+		foreach ( GEX_Parser::STACK_EXCHANGE_RACE as $stack => $race ) {
+			$this->assertArrayHasKey( $race, self::$shape, $stack );
+			$this->assertArrayNotHasKey( $stack, self::$shape, "{$stack} would never need to travel as another race" );
+		}
+		$this->assertSame( 'fera', GEX_Parser::exchange_race( 'bete' ) );
+		$this->assertSame( 'vampire', GEX_Parser::exchange_race( 'vampire' ) );
+	}
+
 	public function test_race_codes_match_race_type_map_and_are_unique(): void {
 		foreach ( GEX_Parser::RACE_TYPE_MAP as $code => $race ) {
 			$this->assertSame( $code, self::$shape[ $race ]['race_code'], "race_code mismatch for {$race}" );

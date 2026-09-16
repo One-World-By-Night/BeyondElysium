@@ -10,14 +10,23 @@ to move between your dashboard, roster, sheet, editor, and plots.
 
 ## 1. Your Characters
 
-The **Characters** tab shows the chronicle's full roster. Look for your own character's
-name, or use **Add Character** to create one if you don't have one yet — pick a creature
-type, fill in your identity fields, and spend your starting build the same way you'll spend
-experience later.
+The **Characters** tab lists your own characters in the chronicle. Use **+ New Character**
+there to create one — pick a creature type, fill in your identity fields, and spend your
+starting build the same way you'll spend experience later.
+
+**Joining a new chronicle.** If you don't play in a chronicle yet, starting a character there is
+your request to join. The character waits, and you aren't a player there yet, until one of the
+chronicle's Storytellers approves it; they get an email when you ask. You can have one request
+waiting per chronicle.
+
+**Already have a character from Grapevine?** Send its exported file straight to the chronicle
+instead of building it by hand again — pick whether you're joining or visiting for a game, and
+a Storyteller there reviews and accepts it the same way. See
+[Send a Grapevine File](help/send-grapevine-file.md).
 
 If a Storyteller entered your character for you (from a Grapevine import or by hand), it may
 not be linked to your WordPress account yet. Ask them to use **Assign Player** on your
-character's row — until then, you can see the character but can't edit it.
+character's row — until then, it doesn't appear in your list at all.
 
 Your new character's **Health** section comes pre-filled — this isn't something you buy
 with your starting build. It's the standard Laws of the Night Revised Extended wound track
@@ -51,7 +60,10 @@ through, check with a Storyteller before submitting it again.
 ### Experience
 
 Your unspent and total experience show on the editor. Spending it on a trait, power, or
-pool increase reduces what's left to spend, following your chronicle's own point costs. A
+pool increase reduces what's left to spend, following your chronicle's own point costs.
+Powers are bought level by level: raising a Discipline (or an Art, Arcanos, Hekau path, or
+Numina) from 1 to 3 costs level 2 plus level 3, and a brand-new power at level 3 costs all
+three levels. A
 Storyteller can award you experience directly (session attendance, plot participation) —
 awards like this usually apply immediately, without needing your own submission.
 
@@ -91,12 +103,12 @@ against it yet; once your Storyteller adjudicates it, it's locked.
 ## 7. Sheet Customization
 
 If your chronicle has granted you sheet customization, you can set your own font, colors,
-background image, and section graphics from the character editor — this is purely visual
-and never changes what your character can do.
+background image, and section graphics with **Customize appearance** on your character's
+sheet — this is purely visual and never changes what your character can do.
 
 ## 8. Printing Your Sheet
 
-**Print / Export** on your character's page generates a signed PDF rather than printing the
+**Print / Export** on your character's page generates a PDF rather than printing the
 page directly — it's the one way to get a copy of your sheet, whether you're keeping a
 record, handing a printout to a visiting chronicle's Storyteller, or bringing a copy to a
 game with spotty wifi. Three checkboxes control what's included: your background, your
@@ -110,14 +122,15 @@ certificate that reader just hasn't been told to trust yet, the same way a new w
 certificate looks different the very first time. It does **not** mean anything is wrong with
 your sheet.
 
-If Print is disabled or tells you the chronicle hasn't set up sheet signing yet, that's a
-one-time setup step your Storyteller's host needs to complete — nothing you did, and nothing
-you can fix from your own account.
+If your site hasn't set up a signing certificate yet, Print still works, but every page of
+the PDF is stamped UNSIGNED: nothing proves that copy wasn't edited, so another chronicle may
+not accept it. Setting up the certificate is a one-time step for your site's host — nothing
+you did, and nothing you can fix from your own account.
 
 If a Storyteller has connected an item to your character — a weapon, a talisman, anything
-your character actually carries — a **Print My Items** button appears beside Print / Export.
-It generates the same kind of signed PDF, but only for the items connected to that character,
-so you can bring a real, signed prop card to the table for what your character is holding.
+your character actually carries — **Print My Items** appears in the same actions list as Print / Export.
+It generates the same kind of PDF, but only for the items connected to that character, so
+you can bring a real prop card to the table for what your character is holding.
 
 ## 9. Using Your Sheet on a Phone
 
@@ -130,5 +143,6 @@ longer misaligns as you scroll it.
 Editing on a phone works, but it isn't the polished experience reading is — a rare, tolerant
 session rather than a frequent one, so a few controls (a power's tradition field, removing a
 held power) move behind a **Details** button instead of sitting inline in an already-full
-row. Building a multi-clause query or editing a chronicle's schema blocks is desk work and
-stays that way; those tools don't reflow for a phone at all, by design.
+row. Lists and tables never make you scroll sideways: on a phone, or anywhere a table doesn't
+have room for its columns, each row becomes a card. Building a multi-clause query or editing a
+chronicle's schema blocks is still desk work.

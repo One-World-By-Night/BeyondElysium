@@ -7,11 +7,16 @@
  * game_slug query parameter, or managing the global block catalog when none
  * is present.
  */
-import { createInterpolateElement, useEffect, useState } from '@wordpress/element';
+import {
+	createInterpolateElement,
+	useEffect,
+	useState,
+} from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import SchemaBlockDefinitionEditor from './SchemaBlockDefinitionEditor';
 import type { SchemaBlock, SectionType } from '../../types';
+import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
 interface RestError {
@@ -24,22 +29,37 @@ interface RestError {
  * usable `message` field.
  */
 function errorMessage( error: unknown ): string {
-	if ( typeof error === 'object' && error !== null && ( error as RestError ).message ) {
+	if (
+		typeof error === 'object' &&
+		error !== null &&
+		( error as RestError ).message
+	) {
 		return ( error as RestError ).message as string;
 	}
 	return __( 'Something went wrong.', 'beyond-elysium' );
 }
 
-const SECTION_TYPES: SectionType[] = [ 'trait_list', 'tiered_power', 'resource_pool', 'identity_field' ];
+const SECTION_TYPES: SectionType[] = [
+	'trait_list',
+	'tiered_power',
+	'resource_pool',
+	'identity_field',
+];
 
-const DEFAULT_DEFINITION: Record<SectionType, Record<string, unknown>> = {
+const DEFAULT_DEFINITION: Record< SectionType, Record< string, unknown > > = {
 	trait_list: { items: [] },
 	tiered_power: { powers: [] },
 	resource_pool: { pools: [] },
 	identity_field: { fields: [] },
 };
 
-const EMPTY_FORM = { slug: '', name: '', section_type: 'trait_list' as SectionType, storyteller_only: 0 as 0 | 1, definition: DEFAULT_DEFINITION.trait_list };
+const EMPTY_FORM = {
+	slug: '',
+	name: '',
+	section_type: 'trait_list' as SectionType,
+	storyteller_only: 0 as 0 | 1,
+	definition: DEFAULT_DEFINITION.trait_list,
+};
 
 /**
  * Renders the Schema Blocks admin page: a filterable table of existing
@@ -49,18 +69,26 @@ const EMPTY_FORM = { slug: '', name: '', section_type: 'trait_list' as SectionTy
  * SchemaBlockDefinitionEditor.
  */
 export function AdminSchemaBlocks() {
-	const [ blocks, setBlocks ] = useState<SchemaBlock[]>( [] );
+	const [ blocks, setBlocks ] = useState< SchemaBlock[] >( [] );
 	const [ loading, setLoading ] = useState( true );
-	const [ error, setError ] = useState<string | null>( null );
-	const [ editingSlug, setEditingSlug ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
+	const [ editingSlug, setEditingSlug ] = useState< string | null >( null );
 	const [ creating, setCreating ] = useState( false );
 	const [ form, setForm ] = useState( EMPTY_FORM );
 	const [ saving, setSaving ] = useState( false );
 	const [ showSystem, setShowSystem ] = useState( true );
 	// Filters the visible list by section type; combines with the system/custom toggle above.
-	const [ sectionTypeFilter, setSectionTypeFilter ] = useState<SectionType | ''>( '' );
+	const [ sectionTypeFilter, setSectionTypeFilter ] = useState<
+		SectionType | ''
+	>( '' );
 	// Optional game_slug query param scopes editing to one chronicle's custom blocks.
-	const gameSlug = new URLSearchParams( window.location.search ).get( 'game_slug' ) ?? '';
+	const gameSlug =
+		new URLSearchParams( window.location.search ).get( 'game_slug' ) ?? '';
+	// The shared catalog is a site administrator's to change; a Storyteller customizes it
+	// through one chronicle's scope, where the server checks their membership.
+	const canEdit =
+		gameSlug !== '' ||
+		!! window.beyondElysium?.capabilities?.be_manage_games;
 
 	/**
 	 * Fetches the schema block list for the current scope (global catalog, or
@@ -75,7 +103,10 @@ export function AdminSchemaBlocks() {
 		// route's default of 20, hiding every block whose display name sorted past
 		// that point (D38's own defect class, in a third call site D38 never touched).
 		api.schemaBlocks
-			.list( { ...( gameSlug ? { game_slug: gameSlug } : {} ), per_page: 100 } )
+			.list( {
+				...( gameSlug ? { game_slug: gameSlug } : {} ),
+				per_page: 100,
+			} )
 			.then( ( result ) => {
 				setBlocks( result );
 				setLoading( false );
@@ -86,10 +117,13 @@ export function AdminSchemaBlocks() {
 			} );
 	}
 
-	useEffect( load, [] );
+	useEffect( load, [ gameSlug ] );
 
-	const visible = ( showSystem ? blocks : blocks.filter( ( b ) => ! b.is_system ) ).filter(
-		( b ) => sectionTypeFilter === '' || b.section_type === sectionTypeFilter
+	const visible = (
+		showSystem ? blocks : blocks.filter( ( b ) => ! b.is_system )
+	).filter(
+		( b ) =>
+			sectionTypeFilter === '' || b.section_type === sectionTypeFilter
 	);
 
 	function startEdit( block: SchemaBlock ) {
@@ -100,7 +134,10 @@ export function AdminSchemaBlocks() {
 			name: block.name,
 			section_type: block.section_type,
 			storyteller_only: block.storyteller_only ? 1 : 0,
-			definition: block.definition as unknown as Record<string, unknown>,
+			definition: block.definition as unknown as Record<
+				string,
+				unknown
+			>,
 		} );
 	}
 
@@ -123,7 +160,11 @@ export function AdminSchemaBlocks() {
 	 */
 	function changeSectionType( sectionType: SectionType ) {
 		// Reset to the new type's default definition shape.
-		setForm( { ...form, section_type: sectionType, definition: DEFAULT_DEFINITION[ sectionType ] } );
+		setForm( {
+			...form,
+			section_type: sectionType,
+			definition: DEFAULT_DEFINITION[ sectionType ],
+		} );
 	}
 
 	/**
@@ -142,13 +183,16 @@ export function AdminSchemaBlocks() {
 		setError( null );
 		try {
 			if ( creating ) {
-				await api.schemaBlocks.create( {
-					slug: form.slug.trim(),
-					name: form.name.trim(),
-					section_type: form.section_type,
-					storyteller_only: form.storyteller_only,
-					definition: form.definition as any,
-				} );
+				await api.schemaBlocks.create(
+					{
+						slug: form.slug.trim(),
+						name: form.name.trim(),
+						section_type: form.section_type,
+						storyteller_only: form.storyteller_only,
+						definition: form.definition as any,
+					},
+					gameSlug || undefined
+				);
 			} else if ( editingSlug ) {
 				await api.schemaBlocks.update(
 					editingSlug,
@@ -181,7 +225,10 @@ export function AdminSchemaBlocks() {
 			! window.confirm(
 				sprintf(
 					// translators: %s: schema block name.
-					__( 'Delete "%s"? Any creature stack or template referencing it will show a missing section.', 'beyond-elysium' ),
+					__(
+						'Delete "%s"? Any creature stack or template referencing it will show a missing section.',
+						'beyond-elysium'
+					),
 					block.name
 				)
 			)
@@ -189,7 +236,7 @@ export function AdminSchemaBlocks() {
 			return;
 		}
 		try {
-			await api.schemaBlocks.delete( block.slug );
+			await api.schemaBlocks.delete( block.slug, gameSlug || undefined );
 			load();
 		} catch ( err: unknown ) {
 			setError( errorMessage( err ) );
@@ -198,12 +245,26 @@ export function AdminSchemaBlocks() {
 
 	return (
 		<div className="be-admin">
-			<h1>{ __( 'Schema Blocks', 'beyond-elysium' ) }</h1>
+			<div className="be-help-heading">
+				<h1>{ __( 'Schema Blocks', 'beyond-elysium' ) }</h1>
+				<HelpButton helpKey="schema-blocks" />
+			</div>
 			{ gameSlug && (
 				<p className="be-admin__game-scope-notice">
 					{ createInterpolateElement(
-						__( "Editing for chronicle <slug/> - a block you save here becomes that chronicle's own customized copy, never the shared base catalog.", 'beyond-elysium' ),
+						__(
+							'Editing for chronicle <slug/> - a block you save or create here belongs to that chronicle alone, never the shared base catalog.',
+							'beyond-elysium'
+						),
 						{ slug: <strong>{ gameSlug }</strong> }
+					) }
+				</p>
+			) }
+			{ ! canEdit && (
+				<p className="be-admin__game-scope-notice">
+					{ __(
+						"The shared catalog can only be changed by a site administrator. To customize blocks for a chronicle you run, open that chronicle's Chronicle Setup and choose Catalog customisation.",
+						'beyond-elysium'
 					) }
 				</p>
 			) }
@@ -218,9 +279,15 @@ export function AdminSchemaBlocks() {
 					{ __( 'Section type', 'beyond-elysium' ) }{ ' ' }
 					<select
 						value={ sectionTypeFilter }
-						onChange={ ( e ) => setSectionTypeFilter( e.target.value as SectionType | '' ) }
+						onChange={ ( e ) =>
+							setSectionTypeFilter(
+								e.target.value as SectionType | ''
+							)
+						}
 					>
-						<option value="">{ __( 'All', 'beyond-elysium' ) }</option>
+						<option value="">
+							{ __( 'All', 'beyond-elysium' ) }
+						</option>
 						{ SECTION_TYPES.map( ( t ) => (
 							<option key={ t } value={ t }>
 								{ t }
@@ -229,8 +296,11 @@ export function AdminSchemaBlocks() {
 					</select>
 				</label>
 				<label>
-					<input type="checkbox" checked={ showSystem } onChange={ ( e ) => setShowSystem( e.target.checked ) } />
-					{ ' ' }
+					<input
+						type="checkbox"
+						checked={ showSystem }
+						onChange={ ( e ) => setShowSystem( e.target.checked ) }
+					/>{ ' ' }
 					{ sprintf(
 						// translators: %d: number of system schema blocks.
 						__( 'Show system blocks (%d)', 'beyond-elysium' ),
@@ -255,7 +325,12 @@ export function AdminSchemaBlocks() {
 					<tbody>
 						{ visible.length === 0 && (
 							<tr>
-								<td colSpan={ 5 }>{ __( 'No custom blocks yet.', 'beyond-elysium' ) }</td>
+								<td colSpan={ 5 }>
+									{ __(
+										'No custom blocks yet.',
+										'beyond-elysium'
+									) }
+								</td>
 							</tr>
 						) }
 						{ visible.map( ( block ) => (
@@ -265,16 +340,37 @@ export function AdminSchemaBlocks() {
 									<code>{ block.slug }</code>
 								</td>
 								<td>{ block.section_type }</td>
-								<td>{ block.is_system ? __( 'Yes', 'beyond-elysium' ) : __( 'No', 'beyond-elysium' ) }</td>
 								<td>
-									<button type="button" onClick={ () => startEdit( block ) }>
-										{ __( 'Edit', 'beyond-elysium' ) }
-									</button>
-									{ ! block.is_system && (
-										<button type="button" onClick={ () => remove( block ) }>
-											{ __( 'Delete', 'beyond-elysium' ) }
+									{ block.is_system
+										? __( 'Yes', 'beyond-elysium' )
+										: __( 'No', 'beyond-elysium' ) }
+								</td>
+								<td>
+									{ canEdit && (
+										<button
+											type="button"
+											onClick={ () => startEdit( block ) }
+										>
+											{ __( 'Edit', 'beyond-elysium' ) }
 										</button>
 									) }
+									{ /* A chronicle may delete only its own blocks - a global one is not its to remove. */ }
+									{ ! block.is_system &&
+										canEdit &&
+										( gameSlug === '' ||
+											block.game_slug === gameSlug ) && (
+											<button
+												type="button"
+												onClick={ () =>
+													remove( block )
+												}
+											>
+												{ __(
+													'Delete',
+													'beyond-elysium'
+												) }
+											</button>
+										) }
 								</td>
 							</tr>
 						) ) }
@@ -282,28 +378,60 @@ export function AdminSchemaBlocks() {
 				</table>
 			) }
 
-			{ ! creating && editingSlug === null && (
+			{ canEdit && ! creating && editingSlug === null && (
 				<button type="button" onClick={ startCreate }>
 					{ __( '+ New Schema Block', 'beyond-elysium' ) }
 				</button>
 			) }
 
 			{ ( creating || editingSlug !== null ) && (
-				<form className="be-admin__form be-admin__form--wide" onSubmit={ save }>
-					<h2>{ creating ? __( 'New Schema Block', 'beyond-elysium' ) : sprintf( __( 'Edit %s', 'beyond-elysium' ), editingSlug as string ) }</h2>
+				<form
+					className="be-admin__form be-admin__form--wide"
+					onSubmit={ save }
+				>
+					<h2>
+						{ creating
+							? __( 'New Schema Block', 'beyond-elysium' )
+							: sprintf(
+									/* translators: %s: the schema block's slug being edited */
+									__( 'Edit %s', 'beyond-elysium' ),
+									editingSlug as string
+							  ) }
+					</h2>
 					<label>
 						{ __( 'Name', 'beyond-elysium' ) }
-						<input type="text" value={ form.name } onChange={ ( e ) => setForm( { ...form, name: e.target.value } ) } required />
+						<input
+							type="text"
+							value={ form.name }
+							onChange={ ( e ) =>
+								setForm( { ...form, name: e.target.value } )
+							}
+							required
+						/>
 					</label>
 					{ creating && (
 						<label>
 							{ __( 'Slug', 'beyond-elysium' ) }
-							<input type="text" value={ form.slug } onChange={ ( e ) => setForm( { ...form, slug: e.target.value } ) } required />
+							<input
+								type="text"
+								value={ form.slug }
+								onChange={ ( e ) =>
+									setForm( { ...form, slug: e.target.value } )
+								}
+								required
+							/>
 						</label>
 					) }
 					<label>
 						{ __( 'Section Type', 'beyond-elysium' ) }
-						<select value={ form.section_type } onChange={ ( e ) => changeSectionType( e.target.value as SectionType ) }>
+						<select
+							value={ form.section_type }
+							onChange={ ( e ) =>
+								changeSectionType(
+									e.target.value as SectionType
+								)
+							}
+						>
 							{ SECTION_TYPES.map( ( t ) => (
 								<option key={ t } value={ t }>
 									{ t }
@@ -316,20 +444,32 @@ export function AdminSchemaBlocks() {
 						<input
 							type="checkbox"
 							checked={ !! form.storyteller_only }
-							onChange={ ( e ) => setForm( { ...form, storyteller_only: e.target.checked ? 1 : 0 } ) }
+							onChange={ ( e ) =>
+								setForm( {
+									...form,
+									storyteller_only: e.target.checked ? 1 : 0,
+								} )
+							}
 						/>
-						{ __( 'Storyteller only — hide this section and its data from players', 'beyond-elysium' ) }
+						{ __(
+							'Storyteller only — hide this section and its data from players',
+							'beyond-elysium'
+						) }
 					</label>
 
 					<SchemaBlockDefinitionEditor
 						sectionType={ form.section_type }
 						definition={ form.definition }
-						onChange={ ( definition ) => setForm( { ...form, definition } ) }
+						onChange={ ( definition ) =>
+							setForm( { ...form, definition } )
+						}
 					/>
 
 					<div className="be-admin__form-actions">
 						<button type="submit" disabled={ saving }>
-							{ saving ? __( 'Saving…', 'beyond-elysium' ) : __( 'Save', 'beyond-elysium' ) }
+							{ saving
+								? __( 'Saving…', 'beyond-elysium' )
+								: __( 'Save', 'beyond-elysium' ) }
 						</button>
 						<button type="button" onClick={ cancel }>
 							{ __( 'Cancel', 'beyond-elysium' ) }

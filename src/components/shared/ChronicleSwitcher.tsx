@@ -14,15 +14,57 @@ export interface ChronicleSwitcherProps {
 	gameSlug: string;
 	onChange: ( slug: string ) => void;
 	loading: boolean;
+	/** The membership request failed; offers a retry instead of "you don't belong to any chronicle". */
+	failed?: boolean;
+	onRetry?: () => void;
 }
 
-export function ChronicleSwitcher( { games, gameSlug, onChange, loading }: ChronicleSwitcherProps ) {
+export function ChronicleSwitcher( {
+	games,
+	gameSlug,
+	onChange,
+	loading,
+	failed = false,
+	onRetry,
+}: ChronicleSwitcherProps ) {
 	if ( loading ) {
-		return <p className="be-chronicle-switcher__status">{ __( 'Loading your chronicles…', 'beyond-elysium' ) }</p>;
+		return (
+			<p className="be-chronicle-switcher__status">
+				{ __( 'Loading your chronicles…', 'beyond-elysium' ) }
+			</p>
+		);
+	}
+
+	// A failed request is not an empty membership list (1.0.0-review F-081).
+	if ( failed ) {
+		return (
+			<p className="be-chronicle-switcher__status" role="alert">
+				{ __(
+					"Your chronicles couldn't be loaded.",
+					'beyond-elysium'
+				) }{ ' ' }
+				{ onRetry && (
+					<button
+						type="button"
+						className="be-chronicle-switcher__retry"
+						onClick={ onRetry }
+					>
+						{ __( 'Try again', 'beyond-elysium' ) }
+					</button>
+				) }
+			</p>
+		);
 	}
 
 	if ( games.length === 0 ) {
-		return <p className="be-chronicle-switcher__status">{ __( "You don't belong to any chronicle yet.", 'beyond-elysium' ) }</p>;
+		return (
+			<p className="be-chronicle-switcher__status">
+				{ __(
+					"You don't belong to any chronicle yet.",
+					'beyond-elysium'
+				) }
+			</p>
+		);
 	}
 
 	return (

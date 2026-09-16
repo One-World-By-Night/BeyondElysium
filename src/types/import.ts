@@ -68,15 +68,42 @@ export interface UnresolvedTrait {
 }
 
 /**
- * A parsed character from the import file whose name already
- * matches an existing character in this chronicle, matched by
- * name only, never by uuid. Requires the importing Storyteller to
- * choose how to handle the conflict.
+ * A parsed character from the import file that is already on this
+ * site. `uuid`: the same character, already in this chronicle.
+ * `uuid_elsewhere`: the same character, in another chronicle - it can
+ * be skipped or copied as a new character, never overwritten from
+ * here. `name`: a character with the same name, possibly a different
+ * one. Every kind needs the importing Storyteller's decision.
  */
 export interface DuplicateCharacter {
 	character: string;
+	/** 0 when the match lives in another chronicle. */
 	existing_id: number;
 	existing_uuid: string;
+	matched_by: 'uuid' | 'uuid_elsewhere' | 'name';
+	/**
+	 * What differs from the sheet already in this chronicle. Only a transfer review sends it,
+	 * and never for a match in another chronicle.
+	 */
+	changes?: SheetChange[];
+	/**
+	 * Whether Overwrite is a real option here - only a submission review sends this (F-122):
+	 * the existing character must already belong to the sender, or be an NPC.
+	 */
+	overwrite_allowed?: boolean;
+	/** Who the existing character belongs to today, for display next to a disallowed Overwrite. Only a submission review sends this. */
+	existing_owner?: string | null;
+}
+
+/**
+ * One difference between a sheet already here and the same character arriving. `here` is null
+ * for something only arriving; `arriving` is null for something only here.
+ */
+export interface SheetChange {
+	section: string;
+	entry: string;
+	here: string | null;
+	arriving: string | null;
 }
 
 /**
@@ -141,9 +168,9 @@ export interface TraitResolution {
  * flagged or unresolved traits.
  */
 export interface ImportResolutions {
-	duplicates?: Record<string, DuplicateAction>;
+	duplicates?: Record< string, DuplicateAction >;
 	/** Keyed by "{type}:{name}", e.g. "item:Sabbat Pack Ritual Dagger", matching DuplicateWorldObject. */
-	world_objects?: Record<string, DuplicateAction>;
+	world_objects?: Record< string, DuplicateAction >;
 	traits?: TraitResolution[];
 }
 

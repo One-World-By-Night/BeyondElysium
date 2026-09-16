@@ -10,7 +10,11 @@
  * (inclusive of both markers) from `text`, then trims the result. An unterminated
  * opening marker removes everything from that point to the end of the string.
  */
-export function stripStSections( text: string, startMarker: string, endMarker: string ): string {
+export function stripStSections(
+	text: string,
+	startMarker: string,
+	endMarker: string
+): string {
 	if ( startMarker === '' || endMarker === '' ) {
 		return text;
 	}

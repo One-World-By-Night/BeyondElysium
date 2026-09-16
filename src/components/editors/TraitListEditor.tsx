@@ -8,7 +8,10 @@ import { __, sprintf } from '@wordpress/i18n';
 import { useMemo, useState } from '@wordpress/element';
 import SearchableSelect from '../shared/SearchableSelect';
 import Modal from '../shared/Modal';
+import WithDots from '../shared/Dots';
 import { groupTraitsByField } from '../../lib/groupTraitsByField';
+import { costChoices } from '../../lib/costChoices';
+import { DOT } from '../../lib/displayTemper';
 import type { TraitListDefinition } from '../../types';
 import './TraitListEditor.css';
 
@@ -42,9 +45,17 @@ interface DraftState {
 	count: number;
 	specialization: string;
 	note: string;
+	/** A variable-cost item's chosen cost; unset means the lowest, as the server prices it. */
+	chosenCost?: number;
 }
 
-const EMPTY_DRAFT: Omit<DraftState, 'index'> = { name: '', isCustom: false, count: 1, specialization: '', note: '' };
+const EMPTY_DRAFT: Omit< DraftState, 'index' > = {
+	name: '',
+	isCustom: false,
+	count: 1,
+	specialization: '',
+	note: '',
+};
 
 /**
  * Renders the trait list for a trait_list block: each held row shows as a compact
@@ -52,10 +63,19 @@ const EMPTY_DRAFT: Omit<DraftState, 'index'> = { name: '', isCustom: false, coun
  * button opens the same modal blank for a new trait. Grouped blocks render their
  * items under group/subgroup headings; flat blocks render a single list.
  */
-export function TraitListEditor( { blockSlug, data, definition, onChange, readOnly }: TraitListEditorProps ) {
+export function TraitListEditor( {
+	blockSlug,
+	data,
+	definition,
+	onChange,
+	readOnly,
+}: TraitListEditorProps ) {
 	// Memoized: large catalogs make this expensive to recompute on every keystroke.
-	const itemNames = useMemo( () => definition.items.map( ( item ) => item.name ), [ definition.items ] );
-	const [ draft, setDraft ] = useState<DraftState | null>( null );
+	const itemNames = useMemo(
+		() => definition.items.map( ( item ) => item.name ),
+		[ definition.items ]
+	);
+	const [ draft, setDraft ] = useState< DraftState | null >( null );
 
 	const emit = ( next: EditableTrait[] ) => onChange( blockSlug, next );
 
@@ -70,10 +90,23 @@ export function TraitListEditor( { blockSlug, data, definition, onChange, readOn
 			count: row.count ?? 1,
 			specialization: row.specialization ?? '',
 			note: row.note ?? '',
+			chosenCost: row.chosen_cost,
 		} );
 	};
 
 	const closeDraft = () => setDraft( null );
+
+	// The costs the drafted catalog item may be bought at, when it lets the player choose (F-107).
+	const draftChoices = draft
+		? costChoices(
+				definition.items.find( ( item ) => item.name === draft.name )
+					?.cost
+		  )
+		: null;
+	const chosen =
+		draftChoices && draft?.chosenCost !== undefined
+			? { chosen_cost: draft.chosenCost }
+			: {};
 
 	const saveDraft = () => {
 		if ( ! draft || ! draft.name ) {
@@ -88,12 +121,17 @@ export function TraitListEditor( { blockSlug, data, definition, onChange, readOn
 					( row ) =>
 						row.name === draft.name &&
 						! row._removed &&
-						( row.specialization ?? '' ) === ( draft.specialization ?? '' )
+						( row.specialization ?? '' ) ===
+							( draft.specialization ?? '' )
 				);
 				if ( existingIndex !== -1 ) {
 					const next = [ ...data ];
 					const existing = next[ existingIndex ];
-					next[ existingIndex ] = { ...existing, count: ( existing.count ?? 1 ) + draft.count };
+					next[ existingIndex ] = {
+						...existing,
+						count: ( existing.count ?? 1 ) + draft.count,
+						...chosen,
+					};
 					emit( next );
 					closeDraft();
 					return;
@@ -106,8 +144,11 @@ export function TraitListEditor( { blockSlug, data, definition, onChange, readOn
 					name: draft.name,
 					count: draft.count,
 					custom: draft.isCustom,
-					...( definition.has_specializations && draft.specialization ? { specialization: draft.specialization } : {} ),
+					...( definition.has_specializations && draft.specialization
+						? { specialization: draft.specialization }
+						: {} ),
 					...( draft.note ? { note: draft.note } : {} ),
+					...chosen,
 				},
 			] );
 		} else {
@@ -119,14 +160,18 @@ export function TraitListEditor( { blockSlug, data, definition, onChange, readOn
 							i !== draft.index &&
 							row.name === draft.name &&
 							! row._removed &&
-							( row.specialization ?? '' ) === ( newSpecialization ?? '' )
+							( row.specialization ?? '' ) ===
+								( newSpecialization ?? '' )
 				  )
 				: -1;
 
 			const next = [ ...data ];
 			if ( collisionIndex !== -1 ) {
 				const target = next[ collisionIndex ];
-				next[ collisionIndex ] = { ...target, count: ( target.count ?? 1 ) + draft.count };
+				next[ collisionIndex ] = {
+					...target,
+					count: ( target.count ?? 1 ) + draft.count,
+				};
 				next.splice( draft.index, 1 );
 			} else {
 				next[ draft.index ] = {
@@ -134,6 +179,7 @@ export function TraitListEditor( { blockSlug, data, definition, onChange, readOn
 					count: draft.count,
 					specialization: newSpecialization,
 					note: draft.note || undefined,
+					...chosen,
 				};
 			}
 			emit( next );
@@ -147,32 +193,64 @@ export function TraitListEditor( { blockSlug, data, definition, onChange, readOn
 			return;
 		}
 		const next = [ ...data ];
-		next[ draft.index ] = { ...next[ draft.index ], _removed: ! next[ draft.index ]._removed };
+		next[ draft.index ] = {
+			...next[ draft.index ],
+			_removed: ! next[ draft.index ]._removed,
+		};
 		emit( next );
 		closeDraft();
 	};
 
-	const editingRow = draft && draft.index !== null ? data[ draft.index ] : null;
+	const editingRow =
+		draft && draft.index !== null ? data[ draft.index ] : null;
 	const editingRemoved = !! editingRow?._removed;
 
 	// Each row carries its original flat-array index through grouping, so edits still address the right row in `data`.
-	const indexedRows = useMemo( () => data.map( ( row, index ) => ( { ...row, index } ) ), [ data ] );
-	const grouped = useMemo( () => groupTraitsByField( indexedRows, definition ), [ indexedRows, definition ] );
+	const indexedRows = useMemo(
+		() => data.map( ( row, index ) => ( { ...row, index } ) ),
+		[ data ]
+	);
+	const grouped = useMemo(
+		() => groupTraitsByField( indexedRows, definition ),
+		[ indexedRows, definition ]
+	);
 
 	const renderRow = ( row: EditableTrait & { index: number } ) => (
 		<li
 			key={ `${ row.name }-${ row.index }` }
-			className={ 'be-trait-list-editor__row' + ( row._removed ? ' be-trait-list-editor__row--removed' : '' ) }
+			className={
+				'be-trait-list-editor__row' +
+				( row._removed ? ' be-trait-list-editor__row--removed' : '' )
+			}
 		>
 			<span className="be-trait-list-editor__summary">
-				<span className="be-trait-list-editor__summary-name">{ row.name }</span>
+				<span className="be-trait-list-editor__summary-name">
+					{ row.name }
+				</span>
 				{ typeof row.count === 'number' && row.count > 0 && (
-					<span className="be-trait-list-editor__dots">{ '•'.repeat( row.count ) }</span>
+					<span className="be-trait-list-editor__dots">
+						<WithDots text={ DOT.repeat( row.count ) } />
+					</span>
 				) }
 				{ row.specialization && (
-					<span className="be-trait-list-editor__summary-detail">({ row.specialization })</span>
+					<span className="be-trait-list-editor__summary-detail">
+						({ row.specialization })
+					</span>
 				) }
-				{ row.note && <span className="be-trait-list-editor__summary-detail">{ row.note }</span> }
+				{ row.note && (
+					<span className="be-trait-list-editor__summary-detail">
+						{ row.note }
+					</span>
+				) }
+				{ row.chosen_cost !== undefined && (
+					<span className="be-trait-list-editor__summary-detail">
+						{ sprintf(
+							/* translators: %d: the cost chosen for a variable-cost item */
+							__( 'cost %d', 'beyond-elysium' ),
+							row.chosen_cost
+						) }
+					</span>
+				) }
 			</span>
 
 			{ ! readOnly && (
@@ -197,21 +275,38 @@ export function TraitListEditor( { blockSlug, data, definition, onChange, readOn
 			{ grouped ? (
 				grouped.map( ( { group, subgroups } ) => (
 					<div className="be-trait-list-editor__group" key={ group }>
-						<h4 className="be-trait-list-editor__category">{ group }</h4>
+						<h4 className="be-trait-list-editor__category">
+							{ group }
+						</h4>
 						{ subgroups.map( ( { subgroup, items } ) => (
-							<div className="be-trait-list-editor__subgroup" key={ subgroup ?? '' }>
-								{ subgroup && <h5 className="be-trait-list-editor__subcategory">{ subgroup }</h5> }
-								<ul className="be-trait-list-editor__rows">{ items.map( renderRow ) }</ul>
+							<div
+								className="be-trait-list-editor__subgroup"
+								key={ subgroup ?? '' }
+							>
+								{ subgroup && (
+									<h5 className="be-trait-list-editor__subcategory">
+										{ subgroup }
+									</h5>
+								) }
+								<ul className="be-trait-list-editor__rows">
+									{ items.map( renderRow ) }
+								</ul>
 							</div>
 						) ) }
 					</div>
 				) )
 			) : (
-				<ul className="be-trait-list-editor__rows">{ indexedRows.map( renderRow ) }</ul>
+				<ul className="be-trait-list-editor__rows">
+					{ indexedRows.map( renderRow ) }
+				</ul>
 			) }
 
 			{ ! readOnly && (
-				<button type="button" className="be-trait-list-editor__add-trigger" onClick={ openAdd }>
+				<button
+					type="button"
+					className="be-trait-list-editor__add-trigger"
+					onClick={ openAdd }
+				>
 					{ __( '+ Add', 'beyond-elysium' ) }
 				</button>
 			) }
@@ -231,15 +326,25 @@ export function TraitListEditor( { blockSlug, data, definition, onChange, readOn
 					footer={
 						<>
 							{ draft.index !== null && (
-								<button type="button" className="be-trait-list-editor__modal-remove" onClick={ toggleRemovedAndClose }>
-									{ editingRemoved ? __( 'Undo removal', 'beyond-elysium' ) : __( 'Remove', 'beyond-elysium' ) }
+								<button
+									type="button"
+									className="be-trait-list-editor__modal-remove"
+									onClick={ toggleRemovedAndClose }
+								>
+									{ editingRemoved
+										? __( 'Undo removal', 'beyond-elysium' )
+										: __( 'Remove', 'beyond-elysium' ) }
 								</button>
 							) }
 							<button type="button" onClick={ closeDraft }>
 								{ __( 'Cancel', 'beyond-elysium' ) }
 							</button>
 							{ ! editingRemoved && (
-								<button type="button" disabled={ ! draft.name } onClick={ saveDraft }>
+								<button
+									type="button"
+									disabled={ ! draft.name }
+									onClick={ saveDraft }
+								>
 									{ __( 'Save', 'beyond-elysium' ) }
 								</button>
 							) }
@@ -247,54 +352,141 @@ export function TraitListEditor( { blockSlug, data, definition, onChange, readOn
 					}
 				>
 					{ editingRemoved ? (
-						<p>{ __( 'This trait is marked for removal. Undo to keep editing it, or leave it removed.', 'beyond-elysium' ) }</p>
+						<p>
+							{ __(
+								'This trait is marked for removal. Undo to keep editing it, or leave it removed.',
+								'beyond-elysium'
+							) }
+						</p>
 					) : (
 						<>
 							{ draft.index === null && (
 								<div className="be-trait-list-editor__modal-field">
-									<label htmlFor={ `${ blockSlug }-trait-name` }>{ __( 'Name', 'beyond-elysium' ) }</label>
+									<label
+										htmlFor={ `${ blockSlug }-trait-name` }
+									>
+										{ __( 'Name', 'beyond-elysium' ) }
+									</label>
 									<SearchableSelect
 										id={ `${ blockSlug }-trait-name` }
 										options={ itemNames }
 										value={ draft.name }
-										allowCustom={ definition.allow_custom ?? false }
-										placeholder={ __( 'Choose or type a name…', 'beyond-elysium' ) }
-										ariaLabel={ __( 'Name', 'beyond-elysium' ) }
-										onChange={ ( name, isCustom ) => setDraft( { ...draft, name, isCustom } ) }
+										allowCustom={
+											definition.allow_custom ?? false
+										}
+										placeholder={ __(
+											'Choose or type a name…',
+											'beyond-elysium'
+										) }
+										ariaLabel={ __(
+											'Name',
+											'beyond-elysium'
+										) }
+										onChange={ ( name, isCustom ) =>
+											setDraft( {
+												...draft,
+												name,
+												isCustom,
+												chosenCost: undefined,
+											} )
+										}
 									/>
 								</div>
 							) }
 
 							<div className="be-trait-list-editor__modal-field">
-								<label htmlFor={ `${ blockSlug }-trait-count` }>{ __( 'Count / Level', 'beyond-elysium' ) }</label>
+								<label htmlFor={ `${ blockSlug }-trait-count` }>
+									{ __( 'Count / Level', 'beyond-elysium' ) }
+								</label>
 								<input
 									id={ `${ blockSlug }-trait-count` }
 									type="number"
 									min={ 1 }
 									value={ draft.count }
-									onChange={ ( e ) => setDraft( { ...draft, count: Math.max( 1, Number( e.target.value ) ) } ) }
+									onChange={ ( e ) =>
+										setDraft( {
+											...draft,
+											count: Math.max(
+												1,
+												Number( e.target.value )
+											),
+										} )
+									}
 								/>
 							</div>
 
+							{ draftChoices && (
+								<div className="be-trait-list-editor__modal-field">
+									<label
+										htmlFor={ `${ blockSlug }-trait-cost` }
+									>
+										{ __( 'Cost', 'beyond-elysium' ) }
+									</label>
+									<select
+										id={ `${ blockSlug }-trait-cost` }
+										value={
+											draft.chosenCost ??
+											Math.min( ...draftChoices )
+										}
+										onChange={ ( e ) =>
+											setDraft( {
+												...draft,
+												chosenCost: Number(
+													e.target.value
+												),
+											} )
+										}
+									>
+										{ draftChoices.map( ( choice ) => (
+											<option
+												key={ choice }
+												value={ choice }
+											>
+												{ choice }
+											</option>
+										) ) }
+									</select>
+								</div>
+							) }
+
 							{ definition.has_specializations && (
 								<div className="be-trait-list-editor__modal-field">
-									<label htmlFor={ `${ blockSlug }-trait-specialization` }>{ __( 'Specialization', 'beyond-elysium' ) }</label>
+									<label
+										htmlFor={ `${ blockSlug }-trait-specialization` }
+									>
+										{ __(
+											'Specialization',
+											'beyond-elysium'
+										) }
+									</label>
 									<input
 										id={ `${ blockSlug }-trait-specialization` }
 										type="text"
 										value={ draft.specialization }
-										onChange={ ( e ) => setDraft( { ...draft, specialization: e.target.value } ) }
+										onChange={ ( e ) =>
+											setDraft( {
+												...draft,
+												specialization: e.target.value,
+											} )
+										}
 									/>
 								</div>
 							) }
 
 							<div className="be-trait-list-editor__modal-field">
-								<label htmlFor={ `${ blockSlug }-trait-note` }>{ __( 'Note', 'beyond-elysium' ) }</label>
+								<label htmlFor={ `${ blockSlug }-trait-note` }>
+									{ __( 'Note', 'beyond-elysium' ) }
+								</label>
 								<input
 									id={ `${ blockSlug }-trait-note` }
 									type="text"
 									value={ draft.note }
-									onChange={ ( e ) => setDraft( { ...draft, note: e.target.value } ) }
+									onChange={ ( e ) =>
+										setDraft( {
+											...draft,
+											note: e.target.value,
+										} )
+									}
 								/>
 							</div>
 						</>

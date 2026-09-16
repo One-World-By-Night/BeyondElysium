@@ -29,6 +29,80 @@ class Authorization {
 	private static array $asc_memo = [];
 
 	/**
+	 * The plugin's own REST requests currently being served, innermost last.
+	 * A stack rather than one slot because a handler can dispatch another
+	 * REST request internally (a transfer's verification callback in tests).
+	 *
+	 * @var \WP_REST_Request[]
+	 */
+	private static array $request_stack = [];
+
+	/**
+	 * Tracks which REST request is being served, so can() answers for the
+	 * chronicle in that request's URL. The stack is emptied on rest_api_init
+	 * so a request that threw mid-dispatch can never leak into the next.
+	 */
+	public static function register(): void {
+		add_action( 'rest_api_init', [ self::class, 'reset_request_stack' ] );
+		add_filter( 'rest_request_before_callbacks', [ self::class, 'push_request' ], 6, 3 );
+		add_filter( 'rest_request_after_callbacks', [ self::class, 'pop_request' ], 10, 3 );
+	}
+
+	/** Forgets every tracked request. */
+	public static function reset_request_stack(): void {
+		self::$request_stack = [];
+	}
+
+	/**
+	 * Records this plugin's REST request as the one being served. Runs on
+	 * rest_request_before_callbacks and passes the dispatch through untouched.
+	 *
+	 * @param mixed            $response
+	 * @param array            $handler
+	 * @param \WP_REST_Request $request
+	 * @return mixed
+	 */
+	public static function push_request( $response, $handler, $request ) {
+		if ( $request instanceof \WP_REST_Request && strpos( (string) $request->get_route(), '/be/v1/' ) === 0 ) {
+			self::$request_stack[] = $request;
+		}
+		return $response;
+	}
+
+	/**
+	 * Drops the request push_request() recorded, once its callbacks are done.
+	 *
+	 * @param mixed            $response
+	 * @param array            $handler
+	 * @param \WP_REST_Request $request
+	 * @return mixed
+	 */
+	public static function pop_request( $response, $handler, $request ) {
+		if ( $request instanceof \WP_REST_Request && end( self::$request_stack ) === $request ) {
+			array_pop( self::$request_stack );
+		}
+		return $response;
+	}
+
+	/**
+	 * Whether the current user holds `$capability` in the chronicle of the
+	 * REST request being served - the same resolution a route's permission
+	 * callback uses, so a handler's own "is this a Storyteller" decision can
+	 * never be wider than the route's (1.0.0-review F-009: a bare
+	 * current_user_can() is site-wide, which made a Storyteller of one
+	 * chronicle a Storyteller in every chronicle they merely play in).
+	 * Outside a REST request - WP-CLI, cron, activation - and on routes with
+	 * no chronicle in the URL, it is the plain site-wide capability.
+	 */
+	public static function can( string $capability ): bool {
+		$request = end( self::$request_stack );
+		if ( $request instanceof \WP_REST_Request ) {
+			return self::check_request( $capability, $request );
+		}
+		return current_user_can( $capability );
+	}
+
+	/**
 	 * Reports whether accessSchema-based authorization is enabled for this
 	 * site. Reads the be_asc_enabled option, defaulting to false when the
 	 * option has never been set.
@@ -184,6 +258,26 @@ class Authorization {
 			}
 		}
 		return $roles;
+	}
+
+	/**
+	 * Whether a WordPress account can use everything a chronicle role grants
+	 * through the membership table. A membership only narrows what the site
+	 * already allows (check_request() asks the site first), so an HST, AST,
+	 * or Narrator on an account without the Editor role holds none of it -
+	 * unless accessSchema grants the role instead (1.0.0-review F-104).
+	 *
+	 * @param \WP_User $user
+	 * @param string   $role
+	 * @return bool
+	 */
+	public static function role_usable_by( \WP_User $user, string $role ): bool {
+		foreach ( self::role_grants( $role ) as $capability ) {
+			if ( ! user_can( $user, $capability ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**

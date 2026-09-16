@@ -75,6 +75,12 @@ class Ai_Assist {
 	/** A generous but bounded ceiling on how much of a field's own current text is ever sent upstream, protecting the HST's own API spend from one runaway field. */
 	const MAX_INPUT_CHARS = 8000;
 
+	/** The same protection for the short direction typed when a field is empty (1.0.0-review F-026). */
+	const MAX_INSTRUCTION_CHARS = 1000;
+
+	/** Suggestions one user may request in any minute - far above real writing, well short of running up a bill. */
+	const RATE_LIMIT_PER_MINUTE = 20;
+
 	/**
 	 * Short, human-readable framing for each field_context, folded into the
 	 * system prompt so the model writes in the right register without the
@@ -88,6 +94,7 @@ class Ai_Assist {
 		'npc_roleplaying_notes'    => 'Storyteller-only roleplaying guidance for a non-player character (voice, mannerisms, or plot hooks)',
 		'plot_description'         => 'a Storyteller plot description for a Mind\'s Eye Theatre LARP chronicle',
 		'plot_cliffhanger'         => 'a short cliffhanger teaser for an ongoing plot',
+		'plot_st_notes'            => 'Storyteller-only planning notes on a plot, never seen by a player',
 		'plot_entry'               => 'a Storyteller note on a plot timeline entry',
 		'rumor_description'        => "an in-character rumor circulating in a Mind's Eye Theatre chronicle",
 		'world_object_description' => "a description of an item or location in a Mind's Eye Theatre chronicle",
@@ -136,7 +143,7 @@ class Ai_Assist {
 		if ( $text !== '' ) {
 			$user_message = "Improve and polish the following text, keeping its meaning and any names/details it already contains:\n\n" . $text;
 		} else {
-			$prompt = trim( $instruction ) !== '' ? trim( $instruction ) : $description;
+			$prompt = trim( $instruction ) !== '' ? self::truncate( trim( $instruction ), self::MAX_INSTRUCTION_CHARS ) : $description;
 			$user_message = 'Write ' . $description . ', based on this direction: ' . $prompt;
 		}
 
@@ -157,14 +164,15 @@ class Ai_Assist {
 	 * @param string $key
 	 * @param string $base_url Empty string uses the built-in default.
 	 * @param string $model    Empty string uses the built-in default.
+	 * @param bool   $safe     Request only public addresses - true for a chronicle's own settings (see dispatch()).
 	 * @return array{ok:bool,message?:string,code?:string}
 	 */
-	public static function test_connection( string $provider, string $key, string $base_url, string $model ): array {
+	public static function test_connection( string $provider, string $key, string $base_url, string $model, bool $safe = false ): array {
 		if ( trim( $key ) === '' ) {
 			return [ 'ok' => false, 'code' => 'ai_not_configured', 'message' => __( 'No key to test - enter one first.', 'beyond-elysium' ) ];
 		}
 
-		$resolved = [ 'provider' => $provider, 'key' => $key, 'base_url' => $base_url, 'model' => $model ];
+		$resolved = [ 'provider' => $provider, 'key' => $key, 'base_url' => $base_url, 'model' => $model, 'scope' => $safe ? 'chronicle' : 'site' ];
 		$result   = self::dispatch( $resolved, 'Reply with only the single word OK.', 'Reply with only the single word OK.' );
 
 		if ( ! $result['ok'] ) {
@@ -178,16 +186,45 @@ class Ai_Assist {
 	 * both generate() and test_connection() route through, so a future
 	 * third provider is one new branch here, not two.
 	 *
-	 * @param array{provider:string,key:string,base_url:string,model:string} $resolved
+	 * A chronicle's own endpoint is requested with wp_safe_remote_post(),
+	 * which refuses private, loopback, and reserved addresses: the people who
+	 * set it are a chronicle's Storytellers, not the server's administrators,
+	 * and an unrestricted request let them reach the host's own network
+	 * (1.0.0-review F-025). A site administrator's endpoint may still be a
+	 * self-hosted server on a local address.
+	 *
+	 * @param array{provider:string,key:string,base_url:string,model:string,scope?:string} $resolved
 	 * @param string $system
 	 * @param string $user_message
 	 * @return array{ok:bool,suggestion?:string,code?:string,message?:string}
 	 */
 	private static function dispatch( array $resolved, string $system, string $user_message ): array {
+		$safe = ( $resolved['scope'] ?? 'site' ) === 'chronicle';
 		if ( $resolved['provider'] === 'claude' ) {
-			return self::call_claude( $resolved['key'], $system, $user_message, $resolved['base_url'], $resolved['model'] );
+			return self::call_claude( $resolved['key'], $system, $user_message, $resolved['base_url'], $resolved['model'], $safe );
 		}
-		return self::call_openai( $resolved['key'], $system, $user_message, $resolved['base_url'], $resolved['model'] );
+		return self::call_openai( $resolved['key'], $system, $user_message, $resolved['base_url'], $resolved['model'], $safe );
+	}
+
+	/**
+	 * Counts one suggestion request for a user and reports whether it is within
+	 * RATE_LIMIT_PER_MINUTE for the current minute (1.0.0-review F-026).
+	 *
+	 * @param int $user_id
+	 * @return bool
+	 */
+	public static function within_rate_limit( int $user_id ): bool {
+		$key    = 'be_ai_rate_' . $user_id;
+		$window = get_transient( $key );
+		$now    = time();
+
+		if ( ! is_array( $window ) || $now - (int) ( $window['start'] ?? 0 ) >= MINUTE_IN_SECONDS ) {
+			$window = [ 'start' => $now, 'count' => 0 ];
+		}
+		$window['count'] = (int) $window['count'] + 1;
+		set_transient( $key, $window, MINUTE_IN_SECONDS );
+
+		return $window['count'] <= self::RATE_LIMIT_PER_MINUTE;
 	}
 
 	/**
@@ -212,7 +249,7 @@ class Ai_Assist {
 
 		if ( $game_slug === null ) {
 			$key = self::decrypt( (string) get_option( self::site_key_option( $site_provider ), '' ) );
-			return $key !== null ? array_merge( [ 'provider' => $site_provider, 'key' => $key ], self::site_overrides( $site_provider ) ) : null;
+			return $key !== null ? array_merge( [ 'provider' => $site_provider, 'key' => $key, 'scope' => 'site' ], self::site_overrides( $site_provider ) ) : null;
 		}
 
 		$game = Game::find_by_slug( $game_slug );
@@ -234,12 +271,14 @@ class Ai_Assist {
 					'key'      => $key,
 					'base_url' => (string) ( $game->settings->$base_url_field ?? '' ),
 					'model'    => (string) ( $game->settings->$model_field ?? '' ),
+					// The chronicle chose this endpoint, so it is requested as a safe URL (see dispatch()).
+					'scope'    => 'chronicle',
 				];
 			}
 		}
 
 		$site_key = self::decrypt( (string) get_option( self::site_key_option( $provider ), '' ) );
-		return $site_key !== null ? array_merge( [ 'provider' => $provider, 'key' => $site_key ], self::site_overrides( $provider ) ) : null;
+		return $site_key !== null ? array_merge( [ 'provider' => $provider, 'key' => $site_key, 'scope' => 'site' ], self::site_overrides( $provider ) ) : null;
 	}
 
 	/** @return array{base_url:string,model:string} The site-wide endpoint/model override for one provider. */
@@ -303,12 +342,12 @@ class Ai_Assist {
 		return $provider === 'claude' ? self::SITE_CLAUDE_KEY_OPTION : self::SITE_OPENAI_KEY_OPTION;
 	}
 
-	/** Truncates input text to MAX_INPUT_CHARS, on a whitespace boundary where possible. */
-	private static function truncate( string $text ): string {
-		if ( function_exists( 'mb_strlen' ) ? mb_strlen( $text ) <= self::MAX_INPUT_CHARS : strlen( $text ) <= self::MAX_INPUT_CHARS ) {
+	/** Truncates input text to `$max` characters (MAX_INPUT_CHARS by default), on a whitespace boundary where possible. */
+	private static function truncate( string $text, int $max = self::MAX_INPUT_CHARS ): string {
+		if ( function_exists( 'mb_strlen' ) ? mb_strlen( $text ) <= $max : strlen( $text ) <= $max ) {
 			return $text;
 		}
-		$cut = function_exists( 'mb_substr' ) ? mb_substr( $text, 0, self::MAX_INPUT_CHARS ) : substr( $text, 0, self::MAX_INPUT_CHARS );
+		$cut = function_exists( 'mb_substr' ) ? mb_substr( $text, 0, $max ) : substr( $text, 0, $max );
 		$space = strrpos( $cut, ' ' );
 		return $space !== false ? substr( $cut, 0, $space ) : $cut;
 	}
@@ -326,8 +365,12 @@ class Ai_Assist {
 	 * @return string
 	 */
 	public static function encrypt( string $plaintext ): string {
+		$iv_length = openssl_cipher_iv_length( 'aes-256-cbc' );
+		if ( ! $iv_length ) {
+			return '';
+		}
 		$key = hash( 'sha256', wp_salt( 'auth' ), true );
-		$iv  = random_bytes( openssl_cipher_iv_length( 'aes-256-cbc' ) );
+		$iv  = random_bytes( $iv_length );
 		$ciphertext = openssl_encrypt( $plaintext, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv );
 		if ( $ciphertext === false ) {
 			return '';
@@ -350,11 +393,11 @@ class Ai_Assist {
 		if ( $encoded === '' ) {
 			return null;
 		}
-		$raw = base64_decode( $encoded, true );
-		if ( $raw === false || strlen( $raw ) <= openssl_cipher_iv_length( 'aes-256-cbc' ) ) {
+		$raw       = base64_decode( $encoded, true );
+		$iv_length = openssl_cipher_iv_length( 'aes-256-cbc' );
+		if ( $raw === false || ! $iv_length || strlen( $raw ) <= $iv_length ) {
 			return null;
 		}
-		$iv_length  = openssl_cipher_iv_length( 'aes-256-cbc' );
 		$iv         = substr( $raw, 0, $iv_length );
 		$ciphertext = substr( $raw, $iv_length );
 		$key        = hash( 'sha256', wp_salt( 'auth' ), true );
@@ -366,31 +409,28 @@ class Ai_Assist {
 	 * Calls an OpenAI-compatible Chat Completions endpoint - the real
 	 * OpenAI API by default, or a self-hosted/otherwise-compatible server
 	 * (Ollama, LM Studio, vLLM, LocalAI, ...) at an admin/HST-configured
-	 * `$base_url`. `wp_remote_post()`, not `wp_safe_remote_post()` -
-	 * deliberately, even though `$base_url` is no longer a fixed literal
-	 * once an override is set: the real SSRF invariant is "never
-	 * attacker/player-controlled input," not "never variable" - this value
-	 * only ever comes from `be_manage_games`/`be_manage_apr`-gated
-	 * settings a trusted admin or HST configured, the same trust level
-	 * `BE_PDF_SIGNING_CERT`'s own file path already carries, and a
-	 * self-hosted LLM's whole point is usually a local-network address
-	 * (`wp_safe_remote_post()` blocks exactly that).
+	 * `$base_url`. A site administrator's endpoint is requested with
+	 * `wp_remote_post()`, since a self-hosted server's whole point is usually
+	 * a local-network address; a chronicle's own endpoint with
+	 * `wp_safe_remote_post()` (`$safe`, see dispatch()).
 	 *
 	 * @param string $key
 	 * @param string $system
 	 * @param string $user_message
 	 * @param string $base_url Empty string uses DEFAULT_OPENAI_URL.
 	 * @param string $model    Empty string uses OPENAI_MODEL.
+	 * @param bool   $safe     Request only public addresses (a chronicle's own endpoint - see dispatch()).
 	 * @return array{ok:bool,suggestion?:string,code?:string,message?:string}
 	 */
-	private static function call_openai( string $key, string $system, string $user_message, string $base_url = '', string $model = '' ): array {
-		$response = wp_remote_post( $base_url !== '' ? $base_url : self::DEFAULT_OPENAI_URL, [
+	private static function call_openai( string $key, string $system, string $user_message, string $base_url = '', string $model = '', bool $safe = false ): array {
+		$post     = $safe ? 'wp_safe_remote_post' : 'wp_remote_post';
+		$response = $post( $base_url !== '' ? $base_url : self::DEFAULT_OPENAI_URL, [
 			'timeout' => 30,
 			'headers' => [
 				'Content-Type'  => 'application/json',
 				'Authorization' => 'Bearer ' . $key,
 			],
-			'body' => wp_json_encode( [
+			'body' => (string) wp_json_encode( [
 				'model'       => $model !== '' ? $model : self::OPENAI_MODEL,
 				'messages'    => [
 					[ 'role' => 'system', 'content' => $system ],
@@ -407,27 +447,27 @@ class Ai_Assist {
 	}
 
 	/**
-	 * Calls a Claude-compatible Messages endpoint - see call_openai()'s own
-	 * docblock for why `$base_url` being admin/HST-configured rather than a
-	 * fixed literal doesn't change the `wp_remote_post()` vs.
-	 * `wp_safe_remote_post()` call.
+	 * Calls a Claude-compatible Messages endpoint, requested the same way as
+	 * call_openai() - see its docblock.
 	 *
 	 * @param string $key
 	 * @param string $system
 	 * @param string $user_message
 	 * @param string $base_url Empty string uses DEFAULT_CLAUDE_URL.
 	 * @param string $model    Empty string uses CLAUDE_MODEL.
+	 * @param bool   $safe     Request only public addresses (a chronicle's own endpoint - see dispatch()).
 	 * @return array{ok:bool,suggestion?:string,code?:string,message?:string}
 	 */
-	private static function call_claude( string $key, string $system, string $user_message, string $base_url = '', string $model = '' ): array {
-		$response = wp_remote_post( $base_url !== '' ? $base_url : self::DEFAULT_CLAUDE_URL, [
+	private static function call_claude( string $key, string $system, string $user_message, string $base_url = '', string $model = '', bool $safe = false ): array {
+		$post     = $safe ? 'wp_safe_remote_post' : 'wp_remote_post';
+		$response = $post( $base_url !== '' ? $base_url : self::DEFAULT_CLAUDE_URL, [
 			'timeout' => 30,
 			'headers' => [
 				'Content-Type'      => 'application/json',
 				'x-api-key'         => $key,
 				'anthropic-version' => '2023-06-01',
 			],
-			'body' => wp_json_encode( [
+			'body' => (string) wp_json_encode( [
 				'model'      => $model !== '' ? $model : self::CLAUDE_MODEL,
 				'system'     => $system,
 				'messages'   => [

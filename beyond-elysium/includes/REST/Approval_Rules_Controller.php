@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Schema_Block;
 
@@ -57,6 +58,20 @@ class Approval_Rules_Controller extends Base_Controller {
 			],
 		] );
 
+		// Before the rule-id route, which would otherwise take "default" for a rule's id.
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base . '/default', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_default_policy' ],
+				'permission_callback' => $this->permission( 'be_manage_approval_rules' ),
+			],
+			[
+				'methods'             => 'PUT',
+				'callback'            => [ $this, 'update_default_policy' ],
+				'permission_callback' => $this->permission( 'be_manage_approval_rules' ),
+			],
+		] );
+
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base . '/(?P<id>[A-Za-z0-9_=-]+)', [
 			[
 				'methods'             => 'PUT',
@@ -100,6 +115,52 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
+	 * Returns the chronicle's default approval policy - whether a change no
+	 * rule has an opinion on is approved automatically.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_default_policy( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		return $this->success( [ 'auto_approve' => ( $game->settings->auto_approve ?? false ) === true ] );
+	}
+
+	/**
+	 * Sets the chronicle's default approval policy. It sits beside the rules
+	 * it backs, so the Storytellers who manage those rules set it here - the
+	 * chronicle's own settings route is a site administrator's
+	 * (1.0.0-review F-102). Only `auto_approve` changes; every other setting
+	 * is kept.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function update_default_policy( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$auto = $request->get_param( 'auto_approve' );
+		if ( ! is_bool( $auto ) ) {
+			return $this->error( 'invalid_param', __( 'auto_approve must be true or false.', 'beyond-elysium' ), 400 );
+		}
+
+		$settings                 = $game->settings ? (array) $game->settings : [];
+		$settings['auto_approve'] = $auto;
+		if ( ! Game::update( $request['game_slug'], [ 'settings' => $settings ] ) ) {
+			return $this->error( 'update_failed', __( 'Failed to save the default approval policy.', 'beyond-elysium' ), 500 );
+		}
+
+		return $this->success( [ 'auto_approve' => $auto ] );
+	}
+
+	/**
 	 * Returns the fixed vocabulary the create/edit form offers: the
 	 * approval levels Change_Engine actually enforces, and the reason-tier
 	 * presets defined in approval-reason-presets.php.
@@ -108,7 +169,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	 */
 	public function get_options() {
 		return $this->success( [
-			'approval_levels' => [ 'auto', 'st', 'coordinator' ],
+			'approval_levels' => [ 'auto', 'st' ],
 			'reason_presets'  => require BE_PLUGIN_DIR . 'includes/Database/approval-reason-presets.php',
 		] );
 	}
@@ -133,19 +194,10 @@ class Approval_Rules_Controller extends Base_Controller {
 			return $target;
 		}
 
-		$block = Schema_Block::find_or_create_fork_for_game( $target['block_slug'], $request['game_slug'] );
-		if ( ! $block ) {
-			return $this->error( 'block_not_found', __( 'Schema block not found.', 'beyond-elysium' ), 404 );
+		$saved = $this->save_rule( $target, $request );
+		if ( is_wp_error( $saved ) ) {
+			return $saved;
 		}
-
-		$result = self::apply_target( $block, $target, $request );
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-
-		Schema_Block::update( $target['block_slug'], [ 'definition' => $block->definition ], $request['game_slug'] );
-
-		$saved = Schema_Block::find_for_game( $target['block_slug'], $request['game_slug'] );
 		return $this->success( self::find_rule( $saved, $target ), 201 );
 	}
 
@@ -169,19 +221,10 @@ class Approval_Rules_Controller extends Base_Controller {
 			return $target;
 		}
 
-		$block = Schema_Block::find_or_create_fork_for_game( $target['block_slug'], $request['game_slug'] );
-		if ( ! $block ) {
-			return $this->error( 'block_not_found', __( 'Schema block not found.', 'beyond-elysium' ), 404 );
+		$saved = $this->save_rule( $target, $request );
+		if ( is_wp_error( $saved ) ) {
+			return $saved;
 		}
-
-		$result = self::apply_target( $block, $target, $request );
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-
-		Schema_Block::update( $target['block_slug'], [ 'definition' => $block->definition ], $request['game_slug'] );
-
-		$saved = Schema_Block::find_for_game( $target['block_slug'], $request['game_slug'] );
 		return $this->success( self::find_rule( $saved, $target ) );
 	}
 
@@ -205,21 +248,102 @@ class Approval_Rules_Controller extends Base_Controller {
 			return $target;
 		}
 
-		$block = Schema_Block::find_or_create_fork_for_game( $target['block_slug'], $request['game_slug'] );
-		if ( ! $block ) {
+		// Cleared on a copy first: a rule that isn't there must not fork the block to find out.
+		$current = Schema_Block::find_for_game( (string) $target['block_slug'], $request['game_slug'] );
+		if ( ! $current ) {
 			return $this->error( 'block_not_found', __( 'Schema block not found.', 'beyond-elysium' ), 404 );
 		}
-
-		$cleared = self::clear_target( $block, $target );
-		if ( ! $cleared ) {
+		if ( ! self::clear_target( self::copy_block( $current ), $target ) ) {
 			return $this->error( 'target_not_found', __( 'That approval rule target no longer exists on this block.', 'beyond-elysium' ), 404 );
 		}
 
-		Schema_Block::update( $target['block_slug'], [ 'definition' => $block->definition ], $request['game_slug'] );
+		$unit  = Transaction::begin( 'be_approval_rule_clear' );
+		$block = Schema_Block::find_or_create_fork_for_game( $target['block_slug'], $request['game_slug'] );
+		if ( $block ) {
+			self::clear_target( $block, $target );
+		}
+		if ( ! $block || ! Schema_Block::update( $target['block_slug'], [ 'definition' => $block->definition ], $request['game_slug'] ) ) {
+			Transaction::rollback( $unit );
+			return self::save_failed();
+		}
+		Transaction::commit( $unit );
 		return $this->success( null, 204 );
 	}
 
 	// --- internals ---
+
+	/**
+	 * Writes a rule onto the chronicle's copy of its block, making the copy
+	 * when the rule is valid, and returns the block as saved. A write that
+	 * fails leaves neither the rule nor a new copy behind (1.0.0-review F-109).
+	 *
+	 * @param array            $target
+	 * @param \WP_REST_Request $request
+	 * @return object|\WP_Error
+	 */
+	private function save_rule( array $target, \WP_REST_Request $request ) {
+		$unit  = Transaction::begin( 'be_approval_rule_save' );
+		$block = self::fork_if_valid( $target, $request );
+		if ( ! is_wp_error( $block ) && ! Schema_Block::update( $target['block_slug'], [ 'definition' => $block->definition ], $request['game_slug'] ) ) {
+			$block = self::save_failed();
+		}
+		if ( is_wp_error( $block ) ) {
+			Transaction::rollback( $unit );
+			return $block;
+		}
+		Transaction::commit( $unit );
+
+		return Schema_Block::find_for_game( $target['block_slug'], $request['game_slug'] )
+			?? $this->error( 'block_not_found', __( 'Schema block not found.', 'beyond-elysium' ), 404 );
+	}
+
+	/**
+	 * @return \WP_Error
+	 */
+	private static function save_failed(): \WP_Error {
+		return new \WP_Error( 'save_failed', __( 'The approval rule could not be saved. Nothing was changed.', 'beyond-elysium' ), [ 'status' => 500 ] );
+	}
+
+	/**
+	 * Applies a rule to a copy of the chronicle's current block - its fork, or
+	 * the global block - and forks only when that succeeds, then applies it to
+	 * the fork. A rule that fails validation must not leave a copy behind
+	 * (1.0.0-review F-034).
+	 *
+	 * @param array            $target
+	 * @param \WP_REST_Request $request
+	 * @return object|\WP_Error The fork with the rule applied, ready to save.
+	 */
+	private static function fork_if_valid( array $target, \WP_REST_Request $request ) {
+		$current = Schema_Block::find_for_game( (string) $target['block_slug'], $request['game_slug'] );
+		if ( ! $current ) {
+			return new \WP_Error( 'block_not_found', __( 'Schema block not found.', 'beyond-elysium' ), [ 'status' => 404 ] );
+		}
+
+		$probe = self::apply_target( self::copy_block( $current ), $target, $request );
+		if ( is_wp_error( $probe ) ) {
+			return $probe;
+		}
+
+		// The block was just found, so no copy now means the copy couldn't be written.
+		$block = Schema_Block::find_or_create_fork_for_game( $target['block_slug'], $request['game_slug'] );
+		if ( ! $block ) {
+			return self::save_failed();
+		}
+		$result = self::apply_target( $block, $target, $request );
+		return is_wp_error( $result ) ? $result : $block;
+	}
+
+	/**
+	 * A deep copy of a decoded block row, so a rule can be tried without
+	 * touching the real definition object.
+	 *
+	 * @param object $block
+	 * @return object
+	 */
+	private static function copy_block( $block ) {
+		return json_decode( (string) wp_json_encode( $block ) );
+	}
 
 	/**
 	 * Walks one block's definition and returns every item, power, or power
@@ -255,11 +379,13 @@ class Approval_Rules_Controller extends Base_Controller {
 					$rules[] = self::rule_shape( $block, [ 'target_type' => 'power', 'target_name' => $power->name ?? '' ], $power->approval_override ?? null, null );
 				}
 				foreach ( $power->levels ?? [] as $rung ) {
-					if ( ! empty( $rung->reason ) ) {
+					// A level's own approval is a rule the engine enforces, with or without a
+					// reason - listed either way, so this page shows every rule (1.0.0-review F-035).
+					if ( ! empty( $rung->reason ) || ! empty( $rung->approval ) ) {
 						$rules[] = self::rule_shape(
 							$block,
 							[ 'target_type' => 'level', 'target_name' => $power->name ?? '', 'level' => $rung->level ?? null ],
-							null,
+							$rung->approval ?? null,
 							$rung->reason ?? null
 						);
 					}
@@ -350,7 +476,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	 * @return string
 	 */
 	private static function encode_id( string $block_slug, array $target ): string {
-		return rtrim( strtr( base64_encode( wp_json_encode( [
+		return rtrim( strtr( base64_encode( (string) wp_json_encode( [
 			$block_slug,
 			$target['target_type'],
 			$target['target_name'],
@@ -459,8 +585,8 @@ class Approval_Rules_Controller extends Base_Controller {
 	 */
 	private static function apply_target( $block, array $target, \WP_REST_Request $request ) {
 		$approval = $request->get_param( 'approval' );
-		if ( $approval !== null && $approval !== '' && ! in_array( $approval, [ 'auto', 'st', 'coordinator' ], true ) ) {
-			return new \WP_Error( 'invalid_param', __( 'approval must be auto, st, or coordinator.', 'beyond-elysium' ), [ 'status' => 400 ] );
+		if ( $approval !== null && $approval !== '' && ! in_array( $approval, [ 'auto', 'st' ], true ) ) {
+			return new \WP_Error( 'invalid_param', __( 'approval must be auto or st.', 'beyond-elysium' ), [ 'status' => 400 ] );
 		}
 
 		$reason = $request->get_param( 'reason' );
@@ -558,6 +684,9 @@ class Approval_Rules_Controller extends Base_Controller {
 			// target_type === 'level'.
 			foreach ( $power->levels ?? [] as $rung ) {
 				if ( ( $rung->level ?? null ) === $target['level'] ) {
+					if ( $approval !== null ) {
+						$rung->approval = $approval ?: null;
+					}
 					if ( $reason !== null ) {
 						$rung->reason = $reason ?: null;
 					}
@@ -601,7 +730,9 @@ class Approval_Rules_Controller extends Base_Controller {
 		$new_range           = new \stdClass();
 		$new_range->from     = $from;
 		$new_range->to       = $to;
-		$new_range->approval = $approval ?: 'auto';
+		// No level chosen means a Storyteller decides - never auto-approval, which a reason-only
+		// rule on a flat item never means either (1.0.0-review F-035).
+		$new_range->approval = $approval ?: 'st';
 		if ( $reason ) {
 			$new_range->reason = $reason;
 		}
@@ -677,7 +808,7 @@ class Approval_Rules_Controller extends Base_Controller {
 				}
 				foreach ( $power->levels ?? [] as $rung ) {
 					if ( ( $rung->level ?? null ) === $target['level'] ) {
-						unset( $rung->reason );
+						unset( $rung->reason, $rung->approval );
 						return true;
 					}
 				}

@@ -430,7 +430,8 @@ class Creature_Stack {
 	 */
 	private static function encode_if_array( $value ): string {
 		if ( is_array( $value ) || is_object( $value ) ) {
-			return wp_json_encode( $value );
+			// An empty string for a value that can't be encoded: the JSON column refuses the write.
+			return (string) wp_json_encode( $value );
 		}
 		return is_string( $value ) ? $value : '{}';
 	}

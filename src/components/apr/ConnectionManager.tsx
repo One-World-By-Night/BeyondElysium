@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
+import { everyPage } from '../../lib/everyPage';
 import { SearchableSelect } from '../shared/SearchableSelect';
 import type { Character } from '../../types/character';
 import type { Connection, EntityType, Plot } from '../../types/plot';
@@ -26,8 +27,14 @@ export interface ConnectionManagerProps {
 type PickMode = 'character' | 'external' | 'plot' | 'world_object' | 'tag';
 
 const PICK_MODES: { value: PickMode; label: string }[] = [
-	{ value: 'character', label: __( 'Character in this chronicle', 'beyond-elysium' ) },
-	{ value: 'external', label: __( 'External (name only)', 'beyond-elysium' ) },
+	{
+		value: 'character',
+		label: __( 'Character in this chronicle', 'beyond-elysium' ),
+	},
+	{
+		value: 'external',
+		label: __( 'External (name only)', 'beyond-elysium' ),
+	},
 	{ value: 'plot', label: __( 'Plot', 'beyond-elysium' ) },
 	{ value: 'world_object', label: __( 'World object', 'beyond-elysium' ) },
 	{ value: 'tag', label: __( 'Tag', 'beyond-elysium' ) },
@@ -39,16 +46,21 @@ const PICK_MODES: { value: PickMode; label: string }[] = [
  * free-text "External" mode for people with no record in this system, and lists the
  * entity's existing connections with a remove control for each.
  */
-export function ConnectionManager( { gameSlug, entityType, entityId, objectTypeFilter }: ConnectionManagerProps ) {
-	const [ items, setItems ] = useState<Connection[]>( [] );
+export function ConnectionManager( {
+	gameSlug,
+	entityType,
+	entityId,
+	objectTypeFilter,
+}: ConnectionManagerProps ) {
+	const [ items, setItems ] = useState< Connection[] >( [] );
 	const [ loading, setLoading ] = useState( true );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
 
-	const [ characters, setCharacters ] = useState<Character[]>( [] );
-	const [ plots, setPlots ] = useState<Plot[]>( [] );
-	const [ worldObjects, setWorldObjects ] = useState<WorldObject[]>( [] );
+	const [ characters, setCharacters ] = useState< Character[] >( [] );
+	const [ plots, setPlots ] = useState< Plot[] >( [] );
+	const [ worldObjects, setWorldObjects ] = useState< WorldObject[] >( [] );
 
-	const [ mode, setMode ] = useState<PickMode>( 'character' );
+	const [ mode, setMode ] = useState< PickMode >( 'character' );
 	const [ targetId, setTargetId ] = useState( '' );
 	const [ worldObjectQuery, setWorldObjectQuery ] = useState( '' );
 	const [ externalName, setExternalName ] = useState( '' );
@@ -64,15 +76,16 @@ export function ConnectionManager( { gameSlug, entityType, entityId, objectTypeF
 	function load() {
 		setLoading( true );
 		setError( null );
-		api
-			.connections( gameSlug )
+		api.connections( gameSlug )
 			.forEntity( entityType, entityId )
 			.then( ( result ) => {
 				setItems( result );
 				setLoading( false );
 			} )
 			.catch( () => {
-				setError( __( 'Failed to load connections.', 'beyond-elysium' ) );
+				setError(
+					__( 'Failed to load connections.', 'beyond-elysium' )
+				);
 				setLoading( false );
 			} );
 	}
@@ -81,10 +94,26 @@ export function ConnectionManager( { gameSlug, entityType, entityId, objectTypeF
 
 	// Loaded once per game; backs both the picker dropdowns and the connections list's id-to-name resolution.
 	useEffect( () => {
-		api.characters( gameSlug ).list( { per_page: 100 } ).then( setCharacters ).catch( () => setCharacters( [] ) );
-		api.plots( gameSlug ).list( { per_page: 100 } ).then( setPlots ).catch( () => setPlots( [] ) );
-		api.worldObjects( gameSlug )
-			.list( { per_page: 100, ...( objectTypeFilter ? { object_type: objectTypeFilter } : {} ) } )
+		// Every page, not the first 100: a picker that stops there hides the rest (1.0.0-review F-080).
+		everyPage( ( page ) =>
+			api.characters( gameSlug ).listPaginated( { page, per_page: 100 } )
+		)
+			.then( setCharacters )
+			.catch( () => setCharacters( [] ) );
+		everyPage( ( page ) =>
+			api.plots( gameSlug ).listPaginated( { page, per_page: 100 } )
+		)
+			.then( setPlots )
+			.catch( () => setPlots( [] ) );
+		everyPage( ( page ) =>
+			api.worldObjects( gameSlug ).listPaginated( {
+				page,
+				per_page: 100,
+				...( objectTypeFilter
+					? { object_type: objectTypeFilter }
+					: {} ),
+			} )
+		)
 			.then( setWorldObjects )
 			.catch( () => setWorldObjects( [] ) );
 	}, [ gameSlug, objectTypeFilter ] );
@@ -99,14 +128,33 @@ export function ConnectionManager( { gameSlug, entityType, entityId, objectTypeF
 			return '';
 		}
 		if ( type === 'character' ) {
-			return characters.find( ( c ) => c.id === id )?.name ?? sprintf( __( 'character #%d', 'beyond-elysium' ), id );
+			return (
+				characters.find( ( c ) => c.id === id )?.name ??
+				sprintf(
+					/* translators: %d: the character's numeric id, shown when its name can't be resolved */
+					__( 'character #%d', 'beyond-elysium' ),
+					id
+				)
+			);
 		}
 		if ( type === 'plot' ) {
-			return plots.find( ( p ) => p.id === id )?.title ?? sprintf( __( 'plot #%d', 'beyond-elysium' ), id );
+			return (
+				plots.find( ( p ) => p.id === id )?.title ??
+				sprintf(
+					/* translators: %d: the plot's numeric id, shown when its title can't be resolved */
+					__( 'plot #%d', 'beyond-elysium' ),
+					id
+				)
+			);
 		}
 		if ( type === 'world_object' ) {
 			return (
-				worldObjects.find( ( w ) => w.id === id )?.name ?? sprintf( __( 'world object #%d', 'beyond-elysium' ), id )
+				worldObjects.find( ( w ) => w.id === id )?.name ??
+				sprintf(
+					/* translators: %d: the world object's numeric id, shown when its name can't be resolved */
+					__( 'world object #%d', 'beyond-elysium' ),
+					id
+				)
 			);
 		}
 		return `#${ id }`;
@@ -147,13 +195,15 @@ export function ConnectionManager( { gameSlug, entityType, entityId, objectTypeF
 				target_type: wireType,
 				target_id: wireType === 'tag' ? undefined : Number( targetId ),
 				// An external connection's typed name is stored as its label.
-				label: isExternal ? externalName.trim() : ( label || undefined ),
+				label: isExternal ? externalName.trim() : label || undefined,
 				notes: notes || undefined,
 			} );
 			resetForm();
 			load();
 		} catch {
-			setError( __( 'Failed to create this connection.', 'beyond-elysium' ) );
+			setError(
+				__( 'Failed to create this connection.', 'beyond-elysium' )
+			);
 		} finally {
 			setSubmitting( false );
 		}
@@ -169,7 +219,9 @@ export function ConnectionManager( { gameSlug, entityType, entityId, objectTypeF
 			await api.connections( gameSlug ).delete( id );
 			load();
 		} catch {
-			setError( __( 'Failed to remove this connection.', 'beyond-elysium' ) );
+			setError(
+				__( 'Failed to remove this connection.', 'beyond-elysium' )
+			);
 		}
 	}
 
@@ -178,16 +230,33 @@ export function ConnectionManager( { gameSlug, entityType, entityId, objectTypeF
 	 * A connection stores a source and a target; this checks which side matches the
 	 * current entity and returns the opposite side's type, id, and label.
 	 */
-	function otherEnd( connection: Connection ): { type: EntityType; id: number | null; label: string | null } {
-		const isSource = connection.source_type === entityType && connection.source_id === entityId;
+	function otherEnd( connection: Connection ): {
+		type: EntityType;
+		id: number | null;
+		label: string | null;
+	} {
+		const isSource =
+			connection.source_type === entityType &&
+			connection.source_id === entityId;
 		return isSource
-			? { type: connection.target_type, id: connection.target_id, label: connection.label }
-			: { type: connection.source_type, id: connection.source_id, label: connection.label };
+			? {
+					type: connection.target_type,
+					id: connection.target_id,
+					label: connection.label,
+			  }
+			: {
+					type: connection.source_type,
+					id: connection.source_id,
+					label: connection.label,
+			  };
 	}
 
 	const pickerList: { value: string; text: string }[] =
 		mode === 'character'
-			? characters.map( ( c ) => ( { value: String( c.id ), text: c.name } ) )
+			? characters.map( ( c ) => ( {
+					value: String( c.id ),
+					text: c.name,
+			  } ) )
 			: mode === 'plot'
 			? plots.map( ( p ) => ( { value: String( p.id ), text: p.title } ) )
 			: [];
@@ -196,13 +265,16 @@ export function ConnectionManager( { gameSlug, entityType, entityId, objectTypeF
 	// (item-cards-design.md §"Assignment (staff side)"); a duplicate catalog name gets its
 	// id appended so both remain individually selectable.
 	const worldObjectDisplayToId = useMemo( () => {
-		const nameCounts = new Map<string, number>();
+		const nameCounts = new Map< string, number >();
 		for ( const w of worldObjects ) {
 			nameCounts.set( w.name, ( nameCounts.get( w.name ) ?? 0 ) + 1 );
 		}
-		const map = new Map<string, number>();
+		const map = new Map< string, number >();
 		for ( const w of worldObjects ) {
-			const display = ( nameCounts.get( w.name ) ?? 0 ) > 1 ? `${ w.name } (#${ w.id })` : w.name;
+			const display =
+				( nameCounts.get( w.name ) ?? 0 ) > 1
+					? `${ w.name } (#${ w.id })`
+					: w.name;
 			map.set( display, w.id );
 		}
 		return map;
@@ -211,7 +283,10 @@ export function ConnectionManager( { gameSlug, entityType, entityId, objectTypeF
 
 	return (
 		<div className="be-connection-manager">
-			<form className="be-connection-manager__form" onSubmit={ addConnection }>
+			<form
+				className="be-connection-manager__form"
+				onSubmit={ addConnection }
+			>
 				<select
 					value={ mode }
 					onChange={ ( e ) => {
@@ -243,11 +318,19 @@ export function ConnectionManager( { gameSlug, entityType, entityId, objectTypeF
 							const id = worldObjectDisplayToId.get( display );
 							setTargetId( id !== undefined ? String( id ) : '' );
 						} }
-						placeholder={ __( 'Search world objects…', 'beyond-elysium' ) }
+						placeholder={ __(
+							'Search world objects…',
+							'beyond-elysium'
+						) }
 					/>
 				) : (
-					<select value={ targetId } onChange={ ( e ) => setTargetId( e.target.value ) }>
-						<option value="">{ __( 'Select…', 'beyond-elysium' ) }</option>
+					<select
+						value={ targetId }
+						onChange={ ( e ) => setTargetId( e.target.value ) }
+					>
+						<option value="">
+							{ __( 'Select…', 'beyond-elysium' ) }
+						</option>
 						{ pickerList.map( ( o ) => (
 							<option key={ o.value } value={ o.value }>
 								{ o.text }
@@ -262,13 +345,22 @@ export function ConnectionManager( { gameSlug, entityType, entityId, objectTypeF
 					onChange={ ( e ) => setLabel( e.target.value ) }
 					placeholder={
 						mode === 'external'
-							? __( 'Role (e.g. visiting player, contact)', 'beyond-elysium' )
-							: __( 'Label (e.g. sister, involved in)', 'beyond-elysium' )
+							? __(
+									'Role (e.g. visiting player, contact)',
+									'beyond-elysium'
+							  )
+							: __(
+									'Label (e.g. sister, involved in)',
+									'beyond-elysium'
+							  )
 					}
 					disabled={ mode === 'external' }
 					title={
 						mode === 'external'
-							? __( 'Set via the name field above for an external connection', 'beyond-elysium' )
+							? __(
+									'Set via the name field above for an external connection',
+									'beyond-elysium'
+							  )
 							: undefined
 					}
 				/>
@@ -281,7 +373,12 @@ export function ConnectionManager( { gameSlug, entityType, entityId, objectTypeF
 				<button
 					type="submit"
 					className="be-st-button"
-					disabled={ submitting || ( mode === 'external' ? ! externalName.trim() : mode !== 'tag' && ! targetId ) }
+					disabled={
+						submitting ||
+						( mode === 'external'
+							? ! externalName.trim()
+							: mode !== 'tag' && ! targetId )
+					}
 				>
 					{ __( 'Add connection', 'beyond-elysium' ) }
 				</button>
@@ -303,23 +400,39 @@ export function ConnectionManager( { gameSlug, entityType, entityId, objectTypeF
 						const other = otherEnd( connection );
 						const isExternalTag = other.type === 'tag';
 						const name = isExternalTag
-							? ( other.label || __( 'external', 'beyond-elysium' ) )
+							? other.label || __( 'external', 'beyond-elysium' )
 							: resolveName( other.type, other.id );
 						return (
 							<li key={ connection.id }>
 								<div className="be-connection-manager__row">
 									<span className="be-connection-manager__other">
 										{ name }
-										{ ! isExternalTag && <span className="be-st-badge">{ other.type }</span> }
+										{ ! isExternalTag && (
+											<span className="be-st-badge">
+												{ other.type }
+											</span>
+										) }
 									</span>
 									{ ! isExternalTag && connection.label && (
-										<span className="be-connection-manager__label">{ connection.label }</span>
+										<span className="be-connection-manager__label">
+											{ connection.label }
+										</span>
 									) }
-									<button type="button" className="be-st-button be-st-button--quiet" onClick={ () => remove( connection.id ) }>
+									<button
+										type="button"
+										className="be-st-button be-st-button--quiet"
+										onClick={ () =>
+											remove( connection.id )
+										}
+									>
 										{ __( 'Remove', 'beyond-elysium' ) }
 									</button>
 								</div>
-								{ connection.notes && <p className="be-connection-manager__notes">{ connection.notes }</p> }
+								{ connection.notes && (
+									<p className="be-connection-manager__notes">
+										{ connection.notes }
+									</p>
+								) }
 							</li>
 						);
 					} ) }

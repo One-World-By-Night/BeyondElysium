@@ -61,3 +61,39 @@
 	align-items: center;
 	gap: 0.4rem;
 }
+
+.be-import-tool__notice {
+	padding: 0.75rem;
+	border: 1px solid #2e7d32;
+	background: #edf7ed;
+	color: #1e4620;
+	border-radius: 3px;
+	margin-bottom: 1rem;
+}
+
+.be-incoming-transfers {
+	margin-bottom: 2rem;
+}
+
+.be-incoming-transfers__review {
+	margin-top: 1.25rem;
+	padding: 1rem;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+}
+
+.be-incoming-transfers__verification[role="alert"] {
+	padding: 0.75rem;
+	border: 1px solid #b8860b;
+	background: #fff8e6;
+	border-radius: 3px;
+	margin: 0.75rem 0;
+}
+
+.be-incoming-transfers__verification[role="alert"] p {
+	margin: 0.4rem 0 0;
+}
+
+.be-incoming-transfers__verification[role="alert"] p:first-child {
+	margin-top: 0;
+}

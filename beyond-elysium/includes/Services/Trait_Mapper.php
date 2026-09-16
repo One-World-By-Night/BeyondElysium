@@ -204,7 +204,7 @@ class Trait_Mapper {
 		}
 		$stripped = substr( $raw_name, strlen( $prefix_match[0] ) );
 		// Strips one trailing "(...)" or "[...]" group at the very end only.
-		$stripped = preg_replace( '/\s*[\(\[][^\(\)\[\]]*[\)\]]\s*$/', '', $stripped );
+		$stripped = (string) preg_replace( '/\s*[\(\[][^\(\)\[\]]*[\)\]]\s*$/', '', $stripped );
 		return trim( $stripped );
 	}
 

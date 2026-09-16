@@ -9,6 +9,7 @@ cd "$(dirname "$0")/.."
 V="${1:?usage: bin/bump-version 0.3.1}"
 
 sed -i '' -E "s/^( \* Version: ).*/\1${V}/" beyond-elysium/beyond-elysium.php
+sed -i '' -E "s/^(Stable tag: ).*/\1${V}/" beyond-elysium/readme.txt
 sed -i '' -E "s/(define\( 'BE_VERSION', ')[^']*(' \);)/\1${V}\2/" beyond-elysium/beyond-elysium.php
 sed -i '' -E "s/(\"version\": \")[^\"]*(\")/\1${V}\2/" package.json
 sed -i '' -E "s/(const DB_VERSION = ')[^']*(';)/\1${V}\2/" beyond-elysium/includes/Database/Schema.php

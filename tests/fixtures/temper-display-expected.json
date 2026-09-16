@@ -1,50 +1,50 @@
 [
     {
-        "name": "a full pool with no temp/perm split renders filled dots",
-        "output": "ooo"
+        "name": "a full pool renders one filled dot per point",
+        "output": "●●●"
     },
     {
         "name": "zero pool renders empty",
         "output": ""
     },
     {
-        "name": "temporary below permanent renders spent glyphs for the difference",
-        "output": "ooøøø"
+        "name": "temporary below permanent renders an empty dot for each spent point",
+        "output": "●●○○○"
     },
     {
-        "name": "temporary above permanent renders overflow glyphs, not clamped",
-        "output": "oooõõ"
+        "name": "temporary above permanent renders a ringed dot for each extra point, not clamped",
+        "output": "●●●◉◉"
     },
     {
-        "name": "temporary equal to permanent renders no overflow or spent glyphs",
-        "output": "oooo"
+        "name": "temporary equal to permanent renders only filled dots",
+        "output": "●●●●"
     },
     {
-        "name": "exactly 10 glyphs does not trigger compression",
-        "output": "oooooooooo"
+        "name": "ten points group into two fives",
+        "output": "●●●●● ●●●●●"
     },
     {
-        "name": "exactly 11 filled glyphs collapses the leftmost run of five, leaving 6 remaining plus the capital",
-        "output": "Ooooooo"
+        "name": "eleven points stay eleven dots of one size, never a capital",
+        "output": "●●●●● ●●●●● ●"
     },
     {
-        "name": "a 15-point pool (e.g. Blood) collapses twice down to two capitals plus the remainder",
-        "output": "OOooooo"
+        "name": "a 15-point pool (e.g. Blood) is three groups of five",
+        "output": "●●●●● ●●●●● ●●●●●"
     },
     {
-        "name": "a large uniform pool stops compressing once at or under 10 characters",
-        "output": "Oooooooooo"
+        "name": "groups count every dot, whatever its state",
+        "output": "●●●○○ ○○"
     },
     {
-        "name": "spent runs collapse from the right, leaving the uncollapsed remainder on the left",
-        "output": "øøøøøøøØ"
+        "name": "twelve spent points group in fives",
+        "output": "○○○○○ ○○○○○ ○○"
     },
     {
-        "name": "overflow runs collapse from the right, leaving the uncollapsed remainder on the left",
-        "output": "õõõõõõõÕ"
+        "name": "twelve points above zero permanent group in fives",
+        "output": "◉◉◉◉◉ ◉◉◉◉◉ ◉◉"
     },
     {
-        "name": "spent is collapsed before filled when both are present",
-        "output": "ooooooøØ"
+        "name": "held and spent together group across the change",
+        "output": "●●●●● ●○○○○ ○○"
     }
 ]

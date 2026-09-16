@@ -121,9 +121,11 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 			'GET creature-stacks' => [ 'GET', '/be/v1/creature-stacks', 'be_view_characters' ],
 			'GET characters'      => [ 'GET', "/be/v1/{$g}/characters", 'be_view_characters' ],
 			'GET character changes (per-character)' => [ 'GET', "/be/v1/{$g}/characters/999999/changes", 'be_view_characters' ],
-			'GET templates (global)' => [ 'GET', '/be/v1/templates', 'be_view_characters' ],
+			// The template editor's since 1.0.0-review F-069; a sheet uses resolve.
+			'GET templates (global)' => [ 'GET', '/be/v1/templates', 'be_manage_templates' ],
 			'GET plots'           => [ 'GET', "/be/v1/{$g}/plots", 'be_view_characters' ],
-			'GET connections'     => [ 'GET', "/be/v1/{$g}/connections", 'be_view_characters' ],
+			// Staff only since 1.0.0-review F-063: the list names whose action allocation is whose.
+			'GET connections'     => [ 'GET', "/be/v1/{$g}/connections", [ 'be_manage_connections', 'be_manage_plots' ] ],
 			'GET world-objects'   => [ 'GET', "/be/v1/{$g}/world-objects", 'be_view_characters' ],
 			'GET boons'           => [ 'GET', "/be/v1/{$g}/boons", 'be_view_characters' ],
 			'GET query-fields'    => [ 'GET', '/be/v1/query-fields', 'be_view_characters' ],
@@ -132,11 +134,13 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 			// the permission check for a denied persona.
 			'POST games'          => [ 'POST', '/be/v1/games', 'be_manage_games', [ 'name' => 'Matrix Test Game' ] ],
 			'DELETE games'        => [ 'DELETE', '/be/v1/games/nonexistent-slug', 'be_manage_games' ],
-			'POST schema-blocks'  => [ 'POST', '/be/v1/schema-blocks', 'be_manage_schemas', [ 'slug' => 'matrix-test-block', 'name' => 'Matrix Test Block', 'section_type' => 'trait_list' ] ],
-			'DELETE schema-blocks' => [ 'DELETE', '/be/v1/schema-blocks/nonexistent', 'be_manage_schemas' ],
-			'POST creature-stacks' => [ 'POST', '/be/v1/creature-stacks', 'be_manage_schemas', [ 'slug' => 'matrix-test-stack', 'name' => 'Matrix Test Stack', 'stack_definition' => [] ] ],
-			'POST templates'      => [ 'POST', '/be/v1/templates', 'be_manage_templates' ],
-			'DELETE templates'    => [ 'DELETE', '/be/v1/templates/999999', 'be_manage_templates' ],
+			// The global catalog every chronicle shares is a site administrator's to change
+			// (1.0.0-review F-002) - a Storyteller customizes it through a chronicle's own routes.
+			'POST schema-blocks'  => [ 'POST', '/be/v1/schema-blocks', 'be_manage_games', [ 'slug' => 'matrix-test-block', 'name' => 'Matrix Test Block', 'section_type' => 'trait_list' ] ],
+			'DELETE schema-blocks' => [ 'DELETE', '/be/v1/schema-blocks/nonexistent', 'be_manage_games' ],
+			'POST creature-stacks' => [ 'POST', '/be/v1/creature-stacks', 'be_manage_games', [ 'slug' => 'matrix-test-stack', 'name' => 'Matrix Test Stack', 'stack_definition' => [] ] ],
+			'POST templates'      => [ 'POST', '/be/v1/templates', 'be_manage_games' ],
+			'DELETE templates'    => [ 'DELETE', '/be/v1/templates/999999', 'be_manage_games' ],
 			'POST import parse'   => [ 'POST', "/be/v1/{$g}/import/parse", 'be_import' ],
 
 			// ST-level management (editor+admin).

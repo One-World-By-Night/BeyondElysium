@@ -95,8 +95,8 @@
 	color: #555;
 }
 
-.be-trait-list-editor__modal-field input[type='text'],
-.be-trait-list-editor__modal-field input[type='number'] {
+.be-trait-list-editor__modal-field input[type="text"],
+.be-trait-list-editor__modal-field input[type="number"] {
 	box-sizing: border-box;
 	width: 100%;
 	padding: 0.4rem 0.5rem;

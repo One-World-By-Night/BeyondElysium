@@ -35,20 +35,27 @@ class Saved_Query {
 	}
 
 	/**
-	 * Return every saved query belonging to a game, with the recent-search row
-	 * first and the rest alphabetical by name. Includes every inventory type,
-	 * with no filtering or pagination.
+	 * Return a game's saved queries, newest-recent-search first then by name.
+	 * With `$viewer_id`, another user's "Most Recent Search" is left out - a
+	 * recent search is its owner's alone, while named saved queries are shared
+	 * with the chronicle (1.0.0-review F-028). Without it, every row (used when
+	 * deleting a game's content).
 	 *
-	 * @param int $game_id
+	 * @param int      $game_id
+	 * @param int|null $viewer_id
 	 * @return array
 	 */
-	public static function for_game( int $game_id ): array {
+	public static function for_game( int $game_id, ?int $viewer_id = null ): array {
 		global $wpdb;
 		$table = Manager::table( 'queries' );
-		$rows  = $wpdb->get_results( $wpdb->prepare(
-			"SELECT * FROM {$table} WHERE game_id = %d ORDER BY is_recent_search DESC, name ASC",
-			$game_id
-		) ) ?: [];
+		$sql   = $viewer_id === null
+			? $wpdb->prepare( "SELECT * FROM {$table} WHERE game_id = %d ORDER BY is_recent_search DESC, name ASC", $game_id )
+			: $wpdb->prepare(
+				"SELECT * FROM {$table} WHERE game_id = %d AND ( is_recent_search = 0 OR created_by = %d ) ORDER BY is_recent_search DESC, name ASC",
+				$game_id,
+				$viewer_id
+			);
+		$rows = $wpdb->get_results( $sql ) ?: [];
 		return array_map( [ self::class, 'decode' ], $rows );
 	}
 
@@ -134,9 +141,9 @@ class Saved_Query {
 	 */
 	public static function save_recent( int $game_id, int $wp_user_id, string $inventory, bool $match_all, array $conditions ): int {
 		global $wpdb;
-		$table    = Manager::table( 'queries' );
-		$existing = $wpdb->get_var( $wpdb->prepare(
-			"SELECT id FROM {$table} WHERE game_id = %d AND created_by = %d AND is_recent_search = 1",
+		$table  = Manager::table( 'queries' );
+		$oldest = static fn() => (int) $wpdb->get_var( $wpdb->prepare(
+			"SELECT id FROM {$table} WHERE game_id = %d AND created_by = %d AND is_recent_search = 1 ORDER BY id ASC LIMIT 1",
 			$game_id,
 			$wp_user_id
 		) );
@@ -149,14 +156,25 @@ class Saved_Query {
 			'conditions' => $conditions,
 		];
 
+		$existing = $oldest();
 		if ( $existing ) {
-			self::update( (int) $existing, $data );
-			return (int) $existing;
+			self::update( $existing, $data );
+		} else {
+			$data['created_by']       = $wp_user_id;
+			$data['is_recent_search'] = true;
+			self::create( $data );
 		}
 
-		$data['created_by']       = $wp_user_id;
-		$data['is_recent_search'] = true;
-		return (int) self::create( $data );
+		// Two first runs at once each find no row and each make one. Every run keeps only the
+		// oldest, so however they interleave, one is left (1.0.0-review F-092).
+		$kept = $oldest();
+		$wpdb->query( $wpdb->prepare(
+			"DELETE FROM {$table} WHERE game_id = %d AND created_by = %d AND is_recent_search = 1 AND id <> %d",
+			$game_id,
+			$wp_user_id,
+			$kept
+		) );
+		return $kept;
 	}
 
 	/**

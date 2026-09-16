@@ -7,9 +7,15 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
-import type { AuthorizationSettings, Game, GameMember, GameMemberRole } from '../../types';
+import type {
+	AuthorizationSettings,
+	Game,
+	GameMember,
+	GameMemberRole,
+} from '../../types';
 import type { DataManagementSettings } from '../../api/client';
 import type { WpUserSummary } from '../../types/character';
+import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
 interface RestError {
@@ -22,13 +28,26 @@ interface RestError {
  * `message` property.
  */
 function errorMessage( error: unknown ): string {
-	if ( typeof error === 'object' && error !== null && ( error as RestError ).message ) {
+	if (
+		typeof error === 'object' &&
+		error !== null &&
+		( error as RestError ).message
+	) {
 		return ( error as RestError ).message as string;
 	}
 	return __( 'Something went wrong.', 'beyond-elysium' );
 }
 
 const ROLES: GameMemberRole[] = [ 'hst', 'ast', 'narrator', 'boons', 'player' ];
+
+/** Each role as the page names it, not its stored key. */
+const ROLE_LABEL: Record< GameMemberRole, string > = {
+	hst: __( 'HST', 'beyond-elysium' ),
+	ast: __( 'AST', 'beyond-elysium' ),
+	narrator: __( 'Narrator', 'beyond-elysium' ),
+	boons: __( 'Harpy (boons)', 'beyond-elysium' ),
+	player: __( 'Player', 'beyond-elysium' ),
+};
 const SEARCH_DEBOUNCE_MS = 300;
 
 /**
@@ -38,16 +57,18 @@ const SEARCH_DEBOUNCE_MS = 300;
  * setting, change or remove a member's role, and add new members.
  */
 export function AdminChronicleAccess() {
-	const [ games, setGames ] = useState<Game[]>( [] );
-	const [ selectedSlug, setSelectedSlug ] = useState<string>( '' );
-	const [ members, setMembers ] = useState<GameMember[]>( [] );
+	const [ games, setGames ] = useState< Game[] >( [] );
+	const [ selectedSlug, setSelectedSlug ] = useState< string >( '' );
+	const [ members, setMembers ] = useState< GameMember[] >( [] );
 	const [ loadingMembers, setLoadingMembers ] = useState( false );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
 
-	const [ ascSettings, setAscSettings ] = useState<AuthorizationSettings | null>( null );
+	const [ ascSettings, setAscSettings ] =
+		useState< AuthorizationSettings | null >( null );
 	const [ ascSaving, setAscSaving ] = useState( false );
 
-	const [ dataSettings, setDataSettings ] = useState<DataManagementSettings | null>( null );
+	const [ dataSettings, setDataSettings ] =
+		useState< DataManagementSettings | null >( null );
 	const [ dataSaving, setDataSaving ] = useState( false );
 	const [ exporting, setExporting ] = useState( false );
 
@@ -68,19 +89,22 @@ export function AdminChronicleAccess() {
 			.list()
 			.then( ( result ) => {
 				setGames( result );
-				if ( selectedSlug || result.length === 0 ) {
+				if ( result.length === 0 ) {
 					return;
 				}
 				// §6.7/§3.4: a URL-supplied chronicle wins outright (a setup-checklist deep
 				// link); otherwise prefer any real chronicle over "Beyond Elysium Demo",
 				// which sorts first alphabetically on both production sites today and would
 				// otherwise silently become the thing an administrator edits by default.
-				const fromUrl = new URLSearchParams( window.location.search ).get( 'game' );
+				const fromUrl = new URLSearchParams(
+					window.location.search
+				).get( 'game' );
 				const preselect =
 					result.find( ( g ) => g.slug === fromUrl ) ??
 					result.find( ( g ) => g.slug !== 'be-demo' ) ??
 					result[ 0 ];
-				setSelectedSlug( preselect.slug );
+				// A chronicle already chosen stays chosen across a reload.
+				setSelectedSlug( ( current ) => current || preselect.slug );
 			} )
 			.catch( ( err: unknown ) => setError( errorMessage( err ) ) );
 	}
@@ -167,11 +191,16 @@ export function AdminChronicleAccess() {
 		setError( null );
 		try {
 			const data = await api.dataManagement.export();
-			const blob = new Blob( [ JSON.stringify( data, null, 2 ) ], { type: 'application/json' } );
+			const blob = new Blob( [ JSON.stringify( data, null, 2 ) ], {
+				type: 'application/json',
+			} );
 			const url = URL.createObjectURL( blob );
 			const link = document.createElement( 'a' );
 			link.href = url;
-			link.download = `beyond-elysium-export-${ data.exported_at.replace( /[^0-9]/g, '' ) }.json`;
+			link.download = `beyond-elysium-export-${ data.exported_at.replace(
+				/[^0-9]/g,
+				''
+			) }.json`;
 			link.click();
 			URL.revokeObjectURL( url );
 		} catch ( err: unknown ) {
@@ -195,7 +224,9 @@ export function AdminChronicleAccess() {
 		setAscRolePathSaving( true );
 		setError( null );
 		try {
-			await api.games.update( roleEditingSlug, { asc_role_path: ascRolePathDraft.trim() } );
+			await api.games.update( roleEditingSlug, {
+				asc_role_path: ascRolePathDraft.trim(),
+			} );
 			setRoleEditingSlug( '' );
 			loadGames();
 		} catch ( err: unknown ) {
@@ -214,7 +245,9 @@ export function AdminChronicleAccess() {
 		setNotificationsSaving( true );
 		setError( null );
 		try {
-			await api.games.update( game.slug, { notifications_enabled: enabled } );
+			await api.games.update( game.slug, {
+				notifications_enabled: enabled,
+			} );
 			loadGames();
 		} catch ( err: unknown ) {
 			setError( errorMessage( err ) );
@@ -249,7 +282,10 @@ export function AdminChronicleAccess() {
 			! window.confirm(
 				sprintf(
 					// translators: %s: member's display name, or a generic fallback if unknown.
-					__( 'Remove %s from this chronicle? They keep their WordPress account and any characters - only chronicle-scoped access is removed.', 'beyond-elysium' ),
+					__(
+						'Remove %s from this chronicle? They keep their WordPress account and any characters - only chronicle-scoped access is removed.',
+						'beyond-elysium'
+					),
 					name ?? __( 'this user', 'beyond-elysium' )
 				)
 			)
@@ -267,7 +303,10 @@ export function AdminChronicleAccess() {
 
 	return (
 		<div className="be-admin">
-			<h1>{ __( 'Chronicle Access', 'beyond-elysium' ) }</h1>
+			<div className="be-help-heading">
+				<h1>{ __( 'Chronicle Access', 'beyond-elysium' ) }</h1>
+				<HelpButton helpKey="chronicle-access" />
+			</div>
 			{ error && (
 				<div className="be-admin__error" role="alert">
 					{ error }
@@ -283,23 +322,33 @@ export function AdminChronicleAccess() {
 						disabled={ ! ascSettings || ascSaving }
 						onChange={ ( e ) => toggleAsc( e.target.checked ) }
 					/>{ ' ' }
-					{ __( 'Use accessSchema role paths (falls back to chronicle membership below whenever it denies, is unreachable, or is off)', 'beyond-elysium' ) }
+					{ __(
+						'Use accessSchema role paths (falls back to chronicle membership below whenever it denies, is unreachable, or is off)',
+						'beyond-elysium'
+					) }
 				</label>
 				{ ascSettings && (
 					<p>
 						{ sprintf(
 							// translators: %s: "detected" or "NOT detected".
-							__( 'Client %s on this install.', 'beyond-elysium' ),
+							__(
+								'Client %s on this install.',
+								'beyond-elysium'
+							),
 							ascSettings.client_detected
 								? __( 'detected', 'beyond-elysium' )
 								: __( 'NOT detected', 'beyond-elysium' )
 						) }
-						{ ascSettings.asc_enabled && ! ascSettings.client_detected && (
-							<strong>
-								{ ' ' }
-								{ __( 'accessSchema is enabled but no client is installed - every chronicle-scoped request is falling through to membership below.', 'beyond-elysium' ) }
-							</strong>
-						) }
+						{ ascSettings.asc_enabled &&
+							! ascSettings.client_detected && (
+								<strong>
+									{ ' ' }
+									{ __(
+										'accessSchema is enabled but no client is installed - every chronicle-scoped request is falling through to membership below.',
+										'beyond-elysium'
+									) }
+								</strong>
+							) }
 					</p>
 				) }
 			</div>
@@ -311,22 +360,39 @@ export function AdminChronicleAccess() {
 						type="checkbox"
 						checked={ dataSettings?.delete_on_uninstall ?? false }
 						disabled={ ! dataSettings || dataSaving }
-						onChange={ ( e ) => toggleDeleteOnUninstall( e.target.checked ) }
+						onChange={ ( e ) =>
+							toggleDeleteOnUninstall( e.target.checked )
+						}
 					/>{ ' ' }
-					{ __( 'Delete all Beyond Elysium data when the plugin is uninstalled (off by default - deactivating or uninstalling otherwise keeps every chronicle intact)', 'beyond-elysium' ) }
+					{ __(
+						'Delete all Beyond Elysium data when the plugin is uninstalled (off by default - deactivating or uninstalling otherwise keeps every chronicle intact)',
+						'beyond-elysium'
+					) }
 				</label>
 				<p>
-					<button type="button" disabled={ exporting } onClick={ exportData }>
-						{ exporting ? __( 'Exporting…', 'beyond-elysium' ) : __( 'Export all data', 'beyond-elysium' ) }
+					<button
+						type="button"
+						disabled={ exporting }
+						onClick={ exportData }
+					>
+						{ exporting
+							? __( 'Exporting…', 'beyond-elysium' )
+							: __( 'Export all data', 'beyond-elysium' ) }
 					</button>{ ' ' }
-					{ __( 'Downloads every chronicle, character, and catalog as one JSON file - a manual backup, available any time, not only before an uninstall.', 'beyond-elysium' ) }
+					{ __(
+						'Downloads every chronicle, character, and catalog as one JSON file - a manual backup, available any time, not only before an uninstall.',
+						'beyond-elysium'
+					) }
 				</p>
 			</div>
 
 			<div className="be-admin__filters">
 				<label>
 					{ __( 'Chronicle', 'beyond-elysium' ) }{ ' ' }
-					<select value={ selectedSlug } onChange={ ( e ) => setSelectedSlug( e.target.value ) }>
+					<select
+						value={ selectedSlug }
+						onChange={ ( e ) => setSelectedSlug( e.target.value ) }
+					>
 						{ games.map( ( g ) => (
 							<option key={ g.slug } value={ g.slug }>
 								{ g.name }
@@ -338,29 +404,60 @@ export function AdminChronicleAccess() {
 
 			{ selectedGame && (
 				<div className="be-admin__form" style={ { maxWidth: '100%' } }>
-					<h2>{ sprintf( __( "%s's accessSchema path", 'beyond-elysium' ), selectedGame.name ) }</h2>
+					<h2>
+						{ sprintf(
+							/* translators: %s: the chronicle's name */
+							__( "%s's accessSchema path", 'beyond-elysium' ),
+							selectedGame.name
+						) }
+					</h2>
 					{ roleEditingSlug === selectedGame.slug ? (
 						<>
 							<input
 								type="text"
-								aria-label={ __( 'accessSchema role path', 'beyond-elysium' ) }
-								placeholder={ __( 'Chronicle/KONY', 'beyond-elysium' ) }
+								aria-label={ __(
+									'accessSchema role path',
+									'beyond-elysium'
+								) }
+								placeholder={ __(
+									'Chronicle/KONY',
+									'beyond-elysium'
+								) }
 								value={ ascRolePathDraft }
-								onChange={ ( e ) => setAscRolePathDraft( e.target.value ) }
+								onChange={ ( e ) =>
+									setAscRolePathDraft( e.target.value )
+								}
 							/>
 							<div className="be-admin__form-actions">
-								<button type="button" disabled={ ascRolePathSaving } onClick={ saveRolePath }>
-									{ ascRolePathSaving ? __( 'Saving…', 'beyond-elysium' ) : __( 'Save', 'beyond-elysium' ) }
+								<button
+									type="button"
+									disabled={ ascRolePathSaving }
+									onClick={ saveRolePath }
+								>
+									{ ascRolePathSaving
+										? __( 'Saving…', 'beyond-elysium' )
+										: __( 'Save', 'beyond-elysium' ) }
 								</button>
-								<button type="button" onClick={ () => setRoleEditingSlug( '' ) }>
+								<button
+									type="button"
+									onClick={ () => setRoleEditingSlug( '' ) }
+								>
 									{ __( 'Cancel', 'beyond-elysium' ) }
 								</button>
 							</div>
 						</>
 					) : (
 						<p>
-							<code>{ selectedGame.asc_role_path || __( '(not set)', 'beyond-elysium' ) }</code>{ ' ' }
-							<button type="button" onClick={ () => startEditRolePath( selectedGame ) }>
+							<code>
+								{ selectedGame.asc_role_path ||
+									__( '(not set)', 'beyond-elysium' ) }
+							</code>{ ' ' }
+							<button
+								type="button"
+								onClick={ () =>
+									startEditRolePath( selectedGame )
+								}
+							>
 								{ __( 'Edit', 'beyond-elysium' ) }
 							</button>
 						</p>
@@ -370,15 +467,29 @@ export function AdminChronicleAccess() {
 
 			{ selectedGame && (
 				<div className="be-admin__form" style={ { maxWidth: '100%' } }>
-					<h2>{ sprintf( __( "%s's notifications", 'beyond-elysium' ), selectedGame.name ) }</h2>
+					<h2>
+						{ sprintf(
+							/* translators: %s: the chronicle's name */
+							__( "%s's notifications", 'beyond-elysium' ),
+							selectedGame.name
+						) }
+					</h2>
 					<label>
 						<input
 							type="checkbox"
 							checked={ !! selectedGame.notifications_enabled }
 							disabled={ notificationsSaving }
-							onChange={ ( e ) => toggleNotifications( selectedGame, e.target.checked ) }
+							onChange={ ( e ) =>
+								toggleNotifications(
+									selectedGame,
+									e.target.checked
+								)
+							}
 						/>{ ' ' }
-						{ __( 'Email a player when their submitted change is approved or rejected', 'beyond-elysium' ) }
+						{ __(
+							'Email a player when their submitted change is approved or rejected',
+							'beyond-elysium'
+						) }
 					</label>
 				</div>
 			) }
@@ -399,27 +510,60 @@ export function AdminChronicleAccess() {
 					<tbody>
 						{ members.length === 0 && (
 							<tr>
-								<td colSpan={ 4 }>{ __( 'No members yet.', 'beyond-elysium' ) }</td>
+								<td colSpan={ 4 }>
+									{ __(
+										'No members yet.',
+										'beyond-elysium'
+									) }
+								</td>
 							</tr>
 						) }
 						{ members.map( ( member ) => (
 							<tr key={ member.wp_user_id }>
-								<td>{ member.name ?? sprintf( __( 'User #%d', 'beyond-elysium' ), member.wp_user_id ) }</td>
+								<td>
+									{ member.name ??
+										sprintf(
+											/* translators: %d: the WordPress user id, shown when the member has no display name */
+											__( 'User #%d', 'beyond-elysium' ),
+											member.wp_user_id
+										) }
+								</td>
 								<td>{ member.user_email }</td>
 								<td>
 									<select
 										value={ member.role }
-										onChange={ ( e ) => changeRole( member.wp_user_id, e.target.value as GameMemberRole ) }
+										onChange={ ( e ) =>
+											changeRole(
+												member.wp_user_id,
+												e.target.value as GameMemberRole
+											)
+										}
 									>
 										{ ROLES.map( ( r ) => (
 											<option key={ r } value={ r }>
-												{ r }
+												{ ROLE_LABEL[ r ] }
 											</option>
 										) ) }
 									</select>
+									{ ! member.role_usable && (
+										<p className="description">
+											{ __(
+												'This account needs the Editor role on this site to use this role, unless accessSchema grants it.',
+												'beyond-elysium'
+											) }
+										</p>
+									) }
 								</td>
 								<td>
-									<button type="button" onClick={ () => removeMember( member.wp_user_id, member.name ) }>
+									<button
+										type="button"
+										onClick={ () =>
+											removeMember(
+												member.wp_user_id,
+												member.name
+											)
+										}
+									>
 										{ __( 'Remove', 'beyond-elysium' ) }
 									</button>
 								</td>
@@ -430,7 +574,11 @@ export function AdminChronicleAccess() {
 			) }
 
 			{ ! addingMember ? (
-				<button type="button" disabled={ ! selectedSlug } onClick={ () => setAddingMember( true ) }>
+				<button
+					type="button"
+					disabled={ ! selectedSlug }
+					onClick={ () => setAddingMember( true ) }
+				>
 					{ __( '+ Add Member', 'beyond-elysium' ) }
 				</button>
 			) : (
@@ -465,9 +613,9 @@ function AddMemberForm( {
 	onError: ( message: string ) => void;
 } ) {
 	const [ search, setSearch ] = useState( '' );
-	const [ users, setUsers ] = useState<WpUserSummary[]>( [] );
+	const [ users, setUsers ] = useState< WpUserSummary[] >( [] );
 	const [ loading, setLoading ] = useState( true );
-	const [ role, setRole ] = useState<GameMemberRole>( 'player' );
+	const [ role, setRole ] = useState< GameMemberRole >( 'player' );
 	const [ submitting, setSubmitting ] = useState( false );
 
 	useEffect( () => {
@@ -515,20 +663,33 @@ function AddMemberForm( {
 			<h2>{ __( 'Add member', 'beyond-elysium' ) }</h2>
 			<label>
 				{ __( 'Role', 'beyond-elysium' ) }{ ' ' }
-				<select value={ role } onChange={ ( e ) => setRole( e.target.value as GameMemberRole ) }>
+				<select
+					value={ role }
+					onChange={ ( e ) =>
+						setRole( e.target.value as GameMemberRole )
+					}
+				>
 					{ ROLES.map( ( r ) => (
 						<option key={ r } value={ r }>
-							{ r }
+							{ ROLE_LABEL[ r ] }
 						</option>
 					) ) }
 				</select>
 			</label>
 			<input
 				type="search"
-				aria-label={ __( 'Search by name or email…', 'beyond-elysium' ) }
-				placeholder={ __( 'Search by name or email…', 'beyond-elysium' ) }
+				aria-label={ __(
+					'Search by name or email…',
+					'beyond-elysium'
+				) }
+				placeholder={ __(
+					'Search by name or email…',
+					'beyond-elysium'
+				) }
 				value={ search }
 				onChange={ ( e ) => setSearch( e.target.value ) }
+				// The search is what this dialog is for.
+				// eslint-disable-next-line jsx-a11y/no-autofocus
 				autoFocus
 			/>
 			{ loading ? (
@@ -540,8 +701,16 @@ function AddMemberForm( {
 					{ users.map( ( user ) => (
 						<li key={ user.id }>
 							{ user.display_name } ({ user.email }){ ' ' }
-							<button type="button" disabled={ submitting } onClick={ () => add( user.id ) }>
-								{ sprintf( __( 'Add as %s', 'beyond-elysium' ), role ) }
+							<button
+								type="button"
+								disabled={ submitting }
+								onClick={ () => add( user.id ) }
+							>
+								{ sprintf(
+									/* translators: %s: the chronicle role label, e.g. "Storyteller" or "Player" */
+									__( 'Add as %s', 'beyond-elysium' ),
+									ROLE_LABEL[ role ]
+								) }
 							</button>
 						</li>
 					) ) }

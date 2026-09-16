@@ -7,9 +7,18 @@
 import { __ } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
 import api from '../../api/client';
-import type { QueryCondition, QueryField, QueryLogic, QueryResultCharacter, SavedQuery, StatisticsResult, StatisticType } from '../../types/query';
+import type {
+	QueryCondition,
+	QueryField,
+	QueryLogic,
+	QueryResultCharacter,
+	SavedQuery,
+	StatisticsResult,
+	StatisticType,
+} from '../../types/query';
 import { QueryBuilder } from './QueryBuilder';
 import { QueryResults } from './QueryResults';
+import { searchKey } from '../../lib/querySelection';
 import { StatisticsView } from './StatisticsView';
 import './QueryTool.css';
 
@@ -28,7 +37,7 @@ const INVENTORIES: { value: string; label: string }[] = [
 ];
 
 /** Result-table columns per inventory - matches query-inventories.php's own result_columns. */
-const RESULT_COLUMNS: Record<string, { key: string; label: string }[]> = {
+const RESULT_COLUMNS: Record< string, { key: string; label: string }[] > = {
 	char: [
 		{ key: 'name', label: __( 'Name', 'beyond-elysium' ) },
 		{ key: 'stack_slug', label: __( 'Type', 'beyond-elysium' ) },
@@ -41,7 +50,10 @@ const RESULT_COLUMNS: Record<string, { key: string; label: string }[]> = {
 	],
 	loc: [
 		{ key: 'name', label: __( 'Name', 'beyond-elysium' ) },
-		{ key: 'location_type', label: __( 'Location Type', 'beyond-elysium' ) },
+		{
+			key: 'location_type',
+			label: __( 'Location Type', 'beyond-elysium' ),
+		},
 		{ key: 'level', label: __( 'Level', 'beyond-elysium' ) },
 	],
 	rote: [
@@ -59,25 +71,31 @@ const PER_PAGE = 20;
  * switch between the Search, Statistics, and Saved Queries views.
  */
 export function QueryTool( { gameSlug }: QueryToolProps ) {
-	const [ tab, setTab ] = useState<Tab>( 'query' );
+	const [ tab, setTab ] = useState< Tab >( 'query' );
 	const [ inventory, setInventory ] = useState( 'char' );
-	const [ fields, setFields ] = useState<QueryField[]>( [] );
-	const [ conditions, setConditions ] = useState<QueryCondition[]>( [] );
-	const [ logic, setLogic ] = useState<QueryLogic>( 'AND' );
+	const [ fields, setFields ] = useState< QueryField[] >( [] );
+	const [ conditions, setConditions ] = useState< QueryCondition[] >( [] );
+	const [ logic, setLogic ] = useState< QueryLogic >( 'AND' );
 
-	const [ results, setResults ] = useState<QueryResultCharacter[]>( [] );
+	const [ results, setResults ] = useState< QueryResultCharacter[] >( [] );
+	// The search the shown results came from, so a bulk selection never outlives it.
+	const [ resultsFor, setResultsFor ] = useState( '' );
 	const [ total, setTotal ] = useState( 0 );
 	const [ page, setPage ] = useState( 1 );
-	const [ sortField, setSortField ] = useState<string | undefined>();
-	const [ sortDirection, setSortDirection ] = useState<'asc' | 'desc'>( 'asc' );
+	const [ sortField, setSortField ] = useState< string | undefined >();
+	const [ sortDirection, setSortDirection ] = useState< 'asc' | 'desc' >(
+		'asc'
+	);
 	const [ loading, setLoading ] = useState( false );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
 
-	const [ statsResult, setStatsResult ] = useState<StatisticsResult | null>( null );
+	const [ statsResult, setStatsResult ] = useState< StatisticsResult | null >(
+		null
+	);
 	const [ statsLoading, setStatsLoading ] = useState( false );
-	const [ statsError, setStatsError ] = useState<string | null>( null );
+	const [ statsError, setStatsError ] = useState< string | null >( null );
 
-	const [ savedQueries, setSavedQueries ] = useState<SavedQuery[]>( [] );
+	const [ savedQueries, setSavedQueries ] = useState< SavedQuery[] >( [] );
 	const [ saveName, setSaveName ] = useState( '' );
 
 	// The field list is fetched once here (not independently in QueryBuilder/StatisticsView)
@@ -89,7 +107,12 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 			.then( ( all ) => setFields( all.filter( ( f ) => f.mapped ) ) )
 			.catch( () => {
 				setFields( [] );
-				setError( __( 'Failed to load the field list. Try refreshing the page.', 'beyond-elysium' ) );
+				setError(
+					__(
+						'Failed to load the field list. Try refreshing the page.',
+						'beyond-elysium'
+					)
+				);
 			} );
 	}, [ gameSlug, inventory ] );
 
@@ -109,6 +132,7 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 		setInventory( next );
 		setConditions( [] );
 		setResults( [] );
+		setResultsFor( '' );
 		setTotal( 0 );
 		setSortField( undefined );
 		setStatsResult( null );
@@ -120,7 +144,9 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 			.then( setSavedQueries )
 			.catch( () => {
 				setSavedQueries( [] );
-				setError( __( 'Failed to load saved queries.', 'beyond-elysium' ) );
+				setError(
+					__( 'Failed to load saved queries.', 'beyond-elysium' )
+				);
 			} );
 	}
 
@@ -135,13 +161,16 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 				inventory,
 				conditions,
 				logic,
-				sort: sortField ? { field: sortField, direction: sortDirection } : undefined,
+				sort: sortField
+					? { field: sortField, direction: sortDirection }
+					: undefined,
 				page: targetPage,
 				per_page: PER_PAGE,
 			} );
 			setResults( result.items );
 			setTotal( result.total );
 			setPage( targetPage );
+			setResultsFor( searchKey( inventory, conditions, logic ) );
 			loadSavedQueries();
 		} catch ( err: unknown ) {
 			setError( errorMessage( err ) );
@@ -156,11 +185,24 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 		runQuery( 1 );
 	}
 
-	async function runStatistics( key: string, statType: StatisticType, okZero: boolean, trait?: string ) {
+	async function runStatistics(
+		key: string,
+		statType: StatisticType,
+		okZero: boolean,
+		trait?: string
+	) {
 		setStatsLoading( true );
 		setStatsError( null );
 		try {
-			const result = await api.query( gameSlug ).statistics( { inventory, conditions, logic, key, stat_type: statType, ok_zero: okZero, trait } );
+			const result = await api.query( gameSlug ).statistics( {
+				inventory,
+				conditions,
+				logic,
+				key,
+				stat_type: statType,
+				ok_zero: okZero,
+				trait,
+			} );
 			setStatsResult( result );
 		} catch ( err: unknown ) {
 			// Shows an explicit error instead of a null result indistinguishable from "nothing run yet."
@@ -176,7 +218,12 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 			return;
 		}
 		try {
-			await api.query( gameSlug ).savedQueries.create( { name: saveName.trim(), inventory, logic, conditions } );
+			await api.query( gameSlug ).savedQueries.create( {
+				name: saveName.trim(),
+				inventory,
+				logic,
+				conditions,
+			} );
 			setSaveName( '' );
 			loadSavedQueries();
 		} catch ( err: unknown ) {
@@ -199,6 +246,7 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 		setLogic( saved.match_all ? 'AND' : 'OR' );
 		setResults( [] );
 		setTotal( 0 );
+		setResultsFor( '' );
 		setTab( 'query' );
 	}
 
@@ -213,12 +261,17 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 
 	async function renameSavedQuery( saved: SavedQuery ) {
 		// eslint-disable-next-line no-alert
-		const name = window.prompt( __( 'Rename query', 'beyond-elysium' ), saved.name );
+		const name = window.prompt(
+			__( 'Rename query', 'beyond-elysium' ),
+			saved.name
+		);
 		if ( ! name || ! name.trim() || name.trim() === saved.name ) {
 			return;
 		}
 		try {
-			await api.query( gameSlug ).savedQueries.update( saved.id, { name: name.trim() } );
+			await api
+				.query( gameSlug )
+				.savedQueries.update( saved.id, { name: name.trim() } );
 			loadSavedQueries();
 		} catch ( err: unknown ) {
 			setError( errorMessage( err ) );
@@ -228,13 +281,25 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 	return (
 		<div className="be-query-tool">
 			<nav className="be-query-tool__tabs">
-				<button type="button" className={ tab === 'query' ? 'is-active' : '' } onClick={ () => setTab( 'query' ) }>
+				<button
+					type="button"
+					className={ tab === 'query' ? 'is-active' : '' }
+					onClick={ () => setTab( 'query' ) }
+				>
 					{ __( 'Search', 'beyond-elysium' ) }
 				</button>
-				<button type="button" className={ tab === 'statistics' ? 'is-active' : '' } onClick={ () => setTab( 'statistics' ) }>
+				<button
+					type="button"
+					className={ tab === 'statistics' ? 'is-active' : '' }
+					onClick={ () => setTab( 'statistics' ) }
+				>
 					{ __( 'Statistics', 'beyond-elysium' ) }
 				</button>
-				<button type="button" className={ tab === 'saved' ? 'is-active' : '' } onClick={ () => setTab( 'saved' ) }>
+				<button
+					type="button"
+					className={ tab === 'saved' ? 'is-active' : '' }
+					onClick={ () => setTab( 'saved' ) }
+				>
 					{ __( 'Saved Queries', 'beyond-elysium' ) }
 				</button>
 			</nav>
@@ -245,7 +310,11 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 				</div>
 			) }
 
-			<nav className="be-query-tool__inventories" role="tablist" aria-label={ __( 'Inventory to query', 'beyond-elysium' ) }>
+			<div
+				className="be-query-tool__inventories"
+				role="tablist"
+				aria-label={ __( 'Inventory to query', 'beyond-elysium' ) }
+			>
 				{ INVENTORIES.map( ( inv ) => (
 					<button
 						key={ inv.value }
@@ -258,18 +327,43 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 						{ inv.label }
 					</button>
 				) ) }
-			</nav>
+			</div>
 
 			{ tab === 'query' && (
 				<>
-					<QueryBuilder fields={ fields } conditions={ conditions } logic={ logic } onChange={ ( c, l ) => { setConditions( c ); setLogic( l ); } } />
+					<QueryBuilder
+						fields={ fields }
+						conditions={ conditions }
+						logic={ logic }
+						onChange={ ( c, l ) => {
+							setConditions( c );
+							setLogic( l );
+						} }
+					/>
 
 					<div className="be-query-tool__run-row">
-						<button type="button" onClick={ () => runQuery( 1 ) } disabled={ loading || conditions.length === 0 }>
-							{ loading ? __( 'Running…', 'beyond-elysium' ) : __( 'Run Query', 'beyond-elysium' ) }
+						<button
+							type="button"
+							onClick={ () => runQuery( 1 ) }
+							disabled={ loading || conditions.length === 0 }
+						>
+							{ loading
+								? __( 'Running…', 'beyond-elysium' )
+								: __( 'Run Query', 'beyond-elysium' ) }
 						</button>
-						<input type="text" placeholder={ __( 'Save as…', 'beyond-elysium' ) } value={ saveName } onChange={ ( e ) => setSaveName( e.target.value ) } />
-						<button type="button" onClick={ saveCurrentQuery } disabled={ ! saveName.trim() || conditions.length === 0 }>
+						<input
+							type="text"
+							placeholder={ __( 'Save as…', 'beyond-elysium' ) }
+							value={ saveName }
+							onChange={ ( e ) => setSaveName( e.target.value ) }
+						/>
+						<button
+							type="button"
+							onClick={ saveCurrentQuery }
+							disabled={
+								! saveName.trim() || conditions.length === 0
+							}
+						>
 							{ __( 'Save', 'beyond-elysium' ) }
 						</button>
 					</div>
@@ -277,7 +371,9 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 					<QueryResults
 						gameSlug={ gameSlug }
 						inventory={ inventory }
-						columns={ RESULT_COLUMNS[ inventory ] ?? RESULT_COLUMNS.char }
+						columns={
+							RESULT_COLUMNS[ inventory ] ?? RESULT_COLUMNS.char
+						}
 						items={ results }
 						total={ total }
 						page={ page }
@@ -286,6 +382,7 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 						onSort={ onSort }
 						sortField={ sortField }
 						sortDirection={ sortDirection }
+						searchKey={ resultsFor }
 					/>
 				</>
 			) }
@@ -297,32 +394,58 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 							{ statsError }
 						</div>
 					) }
-					<StatisticsView fields={ fields } onRun={ runStatistics } result={ statsResult } loading={ statsLoading } />
+					<StatisticsView
+						fields={ fields }
+						onRun={ runStatistics }
+						result={ statsResult }
+						loading={ statsLoading }
+					/>
 				</>
 			) }
 
 			{ tab === 'saved' && (
 				<ul className="be-query-tool__saved-list">
-					{ savedQueries.length === 0 && <p>{ __( 'No saved queries yet.', 'beyond-elysium' ) }</p> }
+					{ savedQueries.length === 0 && (
+						<p>
+							{ __( 'No saved queries yet.', 'beyond-elysium' ) }
+						</p>
+					) }
 					{ savedQueries.map( ( saved ) => (
 						<li key={ saved.id }>
 							<span>
-								{ saved.name }
-								{ ' ' }
+								{ saved.name }{ ' ' }
 								<em className="be-query-tool__saved-inventory">
-									({ INVENTORIES.find( ( inv ) => inv.value === saved.inventory )?.label ?? saved.inventory })
+									(
+									{ INVENTORIES.find(
+										( inv ) => inv.value === saved.inventory
+									)?.label ?? saved.inventory }
+									)
 								</em>
-								{ saved.is_recent_search && <em> { __( '(auto)', 'beyond-elysium' ) }</em> }
+								{ saved.is_recent_search && (
+									<em>
+										{ ' ' }
+										{ __( '(auto)', 'beyond-elysium' ) }
+									</em>
+								) }
 							</span>
-							<button type="button" onClick={ () => loadSavedQuery( saved ) }>
+							<button
+								type="button"
+								onClick={ () => loadSavedQuery( saved ) }
+							>
 								{ __( 'Load', 'beyond-elysium' ) }
 							</button>
 							{ ! saved.is_recent_search && (
-								<button type="button" onClick={ () => renameSavedQuery( saved ) }>
+								<button
+									type="button"
+									onClick={ () => renameSavedQuery( saved ) }
+								>
 									{ __( 'Rename', 'beyond-elysium' ) }
 								</button>
 							) }
-							<button type="button" onClick={ () => deleteSavedQuery( saved.id ) }>
+							<button
+								type="button"
+								onClick={ () => deleteSavedQuery( saved.id ) }
+							>
 								{ __( 'Delete', 'beyond-elysium' ) }
 							</button>
 						</li>
@@ -338,7 +461,11 @@ interface RestError {
 }
 
 function errorMessage( error: unknown ): string {
-	if ( typeof error === 'object' && error !== null && ( error as RestError ).message ) {
+	if (
+		typeof error === 'object' &&
+		error !== null &&
+		( error as RestError ).message
+	) {
 		return ( error as RestError ).message as string;
 	}
 	return __( 'Failed to run this query.', 'beyond-elysium' );

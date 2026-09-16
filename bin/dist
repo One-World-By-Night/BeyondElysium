@@ -66,6 +66,14 @@ for po in beyond-elysium/languages/*.po; do
     "$PHP" "$WP_CLI" i18n make-json "$po" beyond-elysium/languages/ --no-purge --quiet
 done
 
+# make-json's own per-source-file output only ever reaches the two script handles this
+# plugin actually registers (both loaded as one lazily-chunked webpack bundle apiece,
+# never one WP script handle per chunk) by coincidence, when a string happens to live in
+# that bundle's own eagerly-loaded entry file - everything else silently never reaches the
+# browser. See bin/merge-translations.php's own doc comment for how this was found.
+echo "==> merging per-file translations onto the registered script handles"
+"$PHP" bin/merge-translations.php beyond-elysium/languages beyond-elysium beyond-elysium beyond-elysium-admin
+
 echo "==> assembling"
 rm -rf dist
 mkdir -p "$OUT"

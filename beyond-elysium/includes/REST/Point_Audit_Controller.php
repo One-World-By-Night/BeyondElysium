@@ -53,9 +53,10 @@ class Point_Audit_Controller extends Base_Controller {
 			return $this->error( 'character_not_found', __( 'Character not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
+		// The character is here; what's missing is its creature type (1.0.0-review F-088).
 		$report = Point_Audit::for_character( $character_id );
 		if ( $report === null ) {
-			return $this->error( 'character_not_found', __( 'Character not found in this game.', 'beyond-elysium' ), 404 );
+			return $this->error( 'creature_stack_not_found', __( 'This character\'s creature type no longer exists, so its points can\'t be audited.', 'beyond-elysium' ), 404 );
 		}
 
 		return $this->success( $report );

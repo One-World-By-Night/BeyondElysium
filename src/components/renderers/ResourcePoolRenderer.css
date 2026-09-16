@@ -24,16 +24,11 @@
 }
 
 /*
- * displayTemper()'s glyphs (o/õ/ø) are a literal port of DisplayTemper's own on-screen
- * characters (GV-SOURCEMAP.md "DisplayTemper"). The original app paired them with a
- * custom Windows font that rendered 'o' as a filled dot; nothing web-side supplies that
- * substitution, so without styling they read as literal letters run into the label.
- * Letter-spacing plus a heavier weight is enough to read as pips without touching the
- * glyph characters themselves - the glyph choice stays an exact, tested port.
+ * displayTemper()'s dots are the same glyph a trait's rating uses, so they take the size of
+ * the surrounding text exactly as a trait's do - no size or weight of their own
+ * (1.0.0-review F-016, owner ruling 2026-09-14: every dot the same size). They used to be
+ * Grapevine's letters, bolded and enlarged to read as pips.
  */
 .be-resource-pool__glyphs {
-	letter-spacing: 0.15em;
-	font-weight: 700;
-	font-size: 1.1em;
 	overflow-wrap: anywhere;
 }

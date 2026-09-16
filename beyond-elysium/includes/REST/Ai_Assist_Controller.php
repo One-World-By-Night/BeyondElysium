@@ -35,6 +35,7 @@ class Ai_Assist_Controller extends Base_Controller {
 		'npc_roleplaying_notes'    => 'be_manage_characters',
 		'plot_description'         => 'be_manage_plots',
 		'plot_cliffhanger'         => 'be_manage_plots',
+		'plot_st_notes'            => 'be_manage_plots',
 		'plot_entry'               => 'be_manage_plots',
 		'rumor_description'        => 'be_manage_plots',
 		'world_object_description' => 'be_manage_world_objects',
@@ -160,7 +161,7 @@ class Ai_Assist_Controller extends Base_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function test_site_connection( $request ) {
-		return $this->run_test( $request );
+		return $this->run_test( $request, false );
 	}
 
 	/**
@@ -173,24 +174,33 @@ class Ai_Assist_Controller extends Base_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function test_chronicle_connection( $request ) {
-		return $this->run_test( $request );
+		return $this->run_test( $request, true );
 	}
 
 	/**
-	 * Shared implementation for both test-connection routes.
+	 * Shared implementation for both test-connection routes. A chronicle's
+	 * test requests only public addresses and answers only "connected" or
+	 * "not" - the distinct failure messages a site administrator sees would
+	 * otherwise tell a chronicle's Storyteller which addresses and ports on
+	 * the host's network answer (1.0.0-review F-025).
 	 *
 	 * @param \WP_REST_Request $request
+	 * @param bool             $chronicle
 	 * @return \WP_REST_Response|\WP_Error
 	 */
-	private function run_test( \WP_REST_Request $request ) {
+	private function run_test( \WP_REST_Request $request, bool $chronicle ) {
 		$result = Ai_Assist::test_connection(
 			(string) $request->get_param( 'provider' ),
 			(string) $request->get_param( 'key' ),
-			(string) $request->get_param( 'base_url' ),
-			(string) $request->get_param( 'model' )
+			$chronicle ? esc_url_raw( (string) $request->get_param( 'base_url' ) ) : (string) $request->get_param( 'base_url' ),
+			(string) $request->get_param( 'model' ),
+			$chronicle
 		);
 
 		if ( ! $result['ok'] ) {
+			if ( $chronicle && ( $result['code'] ?? '' ) !== 'ai_not_configured' ) {
+				return $this->error( 'ai_connection_failed', __( 'Could not connect with these settings.', 'beyond-elysium' ), 502 );
+			}
 			return $this->error( $result['code'] ?? 'ai_error', $result['message'] ?? __( 'Connection test failed.', 'beyond-elysium' ), 502 );
 		}
 		return $this->success( [ 'message' => $result['message'] ] );
@@ -213,7 +223,9 @@ class Ai_Assist_Controller extends Base_Controller {
 		$field_context = (string) $request->get_param( 'field_context' );
 		$capability    = self::FIELD_CAPABILITIES[ $field_context ] ?? null;
 		if ( $capability === null ) {
-			return true; // Falls through to generate(), which reports unknown_field_context - a clearer error than a bare 403.
+			// Fails closed: a field with no capability mapped is refused here, before any key is
+			// resolved or anything is sent upstream (1.0.0-review F-026).
+			return new \WP_Error( 'unknown_field_context', __( 'Unknown field.', 'beyond-elysium' ), [ 'status' => 400 ] );
 		}
 
 		$has_game_slug = $request->get_url_params()['game_slug'] ?? null;
@@ -239,6 +251,10 @@ class Ai_Assist_Controller extends Base_Controller {
 	 */
 	public function generate( $request ) {
 		$game_slug = $request->get_url_params()['game_slug'] ?? null;
+
+		if ( ! Ai_Assist::within_rate_limit( get_current_user_id() ) ) {
+			return $this->error( 'ai_rate_limited', __( 'Too many suggestions in the last minute - wait a moment and try again.', 'beyond-elysium' ), 429 );
+		}
 
 		$result = Ai_Assist::generate(
 			(string) $request->get_param( 'field_context' ),
@@ -421,7 +437,9 @@ class Ai_Assist_Controller extends Base_Controller {
 		if ( ! empty( $incoming ) ) {
 			$existing = (array) ( $game->settings ?? new \stdClass() );
 			$merged   = Ai_Assist::merge_settings_write( $incoming, $existing );
-			\BeyondElysium\Models\Game::update( $game->slug, [ 'settings' => $merged ] );
+			if ( ! Game::update( $game->slug, [ 'settings' => $merged ] ) ) {
+				return $this->error( 'save_failed', __( 'Failed to update game.', 'beyond-elysium' ), 500 );
+			}
 		}
 
 		return $this->get_chronicle_settings( $request );

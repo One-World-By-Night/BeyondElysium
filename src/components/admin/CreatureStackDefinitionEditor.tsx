@@ -9,7 +9,12 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
-import type { CreationRules, SchemaBlock, StackDefinition, StackSection } from '../../types';
+import type {
+	CreationRules,
+	SchemaBlock,
+	StackDefinition,
+	StackSection,
+} from '../../types';
 import './Admin.css';
 
 export interface CreatureStackDefinitionEditorProps {
@@ -32,33 +37,54 @@ export function CreatureStackDefinitionEditor( {
 	onChangeStackDefinition,
 	onChangeCreationRules,
 }: CreatureStackDefinitionEditorProps ) {
-	const [ blocks, setBlocks ] = useState<SchemaBlock[]>( [] );
+	const [ blocks, setBlocks ] = useState< SchemaBlock[] >( [] );
 	const [ showRules, setShowRules ] = useState( false );
-	const [ rulesJson, setRulesJson ] = useState( () => JSON.stringify( creationRules ?? {}, null, 2 ) );
-	const [ rulesError, setRulesError ] = useState<string | null>( null );
+	const [ rulesJson, setRulesJson ] = useState( () =>
+		JSON.stringify( creationRules ?? {}, null, 2 )
+	);
+	const [ rulesError, setRulesError ] = useState< string | null >( null );
 
 	useEffect( () => {
 		// Fetches up to 100 schema blocks (the REST route's max page size) for the picker.
-		api.schemaBlocks.list( { per_page: 100 } ).then( setBlocks ).catch( () => setBlocks( [] ) );
+		api.schemaBlocks
+			.list( { per_page: 100 } )
+			.then( setBlocks )
+			.catch( () => setBlocks( [] ) );
 	}, [] );
 
 	const sections = stackDefinition.sections ?? [];
 
-	function updateSection( index: number, patch: Partial<StackSection> ) {
-		const next = sections.map( ( s, i ) => ( i === index ? { ...s, ...patch } : s ) );
+	function updateSection( index: number, patch: Partial< StackSection > ) {
+		const next = sections.map( ( s, i ) =>
+			i === index ? { ...s, ...patch } : s
+		);
 		onChangeStackDefinition( { ...stackDefinition, sections: next } );
 	}
 
 	function addSection() {
-		const nextOrder = sections.length > 0 ? Math.max( ...sections.map( ( s ) => s.display_order ) ) + 1 : 1;
+		const nextOrder =
+			sections.length > 0
+				? Math.max( ...sections.map( ( s ) => s.display_order ) ) + 1
+				: 1;
 		onChangeStackDefinition( {
 			...stackDefinition,
-			sections: [ ...sections, { block_slug: '', label: '', display_order: nextOrder, required: false } ],
+			sections: [
+				...sections,
+				{
+					block_slug: '',
+					label: '',
+					display_order: nextOrder,
+					required: false,
+				},
+			],
 		} );
 	}
 
 	function removeSection( index: number ) {
-		onChangeStackDefinition( { ...stackDefinition, sections: sections.filter( ( _, i ) => i !== index ) } );
+		onChangeStackDefinition( {
+			...stackDefinition,
+			sections: sections.filter( ( _, i ) => i !== index ),
+		} );
 	}
 
 	/**
@@ -72,14 +98,22 @@ export function CreatureStackDefinitionEditor( {
 			setRulesError( null );
 			onChangeCreationRules( parsed );
 		} catch {
-			setRulesError( __( 'Not valid JSON - not applied.', 'beyond-elysium' ) );
+			setRulesError(
+				__( 'Not valid JSON - not applied.', 'beyond-elysium' )
+			);
 		}
 	}
 
 	return (
 		<div className="be-def-editor">
 			<div className="be-def-editor__section">
-				<h3>{ sprintf( __( 'Sections (%d)', 'beyond-elysium' ), sections.length ) }</h3>
+				<h3>
+					{ sprintf(
+						/* translators: %d: number of sections in this creature stack */
+						__( 'Sections (%d)', 'beyond-elysium' ),
+						sections.length
+					) }
+				</h3>
 				<table className="be-def-editor__table">
 					<thead>
 						<tr>
@@ -87,7 +121,12 @@ export function CreatureStackDefinitionEditor( {
 							<th>{ __( 'Label', 'beyond-elysium' ) }</th>
 							<th>{ __( 'Order', 'beyond-elysium' ) }</th>
 							<th>{ __( 'Required', 'beyond-elysium' ) }</th>
-							<th>{ __( 'Negative block (optional)', 'beyond-elysium' ) }</th>
+							<th>
+								{ __(
+									'Negative block (optional)',
+									'beyond-elysium'
+								) }
+							</th>
 							<th />
 						</tr>
 					</thead>
@@ -95,47 +134,95 @@ export function CreatureStackDefinitionEditor( {
 						{ sections.map( ( section, i ) => (
 							<tr key={ i }>
 								<td>
-									<select value={ section.block_slug } onChange={ ( e ) => updateSection( i, { block_slug: e.target.value } ) }>
-										<option value="">{ __( 'Select a block…', 'beyond-elysium' ) }</option>
+									<select
+										value={ section.block_slug }
+										onChange={ ( e ) =>
+											updateSection( i, {
+												block_slug: e.target.value,
+											} )
+										}
+									>
+										<option value="">
+											{ __(
+												'Select a block…',
+												'beyond-elysium'
+											) }
+										</option>
 										{ blocks.map( ( b ) => (
-											<option key={ b.slug } value={ b.slug }>
+											<option
+												key={ b.slug }
+												value={ b.slug }
+											>
 												{ b.name } ({ b.slug })
 											</option>
 										) ) }
 									</select>
 								</td>
 								<td>
-									<input type="text" value={ section.label } onChange={ ( e ) => updateSection( i, { label: e.target.value } ) } />
+									<input
+										type="text"
+										value={ section.label }
+										onChange={ ( e ) =>
+											updateSection( i, {
+												label: e.target.value,
+											} )
+										}
+									/>
 								</td>
 								<td>
 									<input
 										type="number"
 										value={ section.display_order }
-										onChange={ ( e ) => updateSection( i, { display_order: Number( e.target.value ) } ) }
+										onChange={ ( e ) =>
+											updateSection( i, {
+												display_order: Number(
+													e.target.value
+												),
+											} )
+										}
 									/>
 								</td>
 								<td>
 									<input
 										type="checkbox"
 										checked={ section.required }
-										onChange={ ( e ) => updateSection( i, { required: e.target.checked } ) }
+										onChange={ ( e ) =>
+											updateSection( i, {
+												required: e.target.checked,
+											} )
+										}
 									/>
 								</td>
 								<td>
 									<select
-										value={ section.negative_block_slug ?? '' }
-										onChange={ ( e ) => updateSection( i, { negative_block_slug: e.target.value || undefined } ) }
+										value={
+											section.negative_block_slug ?? ''
+										}
+										onChange={ ( e ) =>
+											updateSection( i, {
+												negative_block_slug:
+													e.target.value || undefined,
+											} )
+										}
 									>
-										<option value="">{ __( 'None', 'beyond-elysium' ) }</option>
+										<option value="">
+											{ __( 'None', 'beyond-elysium' ) }
+										</option>
 										{ blocks.map( ( b ) => (
-											<option key={ b.slug } value={ b.slug }>
+											<option
+												key={ b.slug }
+												value={ b.slug }
+											>
 												{ b.name } ({ b.slug })
 											</option>
 										) ) }
 									</select>
 								</td>
 								<td>
-									<button type="button" onClick={ () => removeSection( i ) }>
+									<button
+										type="button"
+										onClick={ () => removeSection( i ) }
+									>
 										{ __( 'Remove', 'beyond-elysium' ) }
 									</button>
 								</td>
@@ -148,17 +235,32 @@ export function CreatureStackDefinitionEditor( {
 				</button>
 			</div>
 
-			<button type="button" className="be-def-editor__raw-toggle" onClick={ () => setShowRules( ! showRules ) }>
+			<button
+				type="button"
+				className="be-def-editor__raw-toggle"
+				onClick={ () => setShowRules( ! showRules ) }
+			>
 				{ sprintf(
 					// translators: %s: "Hide" or "Show".
-					__( '%s creation rules (advanced, JSON)', 'beyond-elysium' ),
-					showRules ? __( 'Hide', 'beyond-elysium' ) : __( 'Show', 'beyond-elysium' )
+					__(
+						'%s creation rules (advanced, JSON)',
+						'beyond-elysium'
+					),
+					showRules
+						? __( 'Hide', 'beyond-elysium' )
+						: __( 'Show', 'beyond-elysium' )
 				) }
 			</button>
 			{ showRules && (
 				<div className="be-def-editor__raw">
-					<textarea rows={ 10 } value={ rulesJson } onChange={ ( e ) => setRulesJson( e.target.value ) } />
-					{ rulesError && <p className="be-admin__json-error">{ rulesError }</p> }
+					<textarea
+						rows={ 10 }
+						value={ rulesJson }
+						onChange={ ( e ) => setRulesJson( e.target.value ) }
+					/>
+					{ rulesError && (
+						<p className="be-admin__json-error">{ rulesError }</p>
+					) }
 					<button type="button" onClick={ applyRules }>
 						{ __( 'Apply JSON', 'beyond-elysium' ) }
 					</button>

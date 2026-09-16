@@ -2,6 +2,8 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Database\Option_Lock;
+use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Services\Game_File_Parser;
 use BeyondElysium\Services\GV_Binary_Reader;
@@ -178,6 +180,38 @@ class Game_Import_Controller extends Base_Controller {
 			return $this->success( $job['committed_result'] );
 		}
 
+		// Held while the import runs: an overlapping commit of this job would make a second
+		// chronicle out of the same file (1.0.0-review F-070).
+		$lock = Import_Controller::commit_lock_name( (string) $request['job_id'] );
+		if ( ! Option_Lock::claim( $lock, Import_Controller::COMMIT_LOCK_TTL ) ) {
+			return Import_Controller::commit_in_progress_error();
+		}
+
+		try {
+			return $this->commit_locked( $request, $job_key );
+		} finally {
+			Option_Lock::release( $lock );
+		}
+	}
+
+	/**
+	 * The commit itself, run while this request holds the job's commit lock.
+	 * Reads the job again first, since a commit that finished just before
+	 * the lock was taken has already stored its result.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @param string           $job_key
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	private function commit_locked( $request, string $job_key ) {
+		$job = get_transient( $job_key );
+		if ( ! $job ) {
+			return $this->error( 'not_found', __( 'No import job found with that id - it may have expired.', 'beyond-elysium' ), 404 );
+		}
+		if ( isset( $job['committed_result'] ) ) {
+			return $this->success( $job['committed_result'] );
+		}
+
 		$target      = (array) ( $request['target'] ?? [] );
 		$resolutions = (array) ( $request['resolutions'] ?? [] );
 		$parsed      = $job['parsed'];
@@ -209,9 +243,7 @@ class Game_Import_Controller extends Base_Controller {
 			return $this->error( $block['code'], $block['message'], $block['status'] );
 		}
 
-		global $wpdb;
-		$nested = (int) $wpdb->get_var( 'SELECT @@autocommit' ) === 0;
-		$wpdb->query( $nested ? 'SAVEPOINT be_game_import_commit' : 'START TRANSACTION' );
+		$savepoint = Transaction::begin( 'be_game_import_commit' );
 
 		try {
 			if ( $merge_game ) {
@@ -233,6 +265,9 @@ class Game_Import_Controller extends Base_Controller {
 					throw new \RuntimeException( 'Could not create the new chronicle.' );
 				}
 				$game = Game::find( (int) $new_game_id );
+				if ( ! $game ) {
+					throw new \RuntimeException( 'Could not create the new chronicle.' );
+				}
 
 				// GS-7: this path also wrote no membership row, and never fired
 				// be_after_upgrade, so an imported chronicle got no front-end pages either
@@ -245,11 +280,11 @@ class Game_Import_Controller extends Base_Controller {
 
 			$result = Import_Controller::apply_import( (int) $game->id, $game->slug, $parsed, (string) $job['source_file'], $resolutions );
 		} catch ( \Throwable $e ) {
-			$wpdb->query( $nested ? 'ROLLBACK TO SAVEPOINT be_game_import_commit' : 'ROLLBACK' );
+			Transaction::rollback( $savepoint );
 			return $this->error( 'commit_failed', $e->getMessage(), 500 );
 		}
 
-		$wpdb->query( $nested ? 'RELEASE SAVEPOINT be_game_import_commit' : 'COMMIT' );
+		Transaction::commit( $savepoint );
 
 		// GS-8/GS-7: fires only for a genuinely new chronicle, after the transaction that
 		// created it has actually committed - runs Page_Provisioner (and anything else

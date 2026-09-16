@@ -17,7 +17,7 @@ export interface AprSettings {
 	carry_unused: boolean;
 	add_common: boolean;
 	background_actions: string[];
-	actions_per_level: Record<string, number>;
+	actions_per_level: Record< string, number >;
 	public_rumors: boolean;
 	personal_rumors: boolean;
 	race_rumors: boolean;
@@ -31,7 +31,7 @@ export interface AprSettings {
 }
 
 /** A partial update to a chronicle's Action & Rumor settings; only the included keys change. */
-export type AprSettingsRequest = Partial<AprSettings>;
+export type AprSettingsRequest = Partial< AprSettings >;
 
 /**
  * One background or influence name available across a chronicle's
@@ -54,7 +54,8 @@ export interface AprBackgroundOption {
  */
 export interface SpendableBackground {
 	name: string;
-	block_slug: string;
+	/** Null for Personal actions, which every allocation grants and no block holds. */
+	block_slug: string | null;
 	level: number;
 	source: string;
 	budget_total: number | null;

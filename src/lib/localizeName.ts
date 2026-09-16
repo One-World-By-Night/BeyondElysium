@@ -22,7 +22,9 @@ export function isPortugueseLocale(): boolean {
  * untranslated item (no `name_pt` yet) falls back to English rather than
  * showing blank.
  */
-export function localizedItemName( item: Pick<TraitListItem, 'name' | 'name_pt'> ): string {
+export function localizedItemName(
+	item: Pick< TraitListItem, 'name' | 'name_pt' >
+): string {
 	if ( isPortugueseLocale() && item.name_pt ) {
 		return item.name_pt;
 	}
@@ -30,7 +32,9 @@ export function localizedItemName( item: Pick<TraitListItem, 'name' | 'name_pt'>
 }
 
 /** Same fallback rule as localizedItemName(), for a tiered_power level's power_name/power_name_pt pair. */
-export function localizedPowerName( level: Pick<PowerLevel, 'power_name' | 'power_name_pt'> ): string {
+export function localizedPowerName(
+	level: Pick< PowerLevel, 'power_name' | 'power_name_pt' >
+): string {
 	if ( isPortugueseLocale() && level.power_name_pt ) {
 		return level.power_name_pt;
 	}

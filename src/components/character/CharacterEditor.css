@@ -31,8 +31,8 @@
 	cursor: pointer;
 }
 
-.be-character-editor__portrait-button:hover:not( :disabled ),
-.be-character-editor__portrait-button:focus-visible:not( :disabled ) {
+.be-character-editor__portrait-button:hover:not(:disabled),
+.be-character-editor__portrait-button:focus-visible:not(:disabled) {
 	background: #eee;
 }
 
@@ -55,12 +55,13 @@
    correctly instead of three forced-equal columns. */
 .be-character-editor__grid {
 	display: grid;
-	grid-template-columns: repeat( 6, minmax( 0, 1fr ) );
+	grid-template-columns: repeat(6, minmax(0, 1fr));
 	gap: 1rem;
 	align-items: start;
 }
 
 @media ( max-width: 768px ) {
+
 	.be-character-editor__grid {
 		grid-template-columns: 1fr;
 	}
@@ -157,7 +158,7 @@
 	margin-bottom: 0.35rem;
 }
 
-.be-character-editor__header-text h4:not( :first-child ) {
+.be-character-editor__header-text h4:not(:first-child) {
 	margin-top: 1.25rem;
 }
 

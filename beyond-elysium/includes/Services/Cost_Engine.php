@@ -89,9 +89,27 @@ class Cost_Engine {
 	 * needed to answer is missing.
 	 */
 	public static function is_in_type( $character, string $block_slug, string $trait_name ): bool {
-		$stack = Creature_Stack::find_by_slug( $character->stack_slug );
+		return ( self::in_type_check( $character, $block_slug ) )( $trait_name );
+	}
+
+	/**
+	 * Loads what `is_in_type()` needs for one block - the stack's `in_type_source`
+	 * and the identity block it names - and returns the check for any trait in
+	 * that block, so pricing a character's every held trait loads them once per
+	 * block rather than once per trait (1.0.0-review F-087). A caller that has
+	 * already loaded the character's stack, or the chronicle's blocks by slug,
+	 * passes them in.
+	 *
+	 * @param object|null          $stack  The character's creature stack, when already loaded.
+	 * @param array<string,object> $blocks The character's chronicle's blocks by slug, fork-aware, when already loaded.
+	 * @return callable(string):bool
+	 */
+	public static function in_type_check( $character, string $block_slug, ?object $stack = null, array $blocks = [] ): callable {
+		$always = static fn( string $trait_name ): bool => true;
+
+		$stack = $stack ?? Creature_Stack::find_by_slug( $character->stack_slug );
 		if ( ! $stack ) {
-			return true;
+			return $always;
 		}
 
 		$in_type_source = null;
@@ -102,22 +120,25 @@ class Cost_Engine {
 			}
 		}
 		if ( ! $in_type_source ) {
-			return true;
+			return $always;
 		}
 
 		$parts = explode( '.', $in_type_source, 2 );
 		if ( count( $parts ) !== 2 ) {
-			return true;
+			return $always;
 		}
 		[ $identity_block_slug, $field_name ] = $parts;
 
-		$identity_block = Schema_Block::find_by_slug( $identity_block_slug );
+		// The chronicle's own fork when it has one: a chronicle that adds a bloodline and its
+		// in-clan Disciplines must be priced by that list, not the global one (1.0.0-review F-013).
+		$identity_block = $blocks[ $identity_block_slug ] ?? Schema_Block::find_for_game( $identity_block_slug, (string) ( $character->owner_slug ?? '' ) );
 		if ( ! $identity_block ) {
-			return true;
+			return $always;
 		}
 
 		$sheet_data = is_array( $character->sheet_data ?? null ) ? $character->sheet_data : [];
-		return self::is_in_type_pure( $sheet_data, $identity_block_slug, $field_name, $trait_name, $identity_block->definition );
+		$definition = $identity_block->definition;
+		return static fn( string $trait_name ): bool => self::is_in_type_pure( $sheet_data, $identity_block_slug, $field_name, $trait_name, $definition );
 	}
 
 	// Pure logic: DB-free, directly unit-tested.
@@ -413,9 +434,9 @@ class Cost_Engine {
 	 * `price_tiered_power_change()`'s three-way dispatch (§4.2) exactly, but
 	 * against a held state rather than a before/after pair: a flat
 	 * `elder_tier_cost()` per named pick, `sequential_step_cost( $power, 0,
-	 * $level, $modifier )` for a sequential block, or one flat
-	 * `level_base_cost()` - **never summed** - for a non-sequential one,
-	 * where a cumulative sum would inflate Animalism 5 sevenfold (§4.2c).
+	 * $level, $modifier )` for a sequential block - every seeded ladder since
+	 * the owner's "levels add up" ruling (1.0.0-review F-040) - or one flat
+	 * `level_base_cost()` for a block a chronicle has switched to flat pricing.
 	 *
 	 * @param array $held One entry from `sheet_data[block_slug]`: `name`, `level?`, `power_name?`, `custom?`/`keep_custom?`, `chosen_cost?`.
 	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
@@ -579,7 +600,7 @@ class Cost_Engine {
 		}
 
 		if ( preg_match( '/^-?\d+(?:\s+or\s+-?\d+)+$/i', $trimmed ) ) {
-			$values = array_map( 'intval', preg_split( '/\s+or\s+/i', $trimmed ) );
+			$values = array_map( 'intval', preg_split( '/\s+or\s+/i', $trimmed ) ?: [] );
 			return [ 'type' => 'set', 'values' => $values ];
 		}
 

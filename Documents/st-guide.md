@@ -86,7 +86,8 @@ build these from scratch. Under **Beyond Elysium → System Config → Schema Bl
 **→ Creature Stacks** you can review what exists and, if your chronicle needs a house rule or a
 homebrew trait, fork just that block for your own game without touching the shared catalog
 other chronicles use. A forked block is scoped to your game only; the base catalog is never
-edited in place.
+edited in place. Your copy keeps what you changed and still picks up fixes to everything else
+in the shared block.
 
 Adding an entirely new creature type (one this catalog doesn't already cover) is an admin
 task — see the [Admin Guide](admin-guide.md).
@@ -116,17 +117,31 @@ mannerisms, and plot hooks that never appears on an ordinary player character's 
 same checkbox is available in edit mode too, so a character created as a player character
 can be flagged as an NPC later, or the reverse, with no separate "convert" action needed.
 
+**Storyteller-only text.** Wrap anything players must not see in `[ST]...[/ST]` - in a
+character's biography or notes, or in an item's, location's, rote's, or boon's text. Only the
+chronicle's Storytellers see it (for boons, its Harpy too); for everyone else it is removed
+before it leaves the server, and neither a catalog search nor a report's filters can find it.
+
 **Stuck on a blank Biography or NPC notes field?** An "AI Assist" button sits next to it (and
 every other long-form text field in the plugin) once your chronicle has opted in — see the
 [Admin Guide's AI Writing Assist section](admin-guide.md#ai-writing-assist). Never shown to a
 player, and never saves anything on its own - you review and Accept before it ever touches
 the field.
 
+**Requests to join.** Someone who doesn't play in your chronicle yet can still start a character
+in it - that's their request to join. The character arrives **pending** and every HST and AST gets
+an email. Setting the character **active** on the roster approves them: they become a player.
+Delete the character to decline. A request never makes anyone a member on its own.
+
 Every character needs a linked WordPress account (`wp_user_id`) to be playable by someone.
 If a character is imported or entered before its player has an account, use the **Assign
 Player** control on the character's row in the roster — search by name or email and attach
 the account once it exists. Until then the character is visible but not editable by anyone
-but a Storyteller.
+but a Storyteller. **This is also how a brand-new player joins your chronicle at all** —
+creating a character for them, or assigning them to one, is what makes the chronicle appear
+on their own My Chronicle switcher from then on. There's no separate "add a member" step
+and, for 1.0.0, no self-service join link to hand out — a Storyteller adding them this way
+is the path.
 
 **Health Levels are pre-filled automatically, not something you or the player has to build.**
 Every applicable creature type's sheet includes a Health section — the Laws of the Night
@@ -153,10 +168,9 @@ set under **Beyond Elysium → System Config → Approval Rules** - see the
 - Select several and **Approve Selected** to clear a batch in one action — this applies each
   change individually (same sheet mutation and XP deduction as approving one at a time), it
   is a convenience over the loop, not a different approval mechanism.
-- A change over the **coordinator** threshold (a genre/site-wide OWBN role, not a
-  per-chronicle one) is flagged as such in the queue, but coordinator-tier enforcement itself
-  is not yet built — any Storyteller can currently approve any tier. This is a known,
-  deliberately-unbuilt gap, not an oversight.
+- There are two approval levels: automatic, and Storyteller review. When a rule's reason says a
+  coordinator's approval is needed (an OWBN bylaw, for example), getting it is the Storyteller's
+  job before approving - Beyond Elysium has no separate coordinator step.
 
 **This queue works on a phone.** Triaging pending changes between scenes is a real phone
 surface, not just a desktop one — each pending change is a card with Approve/Reject at the
@@ -167,16 +181,49 @@ top, the rest (level, submitted by, when) behind a **Details** disclosure.
 Under **Beyond Elysium → Import**, upload a `.gex` (character or game exchange file) or a
 full `.gv3` game file exported from Grapevine 3.01.
 
-- A **character** exchange file is checked by name against existing characters in this game.
-  If a match is found, you choose to skip it, overwrite the existing character in place
+- A **character** exchange file is checked against the characters already here - by name,
+  and by the character's own identity when the file carries one (every transfer document
+  does). For each match you choose to skip it, overwrite the existing character in place
   (preserving its ID and every connection/plot reference to it), or import it as a new,
-  separate character.
+  separate character. A character that already lives in *another* chronicle on this site can
+  only be skipped or imported as a new character - never overwritten from yours. Overwrite
+  replaces what the file carries and keeps the rest of the sheet: a section your chronicle
+  added, or anything a Grapevine file has no place for, stays as it was.
+- The items and locations a character holds come with it: each connects to your catalog entry
+  of the same name, and one your catalog doesn't have yet is added by name (the preview lists
+  those first). Its boons are kept in the character's import history, not recreated.
 - A **game** file (`.gv3`) can create a brand-new chronicle from its contents, or merge into
   an existing one — the existing chronicle is always the protected base; the file only
   contributes characters, plots, items, and locations it doesn't already have, and anything
   that collides by name gets the same skip/overwrite/import-as-new choice.
 - Any trait the importer can't match automatically is flagged for manual resolution before
   the import can complete — nothing partially imports.
+
+**Transfers from other chronicles.** When another chronicle sends you a character, it appears
+under **Waiting for Review** at the top of the Import page, and every HST and AST gets an
+email. Nothing is added to your chronicle yet. **Review** shows it exactly like an uploaded
+file - duplicates, flagged traits and all - and **Accept Transfer** imports it once every
+decision is made. A character coming back to your chronicle also shows what differs from the
+sheet you already hold - details, experience totals, and every trait added, removed, or
+changed - so you know what Overwrite will change; **Refuse** turns it down. If the sending chronicle cancels first, accepting
+fails and you can refuse it. An accepted character shows as visiting; **Send home** ends the
+visit and **Keep for good** makes it yours. Sending a character works from its sheet's
+**Send Sheet** panel: it waits at the other chronicle until one of their Storytellers accepts, then
+you mark it received abroad. An offer
+nobody reviews expires after 60 days, and so does a transfer you sent that no host accepted -
+its verification code stops working with it. Deleting a character closes its transfers the
+same way: an offer still waiting can't be accepted, and a visit ends.
+
+**Player-sent Grapevine files.** A player doesn't need a Storyteller on the sending end at
+all - anyone signed in can send their own exported `.gex` straight to your chronicle,
+joining it or just visiting for a game, and it lands in the same **Waiting for Review** list
+alongside transfers, with the same email to every HST and AST. Review checks any embedded
+verification code against its issuing chronicle automatically, so you see whether the file
+still matches what was exported before you decide. Accepting a join makes the sender a
+player here the same moment; accepting a visit works exactly like an inbound transfer,
+Send home and all. One restriction that doesn't apply to your own transfers: a player-sent
+file can never overwrite a character it doesn't already own here. See
+[Send a Grapevine File](help/send-grapevine-file.md).
 
 ## 6. Notifications
 
@@ -185,6 +232,9 @@ gets one email. If a batch approval clears several of one player's changes at on
 a single summary email, not one per change — and a change that auto-approves (an XP award
 you grant directly, for example) never sends anything, since the player already knows they
 just made it.
+
+A character transfer offered to your chronicle emails each of its HSTs and ASTs, so the offer
+doesn't sit unseen on the Import page.
 
 Turn this off for the whole chronicle under **Chronicle Access**. A player can also opt out
 for themselves from their own WordPress profile screen, next to the sheet-customization
@@ -216,6 +266,11 @@ plot, respond to player actions submitted against it, allocate action slots, and
 rumors that distribute to players via a saved query (see below) rather than by hand. Players
 see their own plot connections on **My Chronicle**'s own **My Plots & Rumors** tab.
 
+Every character, PC or NPC, has its own plot, `<Character> [id] Plot`, made with the
+character. Only its player and the chronicle's Storytellers see it, each game date's actions
+for the character sit under it unless you nest them elsewhere, and it goes when the character
+does - it can't be deleted on its own.
+
 ## 9. Action & Rumor Settings and the Background-Use Ledger
 
 Under **Beyond Elysium → Chronicle Setup → Action & Rumor Settings**, pick a chronicle to configure how many
@@ -225,8 +280,10 @@ actions and growth carry forward week to week, whether Common Actions (from Infl
 configured Backgrounds) are added automatically, an actions-per-level override table for
 specific dot ratings, and which Backgrounds grant an action at all — an Influence always
 does and is shown for reference only. The **Rumors** tab holds the eight rumor-generation
-toggles the Storyteller Toolkit's rumor generator reads; Group and Subgroup rumors are shown
-but not yet functional, since no character data exists to generate them from. A **Restore
+toggles the Storyteller Toolkit's rumor generator reads. Group and Subgroup rumors make one
+rumor for each group among your active characters, reaching everyone in it: a character's group
+is its Clan, Tribe, Kith, Tradition, and so on, and its subgroup its Sect, Auspice, Seeming, or
+Guild, depending on the creature type. A **Restore
 Grapevine defaults** button is available if you want the original 1998 values instead of
 Beyond Elysium's own (higher personal-action, carry-forward-on) defaults — it does not touch
 your rumor settings.
@@ -268,21 +325,24 @@ character — retiring a batch, or marking a group inactive at once. A bad or st
 ID in a selection never touches another chronicle's character; it's reported as failed
 rather than silently ignored or acted on.
 
-**This is desk work.** A multi-clause query with a results grid of arbitrary columns doesn't
-reflow for a phone, and isn't meant to — build queries and read reports at a keyboard.
+**This is desk work.** Building a multi-clause query is best done at a keyboard. Its results
+still read on a phone: when there isn't room for the columns, each result becomes a card, the
+same as the roster and the approval queue.
 
 ## 11. Signed Character Sheets
 
-Every printed sheet is a digitally signed PDF, generated on your own site rather than
-captured from the browser — a Storyteller who receives one can be sure the trait values on
-it have not been edited after the fact. This replaces the old browser print entirely; there
+Every printed sheet is a PDF generated on your own site rather than captured from the
+browser. Once your site has a signing certificate, it's digitally signed — a Storyteller who
+receives one can be sure the trait values on it have not been edited after the fact. This replaces the old browser print entirely; there
 is only the one Print button now.
 
-**Before anyone can print, your chronicle's host needs a signing certificate.** This is a
-one-time setup per site (not per chronicle), done by whoever has SSH/hosting access — if
-that isn't you, this section is what to hand them. If it isn't set up yet, the Print button
-tells the player so instead of failing silently, and an admin notice on every wp-admin page
-names exactly what's missing.
+**Signing needs a certificate on your site's host.** This is a one-time setup per site (not
+per chronicle), done by whoever has SSH/hosting access — if that isn't you, this section is
+what to hand them. Until it's set up, sheets and reports still print, but every page is
+stamped UNSIGNED, the file name ends in `-unsigned.pdf`, the sheet's Print / Export panel tells the
+player prints are unsigned, and an admin notice on every wp-admin page names exactly what's missing.
+An unsigned copy proves nothing about whether it was edited, so don't take one as proof of a
+visiting character's sheet.
 
 **Generating the certificate:**
 
@@ -322,15 +382,29 @@ session or two old, treat it as a record of that moment, not a live view.
 ## 12. Reports, Cards, and Batch Output
 
 Beyond Elysium's Reports page (under the plugin's admin menu) generates every one of
-Grapevine's 19 remaining reports as a signed PDF, sharing the same signing setup as the
-character sheet (§11) — if signing isn't configured yet, a report can't be generated either,
-for the same reason. Character Roster, Player Roster, Sign-In Sheet, Experience History,
+Grapevine's 19 remaining reports as a PDF, sharing the same signing setup as the character
+sheet (§11) — without a certificate, a report prints stamped UNSIGNED, the same as a sheet. Character Roster, Player Roster, Sign-In Sheet, Experience History,
 Player Point History, item/location/rote Cards, Plot Report, Master Action/Rumor Report,
 Action and Rumor Report, Search Report, Statistics Report, Vampire Status Report, Merits and
 Flaws Report, Influence Report, and Character Equipment. Pick a chronicle, pick a report, and
 Generate PDF — cards print several to a page, and any `table`-shaped report can be scoped to
 a saved query's own results instead of the whole chronicle, which is what "batch output"
 means here: one PDF for a chosen set of characters or objects, not a new mechanism to learn.
+
+**Who can run which report.** Character and player reports (rosters, sign-in sheet, experience
+and point history, search, statistics, status, merits and flaws, influence, equipment) are for
+HSTs and ASTs. Plot, action, and rumor reports are also open to narrators. Everyone in the
+chronicle, players included, can run House Rules, the Game Calendar, and the item, location, and
+rote cards. The Reports page only lists what you can run.
+
+**Reading the action reports.** The Master Action Report and the Action and Rumor Report
+list one line per action. An action allocation shows a line for each budget line (Personal,
+and each Background that grants actions) with its Total, Growth, and what's left Unused after
+every use, and each Background use recorded against it gets its own line with your result. A
+player's own post on a plot names their character on that plot. Plot threads don't link a
+reply to a post, so a reply shows as a post's result only when that player was the only one
+waiting on an answer. When several players had posted, their lines read "Reply came after
+several actions" and name the plot, so check the thread.
 
 **Game Calendar always renders empty right now.** Beyond Elysium doesn't yet model a
 chronicle's own game-date schedule, so this one report is an honest placeholder rather than
@@ -339,20 +413,20 @@ invented data — it will populate once that feature exists.
 **House Rules is the 20th report, and the only one with no Grapevine counterpart.** It lists
 every catalog item, tiered power level, or tiered power family carrying a description (see the
 [Admin Guide](admin-guide.md#descriptions-and-approval-schedules-on-catalog-items)), grouped by
-schema block, and generates as the same signed PDF every other report does. Unlike the other
+schema block, and generates as the same PDF every other report does. Unlike the other
 nineteen, it can *also* be dropped directly onto a front-end page — as an Elementor widget
 ("House Rules" in the Beyond Elysium widget category) or the `[be_house_rules game="chronicle-slug"]`
 shortcode — for a live, always-current view players can browse without waiting for a
-Storyteller to generate anything, since `be_view_reports` already reaches every real chronicle
-role including plain players.
+Storyteller to generate anything: every member of the chronicle, plain players included, may run
+it.
 
 **Item Cards can be scoped to one character's own held items.** A character sheet's
 Connections section (visible to anyone holding `be_manage_connections`) lets a Storyteller
 link a world-object item to a character — search for it by name, optionally add a note (shown
 under the connection once saved), and it's connected. The Item Cards report normally prints
 every item in the chronicle's catalog; add `character_id` to the request (the character
-sheet's own "Print My Items" button does this automatically) to print only that character's
-connected items instead, signed the same way every other report is.
+sheet's own **Print My Items** action does this automatically) to print only that character's
+connected items instead, signed the same way every other report is (or stamped UNSIGNED, the same way).
 
 A World Objects catalog entry can be shared across as many characters as hold one — connecting
 "the pistol" to fifty enforcers is fifty ordinary connections to the same item, not fifty
@@ -363,8 +437,8 @@ starting point rather than typing it from scratch, and never changes the origina
 
 ## 13. The Point Audit
 
-Opening a character's sheet as a Storyteller shows a **Point audit** toggle beside View
-history and Transfer. It lists every trait, power, resource, and identity field the
+Opening a character's sheet as a Storyteller adds **Point audit** to its actions list,
+alongside View history and Send Sheet. It lists every trait, power, resource, and identity field the
 character holds, priced against the exact same rules the purchase flow charges — never a
 second, independently-guessed number.
 
@@ -382,9 +456,9 @@ owes you anything.
 
 | Role | Access |
 |---|---|
-| HST | Everything — characters, plots, queries, schema and template customization, importing, chronicle membership. The one exception is deleting or editing the chronicle itself (renaming it, changing its slug); that's a site-administrator act, not a chronicle-level one, by design. |
-| AST | Everything HST can do within the chronicle, including importing — the only difference from HST is that an AST cannot delete or edit the chronicle itself. |
-| Narrator | Plots — creating and running them, responding to player actions, generating rumors, and the roster queries that plot work depends on. Not full character management. |
+| HST | Everything in the chronicle — characters (including permanently deleting one), plots, queries, approval rules, schema and template customization, importing. Also the chronicle's own Creature types, Sub-Faction Restrictions, and New-character approval on Chronicle Setup. Creating, renaming, or deleting the chronicle itself, assigning its roles on Chronicle Access, and Plot Features are a site administrator's, by design. |
+| AST | Everything an HST can do except Approval Rules, catalog and template customization (forking a schema block or a template), permanently deleting a character, and the three Chronicle Setup settings above — an HST's alone. Keeps import, transfers, editing characters, and the bulk XP/status/reset operations. |
+| Narrator | Plots — creating and running them, responding to player actions, generating rumors, and the plot, action, and rumor reports. Can allocate actions for any character in the chronicle, seeing the full roster to do it, but cannot edit, delete, or create a character, and cannot use the Query Tool, which reads whole sheets and is for HSTs and ASTs. |
 | Boons (Harpy) | The boon ledger only — recording and repaying boons. No Storyteller powers over characters or plots. Can still look characters up (needed to know who owes whom) and view reports. |
 | Player | Creates and submits their own characters, and edits their own sheet — every edit still goes through the same approval process everyone else's does. Nothing outside their own characters, changes, and plot connections. |
 

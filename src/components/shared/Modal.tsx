@@ -23,7 +23,7 @@ export interface ModalProps {
  * backdrop click; a click inside the dialog itself does not close it.
  */
 export function Modal( { title, onClose, children, footer }: ModalProps ) {
-	const dialogRef = useRef<HTMLDivElement>( null );
+	const dialogRef = useRef< HTMLDivElement >( null );
 
 	useEffect( () => {
 		const onKeyDown = ( e: KeyboardEvent ) => {
@@ -37,13 +37,21 @@ export function Modal( { title, onClose, children, footer }: ModalProps ) {
 
 	// Moves focus into the dialog on open and restores it to the previously focused element on close.
 	useEffect( () => {
-		const previouslyFocused = document.activeElement as HTMLElement | null;
+		const previouslyFocused = dialogRef.current?.ownerDocument
+			.activeElement as HTMLElement | null;
 		dialogRef.current?.focus();
 		return () => previouslyFocused?.focus?.();
 	}, [] );
 
 	return createPortal(
-		<div className="be-modal__backdrop" role="presentation" onClick={ onClose }>
+		<div
+			className="be-modal__backdrop"
+			role="presentation"
+			onClick={ onClose }
+		>
+			{ /* Keeps a click inside the dialog from reaching the backdrop, which closes it. Nothing
+			here to operate: Escape and the close button close it from the keyboard. */ }
+			{ /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */ }
 			<div
 				className="be-modal"
 				role="dialog"
@@ -55,7 +63,12 @@ export function Modal( { title, onClose, children, footer }: ModalProps ) {
 			>
 				<div className="be-modal__header">
 					<h3 className="be-modal__title">{ title }</h3>
-					<button type="button" className="be-modal__close" onClick={ onClose } aria-label={ __( 'Close', 'beyond-elysium' ) }>
+					<button
+						type="button"
+						className="be-modal__close"
+						onClick={ onClose }
+						aria-label={ __( 'Close', 'beyond-elysium' ) }
+					>
 						×
 					</button>
 				</div>

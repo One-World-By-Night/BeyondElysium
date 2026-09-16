@@ -10,6 +10,7 @@ import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import QueryTool from '../query/QueryTool';
 import type { Game } from '../../types';
+import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
 /**
@@ -19,7 +20,7 @@ import './Admin.css';
  * and a message prompting game creation when none exist.
  */
 export function AdminQuery() {
-	const [ games, setGames ] = useState<Game[]>( [] );
+	const [ games, setGames ] = useState< Game[] >( [] );
 	const [ gameSlug, setGameSlug ] = useState( '' );
 	const [ loading, setLoading ] = useState( true );
 
@@ -38,18 +39,31 @@ export function AdminQuery() {
 
 	return (
 		<div className="be-admin">
-			<h1>{ __( 'Query Tool', 'beyond-elysium' ) }</h1>
+			<div className="be-help-heading">
+				<h1>{ __( 'Query Tool', 'beyond-elysium' ) }</h1>
+				<HelpButton helpKey="query-tool" />
+			</div>
 
 			{ loading ? (
 				<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
 			) : games.length === 0 ? (
-				<p>{ __( 'No games exist yet - create one under Beyond Elysium → Games first.', 'beyond-elysium' ) }</p>
+				<p>
+					{ __(
+						'No games exist yet - create one under Beyond Elysium → System Config → Games first.',
+						'beyond-elysium'
+					) }
+				</p>
 			) : (
 				<>
 					<div className="be-admin__filters">
 						<label>
 							{ __( 'Game', 'beyond-elysium' ) }{ ' ' }
-							<select value={ gameSlug } onChange={ ( e ) => setGameSlug( e.target.value ) }>
+							<select
+								value={ gameSlug }
+								onChange={ ( e ) =>
+									setGameSlug( e.target.value )
+								}
+							>
 								{ games.map( ( g ) => (
 									<option key={ g.slug } value={ g.slug }>
 										{ g.name }

@@ -288,6 +288,12 @@ class Template {
 			if ( $display !== null && ! in_array( $display, self::DISPLAY_TYPES, true ) ) {
 				return new \WP_Error( 'invalid_layout', "Section '{$slug}': display must be null or one of the 11 display types.", [ 'status' => 400 ] );
 			}
+
+			// Checked like display: an unknown width once stopped every signed sheet on the stack (1.0.0-review F-077).
+			$width = $section['width'] ?? null;
+			if ( $width !== null && ! in_array( $width, [ 'third', 'half', 'full' ], true ) ) {
+				return new \WP_Error( 'invalid_layout', "Section '{$slug}': width must be null, third, half, or full.", [ 'status' => 400 ] );
+			}
 		}
 
 		return null;
@@ -363,7 +369,7 @@ class Template {
 			return $decoded;
 		}
 		if ( is_object( $layout ) ) {
-			return json_decode( wp_json_encode( $layout ), true );
+			return json_decode( (string) wp_json_encode( $layout ), true );
 		}
 		return $layout;
 	}

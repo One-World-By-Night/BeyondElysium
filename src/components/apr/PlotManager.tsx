@@ -7,18 +7,22 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
-import type { Plot } from '../../types/plot';
+import { canIn } from '../../lib/chronicleCapabilities';
+import type { MyCapabilities } from '../../types';
 import { PlotList } from './PlotList';
 import { PlotThread } from './PlotThread';
 import { ConnectionManager } from './ConnectionManager';
 import { ActionAllocator } from './ActionAllocator';
 import { RumorPanel } from './RumorPanel';
 import Modal from '../shared/Modal';
+import HelpButton from '../shared/HelpButton';
 import './PlotManager.css';
 
 export interface PlotManagerProps {
 	gameSlug: string;
 	defaultStatus?: 'active' | 'resolved' | 'archived';
+	/** What the person can do in this chronicle, when the page resolved it; the site-wide snapshot otherwise (F-103). */
+	capabilities?: MyCapabilities;
 }
 
 /** Which standalone tool is open in a modal, if any. */
@@ -31,22 +35,30 @@ type Tool = 'allocate' | 'rumors' | 'connect' | null;
  * connection manager tools. Shows a denial message for viewers who lack the manage
  * capability.
  */
-export function PlotManager( { gameSlug, defaultStatus }: PlotManagerProps ) {
-	const [ selectedPlot, setSelectedPlot ] = useState<number | null>( null );
+export function PlotManager( {
+	gameSlug,
+	defaultStatus,
+	capabilities,
+}: PlotManagerProps ) {
+	const [ selectedPlot, setSelectedPlot ] = useState< number | null >( null );
 	const [ expandedEnabled, setExpandedEnabled ] = useState( false );
-	const [ tool, setTool ] = useState<Tool>( null );
+	const [ tool, setTool ] = useState< Tool >( null );
 	const [ refreshKey, setRefreshKey ] = useState( 0 );
 
 	// UI affordance only; every REST route re-checks this capability server-side.
-	const canManage = window.beyondElysium?.capabilities?.be_manage_plots ?? false;
+	const canManage = canIn( 'be_manage_plots', capabilities );
 
 	useEffect( () => {
 		// Arc/Subplot/Season/Episode structure is opt-in per chronicle.
 		api.games
 			.get( gameSlug )
 			.then( ( game ) => {
-				const settings = game.settings as { plots?: { expanded_enabled?: boolean } } | null;
-				setExpandedEnabled( Boolean( settings?.plots?.expanded_enabled ) );
+				const settings = game.settings as {
+					plots?: { expanded_enabled?: boolean };
+				} | null;
+				setExpandedEnabled(
+					Boolean( settings?.plots?.expanded_enabled )
+				);
 			} )
 			.catch( () => setExpandedEnabled( false ) );
 	}, [ gameSlug ] );
@@ -75,11 +87,19 @@ export function PlotManager( { gameSlug, defaultStatus }: PlotManagerProps ) {
 	return (
 		<div className="be-plot-manager">
 			<header className="be-plot-manager__header">
-				<h2 className="be-plot-manager__title">{ __( 'Storyteller Toolkit', 'beyond-elysium' ) }</h2>
+				<div className="be-help-heading">
+					<h2 className="be-plot-manager__title">
+						{ __( 'Storyteller Toolkit', 'beyond-elysium' ) }
+					</h2>
+					<HelpButton helpKey="plot-manager" />
+				</div>
 
 				{ selectedPlot !== null ? (
 					<nav className="be-plot-manager__crumbs">
-						<button type="button" onClick={ () => setSelectedPlot( null ) }>
+						<button
+							type="button"
+							onClick={ () => setSelectedPlot( null ) }
+						>
 							{ __( 'All plots', 'beyond-elysium' ) }
 						</button>
 						<span>/</span>
@@ -87,10 +107,18 @@ export function PlotManager( { gameSlug, defaultStatus }: PlotManagerProps ) {
 					</nav>
 				) : (
 					<div className="be-plot-manager__tools">
-						<button type="button" className="be-st-button be-st-button--quiet" onClick={ () => setTool( 'allocate' ) }>
+						<button
+							type="button"
+							className="be-st-button be-st-button--quiet"
+							onClick={ () => setTool( 'allocate' ) }
+						>
 							{ __( 'Allocate actions', 'beyond-elysium' ) }
 						</button>
-						<button type="button" className="be-st-button be-st-button--quiet" onClick={ () => setTool( 'rumors' ) }>
+						<button
+							type="button"
+							className="be-st-button be-st-button--quiet"
+							onClick={ () => setTool( 'rumors' ) }
+						>
 							{ __( 'Generate rumors', 'beyond-elysium' ) }
 						</button>
 					</div>
@@ -121,20 +149,42 @@ export function PlotManager( { gameSlug, defaultStatus }: PlotManagerProps ) {
 
 			{ /* Shared tools reused inside a modal; the selected plot is passed as the default parent. */ }
 			{ tool === 'allocate' && (
-				<Modal title={ __( 'Allocate actions', 'beyond-elysium' ) } onClose={ closeToolAndRefresh }>
-					<ActionAllocator gameSlug={ gameSlug } defaultParentPlotId={ selectedPlot ?? undefined } />
+				<Modal
+					title={ __( 'Allocate actions', 'beyond-elysium' ) }
+					onClose={ closeToolAndRefresh }
+				>
+					<ActionAllocator
+						gameSlug={ gameSlug }
+						defaultParentPlotId={ selectedPlot ?? undefined }
+					/>
 				</Modal>
 			) }
 
 			{ tool === 'rumors' && (
-				<Modal title={ __( 'Rumors', 'beyond-elysium' ) } onClose={ closeToolAndRefresh }>
-					<RumorPanel gameSlug={ gameSlug } defaultParentPlotId={ selectedPlot ?? undefined } />
+				<Modal
+					title={ __( 'Rumors', 'beyond-elysium' ) }
+					onClose={ closeToolAndRefresh }
+				>
+					<RumorPanel
+						gameSlug={ gameSlug }
+						defaultParentPlotId={ selectedPlot ?? undefined }
+					/>
 				</Modal>
 			) }
 
 			{ tool === 'connect' && selectedPlot !== null && (
-				<Modal title={ __( 'Connect a character to this plot', 'beyond-elysium' ) } onClose={ closeToolAndRefresh }>
-					<ConnectionManager gameSlug={ gameSlug } entityType="plot" entityId={ selectedPlot } />
+				<Modal
+					title={ __(
+						'Connect a character to this plot',
+						'beyond-elysium'
+					) }
+					onClose={ closeToolAndRefresh }
+				>
+					<ConnectionManager
+						gameSlug={ gameSlug }
+						entityType="plot"
+						entityId={ selectedPlot }
+					/>
 				</Modal>
 			) }
 		</div>

@@ -88,7 +88,7 @@ class Game_Stats_Controller extends Base_Controller {
 			'characters_by_stack'               => Character::counts_by_stack_for_game( $game->slug ),
 			'characters_by_status'              => Character::counts_by_status_for_game( $game->slug ),
 			'pending_changes'                   => Change::count_for_game( $game->slug, [ 'status' => 'pending' ] ),
-			'active_plots'                      => Plot::count_for_game( (int) $game->id, [ 'status' => 'active' ] ),
+			'active_plots'                      => Plot::count_for_game( (int) $game->id, [ 'status' => 'active', 'exclude_character_plots' => true ] ),
 			'recent_activity'                   => $recent_activity,
 			'players_without_active_character'  => count( Game_Member::ids_without_active_character( (int) $game->id, $game->slug ) ),
 		];

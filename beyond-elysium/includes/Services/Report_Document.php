@@ -10,6 +10,7 @@ use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Plot;
 use BeyondElysium\Models\Plot_Entry;
 use BeyondElysium\Models\Schema_Block;
+use BeyondElysium\Models\World_Object;
 use BeyondElysium\Services\Display\Change_Description;
 
 defined( 'ABSPATH' ) || exit;
@@ -70,6 +71,17 @@ class Report_Document {
 	}
 
 	/**
+	 * The capability a caller needs to run a report in a chronicle, or null
+	 * when every member may (1.0.0-review F-047). A report that names none is
+	 * a Storyteller's.
+	 *
+	 * @param array<string,mixed> $report A registry row.
+	 */
+	public static function required_capability( array $report ): ?string {
+		return array_key_exists( 'capability', $report ) ? $report['capability'] : 'be_manage_characters';
+	}
+
+	/**
 	 * @return array<string,array<string,mixed>>
 	 */
 	public static function registry(): array {
@@ -126,19 +138,17 @@ class Report_Document {
 
 	/**
 	 * Experience History: one synthetic row per approved `Change`, decorated
-	 * with the owning character's name - `resolve_ledger()` reads both off
-	 * the same object rather than `Report_Document` needing a second join
-	 * pass per column.
+	 * with the owning character's name and the totals after that change -
+	 * `resolve_ledger()` reads all of it off the same object rather than
+	 * `Report_Document` needing a second join pass per column.
 	 *
 	 * @return array<int,object>
 	 */
 	private static function ledger_rows_for_characters( object $game ): array {
 		$rows = [];
 		foreach ( Character::all_for_game( $game->slug ) as $character ) {
-			foreach ( Change::for_character( (int) $character->id, [ 'status' => 'approved', 'order' => 'ASC' ] ) as $change ) {
-				$change->character_name = $character->name;
-				$rows[] = $change;
-			}
+			$changes = Change::for_character( (int) $character->id, [ 'status' => 'approved', 'order' => 'ASC' ] );
+			array_push( $rows, ...self::with_totals_after( $changes, (string) $character->name, (int) $character->xp_earned, (int) $character->xp_unspent ) );
 		}
 		return $rows;
 	}
@@ -146,12 +156,13 @@ class Report_Document {
 	/**
 	 * Player Point History: the same ledger, grouped by the WordPress user who
 	 * owns each character rather than by character - one row per approved
-	 * change on any character that WordPress user is attached to.
+	 * change on any character that WordPress user is attached to, in the
+	 * order they happened, with that player's characters' totals together.
 	 *
 	 * @return array<int,object>
 	 */
 	private static function ledger_rows_for_players( object $game ): array {
-		$rows = [];
+		$players = [];
 		foreach ( Character::all_for_game( $game->slug ) as $character ) {
 			if ( empty( $character->wp_user_id ) ) {
 				continue;
@@ -160,12 +171,49 @@ class Report_Document {
 			if ( ! $user ) {
 				continue;
 			}
-			foreach ( Change::for_character( (int) ( $character->id ?? 0 ), [ 'status' => 'approved', 'order' => 'ASC' ] ) as $change ) {
-				$change->character_name = $user->display_name;
-				$rows[] = $change;
+			$user_id = (int) $user->ID;
+			if ( ! isset( $players[ $user_id ] ) ) {
+				$players[ $user_id ] = [ 'name' => (string) $user->display_name, 'earned' => 0, 'unspent' => 0, 'changes' => [] ];
 			}
+			$players[ $user_id ]['earned']  += (int) ( $character->xp_earned ?? 0 );
+			$players[ $user_id ]['unspent'] += (int) ( $character->xp_unspent ?? 0 );
+			$players[ $user_id ]['changes']  = array_merge(
+				$players[ $user_id ]['changes'],
+				Change::for_character( (int) ( $character->id ?? 0 ), [ 'status' => 'approved', 'order' => 'ASC' ] )
+			);
+		}
+
+		$rows = [];
+		foreach ( $players as $player ) {
+			usort( $player['changes'], static fn( $a, $b ) => [ (string) $a->submitted_at, (int) $a->id ] <=> [ (string) $b->submitted_at, (int) $b->id ] );
+			array_push( $rows, ...self::with_totals_after( $player['changes'], $player['name'], $player['earned'], $player['unspent'] ) );
 		}
 		return $rows;
+	}
+
+	/**
+	 * Stamps each change, in order, with the earned and unspent totals after
+	 * it - Grapevine's own per-entry "U/E" (`ExperienceHistoryNode`). Counted
+	 * back from today's real totals rather than up from zero, since XP that
+	 * arrived with an imported character has no change row (1.0.0-review F-071).
+	 *
+	 * @param array<int,object> $changes Approved changes, oldest first.
+	 * @return array<int,object>
+	 */
+	private static function with_totals_after( array $changes, string $name, int $earned, int $unspent ): array {
+		foreach ( array_reverse( $changes ) as $change ) {
+			$change->character_name = $name;
+			$change->earned_after   = $earned;
+			$change->unspent_after  = $unspent;
+
+			$change_data = is_object( $change->change_data ?? null ) ? (array) $change->change_data : (array) ( $change->change_data ?? [] );
+			$delta       = Change_Description::xp_delta( (string) $change->change_type, $change_data, (float) ( $change->xp_cost ?? 0 ) );
+			$unspent    -= $delta;
+			if ( in_array( $change->change_type, [ 'xp_earn', 'xp_adjust' ], true ) ) {
+				$earned -= $delta;
+			}
+		}
+		return $changes;
 	}
 
 	/**
@@ -173,12 +221,20 @@ class Report_Document {
 	 * @param array<string,mixed> $filters
 	 */
 	private static function build_card( array $report, object $game, array $filters, bool $can_manage ): array {
-		$result = Query_Engine::execute(
+		// Rows are redacted before conditions run, so a card's conditions cannot confirm what
+		// Storyteller-only text says either (F-046).
+		$options = $can_manage ? [] : [
+			'prepare_row' => static function ( $row ) use ( $game ): void {
+				St_Visibility::filter_world_object( $row, $game, false );
+			},
+		];
+		$result  = Query_Engine::execute(
 			$game->slug,
 			(array) ( $filters['conditions'] ?? [] ),
 			(string) ( $filters['logic'] ?? 'AND' ),
 			[ 'per_page' => 1000, 'sort' => [ 'field' => 'name' ] ],
-			$report['entity']
+			$report['entity'],
+			$options
 		);
 
 		$rows = $result['results'];
@@ -393,10 +449,10 @@ class Report_Document {
 	}
 
 	/**
-	 * A plot-entity row for the table shape is either a real `Plot_Entry`
-	 * (`entry_type: 'action'`) or a rumor-tagged `Plot` itself
-	 * (`entry_type: 'rumor'` - not a real Plot_Entry value, see the
-	 * registry's own comment). `Plot Report` (narrative) never reaches here.
+	 * A plot-entity row for the table shape is either one action line (see
+	 * `action_rows()`) or a rumor-tagged `Plot` itself (`entry_type: 'rumor'`
+	 * - not a real Plot_Entry value, see the registry's own comment).
+	 * `Plot Report` (narrative) never reaches here.
 	 *
 	 * @return array<int,object>
 	 */
@@ -406,21 +462,13 @@ class Report_Document {
 
 		if ( in_array( 'action', $wanted, true ) ) {
 			foreach ( Plot::for_game( (int) $game->id ) as $plot ) {
-				foreach ( Plot_Entry::for_plot( (int) $plot->id, [ 'entry_type' => 'action' ] ) as $entry ) {
-					$response = self::matching_response( (int) $plot->id, $entry );
-					$rows[]   = (object) [
-						'kind'     => 'action',
-						'plot'     => $plot,
-						'entry'    => $entry,
-						'response' => $response,
-					];
-				}
+				array_push( $rows, ...self::action_rows( $plot, $game ) );
 			}
 		}
 
 		if ( in_array( 'rumor', $wanted, true ) ) {
 			foreach ( self::rumor_tagged_plots( $game ) as $plot ) {
-				$rows[] = (object) [ 'kind' => 'rumor', 'plot' => $plot, 'entry' => null, 'response' => null ];
+				$rows[] = (object) [ 'kind' => 'rumor', 'plot' => $plot ];
 			}
 		}
 
@@ -428,16 +476,183 @@ class Report_Document {
 	}
 
 	/**
-	 * The `response` entry on the same plot posted after the given `action`
-	 * entry - the ST's own answer to that action, if one exists yet.
+	 * One plot's action lines, each already resolved to the values its columns
+	 * print.
+	 *
+	 * An allocation plot (one with an `apr_actor` character) reads the way
+	 * Grapevine's own Master Action Report does: a line per budget line, and
+	 * each Background use recorded against one is its own line, carrying the
+	 * Storyteller's result and what is left of that budget after every use.
+	 * Budget lines and uses are stored as JSON action entries and never print
+	 * as text. A player's own post is its own line (1.0.0-review F-054).
+	 *
+	 * @return array<int,object>
 	 */
-	private static function matching_response( int $plot_id, object $action_entry ): ?object {
-		foreach ( Plot_Entry::for_plot( $plot_id, [ 'entry_type' => 'response' ] ) as $response ) {
-			if ( strtotime( (string) $response->created_at ) >= strtotime( (string) $action_entry->created_at ) ) {
-				return $response;
+	private static function action_rows( object $plot, object $game ): array {
+		$plot_id   = (int) $plot->id;
+		$plot_date = (string) ( $plot->game_date ?? substr( (string) $plot->created_at, 0, 10 ) );
+		$actor_id  = Action_Allocator::actor_character_id( $plot_id );
+		$actor     = $actor_id !== null ? Character::find( $actor_id ) : null;
+		$rows      = [];
+
+		if ( $actor_id !== null ) {
+			$actor_name   = $actor !== null ? (string) $actor->name : '—';
+			$uses         = Background_Ledger::entries_for_plot( $plot_id );
+			$uses_by_name = [];
+			foreach ( $uses as $use ) {
+				$uses_by_name[ (string) ( $use['name'] ?? '' ) ][] = $use;
+			}
+
+			$budgets = Background_Ledger::apply_spends( array_values( Action_Allocator::subactions_for_plot( $plot_id ) ), $uses )['subactions'];
+			foreach ( $budgets as $budget ) {
+				foreach ( $uses_by_name[ $budget['name'] ] ?? [ null ] as $use ) {
+					$rows[] = self::action_line( $plot_date, $actor_name, $budget['name'], $use, $budget );
+				}
+				unset( $uses_by_name[ $budget['name'] ] );
+			}
+			// A use whose budget line is gone (re-allocated away) still happened.
+			foreach ( $uses_by_name as $name => $unbudgeted ) {
+				foreach ( $unbudgeted as $use ) {
+					$rows[] = self::action_line( $plot_date, $actor_name, (string) $name, $use, null );
+				}
 			}
 		}
-		return null;
+
+		return array_merge( $rows, self::post_rows( $plot, $game, $actor ) );
+	}
+
+	/**
+	 * One allocation-plot line: a Background use with its budget line, a
+	 * budget line nobody has used yet, or a use whose budget line is gone.
+	 * An empty value prints as a dash.
+	 *
+	 * @param array<string,mixed>|null $use    A decoded Background_Ledger entry, or null for a budget line nobody has used.
+	 * @param array<string,mixed>|null $budget The budget line after spends, or null for a use with none.
+	 */
+	private static function action_line( string $date, string $character, string $type, ?array $use, ?array $budget ): object {
+		return (object) [
+			'kind'   => 'action',
+			'date'   => $date,
+			'name'   => $character,
+			'type'   => $type,
+			'action' => $use !== null ? (string) ( $use['text'] ?? '' ) : '',
+			'result' => $use !== null ? (string) ( $use['result'] ?? '' ) : '',
+			'total'  => $budget !== null ? (string) (int) $budget['total'] : '',
+			'growth' => $budget !== null ? (string) (int) $budget['growth'] : '',
+			'unused' => $budget !== null ? (string) (int) $budget['unused'] : '',
+		];
+	}
+
+	/**
+	 * A plot's free-text action posts, in thread order.
+	 *
+	 * The poster is a WordPress user, not a character: the line names the
+	 * allocation plot's own character, else the poster's characters connected
+	 * to the plot, else the poster's one active character in this chronicle.
+	 *
+	 * A plot thread has no reply links, so a Storyteller response can only be
+	 * matched to the posts waiting since the last response. It becomes their
+	 * result when one character (or one poster) is waiting. When several
+	 * players are waiting, nothing says which post it answers, so each of
+	 * their lines points at the plot rather than guess.
+	 *
+	 * @return array<int,object>
+	 */
+	private static function post_rows( object $plot, object $game, ?object $actor ): array {
+		$rows    = [];
+		$waiting = [];
+		$names   = [];
+		$posters = $actor === null ? self::plot_characters_by_user( $plot, $game ) : [];
+
+		foreach ( Plot_Entry::for_plot( (int) $plot->id ) as $entry ) {
+			if ( $entry->entry_type === 'action' && ! self::is_apr_entry( (string) $entry->content ) ) {
+				$author = (int) $entry->author_id;
+				if ( ! isset( $names[ $author ] ) ) {
+					$names[ $author ] = $actor !== null ? (string) $actor->name : self::poster_character_name( $author, $posters, $game );
+				}
+				$line = (object) [
+					'kind'   => 'action',
+					'date'   => (string) ( $entry->event_date ?? substr( (string) $entry->created_at, 0, 10 ) ),
+					'name'   => $names[ $author ],
+					'type'   => 'Action',
+					'action' => wp_strip_all_tags( (string) $entry->content ),
+					'result' => '',
+					'total'  => '',
+					'growth' => '',
+					'unused' => '',
+				];
+				$rows[]    = $line;
+				$waiting[] = [ 'who' => $actor !== null ? 'actor' : $author, 'line' => $line ];
+				continue;
+			}
+
+			if ( $entry->entry_type !== 'response' || $waiting === [] ) {
+				continue;
+			}
+
+			$one_voice = count( array_unique( array_column( $waiting, 'who' ) ) ) === 1;
+			foreach ( $waiting as $post ) {
+				$post['line']->result = $one_voice
+					? wp_strip_all_tags( (string) $entry->content )
+					/* translators: %s: plot title */
+					: sprintf( __( 'Reply came after several actions, see "%s"', 'beyond-elysium' ), (string) $plot->title );
+			}
+			$waiting = [];
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * The chronicle's player characters connected to a plot, in either
+	 * direction, grouped by the WordPress user who owns each - what a post's
+	 * author id is matched against.
+	 *
+	 * @return array<int,string[]>
+	 */
+	private static function plot_characters_by_user( object $plot, object $game ): array {
+		$by_user = [];
+		foreach ( Connection::for_entity( 'plot', (int) $plot->id ) as $connection ) {
+			if ( $connection->source_type === 'plot' && $connection->target_type === 'character' ) {
+				$character_id = (int) $connection->target_id;
+			} elseif ( $connection->target_type === 'plot' && $connection->source_type === 'character' ) {
+				$character_id = (int) $connection->source_id;
+			} else {
+				continue;
+			}
+			$character = Character::find( $character_id );
+			if ( $character !== null && (int) $character->wp_user_id > 0 && $character->owner_slug === $game->slug ) {
+				$by_user[ (int) $character->wp_user_id ][ $character_id ] = (string) $character->name;
+			}
+		}
+		return array_map( 'array_values', $by_user );
+	}
+
+	/**
+	 * The character a post's author acted as: their characters connected to
+	 * the plot, else their one active character in this chronicle, else a
+	 * dash - a user id is never read as a character id.
+	 *
+	 * @param array<int,string[]> $posters
+	 */
+	private static function poster_character_name( int $author_id, array $posters, object $game ): string {
+		if ( ! empty( $posters[ $author_id ] ) ) {
+			return implode( ', ', $posters[ $author_id ] );
+		}
+		if ( $author_id <= 0 ) {
+			return '—';
+		}
+		$active = Character::all_for_game( (string) $game->slug, [ 'wp_user_id' => $author_id, 'status' => 'active', 'per_page' => 2 ] );
+		return count( $active ) === 1 ? (string) $active[0]->name : '—';
+	}
+
+	/**
+	 * Whether an action entry is an allocator budget line or a Background
+	 * use: stored JSON the Action & Rumor system reads, never a post to print.
+	 */
+	private static function is_apr_entry( string $content ): bool {
+		$data = json_decode( $content, true );
+		return is_array( $data ) && in_array( $data['source'] ?? '', [ 'allocator', 'ledger' ], true );
 	}
 
 	/**
@@ -492,6 +707,12 @@ class Report_Document {
 			case 'plot':
 				return self::resolve_plot( $key, $row );
 
+			case 'boons':
+				return self::resolve_boons( $row );
+
+			case 'equipment':
+				return self::resolve_equipment( $row );
+
 			case 'unmapped':
 			default:
 				return '—';
@@ -528,7 +749,8 @@ class Report_Document {
 			case 'charname':
 				return (string) ( $row->name ?? '—' );
 			case 'matchvalue':
-				return (string) ( $row->match_value ?? '—' );
+				// What the query engine records for each match (1.0.0-review F-074).
+				return (string) ( ( $row->match_reason ?? '' ) !== '' ? $row->match_reason : '—' );
 			case 'sortvalue':
 				return (string) ( $row->sort_value ?? $row->name ?? '—' );
 			default:
@@ -553,16 +775,77 @@ class Report_Document {
 			case 'changetext':
 				return Change_Description::describe( (string) ( $row->change_type ?? '' ), $change_data );
 			case 'reason':
-				return (string) ( $change_data['reason'] ?? '—' );
+				// An award's reason lives in its change data; any other change's in its own reason
+				// or the submitter's note - the same order the Grapevine export reads (F-071).
+				foreach ( [ $change_data['reason'] ?? null, $row->reason ?? null, $row->notes ?? null ] as $reason ) {
+					if ( trim( (string) $reason ) !== '' ) {
+						return (string) $reason;
+					}
+				}
+				return '—';
 			case 'earned':
 			case 'ppearned':
-				return (string) max( 0.0, (float) ( $row->xp_cost ?? 0 ) );
+				return (string) (int) ( $row->earned_after ?? 0 );
 			case 'unspent':
 			case 'ppunspent':
-				return (string) max( 0.0, -1 * (float) ( $row->xp_cost ?? 0 ) );
+				return (string) (int) ( $row->unspent_after ?? 0 );
 			default:
 				return '—';
 		}
+	}
+
+	/**
+	 * A character's outstanding boons, each naming the other party, as
+	 * Grapevine's Vampire Status Report lists them (1.0.0-review F-072). A
+	 * repaid boon stays on the Boon Ledger as history but no longer stands.
+	 */
+	private static function resolve_boons( object $row ): string {
+		$lines = [];
+		foreach ( Connection::for_target( 'character', (int) $row->id ) as $connection ) {
+			if ( $connection->source_type !== 'world_object' || ! in_array( $connection->label, [ 'owed_by', 'owed_to' ], true ) ) {
+				continue;
+			}
+			$boon = World_Object::find( (int) $connection->source_id );
+			if ( ! $boon || $boon->object_type !== 'boon' || ( $boon->properties['status'] ?? '' ) === 'repaid' ) {
+				continue;
+			}
+
+			$other_label = $connection->label === 'owed_by' ? 'owed_to' : 'owed_by';
+			$other       = '—';
+			foreach ( Connection::for_source( 'world_object', (int) $boon->id ) as $party ) {
+				if ( $party->label === $other_label && $party->target_type === 'character' ) {
+					$other = (string) ( Character::find( (int) $party->target_id )->name ?? '—' );
+				}
+			}
+			$level   = (string) ( $boon->properties['boon_level'] ?? '' );
+			$lines[] = $connection->label === 'owed_by'
+				/* translators: 1: character owed the boon, 2: boon level */
+				? sprintf( __( 'Owes %1$s (%2$s)', 'beyond-elysium' ), $other, $level )
+				/* translators: 1: character who owes the boon, 2: boon level */
+				: sprintf( __( 'Owed by %1$s (%2$s)', 'beyond-elysium' ), $other, $level );
+		}
+		sort( $lines );
+		return $lines !== [] ? implode( '; ', $lines ) : '—';
+	}
+
+	/**
+	 * The items a character holds - its connections to item world objects -
+	 * by name (1.0.0-review F-073), the same connections the Grapevine export
+	 * writes as Equipment and Item Cards scope to.
+	 */
+	private static function resolve_equipment( object $row ): string {
+		$names = [];
+		foreach ( Connection::for_source( 'character', (int) $row->id ) as $connection ) {
+			if ( $connection->target_type !== 'world_object' ) {
+				continue;
+			}
+			$object = World_Object::find( (int) $connection->target_id );
+			if ( $object && $object->object_type === 'item' ) {
+				$names[] = (string) $object->name;
+			}
+		}
+		sort( $names );
+		return $names !== [] ? implode( ', ', $names ) : '—';
 	}
 
 	private static function resolve_player( string $key, object $row ): string {
@@ -580,8 +863,8 @@ class Report_Document {
 	}
 
 	private static function resolve_plot( string $key, object $row ): string {
-		$plot = $row->plot;
 		if ( $row->kind === 'rumor' ) {
+			$plot = $row->plot;
 			switch ( $key ) {
 				case 'date':
 					return (string) ( $plot->game_date ?? substr( (string) $plot->created_at, 0, 10 ) );
@@ -594,21 +877,10 @@ class Report_Document {
 			}
 		}
 
-		$entry = $row->entry;
-		switch ( $key ) {
-			case 'date':
-				return (string) ( $entry->event_date ?? substr( (string) $entry->created_at, 0, 10 ) );
-			case 'name':
-				$character = \BeyondElysium\Models\Character::find( (int) $entry->author_id );
-				return $character !== null ? (string) $character->name : '—';
-			case 'type':
-				return 'Action';
-			case 'action':
-				return wp_strip_all_tags( (string) $entry->content );
-			case 'result':
-				return $row->response !== null ? wp_strip_all_tags( (string) $row->response->content ) : '—';
-			default:
-				return '—';
-		}
+		// An action line arrives already resolved (action_rows()); a column it does not carry prints a dash.
+		$value = in_array( $key, [ 'date', 'name', 'type', 'action', 'result', 'total', 'growth', 'unused' ], true )
+			? (string) $row->{$key}
+			: '';
+		return $value !== '' ? $value : '—';
 	}
 }

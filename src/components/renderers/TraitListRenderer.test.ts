@@ -1,4 +1,8 @@
-import { resolveDisplay, groupByCategory, sortIfAlphabetized } from './TraitListRenderer';
+import {
+	resolveDisplay,
+	groupByCategory,
+	sortIfAlphabetized,
+} from './TraitListRenderer';
 import type { Trait, DisplayType } from '../../lib/displayTrait';
 import type { TraitListDefinition } from '../../types';
 import input from '../../../tests/fixtures/trait-grouping-input.json';
@@ -37,8 +41,12 @@ describe( 'TraitListRenderer helpers — parity with Trait_Grouping', () => {
 	describe( 'sortIfAlphabetized', () => {
 		input.sortIfAlphabetized.forEach( ( testCase, i ) => {
 			it( `matches the shared fixture: ${ testCase.case }`, () => {
-				const alphabetize = ( testCase as { alphabetize?: boolean } ).alphabetize;
-				const result = sortIfAlphabetized( testCase.traits as unknown as Trait[], alphabetize );
+				const alphabetize = ( testCase as { alphabetize?: boolean } )
+					.alphabetize;
+				const result = sortIfAlphabetized(
+					testCase.traits as unknown as Trait[],
+					alphabetize
+				);
 				expect( result ).toEqual( expected.sortIfAlphabetized[ i ] );
 			} );
 		} );

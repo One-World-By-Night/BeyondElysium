@@ -2,11 +2,13 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Core\Authorization;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Saved_Query;
+use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Services\Field_Registry;
 use BeyondElysium\Services\Query_Engine;
-use BeyondElysium\Services\St_Filter;
+use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -35,7 +37,7 @@ class Query_Controller extends Base_Controller {
 			[
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'run_query' ],
-				'permission_callback' => $this->permission( 'be_run_queries' ),
+				'permission_callback' => $this->storyteller_only(),
 				'args'                => [ 'inventory' => $inventory_arg ],
 			],
 		] );
@@ -44,7 +46,7 @@ class Query_Controller extends Base_Controller {
 			[
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'run_statistics' ],
-				'permission_callback' => $this->permission( 'be_run_queries' ),
+				'permission_callback' => $this->storyteller_only(),
 				'args'                => [ 'inventory' => $inventory_arg ],
 			],
 		] );
@@ -53,12 +55,12 @@ class Query_Controller extends Base_Controller {
 			[
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'get_items' ],
-				'permission_callback' => $this->permission( 'be_run_queries' ),
+				'permission_callback' => $this->storyteller_only(),
 			],
 			[
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'create_item' ],
-				'permission_callback' => $this->permission( 'be_run_queries' ),
+				'permission_callback' => $this->storyteller_only(),
 				'args'                => [ 'inventory' => $inventory_arg ],
 			],
 		] );
@@ -67,13 +69,13 @@ class Query_Controller extends Base_Controller {
 			[
 				'methods'             => 'PUT',
 				'callback'            => [ $this, 'update_item' ],
-				'permission_callback' => $this->permission( 'be_run_queries' ),
+				'permission_callback' => $this->storyteller_only(),
 				'args'                => [ 'inventory' => $inventory_arg ],
 			],
 			[
 				'methods'             => 'DELETE',
 				'callback'            => [ $this, 'delete_item' ],
-				'permission_callback' => $this->permission( 'be_run_queries' ),
+				'permission_callback' => $this->storyteller_only(),
 			],
 		] );
 	}
@@ -109,20 +111,9 @@ class Query_Controller extends Base_Controller {
 			'per_page' => $request->get_param( 'per_page' ),
 		];
 
-		$result = Query_Engine::execute( $request['game_slug'], $conditions, $logic, $paging, $inventory );
-
-		// ST-text redaction only applies to characters. A world object has no rp_notes/
-		// biography/notes properties at all - writing them unconditionally onto every row
-		// (the pre-fix behavior) raised a PHP 8.2 "undefined property" warning per field per
-		// row AND fabricated two empty properties on every result (query-beyond-characters-
-		// design.md §8 point 3).
-		if ( $inventory === 'char' ) {
-			foreach ( $result['results'] as $character ) {
-				unset( $character->rp_notes );
-				$character->biography = St_Filter::strip_for_game( (string) $character->biography, $game->settings ?? null );
-				$character->notes     = St_Filter::strip_for_game( (string) $character->notes, $game->settings ?? null );
-			}
-		}
+		// Character rows are redacted inside the engine, before matching, for anyone who is not a
+		// Storyteller of this chronicle; a Storyteller gets them whole (1.0.0-review F-024).
+		$result = Query_Engine::execute( $request['game_slug'], $conditions, $logic, $paging, $inventory, $this->visibility_options( $inventory, $game ) );
 
 		Saved_Query::save_recent( (int) $game->id, get_current_user_id(), $inventory, $logic === 'AND', $conditions );
 
@@ -173,7 +164,8 @@ class Query_Controller extends Base_Controller {
 			$stat_type,
 			$ok_zero === null ? true : (bool) $ok_zero,
 			$trait ? (string) $trait : null,
-			$inventory
+			$inventory,
+			$this->visibility_options( $inventory, $game )
 		);
 
 		return $this->success( $result );
@@ -192,7 +184,7 @@ class Query_Controller extends Base_Controller {
 		if ( is_wp_error( $game ) ) {
 			return $game;
 		}
-		return $this->success( Saved_Query::for_game( (int) $game->id ) );
+		return $this->success( Saved_Query::for_game( (int) $game->id, get_current_user_id() ) );
 	}
 
 	/**
@@ -254,6 +246,10 @@ class Query_Controller extends Base_Controller {
 		if ( is_wp_error( $query ) ) {
 			return $query;
 		}
+		$denied = $this->ownership_error( $query );
+		if ( $denied ) {
+			return $denied;
+		}
 
 		$data = [];
 		foreach ( [ 'name', 'inventory', 'sort_key', 'sort_direction' ] as $field ) {
@@ -298,8 +294,62 @@ class Query_Controller extends Base_Controller {
 		if ( is_wp_error( $query ) ) {
 			return $query;
 		}
+		$denied = $this->ownership_error( $query );
+		if ( $denied ) {
+			return $denied;
+		}
 		Saved_Query::delete( (int) $query->id );
 		return $this->success( null, 204 );
+	}
+
+	/**
+	 * Refuses a change to someone else's saved query unless the viewer is a
+	 * Storyteller of this chronicle (1.0.0-review F-028).
+	 *
+	 * @param object $query
+	 * @return \WP_Error|null Null when the change may proceed.
+	 */
+	private function ownership_error( $query ): ?\WP_Error {
+		if ( (int) $query->created_by === get_current_user_id() || Authorization::can( 'be_manage_characters' ) ) {
+			return null;
+		}
+		return $this->error( 'ownership_denied', __( 'Only the person who saved this query, or a Storyteller, can change it.', 'beyond-elysium' ), 403 );
+	}
+
+	/**
+	 * The Query Tool is a Storyteller's (owner ruling, 1.0.0-review F-041): it needs
+	 * `be_run_queries` and `be_manage_characters` in the chronicle, however either was
+	 * granted - a chronicle role, a WordPress role, or accessSchema.
+	 */
+	private function storyteller_only(): callable {
+		return $this->permission_all( [ 'be_run_queries', 'be_manage_characters' ] );
+	}
+
+	/**
+	 * What a query may reach for the current viewer. A Storyteller of this
+	 * chronicle queries everything - and since F-041 only Storytellers pass
+	 * these routes' permission check. This stays as a second line: anyone else
+	 * would never reach an NPC, and every character row would be redacted
+	 * exactly as the character routes redact it before a single clause is
+	 * evaluated, so hidden text or blocks could neither come back in results nor
+	 * answer a condition. World objects are unaffected.
+	 *
+	 * @param string $inventory
+	 * @param object $game
+	 * @return array
+	 */
+	private function visibility_options( string $inventory, $game ): array {
+		if ( $inventory !== 'char' || Authorization::can( 'be_manage_characters' ) ) {
+			return [];
+		}
+
+		$hidden = Schema_Block::storyteller_only_slugs( $game->slug );
+		return [
+			'exclude_npcs' => true,
+			'prepare_row'  => static function ( $row ) use ( $game, $hidden ): void {
+				St_Visibility::filter_character( $row, $game, false, $hidden );
+			},
+		];
 	}
 
 	/**

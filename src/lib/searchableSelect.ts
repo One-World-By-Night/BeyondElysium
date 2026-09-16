@@ -23,7 +23,11 @@ export function filterOptions( options: string[], query: string ): string[] {
  * must be true, the (trimmed) query must be non-empty, and it must not already exactly
  * match an existing option case-insensitively.
  */
-export function canUseCustomEntry( query: string, options: string[], allowCustom: boolean ): boolean {
+export function canUseCustomEntry(
+	query: string,
+	options: string[],
+	allowCustom: boolean
+): boolean {
 	if ( ! allowCustom ) {
 		return false;
 	}
@@ -50,7 +54,9 @@ export function resolveBlurCommit(
 	allowCustom: boolean
 ): { value: string; isCustom: boolean } | null {
 	const trimmed = query.trim();
-	const exact = options.find( ( option ) => option.toLowerCase() === trimmed.toLowerCase() );
+	const exact = options.find(
+		( option ) => option.toLowerCase() === trimmed.toLowerCase()
+	);
 	if ( exact !== undefined ) {
 		return { value: exact, isCustom: false };
 	}

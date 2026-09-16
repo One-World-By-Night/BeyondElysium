@@ -38,7 +38,10 @@ class TraitDisplayParityTest extends TestCase {
 				"Fixture case order drifted at index {$i}."
 			);
 
-			$actual = Trait_Display::display_trait( $case->trait, $case->mode, $case->dot ?? '•' );
+			// Omitted when the case names no glyph, so the default dot is part of what both halves agree on.
+			$actual = isset( $case->dot )
+				? Trait_Display::display_trait( $case->trait, $case->mode, $case->dot )
+				: Trait_Display::display_trait( $case->trait, $case->mode );
 
 			$this->assertSame( $expected[ $i ]->output, $actual, $case->name );
 		}

@@ -40,42 +40,77 @@ export interface BackgroundLedgerProps {
  * the character or date changes, independent of whatever re-fetches the
  * allocation itself.
  */
-export function BackgroundLedger( { gameSlug, characterId, gameDate, subactions = [], canManage }: BackgroundLedgerProps ) {
-	const [ spendable, setSpendable ] = useState<SpendableBackground[]>( [] );
-	const [ uses, setUses ] = useState<BackgroundUse[]>( [] );
-	const [ drafts, setDrafts ] = useState<Record<string, string>>( {} );
-	const [ error, setError ] = useState<string | null>( null );
+export function BackgroundLedger( {
+	gameSlug,
+	characterId,
+	gameDate,
+	subactions = [],
+	canManage,
+}: BackgroundLedgerProps ) {
+	const [ spendable, setSpendable ] = useState< SpendableBackground[] >( [] );
+	const [ uses, setUses ] = useState< BackgroundUse[] >( [] );
+	const [ drafts, setDrafts ] = useState< Record< string, string > >( {} );
+	const [ error, setError ] = useState< string | null >( null );
 
 	function reload() {
-		Promise.all( [ api.apr( gameSlug ).spendable( characterId ), api.apr( gameSlug ).backgroundUses( characterId, gameDate ) ] )
+		Promise.all( [
+			api.apr( gameSlug ).spendable( characterId ),
+			api.apr( gameSlug ).backgroundUses( characterId, gameDate ),
+		] )
 			.then( ( [ found, recorded ] ) => {
 				setSpendable( found );
 				setUses( recorded );
 				setError( null );
 			} )
-			.catch( () => setError( __( 'Failed to load the background ledger.', 'beyond-elysium' ) ) );
+			.catch( () =>
+				setError(
+					__(
+						'Failed to load the background ledger.',
+						'beyond-elysium'
+					)
+				)
+			);
 	}
 
 	useEffect( reload, [ gameSlug, characterId, gameDate ] );
 
-	const bySubactionName: Record<string, Subaction> = {};
+	const bySubactionName: Record< string, Subaction > = {};
 	subactions.forEach( ( s ) => {
 		bySubactionName[ s.name ] = s;
 	} );
-	const budgetedFromSpendable = spendable.filter( ( bg ) => bg.budget_name !== null );
-	const budgetedNames = Array.from( new Set( [ ...subactions.map( ( s ) => s.name ), ...budgetedFromSpendable.map( ( bg ) => bg.name ) ] ) );
+	const budgetedFromSpendable = spendable.filter(
+		( bg ) => bg.budget_name !== null
+	);
+	const budgetedNames = Array.from(
+		new Set( [
+			...subactions.map( ( s ) => s.name ),
+			...budgetedFromSpendable.map( ( bg ) => bg.name ),
+		] )
+	);
 	const budgetedRows = budgetedNames.map( ( name ) => {
 		const sub = bySubactionName[ name ];
 		if ( sub ) {
-			return { name, total: sub.total, spent: sub.spent, overBudget: sub.over_budget };
+			return {
+				name,
+				total: sub.total,
+				spent: sub.spent,
+				overBudget: sub.over_budget,
+			};
 		}
 		const bg = budgetedFromSpendable.find( ( b ) => b.name === name );
-		return { name, total: bg?.budget_total ?? undefined, spent: undefined, overBudget: false };
+		return {
+			name,
+			total: bg?.budget_total ?? undefined,
+			spent: undefined,
+			overBudget: false,
+		};
 	} );
 	const budgetedNameSet = new Set( budgetedNames );
-	const unbudgeted = spendable.filter( ( bg ) => ! budgetedNameSet.has( bg.name ) );
+	const unbudgeted = spendable.filter(
+		( bg ) => ! budgetedNameSet.has( bg.name )
+	);
 
-	const usesByName: Record<string, BackgroundUse[]> = {};
+	const usesByName: Record< string, BackgroundUse[] > = {};
 	uses.forEach( ( u ) => {
 		( usesByName[ u.name ] ??= [] ).push( u );
 	} );
@@ -83,7 +118,11 @@ export function BackgroundLedger( { gameSlug, characterId, gameDate, subactions 
 	async function record( name: string ) {
 		setError( null );
 		try {
-			await api.apr( gameSlug ).recordUse( characterId, { game_date: gameDate, name, text: drafts[ name ] ?? '' } );
+			await api.apr( gameSlug ).recordUse( characterId, {
+				game_date: gameDate,
+				name,
+				text: drafts[ name ] ?? '',
+			} );
 			setDrafts( { ...drafts, [ name ]: '' } );
 			reload();
 		} catch ( err ) {
@@ -111,7 +150,14 @@ export function BackgroundLedger( { gameSlug, characterId, gameDate, subactions 
 
 	async function clearForCharacter() {
 		// eslint-disable-next-line no-alert
-		if ( ! window.confirm( __( 'Clear every recorded background use for this character, on every game date? This does not touch their action budgets, only the uses recorded against them.', 'beyond-elysium' ) ) ) {
+		if (
+			! window.confirm(
+				__(
+					'Clear every recorded background use for this character, on every game date? This does not touch their action budgets, only the uses recorded against them.',
+					'beyond-elysium'
+				)
+			)
+		) {
 			return;
 		}
 		await api.apr( gameSlug ).clearForCharacter( characterId );
@@ -120,7 +166,18 @@ export function BackgroundLedger( { gameSlug, characterId, gameDate, subactions 
 
 	async function clearForDate() {
 		// eslint-disable-next-line no-alert
-		if ( ! window.confirm( sprintf( __( 'Clear every recorded background use for every character on %s? This does not touch action budgets, only the uses recorded against them.', 'beyond-elysium' ), gameDate ) ) ) {
+		if (
+			! window.confirm(
+				sprintf(
+					/* translators: %s: the game date every character's background uses are cleared for */
+					__(
+						'Clear every recorded background use for every character on %s? This does not touch action budgets, only the uses recorded against them.',
+						'beyond-elysium'
+					),
+					gameDate
+				)
+			)
+		) {
 			return;
 		}
 		await api.apr( gameSlug ).clearForDate( gameDate );
@@ -133,7 +190,9 @@ export function BackgroundLedger( { gameSlug, characterId, gameDate, subactions 
 		const canClearThis = canManage || use.result === '';
 		return (
 			<li key={ use.id } className="be-background-ledger__use">
-				<p className="be-background-ledger__use-text">{ use.text || __( '(no description)', 'beyond-elysium' ) }</p>
+				<p className="be-background-ledger__use-text">
+					{ use.text || __( '(no description)', 'beyond-elysium' ) }
+				</p>
 				{ canManage ? (
 					<input
 						type="text"
@@ -142,10 +201,16 @@ export function BackgroundLedger( { gameSlug, characterId, gameDate, subactions 
 						onChange={ ( e ) => setResult( use, e.target.value ) }
 					/>
 				) : (
-					use.result && <p className="be-background-ledger__use-result">{ use.result }</p>
+					use.result && (
+						<p className="be-background-ledger__use-result">
+							{ use.result }
+						</p>
+					)
 				) }
 				{ canClearThis && (
-					<button type="button" onClick={ () => clearUse( use ) }>{ __( 'Clear', 'beyond-elysium' ) }</button>
+					<button type="button" onClick={ () => clearUse( use ) }>
+						{ __( 'Clear', 'beyond-elysium' ) }
+					</button>
 				) }
 			</li>
 		);
@@ -153,33 +218,79 @@ export function BackgroundLedger( { gameSlug, characterId, gameDate, subactions 
 
 	return (
 		<div className="be-background-ledger">
-			{ error && <p className="be-background-ledger__error" role="alert">{ error }</p> }
+			{ error && (
+				<p className="be-background-ledger__error" role="alert">
+					{ error }
+				</p>
+			) }
 
 			{ budgetedRows.map( ( row ) => (
-				<div className="be-background-ledger__subaction" key={ row.name }>
+				<div
+					className="be-background-ledger__subaction"
+					key={ row.name }
+				>
 					<h4>
 						{ row.name }
-						{ row.spent !== undefined && row.total !== undefined && (
-							<span className={ row.overBudget ? 'be-background-ledger__spent is-over' : 'be-background-ledger__spent' }>
-								{ sprintf( __( 'Spent %1$d / %2$d', 'beyond-elysium' ), row.spent, row.total ) }
-								{ row.overBudget && ` (${ __( 'over budget', 'beyond-elysium' ) })` }
-							</span>
-						) }
-						{ row.spent === undefined && row.total !== undefined && (
-							<span className="be-background-ledger__spent">
-								{ sprintf( __( 'Budget: %d', 'beyond-elysium' ), row.total ) }
-							</span>
-						) }
+						{ row.spent !== undefined &&
+							row.total !== undefined && (
+								<span
+									className={
+										row.overBudget
+											? 'be-background-ledger__spent is-over'
+											: 'be-background-ledger__spent'
+									}
+								>
+									{ sprintf(
+										/* translators: 1: XP or points spent so far, 2: the total budget */
+										__(
+											'Spent %1$d / %2$d',
+											'beyond-elysium'
+										),
+										row.spent,
+										row.total
+									) }
+									{ row.overBudget &&
+										` (${ __(
+											'over budget',
+											'beyond-elysium'
+										) })` }
+								</span>
+							) }
+						{ row.spent === undefined &&
+							row.total !== undefined && (
+								<span className="be-background-ledger__spent">
+									{ sprintf(
+										/* translators: %d: the total budget for this subaction */
+										__( 'Budget: %d', 'beyond-elysium' ),
+										row.total
+									) }
+								</span>
+							) }
 					</h4>
-					<ul>{ ( usesByName[ row.name ] ?? [] ).map( renderUse ) }</ul>
+					<ul>
+						{ ( usesByName[ row.name ] ?? [] ).map( renderUse ) }
+					</ul>
 					<div className="be-background-ledger__record">
 						<input
 							type="text"
-							placeholder={ __( 'What did they do?', 'beyond-elysium' ) }
+							placeholder={ __(
+								'What did they do?',
+								'beyond-elysium'
+							) }
 							value={ drafts[ row.name ] ?? '' }
-							onChange={ ( e ) => setDrafts( { ...drafts, [ row.name ]: e.target.value } ) }
+							onChange={ ( e ) =>
+								setDrafts( {
+									...drafts,
+									[ row.name ]: e.target.value,
+								} )
+							}
 						/>
-						<button type="button" onClick={ () => record( row.name ) }>{ __( 'Record a use', 'beyond-elysium' ) }</button>
+						<button
+							type="button"
+							onClick={ () => record( row.name ) }
+						>
+							{ __( 'Record a use', 'beyond-elysium' ) }
+						</button>
 					</div>
 				</div>
 			) ) }
@@ -188,20 +299,43 @@ export function BackgroundLedger( { gameSlug, characterId, gameDate, subactions 
 				<div className="be-background-ledger__unbudgeted">
 					<h4>{ __( 'Other backgrounds', 'beyond-elysium' ) }</h4>
 					{ unbudgeted.map( ( bg ) => (
-						<div className="be-background-ledger__subaction" key={ bg.name }>
+						<div
+							className="be-background-ledger__subaction"
+							key={ bg.name }
+						>
 							<h5>{ bg.name }</h5>
 							<p className="be-background-ledger__hint">
-								{ __( 'No action budget — set this background under Action & Rumor Settings.', 'beyond-elysium' ) }
+								{ __(
+									'No action budget — set this background under Action & Rumor Settings.',
+									'beyond-elysium'
+								) }
 							</p>
-							<ul>{ ( usesByName[ bg.name ] ?? [] ).map( renderUse ) }</ul>
+							<ul>
+								{ ( usesByName[ bg.name ] ?? [] ).map(
+									renderUse
+								) }
+							</ul>
 							<div className="be-background-ledger__record">
 								<input
 									type="text"
-									placeholder={ __( 'What did they do?', 'beyond-elysium' ) }
+									placeholder={ __(
+										'What did they do?',
+										'beyond-elysium'
+									) }
 									value={ drafts[ bg.name ] ?? '' }
-									onChange={ ( e ) => setDrafts( { ...drafts, [ bg.name ]: e.target.value } ) }
+									onChange={ ( e ) =>
+										setDrafts( {
+											...drafts,
+											[ bg.name ]: e.target.value,
+										} )
+									}
 								/>
-								<button type="button" onClick={ () => record( bg.name ) }>{ __( 'Record a use', 'beyond-elysium' ) }</button>
+								<button
+									type="button"
+									onClick={ () => record( bg.name ) }
+								>
+									{ __( 'Record a use', 'beyond-elysium' ) }
+								</button>
 							</div>
 						</div>
 					) ) }
@@ -210,8 +344,15 @@ export function BackgroundLedger( { gameSlug, characterId, gameDate, subactions 
 
 			{ canManage && (
 				<div className="be-background-ledger__clear-actions">
-					<button type="button" onClick={ clearForCharacter }>{ __( 'Clear all for this Character', 'beyond-elysium' ) }</button>
-					<button type="button" onClick={ clearForDate }>{ __( 'Clear all for this Date', 'beyond-elysium' ) }</button>
+					<button type="button" onClick={ clearForCharacter }>
+						{ __(
+							'Clear all for this Character',
+							'beyond-elysium'
+						) }
+					</button>
+					<button type="button" onClick={ clearForDate }>
+						{ __( 'Clear all for this Date', 'beyond-elysium' ) }
+					</button>
 				</div>
 			) }
 		</div>
@@ -223,7 +364,11 @@ interface RestError {
 }
 
 function errorMessage( error: unknown ): string {
-	if ( typeof error === 'object' && error !== null && ( error as RestError ).message ) {
+	if (
+		typeof error === 'object' &&
+		error !== null &&
+		( error as RestError ).message
+	) {
 		return ( error as RestError ).message as string;
 	}
 	return __( 'Something went wrong.', 'beyond-elysium' );

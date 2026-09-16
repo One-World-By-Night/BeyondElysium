@@ -9,7 +9,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * The markers are configurable per game rather than a fixed `[ST]`/`[/ST]` pair -
  * they live on `be_games.settings.st_comment_start` / `st_comment_end`, defaulting
- * to `[ST]` / `[/ST]`. An empty marker means filtering is off entirely.
+ * to `[ST]` / `[/ST]`. Passed an empty marker, `strip()` does no filtering, as
+ * Grapevine does; a game's blank stored marker falls back to the default instead.
  *
  * This is the authoritative strip: it runs server-side, before `biography`/`notes`
  * ever reach a non-ST client. `src/lib/stripStSections.ts` is a second layer for
@@ -63,15 +64,36 @@ class St_Filter {
 	/**
 	 * Strips ST sections from a field using a game's configured markers. Reads
 	 * `st_comment_start`/`st_comment_end` from the game's settings, falling back
-	 * to `[ST]` / `[/ST]` when the game has not customized them.
+	 * to `[ST]` / `[/ST]` when the game has not customized them - or has stored
+	 * a blank one. Unlike `strip()`, a chronicle's settings can never turn
+	 * filtering off: that would show every player every `[ST]` passage in it
+	 * (1.0.0-review F-061).
 	 *
 	 * @param string      $text
 	 * @param object|null $game_settings Decoded `be_games.settings`, or null.
 	 * @return string
 	 */
 	public static function strip_for_game( string $text, $game_settings ): string {
-		$start = $game_settings->st_comment_start ?? '[ST]';
-		$end   = $game_settings->st_comment_end ?? '[/ST]';
-		return self::strip( $text, (string) $start, (string) $end );
+		$start = (string) ( $game_settings->st_comment_start ?? '' );
+		$end   = (string) ( $game_settings->st_comment_end ?? '' );
+		return self::strip( $text, $start !== '' ? $start : '[ST]', $end !== '' ? $end : '[/ST]' );
+	}
+
+	/**
+	 * Same as strip_for_game(), for a field that may hold HTML rather than plain text
+	 * (character biography/notes, world-object description/limitations/text properties -
+	 * every one of them a rich-text field this filter already ran against before it could
+	 * hold HTML). `strip()` cuts by byte offset with no notion of tag boundaries, so a
+	 * marker placed across a paragraph break or inline formatting can leave a dangling
+	 * unclosed tag in what's left over. Re-running the result through `wp_kses_post()`
+	 * costs nothing when nothing was cut mid-tag, and only ever narrows the output
+	 * otherwise - it cannot reintroduce the secret text `strip()` already removed.
+	 *
+	 * @param string      $html
+	 * @param object|null $game_settings Decoded `be_games.settings`, or null.
+	 * @return string
+	 */
+	public static function strip_html_for_game( string $html, $game_settings ): string {
+		return wp_kses_post( self::strip_for_game( $html, $game_settings ) );
 	}
 }

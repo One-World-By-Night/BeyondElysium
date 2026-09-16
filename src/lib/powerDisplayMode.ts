@@ -10,7 +10,7 @@
 import { useEffect, useState } from '@wordpress/element';
 
 const STORAGE_KEY = 'be-power-display-mode';
-const listeners = new Set<( checklist: boolean ) => void>();
+const listeners = new Set< ( checklist: boolean ) => void >();
 
 /** Reads the stored preference. Exported for testing the storage logic without a hook-rendering dependency. */
 export function readStoredDisplayMode(): boolean {
@@ -24,7 +24,10 @@ export function readStoredDisplayMode(): boolean {
 /** Writes the preference. Any storage failure - a full quota, private browsing - is caught and ignored. */
 export function writeStoredDisplayMode( checklist: boolean ): void {
 	try {
-		window.localStorage.setItem( STORAGE_KEY, checklist ? 'checklist' : 'stepper' );
+		window.localStorage.setItem(
+			STORAGE_KEY,
+			checklist ? 'checklist' : 'stepper'
+		);
 	} catch {
 		// A per-viewer convenience, never something a real toggle should be blocked on.
 	}

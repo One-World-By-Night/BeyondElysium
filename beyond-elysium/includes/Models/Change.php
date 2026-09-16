@@ -51,6 +51,40 @@ class Change {
 	}
 
 	/**
+	 * Look up a change and lock its row until the surrounding transaction
+	 * ends, so a review decided on this read cannot race another review or
+	 * a resubmission of the same change. Must run inside a Transaction.
+	 *
+	 * @param int $id
+	 * @return object|null
+	 */
+	public static function find_for_update( int $id ) {
+		$row = Manager::get_row(
+			'SELECT * FROM ' . Manager::table( 'character_changes' ) . ' WHERE id = %d FOR UPDATE',
+			$id
+		);
+		return $row ? self::decode_change_data( $row ) : null;
+	}
+
+	/**
+	 * A token for exactly the content a reviewer was shown: what the change
+	 * does, what it costs, and when it was last submitted. A player's
+	 * resubmission rewrites all three in place, so a token taken before it no
+	 * longer matches (1.0.0-review F-031).
+	 *
+	 * @param object $change A decoded change row.
+	 * @return string
+	 */
+	public static function review_token( $change ): string {
+		return hash( 'sha256', (string) json_encode( [
+			(string) $change->change_type,
+			$change->change_data,
+			(string) (float) $change->xp_cost,
+			(string) $change->submitted_at,
+		] ) );
+	}
+
+	/**
 	 * Return the change records belonging to one character. Supports filtering by
 	 * status and change_type, plus pagination and sort order, and returns decoded
 	 * rows ordered by submission time.
@@ -242,6 +276,10 @@ class Change {
 	 * row in the queue. Never touches `status`, `submitted_by`, `character_id`, or anything
 	 * review-related - only what a fresh submit() call would have set.
 	 *
+	 * Returns false when no still-pending row matched - a review that landed
+	 * first leaves nothing to overwrite, and the caller must not report the
+	 * resubmission as accepted (1.0.0-review F-031).
+	 *
 	 * @param int   $id
 	 * @param array $data change_type, category, change_data, xp_cost, notes, reason - same
 	 *                     shape create() accepts.
@@ -260,26 +298,37 @@ class Change {
 			'reason'      => $data['reason'] ?? null,
 		];
 
-		return Manager::update( 'character_changes', $update, [ 'id' => $id, 'status' => 'pending' ] ) !== false;
+		$updated = Manager::update( 'character_changes', $update, [ 'id' => $id, 'status' => 'pending' ] );
+		if ( $updated === false ) {
+			return false;
+		}
+		if ( $updated > 0 ) {
+			return true;
+		}
+		// MySQL counts an UPDATE that writes identical values as zero rows, so zero means either
+		// "already reviewed" or "resubmitted unchanged within the same second" - tell them apart.
+		$status = Manager::get_var( 'SELECT status FROM ' . Manager::table( 'character_changes' ) . ' WHERE id = %d', $id );
+		return $status === 'pending';
 	}
 
 	/**
-	 * Update a change record's review outcome. Sets status, reviewed_by, and notes,
-	 * and stamps reviewed_at with the current time; used when a storyteller
-	 * approves or rejects a pending change.
+	 * Update a change record's review outcome. Sets status, reviewed_by, and the
+	 * reviewer's own note, and stamps reviewed_at with the current time; used
+	 * when a storyteller approves or rejects a pending change. The submitter's
+	 * `notes` are never touched (1.0.0-review F-032).
 	 *
 	 * @param int      $id
 	 * @param string   $status      'approved' or 'rejected'.
 	 * @param int      $reviewed_by
-	 * @param string|null $notes
+	 * @param string|null $notes    The reviewer's note.
 	 * @return bool
 	 */
 	public static function update_status( int $id, string $status, int $reviewed_by, $notes ): bool {
 		$update = [
-			'status'      => $status,
-			'reviewed_by' => $reviewed_by,
-			'reviewed_at' => current_time( 'mysql' ),
-			'notes'       => $notes,
+			'status'       => $status,
+			'reviewed_by'  => $reviewed_by,
+			'reviewed_at'  => current_time( 'mysql' ),
+			'review_notes' => $notes,
 		];
 		$result = Manager::update( 'character_changes', $update, [ 'id' => $id ] );
 		return $result !== false;

@@ -18,11 +18,49 @@
 	font-weight: 600;
 }
 
+/* Which inventory the query runs over: a row of choices under the tabs, the chosen one filled
+ * (1.0.0-review F-112). */
+.be-query-tool__inventories {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.375rem;
+	margin-bottom: 1rem;
+}
+
+.be-query-tool__inventories button {
+	padding: 0.3rem 0.85rem;
+	border: 1px solid #c3c4c7;
+	border-radius: 999px;
+	background: #fff;
+	color: #1d2327;
+	cursor: pointer;
+}
+
+.be-query-tool__inventories button:hover {
+	border-color: #1a4f9c;
+}
+
+.be-query-tool__inventories button.is-active {
+	border-color: #1a4f9c;
+	background: #1a4f9c;
+	color: #fff;
+	font-weight: 600;
+}
+
 .be-query-tool__run-row {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 0.5rem;
 	align-items: center;
 	margin: 1rem 0;
+}
+
+/* The name field takes the room that's left. A theme's `input[type=text] { width: 100% }` (0,1,1)
+ * otherwise squeezed Run Query narrower than its own label on a phone (1.0.0-review F-019). */
+.be-query-tool__run-row input {
+	flex: 1 1 10rem;
+	width: auto;
+	min-width: 0;
 }
 
 .be-query-tool__error {

@@ -1,4 +1,31 @@
-import { readGameSlugFromUrl, writeGameSlugToUrl } from './useChronicleSwitcher';
+import {
+	fetchMemberships,
+	readGameSlugFromUrl,
+	writeGameSlugToUrl,
+} from './useChronicleSwitcher';
+
+/**
+ * 1.0.0-review F-081 (Pass H intake `t1-client-state`). When the membership request failed, My
+ * Chronicle and the Storyteller Toolkit said "You don't belong to any chronicle yet." - the same
+ * words a real non-member sees - with no way to try again.
+ */
+describe( 'fetchMemberships', () => {
+	it( 'tells a failed request apart from belonging to no chronicle', async () => {
+		expect(
+			await fetchMemberships( () => Promise.reject( new Error( '502' ) ) )
+		).toEqual( { games: [], failed: true } );
+		expect( await fetchMemberships( () => Promise.resolve( [] ) ) ).toEqual(
+			{ games: [], failed: false }
+		);
+	} );
+
+	it( 'passes memberships through', async () => {
+		const games = [ { slug: 'kony', name: 'Kony', role: 'player' } ];
+		expect(
+			await fetchMemberships( () => Promise.resolve( games as never ) )
+		).toEqual( { games, failed: false } );
+	} );
+} );
 
 function setLocation( href: string ): void {
 	window.history.replaceState( {}, '', href );
@@ -16,7 +43,9 @@ describe( 'readGameSlugFromUrl', () => {
 	} );
 
 	it( 'reads correctly alongside other params', () => {
-		setLocation( 'http://localhost/be-player/?tab=sheet&game_slug=boston&character_id=42' );
+		setLocation(
+			'http://localhost/be-player/?tab=sheet&game_slug=boston&character_id=42'
+		);
 		expect( readGameSlugFromUrl() ).toBe( 'boston' );
 	} );
 } );

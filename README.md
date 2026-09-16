@@ -2,29 +2,51 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**Status:** `v0.99.34` is released and running in production chronicles. The 1.0 closed scope shipped in full as of `v0.99.17` — character engine, editor, Storyteller tools, world data, Grapevine import/export/transfer, signed PDFs, the full Grapevine report set, point audit, guided chronicle setup, and an expanded Mage rote catalog. Development continues past 1.0 on real, requested work: the wp-admin menu was consolidated into 8 tabbed pages plus a landing dashboard, with NPC creation added directly to the character editor; purchase-approval rules now cover every override mechanism in the schema (not just trait lists and tiered powers), alongside a real global default-approval policy; and a Storyteller-only AI writing-assist button now sits next to every long-form text field in the plugin — biographies, plot descriptions, rumors, world-object text — using a real OpenAI or Anthropic API key (or a self-hosted OpenAI-compatible server) an administrator or Storyteller supplies, never a default generator, and never visible to a plain player. See [Installation](#installation) to run it, or the [Roadmap](#roadmap) for what's next.
+**`v1.0.0` — released and running in production chronicles.**
 
 ## What It Does
 
-BeyondElysium handles character sheets, player submissions, and Storyteller approval workflows for tabletop LARP chronicles. It ships full character sheets for every World of Darkness creature type — Vampire, Werewolf, Mage, Changeling, Wraith, Demon, Mummy, Kuei-Jin, and more — with zero creature-specific code. A new creature type is a configuration entry, not a rewrite.
+BeyondElysium runs character sheets, player submissions, and Storyteller approval for a LARP chronicle. It ships complete sheets for every World of Darkness creature type — Vampire, Werewolf, Mage, Changeling, Wraith, Demon, Mummy, Kuei-Jin, Fera, Bête, Mortal — with **no creature-specific code anywhere**. A new creature type is a configuration entry, not a rewrite.
 
-Beyond the sheet itself:
+**Characters and approval**
 
-- **Character editor** with a full submit/review/approval workflow, XP tracking, and autosave, so a crashed browser or an accidental close doesn't cost a player their draft.
-- **Storyteller Toolkit** for plots, player actions, and rumors, written by hand or generated straight from chronicle data.
-- **Query engine and roster statistics** — a real answer out of a chronicle's data, faster than scrolling a spreadsheet.
-- **World objects** — items, locations, rotes, and a full Harpy/boon ledger.
-- **The full MET-mechanics catalog** — disciplines, gifts, merits, flaws, backgrounds, abilities, and more — reconciled against real published data.
-- **Grapevine 3.01 import**, for binary and XML exchange files and full game files (`.gv3`), with chronicle create-or-merge, duplicate detection, and a review wizard for anything the importer can't resolve on its own.
-- **Per-character sheet customization**, portraits, and print layout.
-- **Notifications and a game dashboard.** Players hear when a submission is approved or rejected; Storytellers get an aggregate view of the chronicle, players get their own.
-- **Internationalization scaffolding and an accessibility pass**, including ARIA labeling on key interactive components.
+- Full character editor with draft autosave, XP tracking, and a real submit → review → approve workflow.
+- Approval rules a chronicle sets for itself, down to a single trait value, power level, or identity-field option.
+- Point audit: a line-by-line account of what a sheet is worth in XP, marking honestly what can't be priced rather than guessing.
+- Health levels, resource pools, blood magic paths, Elder-tier discipline pricing — the mechanics, not an approximation of them.
+
+**Grapevine interoperability**
+
+- Reads and writes Grapevine 3.01's own exchange format (`.gex`, binary and XML, all twelve character classes) and full game files (`.gv3`).
+- Import with duplicate detection and a review wizard for anything matching can't resolve on its own.
+- Chronicle-to-chronicle character transfer, online or by file, with a travelling/visiting badge on both ends.
+- Players can send their own exported sheet straight to a chronicle — joining it, or visiting for a game — for a Storyteller to review and accept.
+
+**Signed, verifiable documents**
+
+- Character sheets print as cryptographically signed PDFs, not browser output.
+- Every export and transfer can carry a verification code, checkable by anyone at a public endpoint — confirming the document is genuine and whether it still matches the character today.
+
+**Running a chronicle**
+
+- Storyteller Toolkit for plots, downtime actions, and rumors — written by hand or generated from chronicle data.
+- Query engine across characters, items, locations, and rotes, with bulk XP, status, and pool operations straight off a result set.
+- Twenty reports — rosters, sign-in sheets, item/location/rote cards, statistics, House Rules — all as signed PDFs.
+- Items, locations, rotes, and a full Harpy boon ledger.
+- Guided setup checklist, computed live, for standing a new chronicle up.
+
+**Everywhere else**
+
+- Mobile-first sheet and editor: real touch targets, tables that become cards, no sideways scrolling.
+- Portuguese (Brazil) throughout, interface and catalog names alike.
+- Per-chronicle roles, standalone or integrated with a wider role system.
+- A Storyteller-only writing-assist button on long-form text fields, using an API key an administrator supplies — never a default generator, never shown to a player.
 
 ## Installation
 
-Download `beyond-elysium-0.99.34.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
+Download `beyond-elysium-1.0.0.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
 
-That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder in this repository is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder straight into `wp-content/plugins/` will not work. To build it yourself:
+That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder here is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder into `wp-content/plugins/` will not work. To build it yourself:
 
 ```bash
 composer install
@@ -33,97 +55,28 @@ npm install && npm run build
 ./bin/verify        # lint, static analysis, and the test suite
 ```
 
-Requires PHP 8.2, WordPress 6.0 or newer, and [Elementor](https://wordpress.org/plugins/elementor/) — the page builder this plugin registers its widgets into. On WordPress 6.5+ the dependency is declared in the plugin header, so WordPress will offer to install Elementor for you and will not activate this plugin without it. Tested against PHP 8.2.33, MySQL 8.4.6, and WordPress 7.1.
+Requires PHP 8.2, WordPress 6.0 or newer, and [Elementor](https://wordpress.org/plugins/elementor/). On WordPress 6.5+ the dependency is declared in the plugin header, so WordPress offers to install Elementor for you and won't activate this plugin without it. Tested against PHP 8.2.33, MySQL 8.4.6, and WordPress 7.1.
 
 ## How It Works
 
-The plugin uses a schema-driven "engine pattern." Character sheets are assembled from reusable building blocks — trait lists, tiered powers, resource pools, and identity fields. Adding a new creature type means configuring blocks in the admin UI, not writing code.
+Sheets are assembled from reusable building blocks — trait lists, tiered powers, resource pools, identity fields. Schema blocks define what a block holds; creature stacks assemble blocks into a full sheet; a character is an instance of a stack. Adding a creature type means configuring blocks in the admin UI, not writing code.
 
-- **Players** create and edit characters, submit changes for review, and track experience.
-- **Storytellers** review and approve submissions, run plots and rumors, and manage the roster.
-- **Schema blocks** define what a character sheet looks like for each game type.
-- **Creature stacks** assemble blocks into a complete sheet definition.
-- **Characters** are instances of a stack, filled with player data.
+A chronicle can fork any block for itself without touching the shared catalog, so one chronicle's house rules never leak into another's.
 
 ## Permissions
 
-BeyondElysium runs standalone on plain WordPress capabilities, and integrates with [accessSchema](https://github.com/One-World-By-Night/accessSchema) for chronicle-scoped role paths where the wider OWBN plugin stack is present. Neither depends on the other: a chronicle can run this plugin on a bare WordPress install with no other OWBN plugins at all. If accessSchema is off, unreachable, or doesn't cover a given member, permissions fall back to the plugin's own chronicle-membership table automatically — nothing breaks, and nothing needs configuring differently.
+BeyondElysium runs on plain WordPress capabilities, and integrates with [accessSchema](https://github.com/One-World-By-Night/accessSchema) for chronicle-scoped role paths where the wider OWBN stack is present. Neither depends on the other — a chronicle can run this on a bare WordPress install. If accessSchema is off, unreachable, or doesn't cover a member, permissions fall back to the plugin's own chronicle-membership table automatically.
 
-Every chronicle gets four roles: **HST** and **AST** (full chronicle management, characters through imports), **Narrator** (plots, player actions, and the roster queries that support them), and **Player** (their own characters, their own changes, nothing else). Full breakdown in the [Storyteller Guide](Documents/st-guide.md#roles-reference).
-
-## Tech Stack
-
-- PHP 8.2 / WordPress 7.x / MySQL 8.4 backend with custom database tables
-- React / TypeScript frontend with Elementor widget integration
-- REST API (`be/v1` namespace) for all operations
-- Optional accessSchema client for chronicle-scoped RBAC
+Five roles per chronicle: **HST** and **AST** (chronicle management, characters through imports), **Narrator** (plots, actions, rumors, and the roster queries behind them), **Boons** (the Harpy's ledger), and **Player** (their own characters and changes, nothing else). Full breakdown in the [Storyteller Guide](Documents/st-guide.md#roles-reference).
 
 ## Documentation
 
-BeyondElysium ships in-app documentation, viewable inside the plugin's own admin screen. The same files, unedited, are collected in [`Documents/`](Documents/) here:
+The plugin ships its own in-app documentation — four guides and a per-screen help panel on every screen. The same guides, unedited, are mirrored here:
 
-- [Storyteller Guide](Documents/st-guide.md) — running a chronicle: games, schema, characters, the approval queue, imports, notifications, the dashboard, plots.
-- [Admin Guide](Documents/admin-guide.md) — schema blocks, creature stacks, adding a new creature type without code, templates.
+- [Storyteller Guide](Documents/st-guide.md) — running a chronicle end to end.
+- [Admin Guide](Documents/admin-guide.md) — schema blocks, creature stacks, adding a creature type without code.
 - [Player Guide](Documents/player-guide.md) — creating and editing a character, submitting changes, experience, plots.
-- [REST API Reference](Documents/rest-api.md) — every route, its required capability, and what it does.
-
-## Build Progress
-
-| Area | Status |
-|---|---|
-| Foundation, games, schema blocks, creature stacks | Complete |
-| Characters, change/approval workflow, XP tracking | Complete |
-| Character sheet templates and rendering | Complete |
-| Character editor, with autosave-draft protection | Complete |
-| Storyteller Toolkit — plots, actions, and rumors | Complete |
-| Query engine and roster statistics | Complete |
-| World objects — items, locations, rotes, boons | Complete |
-| MET-mechanics catalog, reconciled against published data | Complete |
-| Grapevine exchange-file import — binary and XML, with duplicate detection and a review wizard | Complete |
-| Grapevine full game-file (`.gv3`) import and chronicle merge | Complete |
-| Per-character sheet customization, portraits, print layout | Complete |
-| Chronicle-scoped authorization — HST/AST/Narrator/Player, standalone or accessSchema-integrated | Complete |
-| Notifications and game dashboard | Complete |
-| Internationalization scaffolding and accessibility pass | Complete |
-| In-app documentation — Storyteller, Admin, and Player guides, REST API reference | Complete |
-| Character-sheet defect pass, WCAG AA contrast, phone-width layout, print styles | Complete |
-| Configurable purchase-approval rules, credits and in-memoriam, NPC forms | Complete |
-| Release readiness — packaging, upgrade and uninstall paths, public release | Complete |
-| Blood magic paths, Elder-tier discipline pricing, downtime action allocation, rumor delivery | Complete |
-| Chronicle rename — slug changes cascade transactionally to characters, schema-block forks, and page/widget references instead of orphaning them | Complete |
-| Background-use ledger and Action & Rumor settings — what a downtime action grants, and a use-by-use record of what a character spent it on | Complete |
-| Query engine extended to items, locations, and rotes — not just characters | Complete |
-| Grapevine exchange-file import fix (single-dot traits no longer zero on import) and the field-order groundwork for character export | Complete |
-| Export a character to a real Grapevine `.gex` XML file, from the character sheet | Complete |
-| A public verification endpoint for an exported character, with a human-facing check page | Complete |
-| Chronicle-to-chronicle character transfer, online and offline, with the travelling/visiting badge | Complete |
-| Signed, cryptographically verifiable character-sheet PDF, replacing browser printing, checked against the same public verification endpoint as Grapevine export | Complete |
-| The remaining 19 Grapevine reports - rosters, sign-in sheets, item/location/rote cards, plot and action/rumor reports, statistics - and batch output, sharing the signed-PDF generator | Complete |
-| Point audit - an itemised, line-by-line report of what a character sheet is worth in XP, honestly marking what can't be priced yet instead of guessing | Complete |
-| Guided chronicle setup - a live checklist for a new chronicle (creature types, Storytellers, approval defaults) computed fresh on every visit rather than a one-time wizard | Complete |
-| Mage rote catalog expanded from a published rote compendium - 201 rotes to 804, organised into real chapters | Complete |
-| Rich-text descriptions (reference/description/source) on any catalog item, tiered-power level or family, resource pool, or identity field - global by default, survives every future update | Complete |
-| Per-value and per-option approval scheduling - a trait or resource pool can require different approval at different point values, a specific power level or identity-field option can require its own approval level | Complete |
-| House Rules report - every catalog description gathered into one signed PDF, and the first report embeddable live on a front-end page via an Elementor widget or shortcode | Complete |
-| Sub-faction restriction - narrow a real catalog field (Vampire Sect or Clan, a Werewolf Tribe, and similar) within an already-enabled creature type, beneath the whole-creature-type toggle | Complete |
-| Mobile-first character sheet, editor, and Approval Queue - real touch targets, information priority, and a shared table-to-card mechanism, not a desktop layout that just avoids breaking | Complete |
-| Health-level tracker - Laws of the Night Revised's Extended wound track, modeled per creature type and applied automatically when a character is created | Complete |
-| Bulk session maintenance - reset Willpower/Blood-style pools, or update several characters' status at once, from a saved query's own results | Complete |
-| Roster health indicator - see at a glance which players have no active character, or whose only character has gone inactive | Complete |
-| Front-end page consolidation - ten pages that used to duplicate per chronicle collapsed to two fixed, tabbed, chronicle-switchable pages | Complete |
-| Player-printable item cards - print cards for the items a character already carries, not just the chronicle-wide catalog view | Complete |
-| Portuguese (Brazil) localization - a chronicle can switch its site language and both the interface and most catalog item names (Disciplines, Rituals, Merits, Flaws, and more) render in Portuguese | Complete |
-| wp-admin menu consolidation - 16 flat submenus collapsed into 8 tabbed pages plus a landing dashboard, and NPC character creation/flagging added to the admin UI | Complete |
-| Purchase-approval rules extended to every override mechanism in the schema (per-value and per-option ranges, not just flat trait/tiered-power settings), plus a real global default approval policy | Complete |
-| AI writing-assist tool - a Storyteller-only button on every long-form text field that drafts or polishes it, using a real OpenAI or Anthropic API key an administrator or Storyteller supplies (or a self-hosted OpenAI-compatible server instead), never a default generator and never visible to a plain player | Complete |
-
-## Roadmap
-
-`v0.99.0` was the first public release; the 1.0 closed scope shipped in full as of `v0.99.17`. Development continues past 1.0 on real, requested work rather than a fixed list — see the "Planning" row above for what's designed and next in line, or the project's own backlog for everything under consideration.
-
-**Bylaw-driven approval data.** Chronicles configure their own approval rules through the admin UI today. Importing OWBN's published Character Regulation Bylaws directly — 1,032 clauses — is fully designed, including the review workflow for the roughly 900 clauses automatic matching can't place with confidence (most restrict character *concepts* rather than named traits). Deliberately not built yet - a simpler, hand-managed approval-rules engine shipped instead as a stopgap, and this remains on the shelf for when the fuller version is wanted.
-
-**Held, by choice.** Character sharing between players, coordinator-tier approval enforcement, and autosave-draft protection for plot and rumor forms are each specified and intentionally deferred.
+- [REST API Reference](Documents/rest-api.md) — every route, its capability, and what it does.
 
 ## Dark Pack
 

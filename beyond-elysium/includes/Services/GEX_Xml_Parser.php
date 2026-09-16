@@ -88,10 +88,10 @@ class GEX_Xml_Parser {
 					$rotes[] = self::parse_rote( $child );
 					break;
 				case 'vampire':
-					$characters[] = self::with_transfer_uuid( self::parse_character_vampire( $child ), $child );
+					$characters[] = self::with_beyond_elysium_attributes( self::with_transfer_uuid( self::parse_character_vampire( $child ), $child ), $child );
 					break;
 				case 'werewolf':
-					$characters[] = self::with_transfer_uuid( self::parse_character_werewolf( $child ), $child );
+					$characters[] = self::with_beyond_elysium_attributes( self::with_transfer_uuid( self::parse_character_werewolf( $child ), $child ), $child );
 					break;
 				case 'mortal':
 				case 'changeling':
@@ -103,7 +103,7 @@ class GEX_Xml_Parser {
 				case 'kueijin':
 				case 'hunter':
 				case 'demon':
-					$characters[] = self::with_transfer_uuid( self::parse_character_generic( $child, $name ), $child );
+					$characters[] = self::with_beyond_elysium_attributes( self::with_transfer_uuid( self::parse_character_generic( $child, $name ), $child ), $child );
 					break;
 				default:
 					throw new \RuntimeException(
@@ -135,9 +135,11 @@ class GEX_Xml_Parser {
 	/**
 	 * Maps a `<vampire>` element to the identical shape
 	 * `GEX_Parser::parse_character_vampire()`'s binary reader produces.
-	 * `coterie`, `narrator`, and `player` do not exist in the XML format
-	 * and are emitted as the same empty defaults the binary reader uses
-	 * when those fields are absent, rather than omitted.
+	 * `coterie`, `narrator`, and `player` are real attributes Grapevine
+	 * writes (`VampireClass.cls:358,380,384`), read when present; the web
+	 * tool's own exports leave them out, which reads as empty. They were
+	 * always emitted empty until 1.0.0-review F-049, so a vampire's player
+	 * name never survived an export and import.
 	 *
 	 * `id`, `npc`, `biography`, `aura`/`aurabonus`, `<boon>` children, and
 	 * every `temp_*` field are real GV XML attributes/elements this parser
@@ -168,7 +170,7 @@ class GEX_Xml_Parser {
 			'demeanor'          => (string) $el['demeanor'],
 			'clan'              => (string) $el['clan'],
 			'sect'              => (string) $el['sect'],
-			'coterie'           => '',
+			'coterie'           => (string) $el['coterie'],
 			'sire'              => (string) $el['sire'],
 			'generation'        => (int) $el['generation'],
 			'title'             => (string) $el['title'],
@@ -194,11 +196,11 @@ class GEX_Xml_Parser {
 			'physical_max'      => $physical_max,
 			'social_max'        => $social_max,
 			'mental_max'        => $mental_max,
-			'player'            => '',
+			'player'            => (string) $el['player'],
 			'status'            => (string) $el['status'],
 			'id'                => (string) $el['id'],
 			'start_date'        => self::parse_date( (string) $el['startdate'] ),
-			'narrator'          => '',
+			'narrator'          => (string) $el['narrator'],
 			'is_npc'            => (string) $el['npc'] === 'yes',
 			'last_modified'     => self::parse_date( (string) $el['lastmodified'] ),
 			'experience'        => $experience,
@@ -260,11 +262,12 @@ class GEX_Xml_Parser {
 			'physical_max'   => $physical_max,
 			'social_max'     => $social_max,
 			'mental_max'     => $mental_max,
-			'player'         => '',
+			// Real attributes (WerewolfClass.cls:369,373), emitted empty until 1.0.0-review F-049.
+			'player'         => (string) $el['player'],
 			'status'         => (string) $el['status'],
 			'id'             => (string) $el['id'],
 			'start_date'     => self::parse_date( (string) $el['startdate'] ),
-			'narrator'       => '',
+			'narrator'       => (string) $el['narrator'],
 			'is_npc'         => (string) $el['npc'] === 'yes',
 			'last_modified'  => self::parse_date( (string) $el['lastmodified'] ),
 			'experience'     => $experience,
@@ -573,6 +576,31 @@ class GEX_Xml_Parser {
 	 */
 	private static function xml_attr_or( \SimpleXMLElement $el, string $attr, $fallback ): string {
 		return isset( $el[ $attr ] ) ? (string) $el[ $attr ] : (string) $fallback;
+	}
+
+	/**
+	 * Reads the attributes `Character_Exporter` adds for a Beyond Elysium
+	 * import, which Grapevine's reader collects and never reads. `bestack`
+	 * restores a creature stack that travels as another race's element
+	 * (`GEX_Parser::STACK_EXCHANGE_RACE`) - honored only for a stack that really
+	 * travels as this element's race, so a document cannot turn a vampire into
+	 * anything else (1.0.0-review F-048). `benature`/`bedemeanor` carry Nature
+	 * and Demeanor for a race with no fields of its own for them (F-049).
+	 *
+	 * @param array<string,mixed> $character
+	 * @param \SimpleXMLElement   $el
+	 * @return array<string,mixed>
+	 */
+	private static function with_beyond_elysium_attributes( array $character, \SimpleXMLElement $el ): array {
+		$stack = (string) $el['bestack'];
+		if ( $stack !== '' && $stack !== $character['race'] && GEX_Parser::exchange_race( $stack ) === $character['race'] ) {
+			$character['race'] = $stack;
+		}
+		if ( ! array_key_exists( 'nature', $character ) && isset( $el['benature'] ) ) {
+			$character['nature']   = (string) $el['benature'];
+			$character['demeanor'] = (string) $el['bedemeanor'];
+		}
+		return $character;
 	}
 
 	/**

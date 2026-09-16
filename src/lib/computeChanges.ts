@@ -16,8 +16,10 @@ import type { IdentityFieldValue } from '../components/editors/IdentityFieldEdit
 export type { SheetData };
 
 /** Groups rows into a map keyed by `name`, preserving each row's order within its group. */
-function groupByName<T extends { name: string }>( rows: T[] ): Map<string, T[]> {
-	const groups = new Map<string, T[]>();
+function groupByName< T extends { name: string } >(
+	rows: T[]
+): Map< string, T[] > {
+	const groups = new Map< string, T[] >();
 	for ( const row of rows ) {
 		const bucket = groups.get( row.name ) ?? [];
 		bucket.push( row );
@@ -32,7 +34,11 @@ function groupByName<T extends { name: string }>( rows: T[] ): Map<string, T[]> 
  * changes. Duplicate names are paired off in arrival order via per-name queues rather
  * than colliding on a single map key.
  */
-function diffTraitList( blockSlug: string, original: EditableTrait[], current: EditableTrait[] ): ChangeRequest[] {
+function diffTraitList(
+	blockSlug: string,
+	original: EditableTrait[],
+	current: EditableTrait[]
+): ChangeRequest[] {
 	const changes: ChangeRequest[] = [];
 	const effectiveCurrent = current.filter( ( row ) => ! row._removed );
 
@@ -48,7 +54,7 @@ function diffTraitList( blockSlug: string, original: EditableTrait[], current: E
 		for ( let i = 0; i < pairCount; i++ ) {
 			const o = origQueue[ i ];
 			const c = curQueue[ i ];
-			const changed: Partial<EditableTrait> = {};
+			const changed: Partial< EditableTrait > = {};
 			if ( ( o.count ?? 1 ) !== ( c.count ?? 1 ) ) {
 				changed.count = c.count ?? 1;
 			}
@@ -69,7 +75,13 @@ function diffTraitList( blockSlug: string, original: EditableTrait[], current: E
 						block_slug: blockSlug,
 						trait: { name, ...changed },
 						// Display-only: the change-apply step only reads `.trait`, not this key.
-						previous: { name, count: o.count ?? 1, specialization: o.specialization, note: o.note, chosen_cost: o.chosen_cost },
+						previous: {
+							name,
+							count: o.count ?? 1,
+							specialization: o.specialization,
+							note: o.note,
+							chosen_cost: o.chosen_cost,
+						},
 					},
 				} );
 			}
@@ -85,10 +97,14 @@ function diffTraitList( blockSlug: string, original: EditableTrait[], current: E
 					trait: {
 						name,
 						count: row.count ?? 1,
-						...( row.specialization ? { specialization: row.specialization } : {} ),
+						...( row.specialization
+							? { specialization: row.specialization }
+							: {} ),
 						...( row.note ? { note: row.note } : {} ),
 						...( row.custom ? { custom: true } : {} ),
-						...( row.chosen_cost !== undefined ? { chosen_cost: row.chosen_cost } : {} ),
+						...( row.chosen_cost !== undefined
+							? { chosen_cost: row.chosen_cost }
+							: {} ),
 					},
 				},
 			} );
@@ -126,12 +142,20 @@ function tieredPowerKey( row: EditableHeldPower ): string {
  * alongside its level, and clearing a tradition is emitted as an explicit empty string
  * rather than an omitted key so the change is applied rather than dropped as a no-op.
  */
-function diffTieredPower( blockSlug: string, original: EditableHeldPower[], current: EditableHeldPower[] ): ChangeRequest[] {
+function diffTieredPower(
+	blockSlug: string,
+	original: EditableHeldPower[],
+	current: EditableHeldPower[]
+): ChangeRequest[] {
 	const changes: ChangeRequest[] = [];
 	const effectiveCurrent = current.filter( ( row ) => ! row._removed );
 
-	const origByKey = new Map( original.map( ( row ) => [ tieredPowerKey( row ), row ] ) );
-	const curByKey = new Map( effectiveCurrent.map( ( row ) => [ tieredPowerKey( row ), row ] ) );
+	const origByKey = new Map(
+		original.map( ( row ) => [ tieredPowerKey( row ), row ] )
+	);
+	const curByKey = new Map(
+		effectiveCurrent.map( ( row ) => [ tieredPowerKey( row ), row ] )
+	);
 	const allKeys = new Set( [ ...origByKey.keys(), ...curByKey.keys() ] );
 
 	// Tradition is carried through verbatim and omitted when absent; power_name is always
@@ -139,7 +163,12 @@ function diffTieredPower( blockSlug: string, original: EditableHeldPower[], curr
 	// is, not a value that changes on an already-matched row (two different power_names
 	// are two different keys above, never one row's power_name changing in place).
 	const traitOf = ( row: EditableHeldPower ) => {
-		const trait: { name: string; level?: number; power_name?: string; tradition?: string } = {
+		const trait: {
+			name: string;
+			level?: number;
+			power_name?: string;
+			tradition?: string;
+		} = {
 			name: row.name,
 			level: row.level,
 		};
@@ -183,7 +212,9 @@ function diffTieredPower( blockSlug: string, original: EditableHeldPower[], curr
 			// A removal must name which specific pick is leaving when the family holds
 			// more than one - {name} alone (correct for a plain numbered holding) would
 			// be ambiguous for an Elder-and-above pick with siblings under the same name.
-			const trait: { name: string; power_name?: string } = { name: o.name };
+			const trait: { name: string; power_name?: string } = {
+				name: o.name,
+			};
 			if ( o.power_name ) {
 				trait.power_name = o.power_name;
 			}
@@ -199,8 +230,14 @@ function diffTieredPower( blockSlug: string, original: EditableHeldPower[], curr
 }
 
 /** Whether two resource-pool values have equal permanent and temporary amounts. */
-function poolsEqual( a: ResourcePoolValue | undefined, b: ResourcePoolValue | undefined ): boolean {
-	return ( a?.permanent ?? 0 ) === ( b?.permanent ?? 0 ) && ( a?.temporary ?? 0 ) === ( b?.temporary ?? 0 );
+function poolsEqual(
+	a: ResourcePoolValue | undefined,
+	b: ResourcePoolValue | undefined
+): boolean {
+	return (
+		( a?.permanent ?? 0 ) === ( b?.permanent ?? 0 ) &&
+		( a?.temporary ?? 0 ) === ( b?.temporary ?? 0 )
+	);
 }
 
 /**
@@ -210,18 +247,24 @@ function poolsEqual( a: ResourcePoolValue | undefined, b: ResourcePoolValue | un
  */
 function diffResourcePool(
 	blockSlug: string,
-	original: Record<string, ResourcePoolValue>,
-	current: Record<string, ResourcePoolValue>
+	original: Record< string, ResourcePoolValue >,
+	current: Record< string, ResourcePoolValue >
 ): ChangeRequest[] {
 	const changes: ChangeRequest[] = [];
-	const allPools = new Set( [ ...Object.keys( original ), ...Object.keys( current ) ] );
+	const allPools = new Set( [
+		...Object.keys( original ),
+		...Object.keys( current ),
+	] );
 
 	for ( const poolName of allPools ) {
 		if ( ! poolsEqual( original[ poolName ], current[ poolName ] ) ) {
 			changes.push( {
 				change_type: 'modify_resource',
 				category: blockSlug,
-				change_data: { block_slug: blockSlug, values: { [ poolName ]: current[ poolName ] } },
+				change_data: {
+					block_slug: blockSlug,
+					values: { [ poolName ]: current[ poolName ] },
+				},
 			} );
 		}
 	}
@@ -244,18 +287,24 @@ function valuesEqual( a: IdentityFieldValue, b: IdentityFieldValue ): boolean {
  */
 function diffIdentityField(
 	blockSlug: string,
-	original: Record<string, IdentityFieldValue>,
-	current: Record<string, IdentityFieldValue>
+	original: Record< string, IdentityFieldValue >,
+	current: Record< string, IdentityFieldValue >
 ): ChangeRequest[] {
 	const changes: ChangeRequest[] = [];
-	const allFields = new Set( [ ...Object.keys( original ), ...Object.keys( current ) ] );
+	const allFields = new Set( [
+		...Object.keys( original ),
+		...Object.keys( current ),
+	] );
 
 	for ( const fieldName of allFields ) {
 		if ( ! valuesEqual( original[ fieldName ], current[ fieldName ] ) ) {
 			changes.push( {
 				change_type: 'modify_identity',
 				category: blockSlug,
-				change_data: { block_slug: blockSlug, fields: { [ fieldName ]: current[ fieldName ] } },
+				change_data: {
+					block_slug: blockSlug,
+					fields: { [ fieldName ]: current[ fieldName ] },
+				},
 			} );
 		}
 	}
@@ -272,7 +321,7 @@ function diffIdentityField(
 export function computeChanges(
 	original: SheetData,
 	current: SheetData,
-	blocks: Record<string, SchemaBlock>
+	blocks: Record< string, SchemaBlock >
 ): ChangeRequest[] {
 	const changes: ChangeRequest[] = [];
 
@@ -282,8 +331,12 @@ export function computeChanges(
 				changes.push(
 					...diffTraitList(
 						blockSlug,
-						( original[ blockSlug ] as EditableTrait[] | undefined ) ?? [],
-						( current[ blockSlug ] as EditableTrait[] | undefined ) ?? []
+						( original[ blockSlug ] as
+							| EditableTrait[]
+							| undefined ) ?? [],
+						( current[ blockSlug ] as
+							| EditableTrait[]
+							| undefined ) ?? []
 					)
 				);
 				break;
@@ -292,8 +345,12 @@ export function computeChanges(
 				changes.push(
 					...diffTieredPower(
 						blockSlug,
-						( original[ blockSlug ] as EditableHeldPower[] | undefined ) ?? [],
-						( current[ blockSlug ] as EditableHeldPower[] | undefined ) ?? []
+						( original[ blockSlug ] as
+							| EditableHeldPower[]
+							| undefined ) ?? [],
+						( current[ blockSlug ] as
+							| EditableHeldPower[]
+							| undefined ) ?? []
 					)
 				);
 				break;
@@ -302,8 +359,12 @@ export function computeChanges(
 				changes.push(
 					...diffResourcePool(
 						blockSlug,
-						( original[ blockSlug ] as Record<string, ResourcePoolValue> | undefined ) ?? {},
-						( current[ blockSlug ] as Record<string, ResourcePoolValue> | undefined ) ?? {}
+						( original[ blockSlug ] as
+							| Record< string, ResourcePoolValue >
+							| undefined ) ?? {},
+						( current[ blockSlug ] as
+							| Record< string, ResourcePoolValue >
+							| undefined ) ?? {}
 					)
 				);
 				break;
@@ -312,8 +373,12 @@ export function computeChanges(
 				changes.push(
 					...diffIdentityField(
 						blockSlug,
-						( original[ blockSlug ] as Record<string, IdentityFieldValue> | undefined ) ?? {},
-						( current[ blockSlug ] as Record<string, IdentityFieldValue> | undefined ) ?? {}
+						( original[ blockSlug ] as
+							| Record< string, IdentityFieldValue >
+							| undefined ) ?? {},
+						( current[ blockSlug ] as
+							| Record< string, IdentityFieldValue >
+							| undefined ) ?? {}
 					)
 				);
 				break;

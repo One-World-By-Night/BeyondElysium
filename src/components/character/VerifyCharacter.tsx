@@ -11,6 +11,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import type { VerifyResponse } from '../../types/verify';
+import HelpButton from '../shared/HelpButton';
 import './VerifyCharacter.css';
 
 type State =
@@ -21,13 +22,16 @@ type State =
 	| { status: 'error' }
 	| { status: 'result'; data: VerifyResponse };
 
-const KIND_LABELS: Record<string, string> = {
+const KIND_LABELS: Record< string, string > = {
 	gex: __( 'Grapevine export', 'beyond-elysium' ),
 	pdf: __( 'Signed PDF', 'beyond-elysium' ),
 	transfer: __( 'Chronicle transfer', 'beyond-elysium' ),
 };
 
-const MATCH_LABELS: Array<{ key: keyof NonNullable<VerifyResponse[ 'still_matches' ]>; label: string }> = [
+const MATCH_LABELS: Array< {
+	key: keyof NonNullable< VerifyResponse[ 'still_matches' ] >;
+	label: string;
+} > = [
 	{ key: 'name', label: __( 'Name', 'beyond-elysium' ) },
 	{ key: 'status', label: __( 'Status', 'beyond-elysium' ) },
 	{ key: 'xp_earned', label: __( 'XP earned', 'beyond-elysium' ) },
@@ -58,7 +62,7 @@ function isRestError( error: unknown ): error is RestError {
 export function VerifyCharacter() {
 	const [ code, setCode ] = useState( () => codeFromUrl() );
 	const [ input, setInput ] = useState( () => codeFromUrl() );
-	const [ state, setState ] = useState<State>( { status: 'idle' } );
+	const [ state, setState ] = useState< State >( { status: 'idle' } );
 
 	useEffect( () => {
 		if ( ! code ) {
@@ -69,8 +73,7 @@ export function VerifyCharacter() {
 		let cancelled = false;
 		setState( { status: 'loading' } );
 
-		api
-			.verification()
+		api.verification()
 			.resolve( code )
 			.then( ( data ) => {
 				if ( ! cancelled ) {
@@ -110,7 +113,12 @@ export function VerifyCharacter() {
 
 	return (
 		<div className="be-verify">
-			<h1 className="be-verify__title">{ __( 'Verify a Character', 'beyond-elysium' ) }</h1>
+			<div className="be-help-heading">
+				<h1 className="be-verify__title">
+					{ __( 'Verify a Character', 'beyond-elysium' ) }
+				</h1>
+				<HelpButton helpKey="verify" />
+			</div>
 			<p className="be-verify__intro">
 				{ __(
 					'Enter the code printed on an exported or signed character document to confirm it is genuine and see whether it still matches the character today.',
@@ -137,27 +145,51 @@ export function VerifyCharacter() {
 				</div>
 			</form>
 
-			{ state.status === 'loading' && <p className="be-verify__status">{ __( 'Checking…', 'beyond-elysium' ) }</p> }
+			{ state.status === 'loading' && (
+				<p className="be-verify__status">
+					{ __( 'Checking…', 'beyond-elysium' ) }
+				</p>
+			) }
 
 			{ state.status === 'not_found' && (
-				<div className="be-verify__banner be-verify__banner--error" role="alert">
-					{ __( "This code doesn't match any verification record. Check it was typed correctly.", 'beyond-elysium' ) }
+				<div
+					className="be-verify__banner be-verify__banner--error"
+					role="alert"
+				>
+					{ __(
+						"This code doesn't match any verification record. Check it was typed correctly.",
+						'beyond-elysium'
+					) }
 				</div>
 			) }
 
 			{ state.status === 'rate_limited' && (
-				<div className="be-verify__banner be-verify__banner--warning" role="alert">
-					{ __( 'Too many checks from this connection. Please try again in a minute.', 'beyond-elysium' ) }
+				<div
+					className="be-verify__banner be-verify__banner--warning"
+					role="alert"
+				>
+					{ __(
+						'Too many checks from this connection. Please try again in a minute.',
+						'beyond-elysium'
+					) }
 				</div>
 			) }
 
 			{ state.status === 'error' && (
-				<div className="be-verify__banner be-verify__banner--error" role="alert">
-					{ __( 'Something went wrong checking that code. Please try again.', 'beyond-elysium' ) }
+				<div
+					className="be-verify__banner be-verify__banner--error"
+					role="alert"
+				>
+					{ __(
+						'Something went wrong checking that code. Please try again.',
+						'beyond-elysium'
+					) }
 				</div>
 			) }
 
-			{ state.status === 'result' && <VerifyResult data={ state.data } /> }
+			{ state.status === 'result' && (
+				<VerifyResult data={ state.data } />
+			) }
 		</div>
 	);
 }
@@ -173,11 +205,20 @@ function VerifyResult( { data }: { data: VerifyResponse } ) {
 	return (
 		<div className="be-verify__result">
 			{ data.revoked ? (
-				<div className="be-verify__banner be-verify__banner--error" role="alert">
-					{ __( 'This attestation has been revoked by its issuing chronicle. It should no longer be treated as valid.', 'beyond-elysium' ) }
+				<div
+					className="be-verify__banner be-verify__banner--error"
+					role="alert"
+				>
+					{ __(
+						'This attestation has been revoked by its issuing chronicle. It should no longer be treated as valid.',
+						'beyond-elysium'
+					) }
 				</div>
 			) : (
-				<div className="be-verify__banner be-verify__banner--success" role="status">
+				<div
+					className="be-verify__banner be-verify__banner--success"
+					role="status"
+				>
 					{ __( 'This is a genuine attestation.', 'beyond-elysium' ) }
 				</div>
 			) }
@@ -200,7 +241,10 @@ function VerifyResult( { data }: { data: VerifyResponse } ) {
 					<dd>
 						{ sprintf(
 							/* translators: 1: earned XP total, 2: unspent XP total */
-							__( '%1$d earned / %2$d unspent', 'beyond-elysium' ),
+							__(
+								'%1$d earned / %2$d unspent',
+								'beyond-elysium'
+							),
 							data.attested.xp_earned,
 							data.attested.xp_unspent
 						) }
@@ -209,7 +253,11 @@ function VerifyResult( { data }: { data: VerifyResponse } ) {
 				<div className="be-verify__fact">
 					<dt>{ __( 'Issued by', 'beyond-elysium' ) }</dt>
 					<dd>
-						<a href={ data.issuer.site } target="_blank" rel="noreferrer">
+						<a
+							href={ data.issuer.site }
+							target="_blank"
+							rel="noreferrer"
+						>
 							{ data.issuer.chronicle }
 						</a>
 					</dd>
@@ -226,16 +274,28 @@ function VerifyResult( { data }: { data: VerifyResponse } ) {
 
 			{ data.still_matches && (
 				<div className="be-verify__matches">
-					<h2 className="be-verify__matches-title">{ __( 'Still matches the character today?', 'beyond-elysium' ) }</h2>
+					<h2 className="be-verify__matches-title">
+						{ __(
+							'Still matches the character today?',
+							'beyond-elysium'
+						) }
+					</h2>
 					<ul className="be-verify__match-list">
 						{ MATCH_LABELS.map( ( { key, label } ) => {
 							const matches = data.still_matches![ key ];
 							return (
 								<li
 									key={ key }
-									className={ `be-verify__match-item ${ matches ? 'be-verify__match-item--yes' : 'be-verify__match-item--no' }` }
+									className={ `be-verify__match-item ${
+										matches
+											? 'be-verify__match-item--yes'
+											: 'be-verify__match-item--no'
+									}` }
 								>
-									<span className="be-verify__match-icon" aria-hidden="true">
+									<span
+										className="be-verify__match-icon"
+										aria-hidden="true"
+									>
 										{ matches ? '✓' : '✗' }
 									</span>
 									{ label }

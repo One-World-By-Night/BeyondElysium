@@ -19,13 +19,30 @@ export interface WorldObjectCardProps {
 	objectId: number;
 }
 
-const LABELS: Record<string, string> = {
-	item_type: __( 'Type', 'beyond-elysium' ), item_subtype: __( 'Subtype', 'beyond-elysium' ), level: __( 'Level', 'beyond-elysium' ), bonus: __( 'Bonus', 'beyond-elysium' ),
-	damage_type: __( 'Damage Type', 'beyond-elysium' ), damage_amount: __( 'Damage Amount', 'beyond-elysium' ), concealability: __( 'Concealability', 'beyond-elysium' ),
-	powers: __( 'Powers', 'beyond-elysium' ), appearance: __( 'Appearance', 'beyond-elysium' ), location_type: __( 'Type', 'beyond-elysium' ), owner: __( 'Owner', 'beyond-elysium' ), where: __( 'Where', 'beyond-elysium' ),
-	access: __( 'Access', 'beyond-elysium' ), security: __( 'Security', 'beyond-elysium' ), security_traits: __( 'Security Traits', 'beyond-elysium' ),
-	security_retests: __( 'Security Retests', 'beyond-elysium' ), gauntlet: __( 'Gauntlet', 'beyond-elysium' ), umbra: __( 'Umbra', 'beyond-elysium' ), affinity: __( 'Affinity', 'beyond-elysium' ),
-	totem: __( 'Totem', 'beyond-elysium' ), duration: __( 'Duration', 'beyond-elysium' ), description: __( 'Description', 'beyond-elysium' ), grades: __( 'Grades', 'beyond-elysium' ),
+const LABELS: Record< string, string > = {
+	item_type: __( 'Type', 'beyond-elysium' ),
+	item_subtype: __( 'Subtype', 'beyond-elysium' ),
+	level: __( 'Level', 'beyond-elysium' ),
+	bonus: __( 'Bonus', 'beyond-elysium' ),
+	damage_type: __( 'Damage Type', 'beyond-elysium' ),
+	damage_amount: __( 'Damage Amount', 'beyond-elysium' ),
+	concealability: __( 'Concealability', 'beyond-elysium' ),
+	powers: __( 'Powers', 'beyond-elysium' ),
+	appearance: __( 'Appearance', 'beyond-elysium' ),
+	location_type: __( 'Type', 'beyond-elysium' ),
+	owner: __( 'Owner', 'beyond-elysium' ),
+	where: __( 'Where', 'beyond-elysium' ),
+	access: __( 'Access', 'beyond-elysium' ),
+	security: __( 'Security', 'beyond-elysium' ),
+	security_traits: __( 'Security Traits', 'beyond-elysium' ),
+	security_retests: __( 'Security Retests', 'beyond-elysium' ),
+	gauntlet: __( 'Gauntlet', 'beyond-elysium' ),
+	umbra: __( 'Umbra', 'beyond-elysium' ),
+	affinity: __( 'Affinity', 'beyond-elysium' ),
+	totem: __( 'Totem', 'beyond-elysium' ),
+	duration: __( 'Duration', 'beyond-elysium' ),
+	description: __( 'Description', 'beyond-elysium' ),
+	grades: __( 'Grades', 'beyond-elysium' ),
 };
 
 const TEXT_TYPES = new Set( [ 'string', 'text', 'int', 'date' ] );
@@ -37,23 +54,27 @@ const TEXT_TYPES = new Set( [ 'string', 'text', 'int', 'date' ] );
  * object's connected characters. Shows loading and error states while
  * the fetch is in flight or if it fails.
  */
-export function WorldObjectCard( { gameSlug, objectId }: WorldObjectCardProps ) {
-	const [ object, setObject ] = useState<WorldObject | null>( null );
+export function WorldObjectCard( {
+	gameSlug,
+	objectId,
+}: WorldObjectCardProps ) {
+	const [ object, setObject ] = useState< WorldObject | null >( null );
 	const [ loading, setLoading ] = useState( true );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
 
 	useEffect( () => {
 		setLoading( true );
 		setError( null );
-		api
-			.worldObjects( gameSlug )
+		api.worldObjects( gameSlug )
 			.get( objectId )
 			.then( ( result ) => {
 				setObject( result );
 				setLoading( false );
 			} )
 			.catch( () => {
-				setError( __( 'Failed to load this world object.', 'beyond-elysium' ) );
+				setError(
+					__( 'Failed to load this world object.', 'beyond-elysium' )
+				);
 				setLoading( false );
 			} );
 	}, [ gameSlug, objectId ] );
@@ -74,12 +95,24 @@ export function WorldObjectCard( { gameSlug, objectId }: WorldObjectCardProps ) 
 	return (
 		<div className="be-world-card">
 			<h3 className="be-world-card__name">{ object.name }</h3>
-			{ object.description && <p className="be-world-card__description">{ object.description }</p> }
+			{ /* Rich text, sanitized server-side with wp_kses_post() on save. */ }
+			{ object.description && (
+				<div
+					className="be-world-card__description"
+					dangerouslySetInnerHTML={ {
+						__html: object.description,
+					} }
+				/>
+			) }
 
 			<dl className="be-world-card__properties">
 				{ Object.entries( schema ).map( ( [ key, type ] ) => {
 					const value = object.properties[ key ];
-					if ( value === undefined || value === null || value === '' ) {
+					if (
+						value === undefined ||
+						value === null ||
+						value === ''
+					) {
 						return null;
 					}
 					return (
@@ -87,7 +120,22 @@ export function WorldObjectCard( { gameSlug, objectId }: WorldObjectCardProps ) 
 							<dt>{ LABELS[ key ] ?? key }</dt>
 							<dd>
 								{ type === 'trait_list' ? (
-									<TraitList entries={ value as Array<{ name: string; count?: number; note?: string }> } />
+									<TraitList
+										entries={
+											value as Array< {
+												name: string;
+												count?: number;
+												note?: string;
+											} >
+										}
+									/>
+								) : type === 'text' ? (
+									// Rich text, sanitized server-side with wp_kses_post() on save.
+									<div
+										dangerouslySetInnerHTML={ {
+											__html: value as string,
+										} }
+									/>
 								) : TEXT_TYPES.has( type ) ? (
 									String( value )
 								) : (
@@ -101,39 +149,59 @@ export function WorldObjectCard( { gameSlug, objectId }: WorldObjectCardProps ) 
 
 			{ object.rarity && (
 				<p className="be-world-card__meta">
-					<strong>{ __( 'Rarity:', 'beyond-elysium' ) }</strong> { object.rarity }
+					<strong>{ __( 'Rarity:', 'beyond-elysium' ) }</strong>{ ' ' }
+					{ object.rarity }
 				</p>
 			) }
 			{ object.cost && (
 				<p className="be-world-card__meta">
-					<strong>{ __( 'Cost:', 'beyond-elysium' ) }</strong> { object.cost }
+					<strong>{ __( 'Cost:', 'beyond-elysium' ) }</strong>{ ' ' }
+					{ object.cost }
 				</p>
 			) }
+			{ /* Rich text, sanitized server-side with wp_kses_post() on save. */ }
 			{ object.limitations && (
-				<p className="be-world-card__meta">
-					<strong>{ __( 'Limitations:', 'beyond-elysium' ) }</strong> { object.limitations }
-				</p>
+				<div className="be-world-card__meta">
+					<strong>{ __( 'Limitations:', 'beyond-elysium' ) }</strong>{ ' ' }
+					<span
+						dangerouslySetInnerHTML={ {
+							__html: object.limitations,
+						} }
+					/>
+				</div>
 			) }
 
 			{ /* Full connection manager when permitted, otherwise a read-only connected-characters list. */ }
 			{ window.beyondElysium?.capabilities?.be_manage_connections ? (
 				<>
 					<h4>{ __( 'Connections', 'beyond-elysium' ) }</h4>
-					<ConnectionManager gameSlug={ gameSlug } entityType="world_object" entityId={ objectId } />
+					<ConnectionManager
+						gameSlug={ gameSlug }
+						entityType="world_object"
+						entityId={ objectId }
+					/>
 				</>
 			) : (
 				<>
 					<h4>{ __( 'Connected Characters', 'beyond-elysium' ) }</h4>
-					{ ! object.connected_characters || object.connected_characters.length === 0 ? (
+					{ ! object.connected_characters ||
+					object.connected_characters.length === 0 ? (
 						<p>{ __( 'None.', 'beyond-elysium' ) }</p>
 					) : (
 						<ul className="be-world-card__characters">
-							{ object.connected_characters.map( ( character ) => (
-								<li key={ character.id }>
-									{ character.name }
-									{ character.label && <span className="be-world-card__character-label"> ({ character.label })</span> }
-								</li>
-							) ) }
+							{ object.connected_characters.map(
+								( character ) => (
+									<li key={ character.id }>
+										{ character.name }
+										{ character.label && (
+											<span className="be-world-card__character-label">
+												{ ' ' }
+												({ character.label })
+											</span>
+										) }
+									</li>
+								)
+							) }
 						</ul>
 					) }
 				</>
@@ -147,7 +215,11 @@ export function WorldObjectCard( { gameSlug, objectId }: WorldObjectCardProps ) 
  * using the same `displayTrait()` formatter as character-sheet trait
  * lists. Renders "None" when the entry list is empty or not an array.
  */
-function TraitList( { entries }: { entries: Array<{ name: string; count?: number; note?: string }> } ) {
+function TraitList( {
+	entries,
+}: {
+	entries: Array< { name: string; count?: number; note?: string } >;
+} ) {
 	if ( ! Array.isArray( entries ) || entries.length === 0 ) {
 		return <>{ __( 'None', 'beyond-elysium' ) }</>;
 	}
@@ -155,7 +227,14 @@ function TraitList( { entries }: { entries: Array<{ name: string; count?: number
 		<ul className="be-world-card__trait-list">
 			{ entries.map( ( entry, i ) => (
 				<li key={ `${ entry.name }-${ i }` }>
-					{ displayTrait( { name: entry.name, total: entry.count, note: entry.note }, 'multiplier' ) }
+					{ displayTrait(
+						{
+							name: entry.name,
+							total: entry.count,
+							note: entry.note,
+						},
+						'multiplier'
+					) }
 				</li>
 			) ) }
 		</ul>

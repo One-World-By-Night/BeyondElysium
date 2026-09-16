@@ -12,9 +12,11 @@ import api from '../../api/client';
 import EnabledStacksPicker from './EnabledStacksPicker';
 import FactionRestrictionsPicker from './FactionRestrictionsPicker';
 import type { Game, SetupStatus, SetupStatusItem } from '../../types';
+import HelpButton from '../shared/HelpButton';
+import { sendFileLinkUrl } from '../../lib/pluginPages';
 import './AdminChronicleSetup.css';
 
-const STATUS_LABEL: Record<SetupStatusItem[ 'status' ], string> = {
+const STATUS_LABEL: Record< SetupStatusItem[ 'status' ], string > = {
 	attention: __( 'Needs attention', 'beyond-elysium' ),
 	ok: __( 'Ready', 'beyond-elysium' ),
 	info: __( 'Info', 'beyond-elysium' ),
@@ -34,15 +36,23 @@ function StatusRow( {
 	children?: ReactNode;
 } ) {
 	return (
-		<tr className={ `be-chronicle-setup__row be-chronicle-setup__row--${ item.status }` }>
+		<tr
+			className={ `be-chronicle-setup__row be-chronicle-setup__row--${ item.status }` }
+		>
 			<td>
-				<span className="be-chronicle-setup__pill">{ STATUS_LABEL[ item.status ] }</span>
+				<span className="be-chronicle-setup__pill">
+					{ STATUS_LABEL[ item.status ] }
+				</span>
 			</td>
 			<td>
 				<strong>{ item.title }</strong>
 				<p>{ item.detail }</p>
 			</td>
-			<td className={ item.actionable ? '' : 'be-chronicle-setup__not-actionable' }>
+			<td
+				className={
+					item.actionable ? '' : 'be-chronicle-setup__not-actionable'
+				}
+			>
 				{ children ??
 					( item.fix.kind === 'link' && item.fix.href ? (
 						<a className="button" href={ item.fix.href }>
@@ -55,11 +65,29 @@ function StatusRow( {
 }
 
 export function AdminChronicleSetup() {
-	const [ games, setGames ] = useState<Game[]>( [] );
+	const [ games, setGames ] = useState< Game[] >( [] );
 	const [ gameSlug, setGameSlug ] = useState( '' );
-	const [ status, setStatus ] = useState<SetupStatus | null>( null );
+	const [ status, setStatus ] = useState< SetupStatus | null >( null );
 	const [ loading, setLoading ] = useState( true );
-	const [ savingRow, setSavingRow ] = useState<string | null>( null );
+	const [ savingRow, setSavingRow ] = useState< string | null >( null );
+	const [ saveError, setSaveError ] = useState< string | null >( null );
+	const [ linkCopied, setLinkCopied ] = useState( false );
+
+	function copySendFileLink( url: string, inputEl: HTMLInputElement | null ) {
+		const done = () => {
+			setLinkCopied( true );
+			setTimeout( () => setLinkCopied( false ), 3000 );
+		};
+		if ( navigator.clipboard?.writeText ) {
+			navigator.clipboard.writeText( url ).then( done, () => {
+				inputEl?.select();
+			} );
+		} else {
+			inputEl?.select();
+			document.execCommand( 'copy' );
+			done();
+		}
+	}
 
 	useEffect( () => {
 		api.games
@@ -67,8 +95,13 @@ export function AdminChronicleSetup() {
 			.then( ( result ) => {
 				setGames( result );
 				if ( result.length > 0 ) {
-					const fromUrl = new URLSearchParams( window.location.search ).get( 'game' );
-					setGameSlug( result.find( ( g ) => g.slug === fromUrl )?.slug ?? result[ 0 ].slug );
+					const fromUrl = new URLSearchParams(
+						window.location.search
+					).get( 'game' );
+					setGameSlug(
+						result.find( ( g ) => g.slug === fromUrl )?.slug ??
+							result[ 0 ].slug
+					);
 				}
 				setLoading( false );
 			} )
@@ -88,52 +121,90 @@ export function AdminChronicleSetup() {
 	useEffect( reload, [ gameSlug ] );
 
 	const currentGame = games.find( ( g ) => g.slug === gameSlug ) ?? null;
-	const item = ( id: string ) => status?.items.find( ( i ) => i.id === id ) ?? null;
+	const item = ( id: string ) =>
+		status?.items.find( ( i ) => i.id === id ) ?? null;
+
+	/**
+	 * Keeps this page's copy of a chronicle current with what the server just saved, so the
+	 * next save and the pickers never work from the settings the page first loaded with
+	 * (1.0.0-review F-066).
+	 */
+	function applySaved( saved: Game ) {
+		setGames( ( prev ) =>
+			prev.map( ( g ) => ( g.slug === saved.slug ? saved : g ) )
+		);
+		setSavingRow( null );
+		reload();
+	}
+
+	/** A save that failed says so, rather than leaving the control as if it took (1.0.0-review F-106). */
+	function saveFailed( error: unknown ) {
+		setSavingRow( null );
+		setSaveError(
+			( error as { message?: string } | null )?.message ??
+				__( 'That change could not be saved.', 'beyond-elysium' )
+		);
+	}
 
 	function saveStacks( slugs: string[] ) {
 		setSavingRow( 'enabled_stacks' );
+		setSaveError( null );
 		api.games
-			.update( gameSlug, { settings: { enabled_stacks: slugs } } )
-			.then( () => {
-				setSavingRow( null );
-				reload();
-			} )
-			.catch( () => setSavingRow( null ) );
+			.updateChronicleSetup( gameSlug, { enabled_stacks: slugs } )
+			.then( applySaved )
+			.catch( saveFailed );
 	}
 
 	function saveApproval( required: boolean ) {
 		setSavingRow( 'require_new_character_approval' );
+		setSaveError( null );
 		api.games
-			.update( gameSlug, { settings: { require_new_character_approval: required } } )
-			.then( () => {
-				setSavingRow( null );
-				reload();
+			.updateChronicleSetup( gameSlug, {
+				require_new_character_approval: required,
 			} )
-			.catch( () => setSavingRow( null ) );
+			.then( applySaved )
+			.catch( saveFailed );
 	}
 
-	function saveFactionRestriction( stackSlug: string, fieldName: string, allowed: string[] ) {
-		const key = `faction:${ stackSlug }:${ fieldName }`;
-		setSavingRow( key );
-		const existing = ( currentGame?.settings?.enabled_factions as Record<string, Record<string, string[]>> | undefined ) ?? {};
+	function saveExpandedPlots( enabled: boolean ) {
+		setSavingRow( 'plots_expanded_enabled' );
+		setSaveError( null );
 		api.games
 			.update( gameSlug, {
-				settings: {
-					enabled_factions: {
-						...existing,
-						[ stackSlug ]: { ...( existing[ stackSlug ] ?? {} ), [ fieldName ]: allowed },
-					},
+				settings: { plots: { expanded_enabled: enabled } },
+			} )
+			.then( applySaved )
+			.catch( saveFailed );
+	}
+
+	function saveFactionRestriction(
+		stackSlug: string,
+		fieldName: string,
+		allowed: string[]
+	) {
+		const key = `faction:${ stackSlug }:${ fieldName }`;
+		setSavingRow( key );
+		setSaveError( null );
+		// Only the field being saved: the server keeps every other stack's and field's restriction.
+		api.games
+			.updateChronicleSetup( gameSlug, {
+				enabled_factions: {
+					[ stackSlug ]: { [ fieldName ]: allowed },
 				},
 			} )
-			.then( () => {
-				setSavingRow( null );
-				reload();
-			} )
-			.catch( () => setSavingRow( null ) );
+			.then( applySaved )
+			.catch( saveFailed );
 	}
 
 	function deleteDemo() {
-		if ( ! window.confirm( __( 'Delete the demo chronicle and all 22 sample characters? This cannot be undone.', 'beyond-elysium' ) ) ) {
+		if (
+			! window.confirm(
+				__(
+					'Delete the demo chronicle and all 22 sample characters? This cannot be undone.',
+					'beyond-elysium'
+				)
+			)
+		) {
 			return;
 		}
 		api.games.delete( gameSlug, true ).then( () => {
@@ -145,7 +216,14 @@ export function AdminChronicleSetup() {
 		return <p>{ __( 'Loading…', 'beyond-elysium' ) }</p>;
 	}
 	if ( games.length === 0 ) {
-		return <p>{ __( 'No chronicles exist yet - create one under Beyond Elysium → Games first.', 'beyond-elysium' ) }</p>;
+		return (
+			<p>
+				{ __(
+					'No chronicles exist yet - create one under Beyond Elysium → System Config → Games first.',
+					'beyond-elysium'
+				) }
+			</p>
+		);
 	}
 
 	const enabledStacksItem = item( 'enabled_stacks' );
@@ -154,12 +232,24 @@ export function AdminChronicleSetup() {
 
 	return (
 		<div className="be-admin be-chronicle-setup">
-			<h1>{ __( 'Chronicle Setup', 'beyond-elysium' ) }</h1>
+			<div className="be-help-heading">
+				<h1>{ __( 'Chronicle Setup', 'beyond-elysium' ) }</h1>
+				<HelpButton helpKey="chronicle-setup" />
+			</div>
+
+			{ saveError && (
+				<div className="be-admin__error" role="alert">
+					{ saveError }
+				</div>
+			) }
 
 			<div className="be-admin__filters">
 				<label>
 					{ __( 'Chronicle', 'beyond-elysium' ) }{ ' ' }
-					<select value={ gameSlug } onChange={ ( e ) => setGameSlug( e.target.value ) }>
+					<select
+						value={ gameSlug }
+						onChange={ ( e ) => setGameSlug( e.target.value ) }
+					>
 						{ games.map( ( g ) => (
 							<option key={ g.slug } value={ g.slug }>
 								{ g.name }
@@ -173,10 +263,15 @@ export function AdminChronicleSetup() {
 				<p className="be-chronicle-setup__summary">
 					{ status.summary.attention > 0
 						? sprintf(
-							/* translators: %d: number of checklist items needing attention */
-							_n( '%d item needs attention.', '%d items need attention.', status.summary.attention, 'beyond-elysium' ),
-							status.summary.attention
-						)
+								/* translators: %d: number of checklist items needing attention */
+								_n(
+									'%d item needs attention.',
+									'%d items need attention.',
+									status.summary.attention,
+									'beyond-elysium'
+								),
+								status.summary.attention
+						  )
 						: __( 'Nothing needs attention.', 'beyond-elysium' ) }
 				</p>
 			) }
@@ -185,21 +280,38 @@ export function AdminChronicleSetup() {
 				<table className="be-admin__table be-chronicle-setup__table">
 					<tbody>
 						{ status.items.map( ( row ) => {
-							if ( row.id === 'enabled_stacks' && enabledStacksItem ) {
+							if (
+								row.id === 'enabled_stacks' &&
+								enabledStacksItem
+							) {
 								return (
 									<StatusRow item={ row } key={ row.id }>
 										{ row.actionable ? (
 											<EnabledStacksPicker
-												enabled={ ( currentGame?.settings?.enabled_stacks as string[] | undefined ) ?? null }
+												enabled={
+													( currentGame?.settings
+														?.enabled_stacks as
+														| string[]
+														| undefined ) ?? null
+												}
 												onSave={ saveStacks }
-												saving={ savingRow === 'enabled_stacks' }
+												saving={
+													savingRow ===
+													'enabled_stacks'
+												}
 											/>
 										) : null }
 									</StatusRow>
 								);
 							}
-							if ( row.id === 'require_new_character_approval' && approvalItem ) {
-								const current = currentGame?.settings?.require_new_character_approval as boolean | undefined;
+							if (
+								row.id === 'require_new_character_approval' &&
+								approvalItem
+							) {
+								const current = currentGame?.settings
+									?.require_new_character_approval as
+									| boolean
+									| undefined;
 								return (
 									<StatusRow item={ row } key={ row.id }>
 										{ row.actionable ? (
@@ -208,21 +320,43 @@ export function AdminChronicleSetup() {
 													<input
 														type="radio"
 														name="require_new_character_approval"
-														checked={ current === true }
-														onChange={ () => saveApproval( true ) }
-														disabled={ savingRow === 'require_new_character_approval' }
+														checked={
+															current === true
+														}
+														onChange={ () =>
+															saveApproval( true )
+														}
+														disabled={
+															savingRow ===
+															'require_new_character_approval'
+														}
 													/>
-													{ __( 'Require approval', 'beyond-elysium' ) }
+													{ __(
+														'Require approval',
+														'beyond-elysium'
+													) }
 												</label>
 												<label>
 													<input
 														type="radio"
 														name="require_new_character_approval"
-														checked={ current === false }
-														onChange={ () => saveApproval( false ) }
-														disabled={ savingRow === 'require_new_character_approval' }
+														checked={
+															current === false
+														}
+														onChange={ () =>
+															saveApproval(
+																false
+															)
+														}
+														disabled={
+															savingRow ===
+															'require_new_character_approval'
+														}
 													/>
-													{ __( 'Active immediately', 'beyond-elysium' ) }
+													{ __(
+														'Active immediately',
+														'beyond-elysium'
+													) }
 												</label>
 											</div>
 										) : null }
@@ -233,8 +367,15 @@ export function AdminChronicleSetup() {
 								return (
 									<StatusRow item={ row } key={ row.id }>
 										{ row.actionable ? (
-											<button type="button" className="button" onClick={ deleteDemo }>
-												{ __( 'Delete demo chronicle', 'beyond-elysium' ) }
+											<button
+												type="button"
+												className="button"
+												onClick={ deleteDemo }
+											>
+												{ __(
+													'Delete demo chronicle',
+													'beyond-elysium'
+												) }
 											</button>
 										) : null }
 									</StatusRow>
@@ -246,17 +387,128 @@ export function AdminChronicleSetup() {
 				</table>
 			) }
 
+			<h2>{ __( 'Plot Features', 'beyond-elysium' ) }</h2>
+			<p className="description">
+				{ __(
+					'Off by default. On adds Faction Goals to a plot, the Arc/Subplot/Season/Episode categories when creating one, and an optional date on a timeline entry - extra structure most chronicles never need.',
+					'beyond-elysium'
+				) }
+			</p>
+			{ /* Deliberately still be_manage_games only, unlike Creature types and
+			 * New-character approval above (1.0.0-checklist.md item 18 names only those two
+			 * plus Sub-Faction Restrictions below - not this). Checked directly rather than
+			 * reused from enabledStacksItem's own actionable flag, which item 18 broadened to
+			 * include an HST - be_manage_games is the one capability with no chronicle-scoped
+			 * narrowing at all (Authorization::check_request()'s own site-administrator
+			 * bypass), so the global, chronicle-blind snapshot is exactly right for it. */ }
+			{ window.beyondElysium?.capabilities?.be_manage_games ? (
+				<label className="be-chronicle-setup__checkbox">
+					<input
+						type="checkbox"
+						checked={ Boolean(
+							(
+								currentGame?.settings?.plots as
+									| { expanded_enabled?: boolean }
+									| undefined
+							 )?.expanded_enabled
+						) }
+						onChange={ ( e ) =>
+							saveExpandedPlots( e.target.checked )
+						}
+						disabled={ savingRow === 'plots_expanded_enabled' }
+					/>
+					{ __(
+						'Turn on Faction Goals, plot categories, and timeline dates',
+						'beyond-elysium'
+					) }
+				</label>
+			) : (
+				<p className="be-chronicle-setup__not-actionable">
+					{ __(
+						'A site administrator sets this.',
+						'beyond-elysium'
+					) }
+				</p>
+			) }
+
 			<h2>{ __( 'Sub-Faction Restrictions', 'beyond-elysium' ) }</h2>
 			<p className="description">
-				{ __( 'Beneath the whole-creature-type toggle above: narrow a real catalog field within an enabled creature type - a Vampire Sect or Clan, a Werewolf Tribe, and similar. Absent or fully-checked means every option stays open, same as the toggle above.', 'beyond-elysium' ) }
+				{ __(
+					'Beneath the whole-creature-type toggle above: narrow a real catalog field within an enabled creature type - a Vampire Sect or Clan, a Werewolf Tribe, and similar. Absent or fully-checked means every option stays open, same as the toggle above.',
+					'beyond-elysium'
+				) }
 			</p>
-			<FactionRestrictionsPicker
-				gameSlug={ gameSlug }
-				enabledStacks={ ( currentGame?.settings?.enabled_stacks as string[] | undefined ) ?? null }
-				restrictions={ ( currentGame?.settings?.enabled_factions as Record<string, Record<string, string[]>> | undefined ) ?? {} }
-				onSave={ saveFactionRestriction }
-				savingKey={ savingRow?.startsWith( 'faction:' ) ? savingRow.slice( 'faction:'.length ) : null }
-			/>
+			{ /* Saved with the creature types above, so offered to whoever that row lets act (F-106). */ }
+			{ status &&
+				( enabledStacksItem?.actionable ? (
+					<FactionRestrictionsPicker
+						gameSlug={ gameSlug }
+						enabledStacks={
+							( currentGame?.settings?.enabled_stacks as
+								| string[]
+								| undefined ) ?? null
+						}
+						restrictions={
+							( currentGame?.settings?.enabled_factions as
+								| Record< string, Record< string, string[] > >
+								| undefined ) ?? {}
+						}
+						onSave={ saveFactionRestriction }
+						savingKey={
+							savingRow?.startsWith( 'faction:' )
+								? savingRow.slice( 'faction:'.length )
+								: null
+						}
+					/>
+				) : (
+					<p className="be-chronicle-setup__not-actionable">
+						{ __(
+							"Your chronicle's HST sets these.",
+							'beyond-elysium'
+						) }
+					</p>
+				) ) }
+
+			<h2>{ __( "Players' Grapevine Files", 'beyond-elysium' ) }</h2>
+			<p className="description">
+				{ sprintf(
+					/* translators: %s: chronicle name */
+					__(
+						"Share this link so players can send their character's Grapevine file to %s. Anyone signed in can use it; nothing is added until a Storyteller accepts.",
+						'beyond-elysium'
+					),
+					currentGame?.name ?? gameSlug
+				) }
+			</p>
+			{ gameSlug && (
+				<p className="be-chronicle-setup__send-file-link">
+					<input
+						type="text"
+						readOnly
+						id="be-send-file-link"
+						value={ sendFileLinkUrl( gameSlug ) }
+						onFocus={ ( e ) => e.currentTarget.select() }
+					/>{ ' ' }
+					<button
+						type="button"
+						onClick={ () =>
+							copySendFileLink(
+								sendFileLinkUrl( gameSlug ),
+								document.getElementById(
+									'be-send-file-link'
+								) as HTMLInputElement | null
+							)
+						}
+					>
+						{ __( 'Copy link', 'beyond-elysium' ) }
+					</button>
+					{ linkCopied && (
+						<span role="status">
+							{ __( 'Link copied.', 'beyond-elysium' ) }
+						</span>
+					) }
+				</p>
+			) }
 		</div>
 	);
 }

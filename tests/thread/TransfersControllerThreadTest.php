@@ -185,26 +185,18 @@ class TransfersControllerThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Proves the full online handshake end to end: home's own outbound POST,
-	 * the host's callback-verify against home's own `/verify/{code}`, and a
-	 * real `apply_import()` commit, all through real plugin code on both
-	 * "sides" via the loopback above.
+	 * Proves the full online handshake end to end, with a Storyteller on each side (owner
+	 * ruling 2026-09-14, 1.0.0-review F-003): home's own outbound POST, the host's
+	 * callback-verify against home's own `/verify/{code}`, the offer waiting at the host, the
+	 * host Storyteller's accept (which asks home again before importing), and home marking the
+	 * character received abroad - all through real plugin code on both "sides" via the loopback.
 	 *
-	 * One thing this single shared test database genuinely cannot prove,
-	 * called out rather than silently glossed over: two REAL chronicles in
-	 * production are two separate WordPress installs with two separate
-	 * databases, so the host's own `find_by_uuid()` lookup finds nothing on
-	 * a character's first-ever arrival there and a fresh row is created
-	 * (proven instead by `CharacterExporterThreadTest`'s and
-	 * `Import_Controller`'s own existing create-path coverage). Sharing one
-	 * database here means home's own row IS the uuid `find_by_uuid()` finds
-	 * (uuid is a single global unique key - INTEROP-UUID.md), which
-	 * `import_character()` correctly reports as `overwritten` - exactly
-	 * `test_inbound_uuid_match_updates_the_existing_host_character_in_place`'s
-	 * own scenario, not a bug this test should paper over by asserting
-	 * around it.
+	 * Both chronicles share this one test database, so the character's uuid already exists at
+	 * home when it reaches the host. The host can only copy such a character, never overwrite
+	 * another chronicle's row - on two real installations the host would find nothing and the
+	 * copy would keep the uuid (`TransferHostApprovalThreadTest` covers both).
 	 */
-	public function test_full_online_round_trip_marks_home_abroad_and_the_host_side_visiting(): void {
+	public function test_full_online_round_trip_needs_a_storyteller_on_each_side(): void {
 		$callback = $this->loopback_both_directions();
 
 		$response = $this->post( "/be/v1/{$this->home_slug}/transfers/outbound", [
@@ -213,18 +205,27 @@ class TransfersControllerThreadTest extends WP_UnitTestCase {
 			'host_slug'    => $this->host_slug,
 		] );
 
-		remove_filter( 'pre_http_request', $callback, 10 );
-
 		$this->assertSame( 200, $response->get_status() );
 		$data = $response->get_data();
-		$this->assertTrue( $data['host']['accepted'] ?? false, wp_json_encode( $data['host'] ?? null ) );
-		$this->assertSame( 'abroad', $data['transfer']->state );
-		$this->assertSame( $this->character->uuid, $data['transfer']->character_uuid );
+		$this->assertTrue( $data['host']['pending_review'] ?? false, wp_json_encode( $data['host'] ?? null ) );
+		$this->assertSame( 'pending', $data['transfer']->state );
+		$this->assertSame( 'Thread Test Xfer Host', $data['transfer']->host_chronicle );
 
-		$inbound_row = Transfer::find_open( $this->character->uuid, 'inbound' );
-		$this->assertNotNull( $inbound_row );
-		$this->assertSame( 'visiting', $inbound_row->state );
-		$this->assertSame( $this->host_slug, $inbound_row->host_slug );
+		$offer = Transfer::find_open( $this->character->uuid, 'inbound' );
+		$this->assertSame( 'offered', $offer->state );
+		$this->assertSame( 0, Character::count_for_game( $this->host_slug ), 'nothing arrives before the host accepts' );
+
+		$accepted = $this->post( "/be/v1/{$this->host_slug}/transfers/{$offer->id}/accept", [
+			'resolutions' => [ 'duplicates' => [ 'Transfer Test Vampire' => 'import_as_new' ] ],
+		] );
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertSame( 200, $accepted->get_status(), wp_json_encode( $accepted->get_data() ) );
+		$this->assertSame( 'visiting', Transfer::find( (int) $offer->id )->state );
+		$this->assertSame( 1, Character::count_for_game( $this->host_slug ) );
+
+		$home = $this->post( "/be/v1/{$this->home_slug}/transfers/{$data['transfer']->id}/acknowledge" );
+		$this->assertSame( 'abroad', $home->get_data()->state );
 	}
 
 	public function test_inbound_rejects_a_payload_whose_hash_does_not_match_the_attestation(): void {
@@ -244,6 +245,33 @@ class TransfersControllerThreadTest extends WP_UnitTestCase {
 
 		$this->assertSame( 400, $response->get_status() );
 		$this->assertSame( 'verify_failed', $response->as_error()->get_error_code() );
+	}
+
+	/**
+	 * 1.0.0-review F-059. A verified export is a player's to make, and its document differs from
+	 * a transfer's only in the `character_uuid` on its `<verification>` line - the line the hash
+	 * check strips. Added by hand, the export passed as a transfer no home Storyteller started.
+	 */
+	public function test_inbound_rejects_a_verified_export_dressed_up_as_a_transfer(): void {
+		$export = \BeyondElysium\Services\Character_Exporter::export( $this->character_id, [ 'verify' => true ] );
+		preg_match( '/code=([A-Za-z0-9-]+)/', $export['xml'], $m );
+		$dressed = preg_replace( '/(<verification\b[^>]*?)\s*\/>/', '$1 character_uuid="' . $this->character->uuid . '"/>', $export['xml'], 1 );
+		$this->assertStringContainsString( 'character_uuid=', $dressed );
+
+		$callback = $this->loopback_both_directions();
+		$response = $this->post( "/be/v1/{$this->host_slug}/transfers/inbound", [
+			'payload'        => $dressed,
+			'short_code'     => $m[1],
+			'home_site'      => home_url(),
+			'home_slug'      => $this->home_slug,
+			'home_chronicle' => 'Thread Test Xfer Home',
+			'character_uuid' => $this->character->uuid,
+		] );
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertSame( 400, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( 'verify_failed', $response->as_error()->get_error_code() );
+		$this->assertNull( Transfer::find_open( $this->character->uuid, 'inbound' ) );
 	}
 
 	public function test_inbound_rejects_when_the_claimed_home_site_does_not_match_the_real_issuer(): void {
@@ -284,46 +312,5 @@ class TransfersControllerThreadTest extends WP_UnitTestCase {
 
 		$this->assertSame( 502, $response->get_status() );
 		$this->assertSame( 'verify_unreachable', $response->as_error()->get_error_code() );
-	}
-
-	public function test_inbound_uuid_match_updates_the_existing_host_character_in_place(): void {
-		// The host already has a local copy of this exact character (e.g. a prior visit) -
-		// re-arriving must update it in place, never create a second row for the same uuid.
-		// uuid is a single global UNIQUE key (INTEROP-UUID.md), so home's own row can't
-		// coexist with the host's in one shared database the way two real, separate
-		// installations naturally would - captured its export first, then removed it, to
-		// isolate exactly the one invariant this test is actually about: the host's own
-		// pre-existing row updates in place rather than a second one being created.
-		$export = \BeyondElysium\Services\Character_Exporter::export( $this->character_id, [ 'as_transfer' => true ] );
-		preg_match( '/code=([A-Za-z0-9-]+)/', $export['xml'], $m );
-		$uuid = $this->character->uuid;
-		Character::delete( $this->character_id );
-
-		$existing_id = Character::create( [
-			'name' => 'Old Name Before Update', 'stack_slug' => 'vampire',
-			'owner_type' => 'chronicle', 'owner_slug' => $this->host_slug,
-			'status' => 'active', 'uuid' => $uuid,
-		] );
-
-		$callback = $this->loopback_both_directions();
-		$response = $this->post( "/be/v1/{$this->host_slug}/transfers/inbound", [
-			'payload'        => $export['xml'],
-			'short_code'     => $m[1],
-			'home_site'      => home_url(),
-			'home_slug'      => $this->home_slug,
-			'home_chronicle' => 'Thread Test Xfer Home',
-			'character_uuid' => $uuid,
-		] );
-		remove_filter( 'pre_http_request', $callback, 10 );
-
-		$this->assertSame( 200, $response->get_status() );
-		$updated = Character::find( $existing_id );
-		$this->assertSame( 'Transfer Test Vampire', $updated->name, 'updated in place, not left stale' );
-		$this->assertSame( $uuid, $updated->uuid, 'uuid never changes' );
-
-		global $wpdb;
-		$table = \BeyondElysium\Database\Manager::table( 'characters' );
-		$count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE uuid = %s", $uuid ) );
-		$this->assertSame( 1, $count, 'exactly one row for this uuid on the host - no duplicate created' );
 	}
 }

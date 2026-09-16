@@ -26,7 +26,10 @@ function storageKey( characterId: number ): string {
 export function saveDraft( characterId: number, sheetData: SheetData ): void {
 	try {
 		const payload: StoredDraft = { sheetData, savedAt: Date.now() };
-		window.localStorage.setItem( storageKey( characterId ), JSON.stringify( payload ) );
+		window.localStorage.setItem(
+			storageKey( characterId ),
+			JSON.stringify( payload )
+		);
 	} catch {
 		// Autosave is a convenience, never something a real edit should be blocked on.
 	}
@@ -46,8 +49,11 @@ export function loadDraft( characterId: number ): StoredDraft | null {
 		if ( ! raw ) {
 			return null;
 		}
-		const parsed = JSON.parse( raw ) as Partial<StoredDraft>;
-		return parsed && typeof parsed === 'object' && parsed.sheetData && typeof parsed.savedAt === 'number'
+		const parsed = JSON.parse( raw ) as Partial< StoredDraft >;
+		return parsed &&
+			typeof parsed === 'object' &&
+			parsed.sheetData &&
+			typeof parsed.savedAt === 'number'
 			? ( parsed as StoredDraft )
 			: null;
 	} catch {
@@ -78,8 +84,13 @@ function stableStringify( value: unknown ): string {
 		return `[${ value.map( stableStringify ).join( ',' ) }]`;
 	}
 	if ( value !== null && typeof value === 'object' ) {
-		const keys = Object.keys( value as Record<string, unknown> ).sort();
-		const entries = keys.map( ( k ) => `${ JSON.stringify( k ) }:${ stableStringify( ( value as Record<string, unknown> )[ k ] ) }` );
+		const keys = Object.keys( value as Record< string, unknown > ).sort();
+		const entries = keys.map(
+			( k ) =>
+				`${ JSON.stringify( k ) }:${ stableStringify(
+					( value as Record< string, unknown > )[ k ]
+				) }`
+		);
 		return `{${ entries.join( ',' ) }}`;
 	}
 	return JSON.stringify( value );
@@ -90,6 +101,9 @@ function stableStringify( value: unknown ): string {
  * JSON-serializable structures regardless of object-key order. Returns true when the
  * two differ.
  */
-export function draftDiffersFrom( draft: SheetData, sheetData: SheetData ): boolean {
+export function draftDiffersFrom(
+	draft: SheetData,
+	sheetData: SheetData
+): boolean {
 	return stableStringify( draft ) !== stableStringify( sheetData );
 }

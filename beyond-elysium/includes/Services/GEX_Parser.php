@@ -283,8 +283,37 @@ class GEX_Parser {
 		];
 	}
 
+	/**
+	 * Beyond Elysium creature stacks with no Grapevine race of their own, and the race each
+	 * travels as. Grapevine 3.01's source carries a `BeteClass`, but its race list and its file
+	 * reader never learned about it (`PublicTypes.bas:29-45`, `GameClass.cls:1002`), so a real
+	 * Grapevine reads a `<bete>` element as nothing. A Bête character travels as the Fera it
+	 * shares every schema block with, and names its own stack for a Beyond Elysium import
+	 * (`Character_Exporter`, `GEX_Xml_Parser`). 1.0.0-review F-048.
+	 */
+	const STACK_EXCHANGE_RACE = [ 'bete' => 'fera' ];
+
 	/** @var array<string,array<string,mixed>>|null */
 	private static ?array $shape = null;
+
+	/**
+	 * The Grapevine race a creature stack travels as: its own slug, unless
+	 * `STACK_EXCHANGE_RACE` names another.
+	 */
+	public static function exchange_race( string $stack_slug ): string {
+		return self::STACK_EXCHANGE_RACE[ $stack_slug ] ?? $stack_slug;
+	}
+
+	/**
+	 * Whether `shape()` knows a race - false for a creature stack an
+	 * administrator added, which has no Grapevine equivalent at all.
+	 */
+	public static function has_shape( string $race ): bool {
+		if ( self::$shape === null ) {
+			self::$shape = require __DIR__ . '/gv-exchange-shape.php';
+		}
+		return isset( self::$shape[ $race ] );
+	}
 
 	/**
 	 * Returns GX-1's shared field-order authority (`gv-exchange-shape.php`)
@@ -339,6 +368,23 @@ class GEX_Parser {
 			$trait_lists[ $tl['name'] ] = $tl;
 		}
 		return $trait_lists;
+	}
+
+	/**
+	 * A character's Physical, Social, and Mental lists, which every reader
+	 * needs by name for its attribute maximums. A file that names one
+	 * differently still keeps that list under its own name; here it counts
+	 * as empty, never a crash (1.0.0-review F-089).
+	 *
+	 * @param array<string,array<string,mixed>> $trait_lists Keyed by each list's own parsed name.
+	 * @return array{0:array<string,mixed>,1:array<string,mixed>,2:array<string,mixed>}
+	 */
+	private static function attribute_lists( array $trait_lists ): array {
+		$lists = [];
+		foreach ( [ 'Physical', 'Social', 'Mental' ] as $name ) {
+			$lists[] = $trait_lists[ $name ] ?? [ 'name' => $name, 'alphabetized' => false, 'atomic' => false, 'negative' => false, 'display' => 0, 'traits' => [] ];
+		}
+		return $lists;
 	}
 
 	/**
@@ -1152,9 +1198,7 @@ class GEX_Parser {
 
 		$experience  = self::parse_experience( $r, $version );
 		$trait_lists = self::read_trait_lists( $r, $version, 'vampire' );
-		$physical    = $trait_lists['Physical'];
-		$social      = $trait_lists['Social'];
-		$mental      = $trait_lists['Mental'];
+		[ $physical, $social, $mental ] = self::attribute_lists( $trait_lists );
 
 		$boons = [];
 		if ( $version >= 2.399 ) {
@@ -1301,9 +1345,7 @@ class GEX_Parser {
 
 		$experience  = self::parse_experience( $r, $version );
 		$trait_lists = self::read_trait_lists( $r, $version, 'werewolf' );
-		$physical    = $trait_lists['Physical'];
-		$social      = $trait_lists['Social'];
-		$mental      = $trait_lists['Mental'];
+		[ $physical, $social, $mental ] = self::attribute_lists( $trait_lists );
 
 		$biography = $version >= 2.397 ? $r->string() : '';
 		$notes     = $r->string();
@@ -1418,9 +1460,7 @@ class GEX_Parser {
 
 		$experience  = self::parse_experience( $r, $version );
 		$trait_lists = self::read_trait_lists( $r, $version, 'mage' );
-		$physical    = $trait_lists['Physical'];
-		$social      = $trait_lists['Social'];
-		$mental      = $trait_lists['Mental'];
+		[ $physical, $social, $mental ] = self::attribute_lists( $trait_lists );
 
 		$foci      = $r->string();
 		$biography = $version >= 2.397 ? $r->string() : '';
@@ -1526,9 +1566,7 @@ class GEX_Parser {
 
 		$experience  = self::parse_experience( $r, $version );
 		$trait_lists = self::read_trait_lists( $r, $version, 'changeling' );
-		$physical    = $trait_lists['Physical'];
-		$social      = $trait_lists['Social'];
-		$mental      = $trait_lists['Mental'];
+		[ $physical, $social, $mental ] = self::attribute_lists( $trait_lists );
 
 		$oaths     = $r->string();
 		$biography = $version >= 2.397 ? $r->string() : '';
@@ -1646,9 +1684,7 @@ class GEX_Parser {
 		// fields - read in the shape table's own order, sliced at each interleave
 		// point (Physical..Influences, then Arcanoi..Locations, then Thorns alone).
 		$trait_lists = self::read_trait_lists( $r, $version, 'wraith', 0, 10 );
-		$physical    = $trait_lists['Physical'];
-		$social      = $trait_lists['Social'];
-		$mental      = $trait_lists['Mental'];
+		[ $physical, $social, $mental ] = self::attribute_lists( $trait_lists );
 
 		$passions = $r->string();
 		$fetters  = $r->string();
@@ -1784,9 +1820,7 @@ class GEX_Parser {
 
 		$experience  = self::parse_experience( $r, $version );
 		$trait_lists = self::read_trait_lists( $r, $version, 'mortal' );
-		$physical    = $trait_lists['Physical'];
-		$social      = $trait_lists['Social'];
-		$mental      = $trait_lists['Mental'];
+		[ $physical, $social, $mental ] = self::attribute_lists( $trait_lists );
 
 		$other     = $r->string();
 		$biography = $version >= 2.397 ? $r->string() : '';
@@ -1912,9 +1946,7 @@ class GEX_Parser {
 
 		$experience  = self::parse_experience( $r, $version );
 		$trait_lists = self::read_trait_lists( $r, $version, 'mummy' );
-		$physical    = $trait_lists['Physical'];
-		$social      = $trait_lists['Social'];
-		$mental      = $trait_lists['Mental'];
+		[ $physical, $social, $mental ] = self::attribute_lists( $trait_lists );
 
 		$inheritance = $r->string();
 		$biography   = $version >= 2.397 ? $r->string() : '';
@@ -2038,9 +2070,7 @@ class GEX_Parser {
 
 		$experience  = self::parse_experience( $r, $version );
 		$trait_lists = self::read_trait_lists( $r, $version, 'kueijin' );
-		$physical    = $trait_lists['Physical'];
-		$social      = $trait_lists['Social'];
-		$mental      = $trait_lists['Mental'];
+		[ $physical, $social, $mental ] = self::attribute_lists( $trait_lists );
 
 		$biography = $version >= 2.397 ? $r->string() : '';
 		$notes     = $r->string();
@@ -2175,9 +2205,7 @@ class GEX_Parser {
 
 		$experience  = self::parse_experience( $r, $version );
 		$trait_lists = self::read_trait_lists( $r, $version, 'fera' );
-		$physical    = $trait_lists['Physical'];
-		$social      = $trait_lists['Social'];
-		$mental      = $trait_lists['Mental'];
+		[ $physical, $social, $mental ] = self::attribute_lists( $trait_lists );
 
 		$biography = $version >= 2.397 ? $r->string() : '';
 		$notes     = $r->string();
@@ -2276,9 +2304,7 @@ class GEX_Parser {
 
 		$experience  = self::parse_experience( $r, $version );
 		$trait_lists = self::read_trait_lists( $r, $version, 'various' );
-		$physical    = $trait_lists['Physical'];
-		$social      = $trait_lists['Social'];
-		$mental      = $trait_lists['Mental'];
+		[ $physical, $social, $mental ] = self::attribute_lists( $trait_lists );
 
 		$other     = $r->string();
 		$biography = $version >= 2.397 ? $r->string() : '';

@@ -3,13 +3,15 @@
 namespace BeyondElysium\Core;
 
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Game_Member;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Queues and sends email notifications to players: their character's
  * submitted change was approved or rejected, or a new rumor now reaches one
- * of their characters. Each kind has its own queue/flush pair (the shapes
+ * of their characters. Also tells a chronicle's Storytellers that a character
+ * transfer is waiting for them to accept or refuse. Each kind has its own queue/flush pair (the shapes
  * don't share a sensible email format), but both honor the same per-user
  * opt-out and per-game toggle via should_notify(). Callers enqueue() one
  * outcome at a time during a request, then flush() sends one summary email
@@ -256,5 +258,239 @@ class Notifications {
 		}
 
 		return implode( "\n", $lines );
+	}
+
+	/**
+	 * Emails the receiving chronicle's HSTs and ASTs that a character transfer
+	 * is waiting for one of them to accept or refuse - nothing is added to the
+	 * chronicle until someone does (1.0.0-review F-003). Sent at once, one
+	 * message per Storyteller, honoring the same opt-out and per-chronicle
+	 * toggle as every other notification.
+	 *
+	 * @param object $game     The receiving chronicle's row.
+	 * @param object $transfer The inbound transfer row.
+	 * @return void
+	 */
+	public static function transfer_offered( object $game, object $transfer ): void {
+		foreach ( self::storytellers( $game ) as $user ) {
+			$character = (string) ( $transfer->character_name ?? '' ) !== '' ? (string) $transfer->character_name : __( 'A character', 'beyond-elysium' );
+			$lines     = [
+				sprintf(
+					/* translators: %s: display name */
+					__( 'Hi %s,', 'beyond-elysium' ),
+					$user->display_name
+				),
+				'',
+				sprintf(
+					/* translators: 1: character name, 2: sending chronicle, 3: sending site, 4: receiving chronicle */
+					__( '%1$s is being transferred from %2$s (%3$s) to %4$s. Nothing has been added to your chronicle yet - review the transfer, then accept or refuse it, under Beyond Elysium > Import:', 'beyond-elysium' ),
+					$character,
+					(string) $transfer->home_chronicle,
+					(string) $transfer->home_site,
+					(string) $game->name
+				),
+				admin_url( 'admin.php?page=beyond-elysium-import' ),
+			];
+
+			wp_mail(
+				$user->user_email,
+				sprintf(
+					/* translators: 1: character name, 2: receiving chronicle */
+					__( '[Beyond Elysium] Transfer waiting for review: %1$s to %2$s', 'beyond-elysium' ),
+					$character,
+					(string) $game->name
+				),
+				implode( "\n", $lines )
+			);
+		}
+	}
+
+	/**
+	 * Emails the chronicle's HSTs and ASTs that someone asked to join by
+	 * starting a character (owner ruling, 1.0.0-review F-033): the character
+	 * waits, pending, until one of them sets it active, which makes its player
+	 * a member.
+	 *
+	 * @param object   $game      The chronicle's row.
+	 * @param object   $character The pending character.
+	 * @param \WP_User $applicant
+	 * @return void
+	 */
+	public static function join_requested( object $game, object $character, \WP_User $applicant ): void {
+		foreach ( self::storytellers( $game ) as $user ) {
+			$lines = [
+				sprintf(
+					/* translators: %s: display name */
+					__( 'Hi %s,', 'beyond-elysium' ),
+					$user->display_name
+				),
+				'',
+				sprintf(
+					/* translators: 1: applicant's display name, 2: character name, 3: chronicle */
+					__( '%1$s asked to join %3$s by starting a character, %2$s. They become a player when a Storyteller approves the character - set it active on the roster, or delete it to decline:', 'beyond-elysium' ),
+					$applicant->display_name,
+					(string) $character->name,
+					(string) $game->name
+				),
+				admin_url( 'admin.php?page=beyond-elysium-characters' ),
+			];
+
+			wp_mail(
+				$user->user_email,
+				sprintf(
+					/* translators: 1: chronicle, 2: character name */
+					__( '[Beyond Elysium] Request to join %1$s: %2$s', 'beyond-elysium' ),
+					(string) $game->name,
+					(string) $character->name
+				),
+				implode( "\n", $lines )
+			);
+		}
+	}
+
+	/**
+	 * Emails the chronicle's HSTs and ASTs that a player sent a Grapevine
+	 * file waiting for review (F-122). Nothing is added to the chronicle
+	 * until a Storyteller reviews it, under Beyond Elysium > Import.
+	 *
+	 * @param object $game
+	 * @param object $submission
+	 * @param \WP_User $sender
+	 * @return void
+	 */
+	public static function submission_received( object $game, object $submission, \WP_User $sender ): void {
+		$character = (string) ( $submission->character_name ?? '' ) !== '' ? (string) $submission->character_name : __( 'A character', 'beyond-elysium' );
+		$arriving  = self::arrival_phrase( $submission );
+
+		foreach ( self::storytellers( $game ) as $user ) {
+			$lines = [
+				sprintf(
+					/* translators: %s: display name */
+					__( 'Hi %s,', 'beyond-elysium' ),
+					$user->display_name
+				),
+				'',
+				sprintf(
+					/* translators: 1: sender display name, 2: character name, 3: creature type, 4: joining/visiting phrase */
+					__( '%1$s sent a Grapevine file for %2$s (%3$s), %4$s. Nothing is added until a Storyteller reviews it:', 'beyond-elysium' ),
+					$sender->display_name,
+					$character,
+					(string) $submission->stack_slug,
+					$arriving
+				),
+				admin_url( 'admin.php?page=beyond-elysium-import' ),
+			];
+
+			wp_mail(
+				$user->user_email,
+				sprintf(
+					/* translators: 1: chronicle, 2: character name */
+					__( '[Beyond Elysium] Sheet to review for %1$s: %2$s', 'beyond-elysium' ),
+					(string) $game->name,
+					$character
+				),
+				implode( "\n", $lines )
+			);
+		}
+	}
+
+	/**
+	 * Emails the sender of a player-submitted Grapevine file once a
+	 * Storyteller has accepted or refused it (F-122). Skipped when the
+	 * sender opted out or the chronicle has notifications off - the same
+	 * checks every other player-facing notification honors.
+	 *
+	 * @param object $game
+	 * @param object $submission
+	 * @return void
+	 */
+	public static function submission_answered( object $game, object $submission ): void {
+		$sender_id = (int) $submission->submitted_by;
+		if ( ! self::should_notify( $sender_id, $game ) ) {
+			return;
+		}
+		$sender = get_userdata( $sender_id );
+		if ( ! $sender || ! $sender->user_email ) {
+			return;
+		}
+
+		$character = (string) ( $submission->character_name ?? '' ) !== '' ? (string) $submission->character_name : __( 'Your character', 'beyond-elysium' );
+
+		if ( $submission->state === 'accepted' ) {
+			$subject = sprintf(
+				/* translators: 1: chronicle, 2: character name */
+				__( '[Beyond Elysium] %1$s accepted %2$s', 'beyond-elysium' ),
+				(string) $game->name,
+				$character
+			);
+			$body = sprintf(
+				/* translators: 1: chronicle, 2: character name */
+				__( "%1\$s's Storytellers accepted %2\$s.", 'beyond-elysium' ),
+				(string) $game->name,
+				$character
+			);
+		} else {
+			$subject = sprintf(
+				/* translators: 1: chronicle, 2: character name */
+				__( '[Beyond Elysium] %1$s didn\'t accept %2$s', 'beyond-elysium' ),
+				(string) $game->name,
+				$character
+			);
+			$body = sprintf(
+				/* translators: 1: chronicle, 2: character name */
+				__( "%1\$s's Storytellers didn't accept %2\$s.", 'beyond-elysium' ),
+				(string) $game->name,
+				$character
+			);
+			if ( ! empty( $submission->answer_note ) ) {
+				$body .= "\n\n" . sprintf(
+					/* translators: %s: the Storyteller's note */
+					__( 'Their note: %s', 'beyond-elysium' ),
+					(string) $submission->answer_note
+				);
+			}
+		}
+
+		wp_mail( $sender->user_email, $subject, $body );
+	}
+
+	/**
+	 * @param object $submission
+	 * @return string
+	 */
+	private static function arrival_phrase( object $submission ): string {
+		if ( $submission->arrival === 'joining' ) {
+			return __( 'joining the chronicle', 'beyond-elysium' );
+		}
+		return ( $submission->home_chronicle ?? '' ) !== ''
+			? sprintf(
+				/* translators: %s: the sender's home chronicle, as they typed it */
+				__( 'visiting from %s', 'beyond-elysium' ),
+				(string) $submission->home_chronicle
+			)
+			: __( 'visiting for a game', 'beyond-elysium' );
+	}
+
+	/**
+	 * The chronicle's HSTs and ASTs who should get a staff notification: each
+	 * once, with an email address, not opted out, on a chronicle with
+	 * notifications on.
+	 *
+	 * @param object $game
+	 * @return array<int,\WP_User>
+	 */
+	private static function storytellers( object $game ): array {
+		$users = [];
+		foreach ( Game_Member::for_game( (int) $game->id ) as $member ) {
+			$wp_user_id = (int) $member->wp_user_id;
+			if ( ! in_array( $member->role, [ 'hst', 'ast' ], true ) || isset( $users[ $wp_user_id ] ) || ! self::should_notify( $wp_user_id, $game ) ) {
+				continue;
+			}
+			$user = get_userdata( $wp_user_id );
+			if ( $user && $user->user_email ) {
+				$users[ $wp_user_id ] = $user;
+			}
+		}
+		return array_values( $users );
 	}
 }

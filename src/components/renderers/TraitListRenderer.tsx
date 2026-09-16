@@ -5,9 +5,14 @@
  * Renders a "None" placeholder when the list is empty.
  */
 import { __ } from '@wordpress/i18n';
-import { displayTrait, type Trait, type DisplayType } from '../../lib/displayTrait';
+import {
+	displayTrait,
+	type Trait,
+	type DisplayType,
+} from '../../lib/displayTrait';
 import { groupTraitsByField } from '../../lib/groupTraitsByField';
 import { localizedItemName } from '../../lib/localizeName';
+import WithDots from '../shared/Dots';
 import type { TraitListDefinition, TraitListItem } from '../../types';
 import './TraitListRenderer.css';
 
@@ -25,7 +30,10 @@ interface TraitGroup {
 }
 
 /** Resolves the display mode: the template section's override, then the block's own default, then 'simple'. */
-export function resolveDisplay( sectionDisplay: DisplayType | null, blockDisplay: DisplayType | undefined ): DisplayType {
+export function resolveDisplay(
+	sectionDisplay: DisplayType | null,
+	blockDisplay: DisplayType | undefined
+): DisplayType {
 	return sectionDisplay ?? blockDisplay ?? 'simple';
 }
 
@@ -35,13 +43,18 @@ export function resolveDisplay( sectionDisplay: DisplayType | null, blockDisplay
  * unrecognized-category traits land in a trailing "Other" bucket rather than vanishing.
  * A block with no `categories` renders flat.
  */
-export function groupByCategory( data: Trait[], definition: TraitListDefinition ): TraitGroup[] {
+export function groupByCategory(
+	data: Trait[],
+	definition: TraitListDefinition
+): TraitGroup[] {
 	if ( ! definition.categories || definition.categories.length === 0 ) {
 		return [ { label: null, traits: data } ];
 	}
 
-	const catalogByName = new Map( definition.items.map( ( item ) => [ item.name, item ] ) );
-	const buckets = new Map<string, Trait[]>();
+	const catalogByName = new Map(
+		definition.items.map( ( item ) => [ item.name, item ] )
+	);
+	const buckets = new Map< string, Trait[] >();
 	const other: Trait[] = [];
 
 	for ( const trait of data ) {
@@ -57,16 +70,25 @@ export function groupByCategory( data: Trait[], definition: TraitListDefinition 
 
 	const groups: TraitGroup[] = definition.categories
 		.filter( ( category ) => buckets.has( category ) )
-		.map( ( category ) => ( { label: category, traits: buckets.get( category ) as Trait[] } ) );
+		.map( ( category ) => ( {
+			label: category,
+			traits: buckets.get( category ) as Trait[],
+		} ) );
 
 	if ( other.length > 0 ) {
-		groups.push( { label: __( 'Other', 'beyond-elysium' ), traits: other } );
+		groups.push( {
+			label: __( 'Other', 'beyond-elysium' ),
+			traits: other,
+		} );
 	}
 
 	return groups;
 }
 
-export function sortIfAlphabetized( traits: Trait[], alphabetize?: boolean ): Trait[] {
+export function sortIfAlphabetized(
+	traits: Trait[],
+	alphabetize?: boolean
+): Trait[] {
 	if ( ! alphabetize ) {
 		return traits;
 	}
@@ -78,7 +100,10 @@ export function sortIfAlphabetized( traits: Trait[], alphabetize?: boolean ): Tr
  * Portuguese and one exists (i18n-pt-br-design.md) - a display-only copy, never mutating
  * the trait's own `name` (still the canonical value every sort/key/lookup above uses).
  */
-function localizeTraitForDisplay( trait: Trait, catalogByName: Map<string, TraitListItem> ): Trait {
+function localizeTraitForDisplay(
+	trait: Trait,
+	catalogByName: Map< string, TraitListItem >
+): Trait {
 	const catalogItem = catalogByName.get( trait.name );
 	if ( ! catalogItem?.name_pt ) {
 		return trait;
@@ -93,15 +118,24 @@ function localizeTraitForDisplay( trait: Trait, catalogByName: Map<string, Trait
  *
  * Creature-agnostic: nothing here branches on stack_slug or block_slug identity.
  */
-export function TraitListRenderer( { blockSlug, data, definition, display }: TraitListRendererProps ) {
+export function TraitListRenderer( {
+	blockSlug,
+	data,
+	definition,
+	display,
+}: TraitListRendererProps ) {
 	const mode = resolveDisplay( display, definition.display );
 	const nested = groupTraitsByField( data, definition );
-	const catalogByName = new Map( definition.items.map( ( item ) => [ item.name, item ] ) );
+	const catalogByName = new Map(
+		definition.items.map( ( item ) => [ item.name, item ] )
+	);
 
 	if ( data.length === 0 ) {
 		return (
 			<div className="be-trait-list" data-block-slug={ blockSlug }>
-				<p className="be-trait-list__empty">{ __( 'None', 'beyond-elysium' ) }</p>
+				<p className="be-trait-list__empty">
+					{ __( 'None', 'beyond-elysium' ) }
+				</p>
 			</div>
 		);
 	}
@@ -113,11 +147,31 @@ export function TraitListRenderer( { blockSlug, data, definition, display }: Tra
 					<div className="be-trait-list__group" key={ group }>
 						<h4 className="be-trait-list__category">{ group }</h4>
 						{ subgroups.map( ( { subgroup, items } ) => (
-							<div className="be-trait-list__subgroup" key={ subgroup ?? '' }>
-								{ subgroup && <h5 className="be-trait-list__subcategory">{ subgroup }</h5> }
+							<div
+								className="be-trait-list__subgroup"
+								key={ subgroup ?? '' }
+							>
+								{ subgroup && (
+									<h5 className="be-trait-list__subcategory">
+										{ subgroup }
+									</h5>
+								) }
 								<ul className="be-trait-list__items">
-									{ sortIfAlphabetized( items, definition.alphabetize ).map( ( trait, i ) => (
-										<li key={ `${ trait.name }-${ i }` }>{ displayTrait( localizeTraitForDisplay( trait, catalogByName ), mode ) }</li>
+									{ sortIfAlphabetized(
+										items,
+										definition.alphabetize
+									).map( ( trait, i ) => (
+										<li key={ `${ trait.name }-${ i }` }>
+											<WithDots
+												text={ displayTrait(
+													localizeTraitForDisplay(
+														trait,
+														catalogByName
+													),
+													mode
+												) }
+											/>
+										</li>
 									) ) }
 								</ul>
 							</div>
@@ -133,11 +187,31 @@ export function TraitListRenderer( { blockSlug, data, definition, display }: Tra
 	return (
 		<div className="be-trait-list" data-block-slug={ blockSlug }>
 			{ groups.map( ( group, index ) => (
-				<div className="be-trait-list__group" key={ group.label ?? index }>
-					{ group.label && <h4 className="be-trait-list__category">{ group.label }</h4> }
+				<div
+					className="be-trait-list__group"
+					key={ group.label ?? index }
+				>
+					{ group.label && (
+						<h4 className="be-trait-list__category">
+							{ group.label }
+						</h4>
+					) }
 					<ul className="be-trait-list__items">
-						{ sortIfAlphabetized( group.traits, definition.alphabetize ).map( ( trait, i ) => (
-							<li key={ `${ trait.name }-${ i }` }>{ displayTrait( localizeTraitForDisplay( trait, catalogByName ), mode ) }</li>
+						{ sortIfAlphabetized(
+							group.traits,
+							definition.alphabetize
+						).map( ( trait, i ) => (
+							<li key={ `${ trait.name }-${ i }` }>
+								<WithDots
+									text={ displayTrait(
+										localizeTraitForDisplay(
+											trait,
+											catalogByName
+										),
+										mode
+									) }
+								/>
+							</li>
 						) ) }
 					</ul>
 				</div>

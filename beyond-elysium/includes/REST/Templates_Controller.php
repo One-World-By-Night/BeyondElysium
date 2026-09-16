@@ -32,13 +32,14 @@ class Templates_Controller extends Base_Controller {
 			[
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'get_globals' ],
-				'permission_callback' => $this->permission( 'be_view_characters' ),
+				// The template editor's; a sheet reaches its template through resolve (1.0.0-review F-069).
+				'permission_callback' => $this->permission( 'be_manage_templates' ),
 				'args'                => $this->get_collection_params(),
 			],
 			[
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'create_global' ],
-				'permission_callback' => $this->permission( 'be_manage_templates' ),
+				'permission_callback' => $this->permission( 'be_manage_games' ),
 			],
 		] );
 
@@ -46,17 +47,17 @@ class Templates_Controller extends Base_Controller {
 			[
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'get_item' ],
-				'permission_callback' => $this->permission( 'be_view_characters' ),
+				'permission_callback' => $this->permission( 'be_manage_templates' ),
 			],
 			[
 				'methods'             => 'PUT',
 				'callback'            => [ $this, 'update_global' ],
-				'permission_callback' => $this->permission( 'be_manage_templates' ),
+				'permission_callback' => $this->permission( 'be_manage_games' ),
 			],
 			[
 				'methods'             => 'DELETE',
 				'callback'            => [ $this, 'delete_global' ],
-				'permission_callback' => $this->permission( 'be_manage_templates' ),
+				'permission_callback' => $this->permission( 'be_manage_games' ),
 			],
 		] );
 
@@ -77,7 +78,7 @@ class Templates_Controller extends Base_Controller {
 			[
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'get_for_game' ],
-				'permission_callback' => $this->permission( 'be_view_characters' ),
+				'permission_callback' => $this->permission( 'be_manage_templates' ),
 				'args'                => $this->get_collection_params(),
 			],
 			[
@@ -129,16 +130,17 @@ class Templates_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns a single template by id, whether it is a global template or
-	 * a game-scoped one. Returns a 404 error when no matching template
-	 * exists. Available to any user who can view characters.
+	 * Returns a single global template by id. A chronicle's own template is
+	 * not found here, as on the global update and delete routes: this route
+	 * names no chronicle to check membership against, so a chronicle's
+	 * templates are read through its own list (1.0.0-review F-069).
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function get_item( $request ) {
 		$template = Template::find( (int) $request['id'] );
-		if ( ! $template ) {
+		if ( ! $template || $template->game_id !== null ) {
 			return $this->error( 'not_found', __( 'Template not found.', 'beyond-elysium' ), 404 );
 		}
 		return $this->success( $template );
@@ -207,7 +209,7 @@ class Templates_Controller extends Base_Controller {
 					'name'          => $template->name,
 					'stack_slug'    => $template->stack_slug,
 					'template_type' => $template->template_type,
-					'layout'        => St_Visibility::filter_layout( $template->layout, current_user_can( 'be_manage_characters' ) ),
+					'layout'        => St_Visibility::filter_layout( $template->layout, \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ), $game->slug ),
 				],
 			] );
 		}
@@ -217,7 +219,7 @@ class Templates_Controller extends Base_Controller {
 			return $this->error( 'stack_not_found', __( 'Creature stack not found.', 'beyond-elysium' ), 404 );
 		}
 
-		$layout = St_Visibility::filter_layout( $layout, current_user_can( 'be_manage_characters' ) );
+		$layout = St_Visibility::filter_layout( $layout, \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ), $game->slug );
 
 		return $this->success( [
 			'resolved_from' => 'generated',
@@ -339,7 +341,7 @@ class Templates_Controller extends Base_Controller {
 
 		$decoded = is_string( $layout ) ? json_decode( $layout, true ) : $layout;
 		if ( is_object( $decoded ) ) {
-			$decoded = json_decode( wp_json_encode( $decoded ), true );
+			$decoded = json_decode( (string) wp_json_encode( $decoded ), true );
 		}
 
 		$validation_error = Template::validate_layout( $decoded );
@@ -386,7 +388,7 @@ class Templates_Controller extends Base_Controller {
 		if ( $layout !== null ) {
 			$decoded = is_string( $layout ) ? json_decode( $layout, true ) : $layout;
 			if ( is_object( $decoded ) ) {
-				$decoded = json_decode( wp_json_encode( $decoded ), true );
+				$decoded = json_decode( (string) wp_json_encode( $decoded ), true );
 			}
 
 			$validation_error = Template::validate_layout( $decoded );

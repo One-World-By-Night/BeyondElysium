@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Services\Rich_Text_Sanitizer;
 
@@ -33,7 +34,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 			[
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'create_item' ],
-				'permission_callback' => $this->permission( 'be_manage_schemas' ),
+				'permission_callback' => $this->permission( 'be_manage_games' ),
 				'args'                => $this->get_create_params(),
 			],
 		] );
@@ -47,12 +48,12 @@ class Schema_Blocks_Controller extends Base_Controller {
 			[
 				'methods'             => 'PUT',
 				'callback'            => [ $this, 'update_item' ],
-				'permission_callback' => $this->permission( 'be_manage_schemas' ),
+				'permission_callback' => $this->permission( 'be_manage_games' ),
 			],
 			[
 				'methods'             => 'DELETE',
 				'callback'            => [ $this, 'delete_item' ],
-				'permission_callback' => $this->permission( 'be_manage_schemas' ),
+				'permission_callback' => $this->permission( 'be_manage_games' ),
 			],
 		] );
 
@@ -126,9 +127,14 @@ class Schema_Blocks_Controller extends Base_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function get_item( $request ) {
-		$game_slug = (string) ( $request->get_param( 'game_slug' ) ?? '' );
-		$block     = Schema_Block::find_for_game( $request['slug'], $game_slug );
-		if ( ! $block ) {
+		$game_slug = $this->write_scope( $request );
+		if ( is_wp_error( $game_slug ) ) {
+			return $game_slug;
+		}
+		// find_for_game() falls back to the global block when the chronicle has no fork of
+		// its own - a chronicle route must never mistake that global block for its fork.
+		$block = Schema_Block::find_for_game( $request['slug'], $game_slug );
+		if ( ! $block || (string) $block->game_slug !== $game_slug ) {
 			return $this->error( 'not_found', __( 'Schema block not found.', 'beyond-elysium' ), 404 );
 		}
 		return $this->success( $block );
@@ -172,12 +178,21 @@ class Schema_Blocks_Controller extends Base_Controller {
 			$definition = $this->default_definition( $section_type );
 		}
 
-		if ( Schema_Block::find_by_slug( sanitize_title( $slug ) ) ) {
+		$game_slug = $this->write_scope( $request );
+		if ( is_wp_error( $game_slug ) ) {
+			return $game_slug;
+		}
+
+		// A slug already in use anywhere - the global catalog or any chronicle - would either
+		// collide or silently shadow another block, since a chronicle's row with the same slug
+		// is exactly what a fork is.
+		if ( Schema_Block::slug_in_use( sanitize_title( $slug ) ) ) {
 			return $this->error( 'duplicate_slug', __( 'A schema block with this slug already exists.', 'beyond-elysium' ), 409 );
 		}
 
 		$id = Schema_Block::create( [
 			'slug'             => $slug,
+			'game_slug'        => $game_slug,
 			'name'             => $name,
 			'section_type'     => $section_type,
 			'definition'       => $definition,
@@ -203,11 +218,11 @@ class Schema_Blocks_Controller extends Base_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function update_item( $request ) {
-		// Auto-creates the game's fork of the block on first edit if one doesn't exist yet.
-		$game_slug = (string) ( $request->get_param( 'game_slug' ) ?? '' );
-		$block     = $game_slug !== ''
-			? Schema_Block::find_or_create_fork_for_game( $request['slug'], $game_slug )
-			: Schema_Block::find_by_slug( $request['slug'] );
+		$game_slug = $this->write_scope( $request );
+		if ( is_wp_error( $game_slug ) ) {
+			return $game_slug;
+		}
+		$block = Schema_Block::find_for_game( $request['slug'], $game_slug );
 		if ( ! $block ) {
 			return $this->error( 'not_found', __( 'Schema block not found.', 'beyond-elysium' ), 404 );
 		}
@@ -231,9 +246,29 @@ class Schema_Blocks_Controller extends Base_Controller {
 				return $validation_error;
 			}
 			$data['definition'] = $this->sanitize_definition( $section_type, $data['definition'] );
+
+			// What an administrator adds to a shared system block survives the next plugin update (F-011).
+			if ( $game_slug === '' && (int) $block->is_system === 1 && is_object( $block->definition ) ) {
+				$data['definition'] = \BeyondElysium\Database\Seeder::mark_admin_additions( $block->definition, $data['definition'] );
+			}
 		}
 
-		Schema_Block::update( $request['slug'], $data, $game_slug );
+		if ( ! empty( $data ) ) {
+			// A chronicle's first edit makes its copy of the block, and the save lands on that copy or
+			// nothing is kept - never the catalog block in its place (1.0.0-review F-109).
+			$unit  = Transaction::begin( 'be_schema_block_save' );
+			$saved = ( $game_slug === '' || Schema_Block::find_or_create_fork_for_game( $request['slug'], $game_slug ) )
+				&& Schema_Block::update( $request['slug'], $data, $game_slug );
+			if ( ! $saved ) {
+				Transaction::rollback( $unit );
+				return $this->error( 'save_failed', __( 'Failed to update schema block.', 'beyond-elysium' ), 500 );
+			}
+			Transaction::commit( $unit );
+		}
+		// A catalog save reaches every chronicle's copy, past what each chronicle changed (1.0.0-review F-034).
+		if ( $game_slug === '' && isset( $data['definition'] ) ) {
+			Schema_Block::refresh_forks( $request['slug'] );
+		}
 		return $this->success( Schema_Block::find_for_game( $request['slug'], $game_slug ) );
 	}
 
@@ -249,9 +284,14 @@ class Schema_Blocks_Controller extends Base_Controller {
 		// Reached via the URL's own game_slug (GS-1) this deletes only that chronicle's
 		// fork, exact-match, never the global row a game-scoped route has no business
 		// touching - Schema_Block::delete()'s own exact-match query enforces this.
-		$game_slug = (string) ( $request->get_param( 'game_slug' ) ?? '' );
-		$block     = Schema_Block::find_for_game( $request['slug'], $game_slug );
-		if ( ! $block ) {
+		$game_slug = $this->write_scope( $request );
+		if ( is_wp_error( $game_slug ) ) {
+			return $game_slug;
+		}
+		// find_for_game() falls back to the global block when the chronicle has no fork of
+		// its own - a chronicle route must never mistake that global block for its fork.
+		$block = Schema_Block::find_for_game( $request['slug'], $game_slug );
+		if ( ! $block || (string) $block->game_slug !== $game_slug ) {
 			return $this->error( 'not_found', __( 'Schema block not found.', 'beyond-elysium' ), 404 );
 		}
 
@@ -261,6 +301,30 @@ class Schema_Blocks_Controller extends Base_Controller {
 
 		Schema_Block::delete( $request['slug'], $game_slug );
 		return $this->success( null, 204 );
+	}
+
+	/**
+	 * Returns the chronicle a write targets: the `game_slug` in the route's own
+	 * URL, or '' for the global catalog. A `game_slug` anywhere else - the query
+	 * string or body of a global route - is refused rather than honored or
+	 * ignored: honoring it skipped the chronicle membership check, and ignoring
+	 * it would silently write the global block a caller meant to fork
+	 * (1.0.0-review F-002).
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return string|\WP_Error
+	 */
+	private function write_scope( \WP_REST_Request $request ) {
+		$from_url = (string) ( $request->get_url_params()['game_slug'] ?? '' );
+		$param    = $request->get_param( 'game_slug' );
+		if ( $from_url === '' && $param !== null && $param !== '' ) {
+			return $this->error(
+				'use_chronicle_route',
+				__( "A chronicle's own schema blocks are changed through that chronicle's route, not the global catalog's.", 'beyond-elysium' ),
+				400
+			);
+		}
+		return $from_url;
 	}
 
 	/**
@@ -357,7 +421,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 				return $this->error( 'invalid_json', __( 'definition must be a valid JSON object.', 'beyond-elysium' ), 400 );
 			}
 		} elseif ( is_object( $definition ) ) {
-			$definition = json_decode( wp_json_encode( $definition ), true );
+			$definition = json_decode( (string) wp_json_encode( $definition ), true );
 		}
 
 		$required_keys = [
@@ -390,7 +454,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 		if ( is_string( $definition ) ) {
 			$definition = json_decode( $definition, true );
 		} elseif ( is_object( $definition ) ) {
-			$definition = json_decode( wp_json_encode( $definition ), true );
+			$definition = json_decode( (string) wp_json_encode( $definition ), true );
 		}
 		return Rich_Text_Sanitizer::sanitize_definition( (array) $definition, $section_type );
 	}

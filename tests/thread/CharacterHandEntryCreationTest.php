@@ -48,6 +48,8 @@ class CharacterHandEntryCreationTest extends WP_UnitTestCase {
 		] );
 
 		$this->player_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		// A player of this chronicle - a non-member's first character is a join request instead (1.0.0-review F-033).
+		\BeyondElysium\Models\Game_Member::set_role( (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}be_games WHERE slug = %s", $this->game_slug ) ), $this->player_id, 'player' );
 	}
 
 	private function starting_sheet(): array {

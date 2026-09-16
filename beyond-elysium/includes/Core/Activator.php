@@ -23,6 +23,9 @@ class Activator {
 	 * completes.
 	 */
 	public static function activate(): void {
+		// Read before create_tables() records the schema version.
+		$fresh_install = get_option( Schema::VERSION_OPTION ) === false;
+
 		Schema::create_tables();
 		Capabilities::register();
 		Seeder::seed_schema_blocks();
@@ -39,10 +42,14 @@ class Activator {
 		// Repairs any default template layouts that drifted from current definitions.
 		Schema::repair_stale_default_layouts();
 
-		// Seeds demo characters into the be-demo game.
-		Seeder::seed_demo_characters();
+		// Seeds demo characters into the be-demo game, on a fresh install only.
+		Seeder::seed_demo_characters( $fresh_install );
 
 		// Fires the post-upgrade action that provisions default pages.
 		do_action( 'be_after_upgrade' );
+
+		// Recorded last: an activation that fails partway leaves the version unrecorded, so the
+		// next request's upgrade runs every step again (1.0.0-review F-064).
+		update_option( Schema::VERSION_OPTION, Schema::DB_VERSION );
 	}
 }

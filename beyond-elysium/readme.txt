@@ -1,82 +1,48 @@
-# Beyond Elysium
+=== Beyond Elysium ===
+Tags: larp, character sheet, mind's eye theatre, world of darkness, chronicle
+Requires at least: 6.0
+Tested up to: 7.1
+Requires PHP: 8.2
+Stable tag: 1.0.0
+License: GPL-2.0-or-later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for One World by Night (https://www.owbn.net/).
+Character management for Mind's Eye Theatre LARP chronicles, built for One World by Night.
 
-Status: v0.99.14, live on two production OWBN chronicles (kony-sabbat.net, Boston By Night). Working through a defined set of remaining items toward a 1.0 release.
+== Description ==
 
-## What It Does
+Beyond Elysium keeps a chronicle's characters: the sheets, the changes players submit, and the Storyteller approval in between.
 
-Beyond Elysium handles character sheets, player submissions, and Storyteller approval workflows for tabletop LARP games. It supports every creature type in the World of Darkness (Vampire, Werewolf, Mage, Changeling, and others) without any creature-specific code.
+Eleven creature types ship with it: Vampire, Werewolf, Mage, Changeling, Wraith, Demon, Mummy, Kuei-Jin, Mortal, Fera, and Bête. Sheets are built from shared blocks (trait lists, tiered powers, resource pools, identity fields), so there is no per-creature code, and a chronicle can adjust a block for its own game without touching anyone else's.
 
-## How It Works
+* Players build their characters, submit changes, and track their experience.
+* Storytellers review submissions, run plots, actions, and rumors, and manage the roster.
+* Each chronicle's characters, plots, and changes are its own. A Storyteller reaches only the chronicles they run.
+* Grapevine 3.01 exchange files (.gex) import, and characters export back to .gex with a verification code the receiving chronicle can check.
+* Printed sheets and reports are digitally signed PDFs.
 
-The plugin uses a schema-driven "engine pattern." Character sheets are assembled from reusable building blocks -- trait lists, tiered powers, resource pools, and identity fields. Adding a new creature type means configuring blocks in the admin UI, not writing code.
+== Installation ==
 
-- Players create and edit characters, submit changes for review, and track experience
-- Storytellers review and approve submissions, run plots and rumors, and manage the roster
-- Schema blocks define what a character sheet looks like for each game type
-- Creature stacks assemble blocks into a complete sheet definition
-- Characters are instances of a stack filled with player data
-- Chronicles are isolated from one another -- a Storyteller reaches their own chronicle's characters, plots and changes, and no other's
+1. Install and activate Elementor, which Beyond Elysium requires.
+2. Upload the plugin zip under Plugins > Add New > Upload Plugin, then activate it.
+3. Open Beyond Elysium in the admin menu and work through Chronicle Setup.
 
-Beyond Elysium runs standalone on plain, game-scoped WordPress capabilities, and integrates with accessSchema for chronicle-scoped role paths where the wider OWBN plugin stack is present. Neither is required by the other: a chronicle can run this plugin on a bare WordPress install with no OWBN plugins at all, and every permission check falls back cleanly if accessSchema is absent, unreachable, or declines to answer.
+Signed PDFs need a certificate and key defined in `wp-config.php`. Until they are, an admin notice gives the exact constants and the command that generates both.
 
-## Tech Stack
+== Frequently Asked Questions ==
 
-- PHP 8.2 / WordPress 7.1 / MySQL 8.4 backend with custom database tables
-- React / TypeScript frontend with Elementor widget integration
-- REST API (be/v1 namespace) for all operations
-- Optional accessSchema client for chronicle-scoped RBAC
+= Does it need One World by Night's other plugins? =
 
-## Build Progress
+No. It runs on a bare WordPress install with Elementor. Where accessSchema is installed and enabled, chronicle roles can come from it too.
 
-Foundation, games, schema blocks, creature stacks: Complete
-Characters, change/approval workflow, XP tracking: Complete
-Character sheet templates and rendering: Complete
-Character editor: Complete
-Storyteller Toolkit -- plots, actions, and rumors: Complete
-Query engine and roster statistics: Complete
-World objects -- items, locations, rotes, boons: Complete
-MET-mechanics catalog import (disciplines, gifts, merits, and more): Complete
-Grapevine exchange-file import -- binary and XML, with duplicate detection and a review wizard: Complete
-Grapevine full game-file (.gv3) import and chronicle merge: Complete
-Per-character sheet customization, portraits, print layout: Complete
-Permissions audit, performance pass, error-handling audit: Complete
-Chronicle-scoped authorization: Complete
-Notifications and game dashboard: Complete
-Internationalization, accessibility, documentation: Complete
-Release-readiness checklist -- packaging, uninstall handling, security review: Complete
-Blood magic paths, downtime and rumor systems: Complete
-Chronicle rename -- slug changes now cascade to characters, schema-block forks, and pages instead of orphaning them: Complete
-Mobile-first character sheet, phase 1 (phone-width layout fix): Complete
-Background-use ledger and Action & Rumor settings -- what a downtime action grants, and what a character spent it on: Complete
-Query engine extended to items, locations, and rotes -- not just characters: Complete
-Grapevine exchange-file import fix (single-dot traits no longer zero on import) and the field-order groundwork for character export: Complete
-Export a character to a real Grapevine .gex XML file, from the character sheet: Complete
-A public verification endpoint for an exported character, with a human-facing check page: Complete
-Chronicle-to-chronicle character transfer, online and offline, with the travelling/visiting badge: Complete
-Binary Grapevine .gex export (primitive writer; the container writer is deliberately deferred): Complete
-Signed, cryptographically verifiable character-sheet PDF, replacing browser printing: Complete
-The 19 remaining GV301 reports, item/location/rote cards, and batch output, sharing the signed-PDF generator: Complete
+= Can it import a full Grapevine game file? =
 
-## What's Next
+Not yet. Export an exchange file (.gex) from Grapevine and import that.
 
-Toward 1.0: an 11-item closed scope, each already given a full design pass. Six are now complete (chronicle rename; the read-only sheet's phone-width fix; the background-use ledger and its settings; query beyond characters; the signed/verifiable PDF; the reports/cards/batch-output layer). What remains: a point calculator, the rest of the mobile-first sheet work, guided chronicle setup, expanding the Mage rotes catalog from the published Grimoire compendium, and bylaw-driven approval data pending a review-workflow decision.
+= Where are the release notes? =
 
-Full Grapevine 3.01 import is complete and verified against real chronicle data: binary and XML exchange files, and full game files with create-or-merge into an existing chronicle.
+https://github.com/One-World-By-Night/BeyondElysium/releases
 
-## Development
+== License ==
 
-    composer install              # PSR-4 autoloader + dev tooling
-    npm install && npm run build  # React/TypeScript frontend
-    ./bin/verify                  # lint, static analysis, tests, build
-    ./bin/dist                    # deployable artifact
-
-Requires PHP 8.2+, WordPress 7.x and MySQL 8.4, matching OWBN production.
-
-## License
-
-GPL-2.0-or-later. Signed-PDF export bundles `tecnickcom/tcpdf` (LGPL-3.0-or-later), which is
-GPLv3-compatible but not GPLv2-compatible — distributing the combination means electing this
-plugin's own "or later" clause, so the combined work ships under GPLv3 terms rather than
-GPLv2 alone. Nothing else about this plugin's own license changes.
+GPL-2.0-or-later. Signed-PDF output bundles tecnickcom/tcpdf (LGPL-3.0-or-later), which is compatible with GPLv3 but not GPLv2, so the combined work is distributed under GPLv3 terms through this plugin's "or later" clause.

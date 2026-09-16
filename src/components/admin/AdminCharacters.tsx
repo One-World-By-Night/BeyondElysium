@@ -8,8 +8,13 @@ import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import CharacterList from '../character/CharacterList';
-import { playerTabUrl, PLAYER_TABS, newCharacterUrl } from '../../lib/pluginPages';
+import {
+	playerTabUrl,
+	PLAYER_TABS,
+	newCharacterUrl,
+} from '../../lib/pluginPages';
 import type { Game } from '../../types';
+import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
 /**
@@ -19,7 +24,7 @@ import './Admin.css';
  * checkbox to switch the roster between player characters and NPCs.
  */
 export function AdminCharacters() {
-	const [ games, setGames ] = useState<Game[]>( [] );
+	const [ games, setGames ] = useState< Game[] >( [] );
 	const [ gameSlug, setGameSlug ] = useState( '' );
 	const [ loading, setLoading ] = useState( true );
 	const [ showNpcs, setShowNpcs ] = useState( false );
@@ -42,18 +47,31 @@ export function AdminCharacters() {
 
 	return (
 		<div className="be-admin">
-			<h1>{ __( 'Characters', 'beyond-elysium' ) }</h1>
+			<div className="be-help-heading">
+				<h1>{ __( 'Characters', 'beyond-elysium' ) }</h1>
+				<HelpButton helpKey="admin-characters" />
+			</div>
 
 			{ loading ? (
 				<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
 			) : games.length === 0 ? (
-				<p>{ __( 'No games exist yet - create one under Beyond Elysium → Games first.', 'beyond-elysium' ) }</p>
+				<p>
+					{ __(
+						'No games exist yet - create one under Beyond Elysium → System Config → Games first.',
+						'beyond-elysium'
+					) }
+				</p>
 			) : (
 				<>
 					<div className="be-admin__filters">
 						<label>
 							{ __( 'Game', 'beyond-elysium' ) }{ ' ' }
-							<select value={ gameSlug } onChange={ ( e ) => setGameSlug( e.target.value ) }>
+							<select
+								value={ gameSlug }
+								onChange={ ( e ) =>
+									setGameSlug( e.target.value )
+								}
+							>
 								{ games.map( ( g ) => (
 									<option key={ g.slug } value={ g.slug }>
 										{ g.name }
@@ -63,17 +81,35 @@ export function AdminCharacters() {
 						</label>
 						<label>
 							{ ' ' }
-							<input type="checkbox" checked={ showNpcs } onChange={ ( e ) => setShowNpcs( e.target.checked ) } />
-							{ ' ' }{ __( 'Show NPCs instead of player characters', 'beyond-elysium' ) }
+							<input
+								type="checkbox"
+								checked={ showNpcs }
+								onChange={ ( e ) =>
+									setShowNpcs( e.target.checked )
+								}
+							/>{ ' ' }
+							{ __(
+								'Show NPCs instead of player characters',
+								'beyond-elysium'
+							) }
 						</label>
 						{ gameSlug && (
-							<a className="button button-primary" href={ newCharacterUrl( gameSlug ) }>
+							<a
+								className="button button-primary"
+								href={ newCharacterUrl( gameSlug ) }
+							>
 								{ __( '+ New Character', 'beyond-elysium' ) }
 							</a>
 						) }
 					</div>
 
-					{ gameSlug && <CharacterList gameSlug={ gameSlug } showNpcs={ showNpcs } sheetPageUrl={ sheetUrl } /> }
+					{ gameSlug && (
+						<CharacterList
+							gameSlug={ gameSlug }
+							showNpcs={ showNpcs }
+							sheetPageUrl={ sheetUrl }
+						/>
+					) }
 				</>
 			) }
 		</div>

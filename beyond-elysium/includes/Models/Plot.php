@@ -65,7 +65,7 @@ class Plot {
 			'SELECT * FROM ' . Manager::table( 'plots' ) . ' WHERE parent_plot_id = %d ORDER BY created_at ASC',
 			$plot_id
 		);
-		return array_map( [ self::class, 'decode_json_columns' ], $rows ?: [] );
+		return array_map( [ self::class, 'decode_row' ], $rows ?: [] );
 	}
 
 	/**
@@ -106,7 +106,8 @@ class Plot {
 	 *
 	 * @param int   $game_id
 	 * @param array $args Filters: status, initiated_by, search, date_from, date_to,
-	 *                    exclude_actor_plots_not_owned_by, per_page, offset, orderby, order.
+	 *                    exclude_actor_plots_not_owned_by, character_plots (see
+	 *                    character_plot_filter()), per_page, offset, orderby, order.
 	 * @return array
 	 */
 	public static function for_game( int $game_id, array $args = [] ): array {
@@ -148,6 +149,12 @@ class Plot {
 			array_push( $values, ...$clause_values );
 		}
 
+		$character_plots = self::character_plot_filter( (string) ( $args['character_plots'] ?? '' ) );
+		if ( $character_plots !== null ) {
+			$where[] = $character_plots[0];
+			array_push( $values, ...$character_plots[1] );
+		}
+
 		// Aliased as p: actor_ownership_exclusion()'s NOT EXISTS clause correlates against p.id.
 		$sql = 'SELECT p.* FROM ' . $table . ' p WHERE ' . implode( ' AND ', $where );
 
@@ -163,13 +170,14 @@ class Plot {
 
 		$sql  = $wpdb->prepare( $sql, $values );
 		$rows = $wpdb->get_results( $sql ) ?: [];
-		return array_map( [ self::class, 'decode_json_columns' ], $rows );
+		return array_map( [ self::class, 'decode_row' ], $rows );
 	}
 
 	/**
 	 * Count plots belonging to a game that match the given filters. Accepts the
 	 * same status, initiated_by, search, and date range filters as for_game(),
-	 * without pagination, and returns a plain integer total.
+	 * without pagination, and returns a plain integer total. `exclude_character_plots`
+	 * leaves out each character's own plot.
 	 *
 	 * @param int   $game_id
 	 * @param array $args
@@ -210,10 +218,42 @@ class Plot {
 			array_push( $values, ...$clause_values );
 		}
 
+		$character_plots = self::character_plot_filter( (string) ( $args['character_plots'] ?? '' ) );
+		if ( $character_plots !== null ) {
+			$where[] = $character_plots[0];
+			array_push( $values, ...$character_plots[1] );
+		}
+
+		// A character's own plot holds that character's story; it isn't a storyline of its own.
+		if ( ! empty( $args['exclude_character_plots'] ) ) {
+			$where[]  = 'NOT ( p.game_date IS NULL AND EXISTS (
+				SELECT 1 FROM ' . Manager::table( 'connections' ) . " c
+				WHERE c.source_type = 'plot' AND c.source_id = p.id AND c.target_type = 'character' AND c.label = %s
+			) )";
+			$values[] = 'apr_actor';
+		}
+
 		// Aliased as p: actor_ownership_exclusion()'s NOT EXISTS clause correlates against p.id.
 		$sql = 'SELECT COUNT(*) FROM ' . $table . ' p WHERE ' . implode( ' AND ', $where );
 		$sql = $wpdb->prepare( $sql, $values );
 		return (int) $wpdb->get_var( $sql );
+	}
+
+	/**
+	 * The WHERE clause fragment for the plot list's character filter (owner, 2026-09-15: "filter
+	 * to show only player or only not player"). `only` keeps the plots a character is tied to by
+	 * `apr_actor` - its own plot and each action round - and `exclude` keeps every other plot.
+	 * Any other value filters nothing.
+	 *
+	 * @return array{0: string, 1: string[]}|null The clause and its bound values, or null.
+	 */
+	private static function character_plot_filter( string $mode ): ?array {
+		if ( $mode !== 'only' && $mode !== 'exclude' ) {
+			return null;
+		}
+		$tied = 'EXISTS ( SELECT 1 FROM ' . Manager::table( 'connections' ) . " c
+			WHERE c.source_type = 'plot' AND c.source_id = p.id AND c.target_type = 'character' AND c.label = %s )";
+		return [ $mode === 'only' ? $tied : "NOT {$tied}", [ 'apr_actor' ] ];
 	}
 
 	/**
@@ -328,7 +368,7 @@ class Plot {
 			$game_id
 		) ) ?: [];
 
-		return array_map( [ self::class, 'decode_json_columns' ], $rows );
+		return array_map( [ self::class, 'decode_row' ], $rows );
 	}
 
 	/**
@@ -361,7 +401,7 @@ class Plot {
 	 * that the parent exists and belongs to the same game before nesting under it.
 	 *
 	 * @param array $data
-	 * @return int|false Insert ID, or false if status/initiated_by is invalid.
+	 * @return int|false Insert ID, or false if status/initiated_by is invalid or a JSON value can't be encoded.
 	 */
 	public static function create( array $data ) {
 		$status       = $data['status'] ?? 'active';
@@ -413,6 +453,9 @@ class Plot {
 		}
 		if ( array_key_exists( 'faction_goals', $data ) ) {
 			$insert['faction_goals'] = self::encode_json_field( $data['faction_goals'] );
+		}
+		if ( ( $insert['target_query'] ?? null ) === false || ( $insert['faction_goals'] ?? null ) === false ) {
+			return false;
 		}
 
 		return Manager::insert( 'plots', $insert );
@@ -467,14 +510,17 @@ class Plot {
 				self::assert_no_cycle( $id, $update['parent_plot_id'] );
 			}
 		}
+		if ( empty( $update ) ) {
+			return false;
+		}
+
 		if ( array_key_exists( 'target_query', $update ) ) {
 			$update['target_query'] = self::encode_target_query( $update['target_query'] );
 		}
 		if ( array_key_exists( 'faction_goals', $update ) ) {
 			$update['faction_goals'] = self::encode_json_field( $update['faction_goals'] );
 		}
-
-		if ( empty( $update ) ) {
+		if ( ( $update['target_query'] ?? null ) === false || ( $update['faction_goals'] ?? null ) === false ) {
 			return false;
 		}
 
@@ -548,9 +594,9 @@ class Plot {
 	 * purpose clearly at each call site.
 	 *
 	 * @param mixed $value
-	 * @return string|null
+	 * @return string|false|null
 	 */
-	private static function encode_target_query( $value ): ?string {
+	private static function encode_target_query( $value ) {
 		return self::encode_json_field( $value );
 	}
 
@@ -560,9 +606,9 @@ class Plot {
 	 * plain string.
 	 *
 	 * @param mixed $value
-	 * @return string|null
+	 * @return string|false|null False when the value can't be encoded; create() and update() then write nothing.
 	 */
-	private static function encode_json_field( $value ): ?string {
+	private static function encode_json_field( $value ) {
 		if ( $value === null ) {
 			return null;
 		}
@@ -582,10 +628,16 @@ class Plot {
 	 * @return object|null
 	 */
 	private static function decode_json_columns( $row ) {
-		if ( ! $row ) {
-			return null;
-		}
+		return $row ? self::decode_row( $row ) : null;
+	}
 
+	/**
+	 * decode_json_columns() for a row already known to exist.
+	 *
+	 * @param object $row
+	 * @return object
+	 */
+	private static function decode_row( object $row ): object {
 		foreach ( [ 'target_query', 'faction_goals' ] as $field ) {
 			if ( ! property_exists( $row, $field ) || $row->$field === null ) {
 				continue;

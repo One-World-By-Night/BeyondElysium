@@ -16,13 +16,15 @@ export const PLUGIN_PAGE_SLUGS = {
 	verify: 'be-verify',
 } as const;
 
-/** Tab keys for the My Chronicle page. */
+/** Tab keys for the My Chronicle page. Not in the tab strip: sendFile (F-122). */
 export const PLAYER_TABS = {
 	dashboard: 'dashboard',
 	characters: 'characters',
 	sheet: 'sheet',
 	edit: 'edit',
 	plots: 'plots',
+	reports: 'reports',
+	sendFile: 'send-file',
 } as const;
 
 /** Tab keys for the Storyteller Toolkit page. */
@@ -49,13 +51,27 @@ export function storytellerTabUrl( tab: string ): string {
 }
 
 /** The character sheet URL for one character - the My Chronicle page's Sheet tab. */
-export function characterSheetUrl( characterId: number, gameSlug: string ): string {
-	return `${ playerTabUrl( PLAYER_TABS.sheet ) }&character_id=${ characterId }&game_slug=${ encodeURIComponent( gameSlug ) }`;
+export function characterSheetUrl(
+	characterId: number,
+	gameSlug: string
+): string {
+	return `${ playerTabUrl(
+		PLAYER_TABS.sheet
+	) }&character_id=${ characterId }&game_slug=${ encodeURIComponent(
+		gameSlug
+	) }`;
 }
 
 /** The character editor URL for one character - the My Chronicle page's Edit tab. */
-export function characterEditorUrl( characterId: number, gameSlug: string ): string {
-	return `${ playerTabUrl( PLAYER_TABS.edit ) }&character_id=${ characterId }&game_slug=${ encodeURIComponent( gameSlug ) }`;
+export function characterEditorUrl(
+	characterId: number,
+	gameSlug: string
+): string {
+	return `${ playerTabUrl(
+		PLAYER_TABS.edit
+	) }&character_id=${ characterId }&game_slug=${ encodeURIComponent(
+		gameSlug
+	) }`;
 }
 
 /**
@@ -65,7 +81,20 @@ export function characterEditorUrl( characterId: number, gameSlug: string ): str
  * point reuses this same front-end path rather than duplicating the editor).
  */
 export function newCharacterUrl( gameSlug: string ): string {
-	return `${ playerTabUrl( PLAYER_TABS.edit ) }&game_slug=${ encodeURIComponent( gameSlug ) }`;
+	return `${ playerTabUrl(
+		PLAYER_TABS.edit
+	) }&game_slug=${ encodeURIComponent( gameSlug ) }`;
+}
+
+/**
+ * The shared link Chronicle Setup offers for players to send a Grapevine
+ * file to a specific chronicle (F-122) - opens Send a Grapevine File with
+ * that chronicle already picked.
+ */
+export function sendFileLinkUrl( gameSlug: string ): string {
+	return `${ playerTabUrl(
+		PLAYER_TABS.sendFile
+	) }&game_slug=${ encodeURIComponent( gameSlug ) }`;
 }
 
 /** True when `pathname` is the print-canvas page, which renders with no chrome and prints itself automatically. */
@@ -75,7 +104,9 @@ export function isPrintCanvasPath( pathname: string ): boolean {
 
 /** Reads the current `?tab=` from the URL, or `defaultTab` when absent. */
 export function readTabFromUrl( defaultTab: string ): string {
-	return new URLSearchParams( window.location.search ).get( 'tab' ) || defaultTab;
+	return (
+		new URLSearchParams( window.location.search ).get( 'tab' ) || defaultTab
+	);
 }
 
 /** Writes `tab` into the URL without a page reload, so a bookmark or refresh preserves it. */

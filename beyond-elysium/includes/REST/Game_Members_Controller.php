@@ -66,12 +66,13 @@ class Game_Members_Controller extends Base_Controller {
 
 		$members = Game_Member::for_game( (int) $game->id );
 
-		// Enriches each member row with a display name and email.
+		// Enriches each member row with a display name and email, and whether their account can use their role.
 		$enriched = array_map(
 			static function ( $member ) {
-				$user               = get_userdata( (int) $member->wp_user_id );
-				$member->name       = $user ? $user->display_name : null;
-				$member->user_email = $user ? $user->user_email : null;
+				$user                = get_userdata( (int) $member->wp_user_id );
+				$member->name        = $user ? $user->display_name : null;
+				$member->user_email  = $user ? $user->user_email : null;
+				$member->role_usable = $user && \BeyondElysium\Core\Authorization::role_usable_by( $user, (string) $member->role );
 				return $member;
 			},
 			$members

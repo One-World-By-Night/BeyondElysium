@@ -4,6 +4,7 @@ namespace BeyondElysium\REST;
 
 use BeyondElysium\Core\Authorization;
 use BeyondElysium\Core\Notifications;
+use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
@@ -94,7 +95,8 @@ class Plots_Controller extends Base_Controller {
 
 	/**
 	 * Returns a paginated list of plots for a game, optionally filtered
-	 * by status, initiated_by, search text, or a date range, and ordered
+	 * by status, initiated_by, search text, a date range, or whether a
+	 * character is tied to the plot (`character_plots`), and ordered
 	 * by the requested column and direction. Each plot is prepared with
 	 * its derived status and a thumbnail image URL.
 	 *
@@ -107,18 +109,19 @@ class Plots_Controller extends Base_Controller {
 			return $game;
 		}
 
-		$can_manage = current_user_can( 'be_manage_plots' );
+		$can_manage = Authorization::can( 'be_manage_plots' );
 		$pagination = $this->get_pagination( $request );
 		$args       = [
-			'status'       => $request->get_param( 'status' ),
-			'initiated_by' => $request->get_param( 'initiated_by' ),
-			'search'       => $request->get_param( 'search' ),
-			'date_from'    => $request->get_param( 'date_from' ),
-			'date_to'      => $request->get_param( 'date_to' ),
-			'orderby'      => $request->get_param( 'orderby' ) ?: 'updated_at',
-			'order'        => $request->get_param( 'order' ) ?: 'DESC',
-			'per_page'     => $pagination['per_page'],
-			'offset'       => $pagination['offset'],
+			'status'          => $request->get_param( 'status' ),
+			'initiated_by'    => $request->get_param( 'initiated_by' ),
+			'search'          => $request->get_param( 'search' ),
+			'date_from'       => $request->get_param( 'date_from' ),
+			'date_to'         => $request->get_param( 'date_to' ),
+			'character_plots' => $request->get_param( 'character_plots' ),
+			'orderby'         => $request->get_param( 'orderby' ) ?: 'updated_at',
+			'order'           => $request->get_param( 'order' ) ?: 'DESC',
+			'per_page'        => $pagination['per_page'],
+			'offset'          => $pagination['offset'],
 		];
 		// A non-manager never sees another character's action-allocation plot in the list -
 		// its title alone already discloses who has one (§3.4/§5.8).
@@ -160,15 +163,16 @@ class Plots_Controller extends Base_Controller {
 		// plain player in this specific chronicle must not see its ST notes or another
 		// character's allocation, even though the capability alone would pass (§3.4/§5.8).
 		$can_manage = Authorization::check_request( 'be_manage_plots', $request );
+
+		// Someone else's action allocation is not there for this viewer at all: its entries disclose
+		// exact background ratings, and its title and actor link name the character - which is why
+		// the list leaves it out (§3.4/§5.8, 1.0.0-review F-063).
+		if ( ! $can_manage && self::is_unowned_allocation( (int) $plot->id ) ) {
+			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
+		}
 		$this->prepare_plot( $plot, $can_manage );
 
-		// Whether this plot is someone else's action-allocation - its entries disclose
-		// exact background dot ratings and are never visible past ownership (§3.4/§5.8).
-		$is_unowned_allocation = ! $can_manage
-			&& Action_Allocator::actor_character_id( (int) $plot->id ) !== null
-			&& ! Action_Allocator::is_actor_owned_by( (int) $plot->id, get_current_user_id() );
-
-		$entries = $is_unowned_allocation ? [] : Plot_Entry::for_plot( (int) $plot->id );
+		$entries = Plot_Entry::for_plot( (int) $plot->id );
 		if ( ! $can_manage ) {
 			// Note entries are ST-only; excluded from the response, not just hidden client-side.
 			$entries = array_values( array_filter( $entries, static function ( $entry ) {
@@ -178,13 +182,30 @@ class Plots_Controller extends Base_Controller {
 
 		$plot->entries     = $entries;
 		$plot->connections = Connection::for_entity( 'plot', (int) $plot->id );
-		// Immediate child plots are included and prepared the same way as the parent.
-		$plot->children = Plot::children( (int) $plot->id );
+		// Immediate child plots are included and prepared the same way as the parent - an
+		// allocation nested under a shared plot only for those who could open it.
+		$plot->children = array_values( array_filter(
+			Plot::children( (int) $plot->id ),
+			static fn( $child ) => $can_manage || ! self::is_unowned_allocation( (int) $child->id )
+		) );
 		foreach ( $plot->children as $child ) {
 			$this->prepare_plot( $child, $can_manage, 'thumbnail' );
 		}
 
 		return $this->success( $plot );
+	}
+
+	/**
+	 * Whether a plot is an action allocation for a character the current
+	 * user does not own. Callers skip the check for a plot manager, who may
+	 * see every allocation.
+	 *
+	 * @param int $plot_id
+	 * @return bool
+	 */
+	private static function is_unowned_allocation( int $plot_id ): bool {
+		return Action_Allocator::actor_character_id( $plot_id ) !== null
+			&& ! Action_Allocator::is_actor_owned_by( $plot_id, get_current_user_id() );
 	}
 
 	/**
@@ -202,7 +223,7 @@ class Plots_Controller extends Base_Controller {
 			return $game;
 		}
 
-		$can_manage = current_user_can( 'be_manage_plots' );
+		$can_manage = Authorization::can( 'be_manage_plots' );
 		$wp_user_id = get_current_user_id();
 
 		$by_id = [];
@@ -263,7 +284,7 @@ class Plots_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'Missing required field: title.', 'beyond-elysium' ), 400 );
 		}
 
-		$can_manage = current_user_can( 'be_manage_plots' );
+		$can_manage = Authorization::can( 'be_manage_plots' );
 
 		// parent_plot_id is validated here to return a clean 400 instead of a generic failure.
 		$parent_plot_id = $request->get_param( 'parent_plot_id' );
@@ -310,17 +331,21 @@ class Plots_Controller extends Base_Controller {
 			$data['initiated_by'] = 'player';
 		}
 
-		$id = Plot::create( $data );
-		if ( ! $id ) {
+		// A rumor is tagged the same way Rumor_Generator tags one, and a rumor whose tag didn't save
+		// is not kept as an ordinary plot (1.0.0-review F-111).
+		$unit     = Transaction::begin( 'be_plot_create' );
+		$id       = Plot::create( $data );
+		$is_rumor = $can_manage && $request->get_param( 'is_rumor' );
+		if ( ! $id || ( $is_rumor && ! Rumor_Generator::tag_as_rumor( $id, (int) $game->id ) ) ) {
+			Transaction::rollback( $unit );
 			return $this->error( 'create_failed', __( 'Failed to create plot.', 'beyond-elysium' ), 500 );
 		}
-
-		// Tags the new plot as a rumor using the same mechanism Rumor_Generator applies.
-		if ( $can_manage && $request->get_param( 'is_rumor' ) ) {
-			Rumor_Generator::tag_as_rumor( $id, (int) $game->id );
-		}
+		Transaction::commit( $unit );
 
 		$plot = Plot::find( $id );
+		if ( ! $plot ) {
+			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
+		}
 		$this->prepare_plot( $plot, $can_manage );
 		return $this->success( $plot, 201 );
 	}
@@ -403,6 +428,9 @@ class Plots_Controller extends Base_Controller {
 		}
 
 		$updated = Plot::find( (int) $plot->id );
+		if ( ! $updated ) {
+			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
+		}
 		$this->prepare_plot( $updated, true );
 		return $this->success( $updated );
 	}
@@ -424,6 +452,12 @@ class Plots_Controller extends Base_Controller {
 		$plot = Plot::find( (int) $request['id'] );
 		if ( ! $plot || (int) $plot->game_id !== (int) $game->id ) {
 			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
+		}
+
+		// A character's own plot goes with the character, never on its own (owner, 2026-09-15).
+		$actor = Action_Allocator::actor_character_id( (int) $plot->id );
+		if ( $actor !== null && Character::plot_id( $actor ) === (int) $plot->id ) {
+			return $this->error( 'character_plot', __( "A character's own plot is deleted with the character, not on its own.", 'beyond-elysium' ), 409 );
 		}
 
 		Plot::delete( (int) $plot->id );
@@ -467,6 +501,9 @@ class Plots_Controller extends Base_Controller {
 
 		if ( $request->get_param( 'commit' ) ) {
 			$plot_id = Action_Allocator::persist( $character_id, $game_date, $parent_plot_id ? (int) $parent_plot_id : null );
+			if ( $plot_id === 0 ) {
+				return $this->error( 'allocation_failed', __( 'The actions could not be saved. Nothing was changed.', 'beyond-elysium' ), 500 );
+			}
 			return $this->success( [
 				'plot_id'    => $plot_id,
 				'subactions' => Action_Allocator::allocate( $character_id, $game_date ),
@@ -508,6 +545,9 @@ class Plots_Controller extends Base_Controller {
 
 		$commit = (bool) $request->get_param( 'commit' );
 		$rumors = Rumor_Generator::generate( (int) $game->id, $game_date, $commit );
+		if ( is_wp_error( $rumors ) ) {
+			return $rumors;
+		}
 
 		foreach ( $rumors as &$rumor ) {
 			$character_ids            = Query_Engine::resolve_target_query( $request['game_slug'], $rumor['target_query'] );
@@ -574,49 +614,54 @@ class Plots_Controller extends Base_Controller {
 
 	/**
 	 * Defines the query parameters accepted by the plot collection
-	 * endpoint: status/initiated_by/search/date_from/date_to filters,
+	 * endpoint: status/initiated_by/search/date_from/date_to/character_plots filters,
 	 * orderby/order sort controls, and page/per_page pagination.
 	 *
 	 * @return array
 	 */
 	public function get_collection_params(): array {
 		return [
-			'status'       => [
+			'status'          => [
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			],
-			'initiated_by' => [
+			'initiated_by'    => [
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			],
-			'search'       => [
+			'search'          => [
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			],
-			'date_from'    => [
+			'date_from'       => [
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			],
-			'date_to'      => [
+			'date_to'         => [
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			],
-			'orderby'      => [
+			// `only`: each character's own plot and its action rounds; `exclude`: every other plot.
+			'character_plots' => [
+				'type' => 'string',
+				'enum' => [ 'only', 'exclude' ],
+			],
+			'orderby'         => [
 				'type'    => 'string',
 				'default' => 'updated_at',
 				'enum'    => [ 'title', 'status', 'created_at', 'updated_at' ],
 			],
-			'order'        => [
+			'order'           => [
 				'type'    => 'string',
 				'default' => 'DESC',
 				'enum'    => [ 'ASC', 'DESC' ],
 			],
-			'page'         => [
+			'page'            => [
 				'type'    => 'integer',
 				'default' => 1,
 				'minimum' => 1,
 			],
-			'per_page'     => [
+			'per_page'        => [
 				'type'    => 'integer',
 				'default' => 20,
 				'minimum' => 1,

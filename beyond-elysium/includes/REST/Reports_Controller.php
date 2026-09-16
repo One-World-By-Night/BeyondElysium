@@ -13,11 +13,12 @@ defined( 'ABSPATH' ) || exit;
  * REST controller for the 19 reports: `GET /{game_slug}/reports` (the
  * registry, for the Reports admin page) and `GET /{game_slug}/reports/{report_key}/pdf`.
  *
- * `be_view_reports` gates both routes the same broad way `be_view_characters`
- * gates `Sheets_Controller` - every real chronicle role holds it
- * (reports-cards-batch-design.md §4). Row-level visibility (NPC hiding,
- * `[ST]`-marked text) still runs inside `Report_Document`/`Query_Engine`
- * exactly as it does for the character list and the signed sheet.
+ * `be_view_reports` gates the routes, and every real chronicle role holds it;
+ * each report then needs its own capability (`Report_Document::required_capability()`):
+ * character and player reports are a Storyteller's, plot, action, and rumor
+ * reports need `be_manage_plots`, and only catalog cards, the calendar, and
+ * House Rules are open to every member (1.0.0-review F-047). The list shows a
+ * caller only the reports they may run.
  *
  * @see BE_PROCESS/reports-cards-batch-design.md §3.5
  */
@@ -79,6 +80,9 @@ class Reports_Controller extends Base_Controller {
 
 		$rows = [];
 		foreach ( Report_Document::registry() as $key => $report ) {
+			if ( ! self::may_run( $report ) ) {
+				continue;
+			}
 			$rows[] = [
 				'key'    => $key,
 				'title'  => $report['title'],
@@ -124,22 +128,15 @@ class Reports_Controller extends Base_Controller {
 			return $game;
 		}
 
-		$availability = Pdf_Signer::availability();
-		if ( ! $availability['ok'] ) {
-			return $this->error(
-				'signing_unavailable',
-				__( 'This chronicle has not set up sheet signing yet - ask your Storyteller.', 'beyond-elysium' ),
-				503
-			);
-		}
-
 		$document = $this->build_document_from_request( $request );
 		if ( is_wp_error( $document ) ) {
 			return $document;
 		}
 
-		$bytes    = Report_Writer::write( $document, $game );
-		$filename = sanitize_file_name( $request['game_slug'] . '-' . (string) $request['report_key'] ) . '.pdf';
+		// With no certificate a report still prints, stamped UNSIGNED (1.0.0-review F-042).
+		$signed   = Pdf_Signer::availability()['ok'];
+		$bytes    = Report_Writer::write( $document, $game, $signed );
+		$filename = sanitize_file_name( $request['game_slug'] . '-' . (string) $request['report_key'] ) . ( $signed ? '' : '-unsigned' ) . '.pdf';
 
 		return $this->success( [ 'bytes' => $bytes, 'filename' => $filename ] );
 	}
@@ -156,6 +153,9 @@ class Reports_Controller extends Base_Controller {
 		if ( ! array_key_exists( $report_key, Report_Document::registry() ) ) {
 			return $this->error( 'report_not_found', __( 'Report not found.', 'beyond-elysium' ), 404 );
 		}
+		if ( ! self::may_run( Report_Document::registry()[ $report_key ] ) ) {
+			return $this->error( 'report_forbidden', __( 'You do not have permission to run this report.', 'beyond-elysium' ), 403 );
+		}
 
 		$raw_conditions = (string) $request->get_param( 'conditions' );
 		$conditions     = $raw_conditions !== '' ? json_decode( $raw_conditions, true ) : [];
@@ -163,7 +163,7 @@ class Reports_Controller extends Base_Controller {
 			return $this->error( 'invalid_request', __( 'conditions must be valid JSON.', 'beyond-elysium' ), 400 );
 		}
 
-		$can_manage = current_user_can( 'be_manage_characters' );
+		$can_manage = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
 		$filters    = [ 'conditions' => $conditions, 'logic' => (string) $request->get_param( 'logic' ) ];
 
 		$character_id = $request->get_param( 'character_id' );
@@ -198,6 +198,17 @@ class Reports_Controller extends Base_Controller {
 		}
 
 		return $document;
+	}
+
+	/**
+	 * Whether the current caller holds the capability a report needs in the
+	 * chronicle being served.
+	 *
+	 * @param array<string,mixed> $report A registry row.
+	 */
+	private static function may_run( array $report ): bool {
+		$capability = Report_Document::required_capability( $report );
+		return $capability === null || \BeyondElysium\Core\Authorization::can( $capability );
 	}
 
 	/**

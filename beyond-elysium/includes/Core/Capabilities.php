@@ -28,7 +28,15 @@ class Capabilities {
 		// layer when the route itself carries a game_slug URL param).
 		'be_manage_schemas'      => [ 'administrator', 'editor' ],
 		'be_manage_templates'    => [ 'administrator', 'editor' ],
+		// Owner ruling, 1.0.0-checklist.md item 18 (2026-09-15): an HST saves their own
+		// chronicle's creature types, sub-faction restrictions, and new-character approval
+		// policy - previously be_manage_games only, unreachable by anyone but a site
+		// administrator. AST excluded (item 27, game-roles.php).
+		'be_manage_chronicle_setup' => [ 'administrator', 'editor' ],
 		'be_manage_characters'   => [ 'administrator', 'editor' ],
+		// Split from be_manage_characters (owner ruling, 1.0.0-checklist.md item 27): an AST
+		// keeps every other character power - edit, bulk XP/status/resets - but not this one.
+		'be_delete_characters'   => [ 'administrator', 'editor' ],
 		'be_edit_own_characters' => [ 'administrator', 'editor', 'author', 'contributor', 'subscriber' ],
 		'be_view_characters'     => [ 'administrator', 'editor', 'author', 'contributor', 'subscriber' ],
 		'be_manage_plots'        => [ 'administrator', 'editor' ],

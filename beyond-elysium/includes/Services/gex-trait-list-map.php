@@ -87,22 +87,29 @@ return [
 		'Wisdom' => [ 'outcome' => 'needs_design', 'note' => 'werewolf-renown holds Honor/Glory/Wisdom together; no merge logic written yet' ],
 	],
 
-	// Fera and Bete share werewolf-gifts/werewolf-rites/werewolf-renown/werewolf-resources, and add their own Features list, which has no BE block.
+	// Fera and Bete share every block: their own fera-gifts and fera-backgrounds, and werewolf's
+	// rites, health, renown, and resources; their Features list has no BE block. Gifts pointed at
+	// werewolf-gifts, and Health Levels and a Bete's Backgrounds at blocks neither stack has, so
+	// all three were dropped on export and on import until 1.0.0-review F-049.
 	'fera' => [
-		'Gifts'    => [ 'outcome' => 'sheet_block', 'block_slug' => 'werewolf-gifts' ],
-		'Rites'    => [ 'outcome' => 'sheet_block', 'block_slug' => 'werewolf-rites' ],
-		'Honor'    => [ 'outcome' => 'needs_design', 'note' => 'werewolf-renown holds Honor/Glory/Wisdom together; no merge logic written yet' ],
-		'Glory'    => [ 'outcome' => 'needs_design', 'note' => 'werewolf-renown holds Honor/Glory/Wisdom together; no merge logic written yet' ],
-		'Wisdom'   => [ 'outcome' => 'needs_design', 'note' => 'werewolf-renown holds Honor/Glory/Wisdom together; no merge logic written yet' ],
-		'Features' => [ 'outcome' => 'preserve_as_note' ],
+		'Gifts'         => [ 'outcome' => 'sheet_block', 'block_slug' => 'fera-gifts' ],
+		'Rites'         => [ 'outcome' => 'sheet_block', 'block_slug' => 'werewolf-rites' ],
+		'Health Levels' => [ 'outcome' => 'sheet_block', 'block_slug' => 'werewolf-health' ],
+		'Honor'         => [ 'outcome' => 'needs_design', 'note' => 'werewolf-renown holds Honor/Glory/Wisdom together; no merge logic written yet' ],
+		'Glory'         => [ 'outcome' => 'needs_design', 'note' => 'werewolf-renown holds Honor/Glory/Wisdom together; no merge logic written yet' ],
+		'Wisdom'        => [ 'outcome' => 'needs_design', 'note' => 'werewolf-renown holds Honor/Glory/Wisdom together; no merge logic written yet' ],
+		'Features'      => [ 'outcome' => 'preserve_as_note' ],
 	],
 	'bete' => [
-		'Gifts'    => [ 'outcome' => 'sheet_block', 'block_slug' => 'werewolf-gifts' ],
-		'Rites'    => [ 'outcome' => 'sheet_block', 'block_slug' => 'werewolf-rites' ],
-		'Honor'    => [ 'outcome' => 'needs_design', 'note' => 'werewolf-renown holds Honor/Glory/Wisdom together; no merge logic written yet' ],
-		'Glory'    => [ 'outcome' => 'needs_design', 'note' => 'werewolf-renown holds Honor/Glory/Wisdom together; no merge logic written yet' ],
-		'Wisdom'   => [ 'outcome' => 'needs_design', 'note' => 'werewolf-renown holds Honor/Glory/Wisdom together; no merge logic written yet' ],
-		'Features' => [ 'outcome' => 'preserve_as_note' ],
+		'Influences'    => [ 'outcome' => 'sheet_block', 'block_slug' => 'fera-backgrounds' ],
+		'Backgrounds'   => [ 'outcome' => 'sheet_block', 'block_slug' => 'fera-backgrounds' ],
+		'Gifts'         => [ 'outcome' => 'sheet_block', 'block_slug' => 'fera-gifts' ],
+		'Rites'         => [ 'outcome' => 'sheet_block', 'block_slug' => 'werewolf-rites' ],
+		'Health Levels' => [ 'outcome' => 'sheet_block', 'block_slug' => 'werewolf-health' ],
+		'Honor'         => [ 'outcome' => 'needs_design', 'note' => 'werewolf-renown holds Honor/Glory/Wisdom together; no merge logic written yet' ],
+		'Glory'         => [ 'outcome' => 'needs_design', 'note' => 'werewolf-renown holds Honor/Glory/Wisdom together; no merge logic written yet' ],
+		'Wisdom'        => [ 'outcome' => 'needs_design', 'note' => 'werewolf-renown holds Honor/Glory/Wisdom together; no merge logic written yet' ],
+		'Features'      => [ 'outcome' => 'preserve_as_note' ],
 	],
 
 	'mage' => [

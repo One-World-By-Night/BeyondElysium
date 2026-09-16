@@ -17,23 +17,53 @@ import { GameDashboard } from '../game/GameDashboard';
 import { ApprovalQueue } from '../changes/ApprovalQueue';
 import { PlotManager } from '../apr/PlotManager';
 import { BoonLedger } from '../world/BoonLedger';
-import { playerTabUrl, readTabFromUrl, writeTabToUrl, PLAYER_TABS, STORYTELLER_TABS } from '../../lib/pluginPages';
+import {
+	playerTabUrl,
+	readTabFromUrl,
+	writeTabToUrl,
+	PLAYER_TABS,
+	STORYTELLER_TABS,
+} from '../../lib/pluginPages';
 import type { Tab } from '../shared/TabStrip';
+import HelpButton from '../shared/HelpButton';
 import './StorytellerToolkitPage.css';
 
 export function StorytellerToolkitPage() {
-	const { games, gameSlug, setGameSlug, capabilities, loadingGames } = useChronicleSwitcher();
-	const [ tab, setTab ] = useState( () => readTabFromUrl( STORYTELLER_TABS.dashboard ) );
+	const {
+		games,
+		gameSlug,
+		setGameSlug,
+		capabilities,
+		capabilitiesFor,
+		loadingGames,
+		gamesFailed,
+		retryGames,
+	} = useChronicleSwitcher();
+	const [ tab, setTab ] = useState( () =>
+		readTabFromUrl( STORYTELLER_TABS.dashboard )
+	);
 
 	useEffect( () => {
 		writeTabToUrl( tab );
 	}, [ tab ] );
 
 	const tabs: Tab[] = [
-		capabilities.be_manage_characters && { key: STORYTELLER_TABS.dashboard, label: __( 'Dashboard', 'beyond-elysium' ) },
-		capabilities.be_manage_characters && { key: STORYTELLER_TABS.approvalQueue, label: __( 'Approval Queue', 'beyond-elysium' ) },
-		capabilities.be_manage_plots && { key: STORYTELLER_TABS.plots, label: __( 'Plots & Rumors', 'beyond-elysium' ) },
-		capabilities.be_manage_boons && { key: STORYTELLER_TABS.boonLedger, label: __( 'Boon Ledger', 'beyond-elysium' ) },
+		capabilities.be_manage_characters && {
+			key: STORYTELLER_TABS.dashboard,
+			label: __( 'Dashboard', 'beyond-elysium' ),
+		},
+		capabilities.be_manage_characters && {
+			key: STORYTELLER_TABS.approvalQueue,
+			label: __( 'Approval Queue', 'beyond-elysium' ),
+		},
+		capabilities.be_manage_plots && {
+			key: STORYTELLER_TABS.plots,
+			label: __( 'Plots & Rumors', 'beyond-elysium' ),
+		},
+		capabilities.be_manage_boons && {
+			key: STORYTELLER_TABS.boonLedger,
+			label: __( 'Boon Ledger', 'beyond-elysium' ),
+		},
 	].filter( Boolean ) as Tab[];
 
 	// The previously-active tab can become unavailable after switching to a chronicle
@@ -47,33 +77,71 @@ export function StorytellerToolkitPage() {
 
 	return (
 		<div className="be-storyteller-toolkit-page">
-			<ChronicleSwitcher games={ games } gameSlug={ gameSlug } onChange={ setGameSlug } loading={ loadingGames } />
+			<div className="be-help-heading">
+				<h1>{ __( 'Storyteller Toolkit', 'beyond-elysium' ) }</h1>
+				<HelpButton helpKey="storyteller-toolkit" />
+			</div>
+			<ChronicleSwitcher
+				games={ games }
+				gameSlug={ gameSlug }
+				onChange={ setGameSlug }
+				loading={ loadingGames }
+				failed={ gamesFailed }
+				onRetry={ retryGames }
+			/>
 
-			{ gameSlug && (
-				tabs.length === 0 ? (
-					<p>{ __( "You don't hold a Storyteller role in this chronicle.", 'beyond-elysium' ) }</p>
+			{ gameSlug &&
+				capabilitiesFor === gameSlug &&
+				( tabs.length === 0 ? (
+					<p>
+						{ __(
+							"You don't hold a Storyteller role in this chronicle.",
+							'beyond-elysium'
+						) }
+					</p>
 				) : (
 					<>
-						<TabStrip tabs={ tabs } active={ tab } onChange={ setTab } />
+						<TabStrip
+							tabs={ tabs }
+							active={ tab }
+							onChange={ setTab }
+						/>
 
 						{ tab === STORYTELLER_TABS.dashboard && (
-							<GameDashboard key={ gameSlug } gameSlug={ gameSlug } sheetPageUrl={ playerTabUrl( PLAYER_TABS.sheet ) } />
+							<GameDashboard
+								key={ gameSlug }
+								gameSlug={ gameSlug }
+								sheetPageUrl={ playerTabUrl(
+									PLAYER_TABS.sheet
+								) }
+								capabilities={ capabilities }
+							/>
 						) }
 
 						{ tab === STORYTELLER_TABS.approvalQueue && (
-							<ApprovalQueue key={ gameSlug } gameSlug={ gameSlug } />
+							<ApprovalQueue
+								key={ gameSlug }
+								gameSlug={ gameSlug }
+							/>
 						) }
 
 						{ tab === STORYTELLER_TABS.plots && (
-							<PlotManager key={ gameSlug } gameSlug={ gameSlug } />
+							<PlotManager
+								key={ gameSlug }
+								gameSlug={ gameSlug }
+								capabilities={ capabilities }
+							/>
 						) }
 
 						{ tab === STORYTELLER_TABS.boonLedger && (
-							<BoonLedger key={ gameSlug } gameSlug={ gameSlug } />
+							<BoonLedger
+								key={ gameSlug }
+								gameSlug={ gameSlug }
+								capabilities={ capabilities }
+							/>
 						) }
 					</>
-				)
-			) }
+				) ) }
 		</div>
 	);
 }

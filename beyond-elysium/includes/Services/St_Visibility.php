@@ -3,6 +3,7 @@
 namespace BeyondElysium\Services;
 
 use BeyondElysium\Models\Schema_Block;
+use BeyondElysium\Models\World_Object;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -60,9 +61,51 @@ class St_Visibility {
 		}
 
 		unset( $character->rp_notes );
-		$character->biography = St_Filter::strip_for_game( (string) ( $character->biography ?? '' ), $game->settings ?? null );
-		$character->notes     = St_Filter::strip_for_game( (string) ( $character->notes ?? '' ), $game->settings ?? null );
-		self::strip_blocks( $character, $hidden ?? Schema_Block::storyteller_only_slugs() );
+		$character->biography = St_Filter::strip_html_for_game( (string) ( $character->biography ?? '' ), $game->settings ?? null );
+		$character->notes     = St_Filter::strip_html_for_game( (string) ( $character->notes ?? '' ), $game->settings ?? null );
+		self::strip_blocks( $character, $hidden ?? Schema_Block::storyteller_only_slugs( (string) ( $game->slug ?? '' ) ) );
+	}
+
+	/**
+	 * Strips `[ST]...[/ST]`-marked text from a world object in place - its
+	 * `description`, `limitations`, and every text or string property its
+	 * type declares (an item's powers, a location's security, a boon's
+	 * terms) - for anyone who isn't a Storyteller of the chronicle
+	 * (1.0.0-review F-046, owner ruling on D44). A manager is returned
+	 * untouched.
+	 *
+	 * @param object      $object     A decoded world-object row (`properties` an array).
+	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
+	 * @param bool        $can_manage
+	 */
+	public static function filter_world_object( object $object, ?object $game, bool $can_manage ): void {
+		if ( $can_manage ) {
+			return;
+		}
+
+		$settings = $game->settings ?? null;
+		foreach ( [ 'description', 'limitations' ] as $column ) {
+			if ( isset( $object->$column ) && is_string( $object->$column ) ) {
+				$object->$column = St_Filter::strip_html_for_game( $object->$column, $settings );
+			}
+		}
+
+		if ( ! is_array( $object->properties ?? null ) ) {
+			return;
+		}
+		$schema = World_Object::schemas()[ (string) ( $object->object_type ?? '' ) ] ?? [];
+		foreach ( $object->properties as $key => $value ) {
+			if ( ! is_string( $value ) ) {
+				continue;
+			}
+			// A 'text' property is rich HTML like description/limitations; a plain 'string'
+			// one never carries markup, so the cheaper byte-offset strip is exact for it.
+			if ( ( $schema[ $key ] ?? null ) === 'text' ) {
+				$object->properties[ $key ] = St_Filter::strip_html_for_game( $value, $settings );
+			} elseif ( ( $schema[ $key ] ?? null ) === 'string' ) {
+				$object->properties[ $key ] = St_Filter::strip_for_game( $value, $settings );
+			}
+		}
 	}
 
 	/**
@@ -92,6 +135,8 @@ class St_Visibility {
 	 *
 	 * @param array<string,mixed> $layout
 	 * @param bool                $can_manage
+	 * @param string              $game_slug The chronicle the layout is shown in - a block is
+	 *                                        Storyteller-only per chronicle (F-062).
 	 * @param array<string>|null  $hidden A caller-computed `storyteller_only_slugs()` result,
 	 *                                     for a caller resolving many layouts to avoid an N+1;
 	 *                                     omit for a fresh lookup. Also lets this be exercised
@@ -99,12 +144,12 @@ class St_Visibility {
 	 *                                     itself reads `$wpdb`.
 	 * @return array<string,mixed>
 	 */
-	public static function filter_layout( array $layout, bool $can_manage, ?array $hidden = null ): array {
+	public static function filter_layout( array $layout, bool $can_manage, string $game_slug, ?array $hidden = null ): array {
 		if ( $can_manage || ! isset( $layout['sections'] ) || ! is_array( $layout['sections'] ) ) {
 			return $layout;
 		}
 
-		$hidden = $hidden ?? Schema_Block::storyteller_only_slugs();
+		$hidden = $hidden ?? Schema_Block::storyteller_only_slugs( $game_slug );
 		if ( empty( $hidden ) ) {
 			return $layout;
 		}

@@ -90,7 +90,7 @@
 		"mode": "dot_separate"
 	},
 	{
-		"name": "dot_separate emits X•X for total 2",
+		"name": "dot_separate emits X●X for total 2",
 		"trait": { "name": "X", "total": 2 },
 		"mode": "dot_separate"
 	},

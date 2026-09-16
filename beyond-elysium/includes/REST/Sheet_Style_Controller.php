@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Core\Authorization;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Sheet_Style;
@@ -40,14 +41,32 @@ class Sheet_Style_Controller extends Base_Controller {
 			[
 				'methods'             => 'PUT',
 				'callback'            => [ $this, 'update_item' ],
-				'permission_callback' => $this->permission( 'be_customize_sheet' ),
+				'permission_callback' => [ $this, 'can_customize' ],
 			],
 			[
 				'methods'             => 'DELETE',
 				'callback'            => [ $this, 'delete_item' ],
-				'permission_callback' => $this->permission( 'be_customize_sheet' ),
+				'permission_callback' => [ $this, 'can_customize' ],
 			],
 		] );
+	}
+
+	/**
+	 * Permission callback for writing a sheet style. `be_customize_sheet` is a
+	 * per-user grant made on the profile screen (User_Settings), not something
+	 * a chronicle role carries, so it is checked site-wide; membership in the
+	 * chronicle is checked through `be_view_characters`, which every chronicle
+	 * role holds. Checking it as a chronicle capability - the old rule - meant
+	 * the grant never reached a player (1.0.0-review F-039). Which sheet may be
+	 * styled is the handler's ownership check.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return true|\WP_Error
+	 */
+	public function can_customize( \WP_REST_Request $request ) {
+		return current_user_can( 'be_customize_sheet' ) && Authorization::check_request( 'be_view_characters', $request )
+			? true
+			: Authorization::denied();
 	}
 
 	/**
@@ -101,6 +120,11 @@ class Sheet_Style_Controller extends Base_Controller {
 		$character = $this->resolve_character( (int) $request['character_id'], $request['game_slug'] );
 		if ( is_wp_error( $character ) ) {
 			return $character;
+		}
+
+		$denied = $this->ownership_error( $character );
+		if ( $denied ) {
+			return $denied;
 		}
 
 		$font = (string) ( $request->get_param( 'font_family' ) ?? '' );
@@ -161,6 +185,11 @@ class Sheet_Style_Controller extends Base_Controller {
 			return $character;
 		}
 
+		$denied = $this->ownership_error( $character );
+		if ( $denied ) {
+			return $denied;
+		}
+
 		Sheet_Style::delete_for_character( (int) $request['character_id'] );
 		return $this->success( null, 204 );
 	}
@@ -198,5 +227,20 @@ class Sheet_Style_Controller extends Base_Controller {
 		}
 
 		return $character;
+	}
+
+	/**
+	 * Refuses a sheet-style write on a character the current user may not
+	 * edit: a Storyteller of this chronicle may style any sheet, anyone else
+	 * only their own.
+	 *
+	 * @param object $character
+	 * @return \WP_Error|null Null when the write may proceed.
+	 */
+	private function ownership_error( $character ): ?\WP_Error {
+		if ( Authorization::can( 'be_manage_characters' ) || (int) $character->wp_user_id === get_current_user_id() ) {
+			return null;
+		}
+		return $this->error( 'ownership_denied', __( 'You may only customize your own character sheet.', 'beyond-elysium' ), 403 );
 	}
 }

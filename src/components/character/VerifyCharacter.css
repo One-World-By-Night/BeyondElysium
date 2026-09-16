@@ -148,6 +148,7 @@
 }
 
 @media ( max-width: 768px ) {
+
 	.be-verify__facts {
 		grid-template-columns: 1fr;
 	}

@@ -12,11 +12,12 @@ defined( 'ABSPATH' ) || exit;
  * draws was already formatted by `Sheet_Document`/`Services\Display\*`; this
  * class only places it.
  *
- * Every output is signed - `Pdf_Signer::configure()` runs between the
+ * A signed output has `Pdf_Signer::configure()` run between the
  * `new \TCPDF(...)` call and the first `AddPage()`, so a layout bug and a
  * signing bug can never be confused for each other (SP-7's own explicit
  * constraint, which is why the two were built and tested as separate passes
- * even though both landed in this file).
+ * even though both landed in this file). An unsigned one skips it and is
+ * stamped UNSIGNED on every page instead (1.0.0-review F-042).
  *
  * Layout replicates `CharacterSheet.tsx`'s own on-screen grid exactly: a
  * 6-track row, sections placed in `(column, order)` flow sequence (already
@@ -76,20 +77,22 @@ class Pdf_Writer {
 	];
 
 	/**
-	 * Every output is signed, unconditionally - `Pdf_Signer::configure()` throws
-	 * when signing isn't available, and that exception is left to propagate
-	 * rather than caught here, so this method can never return unsigned bytes
-	 * (P1: an unsigned PDF is not a degraded success, it is a wrong answer).
-	 * The caller (`Sheets_Controller`, SP-9) catches it and answers `503
-	 * signing_unavailable` instead of generating anything.
+	 * Signed unless the caller says otherwise. Asked to sign where signing isn't
+	 * available, `Pdf_Signer::configure()` throws and the exception propagates,
+	 * so this method never returns unsigned bytes by accident. Asked not to sign
+	 * (`Sheets_Controller` passes `Pdf_Signer::availability()`), every page is
+	 * stamped UNSIGNED (1.0.0-review F-042).
 	 *
 	 * @param array<int,array<string,mixed>> $documents One entry per `Sheet_Document` result.
 	 * @param object                         $game      The issuing chronicle - `Pdf_Signer::configure()`'s own `Name`/`Reason` metadata.
-	 * @throws \RuntimeException When signing is not configured or its files are unreadable.
+	 * @param bool                           $signed    False prints an unsigned copy, marked as one.
+	 * @throws \RuntimeException When asked to sign and signing is not configured or its files are unreadable.
 	 */
-	public static function write( array $documents, object $game ): string {
+	public static function write( array $documents, object $game, bool $signed = true ): string {
 		$pdf = new \TCPDF( 'P', 'mm', 'A4', true, 'UTF-8', false );
-		Pdf_Signer::configure( $pdf, $game );
+		if ( $signed ) {
+			Pdf_Signer::configure( $pdf, $game );
+		}
 
 		$pdf->setPrintHeader( false );
 		$pdf->setPrintFooter( false );
@@ -110,6 +113,10 @@ class Pdf_Writer {
 			self::draw_prose( $pdf, is_array( $document['prose'] ?? null ) ? $document['prose'] : [] );
 			self::draw_xp_history( $pdf, is_array( $document['xp_history'] ?? null ) ? $document['xp_history'] : [] );
 			self::draw_provenance_footer( $pdf, is_array( $document['provenance_lines'] ?? null ) ? $document['provenance_lines'] : [] );
+		}
+
+		if ( ! $signed ) {
+			Pdf_Signer::mark_unsigned( $pdf );
 		}
 
 		return $pdf->Output( '', 'S' );
@@ -147,7 +154,14 @@ class Pdf_Writer {
 	 * `(column, order)`-sorted by `Sheet_Document`/`Layout_Flow`), and a
 	 * section whose span doesn't fit what's left in the current row starts a
 	 * new one - a section is never split mid-row. A row taller than the
-	 * remaining page starts a fresh page instead of overflowing it.
+	 * remaining page starts a fresh page instead of overflowing it. A
+	 * section taller than a whole fresh page on its own - a heavily-built
+	 * character's Abilities can easily run past one page in a two-track
+	 * column (1.0.0-review F-118: a real print "cuts off" mid-list, since
+	 * `setAutoPageBreak(false)` for this method means TCPDF never inserts a
+	 * page break on its own, it simply draws past the bottom margin) - gets
+	 * its own row and `draw_overflowing_section()`'s real multi-page flow
+	 * instead of `draw_section()`'s single fixed position.
 	 *
 	 * @param array<int,array<string,mixed>> $sections
 	 */
@@ -156,9 +170,10 @@ class Pdf_Writer {
 			return;
 		}
 
-		$usable_width = $pdf->getPageWidth() - 2 * self::MARGIN;
-		$track_width  = $usable_width / self::GRID_TRACKS;
-		$page_bottom  = $pdf->getPageHeight() - self::MARGIN;
+		$usable_width     = $pdf->getPageWidth() - 2 * self::MARGIN;
+		$track_width      = $usable_width / self::GRID_TRACKS;
+		$page_bottom      = $pdf->getPageHeight() - self::MARGIN;
+		$max_page_height  = $pdf->getPageHeight() - 2 * self::MARGIN;
 
 		$cursor     = 0;
 		$row_y      = $pdf->GetY();
@@ -178,6 +193,18 @@ class Pdf_Writer {
 
 			[ $title_height, $body_height ] = self::measure_section( $pdf, $section, $box_width );
 			$section_height                 = $title_height + $body_height;
+
+			if ( $section_height > $max_page_height ) {
+				// No position on any single page could ever hold this section - it gets a
+				// row (and, since it spans past one page, a fresh page) to itself.
+				if ( $cursor > 0 ) {
+					$row_y     += $row_height + self::ROW_GAP;
+					$cursor     = 0;
+					$row_height = 0.0;
+				}
+				$row_y = self::draw_overflowing_section( $pdf, $section, $row_y, $box_width, $page_bottom );
+				continue;
+			}
 
 			if ( $row_y + $section_height > $page_bottom ) {
 				$pdf->AddPage();
@@ -203,6 +230,37 @@ class Pdf_Writer {
 			$row_y += $row_height + self::ROW_GAP;
 		}
 		$pdf->SetY( $row_y );
+	}
+
+	/**
+	 * Draws a section too tall for any single page, letting TCPDF's own text flow carry
+	 * it across as many pages as it needs - the one place in `draw_sections()` that
+	 * re-enables `setAutoPageBreak()`, restored to `false` again before returning so
+	 * every other (page-fitting) section keeps using the grid's own manual pagination
+	 * unchanged. Always starts on a fresh page: a partial page above it would waste
+	 * space `MultiCell()`'s own flow can't reclaim once it starts.
+	 *
+	 * @param array<string,mixed> $section
+	 * @return float The Y position immediately below the section, on whichever page
+	 *               TCPDF's own pagination left it on - the next row starts there.
+	 */
+	private static function draw_overflowing_section( \TCPDF $pdf, array $section, float $row_y, float $box_width, float $page_bottom ): float {
+		$pdf->AddPage();
+
+		$pdf->setFont( self::FONT, 'B', self::SECTION_TITLE_SIZE );
+		$pdf->MultiCell( $box_width, 0, (string) ( $section['title'] ?? '' ), 0, 'L', false, 1, self::MARGIN, $pdf->GetY() );
+
+		$pdf->setAutoPageBreak( true, self::MARGIN );
+		$pdf->setFont( self::FONT, '', self::BODY_SIZE );
+		$pdf->MultiCell( $box_width, 0, self::section_body_text( $section ), 0, 'L', false, 1, self::MARGIN, $pdf->GetY() );
+		$pdf->setAutoPageBreak( false );
+
+		$end_y = $pdf->GetY();
+		// MultiCell( ..., $ln = 1 ) can leave Y at (or past) this page's own bottom margin
+		// once the last line lands exactly at the page edge - draw_sections()' own
+		// row-fit check on the NEXT section would then see a full page as having room
+		// left. A fresh page for whatever comes next is exactly what a full page means.
+		return $end_y >= $page_bottom ? $pdf->GetPageHeight() : $end_y;
 	}
 
 	/**

@@ -12,22 +12,16 @@
 	max-width: 34rem;
 	margin-bottom: 1.25rem;
 	padding: 0.85rem 1rem;
-	border: 1px solid var( --be-st-border-strong, #ccc );
-	border-radius: var( --be-st-radius, 4px );
-	background: var( --be-st-surface-alt, #f7f7f7 );
+	border: 1px solid var(--be-st-border-strong, #ccc);
+	border-radius: var(--be-st-radius, 4px);
+	background: var(--be-st-surface-alt, #f7f7f7);
 }
 
 .be-plot-list__new-form.be-plot-list__new-form input,
-.be-plot-list__new-form.be-plot-list__new-form textarea,
 .be-plot-list__new-form.be-plot-list__new-form select {
 	width: 100%;
 	box-sizing: border-box;
 	padding: 0.4rem 0.6rem;
-}
-
-.be-plot-list__new-form.be-plot-list__new-form textarea {
-	min-height: 4rem;
-	resize: vertical;
 }
 
 .be-plot-list__cover-row {
@@ -42,7 +36,7 @@
 	height: 3rem;
 	object-fit: cover;
 	border-radius: 3px;
-	border: 1px solid var( --be-st-border-strong, #ccc );
+	border: 1px solid var(--be-st-border-strong, #ccc);
 }
 
 .be-plot-list__new-form-actions {
@@ -70,5 +64,5 @@
 	align-items: center;
 	margin-top: 1.25rem;
 	font-size: 0.85rem;
-	color: var( --be-st-faint, #777 );
+	color: var(--be-st-faint, #777);
 }

@@ -130,4 +130,30 @@ class GameMembersControllerTest extends WP_UnitTestCase {
 		$response = $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/thread-test-nonexistent-game/members' ) );
 		$this->assertSame( 404, $response->get_status() );
 	}
+	/**
+	 * 1.0.0-review F-104 (docs-pass intake, question 14): without accessSchema, a chronicle role
+	 * needs a WordPress role that holds its powers - an HST, AST, or Narrator must be an Editor. A
+	 * Narrator given to a plain subscriber account could open nothing, and Chronicle Access gave
+	 * no sign of it.
+	 */
+	public function test_each_member_says_whether_their_account_can_use_their_role(): void {
+		$editor = self::factory()->user->create( [ 'role' => 'editor' ] );
+		$harpy  = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( $this->game_id, $this->target_user_id, 'narrator' );
+		Game_Member::set_role( $this->game_id, $editor, 'narrator' );
+		Game_Member::set_role( $this->game_id, $harpy, 'boons' );
+		Game_Member::set_role( $this->game_id, $player, 'player' );
+		wp_set_current_user( $this->admin_id );
+
+		$usable = [];
+		foreach ( $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/members" ) )->get_data() as $member ) {
+			$usable[ (int) $member->wp_user_id ] = $member->role_usable;
+		}
+
+		$this->assertFalse( $usable[ $this->target_user_id ], 'a subscriber Narrator can use none of it' );
+		$this->assertTrue( $usable[ $editor ] );
+		$this->assertTrue( $usable[ $harpy ], 'the Harpy role is open to any account' );
+		$this->assertTrue( $usable[ $player ] );
+	}
 }

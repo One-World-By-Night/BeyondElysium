@@ -11,11 +11,20 @@ import useCharacterEditorStore from '../../store/characterEditorStore';
 import BlockEditor from '../editors/BlockEditor';
 import ConfirmDialog from '../shared/ConfirmDialog';
 import HtmlEditor from '../shared/HtmlEditor';
+import HelpButton from '../shared/HelpButton';
 import { spanFor, sortedForFlow } from '../../lib/templateLayout';
 import { resolveSectionTitle } from '../../lib/resolveCrossBlockRef';
 import { pickMediaImage } from '../../lib/pickMediaImage';
 import { characterSheetUrl } from '../../lib/pluginPages';
-import type { CreatureStack, ResolvedStack, TemplateLayoutSection, TemplateResolveResponse } from '../../types';
+import { changedFields } from '../../lib/changedFields';
+import { canIn } from '../../lib/chronicleCapabilities';
+import type {
+	CreatureStack,
+	MyCapabilities,
+	ResolvedStack,
+	TemplateLayoutSection,
+	TemplateResolveResponse,
+} from '../../types';
 import type { SubmitResult } from '../../store/characterEditorStore';
 import './CharacterEditor.css';
 
@@ -26,6 +35,8 @@ export interface CharacterEditorProps {
 	/** Create mode only. Absent means the player picks a stack first. */
 	stackSlug?: string;
 	templateType?: string;
+	/** What the person can do in this chronicle, when the page resolved it; the site-wide snapshot otherwise (F-103). */
+	capabilities?: MyCapabilities;
 }
 
 interface RestError {
@@ -34,13 +45,19 @@ interface RestError {
 }
 
 function errorMessage( error: unknown ): string {
-	if ( typeof error === 'object' && error !== null && ( error as RestError ).message ) {
+	if (
+		typeof error === 'object' &&
+		error !== null &&
+		( error as RestError ).message
+	) {
 		return ( error as RestError ).message as string;
 	}
 	return __( 'Something went wrong.', 'beyond-elysium' );
 }
 
-function sortedSections( resolved: TemplateResolveResponse | null ): TemplateLayoutSection[] {
+function sortedSections(
+	resolved: TemplateResolveResponse | null
+): TemplateLayoutSection[] {
 	if ( ! resolved ) {
 		return [];
 	}
@@ -54,35 +71,67 @@ function sortedSections( resolved: TemplateResolveResponse | null ): TemplateLay
  * applies every pick through the same diff/submit path an edit uses; edit mode
  * loads the character's current state directly into the editor store.
  */
-export function CharacterEditor( { characterId, gameSlug, stackSlug, templateType = 'sheet_full' }: CharacterEditorProps ) {
+export function CharacterEditor( {
+	characterId,
+	gameSlug,
+	stackSlug,
+	templateType = 'sheet_full',
+	capabilities,
+}: CharacterEditorProps ) {
 	const store = useCharacterEditorStore();
 
 	// ---- create-mode local state (no character exists yet, so nothing here lives in the store) ----
-	const [ createdId, setCreatedId ] = useState<number | null>( null );
-	const [ availableStacks, setAvailableStacks ] = useState<CreatureStack[]>( [] );
-	const [ chosenStackSlug, setChosenStackSlug ] = useState<string>( stackSlug ?? '' );
-	const [ createStack, setCreateStack ] = useState<ResolvedStack | null>( null );
+	const [ createdId, setCreatedId ] = useState< number | null >( null );
+	// The name of a character just sent as a request to join this chronicle (1.0.0-review F-033).
+	const [ joinRequested, setJoinRequested ] = useState< string | null >(
+		null
+	);
+	const [ availableStacks, setAvailableStacks ] = useState< CreatureStack[] >(
+		[]
+	);
+	const [ chosenStackSlug, setChosenStackSlug ] = useState< string >(
+		stackSlug ?? ''
+	);
+	const [ createStack, setCreateStack ] = useState< ResolvedStack | null >(
+		null
+	);
 	const [ draftName, setDraftName ] = useState( '' );
-	const [ draftSheetData, setDraftSheetData ] = useState<Record<string, unknown>>( {} );
+	const [ draftSheetData, setDraftSheetData ] = useState<
+		Record< string, unknown >
+	>( {} );
 	const [ creating, setCreating ] = useState( false );
-	const [ createError, setCreateError ] = useState<string | null>( null );
+	const [ createError, setCreateError ] = useState< string | null >( null );
 	// admin-menu-consolidation-design.md: Storyteller-only, never shown to a player.
 	const [ createIsNpc, setCreateIsNpc ] = useState( false );
-	const canFlagNpc = !! window.beyondElysium?.capabilities?.be_manage_characters;
+	const canFlagNpc = canIn( 'be_manage_characters', capabilities );
 
 	// ---- shared ----
-	const [ template, setTemplate ] = useState<TemplateResolveResponse | null>( null );
-	const [ templateError, setTemplateError ] = useState<string | null>( null );
-	const [ submitResult, setSubmitResult ] = useState<SubmitResult | null>( null );
+	const [ template, setTemplate ] =
+		useState< TemplateResolveResponse | null >( null );
+	const [ templateError, setTemplateError ] = useState< string | null >(
+		null
+	);
+	const [ submitResult, setSubmitResult ] = useState< SubmitResult | null >(
+		null
+	);
 	const [ confirmingReset, setConfirmingReset ] = useState( false );
 
 	// Background/Notes are header fields that save directly, independent of the pending-changes flow below.
-	const biographyDraft = useRef<string>( '' );
-	const notesDraft = useRef<string>( '' );
-	const headerDraftsSeeded = useRef<number | null>( null );
+	const biographyDraft = useRef< string >( '' );
+	const notesDraft = useRef< string >( '' );
+	// What was loaded or last saved: a save sends only the fields that differ from it (1.0.0-review F-076).
+	const headerSaved = useRef< { biography: string; notes: string } >( {
+		biography: '',
+		notes: '',
+	} );
+	const headerDraftsSeeded = useRef< number | null >( null );
 	const [ savingHeader, setSavingHeader ] = useState( false );
-	const [ headerSaveError, setHeaderSaveError ] = useState<string | null>( null );
-	const [ headerSaveMessage, setHeaderSaveMessage ] = useState<string | null>( null );
+	const [ headerSaveError, setHeaderSaveError ] = useState< string | null >(
+		null
+	);
+	const [ headerSaveMessage, setHeaderSaveMessage ] = useState<
+		string | null
+	>( null );
 
 	async function saveBackgroundAndNotes() {
 		if ( ! effectiveCharacterId ) {
@@ -91,11 +140,19 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 		setSavingHeader( true );
 		setHeaderSaveError( null );
 		setHeaderSaveMessage( null );
+		// Only what was edited: a field left alone is not put back as it was when this editor
+		// opened, over whatever someone else has saved to it since.
+		const edited = changedFields(
+			{ biography: biographyDraft.current, notes: notesDraft.current },
+			headerSaved.current
+		);
 		try {
-			await api.characters( gameSlug ).update( effectiveCharacterId, {
-				biography: biographyDraft.current,
-				notes: notesDraft.current,
-			} );
+			if ( Object.keys( edited ).length > 0 ) {
+				await api
+					.characters( gameSlug )
+					.update( effectiveCharacterId, edited );
+				headerSaved.current = { ...headerSaved.current, ...edited };
+			}
 			setHeaderSaveMessage( __( 'Saved.', 'beyond-elysium' ) );
 		} catch ( err: unknown ) {
 			setHeaderSaveError( errorMessage( err ) );
@@ -105,7 +162,7 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 	}
 
 	// A WP attachment ID/URL, same picker pattern as SheetStyleEditor; local state so the image updates immediately.
-	const [ portraitUrl, setPortraitUrl ] = useState<string | null>( null );
+	const [ portraitUrl, setPortraitUrl ] = useState< string | null >( null );
 	const [ savingPortrait, setSavingPortrait ] = useState( false );
 
 	// admin-menu-consolidation-design.md: flagging an existing character as an NPC (or
@@ -118,7 +175,9 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 		}
 		setSavingNpc( true );
 		try {
-			await api.characters( gameSlug ).update( effectiveCharacterId, { is_npc: nextIsNpc } );
+			await api
+				.characters( gameSlug )
+				.update( effectiveCharacterId, { is_npc: nextIsNpc } );
 			// Reloads so the template re-resolves (sheet_full <-> npc_full follows is_npc directly).
 			await store.loadCharacter( effectiveCharacterId, gameSlug );
 		} catch ( err: unknown ) {
@@ -132,13 +191,17 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 		if ( ! effectiveCharacterId ) {
 			return;
 		}
-		const attachment = await pickMediaImage( __( 'Choose a character portrait', 'beyond-elysium' ) );
+		const attachment = await pickMediaImage(
+			__( 'Choose a character portrait', 'beyond-elysium' )
+		);
 		if ( ! attachment ) {
 			return;
 		}
 		setSavingPortrait( true );
 		try {
-			await api.characters( gameSlug ).update( effectiveCharacterId, { image_id: attachment.id } );
+			await api
+				.characters( gameSlug )
+				.update( effectiveCharacterId, { image_id: attachment.id } );
 			setPortraitUrl( attachment.url );
 		} catch ( err: unknown ) {
 			setHeaderSaveError( errorMessage( err ) );
@@ -166,10 +229,15 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 				.then( setAvailableStacks )
 				.catch( () => {
 					setAvailableStacks( [] );
-					setCreateError( __( 'Failed to load the list of creature types. Try refreshing the page.', 'beyond-elysium' ) );
+					setCreateError(
+						__(
+							'Failed to load the list of creature types. Try refreshing the page.',
+							'beyond-elysium'
+						)
+					);
 				} );
 		}
-	}, [ isCreateMode, stackSlug ] );
+	}, [ isCreateMode, stackSlug, gameSlug ] );
 
 	// Create mode: resolve the chosen stack for rendering its block editors.
 	// forCreation narrows any restricted identity field's options (a Vampire
@@ -182,10 +250,15 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 				.then( setCreateStack )
 				.catch( () => {
 					setCreateStack( null );
-					setCreateError( __( 'Failed to load that creature type. Try choosing it again.', 'beyond-elysium' ) );
+					setCreateError(
+						__(
+							'Failed to load that creature type. Try choosing it again.',
+							'beyond-elysium'
+						)
+					);
 				} );
 		}
-	}, [ isCreateMode, chosenStackSlug ] );
+	}, [ isCreateMode, chosenStackSlug, gameSlug ] );
 
 	// Both modes resolve the template once a stack_slug is known, matching the read-only sheet exactly.
 	const activeStackSlug = isCreateMode ? chosenStackSlug : store.stackSlug;
@@ -193,8 +266,7 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 	const isNpc = isCreateMode ? createIsNpc : !! store.character?.is_npc;
 	useEffect( () => {
 		if ( activeStackSlug ) {
-			api
-				.templates( gameSlug )
+			api.templates( gameSlug )
 				.resolve( activeStackSlug, isNpc ? 'npc_full' : templateType )
 				.then( ( result ) => {
 					setTemplate( result );
@@ -203,7 +275,12 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 				.catch( () => {
 					// Shows an explicit error instead of silently rendering zero fields in either mode.
 					setTemplate( null );
-					setTemplateError( __( 'Failed to load the character sheet layout. Try refreshing the page.', 'beyond-elysium' ) );
+					setTemplateError(
+						__(
+							'Failed to load the character sheet layout. Try refreshing the page.',
+							'beyond-elysium'
+						)
+					);
 				} );
 		}
 	}, [ activeStackSlug, gameSlug, templateType, isNpc ] );
@@ -214,7 +291,9 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 
 	// Unsaved-changes guard on navigation away, via the browser's beforeunload event.
 	useEffect( () => {
-		const dirty = isCreateMode ? Object.keys( draftSheetData ).length > 0 : store.dirty;
+		const dirty = isCreateMode
+			? Object.keys( draftSheetData ).length > 0
+			: store.dirty;
 		if ( ! dirty ) {
 			return;
 		}
@@ -228,7 +307,12 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 
 	async function handleCreate() {
 		if ( ! chosenStackSlug || ! draftName.trim() ) {
-			setCreateError( __( 'A name and a creature type are required.', 'beyond-elysium' ) );
+			setCreateError(
+				__(
+					'A name and a creature type are required.',
+					'beyond-elysium'
+				)
+			);
 			return;
 		}
 		setCreating( true );
@@ -243,6 +327,11 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 				...( canFlagNpc ? { is_npc: createIsNpc } : {} ),
 			} );
 
+			if ( character.join_pending ) {
+				// Not a member yet, so there is no sheet to open until a Storyteller approves.
+				setJoinRequested( character.name );
+				return;
+			}
 			setCreatedId( character.id );
 			await store.loadCharacter( character.id, gameSlug );
 		} catch ( error ) {
@@ -257,10 +346,35 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 		setSubmitResult( result );
 	}
 
+	if ( joinRequested ) {
+		return (
+			<div className="be-character-editor be-character-editor--create">
+				<h2 className="be-character-editor__title">
+					{ __( 'Request Sent', 'beyond-elysium' ) }
+				</h2>
+				<p role="status">
+					{ sprintf(
+						// translators: %s: character name.
+						__(
+							"%s is waiting for this chronicle's Storytellers to approve it. You become a player here, and can open the sheet, once they do.",
+							'beyond-elysium'
+						),
+						joinRequested
+					) }
+				</p>
+			</div>
+		);
+	}
+
 	if ( isCreateMode ) {
 		return (
 			<div className="be-character-editor be-character-editor--create">
-				<h2 className="be-character-editor__title">{ __( 'New Character', 'beyond-elysium' ) }</h2>
+				<div className="be-help-heading">
+					<h2 className="be-character-editor__title">
+						{ __( 'New Character', 'beyond-elysium' ) }
+					</h2>
+					<HelpButton helpKey="character-editor" />
+				</div>
 
 				{ ( createError || templateError ) && (
 					<div className="be-character-editor__error" role="alert">
@@ -269,7 +383,9 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 				) }
 
 				<div className="be-character-editor__field">
-					<label htmlFor="be-character-editor-name">{ __( 'Name', 'beyond-elysium' ) }</label>
+					<label htmlFor="be-character-editor-name">
+						{ __( 'Name', 'beyond-elysium' ) }
+					</label>
 					<input
 						id="be-character-editor-name"
 						type="text"
@@ -280,13 +396,19 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 
 				{ ! stackSlug && (
 					<div className="be-character-editor__field">
-						<label htmlFor="be-character-editor-stack">{ __( 'Creature Type', 'beyond-elysium' ) }</label>
+						<label htmlFor="be-character-editor-stack">
+							{ __( 'Creature Type', 'beyond-elysium' ) }
+						</label>
 						<select
 							id="be-character-editor-stack"
 							value={ chosenStackSlug }
-							onChange={ ( e ) => setChosenStackSlug( e.target.value ) }
+							onChange={ ( e ) =>
+								setChosenStackSlug( e.target.value )
+							}
 						>
-							<option value="">{ __( 'Choose one…', 'beyond-elysium' ) }</option>
+							<option value="">
+								{ __( 'Choose one…', 'beyond-elysium' ) }
+							</option>
 							{ availableStacks.map( ( stack ) => (
 								<option key={ stack.slug } value={ stack.slug }>
 									{ stack.name }
@@ -303,7 +425,9 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 								id="be-character-editor-is-npc"
 								type="checkbox"
 								checked={ createIsNpc }
-								onChange={ ( e ) => setCreateIsNpc( e.target.checked ) }
+								onChange={ ( e ) =>
+									setCreateIsNpc( e.target.checked )
+								}
 							/>{ ' ' }
 							{ __( 'This is an NPC', 'beyond-elysium' ) }
 						</label>
@@ -313,7 +437,8 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 				{ activeStack && (
 					<div className="be-character-editor__grid">
 						{ sections.map( ( section ) => {
-							const block = activeStack.blocks[ section.block_slug ];
+							const block =
+								activeStack.blocks[ section.block_slug ];
 							if ( ! block ) {
 								return null;
 							}
@@ -321,15 +446,50 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 								<div
 									className="be-character-editor__section"
 									key={ section.block_slug }
-									style={ { gridColumn: `span ${ spanFor( section.width ) }` } }
+									style={ {
+										gridColumn: `span ${ spanFor(
+											section.width
+										) }`,
+									} }
 								>
-									<h4>{ resolveSectionTitle( section, draftSheetData ) }</h4>
+									<div className="be-help-heading">
+										<h4>
+											{ resolveSectionTitle(
+												section,
+												draftSheetData
+											) }
+										</h4>
+										{ /* One help doc per section_type, written as literal
+										 * per-type helpKey props (not a lookup object) so
+										 * helpDocs.test.ts's static scan can see each one. */ }
+										{ block.section_type ===
+											'trait_list' && (
+											<HelpButton helpKey="trait-editor" />
+										) }
+										{ block.section_type ===
+											'tiered_power' && (
+											<HelpButton helpKey="power-editor" />
+										) }
+										{ ( block.section_type ===
+											'resource_pool' ||
+											block.section_type ===
+												'identity_field' ) && (
+											<HelpButton helpKey="pools-identity-editor" />
+										) }
+									</div>
 									<BlockEditor
 										blockSlug={ section.block_slug }
 										sectionType={ block.section_type }
 										definition={ block.definition }
-										data={ draftSheetData[ section.block_slug ] }
-										onChange={ ( slug, data ) => setDraftSheetData( ( prev ) => ( { ...prev, [ slug ]: data } ) ) }
+										data={
+											draftSheetData[ section.block_slug ]
+										}
+										onChange={ ( slug, data ) =>
+											setDraftSheetData( ( prev ) => ( {
+												...prev,
+												[ slug ]: data,
+											} ) )
+										}
 										sheetData={ draftSheetData }
 										gameSlug={ gameSlug }
 									/>
@@ -339,15 +499,25 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 					</div>
 				) }
 
-				<button type="button" disabled={ creating || ! chosenStackSlug } onClick={ handleCreate }>
-					{ creating ? __( 'Creating…', 'beyond-elysium' ) : __( 'Create Character', 'beyond-elysium' ) }
+				<button
+					type="button"
+					disabled={ creating || ! chosenStackSlug }
+					onClick={ handleCreate }
+				>
+					{ creating
+						? __( 'Creating…', 'beyond-elysium' )
+						: __( 'Create Character', 'beyond-elysium' ) }
 				</button>
 			</div>
 		);
 	}
 
 	if ( store.loading ) {
-		return <div className="be-character-editor__skeleton">{ __( 'Loading character…', 'beyond-elysium' ) }</div>;
+		return (
+			<div className="be-character-editor__skeleton">
+				{ __( 'Loading character…', 'beyond-elysium' ) }
+			</div>
+		);
 	}
 
 	if ( store.error && ! store.character ) {
@@ -368,14 +538,23 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 	const readOnly = ! canEdit;
 
 	const pendingTotal = store.pendingChanges.length;
-	const totalCost = store.previewCosts?.results.reduce( ( sum, r ) => sum + r.xp_cost, 0 ) ?? 0;
-	const resultingUnspent = store.previewCosts?.running_xp_unspent ?? store.character.xp_unspent;
+	const totalCost =
+		store.previewCosts?.results.reduce(
+			( sum, r ) => sum + r.xp_cost,
+			0
+		) ?? 0;
+	const resultingUnspent =
+		store.previewCosts?.running_xp_unspent ?? store.character.xp_unspent;
 	const overBudget = ! canManage && resultingUnspent < 0;
 
 	// Seeds the drafts from the loaded character once per character, not on every re-render.
 	if ( headerDraftsSeeded.current !== effectiveCharacterId ) {
 		biographyDraft.current = store.character.biography ?? '';
 		notesDraft.current = store.character.notes ?? '';
+		headerSaved.current = {
+			biography: biographyDraft.current,
+			notes: notesDraft.current,
+		};
 		setPortraitUrl( store.character.image_url ?? null );
 		headerDraftsSeeded.current = effectiveCharacterId;
 	}
@@ -383,19 +562,33 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 	return (
 		<div className="be-character-editor">
 			{ store.restorableDraft && ! readOnly && (
-				<div className="be-character-editor__draft-notice" role="status">
+				<div
+					className="be-character-editor__draft-notice"
+					role="status"
+				>
 					<p>
 						{ sprintf(
 							/* translators: %s: when the draft was saved, e.g. "9/11/2026, 3:45:00 PM" */
-							__( 'You have unsaved changes from a previous session, saved %s.', 'beyond-elysium' ),
-							new Date( store.restorableDraft.savedAt ).toLocaleString()
+							__(
+								'You have unsaved changes from a previous session, saved %s.',
+								'beyond-elysium'
+							),
+							new Date(
+								store.restorableDraft.savedAt
+							).toLocaleString()
 						) }
 					</p>
 					<div className="be-character-editor__draft-notice-actions">
-						<button type="button" onClick={ () => store.restoreDraft() }>
+						<button
+							type="button"
+							onClick={ () => store.restoreDraft() }
+						>
 							{ __( 'Restore', 'beyond-elysium' ) }
 						</button>
-						<button type="button" onClick={ () => store.dismissDraft() }>
+						<button
+							type="button"
+							onClick={ () => store.dismissDraft() }
+						>
 							{ __( 'Discard', 'beyond-elysium' ) }
 						</button>
 					</div>
@@ -407,18 +600,33 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 					<img
 						className="be-character-editor__portrait"
 						src={ portraitUrl }
-						alt={ sprintf( __( '%s portrait', 'beyond-elysium' ), store.character.name ) }
+						alt={ sprintf(
+							/* translators: %s: the character's own name */
+							__( '%s portrait', 'beyond-elysium' ),
+							store.character.name
+						) }
 					/>
 				) }
 				<div>
-					<h2>{ store.character.name }</h2>
+					<div className="be-help-heading">
+						<h2>{ store.character.name }</h2>
+						<HelpButton helpKey="character-editor" />
+					</div>
 					{ readOnly && (
 						<p className="be-character-editor__readonly-note">
-							{ __( 'You can view this sheet but not edit it.', 'beyond-elysium' ) }
+							{ __(
+								'You can view this sheet but not edit it.',
+								'beyond-elysium'
+							) }
 						</p>
 					) }
 					{ ! readOnly && (
-						<button type="button" className="be-character-editor__portrait-button" disabled={ savingPortrait } onClick={ pickPortrait }>
+						<button
+							type="button"
+							className="be-character-editor__portrait-button"
+							disabled={ savingPortrait }
+							onClick={ pickPortrait }
+						>
 							{ savingPortrait
 								? __( 'Saving…', 'beyond-elysium' )
 								: portraitUrl
@@ -432,7 +640,9 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 								type="checkbox"
 								checked={ isNpc }
 								disabled={ savingNpc }
-								onChange={ ( e ) => toggleNpc( e.target.checked ) }
+								onChange={ ( e ) =>
+									toggleNpc( e.target.checked )
+								}
 							/>{ ' ' }
 							{ __( 'This is an NPC', 'beyond-elysium' ) }
 						</label>
@@ -446,14 +656,21 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 				</div>
 			) }
 
-			<div className="be-character-editor__section be-character-editor__header-text" key={ `header-text-${ effectiveCharacterId }` }>
+			<div
+				className="be-character-editor__section be-character-editor__header-text"
+				key={ `header-text-${ effectiveCharacterId }` }
+			>
 				<h4>{ __( 'Background', 'beyond-elysium' ) }</h4>
 				<HtmlEditor
 					id={ `be-biography-${ effectiveCharacterId }` }
 					defaultValue={ biographyDraft.current }
 					onChange={ ( html ) => ( biographyDraft.current = html ) }
 					readOnly={ readOnly }
-					aiAssist={ { capability: 'be_manage_characters', fieldContext: 'character_biography', gameSlug } }
+					aiAssist={ {
+						capability: 'be_manage_characters',
+						fieldContext: 'character_biography',
+						gameSlug,
+					} }
 				/>
 
 				<h4>{ __( 'Notes', 'beyond-elysium' ) }</h4>
@@ -462,17 +679,37 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 					defaultValue={ notesDraft.current }
 					onChange={ ( html ) => ( notesDraft.current = html ) }
 					readOnly={ readOnly }
-					aiAssist={ { capability: 'be_manage_characters', fieldContext: 'character_notes', gameSlug } }
+					aiAssist={ {
+						capability: 'be_manage_characters',
+						fieldContext: 'character_notes',
+						gameSlug,
+					} }
 				/>
 
 				{ ! readOnly && (
 					<div className="be-character-editor__header-text-actions">
-						<button type="button" disabled={ savingHeader } onClick={ saveBackgroundAndNotes }>
-							{ savingHeader ? __( 'Saving…', 'beyond-elysium' ) : __( 'Save Background & Notes', 'beyond-elysium' ) }
+						<button
+							type="button"
+							disabled={ savingHeader }
+							onClick={ saveBackgroundAndNotes }
+						>
+							{ savingHeader
+								? __( 'Saving…', 'beyond-elysium' )
+								: __(
+										'Save Background & Notes',
+										'beyond-elysium'
+								  ) }
 						</button>
-						{ headerSaveMessage && <span className="be-character-editor__header-text-status">{ headerSaveMessage }</span> }
+						{ headerSaveMessage && (
+							<span className="be-character-editor__header-text-status">
+								{ headerSaveMessage }
+							</span>
+						) }
 						{ headerSaveError && (
-							<span className="be-character-editor__error" role="alert">
+							<span
+								className="be-character-editor__error"
+								role="alert"
+							>
 								{ headerSaveError }
 							</span>
 						) }
@@ -490,9 +727,31 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 						<div
 							className="be-character-editor__section"
 							key={ section.block_slug }
-							style={ { gridColumn: `span ${ spanFor( section.width ) }` } }
+							style={ {
+								gridColumn: `span ${ spanFor(
+									section.width
+								) }`,
+							} }
 						>
-							<h4>{ resolveSectionTitle( section, store.sheetData ) }</h4>
+							<div className="be-help-heading">
+								<h4>
+									{ resolveSectionTitle(
+										section,
+										store.sheetData
+									) }
+								</h4>
+								{ block.section_type === 'trait_list' && (
+									<HelpButton helpKey="trait-editor" />
+								) }
+								{ block.section_type === 'tiered_power' && (
+									<HelpButton helpKey="power-editor" />
+								) }
+								{ ( block.section_type === 'resource_pool' ||
+									block.section_type ===
+										'identity_field' ) && (
+									<HelpButton helpKey="pools-identity-editor" />
+								) }
+							</div>
 							<BlockEditor
 								blockSlug={ section.block_slug }
 								sectionType={ block.section_type }
@@ -510,8 +769,16 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 
 			{ ! readOnly && (
 				<div className="be-character-editor__summary">
-					<h4>{ sprintf( __( 'Pending Changes (%d)', 'beyond-elysium' ), pendingTotal ) }</h4>
-					{ pendingTotal === 0 && <p>{ __( 'No unsaved changes.', 'beyond-elysium' ) }</p> }
+					<h4>
+						{ sprintf(
+							/* translators: %d: number of unsaved pending changes */
+							__( 'Pending Changes (%d)', 'beyond-elysium' ),
+							pendingTotal
+						) }
+					</h4>
+					{ pendingTotal === 0 && (
+						<p>{ __( 'No unsaved changes.', 'beyond-elysium' ) }</p>
+					) }
 					<ul>
 						{ store.pendingChanges.map( ( change, i ) => {
 							const preview = store.previewCosts?.results[ i ];
@@ -522,7 +789,12 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 										<>
 											{ ' ' }
 											({ preview.xp_cost >= 0 ? '+' : '' }
-											{ sprintf( __( '%d XP', 'beyond-elysium' ), preview.xp_cost ) }, { preview.approval_level })
+											{ sprintf(
+												/* translators: %d: the XP cost or refund for this pending change */
+												__( '%d XP', 'beyond-elysium' ),
+												preview.xp_cost
+											) }
+											, { preview.approval_level })
 										</>
 									) }
 								</li>
@@ -532,23 +804,41 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 					{ pendingTotal > 0 && (
 						<p className="be-character-editor__totals">
 							{ sprintf(
-								__( 'Total: %1$s XP — Unspent after: %2$d', 'beyond-elysium' ),
+								/* translators: 1: total signed XP cost of every pending change, already formatted with a sign, 2: unspent XP remaining after applying them */
+								__(
+									'Total: %1$s XP — Unspent after: %2$d',
+									'beyond-elysium'
+								),
 								`${ totalCost >= 0 ? '+' : '' }${ totalCost }`,
 								resultingUnspent
 							) }
 							{ overBudget && (
-								<span className="be-character-editor__over-budget">{ __( ' (exceeds available XP)', 'beyond-elysium' ) }</span>
+								<span className="be-character-editor__over-budget">
+									{ ' ' }
+									{ __(
+										'(exceeds available XP)',
+										'beyond-elysium'
+									) }
+								</span>
 							) }
 						</p>
 					) }
 
 					<div className="be-character-editor__actions">
-						<button type="button" disabled={ pendingTotal === 0 || overBudget } onClick={ handleSubmit } >
-							{ store.saving ? __( 'Submitting…', 'beyond-elysium' ) : __( 'Submit Changes', 'beyond-elysium' ) }
+						<button
+							type="button"
+							disabled={
+								store.saving || pendingTotal === 0 || overBudget
+							}
+							onClick={ handleSubmit }
+						>
+							{ store.saving
+								? __( 'Submitting…', 'beyond-elysium' )
+								: __( 'Submit Changes', 'beyond-elysium' ) }
 						</button>
 						<button
 							type="button"
-							disabled={ pendingTotal === 0 }
+							disabled={ store.saving || pendingTotal === 0 }
 							onClick={ () => setConfirmingReset( true ) }
 						>
 							{ __( 'Discard', 'beyond-elysium' ) }
@@ -558,6 +848,7 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 					{ submitResult && submitResult.failed.length > 0 && (
 						<p className="be-character-editor__error" role="alert">
 							{ sprintf(
+								/* translators: 1: number of changes saved, 2: total number of changes submitted, 3: number that failed and need retrying */
 								_n(
 									'%1$d of %2$d changes were saved. %3$d did not - review and submit again to retry it.',
 									'%1$d of %2$d changes were saved. %3$d did not - review and submit again to retry them.',
@@ -565,15 +856,20 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 									'beyond-elysium'
 								),
 								submitResult.submitted.length,
-								submitResult.submitted.length + submitResult.failed.length,
+								submitResult.submitted.length +
+									submitResult.failed.length,
 								submitResult.failed.length
 							) }
 						</p>
 					) }
 
 					{ submitResult && submitResult.pending.length > 0 && (
-						<p className="be-character-editor__pending-notice" role="status">
+						<p
+							className="be-character-editor__pending-notice"
+							role="status"
+						>
 							{ sprintf(
+								/* translators: %d: number of changes submitted and awaiting Storyteller approval */
 								_n(
 									'%d change was submitted and is awaiting Storyteller approval - it will not appear on the sheet until then.',
 									'%d changes were submitted and are awaiting Storyteller approval - they will not appear on the sheet until then.',
@@ -598,7 +894,10 @@ export function CharacterEditor( { characterId, gameSlug, stackSlug, templateTyp
 				onConfirm={ () => {
 					// Navigates back to the sheet so the discard's effect is visible, not just a silent state reset.
 					store.reset();
-					window.location.href = characterSheetUrl( effectiveCharacterId, gameSlug );
+					window.location.href = characterSheetUrl(
+						effectiveCharacterId,
+						gameSlug
+					);
 				} }
 				onCancel={ () => setConfirmingReset( false ) }
 			/>

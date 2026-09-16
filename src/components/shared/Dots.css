@@ -1,0 +1,39 @@
+/*
+ * The one dot on the sheet and in the editor (1.0.0-review F-016): a trait's rating, a pool's
+ * points, and the editor's trait summary all draw through WithDots, and DotTracker's dots are
+ * this size too. A fixed size, never relative to the text around it, so a dot in one section
+ * can't come out bigger than a dot in another.
+ */
+.be-dots {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.2rem;
+	vertical-align: middle;
+}
+
+.be-dot {
+	display: inline-block;
+	box-sizing: border-box;
+	width: 0.875rem;
+	height: 0.875rem;
+	border: 2px solid currentcolor;
+	border-radius: 50%;
+}
+
+.be-dot--filled {
+	background: currentcolor;
+}
+
+.be-dot--spent {
+	background: transparent;
+}
+
+/* A temporary point above permanent: a filled center inside the ring. */
+.be-dot--overflow {
+	background: radial-gradient(circle, currentcolor 0 38%, transparent 40%);
+}
+
+.be-dots__gap {
+	width: 0.3rem;
+}

@@ -126,10 +126,11 @@ class PointAuditTest extends WP_UnitTestCase {
 		Character::delete( $character_id );
 	}
 
-	public function test_a_non_cumulative_discipline_at_level_five_prices_flat_not_summed(): void {
+	/** Owner ruling, 1.0.0-review F-040: levels add up - a Discipline at level five audits as every level up to it. */
+	public function test_a_discipline_at_level_five_audits_as_every_level_up_to_it(): void {
 		$block      = Schema_Block::find_by_slug( 'vampire-disciplines' );
 		$definition = $block->definition;
-		$this->assertEmpty( $definition->sequential ?? false );
+		$this->assertNotEmpty( $definition->sequential ?? false );
 
 		$power = null;
 		foreach ( $definition->powers as $candidate ) {
@@ -159,7 +160,7 @@ class PointAuditTest extends WP_UnitTestCase {
 		}
 
 		$character_id = Character::create( [
-			'name'       => 'Point Audit Non Cumulative Test',
+			'name'       => 'Point Audit Cumulative Test',
 			'owner_slug' => self::$game_slug,
 			'stack_slug' => 'vampire',
 			'sheet_data' => [
@@ -178,8 +179,8 @@ class PointAuditTest extends WP_UnitTestCase {
 		}
 
 		$this->assertNotNull( $line );
-		$this->assertSame( $level_5_cost, $line['xp'] );
-		$this->assertLessThan( $sum_1_through_5, $line['xp'], 'a cumulative sum would overcharge whenever the ladder is not strictly increasing' );
+		$this->assertSame( $sum_1_through_5, $line['xp'] );
+		$this->assertGreaterThan( $level_5_cost, $line['xp'], 'every level up to five, not level five alone' );
 
 		Character::delete( $character_id );
 	}
@@ -201,5 +202,30 @@ class PointAuditTest extends WP_UnitTestCase {
 		$this->assertCount( 2, $merit_lines, 'find_held_trait()-style first-match logic would collapse this to one line' );
 
 		Character::delete( $character_id );
+	}
+
+	/**
+	 * 1.0.0-review F-085: the summary's most common reason was the machine key with its
+	 * underscores swapped for spaces, so a translated chronicle read it in English.
+	 */
+	public function test_the_caveat_names_its_most_common_reason_through_translation(): void {
+		$isolde = $this->find_demo_character( 'Isolde Marchetti' );
+
+		// The sentence becomes "count|reason", and every other phrase is marked as translated.
+		$mark = static function ( $translation, $text ) {
+			return str_contains( $text, 'could not be priced' ) ? '%1$d|%2$s' : '⟦' . $translation . '⟧';
+		};
+		add_filter( 'gettext_beyond-elysium', $mark, 10, 2 );
+		$report = Point_Audit::for_character( (int) $isolde->id );
+		remove_filter( 'gettext_beyond-elysium', $mark, 10 );
+
+		$by_reason = $report['coverage']['unpriced_by_reason'];
+		arsort( $by_reason );
+		$top = (string) array_key_first( $by_reason );
+
+		$this->assertSame(
+			$report['coverage']['unpriced_lines'] . '|⟦' . Point_Audit::reason_label( $top ) . '⟧',
+			$report['caveat']
+		);
 	}
 }

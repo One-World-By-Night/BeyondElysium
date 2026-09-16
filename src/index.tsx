@@ -19,10 +19,14 @@ import './styles/breakpoints.css';
  * the admin- prefixed entries back the equivalent wp-admin pages
  * using the same hydration mechanism.
  */
-const widgetRegistry: Record<string, () => Promise<{ default: React.ComponentType<any> }>> = {
+const widgetRegistry: Record<
+	string,
+	() => Promise< { default: React.ComponentType< any > } >
+> = {
 	'character-sheet': () => import( './components/character/CharacterSheet' ),
 	'character-list': () => import( './components/character/CharacterList' ),
-	'character-editor': () => import( './components/character/CharacterEditor' ),
+	'character-editor': () =>
+		import( './components/character/CharacterEditor' ),
 	'approval-queue': () => import( './components/changes/ApprovalQueue' ),
 	'plot-manager': () => import( './components/apr/PlotManager' ),
 	'my-plots': () => import( './components/apr/MyPlotsFeed' ),
@@ -31,14 +35,16 @@ const widgetRegistry: Record<string, () => Promise<{ default: React.ComponentTyp
 	'boon-ledger': () => import( './components/world/BoonLedger' ),
 	'import-tool': () => import( './components/import/ImportTool' ),
 	'game-dashboard': () => import( './components/game/GameDashboard' ),
-	'verify-character': () => import( './components/character/VerifyCharacter' ),
+	'verify-character': () =>
+		import( './components/character/VerifyCharacter' ),
 	'house-rules': () => import( './components/game/HouseRules' ),
 	// page-consolidation-design.md's two fixed, tabbed pages - replace the ten
 	// per-chronicle-duplicated pages below with a shell each, wrapping the same
 	// inner widgets (still registered here too, since Elementor may still place
 	// any of them individually).
 	'my-chronicle': () => import( './components/pages/MyChroniclePage' ),
-	'storyteller-toolkit-page': () => import( './components/pages/StorytellerToolkitPage' ),
+	'storyteller-toolkit-page': () =>
+		import( './components/pages/StorytellerToolkitPage' ),
 
 	// wp-admin pages, mounted the same way as a front-end Elementor widget.
 	// admin-menu-consolidation-design.md: 16 flat pages collapsed to 8 - the individual
@@ -48,22 +54,30 @@ const widgetRegistry: Record<string, () => Promise<{ default: React.ComponentTyp
 	'admin-dashboard': () => import( './components/admin/AdminDashboard' ),
 	'admin-games': () => import( './components/admin/AdminGames' ),
 	'admin-characters': () => import( './components/admin/AdminCharacters' ),
-	'admin-schema-blocks': () => import( './components/admin/AdminSchemaBlocks' ),
-	'admin-creature-stacks': () => import( './components/admin/AdminCreatureStacks' ),
+	'admin-schema-blocks': () =>
+		import( './components/admin/AdminSchemaBlocks' ),
+	'admin-creature-stacks': () =>
+		import( './components/admin/AdminCreatureStacks' ),
 	'admin-templates': () => import( './components/admin/AdminTemplates' ),
 	'admin-plots': () => import( './components/admin/AdminPlots' ),
-	'admin-world-objects': () => import( './components/admin/AdminWorldObjects' ),
+	'admin-world-objects': () =>
+		import( './components/admin/AdminWorldObjects' ),
 	'admin-query': () => import( './components/admin/AdminQuery' ),
 	'admin-import': () => import( './components/admin/AdminImport' ),
-	'admin-chronicle-access': () => import( './components/admin/AdminChronicleAccess' ),
+	'admin-chronicle-access': () =>
+		import( './components/admin/AdminChronicleAccess' ),
 	'admin-docs': () => import( './components/admin/AdminDocs' ),
-	'admin-approval-rules': () => import( './components/admin/AdminApprovalRules' ),
+	'admin-approval-rules': () =>
+		import( './components/admin/AdminApprovalRules' ),
 	'admin-apr-settings': () => import( './components/admin/AdminAprSettings' ),
 	'admin-reports': () => import( './components/admin/AdminReports' ),
-	'admin-chronicle-setup': () => import( './components/admin/AdminChronicleSetup' ),
+	'admin-chronicle-setup': () =>
+		import( './components/admin/AdminChronicleSetup' ),
 	'admin-query-hub': () => import( './components/admin/hubs/QueryHub' ),
-	'admin-chronicle-setup-hub': () => import( './components/admin/hubs/ChronicleSetupHub' ),
-	'admin-system-config-hub': () => import( './components/admin/hubs/SystemConfigHub' ),
+	'admin-chronicle-setup-hub': () =>
+		import( './components/admin/hubs/ChronicleSetupHub' ),
+	'admin-system-config-hub': () =>
+		import( './components/admin/hubs/SystemConfigHub' ),
 };
 
 /**
@@ -73,9 +87,9 @@ const widgetRegistry: Record<string, () => Promise<{ default: React.ComponentTyp
  * value, and letting a game_slug URL param override the config's
  * own gameSlug when present.
  */
-function parseConfig( el: HTMLElement ): Record<string, unknown> {
+function parseConfig( el: HTMLElement ): Record< string, unknown > {
 	const raw = el.getAttribute( 'data-be-config' );
-	let config: Record<string, unknown> = {};
+	let config: Record< string, unknown > = {};
 
 	if ( raw ) {
 		try {
@@ -113,16 +127,19 @@ function parseConfig( el: HTMLElement ): Record<string, unknown> {
  * component, parses its config, and mounts it inside an error
  * boundary.
  */
-async function hydrateWidgets(): Promise<void> {
+async function hydrateWidgets(): Promise< void > {
 	// Zero-risk detection, never injection - this plugin owns only the DOM
 	// subtree under [data-be-widget], never the page's own <head> (mobile-sheet-
 	// design.md §2.8). A missing viewport meta tag turns every phone-width fix
 	// in breakpoints.css into a silent no-op; this at least makes that diagnosable.
 	if ( ! document.querySelector( 'meta[name="viewport"]' ) ) {
-		console.warn( '[BE] No <meta name="viewport"> found on this page - phone-width layout will not apply correctly.' );
+		console.warn(
+			'[BE] No <meta name="viewport"> found on this page - phone-width layout will not apply correctly.'
+		);
 	}
 
-	const mountPoints = document.querySelectorAll<HTMLElement>( '[data-be-widget]' );
+	const mountPoints =
+		document.querySelectorAll< HTMLElement >( '[data-be-widget]' );
 
 	for ( const el of mountPoints ) {
 		const widgetName = el.getAttribute( 'data-be-widget' );
@@ -150,7 +167,10 @@ async function hydrateWidgets(): Promise<void> {
 				</ErrorBoundary>
 			);
 		} catch ( err ) {
-			console.error( `[BE] Failed to hydrate widget "${ widgetName }":`, err );
+			console.error(
+				`[BE] Failed to hydrate widget "${ widgetName }":`,
+				err
+			);
 		}
 	}
 }

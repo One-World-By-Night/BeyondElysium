@@ -91,6 +91,26 @@ class GV_Binary_Reader {
 	}
 
 	/**
+	 * Unpacks the next `$bytes` bytes with one `unpack()` format code and
+	 * advances the read position past them.
+	 *
+	 * @param string $format
+	 * @param int    $bytes
+	 * @return int|float
+	 * @throws \RuntimeException When there are not enough bytes left, or they don't unpack.
+	 */
+	private function unpack_next( string $format, int $bytes ) {
+		$this->need( $bytes );
+		$values = unpack( $format, substr( $this->data, $this->pos, $bytes ) );
+		if ( $values === false ) {
+			throw new \RuntimeException( sprintf( '%s: unreadable value at byte %d', $this->label, $this->pos ) );
+		}
+		$this->pos += $bytes;
+
+		return $values[1];
+	}
+
+	/**
 	 * Reads a VB6 Integer field: 2 bytes, little-endian, signed. Unpacks
 	 * the next two bytes as an unsigned short, converts values above the
 	 * signed range to their negative equivalent, and advances the read
@@ -99,9 +119,7 @@ class GV_Binary_Reader {
 	 * @return int
 	 */
 	public function int16(): int {
-		$this->need( 2 );
-		$value      = unpack( 'v', substr( $this->data, $this->pos, 2 ) )[1];
-		$this->pos += 2;
+		$value = (int) $this->unpack_next( 'v', 2 );
 
 		return $value > 32767 ? $value - 65536 : $value;
 	}
@@ -115,9 +133,7 @@ class GV_Binary_Reader {
 	 * @return int
 	 */
 	public function int32(): int {
-		$this->need( 4 );
-		$value      = unpack( 'V', substr( $this->data, $this->pos, 4 ) )[1];
-		$this->pos += 4;
+		$value = (int) $this->unpack_next( 'V', 4 );
 
 		return $value > 2147483647 ? $value - 4294967296 : $value;
 	}
@@ -130,11 +146,7 @@ class GV_Binary_Reader {
 	 * @return float
 	 */
 	public function double(): float {
-		$this->need( 8 );
-		$value      = unpack( 'e', substr( $this->data, $this->pos, 8 ) )[1];
-		$this->pos += 8;
-
-		return $value;
+		return (float) $this->unpack_next( 'e', 8 );
 	}
 
 	/**
@@ -145,11 +157,7 @@ class GV_Binary_Reader {
 	 * @return float
 	 */
 	public function single(): float {
-		$this->need( 4 );
-		$value      = unpack( 'g', substr( $this->data, $this->pos, 4 ) )[1];
-		$this->pos += 4;
-
-		return $value;
+		return (float) $this->unpack_next( 'g', 4 );
 	}
 
 	/**

@@ -13,17 +13,17 @@
 	width: 12rem;
 	height: 8rem;
 	object-fit: cover;
-	border-radius: var( --be-st-radius, 4px );
-	border: 1px solid var( --be-st-border-strong, #ccc );
+	border-radius: var(--be-st-radius, 4px);
+	border: 1px solid var(--be-st-border-strong, #ccc);
 	flex: 0 0 auto;
 }
 
 .be-plot-thread__cover--empty {
 	width: 12rem;
 	height: 8rem;
-	border-radius: var( --be-st-radius, 4px );
-	border: 1px dashed var( --be-st-border-strong, #ccc );
-	background: var( --be-st-surface-alt, #f7f7f7 );
+	border-radius: var(--be-st-radius, 4px);
+	border: 1px dashed var(--be-st-border-strong, #ccc);
+	background: var(--be-st-surface-alt, #f7f7f7);
 	flex: 0 0 auto;
 }
 
@@ -47,7 +47,7 @@
 	flex-wrap: wrap;
 	align-items: center;
 	font-size: 0.8rem;
-	color: var( --be-st-muted, #555 );
+	color: var(--be-st-muted, #555);
 }
 
 .be-plot-thread__prose {
@@ -66,7 +66,7 @@
 }
 
 .be-plot-thread__placeholder {
-	color: var( --be-st-faint, #777 );
+	color: var(--be-st-faint, #777);
 	font-style: italic;
 	margin: 0 0 0.6rem;
 }
@@ -87,7 +87,7 @@
 
 .be-plot-thread__children {
 	display: grid;
-	grid-template-columns: repeat( auto-fill, minmax( 12rem, 1fr ) );
+	grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
 	gap: 0.6rem;
 }
 
@@ -96,9 +96,9 @@
 	flex-direction: column;
 	gap: 0.35rem;
 	padding: 0.5rem 0.6rem;
-	border: 1px solid var( --be-st-border, #ddd );
+	border: 1px solid var(--be-st-border, #ddd);
 	border-radius: 3px;
-	background: var( --be-st-surface, #fff );
+	background: var(--be-st-surface, #fff);
 	text-align: left;
 	font: inherit;
 	color: inherit;
@@ -106,7 +106,7 @@
 }
 
 .be-plot-thread__child:hover {
-	border-color: var( --be-st-accent, #8b0000 );
+	border-color: var(--be-st-accent, #8b0000);
 }
 
 .be-plot-thread__child img {
@@ -138,13 +138,6 @@
 	padding: 0.35rem 0.55rem;
 }
 
-.be-plot-thread__cliffhanger.be-plot-thread__cliffhanger {
-	width: 100%;
-	box-sizing: border-box;
-	padding: 0.4rem 0.6rem;
-	resize: vertical;
-}
-
 /* --- Timeline ---------------------------------------------------------------- */
 
 .be-plot-thread__entries {
@@ -155,7 +148,7 @@
 
 .be-plot-thread__entry {
 	padding: 0.6rem 0;
-	border-bottom: 1px solid var( --be-st-border, #ddd );
+	border-bottom: 1px solid var(--be-st-border, #ddd);
 }
 
 .be-plot-thread__entry--note {
@@ -171,7 +164,7 @@
 	align-items: center;
 	flex-wrap: wrap;
 	font-size: 0.75rem;
-	color: var( --be-st-faint, #777 );
+	color: var(--be-st-faint, #777);
 	margin-bottom: 0.25rem;
 }
 
@@ -182,7 +175,7 @@
 }
 
 .be-plot-thread__entry-event-date {
-	color: var( --be-st-accent, #8b0000 );
+	color: var(--be-st-accent, #8b0000);
 	font-weight: 600;
 }
 
@@ -198,6 +191,7 @@
 }
 
 @media ( max-width: 768px ) {
+
 	.be-plot-thread__cover,
 	.be-plot-thread__cover--empty {
 		width: 100%;

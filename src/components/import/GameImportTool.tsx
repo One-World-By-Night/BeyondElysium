@@ -15,7 +15,15 @@ import type {
 	DuplicateAction,
 	TraitResolution,
 } from '../../types/import';
-import { ImportPreview, keyFor } from './ImportPreview';
+import { ImportPreview } from './ImportPreview';
+import {
+	blockingCount as countBlocking,
+	decisionsFor,
+	noDecisions,
+	previewKey,
+	withDecision,
+	type ImportDecisions,
+} from '../../lib/importDecisions';
 import './ImportTool.css';
 
 type Stage = 'upload' | 'preview' | 'target' | 'resolve' | 'commit';
@@ -35,68 +43,76 @@ const STAGES: { key: Stage; label: string }[] = [
  * ImportPreview unchanged for the Preview and Resolve stages.
  */
 export function GameImportTool() {
-	const [ stage, setStage ] = useState<Stage>( 'upload' );
-	const [ preview, setPreview ] = useState<GameImportPreview | null>( null );
+	const [ stage, setStage ] = useState< Stage >( 'upload' );
+	const [ preview, setPreview ] = useState< GameImportPreview | null >(
+		null
+	);
 	const [ loading, setLoading ] = useState( false );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
 	const [ committing, setCommitting ] = useState( false );
-	const [ result, setResult ] = useState<GameImportCommitResult | null>( null );
-	const fileInputRef = useRef<HTMLInputElement>( null );
+	const [ result, setResult ] = useState< GameImportCommitResult | null >(
+		null
+	);
+	const fileInputRef = useRef< HTMLInputElement >( null );
 
-	const [ targetAction, setTargetAction ] = useState<'create_new' | 'merge' | ''>( '' );
+	const [ targetAction, setTargetAction ] = useState<
+		'create_new' | 'merge' | ''
+	>( '' );
 	const [ newChronicleName, setNewChronicleName ] = useState( '' );
 	const [ mergeGameSlug, setMergeGameSlug ] = useState( '' );
 
-	const [ traitResolutions, setTraitResolutions ] = useState<Record<string, TraitResolution>>( {} );
-	const [ duplicateActions, setDuplicateActions ] = useState<Record<string, DuplicateAction>>( {} );
-	const [ worldObjectActions, setWorldObjectActions ] = useState<Record<string, DuplicateAction>>( {} );
+	// The chronicle the current preview was checked against ('' until a merge target is confirmed).
+	const [ previewTarget, setPreviewTarget ] = useState( '' );
 
-	function onTraitResolutionChange( key: string, resolution: TraitResolution | null ) {
-		setTraitResolutions( ( prev ) => {
-			const next = { ...prev };
-			if ( resolution ) {
-				next[ key ] = resolution;
-			} else {
-				delete next[ key ];
-			}
-			return next;
-		} );
+	// Held against the job and target they were made on: Start Over, a new file, or another
+	// merge target begin with none (1.0.0-review F-057).
+	const [ decisions, setDecisions ] = useState< ImportDecisions >(
+		noDecisions()
+	);
+	const madeFor = preview ? previewKey( preview.job_id, previewTarget ) : '';
+	const {
+		traits: traitResolutions,
+		duplicates: duplicateActions,
+		worldObjects: worldObjectActions,
+	} = decisionsFor( decisions, madeFor );
+
+	function onTraitResolutionChange(
+		key: string,
+		resolution: TraitResolution | null
+	) {
+		setDecisions( ( prev ) =>
+			withDecision( prev, madeFor, 'traits', key, resolution )
+		);
 	}
 
-	function onDuplicateActionChange( character: string, action: DuplicateAction | null ) {
-		setDuplicateActions( ( prev ) => {
-			const next = { ...prev };
-			if ( action ) {
-				next[ character ] = action;
-			} else {
-				delete next[ character ];
-			}
-			return next;
-		} );
+	function onDuplicateActionChange(
+		character: string,
+		action: DuplicateAction | null
+	) {
+		setDecisions( ( prev ) =>
+			withDecision( prev, madeFor, 'duplicates', character, action )
+		);
 	}
 
-	function onWorldObjectActionChange( key: string, action: DuplicateAction | null ) {
-		setWorldObjectActions( ( prev ) => {
-			const next = { ...prev };
-			if ( action ) {
-				next[ key ] = action;
-			} else {
-				delete next[ key ];
-			}
-			return next;
-		} );
+	function onWorldObjectActionChange(
+		key: string,
+		action: DuplicateAction | null
+	) {
+		setDecisions( ( prev ) =>
+			withDecision( prev, madeFor, 'worldObjects', key, action )
+		);
 	}
 
+	/** The same count the server enforces - a trait kept as written, too, no longer blocks. */
 	function blockingCount(): number {
-		if ( ! preview ) {
-			return 0;
-		}
-		const stillFlagged = preview.flagged_traits.filter( ( t, i ) => ! traitResolutions[ keyFor( t, i ) ] ).length;
-		const stillDuplicate = preview.duplicates.filter( ( d ) => ! duplicateActions[ d.character ] ).length;
-		const stillWorldObject = preview.world_object_duplicates.filter(
-			( d ) => ! worldObjectActions[ `${ d.type }:${ d.name }` ]
-		).length;
-		return preview.unresolved.length + stillFlagged + stillDuplicate + stillWorldObject;
+		return preview
+			? countBlocking(
+					preview,
+					traitResolutions,
+					duplicateActions,
+					worldObjectActions
+			  )
+			: 0;
 	}
 
 	async function upload( e: React.FormEvent ) {
@@ -111,6 +127,7 @@ export function GameImportTool() {
 		try {
 			const parsed = await api.gameImport().parse( file );
 			setPreview( parsed );
+			setPreviewTarget( '' );
 			setNewChronicleName( parsed.chronicle_title );
 			setStage( 'preview' );
 		} catch ( err: unknown ) {
@@ -120,17 +137,25 @@ export function GameImportTool() {
 		}
 	}
 
-	/** Moving past the Target stage re-fetches the preview against the real chosen merge target, so duplicates shown at Resolve are real, never guessed client-side. */
+	/**
+	 * Moving past the Target stage re-fetches the preview against the chosen target, so duplicates
+	 * shown at Resolve are real, never guessed client-side - and a new chronicle, which has nothing
+	 * to collide with, never keeps the duplicates found in a merge target picked before it.
+	 */
 	async function confirmTarget() {
 		if ( ! preview ) {
 			return;
 		}
-		if ( targetAction === 'merge' && mergeGameSlug ) {
+		const target = targetAction === 'merge' ? mergeGameSlug : '';
+		if ( target !== previewTarget ) {
 			setLoading( true );
 			setError( null );
 			try {
-				const refreshed = await api.gameImport().getJob( preview.job_id, mergeGameSlug );
+				const refreshed = await api
+					.gameImport()
+					.getJob( preview.job_id, target || undefined );
 				setPreview( refreshed );
+				setPreviewTarget( target );
 			} catch ( err: unknown ) {
 				setError( errorMessage( err ) );
 				return;
@@ -150,14 +175,19 @@ export function GameImportTool() {
 		try {
 			const target: GameImportTarget =
 				targetAction === 'create_new'
-					? { action: 'create_new', name: newChronicleName || preview.chronicle_title }
+					? {
+							action: 'create_new',
+							name: newChronicleName || preview.chronicle_title,
+					  }
 					: { action: 'merge', game_slug: mergeGameSlug };
 			const resolutions: ImportResolutions = {
 				duplicates: duplicateActions,
 				world_objects: worldObjectActions,
 				traits: Object.values( traitResolutions ),
 			};
-			const committed = await api.gameImport().commit( preview.job_id, target, resolutions );
+			const committed = await api
+				.gameImport()
+				.commit( preview.job_id, target, resolutions );
 			setResult( committed );
 		} catch ( err: unknown ) {
 			setError( errorMessage( err ) );
@@ -196,19 +226,40 @@ export function GameImportTool() {
 			{ stage === 'upload' && (
 				<form className="be-import-tool__upload" onSubmit={ upload }>
 					<p>
-						{ __( 'Upload a full Grapevine game file (', 'beyond-elysium' ) }<code>.gv3</code>
-						{ __( ", binary). This is a whole chronicle - characters, items, locations, and more - not a single character's exchange file.", 'beyond-elysium' ) }
+						{ __(
+							'Upload a full Grapevine game file (',
+							'beyond-elysium'
+						) }
+						<code>.gv3</code>
+						{ __(
+							", binary). This is a whole chronicle - characters, items, locations, and more - not a single character's exchange file.",
+							'beyond-elysium'
+						) }
 					</p>
-					<input type="file" ref={ fileInputRef } accept=".gv3" required aria-label={ __( 'Grapevine game file to upload (.gv3)', 'beyond-elysium' ) } />
+					<input
+						type="file"
+						ref={ fileInputRef }
+						accept=".gv3"
+						required
+						aria-label={ __(
+							'Grapevine game file to upload (.gv3)',
+							'beyond-elysium'
+						) }
+					/>
 					<button type="submit" disabled={ loading }>
-						{ loading ? __( 'Parsing…', 'beyond-elysium' ) : __( 'Parse File', 'beyond-elysium' ) }
+						{ loading
+							? __( 'Parsing…', 'beyond-elysium' )
+							: __( 'Parse File', 'beyond-elysium' ) }
 					</button>
 				</form>
 			) }
 
 			{ stage === 'preview' && preview && (
 				<>
-					<h4>{ preview.chronicle_title || __( '(untitled chronicle)', 'beyond-elysium' ) }</h4>
+					<h4>
+						{ preview.chronicle_title ||
+							__( '(untitled chronicle)', 'beyond-elysium' ) }
+					</h4>
 					<ImportPreview
 						preview={ preview }
 						traitResolutions={ traitResolutions }
@@ -218,27 +269,82 @@ export function GameImportTool() {
 						worldObjectActions={ worldObjectActions }
 						onWorldObjectActionChange={ onWorldObjectActionChange }
 					/>
-					<h4>{ __( 'Not Imported by This Tool', 'beyond-elysium' ) }</h4>
+					<h4>
+						{ __( 'Not Imported by This Tool', 'beyond-elysium' ) }
+					</h4>
 					<p className="be-import-tool__blocking-note">
-						{ __( 'This file also carries', 'beyond-elysium' ) } { preview.skipped.queries }{ ' ' }
-						{ _n( 'query', 'queries', preview.skipped.queries, 'beyond-elysium' ) },{ ' ' }
-						{ preview.skipped.actions } { _n( 'action', 'actions', preview.skipped.actions, 'beyond-elysium' ) },{ ' ' }
-						{ preview.skipped.plots } { _n( 'plot', 'plots', preview.skipped.plots, 'beyond-elysium' ) },{ ' ' }
-						{ preview.skipped.rumors } { _n( 'rumor', 'rumors', preview.skipped.rumors, 'beyond-elysium' ) },{ ' ' }
-						{ preview.skipped.xp_awards }{ ' ' }
-						{ _n( 'XP award', 'XP awards', preview.skipped.xp_awards, 'beyond-elysium' ) },{ ' ' }
-						{ preview.skipped.templates }{ ' ' }
-						{ _n( 'template', 'templates', preview.skipped.templates, 'beyond-elysium' ) },{ ' ' }
-						{ preview.skipped.calendar_entries }{ ' ' }
-						{ _n( 'calendar entry', 'calendar entries', preview.skipped.calendar_entries, 'beyond-elysium' ) }
-						{ preview.skipped.apr_engine ? __( ', and action/rumor allocation settings', 'beyond-elysium' ) : '' }{ ' ' }
-						{ __( '- none of these have an import destination yet, so they are left out rather than guessed at.', 'beyond-elysium' ) }
+						{ __( 'This file also carries', 'beyond-elysium' ) }{ ' ' }
+						{ preview.skipped.queries }{ ' ' }
+						{ _n(
+							'query',
+							'queries',
+							preview.skipped.queries,
+							'beyond-elysium'
+						) }
+						, { preview.skipped.actions }{ ' ' }
+						{ _n(
+							'action',
+							'actions',
+							preview.skipped.actions,
+							'beyond-elysium'
+						) }
+						, { preview.skipped.plots }{ ' ' }
+						{ _n(
+							'plot',
+							'plots',
+							preview.skipped.plots,
+							'beyond-elysium'
+						) }
+						, { preview.skipped.rumors }{ ' ' }
+						{ _n(
+							'rumor',
+							'rumors',
+							preview.skipped.rumors,
+							'beyond-elysium'
+						) }
+						, { preview.skipped.xp_awards }{ ' ' }
+						{ _n(
+							'XP award',
+							'XP awards',
+							preview.skipped.xp_awards,
+							'beyond-elysium'
+						) }
+						, { preview.skipped.templates }{ ' ' }
+						{ _n(
+							'template',
+							'templates',
+							preview.skipped.templates,
+							'beyond-elysium'
+						) }
+						, { preview.skipped.calendar_entries }{ ' ' }
+						{ _n(
+							'calendar entry',
+							'calendar entries',
+							preview.skipped.calendar_entries,
+							'beyond-elysium'
+						) }
+						{ preview.skipped.apr_engine
+							? __(
+									', and action/rumor allocation settings',
+									'beyond-elysium'
+							  )
+							: '' }{ ' ' }
+						{ __(
+							'- none of these have an import destination yet, so they are left out rather than guessed at.',
+							'beyond-elysium'
+						) }
 					</p>
 					<div className="be-import-tool__nav-row">
-						<button type="button" onClick={ () => setStage( 'upload' ) }>
+						<button
+							type="button"
+							onClick={ () => setStage( 'upload' ) }
+						>
 							{ __( 'Start Over', 'beyond-elysium' ) }
 						</button>
-						<button type="button" onClick={ () => setStage( 'target' ) }>
+						<button
+							type="button"
+							onClick={ () => setStage( 'target' ) }
+						>
 							{ __( 'Next: Choose Target', 'beyond-elysium' ) }
 						</button>
 					</div>
@@ -255,7 +361,9 @@ export function GameImportTool() {
 								name="target-action"
 								value="create_new"
 								checked={ targetAction === 'create_new' }
-								onChange={ () => setTargetAction( 'create_new' ) }
+								onChange={ () =>
+									setTargetAction( 'create_new' )
+								}
 							/>{ ' ' }
 							{ __( 'Create a new chronicle', 'beyond-elysium' ) }
 						</label>
@@ -266,7 +374,11 @@ export function GameImportTool() {
 									<input
 										type="text"
 										value={ newChronicleName }
-										onChange={ ( e ) => setNewChronicleName( e.target.value ) }
+										onChange={ ( e ) =>
+											setNewChronicleName(
+												e.target.value
+											)
+										}
 									/>
 								</label>
 							</p>
@@ -280,16 +392,32 @@ export function GameImportTool() {
 								checked={ targetAction === 'merge' }
 								onChange={ () => setTargetAction( 'merge' ) }
 							/>{ ' ' }
-							{ __( 'Merge into an existing chronicle', 'beyond-elysium' ) }
+							{ __(
+								'Merge into an existing chronicle',
+								'beyond-elysium'
+							) }
 						</label>
 						{ targetAction === 'merge' && (
 							<p>
 								<label>
 									{ __( 'Chronicle', 'beyond-elysium' ) }{ ' ' }
-									<select value={ mergeGameSlug } onChange={ ( e ) => setMergeGameSlug( e.target.value ) }>
-										<option value="">{ __( 'Choose…', 'beyond-elysium' ) }</option>
+									<select
+										value={ mergeGameSlug }
+										onChange={ ( e ) =>
+											setMergeGameSlug( e.target.value )
+										}
+									>
+										<option value="">
+											{ __(
+												'Choose…',
+												'beyond-elysium'
+											) }
+										</option>
 										{ preview.existing_games.map( ( g ) => (
-											<option key={ g.slug } value={ g.slug }>
+											<option
+												key={ g.slug }
+												value={ g.slug }
+											>
 												{ g.name }
 											</option>
 										) ) }
@@ -297,13 +425,19 @@ export function GameImportTool() {
 								</label>
 								<span className="be-import-tool__blocking-note">
 									{ ' ' }
-									{ __( 'The existing chronicle is never overwritten wholesale - only records that collide by name need a decision, on the next step.', 'beyond-elysium' ) }
+									{ __(
+										'The existing chronicle is never overwritten wholesale - only records that collide by name need a decision, on the next step.',
+										'beyond-elysium'
+									) }
 								</span>
 							</p>
 						) }
 					</div>
 					<div className="be-import-tool__nav-row">
-						<button type="button" onClick={ () => setStage( 'preview' ) }>
+						<button
+							type="button"
+							onClick={ () => setStage( 'preview' ) }
+						>
 							{ __( 'Back', 'beyond-elysium' ) }
 						</button>
 						<button
@@ -311,12 +445,15 @@ export function GameImportTool() {
 							disabled={
 								loading ||
 								! targetAction ||
-								( targetAction === 'create_new' && ! newChronicleName.trim() ) ||
+								( targetAction === 'create_new' &&
+									! newChronicleName.trim() ) ||
 								( targetAction === 'merge' && ! mergeGameSlug )
 							}
 							onClick={ confirmTarget }
 						>
-							{ loading ? __( 'Checking…', 'beyond-elysium' ) : __( 'Next: Resolve', 'beyond-elysium' ) }
+							{ loading
+								? __( 'Checking…', 'beyond-elysium' )
+								: __( 'Next: Resolve', 'beyond-elysium' ) }
 						</button>
 					</div>
 				</>
@@ -328,10 +465,18 @@ export function GameImportTool() {
 						{ targetAction === 'merge'
 							? sprintf(
 									/* translators: %s: chronicle name being merged into */
-									__( 'Resolve — merging into %s', 'beyond-elysium' ),
-									preview.existing_games.find( ( g ) => g.slug === mergeGameSlug )?.name ?? mergeGameSlug
+									__(
+										'Resolve — merging into %s',
+										'beyond-elysium'
+									),
+									preview.existing_games.find(
+										( g ) => g.slug === mergeGameSlug
+									)?.name ?? mergeGameSlug
 							  )
-							: __( 'Resolve — new chronicle', 'beyond-elysium' ) }
+							: __(
+									'Resolve — new chronicle',
+									'beyond-elysium'
+							  ) }
 					</h4>
 					<ImportPreview
 						preview={ preview }
@@ -343,10 +488,16 @@ export function GameImportTool() {
 						onWorldObjectActionChange={ onWorldObjectActionChange }
 					/>
 					<div className="be-import-tool__nav-row">
-						<button type="button" onClick={ () => setStage( 'target' ) }>
+						<button
+							type="button"
+							onClick={ () => setStage( 'target' ) }
+						>
 							{ __( 'Back', 'beyond-elysium' ) }
 						</button>
-						<button type="button" onClick={ () => setStage( 'commit' ) }>
+						<button
+							type="button"
+							onClick={ () => setStage( 'commit' ) }
+						>
 							{ __( 'Next: Commit', 'beyond-elysium' ) }
 						</button>
 					</div>
@@ -359,6 +510,7 @@ export function GameImportTool() {
 					{ blockingCount() > 0 ? (
 						<p className="be-import-tool__blocking-note">
 							{ sprintf(
+								/* translators: %d: number of items still needing resolution */
 								_n(
 									'%d item must be resolved before this import can be committed - go back and review them above.',
 									'%d items must be resolved before this import can be committed - go back and review them above.',
@@ -370,27 +522,48 @@ export function GameImportTool() {
 						</p>
 					) : (
 						<p>
-							{ __( 'Ready to commit job', 'beyond-elysium' ) } <code>{ preview.job_id }</code> -{ ' ' }
+							{ __( 'Ready to commit job', 'beyond-elysium' ) }{ ' ' }
+							<code>{ preview.job_id }</code> -{ ' ' }
 							{ targetAction === 'create_new'
 								? sprintf(
 										/* translators: %s: name of the new chronicle being created */
-										__( 'creating a new chronicle, "%s."', 'beyond-elysium' ),
+										__(
+											'creating a new chronicle, "%s."',
+											'beyond-elysium'
+										),
 										newChronicleName
 								  )
 								: sprintf(
 										/* translators: %s: name of the existing chronicle being merged into */
-										__( 'merging into "%s."', 'beyond-elysium' ),
-										preview.existing_games.find( ( g ) => g.slug === mergeGameSlug )?.name ?? mergeGameSlug
+										__(
+											'merging into "%s."',
+											'beyond-elysium'
+										),
+										preview.existing_games.find(
+											( g ) => g.slug === mergeGameSlug
+										)?.name ?? mergeGameSlug
 								  ) }{ ' ' }
-							{ __( 'This creates or updates every record in one transaction - nothing is written unless all of it succeeds.', 'beyond-elysium' ) }
+							{ __(
+								'This creates or updates every record in one transaction - nothing is written unless all of it succeeds.',
+								'beyond-elysium'
+							) }
 						</p>
 					) }
 					<div className="be-import-tool__nav-row">
-						<button type="button" onClick={ () => setStage( 'resolve' ) }>
+						<button
+							type="button"
+							onClick={ () => setStage( 'resolve' ) }
+						>
 							{ __( 'Back', 'beyond-elysium' ) }
 						</button>
-						<button type="button" disabled={ committing || blockingCount() > 0 } onClick={ doCommit }>
-							{ committing ? __( 'Committing…', 'beyond-elysium' ) : __( 'Commit', 'beyond-elysium' ) }
+						<button
+							type="button"
+							disabled={ committing || blockingCount() > 0 }
+							onClick={ doCommit }
+						>
+							{ committing
+								? __( 'Committing…', 'beyond-elysium' )
+								: __( 'Commit', 'beyond-elysium' ) }
 						</button>
 					</div>
 				</>
@@ -400,30 +573,58 @@ export function GameImportTool() {
 				<>
 					<h4>{ __( 'Import Complete', 'beyond-elysium' ) }</h4>
 					<p>
-						{ result.game.created ? __( 'Created', 'beyond-elysium' ) : __( 'Merged into', 'beyond-elysium' ) } { __( 'chronicle', 'beyond-elysium' ) } <strong>{ result.game.name }</strong>.
+						{ result.game.created
+							? __( 'Created', 'beyond-elysium' )
+							: __( 'Merged into', 'beyond-elysium' ) }{ ' ' }
+						{ __( 'chronicle', 'beyond-elysium' ) }{ ' ' }
+						<strong>{ result.game.name }</strong>.
 					</p>
 					<ul className="be-import-tool__result">
 						<li>
 							{ sprintf(
-								_n( '%d character processed', '%d characters processed', result.characters.length, 'beyond-elysium' ),
+								/* translators: %d: number of characters processed by the import */
+								_n(
+									'%d character processed',
+									'%d characters processed',
+									result.characters.length,
+									'beyond-elysium'
+								),
 								result.characters.length
 							) }
 						</li>
 						<li>
 							{ sprintf(
-								_n( '%d item processed', '%d items processed', result.items.length, 'beyond-elysium' ),
+								/* translators: %d: number of items processed by the import */
+								_n(
+									'%d item processed',
+									'%d items processed',
+									result.items.length,
+									'beyond-elysium'
+								),
 								result.items.length
 							) }
 						</li>
 						<li>
 							{ sprintf(
-								_n( '%d location processed', '%d locations processed', result.locations.length, 'beyond-elysium' ),
+								/* translators: %d: number of locations processed by the import */
+								_n(
+									'%d location processed',
+									'%d locations processed',
+									result.locations.length,
+									'beyond-elysium'
+								),
 								result.locations.length
 							) }
 						</li>
 						<li>
 							{ sprintf(
-								_n( '%d rote processed', '%d rotes processed', result.rotes.length, 'beyond-elysium' ),
+								/* translators: %d: number of rotes processed by the import */
+								_n(
+									'%d rote processed',
+									'%d rotes processed',
+									result.rotes.length,
+									'beyond-elysium'
+								),
 								result.rotes.length
 							) }
 						</li>
@@ -439,7 +640,11 @@ interface RestError {
 }
 
 function errorMessage( error: unknown ): string {
-	if ( typeof error === 'object' && error !== null && ( error as RestError ).message ) {
+	if (
+		typeof error === 'object' &&
+		error !== null &&
+		( error as RestError ).message
+	) {
 		return ( error as RestError ).message as string;
 	}
 	return __( 'Failed to parse this file.', 'beyond-elysium' );

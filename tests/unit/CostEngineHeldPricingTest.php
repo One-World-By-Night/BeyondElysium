@@ -99,24 +99,27 @@ class CostEngineHeldPricingTest extends TestCase {
 	// tiered_power
 	// -------------------------------------------------------------------------
 
-	public function test_a_non_sequential_power_prices_the_flat_level_never_a_cumulative_sum(): void {
+	/**
+	 * Owner ruling, 1.0.0-review F-040: levels add up. A held Discipline at level five is priced as
+	 * every level up to it, not level five's own price.
+	 */
+	public function test_a_discipline_held_at_level_five_prices_every_level_up_to_it(): void {
 		$definition = self::def( 'vampire-disciplines' );
-		$this->assertEmpty( $definition->sequential ?? false, 'vampire-disciplines must be non-sequential for this test to mean anything' );
+		$this->assertNotEmpty( $definition->sequential ?? false, 'the seeded Disciplines ladder adds up' );
 
-		$power        = $this->find_power( $definition, 'Animalism' );
-		$level_5_cost = null;
+		$power = $this->find_power( $definition, 'Animalism' );
+		$sum   = 0;
 		foreach ( $power->levels as $level ) {
-			if ( (int) ( $level->level ?? 0 ) === 5 ) {
-				$level_5_cost = (int) $level->cost;
+			$n = (int) ( $level->level ?? 0 );
+			if ( $n >= 1 && $n <= 5 && isset( $level->cost ) ) {
+				$sum += (int) $level->cost;
 			}
 		}
-		$this->assertNotNull( $level_5_cost, 'Animalism must have a real seeded level 5' );
 
 		$result = Cost_Engine::price_held_tiered_power( $definition, [ 'name' => 'Animalism', 'level' => 5 ], true );
 
-		$this->assertSame( $level_5_cost, $result['xp'] );
-		$this->assertSame( 'flat_level', $result['basis'] );
-		$this->assertLessThan( 21, $result['xp'], 'a cumulative sum of a real 3/3/6/6/x ladder would read much higher than any single level' );
+		$this->assertSame( $sum, $result['xp'] );
+		$this->assertSame( 'sequential_sum', $result['basis'] );
 	}
 
 	public function test_a_sequential_power_sums_every_step_from_zero(): void {

@@ -4,7 +4,7 @@
 # See BE_PROCESS/TESTING.md for the three test layers.
 #
 # Usage:
-#   bin/verify            lint, static analysis, unit tests, build
+#   bin/verify            lint, static analysis (level 5, plus level 8's null/false checks), unit tests, build
 #   bin/verify --all      also run thread and workflow suites (needs WP_TESTS_DIR)
 #
 set -euo pipefail
@@ -38,6 +38,9 @@ echo "    ok"
 echo "==> phpstan (level 5)"
 "$PHP" beyond-elysium/vendor/bin/phpstan analyse --no-progress --memory-limit=1G --quiet
 
+echo "==> phpstan (null and false handling, level 8)"
+"$PHP" beyond-elysium/vendor/bin/phpstan analyse --no-progress --memory-limit=1G --quiet -c phpstan-null-safety.neon
+
 echo "==> phpunit :: unit"
 "$PHP" beyond-elysium/vendor/bin/phpunit --testsuite unit --no-coverage
 
@@ -60,11 +63,19 @@ fi
 echo "==> npm run check-types"
 npm run check-types --silent
 
+echo "==> npm run lint:js"
+npm run lint:js --silent
+
+echo "==> npm run lint:css"
+npm run lint:css --silent
+
 echo "==> npm test"
 npm test --silent
 
 echo "==> npm run build"
 npm run build --silent
+
+./bin/check-translations
 
 echo
 echo "all green"

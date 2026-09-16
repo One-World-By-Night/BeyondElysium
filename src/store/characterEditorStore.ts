@@ -5,12 +5,23 @@
  * edits, compute and submit changes, and manage the local
  * autosave draft.
  */
-import { create } from 'zustand';
+import { create, type StoreApi } from 'zustand';
 import api from '../api/client';
 import { computeChanges as computeChangesPure } from '../lib/computeChanges';
-import { clearDraft, draftDiffersFrom, loadDraft, saveDraft, type StoredDraft } from '../lib/draftStorage';
+import {
+	clearDraft,
+	draftDiffersFrom,
+	loadDraft,
+	saveDraft,
+	type StoredDraft,
+} from '../lib/draftStorage';
 import type { ResolvedStack } from '../types';
-import type { Character, ChangeRequest, PreviewChangesResponse, SheetData } from '../types/character';
+import type {
+	Character,
+	ChangeRequest,
+	PreviewChangesResponse,
+	SheetData,
+} from '../types/character';
 
 /**
  * The minimal shape of an apiFetch rejection this store knows how
@@ -41,7 +52,7 @@ function errorMessage( error: unknown ): string {
  * round trip, so the copy shares no object references with the
  * original.
  */
-function deepClone<T>( value: T ): T {
+function deepClone< T >( value: T ): T {
 	return JSON.parse( JSON.stringify( value ) );
 }
 
@@ -86,13 +97,13 @@ interface CharacterEditorState {
 	restorableDraft: StoredDraft | null;
 
 	/** Loads a character and its resolved stack, and checks for a restorable local draft. */
-	loadCharacter: ( id: number, gameSlug: string ) => Promise<void>;
+	loadCharacter: ( id: number, gameSlug: string ) => Promise< void >;
 	/** Stages an edit to one sheet block and saves it to the local autosave draft. */
 	setBlockData: ( blockSlug: string, data: unknown ) => void;
 	/** Recomputes the pending change list from the diff between the original and edited sheet data. */
 	computeChanges: () => ChangeRequest[];
 	/** Submits every pending change to the server and updates local state with the outcome. */
-	submitChanges: () => Promise<SubmitResult>;
+	submitChanges: () => Promise< SubmitResult >;
 	/** Discards unsaved edits, reverting sheetData back to originalSheetData. */
 	reset: () => void;
 	/** Applies the restorable draft to sheetData and clears it. */
@@ -101,232 +112,311 @@ interface CharacterEditorState {
 	dismissDraft: () => void;
 }
 
-let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+let debounceTimer: ReturnType< typeof setTimeout > | null = null;
+
+/** Counts cost-preview requests, so only the latest one's answer is ever shown. */
+let previewRequest = 0;
+
+/**
+ * Asks the server what the pending changes cost, or clears the preview
+ * when nothing is pending. An answer to an older request describes a diff
+ * that is gone - a submission or another character came in between - and
+ * never overwrites a newer one.
+ */
+function refreshPreview(
+	get: StoreApi< CharacterEditorState >[ 'getState' ],
+	set: StoreApi< CharacterEditorState >[ 'setState' ]
+): void {
+	const request = ++previewRequest;
+	const changes = get().computeChanges();
+	const { characterId, gameSlug } = get();
+	if ( ! characterId || ! gameSlug || changes.length === 0 ) {
+		set( { previewCosts: null } );
+		return;
+	}
+	api.characters( gameSlug )
+		.previewChanges( characterId, changes )
+		.then( ( previewCosts ) => {
+			if ( request === previewRequest ) {
+				set( { previewCosts } );
+			}
+		} )
+		.catch( ( error ) => {
+			if ( request === previewRequest ) {
+				set( { error: errorMessage( error ) } );
+			}
+		} );
+}
 
 /**
  * The character editor's Zustand store hook. Initializes all
  * state to empty/idle values and wires up each action's
  * implementation against that state.
  */
-export const useCharacterEditorStore = create<CharacterEditorState>( ( set, get ) => ( {
-	characterId: null,
-	gameSlug: null,
-	stackSlug: null,
-	stack: null,
-	character: null,
-	sheetData: {},
-	originalSheetData: {},
-	pendingChanges: [],
-	previewCosts: null,
-	submittedChanges: [],
-	dirty: false,
-	loading: false,
-	saving: false,
-	error: null,
-	restorableDraft: null,
+export const useCharacterEditorStore = create< CharacterEditorState >(
+	( set, get ) => ( {
+		characterId: null,
+		gameSlug: null,
+		stackSlug: null,
+		stack: null,
+		character: null,
+		sheetData: {},
+		originalSheetData: {},
+		pendingChanges: [],
+		previewCosts: null,
+		submittedChanges: [],
+		dirty: false,
+		loading: false,
+		saving: false,
+		error: null,
+		restorableDraft: null,
 
-	/**
-	 * Loads a character and its resolved creature stack, resets
-	 * every editing field back to a clean baseline, and checks for
-	 * a local draft worth offering the player to restore.
-	 */
-	loadCharacter: async ( id, gameSlug ) => {
-		set( { loading: true, error: null } );
-		try {
-			const character = await api.characters( gameSlug ).get( id );
-			const stack = await api.creatureStacks.resolve( character.stack_slug, gameSlug );
-			// Cloned separately so sheetData and originalSheetData never share references.
-			const sheet = deepClone( character.sheet_data );
+		/**
+		 * Loads a character and its resolved creature stack, resets
+		 * every editing field back to a clean baseline, and checks for
+		 * a local draft worth offering the player to restore.
+		 */
+		loadCharacter: async ( id, gameSlug ) => {
+			// A cost preview still on its way belongs to the sheet being replaced.
+			previewRequest++;
+			set( { loading: true, error: null } );
+			try {
+				const character = await api.characters( gameSlug ).get( id );
+				const stack = await api.creatureStacks.resolve(
+					character.stack_slug,
+					gameSlug
+				);
+				// Cloned separately so sheetData and originalSheetData never share references.
+				const sheet = deepClone( character.sheet_data );
 
-			// Only offered when it actually differs from what the server just returned.
-			const draft = loadDraft( id );
-			const restorableDraft = draft && draftDiffersFrom( draft.sheetData, sheet ) ? draft : null;
+				// Only offered when it actually differs from what the server just returned.
+				const draft = loadDraft( id );
+				const restorableDraft =
+					draft && draftDiffersFrom( draft.sheetData, sheet )
+						? draft
+						: null;
 
-			set( {
-				characterId: id,
-				gameSlug,
-				stackSlug: character.stack_slug,
-				stack,
-				character,
-				sheetData: sheet,
-				originalSheetData: deepClone( sheet ),
+				set( {
+					characterId: id,
+					gameSlug,
+					stackSlug: character.stack_slug,
+					stack,
+					character,
+					sheetData: sheet,
+					originalSheetData: deepClone( sheet ),
+					pendingChanges: [],
+					previewCosts: null,
+					submittedChanges: [],
+					dirty: false,
+					loading: false,
+					restorableDraft,
+				} );
+			} catch ( error ) {
+				set( { loading: false, error: errorMessage( error ) } );
+			}
+		},
+
+		/**
+		 * Stages an edit to a single sheet block, marks the sheet
+		 * dirty, saves the change to the local autosave draft
+		 * immediately, and debounces a server round trip to recompute
+		 * the pending changes' previewed cost.
+		 */
+		setBlockData: ( blockSlug, data ) => {
+			set( ( state ) => ( {
+				sheetData: { ...state.sheetData, [ blockSlug ]: data },
+				dirty: true,
+			} ) );
+
+			// Saved on every edit, not debounced, so a crash or closed tab loses nothing.
+			const { characterId, sheetData } = get();
+			if ( characterId ) {
+				saveDraft( characterId, sheetData );
+			}
+
+			if ( debounceTimer ) {
+				clearTimeout( debounceTimer );
+			}
+			debounceTimer = setTimeout( () => refreshPreview( get, set ), 500 );
+		},
+
+		/**
+		 * Recomputes the pending change list by diffing sheetData
+		 * against originalSheetData for every block in the loaded
+		 * stack, stores the result, and returns it.
+		 */
+		computeChanges: () => {
+			const { originalSheetData, sheetData, stack } = get();
+			const changes = computeChangesPure(
+				originalSheetData,
+				sheetData,
+				stack?.blocks ?? {}
+			);
+			set( { pendingChanges: changes } );
+			return changes;
+		},
+
+		/**
+		 * Submits every currently pending change to the server, one
+		 * request per change, continuing through the whole batch even
+		 * if some requests fail. Updates originalSheetData to what was
+		 * sent for any category that fully succeeded, and manages the
+		 * local draft and dirty state based on what is left unresolved.
+		 * A call made while a submission is still sending does nothing.
+		 */
+		submitChanges: async () => {
+			// A second Submit while the first is still sending would send the same diff again.
+			if ( get().saving ) {
+				return { submitted: [], failed: [], pending: [] };
+			}
+
+			// Recomputed synchronously so a submit racing the debounce sends the on-screen diff.
+			const changes = get().computeChanges();
+			const { characterId, gameSlug, sheetData } = get();
+
+			if ( ! characterId || ! gameSlug ) {
+				return { submitted: [], failed: changes, pending: [] };
+			}
+
+			// The sheet stays editable while the requests are out, so what was sent is frozen here:
+			// a later edit must stay unsaved, not be baselined as if it went too (1.0.0-review F-055).
+			const sent: SheetData = {};
+			for ( const change of changes ) {
+				sent[ change.category ] = deepClone(
+					sheetData[ change.category ]
+				);
+			}
+
+			// A cost preview already on its way prices the diff being sent, not what will be left.
+			previewRequest++;
+			set( { saving: true, error: null } );
+
+			// Every queued change is attempted, even after an earlier one in the batch fails.
+			const submitted: ChangeRequest[] = [];
+			const failed: ChangeRequest[] = [];
+			const pending: ChangeRequest[] = [];
+			let lastError: unknown = null;
+			for ( const change of changes ) {
+				try {
+					const created = await api
+						.changes( gameSlug )
+						.create( characterId, change );
+					submitted.push( change );
+					// A created change only reaches sheet_data once approved; otherwise it stays pending.
+					if ( created.status !== 'approved' ) {
+						pending.push( change );
+					}
+				} catch ( error ) {
+					failed.push( change );
+					lastError = error;
+				}
+			}
+
+			// Only a category with nothing failed or still pending is safe to baseline as saved.
+			const failedCategories = new Set(
+				failed.map( ( change ) => change.category )
+			);
+			const pendingCategories = new Set(
+				pending.map( ( change ) => change.category )
+			);
+			const succeededCategories = new Set(
+				submitted
+					.map( ( change ) => change.category )
+					.filter(
+						( category ) =>
+							! failedCategories.has( category ) &&
+							! pendingCategories.has( category )
+					)
+			);
+
+			// Another character opened meanwhile: nothing here describes its sheet.
+			if ( get().characterId !== characterId ) {
+				set( { saving: false } );
+				return { submitted, failed, pending };
+			}
+
+			set( ( state ) => {
+				const nextOriginal = { ...state.originalSheetData };
+				for ( const category of succeededCategories ) {
+					nextOriginal[ category ] = deepClone( sent[ category ] );
+				}
+				return {
+					saving: false,
+					error: failed.length > 0 ? errorMessage( lastError ) : null,
+					originalSheetData: nextOriginal,
+					previewCosts: null,
+					submittedChanges: [
+						...state.submittedChanges,
+						...submitted,
+					],
+				};
+			} );
+
+			// Still-pending categories stay live in the diff, so they keep showing as unsaved.
+			const stillPending = get().computeChanges();
+			const isDirty = stillPending.length > 0;
+			set( { dirty: isDirty } );
+
+			if ( isDirty ) {
+				// What is left - a failed or pending change, or an edit made while sending - is priced afresh.
+				refreshPreview( get, set );
+			} else if ( characterId ) {
+				// The draft is only cleared once nothing is left unresolved.
+				clearDraft( characterId );
+			}
+
+			return { submitted, failed, pending };
+		},
+
+		/**
+		 * Discards all unsaved edits, reverting sheetData back to
+		 * originalSheetData, clearing the pending diff and preview
+		 * cost, and clearing the local autosave draft.
+		 */
+		reset: () => {
+			const { characterId } = get();
+			if ( characterId ) {
+				clearDraft( characterId );
+			}
+			set( ( state ) => ( {
+				sheetData: deepClone( state.originalSheetData ),
 				pendingChanges: [],
 				previewCosts: null,
-				submittedChanges: [],
 				dirty: false,
-				loading: false,
-				restorableDraft,
-			} );
-		} catch ( error ) {
-			set( { loading: false, error: errorMessage( error ) } );
-		}
-	},
+				restorableDraft: null,
+			} ) );
+		},
 
-	/**
-	 * Stages an edit to a single sheet block, marks the sheet
-	 * dirty, saves the change to the local autosave draft
-	 * immediately, and debounces a server round trip to recompute
-	 * the pending changes' previewed cost.
-	 */
-	setBlockData: ( blockSlug, data ) => {
-		set( ( state ) => ( {
-			sheetData: { ...state.sheetData, [ blockSlug ]: data },
-			dirty: true,
-		} ) );
-
-		// Saved on every edit, not debounced, so a crash or closed tab loses nothing.
-		const { characterId, sheetData } = get();
-		if ( characterId ) {
-			saveDraft( characterId, sheetData );
-		}
-
-		if ( debounceTimer ) {
-			clearTimeout( debounceTimer );
-		}
-		debounceTimer = setTimeout( () => {
-			const changes = get().computeChanges();
-			const { characterId, gameSlug } = get();
-			if ( ! characterId || ! gameSlug || changes.length === 0 ) {
-				set( { previewCosts: null } );
+		/**
+		 * Applies the offered local draft to sheetData, marks the
+		 * sheet dirty, clears the restorable draft, and recomputes the
+		 * pending change list against the restored data.
+		 */
+		restoreDraft: () => {
+			const { restorableDraft } = get();
+			if ( ! restorableDraft ) {
 				return;
 			}
-			api
-				.characters( gameSlug )
-				.previewChanges( characterId, changes )
-				.then( ( previewCosts ) => set( { previewCosts } ) )
-				.catch( ( error ) => set( { error: errorMessage( error ) } ) );
-		}, 500 );
-	},
+			set( {
+				sheetData: deepClone( restorableDraft.sheetData ),
+				dirty: true,
+				restorableDraft: null,
+			} );
+			get().computeChanges();
+		},
 
-	/**
-	 * Recomputes the pending change list by diffing sheetData
-	 * against originalSheetData for every block in the loaded
-	 * stack, stores the result, and returns it.
-	 */
-	computeChanges: () => {
-		const { originalSheetData, sheetData, stack } = get();
-		const changes = computeChangesPure( originalSheetData, sheetData, stack?.blocks ?? {} );
-		set( { pendingChanges: changes } );
-		return changes;
-	},
-
-	/**
-	 * Submits every currently pending change to the server, one
-	 * request per change, continuing through the whole batch even
-	 * if some requests fail. Updates originalSheetData to match
-	 * for any category that fully succeeded, and manages the local
-	 * draft and dirty state based on what is left unresolved.
-	 */
-	submitChanges: async () => {
-		// Recomputed synchronously so a submit racing the debounce sends the on-screen diff.
-		const changes = get().computeChanges();
-		const { characterId, gameSlug } = get();
-
-		if ( ! characterId || ! gameSlug ) {
-			return { submitted: [], failed: changes, pending: [] };
-		}
-
-		set( { saving: true, error: null } );
-
-		// Every queued change is attempted, even after an earlier one in the batch fails.
-		const submitted: ChangeRequest[] = [];
-		const failed: ChangeRequest[] = [];
-		const pending: ChangeRequest[] = [];
-		let lastError: unknown = null;
-		for ( const change of changes ) {
-			try {
-				const created = await api.changes( gameSlug ).create( characterId, change );
-				submitted.push( change );
-				// A created change only reaches sheet_data once approved; otherwise it stays pending.
-				if ( created.status !== 'approved' ) {
-					pending.push( change );
-				}
-			} catch ( error ) {
-				failed.push( change );
-				lastError = error;
+		/**
+		 * Discards the offered local draft without applying it,
+		 * deleting it from local storage and clearing it from state.
+		 */
+		dismissDraft: () => {
+			const { characterId } = get();
+			if ( characterId ) {
+				clearDraft( characterId );
 			}
-		}
-
-		// Only a category with nothing failed or still pending is safe to baseline as saved.
-		const failedCategories = new Set( failed.map( ( change ) => change.category ) );
-		const pendingCategories = new Set( pending.map( ( change ) => change.category ) );
-		const succeededCategories = new Set(
-			submitted
-				.map( ( change ) => change.category )
-				.filter( ( category ) => ! failedCategories.has( category ) && ! pendingCategories.has( category ) )
-		);
-
-		set( ( state ) => {
-			const nextOriginal = { ...state.originalSheetData };
-			for ( const category of succeededCategories ) {
-				nextOriginal[ category ] = deepClone( state.sheetData[ category ] );
-			}
-			return {
-				saving: false,
-				error: failed.length > 0 ? errorMessage( lastError ) : null,
-				originalSheetData: nextOriginal,
-				previewCosts: null,
-				submittedChanges: [ ...state.submittedChanges, ...submitted ],
-			};
-		} );
-
-		// Still-pending categories stay live in the diff, so they keep showing as unsaved.
-		const stillPending = get().computeChanges();
-		const isDirty = stillPending.length > 0;
-		set( { dirty: isDirty } );
-
-		// The draft is only cleared once nothing is left unresolved.
-		if ( ! isDirty && characterId ) {
-			clearDraft( characterId );
-		}
-
-		return { submitted, failed, pending };
-	},
-
-	/**
-	 * Discards all unsaved edits, reverting sheetData back to
-	 * originalSheetData, clearing the pending diff and preview
-	 * cost, and clearing the local autosave draft.
-	 */
-	reset: () => {
-		const { characterId } = get();
-		if ( characterId ) {
-			clearDraft( characterId );
-		}
-		set( ( state ) => ( {
-			sheetData: deepClone( state.originalSheetData ),
-			pendingChanges: [],
-			previewCosts: null,
-			dirty: false,
-			restorableDraft: null,
-		} ) );
-	},
-
-	/**
-	 * Applies the offered local draft to sheetData, marks the
-	 * sheet dirty, clears the restorable draft, and recomputes the
-	 * pending change list against the restored data.
-	 */
-	restoreDraft: () => {
-		const { restorableDraft } = get();
-		if ( ! restorableDraft ) {
-			return;
-		}
-		set( { sheetData: deepClone( restorableDraft.sheetData ), dirty: true, restorableDraft: null } );
-		get().computeChanges();
-	},
-
-	/**
-	 * Discards the offered local draft without applying it,
-	 * deleting it from local storage and clearing it from state.
-	 */
-	dismissDraft: () => {
-		const { characterId } = get();
-		if ( characterId ) {
-			clearDraft( characterId );
-		}
-		set( { restorableDraft: null } );
-	},
-} ) );
+			set( { restorableDraft: null } );
+		},
+	} )
+);
 
 export default useCharacterEditorStore;

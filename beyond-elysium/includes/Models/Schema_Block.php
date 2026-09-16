@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\Models;
 
+use BeyondElysium\Database\Fork_Merge;
 use BeyondElysium\Database\Manager;
 
 defined( 'ABSPATH' ) || exit;
@@ -36,6 +37,20 @@ class Schema_Block {
 			$slug
 		);
 		return self::decode_definition( $row );
+	}
+
+	/**
+	 * Whether any row uses this slug - the global catalog or any chronicle's
+	 * own block or fork.
+	 *
+	 * @param string $slug
+	 * @return bool
+	 */
+	public static function slug_in_use( string $slug ): bool {
+		return (bool) Manager::get_var(
+			'SELECT COUNT(*) FROM ' . Manager::table( 'schema_blocks' ) . ' WHERE slug = %s',
+			$slug
+		);
 	}
 
 	/**
@@ -74,7 +89,7 @@ class Schema_Block {
 	 *
 	 * @param string $slug
 	 * @param string $game_slug Must not be ''.
-	 * @return object|null Null if `$slug` doesn't exist at all, even globally.
+	 * @return object|null Null if `$slug` doesn't exist at all, even globally, or the copy couldn't be written.
 	 */
 	public static function find_or_create_fork_for_game( string $slug, string $game_slug ) {
 		if ( $game_slug === '' ) {
@@ -102,13 +117,26 @@ class Schema_Block {
 			'section_type' => $global->section_type,
 			'definition'   => wp_json_encode( $global->definition ),
 			'is_system'    => 0,
+			// A copy of a Storyteller-only block starts Storyteller-only; the copy decides for
+			// its chronicle from here on (F-062).
+			'storyteller_only' => (int) ( $global->storyteller_only ?? 0 ),
+			// A fresh copy has changed nothing yet; its saves record what they change (F-034).
+			'fork_changes' => wp_json_encode( Fork_Merge::NO_CHANGES ),
 			'version'      => 1,
 			'created_by'   => get_current_user_id(),
 			'created_at'   => current_time( 'mysql' ),
 			'updated_at'   => current_time( 'mysql' ),
 		] );
 
-		return self::find_for_game( $slug, $game_slug );
+		// Never the catalog block in the copy's place: a save onto it would land nowhere
+		// (1.0.0-review F-109). An insert that lost to another request making the same copy
+		// finds that copy.
+		$fork = Manager::get_row(
+			'SELECT * FROM ' . Manager::table( 'schema_blocks' ) . ' WHERE slug = %s AND game_slug = %s',
+			$slug,
+			$game_slug
+		);
+		return $fork ? self::decode_definition( $fork ) : null;
 	}
 
 	/**
@@ -177,7 +205,7 @@ class Schema_Block {
 		}
 
 		$rows = $wpdb->get_results( $sql ) ?: [];
-		return array_map( [ self::class, 'decode_definition' ], $rows );
+		return array_map( [ self::class, 'decode_row' ], $rows );
 	}
 
 	/**
@@ -243,7 +271,7 @@ class Schema_Block {
 		) ?: [];
 
 		foreach ( $forks as $fork ) {
-			$fork = self::decode_definition( $fork );
+			$fork = self::decode_row( $fork );
 			foreach ( $blocks as $i => $block ) {
 				if ( $block->slug === $fork->slug ) {
 					$blocks[ $i ] = $fork;
@@ -286,7 +314,7 @@ class Schema_Block {
 			"SELECT * FROM {$table} WHERE game_slug = '' AND section_type IN ({$placeholders})",
 			$section_types
 		) ) ?: [];
-		$blocks = array_map( [ self::class, 'decode_definition' ], $globals );
+		$blocks = array_map( [ self::class, 'decode_row' ], $globals );
 
 		if ( $game_slug === '' ) {
 			return $blocks;
@@ -298,7 +326,7 @@ class Schema_Block {
 		) ) ?: [];
 
 		foreach ( $forks as $fork ) {
-			$fork = self::decode_definition( $fork );
+			$fork = self::decode_row( $fork );
 			foreach ( $blocks as $i => $block ) {
 				if ( $block->slug === $fork->slug ) {
 					$blocks[ $i ] = $fork;
@@ -332,7 +360,7 @@ class Schema_Block {
 		$rows = $wpdb->get_results( $sql ) ?: [];
 		$result = [];
 		foreach ( $rows as $row ) {
-			$row = self::decode_definition( $row );
+			$row = self::decode_row( $row );
 			$result[ $row->slug ] = $row;
 		}
 		return $result;
@@ -363,7 +391,7 @@ class Schema_Block {
 		);
 		$rows = $wpdb->get_results( $sql ) ?: [];
 		foreach ( $rows as $row ) {
-			$row          = self::decode_definition( $row );
+			$row          = self::decode_row( $row );
 			$base[ $row->slug ] = $row;
 		}
 		return $base;
@@ -406,7 +434,9 @@ class Schema_Block {
 	 * Update a schema block identified by slug and game_slug, incrementing
 	 * its version counter. $game_slug defaults to '' (the global block);
 	 * since slug alone is not unique, omitting it would otherwise risk
-	 * matching more than one chronicle's fork of the same slug.
+	 * matching more than one chronicle's fork of the same slug. A new
+	 * definition for a chronicle's copy also records what it changes, so a
+	 * later catalog update keeps it (1.0.0-review F-034).
 	 *
 	 * @param string $slug
 	 * @param array  $data Fields to update.
@@ -425,6 +455,13 @@ class Schema_Block {
 
 		if ( empty( $update ) ) {
 			return false;
+		}
+
+		if ( $game_slug !== '' && isset( $update['definition'] ) ) {
+			$changes = self::changes_for_save( $slug, $game_slug, $update['definition'] );
+			if ( $changes !== null ) {
+				$update['fork_changes'] = wp_json_encode( $changes );
+			}
 		}
 
 		if ( isset( $update['definition'] ) && ( is_array( $update['definition'] ) || is_object( $update['definition'] ) ) ) {
@@ -460,6 +497,92 @@ class Schema_Block {
 		);
 
 		return $wpdb->query( $sql ) !== false;
+	}
+
+	/**
+	 * What a chronicle's copy will have changed once this definition is saved:
+	 * what it had recorded - or, for a copy made before copies recorded their
+	 * changes, how it differs from the catalog - plus what this save changes.
+	 * Null when there's no such copy.
+	 *
+	 * @param string       $slug
+	 * @param string       $game_slug
+	 * @param mixed        $incoming The definition being saved: array, object, or JSON.
+	 * @return array<string,mixed>|null
+	 */
+	private static function changes_for_save( string $slug, string $game_slug, $incoming ): ?array {
+		$table = Manager::table( 'schema_blocks' );
+		$row   = Manager::get_row( "SELECT definition, fork_changes FROM {$table} WHERE slug = %s AND game_slug = %s", $slug, $game_slug );
+		if ( ! $row ) {
+			return null;
+		}
+
+		$stored   = self::as_array( $row->definition );
+		$incoming = self::as_array( $incoming );
+		$changes  = $row->fork_changes !== null ? self::as_array( $row->fork_changes ) : null;
+		if ( $changes === null ) {
+			$shared  = Manager::get_var( "SELECT definition FROM {$table} WHERE slug = %s AND game_slug = ''", $slug );
+			$changes = Fork_Merge::changes_against( self::as_array( $shared ), $stored );
+		}
+
+		return Fork_Merge::stamp( $stored, $incoming, $changes );
+	}
+
+	/**
+	 * Rebuilds every chronicle's copy of a catalog block from the catalog
+	 * block as it now stands, keeping what each chronicle changed (1.0.0-review
+	 * F-034). Run after the catalog block changes - a plugin update's reseed,
+	 * or an administrator's save - so a catalog fix reaches every chronicle.
+	 * Records nothing: none of it is a chronicle's own change.
+	 *
+	 * @param string $slug
+	 * @return int How many copies were rebuilt.
+	 */
+	public static function refresh_forks( string $slug ): int {
+		global $wpdb;
+		$table  = Manager::table( 'schema_blocks' );
+		$shared = Manager::get_var( "SELECT definition FROM {$table} WHERE slug = %s AND game_slug = ''", $slug );
+		if ( $shared === null ) {
+			return 0;
+		}
+		$catalog = self::as_array( $shared );
+
+		$rebuilt = 0;
+		$copies  = Manager::get_results( "SELECT id, definition, fork_changes FROM {$table} WHERE slug = %s AND game_slug <> ''", $slug );
+		foreach ( $copies as $copy ) {
+			$definition = self::as_array( $copy->definition );
+			$changes    = $copy->fork_changes !== null ? self::as_array( $copy->fork_changes ) : Fork_Merge::changes_against( $catalog, $definition );
+			$merged     = Fork_Merge::merge( $catalog, $definition, $changes );
+
+			$result = $wpdb->query( $wpdb->prepare(
+				"UPDATE {$table} SET definition = %s, fork_changes = %s, updated_at = %s, version = version + 1 WHERE id = %d",
+				wp_json_encode( $merged ),
+				wp_json_encode( $changes ),
+				current_time( 'mysql' ),
+				(int) $copy->id
+			) );
+			if ( $result === false ) {
+				error_log( 'Beyond Elysium: failed to bring catalog changes to schema block copy ' . (int) $copy->id . ': ' . $wpdb->last_error );
+				continue;
+			}
+			$rebuilt++;
+		}
+		return $rebuilt;
+	}
+
+	/**
+	 * A definition or change record as a plain array, whatever form it arrived in.
+	 *
+	 * @param mixed $value
+	 * @return array<string,mixed>
+	 */
+	private static function as_array( $value ): array {
+		if ( is_string( $value ) ) {
+			$value = json_decode( $value, true );
+		} elseif ( is_object( $value ) || is_array( $value ) ) {
+			$value = json_decode( (string) wp_json_encode( $value ), true );
+		}
+		return is_array( $value ) ? $value : [];
 	}
 
 	/**
@@ -500,9 +623,15 @@ class Schema_Block {
 	}
 
 	/**
-	 * Return the slugs of every block flagged storyteller_only, across every
-	 * chronicle scope. Callers use this to strip Storyteller-only content
-	 * from a response bound for a viewer without `be_manage_characters`.
+	 * Return the slugs of every block that is Storyteller-only in one
+	 * chronicle. Callers use this to strip Storyteller-only content from a
+	 * response bound for a viewer without `be_manage_characters`.
+	 *
+	 * Resolved the way `find_for_game()` resolves a block: the chronicle's own
+	 * copy decides for that chronicle, the shared block decides where it has
+	 * none, and no other chronicle's copy counts. Asked for the whole install,
+	 * one chronicle hiding its own copy hid that block from every chronicle's
+	 * players (1.0.0-review F-062).
 	 *
 	 * Deliberately not memoized: a static cache latches the first result for
 	 * the whole PHP process, which is wrong the moment a block's flag
@@ -510,15 +639,29 @@ class Schema_Block {
 	 * A caller looping over many characters hoists this call out of the loop
 	 * instead.
 	 *
+	 * @param string $game_slug The chronicle whose view this is; '' for the shared blocks alone.
 	 * @return string[]
 	 */
-	public static function storyteller_only_slugs(): array {
+	public static function storyteller_only_slugs( string $game_slug ): array {
 		global $wpdb;
 
 		$table = Manager::table( 'schema_blocks' );
-		$found = $wpdb->get_col( "SELECT DISTINCT slug FROM {$table} WHERE storyteller_only = 1" );
+		$rows  = $wpdb->get_results( $wpdb->prepare(
+			"SELECT slug, game_slug, storyteller_only FROM {$table} WHERE game_slug = '' OR game_slug = %s",
+			$game_slug
+		) ) ?: [];
 
-		return is_array( $found ) ? $found : [];
+		$shared = [];
+		$own    = [];
+		foreach ( $rows as $row ) {
+			if ( $row->game_slug === '' ) {
+				$shared[ (string) $row->slug ] = (int) $row->storyteller_only;
+			} else {
+				$own[ (string) $row->slug ] = (int) $row->storyteller_only;
+			}
+		}
+
+		return array_map( 'strval', array_keys( array_filter( $own + $shared ) ) );
 	}
 
 	/**
@@ -530,13 +673,26 @@ class Schema_Block {
 	 * @return object|null
 	 */
 	private static function decode_definition( $row ) {
-		if ( $row && isset( $row->definition ) && is_string( $row->definition ) ) {
+		return $row ? self::decode_row( $row ) : null;
+	}
+
+	/**
+	 * decode_definition() for a row already known to exist.
+	 *
+	 * @param object $row
+	 * @return object
+	 */
+	private static function decode_row( object $row ): object {
+		if ( isset( $row->definition ) && is_string( $row->definition ) ) {
 			$row->definition = json_decode( $row->definition );
+		}
+		if ( isset( $row->fork_changes ) && is_string( $row->fork_changes ) ) {
+			$row->fork_changes = json_decode( $row->fork_changes );
 		}
 		// $wpdb returns "0"/"1" strings, and "0" is truthy in JavaScript - uncast, the Schema
 		// Blocks editor saved every block it opened as storyteller_only (D53, D51's class).
 		foreach ( [ 'is_system', 'storyteller_only' ] as $flag ) {
-			if ( $row && isset( $row->$flag ) ) {
+			if ( isset( $row->$flag ) ) {
 				$row->$flag = (int) $row->$flag;
 			}
 		}

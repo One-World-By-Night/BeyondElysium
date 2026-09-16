@@ -32,10 +32,11 @@ class Trait_Display {
 	 * @param string $mode  One of: simple, multiplier, multiplier_dot, dot, cost,
 	 *                      note_only, cost_only, dot_separate, simple_dots,
 	 *                      simple_number, simple_note.
-	 * @param string $dot   Glyph used by dot-rendering modes, defaulting to a bullet.
+	 * @param string $dot   Glyph used by dot-rendering modes, defaulting to the one dot a
+	 *                      resource pool's points use too (1.0.0-review F-016).
 	 * @return string
 	 */
-	public static function display_trait( object $trait, string $mode, string $dot = '•' ): string {
+	public static function display_trait( object $trait, string $mode, string $dot = Temper_Display::DOT ): string {
 		$total = self::parse_total( $trait->total ?? null );
 		$note  = $trait->note ?? '';
 

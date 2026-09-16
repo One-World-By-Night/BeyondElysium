@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+#
+# Fails if any .po file has a fuzzy or untranslated message against the current source.
+# Builds a fresh .pot from source into a scratch directory, merges it into a scratch copy
+# of each committed .po (never touching the real files), and reads msgfmt --statistics.
+#
+# Run from bin/verify, which skips this (with a note) when WP-CLI or gettext isn't installed -
+# same convention as the thread/workflow suite's WP_TESTS_DIR skip.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+PHP="${BE_PHP:-}"
+if [ -z "$PHP" ] && [ -x /opt/homebrew/opt/php@8.2/bin/php ]; then
+    PHP=/opt/homebrew/opt/php@8.2/bin/php
+fi
+[ -n "$PHP" ] || PHP="$(command -v php)"
+
+WP_CLI="${BE_WP_CLI:-}"
+if [ -z "$WP_CLI" ] && [ -x /opt/homebrew/Cellar/wp-cli/2.12.0/bin/wp ]; then
+    WP_CLI=/opt/homebrew/Cellar/wp-cli/2.12.0/bin/wp
+fi
+[ -n "$WP_CLI" ] || WP_CLI="$(command -v wp || true)"
+
+if [ -z "$WP_CLI" ] || ! command -v msgmerge >/dev/null 2>&1 || ! command -v msgfmt >/dev/null 2>&1; then
+    echo "==> check-translations SKIPPED (WP-CLI or gettext not installed)"
+    exit 0
+fi
+
+SCRATCH="$(mktemp -d)"
+trap 'rm -rf "$SCRATCH"' EXIT
+
+echo "==> check-translations"
+
+"$PHP" "$WP_CLI" i18n make-pot beyond-elysium "$SCRATCH/beyond-elysium.pot" \
+    --domain=beyond-elysium \
+    --exclude=vendor \
+    --quiet
+
+FAILED=0
+for po in beyond-elysium/languages/*.po; do
+    [ -e "$po" ] || continue
+    locale="$(basename "$po" .po | sed 's/^beyond-elysium-//')"
+    scratch_po="$SCRATCH/$(basename "$po")"
+    cp "$po" "$scratch_po"
+    msgmerge --update --backup=none --quiet "$scratch_po" "$SCRATCH/beyond-elysium.pot"
+
+    stats="$(msgfmt --statistics -o /dev/null "$scratch_po" 2>&1)"
+    if echo "$stats" | grep -qE '[0-9]+ fuzzy|[0-9]+ untranslated'; then
+        echo "    $locale: $stats" >&2
+        FAILED=1
+    else
+        echo "    $locale: $stats"
+    fi
+done
+
+if [ "$FAILED" != "0" ]; then
+    echo "check-translations FAILED - fuzzy or untranslated messages against current source" >&2
+    exit 1
+fi
+
+echo "    ok"

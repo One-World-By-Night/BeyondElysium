@@ -1,4 +1,7 @@
-import { readStoredDisplayMode, writeStoredDisplayMode } from './powerDisplayMode';
+import {
+	readStoredDisplayMode,
+	writeStoredDisplayMode,
+} from './powerDisplayMode';
 
 beforeEach( () => {
 	window.localStorage.clear();
@@ -23,12 +26,16 @@ describe( 'readStoredDisplayMode', () => {
 describe( 'writeStoredDisplayMode', () => {
 	it( 'persists checklist mode', () => {
 		writeStoredDisplayMode( true );
-		expect( window.localStorage.getItem( 'be-power-display-mode' ) ).toBe( 'checklist' );
+		expect( window.localStorage.getItem( 'be-power-display-mode' ) ).toBe(
+			'checklist'
+		);
 	} );
 
 	it( 'persists stepper mode', () => {
 		writeStoredDisplayMode( false );
-		expect( window.localStorage.getItem( 'be-power-display-mode' ) ).toBe( 'stepper' );
+		expect( window.localStorage.getItem( 'be-power-display-mode' ) ).toBe(
+			'stepper'
+		);
 	} );
 
 	it( 'round-trips through readStoredDisplayMode', () => {

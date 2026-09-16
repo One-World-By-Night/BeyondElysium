@@ -3,6 +3,7 @@
 namespace BeyondElysium\Services;
 
 use BeyondElysium\Database\Manager;
+use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Creature_Stack;
@@ -42,15 +43,25 @@ class Rumor_Generator {
 	 * generated plots only when `$commit` is true; otherwise returns the
 	 * candidate list for preview.
 	 *
+	 * A commit holds the chronicle's row from reading the date's rumors to
+	 * writing its own, so two at once can't each find the date empty, and
+	 * writes every rumor - plot and tag - or none of them (1.0.0-review F-111).
+	 *
 	 * @param int    $game_id
 	 * @param string $game_date `Y-m-d`.
 	 * @param bool   $commit
-	 * @return array[] Each: title, category, target_query, description.
+	 * @return array[]|\WP_Error Each: title, category, target_query, description. An error when a commit could not write them, with nothing kept.
 	 */
-	public static function generate( int $game_id, string $game_date, bool $commit = false ): array {
+	public static function generate( int $game_id, string $game_date, bool $commit = false ) {
 		$game = Game::find( $game_id );
 		if ( ! $game ) {
 			return [];
+		}
+
+		$unit = $commit ? Transaction::begin( 'be_rumor_generate' ) : null;
+		if ( $unit !== null && ! Game::lock( $game->slug ) ) {
+			Transaction::rollback( $unit );
+			return self::not_saved();
 		}
 
 		$toggles = self::rumor_config( $game );
@@ -76,13 +87,18 @@ class Rumor_Generator {
 		}
 
 		// Active characters only, pre-resolved here so the candidate logic below stays pure.
+		$active     = Character::all_for_game( $game->slug, [ 'status' => 'active' ] );
+		$groups     = $toggles['group_rumors'] ? self::group_values( $active, 'group' ) : [];
+		$subgroups  = $toggles['subgroup_rumors'] ? self::group_values( $active, 'subgroup' ) : [];
 		$characters = [];
-		foreach ( Character::all_for_game( $game->slug, [ 'status' => 'active' ] ) as $character ) {
-			$stack           = Creature_Stack::find_by_slug( $character->stack_slug );
-			$characters[]    = [
+		foreach ( $active as $character ) {
+			$stack        = Creature_Stack::find_by_slug( $character->stack_slug );
+			$characters[] = [
 				'name'        => $character->name,
 				'stack_slug'  => $character->stack_slug,
 				'stack_label' => $stack->name ?? $character->stack_slug,
+				'group'       => $groups[ (int) $character->id ] ?? null,
+				'subgroup'    => $subgroups[ (int) $character->id ] ?? null,
 				'influences'  => self::character_influences( $character ),
 			];
 		}
@@ -91,23 +107,33 @@ class Rumor_Generator {
 			$candidates[] = $candidate;
 		}
 
-		if ( $commit ) {
+		if ( $unit !== null ) {
 			foreach ( $candidates as $candidate ) {
-				self::persist_one( $game_id, $game_date, $candidate );
+				if ( ! self::persist_one( $game_id, $game_date, $candidate ) ) {
+					Transaction::rollback( $unit );
+					return self::not_saved();
+				}
 			}
+			Transaction::commit( $unit );
 		}
 
 		return $candidates;
 	}
 
 	/**
-	 * Generates personal, race, and influence rumor candidates per character.
-	 * Pure - no database access. `$characters` entries are
-	 * `{name, stack_slug, stack_label, influences}`, already filtered to active
-	 * characters and pre-resolved by the caller.
-	 *
-	 * `group_rumors`/`subgroup_rumors` are recognized config toggles but produce
-	 * no candidates here: characters carry no group/subgroup data to query against.
+	 * @return \WP_Error
+	 */
+	private static function not_saved(): \WP_Error {
+		return new \WP_Error( 'generate_failed', __( 'The rumors could not be saved. Nothing was changed.', 'beyond-elysium' ), [ 'status' => 500 ] );
+	}
+
+	/**
+	 * Generates personal, race, group, subgroup, and influence rumor candidates
+	 * per character, in Grapevine's order. Pure - no database access.
+	 * `$characters` entries are `{name, stack_slug, stack_label, group,
+	 * subgroup, influences}`, already filtered to active characters and
+	 * pre-resolved by the caller; `group`/`subgroup` are `{field, label, value}`
+	 * or null for a creature type without one (`group_values()`).
 	 *
 	 * @param array[] $characters
 	 * @param array   $toggles
@@ -132,6 +158,20 @@ class Rumor_Generator {
 				] );
 			}
 
+			// A group or subgroup rumor is titled with the value itself ("Brujah", "Camarilla"),
+			// as Grapevine titles it; a bare number says nothing on its own, so it carries its
+			// field ("Rank 2").
+			foreach ( [ 'group' => 'group_rumors', 'subgroup' => 'subgroup_rumors' ] as $kind => $toggle ) {
+				$held = $character[ $kind ] ?? null;
+				if ( ! $toggles[ $toggle ] || $held === null || $held['value'] === '' ) {
+					continue;
+				}
+				$title = ctype_digit( $held['value'] ) ? "{$held['label']} {$held['value']}" : $held['value'];
+				self::add_candidate( $candidates, $existing, $title, $kind, [
+					'field' => $held['field'], 'operator' => 'equals', 'value' => $held['value'],
+				] );
+			}
+
 			if ( $toggles['influence_rumors'] ) {
 				foreach ( $character['influences'] as $influence_name ) {
 					self::add_candidate( $candidates, $existing, "{$influence_name} Influence", 'influence', [
@@ -142,6 +182,47 @@ class Rumor_Generator {
 		}
 
 		return $candidates;
+	}
+
+	/** @var array<string,array{group:?string,subgroup:?string}>|null */
+	private static ?array $group_map = null;
+
+	/**
+	 * Each character's group or subgroup - the field `rumor-group-map.php`
+	 * names for its creature type, read through the query engine so a
+	 * chronicle's own blocks and a field shared by several types (Auspice)
+	 * resolve the same way a rumor's target will. A character whose type has
+	 * no such field is left out.
+	 *
+	 * @param object[] $characters
+	 * @param string   $which 'group' | 'subgroup'.
+	 * @return array<int,array{field:string,label:string,value:string}> Keyed by character id.
+	 */
+	private static function group_values( array $characters, string $which ): array {
+		if ( self::$group_map === null ) {
+			self::$group_map = require __DIR__ . '/rumor-group-map.php';
+		}
+
+		$by_field = [];
+		foreach ( $characters as $character ) {
+			$field = self::$group_map[ (string) $character->stack_slug ][ $which ] ?? null;
+			if ( $field !== null ) {
+				$by_field[ $field ][] = $character;
+			}
+		}
+
+		$values = [];
+		foreach ( $by_field as $field => $rows ) {
+			$label = Field_Registry::get( $field )['title'] ?? $field;
+			foreach ( Query_Engine::values_for( $rows, $field ) as $index => $value ) {
+				$values[ (int) $rows[ $index ]->id ] = [
+					'field' => $field,
+					'label' => (string) $label,
+					'value' => is_scalar( $value ) ? trim( (string) $value ) : '',
+				];
+			}
+		}
+		return $values;
 	}
 
 	/**
@@ -245,9 +326,9 @@ class Rumor_Generator {
 	 * @param int    $game_id
 	 * @param string $game_date
 	 * @param array  $candidate
-	 * @return int Plot ID.
+	 * @return bool False when the plot or its tag could not be written.
 	 */
-	private static function persist_one( int $game_id, string $game_date, array $candidate ): int {
+	private static function persist_one( int $game_id, string $game_date, array $candidate ): bool {
 		$plot_id = Plot::create( [
 			'game_id'      => $game_id,
 			'title'        => $candidate['title'],
@@ -258,9 +339,7 @@ class Rumor_Generator {
 			'created_by'   => get_current_user_id(),
 		] );
 
-		self::tag_as_rumor( $plot_id, $game_id );
-
-		return $plot_id;
+		return $plot_id !== false && self::tag_as_rumor( $plot_id, $game_id );
 	}
 
 	/**
@@ -271,10 +350,10 @@ class Rumor_Generator {
 	 *
 	 * @param int $plot_id
 	 * @param int $game_id
-	 * @return void
+	 * @return bool False when the tag could not be written.
 	 */
-	public static function tag_as_rumor( int $plot_id, int $game_id ): void {
-		Connection::create( [
+	public static function tag_as_rumor( int $plot_id, int $game_id ): bool {
+		return false !== Connection::create( [
 			'game_id'     => $game_id,
 			'source_type' => 'plot',
 			'source_id'   => $plot_id,

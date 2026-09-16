@@ -6,11 +6,13 @@
  */
 import { __ } from '@wordpress/i18n';
 import type { IdentityFieldDefinition } from '../../types';
+import { identityValueText } from '../../lib/identityValue';
 import './IdentityFieldRenderer.css';
 
 export interface IdentityFieldRendererProps {
 	blockSlug: string;
-	data: Record<string, string | number | null | undefined>;
+	/** A multiselect field holds a list of its choices. */
+	data: Record< string, string | number | string[] | null | undefined >;
 	definition: IdentityFieldDefinition;
 }
 
@@ -20,12 +22,17 @@ export interface IdentityFieldRendererProps {
  * label with an em-dash value, so a half-filled sheet reads as a sheet
  * rather than a shorter one.
  */
-export function IdentityFieldRenderer( { blockSlug, data, definition }: IdentityFieldRendererProps ) {
+export function IdentityFieldRenderer( {
+	blockSlug,
+	data,
+	definition,
+}: IdentityFieldRendererProps ) {
 	return (
 		<dl className="be-identity-fields" data-block-slug={ blockSlug }>
 			{ definition.fields.map( ( field ) => {
-				const value = data[ field.name ];
-				const display = value === undefined || value === null || value === '' ? __( '—', 'beyond-elysium' ) : String( value );
+				const display =
+					identityValueText( data[ field.name ] ) ??
+					__( '—', 'beyond-elysium' );
 
 				return (
 					<div className="be-identity-fields__row" key={ field.name }>

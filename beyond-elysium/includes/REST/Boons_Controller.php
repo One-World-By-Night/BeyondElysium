@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
@@ -71,22 +72,25 @@ class Boons_Controller extends Base_Controller {
 			return $game;
 		}
 
-		$boons = World_Object::for_game( (int) $game->id, [ 'object_type' => 'boon', 'orderby' => 'created_at', 'order' => 'DESC' ] );
+		$boons      = World_Object::for_game( (int) $game->id, [ 'object_type' => 'boon', 'orderby' => 'created_at', 'order' => 'DESC' ] );
+		$can_manage = \BeyondElysium\Core\Authorization::can( 'be_manage_boons' );
+		foreach ( $boons as $boon ) {
+			\BeyondElysium\Services\St_Visibility::filter_world_object( $boon, $game, $can_manage );
+		}
 
 		$level          = $request->get_param( 'level' );
 		$status         = $request->get_param( 'status' );
 		$character_id   = $request->get_param( 'character_id' );
 
+		$boons = array_values( array_filter( $boons, static function ( $boon ) use ( $level, $status ) {
+			return ( ! $level || ( $boon->properties['boon_level'] ?? '' ) === $level )
+				&& ( ! $status || ( $boon->properties['status'] ?? 'outstanding' ) === $status );
+		} ) );
+		$parties_by_boon = $this->parties_by_boon( array_map( static fn( $boon ) => (int) $boon->id, $boons ) );
+
 		$ledger = [];
 		foreach ( $boons as $boon ) {
-			if ( $level && ( $boon->properties['boon_level'] ?? '' ) !== $level ) {
-				continue;
-			}
-			if ( $status && ( $boon->properties['status'] ?? 'outstanding' ) !== $status ) {
-				continue;
-			}
-
-			$parties = $this->resolve_parties( (int) $boon->id );
+			$parties = $parties_by_boon[ (int) $boon->id ] ?? null;
 			if ( $parties === null ) {
 				continue;
 			}
@@ -114,40 +118,58 @@ class Boons_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Resolves a boon's two connections into owed_by/owed_to character summaries.
+	 * Resolves each boon's two connections into owed_by/owed_to character summaries.
 	 *
-	 * Walks the boon's `world_object` connections and picks out the one
-	 * labeled `owed_by` and the one labeled `owed_to`, each reduced to an
-	 * id/name pair. Returns null if the boon does not have exactly one of
-	 * each.
+	 * Reads every boon's `owed_by` and `owed_to` connections in one query and
+	 * their characters' names in one more, rather than three queries a boon
+	 * (1.0.0-review F-093). Each summary is an id/name pair; a boon missing
+	 * either party, or whose character is gone, has no entry.
 	 *
-	 * @param int $boon_id
-	 * @return array{owed_by: array, owed_to: array}|null
+	 * @param int[] $boon_ids
+	 * @return array<int,array{owed_by: array, owed_to: array}> Keyed by boon id.
 	 */
-	private function resolve_parties( int $boon_id ): ?array {
-		$owed_by = null;
-		$owed_to = null;
+	private function parties_by_boon( array $boon_ids ): array {
+		if ( $boon_ids === [] ) {
+			return [];
+		}
 
-		foreach ( Connection::for_source( 'world_object', $boon_id ) as $connection ) {
-			if ( $connection->target_type !== 'character' || $connection->target_id === null ) {
-				continue;
-			}
-			$character = Character::find( (int) $connection->target_id );
-			if ( ! $character ) {
-				continue;
-			}
-			$summary = [ 'id' => $character->id, 'name' => $character->name ];
-			if ( $connection->label === self::OWED_BY_LABEL ) {
-				$owed_by = $summary;
-			} elseif ( $connection->label === self::OWED_TO_LABEL ) {
-				$owed_to = $summary;
+		global $wpdb;
+		$connections = $wpdb->get_results( $wpdb->prepare(
+			'SELECT source_id, target_id, label FROM ' . \BeyondElysium\Database\Manager::table( 'connections' ) . "
+			 WHERE source_type = 'world_object' AND target_type = 'character' AND target_id IS NOT NULL
+			   AND label IN (%s, %s) AND source_id IN (" . implode( ',', array_fill( 0, count( $boon_ids ), '%d' ) ) . ')
+			 ORDER BY created_at DESC',
+			array_merge( [ self::OWED_BY_LABEL, self::OWED_TO_LABEL ], $boon_ids )
+		) ) ?: [];
+
+		$character_ids = array_values( array_unique( array_map( static fn( $row ) => (int) $row->target_id, $connections ) ) );
+		$names         = [];
+		if ( $character_ids !== [] ) {
+			$rows = $wpdb->get_results( $wpdb->prepare(
+				'SELECT id, name FROM ' . \BeyondElysium\Database\Manager::table( 'characters' ) . ' WHERE id IN (' . implode( ',', array_fill( 0, count( $character_ids ), '%d' ) ) . ')',
+				$character_ids
+			) ) ?: [];
+			foreach ( $rows as $row ) {
+				$names[ (int) $row->id ] = $row;
 			}
 		}
 
-		if ( $owed_by === null || $owed_to === null ) {
-			return null;
+		$sides = [];
+		foreach ( $connections as $connection ) {
+			$character = $names[ (int) $connection->target_id ] ?? null;
+			if ( $character !== null ) {
+				// A number, as the ledger compares it with the character it's scoped to (F-094).
+				$sides[ (int) $connection->source_id ][ $connection->label ] = [ 'id' => (int) $character->id, 'name' => $character->name ];
+			}
 		}
-		return [ 'owed_by' => $owed_by, 'owed_to' => $owed_to ];
+
+		$parties = [];
+		foreach ( $sides as $boon_id => $side ) {
+			if ( isset( $side[ self::OWED_BY_LABEL ], $side[ self::OWED_TO_LABEL ] ) ) {
+				$parties[ $boon_id ] = [ 'owed_by' => $side[ self::OWED_BY_LABEL ], 'owed_to' => $side[ self::OWED_TO_LABEL ] ];
+			}
+		}
+		return $parties;
 	}
 
 	/**
@@ -191,9 +213,7 @@ class Boons_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'owed_to_character_id does not exist in this game.', 'beyond-elysium' ), 400 );
 		}
 
-		global $wpdb;
-		$nested = (int) $wpdb->get_var( 'SELECT @@autocommit' ) === 0;
-		$wpdb->query( $nested ? 'SAVEPOINT be_boon_create' : 'START TRANSACTION' );
+		$savepoint = Transaction::begin( 'be_boon_create' );
 
 		$boon_id = World_Object::create( [
 			'game_id'     => (int) $game->id,
@@ -221,15 +241,15 @@ class Boons_Controller extends Base_Controller {
 		] ) : false;
 
 		if ( ! $boon_id || ! $first || ! $second ) {
-			$wpdb->query( $nested ? 'ROLLBACK TO SAVEPOINT be_boon_create' : 'ROLLBACK' );
+			Transaction::rollback( $savepoint );
 			return $this->error( 'create_failed', __( 'Failed to create this boon.', 'beyond-elysium' ), 500 );
 		}
 
-		$wpdb->query( $nested ? 'RELEASE SAVEPOINT be_boon_create' : 'COMMIT' );
+		Transaction::commit( $savepoint );
 
 		return $this->success( array_merge(
 			(array) World_Object::find( (int) $boon_id ),
-			[ 'owed_by' => [ 'id' => $debtor->id, 'name' => $debtor->name ], 'owed_to' => [ 'id' => $creditor->id, 'name' => $creditor->name ] ]
+			[ 'owed_by' => [ 'id' => (int) $debtor->id, 'name' => $debtor->name ], 'owed_to' => [ 'id' => (int) $creditor->id, 'name' => $creditor->name ] ]
 		), 201 );
 	}
 
@@ -265,7 +285,9 @@ class Boons_Controller extends Base_Controller {
 			$properties['repaid_note'] = sanitize_textarea_field( (string) $note );
 		}
 
-		World_Object::update( (int) $boon->id, [ 'properties' => $properties ] );
+		if ( ! World_Object::update( (int) $boon->id, [ 'properties' => $properties ] ) ) {
+			return $this->error( 'save_failed', __( 'Failed to mark this boon repaid.', 'beyond-elysium' ), 500 );
+		}
 		return $this->success( World_Object::find( (int) $boon->id ) );
 	}
 

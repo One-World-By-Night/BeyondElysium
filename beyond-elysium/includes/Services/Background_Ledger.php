@@ -3,10 +3,8 @@
 namespace BeyondElysium\Services;
 
 use BeyondElysium\Database\Manager;
+use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Character;
-use BeyondElysium\Models\Connection;
-use BeyondElysium\Models\Game;
-use BeyondElysium\Models\Plot;
 use BeyondElysium\Models\Plot_Entry;
 
 defined( 'ABSPATH' ) || exit;
@@ -29,8 +27,10 @@ class Background_Ledger {
 	 * Every background a character holds with count > 0, each annotated with
 	 * its catalog source and, when the character's single most recent
 	 * allocation granted it a subaction, that subaction's current unused
-	 * budget. A character whose stack has no backgrounds block at all (e.g.
-	 * `bete`) returns an empty array, not an error.
+	 * budget - led by Personal actions whenever that allocation granted them,
+	 * which every character gets without holding anything (1.0.0-review F-105).
+	 * A character whose stack has no backgrounds block at all (e.g. `bete`)
+	 * and no allocation returns an empty array, not an error.
 	 *
 	 * @param int $character_id
 	 * @return array[] {name, block_slug, level, source, budget_total, budget_name}
@@ -40,14 +40,6 @@ class Background_Ledger {
 		if ( ! $character ) {
 			return [];
 		}
-
-		$backgrounds_slug = "{$character->stack_slug}-backgrounds";
-		$held             = $character->sheet_data[ $backgrounds_slug ] ?? [];
-		if ( empty( $held ) ) {
-			return [];
-		}
-
-		$sources = Backgrounds_Catalog::sources_for( $backgrounds_slug, $character->owner_slug );
 
 		// The stored allocator entry's own `unused` only reflects ledger spends as of the
 		// last persist() call - re-applying apply_spends() here against that same plot's
@@ -64,6 +56,25 @@ class Background_Ledger {
 		}
 
 		$result = [];
+		if ( isset( $budget_by_name[ Action_Allocator::PERSONAL_NAME ] ) ) {
+			$result[] = [
+				'name'         => Action_Allocator::PERSONAL_NAME,
+				'block_slug'   => null,
+				'level'        => 0,
+				'source'       => '',
+				'budget_total' => $budget_by_name[ Action_Allocator::PERSONAL_NAME ]['unused'] ?? null,
+				'budget_name'  => Action_Allocator::PERSONAL_NAME,
+			];
+		}
+
+		$backgrounds_slug = "{$character->stack_slug}-backgrounds";
+		$held             = $character->sheet_data[ $backgrounds_slug ] ?? [];
+		if ( empty( $held ) ) {
+			return $result;
+		}
+
+		$sources = Backgrounds_Catalog::sources_for( $backgrounds_slug, $character->owner_slug );
+
 		foreach ( $held as $trait ) {
 			$name = $trait['name'] ?? '';
 			if ( $name === '' ) {
@@ -103,7 +114,9 @@ class Background_Ledger {
 			if ( $name === '' ) {
 				continue;
 			}
-			$spent_by_name[ $name ] = ( $spent_by_name[ $name ] ?? 0 ) + (int) ( $entry['cost'] ?? 1 );
+			// Floored here, where it is read, not only where record() writes it: a stored cost
+			// below one must never hand uses back (1.0.0-review F-038).
+			$spent_by_name[ $name ] = ( $spent_by_name[ $name ] ?? 0 ) + max( 1, (int) ( $entry['cost'] ?? 1 ) );
 		}
 
 		$budgeted = [];
@@ -213,25 +226,15 @@ class Background_Ledger {
 			$level = (int) ( $held_trait['count'] ?? 0 );
 		}
 
-		$plot_id = Action_Allocator::find_own_plot_id( $character_id, $game_date );
-		if ( ! $plot_id ) {
-			$game    = Game::find_by_slug( $character->owner_slug );
-			$plot_id = Plot::create( [
-				'game_id'      => (int) $game->id,
-				'title'        => "{$game_date} {$character->name}",
-				'initiated_by' => 'player',
-				'game_date'    => $game_date,
-				'created_by'   => get_current_user_id(),
-			] );
-			Connection::create( [
-				'game_id'     => (int) $game->id,
-				'source_type' => 'plot',
-				'source_id'   => $plot_id,
-				'target_type' => 'character',
-				'target_id'   => $character_id,
-				'label'       => Action_Allocator::ACTOR_LABEL,
-				'created_by'  => get_current_user_id(),
-			] );
+		// The use, and the date's plot when it's the first, land together or not at all; the
+		// character's row keeps an allocation from making a second plot meanwhile (F-091).
+		$unit = Transaction::begin( 'be_ledger_record' );
+		Character::lock( $character_id );
+		$plot_id = Action_Allocator::find_own_plot_id( $character_id, $game_date )
+			?? Action_Allocator::create_own_plot( $character, $game_date );
+		if ( $plot_id === null ) {
+			Transaction::rollback( $unit );
+			return new \WP_Error( 'record_failed', __( 'The background use could not be saved.', 'beyond-elysium' ), [ 'status' => 500 ] );
 		}
 
 		$content = [
@@ -254,8 +257,13 @@ class Background_Ledger {
 			'content'    => wp_json_encode( $content ),
 			'event_date' => $game_date,
 		] );
+		if ( ! $entry_id ) {
+			Transaction::rollback( $unit );
+			return new \WP_Error( 'record_failed', __( 'The background use could not be saved.', 'beyond-elysium' ), [ 'status' => 500 ] );
+		}
+		Transaction::commit( $unit );
 
-		$decoded             = self::decode_ledger_entry( (int) $entry_id, wp_json_encode( $content ) );
+		$decoded             = self::decode_ledger_entry( (int) $entry_id, (string) wp_json_encode( $content ) );
 		$decoded['plot_id']  = $plot_id;
 		return $decoded;
 	}

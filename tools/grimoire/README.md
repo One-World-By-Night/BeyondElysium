@@ -1,7 +1,7 @@
 # Grimoire extractor
 
 Offline, one-time tooling that produced `beyond-elysium/data/grimoire-rotes.csv`
-from `data-samples/Enlightened_Grimoire.pdf` (a Storytellers Vault title, never
+from `samples/data/Enlightened_Grimoire.pdf` (a Storytellers Vault title, never
 committed, never shipped - see `BE_PROCESS/mage-rotes-grimoire-design.md` §8.1).
 Not part of the plugin, not run at runtime, not run by `bin/verify`. Kept here so
 the method is reproducible and reviewable, not because it runs again on its own.
@@ -45,5 +45,5 @@ unmerged, never guessed).
 ## Re-running
 
 The PDF and its raw extracted text never get committed - keep them in
-`data-samples/` (gitignored) and `tools/grimoire/out/` (also gitignored) if
+`samples/data/` (gitignored) and `tools/grimoire/out/` (also gitignored) if
 you re-run this by hand.

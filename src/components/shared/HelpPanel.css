@@ -1,0 +1,169 @@
+/*
+ * The help `?` and its side panel (1.0.0-help.md H-1). The panel sits under the admin bar, over
+ * the screen's right edge and any open dialog, and leaves the rest of the screen usable.
+ */
+.be-help-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.be-help-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 1.75rem;
+	height: 1.75rem;
+	padding: 0;
+	border: 1px solid #c3c4c7;
+	border-radius: 50%;
+	background: #fff;
+	color: #1d2327;
+	font-size: 0.9rem;
+	font-weight: 600;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.be-help-button:hover {
+	border-color: #1a4f9c;
+}
+
+.be-help-button[aria-expanded="true"] {
+	border-color: #1a4f9c;
+	background: #1a4f9c;
+	color: #fff;
+}
+
+.be-help-panel {
+	position: fixed;
+	top: var(--wp-admin--admin-bar--height, 0);
+	right: 0;
+	bottom: 0;
+	z-index: 100001;
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	width: min(28rem, 100vw);
+	background: #fff;
+	color: #1d2327;
+	box-shadow: -4px 0 24px rgba(0, 0, 0, 0.2);
+	animation: be-help-panel-in 0.18s ease-out;
+}
+
+@keyframes be-help-panel-in {
+
+	from {
+		transform: translateX(100%);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.be-help-panel {
+		animation: none;
+	}
+}
+
+.be-help-panel__header {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.75rem 1rem;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.be-help-panel__title {
+	flex: 1 1 auto;
+	margin: 0;
+	font-size: 1.15rem;
+	line-height: 1.3;
+}
+
+.be-help-panel__title:focus {
+	outline: none;
+}
+
+.be-help-panel .be-help-panel__back,
+.be-help-panel .be-help-panel__close {
+	flex: 0 0 auto;
+	padding: 0.25rem 0.6rem;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	background: #fff;
+	color: #1d2327;
+	font-size: 0.9rem;
+	line-height: 1.2;
+	cursor: pointer;
+}
+
+.be-help-panel .be-help-panel__close {
+	font-size: 1.25rem;
+}
+
+.be-help-panel__body {
+	flex: 1 1 auto;
+	overflow-y: auto;
+	padding: 0.5rem 1rem 2rem;
+	font-size: 14px;
+	line-height: 1.55;
+	overflow-wrap: anywhere;
+}
+
+.be-help-panel__body h3 {
+	margin: 1.5rem 0 0.5rem;
+	font-size: 1.05rem;
+}
+
+.be-help-panel__body h4 {
+	margin: 1.25rem 0 0.4rem;
+	font-size: 0.95rem;
+}
+
+.be-help-panel__body code {
+	padding: 0 0.25em;
+	border-radius: 3px;
+	background: #f0f0f1;
+}
+
+.be-help-panel__body pre {
+	white-space: pre-wrap;
+}
+
+/* A table reads as cards, one per row with each cell under its column's name: the panel is too
+ * narrow for columns, and nothing in it scrolls sideways. Two classes, to outrank a theme's
+ * striped `table tbody > tr:nth-child(odd) > td` (1.0.0-review F-019). */
+.be-help-panel .be-help-panel__body table,
+.be-help-panel .be-help-panel__body tbody,
+.be-help-panel .be-help-panel__body tr,
+.be-help-panel .be-help-panel__body td {
+	display: block;
+	width: auto;
+	border: 0;
+	background: transparent;
+}
+
+.be-help-panel .be-help-panel__body thead {
+	display: none;
+}
+
+.be-help-panel .be-help-panel__body tr {
+	margin: 0 0 0.5rem;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+}
+
+.be-help-panel .be-help-panel__body td {
+	padding: 0.15rem 0;
+}
+
+.be-help-panel .be-help-panel__body td::before {
+	content: attr(data-label);
+	display: block;
+	color: #50575e;
+	font-size: 12px;
+	font-weight: 600;
+}

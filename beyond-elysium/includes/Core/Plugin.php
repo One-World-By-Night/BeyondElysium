@@ -33,6 +33,9 @@ class Plugin {
 		Print_Canvas::register();
 		Chronicle_Sync::register();
 		Shortcodes::register();
+		Maintenance::register();
+		\BeyondElysium\REST\Url_Param_Guard::register();
+		Authorization::register();
 
 		// Cleans up be_game_members rows when a user is deleted, single-site or multisite.
 		add_action( 'deleted_user', [ '\BeyondElysium\Models\Game_Member', 'remove_user_everywhere' ] );
@@ -93,6 +96,8 @@ class Plugin {
 			// already resolve the UI-chrome strings. Drives which catalog item name a
 			// renderer shows (name vs name_pt); never the value stored or matched against.
 			'locale'   => get_locale(),
+			// The Approval Queue's own waiting-sheets pointer (F-122) links here.
+			'importPageUrl' => admin_url( 'admin.php?page=beyond-elysium-import' ),
 			// UI affordance only; every REST route enforces its own capability check server-side.
 			'capabilities' => [
 				'be_manage_plots'         => current_user_can( 'be_manage_plots' ),
@@ -166,6 +171,7 @@ class Plugin {
 			new \BeyondElysium\REST\Export_Controller(),
 			new \BeyondElysium\REST\Verify_Controller(),
 			new \BeyondElysium\REST\Transfers_Controller(),
+			new \BeyondElysium\REST\Submissions_Controller(),
 			new \BeyondElysium\REST\Sheets_Controller(),
 			new \BeyondElysium\REST\Reports_Controller(),
 			new \BeyondElysium\REST\Point_Audit_Controller(),

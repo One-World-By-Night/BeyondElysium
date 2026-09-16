@@ -23,9 +23,17 @@
  *             `email`/`phone`/`address` entries are `unmapped` for exactly
  *             this reason.
  *   plot      From `Models\Plot`/`Plot_Entry`, filtered by entry type.
+ *   boons     A character's outstanding boons, naming the other party.
+ *   equipment The items a character holds, through its world-object connections.
  *   unmapped  No BE equivalent yet. Rendered as an explicit `—` with the
  *             report's own footnote, never guessed (point-calculator-design.md
  *             §4.5's honesty contract, applied here).
+ *
+ * `capability` names who may run a report in a chronicle (1.0.0-review F-047).
+ * Left out, a report is a Storyteller's (`be_manage_characters`) - every
+ * character and player report relies on that default. Plot, action, and rumor
+ * reports are `be_manage_plots`; `null` opens a report to every member
+ * (catalog cards, the calendar, House Rules).
  *
  * @see BE_PROCESS/reports-cards-batch-design.md
  */
@@ -86,7 +94,8 @@ return [
 			[ 'Match', 'matchvalue', 'special' ],
 			[ 'Sort Value', 'sortvalue', 'special' ],
 		],
-		'sort' => 'sortvalue',
+		// The sort the report actually applies; Sort Value shows it (1.0.0-review F-074).
+		'sort' => 'name',
 	],
 
 	'statistics-report' => [
@@ -121,12 +130,14 @@ return [
 		'title'   => 'Vampire Status Report',
 		'shape'   => 'table',
 		'entity'  => 'char',
+		// Grapevine's own columns (Templates/Text/Vampire Status Report.txt); the Group, Date, and
+		// Description this report carried had nothing behind them (1.0.0-review F-072).
 		'columns' => [
 			[ 'Name', 'name', 'field' ],
+			[ 'Title', 'title', 'field' ],
+			[ 'Clan', 'clan', 'field' ],
 			[ 'Status', 'status', 'field' ],
-			[ 'Group', 'group', 'unmapped' ],
-			[ 'Date', 'date', 'ledger' ],
-			[ 'Description', 'description', 'unmapped' ],
+			[ 'Boons', 'boons', 'boons' ],
 		],
 		'sort' => 'name',
 	],
@@ -164,6 +175,7 @@ return [
 	// -- card ------------------------------------------------------------------------
 
 	'item-cards' => [
+		'capability' => null,
 		'title'   => 'Item Cards',
 		'shape'   => 'card',
 		'entity'  => 'item',
@@ -183,6 +195,7 @@ return [
 	],
 
 	'rote-cards' => [
+		'capability' => null,
 		'title'   => 'Rote Cards',
 		'shape'   => 'card',
 		'entity'  => 'rote',
@@ -197,6 +210,7 @@ return [
 	],
 
 	'location-cards' => [
+		'capability' => null,
 		'title'   => 'Location Cards',
 		'shape'   => 'card',
 		'entity'  => 'loc',
@@ -226,7 +240,7 @@ return [
 		'entity'  => 'char',
 		'columns' => [
 			[ 'Character', 'charname', 'special' ],
-			[ 'Item', 'equipment', 'unmapped' ],
+			[ 'Item', 'equipment', 'equipment' ],
 		],
 	],
 
@@ -240,6 +254,7 @@ return [
 	// resolver branches on this registry value, not on a real shared column.
 
 	'plot-report' => [
+		'capability' => 'be_manage_plots',
 		'title'   => 'Plot Report',
 		'shape'   => 'narrative',
 		'entity'  => 'plot',
@@ -247,6 +262,7 @@ return [
 	],
 
 	'master-action-report' => [
+		'capability' => 'be_manage_plots',
 		'title'   => 'Master Action Report',
 		'shape'   => 'table',
 		'entity'  => 'plot',
@@ -257,13 +273,14 @@ return [
 			[ 'Type', 'type', 'plot' ],
 			[ 'Action', 'action', 'plot' ],
 			[ 'Result', 'result', 'plot' ],
-			[ 'Total', 'total', 'unmapped' ],
-			[ 'Growth', 'growth', 'unmapped' ],
-			[ 'Unused', 'unused', 'unmapped' ],
+			[ 'Total', 'total', 'plot' ],
+			[ 'Growth', 'growth', 'plot' ],
+			[ 'Unused', 'unused', 'plot' ],
 		],
 	],
 
 	'master-rumor-report' => [
+		'capability' => 'be_manage_plots',
 		'title'   => 'Master Rumor Report',
 		'shape'   => 'table',
 		'entity'  => 'plot',
@@ -276,6 +293,7 @@ return [
 	],
 
 	'action-and-rumor-report' => [
+		'capability' => 'be_manage_plots',
 		'title'   => 'Action and Rumor Report',
 		'shape'   => 'table',
 		'entity'  => 'plot',
@@ -287,13 +305,14 @@ return [
 			[ 'Action', 'action', 'plot' ],
 			[ 'Rumor', 'rumor', 'plot' ],
 			[ 'Result', 'result', 'plot' ],
-			[ 'Total', 'total', 'unmapped' ],
+			[ 'Total', 'total', 'plot' ],
 		],
 	],
 
 	// -- calendar (no real data source yet - §5 of the design doc) ---------------------
 
 	'game-calendar' => [
+		'capability' => null,
 		'title'      => 'Game Calendar',
 		'shape'      => 'calendar',
 		'entity'     => 'none',
@@ -307,6 +326,7 @@ return [
 	// character/plot/etc.) ------------------------------------------------------------
 
 	'house-rules' => [
+		'capability' => null,
 		'title'  => 'House Rules',
 		'shape'  => 'house_rules',
 		'entity' => 'none',

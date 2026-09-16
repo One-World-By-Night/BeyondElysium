@@ -12,7 +12,7 @@ describe( 'groupTraitsByField — parity with Trait_Grouping::group_traits_by_fi
 	input.groupTraitsByField.forEach( ( testCase, i ) => {
 		it( `matches the shared fixture: ${ testCase.case }`, () => {
 			const result = groupTraitsByField(
-				testCase.data as unknown as Array<{ name: string }>,
+				testCase.data as unknown as Array< { name: string } >,
 				testCase.definition as unknown as TraitListDefinition
 			);
 			expect( result ).toEqual( expected.groupTraitsByField[ i ] );

@@ -67,7 +67,7 @@ class AiAssistThreadTest extends WP_UnitTestCase {
 		update_option( Ai_Assist::SITE_OPENAI_KEY_OPTION, Ai_Assist::encrypt( 'sk-site-openai' ) );
 
 		$resolved = Ai_Assist::resolve_key( null );
-		$this->assertSame( [ 'provider' => 'openai', 'key' => 'sk-site-openai', 'base_url' => '', 'model' => '' ], $resolved );
+		$this->assertSame( [ 'provider' => 'openai', 'key' => 'sk-site-openai', 'scope' => 'site', 'base_url' => '', 'model' => '' ], $resolved );
 	}
 
 	public function test_a_chronicle_that_has_not_opted_in_gets_nothing_even_with_a_site_key(): void {
@@ -80,7 +80,7 @@ class AiAssistThreadTest extends WP_UnitTestCase {
 		Game::update( $this->game_slug, [ 'settings' => [ 'ai_assist_enabled' => true ] ] );
 
 		$resolved = Ai_Assist::resolve_key( $this->game_slug );
-		$this->assertSame( [ 'provider' => 'openai', 'key' => 'sk-site-openai', 'base_url' => '', 'model' => '' ], $resolved );
+		$this->assertSame( [ 'provider' => 'openai', 'key' => 'sk-site-openai', 'scope' => 'site', 'base_url' => '', 'model' => '' ], $resolved );
 	}
 
 	public function test_a_chronicles_own_key_wins_over_the_site_key(): void {
@@ -91,7 +91,7 @@ class AiAssistThreadTest extends WP_UnitTestCase {
 		] ] );
 
 		$resolved = Ai_Assist::resolve_key( $this->game_slug );
-		$this->assertSame( [ 'provider' => 'openai', 'key' => 'sk-chronicle-own', 'base_url' => '', 'model' => '' ], $resolved );
+		$this->assertSame( [ 'provider' => 'openai', 'key' => 'sk-chronicle-own', 'base_url' => '', 'model' => '', 'scope' => 'chronicle' ], $resolved );
 	}
 
 	public function test_a_chronicle_can_choose_claude_independent_of_the_site_default(): void {
@@ -103,7 +103,7 @@ class AiAssistThreadTest extends WP_UnitTestCase {
 		] ] );
 
 		$resolved = Ai_Assist::resolve_key( $this->game_slug );
-		$this->assertSame( [ 'provider' => 'claude', 'key' => 'sk-ant-chronicle', 'base_url' => '', 'model' => '' ], $resolved );
+		$this->assertSame( [ 'provider' => 'claude', 'key' => 'sk-ant-chronicle', 'base_url' => '', 'model' => '', 'scope' => 'chronicle' ], $resolved );
 	}
 
 	public function test_site_wide_call_picks_up_the_site_wide_base_url_and_model_override(): void {

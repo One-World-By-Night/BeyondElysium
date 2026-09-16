@@ -25,24 +25,45 @@ interface ErrorBoundaryState {
  * component, since React has no hook equivalent for `componentDidCatch`/
  * `getDerivedStateFromError`.
  */
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+	ErrorBoundaryProps,
+	ErrorBoundaryState
+> {
 	state: ErrorBoundaryState = { error: null };
 
 	static getDerivedStateFromError( error: Error ): ErrorBoundaryState {
 		return { error };
 	}
 
-	componentDidCatch( error: Error, info: { componentStack?: string | null } ): void {
+	componentDidCatch(
+		error: Error,
+		info: { componentStack?: string | null }
+	): void {
 		// eslint-disable-next-line no-console
-		console.error( `[BE] "${ this.props.label }" crashed:`, error, info.componentStack );
+		console.error(
+			`[BE] "${ this.props.label }" crashed:`,
+			error,
+			info.componentStack
+		);
 	}
 
 	render(): ReactNode {
 		if ( this.state.error ) {
 			return (
 				<div className="be-error-boundary" role="alert">
-					<p>{ sprintf( __( 'Something went wrong loading "%1$s".', 'beyond-elysium' ), this.props.label ) }</p>
-					<p className="be-error-boundary__detail">{ this.state.error.message }</p>
+					<p>
+						{ sprintf(
+							/* translators: %1$s: the label of the widget or panel that crashed */
+							__(
+								'Something went wrong loading "%1$s".',
+								'beyond-elysium'
+							),
+							this.props.label
+						) }
+					</p>
+					<p className="be-error-boundary__detail">
+						{ this.state.error.message }
+					</p>
 				</div>
 			);
 		}

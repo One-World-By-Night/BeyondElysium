@@ -33,7 +33,7 @@ class ChangeEngineBylawReasonTest extends WP_UnitTestCase {
 					[ 'name' => 'Plain Item' ],
 					[ 'name' => 'Reason Only Item', 'reason' => 'Requires Tremere Coordinator approval.' ],
 					[ 'name' => 'Reason Plus Auto Item', 'approval' => 'auto', 'reason' => 'Requires Ravnos Coordinator approval.' ],
-					[ 'name' => 'Reason Plus Coordinator Item', 'approval' => 'coordinator', 'reason' => 'Disallowed per Character Bylaws.' ],
+					[ 'name' => 'Reason Plus Storyteller Item', 'approval' => 'st', 'reason' => 'Disallowed per Character Bylaws.' ],
 				],
 			],
 			'is_system'    => 1,
@@ -55,7 +55,7 @@ class ChangeEngineBylawReasonTest extends WP_UnitTestCase {
 					],
 					[
 						'name'              => 'Thanatosis',
-						'approval_override' => 'coordinator',
+						'approval_override' => 'st',
 						'levels'            => [
 							[ 'level' => 5, 'tier' => 'advanced', 'power_name' => 'Level Five', 'reason' => 'Requires Giovanni Coordinator approval.' ],
 						],
@@ -118,14 +118,14 @@ class ChangeEngineBylawReasonTest extends WP_UnitTestCase {
 		$this->assertSame( 'Requires Ravnos Coordinator approval.', $resolved['reason'] );
 	}
 
-	public function test_a_coordinator_approval_alongside_a_reason_stays_coordinator(): void {
+	public function test_a_storyteller_approval_alongside_a_reason_stays_storyteller(): void {
 		$character = $this->make_character();
 		$resolved  = Change_Engine::resolve_approval_level( $character, (object) [
 			'change_type' => 'add_trait',
-			'change_data' => [ 'block_slug' => $this->trait_list_slug, 'trait' => [ 'name' => 'Reason Plus Coordinator Item' ] ],
+			'change_data' => [ 'block_slug' => $this->trait_list_slug, 'trait' => [ 'name' => 'Reason Plus Storyteller Item' ] ],
 		] );
 
-		$this->assertSame( 'coordinator', $resolved['level'] );
+		$this->assertSame( 'st', $resolved['level'] );
 		$this->assertSame( 'Disallowed per Character Bylaws.', $resolved['reason'] );
 	}
 
@@ -162,7 +162,7 @@ class ChangeEngineBylawReasonTest extends WP_UnitTestCase {
 			'change_data' => [ 'block_slug' => $this->tiered_power_slug, 'trait' => [ 'name' => 'Thanatosis', 'level' => 5 ] ],
 		] );
 
-		$this->assertSame( 'coordinator', $resolved['level'] );
+		$this->assertSame( 'st', $resolved['level'] );
 		$this->assertSame( 'Requires Giovanni Coordinator approval.', $resolved['reason'] );
 	}
 

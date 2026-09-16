@@ -87,15 +87,45 @@ class RumorGeneratorTest extends TestCase {
 		$this->assertSame( [ 'field' => 'influences', 'operator' => 'contains', 'value' => 'Bureaucracy' ], $result[0]['target_query'] );
 	}
 
-	public function test_group_and_subgroup_toggles_produce_nothing_no_data_source_exists(): void {
-		$characters = [ $this->character() ];
-		$result     = Rumor_Generator::resolve_character_candidates(
-			$characters,
-			$this->toggles( [ 'group_rumors' => true, 'subgroup_rumors' => true ] ),
-			[]
-		);
+	/**
+	 * 1.0.0-review F-037: both toggles saved and changed nothing. A character's group and
+	 * subgroup are the fields Grapevine's own Group()/Subgroup() name for its creature type -
+	 * a vampire's Clan and Sect (rumor-group-map.php).
+	 */
+	public function test_group_and_subgroup_toggles_title_a_rumor_with_the_characters_group_and_subgroup(): void {
+		$characters = [
+			$this->character( [ 'group' => [ 'field' => 'clan', 'label' => 'Clan', 'value' => 'Brujah' ], 'subgroup' => [ 'field' => 'sect', 'label' => 'Sect', 'value' => 'Anarch' ] ] ),
+			$this->character( [ 'name' => 'Isolde', 'group' => [ 'field' => 'clan', 'label' => 'Clan', 'value' => 'Brujah' ], 'subgroup' => [ 'field' => 'sect', 'label' => 'Sect', 'value' => 'Camarilla' ] ] ),
+		];
 
-		$this->assertSame( [], $result, 'be_characters has no group/subgroup column (Decision 031) - these toggles are inert, not silently wrong' );
+		$result = Rumor_Generator::resolve_character_candidates( $characters, $this->toggles( [ 'group_rumors' => true, 'subgroup_rumors' => true ] ), [] );
+
+		$this->assertSame( [ 'Brujah', 'Anarch', 'Camarilla' ], array_column( $result, 'title' ) );
+		$this->assertSame( [ 'group', 'subgroup', 'subgroup' ], array_column( $result, 'category' ) );
+		$this->assertSame( [ 'field' => 'clan', 'operator' => 'equals', 'value' => 'Brujah' ], $result[0]['target_query'] );
+	}
+
+	public function test_a_creature_type_without_a_group_or_an_empty_one_makes_no_rumor(): void {
+		$characters = [
+			$this->character( [ 'group' => null, 'subgroup' => [ 'field' => 'guild', 'label' => 'Guild', 'value' => '' ] ] ),
+		];
+
+		$this->assertSame( [], Rumor_Generator::resolve_character_candidates( $characters, $this->toggles( [ 'group_rumors' => true, 'subgroup_rumors' => true ] ), [] ) );
+	}
+
+	public function test_a_number_is_titled_with_its_field_so_the_rumor_says_what_it_is(): void {
+		$characters = [ $this->character( [ 'subgroup' => [ 'field' => 'rank', 'label' => 'Rank', 'value' => '2' ] ] ) ];
+
+		$result = Rumor_Generator::resolve_character_candidates( $characters, $this->toggles( [ 'subgroup_rumors' => true ] ), [] );
+
+		$this->assertSame( 'Rank 2', $result[0]['title'] );
+		$this->assertSame( [ 'field' => 'rank', 'operator' => 'equals', 'value' => '2' ], $result[0]['target_query'] );
+	}
+
+	public function test_group_and_subgroup_toggles_off_make_no_group_rumors(): void {
+		$characters = [ $this->character( [ 'group' => [ 'field' => 'clan', 'label' => 'Clan', 'value' => 'Brujah' ] ] ) ];
+
+		$this->assertSame( [], Rumor_Generator::resolve_character_candidates( $characters, $this->toggles(), [] ) );
 	}
 
 	public function test_all_toggles_off_produces_nothing(): void {

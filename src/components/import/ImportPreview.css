@@ -38,6 +38,25 @@
 	color: #b3261e;
 }
 
+.be-import-preview__changes {
+	margin: 0.75rem 0 1rem;
+}
+
+.be-import-preview__changes h5 {
+	margin: 0 0 0.4rem;
+	font-size: 0.95em;
+}
+
+.be-import-preview__change--added td:nth-child(4),
+.be-import-preview__change--changed td:nth-child(4) {
+	font-weight: 600;
+}
+
+.be-import-preview__change--removed td:nth-child(3) {
+	color: #b3261e;
+	text-decoration: line-through;
+}
+
 .be-import-preview__unresolved,
 .be-import-preview__players {
 	list-style: none;

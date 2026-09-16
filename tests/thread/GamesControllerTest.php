@@ -101,11 +101,10 @@ class GamesControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Game::delete_with_content() never removes schema-block forks (a real, separate,
-	 * logged defect - BE_PROCESS/chronicle-rename-design.md §7.2), so a fork can outlive
-	 * its game and sit at a slug a later chronicle then tries to rename into. That must
-	 * abort with a named error, not silently merge or hit the forks table's own unique
-	 * index as a generic 500.
+	 * Before 1.0.0 a row-only delete left a chronicle's schema-block forks behind (D42, fixed
+	 * by 1.0.0-review F-036), so an install can still hold a fork outliving its game at a slug
+	 * a later chronicle then tries to rename into. That must abort with a named error, not
+	 * silently merge or hit the forks table's own unique index as a generic 500.
 	 */
 	public function test_renaming_into_a_slug_with_an_orphaned_schema_block_fork_is_rejected(): void {
 		$this->create_game( 'thread-test-fork-source' );
@@ -283,5 +282,117 @@ class GamesControllerTest extends WP_UnitTestCase {
 		wp_set_current_user( 0 );
 		$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$slug}/my/capabilities" ) );
 		$this->assertSame( 401, $response->get_status(), 'is_user_logged_in() gate on the route itself denies an anonymous visitor' );
+	}
+
+	/**
+	 * 1.0.0-review checklist item 22 (Chronicle Setup's new "Plot Features" switch).
+	 * `settings.plots` is a new, one-level-deeper key than `enabled_stacks`/`auto_approve` -
+	 * confirms the same merge (`Games_Controller::update_item()`) round-trips a nested
+	 * object just as cleanly, and that saving it doesn't erase an unrelated sibling key
+	 * already in `settings`, exactly as `enabled_stacks` never erases `auto_approve`.
+	 */
+	public function test_saving_expanded_plots_via_rest_round_trips_and_does_not_clobber_a_sibling_key(): void {
+		$slug = $this->create_game( 'thread-test-expanded-plots-game' )->get_data()->slug;
+
+		$request1 = new WP_REST_Request( 'PUT', "/be/v1/games/{$slug}" );
+		$request1->set_url_params( [ 'slug' => $slug ] );
+		$request1->set_param( 'settings', [ 'auto_approve' => true ] );
+		rest_get_server()->dispatch( $request1 );
+
+		$request2 = new WP_REST_Request( 'PUT', "/be/v1/games/{$slug}" );
+		$request2->set_url_params( [ 'slug' => $slug ] );
+		$request2->set_param( 'settings', [ 'plots' => [ 'expanded_enabled' => true ] ] );
+		$response = rest_get_server()->dispatch( $request2 );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $response->get_data()->settings->plots->expanded_enabled );
+		$this->assertTrue( $response->get_data()->settings->auto_approve, "the first PUT's key must survive the second PUT" );
+
+		$game = \BeyondElysium\Models\Game::find_by_slug( $slug );
+		$this->assertTrue( $game->settings->plots->expanded_enabled );
+		$this->assertTrue( $game->settings->auto_approve );
+	}
+
+	/**
+	 * Owner ruling, 1.0.0-checklist.md item 18 (2026-09-15): an HST saves their own
+	 * chronicle's creature types, sub-faction restrictions, and new-character approval -
+	 * previously be_manage_games only, unreachable by anyone but a site administrator. The
+	 * new /chronicle-setup route (be_manage_chronicle_setup) carries exactly these three
+	 * fields, merged into the shared settings object the same way update_item() does.
+	 */
+	public function test_an_hst_can_save_their_own_chronicles_setup_settings(): void {
+		$slug    = $this->create_game( 'thread-test-hst-chronicle-setup-game' )->get_data()->slug;
+		$game_id = \BeyondElysium\Models\Game::find_by_slug( $slug )->id;
+
+		// A sibling settings key, written as the site administrator, must survive the HST's
+		// own write below - the same "no clobber" guarantee update_item()'s own merge gives.
+		$seed = new WP_REST_Request( 'PUT', "/be/v1/games/{$slug}" );
+		$seed->set_url_params( [ 'slug' => $slug ] );
+		$seed->set_param( 'settings', [ 'auto_approve' => true ] );
+		rest_get_server()->dispatch( $seed );
+
+		$hst_id = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( (int) $game_id, $hst_id, 'hst' );
+		wp_set_current_user( $hst_id );
+
+		$request = new WP_REST_Request( 'PUT', "/be/v1/{$slug}/chronicle-setup" );
+		$request->set_url_params( [ 'game_slug' => $slug ] );
+		$request->set_param( 'enabled_stacks', [ 'vampire', 'werewolf' ] );
+		$request->set_param( 'require_new_character_approval', true );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( [ 'vampire', 'werewolf' ], $response->get_data()->settings->enabled_stacks );
+		$this->assertTrue( $response->get_data()->settings->require_new_character_approval );
+		$this->assertTrue( $response->get_data()->settings->auto_approve, 'a sibling settings key must survive the HST-only write' );
+
+		$game = \BeyondElysium\Models\Game::find_by_slug( $slug );
+		$this->assertSame( [ 'vampire', 'werewolf' ], $game->settings->enabled_stacks );
+	}
+
+	/**
+	 * The AST half of the same ruling (item 27): an AST does not hold
+	 * be_manage_chronicle_setup, so the same route 403s for them even in their own
+	 * chronicle - "an AST loses Chronicle Setup."
+	 */
+	public function test_an_ast_cannot_save_the_chronicles_setup_settings(): void {
+		$slug    = $this->create_game( 'thread-test-ast-chronicle-setup-game' )->get_data()->slug;
+		$game_id = \BeyondElysium\Models\Game::find_by_slug( $slug )->id;
+
+		$ast_id = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( (int) $game_id, $ast_id, 'ast' );
+		wp_set_current_user( $ast_id );
+
+		$request = new WP_REST_Request( 'PUT', "/be/v1/{$slug}/chronicle-setup" );
+		$request->set_url_params( [ 'game_slug' => $slug ] );
+		$request->set_param( 'enabled_stacks', [ 'vampire' ] );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 403, $response->get_status() );
+	}
+
+	/**
+	 * The new route only ever reads enabled_stacks/enabled_factions/
+	 * require_new_character_approval - a stray name/description/asc_role_path in the same
+	 * request body is silently ignored, never applied, so an HST cannot use this narrow
+	 * route to smuggle through a change still gated on the full be_manage_games elsewhere.
+	 */
+	public function test_the_chronicle_setup_route_ignores_fields_it_does_not_own(): void {
+		$slug    = $this->create_game( 'thread-test-chronicle-setup-scope-game' )->get_data()->slug;
+		$game_id = \BeyondElysium\Models\Game::find_by_slug( $slug )->id;
+
+		$hst_id = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( (int) $game_id, $hst_id, 'hst' );
+		wp_set_current_user( $hst_id );
+
+		$request = new WP_REST_Request( 'PUT', "/be/v1/{$slug}/chronicle-setup" );
+		$request->set_url_params( [ 'game_slug' => $slug ] );
+		$request->set_param( 'enabled_stacks', [ 'mage' ] );
+		$request->set_param( 'name', 'Renamed by an HST through the narrow route' );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+		$game = \BeyondElysium\Models\Game::find_by_slug( $slug );
+		$this->assertNotSame( 'Renamed by an HST through the narrow route', $game->name );
 	}
 }

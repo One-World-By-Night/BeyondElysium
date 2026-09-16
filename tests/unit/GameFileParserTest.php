@@ -20,7 +20,12 @@ use PHPUnit\Framework\TestCase;
 class GameFileParserTest extends TestCase {
 
 	private function path( string $relative ): string {
-		return BE_PLUGIN_ROOT . '/' . $relative;
+		$path = BE_PLUGIN_ROOT . '/' . $relative;
+		// Real players' sample files live in samples/, which is kept out of git (owner ruling 2026-09-14).
+		if ( strpos( $relative, 'samples/' ) === 0 && ! file_exists( $path ) ) {
+			$this->markTestSkipped( "{$relative} is not present in this checkout." );
+		}
+		return $path;
 	}
 
 	/** @return array<string,mixed> */

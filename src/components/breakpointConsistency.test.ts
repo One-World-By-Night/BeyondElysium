@@ -36,7 +36,10 @@ test( 'no width-based media query in src/ uses a value other than max-width: 768
 
 	for ( const cssPath of cssFiles ) {
 		const css = readFileSync( cssPath, 'utf-8' );
-		const widthQueries = css.match( /@media[^{]*\b(?:min|max)-width\s*:\s*[\d.]+px[^{]*/g ) ?? [];
+		const widthQueries =
+			css.match(
+				/@media[^{]*\b(?:min|max)-width\s*:\s*[\d.]+px[^{]*/g
+			) ?? [];
 
 		for ( const query of widthQueries ) {
 			if ( ! query.includes( ALLOWED_WIDTH_QUERY ) ) {

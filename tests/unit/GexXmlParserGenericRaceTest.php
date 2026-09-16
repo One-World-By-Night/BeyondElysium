@@ -146,4 +146,31 @@ class GexXmlParserGenericRaceTest extends TestCase {
 		$this->assertSame( 4, $data['characters'][0]['torment'] );
 		$this->assertSame( 4, $data['characters'][0]['temp_torment'] );
 	}
+
+	private static function character( string $element ): array {
+		return GEX_Xml_Parser::parse_string( '<?xml version="1.0"?><grapevine version="3.0">' . $element . '</grapevine>' )['characters'][0];
+	}
+
+	/** 1.0.0-review F-048: a Bete travels as a Fera and names its own stack. */
+	public function test_a_bestack_attribute_restores_the_stack_that_travels_as_this_race(): void {
+		$this->assertSame( 'bete', self::character( '<fera name="Skitter" bestack="bete"><experience unspent="0" earned="0"/></fera>' )['race'] );
+		$this->assertSame( 'fera', self::character( '<fera name="Kesuk"><experience unspent="0" earned="0"/></fera>' )['race'] );
+	}
+
+	public function test_a_bestack_attribute_cannot_turn_one_race_into_an_unrelated_stack(): void {
+		$this->assertSame( 'vampire', self::character( '<vampire name="Marcus" bestack="bete"><experience unspent="0" earned="0"/></vampire>' )['race'] );
+		$this->assertSame( 'fera', self::character( '<fera name="Kesuk" bestack="vampire"><experience unspent="0" earned="0"/></fera>' )['race'] );
+	}
+
+	/** 1.0.0-review F-049: a changeling has no Nature or Demeanor of its own in Grapevine. */
+	public function test_benature_carries_nature_and_demeanor_only_for_a_race_without_them(): void {
+		$changeling = self::character( '<changeling name="Fennick" benature="Trickster" bedemeanor="Jester"><experience unspent="0" earned="0"/></changeling>' );
+		$this->assertSame( 'Trickster', $changeling['nature'] );
+		$this->assertSame( 'Jester', $changeling['demeanor'] );
+
+		$mage = self::character( '<mage name="Adrian" nature="Sage" demeanor="Pedagogue" benature="Other" bedemeanor="Other"><experience unspent="0" earned="0"/></mage>' );
+		$this->assertSame( 'Sage', $mage['nature'] );
+
+		$this->assertArrayNotHasKey( 'nature', self::character( '<changeling name="Rosalind"><experience unspent="0" earned="0"/></changeling>' ) );
+	}
 }

@@ -24,9 +24,13 @@ export interface EnabledStacksPickerProps {
  * selections (§9's named risk: an empty array must never be stored as
  * "none").
  */
-export function EnabledStacksPicker( { enabled, onSave, saving }: EnabledStacksPickerProps ) {
-	const [ stacks, setStacks ] = useState<CreatureStack[]>( [] );
-	const [ checked, setChecked ] = useState<Set<string>>( new Set() );
+export function EnabledStacksPicker( {
+	enabled,
+	onSave,
+	saving,
+}: EnabledStacksPickerProps ) {
+	const [ stacks, setStacks ] = useState< CreatureStack[] >( [] );
+	const [ checked, setChecked ] = useState< Set< string > >( new Set() );
 
 	useEffect( () => {
 		api.creatureStacks.list().then( setStacks );
@@ -73,7 +77,10 @@ export function EnabledStacksPicker( { enabled, onSave, saving }: EnabledStacksP
 			</ul>
 			{ ! canSave && (
 				<p className="be-enabled-stacks-picker__warning">
-					{ __( 'At least one creature type must stay enabled.', 'beyond-elysium' ) }
+					{ __(
+						'At least one creature type must stay enabled.',
+						'beyond-elysium'
+					) }
 				</p>
 			) }
 			<button
@@ -82,7 +89,9 @@ export function EnabledStacksPicker( { enabled, onSave, saving }: EnabledStacksP
 				disabled={ ! canSave || saving }
 				onClick={ () => onSave( Array.from( checked ) ) }
 			>
-				{ saving ? __( 'Saving…', 'beyond-elysium' ) : __( 'Save', 'beyond-elysium' ) }
+				{ saving
+					? __( 'Saving…', 'beyond-elysium' )
+					: __( 'Save', 'beyond-elysium' ) }
 			</button>
 		</div>
 	);

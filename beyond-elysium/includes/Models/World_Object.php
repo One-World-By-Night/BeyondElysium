@@ -208,6 +208,33 @@ class World_Object {
 	}
 
 	/**
+	 * Sanitizes each string property value by its schema type, mirroring how the REST
+	 * controller already treats the fixed description/limitations columns: a `text`
+	 * property is a rich-text field (Decision 111) sanitized with `wp_kses_post()`, a
+	 * `string` one carries no markup and gets `sanitize_text_field()`. Called after
+	 * validate_properties() confirms every key and its structural shape are already
+	 * correct - a value validate_properties() would have rejected never reaches here.
+	 *
+	 * @param string $object_type
+	 * @param array  $properties
+	 * @return array
+	 */
+	private static function sanitize_properties( string $object_type, array $properties ): array {
+		$schema = self::schemas()[ $object_type ] ?? [];
+		foreach ( $properties as $key => $value ) {
+			if ( ! is_string( $value ) ) {
+				continue;
+			}
+			if ( ( $schema[ $key ] ?? null ) === 'text' ) {
+				$properties[ $key ] = wp_kses_post( $value );
+			} elseif ( ( $schema[ $key ] ?? null ) === 'string' ) {
+				$properties[ $key ] = sanitize_text_field( $value );
+			}
+		}
+		return $properties;
+	}
+
+	/**
 	 * Insert a new world object. Validates object_type against the known
 	 * types and its properties against that type's schema before inserting,
 	 * JSON-encoding properties for storage.
@@ -225,6 +252,7 @@ class World_Object {
 		if ( self::validate_properties( $object_type, $properties ) !== null ) {
 			return false;
 		}
+		$properties = self::sanitize_properties( $object_type, $properties );
 
 		$insert = [
 			'game_id'      => (int) $data['game_id'],
@@ -270,7 +298,7 @@ class World_Object {
 			if ( self::validate_properties( $existing->object_type, (array) $update['properties'] ) !== null ) {
 				return false;
 			}
-			$update['properties'] = wp_json_encode( $update['properties'] );
+			$update['properties'] = wp_json_encode( self::sanitize_properties( $existing->object_type, (array) $update['properties'] ) );
 		}
 
 		if ( empty( $update ) ) {

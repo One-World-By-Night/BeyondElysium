@@ -30,13 +30,22 @@ class Attestation {
 	 *
 	 * @param object $character A row from `Character::find()`.
 	 * @param string $kind      'gex' | 'pdf' | 'transfer'.
-	 * @param string $sheet_hash sha256 of the canonicalized export payload this issuance covers.
+	 * @param string $sheet_hash sha256 of the canonicalized, unredacted export payload this
+	 *                           issuance covers - what "has the character changed" compares
+	 *                           against (`still_matches()`).
 	 * @param string|null $expires_at 'Y-m-d H:i:s', or null for no expiry.
+	 * @param string|null $document_hash sha256 of the canonicalized document actually handed
+	 *                     over (redacted when the export itself was, unredacted otherwise) -
+	 *                     what a receiving chronicle's own copy of the file is compared
+	 *                     against (`Sheet_Verification::check()`, F-122). Defaults to
+	 *                     `$sheet_hash` when omitted, so an unredacted export (a transfer, or
+	 *                     any Storyteller-initiated one) needs no separate value.
 	 * @return object The newly created row, decoded (see `find()`).
 	 */
-	public static function issue( object $character, string $kind, string $sheet_hash, ?string $expires_at = null ): object {
+	public static function issue( object $character, string $kind, string $sheet_hash, ?string $expires_at = null, ?string $document_hash = null ): object {
 		$token      = self::generate_token();
 		$short_code = self::generate_unique_short_code();
+		$document_hash = $document_hash ?? $sheet_hash;
 
 		$id = Manager::insert( 'character_attestations', [
 			'character_uuid' => $character->uuid,
@@ -47,12 +56,13 @@ class Attestation {
 			'kind'           => $kind,
 			'sheet_hash'     => $sheet_hash,
 			'attested'       => wp_json_encode( [
-				'name'        => $character->name,
-				'stack'       => $character->stack_slug,
-				'status'      => $character->status,
-				'xp_earned'   => (int) $character->xp_earned,
-				'xp_unspent'  => (int) $character->xp_unspent,
-				'sheet_hash'  => $sheet_hash,
+				'name'          => $character->name,
+				'stack'         => $character->stack_slug,
+				'status'        => $character->status,
+				'xp_earned'     => (int) $character->xp_earned,
+				'xp_unspent'    => (int) $character->xp_unspent,
+				'sheet_hash'    => $sheet_hash,
+				'document_hash' => $document_hash,
 			] ),
 			'issued_at'      => current_time( 'mysql', true ),
 			'issued_by'      => get_current_user_id(),

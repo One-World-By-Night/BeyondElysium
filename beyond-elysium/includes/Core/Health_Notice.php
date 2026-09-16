@@ -62,14 +62,46 @@ class Health_Notice {
 		// is every real install's ordinary, healthy state).
 		self::render_slug_drift();
 		self::render_signing_notice();
+		self::render_upgrade_error();
+	}
+
+	/**
+	 * Says when the last data upgrade did not finish - the version it was
+	 * upgrading to, and what stopped it - so a partial upgrade is never
+	 * silent (1.0.0-review F-064). It is tried again once its lock goes stale;
+	 * the notice clears when an upgrade finishes. Visible only to users who
+	 * can activate plugins.
+	 */
+	private static function render_upgrade_error(): void {
+		if ( ! current_user_can( 'activate_plugins' ) ) {
+			return;
+		}
+
+		$error = get_option( Schema::UPGRADE_ERROR_OPTION );
+		if ( ! is_array( $error ) ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-error"><p><strong>%1$s</strong> %2$s</p><p><code>%3$s</code></p></div>',
+			esc_html__( 'Beyond Elysium:', 'beyond-elysium' ),
+			esc_html( sprintf(
+				/* translators: 1: version being upgraded to, 2: minutes between attempts */
+				__( 'the data upgrade to %1$s did not finish, and the plugin is running on partly upgraded data. It is tried again every %2$d minutes; this notice clears once it finishes. What stopped it:', 'beyond-elysium' ),
+				(string) ( $error['version'] ?? '' ),
+				(int) ( Schema::UPGRADE_LOCK_TTL / MINUTE_IN_SECONDS )
+			) ),
+			esc_html( (string) ( $error['message'] ?? '' ) )
+		);
 	}
 
 	/**
 	 * Warns when sheet signing is not configured on this install -
 	 * `Pdf_Signer::availability()`'s constants live only in `wp-config.php`,
-	 * so a chronicle without them gets a `503` on every print attempt with no
-	 * other visible cause. Names both constants and a real `openssl` command
-	 * to generate a key with, so the fix is actionable from the notice alone
+	 * so a chronicle without them prints every sheet and report stamped
+	 * UNSIGNED (1.0.0-review F-042) with no other visible cause. Names both
+	 * constants and a real `openssl` command to generate a key with, so the
+	 * fix is actionable from the notice alone
 	 * rather than sending an administrator to hunt for the design doc.
 	 * Visible only to users who can activate plugins; no transient cache -
 	 * `defined()`/`is_readable()` are cheap enough to check on every load,
@@ -87,7 +119,7 @@ class Health_Notice {
 		printf(
 			'<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s</p><p>%3$s</p><p><code>%4$s</code></p></div>',
 			esc_html__( 'Beyond Elysium:', 'beyond-elysium' ),
-			esc_html__( 'signed character sheets are not configured on this install. Printing a sheet will fail until BE_PDF_SIGNING_CERT and BE_PDF_SIGNING_KEY are defined in wp-config.php, pointing at a certificate and key generated above the webroot.', 'beyond-elysium' ),
+			esc_html__( 'signed character sheets are not configured on this install. Sheets and reports print stamped UNSIGNED until BE_PDF_SIGNING_CERT and BE_PDF_SIGNING_KEY are defined in wp-config.php, pointing at a certificate and key generated above the webroot.', 'beyond-elysium' ),
 			esc_html__( 'Generate one with:', 'beyond-elysium' ),
 			esc_html( 'BE_KEYPASS=\'your-passphrase\' openssl req -x509 -newkey rsa:4096 -days 3650 -cipher aes-256-cbc -passout env:BE_KEYPASS -subj "/CN=Beyond Elysium Signing" -keyout be-signing.key -out be-signing.crt' )
 		);

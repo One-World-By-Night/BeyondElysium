@@ -6,6 +6,7 @@ use BeyondElysium\Models\Attestation;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Services\Character_Exporter;
+use BeyondElysium\Services\Not_Exportable_Exception;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -120,9 +121,12 @@ class Verify_Controller extends Base_Controller {
 			return [ 'name' => false, 'status' => false, 'xp_earned' => false, 'xp_unspent' => false, 'sheet' => false ];
 		}
 
-		$attested      = $attestation->attested;
-		$current_xml   = Character_Exporter::export( (int) $character->id )['xml'];
-		$current_hash  = hash( 'sha256', $current_xml );
+		$attested = $attestation->attested;
+		try {
+			$current_hash = hash( 'sha256', Character_Exporter::export( (int) $character->id )['xml'] );
+		} catch ( Not_Exportable_Exception ) {
+			$current_hash = null; // Its creature type no longer has an exchange shape to compare.
+		}
 
 		return [
 			'name'       => $character->name === ( $attested['name'] ?? null ),

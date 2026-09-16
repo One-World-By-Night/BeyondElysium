@@ -84,10 +84,32 @@ class ReportRegistryTest extends TestCase {
 	}
 
 	public function test_column_sources_are_recognized(): void {
-		$known = [ 'field', 'special', 'ledger', 'player', 'plot', 'unmapped' ];
+		$known = [ 'field', 'special', 'ledger', 'player', 'plot', 'boons', 'equipment', 'unmapped' ];
 		foreach ( self::$registry as $key => $report ) {
 			foreach ( ( $report['columns'] ?? [] ) as [ $label, $field_key, $source ] ) {
 				$this->assertContains( $source, $known, "Report \"{$key}\" column \"{$label}\" has unrecognized source \"{$source}\"." );
+			}
+		}
+	}
+
+	/**
+	 * 1.0.0-review F-072. Vampire Status Report's rows are characters, and its Date column read a
+	 * change's submission date through the ledger resolver - so it was blank for every row, with
+	 * nothing to say why. Each source reads one kind of row; a column may only use a source that
+	 * fits the rows its report builds.
+	 */
+	public function test_each_column_source_fits_the_rows_its_report_builds(): void {
+		foreach ( self::$registry as $key => $report ) {
+			$rows = ( $report['rows_from'] ?? null ) === 'ledger' ? 'change' : ( $report['entity'] ?? '' );
+			$fits = [
+				'change' => [ 'ledger', 'special', 'unmapped' ],
+				'char'   => [ 'field', 'special', 'boons', 'equipment', 'unmapped' ],
+				'player' => [ 'player', 'special', 'unmapped' ],
+				'plot'   => [ 'plot', 'unmapped' ],
+			][ $rows ] ?? [ 'field', 'special', 'unmapped' ];
+
+			foreach ( ( $report['columns'] ?? [] ) as [ $label, $field_key, $source ] ) {
+				$this->assertContains( $source, $fits, "Report \"{$key}\" builds {$rows} rows, but column \"{$label}\" reads them as \"{$source}\"." );
 			}
 		}
 	}

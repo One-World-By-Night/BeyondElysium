@@ -109,8 +109,8 @@ class Trait_Grouping {
 
 		foreach ( $data as $row ) {
 			$catalog_item = self::find_item_by_name( $items, $row['name'] );
-			$group        = $catalog_item?->group ?? 'Other';
-			$subgroup     = $catalog_item?->subgroup ?? '';
+			$group        = (string) ( $catalog_item?->group ?? 'Other' );
+			$subgroup     = (string) ( $catalog_item?->subgroup ?? '' );
 
 			$groups[ $group ][ $subgroup ][] = $row;
 		}
@@ -123,6 +123,8 @@ class Trait_Grouping {
 
 			$subgroups = [];
 			foreach ( $by_subgroup as $subgroup => $rows ) {
+				// A name like "2" comes back from its array key as an integer.
+				$subgroup    = (string) $subgroup;
 				$subgroups[] = [
 					'subgroup' => $subgroup === '' ? null : $subgroup,
 					'items'    => $rows,
@@ -130,7 +132,7 @@ class Trait_Grouping {
 			}
 
 			$out[] = [
-				'group'     => $group,
+				'group'     => (string) $group,
 				'subgroups' => $subgroups,
 			];
 		}

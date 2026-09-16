@@ -7,6 +7,7 @@ use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Schema_Block;
+use BeyondElysium\Models\Transfer;
 use BeyondElysium\Models\World_Object;
 
 defined( 'ABSPATH' ) || exit;
@@ -21,21 +22,20 @@ defined( 'ABSPATH' ) || exit;
  * has, in what order - comes from `gv-exchange-shape.php` (GX-1); this class
  * never hardcodes a race's own field list.
  *
- * `bete` is a real, seeded creature stack with no `gex-identity-map.php`
- * entry of its own (it reuses werewolf/fera's schema blocks, per
- * `gex-trait-list-map.php`); its identity/resource export falls back to
- * `fera`'s map, since that is the stack it actually shares blocks with.
- * `hunter`/`various` have no BE creature stack at all (confirmed absent from
- * both `gex-identity-map.php` and `Creature_Stack`), so a character of
- * either would export identity/resources empty - not reachable in practice,
- * since no character of either stack can currently exist in this codebase.
+ * `bete` has no Grapevine race: it travels as the `fera` it shares every
+ * schema block with (`GEX_Parser::STACK_EXCHANGE_RACE`), using fera's shape
+ * and identity map, and names its own stack in a `bestack` attribute
+ * Grapevine never reads. A stack an administrator added has no Grapevine
+ * equivalent at all and throws `Not_Exportable_Exception` (1.0.0-review
+ * F-048). `hunter`/`various` have no BE creature stack at all (confirmed
+ * absent from both `gex-identity-map.php` and `Creature_Stack`), so a
+ * character of either would export identity/resources empty - not reachable
+ * in practice, since no character of either stack can currently exist in
+ * this codebase.
  *
  * @see BE_PROCESS/gex-export-transfer-design.md GX-3, §4
  */
 class Character_Exporter {
-
-	/** `gex-identity-map.php` has no entry for `bete`; it reuses fera's blocks (gex-trait-list-map.php). */
-	private const STACK_FALLBACK = [ 'bete' => 'fera' ];
 
 	/**
 	 * Exports one character. Returns the XML document text plus any
@@ -60,8 +60,9 @@ class Character_Exporter {
 	 *                       additionally carries `character_uuid`, which `GEX_Xml_Parser`
 	 *                       reads back on the receiving side (GX-9) to identify a returning
 	 *                       or already-known character with certainty rather than by name.
-	 * @return array{xml:string,warnings:array<int,string>,transliterations:array<int,string>}
+	 * @return array{xml:string,warnings:array<int,string>,transliterations:array<int,string>,attestation_id?:int,short_code?:string} A verified or transfer export also carries the attestation it issued.
 	 * @throws \RuntimeException If the character does not exist.
+	 * @throws Not_Exportable_Exception If its creature type has no Grapevine equivalent.
 	 */
 	public static function export( int $character_id, array $options = [] ): array {
 		$character = Character::find( $character_id );
@@ -86,13 +87,34 @@ class Character_Exporter {
 		// would permanently fail to match itself, with nothing having actually changed.
 		$canonical   = self::build( $character, false, null, null );
 		$sheet_hash  = hash( 'sha256', $canonical['xml'] );
-		$attestation = Attestation::issue( $character, $as_transfer ? 'transfer' : 'gex', $sheet_hash );
+
+		// A redacted export hands over different bytes than the unredacted one sheet_hash
+		// covers - a receiving chronicle (F-122) only ever has the document it was actually
+		// given to hash, never the unredacted original. Computed separately, only when needed,
+		// so an unredacted export (every transfer; any Storyteller-initiated verified export)
+		// pays no extra cost and needs no second value at all.
+		$document_hash = $hide_st ? hash( 'sha256', self::build( $character, true, null, null )['xml'] ) : null;
+
+		// A transfer's code lasts as long as its offer may wait (1.0.0-review F-014); a printed or
+		// exported sheet's code never expires.
+		$attestation = Attestation::issue(
+			$character,
+			$as_transfer ? 'transfer' : 'gex',
+			$sheet_hash,
+			$as_transfer ? gmdate( 'Y-m-d H:i:s', time() + Transfer::OFFER_TTL_DAYS * DAY_IN_SECONDS ) : null,
+			$document_hash
+		);
 		// VerifyCharacter.tsx reads ?code= off the URL (same convention as every other
 		// widget's own URL param, e.g. CharacterSheet.tsx's ?character_id=) - never a path
 		// segment, since be-verify is a plain provisioned WP page, not a rewrite rule.
 		$url = home_url( '/be-verify/?code=' . rawurlencode( $attestation->short_code ) );
 
-		return self::build( $character, $hide_st, $url, $as_transfer ? $character->uuid : null );
+		$document = self::build( $character, $hide_st, $url, $as_transfer ? $character->uuid : null );
+
+		// The issued code, so a transfer can revoke its own offer when the home side cancels it.
+		$document['attestation_id'] = (int) $attestation->id;
+		$document['short_code']     = (string) $attestation->short_code;
+		return $document;
 	}
 
 	/**
@@ -117,8 +139,10 @@ class Character_Exporter {
 	 * @return string
 	 */
 	public static function canonicalize_transfer_payload( string $xml ): string {
-		$xml = preg_replace( '/ id="[^"]*"/', ' id=""', $xml, 1 );
-		return preg_replace( '/^ {4}<verification\b[^>]*\/>\r?\n/m', '', $xml, 1 );
+		// A pattern that fails answers an empty document, whose hash matches no attestation: an
+		// attested hash is always taken from a real rendered sheet, never from this method.
+		$xml = (string) preg_replace( '/ id="[^"]*"/', ' id=""', $xml, 1 );
+		return (string) preg_replace( '/^ {4}<verification\b[^>]*\/>\r?\n/m', '', $xml, 1 );
 	}
 
 	/**
@@ -133,13 +157,25 @@ class Character_Exporter {
 	 */
 	private static function build( object $character, bool $hide_st, ?string $verification_url, ?string $transfer_uuid ): array {
 		$game        = Game::find_by_slug( $character->owner_slug );
+		if ( $hide_st ) {
+			// A copy for someone who isn't a Storyteller holds what every other read path gives them:
+			// no Storyteller-only block, no `[ST]` text (1.0.0-review F-060). Cloned, since export()
+			// hashes the unredacted character from the same row.
+			$character = clone $character;
+			St_Visibility::filter_character( $character, $game, false );
+		}
 		$game_slug   = $game->slug ?? $character->owner_slug;
 		$stack_slug  = (string) $character->stack_slug;
-		$map_slug    = self::STACK_FALLBACK[ $stack_slug ] ?? $stack_slug;
-		$race        = $stack_slug; // Every real BE creature stack slug matches a RACE_TYPE_MAP value exactly.
+		$race        = GEX_Parser::exchange_race( $stack_slug );
+		$map_slug    = $race;
 		$sheet       = is_array( $character->sheet_data ) ? $character->sheet_data : (array) ( $character->sheet_data ?? [] );
 		$warnings    = [];
 
+		if ( ! GEX_Parser::has_shape( $race ) ) {
+			throw new Not_Exportable_Exception(
+				__( 'This character\'s creature type has no Grapevine equivalent, so it cannot be exported or transferred.', 'beyond-elysium' )
+			);
+		}
 		$shape = GEX_Parser::shape( $race );
 
 		$writer = new GEX_Xml_Writer();
@@ -162,6 +198,17 @@ class Character_Exporter {
 
 		self::write_scalars( $writer, $shape['scalars'], $raw );
 
+		// Beyond Elysium's own attributes, which Grapevine's reader collects and never reads: the
+		// stack a character really is when it travels as another race, and Nature and Demeanor for
+		// a race with no fields of its own for them (a changeling's Legacies take their place).
+		// Without them a Bete arrived as a Fera and a changeling lost both (1.0.0-review F-048, F-049).
+		if ( $race !== $stack_slug ) {
+			$writer->write_attribute( 'bestack', $stack_slug );
+		}
+		if ( ! in_array( 'nature', array_column( $shape['scalars'], 'key' ), true ) && $raw['nature'] . $raw['demeanor'] !== '' ) {
+			$writer->write_attribute( 'benature', $raw['nature'] )->write_attribute( 'bedemeanor', $raw['demeanor'] );
+		}
+
 		self::write_experience( $writer, $character );
 
 		foreach ( $shape['trait_lists'] as $spec ) {
@@ -169,7 +216,7 @@ class Character_Exporter {
 		}
 
 		if ( $shape['boons'] ) {
-			self::write_boons( $writer, $character );
+			self::write_boons( $writer, $character, $hide_st, $game );
 		}
 
 		foreach ( $shape['tail'] as $row ) {
@@ -214,7 +261,10 @@ class Character_Exporter {
 			$value = $raw[ $scalar['key'] ] ?? self::default_for_type( $scalar['type'] );
 
 			if ( isset( $scalar['xml_enum'] ) ) {
-				$value = $scalar['xml_enum'][ $value ] ?? $scalar['xml_enum'][0];
+				// A sheet stores the label ("Spectre") the XML writes; only a raw index maps through
+				// the enum. Looking the label up as an index wrote every Spectre and Risen as a
+				// Wraith until 1.0.0-review F-049.
+				$value = in_array( $value, $scalar['xml_enum'], true ) ? $value : ( $scalar['xml_enum'][ $value ] ?? $scalar['xml_enum'][0] );
 			}
 
 			$omit = null;
@@ -256,8 +306,14 @@ class Character_Exporter {
 	 * @return array<string,mixed>
 	 */
 	private static function build_raw_scalars( object $character, string $map_slug, string $game_slug, array $sheet ): array {
-		$raw = [
+		// Nature and Demeanor live in the shared met-archetypes block, which the identity map
+		// below never names; a race whose shape has no such scalars simply never writes them.
+		// Never exported until 1.0.0-review F-049, so every import wrote them back empty.
+		$archetypes = (array) ( $sheet['met-archetypes'] ?? [] );
+		$raw        = [
 			'name'          => (string) $character->name,
+			'nature'        => (string) ( $archetypes['Nature'] ?? '' ),
+			'demeanor'      => (string) ( $archetypes['Demeanor'] ?? '' ),
 			'player'        => (string) ( $character->player_name ?? '' ),
 			'status'        => (string) $character->status,
 			'id'            => '',
@@ -515,9 +571,15 @@ class Character_Exporter {
 		// blood_magic_block_slug/combo_block_slug.
 		if ( isset( $classification['blood_magic_block_slug'] ) ) {
 			foreach ( array_values( (array) ( $sheet[ $classification['blood_magic_block_slug'] ] ?? [] ) ) as $pick ) {
-				if ( isset( $pick['tradition'], $pick['level'] ) ) {
-					$held[] = [ 'name' => "{$pick['tradition']}: {$pick['name']}", 'count' => $pick['level'] ];
+				if ( ! isset( $pick['name'], $pick['level'] ) ) {
+					continue;
 				}
+				// A path imported with no tradition named is still held - it was skipped until
+				// 1.0.0-review F-049, so it vanished on its next export.
+				$held[] = [
+					'name'  => isset( $pick['tradition'] ) ? "{$pick['tradition']}: {$pick['name']}" : (string) $pick['name'],
+					'count' => $pick['level'],
+				];
 			}
 		}
 		if ( isset( $classification['combo_block_slug'] ) ) {
@@ -632,12 +694,15 @@ class Character_Exporter {
 	 * (only a numeric `boon_level`), so `boon_type` is rendered as a plain
 	 * "Level {N}" label - a real, honest gap between the two shapes, not a
 	 * hidden loss, since `terms` (BE's own closest analog to a description)
-	 * is carried through unchanged.
+	 * is carried through unchanged - with its `[ST]` text stripped for a copy
+	 * that isn't a Storyteller's, as everywhere else a boon is read (F-060).
 	 *
 	 * @param GEX_Xml_Writer $writer
 	 * @param object         $character
+	 * @param bool           $hide_st
+	 * @param object|null    $game
 	 */
-	private static function write_boons( GEX_Xml_Writer $writer, object $character ): void {
+	private static function write_boons( GEX_Xml_Writer $writer, object $character, bool $hide_st, $game ): void {
 		foreach ( Connection::for_target( 'character', (int) $character->id ) as $connection ) {
 			if ( $connection->source_type !== 'world_object' || ! in_array( $connection->label, [ 'owed_by', 'owed_to' ], true ) ) {
 				continue;
@@ -646,6 +711,7 @@ class Character_Exporter {
 			if ( ! $boon || $boon->object_type !== 'boon' ) {
 				continue;
 			}
+			St_Visibility::filter_world_object( $boon, $game, ! $hide_st );
 
 			$is_owed  = $connection->label === 'owed_to'; // this character is the creditor
 			$other_label = $is_owed ? 'owed_by' : 'owed_to';

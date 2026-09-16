@@ -10,7 +10,9 @@ defined( 'ABSPATH' ) || exit;
  * Reads a Markdown file from the plugin's own `docs/` directory and returns
  * its raw content. The requested slug is constrained by the route's regex to
  * the fixed set of known documents, so there is no path-traversal surface to
- * defend against.
+ * defend against. A help page (`docs/help/{key}.md`, one per screen, opened by
+ * the screen's `?` - 1.0.0-help.md H-1) is served only for a key that names
+ * one of those files.
  */
 class Docs_Controller extends Base_Controller {
 
@@ -33,6 +35,46 @@ class Docs_Controller extends Base_Controller {
 				'permission_callback' => $this->permission( 'be_view_characters' ),
 			],
 		] );
+
+		register_rest_route( $this->namespace, '/' . $this->rest_base . '/help/(?P<key>[a-z0-9-]+)', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_help' ],
+				'permission_callback' => $this->permission( 'be_view_characters' ),
+			],
+		] );
+	}
+
+	/**
+	 * Returns one screen's help page.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_help( $request ) {
+		$key = (string) $request['key'];
+		if ( ! in_array( $key, self::help_keys(), true ) ) {
+			return $this->error( 'not_found', __( 'That document was not found.', 'beyond-elysium' ), 404 );
+		}
+
+		$content = file_get_contents( BE_PLUGIN_DIR . 'docs/help/' . $key . '.md' );
+		if ( $content === false ) {
+			return $this->error( 'read_failed', __( 'That document could not be read.', 'beyond-elysium' ), 500 );
+		}
+
+		return $this->success( [ 'key' => $key, 'content' => $content ] );
+	}
+
+	/**
+	 * The key of every help page the plugin ships: each `docs/help/*.md` file's name.
+	 *
+	 * @return string[]
+	 */
+	private static function help_keys(): array {
+		return array_map(
+			static fn( string $path ): string => basename( $path, '.md' ),
+			glob( BE_PLUGIN_DIR . 'docs/help/*.md' ) ?: []
+		);
 	}
 
 	/**

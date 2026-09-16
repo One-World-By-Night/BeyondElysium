@@ -1,14 +1,24 @@
 .be-chronicle-switcher {
 	display: inline-flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.5rem;
+	max-width: 100%;
 	font-weight: 600;
 }
 
+/*
+ * A long chronicle name shrinks the picker instead of pushing it past a phone screen's edge
+ * (1.0.0-review F-019). `width: auto` beats hello-elementor's `select { width: 100% }` reset,
+ * which otherwise stretched the switcher across the whole page (F-117).
+ */
 .be-chronicle-switcher__select {
-	font-weight: normal;
-	min-height: var( --be-tap-min, 32px );
-	font-size: max( 16px, var( --be-input-font-min, 1rem ) );
+	width: auto;
+	min-width: 0;
+	max-width: 100%;
+	font-weight: 400;
+	min-height: var(--be-tap-min, 32px);
+	font-size: max(16px, var(--be-input-font-min, 1rem));
 }
 
 .be-chronicle-switcher__status {

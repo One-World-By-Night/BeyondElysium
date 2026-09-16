@@ -72,7 +72,7 @@ class GameStatsControllerTest extends WP_UnitTestCase {
 		$this->assertSame( [ 'vampire' => 1, 'werewolf' => 1 ], $data['characters_by_stack'] );
 		$this->assertSame( [ 'active' => 1, 'inactive' => 1 ], $data['characters_by_status'] );
 		$this->assertSame( 1, $data['pending_changes'] );
-		$this->assertSame( 1, $data['active_plots'] );
+		$this->assertSame( 1, $data['active_plots'], "the two characters' own plots aren't storylines" );
 		$this->assertCount( 1, $data['recent_activity'] );
 		$this->assertSame( 'Stats Vampire', $data['recent_activity'][0]->character_name );
 	}

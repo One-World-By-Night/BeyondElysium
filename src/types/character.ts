@@ -13,7 +13,7 @@ import type { TravellingStatus } from './transfer';
  * slug. Each value's shape depends on the section type of that
  * block, so the value type is intentionally left unstructured.
  */
-export type SheetData = Record<string, unknown>;
+export type SheetData = Record< string, unknown >;
 
 /**
  * The lifecycle state of a submitted character change. A change
@@ -33,46 +33,48 @@ export type ChangeStatus = 'pending' | 'approved' | 'rejected';
  * game-specific trait and resource value.
  */
 export interface Character {
-    /** Local auto-increment id, valid only on this WordPress installation. */
-    id: number;
-    /** Permanent identity that survives transfers between installations; use instead of `id` for cross-site references. */
-    uuid: string;
-    name: string;
-    stack_slug: string;
-    owner_type: string;
-    owner_slug: string;
-    wp_user_id: number | null;
-    /** Player's display name; mirrors the linked account's name once wp_user_id is set, otherwise freely editable text. */
-    player_name: string | null;
-    /** Email address for a not-yet-created account this character is meant to be linked to. */
-    pending_player_email?: string | null;
-    /** A matching real WP account found server-side, awaiting manager confirmation before linking. */
-    pending_match?: { id: number; display_name: string } | null;
-    status: 'active' | 'inactive' | 'retired' | 'dead' | 'pending' | string;
-    is_npc: boolean;
-    narrator: string | null;
-    start_date: string | null;
-    xp_earned: number;
-    xp_unspent: number;
-    biography: string | null;
-    notes: string | null;
-    /** Only present for users with the be_manage_characters capability. */
-    rp_notes?: string | null;
-    /** WP attachment id for the character's portrait image; image_url is resolved from it server-side. */
-    image_id?: number | null;
-    image_url?: string | null;
-    /** Whether the current user may edit this character; present only on the single-character fetch. */
-    can_edit?: boolean;
-    /** Whether the current user holds the be_manage_characters capability; present only on the single-character fetch. */
-    can_manage?: boolean;
-    /** Whether the current user may customize this character's sheet style; its own be_customize_sheet capability, not derived from can_manage. */
-    can_customize_sheet?: boolean;
-    /** Set only while an open transfer, either direction, touches this character (GX-8/9). */
-    travelling_status?: TravellingStatus | null;
-    sheet_data: SheetData;
-    created_by: number;
-    created_at: string;
-    updated_at: string;
+	/** Local auto-increment id, valid only on this WordPress installation. */
+	id: number;
+	/** Only on a create response: this character is its player's request to join the chronicle, waiting for a Storyteller. */
+	join_pending?: boolean;
+	/** Permanent identity that survives transfers between installations; use instead of `id` for cross-site references. */
+	uuid: string;
+	name: string;
+	stack_slug: string;
+	owner_type: string;
+	owner_slug: string;
+	wp_user_id: number | null;
+	/** Player's display name; mirrors the linked account's name once wp_user_id is set, otherwise freely editable text. */
+	player_name: string | null;
+	/** Email address for a not-yet-created account this character is meant to be linked to. */
+	pending_player_email?: string | null;
+	/** A matching real WP account found server-side, awaiting manager confirmation before linking. */
+	pending_match?: { id: number; display_name: string } | null;
+	status: 'active' | 'inactive' | 'retired' | 'dead' | 'pending' | string;
+	is_npc: boolean;
+	narrator: string | null;
+	start_date: string | null;
+	xp_earned: number;
+	xp_unspent: number;
+	biography: string | null;
+	notes: string | null;
+	/** Only present for users with the be_manage_characters capability. */
+	rp_notes?: string | null;
+	/** WP attachment id for the character's portrait image; image_url is resolved from it server-side. */
+	image_id?: number | null;
+	image_url?: string | null;
+	/** Whether the current user may edit this character; present only on the single-character fetch. */
+	can_edit?: boolean;
+	/** Whether the current user holds the be_manage_characters capability; present only on the single-character fetch. */
+	can_manage?: boolean;
+	/** Whether the current user may customize this character's sheet style; its own be_customize_sheet capability, not derived from can_manage. */
+	can_customize_sheet?: boolean;
+	/** Set only while an open transfer, either direction, touches this character (GX-8/9). */
+	travelling_status?: TravellingStatus | null;
+	sheet_data: SheetData;
+	created_by: number;
+	created_at: string;
+	updated_at: string;
 }
 
 /**
@@ -82,18 +84,18 @@ export interface Character {
  * when omitted.
  */
 export interface CreateCharacterRequest {
-    name: string;
-    stack_slug: string;
-    wp_user_id?: number;
-    player_name?: string;
-    status?: string;
-    is_npc?: boolean;
-    narrator?: string;
-    start_date?: string;
-    biography?: string;
-    notes?: string;
-    rp_notes?: string;
-    sheet_data?: SheetData;
+	name: string;
+	stack_slug: string;
+	wp_user_id?: number;
+	player_name?: string;
+	status?: string;
+	is_npc?: boolean;
+	narrator?: string;
+	start_date?: string;
+	biography?: string;
+	notes?: string;
+	rp_notes?: string;
+	sheet_data?: SheetData;
 }
 
 /**
@@ -103,20 +105,20 @@ export interface CreateCharacterRequest {
  * pending_player_email each define their own clear/unassign rule.
  */
 export interface UpdateCharacterRequest {
-    name?: string;
-    status?: string;
-    biography?: string;
-    notes?: string;
-    rp_notes?: string;
-    narrator?: string;
-    player_name?: string;
-    start_date?: string;
-    is_npc?: boolean;
-    image_id?: number | null;
-    /** null/0 unassigns; omitting the field entirely leaves it untouched. */
-    wp_user_id?: number | null;
-    /** Empty string clears it; omitting the field entirely leaves it untouched. */
-    pending_player_email?: string;
+	name?: string;
+	status?: string;
+	biography?: string;
+	notes?: string;
+	rp_notes?: string;
+	narrator?: string;
+	player_name?: string;
+	start_date?: string;
+	is_npc?: boolean;
+	image_id?: number | null;
+	/** null/0 unassigns; omitting the field entirely leaves it untouched. */
+	wp_user_id?: number | null;
+	/** Empty string clears it; omitting the field entirely leaves it untouched. */
+	pending_player_email?: string;
 }
 
 /**
@@ -125,9 +127,10 @@ export interface UpdateCharacterRequest {
  * display which account a character is already linked to.
  */
 export interface WpUserSummary {
-    id: number;
-    display_name: string;
-    email: string;
+	id: number;
+	display_name: string;
+	/** Site administrators always see it; a Storyteller only after searching that exact address. */
+	email?: string;
 }
 
 /**
@@ -136,14 +139,22 @@ export interface WpUserSummary {
  * filtering by status, stack, NPC flag, or a free-text search term.
  */
 export interface CharacterCollectionParams {
-    page?: number;
-    per_page?: number;
-    orderby?: 'name' | 'status' | 'created_at' | 'updated_at' | 'xp_earned' | 'xp_unspent' | 'stack_slug' | 'player_name';
-    order?: 'ASC' | 'DESC';
-    status?: string;
-    stack_slug?: string;
-    is_npc?: boolean;
-    search?: string;
+	page?: number;
+	per_page?: number;
+	orderby?:
+		| 'name'
+		| 'status'
+		| 'created_at'
+		| 'updated_at'
+		| 'xp_earned'
+		| 'xp_unspent'
+		| 'stack_slug'
+		| 'player_name';
+	order?: 'ASC' | 'DESC';
+	status?: string;
+	stack_slug?: string;
+	is_npc?: boolean;
+	search?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -157,14 +168,14 @@ export interface CharacterCollectionParams {
  * note.
  */
 export type ChangeType =
-    | 'add_trait'
-    | 'remove_trait'
-    | 'modify_trait'
-    | 'modify_resource'
-    | 'modify_identity'
-    | 'xp_earn'
-    | 'xp_adjust'
-    | 'import_note';
+	| 'add_trait'
+	| 'remove_trait'
+	| 'modify_trait'
+	| 'modify_resource'
+	| 'modify_identity'
+	| 'xp_earn'
+	| 'xp_adjust'
+	| 'import_note';
 
 /**
  * The data carried by a single character change. Its shape
@@ -172,7 +183,7 @@ export type ChangeType =
  * intentionally left unstructured here rather than modeled as a
  * discriminated union.
  */
-export type ChangePayload = Record<string, unknown>;
+export type ChangePayload = Record< string, unknown >;
 
 /**
  * A single recorded change to a character's sheet, including its
@@ -181,20 +192,23 @@ export type ChangePayload = Record<string, unknown>;
  * endpoints.
  */
 export interface CharacterChange {
-    id: number;
-    character_id: number;
-    change_type: ChangeType;
-    category: string | null;
-    change_data: ChangePayload;
-    xp_cost: number;
-    status: ChangeStatus;
-    submitted_by: number;
-    reviewed_by: number | null;
-    submitted_at: string;
-    reviewed_at: string | null;
-    notes: string | null;
-    /** Citation naming the real-world approval authority, set at submission time. */
-    reason: string | null;
+	id: number;
+	character_id: number;
+	change_type: ChangeType;
+	category: string | null;
+	change_data: ChangePayload;
+	xp_cost: number;
+	status: ChangeStatus;
+	submitted_by: number;
+	reviewed_by: number | null;
+	submitted_at: string;
+	reviewed_at: string | null;
+	/** The submitter's own note. */
+	notes: string | null;
+	/** The reviewing Storyteller's note, kept apart from the submitter's. */
+	review_notes?: string | null;
+	/** Citation naming the real-world approval authority, set at submission time. */
+	reason: string | null;
 }
 
 /**
@@ -204,11 +218,11 @@ export interface CharacterChange {
  * reviewer-facing notes.
  */
 export interface ChangeRequest {
-    change_type: ChangeType;
-    category: string;
-    change_data: ChangePayload;
-    xp_cost?: number;
-    notes?: string;
+	change_type: ChangeType;
+	category: string;
+	change_data: ChangePayload;
+	xp_cost?: number;
+	notes?: string;
 }
 
 /**
@@ -217,8 +231,10 @@ export interface ChangeRequest {
  * optionally records the reviewer's reasoning.
  */
 export interface ChangeReviewRequest {
-    status: 'approved' | 'rejected';
-    notes?: string;
+	status: 'approved' | 'rejected';
+	notes?: string;
+	/** The review_token the queue issued; the server refuses the review if the change was edited since. */
+	review_token?: string;
 }
 
 /**
@@ -227,11 +243,11 @@ export interface ChangeReviewRequest {
  * review status or change type.
  */
 export interface ChangeCollectionParams {
-    page?: number;
-    per_page?: number;
-    order?: 'ASC' | 'DESC';
-    status?: ChangeStatus;
-    change_type?: ChangeType;
+	page?: number;
+	per_page?: number;
+	order?: 'ASC' | 'DESC';
+	status?: ChangeStatus;
+	change_type?: ChangeType;
 }
 
 /**
@@ -241,7 +257,8 @@ export interface ChangeCollectionParams {
  * rather than being scoped to one.
  */
 export interface QueueCollectionParams extends ChangeCollectionParams {
-    character_id?: number;
+	character_id?: number;
+	approval_level?: ApprovalLevel;
 }
 
 /**
@@ -251,8 +268,12 @@ export interface QueueCollectionParams extends ChangeCollectionParams {
  * without a second lookup per row.
  */
 export interface QueueChange extends CharacterChange {
-    character_name: string | null;
-    approval_level: ApprovalLevel;
+	character_name: string | null;
+	approval_level: ApprovalLevel;
+	/** The submitter's display name; null if their account no longer exists. */
+	submitted_by_name: string | null;
+	/** Identifies exactly the content shown; sent back with a review so a later edit is caught. */
+	review_token: string;
 }
 
 /**
@@ -261,7 +282,7 @@ export interface QueueChange extends CharacterChange {
  * changes that have already been approved or rejected.
  */
 export interface ActivityChange extends CharacterChange {
-    character_name: string | null;
+	character_name: string | null;
 }
 
 /**
@@ -270,8 +291,8 @@ export interface ActivityChange extends CharacterChange {
  * caller can reconcile its local queue state.
  */
 export interface BatchApproveResponse {
-    approved: number[];
-    skipped: number[];
+	approved: number[];
+	skipped: number[];
 }
 
 // ---------------------------------------------------------------------------
@@ -285,10 +306,12 @@ export interface BatchApproveResponse {
  * without actually submitting it.
  */
 export interface ChangePreviewResult {
-    xp_cost: number;
-    approval_level: ApprovalLevel;
-    /** Citation naming the real-world approval authority, when the matched rule carries one. */
-    approval_reason: string | null;
+	xp_cost: number;
+	approval_level: ApprovalLevel;
+	/** Citation naming the real-world approval authority, when the matched rule carries one. */
+	approval_reason: string | null;
+	/** Present when the server would refuse this change on submit; the cost is then 0. */
+	error?: { code: string; message: string };
 }
 
 /**
@@ -297,7 +320,7 @@ export interface ChangePreviewResult {
  * real submit endpoint.
  */
 export interface PreviewChangesRequest {
-    changes: ChangeRequest[];
+	changes: ChangeRequest[];
 }
 
 /**
@@ -306,9 +329,9 @@ export interface PreviewChangesRequest {
  * unspent XP total after applying every proposed cost.
  */
 export interface PreviewChangesResponse {
-    results: ChangePreviewResult[];
-    /** Character's xp_unspent after applying every proposed change's cost. */
-    running_xp_unspent: number;
+	results: ChangePreviewResult[];
+	/** Character's xp_unspent after applying every proposed change's cost. */
+	running_xp_unspent: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -321,11 +344,11 @@ export interface PreviewChangesResponse {
  * earlier version of a character's sheet.
  */
 export interface CharacterSnapshot {
-    id: number;
-    character_id: number;
-    snapshot_data: SheetData;
-    change_id: number | null;
-    created_at: string;
+	id: number;
+	character_id: number;
+	snapshot_data: SheetData;
+	change_id: number | null;
+	created_at: string;
 }
 
 /**
@@ -334,9 +357,9 @@ export interface CharacterSnapshot {
  * snapshot list.
  */
 export interface SnapshotCollectionParams {
-    page?: number;
-    per_page?: number;
-    order?: 'ASC' | 'DESC';
+	page?: number;
+	per_page?: number;
+	order?: 'ASC' | 'DESC';
 }
 
 // ---------------------------------------------------------------------------
@@ -350,16 +373,16 @@ export interface SnapshotCollectionParams {
  * of a 404 when nothing has been customized.
  */
 export interface SheetStyle {
-    id?: number;
-    character_id?: number;
-    font_family?: string;
-    accent_color?: string | null;
-    background_color?: string | null;
-    text_color?: string | null;
-    background_image_id?: number | null;
-    background_image_url?: string | null;
-    section_graphics?: Record<string, number>;
-    section_graphic_urls?: Record<string, string>;
+	id?: number;
+	character_id?: number;
+	font_family?: string;
+	accent_color?: string | null;
+	background_color?: string | null;
+	text_color?: string | null;
+	background_image_id?: number | null;
+	background_image_url?: string | null;
+	section_graphics?: Record< string, number >;
+	section_graphic_urls?: Record< string, string >;
 }
 
 /**
@@ -368,12 +391,12 @@ export interface SheetStyle {
  * optional and left unchanged when omitted.
  */
 export interface SheetStyleInput {
-    font_family: string;
-    accent_color?: string | null;
-    background_color?: string | null;
-    text_color?: string | null;
-    background_image_id?: number | null;
-    section_graphics?: Record<string, number>;
+	font_family: string;
+	accent_color?: string | null;
+	background_color?: string | null;
+	text_color?: string | null;
+	background_image_id?: number | null;
+	section_graphics?: Record< string, number >;
 }
 
 // ---------------------------------------------------------------------------
@@ -386,9 +409,9 @@ export interface SheetStyleInput {
  * award.
  */
 export interface BulkXPRequest {
-    character_ids: number[];
-    amount: number;
-    reason: string;
+	character_ids: number[];
+	amount: number;
+	reason: string;
 }
 
 /**
@@ -397,9 +420,9 @@ export interface BulkXPRequest {
  * against the award.
  */
 export interface BulkXPResponse {
-    awarded: number;
-    amount: number;
-    reason: string;
+	awarded: number;
+	amount: number;
+	reason: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -412,9 +435,9 @@ export interface BulkXPResponse {
  * once.
  */
 export interface BulkPoolResetRequest {
-    character_ids: number[];
-    block_slug: string;
-    pool_name: string;
+	character_ids: number[];
+	block_slug: string;
+	pool_name: string;
 }
 
 /**
@@ -423,9 +446,9 @@ export interface BulkPoolResetRequest {
  * who belongs to a different chronicle, is not counted).
  */
 export interface BulkPoolResetResponse {
-    reset: number;
-    block_slug: string;
-    pool_name: string;
+	reset: number;
+	block_slug: string;
+	pool_name: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -437,15 +460,15 @@ export interface BulkPoolResetResponse {
  * at once.
  */
 export interface BulkStatusRequest {
-    character_ids: number[];
-    status: string;
+	character_ids: number[];
+	status: string;
 }
 
 /** One character's own outcome within a bulk-status request. */
 export interface BulkStatusResult {
-    id: number;
-    success: boolean;
-    error?: string;
+	id: number;
+	success: boolean;
+	error?: string;
 }
 
 /**
@@ -455,25 +478,24 @@ export interface BulkStatusResult {
  * is visible rather than silently absorbed into the count.
  */
 export interface BulkStatusResponse {
-    results: BulkStatusResult[];
-    updated: number;
+	results: BulkStatusResult[];
+	updated: number;
 }
 
 /**
  * Request body for exporting a character to a Grapevine exchange
- * file. hide_st strips [ST]...[/ST]-marked text the same way a
- * non-manager's own view of the sheet already does; as_transfer is
- * reserved for the chronicle-to-chronicle transfer flow and has no
- * effect on the document itself yet. verify mints a fresh
- * attestation (GX-7) and embeds its verification URL into the
- * document's own id field (and, for XML, an added <verification>
- * element) - each call issues a new code, so this is not free to
- * call repeatedly for the same download.
+ * file. hide_st asks for a player's copy - no Storyteller-only block,
+ * no [ST]...[/ST]-marked text - and only matters to a Storyteller: a
+ * player's own export is always that copy, whatever it sends. A
+ * transfer document comes from the outbound transfer route, never
+ * this one. verify mints a fresh attestation (GX-7) and embeds its
+ * verification URL into the document's own id field (and, for XML, an
+ * added <verification> element) - each call issues a new code, so this
+ * is not free to call repeatedly for the same download.
  */
 export interface ExportCharacterOptions {
-    hide_st?: boolean;
-    as_transfer?: boolean;
-    verify?: boolean;
+	hide_st?: boolean;
+	verify?: boolean;
 }
 
 /**
@@ -483,9 +505,9 @@ export interface ExportCharacterOptions {
  * substitution made to non-English text.
  */
 export interface ExportCharacterResponse {
-    xml: string;
-    warnings: string[];
-    transliterations: string[];
+	xml: string;
+	warnings: string[];
+	transliterations: string[];
 }
 
 /**
@@ -494,25 +516,30 @@ export interface ExportCharacterResponse {
  * for "free"; check `unpriced_reason` instead of treating a null xp as an error.
  */
 export interface PointAuditLine {
-    block_slug: string;
-    section_label: string;
-    section_type: 'trait_list' | 'tiered_power' | 'resource_pool' | 'identity_field' | null;
-    label: string;
-    xp: number | null;
-    direction: 'spent' | 'earned';
-    basis:
-        | 'catalog_cost'
-        | 'chosen_cost'
-        | 'rule_floor'
-        | 'flat_level'
-        | 'sequential_sum'
-        | 'elder_pick'
-        | 'tier_fallback'
-        | 'innate_free'
-        | null;
-    unpriced_reason: string | null;
-    modifier: number | null;
-    undeclared_by_stack: boolean;
+	block_slug: string;
+	section_label: string;
+	section_type:
+		| 'trait_list'
+		| 'tiered_power'
+		| 'resource_pool'
+		| 'identity_field'
+		| null;
+	label: string;
+	xp: number | null;
+	direction: 'spent' | 'earned';
+	basis:
+		| 'catalog_cost'
+		| 'chosen_cost'
+		| 'rule_floor'
+		| 'flat_level'
+		| 'sequential_sum'
+		| 'elder_pick'
+		| 'tier_fallback'
+		| 'innate_free'
+		| null;
+	unpriced_reason: string | null;
+	modifier: number | null;
+	undeclared_by_stack: boolean;
 }
 
 /**
@@ -521,18 +548,18 @@ export interface PointAuditLine {
  * display `net_total` without `coverage` and `caveat` alongside it.
  */
 export interface PointAudit {
-    character_id: number;
-    lines: PointAuditLine[];
-    spent_total: number;
-    earned_total: number;
-    net_total: number;
-    coverage: {
-        priced_lines: number;
-        unpriced_lines: number;
-        unpriced_by_reason: Record<string, number>;
-    };
-    xp_spent_of_record: number;
-    variance: number;
-    complete: false;
-    caveat: string;
+	character_id: number;
+	lines: PointAuditLine[];
+	spent_total: number;
+	earned_total: number;
+	net_total: number;
+	coverage: {
+		priced_lines: number;
+		unpriced_lines: number;
+		unpriced_by_reason: Record< string, number >;
+	};
+	xp_spent_of_record: number;
+	variance: number;
+	complete: false;
+	caveat: string;
 }

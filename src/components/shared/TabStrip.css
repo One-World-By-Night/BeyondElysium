@@ -8,12 +8,12 @@
 
 .be-tab-strip button {
 	padding: 0.5rem 1rem;
-	min-height: var( --be-tap-min, 32px );
+	min-height: var(--be-tap-min, 32px);
 	border: none;
 	background: none;
 	cursor: pointer;
 	border-bottom: 2px solid transparent;
-	font-size: max( 16px, var( --be-input-font-min, 1rem ) );
+	font-size: max(16px, var(--be-input-font-min, 1rem));
 }
 
 .be-tab-strip button.is-active {

@@ -1,4 +1,8 @@
-import { canUseCustomEntry, filterOptions, resolveBlurCommit } from './searchableSelect';
+import {
+	canUseCustomEntry,
+	filterOptions,
+	resolveBlurCommit,
+} from './searchableSelect';
 
 describe( 'filterOptions', () => {
 	const options = [ 'Celerity', 'Auspex', 'Potence', 'celerity variant' ];
@@ -12,11 +16,16 @@ describe( 'filterOptions', () => {
 	} );
 
 	it( 'matches a substring case-insensitively', () => {
-		expect( filterOptions( options, 'cel' ) ).toEqual( [ 'Celerity', 'celerity variant' ] );
+		expect( filterOptions( options, 'cel' ) ).toEqual( [
+			'Celerity',
+			'celerity variant',
+		] );
 	} );
 
 	it( 'matches mid-string, not just prefix, since it is a substring filter', () => {
-		expect( filterOptions( options, 'ari' ) ).toEqual( [ 'celerity variant' ] );
+		expect( filterOptions( options, 'ari' ) ).toEqual( [
+			'celerity variant',
+		] );
 	} );
 
 	it( 'returns an empty array when nothing matches', () => {
@@ -28,7 +37,9 @@ describe( 'canUseCustomEntry', () => {
 	const options = [ 'Celerity', 'Auspex' ];
 
 	it( 'is false when the block does not allow custom entries', () => {
-		expect( canUseCustomEntry( 'Something New', options, false ) ).toBe( false );
+		expect( canUseCustomEntry( 'Something New', options, false ) ).toBe(
+			false
+		);
 	} );
 
 	it( 'is false for an empty query even when allowed', () => {
@@ -36,7 +47,9 @@ describe( 'canUseCustomEntry', () => {
 	} );
 
 	it( 'is true for a genuinely new value when allowed', () => {
-		expect( canUseCustomEntry( 'Something New', options, true ) ).toBe( true );
+		expect( canUseCustomEntry( 'Something New', options, true ) ).toBe(
+			true
+		);
 	} );
 
 	it( 'is false when the query exactly matches an existing option, case-insensitively', () => {
@@ -59,15 +72,23 @@ describe( 'resolveBlurCommit (Decision 076)', () => {
 	} );
 
 	it( 'commits nothing for a new value when the block does not allow custom entries', () => {
-		expect( resolveBlurCommit( 'Zzz New Thing', options, false ) ).toBeNull();
+		expect(
+			resolveBlurCommit( 'Zzz New Thing', options, false )
+		).toBeNull();
 	} );
 
 	it( 'commits an exact case-insensitive match as a real selection, not custom - typing the full name by hand must work exactly like clicking it', () => {
-		expect( resolveBlurCommit( 'celerity', options, true ) ).toEqual( { value: 'Celerity', isCustom: false } );
+		expect( resolveBlurCommit( 'celerity', options, true ) ).toEqual( {
+			value: 'Celerity',
+			isCustom: false,
+		} );
 	} );
 
 	it( 'commits an exact match even when the block does not allow custom entries at all - this is not a custom entry', () => {
-		expect( resolveBlurCommit( 'AUSPEX', options, false ) ).toEqual( { value: 'Auspex', isCustom: false } );
+		expect( resolveBlurCommit( 'AUSPEX', options, false ) ).toEqual( {
+			value: 'Auspex',
+			isCustom: false,
+		} );
 	} );
 
 	it( 'commits nothing for a blank query', () => {
@@ -79,7 +100,9 @@ describe( 'resolveBlurCommit (Decision 076)', () => {
 	} );
 
 	it( 'trims the committed custom value', () => {
-		expect( resolveBlurCommit( '  Zzz New Thing  ', options, true ) ).toEqual( {
+		expect(
+			resolveBlurCommit( '  Zzz New Thing  ', options, true )
+		).toEqual( {
 			value: 'Zzz New Thing',
 			isCustom: true,
 		} );

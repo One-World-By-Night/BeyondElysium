@@ -81,6 +81,19 @@ class StFilterTest extends TestCase {
 		);
 	}
 
+	/**
+	 * 1.0.0-review F-061. Grapevine treats a blank marker as "filtering off" for the one
+	 * Storyteller at the keyboard; here it would show every player every `[ST]` passage in the
+	 * chronicle, and nothing in the product shows or sets the markers. A blank stored marker
+	 * falls back to the default instead.
+	 */
+	public function test_strip_for_game_never_turns_filtering_off_for_a_blank_stored_marker(): void {
+		foreach ( [ [ '', '' ], [ '', '[/ST]' ], [ '[ST]', '' ] ] as [ $start, $end ] ) {
+			$settings = (object) [ 'st_comment_start' => $start, 'st_comment_end' => $end ];
+			$this->assertSame( 'Before  After', St_Filter::strip_for_game( 'Before [ST]hidden[/ST] After', $settings ), "'{$start}' / '{$end}'" );
+		}
+	}
+
 	public function test_strip_for_game_honors_custom_markers(): void {
 		$settings = (object) [ 'st_comment_start' => '<<HIDE>>', 'st_comment_end' => '<<SHOW>>' ];
 		$this->assertSame(
@@ -88,4 +101,7 @@ class StFilterTest extends TestCase {
 			St_Filter::strip_for_game( 'Before <<HIDE>>hidden<<SHOW>> After', $settings )
 		);
 	}
+
+	// strip_html_for_game() calls wp_kses_post(), a real WordPress function unavailable at
+	// this unit layer - see tests/thread/StFilterHtmlThreadTest.php.
 }

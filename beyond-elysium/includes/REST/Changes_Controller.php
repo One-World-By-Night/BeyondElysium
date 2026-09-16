@@ -6,7 +6,9 @@ use BeyondElysium\Core\Notifications;
 use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Services\Change_Engine;
+use BeyondElysium\Services\Change_Validator;
 use BeyondElysium\Services\Cost_Engine;
 
 defined( 'ABSPATH' ) || exit;
@@ -119,7 +121,7 @@ class Changes_Controller extends Base_Controller {
 			return $character;
 		}
 
-		if ( ! current_user_can( 'be_manage_characters' ) && (int) $character->wp_user_id !== get_current_user_id() ) {
+		if ( ! \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) && (int) $character->wp_user_id !== get_current_user_id() ) {
 			return $this->error( 'ownership_denied', __( 'You do not have permission to view this character\'s change history.', 'beyond-elysium' ), 403 );
 		}
 
@@ -176,21 +178,28 @@ class Changes_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'Missing required field: change_data.', 'beyond-elysium' ), 400 );
 		}
 
-		// A custom trait is only valid on a block whose definition allows it.
-		if ( ! empty( $change_data['trait']['custom'] ) ) {
-			$block_slug = $change_data['block_slug'] ?? null;
-			$block      = $block_slug ? \BeyondElysium\Models\Schema_Block::find_by_slug( $block_slug ) : null;
-			if ( ! $block || empty( $block->definition->allow_custom ) ) {
-				return $this->error( 'custom_not_allowed', __( 'This block does not allow custom trait entries.', 'beyond-elysium' ), 400 );
-			}
-		}
-
-		$is_manager = current_user_can( 'be_manage_characters' );
+		$is_manager = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
 
 		// Ownership check: player can only submit for their own character.
 		if ( ! $is_manager && (int) $character->wp_user_id !== get_current_user_id() ) {
 			return $this->error( 'ownership_denied', __( 'You do not have permission to submit changes for this character.', 'beyond-elysium' ), 403 );
 		}
+
+		// Nothing below trusts the change's shape until it has been checked against this
+		// character's own sections - a chronicle's forks included - and normalized
+		// (1.0.0-review F-030).
+		$stack      = Creature_Stack::resolve( (string) $character->stack_slug, (string) $character->owner_slug );
+		$validation = Change_Validator::validate(
+			[ 'change_type' => $change_type, 'change_data' => $change_data ],
+			$stack['blocks'] ?? [],
+			is_array( $character->sheet_data ) ? $character->sheet_data : [],
+			$is_manager,
+			Change_Validator::protected_fields( $stack['stack'] ?? null )
+		);
+		if ( ! $validation['ok'] ) {
+			return $this->validation_error( $validation );
+		}
+		$change_data = $validation['change_data'];
 
 		// Server-computed XP cost; a non-manager is refused if it would leave xp_unspent negative.
 		$xp_cost = Cost_Engine::cost_for_change(
@@ -247,9 +256,9 @@ class Changes_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'status must be "approved" or "rejected".', 'beyond-elysium' ), 400 );
 		}
 
-		$change = Change::find( (int) $request['id'] );
-		if ( ! $change ) {
-			return $this->error( 'not_found', __( 'Change not found.', 'beyond-elysium' ), 404 );
+		$change = $this->resolve_change( (int) $request['id'], $request['game_slug'] );
+		if ( is_wp_error( $change ) ) {
+			return $change;
 		}
 
 		// Only a pending change may be reviewed; this guards against re-approving the same change twice.
@@ -257,16 +266,34 @@ class Changes_Controller extends Base_Controller {
 			return $this->error( 'change_not_pending', __( 'This change has already been reviewed.', 'beyond-elysium' ), 400 );
 		}
 
+		// The token the queue issued for exactly what the reviewer saw. A player's resubmission
+		// rewrites a pending change in place, so a stale token means the reviewer is deciding on
+		// content that is no longer there (1.0.0-review F-031).
+		$token = $request->get_param( 'review_token' );
+		$token = $token !== null ? (string) $token : null;
+		if ( $token !== null && ! hash_equals( Change::review_token( $change ), $token ) ) {
+			return $this->change_changed_error();
+		}
+
 		$notes  = $request->get_param( 'notes' );
 		$result = false;
 
 		if ( $new_status === 'approved' ) {
-			$result = Change_Engine::approve( (int) $request['id'], get_current_user_id(), $notes );
+			$result = Change_Engine::approve( (int) $request['id'], get_current_user_id(), $notes, $token );
 		} else {
-			$result = Change_Engine::reject( (int) $request['id'], get_current_user_id(), $notes );
+			$result = Change_Engine::reject( (int) $request['id'], get_current_user_id(), $notes, $token );
 		}
 
 		if ( ! $result ) {
+			// The engine re-checks under a row lock, so a review or resubmission that landed after
+			// the checks above is reported as what it was rather than as a server error.
+			$current = Change::find( (int) $request['id'] );
+			if ( $current && $current->status !== 'pending' ) {
+				return $this->error( 'change_not_pending', __( 'This change has already been reviewed.', 'beyond-elysium' ), 400 );
+			}
+			if ( $current && $token !== null && ! hash_equals( Change::review_token( $current ), $token ) ) {
+				return $this->change_changed_error();
+			}
 			return $this->error( 'update_failed', __( 'Failed to update change status.', 'beyond-elysium' ), 500 );
 		}
 
@@ -274,7 +301,7 @@ class Changes_Controller extends Base_Controller {
 
 		// Sends the review notification immediately since this route only ever touches one change.
 		$reviewed_character = Character::find( (int) $change->character_id );
-		if ( $reviewed_character ) {
+		if ( $updated && $reviewed_character ) {
 			Notifications::enqueue( $updated, $reviewed_character, get_current_user_id() );
 		}
 		Notifications::flush();
@@ -291,7 +318,10 @@ class Changes_Controller extends Base_Controller {
 	 *
 	 * Loads matching change records, then enriches each row with its
 	 * character's name and a live-computed `approval_level`, which is never
-	 * stored and is instead recalculated on every request.
+	 * stored and is instead recalculated on every request. Filtering by
+	 * `approval_level` therefore works the level out for every matching
+	 * change before cutting the page, so the page and its total count only
+	 * that level (1.0.0-review F-099).
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -313,10 +343,37 @@ class Changes_Controller extends Base_Controller {
 			'offset'       => $pagination['offset'],
 		];
 
-		$items = Change::for_game( $request['game_slug'], $args );
+		$level = $request->get_param( 'approval_level' );
+		if ( $level ) {
+			unset( $args['per_page'], $args['offset'] );
+			$matching = array_values( array_filter(
+				$this->with_review_fields( Change::for_game( $request['game_slug'], $args ) ),
+				static fn( $item ) => $item->approval_level === $level
+			) );
+			$total = count( $matching );
+			$items = array_slice( $matching, $pagination['offset'], $pagination['per_page'] );
+		} else {
+			$items = $this->with_review_fields( Change::for_game( $request['game_slug'], $args ) );
+			$total = Change::count_for_game( $request['game_slug'], $args );
+		}
 
+		$response = $this->success( $items );
+		return $this->paginate( $response, $total, $pagination['per_page'], $pagination['page'] );
+	}
+
+	/**
+	 * Adds what a reviewer sees to each change: its review token, its
+	 * character's name, its submitter's display name, and its
+	 * live-computed approval level.
+	 *
+	 * @param object[] $items
+	 * @return object[]
+	 */
+	private function with_review_fields( array $items ): array {
 		$characters = [];
+		$submitters = [];
 		foreach ( $items as $item ) {
+			$item->review_token = Change::review_token( $item );
 			$id = (int) $item->character_id;
 			if ( ! isset( $characters[ $id ] ) ) {
 				$characters[ $id ] = Character::find( $id );
@@ -330,11 +387,17 @@ class Changes_Controller extends Base_Controller {
 				] )
 				: [ 'level' => 'st', 'reason' => null ];
 			$item->approval_level = $resolved['level'];
-		}
 
-		$total    = Change::count_for_game( $request['game_slug'], $args );
-		$response = $this->success( $items );
-		return $this->paginate( $response, $total, $pagination['per_page'], $pagination['page'] );
+			// 1.0.0-review F-116: the queue showed the raw wp_user_id ("1") here. A user
+			// deleted since submitting (or never valid) falls back to null, not a fatal.
+			$submitter_id = (int) $item->submitted_by;
+			if ( ! array_key_exists( $submitter_id, $submitters ) ) {
+				$user                        = get_userdata( $submitter_id );
+				$submitters[ $submitter_id ] = $user ? $user->display_name : null;
+			}
+			$item->submitted_by_name = $submitters[ $submitter_id ];
+		}
+		return $items;
 	}
 
 	/**
@@ -362,6 +425,7 @@ class Changes_Controller extends Base_Controller {
 
 		$characters = [];
 		foreach ( $items as $item ) {
+			$item->review_token = Change::review_token( $item );
 			$id = (int) $item->character_id;
 			if ( ! isset( $characters[ $id ] ) ) {
 				$characters[ $id ] = Character::find( $id );
@@ -404,17 +468,20 @@ class Changes_Controller extends Base_Controller {
 
 		$approved = [];
 		$skipped  = [];
+		// Optional { change id: review token } for exactly what the reviewer saw (F-031).
+		$tokens = (array) ( $request->get_param( 'review_tokens' ) ?? [] );
 
 		foreach ( $change_ids as $change_id ) {
 			$change_id = (int) $change_id;
-			$change    = Change::find( $change_id );
+			$change    = $this->resolve_change( $change_id, $request['game_slug'] );
 
-			if ( ! $change || $change->status !== 'pending' ) {
+			if ( is_wp_error( $change ) || $change->status !== 'pending' ) {
 				$skipped[] = $change_id;
 				continue;
 			}
 
-			$ok = Change_Engine::approve( $change_id, get_current_user_id(), null );
+			$token = isset( $tokens[ (string) $change_id ] ) ? (string) $tokens[ (string) $change_id ] : null;
+			$ok    = Change_Engine::approve( $change_id, get_current_user_id(), null, $token );
 			if ( $ok ) {
 				$approved[] = $change_id;
 
@@ -466,7 +533,7 @@ class Changes_Controller extends Base_Controller {
 		}
 
 		// Same ownership rule as create_item(): only a manager or the character's own owner may preview.
-		if ( ! current_user_can( 'be_manage_characters' ) ) {
+		if ( ! \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) ) {
 			if ( (int) $character->wp_user_id !== get_current_user_id() ) {
 				return $this->error( 'ownership_denied', __( 'You do not have permission to preview changes for this character.', 'beyond-elysium' ), 403 );
 			}
@@ -479,16 +546,35 @@ class Changes_Controller extends Base_Controller {
 
 		$results             = [];
 		$running_xp_unspent  = (int) $character->xp_unspent;
+		$is_manager          = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
+		$stack               = Creature_Stack::resolve( (string) $character->stack_slug, (string) $character->owner_slug );
+		$sheet_data          = is_array( $character->sheet_data ) ? $character->sheet_data : [];
+		$protected_fields    = Change_Validator::protected_fields( $stack['stack'] ?? null );
 
 		foreach ( $changes as $change ) {
 			$change = is_array( $change ) ? $change : [];
+
+			// Previewed through the same check as a submission, so a preview never shows a
+			// price for something the submit route would refuse.
+			$validation = Change_Validator::validate( $change, $stack['blocks'] ?? [], $sheet_data, $is_manager, $protected_fields );
+			if ( ! $validation['ok'] ) {
+				$error     = $this->validation_error( $validation );
+				$results[] = [
+					'xp_cost'         => 0,
+					'approval_level'  => null,
+					'approval_reason' => null,
+					'error'           => [ 'code' => $error->get_error_code(), 'message' => $error->get_error_message() ],
+				];
+				continue;
+			}
+			$change['change_data'] = $validation['change_data'];
 
 			$cost = Cost_Engine::cost_for_change( $character, $change );
 			$resolved = Change_Engine::resolve_approval_level(
 				$character,
 				(object) [
 					'change_type' => $change['change_type'] ?? '',
-					'change_data' => $change['change_data'] ?? [],
+					'change_data' => $change['change_data'],
 				]
 			);
 
@@ -525,6 +611,66 @@ class Changes_Controller extends Base_Controller {
 			return $this->error( 'game_not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
 		}
 		return $game;
+	}
+
+	/**
+	 * Turns a Change_Validator failure into a 400, translating the messages a
+	 * player can meet; malformed-request messages stay in English.
+	 *
+	 * @param array $result A failed Change_Validator::validate() result.
+	 * @return \WP_Error
+	 */
+	private function validation_error( array $result ): \WP_Error {
+		$formats = [
+			'invalid_change_type'  => __( 'That kind of change cannot be submitted.', 'beyond-elysium' ),
+			'unknown_block'        => __( "That section isn't part of this character's sheet.", 'beyond-elysium' ),
+			'wrong_section_type'   => __( 'That change does not fit this section.', 'beyond-elysium' ),
+			/* translators: %s: the trait or power name as submitted */
+			'unknown_trait'        => __( '"%s" is not in this section\'s catalog.', 'beyond-elysium' ),
+			/* translators: %s: the power name as submitted */
+			'unknown_power'        => __( '"%s" is not in this section\'s catalog.', 'beyond-elysium' ),
+			/* translators: 1: the power name as submitted, 2: the discipline it was submitted under */
+			'unknown_power_pick'   => __( '"%1$s" is not a power of %2$s.', 'beyond-elysium' ),
+			/* translators: %s: the pool name as submitted */
+			'unknown_pool'         => __( '"%s" is not a pool on this sheet.', 'beyond-elysium' ),
+			/* translators: %s: a resource pool, such as Glory */
+			'pool_not_purchasable' => __( "%s's permanent rating is set by a Storyteller.", 'beyond-elysium' ),
+			/* translators: %s: the field name as submitted */
+			'unknown_field'        => __( '"%s" is not a field on this sheet.', 'beyond-elysium' ),
+			/* translators: 1: the choice as submitted, 2: the field, such as Clan */
+			'unknown_option'       => __( '"%1$s" is not a choice for %2$s.', 'beyond-elysium' ),
+			/* translators: %s: an identity field, such as Clan */
+			'field_required'       => __( '%s cannot be cleared - ask a Storyteller.', 'beyond-elysium' ),
+		];
+		$code    = (string) ( $result['code'] ?? 'invalid_param' );
+		$message = isset( $formats[ $code ] ) ? vsprintf( $formats[ $code ], $result['args'] ?? [] ) : (string) ( $result['message'] ?? '' );
+		return $this->error( $code, $message, 400 );
+	}
+
+	/** @return \WP_Error The refusal for a review whose change was edited after it was shown. */
+	private function change_changed_error(): \WP_Error {
+		return $this->error( 'change_changed', __( 'This change was edited after you opened it. Reload the queue and review it again.', 'beyond-elysium' ), 409 );
+	}
+
+	/**
+	 * Resolves a change by ID, verifying its character belongs to the game.
+	 *
+	 * A change id is a sequential integer that says nothing about which
+	 * chronicle it came from, so the character behind it is checked against
+	 * the URL's chronicle before anyone can review it (1.0.0-review F-008).
+	 * Returns the same 404 whether the change is missing or belongs elsewhere.
+	 *
+	 * @param int    $change_id
+	 * @param string $game_slug
+	 * @return object|\WP_Error
+	 */
+	protected function resolve_change( int $change_id, string $game_slug ) {
+		$change    = Change::find( $change_id );
+		$character = $change ? Character::find( (int) $change->character_id ) : null;
+		if ( ! $change || ! $character || $character->owner_slug !== $game_slug ) {
+			return $this->error( 'not_found', __( 'Change not found.', 'beyond-elysium' ), 404 );
+		}
+		return $change;
 	}
 
 	/**
@@ -571,6 +717,10 @@ class Changes_Controller extends Base_Controller {
 			'character_id' => [
 				'type'    => 'integer',
 				'minimum' => 1,
+			],
+			'approval_level' => [
+				'type' => 'string',
+				'enum' => [ 'auto', 'st' ],
 			],
 			'order'       => [
 				'type'    => 'string',

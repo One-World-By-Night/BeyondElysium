@@ -5,6 +5,8 @@
  * always produces the same output, with no DOM or network access.
  */
 
+import { DOT } from './displayTemper';
+
 export type DisplayType =
 	| 'simple'
 	| 'multiplier'
@@ -44,18 +46,25 @@ function parseTotal( total: Trait[ 'total' ] ): number {
  * Renders a trait's name, total, and note as a display string, with the exact format
  * determined by `mode`: some modes show a multiplier count, some render dots, some fold
  * the note into parentheses, and some drop the name entirely. `dot` is the character
- * used for dot-rendering modes, defaulting to a bullet.
+ * used for dot-rendering modes, defaulting to the one dot a resource pool's points use too
+ * (1.0.0-review F-016).
  */
-export function displayTrait( trait: Trait, mode: DisplayType, dot = '•' ): string {
+export function displayTrait(
+	trait: Trait,
+	mode: DisplayType,
+	dot = DOT
+): string {
+	if ( mode === 'simple' ) {
+		// Note suppressed — one of only two modes that drop it.
+		return trait.name;
+	}
+
 	const total = parseTotal( trait.total );
 	const note = trait.note ?? '';
-	const dots = ( count: number ): string => dot.repeat( Math.max( 0, count ) );
+	const dots = ( count: number ): string =>
+		dot.repeat( Math.max( 0, count ) );
 
 	switch ( mode ) {
-		case 'simple':
-			// Note suppressed — one of only two modes that drop it.
-			return trait.name;
-
 		case 'multiplier': {
 			// Hides x1. Every other numeric total, including 0, shows.
 			let out = trait.name;
@@ -86,7 +95,9 @@ export function displayTrait( trait: Trait, mode: DisplayType, dot = '•' ): st
 
 		case 'cost':
 			// Note lives inside the parens, comma-joined with the total.
-			return `${ trait.name } (${ note ? `${ total }, ${ note }` : total })`;
+			return `${ trait.name } (${
+				note ? `${ total }, ${ note }` : total
+			})`;
 
 		case 'note_only':
 			return note ? `${ trait.name } (${ note })` : trait.name;

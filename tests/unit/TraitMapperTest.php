@@ -148,6 +148,20 @@ class TraitMapperTest extends TestCase {
 		$this->assertSame( 'mage-spheres', Trait_Mapper::classify_list( 'mage', 'Spheres' )['block_slug'] );
 	}
 
+	/**
+	 * 1.0.0-review F-049: Fera and Bete keep Gifts in fera-gifts and Health Levels in
+	 * werewolf-health, and a Bete's Backgrounds live in fera-backgrounds - all three pointed at
+	 * blocks those stacks never hold, so every one was dropped on export and on import.
+	 */
+	public function test_fera_and_bete_lists_route_to_the_blocks_those_stacks_hold(): void {
+		foreach ( [ 'fera', 'bete' ] as $stack ) {
+			$this->assertSame( 'fera-gifts', Trait_Mapper::classify_list( $stack, 'Gifts' )['block_slug'], $stack );
+			$this->assertSame( 'werewolf-health', Trait_Mapper::classify_list( $stack, 'Health Levels' )['block_slug'], $stack );
+			$this->assertSame( 'fera-backgrounds', Trait_Mapper::classify_list( $stack, 'Backgrounds' )['block_slug'], $stack );
+			$this->assertSame( 'fera-backgrounds', Trait_Mapper::classify_list( $stack, 'Influences' )['block_slug'], $stack );
+		}
+	}
+
 	public function test_an_unmapped_list_name_is_preserved_not_dropped(): void {
 		$result = Trait_Mapper::classify_list( 'vampire', 'Some Future List Nobody Declared' );
 		$this->assertSame( 'preserve_as_note', $result['outcome'] );

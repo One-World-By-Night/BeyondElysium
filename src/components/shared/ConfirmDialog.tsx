@@ -23,13 +23,28 @@ export interface ConfirmDialogProps {
  * `onCancel`; clicking confirm calls `onConfirm`. Renders nothing at
  * all when `open` is false, rather than a hidden dialog.
  */
-export function ConfirmDialog( { open, title, message, confirmLabel, cancelLabel, onConfirm, onCancel }: ConfirmDialogProps ) {
+export function ConfirmDialog( {
+	open,
+	title,
+	message,
+	confirmLabel,
+	cancelLabel,
+	onConfirm,
+	onCancel,
+}: ConfirmDialogProps ) {
 	if ( ! open ) {
 		return null;
 	}
 
 	return (
-		<div className="be-confirm-dialog__backdrop" role="presentation" onClick={ onCancel }>
+		<div
+			className="be-confirm-dialog__backdrop"
+			role="presentation"
+			onClick={ onCancel }
+		>
+			{ /* Keeps a click inside the dialog from reaching the backdrop, which cancels it. Nothing
+			here to operate: its buttons are the keyboard's way out. */ }
+			{ /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */ }
 			<div
 				className="be-confirm-dialog"
 				role="alertdialog"
@@ -37,15 +52,26 @@ export function ConfirmDialog( { open, title, message, confirmLabel, cancelLabel
 				aria-labelledby="be-confirm-dialog-title"
 				onClick={ ( e ) => e.stopPropagation() }
 			>
-				<h2 id="be-confirm-dialog-title" className="be-confirm-dialog__title">
+				<h2
+					id="be-confirm-dialog-title"
+					className="be-confirm-dialog__title"
+				>
 					{ title }
 				</h2>
 				<p className="be-confirm-dialog__message">{ message }</p>
 				<div className="be-confirm-dialog__actions">
-					<button type="button" className="be-confirm-dialog__cancel" onClick={ onCancel }>
+					<button
+						type="button"
+						className="be-confirm-dialog__cancel"
+						onClick={ onCancel }
+					>
 						{ cancelLabel ?? __( 'Cancel', 'beyond-elysium' ) }
 					</button>
-					<button type="button" className="be-confirm-dialog__confirm" onClick={ onConfirm }>
+					<button
+						type="button"
+						className="be-confirm-dialog__confirm"
+						onClick={ onConfirm }
+					>
 						{ confirmLabel ?? __( 'Confirm', 'beyond-elysium' ) }
 					</button>
 				</div>

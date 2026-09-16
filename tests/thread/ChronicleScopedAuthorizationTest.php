@@ -102,6 +102,12 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	 * `game-roles.php` entry DID grant it would still fail `current_user_can()`'s own
 	 * baseline gate (`Authorization::check_request()` requires both). Both fixed together;
 	 * this proves the combination actually works end to end, not just one half of it.
+	 *
+	 * Narrowed further 2026-09-15 (1.0.0-checklist.md item 27) - see
+	 * `test_ast_cannot_manage_approval_rules_for_their_own_chronicle()` and its neighbors
+	 * below for the newer restrictions. "Everything but delete and edit game" is no longer
+	 * the whole model; import and the game-level edit/delete boundary this test checks are
+	 * both still exactly as they were.
 	 */
 	public function test_ast_can_import_but_cannot_delete_or_edit_the_game(): void {
 		$ast_id = self::factory()->user->create( [ 'role' => 'editor' ] );
@@ -116,6 +122,137 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 
 		$delete = $this->dispatch( 'DELETE', '/be/v1/games/' . $this->game_a );
 		$this->assertSame( 403, $delete->get_status(), 'an AST must not be able to delete the game itself' );
+	}
+
+	/**
+	 * Owner ruling, 1.0.0-checklist.md item 27 (2026-09-15): an AST loses Chronicle Setup's
+	 * own Approval Rules section for their chronicle. `be_manage_approval_rules` used to be
+	 * part of the blanket `array_diff(Capabilities::all(), ['be_manage_games'])` grant every
+	 * AST shared with every HST - this proves game-roles.php's own exclusion, not just that
+	 * the capability exists.
+	 */
+	public function test_ast_cannot_manage_approval_rules_for_their_own_chronicle(): void {
+		$ast_id = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( $this->game_a_id, $ast_id, 'ast' );
+		wp_set_current_user( $ast_id );
+
+		$response = $this->dispatch( 'POST', '/be/v1/' . $this->game_a . '/approval-rules' );
+		$this->assertSame( 403, $response->get_status() );
+	}
+
+	/**
+	 * Same ruling: an AST loses the chronicle's own catalog customization (forking a
+	 * schema block for their chronicle specifically) - `be_manage_schemas`, chronicle-scoped
+	 * via the exact `?game_slug=` write path GS-1 built for an HST.
+	 */
+	public function test_ast_cannot_customize_the_chronicles_own_catalog(): void {
+		$ast_id = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( $this->game_a_id, $ast_id, 'ast' );
+		wp_set_current_user( $ast_id );
+
+		// The route's own required-args validation runs before permission_callback in WP
+		// core's own dispatch order, so a bare request 400s before the capability is ever
+		// checked - a real create body is needed to actually exercise the permission gate.
+		$response = $this->dispatch( 'POST', '/be/v1/' . $this->game_a . '/schema-blocks', [
+			'slug'         => 'thread-test-ast-catalog-block',
+			'name'         => 'Thread Test AST Catalog Block',
+			'section_type' => 'trait_list',
+		] );
+		$this->assertSame( 403, $response->get_status() );
+	}
+
+	/**
+	 * Same ruling: an AST loses the chronicle's own template customization too - GS-1's
+	 * "fork their own chronicle's catalog and templates" was always both halves together for
+	 * an HST, and item 27's "the chronicle's own schema blocks and templates" (1.0.0-checklist.md's
+	 * own wording) keeps them together for this exclusion as well.
+	 */
+	public function test_ast_cannot_customize_the_chronicles_own_templates(): void {
+		$ast_id = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( $this->game_a_id, $ast_id, 'ast' );
+		wp_set_current_user( $ast_id );
+
+		$response = $this->dispatch( 'POST', '/be/v1/' . $this->game_a . '/templates', [
+			'name'          => 'Thread Test AST Template',
+			'template_type' => 'sheet_full',
+			'stack_slug'    => 'mortal',
+		] );
+		$this->assertSame( 403, $response->get_status() );
+	}
+
+	/**
+	 * Same ruling: an AST loses the ability to permanently delete a character, but keeps
+	 * every other character power the model already granted (edit, bulk XP/status/reset -
+	 * 1.0.0-checklist.md item 27's own "keeps ... the bulk changes"). `be_delete_characters`
+	 * is the new, narrower capability `Characters_Controller`'s DELETE route now checks
+	 * instead of the broader `be_manage_characters` an AST still holds for everything else.
+	 */
+	public function test_ast_cannot_delete_a_character_but_keeps_bulk_status_changes(): void {
+		global $wpdb;
+		$wpdb->insert(
+			$wpdb->prefix . 'be_characters',
+			[
+				'uuid'       => wp_generate_uuid4(),
+				'name'       => 'AST Boundary Test Character',
+				'stack_slug' => 'mortal',
+				'owner_type' => 'chronicle',
+				'owner_slug' => $this->game_a,
+				'status'     => 'active',
+				'created_by' => 1,
+				'created_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql' ),
+			]
+		);
+		$character_id = (int) $wpdb->insert_id;
+
+		$ast_id = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( $this->game_a_id, $ast_id, 'ast' );
+		wp_set_current_user( $ast_id );
+
+		$delete = $this->dispatch( 'DELETE', '/be/v1/' . $this->game_a . '/characters/' . $character_id );
+		$this->assertSame( 403, $delete->get_status(), 'an AST must not be able to permanently delete a character' );
+
+		$bulk = $this->dispatch( 'POST', '/be/v1/' . $this->game_a . '/characters/bulk-status', [
+			'character_ids' => [ $character_id ],
+			'status'        => 'inactive',
+		] );
+		$this->assertNotSame( 403, $bulk->get_status(), 'an AST must keep the bulk status/XP/reset operations item 27 says they keep' );
+	}
+
+	/**
+	 * Positive control for all three narrowings above: an HST (never touched by item 27)
+	 * must still be able to do every one of them, in the same chronicle, the same way as
+	 * before - proving the AST exclusions in game-roles.php did not accidentally reach hst.
+	 */
+	public function test_hst_still_manages_approval_rules_catalog_and_character_deletion(): void {
+		global $wpdb;
+		$wpdb->insert(
+			$wpdb->prefix . 'be_characters',
+			[
+				'uuid'       => wp_generate_uuid4(),
+				'name'       => 'HST Control Test Character',
+				'stack_slug' => 'mortal',
+				'owner_type' => 'chronicle',
+				'owner_slug' => $this->game_a,
+				'status'     => 'active',
+				'created_by' => 1,
+				'created_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql' ),
+			]
+		);
+		$character_id = (int) $wpdb->insert_id;
+
+		// game_a's editor is already hst (setUp()).
+		wp_set_current_user( $this->editor_id );
+
+		$rules = $this->dispatch( 'POST', '/be/v1/' . $this->game_a . '/approval-rules' );
+		$this->assertNotSame( 403, $rules->get_status() );
+
+		$catalog = $this->dispatch( 'POST', '/be/v1/' . $this->game_a . '/schema-blocks' );
+		$this->assertNotSame( 403, $catalog->get_status() );
+
+		$delete = $this->dispatch( 'DELETE', '/be/v1/' . $this->game_a . '/characters/' . $character_id );
+		$this->assertNotSame( 403, $delete->get_status() );
 	}
 
 	/**
@@ -242,8 +379,11 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	 * route this must not apply to (`Base_Controller::permission( ..., true )` on the POST
 	 * route only) - proven here against a user who is a member of NEITHER game, not just
 	 * "no member of game B" like the rest of this file's fixtures.
+	 *
+	 * Since 1.0.0-review F-033 (owner ruling) that first character is a join request: it waits,
+	 * pending, and membership follows when a Storyteller sets it active.
 	 */
-	public function test_a_brand_new_player_can_create_their_first_character_and_gains_membership(): void {
+	public function test_a_brand_new_player_can_ask_to_join_and_a_storyteller_makes_them_a_member(): void {
 		\BeyondElysium\Models\Creature_Stack::create( [
 			'slug'             => 'thread-test-bootstrap-stack',
 			'name'             => 'Thread Test Bootstrap Stack',
@@ -259,14 +399,17 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 			'stack_slug' => 'thread-test-bootstrap-stack',
 		] );
 
-		$this->assertSame( 201, $response->get_status(), 'a player with zero prior membership must still be able to create their first character' );
+		$this->assertSame( 201, $response->get_status(), 'a player with zero prior membership must still be able to start their first character' );
+		$this->assertSame( 'pending', $response->get_data()->status );
+		$this->assertNull( Game_Member::find( $this->game_a_id, $brand_new_id ), 'no membership until a Storyteller approves' );
+
+		\BeyondElysium\Models\Character::update_header( (int) $response->get_data()->id, [ 'status' => 'active' ] );
 
 		$member = Game_Member::find( $this->game_a_id, $brand_new_id );
-		$this->assertNotNull( $member, 'creating the character must grant real player membership, not just let the one request through' );
+		$this->assertNotNull( $member, 'approving the character grants real player membership' );
 		$this->assertSame( 'player', $member->role );
 
-		// Confirm the grant is real, not a fluke of the bootstrap waiver: a second,
-		// ordinary game-scoped request (no bootstrap flag) now succeeds on its own.
+		// The grant is real: an ordinary game-scoped request (no bootstrap flag) now succeeds on its own.
 		$list = $this->dispatch( 'GET', "/be/v1/{$this->game_a}/characters" );
 		$this->assertSame( 200, $list->get_status() );
 	}

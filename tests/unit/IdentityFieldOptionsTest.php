@@ -161,6 +161,6 @@ class IdentityFieldOptionsTest extends TestCase {
 
 	public function test_courage_has_no_name_lookup_at_all(): void {
 		$courage = $this->pool( 'vampire-virtues', 'Courage' );
-		$this->assertArrayNotHasKey( 'name_lookup', $courage, 'No researched Path renames Courage - see vampire-virtue-names.php.' );
+		$this->assertArrayNotHasKey( 'name_lookup', $courage, 'No researched Path renames Courage.' );
 	}
 }

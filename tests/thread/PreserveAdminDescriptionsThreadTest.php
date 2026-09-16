@@ -108,7 +108,7 @@ class PreserveAdminDescriptionsThreadTest extends WP_UnitTestCase {
 	 * real GVM item can't be renamed out from under this test.
 	 */
 	public function test_a_renamed_item_does_not_carry_its_old_description_forward(): void {
-		$method = new \ReflectionMethod( Seeder::class, 'preserve_admin_descriptions' );
+		$method = new \ReflectionMethod( Seeder::class, 'preserve_admin_edits' );
 		$method->setAccessible( true );
 
 		$old_definition = json_decode( wp_json_encode( [

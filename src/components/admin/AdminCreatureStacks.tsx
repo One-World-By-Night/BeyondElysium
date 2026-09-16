@@ -8,7 +8,12 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import CreatureStackDefinitionEditor from './CreatureStackDefinitionEditor';
-import type { CreationRules, CreatureStack, StackDefinition } from '../../types';
+import type {
+	CreationRules,
+	CreatureStack,
+	StackDefinition,
+} from '../../types';
+import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
 interface RestError {
@@ -21,7 +26,11 @@ interface RestError {
  * `message` property.
  */
 function errorMessage( error: unknown ): string {
-	if ( typeof error === 'object' && error !== null && ( error as RestError ).message ) {
+	if (
+		typeof error === 'object' &&
+		error !== null &&
+		( error as RestError ).message
+	) {
 		return ( error as RestError ).message as string;
 	}
 	return __( 'Something went wrong.', 'beyond-elysium' );
@@ -42,10 +51,10 @@ const EMPTY_FORM = {
  * own custom creature stack definitions and character-creation rules.
  */
 export function AdminCreatureStacks() {
-	const [ stacks, setStacks ] = useState<CreatureStack[]>( [] );
+	const [ stacks, setStacks ] = useState< CreatureStack[] >( [] );
 	const [ loading, setLoading ] = useState( true );
-	const [ error, setError ] = useState<string | null>( null );
-	const [ editingSlug, setEditingSlug ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
+	const [ editingSlug, setEditingSlug ] = useState< string | null >( null );
 	const [ creating, setCreating ] = useState( false );
 	const [ form, setForm ] = useState( EMPTY_FORM );
 	const [ saving, setSaving ] = useState( false );
@@ -73,7 +82,9 @@ export function AdminCreatureStacks() {
 
 	useEffect( load, [] );
 
-	const visible = hideSystem ? stacks.filter( ( s ) => ! s.is_system ) : stacks;
+	const visible = hideSystem
+		? stacks.filter( ( s ) => ! s.is_system )
+		: stacks;
 
 	function startEdit( stack: CreatureStack ) {
 		setEditingSlug( stack.slug );
@@ -150,7 +161,7 @@ export function AdminCreatureStacks() {
 			! window.confirm(
 				sprintf(
 					// translators: %s: creature stack name.
-					__( 'Delete "%s"? Existing characters of this type will no longer resolve.', 'beyond-elysium' ),
+					__( 'Delete "%s"?', 'beyond-elysium' ),
 					stack.name
 				)
 			)
@@ -167,7 +178,10 @@ export function AdminCreatureStacks() {
 
 	return (
 		<div className="be-admin">
-			<h1>{ __( 'Creature Stacks', 'beyond-elysium' ) }</h1>
+			<div className="be-help-heading">
+				<h1>{ __( 'Creature Stacks', 'beyond-elysium' ) }</h1>
+				<HelpButton helpKey="creature-stacks" />
+			</div>
 			{ error && (
 				<div className="be-admin__error" role="alert">
 					{ error }
@@ -176,8 +190,11 @@ export function AdminCreatureStacks() {
 
 			<div className="be-admin__filters">
 				<label>
-					<input type="checkbox" checked={ hideSystem } onChange={ ( e ) => setHideSystem( e.target.checked ) } />
-					{ ' ' }
+					<input
+						type="checkbox"
+						checked={ hideSystem }
+						onChange={ ( e ) => setHideSystem( e.target.checked ) }
+					/>{ ' ' }
 					{ sprintf(
 						// translators: %d: number of system creature stacks.
 						__( 'Hide system stacks (%d)', 'beyond-elysium' ),
@@ -202,7 +219,12 @@ export function AdminCreatureStacks() {
 					<tbody>
 						{ visible.length === 0 && (
 							<tr>
-								<td colSpan={ 5 }>{ __( 'No custom creature stacks yet.', 'beyond-elysium' ) }</td>
+								<td colSpan={ 5 }>
+									{ __(
+										'No custom creature stacks yet.',
+										'beyond-elysium'
+									) }
+								</td>
 							</tr>
 						) }
 						{ visible.map( ( stack ) => (
@@ -212,13 +234,23 @@ export function AdminCreatureStacks() {
 									<code>{ stack.slug }</code>
 								</td>
 								<td>{ stack.game_line }</td>
-								<td>{ stack.is_system ? __( 'Yes', 'beyond-elysium' ) : __( 'No', 'beyond-elysium' ) }</td>
 								<td>
-									<button type="button" onClick={ () => startEdit( stack ) }>
+									{ stack.is_system
+										? __( 'Yes', 'beyond-elysium' )
+										: __( 'No', 'beyond-elysium' ) }
+								</td>
+								<td>
+									<button
+										type="button"
+										onClick={ () => startEdit( stack ) }
+									>
 										{ __( 'Edit', 'beyond-elysium' ) }
 									</button>
 									{ ! stack.is_system && (
-										<button type="button" onClick={ () => remove( stack ) }>
+										<button
+											type="button"
+											onClick={ () => remove( stack ) }
+										>
 											{ __( 'Delete', 'beyond-elysium' ) }
 										</button>
 									) }
@@ -236,33 +268,73 @@ export function AdminCreatureStacks() {
 			) }
 
 			{ ( creating || editingSlug !== null ) && (
-				<form className="be-admin__form be-admin__form--wide" onSubmit={ save }>
-					<h2>{ creating ? __( 'New Creature Stack', 'beyond-elysium' ) : sprintf( __( 'Edit %s', 'beyond-elysium' ), editingSlug as string ) }</h2>
+				<form
+					className="be-admin__form be-admin__form--wide"
+					onSubmit={ save }
+				>
+					<h2>
+						{ creating
+							? __( 'New Creature Stack', 'beyond-elysium' )
+							: sprintf(
+									/* translators: %s: the creature stack's slug being edited */
+									__( 'Edit %s', 'beyond-elysium' ),
+									editingSlug as string
+							  ) }
+					</h2>
 					<label>
 						{ __( 'Name', 'beyond-elysium' ) }
-						<input type="text" value={ form.name } onChange={ ( e ) => setForm( { ...form, name: e.target.value } ) } required />
+						<input
+							type="text"
+							value={ form.name }
+							onChange={ ( e ) =>
+								setForm( { ...form, name: e.target.value } )
+							}
+							required
+						/>
 					</label>
 					{ creating && (
 						<label>
 							{ __( 'Slug', 'beyond-elysium' ) }
-							<input type="text" value={ form.slug } onChange={ ( e ) => setForm( { ...form, slug: e.target.value } ) } required />
+							<input
+								type="text"
+								value={ form.slug }
+								onChange={ ( e ) =>
+									setForm( { ...form, slug: e.target.value } )
+								}
+								required
+							/>
 						</label>
 					) }
 					<label>
 						{ __( 'Game Line', 'beyond-elysium' ) }
-						<input type="text" value={ form.game_line } onChange={ ( e ) => setForm( { ...form, game_line: e.target.value } ) } />
+						<input
+							type="text"
+							value={ form.game_line }
+							onChange={ ( e ) =>
+								setForm( {
+									...form,
+									game_line: e.target.value,
+								} )
+							}
+						/>
 					</label>
 
 					<CreatureStackDefinitionEditor
 						stackDefinition={ form.stackDefinition }
 						creationRules={ form.creationRules }
-						onChangeStackDefinition={ ( stackDefinition ) => setForm( { ...form, stackDefinition } ) }
-						onChangeCreationRules={ ( creationRules ) => setForm( { ...form, creationRules } ) }
+						onChangeStackDefinition={ ( stackDefinition ) =>
+							setForm( { ...form, stackDefinition } )
+						}
+						onChangeCreationRules={ ( creationRules ) =>
+							setForm( { ...form, creationRules } )
+						}
 					/>
 
 					<div className="be-admin__form-actions">
 						<button type="submit" disabled={ saving }>
-							{ saving ? __( 'Saving…', 'beyond-elysium' ) : __( 'Save', 'beyond-elysium' ) }
+							{ saving
+								? __( 'Saving…', 'beyond-elysium' )
+								: __( 'Save', 'beyond-elysium' ) }
 						</button>
 						<button type="button" onClick={ cancel }>
 							{ __( 'Cancel', 'beyond-elysium' ) }

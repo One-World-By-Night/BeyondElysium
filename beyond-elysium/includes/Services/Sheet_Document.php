@@ -103,7 +103,7 @@ class Sheet_Document {
 		$template_type = ! empty( $character->is_npc ) ? 'npc_full' : 'sheet_full';
 		$template      = Template::resolve( $character->stack_slug, $template_type, (int) $game->id );
 		$layout        = $template->layout ?? ( Layout_Generator::generate_for_stack( $character->stack_slug ) ?? [ 'sections' => [] ] );
-		$layout        = St_Visibility::filter_layout( $layout, $can_manage );
+		$layout        = St_Visibility::filter_layout( $layout, $can_manage, $game->slug );
 
 		$sheet_data = is_array( $character->sheet_data ) ? $character->sheet_data : [];
 
@@ -307,7 +307,12 @@ class Sheet_Document {
 
 		$rows = [];
 		foreach ( ( $definition->fields ?? [] ) as $field ) {
-			$value   = $values[ $field->name ] ?? null;
+			$value = $values[ $field->name ] ?? null;
+			// A multiselect holds a list: its choices, joined as the on-screen sheet joins them -
+			// never cast to the word "Array" (1.0.0-review F-078).
+			if ( is_array( $value ) ) {
+				$value = implode( ', ', array_map( 'strval', $value ) );
+			}
 			$display = ( $value === null || $value === '' ) ? '—' : (string) $value;
 			$rows[]  = $field->name . ': ' . $display;
 		}

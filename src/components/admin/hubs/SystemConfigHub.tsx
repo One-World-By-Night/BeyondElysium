@@ -16,7 +16,14 @@ import AdminApprovalRules from '../AdminApprovalRules';
 import AdminAiAssistSite from '../AdminAiAssistSite';
 import type { Tab } from '../../shared/TabStrip';
 
-const TABS = { games: 'games', schemaBlocks: 'schema-blocks', creatureStacks: 'creature-stacks', templates: 'templates', approvalRules: 'approval-rules', aiAssist: 'ai-assist' };
+const TABS = {
+	games: 'games',
+	schemaBlocks: 'schema-blocks',
+	creatureStacks: 'creature-stacks',
+	templates: 'templates',
+	approvalRules: 'approval-rules',
+	aiAssist: 'ai-assist',
+};
 
 export function SystemConfigHub() {
 	const [ tab, setTab ] = useState( () => readTabFromUrl( TABS.games ) );
@@ -27,12 +34,32 @@ export function SystemConfigHub() {
 
 	const capabilities = window.beyondElysium?.capabilities;
 	const tabs: Tab[] = [
-		capabilities?.be_manage_games && { key: TABS.games, label: __( 'Games', 'beyond-elysium' ) },
-		capabilities?.be_manage_schemas && { key: TABS.schemaBlocks, label: __( 'Schema Blocks', 'beyond-elysium' ) },
-		capabilities?.be_manage_schemas && { key: TABS.creatureStacks, label: __( 'Creature Stacks', 'beyond-elysium' ) },
-		capabilities?.be_manage_templates && { key: TABS.templates, label: __( 'Templates', 'beyond-elysium' ) },
-		capabilities?.be_manage_approval_rules && { key: TABS.approvalRules, label: __( 'Approval Rules', 'beyond-elysium' ) },
-		capabilities?.be_manage_games && { key: TABS.aiAssist, label: __( 'AI Assist', 'beyond-elysium' ) },
+		capabilities?.be_manage_games && {
+			key: TABS.games,
+			label: __( 'Games', 'beyond-elysium' ),
+		},
+		capabilities?.be_manage_schemas && {
+			key: TABS.schemaBlocks,
+			label: __( 'Schema Blocks', 'beyond-elysium' ),
+		},
+		// Creature stacks are shared by every chronicle and have no per-chronicle copy, so only a
+		// site administrator may change them; a chronicle narrows its stacks in Chronicle Setup.
+		capabilities?.be_manage_games && {
+			key: TABS.creatureStacks,
+			label: __( 'Creature Stacks', 'beyond-elysium' ),
+		},
+		capabilities?.be_manage_templates && {
+			key: TABS.templates,
+			label: __( 'Templates', 'beyond-elysium' ),
+		},
+		capabilities?.be_manage_approval_rules && {
+			key: TABS.approvalRules,
+			label: __( 'Approval Rules', 'beyond-elysium' ),
+		},
+		capabilities?.be_manage_games && {
+			key: TABS.aiAssist,
+			label: __( 'AI Assist', 'beyond-elysium' ),
+		},
 	].filter( Boolean ) as Tab[];
 
 	useEffect( () => {
@@ -43,7 +70,14 @@ export function SystemConfigHub() {
 	}, [ tabs.map( ( t ) => t.key ).join( ',' ) ] );
 
 	if ( tabs.length === 0 ) {
-		return <p>{ __( 'You do not have permission to view this page.', 'beyond-elysium' ) }</p>;
+		return (
+			<p>
+				{ __(
+					'You do not have permission to view this page.',
+					'beyond-elysium'
+				) }
+			</p>
+		);
 	}
 
 	return (

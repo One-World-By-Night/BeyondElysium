@@ -21,7 +21,9 @@ const EMPTY_CAPABILITIES: MyCapabilities = {
 
 /** Reads the current `?game_slug=` from the URL. Exported for testing without a hook-rendering dependency. */
 export function readGameSlugFromUrl(): string {
-	return new URLSearchParams( window.location.search ).get( 'game_slug' ) ?? '';
+	return (
+		new URLSearchParams( window.location.search ).get( 'game_slug' ) ?? ''
+	);
 }
 
 /** Writes `game_slug` into the URL without a page reload, so a bookmark or refresh preserves the switch. */
@@ -31,51 +33,105 @@ export function writeGameSlugToUrl( gameSlug: string ): void {
 	window.history.replaceState( {}, '', url.toString() );
 }
 
+/**
+ * Loads the current user's memberships, telling a failed request apart from
+ * belonging to no chronicle (1.0.0-review F-081). Exported for testing
+ * without a hook-rendering dependency.
+ */
+export async function fetchMemberships(
+	mine: () => Promise< MyGame[] >
+): Promise< { games: MyGame[]; failed: boolean } > {
+	try {
+		return { games: await mine(), failed: false };
+	} catch {
+		return { games: [], failed: true };
+	}
+}
+
 export interface ChronicleSwitcherState {
 	games: MyGame[];
 	gameSlug: string;
 	setGameSlug: ( slug: string ) => void;
 	capabilities: MyCapabilities;
 	loadingGames: boolean;
+	/** The membership request failed - not the same as belonging to no chronicle. */
+	gamesFailed: boolean;
+	/** Asks for the memberships again after a failure. */
+	retryGames: () => void;
 	loadingCapabilities: boolean;
+	/** The chronicle `capabilities` were resolved for - until it matches `gameSlug`, they aren't this chronicle's yet. */
+	capabilitiesFor: string;
 }
 
 export function useChronicleSwitcher(): ChronicleSwitcherState {
-	const [ games, setGames ] = useState<MyGame[]>( [] );
+	const [ games, setGames ] = useState< MyGame[] >( [] );
 	const [ gameSlug, setGameSlug ] = useState( readGameSlugFromUrl );
-	const [ capabilities, setCapabilities ] = useState<MyCapabilities>( EMPTY_CAPABILITIES );
+	const [ capabilities, setCapabilities ] =
+		useState< MyCapabilities >( EMPTY_CAPABILITIES );
 	const [ loadingGames, setLoadingGames ] = useState( true );
+	const [ gamesFailed, setGamesFailed ] = useState( false );
+	const [ gamesAttempt, setGamesAttempt ] = useState( 0 );
 	const [ loadingCapabilities, setLoadingCapabilities ] = useState( false );
+	const [ capabilitiesFor, setCapabilitiesFor ] = useState( '' );
 
 	// Loads the user's real memberships once, then resolves the initial selection: the
 	// URL's own game_slug when it names a real membership, the first membership otherwise.
 	useEffect( () => {
-		api.games
-			.mine()
-			.then( ( result ) => {
+		setLoadingGames( true );
+		fetchMemberships( () => api.games.mine() ).then(
+			( { games: result, failed } ) => {
 				setGames( result );
-				setGameSlug( ( current ) => ( current && result.some( ( g ) => g.slug === current ) )
-					? current
-					: ( result[ 0 ]?.slug ?? '' ) );
-			} )
-			.finally( () => setLoadingGames( false ) );
-	}, [] );
+				setGamesFailed( failed );
+				setGameSlug( ( current ) =>
+					current && result.some( ( g ) => g.slug === current )
+						? current
+						: result[ 0 ]?.slug ?? ''
+				);
+				setLoadingGames( false );
+			}
+		);
+	}, [ gamesAttempt ] );
 
 	// Re-resolves capabilities every time the selected chronicle changes, and keeps the
 	// URL's own game_slug in sync so a reload lands back on the same chronicle.
 	useEffect( () => {
 		if ( ! gameSlug ) {
 			setCapabilities( EMPTY_CAPABILITIES );
+			setCapabilitiesFor( '' );
 			return;
 		}
 		writeGameSlugToUrl( gameSlug );
 		setLoadingCapabilities( true );
+		// An answer for a chronicle switched away from before it arrived is dropped, never shown for the next one.
+		let current = true;
 		api.games
 			.myCapabilities( gameSlug )
-			.then( ( { capabilities: caps } ) => setCapabilities( caps ) )
-			.catch( () => setCapabilities( EMPTY_CAPABILITIES ) )
-			.finally( () => setLoadingCapabilities( false ) );
+			.then( ( { capabilities: caps } ) => caps )
+			.catch( () => EMPTY_CAPABILITIES )
+			.then( ( caps ) => {
+				if ( ! current ) {
+					return;
+				}
+				setCapabilities( caps );
+				setCapabilitiesFor( gameSlug );
+				setLoadingCapabilities( false );
+			} );
+		return () => {
+			current = false;
+		};
 	}, [ gameSlug ] );
 
-	return { games, gameSlug, setGameSlug, capabilities, loadingGames, loadingCapabilities };
+	const retryGames = () => setGamesAttempt( ( attempt ) => attempt + 1 );
+
+	return {
+		games,
+		gameSlug,
+		setGameSlug,
+		capabilities,
+		loadingGames,
+		gamesFailed,
+		retryGames,
+		loadingCapabilities,
+		capabilitiesFor,
+	};
 }

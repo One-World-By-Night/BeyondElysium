@@ -13,7 +13,12 @@ import AdminAprSettings from '../AdminAprSettings';
 import AdminAiAssistChronicle from '../AdminAiAssistChronicle';
 import type { Tab } from '../../shared/TabStrip';
 
-const TABS = { setup: 'setup', access: 'access', apr: 'apr', aiAssist: 'ai-assist' };
+const TABS = {
+	setup: 'setup',
+	access: 'access',
+	apr: 'apr',
+	aiAssist: 'ai-assist',
+};
 
 export function ChronicleSetupHub() {
 	const [ tab, setTab ] = useState( () => readTabFromUrl( TABS.setup ) );
@@ -25,9 +30,18 @@ export function ChronicleSetupHub() {
 	const capabilities = window.beyondElysium?.capabilities;
 	const tabs: Tab[] = [
 		{ key: TABS.setup, label: __( 'Chronicle Setup', 'beyond-elysium' ) },
-		capabilities?.be_manage_games && { key: TABS.access, label: __( 'Chronicle Access', 'beyond-elysium' ) },
-		capabilities?.be_manage_apr && { key: TABS.apr, label: __( 'Action & Rumor Settings', 'beyond-elysium' ) },
-		capabilities?.be_manage_apr && { key: TABS.aiAssist, label: __( 'AI Assist', 'beyond-elysium' ) },
+		capabilities?.be_manage_games && {
+			key: TABS.access,
+			label: __( 'Chronicle Access', 'beyond-elysium' ),
+		},
+		capabilities?.be_manage_apr && {
+			key: TABS.apr,
+			label: __( 'Action & Rumor Settings', 'beyond-elysium' ),
+		},
+		capabilities?.be_manage_apr && {
+			key: TABS.aiAssist,
+			label: __( 'AI Assist', 'beyond-elysium' ),
+		},
 	].filter( Boolean ) as Tab[];
 
 	useEffect( () => {

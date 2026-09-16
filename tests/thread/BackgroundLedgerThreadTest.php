@@ -77,6 +77,33 @@ class BackgroundLedgerThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'Bureaucracy', $by_name['Bureaucracy']['budget_name'] );
 	}
 
+	/**
+	 * 1.0.0-review F-105 (docs-pass intake, question 7): every character's allocation grants Personal
+	 * actions, and a use of one can be recorded - but the sheet's Background uses panel lists only
+	 * the backgrounds a character holds, so a player could never record a Personal action from it.
+	 */
+	public function test_spendable_for_offers_personal_once_an_allocation_grants_it(): void {
+		$this->assertArrayNotHasKey( 'Personal', array_column( Background_Ledger::spendable_for( $this->character_id ), null, 'name' ), 'no allocation yet, no Personal budget' );
+
+		Action_Allocator::persist( $this->character_id, '2026-01-01' );
+		$by_name = array_column( Background_Ledger::spendable_for( $this->character_id ), null, 'name' );
+
+		$this->assertArrayHasKey( 'Personal', $by_name );
+		$this->assertSame( 3, $by_name['Personal']['budget_total'] );
+		$this->assertSame( 'Personal', $by_name['Personal']['budget_name'] );
+		$this->assertNull( $by_name['Personal']['block_slug'] );
+	}
+
+	public function test_a_character_holding_no_backgrounds_still_records_personal_actions(): void {
+		$bare = Character::create( [
+			'name' => 'Personal Only Character', 'stack_slug' => 'thread-ledger-bare-stack',
+			'owner_type' => 'chronicle', 'owner_slug' => $this->game_slug,
+		] );
+		Action_Allocator::persist( $bare, '2026-01-01' );
+
+		$this->assertSame( [ 'Personal' ], array_column( Background_Ledger::spendable_for( $bare ), 'name' ) );
+	}
+
 	public function test_spendable_for_a_stack_with_no_backgrounds_block_is_empty_not_an_error(): void {
 		$bare = Character::create( [
 			'name' => 'Bare Stack Character', 'stack_slug' => 'thread-ledger-bare-stack',

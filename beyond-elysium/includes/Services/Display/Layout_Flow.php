@@ -33,13 +33,15 @@ class Layout_Flow {
 	/**
 	 * Returns the number of grid columns a section should span, based on its declared
 	 * `width` of 'third', 'half', or 'full'. A section with no width set - null, not just
-	 * a missing array key - defaults to 'third'.
+	 * a missing array key - or any other width defaults to 'third': a stored layout with
+	 * a width outside the three failed signed-sheet generation outright for every
+	 * character on its stack (1.0.0-review F-077).
 	 *
 	 * @param string|null $width
 	 * @return int
 	 */
 	public static function span_for( ?string $width ): int {
-		return self::SPAN[ $width ?? 'third' ];
+		return self::SPAN[ (string) $width ] ?? self::SPAN['third'];
 	}
 
 	/**

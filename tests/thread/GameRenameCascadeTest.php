@@ -97,6 +97,32 @@ class GameRenameCascadeTest extends WP_UnitTestCase {
 		$this->assertSame( 'thread-cascade-collide-target', $untouched_fork->game_slug );
 	}
 
+	/**
+	 * 1.0.0-review F-083 (Pass H intake `t1-sync-data-credits-apr-db`). A rename rewrote the slug in
+	 * a provisioned page's widget markup and in Elementor widget settings, but not in the House Rules
+	 * shortcode a Storyteller types onto a page - which kept asking for the old chronicle.
+	 */
+	public function test_a_rename_rewrites_the_house_rules_shortcode_wherever_it_was_placed(): void {
+		$game_id = $this->create_game( 'thread-shortcode-old' );
+		$page    = wp_insert_post( [
+			'post_type'    => 'page', 'post_status' => 'publish', 'post_title' => 'Our House Rules',
+			'post_content' => "Read these first.\n[be_house_rules game=\"thread-shortcode-old\"]\n[be_house_rules game='thread-shortcode-old-annex']\nWelcome to thread-shortcode-old.",
+		] );
+		$elementor_page = wp_insert_post( [ 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Elementor Rules' ] );
+		update_post_meta( $elementor_page, '_elementor_data', wp_slash( wp_json_encode( [
+			[ 'elType' => 'widget', 'widgetType' => 'shortcode', 'settings' => [ 'shortcode' => "[be_house_rules game='thread-shortcode-old']" ] ],
+		] ) ) );
+
+		$this->assertTrue( Game::rename( $game_id, 'thread-shortcode-new' )['changed'] );
+
+		$content = get_post( $page )->post_content;
+		$this->assertStringContainsString( '[be_house_rules game="thread-shortcode-new"]', $content );
+		$this->assertStringContainsString( "game='thread-shortcode-old-annex'", $content, 'another chronicle whose slug starts the same way is left alone' );
+		$this->assertStringContainsString( 'Welcome to thread-shortcode-old.', $content, 'prose naming the slug is left alone' );
+		$elementor = json_decode( get_post_meta( $elementor_page, '_elementor_data', true ), true );
+		$this->assertSame( "[be_house_rules game='thread-shortcode-new']", $elementor[0]['settings']['shortcode'] );
+	}
+
 	public function test_renaming_a_game_to_its_own_current_slug_is_a_no_op(): void {
 		$game_id = $this->create_game( 'thread-cascade-noop' );
 

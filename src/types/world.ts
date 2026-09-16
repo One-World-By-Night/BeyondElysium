@@ -37,7 +37,7 @@ export interface WorldObject {
 	rarity: string | null;
 	cost: string | null;
 	limitations: string | null;
-	properties: Record<string, unknown>;
+	properties: Record< string, unknown >;
 	created_by: number;
 	created_at: string;
 	updated_at: string;
@@ -57,7 +57,7 @@ export interface CreateWorldObjectRequest {
 	rarity?: string;
 	cost?: string;
 	limitations?: string;
-	properties?: Record<string, unknown>;
+	properties?: Record< string, unknown >;
 }
 
 /**
@@ -71,7 +71,7 @@ export interface UpdateWorldObjectRequest {
 	rarity?: string;
 	cost?: string;
 	limitations?: string;
-	properties?: Record<string, unknown>;
+	properties?: Record< string, unknown >;
 }
 
 /**
@@ -138,7 +138,10 @@ export interface BoonLedgerParams {
  * render the world object editor form. Maps each object_type to
  * its set of property names and the input type each one uses.
  */
-export const WORLD_OBJECT_SCHEMAS: Record<ObjectType, Record<string, 'string' | 'text' | 'int' | 'date' | 'trait_list'>> = {
+export const WORLD_OBJECT_SCHEMAS: Record<
+	ObjectType,
+	Record< string, 'string' | 'text' | 'int' | 'date' | 'trait_list' >
+> = {
 	item: {
 		item_type: 'string',
 		item_subtype: 'string',

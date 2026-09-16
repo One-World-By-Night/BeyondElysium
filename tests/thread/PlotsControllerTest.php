@@ -347,6 +347,32 @@ class PlotsControllerTest extends WP_UnitTestCase {
 		$this->assertObjectNotHasProperty( 'st_notes', $data->children[0] );
 	}
 
+	/**
+	 * 1.0.0-review checklist item 23: `st_notes` could always be set at creation but had no
+	 * edit form anywhere - this update path (`update_item()`'s own `$rich_text_fields`,
+	 * unrelated to my new UI) had no test at all despite being the field's only way to
+	 * change once a plot already exists.
+	 */
+	public function test_st_notes_can_be_added_and_changed_on_an_existing_plot_sanitized(): void {
+		$st = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		wp_set_current_user( $st );
+
+		$create  = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots" );
+		$create->set_param( 'title', 'Notes Later' );
+		$plot_id = $this->dispatch( $create )->get_data()->id;
+
+		$add = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/plots/{$plot_id}" );
+		$add->set_param( 'st_notes', 'The real killer is <strong>the butler</strong>. <script>alert(1)</script>' );
+		$added = $this->dispatch( $add )->get_data();
+
+		$this->assertStringContainsString( '<strong>the butler</strong>', $added->st_notes );
+		$this->assertStringNotContainsString( '<script', $added->st_notes );
+
+		$change = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/plots/{$plot_id}" );
+		$change->set_param( 'st_notes', 'Revised plan.' );
+		$this->assertSame( 'Revised plan.', $this->dispatch( $change )->get_data()->st_notes );
+	}
+
 	public function test_an_invalid_cover_image_is_rejected(): void {
 		$admin = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		wp_set_current_user( $admin );

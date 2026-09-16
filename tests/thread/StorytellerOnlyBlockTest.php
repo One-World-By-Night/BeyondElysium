@@ -146,7 +146,7 @@ class StorytellerOnlyBlockTest extends WP_UnitTestCase {
 	}
 
 	public function test_storyteller_only_slugs_reports_only_flagged_blocks(): void {
-		$slugs = Schema_Block::storyteller_only_slugs();
+		$slugs = Schema_Block::storyteller_only_slugs( 'st-only-test' );
 
 		$this->assertContains( 'secret-notes', $slugs );
 		$this->assertNotContains( 'open-notes', $slugs );

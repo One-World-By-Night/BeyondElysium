@@ -149,7 +149,9 @@ class CharacterDeleteTest extends WP_UnitTestCase {
 		// as Plot::delete()'s own established behavior for connections pointing at a
 		// deleted plot - a connection naming a now-nonexistent character on either end is
 		// exactly the orphan this cascade exists to prevent, so this one is correctly gone.
-		$this->assertEmpty( Connection::for_entity( 'character', $keeper_id ) );
+		$between = array_filter( Connection::for_entity( 'character', $keeper_id ), static fn( $c ) => $c->label === 'rival' );
+		$this->assertEmpty( $between );
+		$this->assertNotNull( Character::plot_id( $keeper_id ), "the keeper's link to its own plot is its own, and stays" );
 		$this->assertNotNull( Character::find( $keeper_id ), 'the OTHER character must survive - only its connection is affected' );
 	}
 

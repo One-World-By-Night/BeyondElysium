@@ -3,7 +3,9 @@
         { "name": "unset width (null) defaults to third", "width": null },
         { "name": "third", "width": "third" },
         { "name": "half", "width": "half" },
-        { "name": "full", "width": "full" }
+        { "name": "full", "width": "full" },
+        { "name": "an unknown width reads as third", "width": "quarter" },
+        { "name": "an empty width reads as third", "width": "" }
     ],
     "sortedForFlow": [
         {

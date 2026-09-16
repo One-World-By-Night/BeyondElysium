@@ -9,7 +9,9 @@ import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import ImportTool from '../import/ImportTool';
 import GameImportTool from '../import/GameImportTool';
+import WaitingForReview from '../import/WaitingForReview';
 import type { Game } from '../../types';
+import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
 type Tab = 'gex' | 'gv3';
@@ -21,13 +23,14 @@ type Tab = 'gex' | 'gv3';
  * viewer's capabilities allow.
  */
 export function AdminImport() {
-	const [ games, setGames ] = useState<Game[]>( [] );
+	const [ games, setGames ] = useState< Game[] >( [] );
 	const [ gameSlug, setGameSlug ] = useState( '' );
 	const [ loading, setLoading ] = useState( true );
 
 	const canImportGex = window.beyondElysium?.capabilities?.be_import ?? false;
-	const canImportGameFile = window.beyondElysium?.capabilities?.be_manage_games ?? false;
-	const [ tab, setTab ] = useState<Tab>( canImportGex ? 'gex' : 'gv3' );
+	const canImportGameFile =
+		window.beyondElysium?.capabilities?.be_manage_games ?? false;
+	const [ tab, setTab ] = useState< Tab >( canImportGex ? 'gex' : 'gv3' );
 
 	useEffect( () => {
 		if ( ! canImportGex ) {
@@ -48,20 +51,31 @@ export function AdminImport() {
 
 	return (
 		<div className="be-admin">
-			<h1>{ __( 'Import', 'beyond-elysium' ) }</h1>
+			<div className="be-help-heading">
+				<h1>{ __( 'Import', 'beyond-elysium' ) }</h1>
+				<HelpButton helpKey="import" />
+			</div>
 
 			{ canImportGex && canImportGameFile && (
 				<div className="be-admin__tabs">
 					<button
 						type="button"
-						className={ tab === 'gex' ? 'be-admin__tab be-admin__tab--active' : 'be-admin__tab' }
+						className={
+							tab === 'gex'
+								? 'be-admin__tab be-admin__tab--active'
+								: 'be-admin__tab'
+						}
 						onClick={ () => setTab( 'gex' ) }
 					>
 						{ __( 'Characters & World Objects', 'beyond-elysium' ) }
 					</button>
 					<button
 						type="button"
-						className={ tab === 'gv3' ? 'be-admin__tab be-admin__tab--active' : 'be-admin__tab' }
+						className={
+							tab === 'gv3'
+								? 'be-admin__tab be-admin__tab--active'
+								: 'be-admin__tab'
+						}
 						onClick={ () => setTab( 'gv3' ) }
 					>
 						{ __( 'Full Game File', 'beyond-elysium' ) }
@@ -69,17 +83,28 @@ export function AdminImport() {
 				</div>
 			) }
 
-			{ tab === 'gex' && canImportGex && (
-				loading ? (
+			{ tab === 'gex' &&
+				canImportGex &&
+				( loading ? (
 					<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
 				) : games.length === 0 ? (
-					<p>{ __( 'No games exist yet - create one under Beyond Elysium → Games first.', 'beyond-elysium' ) }</p>
+					<p>
+						{ __(
+							'No games exist yet - create one under Beyond Elysium → System Config → Games first.',
+							'beyond-elysium'
+						) }
+					</p>
 				) : (
 					<>
 						<div className="be-admin__filters">
 							<label>
 								{ __( 'Game', 'beyond-elysium' ) }{ ' ' }
-								<select value={ gameSlug } onChange={ ( e ) => setGameSlug( e.target.value ) }>
+								<select
+									value={ gameSlug }
+									onChange={ ( e ) =>
+										setGameSlug( e.target.value )
+									}
+								>
 									{ games.map( ( g ) => (
 										<option key={ g.slug } value={ g.slug }>
 											{ g.name }
@@ -89,11 +114,21 @@ export function AdminImport() {
 							</label>
 						</div>
 
-						{ /* key={gameSlug} remounts the wizard fresh when the chronicle changes. */ }
-						{ gameSlug && <ImportTool key={ gameSlug } gameSlug={ gameSlug } /> }
+						{ /* key={gameSlug} remounts both fresh when the chronicle changes. Waiting transfers and player-sent files wait above the wizard. */ }
+						{ gameSlug && (
+							<WaitingForReview
+								key={ `waiting-${ gameSlug }` }
+								gameSlug={ gameSlug }
+							/>
+						) }
+						{ gameSlug && (
+							<ImportTool
+								key={ gameSlug }
+								gameSlug={ gameSlug }
+							/>
+						) }
 					</>
-				)
-			) }
+				) ) }
 
 			{ tab === 'gv3' && canImportGameFile && <GameImportTool /> }
 		</div>

@@ -59,4 +59,32 @@ class DocsControllerTest extends WP_UnitTestCase {
 
 		$this->assertSame( 403, $response->get_status() );
 	}
+
+	/**
+	 * 1.0.0-help.md H-1: a screen's `?` reads its help page from `docs/help/{key}.md`.
+	 */
+	public function test_a_help_page_is_served_by_its_key(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'subscriber' ] ) );
+
+		$response = $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/docs/help/character-sheet' ) );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'character-sheet', $response->get_data()['key'] );
+		$this->assertStringStartsWith( '# Character Sheet', $response->get_data()['content'] );
+	}
+
+	public function test_a_help_key_with_no_page_is_not_found(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'subscriber' ] ) );
+
+		foreach ( [ 'no-such-screen', 'st-guide', '..%2Fst-guide', 'Character-Sheet' ] as $key ) {
+			$response = $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/docs/help/' . $key ) );
+			$this->assertSame( 404, $response->get_status(), $key );
+		}
+	}
+
+	public function test_a_help_page_needs_what_the_guides_need(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => '' ] ) );
+
+		$this->assertSame( 403, $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/docs/help/character-sheet' ) )->get_status() );
+	}
 }

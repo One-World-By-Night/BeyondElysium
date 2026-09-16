@@ -33,6 +33,14 @@ class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 		\BeyondElysium\Models\Game_Member::set_role( $game_id, $this->player_id, 'player' );
 	}
 
+	/** A Storyteller of this test's chronicle - an editor with an HST membership row. */
+	private function storyteller(): int {
+		$user_id = self::factory()->user->create( [ 'role' => 'editor' ] );
+		$game    = \BeyondElysium\Models\Game::find_by_slug( $this->game_slug );
+		\BeyondElysium\Models\Game_Member::set_role( (int) $game->id, $user_id, 'hst' );
+		return $user_id;
+	}
+
 	public function test_a_player_cannot_set_is_npc_on_create(): void {
 		wp_set_current_user( $this->player_id );
 
@@ -126,7 +134,8 @@ class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 			'wp_user_id' => $this->player_id,
 		] );
 
-		wp_set_current_user( $this->player_id );
+		// Status is a Storyteller's to set (1.0.0-review F-033), so its validation is checked as one.
+		wp_set_current_user( $this->storyteller() );
 		$request = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/characters/{$character_id}" );
 		$request->set_param( 'status', 'not-a-real-status' );
 		$response = rest_get_server()->dispatch( $request );
@@ -158,7 +167,7 @@ class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 			'wp_user_id' => $this->player_id,
 		] );
 
-		wp_set_current_user( $this->player_id );
+		wp_set_current_user( $this->storyteller() );
 		$request = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/characters/{$character_id}" );
 		$request->set_param( 'status', 'retired' );
 		$request->set_param( 'start_date', '2026-01-15' );

@@ -39,7 +39,7 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 						'approval'          => 'st', // Fallback for a count no range covers.
 						'approval_by_value' => [
 							[ 'from' => 1, 'to' => 3, 'approval' => 'auto' ],
-							[ 'from' => 4, 'to' => 5, 'approval' => 'coordinator', 'reason' => 'Occult 4+ needs Coordinator review.' ],
+							[ 'from' => 4, 'to' => 5, 'approval' => 'st', 'reason' => 'Occult 4+ needs a Storyteller.' ],
 						],
 					],
 					[ 'name' => 'Plain Ability' ],
@@ -58,7 +58,7 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 						'name'   => 'Celerity',
 						'levels' => [
 							[ 'level' => 1, 'tier' => 'basic', 'power_name' => 'Alacrity' ],
-							[ 'level' => 4, 'tier' => 'intermediate', 'power_name' => 'Fleetness', 'approval' => 'coordinator' ],
+							[ 'level' => 4, 'tier' => 'intermediate', 'power_name' => 'Fleetness', 'approval' => 'auto' ],
 						],
 					],
 				],
@@ -77,7 +77,7 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 						'value_type'        => 'integer',
 						'default_start'     => 1,
 						'approval_by_value' => [
-							[ 'from' => 8, 'to' => 10, 'approval' => 'coordinator', 'reason' => 'Willpower 8+ needs Coordinator review.' ],
+							[ 'from' => 8, 'to' => 10, 'approval' => 'st', 'reason' => 'Willpower 8+ needs a Storyteller.' ],
 						],
 					],
 				],
@@ -97,7 +97,7 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 						'required'           => false,
 						'options'            => [ 'Neonate', 'Ancilla', 'Antediluvian' ],
 						'approval_by_option' => [
-							'Antediluvian' => [ 'approval' => 'coordinator', 'reason' => 'Antediluvian generation needs Coordinator review.' ],
+							'Antediluvian' => [ 'approval' => 'st', 'reason' => 'Antediluvian generation needs a Storyteller.' ],
 						],
 					],
 				],
@@ -131,15 +131,15 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 		$this->assertNull( $resolved['reason'] );
 	}
 
-	public function test_a_count_within_the_coordinator_range_resolves_coordinator_with_its_reason(): void {
+	public function test_a_count_within_the_storyteller_range_resolves_st_with_its_reason(): void {
 		$character = $this->make_character();
 		$resolved  = Change_Engine::resolve_approval_level( $character, (object) [
 			'change_type' => 'modify_trait',
 			'change_data' => [ 'block_slug' => $this->trait_list_slug, 'trait' => [ 'name' => 'Occult', 'count' => 5 ] ],
 		] );
 
-		$this->assertSame( 'coordinator', $resolved['level'] );
-		$this->assertSame( 'Occult 4+ needs Coordinator review.', $resolved['reason'] );
+		$this->assertSame( 'st', $resolved['level'] );
+		$this->assertSame( 'Occult 4+ needs a Storyteller.', $resolved['reason'] );
 	}
 
 	public function test_resolution_is_by_resulting_value_only_regardless_of_the_starting_point(): void {
@@ -151,7 +151,8 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 			'change_data' => [ 'block_slug' => $this->trait_list_slug, 'trait' => [ 'name' => 'Occult', 'count' => 5 ] ],
 		] );
 
-		$this->assertSame( 'coordinator', $resolved['level'] );
+		$this->assertSame( 'st', $resolved['level'] );
+		$this->assertSame( 'Occult 4+ needs a Storyteller.', $resolved['reason'] );
 	}
 
 	public function test_a_count_outside_every_range_falls_back_to_the_flat_approval(): void {
@@ -162,6 +163,7 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 		] );
 
 		$this->assertSame( 'st', $resolved['level'], 'no range covers 99 - the item\'s own flat approval must still apply' );
+		$this->assertNull( $resolved['reason'], 'and no range\'s reason' );
 	}
 
 	public function test_an_item_with_no_schedule_at_all_is_unaffected(): void {
@@ -195,7 +197,7 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 			'change_data' => [ 'block_slug' => $this->tiered_power_slug, 'trait' => [ 'name' => 'Celerity', 'level' => 4 ] ],
 		] );
 
-		$this->assertSame( 'coordinator', $resolved['level'] );
+		$this->assertSame( 'auto', $resolved['level'], 'the level\'s own approval, not the safe default' );
 	}
 
 	// -------------------------------------------------------------------------
@@ -209,8 +211,8 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 			'change_data' => [ 'block_slug' => $this->resource_slug, 'values' => [ 'Willpower' => [ 'permanent' => 9, 'temporary' => 9 ] ] ],
 		] );
 
-		$this->assertSame( 'coordinator', $resolved['level'] );
-		$this->assertSame( 'Willpower 8+ needs Coordinator review.', $resolved['reason'] );
+		$this->assertSame( 'st', $resolved['level'] );
+		$this->assertSame( 'Willpower 8+ needs a Storyteller.', $resolved['reason'] );
 	}
 
 	public function test_a_permanent_resource_value_below_every_range_is_unaffected(): void {
@@ -221,6 +223,7 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 		] );
 
 		$this->assertSame( 'st', $resolved['level'] );
+		$this->assertNull( $resolved['reason'] );
 	}
 
 	public function test_spending_only_the_temporary_value_never_triggers_the_permanent_schedule(): void {
@@ -257,8 +260,8 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 			'change_data' => [ 'block_slug' => $this->identity_slug, 'fields' => [ 'Generation' => 'Antediluvian' ] ],
 		] );
 
-		$this->assertSame( 'coordinator', $resolved['level'] );
-		$this->assertSame( 'Antediluvian generation needs Coordinator review.', $resolved['reason'] );
+		$this->assertSame( 'st', $resolved['level'] );
+		$this->assertSame( 'Antediluvian generation needs a Storyteller.', $resolved['reason'] );
 	}
 
 	public function test_a_multiselect_checks_every_selected_value_and_strictest_wins(): void {
@@ -268,7 +271,7 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 			'change_data' => [ 'block_slug' => $this->identity_slug, 'fields' => [ 'Generation' => [ 'Neonate', 'Antediluvian' ] ] ],
 		] );
 
-		$this->assertSame( 'coordinator', $resolved['level'], 'one flagged value among several must still win' );
+		$this->assertSame( 'Antediluvian generation needs a Storyteller.', $resolved['reason'], 'one flagged value among several must still win' );
 	}
 
 	// -------------------------------------------------------------------------

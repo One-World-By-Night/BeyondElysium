@@ -4,11 +4,15 @@
  * Markdown content, with in-page links between docs switching tabs
  * instead of navigating away.
  */
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { marked } from 'marked';
 import type { MouseEvent } from 'react';
 import api from '../../api/client';
+import { helpTarget } from '../../lib/helpPage';
+import { useHelpStore } from '../../store/helpStore';
+import HelpButton from '../shared/HelpButton';
+import HelpPanel from '../shared/HelpPanel';
 import './Admin.css';
 import './AdminDocs.css';
 
@@ -24,7 +28,11 @@ interface RestError {
  * `message` property.
  */
 function errorMessage( error: unknown ): string {
-	if ( typeof error === 'object' && error !== null && ( error as RestError ).message ) {
+	if (
+		typeof error === 'object' &&
+		error !== null &&
+		( error as RestError ).message
+	) {
 		return ( error as RestError ).message as string;
 	}
 	return __( 'Failed to load this document.', 'beyond-elysium' );
@@ -56,10 +64,31 @@ function docLinkSlug( href: string ): DocSlug | null {
  * caching each document's content the first time its tab is opened.
  */
 export function AdminDocs() {
-	const [ active, setActive ] = useState<DocSlug>( 'st-guide' );
-	const [ cache, setCache ] = useState<Partial<Record<DocSlug, string>>>( {} );
+	const [ active, setActive ] = useState< DocSlug >( 'st-guide' );
+	const [ cache, setCache ] = useState<
+		Partial< Record< DocSlug, string > >
+	>( {} );
 	const [ loading, setLoading ] = useState( true );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
+
+	// A guide can link down into one help page (e.g. "Send a Grapevine File" from the Player
+	// Guide); it opens in the same side panel every screen's own `?` button uses.
+	const linkedHelpOwner = useRef(
+		Symbol( 'admin-docs-linked-help' )
+	).current;
+	const [ linkedHelpKey, setLinkedHelpKey ] = useState< string | null >(
+		null
+	);
+	const linkedHelpOpen = useHelpStore(
+		( state ) => state.owner === linkedHelpOwner
+	);
+	const openLinkedHelp = useHelpStore( ( state ) => state.open );
+	const closeLinkedHelp = useHelpStore( ( state ) => state.close );
+
+	useEffect(
+		() => () => closeLinkedHelp( linkedHelpOwner ),
+		[ closeLinkedHelp, linkedHelpOwner ]
+	);
 
 	useEffect( () => {
 		if ( cache[ active ] !== undefined ) {
@@ -71,7 +100,10 @@ export function AdminDocs() {
 		api.docs
 			.get( active )
 			.then( ( result ) => {
-				setCache( ( prev ) => ( { ...prev, [ active ]: result.content } ) );
+				setCache( ( prev ) => ( {
+					...prev,
+					[ active ]: result.content,
+				} ) );
 				setLoading( false );
 			} )
 			.catch( ( err: unknown ) => {
@@ -81,14 +113,16 @@ export function AdminDocs() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ active ] );
 
-	const html = cache[ active ] ? marked( cache[ active ] as string, { async: false } ) : '';
+	const html = cache[ active ]
+		? marked( cache[ active ] as string, { async: false } )
+		: '';
 
 	/**
-	 * Intercepts clicks on links inside the rendered document content.
-	 * When a link points at another known doc, switches to that doc's
-	 * tab instead of letting the browser navigate to a dead relative URL.
+	 * Intercepts clicks on links inside the rendered document content. A link to another
+	 * known doc switches to that doc's tab; a link down into a help page opens it in the
+	 * side panel instead of letting the browser navigate to a dead relative URL.
 	 */
-	function onContentClick( e: MouseEvent<HTMLDivElement> ) {
+	function onContentClick( e: MouseEvent< HTMLDivElement > ) {
 		const link = ( e.target as HTMLElement ).closest( 'a' );
 		if ( ! link ) {
 			return;
@@ -98,12 +132,22 @@ export function AdminDocs() {
 		if ( slug ) {
 			e.preventDefault();
 			setActive( slug );
+			return;
+		}
+		const target = helpTarget( href );
+		if ( target?.kind === 'help' ) {
+			e.preventDefault();
+			setLinkedHelpKey( target.key );
+			openLinkedHelp( linkedHelpOwner );
 		}
 	}
 
 	return (
 		<div className="be-admin be-admin-docs">
-			<h1>{ __( 'Docs', 'beyond-elysium' ) }</h1>
+			<div className="be-help-heading">
+				<h1>{ __( 'Docs', 'beyond-elysium' ) }</h1>
+				<HelpButton helpKey="admin-docs" />
+			</div>
 
 			<div className="be-admin__tabs" role="tablist">
 				{ TABS.map( ( tab ) => (
@@ -112,7 +156,12 @@ export function AdminDocs() {
 						type="button"
 						role="tab"
 						aria-selected={ active === tab.slug }
-						className={ 'be-admin__tab' + ( active === tab.slug ? ' be-admin__tab--active' : '' ) }
+						className={
+							'be-admin__tab' +
+							( active === tab.slug
+								? ' be-admin__tab--active'
+								: '' )
+						}
 						onClick={ () => setActive( tab.slug ) }
 					>
 						{ tab.label }
@@ -129,10 +178,20 @@ export function AdminDocs() {
 			{ loading ? (
 				<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
 			) : (
+				// Catches clicks on the document's own links, which a keyboard reaches and follows as links.
+				// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 				<div
 					className="be-admin-docs__content"
 					onClick={ onContentClick }
 					dangerouslySetInnerHTML={ { __html: html } }
+				/>
+			) }
+
+			{ linkedHelpOpen && linkedHelpKey && (
+				<HelpPanel
+					key={ linkedHelpKey }
+					helpKey={ linkedHelpKey }
+					onClose={ () => closeLinkedHelp( linkedHelpOwner ) }
 				/>
 			) }
 		</div>

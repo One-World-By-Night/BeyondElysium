@@ -4,10 +4,21 @@
  * not in the list, and virtualizes its dropdown when the filtered list is
  * long. Used anywhere a plain <select> would be too long to scan.
  */
-import { createPortal, useEffect, useId, useMemo, useRef, useState } from '@wordpress/element';
+import {
+	createPortal,
+	useEffect,
+	useId,
+	useMemo,
+	useRef,
+	useState,
+} from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import type { KeyboardEvent } from 'react';
-import { canUseCustomEntry, filterOptions, resolveBlurCommit } from '../../lib/searchableSelect';
+import {
+	canUseCustomEntry,
+	filterOptions,
+	resolveBlurCommit,
+} from '../../lib/searchableSelect';
 import './SearchableSelect.css';
 
 export interface SearchableSelectProps {
@@ -42,16 +53,30 @@ const VISIBLE_ROWS = 10;
  * directly. Renders only a windowed slice of rows once the filtered list
  * passes `VIRTUALIZE_THRESHOLD`, to keep long lists scrolling smoothly.
  */
-export function SearchableSelect( { options, value, onChange, allowCustom, placeholder, disabled, ariaLabel, id }: SearchableSelectProps ) {
+export function SearchableSelect( {
+	options,
+	value,
+	onChange,
+	allowCustom,
+	placeholder,
+	disabled,
+	ariaLabel,
+	id,
+}: SearchableSelectProps ) {
 	const [ query, setQuery ] = useState( value );
 	const [ open, setOpen ] = useState( false );
 	const [ highlighted, setHighlighted ] = useState( 0 );
 	const [ scrollTop, setScrollTop ] = useState( 0 );
 	const [ rowHeight, setRowHeight ] = useState( FALLBACK_ROW_HEIGHT );
-	const [ listRect, setListRect ] = useState<{ top: number; left: number; width: number; openUpward: boolean } | null>( null );
-	const listRef = useRef<HTMLUListElement>( null );
-	const inputRef = useRef<HTMLInputElement>( null );
-	const measuredOptionRef = useRef<HTMLLIElement | null>( null );
+	const [ listRect, setListRect ] = useState< {
+		top: number;
+		left: number;
+		width: number;
+		openUpward: boolean;
+	} | null >( null );
+	const listRef = useRef< HTMLUListElement >( null );
+	const inputRef = useRef< HTMLInputElement >( null );
+	const measuredOptionRef = useRef< HTMLLIElement | null >( null );
 	const listboxId = useId();
 	const optionId = ( index: number ) => `${ listboxId }-option-${ index }`;
 
@@ -70,7 +95,12 @@ export function SearchableSelect( { options, value, onChange, allowCustom, place
 			}
 			const spaceBelow = window.innerHeight - rect.bottom;
 			const openUpward = spaceBelow < 200 && rect.top > spaceBelow;
-			setListRect( { top: openUpward ? rect.top : rect.bottom, left: rect.left, width: rect.width, openUpward } );
+			setListRect( {
+				top: openUpward ? rect.top : rect.bottom,
+				left: rect.left,
+				width: rect.width,
+				openUpward,
+			} );
 		};
 		reposition();
 		window.addEventListener( 'scroll', reposition, true );
@@ -95,7 +125,10 @@ export function SearchableSelect( { options, value, onChange, allowCustom, place
 		}
 	};
 
-	const filtered = useMemo( () => filterOptions( options, query ), [ options, query ] );
+	const filtered = useMemo(
+		() => filterOptions( options, query ),
+		[ options, query ]
+	);
 	const showCustomRow = useMemo(
 		() => canUseCustomEntry( query, options, allowCustom ?? false ),
 		[ query, options, allowCustom ]
@@ -126,7 +159,7 @@ export function SearchableSelect( { options, value, onChange, allowCustom, place
 	 * row count); Enter commits the highlighted row via `selectIndex`;
 	 * Escape closes the dropdown without committing anything.
 	 */
-	const onKeyDown = ( e: KeyboardEvent<HTMLInputElement> ) => {
+	const onKeyDown = ( e: KeyboardEvent< HTMLInputElement > ) => {
 		if ( ! open && ( e.key === 'ArrowDown' || e.key === 'ArrowUp' ) ) {
 			setOpen( true );
 			return;
@@ -151,11 +184,15 @@ export function SearchableSelect( { options, value, onChange, allowCustom, place
 
 	const virtualized = filtered.length > VIRTUALIZE_THRESHOLD;
 	const listHeight = rowHeight * VISIBLE_ROWS;
-	const firstVisible = virtualized ? Math.max( 0, Math.floor( scrollTop / rowHeight ) - 2 ) : 0;
+	const firstVisible = virtualized
+		? Math.max( 0, Math.floor( scrollTop / rowHeight ) - 2 )
+		: 0;
 	const lastVisible = virtualized
 		? Math.min( filtered.length, firstVisible + VISIBLE_ROWS + 4 )
 		: filtered.length;
-	const visibleOptions = virtualized ? filtered.slice( firstVisible, lastVisible ) : filtered;
+	const visibleOptions = virtualized
+		? filtered.slice( firstVisible, lastVisible )
+		: filtered;
 
 	const dropdown = open && rowCount > 0 && listRect && (
 		<ul
@@ -166,14 +203,22 @@ export function SearchableSelect( { options, value, onChange, allowCustom, place
 			style={ {
 				position: 'fixed',
 				top: listRect.openUpward ? undefined : listRect.top,
-				bottom: listRect.openUpward ? window.innerHeight - listRect.top : undefined,
+				bottom: listRect.openUpward
+					? window.innerHeight - listRect.top
+					: undefined,
 				left: listRect.left,
 				width: listRect.width,
-				...( virtualized ? { height: listHeight, overflowY: 'auto' } : {} ),
+				...( virtualized
+					? { height: listHeight, overflowY: 'auto' }
+					: {} ),
 			} }
-			onScroll={ ( e ) => setScrollTop( ( e.target as HTMLUListElement ).scrollTop ) }
+			onScroll={ ( e ) =>
+				setScrollTop( ( e.target as HTMLUListElement ).scrollTop )
+			}
 		>
-			{ virtualized && <li style={ { height: firstVisible * rowHeight } } /> }
+			{ virtualized && (
+				<li style={ { height: firstVisible * rowHeight } } />
+			) }
 			{ visibleOptions.map( ( option, i ) => {
 				const index = virtualized ? firstVisible + i : i;
 				return (
@@ -185,7 +230,9 @@ export function SearchableSelect( { options, value, onChange, allowCustom, place
 						aria-selected={ index === highlighted }
 						className={
 							'be-searchable-select__option' +
-							( index === highlighted ? ' be-searchable-select__option--highlighted' : '' )
+							( index === highlighted
+								? ' be-searchable-select__option--highlighted'
+								: '' )
 						}
 						onMouseDown={ () => selectIndex( index ) }
 					>
@@ -193,7 +240,13 @@ export function SearchableSelect( { options, value, onChange, allowCustom, place
 					</li>
 				);
 			} ) }
-			{ virtualized && <li style={ { height: ( filtered.length - lastVisible ) * rowHeight } } /> }
+			{ virtualized && (
+				<li
+					style={ {
+						height: ( filtered.length - lastVisible ) * rowHeight,
+					} }
+				/>
+			) }
 			{ showCustomRow && (
 				<li
 					id={ optionId( filtered.length ) }
@@ -201,11 +254,17 @@ export function SearchableSelect( { options, value, onChange, allowCustom, place
 					aria-selected={ filtered.length === highlighted }
 					className={
 						'be-searchable-select__option be-searchable-select__option--custom' +
-						( filtered.length === highlighted ? ' be-searchable-select__option--highlighted' : '' )
+						( filtered.length === highlighted
+							? ' be-searchable-select__option--highlighted'
+							: '' )
 					}
 					onMouseDown={ () => selectIndex( filtered.length ) }
 				>
-					{ sprintf( __( 'Use "%1$s" (custom)', 'beyond-elysium' ), query.trim() ) }
+					{ sprintf(
+						/* translators: %1$s: the free-text value typed, offered as a custom option */
+						__( 'Use "%1$s" (custom)', 'beyond-elysium' ),
+						query.trim()
+					) }
 				</li>
 			) }
 		</ul>
@@ -225,13 +284,19 @@ export function SearchableSelect( { options, value, onChange, allowCustom, place
 				aria-expanded={ open && rowCount > 0 }
 				aria-controls={ listboxId }
 				aria-autocomplete="list"
-				aria-activedescendant={ open && rowCount > 0 ? optionId( highlighted ) : undefined }
+				aria-activedescendant={
+					open && rowCount > 0 ? optionId( highlighted ) : undefined
+				}
 				aria-label={ ariaLabel ?? placeholder }
 				autoComplete="off"
 				onFocus={ () => setOpen( true ) }
 				onBlur={ () => {
 					// Commits a typed value on blur even when no dropdown row was explicitly picked.
-					const commit = resolveBlurCommit( query, options, allowCustom ?? false );
+					const commit = resolveBlurCommit(
+						query,
+						options,
+						allowCustom ?? false
+					);
 					if ( commit ) {
 						onChange( commit.value, commit.isCustom );
 					}

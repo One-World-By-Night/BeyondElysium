@@ -15,16 +15,19 @@ export type IdentityFieldValue = string | number | string[] | null | undefined;
 
 export interface IdentityFieldEditorProps {
 	blockSlug: string;
-	data: Record<string, IdentityFieldValue>;
+	data: Record< string, IdentityFieldValue >;
 	definition: IdentityFieldDefinition;
-	onChange: ( blockSlug: string, nextData: Record<string, IdentityFieldValue> ) => void;
+	onChange: (
+		blockSlug: string,
+		nextData: Record< string, IdentityFieldValue >
+	) => void;
 	readOnly?: boolean;
 	/** Only used by a textarea field's AI Assist button (ai-writing-assist-design.md). */
 	gameSlug?: string;
 }
 
 /** Returns a field's resolved list of selectable options, or an empty array if none. */
-function resolveOptions( field: IdentityField, _definition: IdentityFieldDefinition ): string[] {
+function resolveOptions( field: IdentityField ): string[] {
 	return field.options ?? [];
 }
 
@@ -34,7 +37,14 @@ function resolveOptions( field: IdentityField, _definition: IdentityFieldDefinit
  * textarea, or text input otherwise. Reports every field change through onChange;
  * it never recalculates derived values itself.
  */
-export function IdentityFieldEditor( { blockSlug, data, definition, onChange, readOnly, gameSlug }: IdentityFieldEditorProps ) {
+export function IdentityFieldEditor( {
+	blockSlug,
+	data,
+	definition,
+	onChange,
+	readOnly,
+	gameSlug,
+}: IdentityFieldEditorProps ) {
 	const baseId = useId();
 	const setField = ( name: string, value: IdentityFieldValue ) => {
 		onChange( blockSlug, { ...data, [ name ]: value } );
@@ -47,29 +57,55 @@ export function IdentityFieldEditor( { blockSlug, data, definition, onChange, re
 				const fieldId = `${ baseId }-${ index }`;
 
 				if ( field.field_type === 'multiselect' ) {
-					const options = resolveOptions( field, definition );
+					const options = resolveOptions( field );
 					const selected = Array.isArray( value ) ? value : [];
 					const limit = field.max_selections ?? options.length;
 
 					const toggle = ( option: string ) => {
 						const isSelected = selected.includes( option );
 						if ( isSelected ) {
-							setField( field.name, selected.filter( ( o ) => o !== option ) );
+							setField(
+								field.name,
+								selected.filter( ( o ) => o !== option )
+							);
 						} else if ( selected.length < limit ) {
 							setField( field.name, [ ...selected, option ] );
 						}
 					};
 
 					return (
-						<div className="be-identity-field-editor__row" key={ field.name }>
-							<span className="be-identity-field-editor__label" id={ fieldId }>{ field.name }</span>
-							<div className="be-identity-field-editor__multiselect" role="group" aria-labelledby={ fieldId }>
+						<div
+							className="be-identity-field-editor__row"
+							key={ field.name }
+						>
+							<span
+								className="be-identity-field-editor__label"
+								id={ fieldId }
+							>
+								{ field.name }
+							</span>
+							<div
+								className="be-identity-field-editor__multiselect"
+								role="group"
+								aria-labelledby={ fieldId }
+							>
 								{ options.map( ( option ) => (
-									<label key={ option } className="be-identity-field-editor__checkbox">
+									<label
+										key={ option }
+										className="be-identity-field-editor__checkbox"
+									>
 										<input
 											type="checkbox"
-											checked={ selected.includes( option ) }
-											disabled={ readOnly || ( ! selected.includes( option ) && selected.length >= limit ) }
+											checked={ selected.includes(
+												option
+											) }
+											disabled={
+												readOnly ||
+												( ! selected.includes(
+													option
+												) &&
+													selected.length >= limit )
+											}
 											onChange={ () => toggle( option ) }
 										/>
 										{ option }
@@ -79,7 +115,10 @@ export function IdentityFieldEditor( { blockSlug, data, definition, onChange, re
 							<span className="be-identity-field-editor__hint">
 								{ sprintf(
 									/* translators: 1: number of options selected, 2: maximum number selectable */
-									__( '%1$d / %2$d selected', 'beyond-elysium' ),
+									__(
+										'%1$d / %2$d selected',
+										'beyond-elysium'
+									),
 									selected.length,
 									limit
 								) }
@@ -89,35 +128,59 @@ export function IdentityFieldEditor( { blockSlug, data, definition, onChange, re
 				}
 
 				if ( field.field_type === 'select' ) {
-					const options = resolveOptions( field, definition );
+					const options = resolveOptions( field );
 
 					// An allow_custom select accepts free text in addition to the option list.
 					if ( field.allow_custom ) {
 						return (
-							<div className="be-identity-field-editor__row" key={ field.name }>
-								<label className="be-identity-field-editor__label" htmlFor={ fieldId }>{ field.name }</label>
+							<div
+								className="be-identity-field-editor__row"
+								key={ field.name }
+							>
+								<label
+									className="be-identity-field-editor__label"
+									htmlFor={ fieldId }
+								>
+									{ field.name }
+								</label>
 								<SearchableSelect
 									id={ fieldId }
 									options={ options }
-									value={ typeof value === 'string' ? value : '' }
+									value={
+										typeof value === 'string' ? value : ''
+									}
 									allowCustom
 									disabled={ readOnly }
-									onChange={ ( next ) => setField( field.name, next ) }
+									onChange={ ( next ) =>
+										setField( field.name, next )
+									}
 								/>
 							</div>
 						);
 					}
 
 					return (
-						<div className="be-identity-field-editor__row" key={ field.name }>
-							<label className="be-identity-field-editor__label" htmlFor={ fieldId }>{ field.name }</label>
+						<div
+							className="be-identity-field-editor__row"
+							key={ field.name }
+						>
+							<label
+								className="be-identity-field-editor__label"
+								htmlFor={ fieldId }
+							>
+								{ field.name }
+							</label>
 							<select
 								id={ fieldId }
 								value={ typeof value === 'string' ? value : '' }
 								disabled={ readOnly }
-								onChange={ ( e ) => setField( field.name, e.target.value ) }
+								onChange={ ( e ) =>
+									setField( field.name, e.target.value )
+								}
 							>
-								<option value="">{ __( '—', 'beyond-elysium' ) }</option>
+								<option value="">
+									{ __( '—', 'beyond-elysium' ) }
+								</option>
 								{ options.map( ( option ) => (
 									<option key={ option } value={ option }>
 										{ option }
@@ -130,8 +193,16 @@ export function IdentityFieldEditor( { blockSlug, data, definition, onChange, re
 
 				if ( field.field_type === 'number' ) {
 					return (
-						<div className="be-identity-field-editor__row" key={ field.name }>
-							<label className="be-identity-field-editor__label" htmlFor={ fieldId }>{ field.name }</label>
+						<div
+							className="be-identity-field-editor__row"
+							key={ field.name }
+						>
+							<label
+								className="be-identity-field-editor__label"
+								htmlFor={ fieldId }
+							>
+								{ field.name }
+							</label>
 							<input
 								id={ fieldId }
 								type="number"
@@ -139,7 +210,14 @@ export function IdentityFieldEditor( { blockSlug, data, definition, onChange, re
 								min={ field.min }
 								max={ field.max }
 								disabled={ readOnly }
-								onChange={ ( e ) => setField( field.name, e.target.value === '' ? null : Number( e.target.value ) ) }
+								onChange={ ( e ) =>
+									setField(
+										field.name,
+										e.target.value === ''
+											? null
+											: Number( e.target.value )
+									)
+								}
 							/>
 						</div>
 					);
@@ -148,13 +226,23 @@ export function IdentityFieldEditor( { blockSlug, data, definition, onChange, re
 				if ( field.field_type === 'textarea' ) {
 					const textValue = typeof value === 'string' ? value : '';
 					return (
-						<div className="be-identity-field-editor__row" key={ field.name }>
-							<label className="be-identity-field-editor__label" htmlFor={ fieldId }>{ field.name }</label>
+						<div
+							className="be-identity-field-editor__row"
+							key={ field.name }
+						>
+							<label
+								className="be-identity-field-editor__label"
+								htmlFor={ fieldId }
+							>
+								{ field.name }
+							</label>
 							<textarea
 								id={ fieldId }
 								value={ textValue }
 								disabled={ readOnly }
-								onChange={ ( e ) => setField( field.name, e.target.value ) }
+								onChange={ ( e ) =>
+									setField( field.name, e.target.value )
+								}
 							/>
 							{ ! readOnly && (
 								<AiAssistButton
@@ -162,7 +250,9 @@ export function IdentityFieldEditor( { blockSlug, data, definition, onChange, re
 									fieldContext="npc_roleplaying_notes"
 									gameSlug={ gameSlug }
 									currentValue={ textValue }
-									onAccept={ ( suggestion ) => setField( field.name, suggestion ) }
+									onAccept={ ( suggestion ) =>
+										setField( field.name, suggestion )
+									}
 								/>
 							) }
 						</div>
@@ -170,14 +260,24 @@ export function IdentityFieldEditor( { blockSlug, data, definition, onChange, re
 				}
 
 				return (
-					<div className="be-identity-field-editor__row" key={ field.name }>
-						<label className="be-identity-field-editor__label" htmlFor={ fieldId }>{ field.name }</label>
+					<div
+						className="be-identity-field-editor__row"
+						key={ field.name }
+					>
+						<label
+							className="be-identity-field-editor__label"
+							htmlFor={ fieldId }
+						>
+							{ field.name }
+						</label>
 						<input
 							id={ fieldId }
 							type="text"
 							value={ typeof value === 'string' ? value : '' }
 							disabled={ readOnly }
-							onChange={ ( e ) => setField( field.name, e.target.value ) }
+							onChange={ ( e ) =>
+								setField( field.name, e.target.value )
+							}
 						/>
 					</div>
 				);

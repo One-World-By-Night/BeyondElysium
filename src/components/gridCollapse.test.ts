@@ -12,7 +12,10 @@ import { join } from 'path';
  * can't repeat that silently - there is no other automated phone-width check in this repo.
  */
 
-function findComponentFiles( dir: string, out: { tsx: string[]; css: string[] } ): void {
+function findComponentFiles(
+	dir: string,
+	out: { tsx: string[]; css: string[] }
+): void {
 	for ( const entry of readdirSync( dir ) ) {
 		const full = join( dir, entry );
 		if ( statSync( full ).isDirectory() ) {
@@ -46,15 +49,21 @@ test( 'every component with an inline gridColumn span has a phone-width override
 		}
 
 		const css = readFileSync( cssPath, 'utf8' );
-		const phoneBlockMatch = css.match( /@media\s*\(\s*max-width:\s*768px\s*\)\s*{([\s\S]*?)\n}/ );
+		const phoneBlockMatch = css.match(
+			/@media\s*\(\s*max-width:\s*768px\s*\)\s*{([\s\S]*?)\n}/
+		);
 		if ( ! phoneBlockMatch ) {
 			missing.push( `${ cssPath } has no max-width: 768px media query` );
 			continue;
 		}
 
 		const phoneBlock = phoneBlockMatch[ 1 ];
-		if ( ! /grid-column\s*:\s*1\s*\/\s*-1\s*!important/.test( phoneBlock ) ) {
-			missing.push( `${ cssPath }'s phone-width block has no grid-column override with !important` );
+		if (
+			! /grid-column\s*:\s*1\s*\/\s*-1\s*!important/.test( phoneBlock )
+		) {
+			missing.push(
+				`${ cssPath }'s phone-width block has no grid-column override with !important`
+			);
 		}
 	}
 

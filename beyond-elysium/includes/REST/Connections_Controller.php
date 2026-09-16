@@ -34,7 +34,10 @@ class Connections_Controller extends Base_Controller {
 			[
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'get_items' ],
-				'permission_callback' => $this->permission( 'be_view_characters' ),
+				// Every link in the chronicle - who holds what, who is on which plot, whose action
+				// allocation is whose - is the staff's view. The one screen that lists them is theirs
+				// too (1.0.0-review F-063).
+				'permission_callback' => $this->permission_any( [ 'be_manage_connections', 'be_manage_plots' ] ),
 			],
 			[
 				'methods'             => 'POST',

@@ -64,6 +64,7 @@
  * trailing `<th />`/`<td>` is unconditional, never omitted for a non-manager viewer.
  */
 @media print {
+
 	#wpadminbar,
 	header,
 	.site-header,
@@ -89,7 +90,7 @@
 	}
 
 	.be-boon-ledger {
-		font-family: Georgia, 'Times New Roman', serif;
+		font-family: Georgia, "Times New Roman", serif;
 		font-size: 9pt;
 		color: #000;
 	}

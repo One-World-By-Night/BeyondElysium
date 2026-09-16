@@ -5,6 +5,16 @@
 	flex-wrap: wrap;
 }
 
+/*
+ * 1.0.0-review F-117: hello-elementor's reset gives every `select` `width: 100%`, which -
+ * inside this flex row - made each filter stretch across the whole page instead of sizing to
+ * its own content. `width: auto`, the same fix as the Character Sheet's action picker
+ * (F-114), restores that.
+ */
+.be-approval-queue__filters select {
+	width: auto;
+}
+
 .be-approval-queue__table {
 	width: 100%;
 	border-collapse: collapse;
@@ -51,14 +61,16 @@
 }
 
 /*
- * Column priority at phone width (mobile-sheet-design.md §5.5): an ST triaging between
+ * Column priority once the table stacks into cards - on a phone, or in any box too narrow for
+ * its columns (breakpoints.css `.be-table-box`) (mobile-sheet-design.md §5.5): an ST triaging between
  * scenes needs Character, Change, XP, Approval Reason, Actions first - not nine stacked
  * labelled rows per pending change, which is no better than the horizontal scroll this
  * replaces. Level/Submitted by/When move behind one native <details> disclosure per card,
  * and Approve/Reject move to the top of the card (order: -1) - they were the 9th column
  * only because desktop reads left-to-right, an ordering with no meaning once stacked.
  */
-@media ( max-width: 768px ) {
+@container be-table ( max-width: 960px ) {
+
 	.be-approval-queue__table.be-responsive-table tbody tr {
 		display: flex;
 		flex-direction: column;
@@ -101,5 +113,11 @@
 	.be-approval-queue__actions {
 		order: -1;
 		flex-wrap: wrap;
+	}
+
+	/* The buttons say what they do; an "Actions" label beside them only pushed Reject onto its
+	 * own line. */
+	.be-approval-queue__table .be-approval-queue__actions::before {
+		display: none;
 	}
 }

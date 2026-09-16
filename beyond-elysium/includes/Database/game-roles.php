@@ -14,14 +14,26 @@
 defined( 'ABSPATH' ) || exit;
 
 $hst = array_values( array_diff( \BeyondElysium\Core\Capabilities::all(), [ 'be_manage_games' ] ) );
-$ast = $hst;
+// Owner ruling, 1.0.0-checklist.md item 27 (2026-09-15), narrower than the 2026-09-11 "AST can
+// do everything but delete and edit game" model: an AST loses Chronicle Setup's own Approval
+// Rules section, the chronicle's own schema blocks AND templates (both halves of GS-1's
+// "catalog and templates" fork), and deleting a character - keeps everything else, including
+// import, transfers, and the bulk XP/status/reset operations.
+$ast = array_values( array_diff( $hst, [
+	'be_manage_approval_rules',
+	'be_manage_schemas',
+	'be_manage_templates',
+	'be_manage_chronicle_setup',
+	'be_delete_characters',
+] ) );
 
 return [
 	'hst'      => $hst,
 	'ast'      => $ast,
+	// No be_run_queries: the Query Tool reads whole sheets and is a Storyteller's (owner ruling,
+	// 1.0.0-review F-041). Rumor targeting runs its own queries under be_manage_plots.
 	'narrator' => [
 		'be_manage_plots',
-		'be_run_queries',
 		'be_view_characters',
 		'be_submit_actions',
 		'be_view_reports',

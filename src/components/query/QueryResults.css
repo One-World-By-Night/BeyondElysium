@@ -5,12 +5,27 @@
 	margin-bottom: 0.5rem;
 }
 
-/* Columns are user-selected and unbounded, so at narrow widths this table used to
- * overflow its own widget box into the theme's layout rather than scrolling within
- * itself (mobile-sheet-design.md §4.6). Containment, not a card collapse - a saved
- * query's column set has no fixed priority order to collapse into. */
-.be-query-results__table-scroll {
-	overflow-x: auto;
+/* Columns are user-selected and unbounded. In a narrow box each result stacks into a card listing
+ * every column (breakpoints.css `.be-table-box`) instead of scrolling sideways on a phone
+ * (1.0.0-review F-019); the sort buttons and select-all stay visible above the cards. */
+@container be-table ( max-width: 960px ) {
+
+	.be-query-results__table.be-responsive-table thead {
+		display: block;
+	}
+
+	.be-query-results__table.be-responsive-table thead tr {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 0.75rem;
+		border: 0;
+		padding: 0;
+	}
+
+	.be-query-results__table.be-responsive-table thead th {
+		border: 0;
+		padding: 0;
+	}
 }
 
 .be-query-results__table {

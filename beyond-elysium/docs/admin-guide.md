@@ -22,7 +22,7 @@ own capability, so a page stays reachable even for a viewer who can't see every 
 | Query Tool | Query Tool (`be_run_queries`), Reports (`be_view_reports`) | — the same query builder as the front-end Query Tool, plus the 20-report/cards/batch-output layer |
 | Import | — (single page) | Import, below |
 | Chronicle Setup | Chronicle Setup (`be_view_characters`), Chronicle Access (`be_manage_games`), Action & Rumor Settings (`be_manage_apr`) | Chronicle-Scoped Access, below; Chronicle Setup itself is a live checklist for a chronicle's own setup, see the [Storyteller Guide](st-guide.md) |
-| System Config | Games (`be_manage_games`), Schema Blocks (`be_manage_schemas`), Creature Stacks (`be_manage_schemas`), Templates (`be_manage_templates`), Approval Rules (`be_manage_approval_rules`) | Schema Blocks and Creature Stacks, Templates, Descriptions and Approval Schedules, and Approval Rules, all below |
+| System Config | Games (`be_manage_games`), Schema Blocks (`be_manage_schemas`), Creature Stacks (`be_manage_games`), Templates (`be_manage_templates`), Approval Rules (`be_manage_approval_rules`) | Schema Blocks and Creature Stacks, Templates, Descriptions and Approval Schedules, and Approval Rules, all below |
 | Docs | — (single page, `be_view_characters`) | — this guide and its three siblings, rendered in-plugin |
 
 Two related pages live on the front end instead, not in wp-admin at all: the **Game
@@ -55,7 +55,10 @@ render time from two kinds of catalog entries:
 Under **Beyond Elysium → System Config → Schema Blocks**, each block shows its section type, whether it's a
 system block (part of the shipped catalog) or a chronicle's own fork, and its full
 definition. A system block can be forked per-chronicle from the Storyteller side (see the
-Storyteller Guide) without ever touching the shared version every other chronicle uses.
+Storyteller Guide) without ever touching the shared version every other chronicle uses. The
+copy keeps what the chronicle changed - values, approval rules, entries it added or removed -
+and takes everything else from the shared block, both when the plugin updates and when you save
+the shared block here.
 
 Under **Beyond Elysium → System Config → Creature Stacks**, each stack lists which blocks it uses and in
 what section/column they render.
@@ -84,6 +87,14 @@ every chronicle immediately. It also survives every future plugin update: a syst
 catalog data (cost, sphere requirements, and so on) refreshes from the shipped source on
 every version bump, but a description an admin has written is carried forward untouched.
 
+The same holds for every other setting only an admin makes on a shared system block: approval
+levels and reasons, approval-by-value and approval-by-option schedules, a power family's
+approval override, the block's own approval rules, and any item, power, level, pool, or field
+an admin added. A section added to a system creature stack is kept too. What an update does
+refresh is what ships with the plugin - names, costs, notes, translations, a stack's own name
+and sections - so changing one of those on a system block lasts only until the next update;
+fork the block for your chronicle to change it for good.
+
 ### Approval by Value and Approval by Option
 
 An item's flat approval setting ("this whole item needs Storyteller approval") can be
@@ -99,8 +110,7 @@ sharpened to depend on what a player is actually raising it to:
   row, so it gets a plain **Approval** dropdown directly, with no range to configure.
 - **Identity fields** (Nature, Clan, Generation, …) — an **Approval by option** button lists
   every option the field offers with its own approval dropdown, for example requiring
-  Coordinator approval to pick "Antediluvian" while every other option stays at the block's
-  default. A multiselect field checks every value a player picks and the strictest
+  Storyteller approval to pick "Antediluvian" while every other option is automatic. A multiselect field checks every value a player picks and the strictest
   requirement applies.
 
 A value or option with no schedule entry falls back to the item's own flat `approval`
@@ -140,9 +150,9 @@ Picking a block offers the matching target picker for its section type:
 The same page also carries the chronicle's own baseline: **Pending by default** (today's
 long-standing behavior - everything needs Storyteller review unless a rule below says
 `auto`) or **Auto-approve by default** (the reverse - everything is waved through unless a
-rule below says `st` or `coordinator`). This is a two-way switch, not a third tier alongside
-`auto`/`st`/`coordinator` - a granular rule can still ask for any of the three regardless of
-which way the chronicle's own default is set.
+rule below says `st`). A granular rule can ask for either level regardless of which way the
+chronicle's own default is set. (There is no coordinator level: a rule whose reason names a
+coordinator's approval is a Storyteller rule, and the Storyteller gets that approval.)
 
 A granular rule **always** wins over this default, in either direction - the default only
 ever applies when nothing more specific (an item, a power, a level, a value range, a field
@@ -162,10 +172,20 @@ time, not a code change.
 2. **Create the creature stack.** Under **System Config → Creature Stacks → Add Stack**, give it a slug and
    name, then assemble it from existing and new blocks — set each block's column and
    display order.
-3. **Set creation rules**, if the type needs any (a starting dot allocation, a required
-   identity field, and so on) — these live on the stack definition alongside its block list.
+3. **Creation rules** can be stored on the stack definition alongside its block list (a
+   starting dot allocation, a required identity field, and so on), but nothing reads them yet —
+   character creation doesn't enforce them in this release.
 4. The new type is immediately available everywhere a creature stack is selectable —
    character creation, the roster filter, query building — with no further wiring.
+
+A custom type can be deleted only once no character in any chronicle is that type - a character
+can't change its type, and one whose type is gone would have no sheet to show, print, or audit.
+
+One thing a new type can't do: leave the site. Export to Grapevine and chronicle-to-chronicle
+transfers travel as Grapevine exchange files, and Grapevine has no race for a type you made up,
+so exporting or transferring one of its characters is refused with a message saying so. The
+shipped types all travel; Bête goes as the Fera it shares every block with and comes back as a
+Bête in Beyond Elysium.
 
 Every one of the plugin's front-end widgets (character sheet, editor, roster, approval
 queue, dashboard, and the rest — fifteen in total, `src/index.tsx`'s widget registry) reads
@@ -216,13 +236,31 @@ scoped to `be_manage_games`. This is deliberate — `game-roles.php` excludes `b
 from every chronicle role by name, so no HST can appoint their own AST even for their own
 chronicle.
 
-An HST *can* now (as of `v0.99.16`) reach **System Config**'s **Schema Blocks**, **Creature Stacks**, and
+An HST *can* now (as of `v0.99.16`) reach **System Config**'s **Schema Blocks** and
 **Templates** for their own chronicle's own customization — forking a block or a template
-for a chronicle they hold `hst`/`ast` membership in. This needs both of two things to be
+for a chronicle they hold `hst` membership in. This needs both of two things to be
 true: the site-wide capability (`be_manage_schemas`/`be_manage_templates`, granted to
 `editor` since `v0.99.16`) and a real membership row in that specific chronicle. Holding the
 capability alone, with no membership row, still gets a `403` — it is not a bare
 site-wide grant, the same two-layer check every chronicle-scoped route in this plugin uses.
+As of `v1.0.0` (below), both **Schema Blocks** and **Templates** are an HST's alone; an AST
+holds neither for their own chronicle.
+
+**Narrower as of `v1.0.0`** (owner ruling, 2026-09-15): an AST no longer holds
+`be_manage_approval_rules`, `be_manage_schemas`, `be_manage_templates`, or the new
+`be_delete_characters` for their own chronicle — Approval Rules, catalog and template
+customization (forking a Schema Block or a Template), and permanently deleting a character
+are an HST's alone. An AST keeps everything else the two roles used to share equally: import,
+transfers, editing characters, and the bulk XP/status/reset operations. Conversely, an HST
+gained real write access to three Chronicle Setup settings that used to be
+`be_manage_games`-only (a site administrator, no exceptions): **Creature types**,
+**Sub-Faction Restrictions**, and **New-character approval** — the new
+`be_manage_chronicle_setup` capability, chronicle-scoped the same two-layer way as everything
+else. Separately, a Narrator (`be_manage_plots`, not `be_manage_characters`) can now see and
+allocate actions for any character in their chronicle, not only one they happen to own as a
+player — the character roster the Action Allocator reads from is no longer restricted to
+their own characters, though editing, deleting, or creating a character still needs
+`be_manage_characters`/`be_delete_characters`, which a Narrator never holds.
 
 ## Front-End Pages
 

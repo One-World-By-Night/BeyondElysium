@@ -43,6 +43,19 @@ class Character {
 	}
 
 	/**
+	 * Lock a character's row until the surrounding transaction ends. Every
+	 * sheet write reads the whole sheet_data document and writes it back, so
+	 * two writers must take turns or one silently erases the other's change
+	 * (1.0.0-review F-015). Must run inside a Transaction.
+	 *
+	 * @param int $id
+	 * @return void
+	 */
+	public static function lock( int $id ): void {
+		Manager::get_var( 'SELECT id FROM ' . Manager::table( 'characters' ) . ' WHERE id = %d FOR UPDATE', $id );
+	}
+
+	/**
 	 * Find a character by its permanent UUID rather than the local auto-increment
 	 * ID. The UUID survives transfers between WordPress installations, so this is
 	 * the lookup external OWBN tools should use.
@@ -166,6 +179,19 @@ class Character {
 	}
 
 	/**
+	 * Count every character of one creature type, in any chronicle - player,
+	 * NPC, active or not.
+	 *
+	 * @param string $stack_slug
+	 * @return int
+	 */
+	public static function count_for_stack( string $stack_slug ): int {
+		global $wpdb;
+		$table = Manager::table( 'characters' );
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE stack_slug = %s", $stack_slug ) );
+	}
+
+	/**
 	 * Return character counts grouped by stack_slug for one game. Only stacks
 	 * with at least one character are present in the result; a dashboard renders
 	 * whichever keys show up rather than a fixed list of every known stack.
@@ -259,18 +285,114 @@ class Character {
 		$insert['created_at'] = current_time( 'mysql' );
 		$insert['updated_at'] = current_time( 'mysql' );
 
-		$id = Manager::insert( 'characters', $insert );
-
-		if ( $id ) {
-			// Auto-create initial snapshot.
-			Snapshot::create( (int) $id, null );
-
-			if ( $insert['owner_type'] === 'chronicle' && ! empty( $insert['wp_user_id'] ) ) {
-				self::ensure_player_membership( (string) $insert['owner_slug'], (int) $insert['wp_user_id'] );
-			}
+		$unit = Transaction::begin( 'be_character_create' );
+		$id   = Manager::insert( 'characters', $insert );
+		if ( ! $id ) {
+			Transaction::rollback( $unit );
+			return 0;
 		}
 
+		// Auto-create initial snapshot.
+		Snapshot::create( (int) $id, null );
+
+		// A join request (`await_approval`) grants membership only when a Storyteller activates it (update_header()).
+		if ( $insert['owner_type'] === 'chronicle' && ! empty( $insert['wp_user_id'] ) && empty( $data['await_approval'] ) ) {
+			self::ensure_player_membership( (string) $insert['owner_slug'], (int) $insert['wp_user_id'] );
+		}
+
+		// Every character in a chronicle has its own plot, and one whose plot can't be written
+		// isn't made either (owner, 2026-09-15).
+		$in_chronicle = $insert['owner_type'] === 'chronicle' && Game::find_by_slug( (string) ( $insert['owner_slug'] ?? '' ) );
+		if ( $in_chronicle && self::ensure_plot( (int) $id ) === null ) {
+			Transaction::rollback( $unit );
+			return 0;
+		}
+
+		Transaction::commit( $unit );
 		return (int) $id;
+	}
+
+	/**
+	 * The title a character's own plot is made with: `<name> [id] Plot`.
+	 *
+	 * @param string $name
+	 * @param int    $id
+	 * @return string
+	 */
+	public static function plot_title( string $name, int $id ): string {
+		return sprintf( '%s [%d] Plot', $name, $id );
+	}
+
+	/**
+	 * A character's own plot: linked to it as its actor - the link that keeps a
+	 * plot from every other player - and with no game date, which sets it apart
+	 * from the character's action rounds. Null when it has none.
+	 *
+	 * @param int $id
+	 * @return int|null
+	 */
+	public static function plot_id( int $id ): ?int {
+		// 'apr_actor' is Services\Action_Allocator::ACTOR_LABEL - Models don't depend on Services.
+		$plot_id = Manager::get_var(
+			'SELECT p.id FROM ' . Manager::table( 'plots' ) . ' p
+			 INNER JOIN ' . Manager::table( 'connections' ) . " c ON c.source_type = 'plot' AND c.source_id = p.id
+			 WHERE c.target_type = 'character' AND c.target_id = %d AND c.label = %s AND p.game_date IS NULL
+			 ORDER BY p.id ASC LIMIT 1",
+			$id,
+			'apr_actor'
+		);
+		return $plot_id ? (int) $plot_id : null;
+	}
+
+	/**
+	 * A character's own plot, made now if it has none. Every character, PC or
+	 * NPC, has one (owner, 2026-09-15): its player and the chronicle's
+	 * Storytellers see it, and the character's action rounds sit under it. Holds
+	 * the character's row while it checks and writes, so two callers can't each
+	 * make one.
+	 *
+	 * @param int $id
+	 * @return int|null Null for a character outside any existing chronicle, or when the plot couldn't be written - nothing is kept then.
+	 */
+	public static function ensure_plot( int $id ): ?int {
+		$unit = Transaction::begin( 'be_character_plot' );
+		self::lock( $id );
+
+		$existing = self::plot_id( $id );
+		if ( $existing !== null ) {
+			Transaction::commit( $unit );
+			return $existing;
+		}
+
+		$character = Manager::get_row( 'SELECT name, owner_type, owner_slug FROM ' . Manager::table( 'characters' ) . ' WHERE id = %d', $id );
+		$game      = $character && $character->owner_type === 'chronicle' ? Game::find_by_slug( (string) $character->owner_slug ) : null;
+		if ( ! $character || ! $game ) {
+			Transaction::rollback( $unit );
+			return null;
+		}
+
+		$plot_id = Plot::create( [
+			'game_id'      => (int) $game->id,
+			'title'        => self::plot_title( (string) $character->name, $id ),
+			'initiated_by' => 'st',
+			'created_by'   => get_current_user_id(),
+		] );
+		$linked  = $plot_id && Connection::create( [
+			'game_id'     => (int) $game->id,
+			'source_type' => 'plot',
+			'source_id'   => (int) $plot_id,
+			'target_type' => 'character',
+			'target_id'   => $id,
+			'label'       => 'apr_actor',
+			'created_by'  => get_current_user_id(),
+		] );
+		if ( ! $linked ) {
+			Transaction::rollback( $unit );
+			return null;
+		}
+
+		Transaction::commit( $unit );
+		return (int) $plot_id;
 	}
 
 	/**
@@ -292,7 +414,8 @@ class Character {
 	/**
 	 * Update a character's header fields - everything except sheet_data. Writes
 	 * only the fields present in $data, stamps updated_at, and ensures chronicle
-	 * membership when wp_user_id is being set to a new owner.
+	 * membership when wp_user_id is being set to a new owner or the character is
+	 * set active - which is how a Storyteller approves a join request.
 	 *
 	 * @param int   $id
 	 * @param array $data Fields to update.
@@ -317,8 +440,21 @@ class Character {
 			return false;
 		}
 
+		$old_name = array_key_exists( 'name', $update )
+			? Manager::get_var( 'SELECT name FROM ' . Manager::table( 'characters' ) . ' WHERE id = %d', $id )
+			: null;
+
 		$update['updated_at'] = current_time( 'mysql' );
 		$result               = Manager::update( 'characters', $update, [ 'id' => $id ] );
+
+		// The character's own plot keeps the character's name, unless a Storyteller has retitled it.
+		if ( $result !== false && $old_name !== null && (string) $old_name !== (string) $update['name'] ) {
+			$plot_id = self::plot_id( $id );
+			$plot    = $plot_id ? Plot::find( $plot_id ) : null;
+			if ( $plot && $plot->title === self::plot_title( (string) $old_name, $id ) ) {
+				Plot::update( (int) $plot_id, [ 'title' => self::plot_title( (string) $update['name'], $id ) ] );
+			}
+		}
 
 		if ( $result !== false && ! empty( $update['wp_user_id'] ) ) {
 			// Looks up just owner_slug rather than fetching the full character row.
@@ -329,6 +465,18 @@ class Character {
 			);
 			if ( $owner_slug ) {
 				self::ensure_player_membership( (string) $owner_slug, (int) $update['wp_user_id'] );
+			}
+		}
+
+		// Activating a character approves its player's join request, if it was one (F-033).
+		if ( $result !== false && ( $update['status'] ?? null ) === 'active' ) {
+			$owner = (array) Manager::get_row(
+				'SELECT owner_slug, wp_user_id FROM ' . Manager::table( 'characters' ) . ' WHERE id = %d AND owner_type = %s',
+				$id,
+				'chronicle'
+			);
+			if ( ! empty( $owner['wp_user_id'] ) ) {
+				self::ensure_player_membership( (string) $owner['owner_slug'], (int) $owner['wp_user_id'] );
 			}
 		}
 
@@ -446,11 +594,24 @@ class Character {
 	 * transaction so a failed delete leaves none of the cascade committed, even
 	 * when called from within another already-open transaction.
 	 *
+	 * Also removes the character's action allocation plots, and closes any
+	 * transfer still in motion the way a Storyteller would: a pending offer is
+	 * declined and its verification code revoked, a character abroad is
+	 * released, and a visiting copy's visit ends (1.0.0-review F-014). The
+	 * codes on printed and exported sheets stay, as the record that the
+	 * chronicle issued those documents.
+	 *
 	 * @param int $id
 	 * @return bool
 	 */
 	public static function delete( int $id ): bool {
 		$savepoint = Transaction::begin( 'be_character_delete' );
+
+		$character = self::find( $id );
+		if ( $character ) {
+			self::delete_allocation_plots( $id );
+			self::close_transfers( $character );
+		}
 
 		Connection::delete_for_entity( 'character', $id );
 		Change::delete_for_character( $id );
@@ -465,6 +626,53 @@ class Character {
 
 		Transaction::commit( $savepoint );
 		return true;
+	}
+
+	/**
+	 * Deletes every action allocation plot a character is the actor of. Only
+	 * that link keeps the plot - titled with the character's name, its entries
+	 * holding the character's Background ratings - hidden from other players,
+	 * so it can't outlive the character.
+	 *
+	 * @param int $id
+	 */
+	private static function delete_allocation_plots( int $id ): void {
+		global $wpdb;
+		$connections = Manager::table( 'connections' );
+		// 'apr_actor' is Services\Action_Allocator::ACTOR_LABEL - Models don't depend on Services.
+		$plot_ids = $wpdb->get_col( $wpdb->prepare(
+			"SELECT source_id FROM {$connections}
+			 WHERE source_type = 'plot' AND target_type = 'character' AND target_id = %d AND label = %s",
+			$id,
+			'apr_actor'
+		) );
+		foreach ( array_unique( array_map( 'intval', $plot_ids ) ) as $plot_id ) {
+			Plot::delete( $plot_id );
+		}
+	}
+
+	/**
+	 * Closes the transfers still in motion for a character being deleted.
+	 *
+	 * @param object $character
+	 */
+	private static function close_transfers( object $character ): void {
+		$outbound = Transfer::find_open( (string) $character->uuid, 'outbound' );
+		if ( $outbound !== null && $outbound->home_slug === $character->owner_slug ) {
+			if ( $outbound->state === 'pending' ) {
+				Transfer::transition( (int) $outbound->id, 'declined' );
+				if ( ! empty( $outbound->attestation_id ) ) {
+					Attestation::revoke( (int) $outbound->attestation_id );
+				}
+			} elseif ( $outbound->state === 'abroad' ) {
+				Transfer::transition( (int) $outbound->id, 'released' );
+			}
+		}
+
+		$inbound = Transfer::find_open( (string) $character->uuid, 'inbound' );
+		if ( $inbound !== null && (int) $inbound->character_id === (int) $character->id && $inbound->state === 'visiting' ) {
+			Transfer::transition( (int) $inbound->id, 'sent_home' );
+		}
 	}
 
 	/**

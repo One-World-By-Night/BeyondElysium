@@ -68,12 +68,13 @@ class TemplatesControllerTest extends WP_UnitTestCase {
 	// Permission matrix
 	// -------------------------------------------------------------------------
 
-	public function test_viewer_can_list_global_templates(): void {
-		$viewer = self::factory()->user->create( [ 'role' => 'subscriber' ] );
-		wp_set_current_user( $viewer );
+	public function test_template_lists_are_the_template_editors_not_a_viewers(): void {
+		// A sheet reaches its template through resolve (1.0.0-review F-069).
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'subscriber' ] ) );
+		$this->assertSame( 403, $this->dispatch( 'GET', '/be/v1/templates' )->get_status() );
 
-		$response = $this->dispatch( 'GET', '/be/v1/templates' );
-		$this->assertSame( 200, $response->get_status() );
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$this->assertSame( 200, $this->dispatch( 'GET', '/be/v1/templates' )->get_status() );
 	}
 
 	public function test_viewer_cannot_create_a_template(): void {
@@ -94,6 +95,24 @@ class TemplatesControllerTest extends WP_UnitTestCase {
 			'stack_slug' => 'test-stack', 'name' => 'X', 'template_type' => 'sheet_full', 'layout' => $this->layout(),
 		] );
 		$this->assertSame( 201, $response->get_status() );
+	}
+
+	/**
+	 * 1.0.0-review F-077. A section's width was never checked, so a layout saved through the API
+	 * with a width outside third, half, and full was stored - and every signed sheet on that
+	 * stack then failed to generate.
+	 */
+	public function test_a_section_width_outside_third_half_and_full_is_refused(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$layout                          = $this->layout();
+		$layout['sections'][0]['width'] = 'quarter';
+
+		$response = $this->dispatch( 'POST', '/be/v1/templates', [
+			'stack_slug' => 'test-stack', 'name' => 'X', 'template_type' => 'sheet_full', 'layout' => $layout,
+		] );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertStringContainsString( 'width', $response->as_error()->get_error_message() );
 	}
 
 	public function test_logged_out_user_is_forbidden(): void {

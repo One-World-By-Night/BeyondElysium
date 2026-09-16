@@ -11,10 +11,12 @@
   { "name": "modify_resource with no values", "output": "Resource updated" },
   { "name": "an identity field change", "output": "Clan → Toreador" },
   { "name": "modify_identity with no fields", "output": "Identity updated" },
+  { "name": "a multiselect identity field change", "output": "Languages → English, Latin" },
   { "name": "XP earn with a reason", "output": "+3 XP (Game attendance)" },
   { "name": "XP earn with no reason", "output": "+5 XP" },
   { "name": "XP adjust with a reason", "output": "XP adjusted by -2 (ST correction)" },
   { "name": "an imported note with a reason", "output": "Migrated from legacy sheet" },
   { "name": "an imported note with no reason", "output": "Imported note" },
+  { "name": "an imported note with an empty reason", "output": "Imported note" },
   { "name": "an unrecognized change type", "output": "Unknown change" }
 ]

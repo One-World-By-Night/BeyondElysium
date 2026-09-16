@@ -37,6 +37,8 @@ export interface QueryResultsProps {
 	onSort: ( field: string, direction: 'asc' | 'desc' ) => void;
 	sortField?: string;
 	sortDirection?: 'asc' | 'desc';
+	/** Names the search these results came from (searchKey()); a selection belongs to one search. */
+	searchKey?: string;
 }
 
 /**
@@ -51,7 +53,7 @@ function cellValue( item: QueryResultCharacter, key: string ): string {
 	if ( direct !== undefined ) {
 		return String( direct ?? '' );
 	}
-	const properties = item.properties as Record<string, unknown> | undefined;
+	const properties = item.properties as Record< string, unknown > | undefined;
 	return String( properties?.[ key ] ?? '' );
 }
 
@@ -66,32 +68,53 @@ function cellValue( item: QueryResultCharacter, key: string ): string {
  * (query-beyond-characters-design.md §9.3, the highest-severity risk in the
  * whole feature).
  */
-export function QueryResults( { gameSlug, inventory, columns, items, total, page, perPage, onPageChange, onSort, sortField, sortDirection }: QueryResultsProps ) {
+export function QueryResults( {
+	gameSlug,
+	inventory,
+	columns,
+	items,
+	total,
+	page,
+	perPage,
+	onPageChange,
+	onSort,
+	sortField,
+	sortDirection,
+	searchKey = '',
+}: QueryResultsProps ) {
 	const [ exporting, setExporting ] = useState( false );
-	const [ selected, setSelected ] = useState<Set<number>>( new Set() );
+	const [ selected, setSelected ] = useState< Set< number > >( new Set() );
 	const [ awarding, setAwarding ] = useState( false );
 	const [ amount, setAmount ] = useState( '' );
 	const [ reason, setReason ] = useState( '' );
-	const [ awardMessage, setAwardMessage ] = useState<string | null>( null );
+	const [ awardMessage, setAwardMessage ] = useState< string | null >( null );
 
-	const [ resourcePoolBlocks, setResourcePoolBlocks ] = useState<SchemaBlock[]>( [] );
+	const [ resourcePoolBlocks, setResourcePoolBlocks ] = useState<
+		SchemaBlock[]
+	>( [] );
 	const [ poolBlockSlug, setPoolBlockSlug ] = useState( '' );
 	const [ poolName, setPoolName ] = useState( '' );
 	const [ resetting, setResetting ] = useState( false );
-	const [ resetMessage, setResetMessage ] = useState<string | null>( null );
+	const [ resetMessage, setResetMessage ] = useState< string | null >( null );
 
-	const [ statusOptions, setStatusOptions ] = useState<string[]>( [] );
+	const [ statusOptions, setStatusOptions ] = useState< string[] >( [] );
 	const [ bulkStatus, setBulkStatus ] = useState( '' );
 	const [ settingStatus, setSettingStatus ] = useState( false );
-	const [ statusMessage, setStatusMessage ] = useState<string | null>( null );
+	const [ statusMessage, setStatusMessage ] = useState< string | null >(
+		null
+	);
 
-	// A selection built against one inventory's rows must never survive into another, where
-	// the same numeric ids would mean an entirely different set of entities.
+	// A selection belongs to the search it was made on. In another inventory the same numeric ids
+	// mean different entities; in another search of the same inventory a checked row may no longer
+	// be on screen, and a bulk action would still reach it (1.0.0-review F-075). Paging and sorting
+	// are the same search and keep it.
 	useEffect( () => {
 		setSelected( new Set() );
-	}, [ inventory ] );
+	}, [ inventory, searchKey ] );
 
-	const canBulkManage = inventory === 'char' && ( window.beyondElysium?.capabilities?.be_manage_characters ?? false );
+	const canBulkManage =
+		inventory === 'char' &&
+		( window.beyondElysium?.capabilities?.be_manage_characters ?? false );
 
 	// Sourced from the server rather than hardcoded a second time client-side - the same
 	// "options" pattern Approval_Rules_Controller's own vocabulary route already established.
@@ -100,7 +123,11 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 			return;
 		}
 		api.schemaBlocks
-			.list( { section_type: 'resource_pool', game_slug: gameSlug, per_page: 100 } )
+			.list( {
+				section_type: 'resource_pool',
+				game_slug: gameSlug,
+				per_page: 100,
+			} )
 			.then( setResourcePoolBlocks )
 			.catch( () => setResourcePoolBlocks( [] ) );
 		api.characters( gameSlug )
@@ -110,7 +137,9 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ canBulkManage, gameSlug ] );
 
-	const activePoolBlock = resourcePoolBlocks.find( ( b ) => b.slug === poolBlockSlug );
+	const activePoolBlock = resourcePoolBlocks.find(
+		( b ) => b.slug === poolBlockSlug
+	);
 	const poolsForActiveBlock = activePoolBlock
 		? ( activePoolBlock.definition as ResourcePoolDefinition ).pools
 		: [];
@@ -118,7 +147,11 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 	function toggleSelected( id: number ) {
 		setSelected( ( prev ) => {
 			const next = new Set( prev );
-			next.has( id ) ? next.delete( id ) : next.add( id );
+			if ( next.has( id ) ) {
+				next.delete( id );
+			} else {
+				next.add( id );
+			}
 			return next;
 		} );
 	}
@@ -128,7 +161,9 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 		const allSelected = pageIds.every( ( id ) => selected.has( id ) );
 		setSelected( ( prev ) => {
 			const next = new Set( prev );
-			pageIds.forEach( ( id ) => ( allSelected ? next.delete( id ) : next.add( id ) ) );
+			pageIds.forEach( ( id ) =>
+				allSelected ? next.delete( id ) : next.add( id )
+			);
 			return next;
 		} );
 	}
@@ -150,7 +185,10 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 			setAwardMessage(
 				sprintf(
 					/* translators: 1: number of characters awarded, 2: XP amount */
-					__( 'Awarded %1$d XP to %2$d character(s).', 'beyond-elysium' ),
+					__(
+						'Awarded %1$d XP to %2$d character(s).',
+						'beyond-elysium'
+					),
 					result.amount,
 					result.awarded
 				)
@@ -159,7 +197,12 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 			setAmount( '' );
 			setReason( '' );
 		} catch {
-			setAwardMessage( __( 'Failed to award XP. Nothing was changed.', 'beyond-elysium' ) );
+			setAwardMessage(
+				__(
+					'Failed to award XP. Nothing was changed.',
+					'beyond-elysium'
+				)
+			);
 		} finally {
 			setAwarding( false );
 		}
@@ -181,14 +224,22 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 			setResetMessage(
 				sprintf(
 					/* translators: 1: pool name, 2: number of characters reset */
-					__( 'Reset %1$s to permanent for %2$d character(s).', 'beyond-elysium' ),
+					__(
+						'Reset %1$s to permanent for %2$d character(s).',
+						'beyond-elysium'
+					),
 					result.pool_name,
 					result.reset
 				)
 			);
 			setSelected( new Set() );
 		} catch {
-			setResetMessage( __( 'Failed to reset the pool. Nothing was changed.', 'beyond-elysium' ) );
+			setResetMessage(
+				__(
+					'Failed to reset the pool. Nothing was changed.',
+					'beyond-elysium'
+				)
+			);
 		} finally {
 			setResetting( false );
 		}
@@ -210,46 +261,65 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 			setStatusMessage(
 				failed > 0
 					? sprintf(
-						/* translators: 1: number of characters updated, 2: number that failed */
-						__( 'Updated %1$d character(s); %2$d could not be updated.', 'beyond-elysium' ),
-						result.updated,
-						failed
-					)
+							/* translators: 1: number of characters updated, 2: number that failed */
+							__(
+								'Updated %1$d character(s); %2$d could not be updated.',
+								'beyond-elysium'
+							),
+							result.updated,
+							failed
+					  )
 					: sprintf(
-						/* translators: %d: number of characters updated */
-						__( 'Updated %d character(s).', 'beyond-elysium' ),
-						result.updated
-					)
+							/* translators: %d: number of characters updated */
+							__( 'Updated %d character(s).', 'beyond-elysium' ),
+							result.updated
+					  )
 			);
 			setSelected( new Set() );
 		} catch {
-			setStatusMessage( __( 'Failed to update status. Nothing was changed.', 'beyond-elysium' ) );
+			setStatusMessage(
+				__(
+					'Failed to update status. Nothing was changed.',
+					'beyond-elysium'
+				)
+			);
 		} finally {
 			setSettingStatus( false );
 		}
 	}
 
 	function toggleSort( key: string ) {
-		const nextDirection = sortField === key && sortDirection === 'asc' ? 'desc' : 'asc';
+		const nextDirection =
+			sortField === key && sortDirection === 'asc' ? 'desc' : 'asc';
 		onSort( key, nextDirection );
 	}
 
 	function exportCsv() {
 		setExporting( true );
 		try {
-			const header = [ ...columns.map( ( c ) => c.label ), __( 'Match Reason', 'beyond-elysium' ) ];
-			const rows   = items.map( ( item ) => [
+			const header = [
+				...columns.map( ( c ) => c.label ),
+				__( 'Match Reason', 'beyond-elysium' ),
+			];
+			const rows = items.map( ( item ) => [
 				...columns.map( ( c ) => cellValue( item, c.key ) ),
 				item.match_reason ?? '',
 			] );
 			const csv = [ header, ...rows ]
-				.map( ( row ) => row.map( ( cell ) => `"${ String( cell ).replace( /"/g, '""' ) }"` ).join( ',' ) )
+				.map( ( row ) =>
+					row
+						.map(
+							( cell ) =>
+								`"${ String( cell ).replace( /"/g, '""' ) }"`
+						)
+						.join( ',' )
+				)
 				.join( '\n' );
 
 			const blob = new Blob( [ csv ], { type: 'text/csv' } );
-			const url  = URL.createObjectURL( blob );
+			const url = URL.createObjectURL( blob );
 			const link = document.createElement( 'a' );
-			link.href     = url;
+			link.href = url;
 			link.download = 'query-results.csv';
 			link.click();
 			URL.revokeObjectURL( url );
@@ -258,13 +328,23 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 		}
 	}
 
-	const allOnPageSelected = items.length > 0 && items.every( ( i ) => selected.has( i.id ) );
+	const allOnPageSelected =
+		items.length > 0 && items.every( ( i ) => selected.has( i.id ) );
 
 	return (
 		<div className="be-query-results">
 			<div className="be-query-results__toolbar">
-				<span>{ sprintf( __( '%d total', 'beyond-elysium' ), total ) }</span>
-				<button type="button" onClick={ exportCsv } disabled={ exporting || items.length === 0 }>
+				<span>
+					{
+						/* translators: %d: total number of matching results */
+						sprintf( __( '%d total', 'beyond-elysium' ), total )
+					}
+				</span>
+				<button
+					type="button"
+					onClick={ exportCsv }
+					disabled={ exporting || items.length === 0 }
+				>
 					{ __( 'Export CSV', 'beyond-elysium' ) }
 				</button>
 			</div>
@@ -272,72 +352,132 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 			{ items.length === 0 ? (
 				<p>{ __( 'Nothing matches this query.', 'beyond-elysium' ) }</p>
 			) : (
-				<div className="be-query-results__table-scroll">
-					<table className="be-query-results__table">
+				<div className="be-table-box">
+					<table className="be-query-results__table be-responsive-table">
 						<thead>
-						<tr>
-							{ canBulkManage && (
-								<th>
-									<input
-										type="checkbox"
-										checked={ allOnPageSelected }
-										onChange={ toggleSelectAllOnPage }
-										aria-label={ __( 'Select all on this page', 'beyond-elysium' ) }
-									/>
-								</th>
-							) }
-							{ columns.map( ( col ) => (
-								<th key={ col.key }>
-									<button type="button" className="be-query-results__sort" onClick={ () => toggleSort( col.key ) }>
-										{ col.label }
-										{ sortField === col.key && ( sortDirection === 'asc' ? ' ▲' : ' ▼' ) }
-									</button>
-								</th>
-							) ) }
-							<th>{ __( 'Match Reason', 'beyond-elysium' ) }</th>
-						</tr>
-					</thead>
-					<tbody>
-						{ items.map( ( item ) => (
-							<tr key={ item.id }>
+							<tr>
 								{ canBulkManage && (
-									<td>
+									<th>
 										<input
 											type="checkbox"
-											checked={ selected.has( item.id ) }
-											onChange={ () => toggleSelected( item.id ) }
-											aria-label={ sprintf( __( 'Select %s', 'beyond-elysium' ), item.name ) }
+											checked={ allOnPageSelected }
+											onChange={ toggleSelectAllOnPage }
+											aria-label={ __(
+												'Select all on this page',
+												'beyond-elysium'
+											) }
 										/>
-									</td>
+									</th>
 								) }
 								{ columns.map( ( col ) => (
-									<td key={ col.key }>{ cellValue( item, col.key ) }</td>
+									<th key={ col.key }>
+										<button
+											type="button"
+											className="be-query-results__sort"
+											onClick={ () =>
+												toggleSort( col.key )
+											}
+										>
+											{ col.label }
+											{ sortField === col.key &&
+												( sortDirection === 'asc'
+													? ' ▲'
+													: ' ▼' ) }
+										</button>
+									</th>
 								) ) }
-								<td>{ item.match_reason }</td>
+								<th>
+									{ __( 'Match Reason', 'beyond-elysium' ) }
+								</th>
 							</tr>
-						) ) }
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							{ items.map( ( item ) => (
+								<tr key={ item.id }>
+									{ canBulkManage && (
+										<td
+											data-label={ __(
+												'Select',
+												'beyond-elysium'
+											) }
+										>
+											<input
+												type="checkbox"
+												checked={ selected.has(
+													item.id
+												) }
+												onChange={ () =>
+													toggleSelected( item.id )
+												}
+												aria-label={ sprintf(
+													/* translators: %s: the result row's own name */
+													__(
+														'Select %s',
+														'beyond-elysium'
+													),
+													item.name
+												) }
+											/>
+										</td>
+									) }
+									{ columns.map( ( col ) => (
+										<td
+											key={ col.key }
+											data-label={ col.label }
+										>
+											{ cellValue( item, col.key ) }
+										</td>
+									) ) }
+									<td
+										data-label={ __(
+											'Match Reason',
+											'beyond-elysium'
+										) }
+									>
+										{ item.match_reason }
+									</td>
+								</tr>
+							) ) }
+						</tbody>
+					</table>
 				</div>
 			) }
 
 			{ canBulkManage && selected.size > 0 && (
-				<form className="be-query-results__bulk-award" onSubmit={ submitBulkAward }>
-					<span>{ sprintf( __( '%d selected', 'beyond-elysium' ), selected.size ) }</span>
+				<form
+					className="be-query-results__bulk-award"
+					onSubmit={ submitBulkAward }
+				>
+					<span>
+						{ sprintf(
+							/* translators: %d: number of results ticked for the bulk XP award */
+							__( '%d selected', 'beyond-elysium' ),
+							selected.size
+						) }
+					</span>
 					<input
 						type="number"
 						value={ amount }
 						onChange={ ( e ) => setAmount( e.target.value ) }
 						placeholder={ __( 'XP amount', 'beyond-elysium' ) }
-						aria-label={ __( 'XP amount to award', 'beyond-elysium' ) }
+						aria-label={ __(
+							'XP amount to award',
+							'beyond-elysium'
+						) }
 						required
 					/>
 					<input
 						type="text"
 						value={ reason }
 						onChange={ ( e ) => setReason( e.target.value ) }
-						placeholder={ __( 'Reason (required)', 'beyond-elysium' ) }
-						aria-label={ __( 'Reason for this award', 'beyond-elysium' ) }
+						placeholder={ __(
+							'Reason (required)',
+							'beyond-elysium'
+						) }
+						aria-label={ __(
+							'Reason for this award',
+							'beyond-elysium'
+						) }
 						required
 					/>
 					<button type="submit" disabled={ awarding }>
@@ -345,71 +485,141 @@ export function QueryResults( { gameSlug, inventory, columns, items, total, page
 					</button>
 				</form>
 			) }
-			{ awardMessage && <p className="be-query-results__award-message" role="status">{ awardMessage }</p> }
-
-			{ canBulkManage && selected.size > 0 && resourcePoolBlocks.length > 0 && (
-				<form className="be-query-results__bulk-award" onSubmit={ submitBulkReset }>
-					<span>{ sprintf( __( '%d selected', 'beyond-elysium' ), selected.size ) }</span>
-					<select
-						value={ poolBlockSlug }
-						onChange={ ( e ) => {
-							setPoolBlockSlug( e.target.value );
-							setPoolName( '' );
-						} }
-						aria-label={ __( 'Resource pool block', 'beyond-elysium' ) }
-						required
-					>
-						<option value="">{ __( 'Pool block…', 'beyond-elysium' ) }</option>
-						{ resourcePoolBlocks.map( ( block ) => (
-							<option key={ block.slug } value={ block.slug }>{ block.name }</option>
-						) ) }
-					</select>
-					<select
-						value={ poolName }
-						onChange={ ( e ) => setPoolName( e.target.value ) }
-						aria-label={ __( 'Pool', 'beyond-elysium' ) }
-						disabled={ ! poolBlockSlug }
-						required
-					>
-						<option value="">{ __( 'Pool…', 'beyond-elysium' ) }</option>
-						{ poolsForActiveBlock.map( ( pool ) => (
-							<option key={ pool.name } value={ pool.name }>{ pool.name }</option>
-						) ) }
-					</select>
-					<button type="submit" disabled={ resetting }>
-						{ __( 'Reset temporary to permanent', 'beyond-elysium' ) }
-					</button>
-				</form>
+			{ awardMessage && (
+				<p className="be-query-results__award-message" role="status">
+					{ awardMessage }
+				</p>
 			) }
-			{ resetMessage && <p className="be-query-results__award-message" role="status">{ resetMessage }</p> }
 
-			{ canBulkManage && selected.size > 0 && statusOptions.length > 0 && (
-				<form className="be-query-results__bulk-award" onSubmit={ submitBulkStatus }>
-					<span>{ sprintf( __( '%d selected', 'beyond-elysium' ), selected.size ) }</span>
-					<select
-						value={ bulkStatus }
-						onChange={ ( e ) => setBulkStatus( e.target.value ) }
-						aria-label={ __( 'New status', 'beyond-elysium' ) }
-						required
+			{ canBulkManage &&
+				selected.size > 0 &&
+				resourcePoolBlocks.length > 0 && (
+					<form
+						className="be-query-results__bulk-award"
+						onSubmit={ submitBulkReset }
 					>
-						<option value="">{ __( 'Set status…', 'beyond-elysium' ) }</option>
-						{ statusOptions.map( ( status ) => (
-							<option key={ status } value={ status }>{ status }</option>
-						) ) }
-					</select>
-					<button type="submit" disabled={ settingStatus }>
-						{ __( 'Set status for selected', 'beyond-elysium' ) }
-					</button>
-				</form>
+						<span>
+							{ sprintf(
+								/* translators: %d: number of results ticked for the bulk pool reset */
+								__( '%d selected', 'beyond-elysium' ),
+								selected.size
+							) }
+						</span>
+						<select
+							value={ poolBlockSlug }
+							onChange={ ( e ) => {
+								setPoolBlockSlug( e.target.value );
+								setPoolName( '' );
+							} }
+							aria-label={ __(
+								'Resource pool block',
+								'beyond-elysium'
+							) }
+							required
+						>
+							<option value="">
+								{ __( 'Pool block…', 'beyond-elysium' ) }
+							</option>
+							{ resourcePoolBlocks.map( ( block ) => (
+								<option key={ block.slug } value={ block.slug }>
+									{ block.name }
+								</option>
+							) ) }
+						</select>
+						<select
+							value={ poolName }
+							onChange={ ( e ) => setPoolName( e.target.value ) }
+							aria-label={ __( 'Pool', 'beyond-elysium' ) }
+							disabled={ ! poolBlockSlug }
+							required
+						>
+							<option value="">
+								{ __( 'Pool…', 'beyond-elysium' ) }
+							</option>
+							{ poolsForActiveBlock.map( ( pool ) => (
+								<option key={ pool.name } value={ pool.name }>
+									{ pool.name }
+								</option>
+							) ) }
+						</select>
+						<button type="submit" disabled={ resetting }>
+							{ __(
+								'Reset temporary to permanent',
+								'beyond-elysium'
+							) }
+						</button>
+					</form>
+				) }
+			{ resetMessage && (
+				<p className="be-query-results__award-message" role="status">
+					{ resetMessage }
+				</p>
 			) }
-			{ statusMessage && <p className="be-query-results__award-message" role="status">{ statusMessage }</p> }
+
+			{ canBulkManage &&
+				selected.size > 0 &&
+				statusOptions.length > 0 && (
+					<form
+						className="be-query-results__bulk-award"
+						onSubmit={ submitBulkStatus }
+					>
+						<span>
+							{ sprintf(
+								/* translators: %d: number of results ticked for the bulk status change */
+								__( '%d selected', 'beyond-elysium' ),
+								selected.size
+							) }
+						</span>
+						<select
+							value={ bulkStatus }
+							onChange={ ( e ) =>
+								setBulkStatus( e.target.value )
+							}
+							aria-label={ __( 'New status', 'beyond-elysium' ) }
+							required
+						>
+							<option value="">
+								{ __( 'Set status…', 'beyond-elysium' ) }
+							</option>
+							{ statusOptions.map( ( status ) => (
+								<option key={ status } value={ status }>
+									{ status }
+								</option>
+							) ) }
+						</select>
+						<button type="submit" disabled={ settingStatus }>
+							{ __(
+								'Set status for selected',
+								'beyond-elysium'
+							) }
+						</button>
+					</form>
+				) }
+			{ statusMessage && (
+				<p className="be-query-results__award-message" role="status">
+					{ statusMessage }
+				</p>
+			) }
 
 			<div className="be-query-results__pagination">
-				<button type="button" disabled={ page <= 1 } onClick={ () => onPageChange( page - 1 ) }>
+				<button
+					type="button"
+					disabled={ page <= 1 }
+					onClick={ () => onPageChange( page - 1 ) }
+				>
 					{ __( 'Previous', 'beyond-elysium' ) }
 				</button>
-				<span>{ sprintf( __( 'Page %d', 'beyond-elysium' ), page ) }</span>
-				<button type="button" disabled={ page * perPage >= total } onClick={ () => onPageChange( page + 1 ) }>
+				<span>
+					{
+						/* translators: %d: current page number */
+						sprintf( __( 'Page %d', 'beyond-elysium' ), page )
+					}
+				</span>
+				<button
+					type="button"
+					disabled={ page * perPage >= total }
+					onClick={ () => onPageChange( page + 1 ) }
+				>
 					{ __( 'Next', 'beyond-elysium' ) }
 				</button>
 			</div>

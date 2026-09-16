@@ -25,7 +25,7 @@
 	gap: 0.4rem;
 }
 
-.be-world-editor__trait-row input[type='text']:first-child {
+.be-world-editor__trait-row input[type="text"]:first-child {
 	flex: 2;
 }
 

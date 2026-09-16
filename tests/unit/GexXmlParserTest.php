@@ -27,7 +27,12 @@ use PHPUnit\Framework\TestCase;
 class GexXmlParserTest extends TestCase {
 
 	private function path( string $relative ): string {
-		return BE_PLUGIN_ROOT . '/' . $relative;
+		$path = BE_PLUGIN_ROOT . '/' . $relative;
+		// Real players' sample files live in samples/, which is kept out of git (owner ruling 2026-09-14).
+		if ( strpos( $relative, 'samples/' ) === 0 && ! file_exists( $path ) ) {
+			$this->markTestSkipped( "{$relative} is not present in this checkout." );
+		}
+		return $path;
 	}
 
 	// -------------------------------------------------------------------------
@@ -203,6 +208,23 @@ class GexXmlParserTest extends TestCase {
 		$this->assertSame( '', $character['player'] );
 		$this->assertFalse( $character['is_npc'] );
 		$this->assertSame( [], $character['boons'] );
+	}
+
+	/**
+	 * 1.0.0-review F-049: Grapevine writes a vampire's coterie, player, and narrator and a
+	 * werewolf's player and narrator (VampireClass.cls:358,380,384; WerewolfClass.cls:369,373) -
+	 * the parser always emitted them empty, so a player's name never survived an export.
+	 */
+	public function test_a_vampire_and_a_werewolf_keep_their_player_narrator_and_coterie(): void {
+		$data = GEX_Xml_Parser::parse_string(
+			'<?xml version="1.0"?><grapevine version="3.0">' .
+			'<vampire name="Marcus" coterie="The Nightwatch" player="Dana Reyes" narrator="Sam"><experience unspent="0" earned="0"/></vampire>' .
+			'<werewolf name="Ezra" player="Lee Park" narrator="Jo"><experience unspent="0" earned="0"/></werewolf>' .
+			'</grapevine>'
+		);
+
+		$this->assertSame( [ 'The Nightwatch', 'Dana Reyes', 'Sam' ], [ $data['characters'][0]['coterie'], $data['characters'][0]['player'], $data['characters'][0]['narrator'] ] );
+		$this->assertSame( [ 'Lee Park', 'Jo' ], [ $data['characters'][1]['player'], $data['characters'][1]['narrator'] ] );
 	}
 
 	public function test_a_real_werewolf_export_matches_the_binary_readers_shape(): void {

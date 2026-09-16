@@ -9,6 +9,7 @@ import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import type { MyPlotsResponse } from '../../types/plot';
 import { PlotThread } from './PlotThread';
+import HelpButton from '../shared/HelpButton';
 import './MyPlotsFeed.css';
 
 export interface MyPlotsFeedProps {
@@ -21,22 +22,23 @@ export interface MyPlotsFeedProps {
  * loading and error states while the feed is being fetched from the API.
  */
 export function MyPlotsFeed( { gameSlug }: MyPlotsFeedProps ) {
-	const [ data, setData ] = useState<MyPlotsResponse | null>( null );
-	const [ selected, setSelected ] = useState<number | null>( null );
+	const [ data, setData ] = useState< MyPlotsResponse | null >( null );
+	const [ selected, setSelected ] = useState< number | null >( null );
 	const [ loading, setLoading ] = useState( true );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
 
 	useEffect( () => {
 		setLoading( true );
-		api
-			.plots( gameSlug )
+		api.plots( gameSlug )
 			.myPlots()
 			.then( ( result ) => {
 				setData( result );
 				setLoading( false );
 			} )
 			.catch( () => {
-				setError( __( 'Failed to load your plots.', 'beyond-elysium' ) );
+				setError(
+					__( 'Failed to load your plots.', 'beyond-elysium' )
+				);
 				setLoading( false );
 			} );
 	}, [ gameSlug ] );
@@ -47,7 +49,8 @@ export function MyPlotsFeed( { gameSlug }: MyPlotsFeedProps ) {
 	if ( error || ! data ) {
 		return (
 			<div className="be-my-plots__error" role="alert">
-				{ error ?? __( 'Could not load your plots.', 'beyond-elysium' ) }
+				{ error ??
+					__( 'Could not load your plots.', 'beyond-elysium' ) }
 			</div>
 		);
 	}
@@ -55,7 +58,11 @@ export function MyPlotsFeed( { gameSlug }: MyPlotsFeedProps ) {
 	if ( selected !== null ) {
 		return (
 			<div className="be-my-plots">
-				<button type="button" className="be-my-plots__back" onClick={ () => setSelected( null ) }>
+				<button
+					type="button"
+					className="be-my-plots__back"
+					onClick={ () => setSelected( null ) }
+				>
 					{ __( '← Back to your plots', 'beyond-elysium' ) }
 				</button>
 				<PlotThread gameSlug={ gameSlug } plotId={ selected } />
@@ -65,15 +72,32 @@ export function MyPlotsFeed( { gameSlug }: MyPlotsFeedProps ) {
 
 	return (
 		<div className="be-my-plots">
+			<div className="be-help-heading">
+				<h2>{ __( 'My Plots & Rumors', 'beyond-elysium' ) }</h2>
+				<HelpButton helpKey="my-plots" />
+			</div>
 			{ data.plots.length === 0 ? (
-				<p>{ __( "Nothing yet - plots you're connected to or reached by will show up here.", 'beyond-elysium' ) }</p>
+				<p>
+					{ __(
+						"Nothing yet - plots you're connected to or reached by will show up here.",
+						'beyond-elysium'
+					) }
+				</p>
 			) : (
 				<ul className="be-my-plots__items">
 					{ data.plots.map( ( plot ) => (
 						<li key={ plot.id }>
-							<button type="button" className="be-my-plots__item-button" onClick={ () => setSelected( plot.id ) }>
-								<span className="be-my-plots__title">{ plot.title }</span>
-								<span className="be-my-plots__updated">{ plot.updated_at }</span>
+							<button
+								type="button"
+								className="be-my-plots__item-button"
+								onClick={ () => setSelected( plot.id ) }
+							>
+								<span className="be-my-plots__title">
+									{ plot.title }
+								</span>
+								<span className="be-my-plots__updated">
+									{ plot.updated_at }
+								</span>
 							</button>
 						</li>
 					) ) }

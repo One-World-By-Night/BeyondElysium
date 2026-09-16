@@ -80,13 +80,13 @@ class StVisibilityTest extends TestCase {
 	public function test_filter_layout_leaves_a_manager_completely_untouched(): void {
 		$layout = $this->layout();
 
-		$result = St_Visibility::filter_layout( $layout, true, [ 'npc-roleplaying-notes' ] );
+		$result = St_Visibility::filter_layout( $layout, true, '', [ 'npc-roleplaying-notes' ] );
 
 		$this->assertSame( $layout, $result );
 	}
 
 	public function test_filter_layout_removes_a_storyteller_only_section_for_a_non_manager(): void {
-		$result = St_Visibility::filter_layout( $this->layout(), false, [ 'npc-roleplaying-notes' ] );
+		$result = St_Visibility::filter_layout( $this->layout(), false, '', [ 'npc-roleplaying-notes' ] );
 
 		$slugs = array_column( $result['sections'], 'block_slug' );
 		$this->assertSame( [ 'met-abilities' ], $slugs );
@@ -95,7 +95,7 @@ class StVisibilityTest extends TestCase {
 	public function test_filter_layout_is_a_no_op_when_nothing_is_hidden(): void {
 		$layout = $this->layout();
 
-		$result = St_Visibility::filter_layout( $layout, false, [] );
+		$result = St_Visibility::filter_layout( $layout, false, '', [] );
 
 		$this->assertSame( $layout, $result );
 	}
@@ -110,7 +110,7 @@ class StVisibilityTest extends TestCase {
 		$character = $this->character();
 		$hidden    = [ 'npc-roleplaying-notes' ];
 
-		St_Visibility::filter_layout( $this->layout(), false, $hidden );
+		St_Visibility::filter_layout( $this->layout(), false, '', $hidden );
 
 		$this->assertArrayHasKey( 'npc-roleplaying-notes', $character->sheet_data );
 	}
@@ -126,7 +126,7 @@ class StVisibilityTest extends TestCase {
 		$hidden    = [ 'npc-roleplaying-notes' ];
 
 		St_Visibility::filter_character( $character, null, false, $hidden );
-		$layout = St_Visibility::filter_layout( $this->layout(), false, $hidden );
+		$layout = St_Visibility::filter_layout( $this->layout(), false, '', $hidden );
 
 		$this->assertArrayNotHasKey( 'npc-roleplaying-notes', $character->sheet_data );
 		$this->assertNotContains( 'npc-roleplaying-notes', array_column( $layout['sections'], 'block_slug' ) );

@@ -3,6 +3,7 @@
 namespace BeyondElysium\REST;
 
 use BeyondElysium\Models\Character;
+use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Services\Pdf_Signer;
 use BeyondElysium\Services\Pdf_Writer;
 use BeyondElysium\Services\Sheet_Document;
@@ -22,11 +23,11 @@ defined( 'ABSPATH' ) || exit;
  * their own. A batch request fails closed - one denied or missing character
  * id fails the whole request rather than silently narrowing the result.
  *
- * Signing is checked *before* any generation is attempted
- * (`Pdf_Signer::availability()`), not caught after the fact - `Pdf_Writer`
- * would throw either way (P1), but gating here means a misconfigured
- * chronicle never spends the work of resolving and walking every requested
- * character first.
+ * Whether to sign is decided once, up front, from `Pdf_Signer::availability()`
+ * and handed to `Pdf_Writer`, so the bytes and the filename always agree. With
+ * no certificate the sheet still prints, stamped UNSIGNED on every page, with
+ * an `-unsigned.pdf` filename (1.0.0-review F-042, owner ruling 2026-09-14);
+ * it used to refuse with `503 signing_unavailable`.
  *
  * @see BE_PROCESS/signed-pdf-design.md Section 4c, SP-9
  */
@@ -73,15 +74,6 @@ class Sheets_Controller extends Base_Controller {
 			return $game;
 		}
 
-		$availability = Pdf_Signer::availability();
-		if ( ! $availability['ok'] ) {
-			return $this->error(
-				'signing_unavailable',
-				__( 'This chronicle has not set up sheet signing yet - ask your Storyteller.', 'beyond-elysium' ),
-				503
-			);
-		}
-
 		$ids = array_values( array_filter( array_map( 'intval', explode( ',', (string) $request->get_param( 'character_ids' ) ) ) ) );
 		if ( empty( $ids ) ) {
 			return $this->error( 'invalid_request', __( 'character_ids is required.', 'beyond-elysium' ), 400 );
@@ -98,7 +90,7 @@ class Sheets_Controller extends Base_Controller {
 			);
 		}
 
-		$can_manage = current_user_can( 'be_manage_characters' );
+		$can_manage = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
 
 		foreach ( $ids as $id ) {
 			$character = Character::find( $id );
@@ -112,6 +104,19 @@ class Sheets_Controller extends Base_Controller {
 					403
 				);
 			}
+			// A character whose creature type is gone has no sheet to build: say so, rather than
+			// print a blank page or a batch one character short (1.0.0-review F-088).
+			if ( Creature_Stack::find_by_slug( (string) $character->stack_slug ) === null ) {
+				return $this->error(
+					'creature_stack_not_found',
+					sprintf(
+						/* translators: %s: character name */
+						__( '%s\'s creature type no longer exists, so no sheet can be printed for them.', 'beyond-elysium' ),
+						$character->name
+					),
+					404
+				);
+			}
 		}
 
 		$documents = Sheet_Document::for_characters( $ids, $request['game_slug'], [
@@ -122,10 +127,11 @@ class Sheets_Controller extends Base_Controller {
 			'xp_history'       => (bool) $request->get_param( 'xp_history' ),
 		] );
 
-		$bytes    = Pdf_Writer::write( $documents, $game );
-		$filename = count( $documents ) === 1
-			? sanitize_file_name( (string) $documents[0]['title'] ) . '.pdf'
-			: sanitize_file_name( $request['game_slug'] ) . '-sheets.pdf';
+		$signed   = Pdf_Signer::availability()['ok'];
+		$bytes    = Pdf_Writer::write( $documents, $game, $signed );
+		$filename = ( count( $documents ) === 1
+			? sanitize_file_name( (string) $documents[0]['title'] )
+			: sanitize_file_name( $request['game_slug'] ) . '-sheets' ) . ( $signed ? '' : '-unsigned' ) . '.pdf';
 
 		return $this->success( [ 'bytes' => $bytes, 'filename' => $filename ] );
 	}

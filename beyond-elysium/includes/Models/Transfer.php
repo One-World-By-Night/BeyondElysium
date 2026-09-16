@@ -3,6 +3,7 @@
 namespace BeyondElysium\Models;
 
 use BeyondElysium\Database\Manager;
+use BeyondElysium\Database\Transaction;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -17,6 +18,9 @@ defined( 'ABSPATH' ) || exit;
  * At most one OPEN row may exist per `(character_uuid, direction)` -
  * enforced here in `create()`, not by a unique index, since a composite
  * unique index would fight `transition()`'s own in-place state changes.
+ * `create()` holds the chronicle's row while it checks and writes, so two
+ * transfers of one character out of, or into, the same chronicle take turns
+ * (1.0.0-review F-110).
  *
  * @see BE_PROCESS/gex-export-transfer-design.md GX-8, GX-9, §7.2, §8.1
  */
@@ -26,27 +30,44 @@ class Transfer {
 	private const TERMINAL_STATES = [ 'returned', 'released', 'declined', 'expired', 'sent_home', 'retained' ];
 
 	/**
+	 * How long a transfer's verification code, a pending transfer, and an
+	 * unreviewed offer last: two monthly game cycles (1.0.0-review F-014).
+	 */
+	const OFFER_TTL_DAYS = 60;
+
+	/**
 	 * Creates a new transfer row. Refuses when an open row already exists
 	 * for this exact `(character_uuid, direction)` pair - a character can
 	 * only be mid-journey once per direction at a time.
 	 *
 	 * @param array<string,mixed> $data
 	 * @return int New row id.
-	 * @throws \RuntimeException If an open row already exists for this uuid+direction.
+	 * @throws \RuntimeException If an open row already exists for this uuid+direction, or the row could not be written.
 	 */
 	public static function create( array $data ): int {
 		$uuid      = strtolower( (string) $data['character_uuid'] );
 		$direction = (string) $data['direction'];
+		$chronicle = (string) ( $direction === 'outbound' ? $data['home_slug'] : ( $data['host_slug'] ?? '' ) );
+
+		$unit = Transaction::begin( 'be_transfer_create' );
+		if ( ! Game::lock( $chronicle ) ) {
+			Transaction::rollback( $unit );
+			throw new \RuntimeException( 'Failed to create transfer row.' );
+		}
 
 		if ( self::find_open( $uuid, $direction ) !== null ) {
+			Transaction::rollback( $unit );
 			throw new \RuntimeException( "A {$direction} transfer is already open for this character." );
 		}
+
+		$state = (string) $data['state'];
 
 		$id = Manager::insert( 'character_transfers', [
 			'character_uuid'  => $uuid,
 			'character_id'    => $data['character_id'] ?? null,
+			'character_name'  => $data['character_name'] ?? null,
 			'direction'       => $direction,
-			'state'           => (string) $data['state'],
+			'state'           => $state,
 			'home_slug'       => (string) $data['home_slug'],
 			'home_site'       => (string) $data['home_site'],
 			'home_chronicle'  => (string) $data['home_chronicle'],
@@ -58,12 +79,20 @@ class Transfer {
 			'payload_hash'    => (string) $data['payload_hash'],
 			'initiated_by'    => (int) $data['initiated_by'],
 			'initiated_at'    => current_time( 'mysql', true ),
+			// A row created straight into abroad/visiting (F-122: a submitted file accepted as
+			// a visitor never passes through a separate acknowledgement step) gets the same
+			// stamp transition() itself applies reaching either state - never left unset just
+			// because this particular row skipped the usual pending/offered stage first.
+			'acknowledged_at' => in_array( $state, [ 'abroad', 'visiting' ], true ) ? current_time( 'mysql', true ) : null,
 			'notes'           => $data['notes'] ?? null,
+			'payload'         => $data['payload'] ?? null,
 		] );
 
 		if ( $id === false ) {
+			Transaction::rollback( $unit );
 			throw new \RuntimeException( 'Failed to create transfer row.' );
 		}
+		Transaction::commit( $unit );
 		return $id;
 	}
 
@@ -74,6 +103,7 @@ class Transfer {
 	 * @param string $character_uuid
 	 * @param string $direction 'outbound' | 'inbound'.
 	 * @return object|null
+	 * @phpstan-impure
 	 */
 	public static function find_open( string $character_uuid, string $direction ): ?object {
 		$table     = Manager::table( 'character_transfers' );
@@ -94,6 +124,19 @@ class Transfer {
 	public static function find( int $id ): ?object {
 		$table = Manager::table( 'character_transfers' );
 		return Manager::get_row( "SELECT * FROM {$table} WHERE id = %d", $id );
+	}
+
+	/**
+	 * Look up a transfer and lock its row until the surrounding transaction
+	 * ends, so an action decided on this read cannot race another action on
+	 * the same transfer. Must run inside a Transaction.
+	 *
+	 * @param int $id
+	 * @return object|null
+	 */
+	public static function find_for_update( int $id ): ?object {
+		$table = Manager::table( 'character_transfers' );
+		return Manager::get_row( "SELECT * FROM {$table} WHERE id = %d FOR UPDATE", $id );
 	}
 
 	/**
@@ -121,6 +164,29 @@ class Transfer {
 		}
 
 		return Manager::update( 'character_transfers', $data, [ 'id' => $id ] ) !== false;
+	}
+
+	/**
+	 * Expires what nobody acted on within `OFFER_TTL_DAYS`: a home chronicle's
+	 * `pending` transfer, whose code is revoked with it, and a host's `offered`
+	 * row, whose stored document is dropped. A character already accepted
+	 * somewhere is travelling, not stale, and is left alone. Called by the
+	 * daily `Core\Maintenance` sweep.
+	 *
+	 * @return int Rows expired.
+	 */
+	public static function expire_stale(): int {
+		global $wpdb;
+		$table  = Manager::table( 'character_transfers' );
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() - self::OFFER_TTL_DAYS * DAY_IN_SECONDS );
+		$stale  = "( ( direction = 'outbound' AND state = 'pending' ) OR ( direction = 'inbound' AND state = 'offered' ) ) AND initiated_at < %s";
+
+		$codes = $wpdb->get_col( $wpdb->prepare( "SELECT attestation_id FROM {$table} WHERE {$stale} AND direction = 'outbound' AND attestation_id IS NOT NULL", $cutoff ) );
+		foreach ( $codes as $attestation_id ) {
+			Attestation::revoke( (int) $attestation_id );
+		}
+
+		return (int) $wpdb->query( $wpdb->prepare( "UPDATE {$table} SET state = 'expired', payload = NULL WHERE {$stale}", $cutoff ) );
 	}
 
 	/**
@@ -175,6 +241,31 @@ class Transfer {
 			$by_uuid[ $entry['character_uuid'] ] = $entry;
 		}
 		return $by_uuid;
+	}
+
+	/**
+	 * Every transfer row touching a chronicle from this site's side - outbound
+	 * rows it is home to, inbound rows it hosts - newest first, without the
+	 * stored payload. An inbound row whose remote home chronicle happens to
+	 * share this chronicle's slug is not this chronicle's.
+	 *
+	 * @param string $game_slug
+	 * @param int    $limit
+	 * @return array<int,object>
+	 */
+	public static function for_game( string $game_slug, int $limit = 200 ): array {
+		$table = Manager::table( 'character_transfers' );
+		return Manager::get_results(
+			"SELECT id, character_uuid, character_id, character_name, direction, state, home_slug, home_site, home_chronicle,
+			        host_slug, host_site, host_chronicle, attestation_id, snapshot_id, payload_hash, initiated_by,
+			        initiated_at, acknowledged_at, returned_at, notes
+			 FROM {$table}
+			 WHERE ( direction = 'outbound' AND home_slug = %s ) OR ( direction = 'inbound' AND host_slug = %s )
+			 ORDER BY id DESC LIMIT %d",
+			$game_slug,
+			$game_slug,
+			$limit
+		);
 	}
 
 	/**

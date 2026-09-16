@@ -60,7 +60,7 @@ class TemperDisplayParityTest extends TestCase {
 
 		$case_index = null;
 		foreach ( $input as $i => $case ) {
-			if ( $case->name === 'temporary above permanent renders overflow glyphs, not clamped' ) {
+			if ( $case->name === 'temporary above permanent renders a ringed dot for each extra point, not clamped' ) {
 				$case_index = $i;
 				break;
 			}
@@ -76,11 +76,12 @@ class TemperDisplayParityTest extends TestCase {
 
 		// Built from codepoints rather than typed as literals, so the assertion can't
 		// silently pass due to a transcription slip matching a transcription bug.
-		$overflow_glyph = mb_chr( 0xF5, 'UTF-8' ); // õ
-		$spent_glyph    = mb_chr( 0xF8, 'UTF-8' ); // ø
+		$dot            = mb_chr( 0x25CF, 'UTF-8' ); // ●
+		$overflow_glyph = mb_chr( 0x25C9, 'UTF-8' ); // ◉
+		$spent_glyph    = mb_chr( 0x25CB, 'UTF-8' ); // ○
 
-		// Not clamped to 3 filled glyphs: temporary - permanent = 2 overflow glyphs follow.
-		$this->assertSame( str_repeat( 'o', 3 ) . str_repeat( $overflow_glyph, 2 ), $actual );
+		// Not clamped to 3 filled dots: temporary - permanent = 2 overflow dots follow.
+		$this->assertSame( str_repeat( $dot, 3 ) . str_repeat( $overflow_glyph, 2 ), $actual );
 		$this->assertStringNotContainsString( $spent_glyph, $actual, 'overflow must never also render spent glyphs' );
 	}
 }

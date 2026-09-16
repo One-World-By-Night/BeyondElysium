@@ -75,7 +75,7 @@ class Point_Audit {
 				continue;
 			}
 
-			foreach ( self::lines_for_block( $character, $block, $entry, $held ) as $line ) {
+			foreach ( self::lines_for_block( $character, $block, $entry, $held, $stack, $blocks ) as $line ) {
 				$lines[] = $line;
 			}
 		}
@@ -124,16 +124,18 @@ class Point_Audit {
 
 	/**
 	 * @param array{slug:string,label:string,undeclared:bool} $entry
+	 * @param array<string,object>                           $blocks The character's blocks by slug, already loaded.
 	 * @return array<int,array<string,mixed>>
 	 */
-	private static function lines_for_block( object $character, object $block, array $entry, $held ): array {
+	private static function lines_for_block( object $character, object $block, array $entry, $held, object $stack, array $blocks ): array {
 		$definition = is_object( $block->definition ?? null ) ? $block->definition : (object) [];
 
 		switch ( $block->section_type ) {
 			case 'trait_list':
 				return self::trait_list_lines( $definition, $entry, is_array( $held ) ? $held : [] );
 			case 'tiered_power':
-				return self::tiered_power_lines( $character, $block->slug ?? $entry['slug'], $definition, $entry, is_array( $held ) ? $held : [] );
+				$in_type = Cost_Engine::in_type_check( $character, $block->slug ?? $entry['slug'], $stack, $blocks );
+				return self::tiered_power_lines( $in_type, $definition, $entry, is_array( $held ) ? $held : [] );
 			case 'resource_pool':
 				return self::resource_pool_lines( $definition, $entry, is_array( $held ) ? $held : [] );
 			case 'identity_field':
@@ -171,14 +173,15 @@ class Point_Audit {
 	}
 
 	/**
+	 * @param callable(string):bool $is_in_type The block's in-type check, looked up once for every held power (F-087).
 	 * @return array<int,array<string,mixed>>
 	 */
-	private static function tiered_power_lines( object $character, string $block_slug, object $definition, array $entry, array $held_list ): array {
+	private static function tiered_power_lines( callable $is_in_type, object $definition, array $entry, array $held_list ): array {
 		$lines = [];
 		foreach ( $held_list as $held ) {
 			$held       = (array) $held;
 			$trait_name = (string) ( $held['name'] ?? '' );
-			$in_type    = $trait_name !== '' ? Cost_Engine::is_in_type( $character, $block_slug, $trait_name ) : true;
+			$in_type    = $trait_name !== '' ? $is_in_type( $trait_name ) : true;
 			$price      = Cost_Engine::price_held_tiered_power( $definition, $held, $in_type );
 
 			$label = $trait_name;
@@ -322,6 +325,25 @@ class Point_Audit {
 	}
 
 	/**
+	 * An unpriced line's reason in words - the same words `PointAudit.tsx` shows beside each
+	 * line, so one translation serves the line and the summary (1.0.0-review F-085). A reason
+	 * with no label yet reads as its key with spaces.
+	 */
+	public static function reason_label( string $reason ): string {
+		$labels = [
+			'catalog_item_has_no_cost'       => __( 'catalog item has no cost', 'beyond-elysium' ),
+			'name_not_in_catalog'            => __( 'name not in catalog', 'beyond-elysium' ),
+			'family_not_in_catalog'          => __( 'family not in catalog', 'beyond-elysium' ),
+			'level_has_no_cost'              => __( 'level has no cost', 'beyond-elysium' ),
+			'custom_no_catalog_entry'        => __( 'custom, no catalog entry', 'beyond-elysium' ),
+			'identity_field_no_catalog_cost' => __( 'identity field, no catalog cost', 'beyond-elysium' ),
+			'resource_pool_no_pricing_rule'  => __( 'resource pool has no pricing rule yet', 'beyond-elysium' ),
+			'held_block_not_in_catalog'      => __( 'held block not in catalog', 'beyond-elysium' ),
+		];
+		return $labels[ $reason ] ?? str_replace( '_', ' ', $reason );
+	}
+
+	/**
 	 * @param array<string,int> $unpriced_by_reason
 	 */
 	private static function caveat( int $unpriced_lines, array $unpriced_by_reason ): string {
@@ -338,7 +360,7 @@ class Point_Audit {
 			/* translators: 1: number of unpriced lines, 2: the single most common reason */
 			__( '%1$d line(s) could not be priced (most commonly: %2$s). This total is not a bill.', 'beyond-elysium' ),
 			$unpriced_lines,
-			str_replace( '_', ' ', (string) $top_reason )
+			self::reason_label( (string) $top_reason )
 		);
 	}
 }

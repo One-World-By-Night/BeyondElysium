@@ -10,13 +10,17 @@ describe( 'toTraits (D25)', () => {
 	} );
 
 	it( 'prefers an explicit "total" over "count" when both are present', () => {
-		expect( toTraits( [ { name: 'Occult', total: 5, count: 3 } ] ) ).toEqual( [
-			{ name: 'Occult', total: 5, note: undefined },
-		] );
+		expect(
+			toTraits( [ { name: 'Occult', total: 5, count: 3 } ] )
+		).toEqual( [ { name: 'Occult', total: 5, note: undefined } ] );
 	} );
 
 	it( 'preserves note', () => {
-		expect( toTraits( [ { name: 'Occult', count: 2, note: 'Specializes in wards' } ] ) ).toEqual( [
+		expect(
+			toTraits( [
+				{ name: 'Occult', count: 2, note: 'Specializes in wards' },
+			] )
+		).toEqual( [
 			{ name: 'Occult', total: 2, note: 'Specializes in wards' },
 		] );
 	} );
@@ -35,21 +39,32 @@ describe( 'toTraits (D25)', () => {
 
 	describe( 'specialization (same shape as D25 - a real field silently dropped)', () => {
 		it( 'folds a bare specialization into note, same slot displayTrait() renders parenthetically', () => {
-			expect( toTraits( [ { name: 'Melee', count: 2, specialization: 'Sword' } ] ) ).toEqual( [
-				{ name: 'Melee', total: 2, note: 'Sword' },
-			] );
+			expect(
+				toTraits( [
+					{ name: 'Melee', count: 2, specialization: 'Sword' },
+				] )
+			).toEqual( [ { name: 'Melee', total: 2, note: 'Sword' } ] );
 		} );
 
 		it( 'combines specialization and a separate note, specialization first', () => {
-			expect( toTraits( [
-				{ name: 'Melee', count: 2, specialization: 'Sword', note: 'borrowed' },
-			] ) ).toEqual( [ { name: 'Melee', total: 2, note: 'Sword, borrowed' } ] );
+			expect(
+				toTraits( [
+					{
+						name: 'Melee',
+						count: 2,
+						specialization: 'Sword',
+						note: 'borrowed',
+					},
+				] )
+			).toEqual( [
+				{ name: 'Melee', total: 2, note: 'Sword, borrowed' },
+			] );
 		} );
 
 		it( 'is a no-op when specialization is absent', () => {
-			expect( toTraits( [ { name: 'Occult', count: 2, note: 'wards' } ] ) ).toEqual( [
-				{ name: 'Occult', total: 2, note: 'wards' },
-			] );
+			expect(
+				toTraits( [ { name: 'Occult', count: 2, note: 'wards' } ] )
+			).toEqual( [ { name: 'Occult', total: 2, note: 'wards' } ] );
 		} );
 	} );
 } );

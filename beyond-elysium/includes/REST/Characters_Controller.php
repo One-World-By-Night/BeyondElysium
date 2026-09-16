@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Database\Manager;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
@@ -98,15 +99,28 @@ class Characters_Controller extends Base_Controller {
 			[
 				'methods'             => 'DELETE',
 				'callback'            => [ $this, 'delete_item' ],
-				'permission_callback' => $this->permission( 'be_manage_characters' ),
+				// Narrower than be_manage_characters on purpose (1.0.0-checklist.md item 27):
+				// an AST may edit and bulk-manage characters but not permanently delete one.
+				'permission_callback' => $this->permission( 'be_delete_characters' ),
 			],
 		] );
 
-		// Site-wide WordPress user search, not scoped to any one game.
+		// Site-wide WordPress user search - adding chronicle members on Chronicle Access, a site
+		// administrator's job. Returns email addresses, so it is never a Storyteller's
+		// directory of every account on the site (1.0.0-review F-010).
 		register_rest_route( $this->namespace, '/wp-users', [
 			[
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'search_wp_users' ],
+				'permission_callback' => $this->permission( 'be_manage_games' ),
+			],
+		] );
+
+		// A chronicle Storyteller's account search for assigning a player to a character.
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/wp-users', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'search_wp_users_for_chronicle' ],
 				'permission_callback' => $this->permission( 'be_manage_characters' ),
 			],
 		] );
@@ -140,6 +154,43 @@ class Characters_Controller extends Base_Controller {
 
 		return $this->success( array_map(
 			static fn( $u ) => [ 'id' => $u->ID, 'display_name' => $u->display_name, 'email' => $u->user_email ],
+			$users
+		) );
+	}
+
+	/**
+	 * Finds an account to assign as a character's player, for a Storyteller
+	 * of this chronicle. Any account on the site can be assigned, so the
+	 * search covers them all - but narrowly: at least three characters,
+	 * matched against display name and login only, at most 20 results, and
+	 * no email addresses. An email comes back only when the search is itself
+	 * that exact address, which confirms an account the Storyteller already
+	 * knows rather than revealing one (1.0.0-review F-010).
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response
+	 */
+	public function search_wp_users_for_chronicle( $request ) {
+		$search = trim( (string) $request->get_param( 'search' ) );
+		if ( mb_strlen( $search ) < 3 ) {
+			return $this->success( [] );
+		}
+
+		if ( is_email( $search ) ) {
+			$user = get_user_by( 'email', $search );
+			return $this->success( $user ? [ [ 'id' => $user->ID, 'display_name' => $user->display_name, 'email' => $user->user_email ] ] : [] );
+		}
+
+		$users = get_users( [
+			'number'         => 20,
+			'orderby'        => 'display_name',
+			'order'          => 'ASC',
+			'search'         => '*' . $search . '*',
+			'search_columns' => [ 'display_name', 'user_login' ],
+		] );
+
+		return $this->success( array_map(
+			static fn( $u ) => [ 'id' => $u->ID, 'display_name' => $u->display_name ],
 			$users
 		) );
 	}
@@ -211,19 +262,24 @@ class Characters_Controller extends Base_Controller {
 			$character = Character::find_by_uuid( (string) $uuid );
 			$visible   = $character
 				&& $character->owner_slug === $request['game_slug']
-				&& ( current_user_can( 'be_manage_characters' ) || (int) $character->wp_user_id === get_current_user_id() );
+				&& ( \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) || (int) $character->wp_user_id === get_current_user_id() );
 			$found = $visible ? [ $character ] : [];
 			return $this->paginate( $this->success( $found ), count( $found ), 1, 1 );
 		}
 
-		$can_manage = current_user_can( 'be_manage_characters' );
+		$can_manage = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
+		// A Narrator holds be_manage_plots, not be_manage_characters - they allocate actions for
+		// any character in the chronicle (1.0.0-checklist.md item 19), which needs the full
+		// roster to pick from, but not the edit/delete/create powers $can_manage still gates
+		// everywhere else in this file, and not NPC visibility (line below, unchanged).
+		$can_view_roster = $can_manage || \BeyondElysium\Core\Authorization::can( 'be_manage_plots' );
 
 		$pagination = $this->get_pagination( $request );
 		$args       = [
 			'status'     => $request->get_param( 'status' ),
 			'stack_slug' => $request->get_param( 'stack_slug' ),
 			// A non-manager is restricted to their own characters regardless of the requested wp_user_id.
-			'wp_user_id' => $can_manage ? $request->get_param( 'wp_user_id' ) : get_current_user_id(),
+			'wp_user_id' => $can_view_roster ? $request->get_param( 'wp_user_id' ) : get_current_user_id(),
 			// NPCs are hidden from non-managers, and default to excluded even for a manager unless explicitly requested.
 			'is_npc'     => $can_manage && $request->get_param( 'is_npc' ) !== null ? $request->get_param( 'is_npc' ) : 0,
 			'search'     => $request->get_param( 'search' ),
@@ -247,7 +303,7 @@ class Characters_Controller extends Base_Controller {
 		}
 
 		// Looked up once for the whole page rather than once per character.
-		$hidden = $can_manage ? [] : Schema_Block::storyteller_only_slugs();
+		$hidden = $can_manage ? [] : Schema_Block::storyteller_only_slugs( $game->slug );
 		foreach ( $items as $item ) {
 			St_Visibility::filter_character( $item, $game, $can_manage, $hidden );
 		}
@@ -284,10 +340,13 @@ class Characters_Controller extends Base_Controller {
 			return $this->error( 'character_not_found', __( 'Character not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
-		$can_manage = current_user_can( 'be_manage_characters' );
+		$can_manage      = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
+		// See get_items()'s identical comment: a Narrator (be_manage_plots, not
+		// be_manage_characters) may view any character in the chronicle to allocate for it.
+		$can_view_roster = $can_manage || \BeyondElysium\Core\Authorization::can( 'be_manage_plots' );
 
-		// A non-manager may only view their own character.
-		if ( ! $can_manage && (int) $character->wp_user_id !== get_current_user_id() ) {
+		// A non-manager (and not a Narrator viewing someone else's) may only view their own character.
+		if ( ! $can_view_roster && (int) $character->wp_user_id !== get_current_user_id() ) {
 			return $this->error( 'ownership_denied', __( 'You do not have permission to view this character.', 'beyond-elysium' ), 403 );
 		}
 
@@ -296,8 +355,10 @@ class Characters_Controller extends Base_Controller {
 		// Computed permission flags so the client can decide whether to render an editor or a read-only sheet.
 		$character->can_edit   = $this->can_edit_character( $character );
 		$character->can_manage = $can_manage;
-		// A separate capability from can_manage, kept distinct for future finer-grained permissions.
-		$character->can_customize_sheet = current_user_can( 'be_customize_sheet' );
+		// A per-user grant (User_Settings), not a chronicle role, so it is checked site-wide - and
+		// only for a sheet the viewer may already edit, matching the sheet-style routes' own rule.
+		$character->can_customize_sheet = current_user_can( 'be_customize_sheet' )
+			&& ( $can_manage || (int) $character->wp_user_id === get_current_user_id() );
 
 		// Resolves the stored attachment ID to a real URL for the client.
 		$character->image_url = $character->image_id
@@ -329,9 +390,9 @@ class Characters_Controller extends Base_Controller {
 		}
 
 		$items      = Character::find_for_user( get_current_user_id(), $request['game_slug'] );
-		$can_manage = current_user_can( 'be_manage_characters' );
+		$can_manage = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
 		// Looked up once for the whole page rather than once per character.
-		$hidden     = $can_manage ? [] : Schema_Block::storyteller_only_slugs();
+		$hidden     = $can_manage ? [] : Schema_Block::storyteller_only_slugs( $game->slug );
 
 		foreach ( $items as $item ) {
 			$item->image_url = $item->image_id ? wp_get_attachment_image_url( (int) $item->image_id, 'thumbnail' ) : null;
@@ -416,7 +477,7 @@ class Characters_Controller extends Base_Controller {
 			);
 		}
 
-		$is_manager = current_user_can( 'be_manage_characters' );
+		$is_manager = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
 
 		// A non-manager's wp_user_id is always forced to their own id, never taken from the request.
 		$wp_user_id = $is_manager ? $request->get_param( 'wp_user_id' ) : get_current_user_id();
@@ -426,8 +487,30 @@ class Characters_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', sprintf( __( 'status must be one of: %s.', 'beyond-elysium' ), implode( ', ', self::STATUSES ) ), 400 );
 		}
 
+		// Someone with no standing in this chronicle - no membership, no accessSchema grant - is
+		// asking to join: the character waits for a Storyteller, and so does their membership
+		// (owner ruling, 1.0.0-review F-033).
+		$joining = ! $is_manager && ! \BeyondElysium\Core\Authorization::can( 'be_edit_own_characters' );
+		if ( $joining ) {
+			$waiting = Manager::get_var(
+				'SELECT COUNT(*) FROM ' . Manager::table( 'characters' ) . " WHERE owner_type = 'chronicle' AND owner_slug = %s AND wp_user_id = %d AND status = 'pending'",
+				$request['game_slug'],
+				get_current_user_id()
+			);
+			if ( (int) $waiting > 0 ) {
+				return $this->error( 'join_already_requested', __( 'Your character is already waiting for this chronicle\'s Storytellers to approve it.', 'beyond-elysium' ), 409 );
+			}
+			// The other half of the same one-waiting-request rule (F-122, §2.2): a sent
+			// Grapevine file waiting for this chronicle blocks a second, hand-built request too.
+			if ( \BeyondElysium\Models\Submission::has_waiting( (int) $game->id, get_current_user_id() ) ) {
+				return $this->error( 'join_already_requested', __( 'Your character is already waiting for this chronicle\'s Storytellers to approve it.', 'beyond-elysium' ), 409 );
+			}
+		}
+
 		if ( $is_manager ) {
 			$status = $requested_status ?: 'active';
+		} elseif ( $joining ) {
+			$status = 'pending';
 		} else {
 			// A non-manager's status is never trusted; it is pending only if the game requires approval, active otherwise.
 			$status = ! empty( $game->settings->require_new_character_approval ) ? 'pending' : 'active';
@@ -518,6 +601,8 @@ class Characters_Controller extends Base_Controller {
 			'notes'       => $request->get_param( 'notes' ) ? wp_kses_post( $request->get_param( 'notes' ) ) : null,
 			'rp_notes'    => $request->get_param( 'rp_notes' ) ? sanitize_textarea_field( $request->get_param( 'rp_notes' ) ) : null,
 			'sheet_data'  => $sheet_data,
+			// A join request grants no membership until a Storyteller activates the character.
+			'await_approval' => $joining,
 		];
 
 		$id = Character::create( $data );
@@ -526,6 +611,13 @@ class Characters_Controller extends Base_Controller {
 		}
 
 		$character = Character::find( $id );
+		if ( ! $character ) {
+			return $this->error( 'character_not_found', __( 'Character not found.', 'beyond-elysium' ), 404 );
+		}
+		if ( $joining ) {
+			\BeyondElysium\Core\Notifications::join_requested( $game, $character, wp_get_current_user() );
+			$character->join_pending = true;
+		}
 		return $this->success( $character, 201 );
 	}
 
@@ -559,22 +651,33 @@ class Characters_Controller extends Base_Controller {
 			return $this->error( 'ownership_denied', __( 'You do not have permission to edit this character.', 'beyond-elysium' ), 403 );
 		}
 
-		$is_manager = current_user_can( 'be_manage_characters' );
+		$is_manager = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
 
-		// is_npc is manager-only; image_id is not, since a player may customize their own portrait.
-		$allowed_fields = [ 'name', 'status', 'biography', 'notes', 'rp_notes', 'narrator', 'player_name', 'start_date', 'image_id' ];
+		// A player edits their own character's story and portrait. Status, the assigned narrator,
+		// Storyteller-only notes, and the NPC flag are a Storyteller's: a player setting status
+		// let a pending new character activate itself - undoing "Require new character
+		// approval" - and brought dead ones back, and rp_notes is never even shown to them
+		// (1.0.0-review F-033).
+		$allowed_fields = [ 'name', 'biography', 'notes', 'player_name', 'start_date', 'image_id' ];
 		if ( $is_manager ) {
-			$allowed_fields[] = 'is_npc';
+			array_push( $allowed_fields, 'status', 'narrator', 'rp_notes', 'is_npc' );
 		}
 
-		// Only these two fields accept rich text; sanitized the same way as create_item().
-		$rich_text_fields = [ 'biography', 'notes' ];
+		// Sanitized the same way create_item() sanitizes each field.
+		$sanitizers = [
+			'name'        => 'sanitize_text_field',
+			'narrator'    => 'sanitize_text_field',
+			'player_name' => 'sanitize_text_field',
+			'biography'   => 'wp_kses_post',
+			'notes'       => 'wp_kses_post',
+			'rp_notes'    => 'sanitize_textarea_field',
+		];
 
 		$data = [];
 		foreach ( $allowed_fields as $field ) {
 			$value = $request->get_param( $field );
 			if ( $value !== null ) {
-				$data[ $field ] = in_array( $field, $rich_text_fields, true ) ? wp_kses_post( $value ) : $value;
+				$data[ $field ] = isset( $sanitizers[ $field ] ) ? call_user_func( $sanitizers[ $field ], (string) $value ) : $value;
 			}
 		}
 
@@ -638,7 +741,7 @@ class Characters_Controller extends Base_Controller {
 		Character::update_header( (int) $request['id'], $data );
 
 		$updated = Character::find( (int) $request['id'] );
-		if ( ! current_user_can( 'be_manage_characters' ) ) {
+		if ( ! \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) ) {
 			unset( $updated->rp_notes );
 		}
 		return $this->success( $updated );
@@ -700,7 +803,7 @@ class Characters_Controller extends Base_Controller {
 	 * @return bool
 	 */
 	protected function can_edit_character( $character ): bool {
-		if ( current_user_can( 'be_manage_characters' ) ) {
+		if ( \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) ) {
 			return true;
 		}
 		// Player can edit only their own character.

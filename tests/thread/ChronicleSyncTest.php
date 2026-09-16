@@ -101,4 +101,32 @@ class ChronicleSyncTest extends WP_UnitTestCase {
 		$this->assertNull( $new_game->owbn_chronicle_post_id, 'the new row must NOT also claim the post the old row already holds' );
 		$this->assertSame( $post_id, (int) Game::find_by_slug( 'thread-sync-oldslug' )->owbn_chronicle_post_id, 'the old row keeps its correlation, undisturbed by the second row being created' );
 	}
+
+	/**
+	 * 1.0.0-review F-082 (Pass H intake `t1-sync-data-credits-apr-db`). A chronicle post's slug is
+	 * plain, editable meta: a duplicated post keeps it. Saving the second post found the first
+	 * chronicle by slug alone and renamed it to the new post's title.
+	 */
+	public function test_another_post_sharing_the_slug_does_not_rename_or_claim_the_chronicle(): void {
+		$first = $this->chronicle( 'thread-sync-shared', 'Kony Sabbat' );
+		Chronicle_Sync::sync( $first, get_post( $first ), false );
+
+		$duplicate = $this->chronicle( 'thread-sync-shared', 'Copy of Kony Sabbat' );
+		Chronicle_Sync::sync( $duplicate, get_post( $duplicate ), false );
+
+		$game = Game::find_by_slug( 'thread-sync-shared' );
+		$this->assertSame( 'Kony Sabbat', $game->name );
+		$this->assertSame( $first, (int) $game->owbn_chronicle_post_id );
+	}
+
+	public function test_a_chronicle_made_on_the_games_screen_is_still_linked_by_its_first_post(): void {
+		Game::create( [ 'name' => 'Made By Hand', 'slug' => 'thread-sync-byhand' ] );
+
+		$post = $this->chronicle( 'thread-sync-byhand', 'Made By Hand, Officially' );
+		Chronicle_Sync::sync( $post, get_post( $post ), false );
+
+		$game = Game::find_by_slug( 'thread-sync-byhand' );
+		$this->assertSame( $post, (int) $game->owbn_chronicle_post_id );
+		$this->assertSame( 'Made By Hand, Officially', $game->name );
+	}
 }

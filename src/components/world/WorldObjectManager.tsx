@@ -32,10 +32,16 @@ type View =
  * form depending on the current view. Switches views and refreshes the
  * list after a create or edit is saved.
  */
-export function WorldObjectManager( { gameSlug, defaultType, showEditor }: WorldObjectManagerProps ) {
-	const [ selected, setSelected ] = useState<number | null>( null );
-	const [ view, setView ] = useState<View>( { mode: 'list' } );
-	const [ activeType, setActiveType ] = useState<ObjectType>( defaultType ?? 'item' );
+export function WorldObjectManager( {
+	gameSlug,
+	defaultType,
+	showEditor,
+}: WorldObjectManagerProps ) {
+	const [ selected, setSelected ] = useState< number | null >( null );
+	const [ view, setView ] = useState< View >( { mode: 'list' } );
+	const [ activeType, setActiveType ] = useState< ObjectType >(
+		defaultType ?? 'item'
+	);
 	const [ refreshKey, setRefreshKey ] = useState( 0 );
 
 	function refresh() {
@@ -46,8 +52,17 @@ export function WorldObjectManager( { gameSlug, defaultType, showEditor }: World
 		<div className="be-world-manager">
 			<div className="be-world-manager__list-pane">
 				{ showEditor && (
-					<button type="button" onClick={ () => setView( { mode: 'create', type: activeType } ) }>
-						{ sprintf( __( 'New %1$s', 'beyond-elysium' ), activeType ) }
+					<button
+						type="button"
+						onClick={ () =>
+							setView( { mode: 'create', type: activeType } )
+						}
+					>
+						{ sprintf(
+							/* translators: %1$s: the object type, e.g. "item" or "location" */
+							__( 'New %1$s', 'beyond-elysium' ),
+							activeType
+						) }
 					</button>
 				) }
 				<WorldObjectList
@@ -103,13 +118,32 @@ export function WorldObjectManager( { gameSlug, defaultType, showEditor }: World
 
 				{ view.mode === 'list' && selected !== null && (
 					<>
-						<WorldObjectCard gameSlug={ gameSlug } objectId={ selected } />
+						<WorldObjectCard
+							gameSlug={ gameSlug }
+							objectId={ selected }
+						/>
 						{ showEditor && (
 							<div className="be-world-manager__actions">
-								<button type="button" onClick={ () => setView( { mode: 'edit', id: selected } ) }>
+								<button
+									type="button"
+									onClick={ () =>
+										setView( {
+											mode: 'edit',
+											id: selected,
+										} )
+									}
+								>
 									{ __( 'Edit', 'beyond-elysium' ) }
 								</button>
-								<button type="button" onClick={ () => setView( { mode: 'duplicate', id: selected } ) }>
+								<button
+									type="button"
+									onClick={ () =>
+										setView( {
+											mode: 'duplicate',
+											id: selected,
+										} )
+									}
+								>
 									{ __( 'Duplicate', 'beyond-elysium' ) }
 								</button>
 							</div>
@@ -117,7 +151,14 @@ export function WorldObjectManager( { gameSlug, defaultType, showEditor }: World
 					</>
 				) }
 
-				{ view.mode === 'list' && selected === null && <p>{ __( 'Select an item to view its details.', 'beyond-elysium' ) }</p> }
+				{ view.mode === 'list' && selected === null && (
+					<p>
+						{ __(
+							'Select an item to view its details.',
+							'beyond-elysium'
+						) }
+					</p>
+				) }
 			</div>
 		</div>
 	);
@@ -139,18 +180,22 @@ function EditWrapper( {
 	onSaved: () => void;
 	onCancel: () => void;
 } ) {
-	const [ object, setObject ] = useState<WorldObject | null>( null );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ object, setObject ] = useState< WorldObject | null >( null );
+	const [ error, setError ] = useState< string | null >( null );
 
 	useEffect( () => {
 		setError( null );
-		api
-			.worldObjects( gameSlug )
+		api.worldObjects( gameSlug )
 			.get( id )
 			.then( setObject )
 			.catch( () => {
 				// Reports a load failure instead of leaving the view stuck on "Loading…".
-				setError( __( 'Failed to load this item. Try again.', 'beyond-elysium' ) );
+				setError(
+					__(
+						'Failed to load this item. Try again.',
+						'beyond-elysium'
+					)
+				);
 			} );
 	}, [ gameSlug, id ] );
 
@@ -194,17 +239,21 @@ function DuplicateWrapper( {
 	onSaved: ( saved: WorldObject ) => void;
 	onCancel: () => void;
 } ) {
-	const [ object, setObject ] = useState<WorldObject | null>( null );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ object, setObject ] = useState< WorldObject | null >( null );
+	const [ error, setError ] = useState< string | null >( null );
 
 	useEffect( () => {
 		setError( null );
-		api
-			.worldObjects( gameSlug )
+		api.worldObjects( gameSlug )
 			.get( id )
 			.then( setObject )
 			.catch( () => {
-				setError( __( 'Failed to load this item. Try again.', 'beyond-elysium' ) );
+				setError(
+					__(
+						'Failed to load this item. Try again.',
+						'beyond-elysium'
+					)
+				);
 			} );
 	}, [ gameSlug, id ] );
 

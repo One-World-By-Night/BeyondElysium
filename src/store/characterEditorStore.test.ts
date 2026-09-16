@@ -16,7 +16,14 @@ import api from '../api/client';
 import { loadDraft, saveDraft } from '../lib/draftStorage';
 import { useCharacterEditorStore } from './characterEditorStore';
 
-const mockedApi = api as jest.Mocked<typeof api>;
+const mockedApi = api as jest.Mocked< typeof api >;
+
+/** Lets every already-settled promise callback run. */
+async function flush() {
+	for ( let i = 0; i < 5; i++ ) {
+		await Promise.resolve();
+	}
+}
 
 function resetStore() {
 	useCharacterEditorStore.setState( {
@@ -53,13 +60,23 @@ describe( 'characterEditorStore.reset', () => {
 describe( 'characterEditorStore.submitChanges', () => {
 	beforeEach( () => {
 		resetStore();
+		// Whatever a submission leaves unsaved is priced again.
+		mockedApi.characters = jest.fn().mockReturnValue( {
+			previewChanges: jest.fn().mockResolvedValue( null ),
+		} ) as never;
 		// Two blocks so computeChanges produces two changes to submit in sequence.
 		useCharacterEditorStore.setState( {
 			stack: {
 				stack: {} as never,
 				blocks: {
-					disciplines: { section_type: 'trait_list', definition: { items: [] } } as never,
-					virtues: { section_type: 'trait_list', definition: { items: [] } } as never,
+					disciplines: {
+						section_type: 'trait_list',
+						definition: { items: [] },
+					} as never,
+					virtues: {
+						section_type: 'trait_list',
+						definition: { items: [] },
+					} as never,
 				},
 			},
 			sheetData: {
@@ -95,8 +112,12 @@ describe( 'characterEditorStore.submitChanges', () => {
 		const succeededCategory = result.submitted[ 0 ].category;
 		// The block that failed keeps its original (pre-edit) baseline, so it still shows
 		// as a pending diff; the block that succeeded is baselined so it does NOT.
-		expect( state.originalSheetData[ failedCategory ] ).not.toEqual( state.sheetData[ failedCategory ] );
-		expect( state.originalSheetData[ succeededCategory ] ).toEqual( state.sheetData[ succeededCategory ] );
+		expect( state.originalSheetData[ failedCategory ] ).not.toEqual(
+			state.sheetData[ failedCategory ]
+		);
+		expect( state.originalSheetData[ succeededCategory ] ).toEqual(
+			state.sheetData[ succeededCategory ]
+		);
 	} );
 
 	it( 'does not resubmit an already-succeeded block on a retry after a partial failure', async () => {
@@ -119,7 +140,9 @@ describe( 'characterEditorStore.submitChanges', () => {
 	} );
 
 	it( 'resets the baseline and reports full success when every change lands', async () => {
-		const create = jest.fn().mockResolvedValue( { id: 1, status: 'approved' } );
+		const create = jest
+			.fn()
+			.mockResolvedValue( { id: 1, status: 'approved' } );
 		mockedApi.changes = jest.fn().mockReturnValue( { create } ) as never;
 
 		const result = await useCharacterEditorStore.getState().submitChanges();
@@ -136,7 +159,9 @@ describe( 'characterEditorStore.submitChanges', () => {
 	} );
 
 	it( 'does NOT baseline a change that submitted successfully but landed pending review (real bug, user report 2026-09-11: a discipline edit appeared saved, then reverted the next time the character reloaded)', async () => {
-		const create = jest.fn().mockResolvedValue( { id: 1, status: 'pending' } );
+		const create = jest
+			.fn()
+			.mockResolvedValue( { id: 1, status: 'pending' } );
 		mockedApi.changes = jest.fn().mockReturnValue( { create } ) as never;
 
 		const result = await useCharacterEditorStore.getState().submitChanges();
@@ -170,8 +195,201 @@ describe( 'characterEditorStore.submitChanges', () => {
 		)!.category;
 		const pendingCategory = result.pending[ 0 ].category;
 
-		expect( state.originalSheetData[ approvedCategory ] ).toEqual( state.sheetData[ approvedCategory ] );
-		expect( state.originalSheetData[ pendingCategory ] ).not.toEqual( state.sheetData[ pendingCategory ] );
+		expect( state.originalSheetData[ approvedCategory ] ).toEqual(
+			state.sheetData[ approvedCategory ]
+		);
+		expect( state.originalSheetData[ pendingCategory ] ).not.toEqual(
+			state.sheetData[ pendingCategory ]
+		);
+	} );
+
+	/**
+	 * 1.0.0-review F-055 (Pass H intake). The requests go out one at a time, and nothing locks the
+	 * sheet meanwhile. The saved baseline was read from the live sheet once they came back, so an
+	 * edit made in between was marked saved without ever being sent, and its draft deleted.
+	 */
+	describe( 'while the requests are still out', () => {
+		let release: ( created: unknown ) => void;
+		let create: jest.Mock;
+
+		beforeEach( () => {
+			jest.useFakeTimers();
+			window.localStorage.clear();
+			mockedApi.characters = jest.fn().mockReturnValue( {
+				previewChanges: jest.fn().mockResolvedValue( null ),
+			} ) as never;
+			create = jest
+				.fn()
+				.mockImplementationOnce(
+					() =>
+						new Promise( ( resolve ) => {
+							release = resolve;
+						} )
+				)
+				.mockResolvedValue( { id: 2, status: 'approved' } );
+			mockedApi.changes = jest
+				.fn()
+				.mockReturnValue( { create } ) as never;
+		} );
+
+		afterEach( () => {
+			jest.clearAllTimers();
+			jest.useRealTimers();
+		} );
+
+		it( 'keeps an edit made after Submit as unsaved, baselining only what was sent', async () => {
+			const submitting = useCharacterEditorStore
+				.getState()
+				.submitChanges();
+			useCharacterEditorStore
+				.getState()
+				.setBlockData( 'disciplines', [
+					{ name: 'Celerity', count: 2 },
+				] );
+			release( { id: 1, status: 'approved' } );
+			await submitting;
+
+			const state = useCharacterEditorStore.getState();
+			expect( state.originalSheetData.disciplines ).toEqual( [
+				{ name: 'Celerity', count: 1 },
+			] );
+			expect( state.dirty ).toBe( true );
+			expect( state.pendingChanges ).toHaveLength( 1 );
+			expect( loadDraft( 1 )?.sheetData.disciplines ).toEqual( [
+				{ name: 'Celerity', count: 2 },
+			] );
+		} );
+
+		it( 'ignores a second Submit, so no change is sent twice', async () => {
+			const first = useCharacterEditorStore.getState().submitChanges();
+			const second = await useCharacterEditorStore
+				.getState()
+				.submitChanges();
+			release( { id: 1, status: 'approved' } );
+			await first;
+
+			expect( second.submitted ).toHaveLength( 0 );
+			expect( create ).toHaveBeenCalledTimes( 2 );
+		} );
+
+		it( 'leaves another character alone when it was opened before the requests came back', async () => {
+			const submitting = useCharacterEditorStore
+				.getState()
+				.submitChanges();
+			useCharacterEditorStore.setState( {
+				characterId: 2,
+				sheetData: { disciplines: [ { name: 'Potence', count: 4 } ] },
+				originalSheetData: {
+					disciplines: [ { name: 'Potence', count: 3 } ],
+				},
+				submittedChanges: [],
+			} );
+			release( { id: 1, status: 'approved' } );
+			await submitting;
+
+			const state = useCharacterEditorStore.getState();
+			expect( state.originalSheetData ).toEqual( {
+				disciplines: [ { name: 'Potence', count: 3 } ],
+			} );
+			expect( state.submittedChanges ).toHaveLength( 0 );
+			expect( state.saving ).toBe( false );
+		} );
+
+		it( 'prices what is left unsaved once the requests come back, and drops a preview that was already on its way', async () => {
+			let answerStalePreview: ( value: unknown ) => void = () => {};
+			const previewChanges = jest
+				.fn()
+				.mockImplementationOnce(
+					() =>
+						new Promise( ( resolve ) => {
+							answerStalePreview = resolve;
+						} )
+				)
+				.mockResolvedValue( {
+					results: [ { xp_cost: 1 } ],
+					running_xp_unspent: 8,
+				} );
+			mockedApi.characters = jest
+				.fn()
+				.mockReturnValue( { previewChanges } ) as never;
+
+			// A preview is on its way when Submit is pressed.
+			useCharacterEditorStore
+				.getState()
+				.setBlockData( 'disciplines', [
+					{ name: 'Celerity', count: 1 },
+				] );
+			jest.advanceTimersByTime( 500 );
+			const submitting = useCharacterEditorStore
+				.getState()
+				.submitChanges();
+			useCharacterEditorStore
+				.getState()
+				.setBlockData( 'disciplines', [
+					{ name: 'Celerity', count: 2 },
+				] );
+			release( { id: 1, status: 'approved' } );
+			await submitting;
+			await flush();
+
+			expect( previewChanges ).toHaveBeenLastCalledWith(
+				1,
+				useCharacterEditorStore.getState().pendingChanges
+			);
+			expect( useCharacterEditorStore.getState().previewCosts ).toEqual( {
+				results: [ { xp_cost: 1 } ],
+				running_xp_unspent: 8,
+			} );
+
+			answerStalePreview( {
+				results: [ { xp_cost: 99 }, { xp_cost: 99 } ],
+				running_xp_unspent: -188,
+			} );
+			await flush();
+			expect(
+				useCharacterEditorStore.getState().previewCosts
+					?.running_xp_unspent
+			).toBe( 8 );
+		} );
+
+		it( 'drops a preview for the character that was open before another one loaded', async () => {
+			let answerStalePreview: ( value: unknown ) => void = () => {};
+			mockedApi.characters = jest.fn().mockReturnValue( {
+				previewChanges: jest.fn().mockImplementationOnce(
+					() =>
+						new Promise( ( resolve ) => {
+							answerStalePreview = resolve;
+						} )
+				),
+				get: jest.fn().mockResolvedValue( {
+					id: 2,
+					stack_slug: 'vampire',
+					sheet_data: { disciplines: [] },
+				} ),
+			} ) as never;
+			mockedApi.creatureStacks = {
+				resolve: jest
+					.fn()
+					.mockResolvedValue( { stack: {}, blocks: {} } ),
+			} as never;
+
+			useCharacterEditorStore
+				.getState()
+				.setBlockData( 'disciplines', [
+					{ name: 'Celerity', count: 3 },
+				] );
+			jest.advanceTimersByTime( 500 );
+			await useCharacterEditorStore.getState().loadCharacter( 2, 'kony' );
+			answerStalePreview( {
+				results: [ { xp_cost: 9 } ],
+				running_xp_unspent: 1,
+			} );
+			await flush();
+
+			expect(
+				useCharacterEditorStore.getState().previewCosts
+			).toBeNull();
+		} );
 	} );
 } );
 
@@ -189,11 +407,15 @@ describe( 'characterEditorStore draft autosave', () => {
 				sheet_data: { disciplines: [] },
 			} ),
 		} ) as never;
-		mockedApi.creatureStacks = { resolve: jest.fn().mockResolvedValue( { stack: {}, blocks: {} } ) } as never;
+		mockedApi.creatureStacks = {
+			resolve: jest.fn().mockResolvedValue( { stack: {}, blocks: {} } ),
+		} as never;
 	} );
 
 	it( 'saves a draft to localStorage on every setBlockData call', () => {
-		useCharacterEditorStore.getState().setBlockData( 'disciplines', [ { name: 'Fortitude', count: 2 } ] );
+		useCharacterEditorStore
+			.getState()
+			.setBlockData( 'disciplines', [ { name: 'Fortitude', count: 2 } ] );
 
 		const draft = loadDraft( 1 );
 		expect( draft?.sheetData ).toEqual( {
@@ -207,7 +429,9 @@ describe( 'characterEditorStore draft autosave', () => {
 		await useCharacterEditorStore.getState().loadCharacter( 1, 'kony' );
 
 		const state = useCharacterEditorStore.getState();
-		expect( state.restorableDraft?.sheetData ).toEqual( { disciplines: [ { name: 'Obfuscate', count: 1 } ] } );
+		expect( state.restorableDraft?.sheetData ).toEqual( {
+			disciplines: [ { name: 'Obfuscate', count: 1 } ],
+		} );
 		// The draft is only ever offered, never auto-applied - the live sheetData still
 		// matches what the server actually returned until the player chooses to restore it.
 		expect( state.sheetData ).toEqual( { disciplines: [] } );
@@ -232,13 +456,18 @@ describe( 'characterEditorStore draft autosave', () => {
 			sheetData: { disciplines: [] },
 			originalSheetData: { disciplines: [] },
 			dirty: false,
-			restorableDraft: { sheetData: { disciplines: [ { name: 'Auspex', count: 3 } ] }, savedAt: Date.now() },
+			restorableDraft: {
+				sheetData: { disciplines: [ { name: 'Auspex', count: 3 } ] },
+				savedAt: Date.now(),
+			},
 		} );
 
 		useCharacterEditorStore.getState().restoreDraft();
 
 		const state = useCharacterEditorStore.getState();
-		expect( state.sheetData ).toEqual( { disciplines: [ { name: 'Auspex', count: 3 } ] } );
+		expect( state.sheetData ).toEqual( {
+			disciplines: [ { name: 'Auspex', count: 3 } ],
+		} );
 		expect( state.dirty ).toBe( true );
 		expect( state.restorableDraft ).toBeNull();
 	} );
@@ -247,7 +476,10 @@ describe( 'characterEditorStore draft autosave', () => {
 		saveDraft( 1, { disciplines: [ { name: 'Auspex', count: 3 } ] } );
 		useCharacterEditorStore.setState( {
 			sheetData: { disciplines: [] },
-			restorableDraft: { sheetData: { disciplines: [ { name: 'Auspex', count: 3 } ] }, savedAt: Date.now() },
+			restorableDraft: {
+				sheetData: { disciplines: [ { name: 'Auspex', count: 3 } ] },
+				savedAt: Date.now(),
+			},
 		} );
 
 		useCharacterEditorStore.getState().dismissDraft();
@@ -268,7 +500,9 @@ describe( 'characterEditorStore draft autosave', () => {
 
 	it( 'clears the stored draft once submitChanges() resolves with nothing left pending', async () => {
 		saveDraft( 1, { disciplines: [ { name: 'Celerity', count: 1 } ] } );
-		const create = jest.fn().mockResolvedValue( { id: 1, status: 'approved' } );
+		const create = jest
+			.fn()
+			.mockResolvedValue( { id: 1, status: 'approved' } );
 		mockedApi.changes = jest.fn().mockReturnValue( { create } ) as never;
 
 		await useCharacterEditorStore.getState().submitChanges();

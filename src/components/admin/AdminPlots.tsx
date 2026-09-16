@@ -9,6 +9,7 @@ import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import PlotManager from '../apr/PlotManager';
 import type { Game } from '../../types';
+import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
 /**
@@ -18,7 +19,7 @@ import './Admin.css';
  * time.
  */
 export function AdminPlots() {
-	const [ games, setGames ] = useState<Game[]>( [] );
+	const [ games, setGames ] = useState< Game[] >( [] );
 	const [ gameSlug, setGameSlug ] = useState( '' );
 	const [ loading, setLoading ] = useState( true );
 
@@ -37,18 +38,31 @@ export function AdminPlots() {
 
 	return (
 		<div className="be-admin">
-			<h1>{ __( 'Plots', 'beyond-elysium' ) }</h1>
+			<div className="be-help-heading">
+				<h1>{ __( 'Plots', 'beyond-elysium' ) }</h1>
+				<HelpButton helpKey="admin-plots" />
+			</div>
 
 			{ loading ? (
 				<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
 			) : games.length === 0 ? (
-				<p>{ __( 'No games exist yet - create one under Beyond Elysium → Games first.', 'beyond-elysium' ) }</p>
+				<p>
+					{ __(
+						'No games exist yet - create one under Beyond Elysium → System Config → Games first.',
+						'beyond-elysium'
+					) }
+				</p>
 			) : (
 				<>
 					<div className="be-admin__filters">
 						<label>
 							{ __( 'Game', 'beyond-elysium' ) }{ ' ' }
-							<select value={ gameSlug } onChange={ ( e ) => setGameSlug( e.target.value ) }>
+							<select
+								value={ gameSlug }
+								onChange={ ( e ) =>
+									setGameSlug( e.target.value )
+								}
+							>
 								{ games.map( ( g ) => (
 									<option key={ g.slug } value={ g.slug }>
 										{ g.name }
@@ -59,7 +73,9 @@ export function AdminPlots() {
 					</div>
 
 					{ /* key={gameSlug} remounts PlotManager so its internal state resets when the chronicle changes. */ }
-					{ gameSlug && <PlotManager key={ gameSlug } gameSlug={ gameSlug } /> }
+					{ gameSlug && (
+						<PlotManager key={ gameSlug } gameSlug={ gameSlug } />
+					) }
 				</>
 			) }
 		</div>

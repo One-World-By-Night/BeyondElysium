@@ -8,7 +8,10 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
-import type { PointAudit as PointAuditReport, PointAuditLine } from '../../types/character';
+import type {
+	PointAudit as PointAuditReport,
+	PointAuditLine,
+} from '../../types/character';
 import './PointAudit.css';
 
 export interface PointAuditProps {
@@ -16,20 +19,34 @@ export interface PointAuditProps {
 	gameSlug: string;
 }
 
-const UNPRICED_REASON_LABEL: Record<string, string> = {
-	catalog_item_has_no_cost: __( 'catalog item has no cost', 'beyond-elysium' ),
+const UNPRICED_REASON_LABEL: Record< string, string > = {
+	catalog_item_has_no_cost: __(
+		'catalog item has no cost',
+		'beyond-elysium'
+	),
 	name_not_in_catalog: __( 'name not in catalog', 'beyond-elysium' ),
 	family_not_in_catalog: __( 'family not in catalog', 'beyond-elysium' ),
 	level_has_no_cost: __( 'level has no cost', 'beyond-elysium' ),
 	custom_no_catalog_entry: __( 'custom, no catalog entry', 'beyond-elysium' ),
-	identity_field_no_catalog_cost: __( 'identity field, no catalog cost', 'beyond-elysium' ),
-	resource_pool_no_pricing_rule: __( 'resource pool has no pricing rule yet', 'beyond-elysium' ),
-	held_block_not_in_catalog: __( 'held block not in catalog', 'beyond-elysium' ),
+	identity_field_no_catalog_cost: __(
+		'identity field, no catalog cost',
+		'beyond-elysium'
+	),
+	resource_pool_no_pricing_rule: __(
+		'resource pool has no pricing rule yet',
+		'beyond-elysium'
+	),
+	held_block_not_in_catalog: __(
+		'held block not in catalog',
+		'beyond-elysium'
+	),
 };
 
-function groupBySection( lines: PointAuditLine[] ): Array<[ string, PointAuditLine[] ]> {
+function groupBySection(
+	lines: PointAuditLine[]
+): Array< [ string, PointAuditLine[] ] > {
 	const order: string[] = [];
-	const groups: Record<string, PointAuditLine[]> = {};
+	const groups: Record< string, PointAuditLine[] > = {};
 	for ( const line of lines ) {
 		if ( ! groups[ line.section_label ] ) {
 			groups[ line.section_label ] = [];
@@ -56,10 +73,13 @@ function AuditLine( { line }: { line: PointAuditLine } ) {
 			<li className="be-point-audit__line be-point-audit__line--unpriced">
 				<span className="be-point-audit__line-label">{ label }</span>
 				<span className="be-point-audit__line-reason">
-					{ UNPRICED_REASON_LABEL[ line.unpriced_reason ?? '' ] ?? line.unpriced_reason }
+					{ UNPRICED_REASON_LABEL[ line.unpriced_reason ?? '' ] ??
+						line.unpriced_reason }
 				</span>
 				{ line.undeclared_by_stack && (
-					<span className="be-point-audit__line-flag">{ __( 'undeclared by stack', 'beyond-elysium' ) }</span>
+					<span className="be-point-audit__line-flag">
+						{ __( 'undeclared by stack', 'beyond-elysium' ) }
+					</span>
 				) }
 			</li>
 		);
@@ -70,11 +90,16 @@ function AuditLine( { line }: { line: PointAuditLine } ) {
 		<li className="be-point-audit__line be-point-audit__line--priced">
 			<span className="be-point-audit__line-label">{ label }</span>
 			<span className="be-point-audit__line-xp">
-				{ sign }{ Math.abs( line.xp ) } { __( 'XP', 'beyond-elysium' ) }
+				{ sign }
+				{ Math.abs( line.xp ) } { __( 'XP', 'beyond-elysium' ) }
 			</span>
 			{ line.modifier ? (
 				<span className="be-point-audit__line-modifier">
-					{ sprintf( __( '(+%d out-of-type)', 'beyond-elysium' ), line.modifier ) }
+					{ sprintf(
+						/* translators: %d: the out-of-type surcharge added to this line's cost */
+						__( '(+%d out-of-type)', 'beyond-elysium' ),
+						line.modifier
+					) }
 				</span>
 			) : null }
 		</li>
@@ -87,31 +112,40 @@ function AuditLine( { line }: { line: PointAuditLine } ) {
  * rather than a silently empty report.
  */
 export function PointAudit( { characterId, gameSlug }: PointAuditProps ) {
-	const [ report, setReport ] = useState<PointAuditReport | null>( null );
+	const [ report, setReport ] = useState< PointAuditReport | null >( null );
 	const [ loading, setLoading ] = useState( true );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
 
 	useEffect( () => {
 		setLoading( true );
 		setError( null );
-		api
-			.characters( gameSlug )
+		api.characters( gameSlug )
 			.pointAudit( characterId )
 			.then( ( result ) => {
 				setReport( result );
 				setLoading( false );
 			} )
 			.catch( () => {
-				setError( __( 'Failed to load the point audit.', 'beyond-elysium' ) );
+				setError(
+					__( 'Failed to load the point audit.', 'beyond-elysium' )
+				);
 				setLoading( false );
 			} );
 	}, [ characterId, gameSlug ] );
 
 	if ( loading ) {
-		return <p className="be-point-audit__status">{ __( 'Loading…', 'beyond-elysium' ) }</p>;
+		return (
+			<p className="be-point-audit__status">
+				{ __( 'Loading…', 'beyond-elysium' ) }
+			</p>
+		);
 	}
 	if ( error || ! report ) {
-		return <p className="be-point-audit__status">{ error ?? __( 'No report available.', 'beyond-elysium' ) }</p>;
+		return (
+			<p className="be-point-audit__status">
+				{ error ?? __( 'No report available.', 'beyond-elysium' ) }
+			</p>
+		);
 	}
 
 	return (
@@ -119,41 +153,58 @@ export function PointAudit( { characterId, gameSlug }: PointAuditProps ) {
 			<div className="be-point-audit__summary">
 				<div className="be-point-audit__totals">
 					<span>
-						{ __( 'Spent:', 'beyond-elysium' ) } <strong>{ report.spent_total }</strong>
+						{ __( 'Spent:', 'beyond-elysium' ) }{ ' ' }
+						<strong>{ report.spent_total }</strong>
 					</span>
 					<span>
-						{ __( 'Earned:', 'beyond-elysium' ) } <strong>{ report.earned_total }</strong>
+						{ __( 'Earned:', 'beyond-elysium' ) }{ ' ' }
+						<strong>{ report.earned_total }</strong>
 					</span>
 					<span>
-						{ __( 'Net:', 'beyond-elysium' ) } <strong>{ report.net_total }</strong>
+						{ __( 'Net:', 'beyond-elysium' ) }{ ' ' }
+						<strong>{ report.net_total }</strong>
 					</span>
 					<span>
-						{ __( 'XP of record:', 'beyond-elysium' ) } <strong>{ report.xp_spent_of_record }</strong>
+						{ __( 'XP of record:', 'beyond-elysium' ) }{ ' ' }
+						<strong>{ report.xp_spent_of_record }</strong>
 					</span>
 					<span>
-						{ __( 'Variance:', 'beyond-elysium' ) } <strong>{ report.variance }</strong>
+						{ __( 'Variance:', 'beyond-elysium' ) }{ ' ' }
+						<strong>{ report.variance }</strong>
 					</span>
 				</div>
 				<div className="be-point-audit__coverage">
 					{ sprintf(
+						/* translators: 1: number of lines with a real XP price, 2: total number of held lines */
 						__( 'Priced %1$d of %2$d lines.', 'beyond-elysium' ),
 						report.coverage.priced_lines,
-						report.coverage.priced_lines + report.coverage.unpriced_lines
+						report.coverage.priced_lines +
+							report.coverage.unpriced_lines
 					) }
 				</div>
 				<p className="be-point-audit__caveat">{ report.caveat }</p>
 			</div>
 
-			{ groupBySection( report.lines ).map( ( [ sectionLabel, lines ] ) => (
-				<div className="be-point-audit__section" key={ sectionLabel }>
-					<h5 className="be-point-audit__section-title">{ sectionLabel }</h5>
-					<ul className="be-point-audit__lines">
-						{ lines.map( ( line, i ) => (
-							<AuditLine line={ line } key={ `${ line.block_slug }-${ i }` } />
-						) ) }
-					</ul>
-				</div>
-			) ) }
+			{ groupBySection( report.lines ).map(
+				( [ sectionLabel, lines ] ) => (
+					<div
+						className="be-point-audit__section"
+						key={ sectionLabel }
+					>
+						<h5 className="be-point-audit__section-title">
+							{ sectionLabel }
+						</h5>
+						<ul className="be-point-audit__lines">
+							{ lines.map( ( line, i ) => (
+								<AuditLine
+									line={ line }
+									key={ `${ line.block_slug }-${ i }` }
+								/>
+							) ) }
+						</ul>
+					</div>
+				)
+			) }
 		</div>
 	);
 }

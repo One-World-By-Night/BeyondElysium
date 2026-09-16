@@ -179,7 +179,7 @@ class Field_Registry {
 	 * normalizing the type and inventory columns along the way.
 	 *
 	 * @return array<string,array{key:string,title:string,type:string,inventories:string[]}>
-	 * @throws \RuntimeException If the source file is missing.
+	 * @throws \RuntimeException If the source file is missing or unreadable.
 	 */
 	private static function parse(): array {
 		if ( ! file_exists( self::SOURCE_FILE ) ) {
@@ -187,6 +187,9 @@ class Field_Registry {
 		}
 
 		$contents = file_get_contents( self::SOURCE_FILE );
+		if ( $contents === false ) {
+			throw new \RuntimeException( 'Field registry source could not be read: ' . self::SOURCE_FILE );
+		}
 
 		// Split on literal CRLF rather than relying on fgetcsv() line-ending autodetection.
 		$lines = explode( "\r\n", rtrim( $contents, "\r\n" ) );
@@ -203,7 +206,7 @@ class Field_Registry {
 				continue;
 			}
 
-			[ $key, $title, $type, $inventories ] = $fields;
+			[ $key, $title, $type, $inventories ] = array_map( 'strval', $fields );
 
 			$rows[ $key ] = [
 				'key'         => $key,

@@ -10,12 +10,19 @@ defined( 'ABSPATH' ) || exit;
  * Lets cascading deletes (e.g. a Game deleting its Characters, Plots and
  * World_Objects) open and close units of work at multiple call-stack levels
  * without one nested call's transaction silently committing an outer call's
- * still-open transaction. Nesting depth is tracked with a plain PHP counter
- * rather than derived from MySQL session state on every call.
+ * still-open transaction. Open units are tracked in a plain PHP list rather
+ * than derived from MySQL session state on every call.
  */
 class Transaction {
 
-	private static int $depth = 0;
+	/**
+	 * Units of work still open, outermost first. `savepoint` records whether the unit was
+	 * opened as a SAVEPOINT (nested, or inside a transaction this class did not open) or as
+	 * a real START TRANSACTION.
+	 *
+	 * @var array<int,array{name:string,savepoint:bool}>
+	 */
+	private static array $open = [];
 
 	/**
 	 * Begin a unit of work. Pass a short, call-site-specific name (e.g.
@@ -28,52 +35,67 @@ class Transaction {
 	 */
 	public static function begin( string $savepoint ): string {
 		global $wpdb;
-		$name = $savepoint . '_' . self::$depth;
+		$name   = $savepoint . '_' . count( self::$open );
+		$nested = self::$open !== [] || self::is_ambient();
 
-		if ( self::$depth > 0 || self::is_ambient() ) {
-			$wpdb->query( "SAVEPOINT {$name}" );
-		} else {
-			$wpdb->query( 'START TRANSACTION' );
-		}
+		$wpdb->query( $nested ? "SAVEPOINT {$name}" : 'START TRANSACTION' );
 
-		self::$depth++;
+		self::$open[] = [ 'name' => $name, 'savepoint' => $nested ];
 		return $name;
 	}
 
 	/**
 	 * Commits the unit of work started by the matching begin() call.
-	 * Releases the savepoint when still nested inside an outer transaction;
+	 * Releases the savepoint when it was opened nested inside an outer transaction;
 	 * otherwise issues a full COMMIT and closes the outermost level.
 	 *
 	 * @param string $name The name begin() returned.
 	 */
 	public static function commit( string $name ): void {
 		global $wpdb;
-		self::$depth--;
-
-		if ( self::$depth > 0 || self::is_ambient() ) {
-			$wpdb->query( "RELEASE SAVEPOINT {$name}" );
-		} else {
-			$wpdb->query( 'COMMIT' );
+		$unit = self::close( $name );
+		if ( $unit === null ) {
+			return;
 		}
+
+		$wpdb->query( $unit['savepoint'] ? "RELEASE SAVEPOINT {$name}" : 'COMMIT' );
 	}
 
 	/**
 	 * Rolls back the unit of work started by the matching begin() call.
-	 * Rolls back to the savepoint when still nested inside an outer transaction;
+	 * Rolls back to the savepoint when it was opened nested inside an outer transaction;
 	 * otherwise issues a full ROLLBACK and closes the outermost level.
 	 *
 	 * @param string $name The name begin() returned.
 	 */
 	public static function rollback( string $name ): void {
 		global $wpdb;
-		self::$depth--;
-
-		if ( self::$depth > 0 || self::is_ambient() ) {
-			$wpdb->query( "ROLLBACK TO SAVEPOINT {$name}" );
-		} else {
-			$wpdb->query( 'ROLLBACK' );
+		$unit = self::close( $name );
+		if ( $unit === null ) {
+			return;
 		}
+
+		$wpdb->query( $unit['savepoint'] ? "ROLLBACK TO SAVEPOINT {$name}" : 'ROLLBACK' );
+	}
+
+	/**
+	 * Removes the named unit from the open list, along with any inner unit above it that
+	 * never closed - an exception thrown between an inner begin() and its commit() or
+	 * rollback() leaves one behind (1.0.0-review F-004). MySQL discards those inner
+	 * savepoints itself when the named unit is released, rolled back, committed, or ended.
+	 *
+	 * @param string $name
+	 * @return array{name:string,savepoint:bool}|null Null when no open unit has that name.
+	 */
+	private static function close( string $name ): ?array {
+		for ( $i = count( self::$open ) - 1; $i >= 0; $i-- ) {
+			if ( self::$open[ $i ]['name'] === $name ) {
+				$unit       = self::$open[ $i ];
+				self::$open = array_slice( self::$open, 0, $i );
+				return $unit;
+			}
+		}
+		return null;
 	}
 
 	/**

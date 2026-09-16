@@ -19,25 +19,49 @@ export type FieldType = 'field' | 'num' | 'date' | 'bool' | 'list';
  * for while others expect a numeric value to compare against.
  */
 export type QueryOperator =
-	| 'contains' | 'equals' | 'at_least' | 'greater' | 'less' | 'no_more'
-	| 'contains_exactly' | 'contains_at_least' | 'contains_more' | 'contains_less' | 'contains_no_more'
-	| 'totals' | 'totals_at_least' | 'totals_more' | 'totals_no_more' | 'totals_less'
-	| 'contains_note' | 'is_true' | 'is_false';
+	| 'contains'
+	| 'equals'
+	| 'at_least'
+	| 'greater'
+	| 'less'
+	| 'no_more'
+	| 'contains_exactly'
+	| 'contains_at_least'
+	| 'contains_more'
+	| 'contains_less'
+	| 'contains_no_more'
+	| 'totals'
+	| 'totals_at_least'
+	| 'totals_more'
+	| 'totals_no_more'
+	| 'totals_less'
+	| 'contains_note'
+	| 'is_true'
+	| 'is_false';
 
 /**
  * The set of operators applicable to each field type. Used to
  * populate the operator picker in the query builder once a field
  * of a given type has been selected.
  */
-export const OPERATORS_BY_TYPE: Record<FieldType, QueryOperator[]> = {
+export const OPERATORS_BY_TYPE: Record< FieldType, QueryOperator[] > = {
 	field: [ 'contains', 'equals' ],
 	num: [ 'equals', 'at_least', 'greater', 'less', 'no_more' ],
 	date: [ 'equals', 'at_least', 'greater', 'less', 'no_more' ],
 	bool: [ 'is_true', 'is_false' ],
 	list: [
-		'contains', 'contains_note',
-		'contains_exactly', 'contains_at_least', 'contains_more', 'contains_less', 'contains_no_more',
-		'totals', 'totals_at_least', 'totals_more', 'totals_no_more', 'totals_less',
+		'contains',
+		'contains_note',
+		'contains_exactly',
+		'contains_at_least',
+		'contains_more',
+		'contains_less',
+		'contains_no_more',
+		'totals',
+		'totals_at_least',
+		'totals_more',
+		'totals_no_more',
+		'totals_less',
 	],
 };
 
@@ -45,7 +69,7 @@ export const OPERATORS_BY_TYPE: Record<FieldType, QueryOperator[]> = {
  * The human-readable label shown for each query operator in the
  * query builder UI, such as "is at least" for at_least.
  */
-export const OPERATOR_LABELS: Record<QueryOperator, string> = {
+export const OPERATOR_LABELS: Record< QueryOperator, string > = {
 	contains: 'contains',
 	equals: 'is equal to',
 	at_least: 'is at least',
@@ -72,8 +96,14 @@ export const OPERATOR_LABELS: Record<QueryOperator, string> = {
  * to search for, rather than a number to compare against.
  */
 export const FIND_OPERATORS: QueryOperator[] = [
-	'contains', 'equals', 'contains_note',
-	'contains_exactly', 'contains_at_least', 'contains_more', 'contains_less', 'contains_no_more',
+	'contains',
+	'equals',
+	'contains_note',
+	'contains_exactly',
+	'contains_at_least',
+	'contains_more',
+	'contains_less',
+	'contains_no_more',
 ];
 
 /**
@@ -81,9 +111,20 @@ export const FIND_OPERATORS: QueryOperator[] = [
  * against, rather than a find string to search for.
  */
 export const VALUE_OPERATORS: QueryOperator[] = [
-	'at_least', 'greater', 'less', 'no_more',
-	'contains_exactly', 'contains_at_least', 'contains_more', 'contains_less', 'contains_no_more',
-	'totals', 'totals_at_least', 'totals_more', 'totals_no_more', 'totals_less',
+	'at_least',
+	'greater',
+	'less',
+	'no_more',
+	'contains_exactly',
+	'contains_at_least',
+	'contains_more',
+	'contains_less',
+	'contains_no_more',
+	'totals',
+	'totals_at_least',
+	'totals_more',
+	'totals_no_more',
+	'totals_less',
 ];
 
 /**
@@ -153,7 +194,12 @@ export interface RunQueryRequest {
  * distribution, a distinct-value distribution, a distribution
  * over one specific value, the maximum found, or a sum total.
  */
-export type StatisticType = 'distribution' | 'distinct_distribution' | 'specific_distribution' | 'maxima' | 'sums';
+export type StatisticType =
+	| 'distribution'
+	| 'distinct_distribution'
+	| 'specific_distribution'
+	| 'maxima'
+	| 'sums';
 
 /**
  * Request body for running a statistics aggregate over the
@@ -176,8 +222,8 @@ export interface RunStatisticsRequest {
  * total and maximum found.
  */
 export interface StatisticsResult {
-	buckets: Record<string, number>;
-	match_sets: Record<string, string[]>;
+	buckets: Record< string, number >;
+	match_sets: Record< string, string[] >;
 	total: number;
 	maximum: number;
 }
@@ -223,13 +269,21 @@ export interface SaveQueryRequest {
  * the operator's label and its find or value operand, handling
  * negation and operators that need both a find and a value.
  */
-export function describeCondition( condition: QueryCondition, fieldTitle: string ): string {
-	const label = OPERATOR_LABELS[ condition.operator as QueryOperator ] ?? condition.operator;
+export function describeCondition(
+	condition: QueryCondition,
+	fieldTitle: string
+): string {
+	const label =
+		OPERATOR_LABELS[ condition.operator as QueryOperator ] ??
+		condition.operator;
 	const find = condition.find ?? '';
 	const value = condition.value ?? 0;
 	const prefix = condition.not ? 'does not ' : '';
 
-	if ( FIND_OPERATORS.includes( condition.operator as QueryOperator ) && VALUE_OPERATORS.includes( condition.operator as QueryOperator ) ) {
+	if (
+		FIND_OPERATORS.includes( condition.operator as QueryOperator ) &&
+		VALUE_OPERATORS.includes( condition.operator as QueryOperator )
+	) {
 		return `${ fieldTitle } ${ prefix }${ label } ${ find } x${ value }`;
 	}
 	if ( FIND_OPERATORS.includes( condition.operator as QueryOperator ) ) {

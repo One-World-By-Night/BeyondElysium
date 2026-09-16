@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Creature_Stack;
 
 defined( 'ABSPATH' ) || exit;
@@ -36,7 +37,7 @@ class Creature_Stacks_Controller extends Base_Controller {
 			[
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'create_item' ],
-				'permission_callback' => $this->permission( 'be_manage_schemas' ),
+				'permission_callback' => $this->permission( 'be_manage_games' ),
 				'args'                => $this->get_create_params(),
 			],
 		] );
@@ -56,12 +57,12 @@ class Creature_Stacks_Controller extends Base_Controller {
 			[
 				'methods'             => 'PUT',
 				'callback'            => [ $this, 'update_item' ],
-				'permission_callback' => $this->permission( 'be_manage_schemas' ),
+				'permission_callback' => $this->permission( 'be_manage_games' ),
 			],
 			[
 				'methods'             => 'DELETE',
 				'callback'            => [ $this, 'delete_item' ],
-				'permission_callback' => $this->permission( 'be_manage_schemas' ),
+				'permission_callback' => $this->permission( 'be_manage_games' ),
 			],
 		] );
 	}
@@ -214,17 +215,30 @@ class Creature_Stacks_Controller extends Base_Controller {
 			if ( $validation_error ) {
 				return $validation_error;
 			}
+
+			// A section an administrator adds to a system stack survives the next plugin update (F-011).
+			if ( (int) $stack->is_system === 1 ) {
+				$incoming = is_string( $data['stack_definition'] )
+					? json_decode( $data['stack_definition'], true )
+					: json_decode( (string) wp_json_encode( $data['stack_definition'] ), true );
+				$data['stack_definition'] = \BeyondElysium\Database\Seeder::mark_admin_stack_sections( $stack->stack_definition, (array) $incoming );
+			}
 		}
 
-		Creature_Stack::update( $request['slug'], $data );
+		if ( ! empty( $data ) && ! Creature_Stack::update( $request['slug'], $data ) ) {
+			return $this->error( 'save_failed', __( 'Failed to update creature stack.', 'beyond-elysium' ), 500 );
+		}
 		return $this->success( Creature_Stack::find_by_slug( $request['slug'] ) );
 	}
 
 	/**
 	 * Deletes a creature stack by slug.
 	 *
-	 * Looks up the stack, refuses to delete it if it is a system stack, and
-	 * otherwise removes the record permanently.
+	 * Looks up the stack, refuses to delete it if it is a system stack or any
+	 * character in any chronicle is still that creature type, and otherwise
+	 * removes the record permanently. A character can't change creature type,
+	 * and one whose type is gone has no sheet, audit, or export
+	 * (1.0.0-review F-088).
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -237,6 +251,24 @@ class Creature_Stacks_Controller extends Base_Controller {
 
 		if ( ! empty( $stack->is_system ) ) {
 			return $this->error( 'cannot_delete', __( 'Cannot delete a system creature stack.', 'beyond-elysium' ), 403 );
+		}
+
+		$in_use = Character::count_for_stack( $stack->slug );
+		if ( $in_use > 0 ) {
+			return new \WP_Error(
+				'creature_stack_in_use',
+				sprintf(
+					/* translators: %d: number of characters of this creature type */
+					_n(
+						'%d character is still this creature type, so it can\'t be deleted.',
+						'%d characters are still this creature type, so it can\'t be deleted.',
+						$in_use,
+						'beyond-elysium'
+					),
+					$in_use
+				),
+				[ 'status' => 409, 'count' => $in_use ]
+			);
 		}
 
 		Creature_Stack::delete( $request['slug'] );
@@ -346,7 +378,7 @@ class Creature_Stacks_Controller extends Base_Controller {
 				return $this->error( 'invalid_json', __( 'stack_definition must be a valid JSON object.', 'beyond-elysium' ), 400 );
 			}
 		} elseif ( is_object( $definition ) ) {
-			$definition = json_decode( wp_json_encode( $definition ), true );
+			$definition = json_decode( (string) wp_json_encode( $definition ), true );
 		}
 
 		if ( ! is_array( $definition ) || ! isset( $definition['sections'] ) || ! is_array( $definition['sections'] ) ) {

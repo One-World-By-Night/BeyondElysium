@@ -7,6 +7,7 @@ import {
 	pluginPageUrl,
 	readTabFromUrl,
 	writeTabToUrl,
+	sendFileLinkUrl,
 	PLAYER_TABS,
 	STORYTELLER_TABS,
 } from './pluginPages';
@@ -29,29 +30,47 @@ describe( 'pluginPageUrl', () => {
 
 describe( 'playerTabUrl', () => {
 	it( 'builds the base URL for one tab, with no selection yet', () => {
-		expect( playerTabUrl( PLAYER_TABS.sheet ) ).toBe( `${ ORIGIN }/be-player/?tab=sheet` );
+		expect( playerTabUrl( PLAYER_TABS.sheet ) ).toBe(
+			`${ ORIGIN }/be-player/?tab=sheet`
+		);
 	} );
 } );
 
 describe( 'storytellerTabUrl', () => {
 	it( 'builds the base URL for one tab, with no chronicle selection yet', () => {
-		expect( storytellerTabUrl( STORYTELLER_TABS.dashboard ) ).toBe( `${ ORIGIN }/be-storyteller/?tab=dashboard` );
+		expect( storytellerTabUrl( STORYTELLER_TABS.dashboard ) ).toBe(
+			`${ ORIGIN }/be-storyteller/?tab=dashboard`
+		);
 	} );
 } );
 
 describe( 'characterSheetUrl', () => {
 	it( 'points at the Sheet tab with the character id and URL-encoded game slug', () => {
-		expect( characterSheetUrl( 42, 'kony' ) ).toBe( `${ ORIGIN }/be-player/?tab=sheet&character_id=42&game_slug=kony` );
+		expect( characterSheetUrl( 42, 'kony' ) ).toBe(
+			`${ ORIGIN }/be-player/?tab=sheet&character_id=42&game_slug=kony`
+		);
 	} );
 
 	it( 'URL-encodes a game slug with special characters', () => {
-		expect( characterSheetUrl( 1, 'a b' ) ).toBe( `${ ORIGIN }/be-player/?tab=sheet&character_id=1&game_slug=a%20b` );
+		expect( characterSheetUrl( 1, 'a b' ) ).toBe(
+			`${ ORIGIN }/be-player/?tab=sheet&character_id=1&game_slug=a%20b`
+		);
 	} );
 } );
 
 describe( 'characterEditorUrl', () => {
 	it( 'points at the Edit tab with the character id and URL-encoded game slug', () => {
-		expect( characterEditorUrl( 42, 'kony' ) ).toBe( `${ ORIGIN }/be-player/?tab=edit&character_id=42&game_slug=kony` );
+		expect( characterEditorUrl( 42, 'kony' ) ).toBe(
+			`${ ORIGIN }/be-player/?tab=edit&character_id=42&game_slug=kony`
+		);
+	} );
+} );
+
+describe( 'sendFileLinkUrl', () => {
+	it( 'points at Send a Grapevine File with the URL-encoded chronicle already picked (F-122)', () => {
+		expect( sendFileLinkUrl( 'kings of new york' ) ).toBe(
+			`${ ORIGIN }/be-player/?tab=send-file&game_slug=kings%20of%20new%20york`
+		);
 	} );
 } );
 
@@ -65,7 +84,9 @@ describe( 'isPrintCanvasPath', () => {
 	} );
 
 	it( 'matches when the print path is a prefix of a longer pathname', () => {
-		expect( isPrintCanvasPath( '/character-sheet-print/index.html' ) ).toBe( true );
+		expect( isPrintCanvasPath( '/character-sheet-print/index.html' ) ).toBe(
+			true
+		);
 	} );
 } );
 

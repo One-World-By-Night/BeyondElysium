@@ -4,6 +4,7 @@ namespace BeyondElysium\REST;
 
 use BeyondElysium\Models\Character;
 use BeyondElysium\Services\Character_Exporter;
+use BeyondElysium\Services\Not_Exportable_Exception;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -62,15 +63,28 @@ class Export_Controller extends Base_Controller {
 			return $this->error( 'character_not_found', __( 'Character not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
-		if ( ! current_user_can( 'be_manage_characters' ) && (int) $character->wp_user_id !== get_current_user_id() ) {
+		$can_manage = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
+		if ( ! $can_manage && (int) $character->wp_user_id !== get_current_user_id() ) {
 			return $this->error( 'ownership_denied', __( 'You do not have permission to export this character.', 'beyond-elysium' ), 403 );
 		}
 
-		$result = Character_Exporter::export( (int) $character->id, [
-			'hide_st'     => (bool) $request->get_param( 'hide_st' ),
-			'as_transfer' => (bool) $request->get_param( 'as_transfer' ),
-			'verify'      => (bool) $request->get_param( 'verify' ),
-		] );
+		// A transfer document is issued only where a transfer is recorded - the outbound transfer
+		// route - never here, where nothing tracks it and a player could mint one (1.0.0-review F-059).
+		if ( $request->get_param( 'as_transfer' ) ) {
+			return $this->error( 'use_transfer_route', __( 'Start a transfer from the character\'s Transfer panel, not from an export.', 'beyond-elysium' ), 400 );
+		}
+
+		try {
+			$result = Character_Exporter::export( (int) $character->id, [
+				// The server decides what Storyteller-only data leaves: a player's copy is always
+				// redacted, whatever the request says; a Storyteller may ask for one (F-058).
+				'hide_st' => ! $can_manage || (bool) $request->get_param( 'hide_st' ),
+				'verify'  => (bool) $request->get_param( 'verify' ),
+			] );
+		} catch ( Not_Exportable_Exception $e ) {
+			return $this->error( 'not_exportable', $e->getMessage(), 422 );
+		}
+		unset( $result['attestation_id'] );
 
 		return $this->success( $result );
 	}

@@ -14,7 +14,10 @@ import { join } from 'path';
  * so a future component can't repeat it silently.
  */
 
-function findComponentFiles( dir: string, out: { tsx: string[]; css: string[] } ): void {
+function findComponentFiles(
+	dir: string,
+	out: { tsx: string[]; css: string[] }
+): void {
 	for ( const entry of readdirSync( dir ) ) {
 		const full = join( dir, entry );
 		if ( statSync( full ).isDirectory() ) {

@@ -20,12 +20,30 @@ class Schema {
 	 * release version. Compared against the stored VERSION_OPTION value by
 	 * maybe_upgrade() to decide whether migrations need to run.
 	 */
-	const DB_VERSION = '0.99.34';
+	const DB_VERSION = '1.0.0';
 
 	/**
 	 * Option key holding the installed schema version.
 	 */
 	const VERSION_OPTION = 'be_db_version';
+
+	/**
+	 * Option key holding the upgrade lock: the time the running upgrade
+	 * started. Only one request upgrades at a time.
+	 */
+	const UPGRADE_LOCK_OPTION = 'be_upgrade_lock';
+
+	/**
+	 * Seconds after which an upgrade lock is stale and may be taken over -
+	 * how long a failed upgrade waits before it is tried again.
+	 */
+	const UPGRADE_LOCK_TTL = 600;
+
+	/**
+	 * Option key holding why the last upgrade did not finish, shown to
+	 * administrators until an upgrade does.
+	 */
+	const UPGRADE_ERROR_OPTION = 'be_upgrade_error';
 
 	/**
 	 * Short names of every table create_tables() creates, unprefixed past `be_`. Kept as
@@ -51,6 +69,7 @@ class Schema {
 		'game_members',
 		'character_attestations',
 		'character_transfers',
+		'character_submissions',
 	];
 
 	/**
@@ -124,6 +143,7 @@ class Schema {
 			version int unsigned NOT NULL DEFAULT 1,
 			is_system tinyint(1) NOT NULL DEFAULT 0,
 			storyteller_only tinyint(1) NOT NULL DEFAULT 0,
+			fork_changes longtext DEFAULT NULL,
 			created_by bigint(20) unsigned NOT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -197,6 +217,7 @@ class Schema {
 			submitted_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			reviewed_at datetime DEFAULT NULL,
 			notes text,
+			review_notes text,
 			reason text,
 			PRIMARY KEY  (id),
 			KEY idx_character (character_id),
@@ -255,6 +276,7 @@ class Schema {
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			character_uuid char(36) NOT NULL,
 			character_id bigint(20) unsigned DEFAULT NULL,
+			character_name varchar(255) DEFAULT NULL,
 			direction varchar(10) NOT NULL,
 			state varchar(20) NOT NULL,
 			home_slug varchar(100) NOT NULL,
@@ -271,10 +293,41 @@ class Schema {
 			acknowledged_at datetime DEFAULT NULL,
 			returned_at datetime DEFAULT NULL,
 			notes text,
+			payload longtext,
 			PRIMARY KEY  (id),
 			KEY idx_uuid_state (character_uuid, state),
 			KEY idx_home (home_slug, state),
 			KEY idx_host (host_slug, state)
+		) $charset_collate;" );
+
+		// be_character_submissions: a player-sent Grapevine file waiting for a Storyteller's
+		// review (F-122). Not be_character_transfers - the sender's file may carry no uuid at
+		// all (and any it does carry is dropped, 1.0.0-review F-003/F-059), and there is no
+		// home site to call back to until a Storyteller accepts and a real character exists.
+		// `parsed`/`verification_source` hold only what the request needs while it waits, and
+		// both are cleared the moment the row leaves 'waiting' (Models/Submission.php).
+		dbDelta( "CREATE TABLE {$prefix}character_submissions (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			submitted_by bigint(20) unsigned NOT NULL,
+			arrival varchar(10) NOT NULL,
+			home_chronicle varchar(255) DEFAULT NULL,
+			character_name varchar(255) NOT NULL,
+			stack_slug varchar(100) NOT NULL,
+			source_file varchar(255) NOT NULL,
+			format varchar(10) NOT NULL,
+			file_hash char(64) NOT NULL,
+			parsed longtext,
+			verification_source longtext,
+			state varchar(20) NOT NULL,
+			character_id bigint(20) unsigned DEFAULT NULL,
+			answered_by bigint(20) unsigned DEFAULT NULL,
+			answer_note text,
+			created_at datetime NOT NULL,
+			answered_at datetime DEFAULT NULL,
+			PRIMARY KEY  (id),
+			KEY idx_game_state (game_id, state),
+			KEY idx_sender_state (submitted_by, state)
 		) $charset_collate;" );
 
 		// be_plots: storyline records, optionally nested under a parent plot.
@@ -426,7 +479,8 @@ class Schema {
 
 		self::migrate();
 
-		update_option( self::VERSION_OPTION, self::DB_VERSION );
+		// The schema version is recorded by the caller once every step after this one has run too,
+		// never here: recorded first, a later failure left the site reading as upgraded (1.0.0-review F-064).
 
 		// Clears the cached health-notice state so any fix is reflected immediately.
 		\BeyondElysium\Core\Health_Notice::clear_cache();
@@ -451,8 +505,306 @@ class Schema {
 		// A pure structure change with no row-content reseed hazard, so it is safe to run here.
 		self::add_schema_block_game_scoping();
 		self::add_storyteller_only_to_schema_blocks();
+		self::add_fork_changes_to_schema_blocks();
 		self::add_owbn_chronicle_post_id();
 		self::backfill_owbn_chronicle_post_ids();
+		self::add_review_notes_to_character_changes();
+		self::remove_coordinator_approvals();
+		self::make_power_ladders_cumulative();
+		self::carry_storyteller_only_to_forks();
+		// Before any reseed, so an old copy's own changes are told apart from the update's (F-034).
+		self::record_fork_changes();
+		self::seed_character_plots();
+	}
+
+	/**
+	 * Gives every character made before 1.0.0 its own plot, and moves its action
+	 * rounds that sit under no plot beneath it (owner, 2026-09-15). A round a
+	 * Storyteller nested under a plot stays where it is. Runs once; a character
+	 * whose plot couldn't be written is logged, and the next upgrade tries again.
+	 */
+	public static function seed_character_plots(): void {
+		if ( get_option( 'be_character_plots_seeded' ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$characters  = self::table( 'characters' );
+		$games       = self::table( 'games' );
+		$plots       = self::table( 'plots' );
+		$connections = self::table( 'connections' );
+
+		// A character whose chronicle no longer exists has nowhere to keep a plot.
+		$ids = $wpdb->get_col(
+			"SELECT ch.id FROM {$characters} ch
+			 INNER JOIN {$games} g ON g.slug = ch.owner_slug
+			 WHERE ch.owner_type = 'chronicle'
+			 ORDER BY ch.id"
+		) ?: [];
+
+		$failed = 0;
+		foreach ( array_map( 'intval', $ids ) as $id ) {
+			$plot_id = \BeyondElysium\Models\Character::ensure_plot( $id );
+			if ( $plot_id === null ) {
+				++$failed;
+				error_log( "Beyond Elysium: failed to give character {$id} its own plot." );
+				continue;
+			}
+			// 'apr_actor' is Services\Action_Allocator::ACTOR_LABEL.
+			$moved = $wpdb->query( $wpdb->prepare(
+				"UPDATE {$plots} p
+				 INNER JOIN {$connections} c ON c.source_type = 'plot' AND c.source_id = p.id
+				 SET p.parent_plot_id = %d
+				 WHERE c.target_type = 'character' AND c.target_id = %d AND c.label = 'apr_actor'
+				   AND p.game_date IS NOT NULL AND p.parent_plot_id IS NULL AND p.id <> %d",
+				$plot_id,
+				$id,
+				$plot_id
+			) );
+			if ( $moved === false ) {
+				++$failed;
+				error_log( "Beyond Elysium: failed to move character {$id}'s action rounds under its plot: " . $wpdb->last_error );
+			}
+		}
+
+		if ( $failed === 0 ) {
+			update_option( 'be_character_plots_seeded', 1 );
+		}
+	}
+
+	/**
+	 * Records, for every chronicle copy of a catalog block made before copies
+	 * recorded their own changes, how it differs from the catalog block it came
+	 * from - so the next catalog update keeps those differences and brings the
+	 * copy everything else (1.0.0-review F-034). Every difference is taken to be
+	 * the chronicle's, so nothing it set is lost. Runs before the reseed, while
+	 * the catalog still matches what the copy was made from as closely as it
+	 * ever will; a copy already recorded is left alone.
+	 */
+	public static function record_fork_changes(): void {
+		global $wpdb;
+		$table = self::table( 'schema_blocks' );
+		$rows  = $wpdb->get_results(
+			"SELECT copy.id, copy.definition AS copy_definition, shared.definition AS shared_definition
+			 FROM {$table} copy
+			 INNER JOIN {$table} shared ON shared.slug = copy.slug AND shared.game_slug = ''
+			 WHERE copy.game_slug <> '' AND copy.fork_changes IS NULL"
+		) ?: [];
+
+		foreach ( $rows as $row ) {
+			$copy   = json_decode( (string) $row->copy_definition, true );
+			$shared = json_decode( (string) $row->shared_definition, true );
+			if ( ! is_array( $copy ) || ! is_array( $shared ) ) {
+				continue;
+			}
+			$changes = Fork_Merge::changes_against( $shared, $copy );
+			if ( $wpdb->update( $table, [ 'fork_changes' => wp_json_encode( $changes ) ], [ 'id' => (int) $row->id ] ) === false ) {
+				error_log( 'Beyond Elysium: failed to record chronicle changes for schema block copy ' . (int) $row->id . ': ' . $wpdb->last_error );
+			}
+		}
+	}
+
+	/**
+	 * Adds `fork_changes` to `schema_blocks`: what a chronicle's copy of a
+	 * catalog block has changed, so catalog updates can reach the rest of it
+	 * (1.0.0-review F-034). Null on a global block, and on a copy made before
+	 * the column existed until `record_fork_changes()` fills it.
+	 */
+	public static function add_fork_changes_to_schema_blocks(): void {
+		global $wpdb;
+		$table      = self::table( 'schema_blocks' );
+		$has_column = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM information_schema.columns
+				 WHERE table_schema = DATABASE() AND table_name = %s AND column_name = 'fork_changes'",
+				$table
+			)
+		);
+		if ( (int) $has_column === 0 ) {
+			$wpdb->query( "ALTER TABLE {$table} ADD COLUMN fork_changes longtext DEFAULT NULL AFTER storyteller_only" );
+			if ( $wpdb->last_error ) {
+				error_log( 'Beyond Elysium: failed to add fork_changes to schema_blocks: ' . $wpdb->last_error );
+			}
+		}
+	}
+
+	/**
+	 * Marks every chronicle's copy of a Storyteller-only block Storyteller-only
+	 * too, exactly once (1.0.0-review F-062). Copies were always made unflagged,
+	 * which changed nothing while the shared block's flag hid the block in
+	 * every chronicle; once a copy decides for its own chronicle, an old copy
+	 * would show a hidden block to that chronicle's players. Runs once, so a
+	 * chronicle that opens its copy afterwards keeps that choice.
+	 */
+	public static function carry_storyteller_only_to_forks(): void {
+		if ( get_option( 'be_fork_storyteller_only_carried' ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table  = self::table( 'schema_blocks' );
+		$result = $wpdb->query(
+			"UPDATE {$table} copy
+			 INNER JOIN {$table} shared ON shared.slug = copy.slug AND shared.game_slug = ''
+			 SET copy.storyteller_only = 1
+			 WHERE copy.game_slug <> '' AND shared.storyteller_only = 1 AND copy.storyteller_only = 0"
+		);
+
+		if ( $result === false ) {
+			error_log( 'Beyond Elysium: failed to carry storyteller_only to chronicle copies: ' . $wpdb->last_error );
+			return;
+		}
+		update_option( 'be_fork_storyteller_only_carried', 1 );
+	}
+
+	/**
+	 * Makes every chronicle's copy of a tiered-power block price its levels
+	 * cumulatively, exactly once (owner ruling "levels add up", 1.0.0-review
+	 * F-040). The shared blocks get it from the reseed; a copy is never
+	 * reseeded, and every copy made before this release carries the old seed's
+	 * `sequential: false` without any chronicle having chosen it. After this
+	 * runs, a chronicle that switches its copy back to flat pricing keeps it.
+	 */
+	public static function make_power_ladders_cumulative(): void {
+		if ( get_option( 'be_power_ladders_cumulative' ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = self::table( 'schema_blocks' );
+		$rows  = $wpdb->get_results( "SELECT id, definition FROM {$table} WHERE section_type = 'tiered_power' AND game_slug <> ''" );
+
+		// Every write is checked, not only the last: `last_error` knows about the last query alone, so
+		// a failure ahead of a success was marked done with the rest (1.0.0-review F-065).
+		$failed = false;
+		foreach ( $rows ?: [] as $row ) {
+			$definition = json_decode( (string) $row->definition, true );
+			if ( ! is_array( $definition ) || ! empty( $definition['sequential'] ) ) {
+				continue;
+			}
+			$definition['sequential'] = true;
+			if ( $wpdb->update( $table, [ 'definition' => wp_json_encode( $definition ) ], [ 'id' => (int) $row->id ] ) === false ) {
+				$failed = true;
+				error_log( 'Beyond Elysium: failed to make power ladder cumulative for schema block ' . (int) $row->id . ': ' . $wpdb->last_error );
+			}
+		}
+
+		if ( $failed || $rows === null ) {
+			return;
+		}
+		update_option( 'be_power_ladders_cumulative', 1 );
+	}
+
+	/**
+	 * Turns every approval rule stored as the retired `coordinator` level into
+	 * a Storyteller (`st`) rule, in every schema block - shared and forked -
+	 * exactly once (owner ruling, 1.0.0-review F-043). Nothing ever enforced
+	 * the coordinator tier, so this changes what the editors show, not what
+	 * happens to a change. Reads each definition as it is stored and rewrites
+	 * only the rows that held one.
+	 */
+	public static function remove_coordinator_approvals(): void {
+		if ( get_option( 'be_coordinator_tier_removed' ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = self::table( 'schema_blocks' );
+		$rows  = $wpdb->get_results( "SELECT id, definition FROM {$table} WHERE definition LIKE '%coordinator%'" );
+
+		// Every write is checked, not only the last (F-065, as above).
+		$failed = false;
+		foreach ( $rows ?: [] as $row ) {
+			$definition = json_decode( (string) $row->definition, true );
+			if ( ! is_array( $definition ) ) {
+				continue;
+			}
+			$changed    = false;
+			$definition = self::coordinator_to_st( $definition, $changed );
+			if ( $changed && $wpdb->update( $table, [ 'definition' => wp_json_encode( $definition ) ], [ 'id' => (int) $row->id ] ) === false ) {
+				$failed = true;
+				error_log( 'Beyond Elysium: failed to retire coordinator approvals in schema block ' . (int) $row->id . ': ' . $wpdb->last_error );
+			}
+		}
+
+		if ( $failed || $rows === null ) {
+			return;
+		}
+		update_option( 'be_coordinator_tier_removed', 1 );
+	}
+
+	/**
+	 * Replaces `coordinator` with `st` wherever a definition names an approval
+	 * level - an entry's `approval`/`approval_override`, a schedule entry's
+	 * `approval`, or an `approval_rules` value - and nowhere else, so reason
+	 * text that mentions a coordinator is left alone.
+	 *
+	 * @param array<mixed> $node
+	 * @param bool         $changed Set true when anything was replaced.
+	 * @return array<mixed>
+	 */
+	private static function coordinator_to_st( array $node, bool &$changed ): array {
+		foreach ( $node as $key => $value ) {
+			if ( is_array( $value ) ) {
+				$node[ $key ] = $key === 'approval_rules'
+					? array_map( static function ( $level ) use ( &$changed ) {
+						if ( $level === 'coordinator' ) {
+							$changed = true;
+							return 'st';
+						}
+						return $level;
+					}, $value )
+					: self::coordinator_to_st( $value, $changed );
+			} elseif ( in_array( $key, [ 'approval', 'approval_override' ], true ) && $value === 'coordinator' ) {
+				$node[ $key ] = 'st';
+				$changed      = true;
+			}
+		}
+		return $node;
+	}
+
+	/**
+	 * Gives a change's reviewer their own column. `notes` used to hold both the
+	 * submitter's note and, once reviewed, the reviewer's - which replaced it
+	 * (1.0.0-review F-032). Adds `review_notes`, then moves the reviewer text
+	 * that reviewed rows already carry in `notes` into it, exactly once: after
+	 * the split, a reviewed row's `notes` is the submitter's and must never be
+	 * moved again.
+	 */
+	public static function add_review_notes_to_character_changes(): void {
+		global $wpdb;
+
+		$table = self::table( 'character_changes' );
+
+		$has_column = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM information_schema.columns
+				 WHERE table_schema = DATABASE() AND table_name = %s AND column_name = 'review_notes'",
+				$table
+			)
+		);
+		if ( (int) $has_column === 0 ) {
+			$wpdb->query( "ALTER TABLE {$table} ADD COLUMN review_notes text AFTER notes" );
+			if ( $wpdb->last_error ) {
+				error_log( 'Beyond Elysium: failed to add review_notes to character_changes: ' . $wpdb->last_error );
+				return;
+			}
+		}
+
+		if ( get_option( 'be_review_notes_split' ) ) {
+			return;
+		}
+
+		$wpdb->query(
+			"UPDATE {$table} SET review_notes = notes, notes = NULL
+			 WHERE reviewed_by IS NOT NULL AND status IN ('approved', 'rejected') AND review_notes IS NULL"
+		);
+		if ( $wpdb->last_error ) {
+			error_log( 'Beyond Elysium: failed to move review notes: ' . $wpdb->last_error );
+			return;
+		}
+
+		update_option( 'be_review_notes_split', 1 );
 	}
 
 	/**
@@ -1553,12 +1905,44 @@ class Schema {
 	 * would otherwise never migrate. Called on every request via Plugin::init().
 	 */
 	public static function maybe_upgrade(): void {
-		$installed = get_option( self::VERSION_OPTION, '0.0.0' );
+		$installed     = get_option( self::VERSION_OPTION, '0.0.0' );
+		$fresh_install = get_option( self::VERSION_OPTION ) === false;
 
 		if ( version_compare( $installed, self::DB_VERSION, '>=' ) ) {
 			return;
 		}
 
+		// One request runs the upgrade at a time; the rest carry on until it is recorded.
+		if ( ! Option_Lock::claim( self::UPGRADE_LOCK_OPTION, self::UPGRADE_LOCK_TTL ) ) {
+			return;
+		}
+
+		try {
+			self::run_upgrade( $fresh_install );
+		} catch ( \Throwable $e ) {
+			// Recorded, logged, and left locked until the lock goes stale: a step that fails every
+			// time retries every few minutes instead of failing every request (1.0.0-review F-064).
+			update_option( self::UPGRADE_ERROR_OPTION, [
+				'version' => self::DB_VERSION,
+				'message' => $e->getMessage(),
+				'at'      => time(),
+			], false );
+			error_log( 'Beyond Elysium: upgrade to ' . self::DB_VERSION . ' did not finish: ' . $e->getMessage() );
+			return;
+		}
+
+		update_option( self::VERSION_OPTION, self::DB_VERSION );
+		delete_option( self::UPGRADE_ERROR_OPTION );
+		Option_Lock::release( self::UPGRADE_LOCK_OPTION );
+	}
+
+	/**
+	 * Every step of an upgrade, in order. Throws if a step does; the caller
+	 * records the new schema version only once this returns.
+	 *
+	 * @param bool $fresh_install Whether no schema version was recorded before this upgrade.
+	 */
+	private static function run_upgrade( bool $fresh_install ): void {
 		self::create_tables();
 
 		// Refreshes system schema blocks/stacks so a block-map correction reaches existing installs.
@@ -1597,8 +1981,8 @@ class Schema {
 		// make the sheet_full layout this reads from correct in the first place.
 		self::repair_stale_npc_layouts();
 
-		// Idempotent demo data, safe to re-run on every upgrade.
-		Seeder::seed_demo_characters();
+		// Demo data, seeded on a fresh install only.
+		Seeder::seed_demo_characters( $fresh_install );
 
 		// Re-registers capabilities so a new one reaches existing installs, not just fresh activations.
 		\BeyondElysium\Core\Capabilities::register();

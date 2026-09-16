@@ -92,6 +92,28 @@ class ReportsControllerThreadTest extends WP_UnitTestCase {
 		$this->assertStringStartsWith( '%PDF-', $response->get_data()['bytes'] );
 	}
 
+	/** 1.0.0-review F-042: with no signing certificate a report still prints, marked unsigned. */
+	public function test_with_no_signing_certificate_a_report_prints_marked_unsigned(): void {
+		$cert_path = BE_PDF_SIGNING_CERT;
+		rename( $cert_path, $cert_path . '.hidden' );
+		try {
+			$response = $this->dispatch( '/be/v1/' . $this->game_slug . '/reports/character-roster/pdf' );
+		} finally {
+			rename( $cert_path . '.hidden', $cert_path );
+		}
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertStringStartsWith( '%PDF-', (string) $response->get_data()['bytes'] );
+		$this->assertStringNotContainsString( '/ByteRange', (string) $response->get_data()['bytes'] );
+		$this->assertStringEndsWith( '-unsigned.pdf', $response->get_data()['filename'] );
+		if ( shell_exec( 'command -v pdftotext' ) ) {
+			$path = wp_tempnam( 'be-unsigned-report' );
+			file_put_contents( $path, $response->get_data()['bytes'] );
+			$this->assertStringContainsString( 'UNSIGNED', (string) shell_exec( 'pdftotext ' . escapeshellarg( $path ) . ' - 2>/dev/null' ) );
+			unlink( $path );
+		}
+	}
+
 	public function test_item_cards_shape_generates_real_pdf_bytes_with_zero_items(): void {
 		$response = $this->dispatch( '/be/v1/' . $this->game_slug . '/reports/item-cards/pdf' );
 
@@ -123,20 +145,6 @@ class ReportsControllerThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'report_not_found', $response->as_error()->get_error_code() );
 	}
 
-	public function test_signing_unavailable_returns_503_with_no_bytes(): void {
-		$cert_path = BE_PDF_SIGNING_CERT;
-		rename( $cert_path, $cert_path . '.hidden' );
-		try {
-			$response = $this->dispatch( '/be/v1/' . $this->game_slug . '/reports/character-roster/pdf' );
-		} finally {
-			rename( $cert_path . '.hidden', $cert_path );
-		}
-
-		$this->assertSame( 503, $response->get_status() );
-		$this->assertSame( 'signing_unavailable', $response->as_error()->get_error_code() );
-		$this->assertArrayNotHasKey( 'bytes', (array) $response->get_data() );
-	}
-
 	public function test_master_action_report_generates_real_pdf_bytes_with_a_real_action_entry(): void {
 		$game_id = Game::find_by_slug( $this->game_slug )->id;
 		$character = Character::find_by_name_in_game( 'Roster Test Character', $this->game_slug );
@@ -149,7 +157,7 @@ class ReportsControllerThreadTest extends WP_UnitTestCase {
 		] );
 		\BeyondElysium\Models\Plot_Entry::create( [
 			'plot_id'    => $plot_id,
-			'author_id'  => $character->id,
+			'author_id'  => $character->wp_user_id,
 			'entry_type' => 'action',
 			'content'    => 'Investigate the docks',
 			'event_date' => '2026-09-13',

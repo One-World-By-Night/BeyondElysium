@@ -16,6 +16,7 @@ import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import Modal from './Modal';
+import HelpButton from './HelpButton';
 import './AiAssistButton.css';
 
 export interface AiAssistButtonProps {
@@ -38,19 +39,26 @@ export interface AiAssistButtonProps {
  * that field is gated on be_manage_characters here, not the plain
  * edit-tier capability that field's own save route accepts).
  */
-export function AiAssistButton( { capability, fieldContext, gameSlug, currentValue, onAccept }: AiAssistButtonProps ) {
+export function AiAssistButton( {
+	capability,
+	fieldContext,
+	gameSlug,
+	currentValue,
+	onAccept,
+}: AiAssistButtonProps ) {
 	const [ isOpen, setIsOpen ] = useState( false );
 	const [ instruction, setInstruction ] = useState( '' );
-	const [ suggestion, setSuggestion ] = useState<string | null>( null );
+	const [ suggestion, setSuggestion ] = useState< string | null >( null );
 	const [ loading, setLoading ] = useState( false );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
 
 	const canUse = !! window.beyondElysium?.capabilities?.[ capability ];
 	if ( ! canUse ) {
 		return null;
 	}
 
-	const resolvedValue = typeof currentValue === 'function' ? currentValue() : currentValue;
+	const resolvedValue =
+		typeof currentValue === 'function' ? currentValue() : currentValue;
 	const hasExistingText = resolvedValue.trim() !== '';
 
 	function open() {
@@ -64,10 +72,15 @@ export function AiAssistButton( { capability, fieldContext, gameSlug, currentVal
 		setLoading( true );
 		setError( null );
 		try {
-			const client = gameSlug ? api.aiAssist( gameSlug ) : api.aiAssistSite;
+			const client = gameSlug
+				? api.aiAssist( gameSlug )
+				: api.aiAssistSite;
 			const response = await client.generate( {
 				field_context: fieldContext,
-				current_text: typeof currentValue === 'function' ? currentValue() : currentValue,
+				current_text:
+					typeof currentValue === 'function'
+						? currentValue()
+						: currentValue,
 				instruction,
 			} );
 			setSuggestion( response.suggestion );
@@ -91,9 +104,14 @@ export function AiAssistButton( { capability, fieldContext, gameSlug, currentVal
 
 	return (
 		<>
-			<button type="button" className="be-ai-assist-button" onClick={ open }>
+			<button
+				type="button"
+				className="be-ai-assist-button"
+				onClick={ open }
+			>
 				{ __( 'AI Assist', 'beyond-elysium' ) }
 			</button>
+			<HelpButton helpKey="writing-assist" />
 			{ isOpen && (
 				<Modal
 					title={ __( 'AI Assist', 'beyond-elysium' ) }
@@ -101,22 +119,41 @@ export function AiAssistButton( { capability, fieldContext, gameSlug, currentVal
 					footer={
 						suggestion ? (
 							<>
-								<button type="button" onClick={ () => setSuggestion( null ) }>
+								<button
+									type="button"
+									onClick={ () => setSuggestion( null ) }
+								>
 									{ __( 'Back', 'beyond-elysium' ) }
 								</button>
-								<button type="button" onClick={ generate } disabled={ loading }>
+								<button
+									type="button"
+									onClick={ generate }
+									disabled={ loading }
+								>
 									{ __( 'Regenerate', 'beyond-elysium' ) }
 								</button>
-								<button type="button" className="button-primary" onClick={ accept }>
+								<button
+									type="button"
+									className="button-primary"
+									onClick={ accept }
+								>
 									{ __( 'Accept', 'beyond-elysium' ) }
 								</button>
 							</>
 						) : (
 							<>
-								<button type="button" onClick={ () => setIsOpen( false ) }>
+								<button
+									type="button"
+									onClick={ () => setIsOpen( false ) }
+								>
 									{ __( 'Cancel', 'beyond-elysium' ) }
 								</button>
-								<button type="button" className="button-primary" onClick={ generate } disabled={ loading }>
+								<button
+									type="button"
+									className="button-primary"
+									onClick={ generate }
+									disabled={ loading }
+								>
 									{ loading
 										? __( 'Generating…', 'beyond-elysium' )
 										: hasExistingText
@@ -134,20 +171,38 @@ export function AiAssistButton( { capability, fieldContext, gameSlug, currentVal
 					) }
 					{ suggestion ? (
 						<div className="be-ai-assist-button__suggestion">
-							<p className="description">{ __( 'Review before accepting - nothing is saved until you click Accept, and the field itself still needs its own Save afterward.', 'beyond-elysium' ) }</p>
-							<div className="be-ai-assist-button__suggestion-text">{ suggestion }</div>
+							<p className="description">
+								{ __(
+									'Review before accepting - nothing is saved until you click Accept, and the field itself still needs its own Save afterward.',
+									'beyond-elysium'
+								) }
+							</p>
+							<div className="be-ai-assist-button__suggestion-text">
+								{ suggestion }
+							</div>
 						</div>
 					) : hasExistingText ? (
 						<p className="description">
-							{ __( 'This will ask the AI to improve the field\'s current text, keeping its meaning and details.', 'beyond-elysium' ) }
+							{ __(
+								"This will ask the AI to improve the field's current text, keeping its meaning and details.",
+								'beyond-elysium'
+							) }
 						</p>
 					) : (
 						<label>
-							{ __( "What should this be about?", 'beyond-elysium' ) }
+							{ __(
+								'What should this be about?',
+								'beyond-elysium'
+							) }
 							<textarea
 								value={ instruction }
-								onChange={ ( e ) => setInstruction( e.target.value ) }
-								placeholder={ __( 'e.g. a stoic Brujah who lost everything in the Anarch Revolt', 'beyond-elysium' ) }
+								onChange={ ( e ) =>
+									setInstruction( e.target.value )
+								}
+								placeholder={ __(
+									'e.g. a stoic Brujah who lost everything in the Anarch Revolt',
+									'beyond-elysium'
+								) }
 								rows={ 3 }
 							/>
 						</label>

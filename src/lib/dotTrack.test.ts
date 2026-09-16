@@ -1,24 +1,57 @@
-import { computeDotStates, nextTrackValueOnClick, stepTrackValue } from './dotTrack';
+import {
+	computeDotStates,
+	nextTrackValueOnClick,
+	stepTrackValue,
+} from './dotTrack';
 
 describe( 'computeDotStates', () => {
 	it( 'fills up to permanent when temporary equals permanent', () => {
-		expect( computeDotStates( 3, 3, 5 ) ).toEqual( [ 'filled', 'filled', 'filled', 'empty', 'empty' ] );
+		expect( computeDotStates( 3, 3, 5 ) ).toEqual( [
+			'filled',
+			'filled',
+			'filled',
+			'empty',
+			'empty',
+		] );
 	} );
 
 	it( 'marks the gap as spent when temporary is below permanent', () => {
-		expect( computeDotStates( 4, 2, 5 ) ).toEqual( [ 'filled', 'filled', 'spent', 'spent', 'empty' ] );
+		expect( computeDotStates( 4, 2, 5 ) ).toEqual( [
+			'filled',
+			'filled',
+			'spent',
+			'spent',
+			'empty',
+		] );
 	} );
 
 	it( 'marks the excess as overflow when temporary exceeds permanent, never clamping', () => {
-		expect( computeDotStates( 2, 5, 5 ) ).toEqual( [ 'filled', 'filled', 'overflow', 'overflow', 'overflow' ] );
+		expect( computeDotStates( 2, 5, 5 ) ).toEqual( [
+			'filled',
+			'filled',
+			'overflow',
+			'overflow',
+			'overflow',
+		] );
 	} );
 
 	it( 'handles zero permanent and zero temporary as all empty', () => {
-		expect( computeDotStates( 0, 0, 4 ) ).toEqual( [ 'empty', 'empty', 'empty', 'empty' ] );
+		expect( computeDotStates( 0, 0, 4 ) ).toEqual( [
+			'empty',
+			'empty',
+			'empty',
+			'empty',
+		] );
 	} );
 
 	it( 'handles permanent and temporary both at max as all filled', () => {
-		expect( computeDotStates( 5, 5, 5 ) ).toEqual( [ 'filled', 'filled', 'filled', 'filled', 'filled' ] );
+		expect( computeDotStates( 5, 5, 5 ) ).toEqual( [
+			'filled',
+			'filled',
+			'filled',
+			'filled',
+			'filled',
+		] );
 	} );
 } );
 

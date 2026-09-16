@@ -15,9 +15,9 @@ use WP_UnitTestCase;
 
 /**
  * `Sheets_Controller`'s two routes, dispatched as real REST requests: `%PDF-`
- * bytes for an owner, `403` for a non-owner, `503 signing_unavailable` with
- * zero bytes when the cert is unreadable, and ST-only values absent from the
- * byte stream for a non-manager. `rest_get_server()->dispatch()` stops short
+ * bytes for an owner, `403` for a non-owner, an UNSIGNED-stamped copy when
+ * the cert is unreadable, and ST-only values absent from the byte stream for a
+ * non-manager. `rest_get_server()->dispatch()` stops short
  * of the real HTTP serve step, so `$response->get_data()['bytes']` is read
  * directly rather than needing the `rest_pre_serve_request` filter to fire
  * (Section 4c's own note on why this route shape stays testable).
@@ -142,7 +142,12 @@ class SheetsControllerThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'ownership_denied', $response->as_error()->get_error_code() );
 	}
 
-	public function test_signing_unavailable_returns_503_with_no_bytes(): void {
+	/**
+	 * 1.0.0-review F-042, owner ruling 2026-09-14: with no signing certificate a sheet still
+	 * prints - clearly marked unsigned, never passed off as a signed copy. It used to refuse with
+	 * `503 signing_unavailable`.
+	 */
+	public function test_with_no_signing_certificate_a_sheet_prints_marked_unsigned(): void {
 		// Hides, then always restores, the *shared* cert file (PdfWriterThreadTest's
 		// tests run in this same process and need it readable again immediately after).
 		$cert_path = BE_PDF_SIGNING_CERT;
@@ -153,9 +158,23 @@ class SheetsControllerThreadTest extends WP_UnitTestCase {
 			rename( $cert_path . '.hidden', $cert_path );
 		}
 
-		$this->assertSame( 503, $response->get_status() );
-		$this->assertSame( 'signing_unavailable', $response->as_error()->get_error_code() );
-		$this->assertArrayNotHasKey( 'bytes', (array) $response->get_data() );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$bytes = (string) $response->get_data()['bytes'];
+		$this->assertStringStartsWith( '%PDF-', $bytes );
+		$this->assertStringNotContainsString( '/ByteRange', $bytes, 'no signature dictionary in an unsigned copy' );
+		$this->assertStringEndsWith( '-unsigned.pdf', $response->get_data()['filename'] );
+		$this->assertStringContainsString( 'UNSIGNED', self::text_of( $bytes ) );
+	}
+
+	private static function text_of( string $bytes ): string {
+		if ( ! shell_exec( 'command -v pdftotext' ) ) {
+			self::markTestSkipped( 'pdftotext (poppler) is not installed.' );
+		}
+		$path = wp_tempnam( 'be-unsigned' );
+		file_put_contents( $path, $bytes );
+		$text = (string) shell_exec( 'pdftotext ' . escapeshellarg( $path ) . ' - 2>/dev/null' );
+		unlink( $path );
+		return $text;
 	}
 
 	public function test_storyteller_only_values_are_absent_from_the_byte_stream_for_a_non_manager(): void {

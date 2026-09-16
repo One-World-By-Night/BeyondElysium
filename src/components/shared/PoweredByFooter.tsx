@@ -11,6 +11,7 @@ import api from '../../api/client';
 import type { CreditsResponse, InMemoriamEntry } from '../../api/client';
 import Modal from './Modal';
 import AiAssistButton from './AiAssistButton';
+import HelpButton from './HelpButton';
 import './PoweredByFooter.css';
 
 /**
@@ -23,7 +24,9 @@ export function PoweredByFooter() {
 
 	return (
 		<div className="be-powered-by">
-			{ __( 'Powered by ', 'beyond-elysium' ) }
+			{ __( 'Powered by', 'beyond-elysium' ) }{ ' ' }
+			{ /* A link, not a button: one word inside the sentence, kept out of the button touch-target floor (breakpoints.css). */ }
+			{ /* eslint-disable-next-line jsx-a11y/anchor-is-valid */ }
 			<a
 				href="#"
 				className="be-powered-by__link"
@@ -46,14 +49,15 @@ export function PoweredByFooter() {
  * be_manage_games.
  */
 function CreditsModal( { onClose }: { onClose: () => void } ) {
-	const [ data, setData ] = useState<CreditsResponse | null>( null );
+	const [ data, setData ] = useState< CreditsResponse | null >( null );
 	const [ editing, setEditing ] = useState( false );
 	const [ draftText, setDraftText ] = useState( '' );
-	const [ draftList, setDraftList ] = useState<InMemoriamEntry[]>( [] );
+	const [ draftList, setDraftList ] = useState< InMemoriamEntry[] >( [] );
 	const [ saving, setSaving ] = useState( false );
-	const [ error, setError ] = useState<string | null>( null );
+	const [ error, setError ] = useState< string | null >( null );
 
-	const canManage = window.beyondElysium?.capabilities?.be_manage_games ?? false;
+	const canManage =
+		window.beyondElysium?.capabilities?.be_manage_games ?? false;
 
 	useEffect( () => {
 		api.credits
@@ -63,14 +67,19 @@ function CreditsModal( { onClose }: { onClose: () => void } ) {
 				setDraftText( result.credits_text );
 				setDraftList( result.in_memoriam );
 			} )
-			.catch( () => setError( __( 'Failed to load credits.', 'beyond-elysium' ) ) );
+			.catch( () =>
+				setError( __( 'Failed to load credits.', 'beyond-elysium' ) )
+			);
 	}, [] );
 
 	async function save() {
 		setSaving( true );
 		setError( null );
 		try {
-			const result = await api.credits.update( { credits_text: draftText, in_memoriam: draftList } );
+			const result = await api.credits.update( {
+				credits_text: draftText,
+				in_memoriam: draftList,
+			} );
 			setData( result );
 			setEditing( false );
 		} catch {
@@ -80,8 +89,12 @@ function CreditsModal( { onClose }: { onClose: () => void } ) {
 		}
 	}
 
-	function updateEntry( index: number, patch: Partial<InMemoriamEntry> ) {
-		setDraftList( ( list ) => list.map( ( entry, i ) => ( i === index ? { ...entry, ...patch } : entry ) ) );
+	function updateEntry( index: number, patch: Partial< InMemoriamEntry > ) {
+		setDraftList( ( list ) =>
+			list.map( ( entry, i ) =>
+				i === index ? { ...entry, ...patch } : entry
+			)
+		);
 	}
 
 	function removeEntry( index: number ) {
@@ -94,8 +107,15 @@ function CreditsModal( { onClose }: { onClose: () => void } ) {
 
 	return (
 		<Modal title={ __( 'Credits', 'beyond-elysium' ) } onClose={ onClose }>
+			<div className="be-help-heading">
+				<HelpButton helpKey="credits" />
+			</div>
 			<p>
-				<a href="https://beyondelysium.com" target="_blank" rel="noopener noreferrer">
+				<a
+					href="https://beyondelysium.com"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
 					beyondelysium.com
 				</a>
 			</p>
@@ -112,7 +132,10 @@ function CreditsModal( { onClose }: { onClose: () => void } ) {
 				<div className="be-powered-by__edit">
 					<label>
 						{ __( 'Credits text', 'beyond-elysium' ) }
-						<textarea value={ draftText } onChange={ ( e ) => setDraftText( e.target.value ) } />
+						<textarea
+							value={ draftText }
+							onChange={ ( e ) => setDraftText( e.target.value ) }
+						/>
 						<AiAssistButton
 							capability="be_manage_games"
 							fieldContext="credits_text"
@@ -129,16 +152,29 @@ function CreditsModal( { onClose }: { onClose: () => void } ) {
 								aria-label={ __( 'Name', 'beyond-elysium' ) }
 								placeholder={ __( 'Name', 'beyond-elysium' ) }
 								value={ entry.name }
-								onChange={ ( e ) => updateEntry( i, { name: e.target.value } ) }
+								onChange={ ( e ) =>
+									updateEntry( i, { name: e.target.value } )
+								}
 							/>
 							<input
 								type="text"
-								aria-label={ __( 'Note (optional)', 'beyond-elysium' ) }
-								placeholder={ __( 'Note (optional)', 'beyond-elysium' ) }
+								aria-label={ __(
+									'Note (optional)',
+									'beyond-elysium'
+								) }
+								placeholder={ __(
+									'Note (optional)',
+									'beyond-elysium'
+								) }
 								value={ entry.note ?? '' }
-								onChange={ ( e ) => updateEntry( i, { note: e.target.value } ) }
+								onChange={ ( e ) =>
+									updateEntry( i, { note: e.target.value } )
+								}
 							/>
-							<button type="button" onClick={ () => removeEntry( i ) }>
+							<button
+								type="button"
+								onClick={ () => removeEntry( i ) }
+							>
 								{ __( 'Remove', 'beyond-elysium' ) }
 							</button>
 						</div>
@@ -148,10 +184,20 @@ function CreditsModal( { onClose }: { onClose: () => void } ) {
 					</button>
 
 					<div className="be-powered-by__edit-actions">
-						<button type="button" disabled={ saving } onClick={ save }>
-							{ saving ? __( 'Saving…', 'beyond-elysium' ) : __( 'Save', 'beyond-elysium' ) }
+						<button
+							type="button"
+							disabled={ saving }
+							onClick={ save }
+						>
+							{ saving
+								? __( 'Saving…', 'beyond-elysium' )
+								: __( 'Save', 'beyond-elysium' ) }
 						</button>
-						<button type="button" disabled={ saving } onClick={ () => setEditing( false ) }>
+						<button
+							type="button"
+							disabled={ saving }
+							onClick={ () => setEditing( false ) }
+						>
 							{ __( 'Cancel', 'beyond-elysium' ) }
 						</button>
 					</div>
@@ -165,13 +211,21 @@ function CreditsModal( { onClose }: { onClose: () => void } ) {
 						{ data.in_memoriam.map( ( entry, i ) => (
 							<li key={ i }>
 								{ entry.name }
-								{ entry.note && <span className="be-powered-by__memoriam-note"> — { entry.note }</span> }
+								{ entry.note && (
+									<span className="be-powered-by__memoriam-note">
+										{ ' ' }
+										— { entry.note }
+									</span>
+								) }
 							</li>
 						) ) }
 					</ul>
 
 					{ canManage && (
-						<button type="button" onClick={ () => setEditing( true ) }>
+						<button
+							type="button"
+							onClick={ () => setEditing( true ) }
+						>
 							{ __( 'Edit', 'beyond-elysium' ) }
 						</button>
 					) }

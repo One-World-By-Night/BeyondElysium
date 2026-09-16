@@ -77,15 +77,13 @@ class Entries_Controller extends Base_Controller {
 		// character's allocation, even though the capability alone would pass (§3.4/§5.8).
 		$can_manage = Authorization::check_request( 'be_manage_plots', $request );
 
-		// Whether this plot is someone else's action-allocation - its entries disclose
-		// exact background dot ratings and are never visible past ownership (§3.4/§5.8).
-		$is_unowned_allocation = ! $can_manage
-			&& Action_Allocator::actor_character_id( (int) $plot->id ) !== null
-			&& ! Action_Allocator::is_actor_owned_by( (int) $plot->id, get_current_user_id() );
+		// Someone else's action allocation is not found, as it is for the plot itself - its entries
+		// disclose exact background dot ratings (§3.4/§5.8, 1.0.0-review F-063).
+		if ( ! $can_manage && self::is_unowned_allocation( $plot ) ) {
+			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
+		}
 
-		$entries = $is_unowned_allocation
-			? []
-			: Plot_Entry::for_plot( (int) $plot->id, [ 'entry_type' => $request->get_param( 'entry_type' ) ] );
+		$entries = Plot_Entry::for_plot( (int) $plot->id, [ 'entry_type' => $request->get_param( 'entry_type' ) ] );
 
 		if ( ! $can_manage ) {
 			$entries = array_values( array_filter( $entries, static function ( $entry ) {
@@ -118,9 +116,9 @@ class Entries_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', sprintf( __( 'entry_type must be one of: %s.', 'beyond-elysium' ), implode( ', ', Plot_Entry::ENTRY_TYPES ) ), 400 );
 		}
 
-		$can_manage = current_user_can( 'be_manage_plots' );
+		$can_manage = Authorization::can( 'be_manage_plots' );
 		if ( $entry_type === 'action' ) {
-			if ( ! $can_manage && ! Authorization::check( 'be_submit_actions' ) ) {
+			if ( ! $can_manage && ! Authorization::can( 'be_submit_actions' ) ) {
 				return $this->error( 'forbidden', __( 'You do not have permission to submit an action.', 'beyond-elysium' ), 403 );
 			}
 		} elseif ( ! $can_manage ) {
@@ -128,9 +126,19 @@ class Entries_Controller extends Base_Controller {
 			return $this->error( 'forbidden', sprintf( __( 'You do not have permission to create a %s entry.', 'beyond-elysium' ), $entry_type ), 403 );
 		}
 
+		// Another character's action-allocation plot is hidden from a non-manager everywhere
+		// else in the API (Plots_Controller) - it cannot be written to either (1.0.0-review F-038).
+		if ( ! $can_manage && self::is_unowned_allocation( $plot ) ) {
+			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
+		}
+
 		$content = $request->get_param( 'content' );
 		if ( empty( $content ) ) {
 			return $this->error( 'invalid_param', __( 'Missing required field: content.', 'beyond-elysium' ), 400 );
+		}
+
+		if ( self::carries_apr_marker( (string) $content ) ) {
+			return $this->reserved_entry_error();
 		}
 
 		$id = Plot_Entry::create( [
@@ -179,7 +187,7 @@ class Entries_Controller extends Base_Controller {
 			return $this->error( 'apr_managed', __( 'This entry is managed by the Action & Rumor system and cannot be edited here.', 'beyond-elysium' ), 409 );
 		}
 
-		$can_manage = current_user_can( 'be_manage_plots' );
+		$can_manage = Authorization::can( 'be_manage_plots' );
 		if ( ! $can_manage ) {
 			if ( $entry->entry_type !== 'action' || (int) $entry->author_id !== get_current_user_id() ) {
 				return $this->error( 'ownership_denied', __( 'You may only edit your own action entries.', 'beyond-elysium' ), 403 );
@@ -193,6 +201,11 @@ class Entries_Controller extends Base_Controller {
 		$content = $request->get_param( 'content' );
 		if ( $content === null ) {
 			return $this->error( 'invalid_param', __( 'Missing required field: content.', 'beyond-elysium' ), 400 );
+		}
+
+		// An ordinary entry must not be turned into a budget or ledger row after the fact either.
+		if ( self::carries_apr_marker( (string) $content ) ) {
+			return $this->reserved_entry_error();
 		}
 
 		$update = [ 'content' => wp_kses_post( $content ) ];
@@ -246,11 +259,38 @@ class Entries_Controller extends Base_Controller {
 	 * @return bool
 	 */
 	private static function is_apr_managed( $entry ): bool {
-		if ( $entry->entry_type !== 'action' ) {
-			return false;
-		}
-		$data = json_decode( (string) $entry->content, true );
+		return $entry->entry_type === 'action' && self::carries_apr_marker( (string) $entry->content );
+	}
+
+	/**
+	 * Whether an entry body carries the Action & Rumor system's own JSON
+	 * marker. The budget and ledger code trusts any such entry, so only that
+	 * system's own routes may write one - a body from this generic route that
+	 * carries the marker is a forgery (1.0.0-review F-038).
+	 *
+	 * @param string $content
+	 * @return bool
+	 */
+	private static function carries_apr_marker( string $content ): bool {
+		$data = json_decode( $content, true );
 		return is_array( $data ) && in_array( $data['source'] ?? '', [ 'allocator', 'ledger' ], true );
+	}
+
+	/**
+	 * Whether a plot is an action-allocation plot belonging to a character
+	 * the current user does not own.
+	 *
+	 * @param object $plot
+	 * @return bool
+	 */
+	private static function is_unowned_allocation( $plot ): bool {
+		return Action_Allocator::actor_character_id( (int) $plot->id ) !== null
+			&& ! Action_Allocator::is_actor_owned_by( (int) $plot->id, get_current_user_id() );
+	}
+
+	/** @return \WP_Error The refusal for a body carrying the Action & Rumor marker. */
+	private function reserved_entry_error(): \WP_Error {
+		return $this->error( 'reserved_entry', __( 'This entry format is reserved for the Action & Rumor system.', 'beyond-elysium' ), 400 );
 	}
 
 	/**

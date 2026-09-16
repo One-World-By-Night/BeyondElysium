@@ -212,15 +212,15 @@ class ApprovalRulesControllerTest extends WP_UnitTestCase {
 	public function test_a_whole_power_approval_override(): void {
 		wp_set_current_user( $this->admin_id );
 		$response = $this->create_rule( [
-			'block_slug' => 'ar-test-disciplines', 'target_type' => 'power', 'target_name' => 'Thaumaturgy', 'approval' => 'coordinator',
+			'block_slug' => 'ar-test-disciplines', 'target_type' => 'power', 'target_name' => 'Thaumaturgy', 'approval' => 'st',
 		] );
 
 		$this->assertSame( 201, $response->get_status() );
-		$this->assertSame( 'coordinator', $response->get_data()['approval'] );
+		$this->assertSame( 'st', $response->get_data()['approval'] );
 
 		$fork  = Schema_Block::find_for_game( 'ar-test-disciplines', 'approval-rules-test' );
 		$power = current( array_filter( $fork->definition->powers, fn( $p ) => $p->name === 'Thaumaturgy' ) );
-		$this->assertSame( 'coordinator', $power->approval_override );
+		$this->assertSame( 'st', $power->approval_override );
 	}
 
 	public function test_a_single_level_reason(): void {
@@ -310,17 +310,17 @@ class ApprovalRulesControllerTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->admin_id );
 		$response = $this->create_rule( [
 			'block_slug' => 'ar-test-resources', 'target_type' => 'pool_range', 'target_name' => 'Willpower',
-			'from' => 8, 'to' => 10, 'approval' => 'coordinator', 'reason' => 'Grapevine cap review',
+			'from' => 8, 'to' => 10, 'approval' => 'st', 'reason' => 'Grapevine cap review',
 		] );
 
 		$this->assertSame( 201, $response->get_status() );
 		$data = $response->get_data();
 		$this->assertSame( [ 8, 10 ], $data['extra'] );
-		$this->assertSame( 'coordinator', $data['approval'] );
+		$this->assertSame( 'st', $data['approval'] );
 
 		$fork = Schema_Block::find_for_game( 'ar-test-resources', 'approval-rules-test' );
 		$pool = current( array_filter( $fork->definition->pools, fn( $p ) => $p->name === 'Willpower' ) );
-		$this->assertSame( 'coordinator', $pool->approval_by_value[0]->approval );
+		$this->assertSame( 'st', $pool->approval_by_value[0]->approval );
 	}
 
 	public function test_a_pool_target_against_a_trait_list_block_is_rejected(): void {
@@ -338,17 +338,17 @@ class ApprovalRulesControllerTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->admin_id );
 		$response = $this->create_rule( [
 			'block_slug' => 'ar-test-identity', 'target_type' => 'field_option', 'target_name' => 'Clan',
-			'option' => 'Antediluvian', 'approval' => 'coordinator', 'reason' => 'Elder-generation vampire',
+			'option' => 'Antediluvian', 'approval' => 'st', 'reason' => 'Elder-generation vampire',
 		] );
 
 		$this->assertSame( 201, $response->get_status() );
 		$data = $response->get_data();
 		$this->assertSame( 'Antediluvian', $data['extra'] );
-		$this->assertSame( 'coordinator', $data['approval'] );
+		$this->assertSame( 'st', $data['approval'] );
 
 		$fork  = Schema_Block::find_for_game( 'ar-test-identity', 'approval-rules-test' );
 		$field = current( array_filter( $fork->definition->fields, fn( $f ) => $f->name === 'Clan' ) );
-		$this->assertSame( 'coordinator', $field->approval_by_option->Antediluvian->approval );
+		$this->assertSame( 'st', $field->approval_by_option->Antediluvian->approval );
 
 		// A second, unrelated option on the same field must never be touched.
 		$this->assertObjectNotHasProperty( 'Brujah', $field->approval_by_option );
@@ -367,7 +367,7 @@ class ApprovalRulesControllerTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->admin_id );
 		$this->create_rule( [
 			'block_slug' => 'ar-test-identity', 'target_type' => 'field_option', 'target_name' => 'Clan',
-			'option' => 'Antediluvian', 'approval' => 'coordinator',
+			'option' => 'Antediluvian', 'approval' => 'st',
 		] );
 		$second = $this->create_rule( [
 			'block_slug' => 'ar-test-identity', 'target_type' => 'field_option', 'target_name' => 'Clan',
@@ -448,7 +448,7 @@ class ApprovalRulesControllerTest extends WP_UnitTestCase {
 		$request->set_url_params( [ 'game_slug' => 'approval-rules-test' ] );
 		$data = $this->dispatch( $request )->get_data();
 
-		$this->assertSame( [ 'auto', 'st', 'coordinator' ], $data['approval_levels'] );
+		$this->assertSame( [ 'auto', 'st' ], $data['approval_levels'] );
 		$this->assertContains( 'Coordinator Approval', $data['reason_presets'] );
 		$this->assertNotContains( 'Unregulated', $data['reason_presets'], 'unregulated names no rule worth creating' );
 	}

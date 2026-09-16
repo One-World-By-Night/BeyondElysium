@@ -12,6 +12,7 @@
  * theme's on kony-sabbat.net (width just happened to coincidentally match). Two classes
  * (0,2,0) beats it cleanly. */
 .be-searchable-select .be-searchable-select__input {
+
 	/* No project-wide box-sizing reset exists - without this, the default content-box
 	 * model adds this padding + border on TOP of the 100% width, overflowing this
 	 * element past its own container by exactly that amount (confirmed live, 2026-09-09:

@@ -3,6 +3,7 @@
 namespace BeyondElysium\Models;
 
 use BeyondElysium\Database\Manager;
+use BeyondElysium\Database\Transaction;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -152,6 +153,14 @@ class Connection {
 		$target_id = $target_type === 'tag' ? null : (int) $data['target_id'];
 		$label     = $data['label'] ?? null;
 
+		// The check and the insert hold the source's row between them, so requests that arrive
+		// together take turns and the second finds the first (1.0.0-review F-090).
+		$unit = Transaction::begin( 'be_connection_create' );
+		if ( ! self::lock_source( $source_type, (int) $data['source_id'] ) ) {
+			Transaction::rollback( $unit );
+			return false;
+		}
+
 		$existing = self::find_duplicate(
 			(int) $data['game_id'],
 			$source_type,
@@ -161,6 +170,7 @@ class Connection {
 			$label
 		);
 		if ( $existing ) {
+			Transaction::commit( $unit );
 			return (int) $existing->id;
 		}
 
@@ -176,7 +186,35 @@ class Connection {
 			'created_at'  => current_time( 'mysql' ),
 		];
 
-		return Manager::insert( 'connections', $insert );
+		$id = Manager::insert( 'connections', $insert );
+		if ( ! $id ) {
+			Transaction::rollback( $unit );
+			return false;
+		}
+
+		Transaction::commit( $unit );
+		return $id;
+	}
+
+	/**
+	 * Holds a connection's source row until the surrounding transaction ends.
+	 * A tag has no row to hold. False when the lock itself failed - a lock wait
+	 * that timed out - so nothing is written unguarded.
+	 *
+	 * @param string $type
+	 * @param int    $id
+	 * @return bool
+	 */
+	private static function lock_source( string $type, int $id ): bool {
+		global $wpdb;
+		$tables = [ 'character' => 'characters', 'plot' => 'plots', 'world_object' => 'world_objects' ];
+		if ( ! isset( $tables[ $type ] ) ) {
+			return true;
+		}
+
+		$wpdb->last_error = '';
+		Manager::get_var( 'SELECT id FROM ' . Manager::table( $tables[ $type ] ) . ' WHERE id = %d FOR UPDATE', $id );
+		return $wpdb->last_error === '';
 	}
 
 	/**

@@ -52,9 +52,9 @@ class Seeder {
 	const MAGE_ROTES_PATH = __DIR__ . '/../../data/Rotes.gex';
 
 	/**
-	 * Path to the extracted Enlightened Grimoire rotes CSV (~880 net-new rotes plus
-	 * category data for the ~140 that overlap the existing 201 GEX rotes), relative to
-	 * this file. Generated once, offline, by `tools/grimoire/` (repo root, outside this
+	 * Path to the extracted Enlightened Grimoire rotes CSV (670 rows: 603 net-new rotes
+	 * plus category data for the 67 that match the existing 201 GEX rotes, as measured in
+	 * Decision 093), relative to this file. Generated once, offline, by `tools/grimoire/` (repo root, outside this
 	 * shippable subfolder) - never a runtime PDF read. See
 	 * BE_PROCESS/mage-rotes-grimoire-design.md §8. Missing or malformed falls back to the
 	 * pre-existing base catalog unchanged, same graceful-degradation style as every other
@@ -85,106 +85,214 @@ class Seeder {
 
 			// System blocks are refreshed from the GVM source; a chronicle's own edited blocks (is_system = 0) are never touched.
 			if ( (int) $existing->is_system === 1 ) {
-				$block = self::preserve_admin_descriptions( $block, $existing->definition );
+				$block = self::preserve_admin_edits( $block, $existing->definition );
 				Schema_Block::update( $block['slug'], $block );
+				// And every chronicle's copy of it, keeping what each chronicle changed (1.0.0-review F-034).
+				Schema_Block::refresh_forks( $block['slug'] );
 			}
 		}
 	}
 
 	/**
-	 * Carries a system block's admin-added `description` object (its
-	 * `reference`/`description`/`source` sections, whichever are set) forward
-	 * across a reseed, matched by name. `Schema_Block::update()` above replaces
-	 * a system block's entire `definition` on every version bump (R5) - the
-	 * correct behavior for everything sourced from GVM/CSV data, but
-	 * `description` is the one field on a catalog item that is never sourced
-	 * from anywhere; it exists only because a site admin typed into it (a
-	 * house rule, a page reference). Without this, that text would be
-	 * silently destroyed the next time this plugin updates, which defeats the
-	 * entire point of the field.
+	 * Keys on a catalog entry that only ever come from a site administrator -
+	 * the seed data never writes them - by the definition list they live in.
+	 * `levels` are a tiered_power family's own levels.
+	 */
+	const ADMIN_OWNED_ENTRY_KEYS = [
+		'items'  => [ 'description', 'approval', 'reason', 'approval_by_value' ],
+		'powers' => [ 'description', 'approval_override' ],
+		'levels' => [ 'description', 'approval', 'reason' ],
+		'pools'  => [ 'description', 'approval_by_value' ],
+		'fields' => [ 'description', 'approval_by_option' ],
+	];
+
+	/** Definition-wide keys only an administrator sets. */
+	const ADMIN_OWNED_BLOCK_KEYS = [ 'approval_rules' ];
+
+	/**
+	 * Carries a site administrator's own edits to a system block across a
+	 * reseed (1.0.0-review F-011; owner ruling 2026-09-14: an update refreshes
+	 * only what the seed data owns). `Schema_Block::update()` replaces a system
+	 * block's whole `definition` on every version bump, which is right for
+	 * everything sourced from GVM/CSV data - names, costs, notes, translations -
+	 * and wrong for the keys in ADMIN_OWNED_ENTRY_KEYS / ADMIN_OWNED_BLOCK_KEYS,
+	 * which exist only because an administrator set them. Those are copied from
+	 * the stored entry onto the fresh one, matched by name (a level by its
+	 * `power_name`, or its number when it has none). An entry the administrator
+	 * added (`admin_added`, stamped by `mark_admin_additions()`) that the seed
+	 * data does not have is kept; any other entry the seed data dropped goes.
 	 *
-	 * Matched by exact name - `trait_list` items by `name`, a `tiered_power`
-	 * family by its own `name`, and a level within it by `power_name` scoped
-	 * to that same family. A renamed source item legitimately loses its old
-	 * note rather than guessing which new item it belongs to now (Decision
-	 * 043's tie rule, applied to a rename instead of a merge).
+	 * A renamed source entry legitimately loses its old edits rather than the
+	 * reseed guessing which new entry they belong to (Decision 043's tie rule).
 	 *
 	 * @param array<string,mixed> $new_block
 	 * @param object              $old_definition
 	 * @return array<string,mixed>
 	 */
-	private static function preserve_admin_descriptions( array $new_block, object $old_definition ): array {
-		$section_type = $new_block['section_type'] ?? null;
-
-		if ( $section_type === 'trait_list' ) {
-			$old_by_name = [];
-			foreach ( $old_definition->items ?? [] as $raw_item ) {
-				// Cast to array: $old_definition decodes as nested stdClass (a generic
-				// `object` PHPStan can't know the shape of), and a plain array read
-				// avoids the "access to an undefined property" false positive that comes
-				// with reading a property PHPStan has no declared shape for.
-				$item = (array) $raw_item;
-				// isset(), not empty() - description decodes as a stdClass (however few
-				// keys it holds), and PHP's empty() never treats an object as empty.
-				if ( isset( $item['description'] ) ) {
-					$old_by_name[ $item['name'] ] = $item['description'];
-				}
-			}
-			if ( $old_by_name === [] ) {
-				return $new_block;
-			}
-			foreach ( $new_block['definition']['items'] as &$item ) {
-				if ( isset( $old_by_name[ $item['name'] ] ) ) {
-					$item['description'] = $old_by_name[ $item['name'] ];
-				}
-			}
-			unset( $item );
+	private static function preserve_admin_edits( array $new_block, object $old_definition ): array {
+		$old = json_decode( (string) wp_json_encode( $old_definition ), true );
+		if ( ! is_array( $old ) || ! isset( $new_block['definition'] ) || ! is_array( $new_block['definition'] ) ) {
 			return $new_block;
 		}
+		$new = $new_block['definition'];
 
-		if ( $section_type === 'tiered_power' ) {
-			$old_power_desc = [];
-			$old_level_desc = [];
-			foreach ( $old_definition->powers ?? [] as $raw_power ) {
-				// Same array-cast reasoning as the trait_list branch above.
-				$power = (array) $raw_power;
-				// isset(), not empty() - same reasoning as the trait_list branch above.
-				if ( isset( $power['description'] ) ) {
-					$old_power_desc[ $power['name'] ] = $power['description'];
-				}
-				foreach ( $power['levels'] ?? [] as $raw_level ) {
-					$level = (array) $raw_level;
-					if ( isset( $level['description'] ) ) {
-						$old_level_desc[ $power['name'] ][ $level['power_name'] ] = $level['description'];
-					}
-				}
+		foreach ( self::ADMIN_OWNED_BLOCK_KEYS as $key ) {
+			if ( array_key_exists( $key, $old ) && ! array_key_exists( $key, $new ) ) {
+				$new[ $key ] = $old[ $key ];
 			}
-			if ( $old_power_desc === [] && $old_level_desc === [] ) {
-				return $new_block;
-			}
-			foreach ( $new_block['definition']['powers'] as &$power ) {
-				if ( isset( $old_power_desc[ $power['name'] ] ) ) {
-					$power['description'] = $old_power_desc[ $power['name'] ];
-				}
-				foreach ( $power['levels'] as &$level ) {
-					if ( isset( $old_level_desc[ $power['name'] ][ $level['power_name'] ] ) ) {
-						$level['description'] = $old_level_desc[ $power['name'] ][ $level['power_name'] ];
-					}
-				}
-				unset( $level );
-			}
-			unset( $power );
-			return $new_block;
 		}
 
+		foreach ( [ 'items', 'pools', 'fields' ] as $list ) {
+			if ( isset( $old[ $list ] ) && is_array( $old[ $list ] ) ) {
+				$new[ $list ] = self::merge_admin_entries( (array) ( $new[ $list ] ?? [] ), $old[ $list ], self::ADMIN_OWNED_ENTRY_KEYS[ $list ], 'name' );
+			}
+		}
+
+		if ( isset( $old['powers'] ) && is_array( $old['powers'] ) ) {
+			$new['powers'] = self::merge_admin_entries(
+				(array) ( $new['powers'] ?? [] ),
+				$old['powers'],
+				self::ADMIN_OWNED_ENTRY_KEYS['powers'],
+				'name',
+				static function ( array $new_power, array $old_power ): array {
+					$new_power['levels'] = self::merge_admin_entries(
+						(array) ( $new_power['levels'] ?? [] ),
+						(array) ( $old_power['levels'] ?? [] ),
+						self::ADMIN_OWNED_ENTRY_KEYS['levels'],
+						'power_name'
+					);
+					return $new_power;
+				}
+			);
+		}
+
+		$new_block['definition'] = $new;
 		return $new_block;
+	}
+
+	/**
+	 * Merges one definition list: each fresh entry takes the stored entry's
+	 * admin-owned keys, and stored entries an administrator added that the
+	 * fresh list lacks are appended.
+	 *
+	 * @param array<int,mixed>      $new_entries
+	 * @param array<int,mixed>      $old_entries
+	 * @param array<int,string>     $keys
+	 * @param string                $id_key
+	 * @param callable|null         $nested Merges an entry's own nested list, given (new entry, old entry).
+	 * @return array<int,mixed>
+	 */
+	private static function merge_admin_entries( array $new_entries, array $old_entries, array $keys, string $id_key, ?callable $nested = null ): array {
+		$old_by_id = [];
+		foreach ( $old_entries as $entry ) {
+			if ( is_array( $entry ) ) {
+				$old_by_id[ self::entry_id( $entry, $id_key ) ] = $entry;
+			}
+		}
+
+		$present = [];
+		foreach ( $new_entries as &$entry ) {
+			if ( ! is_array( $entry ) ) {
+				continue;
+			}
+			$id             = self::entry_id( $entry, $id_key );
+			$present[ $id ] = true;
+			if ( ! isset( $old_by_id[ $id ] ) ) {
+				continue;
+			}
+			foreach ( $keys as $key ) {
+				if ( array_key_exists( $key, $old_by_id[ $id ] ) ) {
+					$entry[ $key ] = $old_by_id[ $id ][ $key ];
+				}
+			}
+			if ( $nested !== null ) {
+				$entry = $nested( $entry, $old_by_id[ $id ] );
+			}
+		}
+		unset( $entry );
+
+		foreach ( $old_by_id as $id => $old_entry ) {
+			if ( ! isset( $present[ $id ] ) && ! empty( $old_entry['admin_added'] ) ) {
+				$new_entries[] = $old_entry;
+			}
+		}
+
+		return $new_entries;
+	}
+
+	/**
+	 * An entry's identity within its list: its `$id_key` value, or for a level
+	 * with no power name, its level number.
+	 *
+	 * @param array<string,mixed> $entry
+	 * @param string              $id_key
+	 */
+	private static function entry_id( array $entry, string $id_key ): string {
+		if ( isset( $entry[ $id_key ] ) && (string) $entry[ $id_key ] !== '' ) {
+			return (string) $entry[ $id_key ];
+		}
+		return '#' . (string) ( $entry['level'] ?? '' );
+	}
+
+	/**
+	 * Stamps `admin_added` on every entry a site administrator's edit adds to a
+	 * system block - an item, power, level, pool, or field whose name the
+	 * stored definition does not have - so the next reseed keeps it rather than
+	 * treating it as something the seed data dropped (F-011). Entries already
+	 * marked keep their mark.
+	 *
+	 * @param object              $stored   The block's stored definition.
+	 * @param array<string,mixed> $incoming The definition being saved.
+	 * @return array<string,mixed>
+	 */
+	public static function mark_admin_additions( object $stored, array $incoming ): array {
+		$old = json_decode( (string) wp_json_encode( $stored ), true );
+		$old = is_array( $old ) ? $old : [];
+
+		foreach ( [ 'items', 'pools', 'fields', 'powers' ] as $list ) {
+			if ( ! isset( $incoming[ $list ] ) || ! is_array( $incoming[ $list ] ) ) {
+				continue;
+			}
+			$old_by_id = [];
+			foreach ( (array) ( $old[ $list ] ?? [] ) as $entry ) {
+				if ( is_array( $entry ) ) {
+					$old_by_id[ self::entry_id( $entry, 'name' ) ] = $entry;
+				}
+			}
+			foreach ( $incoming[ $list ] as &$entry ) {
+				if ( ! is_array( $entry ) ) {
+					continue;
+				}
+				$id = self::entry_id( $entry, 'name' );
+				if ( ! isset( $old_by_id[ $id ] ) ) {
+					$entry['admin_added'] = true;
+				} elseif ( $list === 'powers' && isset( $entry['levels'] ) && is_array( $entry['levels'] ) ) {
+					$known_levels = [];
+					foreach ( (array) ( $old_by_id[ $id ]['levels'] ?? [] ) as $level ) {
+						if ( is_array( $level ) ) {
+							$known_levels[ self::entry_id( $level, 'power_name' ) ] = true;
+						}
+					}
+					foreach ( $entry['levels'] as &$level ) {
+						if ( is_array( $level ) && ! isset( $known_levels[ self::entry_id( $level, 'power_name' ) ] ) ) {
+							$level['admin_added'] = true;
+						}
+					}
+					unset( $level );
+				}
+			}
+			unset( $entry );
+		}
+
+		return $incoming;
 	}
 
 	/**
 	 * Seed all system creature stacks.
 	 *
 	 * Idempotent: system stacks are refreshed from the definitions in this file, custom
-	 * stacks are left alone. Same reasoning as seed_schema_blocks().
+	 * stacks are left alone. Same reasoning as seed_schema_blocks(), and the same
+	 * rule for an administrator's additions (preserve_admin_sections()).
 	 */
 	public static function seed_creature_stacks(): void {
 		$stacks = self::get_stacks_to_seed();
@@ -198,9 +306,55 @@ class Seeder {
 			}
 
 			if ( (int) $existing->is_system === 1 ) {
-				Creature_Stack::update( $stack['slug'], $stack );
+				Creature_Stack::update( $stack['slug'], self::preserve_admin_sections( $stack, $existing->stack_definition ) );
 			}
 		}
+	}
+
+	/**
+	 * Keeps the sections a site administrator added to a system creature stack
+	 * (`admin_added`, stamped by `mark_admin_stack_sections()`) across a reseed,
+	 * when the seed data does not list that block itself (F-011). Everything
+	 * else about the stack - its name, its own sections, creation rules - is
+	 * the seed data's.
+	 *
+	 * @param array<string,mixed> $stack          The fresh stack from the seed data.
+	 * @param mixed               $old_definition The stored stack_definition.
+	 * @return array<string,mixed>
+	 */
+	private static function preserve_admin_sections( array $stack, $old_definition ): array {
+		$old = json_decode( (string) wp_json_encode( $old_definition ), true );
+		if ( ! is_array( $old ) || empty( $old['sections'] ) || ! isset( $stack['stack_definition']['sections'] ) ) {
+			return $stack;
+		}
+
+		$seeded = array_column( $stack['stack_definition']['sections'], 'block_slug' );
+		foreach ( $old['sections'] as $section ) {
+			if ( is_array( $section ) && ! empty( $section['admin_added'] ) && ! in_array( $section['block_slug'] ?? null, $seeded, true ) ) {
+				$stack['stack_definition']['sections'][] = $section;
+			}
+		}
+		return $stack;
+	}
+
+	/**
+	 * Stamps `admin_added` on each section a site administrator's edit adds to
+	 * a system creature stack - one whose block the stored stack does not list.
+	 *
+	 * @param mixed               $stored   The stack's stored stack_definition.
+	 * @param array<string,mixed> $incoming The stack_definition being saved.
+	 * @return array<string,mixed>
+	 */
+	public static function mark_admin_stack_sections( $stored, array $incoming ): array {
+		$old   = json_decode( (string) wp_json_encode( $stored ), true );
+		$known = is_array( $old ) ? array_column( (array) ( $old['sections'] ?? [] ), 'block_slug' ) : [];
+
+		foreach ( (array) ( $incoming['sections'] ?? [] ) as $i => $section ) {
+			if ( is_array( $section ) && ! in_array( $section['block_slug'] ?? null, $known, true ) ) {
+				$incoming['sections'][ $i ]['admin_added'] = true;
+			}
+		}
+		return $incoming;
 	}
 
 	// ---------------------------------------------------------------------------
@@ -417,10 +571,10 @@ class Seeder {
 		}
 
 		// A '-' immediately before a digit is a sign, not a range separator - drop it.
-		$cost = preg_replace( '/-(?=\d)/', '', $cost );
+		$cost = (string) preg_replace( '/-(?=\d)/', '', $cost );
 
 		// "1 to 5" -> "1-5", matching parse_cost_rule()'s real range branch.
-		$cost = preg_replace( '/\s+to\s+/i', '-', $cost );
+		$cost = (string) preg_replace( '/\s+to\s+/i', '-', $cost );
 
 		return $cost;
 	}
@@ -474,7 +628,7 @@ class Seeder {
 							$note  = trim( (string) ( $item['note'] ?? '' ), $trim_chars );
 							$label = $entry['labels'][ $item['source'] ] ?? $item['source'];
 							$tier  = $note;
-							foreach ( preg_split( '/\s+/', $note ) as $word ) {
+							foreach ( preg_split( '/\s+/', $note ) ?: [] as $word ) {
 								$key = strtolower( trim( $word, '.' ) );
 								if ( isset( $note_overrides[ $key ] ) ) {
 									$label = $note_overrides[ $key ];
@@ -1549,7 +1703,7 @@ class Seeder {
 		foreach ( $gvm_raw_items as $i => $item ) {
 			$note  = trim( (string) ( $item['note'] ?? '' ), $trim_chars );
 			$label = $entry['labels'][ $item['source'] ] ?? $item['source'];
-			foreach ( preg_split( '/\s+/', $note ) as $word ) {
+			foreach ( preg_split( '/\s+/', $note ) ?: [] as $word ) {
 				$override_key = strtolower( trim( $word, '.' ) );
 				if ( isset( $note_overrides[ $override_key ] ) ) {
 					$label = $note_overrides[ $override_key ];
@@ -1867,7 +2021,9 @@ class Seeder {
 
 			if ( $entry['source'] === 'container' ) {
 				$extra['shape']      = $resolved['shape'];
-				$extra['sequential'] = ( $resolved['shape'] === 'shared_levels' );
+				// Levels add up (owner ruling, 1.0.0-review F-040): raising a power costs every level
+				// passed through, named ladders (Disciplines, Arcanoi, ...) included, not only shared ones.
+				$extra['sequential'] = true;
 				$blocks[] = self::make_tiered_power_block( $slug, $label, $resolved['powers'], $extra );
 				continue;
 			}
@@ -2032,8 +2188,8 @@ class Seeder {
 	}
 
 	/**
-	 * Merges data/grimoire-rotes.csv (~880 net-new rotes, plus category data for
-	 * the ~140 that overlap the existing 201 GEX rotes) into $base -
+	 * Merges data/grimoire-rotes.csv (603 net-new rotes, plus category data for
+	 * the 67 that match the existing 201 GEX rotes - Decision 093) into $base -
 	 * build_mage_rotes_items()'s output, the protected base per Decision 043.
 	 * $base is never altered except to backfill `group`/`subgroup` onto a
 	 * matched item that has none; sphere/citation stay whichever system
@@ -3173,7 +3329,8 @@ class Seeder {
 			'section_type' => 'tiered_power',
 			'definition'   => array_merge( [
 				'powers'                    => $powers,
-				'sequential'                => false,
+				// Levels add up (F-040); a chronicle can still switch its own copy to flat pricing.
+				'sequential'                => true,
 				'out_of_type_cost_modifier' => 1,
 				// Same default as make_trait_list_block(); a chronicle's own homebrew power isn't blocked.
 				'allow_custom'              => true,
@@ -3578,15 +3735,36 @@ class Seeder {
 	}
 
 	/**
+	 * Option set once the demo chronicle has had its one chance to be seeded.
+	 */
+	const DEMO_SEEDED_OPTION = 'be_demo_seeded';
+
+	/**
 	 * Seeds 22 demo characters (2 per creature stack, all 11 types) into a
 	 * dedicated `be-demo` game, created first if it does not exist yet -
 	 * never into a real chronicle's own game.
 	 *
+	 * Runs on a fresh install only, once. Every activation and version upgrade
+	 * calls this, and it used to re-create a deleted demo chronicle each time -
+	 * adopting whatever a row-only delete had left under its slug (1.0.0-review
+	 * F-036). An install upgrading from before this flag existed is not fresh,
+	 * so its demo stays exactly as it is, deleted or not.
+	 *
 	 * Idempotent per character, checked by name + owner_slug. Never throws:
 	 * a fixture entry referencing a block that does not resolve is logged
 	 * and skipped rather than failing the whole activation.
+	 *
+	 * @param bool $fresh_install True only when no schema version had been recorded before this run.
 	 */
-	public static function seed_demo_characters(): void {
+	public static function seed_demo_characters( bool $fresh_install = false ): void {
+		if ( get_option( self::DEMO_SEEDED_OPTION ) ) {
+			return;
+		}
+		update_option( self::DEMO_SEEDED_OPTION, 1 );
+		if ( ! $fresh_install ) {
+			return;
+		}
+
 		$game = \BeyondElysium\Models\Game::find_by_slug( 'be-demo' );
 		if ( ! $game ) {
 			$game_id = \BeyondElysium\Models\Game::create( [
@@ -3599,6 +3777,9 @@ class Seeder {
 				return;
 			}
 			$game = \BeyondElysium\Models\Game::find( $game_id );
+			if ( ! $game ) {
+				return;
+			}
 		}
 
 		$fixtures = require __DIR__ . '/demo-characters.php';

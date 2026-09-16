@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Services\Change_Engine;
 
@@ -17,6 +18,9 @@ defined( 'ABSPATH' ) || exit;
 class Experience_Controller extends Base_Controller {
 
 	protected $rest_base = 'experience';
+
+	/** The largest single award accepted - far above any real session award, well below the XP columns' range. */
+	const MAX_AWARD = 10000;
 
 	/**
 	 * Registers the experience routes.
@@ -38,9 +42,12 @@ class Experience_Controller extends Base_Controller {
 	/**
 	 * Bulk-awards XP to multiple characters.
 	 *
-	 * Validates the character ID list, amount, and reason, then delegates to
-	 * `Change_Engine::bulk_award_xp()` to apply the award to each character
-	 * and record it in their change history.
+	 * Validates the character ID list, amount, and reason, keeps only the
+	 * characters that belong to this chronicle - ids are sequential integers,
+	 * so any other id is refused rather than trusted (1.0.0-review F-029) -
+	 * then delegates to `Change_Engine::bulk_award_xp()` to apply the award to
+	 * each and record it in their change history. Refused ids come back in
+	 * `skipped`.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -57,8 +64,9 @@ class Experience_Controller extends Base_Controller {
 		}
 
 		$amount = (int) $request->get_param( 'amount' );
-		if ( $amount <= 0 ) {
-			return $this->error( 'invalid_param', __( 'amount must be a positive integer.', 'beyond-elysium' ), 400 );
+		if ( $amount <= 0 || $amount > self::MAX_AWARD ) {
+			/* translators: %d: the largest award accepted */
+			return $this->error( 'invalid_param', sprintf( __( 'amount must be a positive integer no larger than %d.', 'beyond-elysium' ), self::MAX_AWARD ), 400 );
 		}
 
 		$reason = $request->get_param( 'reason' );
@@ -66,8 +74,19 @@ class Experience_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'reason is required.', 'beyond-elysium' ), 400 );
 		}
 
+		$in_chronicle = [];
+		$skipped      = [];
+		foreach ( array_unique( array_map( 'intval', $character_ids ) ) as $character_id ) {
+			$character = Character::find( $character_id );
+			if ( $character && $character->owner_type === 'chronicle' && $character->owner_slug === $game->slug ) {
+				$in_chronicle[] = $character_id;
+			} else {
+				$skipped[] = $character_id;
+			}
+		}
+
 		$count = Change_Engine::bulk_award_xp(
-			array_map( 'intval', $character_ids ),
+			$in_chronicle,
 			$amount,
 			sanitize_text_field( $reason ),
 			get_current_user_id()
@@ -77,6 +96,7 @@ class Experience_Controller extends Base_Controller {
 			'awarded' => $count,
 			'amount'  => $amount,
 			'reason'  => $reason,
+			'skipped' => $skipped,
 		] );
 	}
 }

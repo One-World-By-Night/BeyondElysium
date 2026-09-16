@@ -5,6 +5,7 @@ namespace BeyondElysium\REST;
 use BeyondElysium\Core\Authorization;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Plot;
 use BeyondElysium\Models\Plot_Entry;
 use BeyondElysium\Services\Action_Allocator;
 use BeyondElysium\Services\Backgrounds_Catalog;
@@ -170,6 +171,9 @@ class Apr_Controller extends Base_Controller {
 		}
 
 		$updated = Game::find_by_slug( $request['game_slug'] );
+		if ( ! $updated ) {
+			return $this->error( 'game_not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
+		}
 		return $this->success( array_merge(
 			Action_Allocator::apr_config( $updated ),
 			Rumor_Generator::rumor_config( $updated )
@@ -251,7 +255,7 @@ class Apr_Controller extends Base_Controller {
 			return $this->error( 'character_not_found', __( 'Character not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
-		if ( ! current_user_can( 'be_manage_characters' ) ) {
+		if ( ! Authorization::can( 'be_manage_characters' ) ) {
 			if ( ! Authorization::check( 'be_submit_actions' ) || (int) $character->wp_user_id !== get_current_user_id() ) {
 				return $this->error( 'ownership_denied', __( 'You may only record a use for your own character.', 'beyond-elysium' ), 403 );
 			}
@@ -291,7 +295,7 @@ class Apr_Controller extends Base_Controller {
 			return $game;
 		}
 
-		$entry = $this->find_ledger_entry( (int) $request['id'] );
+		$entry = $this->find_ledger_entry( (int) $request['id'], $game );
 		if ( is_wp_error( $entry ) ) {
 			return $entry;
 		}
@@ -300,14 +304,14 @@ class Apr_Controller extends Base_Controller {
 		$fields       = [];
 
 		if ( $wants_result ) {
-			if ( ! current_user_can( 'be_manage_plots' ) ) {
+			if ( ! Authorization::can( 'be_manage_plots' ) ) {
 				return $this->error( 'forbidden', __( 'Only a Storyteller may record the result of a background use.', 'beyond-elysium' ), 403 );
 			}
 			$fields['result'] = $request->get_param( 'result' );
 		}
 
 		if ( $request->get_param( 'text' ) !== null || $request->get_param( 'cost' ) !== null ) {
-			if ( ! current_user_can( 'be_manage_characters' ) ) {
+			if ( ! Authorization::can( 'be_manage_characters' ) ) {
 				$owns_it = Authorization::check( 'be_submit_actions' ) && $this->owns_ledger_entry( $entry );
 				if ( ! $owns_it || ( $entry['result'] ?? '' ) !== '' ) {
 					return $this->error( 'ownership_denied', __( 'You may only edit your own not-yet-adjudicated background use.', 'beyond-elysium' ), 403 );
@@ -346,12 +350,12 @@ class Apr_Controller extends Base_Controller {
 			return $game;
 		}
 
-		$entry = $this->find_ledger_entry( (int) $request['id'] );
+		$entry = $this->find_ledger_entry( (int) $request['id'], $game );
 		if ( is_wp_error( $entry ) ) {
 			return $entry;
 		}
 
-		if ( ! current_user_can( 'be_manage_characters' ) ) {
+		if ( ! Authorization::can( 'be_manage_characters' ) ) {
 			$owns_it = Authorization::check( 'be_submit_actions' ) && $this->owns_ledger_entry( $entry );
 			if ( ! $owns_it || ( $entry['result'] ?? '' ) !== '' ) {
 				return $this->error( 'ownership_denied', __( 'You may only clear your own not-yet-adjudicated background use.', 'beyond-elysium' ), 403 );
@@ -433,7 +437,7 @@ class Apr_Controller extends Base_Controller {
 			return $this->error( 'character_not_found', __( 'Character not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
-		if ( ! current_user_can( 'be_manage_characters' ) && (int) $character->wp_user_id !== get_current_user_id() ) {
+		if ( ! Authorization::can( 'be_manage_characters' ) && (int) $character->wp_user_id !== get_current_user_id() ) {
 			return $this->error( 'ownership_denied', __( 'You may only view your own character\'s background uses.', 'beyond-elysium' ), 403 );
 		}
 
@@ -442,14 +446,20 @@ class Apr_Controller extends Base_Controller {
 
 	/**
 	 * Looks up a ledger entry by its plot-entry id, returning a 404 when it
-	 * does not exist or is not a ledger-managed entry.
+	 * does not exist, is not a ledger-managed entry, or belongs to a plot in
+	 * another chronicle than the one in the URL. Entry ids run across the
+	 * whole install, and the callers check only the caller's standing in the
+	 * URL's chronicle - without the plot check, a Storyteller of one chronicle
+	 * could adjudicate, rewrite, or delete another's (1.0.0-review F-052).
 	 *
-	 * @param int $entry_id
+	 * @param int    $entry_id
+	 * @param object $game The chronicle the request is served for.
 	 * @return array|\WP_Error
 	 */
-	private function find_ledger_entry( int $entry_id ) {
-		$row = Plot_Entry::find( $entry_id );
-		if ( $row ) {
+	private function find_ledger_entry( int $entry_id, object $game ) {
+		$row  = Plot_Entry::find( $entry_id );
+		$plot = $row ? Plot::find( (int) $row->plot_id ) : null;
+		if ( $row && $plot && (int) $plot->game_id === (int) $game->id ) {
 			foreach ( Background_Ledger::entries_for_plot( (int) $row->plot_id ) as $entry ) {
 				if ( (int) $entry['id'] === $entry_id ) {
 					return $entry;

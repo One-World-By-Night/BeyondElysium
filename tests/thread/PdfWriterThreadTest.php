@@ -11,12 +11,12 @@ use WP_UnitTestCase;
 /**
  * `Pdf_Writer::write()` end to end: structural output, the one behavior that
  * must survive real `wp_kses()` narrowing untouched (a `<script>` tag in
- * prose HTML never reaches TCPDF's `writeHTML()`), and - since every output
- * is signed unconditionally (SP-8) - the three real proofs signed-pdf-
- * design.md's SP-8 names explicitly: a `/ByteRange`+`/Sig` dictionary is
- * present, a real reader reports a genuinely valid signature from an
- * untrusted (self-signed) signer, and flipping one byte of the signed
- * content breaks verification. WordPress-only, not database-only -
+ * prose HTML never reaches TCPDF's `writeHTML()`), the UNSIGNED stamp on an
+ * unsigned copy (1.0.0-review F-042), and - for a signed output, the default
+ * (SP-8) - the three real proofs signed-pdf-design.md's SP-8 names
+ * explicitly: a `/ByteRange`+`/Sig` dictionary is present, a real reader
+ * reports a genuinely valid signature from an untrusted (self-signed) signer,
+ * and flipping one byte of the signed content breaks verification. WordPress-only, not database-only -
  * `draw_prose()` calls the real `wp_kses()`, which this project's own
  * unit/thread split (TESTING.md) puts here rather than in `tests/unit`.
  *
@@ -140,6 +140,27 @@ class PdfWriterThreadTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'Digest Mismatch', self::pdfsig( $this->pdf_path() ) );
 	}
 
+	/**
+	 * 1.0.0-review F-042: an unsigned copy says so on every page, however many pages its
+	 * content runs to, and carries no signature dictionary at all.
+	 */
+	public function test_an_unsigned_copy_is_stamped_on_every_page(): void {
+		$history = array_fill( 0, 90, [ '2026-09-01', 'Raised Occult', '+2' ] );
+		$bytes   = Pdf_Writer::write( [ $this->document( [ 'xp_history' => $history ] ) ], $this->game(), false );
+		file_put_contents( $this->pdf_path(), $bytes );
+
+		$pages = preg_match_all( '/\/Type\s*\/Page[^s]/', $bytes );
+		$this->assertGreaterThan( 1, $pages, 'the history must run past one page to prove every page is stamped' );
+		$this->assertSame( $pages, substr_count( self::extract_text( $this->pdf_path() ), 'UNSIGNED' ) );
+		$this->assertStringNotContainsString( '/ByteRange', $bytes );
+	}
+
+	public function test_a_signed_copy_is_never_stamped_unsigned(): void {
+		file_put_contents( $this->pdf_path(), $this->write() );
+
+		$this->assertStringNotContainsString( 'UNSIGNED', self::extract_text( $this->pdf_path() ) );
+	}
+
 	private function pdf_path(): string {
 		return sys_get_temp_dir() . '/be-pdf-writer-test-' . $this->getName() . '.pdf';
 	}
@@ -176,5 +197,37 @@ class PdfWriterThreadTest extends WP_UnitTestCase {
 			self::markTestSkipped( 'pdfsig (poppler) is not installed.' );
 		}
 		return (string) shell_exec( 'pdfsig ' . escapeshellarg( $path ) . ' 2>/dev/null' );
+	}
+
+	/**
+	 * 1.0.0-review F-118. Owner, 2026-09-15: a real print of a real, heavily-built
+	 * character (Hitchens, on kony-sabbat.net) "cuts off at 'Streetwise x5' etc." -
+	 * `draw_sections()` runs with `setAutoPageBreak(false)` (deliberate, so the 6-track
+	 * grid's own row-fit math owns pagination) and only ever checks whether a section
+	 * fits what's left of the CURRENT page, falling back to "start a fresh page and draw
+	 * it there" - never "this section is taller than any single page could ever hold."
+	 * `MultiCell()` with auto page break off does not overflow onto a new page on its
+	 * own; it just draws past the bottom margin, off the printable page entirely.
+	 */
+	public function test_a_section_taller_than_one_page_does_not_lose_its_last_rows(): void {
+		$rows = [];
+		for ( $i = 1; $i <= 120; $i++ ) {
+			$rows[] = "Ability {$i} x3 •••";
+		}
+		$rows[] = 'Streetwise x5 •••••';
+
+		file_put_contents( $this->pdf_path(), $this->write( [
+			'sections' => [
+				[
+					'block_slug'   => 'met-abilities', 'section_type' => 'trait_list', 'title' => 'Abilities',
+					'column' => 1, 'order' => 1, 'span' => 2,
+					'groups' => [ [ 'label' => null, 'rows' => $rows ] ],
+				],
+			],
+		] ) );
+
+		$text = self::extract_text( $this->pdf_path() );
+		$this->assertStringContainsString( 'Ability 1 x3', $text, 'the section\'s first row' );
+		$this->assertStringContainsString( 'Streetwise x5', $text, "the section's real last row must survive, not be cut off" );
 	}
 }

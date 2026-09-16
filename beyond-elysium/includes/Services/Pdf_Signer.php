@@ -10,9 +10,11 @@ defined( 'ABSPATH' ) || exit;
  * `BE_PDF_SIGNING_PASSPHRASE` - never a WordPress option, since the
  * passphrase is the one secret this plugin holds (signed-pdf-design.md §3c).
  *
- * Failure here is hard and named, never a silent unsigned PDF (P1): an
- * unsigned document is not a degraded success, it is a wrong answer. Callers
- * check `availability()` before generating anything.
+ * Never a *silent* unsigned PDF: `configure()` throws rather than no-op when
+ * signing isn't available. An install with no certificate still prints
+ * (1.0.0-review F-042, owner ruling 2026-09-14) - the writers check
+ * `availability()`, skip `configure()`, and `mark_unsigned()` stamps every
+ * page, so an unsigned copy can never pass for a signed one.
  *
  * `BE_PDF_SIGNING_PASSPHRASE` undefined or empty means "the key has no
  * passphrase" (an `-nodes`/`-noenc`-generated key), not a misconfiguration -
@@ -102,5 +104,29 @@ class Pdf_Signer {
 				'ContactInfo' => home_url(),
 			]
 		);
+	}
+
+	/**
+	 * Stamps a red UNSIGNED notice into the top margin of every page. Call it
+	 * after all content is drawn, so it reaches every page however many the
+	 * content ran to, and only on a document `configure()` never touched.
+	 *
+	 * @param \TCPDF $pdf
+	 */
+	public static function mark_unsigned( \TCPDF $pdf ): void {
+		$notice = __( 'UNSIGNED - printed without a signing certificate. Nothing proves this copy is unaltered.', 'beyond-elysium' );
+		$left   = (float) $pdf->getMargins()['left'];
+
+		for ( $page = 1, $pages = $pdf->getNumPages(); $page <= $pages; $page++ ) {
+			$pdf->setPage( $page );
+			$pdf->setAutoPageBreak( false );
+			$pdf->setFont( 'dejavusans', 'B', 8 );
+			$pdf->setTextColor( 176, 0, 32 );
+			$pdf->setXY( $left, 5.0 );
+			$pdf->Cell( 0, 5, $notice, 0, 0, 'C' );
+		}
+
+		$pdf->setTextColor( 0, 0, 0 );
+		$pdf->lastPage();
 	}
 }

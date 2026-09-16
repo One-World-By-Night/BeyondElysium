@@ -12,17 +12,14 @@ use WP_UnitTestCase;
 
 /**
  * Direct follow-on to Decision 071, same day: "we can delete the demo chronicle content?"
- * `Game::delete()` was a bare row delete, same class of gap as `Character::delete()` had -
- * every character/plot/world object/game-scoped template/saved query it owned was left
- * behind, orphaned. `Game::delete_with_content()` is the real cascade.
+ * `Game::delete()` was a bare row delete - every character/plot/world object/game-scoped
+ * template/saved query it owned was left behind. `Game::delete_with_content()` is the real
+ * cascade.
  *
- * Deliberately a SEPARATE method from `Game::delete()`, not a change to it - a real
- * near-miss caught before shipping: `delete()` is what the already-live admin "Delete"
- * button calls, and its own confirm dialog explicitly promises characters survive.
- * Changing it in place would have made that one-click button silently destroy a REAL
- * chronicle's content with no warning, exactly what the user's own follow-up instruction
- * ruled out for non-demo content. `test_delete_leaves_content_behind_delete_with_content_
- * does_not` below proves both halves of that promise are still true after this change.
+ * The original safeguard still holds: the plain delete behind the Games screen's one-click
+ * button never destroys a chronicle's content. Since 1.0.0-review F-036 it also never leaves
+ * that content behind for a same-named chronicle to inherit - it refuses instead, and the
+ * screen asks separately whether to delete the content too (`ChronicleDeleteThreadTest`).
  */
 class GameDeleteWithContentTest extends WP_UnitTestCase {
 
@@ -73,26 +70,21 @@ class GameDeleteWithContentTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The real safeguard this whole design is built around: the plain `delete()` - what
-	 * the already-live admin button calls - must be completely unaffected by adding
-	 * `delete_with_content()` alongside it. If this ever fails, the near-miss this
-	 * decision's own doc comment describes has actually happened.
+	 * The plain `delete()` must never destroy content, and must never orphan it either: while
+	 * the chronicle holds content it refuses, and the game and its characters stay exactly as
+	 * they were.
 	 */
-	public function test_plain_delete_still_leaves_content_behind_only_delete_with_content_does_not(): void {
-		$slug_a  = 'thread-test-plain-delete-' . wp_generate_password( 8, false );
+	public function test_plain_delete_refuses_while_the_chronicle_holds_content(): void {
+		$slug_a = 'thread-test-plain-delete-' . wp_generate_password( 8, false );
 		$this->make_game( $slug_a );
 		$character_a = Character::create( [
 			'name' => 'Survives Plain Delete', 'stack_slug' => 'vampire',
 			'owner_type' => 'chronicle', 'owner_slug' => $slug_a,
 		] );
 
-		Game::delete( $slug_a );
+		$this->assertFalse( Game::delete( $slug_a ) );
 
-		$this->assertNull( Game::find_by_slug( $slug_a ), 'the game row itself is still removed' );
-		$this->assertNotNull( Character::find( $character_a ), 'plain delete() must still leave characters behind - the existing admin button\'s own promise' );
-
-		// Clean up what the plain delete() deliberately left behind, since this is a
-		// throwaway fixture, not real content.
-		Character::delete( $character_a );
+		$this->assertNotNull( Game::find_by_slug( $slug_a ), 'the game must still exist' );
+		$this->assertNotNull( Character::find( $character_a ), 'its character must still exist, still owned by it' );
 	}
 }

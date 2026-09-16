@@ -115,19 +115,62 @@ class SetupStatusControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 'ok', $row['status'] );
 	}
 
-	public function test_a_read_only_editor_sees_the_same_status_but_actionable_false(): void {
-		// The realistic scenario (§0): an HST is a WordPress editor with a real
-		// be_game_members row in their own chronicle - Authorization's second layer
-		// requires that membership even though be_view_characters is granted site-wide.
+	/**
+	 * Owner ruling, 1.0.0-checklist.md item 18 (2026-09-15) - superseded this test's own
+	 * prior name and premise (`git log` has the original "actionable_false" version, back
+	 * when both rows were be_manage_games-only): an HST is a WordPress editor with a real
+	 * be_game_members row in their own chronicle, and now genuinely gets actionable:true on
+	 * the two rows this ruling names, not just visibility.
+	 */
+	public function test_an_hst_sees_actionable_true_on_creature_types_and_new_character_approval(): void {
 		$game = Game::find_by_slug( $this->game_slug );
 		Game_Member::set_role( (int) $game->id, $this->editor_id, 'hst' );
 
 		$response = $this->dispatch( $this->editor_id );
-		$row      = $this->row( $response->get_data()['items'], 'enabled_stacks' );
+		$data     = $response->get_data();
 
 		$this->assertSame( 200, $response->get_status(), 'be_view_characters is granted broadly - the editor must reach the route at all' );
-		$this->assertSame( 'attention', $row['status'], 'status is visible even when not actionable' );
-		$this->assertFalse( $row['actionable'], 'be_manage_games is administrator-only' );
+		$this->assertSame( 'attention', $this->row( $data['items'], 'enabled_stacks' )['status'], 'status is unrelated to actionable' );
+		$this->assertTrue( $this->row( $data['items'], 'enabled_stacks' )['actionable'] );
+		$this->assertTrue( $this->row( $data['items'], 'require_new_character_approval' )['actionable'] );
+		// Unrelated to item 18 - assigning Storytellers (Chronicle Access) stays administrator-only.
+		$this->assertFalse( $this->row( $data['items'], 'storytellers' )['actionable'] );
+	}
+
+	/**
+	 * The still-true negative case item 18 does not touch: a real chronicle member who
+	 * simply isn't an HST (a player here) reaches the route (be_view_characters) but gets
+	 * actionable:false on both rows, same as before this ruling.
+	 */
+	public function test_a_player_member_sees_the_same_status_but_actionable_false(): void {
+		$game       = Game::find_by_slug( $this->game_slug );
+		$player_id  = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( (int) $game->id, $player_id, 'player' );
+
+		$response = $this->dispatch( $player_id );
+		$data     = $response->get_data();
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertFalse( $this->row( $data['items'], 'enabled_stacks' )['actionable'] );
+		$this->assertFalse( $this->row( $data['items'], 'require_new_character_approval' )['actionable'] );
+	}
+
+	/**
+	 * The AST half of the same ruling (item 27): an AST does not hold
+	 * be_manage_chronicle_setup either, even though they hold almost everything else an
+	 * HST does.
+	 */
+	public function test_an_ast_sees_actionable_false_on_creature_types_and_new_character_approval(): void {
+		$game   = Game::find_by_slug( $this->game_slug );
+		$ast_id = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( (int) $game->id, $ast_id, 'ast' );
+
+		$response = $this->dispatch( $ast_id );
+		$data     = $response->get_data();
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertFalse( $this->row( $data['items'], 'enabled_stacks' )['actionable'] );
+		$this->assertFalse( $this->row( $data['items'], 'require_new_character_approval' )['actionable'] );
 	}
 
 	public function test_a_subscriber_with_no_membership_is_denied_outright(): void {

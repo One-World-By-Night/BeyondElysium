@@ -86,6 +86,27 @@ class Games_Controller extends Base_Controller {
 				'permission_callback' => $this->permission( 'be_manage_games' ),
 			],
 		] );
+
+		// What deleting a chronicle would take with it, so the Games screen can say so in its one confirmation.
+		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<slug>[a-z0-9\-]+)/content', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_content_counts' ],
+				'permission_callback' => $this->permission( 'be_manage_games' ),
+			],
+		] );
+
+		// Owner ruling, 1.0.0-checklist.md item 18: a narrow slice of update_item()'s own
+		// settings, carved into its own route (Decision 109's Default Approval Policy is the
+		// precedent) so an HST can save these three without the full be_manage_games the rest
+		// of update_item() still requires - a rename, description, or asc_role_path change.
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/chronicle-setup', [
+			[
+				'methods'             => 'PUT',
+				'callback'            => [ $this, 'update_chronicle_setup_settings' ],
+				'permission_callback' => $this->permission( 'be_manage_chronicle_setup' ),
+			],
+		] );
 	}
 
 	/**
@@ -220,6 +241,11 @@ class Games_Controller extends Base_Controller {
 			return $this->error( 'duplicate_slug', __( 'A game with this slug already exists.', 'beyond-elysium' ), 409 );
 		}
 
+		// A slug still holding a deleted chronicle's content would hand that content to this one (1.0.0-review F-036).
+		if ( ! empty( $slug ) && array_sum( Game::orphaned_content_counts( sanitize_title( $slug ) ) ) > 0 ) {
+			return $this->error( 'slug_has_orphaned_content', __( 'A deleted chronicle\'s characters or records are still stored under this slug. Choose a different slug.', 'beyond-elysium' ), 409 );
+		}
+
 		$settings = $request->get_param( 'settings' );
 		if ( is_array( $settings ) ) {
 			// A create request is very unlikely to carry an AI key, but if one ever does,
@@ -289,6 +315,13 @@ class Games_Controller extends Base_Controller {
 				if ( ( $result['error'] ?? '' ) === 'duplicate_slug' ) {
 					return $this->error( 'duplicate_slug', __( 'A game with this slug already exists.', 'beyond-elysium' ), 409 );
 				}
+				if ( ( $result['error'] ?? '' ) === 'orphan_collision' ) {
+					return $this->error(
+						'orphan_collision',
+						__( 'Cannot rename: a deleted chronicle\'s characters or records are still stored under this slug, and this chronicle would take them over. Choose a different slug.', 'beyond-elysium' ),
+						409
+					);
+				}
 				if ( ( $result['error'] ?? '' ) === 'fork_collision' ) {
 					$blocks = implode( ', ', $result['blocks'] ?? [] );
 					return $this->error(
@@ -308,6 +341,8 @@ class Games_Controller extends Base_Controller {
 			$rename_report = [
 				'characters'    => $result['characters'],
 				'schema_blocks' => $result['schema_blocks'],
+				'attestations'  => $result['attestations'],
+				'transfers'     => $result['transfers'],
 				'pages'         => $result['pages'],
 				'elementor'     => $result['elementor'],
 			];
@@ -329,8 +364,18 @@ class Games_Controller extends Base_Controller {
 		// erase kony's own real `apr` object. Same hazard background-ledger-apr-design.md
 		// flags for the Apr_Controller editor; one shared merge here covers both (GS-2/GS-6).
 		if ( isset( $data['settings'] ) ) {
-			$existing         = (array) ( $game->settings ?? new \stdClass() );
-			$data['settings'] = Ai_Assist::merge_settings_write( (array) $data['settings'], $existing );
+			$existing = (array) ( $game->settings ?? new \stdClass() );
+			$incoming = (array) $data['settings'];
+			// enabled_factions goes one level further: Chronicle Setup saves one stack's field at a
+			// time, so a write changes the fields it names and keeps every other restriction - the
+			// second save no longer erases the first (1.0.0-review F-066).
+			if ( isset( $incoming['enabled_factions'] ) && is_array( $incoming['enabled_factions'] ) ) {
+				$incoming['enabled_factions'] = self::merge_faction_restrictions(
+					json_decode( (string) wp_json_encode( $existing['enabled_factions'] ?? [] ), true ) ?: [],
+					$incoming['enabled_factions']
+				);
+			}
+			$data['settings'] = Ai_Assist::merge_settings_write( $incoming, $existing );
 		}
 
 		// Normalizes a boolean notifications_enabled value to 0/1 for the tinyint column.
@@ -347,6 +392,9 @@ class Games_Controller extends Base_Controller {
 		}
 
 		$updated = Game::find_by_slug( $current_slug );
+		if ( ! $updated ) {
+			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
+		}
 		if ( isset( $updated->settings ) && $updated->settings instanceof \stdClass ) {
 			Ai_Assist::redact_settings_read( $updated->settings );
 		}
@@ -360,9 +408,85 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Deletes a game identified by slug after confirming it exists. Returns
-	 * a 404 error when no matching game is found, otherwise removes the
-	 * game and responds with an empty 204.
+	 * Saves exactly the three Chronicle Setup settings an HST may set for their own
+	 * chronicle (owner ruling, 1.0.0-checklist.md item 18): enabled_stacks (creature
+	 * types), enabled_factions (sub-faction restrictions), and
+	 * require_new_character_approval. Merges into the chronicle's existing settings
+	 * object the same way update_item() does - never a wholesale replace - since both
+	 * routes write the same shared `settings` column (R6). Only these three field
+	 * names are ever read from the request; every other game field (name, slug,
+	 * description, asc_role_path, ...) still requires the full be_manage_games
+	 * update_item() gates on.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function update_chronicle_setup_settings( $request ) {
+		$game_slug = $request->get_url_params()['game_slug'] ?? '';
+
+		$game = Game::find_by_slug( $game_slug );
+		if ( ! $game ) {
+			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
+		}
+
+		$incoming = [];
+		foreach ( [ 'enabled_stacks', 'enabled_factions', 'require_new_character_approval' ] as $field ) {
+			$value = $request->get_param( $field );
+			if ( $value !== null ) {
+				$incoming[ $field ] = $value;
+			}
+		}
+
+		if ( empty( $incoming ) ) {
+			return $this->error( 'invalid_param', __( 'At least one of enabled_stacks, enabled_factions, or require_new_character_approval is required.', 'beyond-elysium' ), 400 );
+		}
+
+		$existing = (array) ( $game->settings ?? new \stdClass() );
+		// Same one-stack-at-a-time merge update_item() itself applies (1.0.0-review F-066).
+		if ( isset( $incoming['enabled_factions'] ) && is_array( $incoming['enabled_factions'] ) ) {
+			$incoming['enabled_factions'] = self::merge_faction_restrictions(
+				json_decode( (string) wp_json_encode( $existing['enabled_factions'] ?? [] ), true ) ?: [],
+				$incoming['enabled_factions']
+			);
+		}
+
+		$ok = Game::update( $game_slug, [ 'settings' => Ai_Assist::merge_settings_write( $incoming, $existing ) ] );
+		if ( ! $ok ) {
+			return $this->error( 'update_failed', __( 'Failed to update game.', 'beyond-elysium' ), 500 );
+		}
+
+		$updated = Game::find_by_slug( $game_slug );
+		if ( ! $updated ) {
+			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
+		}
+		if ( isset( $updated->settings ) && $updated->settings instanceof \stdClass ) {
+			Ai_Assist::redact_settings_read( $updated->settings );
+		}
+		return $this->success( $updated );
+	}
+
+	/**
+	 * Counts everything deleting this chronicle would delete with it -
+	 * Game::content_counts(), the same numbers delete_item() refuses on.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_content_counts( $request ) {
+		$game = Game::find_by_slug( $request['slug'] );
+		if ( ! $game ) {
+			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
+		}
+		return $this->success( Game::content_counts( $game ) );
+	}
+
+	/**
+	 * Deletes a chronicle identified by slug. A chronicle that still holds
+	 * content is deleted only when `with_content` is set, and then with all
+	 * of it; without the flag the request is refused with 409
+	 * `chronicle_has_content` and the counts, so the caller can show exactly
+	 * what would be lost. Nothing is ever left behind under the slug for a
+	 * later chronicle to inherit (1.0.0-review F-036).
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -373,14 +497,17 @@ class Games_Controller extends Base_Controller {
 			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
 		}
 
-		// GS-11: opt-in, since Game::delete()'s narrower "row only, content becomes
-		// unreachable" behavior (Game.php's own doc comment) is what every existing
-		// caller of this route already expects. The Setup checklist's demo-chronicle
-		// delete action is the one real caller that needs the cascade.
-		if ( $request->get_param( 'with_content' ) ) {
-			Game::delete_with_content( $request['slug'] );
-		} else {
-			Game::delete( $request['slug'] );
+		$counts = Game::content_counts( $game );
+		if ( ! $request->get_param( 'with_content' ) && array_sum( $counts ) > 0 ) {
+			return new \WP_Error(
+				'chronicle_has_content',
+				__( 'This chronicle still holds characters or other content. Delete it with its content, or keep it.', 'beyond-elysium' ),
+				[ 'status' => 409, 'counts' => $counts ]
+			);
+		}
+
+		if ( ! Game::delete_with_content( $game->slug ) ) {
+			return $this->error( 'delete_failed', __( 'Failed to delete the chronicle. Nothing was deleted.', 'beyond-elysium' ), 500 );
 		}
 		return $this->success( null, 204 );
 	}
@@ -420,6 +547,28 @@ class Games_Controller extends Base_Controller {
 				'maximum' => 100,
 			],
 		];
+	}
+
+	/**
+	 * Merges a write's sub-faction restrictions into the stored ones, stack
+	 * by stack and field by field: a field the write names takes its new
+	 * list (an empty list lifts that field's restriction), and every stack or
+	 * field it doesn't name keeps its own.
+	 *
+	 * @param array<string,mixed> $existing Stored `enabled_factions`, stack => field => allowed values.
+	 * @param array<mixed>        $incoming The write's `enabled_factions`, the same shape.
+	 * @return array<string,mixed>
+	 */
+	private static function merge_faction_restrictions( array $existing, array $incoming ): array {
+		foreach ( $incoming as $stack => $fields ) {
+			if ( ! is_array( $fields ) ) {
+				continue;
+			}
+			foreach ( $fields as $field => $allowed ) {
+				$existing[ (string) $stack ][ (string) $field ] = array_values( array_map( 'strval', (array) $allowed ) );
+			}
+		}
+		return $existing;
 	}
 
 	/**

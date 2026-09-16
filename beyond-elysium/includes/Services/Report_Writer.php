@@ -10,11 +10,11 @@ defined( 'ABSPATH' ) || exit;
  * `shape` string only (P7; reports-cards-batch-design.md §3.3) - never on a
  * report's identity.
  *
- * Signs unconditionally, via the same `Pdf_Signer::configure()` contract
- * `Pdf_Writer` uses: P6, "everything that prints inherits this generator."
- * A misconfigured chronicle throws here exactly as it would for a character
- * sheet; the caller (`Reports_Controller`) checks `Pdf_Signer::availability()`
- * first, same as `Sheets_Controller`.
+ * Signs through the same `Pdf_Signer::configure()` contract `Pdf_Writer`
+ * uses: P6, "everything that prints inherits this generator." Asked to sign
+ * where signing isn't available, it throws exactly as a character sheet
+ * would; `Reports_Controller` passes `Pdf_Signer::availability()`, and an
+ * unsigned report is stamped UNSIGNED on every page (1.0.0-review F-042).
  *
  * @see BE_PROCESS/reports-cards-batch-design.md §3.3
  */
@@ -31,11 +31,14 @@ class Report_Writer {
 
 	/**
 	 * @param array<string,mixed> $document `Report_Document::build()`'s return value.
-	 * @throws \RuntimeException When signing is not configured or its files are unreadable.
+	 * @param bool                $signed   False prints an unsigned copy, marked as one.
+	 * @throws \RuntimeException When asked to sign and signing is not configured or its files are unreadable.
 	 */
-	public static function write( array $document, object $game ): string {
+	public static function write( array $document, object $game, bool $signed = true ): string {
 		$pdf = new \TCPDF( 'P', 'mm', 'A4', true, 'UTF-8', false );
-		Pdf_Signer::configure( $pdf, $game );
+		if ( $signed ) {
+			Pdf_Signer::configure( $pdf, $game );
+		}
 
 		$pdf->setPrintHeader( false );
 		$pdf->setPrintFooter( false );
@@ -69,6 +72,10 @@ class Report_Writer {
 				break;
 			default:
 				$pdf->Cell( 0, 6, sprintf( '[unknown report shape "%s"]', (string) ( $document['shape'] ?? '?' ) ), 0, 1 );
+		}
+
+		if ( ! $signed ) {
+			Pdf_Signer::mark_unsigned( $pdf );
 		}
 
 		return $pdf->Output( '', 'S' );

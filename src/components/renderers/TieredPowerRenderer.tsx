@@ -7,7 +7,11 @@
  */
 import { __ } from '@wordpress/i18n';
 import { localizedPowerName } from '../../lib/localizeName';
-import type { TieredPowerDefinition, TieredPower, PowerLevel } from '../../types';
+import type {
+	TieredPowerDefinition,
+	TieredPower,
+	PowerLevel,
+} from '../../types';
 import './TieredPowerRenderer.css';
 
 /**
@@ -44,16 +48,25 @@ export interface TieredPowerRendererProps {
 	displayMode?: 'named' | 'numeric';
 }
 
-function findPower( definition: TieredPowerDefinition, name: string ): TieredPower | undefined {
+function findPower(
+	definition: TieredPowerDefinition,
+	name: string
+): TieredPower | undefined {
 	return definition.powers.find( ( power ) => power.name === name );
 }
 
-function findLevel( power: TieredPower | undefined, level: number ): PowerLevel | undefined {
+function findLevel(
+	power: TieredPower | undefined,
+	level: number
+): PowerLevel | undefined {
 	return power?.levels.find( ( entry ) => entry.level === level );
 }
 
 /** Elder-and-above lookup: by the specific power's own name, not a number. */
-function findByPowerName( power: TieredPower | undefined, powerName: string ): PowerLevel | undefined {
+function findByPowerName(
+	power: TieredPower | undefined,
+	powerName: string
+): PowerLevel | undefined {
 	return power?.levels.find( ( entry ) => entry.power_name === powerName );
 }
 
@@ -63,18 +76,26 @@ function findByPowerName( power: TieredPower | undefined, powerName: string ): P
  * found there, or "Family: Power {level}" when the entry carries its own
  * numbered level instead.
  */
-export function elderLabel( definition: TieredPowerDefinition, held: HeldPower ): string {
+export function elderLabel(
+	definition: TieredPowerDefinition,
+	held: HeldPower
+): string {
 	// Prefers a fresh catalog tier lookup, then the entry's own stored tier, then 'elder' -
 	// the same lookup also backs the localized power name below (i18n-pt-br-design.md); the
 	// family name (held.name, e.g. "Celerity") has no translation in this pass and is never
 	// swapped, only the specific power's own name.
-	const found = findByPowerName( findPower( definition, held.name ), held.power_name as string );
+	const found = findByPowerName(
+		findPower( definition, held.name ),
+		held.power_name as string
+	);
 	const powerName = found ? localizedPowerName( found ) : held.power_name;
 
 	if ( held.level != null ) {
 		return `${ held.name }: ${ powerName } ${ held.level }`;
 	}
-	return `${ held.name }: ${ powerName } (${ found?.tier ?? held.tier ?? 'elder' })`;
+	return `${ held.name }: ${ powerName } (${
+		found?.tier ?? held.tier ?? 'elder'
+	})`;
 }
 
 /**
@@ -82,23 +103,39 @@ export function elderLabel( definition: TieredPowerDefinition, held: HeldPower )
  * `elderLabel()` for a named Elder-and-above pick, or renders
  * "Family {level}" for a plain numeric holding.
  */
-export function numericLabel( definition: TieredPowerDefinition, held: HeldPower ): string {
+export function numericLabel(
+	definition: TieredPowerDefinition,
+	held: HeldPower
+): string {
 	if ( held.power_name ) {
 		return elderLabel( definition, held );
 	}
-	return held.level != null ? `${ held.name } ${ held.level }` : `${ held.name } ?`;
+	return held.level != null
+		? `${ held.name } ${ held.level }`
+		: `${ held.name } ?`;
 }
 
-/** The named label for one held power - a numeric level 1-5 looked up by number, or an
+/**
+ * The named label for one held power - a numeric level 1-5 looked up by number, or an
  * Elder-and-above power looked up by its own name, tagged with its real tier. Falls back
- * to whatever identifying text is available rather than ever rendering `undefined`. */
-export function namedLabel( definition: TieredPowerDefinition, held: HeldPower, level?: number ): string {
+ * to whatever identifying text is available rather than ever rendering `undefined`.
+ */
+export function namedLabel(
+	definition: TieredPowerDefinition,
+	held: HeldPower,
+	level?: number
+): string {
 	if ( held.power_name ) {
 		return elderLabel( definition, held );
 	}
 
-	const powerLevel = level != null ? findLevel( findPower( definition, held.name ), level ) : undefined;
-	return powerLevel ? localizedPowerName( powerLevel ) : numericLabel( definition, held );
+	const powerLevel =
+		level != null
+			? findLevel( findPower( definition, held.name ), level )
+			: undefined;
+	return powerLevel
+		? localizedPowerName( powerLevel )
+		: numericLabel( definition, held );
 }
 
 /**
@@ -109,7 +146,10 @@ export function namedLabel( definition: TieredPowerDefinition, held: HeldPower, 
  * player who wants every named rung listed sees the whole stack either way, sequential
  * block or not.
  */
-export function namedModeRows( definition: TieredPowerDefinition, held: HeldPower ): string[] {
+export function namedModeRows(
+	definition: TieredPowerDefinition,
+	held: HeldPower
+): string[] {
 	if ( held.power_name ) {
 		return [ namedLabel( definition, held, held.level ) ];
 	}
@@ -127,13 +167,20 @@ export function namedModeRows( definition: TieredPowerDefinition, held: HeldPowe
  * holding, or the one specific power's name for an Elder-and-above pick.
  * Renders "None" when nothing is held.
  */
-export function TieredPowerRenderer( { blockSlug, data, definition, displayMode }: TieredPowerRendererProps ) {
+export function TieredPowerRenderer( {
+	blockSlug,
+	data,
+	definition,
+	displayMode,
+}: TieredPowerRendererProps ) {
 	const mode = displayMode ?? 'numeric';
 
 	if ( data.length === 0 ) {
 		return (
 			<div className="be-tiered-power" data-block-slug={ blockSlug }>
-				<p className="be-tiered-power__empty">{ __( 'None', 'beyond-elysium' ) }</p>
+				<p className="be-tiered-power__empty">
+					{ __( 'None', 'beyond-elysium' ) }
+				</p>
 			</div>
 		);
 	}
@@ -142,9 +189,10 @@ export function TieredPowerRenderer( { blockSlug, data, definition, displayMode 
 		<div className="be-tiered-power" data-block-slug={ blockSlug }>
 			<ul className="be-tiered-power__items">
 				{ data.map( ( held, index ) => {
-					const label = mode === 'numeric'
-						? numericLabel( definition, held )
-						: namedModeRows( definition, held ).join( ', ' );
+					const label =
+						mode === 'numeric'
+							? numericLabel( definition, held )
+							: namedModeRows( definition, held ).join( ', ' );
 					return (
 						<li key={ `${ held.name }-${ index }` }>
 							{ withTradition( held, label ) }

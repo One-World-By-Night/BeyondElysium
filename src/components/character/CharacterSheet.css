@@ -12,16 +12,52 @@
 	--be-sheet-text: inherit;
 	--be-sheet-bg-image: none;
 
-	font-family: var( --be-sheet-font );
-	background-color: var( --be-sheet-bg );
-	background-image: var( --be-sheet-bg-image );
+	font-family: var(--be-sheet-font);
+	background-color: var(--be-sheet-bg);
+	background-image: var(--be-sheet-bg-image);
 	background-size: cover;
 	background-position: center;
-	color: var( --be-sheet-text );
+	color: var(--be-sheet-text);
 }
 
 .be-character-sheet__section-title {
-	color: var( --be-sheet-accent );
+	margin: 0 0 0.5rem;
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--be-sheet-accent);
+}
+
+/*
+ * A plain button reset to a bare heading - full width and left-aligned so the whole
+ * title row is the click target, not just the text itself. D34: compound-class
+ * specificity, since hello-elementor's own `button:focus, button:hover { background-color:
+ * #c36; color: #fff }` (a pseudo-class beats a bare single class outright, not just a
+ * source-order tie) painted the whole heading solid pink the moment it was clicked -
+ * found live.
+ */
+.be-character-sheet__section-toggle.be-character-sheet__section-toggle {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	width: 100%;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.be-character-sheet__section-toggle.be-character-sheet__section-toggle:focus,
+.be-character-sheet__section-toggle.be-character-sheet__section-toggle:hover {
+	background: none;
+	color: inherit;
+}
+
+.be-character-sheet__section-toggle-icon {
+	flex: 0 0 auto;
+	font-size: 0.75em;
 }
 
 .be-character-sheet__section-graphic {
@@ -39,37 +75,36 @@
 }
 
 .be-character-sheet__print,
-.be-character-sheet__edit-link,
-.be-character-sheet__style-toggle,
-.be-character-sheet__history-toggle,
+.be-character-sheet__action-go,
+.be-character-sheet__action-close,
 .be-character-sheet__gex-export {
 	display: inline-block;
 	padding: 0.4rem 0.9rem;
-	border: 1px solid var( --be-sheet-accent );
+	border: 1px solid var(--be-sheet-accent);
 	border-radius: 3px;
 	background: transparent;
-	color: var( --be-sheet-accent );
+	color: var(--be-sheet-accent);
 	font-size: 0.85rem;
 	text-decoration: none;
 	cursor: pointer;
 }
 
-.be-character-sheet__print:hover:not( :disabled ),
-.be-character-sheet__edit-link:hover,
-.be-character-sheet__style-toggle:hover,
-.be-character-sheet__history-toggle:hover,
-.be-character-sheet__gex-export:hover:not( :disabled ) {
-	background: var( --be-sheet-accent );
+.be-character-sheet__print:hover:not(:disabled),
+.be-character-sheet__action-go:hover:not(:disabled),
+.be-character-sheet__action-close:hover,
+.be-character-sheet__gex-export:hover:not(:disabled) {
+	background: var(--be-sheet-accent);
 	color: #fff;
 }
 
 .be-character-sheet__print:disabled,
+.be-character-sheet__action-go:disabled,
 .be-character-sheet__gex-export:disabled {
 	opacity: 0.6;
 	cursor: default;
 }
 
-.be-character-sheet__print-unavailable {
+.be-character-sheet__print-unsigned {
 	font-size: 0.85rem;
 	font-style: italic;
 	opacity: 0.8;
@@ -78,7 +113,7 @@
 .be-character-sheet__export-notice {
 	margin: -0.25rem 0 0.75rem;
 	font-size: 0.8rem;
-	color: var( --be-sheet-accent );
+	color: var(--be-sheet-accent);
 }
 
 .be-character-sheet__verify-toggle {
@@ -98,10 +133,51 @@
 	font-size: 0.9rem;
 }
 
-.be-character-sheet__style-toggle[aria-expanded="true"],
-.be-character-sheet__history-toggle[aria-expanded="true"] {
-	background: var( --be-sheet-accent );
-	color: #fff;
+/* The action picker (owner, 2026-09-15): one list and Go in place of a row of buttons. */
+
+/* `width: auto`, or a theme's full-width `select` (hello-elementor's reset) pushes Go and the
+ * help button onto a line of their own. */
+.be-character-sheet__action-select {
+	width: auto;
+	min-width: 14rem;
+	max-width: 100%;
+	padding: 0.35rem 0.5rem;
+	border: 1px solid var(--be-sheet-accent);
+	border-radius: 3px;
+	background: #fff;
+	color: inherit;
+	font-size: 0.85rem;
+}
+
+.be-character-sheet__action-panel {
+	margin-bottom: 0.75rem;
+	padding: 0.75rem 1rem;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+}
+
+.be-character-sheet__action-panel:focus {
+	outline: none;
+}
+
+.be-character-sheet__action-panel-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+
+.be-character-sheet__action-panel-header .be-character-sheet__section-title {
+	margin: 0;
+}
+
+.be-character-sheet__gex-options {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.75rem;
 }
 
 .be-character-sheet__ledger-date {
@@ -127,12 +203,6 @@
 	align-items: center;
 	gap: 0.3rem;
 	cursor: pointer;
-}
-
-/* Desktop: the print-options row below always shows regardless of showPrintOptions state
- * (mobile-sheet-design.md §4.4) - this toggle only does anything at phone width. */
-.be-character-sheet__print-options-toggle {
-	display: none;
 }
 
 
@@ -189,7 +259,7 @@
  * real-browser verification. Grid's auto-placement burns through many rows before
  * column 2's items even start, given DOM order sorted by (column, order) - confirmed by
  * actually rendering it. `columns: N` + `break-inside: avoid` looked right in isolation,
- * but a narrow column forcing a phrase like "Graceful x2 ••" to wrap destabilized the
+ * but a narrow column forcing a phrase like "Graceful x2 ●●" to wrap destabilized the
  * browser's column-fragmentation height calculation badly enough that one section
  * visually painted on top of the next section's box below it, even though
  * getBoundingClientRect() reported clean, non-overlapping geometry for both - a real
@@ -210,7 +280,7 @@
  */
 .be-character-sheet__grid {
 	display: grid;
-	grid-template-columns: repeat( 6, minmax( 0, 1fr ) );
+	grid-template-columns: repeat(6, minmax(0, 1fr));
 	gap: 1rem;
 	align-items: start;
 }
@@ -224,18 +294,20 @@
 /*
  * Print-only Physical/Social/Mental 3-column grouping (see CharacterSheet.tsx's own doc
  * comment for the full reasoning and the real print reference this matches). `contents`
- * makes this wrapper invisible to the Grid layout algorithm on screen - each child
+ * makes both wrappers invisible to the Grid layout algorithm on screen - each section
  * participates directly in the outer `repeat(6,1fr)` grid via its own `width`, exactly as
- * if this wrapper were not there at all. Only `@media print` below gives it real layout.
+ * if the wrappers were not there at all. Only `@media print` below gives them real layout.
+ *
+ * Both levels, not only the outer one (owner, 2026-09-15: "4 columns here, 1 there"): the
+ * column wrapper alone stayed a grid item one track wide, so Physical, Social, and Mental
+ * each took a sixth of a row, Abilities squeezed in beside them, and Backgrounds sat alone.
+ * The grouping also puts each positive list beside its own negative one in the page's
+ * order; every section's inline `order` (CharacterSheet.tsx) puts them back in the
+ * template's.
  */
-.be-character-sheet__attributes {
+.be-character-sheet__attributes,
+.be-character-sheet__attribute-column {
 	display: contents;
-}
-
-.be-character-sheet__section-title {
-	margin: 0 0 0.5rem;
-	font-size: 0.9rem;
-	font-weight: 600;
 }
 
 .be-character-sheet__skeleton {
@@ -251,6 +323,7 @@
 }
 
 @media ( max-width: 768px ) {
+
 	.be-character-sheet__grid {
 		grid-template-columns: 1fr;
 	}
@@ -269,12 +342,9 @@
 
 	/*
 	 * Information priority (§4.4): identity and traits first, chrome after. Making the
-	 * sheet's own root a flex column lets `order` push the toolbar and print-options row -
-	 * 154px of Print/Edit/Customize controls that sit above the character's own name today -
-	 * below everything else, without disturbing any other panel's relative position (each
-	 * keeps its default order: 0, same as before). The four "Include when printing"
-	 * checkboxes are settings for an action, not content, so they additionally collapse
-	 * behind the toggle button above rather than just moving down.
+	 * sheet's own root a flex column lets `order` push the action picker, and the panel it
+	 * opens, below everything else, without disturbing any other part's relative position
+	 * (each keeps its default order: 0).
 	 */
 	.be-character-sheet {
 		display: flex;
@@ -282,20 +352,14 @@
 	}
 
 	.be-character-sheet__toolbar,
-	.be-character-sheet__print-options {
+	.be-character-sheet__export-notice,
+	.be-character-sheet__action-panel {
 		order: 10;
 	}
 
-	.be-character-sheet__print-options-toggle {
-		display: inline-block;
-	}
-
-	.be-character-sheet__print-options {
-		display: none;
-	}
-
-	.be-character-sheet__print-options.be-character-sheet__print-options--open {
-		display: flex;
+	.be-character-sheet__action-select {
+		flex: 1 1 10rem;
+		min-width: 0;
 	}
 }
 
@@ -313,6 +377,7 @@
  * and every page that mounts a character sheet is one this plugin controls the intent of.
  */
 @media print {
+
 	#wpadminbar,
 	header,
 	.site-header,
@@ -354,10 +419,19 @@
 		display: none !important;
 	}
 
+	/* A collapsed section (1.0.0-review checklist item 21) always prints in full - `hidden`
+	 * is a screen-only convenience for a viewer skimming the page, never something that
+	 * should shrink a printed or exported document. Not `revert`: the browser's own
+	 * `[hidden] { display: none }` rule already lives in the user-agent origin `revert`
+	 * would fall right back to, so it wouldn't un-hide anything. */
+	.be-character-sheet [hidden] {
+		display: block !important;
+	}
+
 	.be-character-sheet {
 		width: 7.5in;
 		margin: 0 auto;
-		font-family: Georgia, 'Times New Roman', serif;
+		font-family: Georgia, "Times New Roman", serif;
 		font-size: 9pt;
 		color: #000;
 		background: #fff !important;
@@ -416,6 +490,7 @@
 		border: none;
 		border-radius: 0;
 		padding: 0;
+
 		/*
 		 * Deliberately NOT `avoid`. Abilities alone is taller than a printable page, so
 		 * "don't break me" is unsatisfiable and the browser pushes the whole section to
@@ -447,6 +522,7 @@
 	}
 
 	.be-character-sheet__attribute-column {
+		display: block;
 		float: left;
 		width: 33%;
 	}
@@ -456,7 +532,7 @@
 	 * onward) would wrap up alongside the floated columns instead of starting cleanly
 	 * beneath them. */
 	.be-character-sheet__attributes::after {
-		content: '';
+		content: "";
 		display: table;
 		clear: both;
 	}
@@ -465,6 +541,7 @@
 		font-size: 1em;
 		text-decoration: underline;
 		border: none;
+
 		/* Never strand a heading alone at the foot of a column. */
 		break-after: avoid;
 	}

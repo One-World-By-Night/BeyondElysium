@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\Services;
 
+use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Snapshot;
@@ -13,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Change Engine — submit, approve, reject, and apply changes to characters.
  *
- * Approval levels: auto < st < coordinator
+ * Approval levels: auto < st (the `coordinator` tier was removed - 1.0.0-review F-043)
  * Auto-approved changes are applied immediately on submit.
  *
  * Snapshot threshold: every 25 approved changes a new snapshot is auto-created.
@@ -47,15 +48,16 @@ class Change_Engine {
 		$resolved = self::resolve_approval_level( $character, (object) $change_data );
 		$level    = $resolved['level'];
 
-		$status = ( $level === 'auto' ) ? 'approved' : 'pending';
-
+		// Every change is created pending, even one that qualifies for automatic approval:
+		// approve() applies a change only by claiming it from pending, so the one place a
+		// change's effects are applied also guarantees they are applied once (1.0.0-review F-015).
 		$insert = [
 			'character_id' => $character_id,
 			'change_type'  => $change_data['change_type'],
 			'category'     => $change_data['category'] ?? null,
 			'change_data'  => $change_data['change_data'] ?? [],
 			'xp_cost'      => $change_data['xp_cost'] ?? 0,
-			'status'       => $status,
+			'status'       => 'pending',
 			'submitted_by' => $submitted_by,
 			'notes'        => $change_data['notes'] ?? null,
 			'reason'       => $resolved['reason'],
@@ -66,7 +68,7 @@ class Change_Engine {
 		// 0.99.2-workflow.md, "Resubmitting creates duplicate pending changes"). Only applies
 		// when this submission would itself be pending - an auto-approved change is already a
 		// done deal, never a "duplicate pending" concern.
-		if ( $status === 'pending' ) {
+		if ( $level !== 'auto' ) {
 			$duplicate_key = self::pending_duplicate_key( $change_data['change_type'], (array) ( $change_data['change_data'] ?? [] ) );
 			if ( $duplicate_key !== null ) {
 				$existing_id = self::find_pending_duplicate( $character_id, $change_data['change_type'], $duplicate_key );
@@ -145,49 +147,64 @@ class Change_Engine {
 	}
 
 	/**
-	 * Approves a pending change and applies it to the character's sheet.
-	 * Marks the change approved, merges its effect into sheet_data,
-	 * adjusts XP counters for XP-related change types, and creates a
-	 * snapshot when the approved-change count crosses the threshold.
+	 * Approves a pending change and applies it to the character's sheet:
+	 * merges its effect into sheet_data, adjusts XP counters for XP-related
+	 * change types, marks it approved, and creates a snapshot when the
+	 * approved-change count crosses the threshold.
 	 *
-	 * @param int      $change_id
-	 * @param int      $reviewed_by
+	 * All of it happens once, atomically. The change row is locked and must
+	 * still be pending, so two approvals landing together apply it exactly
+	 * once; the character row is locked too, so two approvals of different
+	 * changes on the same character cannot each write a sheet missing the
+	 * other's trait (1.0.0-review F-015). When `$expected_token` is given it
+	 * must match the change's current review_token(), so a reviewer never
+	 * approves content that was resubmitted after they looked (F-031). When
+	 * any write fails, every write is undone and the change stays pending
+	 * (F-056).
+	 *
+	 * @param int         $change_id
+	 * @param int         $reviewed_by
 	 * @param string|null $notes
-	 * @return bool
+	 * @param string|null $expected_token The review_token() the reviewer was shown, if any.
+	 * @return bool False when the change is missing, no longer pending, changed since the token was taken, or could not be written.
 	 */
-	public static function approve( int $change_id, int $reviewed_by, $notes ): bool {
-		$change = Change::find( $change_id );
-		if ( ! $change ) {
+	public static function approve( int $change_id, int $reviewed_by, $notes, ?string $expected_token = null ): bool {
+		$savepoint = Transaction::begin( 'be_change_approve' );
+
+		$change = Change::find_for_update( $change_id );
+		if ( ! self::reviewable( $change, $expected_token ) ) {
+			Transaction::rollback( $savepoint );
 			return false;
 		}
 
-		// Allow internal calls on already-auto-approved records.
-		if ( $change->status !== 'pending' && $change->status !== 'approved' ) {
-			return false;
-		}
-
-		// Mark as approved.
-		Change::update_status( $change_id, 'approved', $reviewed_by, $notes );
-
+		Character::lock( (int) $change->character_id );
 		$character = Character::find( (int) $change->character_id );
 		if ( ! $character ) {
+			Transaction::rollback( $savepoint );
 			return false;
 		}
 
 		// Apply change to sheet_data.
 		$new_sheet = self::apply_to_sheet( $character, $change );
-		Character::update_sheet_data( (int) $character->id, $new_sheet );
+		$written   = Character::update_sheet_data( (int) $character->id, $new_sheet );
 
 		// Handle XP adjustments.
 		$xp_cost = (float) ( $change->xp_cost ?? 0 );
 		if ( $change->change_type === 'xp_earn' ) {
-			$amount = (int) ( $change->change_data['amount'] ?? 0 );
-			Character::update_xp( (int) $character->id, $amount, $amount );
+			$amount  = (int) ( $change->change_data['amount'] ?? 0 );
+			$written = $written && Character::update_xp( (int) $character->id, $amount, $amount );
 		} elseif ( $change->change_type === 'xp_adjust' ) {
-			$amount = (int) ( $change->change_data['amount'] ?? 0 );
-			Character::update_xp( (int) $character->id, $amount, $amount );
+			$amount  = (int) ( $change->change_data['amount'] ?? 0 );
+			$written = $written && Character::update_xp( (int) $character->id, $amount, $amount );
 		} elseif ( $xp_cost > 0 ) {
-			Character::update_xp( (int) $character->id, 0, -(int) $xp_cost );
+			$written = $written && Character::update_xp( (int) $character->id, 0, -(int) $xp_cost );
+		}
+
+		// All of it lands or none of it does: a sheet and XP already changed under a change still
+		// marked pending would change again at the next approval (1.0.0-review F-056).
+		if ( ! $written || ! Change::update_status( $change_id, 'approved', $reviewed_by, $notes ) ) {
+			Transaction::rollback( $savepoint );
+			return false;
 		}
 
 		// Auto-snapshot every N approved changes.
@@ -196,30 +213,57 @@ class Change_Engine {
 			Snapshot::create( (int) $character->id, $change_id );
 		}
 
+		Transaction::commit( $savepoint );
 		return true;
 	}
 
 	/**
 	 * Rejects a pending change. Marks the change as rejected and leaves
-	 * the character's sheet untouched; only a change in `pending` status
-	 * can be rejected.
+	 * the character's sheet untouched. Only a change still in `pending`
+	 * status can be rejected - read under a row lock, like approve() - and
+	 * when `$expected_token` is given it must match the change's current
+	 * review_token().
 	 *
-	 * @param int      $change_id
-	 * @param int      $reviewed_by
+	 * @param int         $change_id
+	 * @param int         $reviewed_by
 	 * @param string|null $notes
+	 * @param string|null $expected_token
 	 * @return bool
 	 */
-	public static function reject( int $change_id, int $reviewed_by, $notes ): bool {
-		$change = Change::find( $change_id );
-		if ( ! $change ) {
+	public static function reject( int $change_id, int $reviewed_by, $notes, ?string $expected_token = null ): bool {
+		$savepoint = Transaction::begin( 'be_change_reject' );
+
+		$change = Change::find_for_update( $change_id );
+		if ( ! self::reviewable( $change, $expected_token ) ) {
+			Transaction::rollback( $savepoint );
 			return false;
 		}
 
-		if ( $change->status !== 'pending' ) {
+		$ok = Change::update_status( $change_id, 'rejected', $reviewed_by, $notes );
+		if ( ! $ok ) {
+			Transaction::rollback( $savepoint );
 			return false;
 		}
 
-		return Change::update_status( $change_id, 'rejected', $reviewed_by, $notes );
+		Transaction::commit( $savepoint );
+		return true;
+	}
+
+	/**
+	 * Whether a locked change row may be reviewed: it exists, is still
+	 * pending, and - when a token is given - still holds exactly what the
+	 * reviewer was shown.
+	 *
+	 * @param object|null $change
+	 * @param string|null $expected_token
+	 * @return bool
+	 * @phpstan-assert-if-true object $change
+	 */
+	private static function reviewable( $change, ?string $expected_token ): bool {
+		if ( ! $change || $change->status !== 'pending' ) {
+			return false;
+		}
+		return $expected_token === null || hash_equals( Change::review_token( $change ), $expected_token );
 	}
 
 	/**
@@ -308,22 +352,39 @@ class Change_Engine {
 
 	/**
 	 * Determines the approval level required for a change, and any
-	 * citation explaining why. Checks per-item and block-level approval
-	 * rules for the affected trait, applies any game-level auto-approve
-	 * setting, and returns the strictest level found among 'auto', 'st',
-	 * or 'coordinator' alongside an optional reason string.
+	 * citation explaining why: 'auto' or 'st', alongside an optional reason.
+	 * Only those two levels exist (owner ruling, 1.0.0-review F-043) - a rule
+	 * still stored as the retired 'coordinator' is a Storyteller's decision,
+	 * as it always was in practice, since nothing ever enforced it.
 	 *
 	 * @param object $character
 	 * @param object $change    Plain object with change_type, change_data['block_slug'].
-	 * @return array{level: string, reason: ?string} level is 'auto' | 'st' | 'coordinator'.
+	 * @return array{level: string, reason: ?string} level is 'auto' | 'st'.
 	 */
 	public static function resolve_approval_level( $character, $change ): array {
+		$resolved          = self::resolve_rule_level( $character, $change );
+		$resolved['level'] = $resolved['level'] === 'auto' ? 'auto' : 'st';
+		return $resolved;
+	}
+
+	/**
+	 * The level the rules themselves resolve to: checks per-item and
+	 * block-level approval rules for the affected trait, applies any
+	 * game-level auto-approve setting, and returns the strictest level found,
+	 * alongside an optional reason string. `resolve_approval_level()`
+	 * normalizes what it returns.
+	 *
+	 * @param object $character
+	 * @param object $change    Plain object with change_type, change_data['block_slug'].
+	 * @return array{level: string, reason: ?string}
+	 */
+	private static function resolve_rule_level( $character, $change ): array {
 		$change_data = is_array( $change->change_data ) ? $change->change_data : [];
 		$block_slug  = $change_data['block_slug'] ?? null;
 
 		// XP earn/adjust submitted by a narrator/ST defaults to auto.
 		if ( in_array( $change->change_type, [ 'xp_earn', 'xp_adjust', 'import_note' ], true ) ) {
-			if ( current_user_can( 'be_manage_characters' ) ) {
+			if ( \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) ) {
 				return [ 'level' => 'auto', 'reason' => null ];
 			}
 			return [ 'level' => 'st', 'reason' => null ];
@@ -333,6 +394,12 @@ class Change_Engine {
 		// 'st' safe default right before the game-level auto-approve check below.
 		$level  = null;
 		$reason = null;
+
+		// A custom entry has no catalog price or rule of its own, so it always needs a
+		// Storyteller - even on a chronicle that auto-approves by default (1.0.0-review F-030).
+		if ( ! empty( $change_data['trait']['custom'] ) ) {
+			$level = 'st';
+		}
 
 		if ( $block_slug ) {
 			// Prefer this character's chronicle-specific fork of the block, if one exists.
@@ -375,7 +442,8 @@ class Change_Engine {
 				// Check the matched power's own level ladder (tiered_power blocks: Disciplines,
 				// Gifts, Arcanoi...) - a separate catalog shape items[] never covers.
 				if ( $trait_name && ! empty( $definition->powers ) ) {
-					$held_level = $change_data['trait']['level'] ?? null;
+					// Compared as integers: a level sent as the string "5" is the same rung as 5.
+					$held_level = isset( $change_data['trait']['level'] ) && is_numeric( $change_data['trait']['level'] ) ? (int) $change_data['trait']['level'] : null;
 					foreach ( $definition->powers as $power ) {
 						if ( ( $power->name ?? null ) !== $trait_name ) {
 							continue;
@@ -384,7 +452,7 @@ class Change_Engine {
 							$level = self::strictest( $level, $power->approval_override );
 						}
 						foreach ( $power->levels ?? [] as $rung ) {
-							if ( ( $rung->level ?? null ) !== $held_level ) {
+							if ( ! isset( $rung->level ) || $held_level === null || (int) $rung->level !== $held_level ) {
 								continue;
 							}
 							if ( ! empty( $rung->reason ) ) {
@@ -406,22 +474,24 @@ class Change_Engine {
 				// so this reads change_data['values'] instead, keyed on the pool's PERMANENT
 				// value (spending/regaining a temporary point in play never needs approval;
 				// permanently raising it via XP might).
+				// Every pool in the change is judged, not only the first - approval must never
+				// judge one pool while every pool is applied (F-030).
 				if ( ! empty( $change_data['values'] ) && ! empty( $definition->pools ) ) {
-					$pool_name = array_key_first( $change_data['values'] );
-					$new_value = $change_data['values'][ $pool_name ];
-					$permanent = is_array( $new_value ) ? ( $new_value['permanent'] ?? null ) : $new_value;
-					foreach ( $definition->pools as $pool ) {
-						if ( ( $pool->name ?? null ) !== $pool_name || empty( $pool->approval_by_value ) ) {
-							continue;
-						}
-						$range = self::find_approval_range( $pool->approval_by_value, $permanent );
-						if ( $range ) {
-							if ( ! empty( $range->reason ) ) {
-								$reason = $range->reason;
+					foreach ( (array) $change_data['values'] as $pool_name => $new_value ) {
+						$permanent = is_array( $new_value ) ? ( $new_value['permanent'] ?? null ) : $new_value;
+						foreach ( $definition->pools as $pool ) {
+							if ( ( $pool->name ?? null ) !== $pool_name || empty( $pool->approval_by_value ) ) {
+								continue;
 							}
-							$level = self::strictest( $level, $range->approval );
+							$range = self::find_approval_range( $pool->approval_by_value, $permanent );
+							if ( $range ) {
+								if ( ! empty( $range->reason ) ) {
+									$reason = $range->reason;
+								}
+								$level = self::strictest( $level, $range->approval );
+							}
+							break;
 						}
-						break;
 					}
 				}
 
@@ -429,28 +499,29 @@ class Change_Engine {
 				// a specific Generation background...) - identity_field changes populate
 				// change_data['fields'], never change_data['trait']. A multiselect's every
 				// selected value is checked; strictest wins across all of them.
+				// Every field in the change is judged, for the same reason as every pool.
 				if ( ! empty( $change_data['fields'] ) && ! empty( $definition->fields ) ) {
-					$field_name = array_key_first( $change_data['fields'] );
-					$new_value  = $change_data['fields'][ $field_name ];
-					$selected   = is_array( $new_value ) ? $new_value : [ $new_value ];
-					foreach ( $definition->fields as $field ) {
-						if ( ( $field->name ?? null ) !== $field_name || empty( $field->approval_by_option ) ) {
-							continue;
-						}
-						$schedule = (array) $field->approval_by_option;
-						foreach ( $selected as $option ) {
-							if ( ! isset( $schedule[ $option ] ) ) {
+					foreach ( (array) $change_data['fields'] as $field_name => $new_value ) {
+						$selected = is_array( $new_value ) ? $new_value : [ $new_value ];
+						foreach ( $definition->fields as $field ) {
+							if ( ( $field->name ?? null ) !== $field_name || empty( $field->approval_by_option ) ) {
 								continue;
 							}
-							$entry = $schedule[ $option ];
-							if ( ! empty( $entry->reason ) ) {
-								$reason = $entry->reason;
+							$schedule = (array) $field->approval_by_option;
+							foreach ( $selected as $option ) {
+								if ( ! is_string( $option ) || ! isset( $schedule[ $option ] ) ) {
+									continue;
+								}
+								$entry = $schedule[ $option ];
+								if ( ! empty( $entry->reason ) ) {
+									$reason = $entry->reason;
+								}
+								if ( isset( $entry->approval ) ) {
+									$level = self::strictest( $level, $entry->approval );
+								}
 							}
-							if ( isset( $entry->approval ) ) {
-								$level = self::strictest( $level, $entry->approval );
-							}
+							break;
 						}
-						break;
 					}
 				}
 
@@ -490,8 +561,10 @@ class Change_Engine {
 	/**
 	 * Awards XP to multiple characters in one call. Creates an approved
 	 * Change record and updates the XP counters for each character in the
-	 * given list, skipping any character whose Change record fails to
-	 * create.
+	 * given list, each pair inside its own transaction, so an award either
+	 * lands whole or not at all. Skips an id with no character behind it
+	 * rather than recording an award for nobody. Chronicle scoping is the
+	 * caller's job - this method has no chronicle to check against.
 	 *
 	 * @param array  $character_ids
 	 * @param int    $amount
@@ -503,7 +576,12 @@ class Change_Engine {
 		$count = 0;
 		foreach ( $character_ids as $character_id ) {
 			$character_id = (int) $character_id;
-			$change_id    = Change::create( [
+			if ( ! Character::find( $character_id ) ) {
+				continue;
+			}
+
+			$savepoint = Transaction::begin( 'be_bulk_award_xp' );
+			$change_id = Change::create( [
 				'character_id' => $character_id,
 				'change_type'  => 'xp_earn',
 				'category'     => 'experience',
@@ -517,19 +595,22 @@ class Change_Engine {
 				'notes'        => $reason,
 			] );
 
-			if ( $change_id ) {
-				Character::update_xp( $character_id, $amount, $amount );
-				$count++;
+			if ( ! $change_id || ! Character::update_xp( $character_id, $amount, $amount ) ) {
+				Transaction::rollback( $savepoint );
+				continue;
 			}
+
+			Transaction::commit( $savepoint );
+			$count++;
 		}
 		return $count;
 	}
 
 	/**
 	 * Returns the stricter of two approval levels. Orders levels as
-	 * auto < st < coordinator and returns whichever of the two inputs
-	 * ranks at least as strict as the other, treating an unrecognized
-	 * level as equivalent to 'st'.
+	 * auto < st and returns whichever of the two inputs ranks at least as
+	 * strict as the other, treating any other level - the retired
+	 * 'coordinator' included - as equivalent to 'st'.
 	 *
 	 * `$a` is nullable and means "no signal has applied yet" - not the same
 	 * thing as an explicit 'st'. Before this distinction existed, the running
@@ -550,7 +631,7 @@ class Change_Engine {
 		if ( $a === null ) {
 			return $b;
 		}
-		$order = [ 'auto' => 0, 'st' => 1, 'coordinator' => 2 ];
+		$order = [ 'auto' => 0, 'st' => 1 ];
 		$a_val = $order[ $a ] ?? 1;
 		$b_val = $order[ $b ] ?? 1;
 		return $a_val >= $b_val ? $a : $b;

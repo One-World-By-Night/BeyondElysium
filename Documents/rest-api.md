@@ -32,8 +32,9 @@ capability plus their row in `be_game_members` for that chronicle. See the
 | GET | `/games` | `be_view_characters` | List *every* game on the install — correct for a staff picker, never safe to back a front-end chronicle switcher with (see `/my/games` below) |
 | POST | `/games` | `be_manage_games` | Create a game |
 | GET | `/games/{slug}` | `be_view_characters` | Get one game |
-| PUT | `/games/{slug}` | `be_manage_games` | Update name, slug, description, settings, `asc_role_path`, `notifications_enabled` |
-| DELETE | `/games/{slug}` | `be_manage_games` | Delete the game row only — does not cascade its content |
+| PUT | `/games/{slug}` | `be_manage_games` | Update name, slug, description, settings, `asc_role_path`, `notifications_enabled`. `settings` merges into what is stored, key by key; `settings.enabled_factions` merges one level further, stack by stack and field by field, so a write names only the fields it changes (an empty list lifts that field's restriction) |
+| DELETE | `/games/{slug}` | `be_manage_games` | Delete a chronicle. One that still holds content (characters, plots, world objects, its own templates or schema-block forks, named saved queries, verification codes, transfers) is refused with `409 chronicle_has_content` and `data.counts`, unless `?with_content=1` - which deletes all of it, memberships included, in one transaction. Nothing is ever left under the slug. `POST /games` refuses an explicit slug still holding a deleted chronicle's content (`409 slug_has_orphaned_content`), and a rename onto one is refused (`409 orphan_collision`) |
+| GET | `/games/{slug}/content` | `be_manage_games` | Counts what deleting the chronicle would delete with it (`characters`, `plots`, `world_objects`, `templates`, `schema_blocks`, `saved_queries`, `attestations`, `transfers`) - the Games screen names these in its one delete confirmation |
 | GET | `/my/games` | `be_view_characters` | Only the chronicles the caller actually holds a `be_game_members` row in, each with the role held there (`{slug, name, role}`) — the real data source for the My Chronicle / Storyteller Toolkit chronicle switcher |
 | GET | `/{game_slug}/my/capabilities` | logged in (any) | What the caller can actually do *in this one chronicle* — `be_manage_characters`, `be_manage_plots`, `be_manage_schemas`, `be_manage_connections`, `be_manage_boons`, each resolved through the same chronicle-scoped `Authorization::check_request()` every write route uses, not the site-wide snapshot every page load carries. An unresolvable `game_slug` or a caller with no relationship to this chronicle still returns `200` with every flag `false`, never an error — a switcher renders "no access here" rather than failing |
 
@@ -44,10 +45,10 @@ capability plus their row in `be_game_members` for that chronicle. See the
 | GET | `/schema-blocks` | `be_view_characters` | List blocks |
 | POST | `/schema-blocks` | `be_manage_schemas` | Create a block |
 | GET | `/schema-blocks/{slug}` | `be_view_characters` | Get one block; `?game_slug=` substitutes a chronicle's own fork if it has one |
-| PUT | `/schema-blocks/{slug}` | `be_manage_schemas` | Update, or auto-fork per-game if `?game_slug=` is present and no fork exists yet. Any `description` object (`{reference, description, source}`, each HTML) on an item/power/level is sanitized server-side — formatting/lists/tables survive, images and scripts don't — regardless of what the caller submits. |
+| PUT | `/schema-blocks/{slug}` | `be_manage_schemas` | Update, or auto-fork per-game if `?game_slug=` is present and no fork exists yet. Any `description` object (`{reference, description, source}`, each HTML) on an item/power/level is sanitized server-side — formatting/lists/tables survive, images and scripts don't — regardless of what the caller submits. `500 save_failed` when the save didn't land - for a chronicle, neither the change nor a new copy is kept |
 | DELETE | `/schema-blocks/{slug}` | `be_manage_schemas` | Delete |
 | POST | `/{game_slug}/schema-blocks` | `be_manage_schemas` | Explicitly fork a block for this chronicle (the same auto-fork the global `PUT` above performs implicitly via `?game_slug=`, as its own dedicated route) |
-| PUT | `/{game_slug}/schema-blocks/{slug}` | `be_manage_schemas` | Update this chronicle's own fork |
+| PUT | `/{game_slug}/schema-blocks/{slug}` | `be_manage_schemas` | Update this chronicle's own fork, making it on the first edit. `500 save_failed` when the save didn't land - neither the change nor a new copy is kept |
 | DELETE | `/{game_slug}/schema-blocks/{slug}` | `be_manage_schemas` | Delete this chronicle's own fork, reverting to the global block |
 
 An item, tiered-power level/family, resource pool, or identity field's `definition` entry may
@@ -74,17 +75,19 @@ addresses one power level by its `level` number. A rule's response/list shape ca
 | Method | Path | Capability | Notes |
 |---|---|---|---|
 | GET | `/{game_slug}/approval-rules` | `be_manage_approval_rules` | List every rule currently set, this chronicle's own fork where one exists, the global block otherwise |
-| POST | `/{game_slug}/approval-rules` | `be_manage_approval_rules` | Set (create or overwrite) one rule on a catalog item, item value-range, power, power level, pool value-range, or identity field option — forks the block for this chronicle if not already forked |
+| POST | `/{game_slug}/approval-rules` | `be_manage_approval_rules` | Set (create or overwrite) one rule on a catalog item, item value-range, power, power level, pool value-range, or identity field option — forks the block for this chronicle if not already forked. `500 save_failed` when the rule didn't save - nothing is kept, a new copy included |
 | GET | `/{game_slug}/approval-rules/options` | `be_manage_approval_rules` | The fixed vocabulary the create/edit form offers: real approval levels, and reason-tier presets |
-| PUT | `/{game_slug}/approval-rules/{id}` | `be_manage_approval_rules` | Update one rule |
-| DELETE | `/{game_slug}/approval-rules/{id}` | `be_manage_approval_rules` | Clear one rule, back to no override |
+| GET | `/{game_slug}/approval-rules/default` | `be_manage_approval_rules` | The chronicle's Default Approval Policy: `{ auto_approve }` |
+| PUT | `/{game_slug}/approval-rules/default` | `be_manage_approval_rules` | Set it: `{ auto_approve: true \| false }`. Every other chronicle setting is kept |
+| PUT | `/{game_slug}/approval-rules/{id}` | `be_manage_approval_rules` | Update one rule. `500 save_failed` when it didn't save |
+| DELETE | `/{game_slug}/approval-rules/{id}` | `be_manage_approval_rules` | Clear one rule, back to no override. `500 save_failed` when it didn't save |
 
 **Default Approval Policy.** A chronicle's own baseline — used only when nothing above (an
 item, a power, a level, a value range, a field option, or the owning block's own
 `approval_rules.default`) resolved a level at all — is the plain `settings.auto_approve`
 boolean on the game itself (`false`/absent: everything needs `st` review by default; `true`:
-everything is `auto` by default), read and written through the existing
-[`PUT /games/{slug}`](#games) route's own `settings` merge, not a route of its own. A
+everything is `auto` by default), read and written through `/{game_slug}/approval-rules/default`, so
+the Storytellers who manage the rules can set it. A
 granular rule always wins over this default in either direction, in both the `resolve_approval_level()`
 resolution logic and by construction of the merge itself.
 
@@ -93,17 +96,17 @@ resolution logic and by construction of the merge itself.
 | Method | Path | Capability | Notes |
 |---|---|---|---|
 | GET | `/creature-stacks` | `be_view_characters` | List stacks |
-| POST | `/creature-stacks` | `be_manage_schemas` | Create a stack |
+| POST | `/creature-stacks` | `be_manage_games` | Create a stack |
 | GET | `/creature-stacks/{slug}` | `be_view_characters` | Get one stack, resolved (blocks assembled) with `?resolve=true`. Add `?game_slug=` for a chronicle's own forked blocks, and `&for_creation=true` to also narrow identity-field options to that chronicle's `enabled_factions` restriction — the character-creation picker only; never applied when viewing or editing an existing character |
-| PUT | `/creature-stacks/{slug}` | `be_manage_schemas` | Update |
-| DELETE | `/creature-stacks/{slug}` | `be_manage_schemas` | Delete |
+| PUT | `/creature-stacks/{slug}` | `be_manage_games` | Update. `500 save_failed` when the save didn't land |
+| DELETE | `/creature-stacks/{slug}` | `be_manage_games` | Delete a custom stack. A system stack is `403`; a stack any character in any chronicle still uses is `409 creature_stack_in_use`, with `count` |
 
 ## Characters
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
 | GET | `/{game_slug}/characters` | `be_view_characters` | List, with roster filters |
-| POST | `/{game_slug}/characters` | `be_edit_own_characters` | Create — bootstrap-exempt: a player with no prior chronicle relationship can still create their first character here |
+| POST | `/{game_slug}/characters` | `be_edit_own_characters` | Create — bootstrap-exempt: a player with no prior chronicle relationship can still create their first character here. Also creates the character's own plot, `<Character> [id] Plot`, linked to it as its actor (only its player and the chronicle's Storytellers see it); a character whose plot can't be written isn't created (`500 create_failed`) |
 | GET | `/{game_slug}/my/characters` | `be_view_characters` | Only the caller's own characters, ST-only-text stripped the same as every other non-manager read path |
 | GET | `/{game_slug}/characters/{id}` | `be_view_characters` | One character; a non-manager may only view their own |
 | PUT | `/{game_slug}/characters/{id}` | `be_edit_own_characters` | Update |
@@ -118,7 +121,7 @@ resolution logic and by construction of the merge itself.
 |---|---|---|---|
 | GET | `/{game_slug}/characters/{character_id}/changes` | `be_view_characters` | One character's change history |
 | POST | `/{game_slug}/characters/{character_id}/changes` | `be_edit_own_characters` | Submit a change — auto-approves and applies immediately if the block's approval rules allow it |
-| GET | `/{game_slug}/changes` | `be_manage_characters` | The approval queue — every pending (or filtered) change across the whole chronicle |
+| GET | `/{game_slug}/changes` | `be_manage_characters` | The approval queue — every pending (or filtered) change across the whole chronicle. Filters: `status`, `change_type`, `character_id`, and `approval_level` (`auto` or `st`), which pages and totals that level alone |
 | POST | `/{game_slug}/changes/batch-approve` | `be_manage_characters` | Approve several changes in one call |
 | GET | `/{game_slug}/my/changes` | `be_view_characters` | Only the caller's own pending changes, across every character they own |
 | POST | `/{game_slug}/characters/{character_id}/preview-changes` | `be_edit_own_characters` | Price a set of proposed changes without submitting them |
@@ -162,13 +165,13 @@ once rather than one character at a time.
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| GET | `/templates` | `be_view_characters` | List global (base) templates |
-| POST | `/templates` | `be_manage_templates` | Create a global template |
-| GET | `/templates/{id}` | `be_view_characters` | One template |
-| PUT | `/templates/{id}` | `be_manage_templates` | Update |
-| DELETE | `/templates/{id}` | `be_manage_templates` | Delete |
+| GET | `/templates` | `be_manage_templates` | List global (base) templates, for the template editor - a sheet gets its layout from `resolve` |
+| POST | `/templates` | `be_manage_games` | Create a global template |
+| GET | `/templates/{id}` | `be_manage_templates` | One global template; a chronicle's own template is `404` here and listed on its own route |
+| PUT | `/templates/{id}` | `be_manage_games` | Update a global template |
+| DELETE | `/templates/{id}` | `be_manage_games` | Delete a global template |
 | GET | `/{game_slug}/templates/resolve` | `be_view_characters` | Resolve the effective layout for a creature stack in this chronicle (game fork if one exists, else the global template) |
-| GET | `/{game_slug}/templates` | `be_view_characters` | List this chronicle's own template forks |
+| GET | `/{game_slug}/templates` | `be_manage_templates` | List this chronicle's own template forks |
 | POST | `/{game_slug}/templates` | `be_manage_templates` | Fork a template for this chronicle |
 | PUT | `/{game_slug}/templates/{id}` | `be_manage_templates` | Update a chronicle's own fork |
 | DELETE | `/{game_slug}/templates/{id}` | `be_manage_templates` | Delete a chronicle's own fork |
@@ -177,20 +180,20 @@ once rather than one character at a time.
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| GET | `/{game_slug}/plots` | `be_view_characters` | List plots |
-| POST | `/{game_slug}/plots` | `be_submit_actions` OR `be_manage_plots` | Create — a player can start a plot thread via an action, an ST can create one directly |
+| GET | `/{game_slug}/plots` | `be_view_characters` | List plots. `character_plots=only` keeps each character's own plot and its action rounds (plots tied to a character by `apr_actor`); `exclude` keeps every other plot; anything else is `400` |
+| POST | `/{game_slug}/plots` | `be_submit_actions` OR `be_manage_plots` | Create — a player can start a plot thread via an action, an ST can create one directly. A Storyteller's `is_rumor: true` saves the plot and its rumor tag together or neither - `500 create_failed` when nothing was kept |
 | GET | `/{game_slug}/my/plots` | `be_view_characters` | Only the caller's own plots — theirs by connection, or reachable via `target_query` |
-| POST | `/{game_slug}/plots/allocate-actions` | `be_manage_plots` | Allocate a round's action slots |
-| POST | `/{game_slug}/plots/generate-rumors` | `be_manage_plots` | Generate and distribute rumors via a saved query |
-| GET | `/{game_slug}/plots/{id}` | `be_view_characters` | One plot with its entry thread |
+| POST | `/{game_slug}/plots/allocate-actions` | `be_manage_plots` | Allocate a round's action slots. With `commit`, the date's plot and every action entry are saved together or not at all - `500 allocation_failed` when nothing was kept. The date's plot sits under the character's own plot unless `parent_plot_id` names another |
+| POST | `/{game_slug}/plots/generate-rumors` | `be_manage_plots` | Generate a date's standard rumors: a preview, or with `commit`, saved, and each matched player emailed once. A commit keeps every rumor or none - `500 generate_failed`, and no one is emailed - and two commits in one chronicle take turns, so the second finds the first's rumors and skips them |
+| GET | `/{game_slug}/plots/{id}` | `be_view_characters` | One plot with its entry thread. Another character's action allocation is `404` unless you manage plots, and never listed among a plot's children |
 | PUT | `/{game_slug}/plots/{id}` | `be_manage_plots` | Update |
-| DELETE | `/{game_slug}/plots/{id}` | `be_manage_plots` | Delete, cascading its entries and connections |
+| DELETE | `/{game_slug}/plots/{id}` | `be_manage_plots` | Delete, cascading its entries and connections. A character's own plot is refused (`409 character_plot`) - it goes when the character is deleted |
 
 ## Entries (plot responses/actions)
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| GET | `/{game_slug}/plots/{plot_id}/entries` | `be_view_characters` | List a plot's entries |
+| GET | `/{game_slug}/plots/{plot_id}/entries` | `be_view_characters` | List a plot's entries (`404` for another character's action allocation, as above) |
 | POST | `/{game_slug}/plots/{plot_id}/entries` | `be_submit_actions` OR `be_manage_plots` | Add an entry |
 | PUT | `/{game_slug}/entries/{id}` | `be_submit_actions` OR `be_manage_plots` | Update |
 | DELETE | `/{game_slug}/entries/{id}` | `be_manage_plots` | Delete |
@@ -219,7 +222,7 @@ client.
 | POST | `/ai-assist/test` | `be_manage_games` | Test a provider/key/base URL/model combination directly from the request body — never a saved key |
 | POST | `/{game_slug}/ai-assist` | Resolved per `field_context` | Generate a suggestion for a chronicle-scoped field (character, plot, rumor, world-object) |
 | GET | `/{game_slug}/ai-assist/settings` | `be_manage_apr` | This chronicle's own opt-in, provider, key-configured flags, and base URL/model overrides |
-| PUT | `/{game_slug}/ai-assist/settings` | `be_manage_apr` | Update this chronicle's own AI Assist settings |
+| PUT | `/{game_slug}/ai-assist/settings` | `be_manage_apr` | Update this chronicle's own AI Assist settings. `500 save_failed` when the save didn't land |
 | POST | `/{game_slug}/ai-assist/test` | `be_manage_apr` | Test a provider/key/base URL/model combination for this chronicle, before saving |
 
 ## Background Uses
@@ -230,7 +233,7 @@ Recording what a player actually did with an allocated downtime action, and an S
 |---|---|---|---|
 | GET | `/{game_slug}/characters/{character_id}/spendable` | `be_view_characters` | How many actions this character has left to spend on the current game date |
 | GET | `/{game_slug}/characters/{character_id}/background-uses` | `be_view_characters` | List this character's recorded uses |
-| POST | `/{game_slug}/characters/{character_id}/background-uses` | `be_submit_actions` OR `be_manage_characters` | Record what the player did with one action |
+| POST | `/{game_slug}/characters/{character_id}/background-uses` | `be_submit_actions` OR `be_manage_characters` | Record what the player did with one action. `500 record_failed` when it couldn't be saved - nothing is kept |
 | POST | `/{game_slug}/characters/{character_id}/background-uses/clear` | `be_manage_characters` | Clear every use recorded against this character for one game date |
 | POST | `/{game_slug}/background-uses/clear-date` | `be_manage_characters` | Clear every character's recorded uses for one game date at once |
 | PUT | `/{game_slug}/background-uses/{id}` | `be_submit_actions` OR `be_manage_characters` OR `be_manage_plots` | Update one recorded use — an ST filling in the adjudicated result, or the player editing their own before it's reviewed |
@@ -240,7 +243,7 @@ Recording what a player actually did with an allocated downtime action, and an S
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| GET | `/{game_slug}/connections` | `be_view_characters` | List connections between characters/objects |
+| GET | `/{game_slug}/connections` | `be_manage_connections` OR `be_manage_plots` | List connections between characters/objects. Staff only: the list shows who holds what and whose action allocation is whose |
 | POST | `/{game_slug}/connections` | `be_manage_connections` | Create |
 | PUT | `/{game_slug}/connections/{id}` | `be_manage_connections` | Update |
 | DELETE | `/{game_slug}/connections/{id}` | `be_manage_connections` | Delete |
@@ -249,22 +252,22 @@ Recording what a player actually did with an allocated downtime action, and an S
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| POST | `/{game_slug}/query` | `be_run_queries` | Run an ad-hoc query against the roster |
-| POST | `/{game_slug}/statistics` | `be_run_queries` | Run one of the five built-in roster statistics |
-| GET | `/{game_slug}/queries` | `be_run_queries` | List saved queries |
-| POST | `/{game_slug}/queries` | `be_run_queries` | Save a query |
-| PUT | `/{game_slug}/queries/{id}` | `be_run_queries` | Update a saved query |
-| DELETE | `/{game_slug}/queries/{id}` | `be_run_queries` | Delete a saved query |
+| POST | `/{game_slug}/query` | `be_run_queries` AND `be_manage_characters` | Run an ad-hoc query against the roster |
+| POST | `/{game_slug}/statistics` | `be_run_queries` AND `be_manage_characters` | Run one of the five built-in roster statistics |
+| GET | `/{game_slug}/queries` | `be_run_queries` AND `be_manage_characters` | List saved queries |
+| POST | `/{game_slug}/queries` | `be_run_queries` AND `be_manage_characters` | Save a query |
+| PUT | `/{game_slug}/queries/{id}` | `be_run_queries` AND `be_manage_characters` | Update a saved query |
+| DELETE | `/{game_slug}/queries/{id}` | `be_run_queries` AND `be_manage_characters` | Delete a saved query |
 
 ## World Objects (items, locations, rotes)
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| GET | `/{game_slug}/world-objects` | `be_view_characters` | List, filterable by type |
-| POST | `/{game_slug}/world-objects` | `be_manage_world_objects` | Create |
+| GET | `/{game_slug}/world-objects` | `be_view_characters` | List, filterable by type. With `object_type`, any of that type's properties filters too: a number exactly or with `_min`/`_max`, text exactly in any case, and a list - an item's `abilities`, a rote's `spheres` - by one entry's name |
+| POST | `/{game_slug}/world-objects` | `be_manage_world_objects` | Create. Name, rarity, and cost are plain text (at most 255, 20, and 100 characters; longer is `400`), description and limitations allow the same HTML a post does. A boon is refused (`409 use_boon_ledger`) - boons are made on `/boons` |
 | GET | `/{game_slug}/world-objects/{id}` | `be_view_characters` | Get one |
-| PUT | `/{game_slug}/world-objects/{id}` | `be_manage_world_objects` | Update |
-| DELETE | `/{game_slug}/world-objects/{id}` | `be_manage_world_objects` | Delete |
+| PUT | `/{game_slug}/world-objects/{id}` | `be_manage_world_objects` | Update, cleaned and limited the same way as a create. `409 use_boon_ledger` for a boon |
+| DELETE | `/{game_slug}/world-objects/{id}` | `be_manage_world_objects` | Delete. `409 use_boon_ledger` for a boon, which is never deleted |
 
 ## Boons
 
@@ -277,7 +280,7 @@ from the write routes below.
 |---|---|---|---|
 | GET | `/{game_slug}/boons` | `be_view_characters` | The ledger — whole-game, or one character's owed/owed-to-them split |
 | POST | `/{game_slug}/boons` | `be_manage_boons` | Record a new boon |
-| PUT | `/{game_slug}/boons/{id}/repay` | `be_manage_boons` | Mark a boon repaid — a symmetric transactional update |
+| PUT | `/{game_slug}/boons/{id}/repay` | `be_manage_boons` | Mark a boon repaid — a symmetric transactional update. `500 save_failed` when it didn't save |
 
 ## Import (exchange files — `.gex`, character or game-scoped)
 
@@ -291,7 +294,7 @@ from the write routes below.
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| POST | `/{game_slug}/characters/{id}/export` | `be_manage_characters` OR `be_edit_own_characters` | Export one character to a Grapevine `.gex` XML document. `hide_st` strips `[ST]...[/ST]`-marked text the same way a non-manager's own sheet view already does; `verify` mints a fresh attestation embedded in the document, so each call issues a new code — not free to call repeatedly for the same download |
+| POST | `/{game_slug}/characters/{id}/export` | `be_manage_characters` OR `be_edit_own_characters` | Export one character to a Grapevine `.gex` XML document. `422 not_exportable` for a creature type with no Grapevine equivalent (one an administrator added). `hide_st` asks for a player's copy - no Storyteller-only block, no `[ST]...[/ST]`-marked text in notes, biography, or boon terms - and only matters to a Storyteller: a player's own export is always that copy, whatever the request says. `as_transfer: true` is refused (`400 use_transfer_route`); a transfer document comes only from `/transfers/outbound`. `verify` mints a fresh attestation embedded in the document, so each call issues a new code — not free to call repeatedly for the same download, and its stored `document_hash` covers this exact document (redacted or not) rather than the sheet's own always-unredacted `sheet_hash`, so a later re-check compares against what was actually handed over |
 
 ## Game Import (full `.gv3` game files — not game-scoped, since a new chronicle may not exist yet)
 
@@ -305,16 +308,47 @@ from the write routes below.
 
 Sending a character to a different chronicle — on this install, or a different Beyond
 Elysium site entirely — with a real handshake and attestation rather than a plain export/
-re-import.
+re-import. A Storyteller approves each side: the home chronicle's sends it, and the receiving
+chronicle's reviews the offer and accepts or refuses it. Nothing is written to the receiving
+chronicle before that.
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| GET | `/{game_slug}/transfers` | `be_manage_characters` | List this chronicle's outbound and inbound transfers |
-| POST | `/{game_slug}/transfers/outbound` | `be_manage_characters` | Start sending a character elsewhere |
-| POST | `/{game_slug}/transfers/{id}/acknowledge` | `be_manage_characters` | Acknowledge an inbound transfer request |
-| POST | `/{game_slug}/transfers/{id}/release` | `be_manage_characters` | Release the character — the sending side's final confirmation |
-| POST | `/{game_slug}/transfers/{id}/decline` | `be_manage_characters` | Decline an inbound transfer |
-| POST | `/{game_slug}/transfers/inbound` | none (public by design) | The receiving side's callback from the *sending* site — trust comes from verifying the request against the sender's own attestation, not from a WordPress capability on this install |
+| GET | `/{game_slug}/transfers` | `be_manage_characters` | List the transfers this chronicle is party to on this site — outbound rows it is home to, inbound rows it hosts — without stored payloads |
+| POST | `/{game_slug}/transfers/outbound` | `be_manage_characters` | Send a character. Always returns the transfer document; given `host_site` and `host_slug`, also offers it to that chronicle, and the row stays `pending` until acknowledged. `422 not_exportable`, recording nothing, for a creature type with no Grapevine equivalent. `409 already_travelling` while the character has an open outbound transfer, including one another request recorded a moment before; `500 create_failed` when the transfer didn't save |
+| POST | `/{game_slug}/transfers/{id}/acknowledge` | `be_manage_characters` | Home side: mark a `pending` transfer received abroad |
+| POST | `/{game_slug}/transfers/{id}/release` | `be_manage_characters` | Home side: give an `abroad` character up for good |
+| POST | `/{game_slug}/transfers/{id}/decline` | `be_manage_characters` | Home side: cancel a `pending` transfer. Revokes its verification code, so an offer still waiting at the host can no longer be accepted |
+| POST | `/{game_slug}/transfers/inbound` | none (public by design) | Called by the *sending* site. Verified against the sender's own `/verify/{code}`, which must answer for a code issued for a transfer (a verified export's code is refused, `400 verify_failed`); records an `offered` row holding the document and emails this chronicle's HSTs and ASTs. Returns `202 {pending_review: true}`. 10 requests a minute per IP; `409 already_offered` while the character is already waiting or visiting, including an offer recorded a moment before; `500 create_failed` when the offer didn't save; `429 too_many_offers` past 50 waiting offers |
+| GET | `/{game_slug}/transfers/{id}/review` | `be_import` | Host side: an `offered` transfer's import preview — the same shape `GET /{game_slug}/import/{job_id}` returns. A duplicate matched in this chronicle also carries `changes`: one `{section, entry, here, arriving}` row per difference from the sheet already here (`here` null for something only arriving, `arriving` null for something only here); a match in another chronicle carries none |
+| POST | `/{game_slug}/transfers/{id}/accept` | `be_import` | Host side: accept an offer with import `resolutions`. Asks the home site again first (`400 verify_failed` if it cancelled), needs a decision for every duplicate (Skip is refused - refuse the offer instead), imports in one transaction, and moves the row to `visiting`. A character returning to the chronicle it left also closes that outbound row as `returned` |
+| POST | `/{game_slug}/transfers/{id}/refuse` | `be_import` | Host side: turn an offer down; nothing is written |
+| POST | `/{game_slug}/transfers/{id}/send-home` | `be_manage_characters` | Host side: end a visit (`visiting` → `sent_home`) |
+| POST | `/{game_slug}/transfers/{id}/retain` | `be_manage_characters` | Host side: keep a visiting character for good (`visiting` → `retained`) |
+
+A character matched by its identity (uuid) is only this chronicle's to overwrite when it lives
+here. One that lives in another chronicle on this site is reported as `matched_by:
+"uuid_elsewhere"` and can be skipped or imported as a new character with its own identity -
+never overwritten. This applies to every import, not only transfers.
+
+## Submissions (a player sending their own Grapevine file straight to a chronicle)
+
+The player-initiated counterpart to Transfers: no Storyteller on the sending end at all -
+anyone signed in can send an exported `.gex` to any chronicle, joining it or visiting for a
+game. It reuses the same review/accept/refuse shape Transfers already established, keyed on
+`game_id` rather than a slug so a chronicle rename can't orphan a waiting file.
+
+| Method | Path | Capability | Notes |
+|---|---|---|---|
+| POST | `/{game_slug}/submissions/preview` | `be_edit_own_characters` | Bootstrap-exempt, same rule as character creation. Reads the upload and reports which of its characters can be sent here, with a reason for one that can't; stores nothing - `413 file_too_large` past 5 MB, `400 unsupported_format` for a `.gv3`, `400 invalid_format` for anything else unrecognized, `422 no_character` for a file with none |
+| POST | `/{game_slug}/submissions` | `be_edit_own_characters` | Bootstrap-exempt. Re-reads the upload and records the request; `character_index` picks one out of several, `arrival` (`joining` or `visiting`, required) and an optional `home_chronicle`. `400 choose_character` for several characters with no index; `400 not_allowed` when the chosen character fails the same allowed-here check `preview` reports; `409 join_already_requested` for a non-member who already has a pending hand-built join character here (and the reverse, from `POST /{game_slug}/characters`, checks this table too); `409 already_waiting` for a second file to the same chronicle; `429 too_many_waiting` past 50 chronicle-wide. Emails every HST and AST |
+| POST | `/{game_slug}/submissions/{id}/withdraw` | `be_edit_own_characters` | The sender only (`404 submission_not_found` for anyone else, or a wrong `game_slug`) - `waiting` → `withdrawn` |
+| GET | `/my/submissions` | `be_view_characters` | The caller's own last 20, any chronicle. Registered before `/{game_slug}/submissions` so a chronicle literally slugged `my` can't shadow it |
+| GET | `/{game_slug}/submissions` | `be_import` | This chronicle's `waiting` rows, each with `sender_name` |
+| GET | `/{game_slug}/submissions/{id}/review` | `be_import` | The same preview shape `GET /{game_slug}/import/{job_id}` returns, plus `overwrite_allowed`/`existing_owner` on each duplicate - a player-sent file can never overwrite a character it doesn't already own, even one it matches by name. A no-longer-allowed character (a restriction added since it was sent) surfaces as a warning rather than silently blocking review |
+| GET | `/{game_slug}/submissions/{id}/verification` | `be_import` | The embedded verification code checked against its issuing site, if the file carries one - the same seven-outcome check `GET /verify/{code}` runs, reachable here without a Storyteller visiting that page by hand |
+| POST | `/{game_slug}/submissions/{id}/accept` | `be_import` | Imports through the same pipeline every import uses, with the sender forced onto the result: `wp_user_id` the sender, `player_name` cleared, `status` active, never an NPC, no narrator. A join makes the sender a member; a visit behaves exactly like accepting an inbound transfer. Emails the sender |
+| POST | `/{game_slug}/submissions/{id}/refuse` | `be_import` | Turns it down with an optional note; nothing is written. Emails the sender |
 
 ## Chronicle Members
 
@@ -358,21 +392,22 @@ Site-wide, not game-scoped — lives on the Chronicle Access admin screen.
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| GET | `/docs/{slug}` | `be_view_characters` | Serves one of this plugin's own bundled guides (`st-guide`, `admin-guide`, `player-guide`, `rest-api` — this very document) as rendered HTML, for the in-plugin Docs screen |
+| GET | `/docs/{slug}` | `be_view_characters` | Serves one of this plugin's own bundled guides (`st-guide`, `admin-guide`, `player-guide`, `rest-api` — this very document) as Markdown, `{ slug, content }`, for the in-plugin Docs screen and the help panel |
+| GET | `/docs/help/{key}` | `be_view_characters` | One screen's help page, `docs/help/{key}.md`, as Markdown: `{ key, content }` - what a screen's `?` opens in the help panel. `404` for a key that names no file |
 
 ## Game Stats
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| GET | `/{game_slug}/stats` | `be_manage_characters` | The ST dashboard's aggregate numbers — character counts, pending changes, active plots, recent activity, and `players_without_active_character` (a count only; see the detail route below). Cached one minute; a review action invalidates the cache for its own chronicle immediately |
+| GET | `/{game_slug}/stats` | `be_manage_characters` | The ST dashboard's aggregate numbers — character counts, pending changes, active plots (not counting each character's own plot), recent activity, and `players_without_active_character` (a count only; see the detail route below). Cached one minute; a review action invalidates the cache for its own chronicle immediately |
 | GET | `/{game_slug}/stats/players-without-active-character` | `be_manage_characters` | The actual player list behind that count — every player-role member with zero `active` characters (no characters at all, or only a retired/dead/pending one — the same condition), resolved to a display name. Not itself cached; fetched only when the dashboard's roster-health card is opened |
 
-## Sheets (signed character-sheet PDF)
+## Sheets (character-sheet PDF, signed when the site has a certificate)
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| GET | `/{game_slug}/sheets/pdf` | `be_view_characters` | Returns signed PDF bytes for one or more characters (`character_ids`, comma-separated, max 50). A manager may request any character in the chronicle; a non-manager only their own — one denied or missing id fails the whole request. `503 signing_unavailable` when the chronicle hasn't configured a signing certificate. Optional `full_power_names`, `background`, `notes`, `xp_history` |
-| GET | `/{game_slug}/sheets/availability` | `be_view_characters` | Preflight: is signing configured for this chronicle right now |
+| GET | `/{game_slug}/sheets/pdf` | `be_view_characters` | Returns PDF bytes for one or more characters (`character_ids`, comma-separated, max 50). A manager may request any character in the chronicle; a non-manager only their own — one denied or missing id fails the whole request, as does one whose creature type no longer exists (`404 creature_stack_not_found`, naming the character). Signed when the site has a signing certificate; without one the PDF is stamped UNSIGNED on every page and its filename ends `-unsigned.pdf`. Optional `full_power_names`, `background`, `notes`, `xp_history` |
+| GET | `/{game_slug}/sheets/availability` | `be_view_characters` | Preflight: is signing configured on this site right now (`ok: false` means prints come out unsigned) |
 
 ## Verify
 
@@ -384,12 +419,12 @@ Site-wide, not game-scoped — lives on the Chronicle Access admin screen.
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| GET | `/{game_slug}/reports` | `be_view_reports` | Lists the report registry: key, title, shape, entity |
+| GET | `/{game_slug}/reports` | `be_view_reports` | Lists the reports the caller may run in this chronicle: key, title, shape, entity. Each report also needs its own capability - character and player reports `be_manage_characters`, plot/action/rumor reports `be_manage_plots`; the item/location/rote cards, Game Calendar, and House Rules need nothing more. Running a report without it is `403 report_forbidden` |
 | GET | `/{game_slug}/reports/{report_key}` | `be_view_reports` | Returns the resolved report as plain JSON — no signing, no PDF. Built for a live front-end view (House Rules' own widget/shortcode use it); works for any report in the registry, not just House Rules |
-| GET | `/{game_slug}/reports/{report_key}/pdf` | `be_view_reports` | Returns signed PDF bytes for one report. `conditions`/`logic` scope a `table`/`card` report the same way the query builder does (an empty `conditions` means everyone in scope); `stat_field`/`stat_type` parameterize the generic Statistics Report; `character_id` (both this route and the JSON form above) narrows a `card`-shaped report (e.g. `item-cards`) to only the world objects connected to that one character — a manager may pass any character in the chronicle, a non-manager only their own (`404 character_not_found` for a mismatched game, `403 ownership_denied` for someone else's character). `404 report_not_found` for an unknown key; `503 signing_unavailable` when signing isn't configured — every report shares the signed sheet's own signing pipeline |
+| GET | `/{game_slug}/reports/{report_key}/pdf` | `be_view_reports` | Returns PDF bytes for one report, signed or stamped UNSIGNED exactly as a sheet is. `conditions`/`logic` scope a `table`/`card` report the same way the query builder does (an empty `conditions` means everyone in scope); `stat_field`/`stat_type` parameterize the generic Statistics Report; `character_id` (both this route and the JSON form above) narrows a `card`-shaped report (e.g. `item-cards`) to only the world objects connected to that one character — a manager may pass any character in the chronicle, a non-manager only their own (`404 character_not_found` for a mismatched game, `403 ownership_denied` for someone else's character). `404 report_not_found` for an unknown key |
 
 ## Point Audit
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| GET | `/{game_slug}/characters/{id}/point-audit` | `be_manage_characters` | The itemised point audit for one character — every held line, priced or explicitly marked unpriced with a machine-readable reason. Never `be_view_characters`/`be_edit_own_characters`: a grand total computed across a Storyteller-only block would leak its stored values arithmetically, so a non-manager gets `403`, never a reduced total. `complete` is always `false` — this is not a bill, see [st-guide.md](../docs/st-guide.md) |
+| GET | `/{game_slug}/characters/{id}/point-audit` | `be_manage_characters` | The itemised point audit for one character — every held line, priced or explicitly marked unpriced with a machine-readable reason. Never `be_view_characters`/`be_edit_own_characters`: a grand total computed across a Storyteller-only block would leak its stored values arithmetically, so a non-manager gets `403`, never a reduced total. A character whose creature type no longer exists is `404 creature_stack_not_found`. `complete` is always `false` — this is not a bill, see [st-guide.md](../docs/st-guide.md) |

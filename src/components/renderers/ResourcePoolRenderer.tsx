@@ -7,15 +7,16 @@
  */
 import { displayTemper, type ResourcePoolValue } from '../../lib/displayTemper';
 import { resolvePoolName } from '../../lib/resolveCrossBlockRef';
+import WithDots from '../shared/Dots';
 import type { ResourcePoolDefinition } from '../../types';
 import './ResourcePoolRenderer.css';
 
 export interface ResourcePoolRendererProps {
 	blockSlug: string;
-	data: Record<string, ResourcePoolValue>;
+	data: Record< string, ResourcePoolValue >;
 	definition: ResourcePoolDefinition;
 	/** The character's full sheet_data, used to resolve a pool's display name when it depends on another block's value. */
-	sheetData?: Record<string, unknown>;
+	sheetData?: Record< string, unknown >;
 }
 
 /**
@@ -25,7 +26,12 @@ export interface ResourcePoolRendererProps {
  * for each pool is always `pool.name`; only its displayed label can vary
  * per character via `name_lookup`.
  */
-export function ResourcePoolRenderer( { blockSlug, data, definition, sheetData }: ResourcePoolRendererProps ) {
+export function ResourcePoolRenderer( {
+	blockSlug,
+	data,
+	definition,
+	sheetData,
+}: ResourcePoolRendererProps ) {
 	return (
 		<div className="be-resource-pool" data-block-slug={ blockSlug }>
 			{ definition.pools.map( ( pool ) => {
@@ -36,8 +42,12 @@ export function ResourcePoolRenderer( { blockSlug, data, definition, sheetData }
 
 				return (
 					<div className="be-resource-pool__row" key={ pool.name }>
-						<span className="be-resource-pool__label">{ resolvePoolName( pool, sheetData ?? {} ) }</span>
-						<span className="be-resource-pool__glyphs">{ displayTemper( value ) }</span>
+						<span className="be-resource-pool__label">
+							{ resolvePoolName( pool, sheetData ?? {} ) }
+						</span>
+						<span className="be-resource-pool__glyphs">
+							<WithDots text={ displayTemper( value ) } />
+						</span>
 					</div>
 				);
 			} ) }

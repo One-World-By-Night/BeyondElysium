@@ -171,7 +171,7 @@ class SchemaBlockGameScopingTest extends WP_UnitTestCase {
 		Schema_Block::find_or_create_fork_for_game( $this->slug, 'game-a' );
 		Schema_Block::update( $this->slug, [
 			'definition' => [
-				'items'        => [ [ 'name' => 'Chronicle-Only Item', 'approval' => 'coordinator' ] ],
+				'items'        => [ [ 'name' => 'Chronicle-Only Item', 'approval' => 'auto' ] ],
 				'allow_custom' => true,
 			],
 		], 'game-a' );
@@ -187,6 +187,6 @@ class SchemaBlockGameScopingTest extends WP_UnitTestCase {
 			'change_data' => [ 'block_slug' => $this->slug, 'trait' => [ 'name' => 'Chronicle-Only Item' ] ],
 		] );
 
-		$this->assertSame( 'coordinator', $resolved['level'], 'a per-item approval override set only on the fork must be honored, not the global row (which has no such item)' );
+		$this->assertSame( 'auto', $resolved['level'], 'a per-item approval override set only on the fork must be honored, not the global row (which has no such item)' );
 	}
 }

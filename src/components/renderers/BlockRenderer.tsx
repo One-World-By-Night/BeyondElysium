@@ -30,7 +30,7 @@ export interface BlockRendererProps {
 	/** Stack display_preferences override, tiered_power only. */
 	displayMode?: 'named' | 'numeric';
 	/** The character's full sheet_data, resource_pool only, for a pool whose display name depends on another block's value. */
-	sheetData?: Record<string, unknown>;
+	sheetData?: Record< string, unknown >;
 }
 
 /**
@@ -73,7 +73,11 @@ export function BlockRenderer( {
 			return (
 				<ResourcePoolRenderer
 					blockSlug={ blockSlug }
-					data={ ( data as Record<string, ResourcePoolValue> | undefined ) ?? {} }
+					data={
+						( data as
+							| Record< string, ResourcePoolValue >
+							| undefined ) ?? {}
+					}
 					definition={ definition as ResourcePoolDefinition }
 					sheetData={ sheetData }
 				/>
@@ -83,17 +87,27 @@ export function BlockRenderer( {
 			return (
 				<IdentityFieldRenderer
 					blockSlug={ blockSlug }
-					data={ ( data as Record<string, string | number> | undefined ) ?? {} }
+					data={
+						( data as
+							| Record< string, string | number | string[] >
+							| undefined ) ?? {}
+					}
 					definition={ definition as IdentityFieldDefinition }
 				/>
 			);
 
 		default:
 			return (
-				<div className="be-block-renderer__unknown" data-block-slug={ blockSlug }>
+				<div
+					className="be-block-renderer__unknown"
+					data-block-slug={ blockSlug }
+				>
 					{ sprintf(
 						/* translators: 1: section type slug, 2: block slug */
-						__( 'Unknown section type "%1$s" for block "%2$s"', 'beyond-elysium' ),
+						__(
+							'Unknown section type "%1$s" for block "%2$s"',
+							'beyond-elysium'
+						),
 						sectionType,
 						blockSlug
 					) }
@@ -116,13 +130,14 @@ export function toTraits( data: unknown ): Trait[] {
 	if ( ! Array.isArray( data ) ) {
 		return [];
 	}
-	return data.map( ( entry: Record<string, unknown> ) => {
+	return data.map( ( entry: Record< string, unknown > ) => {
 		// Combines the entry's specialization field with its note into one displayed string.
 		const specialization = entry.specialization as string | undefined;
 		const note = entry.note as string | undefined;
-		const combinedNote = specialization && note
-			? `${ specialization }, ${ note }`
-			: specialization || note;
+		const combinedNote =
+			specialization && note
+				? `${ specialization }, ${ note }`
+				: specialization || note;
 
 		return {
 			name: String( entry.name ?? '' ),

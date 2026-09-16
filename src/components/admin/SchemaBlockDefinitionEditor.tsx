@@ -27,8 +27,9 @@ import type {
 } from '../../types';
 import Modal from '../shared/Modal';
 import HtmlEditor from '../shared/HtmlEditor';
+import HelpButton from '../shared/HelpButton';
 
-const APPROVAL_LEVELS: ApprovalLevel[] = [ 'auto', 'st', 'coordinator' ];
+const APPROVAL_LEVELS: ApprovalLevel[] = [ 'auto', 'st' ];
 import './Admin.css';
 
 /** Empty check across all three CatalogDescription sections, for the trigger button's "(set)" indicator. */
@@ -47,9 +48,17 @@ function hasAnyDescriptionSection( value?: CatalogDescription ): boolean {
  * problem - only one modal, and therefore only three TinyMCE instances at
  * most, is ever mounted at a time.
  */
-function DescriptionEditorButton( { label, value, onSave }: { label: string; value?: CatalogDescription; onSave: ( value: CatalogDescription ) => void } ) {
+function DescriptionEditorButton( {
+	label,
+	value,
+	onSave,
+}: {
+	label: string;
+	value?: CatalogDescription;
+	onSave: ( value: CatalogDescription ) => void;
+} ) {
 	const [ isOpen, setIsOpen ] = useState( false );
-	const [ draft, setDraft ] = useState<CatalogDescription>( value ?? {} );
+	const [ draft, setDraft ] = useState< CatalogDescription >( value ?? {} );
 
 	function open() {
 		setDraft( value ?? {} );
@@ -63,16 +72,29 @@ function DescriptionEditorButton( { label, value, onSave }: { label: string; val
 
 	return (
 		<>
-			<button type="button" className="be-def-editor__description-trigger" onClick={ open }>
-				{ hasAnyDescriptionSection( value ) ? __( 'Description (set)', 'beyond-elysium' ) : __( 'Description', 'beyond-elysium' ) }
+			<button
+				type="button"
+				className="be-def-editor__description-trigger"
+				onClick={ open }
+			>
+				{ hasAnyDescriptionSection( value )
+					? __( 'Description (set)', 'beyond-elysium' )
+					: __( 'Description', 'beyond-elysium' ) }
 			</button>
 			{ isOpen && (
 				<Modal
-					title={ sprintf( __( 'Description - %s', 'beyond-elysium' ), label ) }
+					title={ sprintf(
+						/* translators: %s: the item, level, or field's label */
+						__( 'Description - %s', 'beyond-elysium' ),
+						label
+					) }
 					onClose={ () => setIsOpen( false ) }
 					footer={
 						<>
-							<button type="button" onClick={ () => setIsOpen( false ) }>
+							<button
+								type="button"
+								onClick={ () => setIsOpen( false ) }
+							>
 								{ __( 'Cancel', 'beyond-elysium' ) }
 							</button>
 							<button type="button" onClick={ save }>
@@ -81,43 +103,70 @@ function DescriptionEditorButton( { label, value, onSave }: { label: string; val
 						</>
 					}
 				>
+					<div className="be-help-heading">
+						<HelpButton helpKey="schema-block-notes" />
+					</div>
 					<p className="description">
-						{ __( 'Formatting, lists, and tables are kept in each section. Images and anything else are stripped when saved.', 'beyond-elysium' ) }
+						{ __(
+							'Formatting, lists, and tables are kept in each section. Images and anything else are stripped when saved.',
+							'beyond-elysium'
+						) }
 					</p>
 
 					<div className="be-def-editor__description-section">
-						<label htmlFor="be-def-editor-description-reference">{ __( 'Reference', 'beyond-elysium' ) }</label>
+						<label htmlFor="be-def-editor-description-reference">
+							{ __( 'Reference', 'beyond-elysium' ) }
+						</label>
 						<HtmlEditor
 							id="be-def-editor-description-reference"
 							defaultValue={ draft.reference ?? '' }
-							onChange={ ( html ) => setDraft( { ...draft, reference: html } ) }
+							onChange={ ( html ) =>
+								setDraft( { ...draft, reference: html } )
+							}
 							tables
 							rows={ 5 }
-							aiAssist={ { capability: 'be_manage_schemas', fieldContext: 'schema_item_reference' } }
+							aiAssist={ {
+								capability: 'be_manage_schemas',
+								fieldContext: 'schema_item_reference',
+							} }
 						/>
 					</div>
 
 					<div className="be-def-editor__description-section">
-						<label htmlFor="be-def-editor-description-body">{ __( 'Description', 'beyond-elysium' ) }</label>
+						<label htmlFor="be-def-editor-description-body">
+							{ __( 'Description', 'beyond-elysium' ) }
+						</label>
 						<HtmlEditor
 							id="be-def-editor-description-body"
 							defaultValue={ draft.description ?? '' }
-							onChange={ ( html ) => setDraft( { ...draft, description: html } ) }
+							onChange={ ( html ) =>
+								setDraft( { ...draft, description: html } )
+							}
 							tables
 							rows={ 5 }
-							aiAssist={ { capability: 'be_manage_schemas', fieldContext: 'schema_item_description' } }
+							aiAssist={ {
+								capability: 'be_manage_schemas',
+								fieldContext: 'schema_item_description',
+							} }
 						/>
 					</div>
 
 					<div className="be-def-editor__description-section">
-						<label htmlFor="be-def-editor-description-source">{ __( 'Source', 'beyond-elysium' ) }</label>
+						<label htmlFor="be-def-editor-description-source">
+							{ __( 'Source', 'beyond-elysium' ) }
+						</label>
 						<HtmlEditor
 							id="be-def-editor-description-source"
 							defaultValue={ draft.source ?? '' }
-							onChange={ ( html ) => setDraft( { ...draft, source: html } ) }
+							onChange={ ( html ) =>
+								setDraft( { ...draft, source: html } )
+							}
 							tables
 							rows={ 5 }
-							aiAssist={ { capability: 'be_manage_schemas', fieldContext: 'schema_item_source' } }
+							aiAssist={ {
+								capability: 'be_manage_schemas',
+								fieldContext: 'schema_item_source',
+							} }
 						/>
 					</div>
 				</Modal>
@@ -133,9 +182,17 @@ function DescriptionEditorButton( { label, value, onSave }: { label: string; val
  * the permanent value). A modal for the same row-count reason
  * DescriptionEditorButton uses one.
  */
-function ApprovalByValueEditorButton( { label, value, onSave }: { label: string; value?: ApprovalRange[]; onSave: ( ranges: ApprovalRange[] ) => void } ) {
+function ApprovalByValueEditorButton( {
+	label,
+	value,
+	onSave,
+}: {
+	label: string;
+	value?: ApprovalRange[];
+	onSave: ( ranges: ApprovalRange[] ) => void;
+} ) {
 	const [ isOpen, setIsOpen ] = useState( false );
-	const [ draft, setDraft ] = useState<ApprovalRange[]>( value ?? [] );
+	const [ draft, setDraft ] = useState< ApprovalRange[] >( value ?? [] );
 
 	function open() {
 		setDraft( value ?? [] );
@@ -147,8 +204,10 @@ function ApprovalByValueEditorButton( { label, value, onSave }: { label: string;
 		setIsOpen( false );
 	}
 
-	function updateRange( i: number, patch: Partial<ApprovalRange> ) {
-		setDraft( draft.map( ( r, ri ) => ( ri === i ? { ...r, ...patch } : r ) ) );
+	function updateRange( i: number, patch: Partial< ApprovalRange > ) {
+		setDraft(
+			draft.map( ( r, ri ) => ( ri === i ? { ...r, ...patch } : r ) )
+		);
 	}
 
 	function addRange() {
@@ -161,16 +220,33 @@ function ApprovalByValueEditorButton( { label, value, onSave }: { label: string;
 
 	return (
 		<>
-			<button type="button" className="be-def-editor__description-trigger" onClick={ open }>
-				{ value?.length ? sprintf( __( 'Approval by value (%d)', 'beyond-elysium' ), value.length ) : __( 'Approval by value', 'beyond-elysium' ) }
+			<button
+				type="button"
+				className="be-def-editor__description-trigger"
+				onClick={ open }
+			>
+				{ value?.length
+					? sprintf(
+							/* translators: %d: number of approval-by-value ranges already set */
+							__( 'Approval by value (%d)', 'beyond-elysium' ),
+							value.length
+					  )
+					: __( 'Approval by value', 'beyond-elysium' ) }
 			</button>
 			{ isOpen && (
 				<Modal
-					title={ sprintf( __( 'Approval by value - %s', 'beyond-elysium' ), label ) }
+					title={ sprintf(
+						/* translators: %s: the item, level, or field's label */
+						__( 'Approval by value - %s', 'beyond-elysium' ),
+						label
+					) }
 					onClose={ () => setIsOpen( false ) }
 					footer={
 						<>
-							<button type="button" onClick={ () => setIsOpen( false ) }>
+							<button
+								type="button"
+								onClick={ () => setIsOpen( false ) }
+							>
 								{ __( 'Cancel', 'beyond-elysium' ) }
 							</button>
 							<button type="button" onClick={ save }>
@@ -179,8 +255,14 @@ function ApprovalByValueEditorButton( { label, value, onSave }: { label: string;
 						</>
 					}
 				>
+					<div className="be-help-heading">
+						<HelpButton helpKey="schema-block-notes" />
+					</div>
 					<p className="description">
-						{ __( 'Resolved against the resulting value only, whichever range covers it. A value covered by no range falls back to the flat approval above.', 'beyond-elysium' ) }
+						{ __(
+							'Resolved against the resulting value only, whichever range covers it. A value covered by no range falls back to the flat approval above.',
+							'beyond-elysium'
+						) }
 					</p>
 					<table className="be-def-editor__table">
 						<thead>
@@ -198,40 +280,101 @@ function ApprovalByValueEditorButton( { label, value, onSave }: { label: string;
 									<td>
 										<input
 											type="number"
-											aria-label={ sprintf( __( 'From, row %d', 'beyond-elysium' ), i + 1 ) }
+											aria-label={ sprintf(
+												/* translators: %d: the range row's position in the list */
+												__(
+													'From, row %d',
+													'beyond-elysium'
+												),
+												i + 1
+											) }
 											value={ range.from }
-											onChange={ ( e ) => updateRange( i, { from: Number( e.target.value ) } ) }
+											onChange={ ( e ) =>
+												updateRange( i, {
+													from: Number(
+														e.target.value
+													),
+												} )
+											}
 										/>
 									</td>
 									<td>
 										<input
 											type="number"
-											aria-label={ sprintf( __( 'To, row %d', 'beyond-elysium' ), i + 1 ) }
+											aria-label={ sprintf(
+												/* translators: %d: the range row's position in the list */
+												__(
+													'To, row %d',
+													'beyond-elysium'
+												),
+												i + 1
+											) }
 											value={ range.to }
-											onChange={ ( e ) => updateRange( i, { to: Number( e.target.value ) } ) }
+											onChange={ ( e ) =>
+												updateRange( i, {
+													to: Number(
+														e.target.value
+													),
+												} )
+											}
 										/>
 									</td>
 									<td>
 										<select
-											aria-label={ sprintf( __( 'Approval, row %d', 'beyond-elysium' ), i + 1 ) }
+											aria-label={ sprintf(
+												/* translators: %d: the range row's position in the list */
+												__(
+													'Approval, row %d',
+													'beyond-elysium'
+												),
+												i + 1
+											) }
 											value={ range.approval }
-											onChange={ ( e ) => updateRange( i, { approval: e.target.value as ApprovalLevel } ) }
+											onChange={ ( e ) =>
+												updateRange( i, {
+													approval: e.target
+														.value as ApprovalLevel,
+												} )
+											}
 										>
-											{ APPROVAL_LEVELS.map( ( level ) => (
-												<option key={ level } value={ level }>{ level }</option>
-											) ) }
+											{ APPROVAL_LEVELS.map(
+												( level ) => (
+													<option
+														key={ level }
+														value={ level }
+													>
+														{ level }
+													</option>
+												)
+											) }
 										</select>
 									</td>
 									<td>
 										<input
 											type="text"
-											aria-label={ sprintf( __( 'Reason, row %d', 'beyond-elysium' ), i + 1 ) }
+											aria-label={ sprintf(
+												/* translators: %d: the range row's position in the list */
+												__(
+													'Reason, row %d',
+													'beyond-elysium'
+												),
+												i + 1
+											) }
 											value={ range.reason ?? '' }
-											onChange={ ( e ) => updateRange( i, { reason: e.target.value || undefined } ) }
+											onChange={ ( e ) =>
+												updateRange( i, {
+													reason:
+														e.target.value ||
+														undefined,
+												} )
+											}
 										/>
 									</td>
 									<td>
-										<button type="button" onClick={ () => removeRange( i ) }>
+										<button
+											type="button"
+											onClick={ () => removeRange( i ) }
+										>
 											{ __( 'Remove', 'beyond-elysium' ) }
 										</button>
 									</td>
@@ -263,11 +406,15 @@ function ApprovalByOptionEditorButton( {
 }: {
 	label: string;
 	options: string[];
-	value?: Record<string, { approval: ApprovalLevel; reason?: string }>;
-	onSave: ( value: Record<string, { approval: ApprovalLevel; reason?: string }> ) => void;
+	value?: Record< string, { approval: ApprovalLevel; reason?: string } >;
+	onSave: (
+		value: Record< string, { approval: ApprovalLevel; reason?: string } >
+	) => void;
 } ) {
 	const [ isOpen, setIsOpen ] = useState( false );
-	const [ draft, setDraft ] = useState<Record<string, { approval: ApprovalLevel; reason?: string }>>( value ?? {} );
+	const [ draft, setDraft ] = useState<
+		Record< string, { approval: ApprovalLevel; reason?: string } >
+	>( value ?? {} );
 
 	function open() {
 		setDraft( value ?? {} );
@@ -293,23 +440,44 @@ function ApprovalByOptionEditorButton( {
 		if ( ! draft[ option ] ) {
 			return;
 		}
-		setDraft( { ...draft, [ option ]: { ...draft[ option ], reason: reason || undefined } } );
+		setDraft( {
+			...draft,
+			[ option ]: { ...draft[ option ], reason: reason || undefined },
+		} );
 	}
 
 	const overrideCount = Object.keys( value ?? {} ).length;
 
 	return (
 		<>
-			<button type="button" className="be-def-editor__description-trigger" onClick={ open } disabled={ options.length === 0 }>
-				{ overrideCount ? sprintf( __( 'Approval by option (%d)', 'beyond-elysium' ), overrideCount ) : __( 'Approval by option', 'beyond-elysium' ) }
+			<button
+				type="button"
+				className="be-def-editor__description-trigger"
+				onClick={ open }
+				disabled={ options.length === 0 }
+			>
+				{ overrideCount
+					? sprintf(
+							/* translators: %d: number of options with an approval override already set */
+							__( 'Approval by option (%d)', 'beyond-elysium' ),
+							overrideCount
+					  )
+					: __( 'Approval by option', 'beyond-elysium' ) }
 			</button>
 			{ isOpen && (
 				<Modal
-					title={ sprintf( __( 'Approval by option - %s', 'beyond-elysium' ), label ) }
+					title={ sprintf(
+						/* translators: %s: the identity field's label */
+						__( 'Approval by option - %s', 'beyond-elysium' ),
+						label
+					) }
 					onClose={ () => setIsOpen( false ) }
 					footer={
 						<>
-							<button type="button" onClick={ () => setIsOpen( false ) }>
+							<button
+								type="button"
+								onClick={ () => setIsOpen( false ) }
+							>
 								{ __( 'Cancel', 'beyond-elysium' ) }
 							</button>
 							<button type="button" onClick={ save }>
@@ -318,8 +486,14 @@ function ApprovalByOptionEditorButton( {
 						</>
 					}
 				>
+					<div className="be-help-heading">
+						<HelpButton helpKey="schema-block-notes" />
+					</div>
 					<p className="description">
-						{ __( 'An option left at "Block default" carries no override at all. A multiselect checks every value the player picks; the strictest applies.', 'beyond-elysium' ) }
+						{ __(
+							'An option left at "Block default" carries no override at all. A multiselect checks every value the player picks; the strictest applies.',
+							'beyond-elysium'
+						) }
 					</p>
 					<table className="be-def-editor__table">
 						<thead>
@@ -335,23 +509,65 @@ function ApprovalByOptionEditorButton( {
 									<td>{ option }</td>
 									<td>
 										<select
-											aria-label={ sprintf( __( 'Approval for %s', 'beyond-elysium' ), option ) }
-											value={ draft[ option ]?.approval ?? '' }
-											onChange={ ( e ) => setOverride( option, e.target.value as ApprovalLevel | '' ) }
+											aria-label={ sprintf(
+												/* translators: %s: the option's own value */
+												__(
+													'Approval for %s',
+													'beyond-elysium'
+												),
+												option
+											) }
+											value={
+												draft[ option ]?.approval ?? ''
+											}
+											onChange={ ( e ) =>
+												setOverride(
+													option,
+													e.target.value as
+														| ApprovalLevel
+														| ''
+												)
+											}
 										>
-											<option value="">{ __( 'Block default', 'beyond-elysium' ) }</option>
-											{ APPROVAL_LEVELS.map( ( level ) => (
-												<option key={ level } value={ level }>{ level }</option>
-											) ) }
+											<option value="">
+												{ __(
+													'Block default',
+													'beyond-elysium'
+												) }
+											</option>
+											{ APPROVAL_LEVELS.map(
+												( level ) => (
+													<option
+														key={ level }
+														value={ level }
+													>
+														{ level }
+													</option>
+												)
+											) }
 										</select>
 									</td>
 									<td>
 										<input
 											type="text"
-											aria-label={ sprintf( __( 'Reason for %s', 'beyond-elysium' ), option ) }
-											value={ draft[ option ]?.reason ?? '' }
+											aria-label={ sprintf(
+												/* translators: %s: the option's own value */
+												__(
+													'Reason for %s',
+													'beyond-elysium'
+												),
+												option
+											) }
+											value={
+												draft[ option ]?.reason ?? ''
+											}
 											disabled={ ! draft[ option ] }
-											onChange={ ( e ) => setReason( option, e.target.value ) }
+											onChange={ ( e ) =>
+												setReason(
+													option,
+													e.target.value
+												)
+											}
 										/>
 									</td>
 								</tr>
@@ -366,8 +582,8 @@ function ApprovalByOptionEditorButton( {
 
 export interface SchemaBlockDefinitionEditorProps {
 	sectionType: SectionType;
-	definition: Record<string, unknown>;
-	onChange: ( definition: Record<string, unknown> ) => void;
+	definition: Record< string, unknown >;
+	onChange: ( definition: Record< string, unknown > ) => void;
 }
 
 /**
@@ -377,10 +593,16 @@ export interface SchemaBlockDefinitionEditorProps {
  * produces. The raw JSON view stays available behind a collapsible toggle
  * for manual edits.
  */
-export function SchemaBlockDefinitionEditor( { sectionType, definition, onChange }: SchemaBlockDefinitionEditorProps ) {
+export function SchemaBlockDefinitionEditor( {
+	sectionType,
+	definition,
+	onChange,
+}: SchemaBlockDefinitionEditorProps ) {
 	const [ showRaw, setShowRaw ] = useState( false );
-	const [ rawJson, setRawJson ] = useState( () => JSON.stringify( definition, null, 2 ) );
-	const [ rawError, setRawError ] = useState<string | null>( null );
+	const [ rawJson, setRawJson ] = useState( () =>
+		JSON.stringify( definition, null, 2 )
+	);
+	const [ rawError, setRawError ] = useState< string | null >( null );
 
 	/**
 	 * Parses the raw JSON textarea and, if valid, applies it as the new
@@ -393,7 +615,9 @@ export function SchemaBlockDefinitionEditor( { sectionType, definition, onChange
 			setRawError( null );
 			onChange( parsed );
 		} catch {
-			setRawError( __( 'Not valid JSON - not applied.', 'beyond-elysium' ) );
+			setRawError(
+				__( 'Not valid JSON - not applied.', 'beyond-elysium' )
+			);
 		}
 	}
 
@@ -402,7 +626,7 @@ export function SchemaBlockDefinitionEditor( { sectionType, definition, onChange
 	 * re-serializes it into the raw JSON textarea, keeping the two views in
 	 * sync with each other.
 	 */
-	function syncRawFromStructured( next: Record<string, unknown> ) {
+	function syncRawFromStructured( next: Record< string, unknown > ) {
 		onChange( next );
 		setRawJson( JSON.stringify( next, null, 2 ) );
 	}
@@ -410,29 +634,59 @@ export function SchemaBlockDefinitionEditor( { sectionType, definition, onChange
 	return (
 		<div className="be-def-editor">
 			{ sectionType === 'trait_list' && (
-				<TraitListEditor definition={ definition as unknown as TraitListDefinition } onChange={ syncRawFromStructured } />
+				<TraitListEditor
+					definition={ definition as unknown as TraitListDefinition }
+					onChange={ syncRawFromStructured }
+				/>
 			) }
 			{ sectionType === 'tiered_power' && (
-				<TieredPowerEditor definition={ definition as unknown as TieredPowerDefinition } onChange={ syncRawFromStructured } />
+				<TieredPowerEditor
+					definition={
+						definition as unknown as TieredPowerDefinition
+					}
+					onChange={ syncRawFromStructured }
+				/>
 			) }
 			{ sectionType === 'resource_pool' && (
-				<ResourcePoolEditor definition={ definition as unknown as ResourcePoolDefinition } onChange={ syncRawFromStructured } />
+				<ResourcePoolEditor
+					definition={
+						definition as unknown as ResourcePoolDefinition
+					}
+					onChange={ syncRawFromStructured }
+				/>
 			) }
 			{ sectionType === 'identity_field' && (
-				<IdentityFieldEditorAdmin definition={ definition as unknown as IdentityFieldDefinition } onChange={ syncRawFromStructured } />
+				<IdentityFieldEditorAdmin
+					definition={
+						definition as unknown as IdentityFieldDefinition
+					}
+					onChange={ syncRawFromStructured }
+				/>
 			) }
 
-			<button type="button" className="be-def-editor__raw-toggle" onClick={ () => setShowRaw( ! showRaw ) }>
+			<button
+				type="button"
+				className="be-def-editor__raw-toggle"
+				onClick={ () => setShowRaw( ! showRaw ) }
+			>
 				{ sprintf(
 					// translators: %s: "Hide" or "Show".
 					__( '%s advanced (raw JSON)', 'beyond-elysium' ),
-					showRaw ? __( 'Hide', 'beyond-elysium' ) : __( 'Show', 'beyond-elysium' )
+					showRaw
+						? __( 'Hide', 'beyond-elysium' )
+						: __( 'Show', 'beyond-elysium' )
 				) }
 			</button>
 			{ showRaw && (
 				<div className="be-def-editor__raw">
-					<textarea rows={ 10 } value={ rawJson } onChange={ ( e ) => setRawJson( e.target.value ) } />
-					{ rawError && <p className="be-admin__json-error">{ rawError }</p> }
+					<textarea
+						rows={ 10 }
+						value={ rawJson }
+						onChange={ ( e ) => setRawJson( e.target.value ) }
+					/>
+					{ rawError && (
+						<p className="be-admin__json-error">{ rawError }</p>
+					) }
 					<button type="button" onClick={ applyRaw }>
 						{ __( 'Apply JSON', 'beyond-elysium' ) }
 					</button>
@@ -452,24 +706,47 @@ export function SchemaBlockDefinitionEditor( { sectionType, definition, onChange
  * atomic, max per item) and an add/edit/remove table of individual trait
  * items, each with a cost, category, and description.
  */
-function TraitListEditor( { definition, onChange }: { definition: TraitListDefinition; onChange: ( d: Record<string, unknown> ) => void } ) {
+function TraitListEditor( {
+	definition,
+	onChange,
+}: {
+	definition: TraitListDefinition;
+	onChange: ( d: Record< string, unknown > ) => void;
+} ) {
 	const items = definition.items ?? [];
 
-	function updateFlag<K extends keyof TraitListDefinition>( key: K, value: TraitListDefinition[ K ] ) {
-		onChange( { ...definition, [ key ]: value } as unknown as Record<string, unknown> );
+	function updateFlag< K extends keyof TraitListDefinition >(
+		key: K,
+		value: TraitListDefinition[ K ]
+	) {
+		onChange( { ...definition, [ key ]: value } as unknown as Record<
+			string,
+			unknown
+		> );
 	}
 
-	function updateItem( index: number, patch: Partial<TraitListItem> ) {
-		const next = items.map( ( item, i ) => ( i === index ? { ...item, ...patch } : item ) );
-		onChange( { ...definition, items: next } as unknown as Record<string, unknown> );
+	function updateItem( index: number, patch: Partial< TraitListItem > ) {
+		const next = items.map( ( item, i ) =>
+			i === index ? { ...item, ...patch } : item
+		);
+		onChange( { ...definition, items: next } as unknown as Record<
+			string,
+			unknown
+		> );
 	}
 
 	function addItem() {
-		onChange( { ...definition, items: [ ...items, { name: '' } ] } as unknown as Record<string, unknown> );
+		onChange( {
+			...definition,
+			items: [ ...items, { name: '' } ],
+		} as unknown as Record< string, unknown > );
 	}
 
 	function removeItem( index: number ) {
-		onChange( { ...definition, items: items.filter( ( _, i ) => i !== index ) } as unknown as Record<string, unknown> );
+		onChange( {
+			...definition,
+			items: items.filter( ( _, i ) => i !== index ),
+		} as unknown as Record< string, unknown > );
 	}
 
 	return (
@@ -477,36 +754,82 @@ function TraitListEditor( { definition, onChange }: { definition: TraitListDefin
 			<h3>{ __( 'Global settings', 'beyond-elysium' ) }</h3>
 			<div className="be-def-editor__flags">
 				<label>
-					<input type="checkbox" checked={ !! definition.allow_multiples } onChange={ ( e ) => updateFlag( 'allow_multiples', e.target.checked ) } />
-					{ ' ' }{ __( 'Allow multiple selections', 'beyond-elysium' ) }
+					<input
+						type="checkbox"
+						checked={ !! definition.allow_multiples }
+						onChange={ ( e ) =>
+							updateFlag( 'allow_multiples', e.target.checked )
+						}
+					/>{ ' ' }
+					{ __( 'Allow multiple selections', 'beyond-elysium' ) }
 				</label>
 				<label>
-					<input type="checkbox" checked={ !! definition.allow_custom } onChange={ ( e ) => updateFlag( 'allow_custom', e.target.checked ) } />
-					{ ' ' }{ __( 'Allow custom entries', 'beyond-elysium' ) }
+					<input
+						type="checkbox"
+						checked={ !! definition.allow_custom }
+						onChange={ ( e ) =>
+							updateFlag( 'allow_custom', e.target.checked )
+						}
+					/>{ ' ' }
+					{ __( 'Allow custom entries', 'beyond-elysium' ) }
 				</label>
 				<label>
-					<input type="checkbox" checked={ !! definition.alphabetize } onChange={ ( e ) => updateFlag( 'alphabetize', e.target.checked ) } />
-					{ ' ' }{ __( 'Alphabetize', 'beyond-elysium' ) }
+					<input
+						type="checkbox"
+						checked={ !! definition.alphabetize }
+						onChange={ ( e ) =>
+							updateFlag( 'alphabetize', e.target.checked )
+						}
+					/>{ ' ' }
+					{ __( 'Alphabetize', 'beyond-elysium' ) }
 				</label>
 				<label>
-					<input type="checkbox" checked={ !! definition.negative } onChange={ ( e ) => updateFlag( 'negative', e.target.checked ) } />
-					{ ' ' }{ __( 'Negative list (flaws-style)', 'beyond-elysium' ) }
+					<input
+						type="checkbox"
+						checked={ !! definition.negative }
+						onChange={ ( e ) =>
+							updateFlag( 'negative', e.target.checked )
+						}
+					/>{ ' ' }
+					{ __( 'Negative list (flaws-style)', 'beyond-elysium' ) }
 				</label>
 				<label>
-					<input type="checkbox" checked={ !! definition.atomic } onChange={ ( e ) => updateFlag( 'atomic', e.target.checked ) } />
-					{ ' ' }{ __( "Atomic (re-adding appends, doesn't increment)", 'beyond-elysium' ) }
+					<input
+						type="checkbox"
+						checked={ !! definition.atomic }
+						onChange={ ( e ) =>
+							updateFlag( 'atomic', e.target.checked )
+						}
+					/>{ ' ' }
+					{ __(
+						"Atomic (re-adding appends, doesn't increment)",
+						'beyond-elysium'
+					) }
 				</label>
 				<label>
 					{ __( 'Max per item', 'beyond-elysium' ) }{ ' ' }
 					<input
 						type="number"
 						value={ definition.max_per_item ?? '' }
-						onChange={ ( e ) => updateFlag( 'max_per_item', e.target.value ? Number( e.target.value ) : undefined ) }
+						onChange={ ( e ) =>
+							updateFlag(
+								'max_per_item',
+								e.target.value
+									? Number( e.target.value )
+									: undefined
+							)
+						}
 					/>
 				</label>
 			</div>
 
-			<h3>{ sprintf( __( 'Items (%d)', 'beyond-elysium' ), items.length ) }</h3>
+			<h3>
+				{ sprintf(
+					/* translators: %d: number of items in this catalog block */
+					__( 'Items (%d)', 'beyond-elysium' ),
+					items.length
+				) }
+			</h3>
 			<table className="be-def-editor__table">
 				<thead>
 					<tr>
@@ -526,65 +849,146 @@ function TraitListEditor( { definition, onChange }: { definition: TraitListDefin
 							<td>
 								<input
 									type="text"
-									aria-label={ sprintf( __( 'Name for item %d', 'beyond-elysium' ), i + 1 ) }
+									aria-label={ sprintf(
+										/* translators: %d: the item's position in the list */
+										__(
+											'Name for item %d',
+											'beyond-elysium'
+										),
+										i + 1
+									) }
 									value={ item.name }
-									onChange={ ( e ) => updateItem( i, { name: e.target.value } ) }
+									onChange={ ( e ) =>
+										updateItem( i, {
+											name: e.target.value,
+										} )
+									}
 								/>
 							</td>
 							<td>
 								<input
 									type="text"
-									aria-label={ sprintf( __( 'Cost for %s', 'beyond-elysium' ), item.name ) }
+									aria-label={ sprintf(
+										/* translators: %s: the item's own name */
+										__( 'Cost for %s', 'beyond-elysium' ),
+										item.name
+									) }
 									value={ item.cost ?? '' }
-									placeholder={ __( '1, 1-3, 1 or 3…', 'beyond-elysium' ) }
-									onChange={ ( e ) => updateItem( i, { cost: e.target.value } ) }
+									// A cost range is written with a hyphen; the placeholder shows what to type.
+									// eslint-disable-next-line @wordpress/i18n-hyphenated-range
+									placeholder={ __(
+										'1, 1-3, 1 or 3…',
+										'beyond-elysium'
+									) }
+									onChange={ ( e ) =>
+										updateItem( i, {
+											cost: e.target.value,
+										} )
+									}
 								/>
 							</td>
 							<td>
 								<input
 									type="text"
-									aria-label={ sprintf( __( 'Category for %s', 'beyond-elysium' ), item.name ) }
+									aria-label={ sprintf(
+										/* translators: %s: the item's own name */
+										__(
+											'Category for %s',
+											'beyond-elysium'
+										),
+										item.name
+									) }
 									value={ item.category ?? '' }
-									onChange={ ( e ) => updateItem( i, { category: e.target.value } ) }
+									onChange={ ( e ) =>
+										updateItem( i, {
+											category: e.target.value,
+										} )
+									}
 								/>
 							</td>
 							<td>
 								<DescriptionEditorButton
 									label={ item.name }
 									value={ item.description }
-									onSave={ ( value ) => updateItem( i, { description: value } ) }
+									onSave={ ( value ) =>
+										updateItem( i, { description: value } )
+									}
 								/>
 							</td>
 							<td>
 								<select
-									aria-label={ sprintf( __( 'Approval level for %s', 'beyond-elysium' ), item.name ) }
+									aria-label={ sprintf(
+										/* translators: %s: the item's own name */
+										__(
+											'Approval level for %s',
+											'beyond-elysium'
+										),
+										item.name
+									) }
 									value={ item.approval ?? '' }
-									onChange={ ( e ) => updateItem( i, { approval: ( e.target.value || undefined ) as ApprovalLevel | undefined } ) }
+									onChange={ ( e ) =>
+										updateItem( i, {
+											approval: ( e.target.value ||
+												undefined ) as
+												| ApprovalLevel
+												| undefined,
+										} )
+									}
 								>
-									<option value="">{ __( 'Block default', 'beyond-elysium' ) }</option>
+									<option value="">
+										{ __(
+											'Block default',
+											'beyond-elysium'
+										) }
+									</option>
 									{ APPROVAL_LEVELS.map( ( level ) => (
-										<option key={ level } value={ level }>{ level }</option>
+										<option key={ level } value={ level }>
+											{ level }
+										</option>
 									) ) }
 								</select>
 							</td>
 							<td>
 								<input
 									type="text"
-									aria-label={ sprintf( __( 'Approval reason for %s', 'beyond-elysium' ), item.name ) }
+									aria-label={ sprintf(
+										/* translators: %s: the item's own name */
+										__(
+											'Approval reason for %s',
+											'beyond-elysium'
+										),
+										item.name
+									) }
 									value={ item.reason ?? '' }
-									placeholder={ __( 'Requires Tremere Coordinator approval…', 'beyond-elysium' ) }
-									onChange={ ( e ) => updateItem( i, { reason: e.target.value || undefined } ) }
+									placeholder={ __(
+										'Requires Tremere Coordinator approval…',
+										'beyond-elysium'
+									) }
+									onChange={ ( e ) =>
+										updateItem( i, {
+											reason: e.target.value || undefined,
+										} )
+									}
 								/>
 							</td>
 							<td>
 								<ApprovalByValueEditorButton
 									label={ item.name }
 									value={ item.approval_by_value }
-									onSave={ ( ranges ) => updateItem( i, { approval_by_value: ranges.length ? ranges : undefined } ) }
+									onSave={ ( ranges ) =>
+										updateItem( i, {
+											approval_by_value: ranges.length
+												? ranges
+												: undefined,
+										} )
+									}
 								/>
 							</td>
 							<td>
-								<button type="button" onClick={ () => removeItem( i ) }>
+								<button
+									type="button"
+									onClick={ () => removeItem( i ) }
+								>
 									{ __( 'Remove', 'beyond-elysium' ) }
 								</button>
 							</td>
@@ -609,41 +1013,75 @@ function TraitListEditor( { definition, onChange }: { definition: TraitListDefin
  * remove list of power families, each with its own nested table of levels
  * (level number, tier, power name, cost).
  */
-function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerDefinition; onChange: ( d: Record<string, unknown> ) => void } ) {
+function TieredPowerEditor( {
+	definition,
+	onChange,
+}: {
+	definition: TieredPowerDefinition;
+	onChange: ( d: Record< string, unknown > ) => void;
+} ) {
 	const powers = definition.powers ?? [];
 
-	function updateFlag<K extends keyof TieredPowerDefinition>( key: K, value: TieredPowerDefinition[ K ] ) {
-		onChange( { ...definition, [ key ]: value } as unknown as Record<string, unknown> );
+	function updateFlag< K extends keyof TieredPowerDefinition >(
+		key: K,
+		value: TieredPowerDefinition[ K ]
+	) {
+		onChange( { ...definition, [ key ]: value } as unknown as Record<
+			string,
+			unknown
+		> );
 	}
 
-	function updatePower( index: number, patch: Partial<TieredPower> ) {
-		const next = powers.map( ( p, i ) => ( i === index ? { ...p, ...patch } : p ) );
-		onChange( { ...definition, powers: next } as unknown as Record<string, unknown> );
+	function updatePower( index: number, patch: Partial< TieredPower > ) {
+		const next = powers.map( ( p, i ) =>
+			i === index ? { ...p, ...patch } : p
+		);
+		onChange( { ...definition, powers: next } as unknown as Record<
+			string,
+			unknown
+		> );
 	}
 
 	function addPower() {
-		onChange( { ...definition, powers: [ ...powers, { name: '', levels: [] } ] } as unknown as Record<string, unknown> );
+		onChange( {
+			...definition,
+			powers: [ ...powers, { name: '', levels: [] } ],
+		} as unknown as Record< string, unknown > );
 	}
 
 	function removePower( index: number ) {
-		onChange( { ...definition, powers: powers.filter( ( _, i ) => i !== index ) } as unknown as Record<string, unknown> );
+		onChange( {
+			...definition,
+			powers: powers.filter( ( _, i ) => i !== index ),
+		} as unknown as Record< string, unknown > );
 	}
 
 	function addLevel( powerIndex: number ) {
 		const power = powers[ powerIndex ];
-		const levels: PowerLevel[] = [ ...power.levels, { level: null, tier: 'basic', power_name: '' } ];
+		const levels: PowerLevel[] = [
+			...power.levels,
+			{ level: null, tier: 'basic', power_name: '' },
+		];
 		updatePower( powerIndex, { levels } );
 	}
 
-	function updateLevel( powerIndex: number, levelIndex: number, patch: Partial<PowerLevel> ) {
+	function updateLevel(
+		powerIndex: number,
+		levelIndex: number,
+		patch: Partial< PowerLevel >
+	) {
 		const power = powers[ powerIndex ];
-		const levels = power.levels.map( ( l, i ) => ( i === levelIndex ? { ...l, ...patch } : l ) );
+		const levels = power.levels.map( ( l, i ) =>
+			i === levelIndex ? { ...l, ...patch } : l
+		);
 		updatePower( powerIndex, { levels } );
 	}
 
 	function removeLevel( powerIndex: number, levelIndex: number ) {
 		const power = powers[ powerIndex ];
-		updatePower( powerIndex, { levels: power.levels.filter( ( _, i ) => i !== levelIndex ) } );
+		updatePower( powerIndex, {
+			levels: power.levels.filter( ( _, i ) => i !== levelIndex ),
+		} );
 	}
 
 	// Blood magic (BE_PROCESS/0.99.2-workflow.md): the block-level list a player's
@@ -652,7 +1090,10 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 	const traditions = definition.traditions ?? [];
 
 	function updateTradition( index: number, value: string ) {
-		updateFlag( 'traditions', traditions.map( ( t, i ) => ( i === index ? value : t ) ) );
+		updateFlag(
+			'traditions',
+			traditions.map( ( t, i ) => ( i === index ? value : t ) )
+		);
 	}
 
 	function addTradition() {
@@ -660,33 +1101,57 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 	}
 
 	function removeTradition( index: number ) {
-		updateFlag( 'traditions', traditions.filter( ( _, i ) => i !== index ) );
+		updateFlag(
+			'traditions',
+			traditions.filter( ( _, i ) => i !== index )
+		);
 	}
 
 	// A power's own traditions map (Record<tradition, alternate-name|null>) is edited as
 	// an ordered array of [tradition, alternate] pairs, then reduced back to the object
 	// shape on every change - simpler to render as a list than an object whose own keys
 	// are being renamed live.
-	function powerTraditionPairs( power: TieredPower ): Array<[ string, string | null ]> {
+	function powerTraditionPairs(
+		power: TieredPower
+	): Array< [ string, string | null ] > {
 		return Object.entries( power.traditions ?? {} );
 	}
 
-	function setPowerTraditionPairs( powerIndex: number, pairs: Array<[ string, string | null ]> ) {
-		const asRecord = Object.fromEntries( pairs ) as Record<string, string | null>;
-		updatePower( powerIndex, { traditions: Object.keys( asRecord ).length ? asRecord : undefined } );
+	function setPowerTraditionPairs(
+		powerIndex: number,
+		pairs: Array< [ string, string | null ] >
+	) {
+		const asRecord = Object.fromEntries( pairs ) as Record<
+			string,
+			string | null
+		>;
+		updatePower( powerIndex, {
+			traditions: Object.keys( asRecord ).length ? asRecord : undefined,
+		} );
 	}
 
 	function addPowerTradition( powerIndex: number ) {
-		setPowerTraditionPairs( powerIndex, [ ...powerTraditionPairs( powers[ powerIndex ] ), [ '', null ] ] );
+		setPowerTraditionPairs( powerIndex, [
+			...powerTraditionPairs( powers[ powerIndex ] ),
+			[ '', null ],
+		] );
 	}
 
-	function updatePowerTraditionName( powerIndex: number, pairIndex: number, name: string ) {
+	function updatePowerTraditionName(
+		powerIndex: number,
+		pairIndex: number,
+		name: string
+	) {
 		const pairs = powerTraditionPairs( powers[ powerIndex ] );
 		pairs[ pairIndex ] = [ name, pairs[ pairIndex ][ 1 ] ];
 		setPowerTraditionPairs( powerIndex, pairs );
 	}
 
-	function updatePowerTraditionAlternate( powerIndex: number, pairIndex: number, alternate: string ) {
+	function updatePowerTraditionAlternate(
+		powerIndex: number,
+		pairIndex: number,
+		alternate: string
+	) {
 		const pairs = powerTraditionPairs( powers[ powerIndex ] );
 		pairs[ pairIndex ] = [ pairs[ pairIndex ][ 0 ], alternate || null ];
 		setPowerTraditionPairs( powerIndex, pairs );
@@ -694,7 +1159,10 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 
 	function removePowerTradition( powerIndex: number, pairIndex: number ) {
 		const pairs = powerTraditionPairs( powers[ powerIndex ] );
-		setPowerTraditionPairs( powerIndex, pairs.filter( ( _, i ) => i !== pairIndex ) );
+		setPowerTraditionPairs(
+			powerIndex,
+			pairs.filter( ( _, i ) => i !== pairIndex )
+		);
 	}
 
 	return (
@@ -702,43 +1170,82 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 			<h3>{ __( 'Global settings', 'beyond-elysium' ) }</h3>
 			<div className="be-def-editor__flags">
 				<label>
-					<input type="checkbox" checked={ !! definition.sequential } onChange={ ( e ) => updateFlag( 'sequential', e.target.checked ) } />
-					{ ' ' }{ __( 'Sequential (holding a level implies every level below it)', 'beyond-elysium' ) }
+					<input
+						type="checkbox"
+						checked={ !! definition.sequential }
+						onChange={ ( e ) =>
+							updateFlag( 'sequential', e.target.checked )
+						}
+					/>{ ' ' }
+					{ __(
+						'Sequential (holding a level implies every level below it)',
+						'beyond-elysium'
+					) }
 				</label>
 				<label>
 					{ __( 'Out-of-type cost modifier', 'beyond-elysium' ) }{ ' ' }
 					<input
 						type="number"
 						value={ definition.out_of_type_cost_modifier ?? '' }
-						onChange={ ( e ) => updateFlag( 'out_of_type_cost_modifier', e.target.value ? Number( e.target.value ) : undefined ) }
+						onChange={ ( e ) =>
+							updateFlag(
+								'out_of_type_cost_modifier',
+								e.target.value
+									? Number( e.target.value )
+									: undefined
+							)
+						}
 					/>
 				</label>
 				<label>
 					<input
 						type="checkbox"
 						checked={ !! definition.blood_magic }
-						onChange={ ( e ) => updateFlag( 'blood_magic', e.target.checked ) }
-					/>
-					{ ' ' }{ __( 'Blood magic (taking a power prompts for a Tradition)', 'beyond-elysium' ) }
+						onChange={ ( e ) =>
+							updateFlag( 'blood_magic', e.target.checked )
+						}
+					/>{ ' ' }
+					{ __(
+						'Blood magic (taking a power prompts for a Tradition)',
+						'beyond-elysium'
+					) }
 				</label>
 			</div>
 
 			{ definition.blood_magic && (
 				<div className="be-def-editor__traditions">
-					<h4>{ sprintf( __( 'Traditions (%d)', 'beyond-elysium' ), traditions.length ) }</h4>
+					<h4>
+						{ sprintf(
+							/* translators: %d: number of traditions listed for this blood magic block */
+							__( 'Traditions (%d)', 'beyond-elysium' ),
+							traditions.length
+						) }
+					</h4>
 					<p className="description">
-						{ __( 'Every real tradition this block offers. A specific power narrows further to just the traditions that offer it, edited on that power itself below.', 'beyond-elysium' ) }
+						{ __(
+							'Every real tradition this block offers. A specific power narrows further to just the traditions that offer it, edited on that power itself below.',
+							'beyond-elysium'
+						) }
 					</p>
 					<ul className="be-def-editor__tradition-list">
 						{ traditions.map( ( tradition, ti ) => (
 							<li key={ ti }>
 								<input
 									type="text"
-									aria-label={ sprintf( __( 'Tradition %d', 'beyond-elysium' ), ti + 1 ) }
+									aria-label={ sprintf(
+										/* translators: %d: the tradition's position in the list */
+										__( 'Tradition %d', 'beyond-elysium' ),
+										ti + 1
+									) }
 									value={ tradition }
-									onChange={ ( e ) => updateTradition( ti, e.target.value ) }
+									onChange={ ( e ) =>
+										updateTradition( ti, e.target.value )
+									}
 								/>
-								<button type="button" onClick={ () => removeTradition( ti ) }>
+								<button
+									type="button"
+									onClick={ () => removeTradition( ti ) }
+								>
 									{ __( 'Remove', 'beyond-elysium' ) }
 								</button>
 							</li>
@@ -750,32 +1257,66 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 				</div>
 			) }
 
-			<h3>{ sprintf( __( 'Powers (%d)', 'beyond-elysium' ), powers.length ) }</h3>
+			<h3>
+				{ sprintf(
+					/* translators: %d: number of tiered powers in this catalog block */
+					__( 'Powers (%d)', 'beyond-elysium' ),
+					powers.length
+				) }
+			</h3>
 			{ powers.map( ( power, pi ) => (
 				<div className="be-def-editor__power" key={ pi }>
 					<div className="be-def-editor__power-header">
 						<input
 							type="text"
 							value={ power.name }
-							placeholder={ __( 'Power family name (e.g. Celerity)', 'beyond-elysium' ) }
-							onChange={ ( e ) => updatePower( pi, { name: e.target.value } ) }
+							placeholder={ __(
+								'Power family name (e.g. Celerity)',
+								'beyond-elysium'
+							) }
+							onChange={ ( e ) =>
+								updatePower( pi, { name: e.target.value } )
+							}
 						/>
 						<select
-							aria-label={ sprintf( __( 'Approval override for the whole %s power', 'beyond-elysium' ), power.name ) }
+							aria-label={ sprintf(
+								/* translators: %s: the power family's own name */
+								__(
+									'Approval override for the whole %s power',
+									'beyond-elysium'
+								),
+								power.name
+							) }
 							value={ power.approval_override ?? '' }
-							onChange={ ( e ) => updatePower( pi, { approval_override: ( e.target.value || undefined ) as ApprovalLevel | undefined } ) }
+							onChange={ ( e ) =>
+								updatePower( pi, {
+									approval_override: ( e.target.value ||
+										undefined ) as
+										| ApprovalLevel
+										| undefined,
+								} )
+							}
 						>
-							<option value="">{ __( 'Block default', 'beyond-elysium' ) }</option>
+							<option value="">
+								{ __( 'Block default', 'beyond-elysium' ) }
+							</option>
 							{ APPROVAL_LEVELS.map( ( level ) => (
-								<option key={ level } value={ level }>{ level }</option>
+								<option key={ level } value={ level }>
+									{ level }
+								</option>
 							) ) }
 						</select>
 						<DescriptionEditorButton
 							label={ power.name }
 							value={ power.description }
-							onSave={ ( value ) => updatePower( pi, { description: value } ) }
+							onSave={ ( value ) =>
+								updatePower( pi, { description: value } )
+							}
 						/>
-						<button type="button" onClick={ () => removePower( pi ) }>
+						<button
+							type="button"
+							onClick={ () => removePower( pi ) }
+						>
 							{ __( 'Remove power', 'beyond-elysium' ) }
 						</button>
 					</div>
@@ -783,48 +1324,126 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 					{ definition.blood_magic && (
 						<div className="be-def-editor__power-blood-magic">
 							<label>
-								{ __( 'Restriction (caste/covenant, not an alternate name — leave blank for none)', 'beyond-elysium' ) }
+								{ __(
+									'Restriction (caste/covenant, not an alternate name — leave blank for none)',
+									'beyond-elysium'
+								) }
 								<input
 									type="text"
-									aria-label={ sprintf( __( 'Restriction for %s', 'beyond-elysium' ), power.name ) }
+									aria-label={ sprintf(
+										/* translators: %s: the power family's own name */
+										__(
+											'Restriction for %s',
+											'beyond-elysium'
+										),
+										power.name
+									) }
 									value={ power.restriction ?? '' }
-									placeholder={ __( 'e.g. Sabbat, Warrior Only', 'beyond-elysium' ) }
-									onChange={ ( e ) => updatePower( pi, { restriction: e.target.value || undefined } ) }
+									placeholder={ __(
+										'e.g. Sabbat, Warrior Only',
+										'beyond-elysium'
+									) }
+									onChange={ ( e ) =>
+										updatePower( pi, {
+											restriction:
+												e.target.value || undefined,
+										} )
+									}
 								/>
 							</label>
 
 							<p className="description">
-								{ __( 'Which traditions offer this path, and its alternate name under each one (leave blank when it has none).', 'beyond-elysium' ) }
+								{ __(
+									'Which traditions offer this path, and its alternate name under each one (leave blank when it has none).',
+									'beyond-elysium'
+								) }
 							</p>
 							<ul className="be-def-editor__power-tradition-list">
-								{ powerTraditionPairs( power ).map( ( [ name, alternate ], ti ) => (
-									<li key={ ti }>
-										<input
-											type="text"
-											aria-label={ sprintf( __( 'Offering tradition %d for %s', 'beyond-elysium' ), ti + 1, power.name ) }
-											value={ name }
-											placeholder={ __( 'Tradition', 'beyond-elysium' ) }
-											list={ `be-def-editor__traditions-${ pi }` }
-											onChange={ ( e ) => updatePowerTraditionName( pi, ti, e.target.value ) }
-										/>
-										<input
-											type="text"
-											aria-label={ sprintf( __( 'Alternate name %d for %s', 'beyond-elysium' ), ti + 1, power.name ) }
-											value={ alternate ?? '' }
-											placeholder={ __( 'Alternate name (optional)', 'beyond-elysium' ) }
-											onChange={ ( e ) => updatePowerTraditionAlternate( pi, ti, e.target.value ) }
-										/>
-										<button type="button" onClick={ () => removePowerTradition( pi, ti ) }>
-											{ __( 'Remove', 'beyond-elysium' ) }
-										</button>
-									</li>
-								) ) }
+								{ powerTraditionPairs( power ).map(
+									( [ name, alternate ], ti ) => (
+										<li key={ ti }>
+											<input
+												type="text"
+												aria-label={ sprintf(
+													/* translators: 1: position in the list, 2: power name */
+													__(
+														'Offering tradition %1$d for %2$s',
+														'beyond-elysium'
+													),
+													ti + 1,
+													power.name
+												) }
+												value={ name }
+												placeholder={ __(
+													'Tradition',
+													'beyond-elysium'
+												) }
+												list={ `be-def-editor__traditions-${ pi }` }
+												onChange={ ( e ) =>
+													updatePowerTraditionName(
+														pi,
+														ti,
+														e.target.value
+													)
+												}
+											/>
+											<input
+												type="text"
+												aria-label={ sprintf(
+													/* translators: 1: position in the list, 2: power name */
+													__(
+														'Alternate name %1$d for %2$s',
+														'beyond-elysium'
+													),
+													ti + 1,
+													power.name
+												) }
+												value={ alternate ?? '' }
+												placeholder={ __(
+													'Alternate name (optional)',
+													'beyond-elysium'
+												) }
+												onChange={ ( e ) =>
+													updatePowerTraditionAlternate(
+														pi,
+														ti,
+														e.target.value
+													)
+												}
+											/>
+											<button
+												type="button"
+												onClick={ () =>
+													removePowerTradition(
+														pi,
+														ti
+													)
+												}
+											>
+												{ __(
+													'Remove',
+													'beyond-elysium'
+												) }
+											</button>
+										</li>
+									)
+								) }
 							</ul>
-							<datalist id={ `be-def-editor__traditions-${ pi }` }>
-								{ traditions.map( ( t ) => <option key={ t } value={ t } /> ) }
+							<datalist
+								id={ `be-def-editor__traditions-${ pi }` }
+							>
+								{ traditions.map( ( t ) => (
+									<option key={ t } value={ t } />
+								) ) }
 							</datalist>
-							<button type="button" onClick={ () => addPowerTradition( pi ) }>
-								{ __( '+ Add offering tradition', 'beyond-elysium' ) }
+							<button
+								type="button"
+								onClick={ () => addPowerTradition( pi ) }
+							>
+								{ __(
+									'+ Add offering tradition',
+									'beyond-elysium'
+								) }
 							</button>
 						</div>
 					) }
@@ -832,13 +1451,27 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 					<table className="be-def-editor__table">
 						<thead>
 							<tr>
-								<th>{ __( 'Level (blank = Elder+)', 'beyond-elysium' ) }</th>
+								<th>
+									{ __(
+										'Level (blank = Elder+)',
+										'beyond-elysium'
+									) }
+								</th>
 								<th>{ __( 'Tier', 'beyond-elysium' ) }</th>
-								<th>{ __( 'Power name', 'beyond-elysium' ) }</th>
+								<th>
+									{ __( 'Power name', 'beyond-elysium' ) }
+								</th>
 								<th>{ __( 'Cost', 'beyond-elysium' ) }</th>
 								<th>{ __( 'Approval', 'beyond-elysium' ) }</th>
-								<th>{ __( 'Approval reason', 'beyond-elysium' ) }</th>
-								<th>{ __( 'Description', 'beyond-elysium' ) }</th>
+								<th>
+									{ __(
+										'Approval reason',
+										'beyond-elysium'
+									) }
+								</th>
+								<th>
+									{ __( 'Description', 'beyond-elysium' ) }
+								</th>
 								<th />
 							</tr>
 						</thead>
@@ -848,19 +1481,43 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 									<td>
 										<input
 											type="number"
-											aria-label={ sprintf( __( 'Level for %s', 'beyond-elysium' ), level.power_name ) }
+											aria-label={ sprintf(
+												/* translators: %s: this level row's own power name */
+												__(
+													'Level for %s',
+													'beyond-elysium'
+												),
+												level.power_name
+											) }
 											value={ level.level ?? '' }
 											onChange={ ( e ) =>
-												updateLevel( pi, li, { level: e.target.value ? Number( e.target.value ) : null } )
+												updateLevel( pi, li, {
+													level: e.target.value
+														? Number(
+																e.target.value
+														  )
+														: null,
+												} )
 											}
 										/>
 									</td>
 									<td>
 										<input
 											type="text"
-											aria-label={ sprintf( __( 'Tier for %s', 'beyond-elysium' ), level.power_name ) }
+											aria-label={ sprintf(
+												/* translators: %s: this level row's own power name */
+												__(
+													'Tier for %s',
+													'beyond-elysium'
+												),
+												level.power_name
+											) }
 											value={ level.tier }
-											onChange={ ( e ) => updateLevel( pi, li, { tier: e.target.value } ) }
+											onChange={ ( e ) =>
+												updateLevel( pi, li, {
+													tier: e.target.value,
+												} )
+											}
 										/>
 									</td>
 									<td>
@@ -868,36 +1525,75 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 											type="text"
 											aria-label={ sprintf(
 												/* translators: 1: power family name, 2: level row position number */
-												__( 'Power name for %1$s, level %2$d', 'beyond-elysium' ),
+												__(
+													'Power name for %1$s, level %2$d',
+													'beyond-elysium'
+												),
 												power.name,
 												li + 1
 											) }
 											value={ level.power_name }
-											onChange={ ( e ) => updateLevel( pi, li, { power_name: e.target.value } ) }
+											onChange={ ( e ) =>
+												updateLevel( pi, li, {
+													power_name: e.target.value,
+												} )
+											}
 										/>
 									</td>
 									<td>
 										<input
 											type="text"
-											aria-label={ sprintf( __( 'Cost for %s', 'beyond-elysium' ), level.power_name ) }
+											aria-label={ sprintf(
+												/* translators: %s: this level row's own power name */
+												__(
+													'Cost for %s',
+													'beyond-elysium'
+												),
+												level.power_name
+											) }
 											value={ level.cost ?? '' }
-											onChange={ ( e ) => updateLevel( pi, li, { cost: e.target.value } ) }
+											onChange={ ( e ) =>
+												updateLevel( pi, li, {
+													cost: e.target.value,
+												} )
+											}
 										/>
 									</td>
 									<td>
 										<select
 											aria-label={ sprintf(
 												/* translators: 1: power family name, 2: level row position number */
-												__( 'Approval for %1$s, level %2$d', 'beyond-elysium' ),
+												__(
+													'Approval for %1$s, level %2$d',
+													'beyond-elysium'
+												),
 												power.name,
 												li + 1
 											) }
 											value={ level.approval ?? '' }
-											onChange={ ( e ) => updateLevel( pi, li, { approval: ( e.target.value || undefined ) as ApprovalLevel | undefined } ) }
+											onChange={ ( e ) =>
+												updateLevel( pi, li, {
+													approval: ( e.target
+														.value ||
+														undefined ) as
+														| ApprovalLevel
+														| undefined,
+												} )
+											}
 										>
-											<option value="">{ __( 'Block default', 'beyond-elysium' ) }</option>
+											<option value="">
+												{ __(
+													'Block default',
+													'beyond-elysium'
+												) }
+											</option>
 											{ APPROVAL_LEVELS.map( ( lvl ) => (
-												<option key={ lvl } value={ lvl }>{ lvl }</option>
+												<option
+													key={ lvl }
+													value={ lvl }
+												>
+													{ lvl }
+												</option>
 											) ) }
 										</select>
 									</td>
@@ -906,24 +1602,53 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
 											type="text"
 											aria-label={ sprintf(
 												/* translators: 1: power family name, 2: level row position number */
-												__( 'Approval reason for %1$s, level %2$d', 'beyond-elysium' ),
+												__(
+													'Approval reason for %1$s, level %2$d',
+													'beyond-elysium'
+												),
 												power.name,
 												li + 1
 											) }
 											value={ level.reason ?? '' }
-											placeholder={ __( 'Requires Giovanni Coordinator approval…', 'beyond-elysium' ) }
-											onChange={ ( e ) => updateLevel( pi, li, { reason: e.target.value || undefined } ) }
+											placeholder={ __(
+												'Requires Giovanni Coordinator approval…',
+												'beyond-elysium'
+											) }
+											onChange={ ( e ) =>
+												updateLevel( pi, li, {
+													reason:
+														e.target.value ||
+														undefined,
+												} )
+											}
 										/>
 									</td>
 									<td>
 										<DescriptionEditorButton
-											label={ sprintf( '%s, level %d', power.name, li + 1 ) }
+											label={ sprintf(
+												/* translators: 1: power name, 2: level number */
+												__(
+													'%1$s, level %2$d',
+													'beyond-elysium'
+												),
+												power.name,
+												li + 1
+											) }
 											value={ level.description }
-											onSave={ ( value ) => updateLevel( pi, li, { description: value } ) }
+											onSave={ ( value ) =>
+												updateLevel( pi, li, {
+													description: value,
+												} )
+											}
 										/>
 									</td>
 									<td>
-										<button type="button" onClick={ () => removeLevel( pi, li ) }>
+										<button
+											type="button"
+											onClick={ () =>
+												removeLevel( pi, li )
+											}
+										>
 											{ __( 'Remove', 'beyond-elysium' ) }
 										</button>
 									</td>
@@ -953,16 +1678,29 @@ function TieredPowerEditor( { definition, onChange }: { definition: TieredPowerD
  * step values, and an optional name-lookup table that overrides the pool's
  * displayed name based on another block's field value.
  */
-function ResourcePoolEditor( { definition, onChange }: { definition: ResourcePoolDefinition; onChange: ( d: Record<string, unknown> ) => void } ) {
+function ResourcePoolEditor( {
+	definition,
+	onChange,
+}: {
+	definition: ResourcePoolDefinition;
+	onChange: ( d: Record< string, unknown > ) => void;
+} ) {
 	const pools = definition.pools ?? [];
 
-	function updatePool( index: number, patch: Partial<ResourcePool> ) {
-		const next = pools.map( ( p, i ) => ( i === index ? { ...p, ...patch } : p ) );
+	function updatePool( index: number, patch: Partial< ResourcePool > ) {
+		const next = pools.map( ( p, i ) =>
+			i === index ? { ...p, ...patch } : p
+		);
 		onChange( { pools: next } );
 	}
 
 	function addPool() {
-		onChange( { pools: [ ...pools, { name: '', value_type: 'integer', default_start: 0 } ] } );
+		onChange( {
+			pools: [
+				...pools,
+				{ name: '', value_type: 'integer', default_start: 0 },
+			],
+		} );
 	}
 
 	function removePool( index: number ) {
@@ -977,42 +1715,88 @@ function ResourcePoolEditor( { definition, onChange }: { definition: ResourcePoo
 	 * keyed-by block/field reference and the value-to-label table in sync as
 	 * rows are added, edited, or removed.
 	 */
-	function setLookupKeyedBy( index: number, patch: Partial<CrossBlockRef> ) {
+	function setLookupKeyedBy(
+		index: number,
+		patch: Partial< CrossBlockRef >
+	) {
 		const pool = pools[ index ];
-		const keyed_by = { ...( pool.name_lookup?.keyed_by ?? { block_slug: '', field: '' } ), ...patch };
-		updatePool( index, { name_lookup: { keyed_by, table: pool.name_lookup?.table ?? {} } } );
+		const keyedBy = {
+			...( pool.name_lookup?.keyed_by ?? { block_slug: '', field: '' } ),
+			...patch,
+		};
+		updatePool( index, {
+			name_lookup: {
+				keyed_by: keyedBy,
+				table: pool.name_lookup?.table ?? {},
+			},
+		} );
 	}
 
 	function addLookupRow( index: number ) {
 		const pool = pools[ index ];
-		const keyed_by = pool.name_lookup?.keyed_by ?? { block_slug: '', field: '' };
+		const keyedBy = pool.name_lookup?.keyed_by ?? {
+			block_slug: '',
+			field: '',
+		};
 		const table = { ...( pool.name_lookup?.table ?? {} ), '': '' };
-		updatePool( index, { name_lookup: { keyed_by, table } } );
+		updatePool( index, { name_lookup: { keyed_by: keyedBy, table } } );
 	}
 
-	function updateLookupRow( index: number, oldKey: string, newKey: string, value: string ) {
+	function updateLookupRow(
+		index: number,
+		oldKey: string,
+		newKey: string,
+		value: string
+	) {
 		const pool = pools[ index ];
-		const table: Record<string, string> = {};
-		for ( const [ k, v ] of Object.entries( pool.name_lookup?.table ?? {} ) ) {
+		const table: Record< string, string > = {};
+		for ( const [ k, v ] of Object.entries(
+			pool.name_lookup?.table ?? {}
+		) ) {
 			table[ k === oldKey ? newKey : k ] = k === oldKey ? value : v;
 		}
-		updatePool( index, { name_lookup: { keyed_by: pool.name_lookup?.keyed_by ?? { block_slug: '', field: '' }, table } } );
+		updatePool( index, {
+			name_lookup: {
+				keyed_by: pool.name_lookup?.keyed_by ?? {
+					block_slug: '',
+					field: '',
+				},
+				table,
+			},
+		} );
 	}
 
 	function removeLookupRow( index: number, key: string ) {
 		const pool = pools[ index ];
 		const table = { ...( pool.name_lookup?.table ?? {} ) };
 		delete table[ key ];
-		if ( Object.keys( table ).length === 0 && ! pool.name_lookup?.keyed_by.block_slug ) {
+		if (
+			Object.keys( table ).length === 0 &&
+			! pool.name_lookup?.keyed_by.block_slug
+		) {
 			updatePool( index, { name_lookup: undefined } );
 		} else {
-			updatePool( index, { name_lookup: { keyed_by: pool.name_lookup?.keyed_by ?? { block_slug: '', field: '' }, table } } );
+			updatePool( index, {
+				name_lookup: {
+					keyed_by: pool.name_lookup?.keyed_by ?? {
+						block_slug: '',
+						field: '',
+					},
+					table,
+				},
+			} );
 		}
 	}
 
 	return (
 		<div className="be-def-editor__section">
-			<h3>{ sprintf( __( 'Pools (%d)', 'beyond-elysium' ), pools.length ) }</h3>
+			<h3>
+				{ sprintf(
+					/* translators: %d: number of resource pools in this catalog block */
+					__( 'Pools (%d)', 'beyond-elysium' ),
+					pools.length
+				) }
+			</h3>
 			<table className="be-def-editor__table">
 				<thead>
 					<tr>
@@ -1032,9 +1816,20 @@ function ResourcePoolEditor( { definition, onChange }: { definition: ResourcePoo
 							<td>
 								<input
 									type="text"
-									aria-label={ sprintf( __( 'Name for pool %d', 'beyond-elysium' ), i + 1 ) }
+									aria-label={ sprintf(
+										/* translators: %d: the pool's position in the list */
+										__(
+											'Name for pool %d',
+											'beyond-elysium'
+										),
+										i + 1
+									) }
 									value={ pool.name }
-									onChange={ ( e ) => updatePool( i, { name: e.target.value } ) }
+									onChange={ ( e ) =>
+										updatePool( i, {
+											name: e.target.value,
+										} )
+									}
 								/>
 
 								{ /* Optional lookup that overrides this pool's display name via another block's field. */ }
@@ -1042,106 +1837,256 @@ function ResourcePoolEditor( { definition, onChange }: { definition: ResourcePoo
 									<div className="be-def-editor__inline-row">
 										<input
 											type="text"
-											placeholder={ __( 'Keyed by block', 'beyond-elysium' ) }
-											aria-label={ sprintf( __( 'Keyed-by block for %s name lookup', 'beyond-elysium' ), pool.name ) }
-											value={ pool.name_lookup?.keyed_by.block_slug ?? '' }
-											onChange={ ( e ) => setLookupKeyedBy( i, { block_slug: e.target.value } ) }
+											placeholder={ __(
+												'Keyed by block',
+												'beyond-elysium'
+											) }
+											aria-label={ sprintf(
+												/* translators: %s: the resource pool's own name */
+												__(
+													'Keyed-by block for %s name lookup',
+													'beyond-elysium'
+												),
+												pool.name
+											) }
+											value={
+												pool.name_lookup?.keyed_by
+													.block_slug ?? ''
+											}
+											onChange={ ( e ) =>
+												setLookupKeyedBy( i, {
+													block_slug: e.target.value,
+												} )
+											}
 										/>
 										<input
 											type="text"
-											placeholder={ __( 'Field name', 'beyond-elysium' ) }
-											aria-label={ sprintf( __( 'Keyed-by field for %s name lookup', 'beyond-elysium' ), pool.name ) }
-											value={ pool.name_lookup?.keyed_by.field ?? '' }
-											onChange={ ( e ) => setLookupKeyedBy( i, { field: e.target.value } ) }
+											placeholder={ __(
+												'Field name',
+												'beyond-elysium'
+											) }
+											aria-label={ sprintf(
+												/* translators: %s: the resource pool's own name */
+												__(
+													'Keyed-by field for %s name lookup',
+													'beyond-elysium'
+												),
+												pool.name
+											) }
+											value={
+												pool.name_lookup?.keyed_by
+													.field ?? ''
+											}
+											onChange={ ( e ) =>
+												setLookupKeyedBy( i, {
+													field: e.target.value,
+												} )
+											}
 										/>
 									</div>
-									{ Object.entries( pool.name_lookup?.table ?? {} ).map( ( [ key, value ], ri ) => (
-										<div className="be-def-editor__inline-row" key={ ri }>
+									{ Object.entries(
+										pool.name_lookup?.table ?? {}
+									).map( ( [ key, value ], ri ) => (
+										<div
+											className="be-def-editor__inline-row"
+											key={ ri }
+										>
 											<input
 												type="text"
-												placeholder={ __( 'Value (e.g. Conviction)', 'beyond-elysium' ) }
+												placeholder={ __(
+													'Value (e.g. Conviction)',
+													'beyond-elysium'
+												) }
 												aria-label={ sprintf(
 													/* translators: 1: pool name, 2: lookup row position number */
-													__( 'Lookup value for %1$s, row %2$d', 'beyond-elysium' ),
+													__(
+														'Lookup value for %1$s, row %2$d',
+														'beyond-elysium'
+													),
 													pool.name,
 													ri + 1
 												) }
 												value={ key }
-												onChange={ ( e ) => updateLookupRow( i, key, e.target.value, value ) }
+												onChange={ ( e ) =>
+													updateLookupRow(
+														i,
+														key,
+														e.target.value,
+														value
+													)
+												}
 											/>
 											<input
 												type="text"
-												placeholder={ __( 'Display as', 'beyond-elysium' ) }
+												placeholder={ __(
+													'Display as',
+													'beyond-elysium'
+												) }
 												aria-label={ sprintf(
 													/* translators: 1: pool name, 2: lookup row position number */
-													__( 'Lookup display text for %1$s, row %2$d', 'beyond-elysium' ),
+													__(
+														'Lookup display text for %1$s, row %2$d',
+														'beyond-elysium'
+													),
 													pool.name,
 													ri + 1
 												) }
 												value={ value }
-												onChange={ ( e ) => updateLookupRow( i, key, key, e.target.value ) }
+												onChange={ ( e ) =>
+													updateLookupRow(
+														i,
+														key,
+														key,
+														e.target.value
+													)
+												}
 											/>
-											<button type="button" onClick={ () => removeLookupRow( i, key ) }>
+											<button
+												type="button"
+												onClick={ () =>
+													removeLookupRow( i, key )
+												}
+											>
 												×
 											</button>
 										</div>
 									) ) }
-									<button type="button" onClick={ () => addLookupRow( i ) }>
-										{ __( '+ Name lookup row', 'beyond-elysium' ) }
+									<button
+										type="button"
+										onClick={ () => addLookupRow( i ) }
+									>
+										{ __(
+											'+ Name lookup row',
+											'beyond-elysium'
+										) }
 									</button>
 								</div>
 							</td>
 							<td>
 								<select
-									aria-label={ sprintf( __( 'Value type for %s', 'beyond-elysium' ), pool.name ) }
+									aria-label={ sprintf(
+										/* translators: %s: the resource pool's own name */
+										__(
+											'Value type for %s',
+											'beyond-elysium'
+										),
+										pool.name
+									) }
 									value={ pool.value_type }
-									onChange={ ( e ) => updatePool( i, { value_type: e.target.value as ResourcePool[ 'value_type' ] } ) }
+									onChange={ ( e ) =>
+										updatePool( i, {
+											value_type: e.target
+												.value as ResourcePool[ 'value_type' ],
+										} )
+									}
 								>
-									<option value="integer">{ __( 'integer', 'beyond-elysium' ) }</option>
-									<option value="decimal">{ __( 'decimal', 'beyond-elysium' ) }</option>
+									<option value="integer">
+										{ __( 'integer', 'beyond-elysium' ) }
+									</option>
+									<option value="decimal">
+										{ __( 'decimal', 'beyond-elysium' ) }
+									</option>
 								</select>
 							</td>
 							<td>
 								<input
 									type="number"
-									aria-label={ sprintf( __( 'Default start for %s', 'beyond-elysium' ), pool.name ) }
+									aria-label={ sprintf(
+										/* translators: %s: the resource pool's own name */
+										__(
+											'Default start for %s',
+											'beyond-elysium'
+										),
+										pool.name
+									) }
 									value={ pool.default_start }
-									onChange={ ( e ) => updatePool( i, { default_start: Number( e.target.value ) } ) }
+									onChange={ ( e ) =>
+										updatePool( i, {
+											default_start: Number(
+												e.target.value
+											),
+										} )
+									}
 								/>
 							</td>
 							<td>
 								<input
 									type="number"
-									aria-label={ sprintf( __( 'Minimum for %s', 'beyond-elysium' ), pool.name ) }
+									aria-label={ sprintf(
+										/* translators: %s: the resource pool's own name */
+										__(
+											'Minimum for %s',
+											'beyond-elysium'
+										),
+										pool.name
+									) }
 									value={ pool.min ?? '' }
-									onChange={ ( e ) => updatePool( i, { min: e.target.value ? Number( e.target.value ) : undefined } ) }
+									onChange={ ( e ) =>
+										updatePool( i, {
+											min: e.target.value
+												? Number( e.target.value )
+												: undefined,
+										} )
+									}
 								/>
 							</td>
 							<td>
 								<input
 									type="number"
-									aria-label={ sprintf( __( 'Maximum for %s', 'beyond-elysium' ), pool.name ) }
+									aria-label={ sprintf(
+										/* translators: %s: the resource pool's own name */
+										__(
+											'Maximum for %s',
+											'beyond-elysium'
+										),
+										pool.name
+									) }
 									value={ pool.max ?? '' }
-									onChange={ ( e ) => updatePool( i, { max: e.target.value ? Number( e.target.value ) : undefined } ) }
+									onChange={ ( e ) =>
+										updatePool( i, {
+											max: e.target.value
+												? Number( e.target.value )
+												: undefined,
+										} )
+									}
 								/>
 							</td>
 							<td>
 								<input
 									type="number"
-									aria-label={ sprintf( __( 'Step for %s', 'beyond-elysium' ), pool.name ) }
+									aria-label={ sprintf(
+										/* translators: %s: the resource pool's own name */
+										__( 'Step for %s', 'beyond-elysium' ),
+										pool.name
+									) }
 									value={ pool.step ?? '' }
-									onChange={ ( e ) => updatePool( i, { step: e.target.value ? Number( e.target.value ) : undefined } ) }
+									onChange={ ( e ) =>
+										updatePool( i, {
+											step: e.target.value
+												? Number( e.target.value )
+												: undefined,
+										} )
+									}
 								/>
 							</td>
 							<td>
 								<ApprovalByValueEditorButton
 									label={ pool.name }
 									value={ pool.approval_by_value }
-									onSave={ ( ranges ) => updatePool( i, { approval_by_value: ranges.length ? ranges : undefined } ) }
+									onSave={ ( ranges ) =>
+										updatePool( i, {
+											approval_by_value: ranges.length
+												? ranges
+												: undefined,
+										} )
+									}
 								/>
 							</td>
 							<td>
-								<button type="button" onClick={ () => removePool( i ) }>
+								<button
+									type="button"
+									onClick={ () => removePool( i ) }
+								>
 									{ __( 'Remove', 'beyond-elysium' ) }
 								</button>
 							</td>
@@ -1166,37 +2111,75 @@ function ResourcePoolEditor( { definition, onChange }: { definition: ResourcePoo
  * flag, and a comma-separated options list used by the select and
  * multiselect field types.
  */
-function IdentityFieldEditorAdmin( { definition, onChange }: { definition: IdentityFieldDefinition; onChange: ( d: Record<string, unknown> ) => void } ) {
+function IdentityFieldEditorAdmin( {
+	definition,
+	onChange,
+}: {
+	definition: IdentityFieldDefinition;
+	onChange: ( d: Record< string, unknown > ) => void;
+} ) {
 	const fields = definition.fields ?? [];
 
-	function updateField( index: number, patch: Partial<IdentityField> ) {
-		const next = fields.map( ( f, i ) => ( i === index ? { ...f, ...patch } : f ) );
-		onChange( { ...definition, fields: next } as unknown as Record<string, unknown> );
+	function updateField( index: number, patch: Partial< IdentityField > ) {
+		const next = fields.map( ( f, i ) =>
+			i === index ? { ...f, ...patch } : f
+		);
+		onChange( { ...definition, fields: next } as unknown as Record<
+			string,
+			unknown
+		> );
 	}
 
 	function addField() {
-		onChange( { ...definition, fields: [ ...fields, { name: '', field_type: 'text', required: false } ] } as unknown as Record<string, unknown> );
+		onChange( {
+			...definition,
+			fields: [
+				...fields,
+				{ name: '', field_type: 'text', required: false },
+			],
+		} as unknown as Record< string, unknown > );
 	}
 
 	function removeField( index: number ) {
-		onChange( { ...definition, fields: fields.filter( ( _, i ) => i !== index ) } as unknown as Record<string, unknown> );
+		onChange( {
+			...definition,
+			fields: fields.filter( ( _, i ) => i !== index ),
+		} as unknown as Record< string, unknown > );
 	}
 
 	function updateOptions( index: number, raw: string ) {
-		updateField( index, { options: raw.split( ',' ).map( ( s ) => s.trim() ).filter( Boolean ) } );
+		updateField( index, {
+			options: raw
+				.split( ',' )
+				.map( ( s ) => s.trim() )
+				.filter( Boolean ),
+		} );
 	}
 
 	return (
 		<div className="be-def-editor__section">
-			<h3>{ sprintf( __( 'Fields (%d)', 'beyond-elysium' ), fields.length ) }</h3>
+			<h3>
+				{ sprintf(
+					/* translators: %d: number of identity fields in this catalog block */
+					__( 'Fields (%d)', 'beyond-elysium' ),
+					fields.length
+				) }
+			</h3>
 			<table className="be-def-editor__table">
 				<thead>
 					<tr>
 						<th>{ __( 'Name', 'beyond-elysium' ) }</th>
 						<th>{ __( 'Type', 'beyond-elysium' ) }</th>
 						<th>{ __( 'Required', 'beyond-elysium' ) }</th>
-						<th>{ __( 'Options (comma-separated)', 'beyond-elysium' ) }</th>
-						<th>{ __( 'Approval by option', 'beyond-elysium' ) }</th>
+						<th>
+							{ __(
+								'Options (comma-separated)',
+								'beyond-elysium'
+							) }
+						</th>
+						<th>
+							{ __( 'Approval by option', 'beyond-elysium' ) }
+						</th>
 						<th />
 					</tr>
 				</thead>
@@ -1206,39 +2189,97 @@ function IdentityFieldEditorAdmin( { definition, onChange }: { definition: Ident
 							<td>
 								<input
 									type="text"
-									aria-label={ sprintf( __( 'Name for field %d', 'beyond-elysium' ), i + 1 ) }
+									aria-label={ sprintf(
+										/* translators: %d: the field's position in the list */
+										__(
+											'Name for field %d',
+											'beyond-elysium'
+										),
+										i + 1
+									) }
 									value={ field.name }
-									onChange={ ( e ) => updateField( i, { name: e.target.value } ) }
+									onChange={ ( e ) =>
+										updateField( i, {
+											name: e.target.value,
+										} )
+									}
 								/>
 							</td>
 							<td>
 								<select
-									aria-label={ sprintf( __( 'Type for %s', 'beyond-elysium' ), field.name ) }
+									aria-label={ sprintf(
+										/* translators: %s: the identity field's own name */
+										__( 'Type for %s', 'beyond-elysium' ),
+										field.name
+									) }
 									value={ field.field_type }
-									onChange={ ( e ) => updateField( i, { field_type: e.target.value as IdentityField[ 'field_type' ] } ) }
+									onChange={ ( e ) =>
+										updateField( i, {
+											field_type: e.target
+												.value as IdentityField[ 'field_type' ],
+										} )
+									}
 								>
-									<option value="text">{ __( 'text', 'beyond-elysium' ) }</option>
-									<option value="select">{ __( 'select', 'beyond-elysium' ) }</option>
-									<option value="multiselect">{ __( 'multiselect', 'beyond-elysium' ) }</option>
-									<option value="number">{ __( 'number', 'beyond-elysium' ) }</option>
-									<option value="textarea">{ __( 'textarea', 'beyond-elysium' ) }</option>
+									<option value="text">
+										{ __( 'text', 'beyond-elysium' ) }
+									</option>
+									<option value="select">
+										{ __( 'select', 'beyond-elysium' ) }
+									</option>
+									<option value="multiselect">
+										{ __(
+											'multiselect',
+											'beyond-elysium'
+										) }
+									</option>
+									<option value="number">
+										{ __( 'number', 'beyond-elysium' ) }
+									</option>
+									<option value="textarea">
+										{ __( 'textarea', 'beyond-elysium' ) }
+									</option>
 								</select>
 							</td>
 							<td>
 								<input
 									type="checkbox"
-									aria-label={ sprintf( __( 'Required for %s', 'beyond-elysium' ), field.name ) }
+									aria-label={ sprintf(
+										/* translators: %s: the identity field's own name */
+										__(
+											'Required for %s',
+											'beyond-elysium'
+										),
+										field.name
+									) }
 									checked={ field.required }
-									onChange={ ( e ) => updateField( i, { required: e.target.checked } ) }
+									onChange={ ( e ) =>
+										updateField( i, {
+											required: e.target.checked,
+										} )
+									}
 								/>
 							</td>
 							<td>
 								<input
 									type="text"
-									aria-label={ sprintf( __( 'Options for %s', 'beyond-elysium' ), field.name ) }
-									value={ ( field.options ?? [] ).join( ', ' ) }
-									onChange={ ( e ) => updateOptions( i, e.target.value ) }
-									disabled={ field.field_type !== 'select' && field.field_type !== 'multiselect' }
+									aria-label={ sprintf(
+										/* translators: %s: the identity field's own name */
+										__(
+											'Options for %s',
+											'beyond-elysium'
+										),
+										field.name
+									) }
+									value={ ( field.options ?? [] ).join(
+										', '
+									) }
+									onChange={ ( e ) =>
+										updateOptions( i, e.target.value )
+									}
+									disabled={
+										field.field_type !== 'select' &&
+										field.field_type !== 'multiselect'
+									}
 								/>
 							</td>
 							<td>
@@ -1246,11 +2287,22 @@ function IdentityFieldEditorAdmin( { definition, onChange }: { definition: Ident
 									label={ field.name }
 									options={ field.options ?? [] }
 									value={ field.approval_by_option }
-									onSave={ ( value ) => updateField( i, { approval_by_option: Object.keys( value ).length ? value : undefined } ) }
+									onSave={ ( value ) =>
+										updateField( i, {
+											approval_by_option: Object.keys(
+												value
+											).length
+												? value
+												: undefined,
+										} )
+									}
 								/>
 							</td>
 							<td>
-								<button type="button" onClick={ () => removeField( i ) }>
+								<button
+									type="button"
+									onClick={ () => removeField( i ) }
+								>
 									{ __( 'Remove', 'beyond-elysium' ) }
 								</button>
 							</td>

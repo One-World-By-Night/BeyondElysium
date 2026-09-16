@@ -136,6 +136,9 @@ class ConnectionsControllerTest extends WP_UnitTestCase {
 		$query->set_param( 'entity_id', $this->character_id );
 		$data = $this->dispatch( $query )->get_data();
 
-		$this->assertCount( 1, $data );
+		// Besides the character's link to its own plot.
+		$between = array_values( array_filter( (array) $data, static fn( $c ) => ( (object) $c )->source_type === 'character' ) );
+		$this->assertCount( 1, $between );
+		$this->assertSame( $other_id, (int) ( (object) $between[0] )->source_id );
 	}
 }

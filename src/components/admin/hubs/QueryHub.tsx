@@ -23,8 +23,14 @@ export function QueryHub() {
 
 	const capabilities = window.beyondElysium?.capabilities;
 	const tabs: Tab[] = [
-		capabilities?.be_run_queries && { key: TABS.query, label: __( 'Query Tool', 'beyond-elysium' ) },
-		capabilities?.be_view_reports && { key: TABS.reports, label: __( 'Reports', 'beyond-elysium' ) },
+		capabilities?.be_run_queries && {
+			key: TABS.query,
+			label: __( 'Query Tool', 'beyond-elysium' ),
+		},
+		capabilities?.be_view_reports && {
+			key: TABS.reports,
+			label: __( 'Reports', 'beyond-elysium' ),
+		},
 	].filter( Boolean ) as Tab[];
 
 	useEffect( () => {
@@ -35,7 +41,14 @@ export function QueryHub() {
 	}, [ tabs.map( ( t ) => t.key ).join( ',' ) ] );
 
 	if ( tabs.length === 0 ) {
-		return <p>{ __( 'You do not have permission to view this page.', 'beyond-elysium' ) }</p>;
+		return (
+			<p>
+				{ __(
+					'You do not have permission to view this page.',
+					'beyond-elysium'
+				) }
+			</p>
+		);
 	}
 
 	return (
