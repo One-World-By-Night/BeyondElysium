@@ -18,10 +18,10 @@ and click **Go**.
 
 - **Print / Export** opens the print panel:
   - **Background**, **Notes**, **XP History**, **Full power names** - four checkboxes that
-    decide what the PDF carries, and at the same time reveal that same content right on the
-    page, whether or not you print anything. **Full power names** also switches every leveled
-    power's display, on screen and in the PDF, from a single number to the full list of named
-    rungs you hold.
+    decide what the PDF carries. **XP History** also shows the history right on the page, and
+    **Full power names** also switches every leveled power's display, on screen and in the PDF,
+    from a single number to the full list of named rungs you hold. **Background** and **Notes**
+    always show at the bottom of the sheet either way.
   - A notice reading "This site has no signing certificate yet, so prints are marked
     UNSIGNED," shown only when that's true.
   - **Open PDF** - opens a PDF of the sheet in a new tab. Signed with the site's certificate
@@ -90,8 +90,8 @@ and click **Go**.
   administrator.
 - **Print My Items has nothing on it.** No items are connected to this character yet - ask a
   Storyteller to connect one.
-- **I checked a box and content appeared on the page I didn't expect.** That's expected -
-  the print checkboxes show that content here, not only in the printed file.
+- **I ticked XP History and it appeared on the page.** That's expected - XP History and Full
+  power names change the page too, not only the printed file.
 - **"Exported with N note(s)."** Some names or fields were simplified to fit the older
   Grapevine format - read the note text for specifics; the file is still valid.
 - **"Export failed. Please try again."** Try again. If it keeps happening, tell a

@@ -23,6 +23,7 @@ import {
 } from '../../lib/templateLayout';
 import { resolveSectionTitle } from '../../lib/resolveCrossBlockRef';
 import { characterEditorUrl, isPrintCanvasPath } from '../../lib/pluginPages';
+import { showsProseSection } from '../../lib/sheetProse';
 import { canIn } from '../../lib/chronicleCapabilities';
 import { sheetActions, type SheetAction } from '../../lib/sheetActions';
 import type {
@@ -136,7 +137,8 @@ export function CharacterSheet( {
 	const urlParams = new URLSearchParams( window.location.search );
 	const isPrintCanvas = isPrintCanvasPath( window.location.pathname );
 
-	// What to include when printing/exporting; off by default and shown only when asked for.
+	// What to include when printing/exporting, off by default. Background and Notes always show on the
+	// page itself; only the print canvas hides them when they are not chosen.
 	const [ printBackground, setPrintBackground ] = useState(
 		() => urlParams.get( 'print_background' ) === '1'
 	);
@@ -540,7 +542,7 @@ export function CharacterSheet( {
 								</button>
 							</div>
 
-							{ /* What prints is chosen here; ticking one also shows it on this page. */ }
+							{ /* What prints is chosen here. XP History and Full power names also change this page. */ }
 							{ openPanel === 'print' && (
 								<>
 									<div className="be-character-sheet__print-options">
@@ -887,27 +889,37 @@ export function CharacterSheet( {
 					</div>
 				) }
 
-			{ /* Real content, included in print per its own checkbox; biography/notes HTML is already sanitized server-side. */ }
-			{ printBackground && character.biography && (
+			{ /* Always on the page; on the print canvas only when chosen. Biography/notes HTML is already sanitized server-side. */ }
+			{ showsProseSection(
+				character.biography,
+				isPrintCanvas,
+				printBackground
+			) && (
 				<div className="be-character-sheet__section be-character-sheet__prose">
 					<h4 className="be-character-sheet__section-title">
 						{ __( 'Background', 'beyond-elysium' ) }
 					</h4>
 					<div
 						dangerouslySetInnerHTML={ {
-							__html: character.biography,
+							__html: character.biography ?? '',
 						} }
 					/>
 				</div>
 			) }
 
-			{ printNotes && character.notes && (
+			{ showsProseSection(
+				character.notes,
+				isPrintCanvas,
+				printNotes
+			) && (
 				<div className="be-character-sheet__section be-character-sheet__prose">
 					<h4 className="be-character-sheet__section-title">
 						{ __( 'Notes', 'beyond-elysium' ) }
 					</h4>
 					<div
-						dangerouslySetInnerHTML={ { __html: character.notes } }
+						dangerouslySetInnerHTML={ {
+							__html: character.notes ?? '',
+						} }
 					/>
 				</div>
 			) }

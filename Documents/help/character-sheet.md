@@ -66,11 +66,15 @@ Every section from the chronicle's own template, in its own box, read-only. Phys
 and Mental Traits render side by side as three columns; everything else flows in the
 template's own column order.
 
-### Background, Notes, and XP History (when ticked for printing)
+### Background and Notes
 
-Your Background and Notes prose, and the same change-history list **View history** shows,
-appear inline here once their checkbox in the **Print / Export** panel is on - whether or not
-**View history** is also open.
+Your Background and Notes prose, at the bottom of the sheet whenever there is any. Their
+checkboxes in the **Print / Export** panel only decide whether they go into the PDF.
+
+### XP History (when ticked for printing)
+
+The same change-history list **View history** shows appears inline here once its checkbox in the
+**Print / Export** panel is on - whether or not **View history** is also open.
 
 ## Common tasks
 
@@ -92,10 +96,10 @@ appear inline here once their checkbox in the **Print / Export** panel is on - w
 1. Open the character's sheet.
 2. Pick **Print My Items** and click **Go**.
 
-### Read your Background, Notes, or XP History without printing
+### Read your XP History without printing
 
 1. Open the character's sheet, pick **Print / Export**, and click **Go**.
-2. Check the matching box. The content appears on the page - nothing is sent to a printer.
+2. Check **XP History**. The history appears on the page - nothing is sent to a printer.
 
 ### Check the change history
 
@@ -113,8 +117,9 @@ appear inline here once their checkbox in the **Print / Export** panel is on - w
   screen or in any export or print - even on their own character.
 - Every dot - a trait's rating or a resource pool's point - is drawn the same size everywhere:
   this sheet, the editor, and a signed PDF.
-- The print checkboxes do double duty: they also reveal that content on this page, not only
-  in the file you print or export.
+- **XP History** and **Full power names** do double duty: ticking either also changes this page,
+  not only the file you print. **Background** and **Notes** only decide what goes into the PDF -
+  both always show at the bottom of this page.
 - Without a signing certificate configured for this site, **Print / Export** and **Print My
   Items** still work, but every page comes back stamped UNSIGNED and the file name ends
   "-unsigned.pdf". Separately, a PDF reader saying "signature valid, signer not trusted"
@@ -136,8 +141,10 @@ appear inline here once their checkbox in the **Print / Export** panel is on - w
   Storyteller to connect one.
 - **My PDF says UNSIGNED.** This site has no signing certificate configured yet - that's a
   hosting setup step, not a problem with the character.
-- **I checked a box and content appeared I didn't expect.** That's expected - the print
-  checkboxes show that content here, not only in the printed file.
+- **I ticked XP History and it appeared on the page.** That's expected - XP History and Full power
+  names change this page too, not only the printed file.
+- **I don't see my Background or Notes.** They only show when they have text - add some from the
+  Edit tab.
 - **I can't find a character I know is in this chronicle.** If it isn't yours and you're not a
   Storyteller, it won't appear at all - and an NPC never appears for a player.
 
