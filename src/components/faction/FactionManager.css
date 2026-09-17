@@ -1,0 +1,102 @@
+.be-faction-manager {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1.5rem;
+}
+
+@media ( max-width: 768px ) {
+
+	.be-faction-manager {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.be-faction-manager__list-pane button {
+	margin-bottom: 0.75rem;
+}
+
+.be-faction-manager__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.be-faction-manager__list li {
+	margin-bottom: 0.25rem;
+}
+
+.be-faction-manager__list button {
+	width: 100%;
+	text-align: left;
+	display: flex;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+
+.be-faction-manager__list button.is-active {
+	font-weight: 600;
+}
+
+.be-faction-manager__type {
+	color: #666;
+	font-size: 0.85em;
+	text-transform: capitalize;
+}
+
+/* The theme's own active/focus button style fills this row with a dark pink
+ * background - #666 reads as barely-legible gray-on-pink there. */
+.be-faction-manager__list button.is-active .be-faction-manager__type {
+	color: inherit;
+	opacity: 0.85;
+}
+
+.be-faction-manager__empty {
+	color: #666;
+}
+
+.be-faction-manager__error {
+	color: #c00;
+}
+
+.be-faction-manager__editor,
+.be-faction-manager__detail {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.be-faction-manager__editor label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.be-faction-manager__actions {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 0.75rem;
+}
+
+.be-faction-manager__members {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.be-faction-manager__members li {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.25rem;
+}
+
+.be-faction-manager__rank {
+	color: #666;
+	font-size: 0.85em;
+}
+
+.be-faction-manager__member-form {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+}

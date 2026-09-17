@@ -6,12 +6,14 @@
  * viewer's permissions.
  */
 import { useEffect, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { displayTrait } from '../../lib/displayTrait';
 import { WORLD_OBJECT_SCHEMAS } from '../../types/world';
-import type { WorldObject } from '../../types/world';
+import type { ItemEvent, LocationLink, WorldObject } from '../../types/world';
 import { ConnectionManager } from '../apr/ConnectionManager';
+import AttachmentList from '../shared/AttachmentList';
+import WhatYouKnow from '../shared/WhatYouKnow';
 import './WorldObjectCard.css';
 
 export interface WorldObjectCardProps {
@@ -43,6 +45,21 @@ const LABELS: Record< string, string > = {
 	duration: __( 'Duration', 'beyond-elysium' ),
 	description: __( 'Description', 'beyond-elysium' ),
 	grades: __( 'Grades', 'beyond-elysium' ),
+	uses_max: __( 'Uses', 'beyond-elysium' ),
+	uses_left: __( 'Uses Left', 'beyond-elysium' ),
+	expires_on: __( 'Expires', 'beyond-elysium' ),
+};
+
+const EVENT_LABELS: Record< ItemEvent[ 'event' ], string > = {
+	given: __( 'Given', 'beyond-elysium' ),
+	taken: __( 'Taken', 'beyond-elysium' ),
+	traded: __( 'Traded', 'beyond-elysium' ),
+	stolen: __( 'Stolen', 'beyond-elysium' ),
+	lost: __( 'Lost', 'beyond-elysium' ),
+	used: __( 'Used', 'beyond-elysium' ),
+	copied: __( 'Copied', 'beyond-elysium' ),
+	proposed: __( 'Proposed', 'beyond-elysium' ),
+	adjusted: __( 'Adjusted', 'beyond-elysium' ),
 };
 
 const TEXT_TYPES = new Set( [ 'string', 'text', 'int', 'date' ] );
@@ -61,6 +78,9 @@ export function WorldObjectCard( {
 	const [ object, setObject ] = useState< WorldObject | null >( null );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
+	// "Who's here" (1.1.0 §3.9 item 4) - the same /links route the editor's Links panel uses,
+	// audience-narrowed to based_at NPCs already for a non-manager viewer.
+	const [ whosHere, setWhosHere ] = useState< LocationLink[] >( [] );
 
 	useEffect( () => {
 		setLoading( true );
@@ -79,6 +99,16 @@ export function WorldObjectCard( {
 			} );
 	}, [ gameSlug, objectId ] );
 
+	useEffect( () => {
+		if ( object?.object_type !== 'location' ) {
+			return;
+		}
+		api.locations( gameSlug )
+			.links( objectId )
+			.then( setWhosHere )
+			.catch( () => setWhosHere( [] ) );
+	}, [ gameSlug, objectId, object?.object_type ] );
+
 	if ( loading ) {
 		return <p>{ __( 'Loading…', 'beyond-elysium' ) }</p>;
 	}
@@ -91,10 +121,53 @@ export function WorldObjectCard( {
 	}
 
 	const schema = WORLD_OBJECT_SCHEMAS[ object.object_type ] ?? {};
+	const canManage =
+		!! window.beyondElysium?.capabilities?.be_manage_world_objects;
+	const takesAttachments =
+		object.object_type === 'item' || object.object_type === 'location';
+
+	function setAttachments( attachments: WorldObject[ 'attachments' ] ) {
+		setObject( ( prev ) => ( prev ? { ...prev, attachments } : prev ) );
+	}
 
 	return (
 		<div className="be-world-card">
+			{ object.object_type === 'location' &&
+				!! object.ancestors?.length && (
+					<nav
+						className="be-world-card__breadcrumb"
+						aria-label={ __(
+							'Location breadcrumb',
+							'beyond-elysium'
+						) }
+					>
+						{ object.ancestors
+							.slice()
+							.reverse()
+							.map( ( a ) => a.name )
+							.join( ' › ' ) }
+						{ ' › ' }
+					</nav>
+				) }
 			<h3 className="be-world-card__name">{ object.name }</h3>
+			{ /* 1.1.0 §3.12 item 1 - based_on is absent entirely for an ordinary item, null when
+				the source has since been deleted. */ }
+			{ object.based_on && (
+				<p className="be-world-card__based-on">
+					{ sprintf(
+						/* translators: %s: the source item's name */
+						__( 'Based on %s', 'beyond-elysium' ),
+						object.based_on.name
+					) }
+				</p>
+			) }
+			{ ( object.used_up || object.expired ) && (
+				<p className="be-world-card__status-banner">
+					{ object.used_up && __( 'Used up.', 'beyond-elysium' ) }
+					{ object.used_up && object.expired && ' ' }
+					{ object.expired && __( 'Expired.', 'beyond-elysium' ) }
+				</p>
+			) }
 			{ /* Rich text, sanitized server-side with wp_kses_post() on save. */ }
 			{ object.description && (
 				<div
@@ -107,7 +180,14 @@ export function WorldObjectCard( {
 
 			<dl className="be-world-card__properties">
 				{ Object.entries( schema ).map( ( [ key, type ] ) => {
-					const value = object.properties[ key ];
+					// Display over Grapevine text (1.1.0 §3.9 item 3): a location's Owner/Where
+					// prefer a real link/parent name, already resolved server-side.
+					const value =
+						object.object_type === 'location' &&
+						( key === 'owner' || key === 'where' ) &&
+						object.display
+							? object.display[ key as 'owner' | 'where' ]
+							: object.properties[ key ];
 					if (
 						value === undefined ||
 						value === null ||
@@ -171,6 +251,72 @@ export function WorldObjectCard( {
 				</div>
 			) }
 
+			{ object.object_type === 'location' &&
+				!! object.children?.length && (
+					<>
+						<h4>
+							{ __( 'Inside This Location', 'beyond-elysium' ) }
+						</h4>
+						<ul className="be-world-card__children">
+							{ object.children.map( ( c ) => (
+								<li key={ c.id }>{ c.name }</li>
+							) ) }
+						</ul>
+					</>
+				) }
+
+			{ object.object_type === 'location' && (
+				<>
+					<h4>{ __( "Who's Here", 'beyond-elysium' ) }</h4>
+					{ whosHere.length === 0 ? (
+						<p>
+							{ __(
+								'Nobody known is here right now.',
+								'beyond-elysium'
+							) }
+						</p>
+					) : (
+						<ul className="be-world-card__characters">
+							{ whosHere.map( ( link ) => (
+								<li key={ link.id }>
+									{ link.name }
+									{ canManage && (
+										<span className="be-world-card__character-label">
+											{ ' ' }
+											({ link.label })
+										</span>
+									) }
+								</li>
+							) ) }
+						</ul>
+					) }
+				</>
+			) }
+
+			{ ! canManage &&
+				( object.object_type === 'item' ||
+					object.object_type === 'location' ) && (
+					<WhatYouKnow
+						gameSlug={ gameSlug }
+						entityType={ object.object_type }
+						entityId={ objectId }
+					/>
+				) }
+
+			{ takesAttachments && (
+				<>
+					<h4>{ __( 'Files', 'beyond-elysium' ) }</h4>
+					<AttachmentList
+						gameSlug={ gameSlug }
+						entityType={ object.object_type as 'item' | 'location' }
+						entityId={ objectId }
+						attachments={ object.attachments ?? [] }
+						canManage={ canManage }
+						onChange={ setAttachments }
+					/>
+				</>
+			) }
+
 			{ /* Full connection manager when permitted, otherwise a read-only connected-characters list. */ }
 			{ window.beyondElysium?.capabilities?.be_manage_connections ? (
 				<>
@@ -205,6 +351,58 @@ export function WorldObjectCard( {
 						</ul>
 					) }
 				</>
+			) }
+			{ canManage && object.object_type === 'item' && (
+				<ItemHistory gameSlug={ gameSlug } objectId={ objectId } />
+			) }
+		</div>
+	);
+}
+
+/**
+ * A manager-only history section for one item (1.1.0 §3.12 item 3) - every event recorded
+ * against it, oldest first. Loaded on mount rather than gated behind a tab, since this
+ * component has no existing tab UI to reuse.
+ */
+function ItemHistory( {
+	gameSlug,
+	objectId,
+}: {
+	gameSlug: string;
+	objectId: number;
+} ) {
+	const [ events, setEvents ] = useState< ItemEvent[] | null >( null );
+
+	useEffect( () => {
+		api.worldObjects( gameSlug )
+			.events( objectId )
+			.then( setEvents )
+			.catch( () => setEvents( [] ) );
+	}, [ gameSlug, objectId ] );
+
+	return (
+		<div className="be-world-card__history">
+			<h4>{ __( 'History', 'beyond-elysium' ) }</h4>
+			{ events === null ? (
+				<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
+			) : events.length === 0 ? (
+				<p>{ __( 'No history yet.', 'beyond-elysium' ) }</p>
+			) : (
+				<ul className="be-world-card__history-list">
+					{ events.map( ( event ) => (
+						<li key={ event.id }>
+							{ EVENT_LABELS[ event.event ] }
+							{ ' · ' }
+							{ event.created_at }
+							{ event.note && (
+								<>
+									{ ' — ' }
+									{ event.note }
+								</>
+							) }
+						</li>
+					) ) }
+				</ul>
 			) }
 		</div>
 	);

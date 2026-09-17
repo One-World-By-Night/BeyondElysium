@@ -7,7 +7,7 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
-import type { ObjectType, WorldObject } from '../../types/world';
+import type { CopiesFilter, ObjectType, WorldObject } from '../../types/world';
 import './WorldObjectList.css';
 
 export interface WorldObjectListProps {
@@ -26,6 +26,13 @@ const TYPE_LABELS: Record< ObjectType, string > = {
 	rote: __( 'Rotes', 'beyond-elysium' ),
 	boon: __( 'Boons', 'beyond-elysium' ),
 };
+
+/** 1.1.0 §3.12 item 1 - which item copies the catalog shows, items only. */
+const COPIES_OPTIONS: { value: CopiesFilter; label: string }[] = [
+	{ value: 'exclude', label: __( 'Catalog', 'beyond-elysium' ) },
+	{ value: 'only', label: __( 'Personal copies', 'beyond-elysium' ) },
+	{ value: 'include', label: __( 'All', 'beyond-elysium' ) },
+];
 
 /**
  * Renders the world object catalog for one type at a time: a tab strip
@@ -46,6 +53,7 @@ export function WorldObjectList( {
 	const [ total, setTotal ] = useState( 0 );
 	const [ page, setPage ] = useState( 1 );
 	const [ search, setSearch ] = useState( '' );
+	const [ copies, setCopies ] = useState< CopiesFilter >( 'exclude' );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
 
@@ -56,6 +64,7 @@ export function WorldObjectList( {
 			.listPaginated( {
 				object_type: objectType,
 				search: search || undefined,
+				copies: objectType === 'item' ? copies : undefined,
 				page,
 				per_page: 20,
 			} )
@@ -72,7 +81,7 @@ export function WorldObjectList( {
 			} );
 	}
 
-	useEffect( load, [ gameSlug, objectType, search, page ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect( load, [ gameSlug, objectType, search, copies, page ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	function selectType( type: ObjectType ) {
 		setObjectType( type );
@@ -102,6 +111,21 @@ export function WorldObjectList( {
 					onChange={ ( e ) => setSearch( e.target.value ) }
 					placeholder={ __( 'Search name…', 'beyond-elysium' ) }
 				/>
+				{ objectType === 'item' && (
+					<select
+						value={ copies }
+						onChange={ ( e ) => {
+							setCopies( e.target.value as CopiesFilter );
+							setPage( 1 );
+						} }
+					>
+						{ COPIES_OPTIONS.map( ( o ) => (
+							<option key={ o.value } value={ o.value }>
+								{ o.label }
+							</option>
+						) ) }
+					</select>
+				) }
 			</div>
 
 			{ error && (

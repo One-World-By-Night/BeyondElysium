@@ -7,7 +7,9 @@ use BeyondElysium\Database\Manager;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Item_Event;
 use BeyondElysium\Models\Plot;
+use BeyondElysium\Models\World_Object;
 use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
@@ -180,6 +182,15 @@ class Connections_Controller extends Base_Controller {
 			return $this->error( 'create_failed', __( 'Failed to create connection.', 'beyond-elysium' ), 500 );
 		}
 
+		$this->record_connection_item_event(
+			$source_type,
+			$source_id,
+			$target_type,
+			$target_type === 'tag' ? null : (int) $target_id,
+			'given',
+			(int) $game->id
+		);
+
 		return $this->success( Connection::find( (int) $id ), 201 );
 	}
 
@@ -230,7 +241,65 @@ class Connections_Controller extends Base_Controller {
 		}
 
 		Connection::delete( (int) $connection->id );
+
+		$this->record_connection_item_event(
+			$connection->source_type,
+			(int) $connection->source_id,
+			$connection->target_type,
+			$connection->target_id !== null ? (int) $connection->target_id : null,
+			'taken',
+			(int) $connection->game_id
+		);
+
 		return $this->success( null, 204 );
+	}
+
+	/**
+	 * Writes a `given`/`taken` item event (1.1.0 §3.12 item 3) when a connection just
+	 * added or removed links a character to an item specifically - never for any other
+	 * entity pair a connection may name (a plot, a location, a tag).
+	 *
+	 * @param string   $source_type
+	 * @param int      $source_id
+	 * @param string   $target_type
+	 * @param int|null $target_id
+	 * @param string   $event 'given' or 'taken'.
+	 * @param int      $game_id
+	 * @return void
+	 */
+	private function record_connection_item_event(
+		string $source_type,
+		int $source_id,
+		string $target_type,
+		?int $target_id,
+		string $event,
+		int $game_id
+	): void {
+		if ( $source_type === 'character' && $target_type === 'world_object' ) {
+			$character_id    = $source_id;
+			$world_object_id = $target_id;
+		} elseif ( $source_type === 'world_object' && $target_type === 'character' ) {
+			$character_id    = $target_id;
+			$world_object_id = $source_id;
+		} else {
+			return;
+		}
+		if ( $world_object_id === null ) {
+			return;
+		}
+
+		$object = World_Object::find( $world_object_id );
+		if ( ! $object || $object->object_type !== 'item' ) {
+			return;
+		}
+
+		Item_Event::record( [
+			'game_id'         => $game_id,
+			'world_object_id' => $world_object_id,
+			'event'           => $event,
+			'character_id'    => $character_id,
+			'recorded_by'     => get_current_user_id(),
+		] );
 	}
 
 	/**

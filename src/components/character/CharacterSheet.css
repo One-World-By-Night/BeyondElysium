@@ -341,20 +341,16 @@
 	}
 
 	/*
-	 * Information priority (§4.4): identity and traits first, chrome after. Making the
-	 * sheet's own root a flex column lets `order` push the action picker, and the panel it
-	 * opens, below everything else, without disturbing any other part's relative position
-	 * (each keeps its default order: 0).
+	 * 1.1.0 D2: the toolbar, its export notice, and whatever action panel it opens are
+	 * the first thing in the DOM (CharacterSheet.tsx renders them before the header),
+	 * so a flex column with everything at its default order: 0 already puts the Action
+	 * picker at the top - above the header - with no `order` push needed. This replaces
+	 * 0.99.21's own information-priority reorder (`order: 10`, chrome demoted below
+	 * content), which the owner found made the Action picker read as missing on a phone.
 	 */
 	.be-character-sheet {
 		display: flex;
 		flex-direction: column;
-	}
-
-	.be-character-sheet__toolbar,
-	.be-character-sheet__export-notice,
-	.be-character-sheet__action-panel {
-		order: 10;
 	}
 
 	.be-character-sheet__action-select {

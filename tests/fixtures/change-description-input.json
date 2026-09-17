@@ -18,5 +18,9 @@
   { "name": "an imported note with a reason", "change_type": "import_note", "change_data": { "reason": "Migrated from legacy sheet" } },
   { "name": "an imported note with no reason", "change_type": "import_note", "change_data": {} },
   { "name": "an imported note with an empty reason", "change_type": "import_note", "change_data": { "reason": "" } },
-  { "name": "an unrecognized change type", "change_type": "something_else", "change_data": {} }
+  { "name": "an unrecognized change type", "change_type": "something_else", "change_data": {} },
+  { "name": "proposing a world object", "change_type": "propose_world_object", "change_data": { "object_type": "item", "name": "Ashwood Stake" } },
+  { "name": "proposing a world object with no object_type", "change_type": "propose_world_object", "change_data": { "name": "Ashwood Stake" } },
+  { "name": "proposing a faction", "change_type": "propose_faction", "change_data": { "faction_type": "coterie", "name": "Coterie of Thorns" } },
+  { "name": "proposing a faction with no faction_type", "change_type": "propose_faction", "change_data": { "name": "Coterie of Thorns" } }
 ]

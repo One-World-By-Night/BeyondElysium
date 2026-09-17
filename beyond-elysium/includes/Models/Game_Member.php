@@ -35,6 +35,36 @@ class Game_Member {
 		);
 	}
 
+	/** @var string[] Roles eligible for staff assignment (1.1.0 §3.6) and S5's unassigned-post fallback. */
+	public const STAFF_ROLES = [ 'hst', 'ast', 'narrator' ];
+
+	/**
+	 * Every hst/ast/narrator member of one game - who a plot or NPC may be assigned to
+	 * (§3.6), and who an unassigned player post falls back to notifying (§3.5).
+	 *
+	 * @param int $game_id
+	 * @return array
+	 */
+	public static function staff_for_game( int $game_id ): array {
+		return array_values( array_filter(
+			self::for_game( $game_id ),
+			static fn( $member ) => in_array( $member->role, self::STAFF_ROLES, true )
+		) );
+	}
+
+	/**
+	 * The wp_user_id of every hst/ast/narrator member of one game, deduplicated.
+	 *
+	 * @param int $game_id
+	 * @return int[]
+	 */
+	public static function staff_ids_for_game( int $game_id ): array {
+		return array_values( array_unique( array_map(
+			static fn( $member ) => (int) $member->wp_user_id,
+			self::staff_for_game( $game_id )
+		) ) );
+	}
+
 	/**
 	 * Return every membership row for one WordPress user across every game they
 	 * belong to, ordered oldest first. One row per game the user has any role

@@ -37,6 +37,8 @@ return [
 		'be_view_characters',
 		'be_submit_actions',
 		'be_view_reports',
+		// A Narrator often runs the door at a game night (1.1.0 §3.1).
+		'be_manage_sessions',
 	],
 	// A fifth role (BE_PROCESS/releases/0.99.2-workflow.md): runs the boon ledger only - no
 	// Storyteller powers over characters, plots, or the rest of the world-object catalog.

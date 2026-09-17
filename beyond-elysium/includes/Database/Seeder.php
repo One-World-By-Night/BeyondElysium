@@ -547,7 +547,7 @@ class Seeder {
 	 * tradition-configuration tables for the MET-Mechanics CSV overlay, read
 	 * from met-csv-map.php. Used by apply_met_csv_overrides() and its helpers.
 	 *
-	 * @return array{discipline_labels:array<string,string>,ritual_labels:array<string,string>,background_routing:array<string,string[]>,blood_magic:array{excluded_subtypes:string[],restriction_keywords:string[]}}
+	 * @return array{discipline_caste_variant_subtypes:string[],discipline_labels:array<string,string>,ritual_labels:array<string,string>,background_routing:array<string,string[]>,blood_magic:array{excluded_subtypes:string[],restriction_keywords:string[]}}
 	 */
 	public static function met_csv_map(): array {
 		return require __DIR__ . '/met-csv-map.php';
@@ -1052,10 +1052,64 @@ class Seeder {
 		$combos = array_values( array_filter( $rows, static fn( $row ) => $row['Subtype'] === 'Combination' ) );
 		$powers = array_values( array_filter( $rows, static fn( $row ) => $row['Subtype'] !== 'Combination' ) );
 
-		$ordinary   = array_values( array_filter( $powers, static fn( $row ) => $row['Group'] === '' ) );
-		$blood_rows = array_values( array_filter( $powers, static fn( $row ) => $row['Group'] !== '' ) );
+		// A non-empty Group usually means a Blood Magic path (Path of Blood, Lure of
+		// Flames, ...), routed to vampire-blood-magic below - but met-csv-map.php's own
+		// discipline_caste_variant_subtypes already knows some Group values are really just
+		// a caste/bloodline variant name for an ordinary Discipline (Quietus, Sorcerer /
+		// Quietus, Cruscitus / Warrior / ...), not a path. Before this list also counted
+		// here, those rows fell into neither bucket: kept out of blood magic correctly (via
+		// the same list, also part of blood_magic.excluded_subtypes) but never reaching
+		// vampire-disciplines either, so the ladder's only real levels ever came from GVM's
+		// own (here, incomplete) definition with no CSV backfill possible - the exact shape
+		// of a silently-missing top level on Quietus's four caste variants, found live
+		// (owner report, an unbuyable 5th level). "Hermetic" is excluded from blood magic
+		// for an unrelated reason (duplicate data - see met-csv-map.php) and must NOT be
+		// routed here too, so it is deliberately not part of this list.
+		// A caste-variant row's own Group column repeats its Subtype - but only on the
+		// family's first (lowest-level) CSV row, sparse-filled blank on every row after
+		// it (the source spreadsheet's own convention for "still the same group as
+		// above"). build_met_discipline_powers() groups by Subtype+Group together, so
+		// left as-is this splits one real five-level family into two: a one-item family
+		// keyed by the real Group text, and a separate family keyed by the blank Group
+		// carrying the remaining levels - neither of which is the plain, Subtype-keyed
+		// shape every other ordinary Discipline already groups by. Blanking Group here
+		// (Subtype alone already fully identifies the family for these rows) restores
+		// that shape rather than teaching the grouping key a second, sparse-fill rule.
+		$caste_variants = self::met_csv_map()['discipline_caste_variant_subtypes'];
+		$powers         = array_map(
+			static function ( $row ) use ( $caste_variants ) {
+				if ( in_array( $row['Subtype'], $caste_variants, true ) ) {
+					$row['Group'] = '';
+				}
+				return $row;
+			},
+			$powers
+		);
+		$ordinary   = array_values( array_filter(
+			$powers,
+			static fn( $row ) => $row['Group'] === '' || in_array( $row['Subtype'], $caste_variants, true )
+		) );
+		$blood_rows = array_values( array_filter(
+			$powers,
+			static fn( $row ) => $row['Group'] !== '' && ! in_array( $row['Subtype'], $caste_variants, true )
+		) );
 
 		$gvm_families = self::resolve_block_source( $gvm, 'vampire-disciplines', self::block_map()['vampire-disciplines'] )['powers'];
+
+		// The "Disciplines" container's own submenus are not all real, leveled
+		// Disciplines - ten clan-named ones (Assamite, Brujah, Lasombra, Tremere, ...)
+		// are really each that clan's own signature combination powers, a flat list of
+		// two-discipline recipes with a cost, structurally identical to "Combination
+		// Discipline" (which is why GVM even nests one, "Awakening of the Steel," under
+		// "Assamite" as a genuine sub-discipline while "Assamite" itself carries two
+		// combo items directly). Nothing here ever told them apart from a real
+		// Discipline, so every one of them seeded as a fake 1-4-"level" discipline
+		// named after the clan - found live (owner report) as an unbuyable, missing top
+		// level on four Quietus variants, then found systemic auditing every other
+		// short "discipline" the same way. Split them out before they ever reach
+		// build_met_discipline_powers().
+		$gvm_split    = self::split_gvm_clan_combo_powers( $gvm_families );
+		$gvm_families = $gvm_split['disciplines'];
 		$blood_magic  = self::build_met_blood_magic_powers( $blood_rows, $gvm_families );
 
 		return [
@@ -1065,9 +1119,71 @@ class Seeder {
 				$gvm_families,
 				$blood_magic['excluded_gvm_names']
 			),
-			'vampire-combo-disciplines' => self::build_met_combo_disciplines( $combos ),
+			'vampire-combo-disciplines' => self::build_met_combo_disciplines( $combos, $gvm_split['combo_items'] ),
 			'vampire-blood-magic'       => $blood_magic['block'],
 		];
+	}
+
+	/**
+	 * The clans whose own "Disciplines, <Clan>" GVM menu is really that clan's flat
+	 * list of signature combination powers, not a leveled Discipline - verified
+	 * 2026-09-17 against the real GVM source, one by one. Named explicitly rather
+	 * than detected generically (e.g. "any family whose note contains a '+'"):
+	 * "Disciplines, Long Night Combo" has the exact same shape but is not a clan at
+	 * all - a genuine multi-clan combo menu whose items already resolve correctly
+	 * under their own bare CSV "Combination" row and must not also be renamed here.
+	 */
+	const CLAN_SIGNATURE_COMBO_MENUS = [
+		'Assamite', 'Brujah', 'Einherjar', 'Followers of Set', 'Gangrel', 'Lasombra',
+		'Ravnos', 'Toreador', 'Tremere', 'Tzimisce', 'Ventrue',
+	];
+
+	/**
+	 * Splits the "Disciplines" container's own resolved families into real, leveled
+	 * Disciplines and the clan-signature combination powers named in
+	 * CLAN_SIGNATURE_COMBO_MENUS, wrongly shaped like a Discipline by everything
+	 * upstream of this method. A matched clan's items are moved unconditionally,
+	 * confirmed real by resolve_container() giving each clan family its own name
+	 * (the menu's own submenu name) rather than by re-detecting the shape here -
+	 * a family's own note text isn't a safe general signal (a combo recipe
+	 * routinely *names* a prerequisite at a real tier, "int. auspex + basic
+	 * chimerstry" or "elder vicissitude + elder animalism," which would false-
+	 * positive normalize_tier()'s own substring tier-word search).
+	 *
+	 * @param array<int,array{name:string,source:string,items:array}> $gvm_families
+	 * @return array{disciplines:array,combo_items:array<int,array{name:string,cost:string,note:string,source:string,bare_name:string}>}
+	 */
+	private static function split_gvm_clan_combo_powers( array $gvm_families ): array {
+		$disciplines = [];
+		$combo_items = [];
+		foreach ( $gvm_families as $family ) {
+			if ( ! in_array( $family['name'], self::CLAN_SIGNATURE_COMBO_MENUS, true ) ) {
+				$disciplines[] = $family;
+				continue;
+			}
+
+			foreach ( $family['items'] as $item ) {
+				$recipe = implode(
+					' + ',
+					array_map(
+						static fn( $segment ) => ucwords( trim( $segment ) ),
+						explode( '+', (string) ( $item['note'] ?? '' ) )
+					)
+				);
+				$combo_items[] = [
+					'name'   => $family['name'] . ': ' . $item['name'],
+					'cost'   => (string) ( $item['cost'] ?? '' ),
+					'note'   => $recipe,
+					'source' => ( $item['source'] ?? '' ) !== '' ? $item['source'] : $family['source'],
+					// The plain, unprefixed name a CSV "Combination" row already carries
+					// this same power under, so the merge can supersede it rather than
+					// keep both a prefixed and an unprefixed copy of the same power.
+					'bare_name' => $item['name'],
+				];
+			}
+		}
+
+		return [ 'disciplines' => $disciplines, 'combo_items' => $combo_items ];
 	}
 
 	/**
@@ -1205,7 +1321,7 @@ class Seeder {
 	 * refer to the same power, never for display.
 	 */
 	private static function met_name_comparison_key( string $name ): string {
-		return strtolower( (string) preg_replace( '/^(a|an|the)\s+/i', '', trim( $name ) ) );
+		return \BeyondElysium\Services\Name_Key::for( $name );
 	}
 
 	/**
@@ -1531,9 +1647,11 @@ class Seeder {
 				'Blood Magic',
 				$powers,
 				[
-					'atomic'      => true,
-					'blood_magic' => true,
-					'traditions'  => $traditions,
+					'atomic'       => true,
+					'blood_magic'  => true,
+					'traditions'   => $traditions,
+					// 1.1.0 D4: held paths display and reorder in the player's own array order.
+					'player_order' => true,
 				]
 			),
 			'excluded_gvm_names' => $excluded_gvm_names,
@@ -1633,14 +1751,33 @@ class Seeder {
 
 	/**
 	 * Builds the vampire-combo-disciplines trait_list block from the CSV's
-	 * "Combination"-subtype Discipline rows. Combines each row's Control
-	 * and Prerequsites into one note field.
+	 * "Combination"-subtype Discipline rows, plus GVM's own clan-signature combo
+	 * powers split out of "Disciplines, <Clan>" by split_gvm_clan_combo_powers()
+	 * (1.1.0, owner report - see that method's own docblock). A GVM combo item
+	 * whose bare name already has a CSV row (e.g. "Shroud of Absence") supersedes
+	 * it outright, carrying GVM's own real cost/recipe under the clan-prefixed
+	 * name ("Lasombra: Shroud of Absence") rather than leaving both the bare and
+	 * the prefixed form in the catalog side by side.
 	 *
-	 * @param array<int,array<string,string>> $rows "Combination"-subtype Discipline rows.
+	 * @param array<int,array<string,string>> $rows            "Combination"-subtype Discipline rows.
+	 * @param array<int,array{name:string,cost:string,note:string,source:string,bare_name:string}> $gvm_combo_items
 	 * @return array
 	 */
-	private static function build_met_combo_disciplines( array $rows ): array {
+	private static function build_met_combo_disciplines( array $rows, array $gvm_combo_items = [] ): array {
 		$items = self::dedupe_met_rows_by_name( $rows );
+
+		// i18n-pt-br-design.md's own PC-3 precedent: the GVM item wins as the richer,
+		// primary source, but a same-named CSV row's own Name-PT must not be silently
+		// discarded along with the rest of that row - backfilled onto the surviving
+		// GVM-sourced item by name match below.
+		$superseded_pt = [];
+		foreach ( $items as $row ) {
+			if ( ! empty( $row['Name-PT'] ) ) {
+				$superseded_pt[ $row['Name'] ] = $row['Name-PT'];
+			}
+		}
+		$superseded = array_map( static fn( $item ) => $item['bare_name'], $gvm_combo_items );
+		$items      = array_values( array_filter( $items, static fn( $row ) => ! in_array( $row['Name'], $superseded, true ) ) );
 
 		$built = array_map(
 			static function ( $row ) {
@@ -1669,7 +1806,27 @@ class Seeder {
 			$items
 		);
 
-		return self::make_trait_list_block( 'vampire-combo-disciplines', 'Combination Disciplines', $built );
+		foreach ( $gvm_combo_items as $gvm_item ) {
+			$item = [ 'name' => $gvm_item['name'] ];
+			if ( $gvm_item['cost'] !== '' ) {
+				$item['cost'] = $gvm_item['cost'];
+			}
+			if ( $gvm_item['note'] !== '' ) {
+				$item['note'] = $gvm_item['note'];
+			}
+			if ( $gvm_item['source'] !== '' ) {
+				$item['source'] = $gvm_item['source'];
+			}
+			$pt = $superseded_pt[ $gvm_item['bare_name'] ] ?? null;
+			if ( $pt !== null ) {
+				$item['name_pt'] = $pt;
+			}
+			$built[] = $item;
+		}
+
+		// 1.1.0 D3: a held combo's stored count is its flat XP cost, not a rating -
+		// a flag, not a slug check, so any future block could opt into the same rule.
+		return self::make_trait_list_block( 'vampire-combo-disciplines', 'Combination Disciplines', $built, [ 'count_is_cost' => true ] );
 	}
 
 	/**
@@ -1753,7 +1910,8 @@ class Seeder {
 
 		$merged = self::dedupe_built_items_by_name( array_merge( $base, $new_items ) );
 
-		return self::make_trait_list_block( 'vampire-rituals', 'Rituals', $merged, [ 'atomic' => true ] );
+		// 1.1.0 D4: held rituals display and reorder in the player's own array order.
+		return self::make_trait_list_block( 'vampire-rituals', 'Rituals', $merged, [ 'atomic' => true, 'player_order' => true ] );
 	}
 
 	/**
@@ -2427,6 +2585,9 @@ class Seeder {
 		// Storyteller-only NPC prose, shared by every stack - no creature-specific variant.
 		$blocks[] = self::make_npc_roleplaying_notes_block();
 
+		// A quick NPC's condensed sheet (1.1.0 §3.7), shared by every stack - never storyteller_only.
+		$blocks[] = self::make_npc_quick_stats_block();
+
 		if ( isset( $gvm['Archetypes'] ) ) {
 			// IdentityField.options is a plain string list; raw item cost/note fields must not leak in.
 			$archetype_names = array_column( $gvm['Archetypes']['items'], 'name' );
@@ -2668,8 +2829,8 @@ class Seeder {
 				[ 'name' => 'Morality Path', 'field_type' => 'select', 'required' => true,  'allow_custom' => true ],
 			] ),
 			self::make_tiered_power_block( 'vampire-disciplines',       'Vampire Disciplines',   [], [ 'sequential' => true, 'atomic' => true ] ),
-			self::make_trait_list_block(   'vampire-combo-disciplines', 'Combo Disciplines',     [] ),
-			self::make_trait_list_block(   'vampire-rituals',           'Rituals',               [], [ 'atomic' => true ] ),
+			self::make_trait_list_block(   'vampire-combo-disciplines', 'Combo Disciplines',     [], [ 'count_is_cost' => true ] ),
+			self::make_trait_list_block(   'vampire-rituals',           'Rituals',               [], [ 'atomic' => true, 'player_order' => true ] ),
 			self::make_trait_list_block(   'vampire-ritae',             'Ritae',                 [] ),
 			self::make_trait_list_block(   'vampire-statuses',          'Vampire Status',        [] ),
 			self::make_resource_block( 'vampire-resources', 'Vampire Resources', [
@@ -3418,16 +3579,22 @@ class Seeder {
 	/**
 	 * Builds the Storyteller-only NPC roleplaying-notes block.
 	 *
-	 * Eight prose fields describing how an NPC is played, carried on the
-	 * NPC sheet in addition to the ordinary character sheet. Flagged
-	 * storyteller_only, so neither its section nor its stored values reach
-	 * a viewer without be_manage_characters.
+	 * Eleven prose fields describing how an NPC is played, carried on the NPC sheet in
+	 * addition to the ordinary character sheet - the three agenda fields (1.1.0 §3.7 item 2:
+	 * Wants, Knows, Will Do If Unopposed) first, then the original eight. Flagged
+	 * storyteller_only, so neither its section nor its stored values reach a viewer without
+	 * be_manage_characters. A held value is keyed by field name (identity_field's own storage
+	 * shape), so adding fields here on a reseed never disturbs an existing NPC's own answers
+	 * to the original eight.
 	 *
 	 * @return array
 	 */
 	private static function make_npc_roleplaying_notes_block(): array {
 		$fields = [];
 		foreach ( [
+			'Wants',
+			'Knows',
+			'Will Do If Unopposed',
 			'Voice & Tone',
 			'Emotional Range',
 			'Posture & Movement',
@@ -3444,6 +3611,30 @@ class Seeder {
 		$block['storyteller_only'] = 1;
 
 		return $block;
+	}
+
+	/**
+	 * Builds the npc-quick-stats block (1.1.0 §3.7 item 1) - a quick NPC's condensed sheet,
+	 * one shared shape for every creature stack rather than a per-stack variant. Not
+	 * storyteller_only: a player cast to play the NPC (§3.8) needs to read it, unlike
+	 * npc-roleplaying-notes.
+	 *
+	 * @return array
+	 */
+	private static function make_npc_quick_stats_block(): array {
+		$fields = [
+			[ 'name' => 'Physical', 'field_type' => 'number', 'required' => false ],
+			[ 'name' => 'Social', 'field_type' => 'number', 'required' => false ],
+			[ 'name' => 'Mental', 'field_type' => 'number', 'required' => false ],
+			[ 'name' => 'Willpower', 'field_type' => 'number', 'required' => false ],
+			[ 'name' => 'Health', 'field_type' => 'text', 'required' => false ],
+			[ 'name' => 'Key Abilities', 'field_type' => 'textarea', 'required' => false ],
+			[ 'name' => 'Powers', 'field_type' => 'textarea', 'required' => false ],
+			[ 'name' => 'Equipment', 'field_type' => 'textarea', 'required' => false ],
+			[ 'name' => 'Notes', 'field_type' => 'textarea', 'required' => false ],
+		];
+
+		return self::make_identity_block( 'npc-quick-stats', 'NPC Quick Stats', $fields );
 	}
 
 	// ---------------------------------------------------------------------------
@@ -3533,6 +3724,51 @@ class Seeder {
 				'stack_slug'    => $stack->slug,
 				'name'          => $stack->name . ' NPC Sheet',
 				'template_type' => 'npc_full',
+				'layout'        => $layout,
+				'is_system'     => 1,
+				'created_by'    => 0,
+			] );
+		}
+
+		self::seed_npc_quick_templates();
+	}
+
+	/**
+	 * Seeds one `npc_quick` global template per creature stack (1.1.0 §3.7 item 1): the
+	 * stack's own identity section, then npc-quick-stats, then npc-roleplaying-notes - a
+	 * condensed sheet for an NPC that doesn't need the full character sheet, and the one a
+	 * cast player (§3.8) actually reads. Idempotent per stack, matching seed_npc_templates()'s
+	 * own guard shape.
+	 */
+	private static function seed_npc_quick_templates(): void {
+		foreach ( Creature_Stack::all() as $stack ) {
+			$existing = Template::globals( [ 'stack_slug' => $stack->slug, 'template_type' => 'npc_quick' ] );
+			if ( ! empty( $existing ) ) {
+				continue;
+			}
+
+			$identity_slug = "{$stack->slug}-identity";
+			if ( ! Schema_Block::find_by_slug( $identity_slug ) ) {
+				continue;
+			}
+
+			$layout = [
+				'version'  => 1,
+				'columns'  => 2,
+				'sections' => [
+					// width must be null, 'third', 'half', or 'full' - Template::validate_layout()'s
+					// own allowlist (the same defect class as 1.0.0-review F-077: an unknown width
+					// once stopped every signed sheet on the stack).
+					[ 'block_slug' => $identity_slug, 'column' => 1, 'order' => 1, 'title' => null, 'display' => null, 'collapsed' => false, 'width' => 'half' ],
+					[ 'block_slug' => 'npc-quick-stats', 'column' => 1, 'order' => 2, 'title' => 'Quick Stats', 'display' => null, 'collapsed' => false, 'width' => 'half' ],
+					[ 'block_slug' => 'npc-roleplaying-notes', 'column' => 2, 'order' => 1, 'title' => 'Roleplaying Notes', 'display' => null, 'collapsed' => false, 'width' => 'half' ],
+				],
+			];
+
+			Template::create( [
+				'stack_slug'    => $stack->slug,
+				'name'          => $stack->name . ' NPC Sheet (Quick)',
+				'template_type' => 'npc_quick',
 				'layout'        => $layout,
 				'is_system'     => 1,
 				'created_by'    => 0,

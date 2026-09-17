@@ -103,5 +103,43 @@
                 { "name": "Alertness", "total": 1 }
             ]
         }
+    ],
+    "sectionTotal": [
+        {
+            "case": "all_numeric_totals_sum",
+            "traits": [
+                { "name": "Occult", "total": 3 },
+                { "name": "Melee", "total": 2 }
+            ]
+        },
+        { "case": "empty_list_has_no_total", "traits": [] },
+        {
+            "case": "missing_total_blocks_the_total",
+            "traits": [
+                { "name": "Occult", "total": 3 },
+                { "name": "Ritual" }
+            ]
+        },
+        {
+            "case": "non_numeric_total_blocks_the_total",
+            "traits": [
+                { "name": "Occult", "total": 3 },
+                { "name": "X", "total": "3 (borrowed)" }
+            ]
+        },
+        {
+            "case": "numeric_string_totals_sum",
+            "traits": [
+                { "name": "Occult", "total": "3" },
+                { "name": "Melee", "total": "2" }
+            ]
+        },
+        {
+            "case": "zero_totals_still_sum",
+            "traits": [
+                { "name": "Flaw", "total": 0 },
+                { "name": "Merit", "total": 0 }
+            ]
+        }
     ]
 }

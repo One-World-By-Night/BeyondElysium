@@ -30,6 +30,11 @@ return [
 		'negatives'      => 'trait_list',
 		'abilities'      => 'trait_list',
 		'availability'   => 'trait_list',
+		// 1.1.0 §3.12 item 2 - uses_left/expires_on derive used_up/expired (not stored) via
+		// World_Object::is_used_up()/is_expired(), never guessed client-side.
+		'uses_max'       => 'int',
+		'uses_left'      => 'int',
+		'expires_on'     => 'date',
 	],
 	'location' => [
 		'location_type'     => 'string',

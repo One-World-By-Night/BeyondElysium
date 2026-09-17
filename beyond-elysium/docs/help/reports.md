@@ -82,6 +82,13 @@ on the same page - see [Query Tool](query-tool.md).
   a player would print for their own items, generated for the whole catalog at once.
 - **Item Cards can be scoped to one character.** That's the character sheet's own "Print My
   Items" button, not a control on this screen - see [Character Sheet](character-sheet.md).
+- **Rote Cards works differently for a mage than for a Storyteller.** A Storyteller running it
+  here sees every rote in the chronicle's own catalog. A player picking a character on My
+  Chronicle's own Reports tab sees only the rotes that character actually holds, matched by
+  name against the catalog - a held rote with no catalog entry of its own still prints, built
+  straight from the catalog's name/note/source instead. Only a character whose stack actually
+  has a rote-holding block (mages, today) can use it at all; My Chronicle hides the tab for
+  anyone else's character.
 - **Game Calendar always renders empty right now, on this screen or on My Chronicle.** Beyond
   Elysium doesn't yet model a chronicle's own game-date schedule, so this one is an honest
   placeholder everywhere it appears, not broken or guessed at.

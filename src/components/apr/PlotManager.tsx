@@ -23,6 +23,11 @@ export interface PlotManagerProps {
 	defaultStatus?: 'active' | 'resolved' | 'archived';
 	/** What the person can do in this chronicle, when the page resolved it; the site-wide snapshot otherwise (F-103). */
 	capabilities?: MyCapabilities;
+	/**
+	 * Opens straight to this plot's detail view - the Downtime queue's own "open the plot
+	 * thread" link (1.1.0 §3.3) arrives via the URL's own `?open_plot=`, read by the caller.
+	 */
+	initialSelectedPlotId?: number | null;
 }
 
 /** Which standalone tool is open in a modal, if any. */
@@ -39,8 +44,11 @@ export function PlotManager( {
 	gameSlug,
 	defaultStatus,
 	capabilities,
+	initialSelectedPlotId,
 }: PlotManagerProps ) {
-	const [ selectedPlot, setSelectedPlot ] = useState< number | null >( null );
+	const [ selectedPlot, setSelectedPlot ] = useState< number | null >(
+		initialSelectedPlotId ?? null
+	);
 	const [ expandedEnabled, setExpandedEnabled ] = useState( false );
 	const [ tool, setTool ] = useState< Tool >( null );
 	const [ refreshKey, setRefreshKey ] = useState( 0 );

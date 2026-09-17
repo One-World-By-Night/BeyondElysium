@@ -13,6 +13,10 @@ use BeyondElysium\Core\Admin_Menu;
  * that the stale-slug fix-links this replaced (Setup_Status_Controller.php)
  * now point at real registered pages.
  *
+ * 1.1.0 S1 added a 9th group, Game Nights (no existing hub was a natural fit -
+ * `now/roadmap.md` D57), making it 10 visible rows - the counts and slug list
+ * below were updated the same commit that added it, not left to drift stale.
+ *
  * The Dashboard row stays visible rather than hidden via
  * remove_submenu_page() - a real bug found live during this phase's own
  * browser verification: WordPress core builds the top-level label's own
@@ -42,20 +46,21 @@ class AdminMenuThreadTest extends WP_UnitTestCase {
 		return array_map( static fn( $row ) => $row[2], $submenu['beyond-elysium'] ?? [] );
 	}
 
-	public function test_exactly_nine_visible_submenu_pages_are_registered(): void {
+	public function test_exactly_ten_visible_submenu_pages_are_registered(): void {
 		// The Dashboard row (slug == parent slug) is deliberately visible - see
 		// Admin_Menu::add_pages()'s comment on that add_submenu_page() call - so this
-		// is 9, the 8 groups plus the landing dashboard, not a bare 8.
-		$this->assertCount( 9, $this->registered_slugs() );
+		// is 10, the 9 groups (Game Nights added in 1.1.0 S1) plus the landing dashboard.
+		$this->assertCount( 10, $this->registered_slugs() );
 	}
 
-	public function test_the_dashboard_plus_eight_hub_slugs_replace_the_old_sixteen_flat_pages(): void {
+	public function test_the_dashboard_plus_nine_hub_slugs_replace_the_old_sixteen_flat_pages(): void {
 		$this->assertSame(
 			[
 				'beyond-elysium',
 				'beyond-elysium-characters',
 				'beyond-elysium-plots',
 				'beyond-elysium-world-objects',
+				'beyond-elysium-game-nights',
 				'beyond-elysium-query-hub',
 				'beyond-elysium-import',
 				'beyond-elysium-chronicle-setup-hub',

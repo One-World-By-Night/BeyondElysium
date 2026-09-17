@@ -15,6 +15,11 @@ import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { pickMediaImage } from '../../lib/pickMediaImage';
 import HtmlEditor from '../shared/HtmlEditor';
+import AudiencePicker from '../shared/AudiencePicker';
+import AssigneePicker from '../shared/AssigneePicker';
+import AttachmentList from '../shared/AttachmentList';
+import SecretsPanel from '../shared/SecretsPanel';
+import WhatYouKnow from '../shared/WhatYouKnow';
 import type { FactionGoal, Plot } from '../../types/plot';
 import { EntryForm } from './EntryForm';
 import './PlotThread.css';
@@ -172,6 +177,14 @@ export function PlotThread( {
 	const [ factionGoals, setFactionGoals ] = useState< FactionGoal[] >( [] );
 	const [ saving, setSaving ] = useState( false );
 	const [ saveError, setSaveError ] = useState< string | null >( null );
+	// A draft, saved only on explicit click (like Overview/ST notes/Cliffhanger below) rather
+	// than on every AudiencePicker change - a multi-step rule build would otherwise PUT the
+	// server on every clause edit, matching neither this file's own established pattern nor
+	// what a half-built rule set should do.
+	const [ audienceDraft, setAudienceDraft ] =
+		useState< Plot[ 'audience' ] >( 'everyone' );
+	const [ audienceRulesDraft, setAudienceRulesDraft ] =
+		useState< Plot[ 'audience_rules' ] >( null );
 
 	/**
 	 * Fetches this plot from the API and stores it along with its overview draft,
@@ -189,6 +202,8 @@ export function PlotThread( {
 				cliffhangerDraft.current = result.cliffhanger ?? '';
 				stNotesDraft.current = result.st_notes ?? '';
 				setFactionGoals( result.faction_goals ?? [] );
+				setAudienceDraft( result.audience );
+				setAudienceRulesDraft( result.audience_rules );
 				setLoading( false );
 			} )
 			.catch( () => {
@@ -247,6 +262,10 @@ export function PlotThread( {
 		if ( attachment ) {
 			await save( { image_id: attachment.id } );
 		}
+	}
+
+	function setAttachments( attachments: Plot[ 'attachments' ] ) {
+		setPlot( ( prev ) => ( prev ? { ...prev, attachments } : prev ) );
 	}
 
 	function updateFactionGoal(
@@ -308,6 +327,26 @@ export function PlotThread( {
 						>
 							{ plot.status } ({ plot.derived_status })
 						</span>
+						{ plot.audience !== 'everyone' && (
+							<span className="be-st-badge be-st-badge--audience">
+								{ plot.audience === 'storytellers'
+									? __(
+											'Storytellers only',
+											'beyond-elysium'
+									  )
+									: __( 'Restricted', 'beyond-elysium' ) }
+							</span>
+						) }
+						{ plot.held && (
+							<span className="be-st-badge be-st-badge--held">
+								{ plot.release_batch_id
+									? __(
+											'In a release batch',
+											'beyond-elysium'
+									  )
+									: __( 'Draft', 'beyond-elysium' ) }
+							</span>
+						) }
 						<span>
 							{ plot.initiated_by === 'player'
 								? __( 'Player-initiated', 'beyond-elysium' )
@@ -443,6 +482,90 @@ export function PlotThread( {
 					</div>
 				</section>
 			) }
+
+			{ canManage && plot && (
+				<section className="be-st-section">
+					<h3 className="be-st-section__title">
+						{ __( 'Assigned to', 'beyond-elysium' ) }
+					</h3>
+					<AssigneePicker
+						gameSlug={ gameSlug }
+						value={ plot.assigned_to }
+						disabled={ saving }
+						onChange={ ( assignedTo ) =>
+							save( { assigned_to: assignedTo } )
+						}
+					/>
+				</section>
+			) }
+
+			{ canManage && plot && (
+				<section className="be-st-section">
+					<SecretsPanel
+						gameSlug={ gameSlug }
+						entityType="plot"
+						entityId={ plot.id }
+					/>
+				</section>
+			) }
+
+			{ ! canManage && plot && (
+				<WhatYouKnow
+					gameSlug={ gameSlug }
+					entityType="plot"
+					entityId={ plot.id }
+				/>
+			) }
+
+			{ canManage && (
+				<section className="be-st-section">
+					<h3 className="be-st-section__title">
+						{ __( 'Who can see this', 'beyond-elysium' ) }
+					</h3>
+					<AudiencePicker
+						gameSlug={ gameSlug }
+						audience={ audienceDraft }
+						audienceRules={ audienceRulesDraft }
+						onChange={ ( audience, audienceRules ) => {
+							setAudienceDraft( audience );
+							setAudienceRulesDraft( audienceRules );
+						} }
+						disabled={ saving }
+					/>
+					<div className="be-plot-thread__inline-actions">
+						<button
+							type="button"
+							className="be-st-button be-st-button--quiet"
+							disabled={ saving }
+							onClick={ () =>
+								save( {
+									audience: audienceDraft,
+									audience_rules: audienceRulesDraft,
+								} )
+							}
+						>
+							{ __( 'Save audience', 'beyond-elysium' ) }
+						</button>
+					</div>
+				</section>
+			) }
+
+			<section className="be-st-section">
+				<h3 className="be-st-section__title">
+					{ __( 'Files', 'beyond-elysium' ) }
+				</h3>
+				{ /* Every viewer who can see this plot at all may also see its files; only a
+				 * Storyteller or this plot's own owner may upload or remove one - the exact
+				 * check Attachments_Controller::may_manage_attachments() itself enforces. */ }
+				<AttachmentList
+					gameSlug={ gameSlug }
+					entityType="plot"
+					entityId={ plotId }
+					attachments={ plot.attachments ?? [] }
+					canManage={ canManage || plot.is_owner }
+					onChange={ setAttachments }
+				/>
+			</section>
 
 			{ /* Plots nested under this one (e.g. actions under a plot, rumors under an action). */ }
 			{ ( plot.children ?? [] ).length > 0 && (
@@ -593,6 +716,26 @@ export function PlotThread( {
 								<span className="be-plot-thread__entry-type">
 									{ entry.entry_type }
 								</span>
+								{ entry.audience === 'storytellers' && (
+									<span className="be-st-badge be-st-badge--audience">
+										{ __( 'Private', 'beyond-elysium' ) }
+									</span>
+								) }
+								{ entry.audience === 'characters' && (
+									<span className="be-st-badge be-st-badge--audience">
+										{ __( 'Directed', 'beyond-elysium' ) }
+									</span>
+								) }
+								{ entry.held && (
+									<span className="be-st-badge be-st-badge--held">
+										{ entry.release_batch_id
+											? __(
+													'In a release batch',
+													'beyond-elysium'
+											  )
+											: __( 'Draft', 'beyond-elysium' ) }
+									</span>
+								) }
 								{ entry.event_date && (
 									<span className="be-plot-thread__entry-event-date">
 										{ entry.event_date }

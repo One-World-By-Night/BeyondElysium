@@ -10,7 +10,11 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
-import type { VerifyResponse } from '../../types/verify';
+import type {
+	VerifyCharacterResponse,
+	VerifyItemResponse,
+	VerifyResponse,
+} from '../../types/verify';
 import HelpButton from '../shared/HelpButton';
 import './VerifyCharacter.css';
 
@@ -29,7 +33,7 @@ const KIND_LABELS: Record< string, string > = {
 };
 
 const MATCH_LABELS: Array< {
-	key: keyof NonNullable< VerifyResponse[ 'still_matches' ] >;
+	key: keyof NonNullable< VerifyCharacterResponse[ 'still_matches' ] >;
 	label: string;
 } > = [
 	{ key: 'name', label: __( 'Name', 'beyond-elysium' ) },
@@ -37,6 +41,15 @@ const MATCH_LABELS: Array< {
 	{ key: 'xp_earned', label: __( 'XP earned', 'beyond-elysium' ) },
 	{ key: 'xp_unspent', label: __( 'XP unspent', 'beyond-elysium' ) },
 	{ key: 'sheet', label: __( 'Full sheet', 'beyond-elysium' ) },
+];
+
+const ITEM_MATCH_LABELS: Array< {
+	key: keyof NonNullable< VerifyItemResponse[ 'still_matches' ] >;
+	label: string;
+} > = [
+	{ key: 'holder', label: __( 'Holder', 'beyond-elysium' ) },
+	{ key: 'uses_left', label: __( 'Uses left', 'beyond-elysium' ) },
+	{ key: 'expiry', label: __( 'Expiry', 'beyond-elysium' ) },
 ];
 
 function codeFromUrl(): string {
@@ -197,9 +210,105 @@ export function VerifyCharacter() {
 /**
  * Renders one resolved attestation: the revoked banner (which
  * suppresses still_matches entirely) or the snapshot plus live
- * match checklist.
+ * match checklist. Branches on `kind` - `'item'` is never a real
+ * character document kind, so the two shapes can't be confused.
  */
 function VerifyResult( { data }: { data: VerifyResponse } ) {
+	if ( data.kind === 'item' ) {
+		return <VerifyItemResult data={ data } />;
+	}
+
+	return <VerifyCharacterResult data={ data } />;
+}
+
+function VerifyItemResult( { data }: { data: VerifyItemResponse } ) {
+	return (
+		<div className="be-verify__result">
+			{ data.revoked ? (
+				<div
+					className="be-verify__banner be-verify__banner--error"
+					role="alert"
+				>
+					{ __(
+						'This verification code has been revoked by its issuing chronicle. It should no longer be treated as valid.',
+						'beyond-elysium'
+					) }
+				</div>
+			) : (
+				<div
+					className="be-verify__banner be-verify__banner--success"
+					role="status"
+				>
+					{ __( 'This is a genuine item card.', 'beyond-elysium' ) }
+				</div>
+			) }
+
+			<dl className="be-verify__facts">
+				<div className="be-verify__fact">
+					<dt>{ __( 'Item', 'beyond-elysium' ) }</dt>
+					<dd>{ data.name }</dd>
+				</div>
+				<div className="be-verify__fact">
+					<dt>{ __( 'Chronicle', 'beyond-elysium' ) }</dt>
+					<dd>{ data.chronicle }</dd>
+				</div>
+				<div className="be-verify__fact">
+					<dt>{ __( 'Issued on', 'beyond-elysium' ) }</dt>
+					<dd>{ data.issued_at }</dd>
+				</div>
+			</dl>
+
+			{ data.current && (
+				<p className="be-verify__as-of">
+					{ data.current.used_up &&
+						__(
+							'This item is currently used up.',
+							'beyond-elysium'
+						) }
+					{ data.current.used_up && data.current.expired && ' ' }
+					{ data.current.expired &&
+						__( 'This item has expired.', 'beyond-elysium' ) }
+				</p>
+			) }
+
+			{ data.still_matches && (
+				<div className="be-verify__matches">
+					<h2 className="be-verify__matches-title">
+						{ __(
+							'Still matches the item today?',
+							'beyond-elysium'
+						) }
+					</h2>
+					<ul className="be-verify__match-list">
+						{ ITEM_MATCH_LABELS.map( ( { key, label } ) => {
+							const matches = data.still_matches![ key ];
+							return (
+								<li
+									key={ key }
+									className={ `be-verify__match-item ${
+										matches
+											? 'be-verify__match-item--yes'
+											: 'be-verify__match-item--no'
+									}` }
+								>
+									<span
+										className="be-verify__match-icon"
+										aria-hidden="true"
+									>
+										{ matches ? '✓' : '✗' }
+									</span>
+									{ label }
+								</li>
+							);
+						} ) }
+					</ul>
+				</div>
+			) }
+		</div>
+	);
+}
+
+function VerifyCharacterResult( { data }: { data: VerifyCharacterResponse } ) {
 	const kindLabel = KIND_LABELS[ data.kind ] ?? data.kind;
 
 	return (

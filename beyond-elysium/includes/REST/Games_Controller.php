@@ -201,6 +201,12 @@ class Games_Controller extends Base_Controller {
 			// existed only in wp-admin before that, so no front-end screen had ever needed
 			// this capability resolved per chronicle.
 			'be_manage_world_objects',
+			// Added for the Storyteller Toolkit's Game Nights tab (1.1.0 §3.1).
+			'be_manage_sessions',
+			// Added for GameNights.tsx's own downtime-window editor (1.1.0 §3.3).
+			'be_manage_apr',
+			// Added for the Storyteller Toolkit's Factions tab (1.1.0 §3.10, F1/F2).
+			'be_manage_factions',
 		];
 
 		if ( ! Game::find_by_slug( $request['game_slug'] ) ) {

@@ -7,6 +7,9 @@ use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
+use BeyondElysium\Models\Game_Session;
+use BeyondElysium\Models\Item_Attestation;
+use BeyondElysium\Models\Location_Link;
 use BeyondElysium\Models\Plot;
 use BeyondElysium\Models\Plot_Entry;
 use BeyondElysium\Models\Schema_Block;
@@ -62,7 +65,7 @@ class Report_Document {
 			case 'narrative':
 				return self::build_narrative( $report, $game );
 			case 'calendar':
-				return self::build_calendar( $report, $game );
+				return self::build_calendar( $report, $game, $can_manage );
 			case 'house_rules':
 				return self::build_house_rules( $report, $game );
 			default:
@@ -221,6 +224,14 @@ class Report_Document {
 	 * @param array<string,mixed> $filters
 	 */
 	private static function build_card( array $report, object $game, array $filters, bool $can_manage ): array {
+		// Rote Cards for mages (1.1.0 §3.15, C1) - a genuinely different shape from every
+		// other card report: a held rote is a name in sheet_data, never a Connection, so this
+		// bypasses Query_Engine/Audience entirely rather than trying to make either speak a
+		// language they were never built to.
+		if ( ! empty( $report['holder_block'] ) && ! empty( $filters['character_id'] ) ) {
+			return self::build_holder_block_card( $report, $game, (int) $filters['character_id'] );
+		}
+
 		// Rows are redacted before conditions run, so a card's conditions cannot confirm what
 		// Storyteller-only text says either (F-046).
 		$options = $can_manage ? [] : [
@@ -240,7 +251,20 @@ class Report_Document {
 		$rows = $result['results'];
 
 		if ( ! empty( $filters['character_id'] ) ) {
+			// Print My Items/a location a character knows of: connection to the named character
+			// is already the whole authorization (ownership-or-manager checked by the caller
+			// before this ever runs), so no separate audience check applies on top of it - the
+			// same "a connected character always sees it" rule 1.1.0 §2.5 states explicitly,
+			// applied here rather than re-derived through Audience::filter().
 			$rows = self::filter_rows_connected_to_character( $rows, (int) $filters['character_id'] );
+		} elseif ( ! $can_manage ) {
+			// The general catalog view: a non-Storyteller browsing item-cards or location-cards
+			// only sees what their own characters' audience reaches (1.1.0 §2.5). rote-cards and
+			// every other card report are untouched - Audience has no opinion on rotes or boons.
+			$entity_type = [ 'item' => 'item', 'loc' => 'location' ][ $report['entity'] ] ?? null;
+			if ( $entity_type !== null ) {
+				$rows = Audience::filter( $rows, $entity_type, get_current_user_id(), $game->slug, false );
+			}
 		}
 
 		$cards = [];
@@ -248,6 +272,11 @@ class Report_Document {
 			$card = [];
 			foreach ( $report['columns'] as [ $label, $key, $source ] ) {
 				$card[] = [ $label, self::resolve_one( $key, $source, $row, $game, $report['entity'] ) ];
+			}
+			// Verifiable item cards (1.1.0 §3.13) - only item-cards, the one card report an
+			// item can appear on; a location or rote card carries no verification code.
+			if ( $report['entity'] === 'item' ) {
+				$card[] = [ 'Verify', self::verify_line_for_item( $row, $game ) ];
 			}
 			$cards[] = $card;
 		}
@@ -258,6 +287,97 @@ class Report_Document {
 			'cards' => $cards,
 			'game'  => $game->name,
 		];
+	}
+
+	/**
+	 * Builds Rote Cards for one character's own held rotes (1.1.0 §3.15, C1) - a card per
+	 * entry in `sheet_data[holder_block]`, matched by normalized name (`Services\Name_Key`)
+	 * against the chronicle's own `rote` world objects. A held rote with no matching world
+	 * object still gets a card, built straight from the catalog item: name, note (level,
+	 * duration, spheres), and source - no description, since the rote catalog carries none by
+	 * license (Decision 093).
+	 *
+	 * @param array<string,mixed> $report
+	 * @param object              $game
+	 * @param int                 $character_id
+	 * @return array<string,mixed>
+	 */
+	private static function build_holder_block_card( array $report, object $game, int $character_id ): array {
+		$holder_block = (string) $report['holder_block'];
+		$character    = Character::find( $character_id );
+		$held         = $character !== null && is_array( $character->sheet_data[ $holder_block ] ?? null )
+			? $character->sheet_data[ $holder_block ]
+			: [];
+
+		$rote_objects_by_key = [];
+		foreach ( World_Object::for_game( (int) $game->id, [ 'object_type' => 'rote', 'per_page' => 1000 ] ) as $object ) {
+			$rote_objects_by_key[ Name_Key::for( (string) $object->name ) ] = $object;
+		}
+
+		$catalog_items_by_key = [];
+		$block = Schema_Block::find_by_slugs_for_game( [ $holder_block ], $game->slug )[ $holder_block ] ?? null;
+		if ( $block && is_array( $block->definition->items ?? null ) ) {
+			foreach ( $block->definition->items as $item ) {
+				$catalog_items_by_key[ Name_Key::for( (string) ( $item->name ?? '' ) ) ] = $item;
+			}
+		}
+
+		$cards = [];
+		foreach ( $held as $entry ) {
+			$name = (string) ( $entry['name'] ?? '' );
+			if ( $name === '' ) {
+				continue;
+			}
+			$key = Name_Key::for( $name );
+
+			if ( isset( $rote_objects_by_key[ $key ] ) ) {
+				$row  = $rote_objects_by_key[ $key ];
+				$card = [];
+				foreach ( $report['columns'] as [ $label, $col_key, $source ] ) {
+					$card[] = [ $label, self::resolve_one( $col_key, $source, $row, $game, $report['entity'] ) ];
+				}
+				$cards[] = $card;
+				continue;
+			}
+
+			$catalog_item = $catalog_items_by_key[ $key ] ?? null;
+			$cards[]      = [
+				[ 'Name', $name ],
+				[ 'Note', (string) ( $catalog_item->note ?? '' ) ],
+				[ 'Source', (string) ( $catalog_item->source ?? '' ) ],
+			];
+		}
+
+		return [
+			'title' => $report['title'],
+			'shape' => 'card',
+			'cards' => $cards,
+			'game'  => $game->name,
+		];
+	}
+
+	/**
+	 * Issues (or reuses) a verification code for one printed item card and returns the line
+	 * printed on the card itself (1.1.0 §3.13) - "Verify: {site}/be-verify/?code=XXXX-XXXX",
+	 * the exact URL shape `Character_Exporter` already uses for a signed sheet's own code.
+	 *
+	 * @param object $row  A decoded world_object row (already redacted for this viewer).
+	 * @param object $game
+	 * @return string
+	 */
+	private static function verify_line_for_item( object $row, object $game ): string {
+		$holder = null;
+		foreach ( Connection::for_entity( 'world_object', (int) $row->id ) as $connection ) {
+			$character_id = $connection->source_type === 'character' ? $connection->source_id
+				: ( $connection->target_type === 'character' ? $connection->target_id : null );
+			if ( $character_id !== null ) {
+				$holder = Character::find( (int) $character_id );
+				break;
+			}
+		}
+
+		$attestation = Item_Attestation::issue_or_reuse( $row, $holder, $game->slug, (string) $game->name );
+		return 'Verify: ' . home_url( '/be-verify/?code=' . rawurlencode( $attestation->short_code ) );
 	}
 
 	/**
@@ -345,15 +465,27 @@ class Report_Document {
 	}
 
 	/**
-	 * No real per-date schedule exists yet (reports-cards-batch-design.md §5) -
-	 * always the honest empty state, never a fabricated calendar.
+	 * The chronicle's own game sessions (1.1.0 §3.1) - date, time, place, and notes ([ST]
+	 * stripped for a non-manager). Rows are empty, with the registry's own honest note, for a
+	 * chronicle that has never recorded a session.
 	 */
-	private static function build_calendar( array $report, object $game ): array {
+	private static function build_calendar( array $report, object $game, bool $can_manage ): array {
+		$sessions = Game_Session::for_game( (int) $game->id );
+		$rows     = array_map( static function ( $session ) use ( $game, $can_manage ) {
+			St_Visibility::filter_session( $session, $game, $can_manage );
+			return [
+				'date'  => $session->game_date,
+				'time'  => $session->start_time,
+				'place' => $session->place,
+				'notes' => $session->notes,
+			];
+		}, $sessions );
+
 		return [
 			'title' => $report['title'],
 			'shape' => 'calendar',
-			'rows'  => [],
-			'note'  => $report['empty_note'] ?? '',
+			'rows'  => $rows,
+			'note'  => empty( $rows ) ? ( $report['empty_note'] ?? '' ) : '',
 			'game'  => $game->name,
 		];
 	}
@@ -690,6 +822,13 @@ class Report_Document {
 	}
 
 	private static function resolve_one( string $key, string $source, object $row, object $game, string $entity ): string {
+		// Display over Grapevine text (1.1.0 §3.9 item 3): a location's Owner/Where columns
+		// prefer a real link/parent name over the typed text, wherever one exists.
+		if ( $entity === 'loc' && $source === 'field' && in_array( $key, [ 'owner', 'where' ], true ) ) {
+			$display = Location_Link::resolve_owner_and_where( $row );
+			return $display[ $key ] !== '' ? $display[ $key ] : '—';
+		}
+
 		switch ( $source ) {
 			case 'field':
 				$resolved = Query_Engine::resolve_value( $row, $key, $entity );
@@ -753,6 +892,21 @@ class Report_Document {
 				return (string) ( ( $row->match_reason ?? '' ) !== '' ? $row->match_reason : '—' );
 			case 'sortvalue':
 				return (string) ( $row->sort_value ?? $row->name ?? '—' );
+			// 1.1.0 §3.12 item 2 - Item Cards' own "uses left / Expired" columns, read
+			// straight from the row's own properties (never through Query_Engine/
+			// Field_Registry - see report-registry.php's own comment on why).
+			case 'usesleft':
+				$uses_max = ( $row->properties['uses_max'] ?? null );
+				if ( $uses_max === null || $uses_max === '' ) {
+					return '—';
+				}
+				return World_Object::is_used_up( $row ) ? __( 'Used up', 'beyond-elysium' ) : (string) ( $row->properties['uses_left'] ?? 0 );
+			case 'expireson':
+				$expires_on = ( $row->properties['expires_on'] ?? null );
+				if ( $expires_on === null || $expires_on === '' ) {
+					return '—';
+				}
+				return World_Object::is_expired( $row ) ? __( 'Expired', 'beyond-elysium' ) : (string) $expires_on;
 			default:
 				return '—';
 		}

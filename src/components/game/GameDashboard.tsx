@@ -71,6 +71,9 @@ export function GameDashboard( {
 	const [ stats, setStats ] = useState< GameStats | null >( null );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
+	// My Queue's own two assigned-to-me sections (1.1.0 §3.6) - null while unknown, so the
+	// card renders nothing rather than a misleading 0 before the request resolves.
+	const [ waitingOnMe, setWaitingOnMe ] = useState< number | null >( null );
 
 	const [ rosterHealthOpen, setRosterHealthOpen ] = useState( false );
 	const [ rosterHealthPlayers, setRosterHealthPlayers ] = useState<
@@ -106,6 +109,18 @@ export function GameDashboard( {
 				setError( errorMessage( err ) );
 				setLoading( false );
 			} );
+	}, [ gameSlug, canManage ] );
+
+	useEffect( () => {
+		if ( ! canManage ) {
+			return;
+		}
+		api.myQueue( gameSlug )
+			.get()
+			.then( ( result ) =>
+				setWaitingOnMe( result.downtime.length + result.plots.length )
+			)
+			.catch( () => setWaitingOnMe( null ) );
 	}, [ gameSlug, canManage ] );
 
 	if ( ! canManage ) {
@@ -176,12 +191,35 @@ export function GameDashboard( {
 							</span>
 						</div>
 
+						{ waitingOnMe !== null && (
+							<div className="be-game-dashboard__card">
+								<span className="be-game-dashboard__card-value">
+									{ waitingOnMe }
+								</span>
+								<span className="be-game-dashboard__card-label">
+									{ __( 'Waiting on you', 'beyond-elysium' ) }
+								</span>
+							</div>
+						) }
+
 						<div className="be-game-dashboard__card">
 							<span className="be-game-dashboard__card-value">
 								{ stats.active_plots }
 							</span>
 							<span className="be-game-dashboard__card-label">
 								{ __( 'Active Plots', 'beyond-elysium' ) }
+							</span>
+						</div>
+
+						<div className="be-game-dashboard__card">
+							<span className="be-game-dashboard__card-value">
+								{ stats.characters_needing_attention }
+							</span>
+							<span className="be-game-dashboard__card-label">
+								{ __(
+									'Characters Needing Attention',
+									'beyond-elysium'
+								) }
 							</span>
 						</div>
 

@@ -10,6 +10,7 @@ use BeyondElysium\Models\Plot_Entry;
 use BeyondElysium\Services\Action_Allocator;
 use BeyondElysium\Services\Backgrounds_Catalog;
 use BeyondElysium\Services\Background_Ledger;
+use BeyondElysium\Services\Downtime_Window;
 use BeyondElysium\Services\Rumor_Generator;
 
 defined( 'ABSPATH' ) || exit;
@@ -266,6 +267,13 @@ class Apr_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'game_date is required.', 'beyond-elysium' ), 400 );
 		}
 
+		if ( ! Authorization::can( 'be_manage_characters' ) ) {
+			$window_error = $this->background_use_window_error( (int) $game->id, $game_date, (int) $character->id );
+			if ( $window_error !== null ) {
+				return $window_error;
+			}
+		}
+
 		$result = Background_Ledger::record( (int) $character->id, $game_date, [
 			'name' => $request->get_param( 'name' ),
 			'cost' => $request->get_param( 'cost' ),
@@ -316,6 +324,10 @@ class Apr_Controller extends Base_Controller {
 				if ( ! $owns_it || ( $entry['result'] ?? '' ) !== '' ) {
 					return $this->error( 'ownership_denied', __( 'You may only edit your own not-yet-adjudicated background use.', 'beyond-elysium' ), 403 );
 				}
+				$window_error = $this->background_use_window_error( (int) $game->id, (string) $entry['game_date'], (int) ( $entry['character_id'] ?? 0 ) );
+				if ( $window_error !== null ) {
+					return $window_error;
+				}
 			}
 			if ( $request->get_param( 'text' ) !== null ) {
 				$fields['text'] = $request->get_param( 'text' );
@@ -359,6 +371,10 @@ class Apr_Controller extends Base_Controller {
 			$owns_it = Authorization::check( 'be_submit_actions' ) && $this->owns_ledger_entry( $entry );
 			if ( ! $owns_it || ( $entry['result'] ?? '' ) !== '' ) {
 				return $this->error( 'ownership_denied', __( 'You may only clear your own not-yet-adjudicated background use.', 'beyond-elysium' ), 403 );
+			}
+			$window_error = $this->background_use_window_error( (int) $game->id, (string) $entry['game_date'], (int) ( $entry['character_id'] ?? 0 ) );
+			if ( $window_error !== null ) {
+				return $window_error;
 			}
 		}
 
@@ -456,12 +472,51 @@ class Apr_Controller extends Base_Controller {
 	 * @param object $game The chronicle the request is served for.
 	 * @return array|\WP_Error
 	 */
+	/**
+	 * Refuses a background-use write outside its game date's downtime window (1.1.0 §3.3) -
+	 * POST, PUT, and DELETE all check the same way, unlike Entries_Controller's own
+	 * edit-narrows-to-closed-only distinction, since the design names no such nuance for
+	 * background uses specifically. Never called for a manager.
+	 *
+	 * @param int    $game_id
+	 * @param string $game_date `Y-m-d`.
+	 * @param int    $character_id
+	 * @return \WP_Error|null
+	 */
+	private function background_use_window_error( int $game_id, string $game_date, int $character_id ) {
+		if ( $game_date === '' || $character_id === 0 ) {
+			return null;
+		}
+
+		$state = Downtime_Window::state( $game_id, $game_date, $character_id );
+
+		if ( $state === Downtime_Window::NOT_OPEN ) {
+			return $this->error( 'downtime_not_open', sprintf(
+				/* translators: %s: game date, Y-m-d */
+				__( 'Downtime for %s has not opened yet.', 'beyond-elysium' ),
+				$game_date
+			), 409 );
+		}
+		if ( $state === Downtime_Window::CLOSED ) {
+			return $this->error( 'downtime_closed', sprintf(
+				/* translators: %s: game date, Y-m-d */
+				__( 'Downtime for %s has closed.', 'beyond-elysium' ),
+				$game_date
+			), 409 );
+		}
+		return null;
+	}
+
 	private function find_ledger_entry( int $entry_id, object $game ) {
 		$row  = Plot_Entry::find( $entry_id );
 		$plot = $row ? Plot::find( (int) $row->plot_id ) : null;
 		if ( $row && $plot && (int) $plot->game_id === (int) $game->id ) {
 			foreach ( Background_Ledger::entries_for_plot( (int) $row->plot_id ) as $entry ) {
 				if ( (int) $entry['id'] === $entry_id ) {
+					// game_date lives on the plot, not the ledger entry's own JSON - carried
+					// here so a caller can check the downtime window (1.1.0 §3.3) without a
+					// second lookup.
+					$entry['game_date'] = $plot->game_date;
 					return $entry;
 				}
 			}

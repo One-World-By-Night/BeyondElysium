@@ -1,0 +1,33 @@
+.be-attachment-list__items {
+	list-style: none;
+	margin: 0 0 0.5rem;
+	padding: 0;
+}
+
+.be-attachment-list__item {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.25rem 0;
+}
+
+.be-attachment-list__size {
+	color: #666;
+	font-size: 0.85rem;
+}
+
+.be-attachment-list__empty {
+	font-style: italic;
+	color: #666;
+}
+
+.be-attachment-list__error {
+	color: #b32d2e;
+	margin-bottom: 0.5rem;
+}
+
+.be-attachment-list__upload {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}

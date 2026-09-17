@@ -115,12 +115,34 @@ class MetCsvSeederTest extends TestCase {
 	 * vampire-disciplines dropped from 281 to 68 when Blood Magic paths (every Discipline
 	 * row with a real Group value) moved to their own block - see
 	 * BE_PROCESS/releases/0.99.2-workflow.md's "Blood magic" section and BloodMagicSeederTest for the
-	 * block that content moved to. Combo count is untouched: Combination rows were never
-	 * part of that split either way.
+	 * block that content moved to. Combo count is untouched by that split: Combination
+	 * rows were never part of it either way.
+	 *
+	 * 68 dropped again to 57 (1.1.0, owner report - an unbuyable 5th level surfaced a
+	 * systemic bug): eleven of those sixty-eight were never real, leveled Disciplines at
+	 * all - GVM's own "Disciplines, <Clan>" menus (Assamite, Brujah, Einherjar, Followers
+	 * of Set, Gangrel, Lasombra, Ravnos, Toreador, Tremere, Tzimisce, Ventrue) are each
+	 * that clan's own signature combination powers, named explicitly in
+	 * Seeder::CLAN_SIGNATURE_COMBO_MENUS rather than detected by shape (a first attempt
+	 * that flagged any family with a "+"-joined item note broke `ImportControllerCommitTest
+	 * ::test_commit_resolves_real_tiered_power_traits` - "Disciplines, Long Night Combo" has
+	 * the identical shape but is not a clan, and its items already resolved correctly
+	 * under their own bare CSV row; left exactly as it was, logged as D65, not folded into
+	 * this fix). Combo count rose from 384 to 390: the eleven clans' own real combo items
+	 * enter this block, several (e.g. "Shroud of Absence") superseding an already-present
+	 * bare, unprefixed CSV row rather than duplicating it.
 	 */
 	public function test_discipline_and_combo_counts(): void {
-		$this->assertCount( 68, self::$blocks['vampire-disciplines']['definition']['powers'] );
-		$this->assertCount( 384, self::$blocks['vampire-combo-disciplines']['definition']['items'] );
+		$this->assertCount( 57, self::$blocks['vampire-disciplines']['definition']['powers'] );
+		$this->assertCount( 390, self::$blocks['vampire-combo-disciplines']['definition']['items'] );
+	}
+
+	/**
+	 * 1.1.0 D3: a held combo's stored count is its flat XP cost, not a rating - the
+	 * flag that lets the sheet draw it as "6 XP" instead of an unreadable wall of pips.
+	 */
+	public function test_combo_disciplines_are_flagged_count_is_cost(): void {
+		$this->assertTrue( self::$blocks['vampire-combo-disciplines']['definition']['count_is_cost'] );
 	}
 
 	/**
@@ -161,6 +183,99 @@ class MetCsvSeederTest extends TestCase {
 
 		$this->assertContains( 'Animalism', $names );
 		$this->assertNotContains( 'Animalism: Animalism', $names );
+	}
+
+	/**
+	 * 1.1.0, owner report: a clan's own signature combination powers
+	 * ("Disciplines, Lasombra" etc. in GVM) are not a real, leveled Discipline - they
+	 * never survive in vampire-disciplines under the clan's own name at all, real or
+	 * fake-leveled.
+	 */
+	public function test_clan_signature_combos_do_not_survive_as_fake_disciplines(): void {
+		$names = array_column( self::$blocks['vampire-disciplines']['definition']['powers'], 'name' );
+
+		foreach ( [ 'Assamite', 'Brujah', 'Einherjar', 'Followers of Set', 'Gangrel', 'Lasombra', 'Ravnos', 'Toreador', 'Tremere', 'Tzimisce', 'Ventrue' ] as $clan ) {
+			$this->assertNotContains( $clan, $names, "'{$clan}' is a clan's own combo-power menu, not a Discipline" );
+		}
+	}
+
+	/**
+	 * Each clan's real combo powers land in vampire-combo-disciplines instead, named
+	 * "<Clan>: <power>" per the owner's own ruling, carrying GVM's real cost and a
+	 * readable recipe note built from its "+"-joined prerequisite text.
+	 */
+	public function test_clan_signature_combos_land_in_combo_disciplines_named_and_costed(): void {
+		$items = self::$blocks['vampire-combo-disciplines']['definition']['items'];
+		$by_name = [];
+		foreach ( $items as $item ) {
+			$by_name[ $item['name'] ] = $item;
+		}
+
+		$this->assertArrayHasKey( 'Lasombra: Shroud of Absence', $by_name );
+		$this->assertSame( '12', $by_name['Lasombra: Shroud of Absence']['cost'] );
+		$this->assertSame( 'Forgetful Mind + Arms Of The Abyss', $by_name['Lasombra: Shroud of Absence']['note'] );
+
+		$this->assertArrayNotHasKey( 'Shroud of Absence', $by_name, 'The bare CSV row must be superseded, not left duplicated alongside the prefixed one' );
+	}
+
+	/**
+	 * The bare CSV combo row's own Name-PT must not be silently lost when GVM's richer,
+	 * clan-prefixed version supersedes it (i18n-pt-br-design.md's PC-3 backfill precedent).
+	 */
+	public function test_superseded_combo_keeps_its_portuguese_translation(): void {
+		$items = self::$blocks['vampire-combo-disciplines']['definition']['items'];
+		$shroud = null;
+		foreach ( $items as $item ) {
+			if ( $item['name'] === 'Lasombra: Shroud of Absence' ) {
+				$shroud = $item;
+			}
+		}
+
+		$this->assertNotNull( $shroud );
+		$this->assertArrayHasKey( 'name_pt', $shroud );
+		$this->assertNotSame( '', $shroud['name_pt'] );
+	}
+
+	/**
+	 * Every numbered power ladder in vampire-disciplines runs to a real level 5 (or is a
+	 * genuinely shorter real ladder some sourcebook never extended past) with no
+	 * mid-ladder gap - the owner's own "no empty power levels" ruling. This is the
+	 * regression guard for the Quietus caste-variant bug specifically (four families
+	 * capped at level 4 with a real, unbought level 5 sitting in the CSV all along).
+	 */
+	public function test_no_discipline_ladder_has_a_gap(): void {
+		foreach ( self::$blocks['vampire-disciplines']['definition']['powers'] as $power ) {
+			$numbered = array_filter( $power['levels'], static fn( $level ) => ( $level['level'] ?? null ) !== null );
+			$levels   = array_column( $numbered, 'level' );
+			if ( empty( $levels ) ) {
+				continue;
+			}
+			sort( $levels );
+			$max     = max( $levels );
+			$missing = array_diff( range( 1, $max ), $levels );
+			$this->assertSame( [], array_values( $missing ), "{$power['name']} is missing level(s) " . implode( ',', $missing ) . " below its own max of {$max}" );
+		}
+	}
+
+	/**
+	 * The four Quietus caste variants specifically: each keeps its real GVM name and now
+	 * reaches its real, source-backed level 5 rather than stopping at 4.
+	 */
+	public function test_quietus_caste_variants_reach_their_real_fifth_level(): void {
+		$by_name = [];
+		foreach ( self::$blocks['vampire-disciplines']['definition']['powers'] as $power ) {
+			$by_name[ $power['name'] ] = $power;
+		}
+
+		foreach ( [ 'Quietus, Cruscitus / Warrior', 'Quietus, Hematus / Vizier', 'Quietus, Minhit Dume / Vizier', 'Quietus, Sorcerer' ] as $name ) {
+			$this->assertArrayHasKey( $name, $by_name );
+			$levels = array_column(
+				array_filter( $by_name[ $name ]['levels'], static fn( $level ) => ( $level['level'] ?? null ) !== null ),
+				'level'
+			);
+			sort( $levels );
+			$this->assertSame( [ 1, 2, 3, 4, 5 ], $levels, "{$name} must reach a real, complete level 5" );
+		}
 	}
 
 	/**

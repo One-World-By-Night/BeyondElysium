@@ -5,6 +5,8 @@
  * share this same Plot record, distinguished by their place in
  * the parent/child hierarchy and by tags.
  */
+import type { QueryCondition, QueryLogic } from './query';
+import type { Attachment } from './attachment';
 
 /**
  * The stored lifecycle state of a plot: active, resolved, or
@@ -69,6 +71,48 @@ export interface FactionGoal {
 }
 
 /**
+ * Who may see a plot, item, or location (1.1.0 §2.1): everyone in
+ * the chronicle, Storytellers/Narrators only, or a Storyteller-
+ * defined rule set (AudienceRules) plus any character directly
+ * connected to it. Matches Services\Audience::VALUES exactly -
+ * a different, non-overlapping vocabulary from a plot entry's own
+ * EntryAudienceValue below.
+ */
+export type AudienceValue = 'everyone' | 'storytellers' | 'restricted';
+
+/**
+ * A Storyteller-defined rule set narrowing a `restricted` audience
+ * to characters matching a query, in the same {conditions, logic}
+ * shape the query builder already uses (resolved server-side
+ * against the `char` inventory).
+ */
+export interface AudienceRules {
+	conditions: QueryCondition[];
+	logic: QueryLogic;
+}
+
+/**
+ * Who may see a single plot entry (1.1.0 §2.4): everyone who can
+ * see the parent plot (the default), Storytellers/Narrators and
+ * the entry's own author only, or a Storyteller post directed at
+ * specific characters via audience_character_ids. A player may
+ * only choose `plot` or `storytellers` for their own entry; only a
+ * Storyteller may direct one to `characters`.
+ */
+export type EntryAudienceValue = 'plot' | 'storytellers' | 'characters';
+
+/**
+ * A character option in a narrow, name-and-id-only picker, such as
+ * a player plot's invite candidates or an entry's directed-post
+ * recipients. Deliberately excludes every other character field -
+ * neither picker may disclose more about a character than this.
+ */
+export interface CharacterOption {
+	id: number;
+	name: string;
+}
+
+/**
  * A single plot, action, or rumor record - all three share this
  * same shape, distinguished by parent_plot_id and by tags rather
  * than by separate types. Holds its status, timeline, and
@@ -103,11 +147,24 @@ export interface Plot {
 	target_query: TargetQuery | null;
 	/** Only present for users with the be_manage_plots capability. */
 	st_notes?: string | null;
+	/** Defaults to `storytellers` for a Storyteller-created plot, `restricted` for a player plot. */
+	audience: AudienceValue;
+	/** Only meaningful when audience is `restricted`; null otherwise. */
+	audience_rules: AudienceRules | null;
+	/** Whether the current viewer owns this player plot (§2.3a) - always false for a global plot. */
+	is_owner: boolean;
+	/** Release batch gate (1.1.0 §3.2) - held plus a null release_batch_id means "draft, never visible". */
+	held: boolean;
+	release_batch_id: number | null;
+	/** This plot's staff owner (1.1.0 §3.6), or null when unassigned. */
+	assigned_to: number | null;
 	created_at: string;
 	updated_at: string;
 	/** Only present on the single-plot fetch. */
 	entries?: PlotEntry[];
 	connections?: Connection[];
+	/** Only present on the single-plot fetch. */
+	attachments?: Attachment[];
 	/** Immediate child plots, included in the same fetch. */
 	children?: Plot[];
 }
@@ -126,6 +183,13 @@ export interface PlotEntry {
 	content: string;
 	/** A Timeline entry's in-fiction date, independent of created_at. */
 	event_date: string | null;
+	/** Defaults to `plot` (public) when omitted. */
+	audience: EntryAudienceValue;
+	/** Only meaningful when audience is `characters`; null otherwise. */
+	audience_character_ids: number[] | null;
+	/** Release batch gate (1.1.0 §3.2) - held plus a null release_batch_id means "draft, never visible". */
+	held: boolean;
+	release_batch_id: number | null;
 	created_at: string;
 }
 
@@ -171,6 +235,12 @@ export interface CreatePlotRequest {
 	faction_goals?: FactionGoal[];
 	/** Cover image attachment id; be_manage_plots only. */
 	image_id?: number;
+	/** be_manage_plots only; a player plot is always forced to `restricted` regardless of this field. */
+	audience?: AudienceValue;
+	/** be_manage_plots only; requires audience: 'restricted'. */
+	audience_rules?: AudienceRules;
+	/** Player branch only: the player's own character this plot belongs to. */
+	character_id?: number;
 }
 
 /**
@@ -197,6 +267,11 @@ export interface UpdatePlotRequest {
 	faction_goals?: FactionGoal[] | null;
 	/** Cover image attachment id; null clears it. */
 	image_id?: number | null;
+	audience?: AudienceValue;
+	/** Requires audience: 'restricted'; ignored otherwise. */
+	audience_rules?: AudienceRules | null;
+	/** be_manage_plots only; must be a chronicle member with role hst, ast, or narrator. null unassigns. */
+	assigned_to?: number | null;
 }
 
 /** The plot list's character filter. */
@@ -246,6 +321,10 @@ export interface CreateEntryRequest {
 	content: string;
 	/** A Timeline entry's in-fiction date. */
 	event_date?: string;
+	/** A player may only choose `plot` (the default) or `storytellers`; `characters` is manager-only. */
+	audience?: EntryAudienceValue;
+	/** Required, non-empty, when audience is `characters`; manager-only. */
+	audience_character_ids?: number[];
 }
 
 /**

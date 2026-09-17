@@ -22,6 +22,8 @@ export interface TraitListRendererProps {
 	definition: TraitListDefinition;
 	/** Template section override. Null falls through to the block's own default. */
 	display: DisplayType | null;
+	/** Print/Export panel override for a count_is_cost block (1.1.0 D3) - a flat XP cost drawn as a number instead of dots. */
+	costNumbers?: boolean;
 }
 
 interface TraitGroup {
@@ -35,6 +37,16 @@ export function resolveDisplay(
 	blockDisplay: DisplayType | undefined
 ): DisplayType {
 	return sectionDisplay ?? blockDisplay ?? 'simple';
+}
+
+/**
+ * Whether a trait_list section groups and alphabetizes its held entries at all.
+ * False only for a player_order block (1.1.0 D4): its held entries render in
+ * their stored array order - no alphabetizing, no field/category grouping. The
+ * player's own order is their grouping.
+ */
+export function groupsAndSorts( definition: TraitListDefinition ): boolean {
+	return ! definition.player_order;
 }
 
 /**
@@ -123,9 +135,18 @@ export function TraitListRenderer( {
 	data,
 	definition,
 	display,
+	costNumbers,
 }: TraitListRendererProps ) {
-	const mode = resolveDisplay( display, definition.display );
-	const nested = groupTraitsByField( data, definition );
+	// 1.1.0 D3: a count_is_cost block's stored total is a flat XP cost, not a
+	// rating - the Print/Export panel's override always wins over whatever
+	// display mode is otherwise configured, on or off.
+	const mode =
+		definition.count_is_cost && costNumbers
+			? 'cost_number'
+			: resolveDisplay( display, definition.display );
+	const nested = groupsAndSorts( definition )
+		? groupTraitsByField( data, definition )
+		: null;
 	const catalogByName = new Map(
 		definition.items.map( ( item ) => [ item.name, item ] )
 	);
@@ -182,7 +203,9 @@ export function TraitListRenderer( {
 		);
 	}
 
-	const groups = groupByCategory( data, definition );
+	const groups = groupsAndSorts( definition )
+		? groupByCategory( data, definition )
+		: [ { label: null, traits: data } ];
 
 	return (
 		<div className="be-trait-list" data-block-slug={ blockSlug }>
@@ -197,9 +220,12 @@ export function TraitListRenderer( {
 						</h4>
 					) }
 					<ul className="be-trait-list__items">
-						{ sortIfAlphabetized(
-							group.traits,
-							definition.alphabetize
+						{ ( groupsAndSorts( definition )
+							? sortIfAlphabetized(
+									group.traits,
+									definition.alphabetize
+							  )
+							: group.traits
 						).map( ( trait, i ) => (
 							<li key={ `${ trait.name }-${ i }` }>
 								<WithDots

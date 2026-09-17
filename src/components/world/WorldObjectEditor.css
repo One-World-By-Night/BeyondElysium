@@ -5,6 +5,12 @@
 	margin-bottom: 0.75rem;
 }
 
+.be-world-editor__based-on {
+	font-size: 0.85rem;
+	color: #777;
+	margin: 0 0 0.75rem;
+}
+
 .be-world-editor__row {
 	display: flex;
 	gap: 1rem;

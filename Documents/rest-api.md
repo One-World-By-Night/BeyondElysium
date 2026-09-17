@@ -181,21 +181,25 @@ once rather than one character at a time.
 | Method | Path | Capability | Notes |
 |---|---|---|---|
 | GET | `/{game_slug}/plots` | `be_view_characters` | List plots. `character_plots=only` keeps each character's own plot and its action rounds (plots tied to a character by `apr_actor`); `exclude` keeps every other plot; anything else is `400` |
-| POST | `/{game_slug}/plots` | `be_submit_actions` OR `be_manage_plots` | Create — a player can start a plot thread via an action, an ST can create one directly. A Storyteller's `is_rumor: true` saves the plot and its rumor tag together or neither - `500 create_failed` when nothing was kept |
+| POST | `/{game_slug}/plots` | `be_submit_actions` OR `be_manage_plots` | Create — a player can start a plot thread via an action, an ST can create one directly. A non-manager's plot is always their own player plot (1.1.0 §2.3a): requires `character_id` (must be the caller's own, `403` otherwise), forced `audience: restricted`, connected via a `plot_owner` connection. A manager's plot defaults `audience` to `storytellers` (never player-reachable) and may set `audience`/`audience_rules` explicitly. A Storyteller's `is_rumor: true` saves the plot and its rumor tag together or neither - `500 create_failed` when nothing was kept |
 | GET | `/{game_slug}/my/plots` | `be_view_characters` | Only the caller's own plots — theirs by connection, or reachable via `target_query` |
 | POST | `/{game_slug}/plots/allocate-actions` | `be_manage_plots` | Allocate a round's action slots. With `commit`, the date's plot and every action entry are saved together or not at all - `500 allocation_failed` when nothing was kept. The date's plot sits under the character's own plot unless `parent_plot_id` names another |
 | POST | `/{game_slug}/plots/generate-rumors` | `be_manage_plots` | Generate a date's standard rumors: a preview, or with `commit`, saved, and each matched player emailed once. A commit keeps every rumor or none - `500 generate_failed`, and no one is emailed - and two commits in one chronicle take turns, so the second finds the first's rumors and skips them |
-| GET | `/{game_slug}/plots/{id}` | `be_view_characters` | One plot with its entry thread. Another character's action allocation is `404` unless you manage plots, and never listed among a plot's children |
-| PUT | `/{game_slug}/plots/{id}` | `be_manage_plots` | Update |
-| DELETE | `/{game_slug}/plots/{id}` | `be_manage_plots` | Delete, cascading its entries and connections. A character's own plot is refused (`409 character_plot`) - it goes when the character is deleted |
+| GET | `/{game_slug}/plots/{id}` | `be_view_characters` | One plot with its entry thread, connections, attachments (never `stored_name`), and `is_owner` (true only for the player who owns this plot, false for everyone else including a manager). Hidden by its own `audience`/`audience_rules` (1.1.0 §2.1) or another character's action allocation is `404` unless you manage plots, and never listed among a plot's children |
+| PUT | `/{game_slug}/plots/{id}` | `be_manage_plots` | Update, including `audience` (`everyone`/`storytellers`/`restricted`) and `audience_rules` (`{conditions, logic}`, required non-empty when `audience` is `restricted`) - `400 invalid_param` for an invalid value or an empty `conditions` array |
+| DELETE | `/{game_slug}/plots/{id}` | `be_manage_plots` | Delete, cascading its entries, connections, and attachments (rows and files). A character's own plot is refused (`409 character_plot`) - it goes when the character is deleted |
+| GET | `/{game_slug}/plots/{id}/member-candidates` | `be_submit_actions` OR `be_manage_plots` | A player plot's own owner or a manager only (else `403 ownership_denied`): active, non-NPC characters not already connected, name and id only (1.1.0 §2.3a) |
+| POST | `/{game_slug}/plots/{id}/members` | `be_submit_actions` OR `be_manage_plots` | Add a `plot_member` connection - the owner or a manager only; a non-manager is held to the candidates list even if they post a `character_id` directly |
+| DELETE | `/{game_slug}/plots/{id}/members/{connection_id}` | `be_submit_actions` OR `be_manage_plots` | Remove a `plot_member` connection - a manager may remove anyone, the owner only whoever they themselves added (`403 not_your_addition` otherwise). The owner's own connection is never reachable here |
+| GET | `/{game_slug}/plots/{id}/visible-characters` | `be_manage_plots` | Every character who can currently see this plot, name and id only - backs the directed-entry picker |
 
 ## Entries (plot responses/actions)
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| GET | `/{game_slug}/plots/{plot_id}/entries` | `be_view_characters` | List a plot's entries (`404` for another character's action allocation, as above) |
-| POST | `/{game_slug}/plots/{plot_id}/entries` | `be_submit_actions` OR `be_manage_plots` | Add an entry |
-| PUT | `/{game_slug}/entries/{id}` | `be_submit_actions` OR `be_manage_plots` | Update |
+| GET | `/{game_slug}/plots/{plot_id}/entries` | `be_view_characters` | List a plot's entries (`404` for another character's action allocation, as above), each carrying its own `audience` (`plot`/`storytellers`/`characters`) and, for a directed entry, `audience_character_ids` |
+| POST | `/{game_slug}/plots/{plot_id}/entries` | `be_submit_actions` OR `be_manage_plots` | Add an entry. `audience` defaults to `plot`; a non-manager may only choose `plot` or `storytellers` (`403` for `characters`); `characters` requires a non-empty `audience_character_ids`, each id a character who can currently see the plot (`400` otherwise) |
+| PUT | `/{game_slug}/entries/{id}` | `be_submit_actions` OR `be_manage_plots` | Update. `audience`/`audience_character_ids` are left untouched entirely when not sent - a plain content edit never resets a chosen audience back to `plot` |
 | DELETE | `/{game_slug}/entries/{id}` | `be_manage_plots` | Delete |
 
 ## Action & Rumor Settings (APR)
@@ -263,11 +267,23 @@ Recording what a player actually did with an allocated downtime action, and an S
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| GET | `/{game_slug}/world-objects` | `be_view_characters` | List, filterable by type. With `object_type`, any of that type's properties filters too: a number exactly or with `_min`/`_max`, text exactly in any case, and a list - an item's `abilities`, a rote's `spheres` - by one entry's name |
-| POST | `/{game_slug}/world-objects` | `be_manage_world_objects` | Create. Name, rarity, and cost are plain text (at most 255, 20, and 100 characters; longer is `400`), description and limitations allow the same HTML a post does. A boon is refused (`409 use_boon_ledger`) - boons are made on `/boons` |
-| GET | `/{game_slug}/world-objects/{id}` | `be_view_characters` | Get one |
-| PUT | `/{game_slug}/world-objects/{id}` | `be_manage_world_objects` | Update, cleaned and limited the same way as a create. `409 use_boon_ledger` for a boon |
-| DELETE | `/{game_slug}/world-objects/{id}` | `be_manage_world_objects` | Delete. `409 use_boon_ledger` for a boon, which is never deleted |
+| GET | `/{game_slug}/world-objects` | `be_view_characters` | List, filterable by type. With `object_type`, any of that type's properties filters too: a number exactly or with `_min`/`_max`, text exactly in any case, and a list - an item's `abilities`, a rote's `spheres` - by one entry's name. Items/locations are narrowed by their own `audience`/`audience_rules` for a non-manager (1.1.0 §2.5, a connected character always included); rotes and boons pass through untouched |
+| POST | `/{game_slug}/world-objects` | `be_manage_world_objects` | Create. Name, rarity, and cost are plain text (at most 255, 20, and 100 characters; longer is `400`), description and limitations allow the same HTML a post does. `audience`/`audience_rules` accepted the same shape as a plot's; meaningful for item/location only. A boon is refused (`409 use_boon_ledger`) - boons are made on `/boons` |
+| GET | `/{game_slug}/world-objects/{id}` | `be_view_characters` | Get one, with its attachments embedded (never `stored_name`). Hidden by its own audience for a non-manager unless a connected character reaches it |
+| PUT | `/{game_slug}/world-objects/{id}` | `be_manage_world_objects` | Update, cleaned and limited the same way as a create. `audience`/`audience_rules` updatable the same way. `409 use_boon_ledger` for a boon |
+| DELETE | `/{game_slug}/world-objects/{id}` | `be_manage_world_objects` | Delete, cascading its attachments (rows and files). `409 use_boon_ledger` for a boon, which is never deleted |
+
+## Attachments
+
+Files on a plot, item, or location (1.1.0 §2.6) - images and PDFs, 10 MB each, up to 20 for a
+plot/location or exactly 1 for an item. Never served from the WordPress media library; see
+Admin Guide "File Uploads."
+
+| Method | Path | Capability | Notes |
+|---|---|---|---|
+| POST | `/{game_slug}/attachments` | `be_submit_actions` OR `be_manage_plots` OR `be_manage_world_objects` | Upload. Requires `entity_type` (`plot`/`item`/`location`) and `entity_id`, plus one file in the request's file params. The real gate is per-entity: a Storyteller always, or a plot's own owner (`403` otherwise); items/locations are `be_manage_world_objects` only. `400 invalid_file_type`/`file_too_large` against the file's real content, never its claimed type; `409 limit_reached` at the cap |
+| GET | `/{game_slug}/attachments/{id}` | `be_view_characters` | Streams the raw file bytes (not JSON) once the caller's audience reaches the owning entity - `404` otherwise, with nothing about the file disclosed |
+| DELETE | `/{game_slug}/attachments/{id}` | `be_submit_actions` OR `be_manage_plots` OR `be_manage_world_objects` | Delete - the database row and the file together, or neither. Same per-entity gate as upload |
 
 ## Boons
 

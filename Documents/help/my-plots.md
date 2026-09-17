@@ -31,12 +31,17 @@ it. If nothing has reached you yet, this says so instead of a list.
   (the Storyteller's own status alongside what its dates say - pending, active, or finished),
   whether it's player-initiated or Storyteller-initiated, and a game date if it has one.
 - **Overview** - the Storyteller's prose for what this plot is. Read-only here.
+- **Files**, if anything's attached - a download link per file. You get an upload box and a
+  **Remove** button here too if this is your own character's plot; otherwise the list is
+  read-only.
 - **Under this plot** - any plots nested beneath this one, if there are any, each opening the
   same way when clicked.
-- **Timeline** - every entry posted so far, oldest first: what type it is, its date, and its
-  content. An entry created by a Storyteller's action-allocation tool or the background-use
-  ledger renders as a short summary (what was spent, and the result) rather than raw text.
-- A text box for posting your own entry, and **Post**.
+- **Timeline** - every entry posted so far, oldest first: what type it is, a **Private** or
+  **Directed** badge if it isn't an ordinary public entry, its date, and its content. An
+  entry created by a Storyteller's action-allocation tool or the background-use ledger
+  renders as a short summary (what was spent, and the result) rather than raw text.
+- A text box for posting your own entry, a **Public**/**Private - Storytellers and me only**
+  choice for who can read it, and **Post**.
 
 ## Common tasks
 
@@ -51,6 +56,12 @@ it. If nothing has reached you yet, this says so instead of a list.
 1. Open the plot.
 2. Type what your character does into the box at the bottom of the Timeline.
 3. Click **Post**.
+
+### Post something only you and your Storytellers should read
+
+1. Open the plot.
+2. Type your action, pick **Private - Storytellers and me only**, and click **Post**. Another
+   player who can otherwise read this plot never sees it.
 
 ### Follow a plot nested under another
 
@@ -67,7 +78,10 @@ it. If nothing has reached you yet, this says so instead of a list.
 - **You can only post an action.** A Storyteller's response, note, or resolution entries are
   theirs to write - you won't see a type picker here, only a plain box for your own action.
 - **Some entries never show here at all.** A Storyteller's private notes on a plot are
-  Storyteller-only and never reach this feed, even inside a plot you can otherwise read.
+  Storyteller-only and never reach this feed, even inside a plot you can otherwise read. The
+  same goes for another player's private reply, and for a Storyteller's message directed at
+  characters other than your own - you only ever see a directed message if one of your own
+  characters was named.
 - **Each of your characters has its own plot**, named after the character. Only you and your
   chronicle's Storytellers see it, and each game date's actions for that character sit under
   it.
@@ -97,5 +111,6 @@ it. If nothing has reached you yet, this says so instead of a list.
 - [Plots & Rumors](plot-manager.md)
 - [Roles](roles.md)
 - [Storyteller-Only Content](storyteller-only.md)
+- [Admin Guide - Who Can See a Plot, Item, or Location](../admin-guide.md#who-can-see-a-plot-item-or-location)
 - [Player Guide](../player-guide.md#5-plots-and-rumors)
 - [Storyteller Guide](../st-guide.md#8-plots-actions-and-rumors)

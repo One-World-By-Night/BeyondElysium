@@ -77,6 +77,16 @@
 	border-bottom: 1px solid #e0e0e0;
 }
 
+.be-game-dashboard__link-button {
+	border: none;
+	background: none;
+	padding: 0;
+	font: inherit;
+	color: #2271b1;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
 .be-game-dashboard__badge {
 	display: inline-block;
 	padding: 0.1rem 0.5rem;

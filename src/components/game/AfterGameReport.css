@@ -1,0 +1,24 @@
+.be-after-game-report__field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin-bottom: 0.75rem;
+}
+
+.be-after-game-report__field textarea {
+	width: 100%;
+	font: inherit;
+}
+
+.be-after-game-report__closed {
+	color: #b3261e;
+	font-weight: 600;
+}
+
+.be-after-game-report__error {
+	color: #b3261e;
+}
+
+.be-after-game-report__saved {
+	color: #2e7d32;
+}

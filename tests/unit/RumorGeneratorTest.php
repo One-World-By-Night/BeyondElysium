@@ -87,6 +87,24 @@ class RumorGeneratorTest extends TestCase {
 		$this->assertSame( [ 'field' => 'influences', 'operator' => 'contains', 'value' => 'Bureaucracy' ], $result[0]['target_query'] );
 	}
 
+	/** 1.1.0 §3.4 item 4: "The generator sets both on every influence rumor." */
+	public function test_an_influence_rumor_carries_its_own_rumor_level_key_and_match(): void {
+		$characters = [ $this->character( [ 'influences' => [ 'Bureaucracy' ] ] ) ];
+		$result     = Rumor_Generator::resolve_character_candidates( $characters, $this->toggles( [ 'influence_rumors' => true ] ), [] );
+
+		$this->assertSame( 'influences', $result[0]['rumor_level_key'] );
+		$this->assertSame( 'Bureaucracy', $result[0]['rumor_level_match'] );
+	}
+
+	/** A rumor with no per-character rating to gate on never carries these keys at all. */
+	public function test_a_personal_rumor_carries_no_rumor_level_key(): void {
+		$characters = [ $this->character( [ 'name' => 'Marcus Vitel' ] ) ];
+		$result     = Rumor_Generator::resolve_character_candidates( $characters, $this->toggles( [ 'personal_rumors' => true ] ), [] );
+
+		$this->assertArrayNotHasKey( 'rumor_level_key', $result[0] );
+		$this->assertArrayNotHasKey( 'rumor_level_match', $result[0] );
+	}
+
 	/**
 	 * 1.0.0-review F-037: both toggles saved and changed nothing. A character's group and
 	 * subgroup are the fields Grapevine's own Group()/Subgroup() name for its creature type -

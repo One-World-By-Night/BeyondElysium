@@ -19,6 +19,12 @@ class User_Settings {
 	/** User meta key. '1' when this user has opted out of change approved/rejected mail; absent/empty means notifications are on. */
 	const NOTIFICATIONS_OPT_OUT_META = 'be_notifications_opt_out';
 
+	/** User meta key (1.1.0 §3.5). One of PLOT_NOTIFY_VALUES; absent/empty means 'immediate'. The opt-out above still wins over this regardless of its value. */
+	const PLOT_NOTIFY_META = 'be_plot_notify';
+
+	/** @var string[] Valid PLOT_NOTIFY_META values. */
+	const PLOT_NOTIFY_VALUES = [ 'immediate', 'daily', 'off' ];
+
 	/**
 	 * Hooks this class's field rendering and saving onto WordPress's
 	 * profile screens (show/edit_user_profile,
@@ -52,6 +58,10 @@ class User_Settings {
 
 		$customize_checked    = get_user_meta( $user->ID, self::CUSTOMIZE_SHEET_META, true ) === '1';
 		$notifications_opt_out = get_user_meta( $user->ID, self::NOTIFICATIONS_OPT_OUT_META, true ) === '1';
+		$plot_notify = get_user_meta( $user->ID, self::PLOT_NOTIFY_META, true );
+		if ( ! in_array( $plot_notify, self::PLOT_NOTIFY_VALUES, true ) ) {
+			$plot_notify = 'immediate';
+		}
 		?>
 		<h2><?php esc_html_e( 'Beyond Elysium', 'beyond-elysium' ); ?></h2>
 		<table class="form-table" role="presentation">
@@ -97,6 +107,50 @@ class User_Settings {
 				</td>
 			</tr>
 			<?php endif; ?>
+			<?php if ( $can_set_notifications ) : ?>
+			<tr>
+				<th scope="row">
+					<?php esc_html_e( 'Plot Post Emails', 'beyond-elysium' ); ?>
+				</th>
+				<td>
+					<fieldset>
+						<legend class="screen-reader-text">
+							<?php esc_html_e( 'Plot Post Emails', 'beyond-elysium' ); ?>
+						</legend>
+						<label>
+							<input
+								type="radio"
+								name="<?php echo esc_attr( self::PLOT_NOTIFY_META ); ?>"
+								value="immediate"
+								<?php checked( $plot_notify, 'immediate' ); ?>
+							/>
+							<?php esc_html_e( 'Immediately', 'beyond-elysium' ); ?>
+						</label><br />
+						<label>
+							<input
+								type="radio"
+								name="<?php echo esc_attr( self::PLOT_NOTIFY_META ); ?>"
+								value="daily"
+								<?php checked( $plot_notify, 'daily' ); ?>
+							/>
+							<?php esc_html_e( 'Daily digest', 'beyond-elysium' ); ?>
+						</label><br />
+						<label>
+							<input
+								type="radio"
+								name="<?php echo esc_attr( self::PLOT_NOTIFY_META ); ?>"
+								value="off"
+								<?php checked( $plot_notify, 'off' ); ?>
+							/>
+							<?php esc_html_e( 'Off', 'beyond-elysium' ); ?>
+						</label>
+						<p class="description">
+							<?php esc_html_e( 'When a plot you can see gets a new post - who posted, on which plot, in which chronicle, with a link. Never the post itself.', 'beyond-elysium' ); ?>
+						</p>
+					</fieldset>
+				</td>
+			</tr>
+			<?php endif; ?>
 		</table>
 		<?php
 	}
@@ -123,6 +177,12 @@ class User_Settings {
 
 		$opted_out = isset( $_POST[ self::NOTIFICATIONS_OPT_OUT_META ] ) && $_POST[ self::NOTIFICATIONS_OPT_OUT_META ] === '1';
 		update_user_meta( $user_id, self::NOTIFICATIONS_OPT_OUT_META, $opted_out ? '1' : '' );
+
+		$plot_notify = isset( $_POST[ self::PLOT_NOTIFY_META ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::PLOT_NOTIFY_META ] ) ) : 'immediate';
+		if ( ! in_array( $plot_notify, self::PLOT_NOTIFY_VALUES, true ) ) {
+			$plot_notify = 'immediate';
+		}
+		update_user_meta( $user_id, self::PLOT_NOTIFY_META, $plot_notify );
 	}
 
 	/**

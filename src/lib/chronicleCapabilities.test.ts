@@ -1,4 +1,4 @@
-import { canIn } from './chronicleCapabilities';
+import { canIn, canAny } from './chronicleCapabilities';
 import type { MyCapabilities } from '../types';
 
 /**
@@ -22,6 +22,9 @@ describe( 'canIn', () => {
 		be_manage_connections: false,
 		be_manage_boons: false,
 		be_manage_world_objects: false,
+		be_manage_sessions: false,
+		be_manage_apr: false,
+		be_manage_factions: false,
 	};
 
 	beforeEach( () => {
@@ -50,5 +53,34 @@ describe( 'canIn', () => {
 		delete ( window as unknown as { beyondElysium?: unknown } )
 			.beyondElysium;
 		expect( canIn( 'be_manage_plots' ) ).toBe( false );
+	} );
+} );
+
+describe( 'canAny', () => {
+	const playerHere: MyCapabilities = {
+		be_manage_characters: false,
+		be_manage_plots: false,
+		be_manage_schemas: false,
+		be_manage_connections: false,
+		be_manage_boons: false,
+		be_manage_world_objects: false,
+		be_manage_sessions: false,
+		be_manage_apr: false,
+		be_manage_factions: false,
+	};
+
+	it( 'answers yes when any one capability is held', () => {
+		expect(
+			canAny( [ 'be_manage_plots', 'be_manage_characters' ], {
+				...playerHere,
+				be_manage_characters: true,
+			} )
+		).toBe( true );
+	} );
+
+	it( 'answers no when none are held', () => {
+		expect(
+			canAny( [ 'be_manage_plots', 'be_manage_characters' ], playerHere )
+		).toBe( false );
 	} );
 } );

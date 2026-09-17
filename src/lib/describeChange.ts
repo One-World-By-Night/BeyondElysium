@@ -24,6 +24,9 @@ interface ChangeDataLike {
 	fields?: Record< string, unknown >;
 	amount?: number;
 	reason?: string;
+	name?: string;
+	object_type?: string;
+	faction_type?: string;
 }
 
 /**
@@ -168,6 +171,22 @@ export function describeChange(
 
 		case 'import_note':
 			return changeData.reason || __( 'Imported note', 'beyond-elysium' );
+
+		case 'propose_world_object':
+			return sprintf(
+				/* translators: 1: object type (item/location/rote), 2: its proposed name */
+				__( 'Proposed %1$s: %2$s', 'beyond-elysium' ),
+				changeData.object_type ?? __( 'item', 'beyond-elysium' ),
+				changeData.name ?? __( 'Unknown', 'beyond-elysium' )
+			);
+
+		case 'propose_faction':
+			return sprintf(
+				/* translators: 1: faction type (coterie/pack/cabal/motley/other), 2: its proposed name */
+				__( 'Proposed %1$s: %2$s', 'beyond-elysium' ),
+				changeData.faction_type ?? __( 'group', 'beyond-elysium' ),
+				changeData.name ?? __( 'Unknown', 'beyond-elysium' )
+			);
 
 		default:
 			return __( 'Unknown change', 'beyond-elysium' );

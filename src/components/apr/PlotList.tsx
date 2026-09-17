@@ -458,6 +458,16 @@ export function PlotList( {
 								>
 									{ plot.status }
 								</span>
+								{ plot.audience !== 'everyone' && (
+									<span className="be-st-badge be-st-badge--audience">
+										{ plot.audience === 'storytellers'
+											? __( 'ST only', 'beyond-elysium' )
+											: __(
+													'Restricted',
+													'beyond-elysium'
+											  ) }
+									</span>
+								) }
 								<span>
 									{ plot.initiated_by === 'player'
 										? __( 'player', 'beyond-elysium' )

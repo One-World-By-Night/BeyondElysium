@@ -3,6 +3,7 @@
 namespace BeyondElysium\REST;
 
 use BeyondElysium\Models\Character;
+use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Services\Pdf_Signer;
 use BeyondElysium\Services\Report_Document;
 use BeyondElysium\Services\Report_Writer;
@@ -32,6 +33,17 @@ class Reports_Controller extends Base_Controller {
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'get_items' ],
 				'permission_callback' => $this->permission( 'be_view_reports' ),
+			],
+		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/reports/availability', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_availability' ],
+				'permission_callback' => $this->permission( 'be_view_reports' ),
+				'args'                => [
+					'character_id' => [ 'type' => 'integer', 'required' => false ],
+				],
 			],
 		] );
 
@@ -164,10 +176,18 @@ class Reports_Controller extends Base_Controller {
 			return $this->error( 'invalid_request', __( 'conditions must be valid JSON.', 'beyond-elysium' ), 400 );
 		}
 
-		$can_manage = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
-		$filters    = [ 'conditions' => $conditions, 'logic' => (string) $request->get_param( 'logic' ) ];
+		$can_manage   = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
+		$filters      = [ 'conditions' => $conditions, 'logic' => (string) $request->get_param( 'logic' ) ];
+		$holder_block = Report_Document::registry()[ $report_key ]['holder_block'] ?? null;
 
 		$character_id = $request->get_param( 'character_id' );
+
+		// 1.1.0 §3.15, C1 - a non-manager needs a character to scope this report to at all;
+		// a manager may still run it unscoped (every rote in the chronicle).
+		if ( $holder_block !== null && ! $can_manage && ( $character_id === null || $character_id === '' ) ) {
+			return $this->error( 'character_required', __( 'character_id is required.', 'beyond-elysium' ), 400 );
+		}
+
 		if ( $character_id !== null && $character_id !== '' ) {
 			$character = Character::find( (int) $character_id );
 			if ( ! $character || $character->owner_slug !== $request['game_slug'] ) {
@@ -177,6 +197,13 @@ class Reports_Controller extends Base_Controller {
 				return $this->error(
 					'ownership_denied',
 					__( 'You do not have permission to view this character.', 'beyond-elysium' ),
+					403
+				);
+			}
+			if ( $holder_block !== null && ! $can_manage && ! self::stack_has_block( $character, $holder_block ) ) {
+				return $this->error(
+					'report_not_available',
+					__( 'This report is not available for this character.', 'beyond-elysium' ),
 					403
 				);
 			}
@@ -210,6 +237,64 @@ class Reports_Controller extends Base_Controller {
 	private static function may_run( array $report ): bool {
 		$capability = Report_Document::required_capability( $report );
 		return $capability === null || \BeyondElysium\Core\Authorization::can( $capability );
+	}
+
+	/**
+	 * Whether a character's resolved stack includes a given block among its own
+	 * `stack_definition->sections` (1.1.0 §3.15, C1) - the same section-scan shape
+	 * `Cost_Engine`/`Change_Validator`/`Layout_Generator` already use for "does this stack
+	 * have this block", never a creature-type check (the engine pattern, kept).
+	 *
+	 * @param object $character
+	 * @param string $block_slug
+	 * @return bool
+	 */
+	private static function stack_has_block( object $character, string $block_slug ): bool {
+		$resolved = Creature_Stack::resolve( (string) $character->stack_slug, (string) $character->owner_slug );
+		$stack    = $resolved['stack'] ?? null;
+		foreach ( ( $stack->stack_definition->sections ?? [] ) as $section ) {
+			if ( ( $section->block_slug ?? null ) === $block_slug ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * `GET /{game_slug}/reports/availability?character_id=` (1.1.0 §3.15, C1) - whether each
+	 * card report (item-cards, location-cards, rote-cards) is available for the given
+	 * character. A manager always sees every card report available; for a non-manager, only
+	 * rote-cards (the one card report with a `holder_block`) can ever be unavailable - the
+	 * others have no such gate.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_availability( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$can_manage   = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
+		$character_id = $request->get_param( 'character_id' );
+		$character    = $character_id ? Character::find( (int) $character_id ) : null;
+		if ( $character && $character->owner_slug !== $request['game_slug'] ) {
+			$character = null;
+		}
+
+		$result = [];
+		foreach ( Report_Document::registry() as $key => $report ) {
+			if ( ( $report['shape'] ?? null ) !== 'card' || ! self::may_run( $report ) ) {
+				continue;
+			}
+			$holder_block = $report['holder_block'] ?? null;
+			$result[ $key ] = $can_manage
+				|| $holder_block === null
+				|| ( $character !== null && self::stack_has_block( $character, $holder_block ) );
+		}
+
+		return $this->success( $result );
 	}
 
 	/**

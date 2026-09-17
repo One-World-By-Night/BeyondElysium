@@ -33,6 +33,12 @@ class BooleanFlagCoverageTest extends TestCase {
 		'templates.is_system'              => 'Template',
 		'queries.match_all'                => 'Saved_Query',
 		'queries.is_recent_search'         => 'Saved_Query',
+		'plots.held'                       => 'Plot',
+		'plot_entries.held'                => 'Plot_Entry',
+		'secret_reveals.held'              => 'Secret_Reveal',
+		'factions.created_via_proposal'    => 'Faction',
+		'faction_members.is_leader'        => 'Faction_Member',
+		'positions.holder_public'          => 'Position',
 	];
 
 	public function test_every_tinyint_column_in_the_schema_is_a_known_flag(): void {

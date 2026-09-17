@@ -12,6 +12,9 @@ import BlockEditor from '../editors/BlockEditor';
 import ConfirmDialog from '../shared/ConfirmDialog';
 import HtmlEditor from '../shared/HtmlEditor';
 import HelpButton from '../shared/HelpButton';
+import AssigneePicker from '../shared/AssigneePicker';
+import AudiencePicker from '../shared/AudiencePicker';
+import SecretsPanel from '../shared/SecretsPanel';
 import { spanFor, sortedForFlow } from '../../lib/templateLayout';
 import { resolveSectionTitle } from '../../lib/resolveCrossBlockRef';
 import { pickMediaImage } from '../../lib/pickMediaImage';
@@ -24,7 +27,10 @@ import type {
 	ResolvedStack,
 	TemplateLayoutSection,
 	TemplateResolveResponse,
+	TraitListDefinition,
+	TieredPowerDefinition,
 } from '../../types';
+import type { AudienceRules, AudienceValue } from '../../types/plot';
 import type { SubmitResult } from '../../store/characterEditorStore';
 import './CharacterEditor.css';
 
@@ -103,6 +109,10 @@ export function CharacterEditor( {
 	const [ createError, setCreateError ] = useState< string | null >( null );
 	// admin-menu-consolidation-design.md: Storyteller-only, never shown to a player.
 	const [ createIsNpc, setCreateIsNpc ] = useState( false );
+	// "New NPC asks Quick or Full" (1.1.0 §3.7 item 1) - meaningless unless createIsNpc.
+	const [ createNpcDetail, setCreateNpcDetail ] = useState<
+		'full' | 'quick'
+	>( 'full' );
 	const canFlagNpc = canIn( 'be_manage_characters', capabilities );
 
 	// ---- shared ----
@@ -187,6 +197,103 @@ export function CharacterEditor( {
 		}
 	}
 
+	// Staff assignment (1.1.0 §3.6): an NPC's own staff owner. Same reload-after-save shape as toggleNpc().
+	const [ savingAssignee, setSavingAssignee ] = useState( false );
+
+	async function assignNpc( assignedTo: number | null ) {
+		if ( ! effectiveCharacterId ) {
+			return;
+		}
+		setSavingAssignee( true );
+		try {
+			await api
+				.characters( gameSlug )
+				.update( effectiveCharacterId, { assigned_to: assignedTo } );
+			await store.loadCharacter( effectiveCharacterId, gameSlug );
+		} catch ( err: unknown ) {
+			setHeaderSaveError( errorMessage( err ) );
+		} finally {
+			setSavingAssignee( false );
+		}
+	}
+
+	// "Make full NPC" (1.1.0 §3.7 item 1): a Quick NPC the Storyteller wants to develop
+	// further upgrades to the full sheet; there is no downgrade path back to Quick.
+	const [ savingNpcDetail, setSavingNpcDetail ] = useState( false );
+
+	async function upgradeToFullNpc() {
+		if ( ! effectiveCharacterId ) {
+			return;
+		}
+		setSavingNpcDetail( true );
+		try {
+			await api
+				.characters( gameSlug )
+				.update( effectiveCharacterId, { npc_detail: 'full' } );
+			await store.loadCharacter( effectiveCharacterId, gameSlug );
+		} catch ( err: unknown ) {
+			setHeaderSaveError( errorMessage( err ) );
+		} finally {
+			setSavingNpcDetail( false );
+		}
+	}
+
+	// Who's Who public profile (1.1.0 §3.7 item 3): a Storyteller-only panel, separate from
+	// the sheet itself, so it saves through its own PUT rather than the header-fields path.
+	const publicNameDraft = useRef( '' );
+	const publicDescriptionDraft = useRef( '' );
+	const [ publicImageUrl, setPublicImageUrl ] = useState< string | null >(
+		null
+	);
+	const [ publicImageId, setPublicImageId ] = useState< number | null >(
+		null
+	);
+	const [ profileAudience, setProfileAudience ] =
+		useState< AudienceValue >( 'storytellers' );
+	const [ profileAudienceRules, setProfileAudienceRules ] =
+		useState< AudienceRules | null >( null );
+	const [ savingProfile, setSavingProfile ] = useState( false );
+	const [ profileSaveMessage, setProfileSaveMessage ] = useState<
+		string | null
+	>( null );
+	const [ profileSaveError, setProfileSaveError ] = useState< string | null >(
+		null
+	);
+
+	async function pickPublicImage() {
+		const attachment = await pickMediaImage(
+			__( "Choose a Who's Who portrait", 'beyond-elysium' )
+		);
+		if ( ! attachment ) {
+			return;
+		}
+		setPublicImageId( attachment.id );
+		setPublicImageUrl( attachment.url );
+	}
+
+	async function saveProfile() {
+		if ( ! effectiveCharacterId ) {
+			return;
+		}
+		setSavingProfile( true );
+		setProfileSaveError( null );
+		setProfileSaveMessage( null );
+		try {
+			await api.npcs( gameSlug ).updateProfile( effectiveCharacterId, {
+				public_name: publicNameDraft.current,
+				public_description: publicDescriptionDraft.current,
+				public_image_id: publicImageId,
+				profile_audience: profileAudience,
+				profile_audience_rules: profileAudienceRules,
+			} );
+			setProfileSaveMessage( __( 'Saved.', 'beyond-elysium' ) );
+		} catch ( err: unknown ) {
+			setProfileSaveError( errorMessage( err ) );
+		} finally {
+			setSavingProfile( false );
+		}
+	}
+
 	async function pickPortrait() {
 		if ( ! effectiveCharacterId ) {
 			return;
@@ -262,12 +369,20 @@ export function CharacterEditor( {
 
 	// Both modes resolve the template once a stack_slug is known, matching the read-only sheet exactly.
 	const activeStackSlug = isCreateMode ? chosenStackSlug : store.stackSlug;
-	// An NPC gets the NPC sheet, which adds the Storyteller-only sections.
+	// An NPC gets the NPC sheet, which adds the Storyteller-only sections - npc_quick's
+	// shorter one when a Quick NPC hasn't been upgraded to npc_full (1.1.0 §3.7 item 1).
 	const isNpc = isCreateMode ? createIsNpc : !! store.character?.is_npc;
+	const npcDetail = isCreateMode
+		? createNpcDetail
+		: store.character?.npc_detail ?? 'full';
+	const npcTemplateType = npcDetail === 'quick' ? 'npc_quick' : 'npc_full';
 	useEffect( () => {
 		if ( activeStackSlug ) {
 			api.templates( gameSlug )
-				.resolve( activeStackSlug, isNpc ? 'npc_full' : templateType )
+				.resolve(
+					activeStackSlug,
+					isNpc ? npcTemplateType : templateType
+				)
 				.then( ( result ) => {
 					setTemplate( result );
 					setTemplateError( null );
@@ -283,7 +398,7 @@ export function CharacterEditor( {
 					);
 				} );
 		}
-	}, [ activeStackSlug, gameSlug, templateType, isNpc ] );
+	}, [ activeStackSlug, gameSlug, templateType, isNpc, npcTemplateType ] );
 
 	const activeStack = isCreateMode ? createStack : store.stack;
 	// Mirrors CharacterSheet.tsx's own flowing grid layout exactly, so the editor matches the printed sheet.
@@ -324,7 +439,14 @@ export function CharacterEditor( {
 				name: draftName.trim(),
 				stack_slug: chosenStackSlug,
 				sheet_data: draftSheetData,
-				...( canFlagNpc ? { is_npc: createIsNpc } : {} ),
+				...( canFlagNpc
+					? {
+							is_npc: createIsNpc,
+							...( createIsNpc
+								? { npc_detail: createNpcDetail }
+								: {} ),
+					  }
+					: {} ),
 			} );
 
 			if ( character.join_pending ) {
@@ -434,6 +556,32 @@ export function CharacterEditor( {
 					</div>
 				) }
 
+				{ canFlagNpc && createIsNpc && (
+					<div className="be-character-editor__field">
+						<label>
+							<input
+								type="radio"
+								name="be-npc-detail"
+								checked={ createNpcDetail === 'full' }
+								onChange={ () => setCreateNpcDetail( 'full' ) }
+							/>{ ' ' }
+							{ __( 'Full sheet', 'beyond-elysium' ) }
+						</label>
+						<label>
+							<input
+								type="radio"
+								name="be-npc-detail"
+								checked={ createNpcDetail === 'quick' }
+								onChange={ () => setCreateNpcDetail( 'quick' ) }
+							/>{ ' ' }
+							{ __(
+								'Quick stats only - enough to run this NPC in a scene',
+								'beyond-elysium'
+							) }
+						</label>
+					</div>
+				) }
+
 				{ activeStack && (
 					<div className="be-character-editor__grid">
 						{ sections.map( ( section ) => {
@@ -476,6 +624,17 @@ export function CharacterEditor( {
 												'identity_field' ) && (
 											<HelpButton helpKey="pools-identity-editor" />
 										) }
+										{ ( block.section_type ===
+											'trait_list' ||
+											block.section_type ===
+												'tiered_power' ) &&
+											(
+												block.definition as
+													| TraitListDefinition
+													| TieredPowerDefinition
+											 ).player_order && (
+												<HelpButton helpKey="player-order" />
+											) }
 									</div>
 									<BlockEditor
 										blockSlug={ section.block_slug }
@@ -556,6 +715,22 @@ export function CharacterEditor( {
 			notes: notesDraft.current,
 		};
 		setPortraitUrl( store.character.image_url ?? null );
+		publicNameDraft.current = store.character.public_name ?? '';
+		publicDescriptionDraft.current =
+			store.character.public_description ?? '';
+		// No dedicated URL field for public_image_id comes back from the sheet-header
+		// response; a freshly-picked one shows immediately via pickPublicImage()'s own
+		// attachment.url, same as the main portrait picker does.
+		setPublicImageId( store.character.public_image_id ?? null );
+		setPublicImageUrl( null );
+		setProfileAudience(
+			store.character.profile_audience ?? 'storytellers'
+		);
+		setProfileAudienceRules(
+			store.character.profile_audience_rules ?? null
+		);
+		setProfileSaveMessage( null );
+		setProfileSaveError( null );
 		headerDraftsSeeded.current = effectiveCharacterId;
 	}
 
@@ -647,6 +822,31 @@ export function CharacterEditor( {
 							{ __( 'This is an NPC', 'beyond-elysium' ) }
 						</label>
 					) }
+					{ canFlagNpc && canManage && isNpc && (
+						<label className="be-character-editor__npc-assignee">
+							{ __( 'Assigned to', 'beyond-elysium' ) }{ ' ' }
+							<AssigneePicker
+								gameSlug={ gameSlug }
+								value={ store.character?.assigned_to ?? null }
+								disabled={ savingAssignee }
+								onChange={ assignNpc }
+							/>
+						</label>
+					) }
+					{ canFlagNpc &&
+						canManage &&
+						isNpc &&
+						npcDetail === 'quick' && (
+							<button
+								type="button"
+								disabled={ savingNpcDetail }
+								onClick={ upgradeToFullNpc }
+							>
+								{ savingNpcDetail
+									? __( 'Upgrading…', 'beyond-elysium' )
+									: __( 'Make Full NPC', 'beyond-elysium' ) }
+							</button>
+						) }
 				</div>
 			</div>
 
@@ -717,6 +917,121 @@ export function CharacterEditor( {
 				) }
 			</div>
 
+			{ canFlagNpc && canManage && isNpc && (
+				<div
+					className="be-character-editor__section be-character-editor__profile"
+					key={ `profile-${ effectiveCharacterId }` }
+				>
+					<div className="be-help-heading">
+						<h4>{ __( "Who's Who Profile", 'beyond-elysium' ) }</h4>
+						<HelpButton helpKey="whos-who" />
+					</div>
+					<p className="be-character-editor__profile-hint">
+						{ __(
+							"What a player sees about this NPC in the chronicle's Who's Who directory - separate from the sheet above.",
+							'beyond-elysium'
+						) }
+					</p>
+
+					<div className="be-character-editor__field">
+						<label
+							htmlFor={ `be-public-name-${ effectiveCharacterId }` }
+						>
+							{ __( 'Display Name', 'beyond-elysium' ) }
+						</label>
+						<input
+							id={ `be-public-name-${ effectiveCharacterId }` }
+							type="text"
+							placeholder={ store.character.name }
+							defaultValue={ publicNameDraft.current }
+							onChange={ ( e ) =>
+								( publicNameDraft.current = e.target.value )
+							}
+						/>
+					</div>
+
+					<h4>{ __( 'Description', 'beyond-elysium' ) }</h4>
+					<HtmlEditor
+						id={ `be-public-description-${ effectiveCharacterId }` }
+						defaultValue={ publicDescriptionDraft.current }
+						onChange={ ( html ) =>
+							( publicDescriptionDraft.current = html )
+						}
+						aiAssist={ {
+							capability: 'be_manage_characters',
+							fieldContext: 'npc_public_description',
+							gameSlug,
+						} }
+					/>
+
+					<div className="be-character-editor__field">
+						{ publicImageUrl && (
+							<img
+								className="be-character-editor__portrait"
+								src={ publicImageUrl }
+								alt=""
+							/>
+						) }
+						<button type="button" onClick={ pickPublicImage }>
+							{ publicImageId
+								? __( 'Change portrait…', 'beyond-elysium' )
+								: __(
+										"Choose a Who's Who portrait…",
+										'beyond-elysium'
+								  ) }
+						</button>
+					</div>
+
+					<h4>
+						{ __( 'Who Can See This Profile', 'beyond-elysium' ) }
+					</h4>
+					<AudiencePicker
+						gameSlug={ gameSlug }
+						audience={ profileAudience }
+						audienceRules={ profileAudienceRules }
+						onChange={ ( audience, rules ) => {
+							setProfileAudience( audience );
+							setProfileAudienceRules( rules );
+						} }
+					/>
+
+					<div className="be-character-editor__header-text-actions">
+						<button
+							type="button"
+							disabled={ savingProfile }
+							onClick={ saveProfile }
+						>
+							{ savingProfile
+								? __( 'Saving…', 'beyond-elysium' )
+								: __( 'Save Profile', 'beyond-elysium' ) }
+						</button>
+						{ profileSaveMessage && (
+							<span className="be-character-editor__header-text-status">
+								{ profileSaveMessage }
+							</span>
+						) }
+						{ profileSaveError && (
+							<span
+								className="be-character-editor__error"
+								role="alert"
+							>
+								{ profileSaveError }
+							</span>
+						) }
+					</div>
+				</div>
+			) }
+
+			{ canFlagNpc && canManage && isNpc && effectiveCharacterId && (
+				<div className="be-character-editor__section">
+					<SecretsPanel
+						gameSlug={ gameSlug }
+						entityType="npc"
+						entityId={ effectiveCharacterId }
+					/>
+				</div>
+			) }
+
 			<div className="be-character-editor__grid">
 				{ sections.map( ( section ) => {
 					const block = store.stack?.blocks[ section.block_slug ];
@@ -751,6 +1066,15 @@ export function CharacterEditor( {
 										'identity_field' ) && (
 									<HelpButton helpKey="pools-identity-editor" />
 								) }
+								{ ( block.section_type === 'trait_list' ||
+									block.section_type === 'tiered_power' ) &&
+									(
+										block.definition as
+											| TraitListDefinition
+											| TieredPowerDefinition
+									 ).player_order && (
+										<HelpButton helpKey="player-order" />
+									) }
 							</div>
 							<BlockEditor
 								blockSlug={ section.block_slug }
@@ -761,6 +1085,7 @@ export function CharacterEditor( {
 								readOnly={ readOnly }
 								sheetData={ store.sheetData }
 								gameSlug={ gameSlug }
+								characterId={ effectiveCharacterId }
 							/>
 						</div>
 					);

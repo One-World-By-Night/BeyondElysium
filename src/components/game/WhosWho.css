@@ -1,0 +1,46 @@
+.be-whos-who__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+	gap: 1rem;
+}
+
+.be-whos-who__card {
+	padding: 0.75rem;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+}
+
+.be-whos-who__portrait {
+	display: block;
+	width: 100%;
+	max-height: 12rem;
+	object-fit: cover;
+	border-radius: 4px;
+	margin-bottom: 0.5rem;
+}
+
+.be-whos-who__card h3 {
+	margin: 0 0 0.4rem;
+}
+
+.be-whos-who__meta {
+	margin-top: 0.5rem;
+}
+
+.be-whos-who__meta dt {
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	color: #666;
+}
+
+.be-whos-who__meta dd {
+	margin: 0 0 0.4rem;
+}
+
+.be-whos-who__error {
+	padding: 0.75rem;
+	border: 1px solid #c00;
+	border-radius: 4px;
+	color: #c00;
+}

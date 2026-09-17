@@ -46,5 +46,13 @@
         [ { "name": "Alertness", "total": 1 }, { "name": "Occult", "total": 2 } ],
         [ { "name": "Occult", "total": 2 }, { "name": "Alertness", "total": 1 } ],
         [ { "name": "Occult", "total": 2 }, { "name": "Alertness", "total": 1 } ]
+    ],
+    "sectionTotal": [
+        5,
+        null,
+        null,
+        null,
+        5,
+        0
     ]
 }

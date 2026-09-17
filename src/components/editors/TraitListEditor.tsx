@@ -12,6 +12,14 @@ import WithDots from '../shared/Dots';
 import { groupTraitsByField } from '../../lib/groupTraitsByField';
 import { costChoices } from '../../lib/costChoices';
 import { DOT } from '../../lib/displayTemper';
+import { useCostDisplayMode } from '../../lib/costDisplayMode';
+import {
+	moveUp,
+	moveDown,
+	moveTo,
+	reorderErrorMessage,
+} from '../../lib/reorderArray';
+import api from '../../api/client';
 import type { TraitListDefinition } from '../../types';
 import './TraitListEditor.css';
 
@@ -35,6 +43,9 @@ export interface TraitListEditorProps {
 	definition: TraitListDefinition;
 	onChange: ( blockSlug: string, nextData: EditableTrait[] ) => void;
 	readOnly?: boolean;
+	/** Needed only for a player_order block's "Save order" call (1.1.0 D4). */
+	gameSlug?: string;
+	characterId?: number;
 }
 
 /** `index === null` means the modal is adding a new trait, not editing an existing row. */
@@ -69,6 +80,8 @@ export function TraitListEditor( {
 	definition,
 	onChange,
 	readOnly,
+	gameSlug,
+	characterId,
 }: TraitListEditorProps ) {
 	// Memoized: large catalogs make this expensive to recompute on every keystroke.
 	const itemNames = useMemo(
@@ -76,6 +89,7 @@ export function TraitListEditor( {
 		[ definition.items ]
 	);
 	const [ draft, setDraft ] = useState< DraftState | null >( null );
+	const [ costNumbers, setCostNumbers ] = useCostDisplayMode();
 
 	const emit = ( next: EditableTrait[] ) => onChange( blockSlug, next );
 
@@ -210,10 +224,63 @@ export function TraitListEditor( {
 		() => data.map( ( row, index ) => ( { ...row, index } ) ),
 		[ data ]
 	);
+	// 1.1.0 D4: a player_order block never groups - the player's own order is
+	// their grouping.
 	const grouped = useMemo(
-		() => groupTraitsByField( indexedRows, definition ),
+		() =>
+			definition.player_order
+				? null
+				: groupTraitsByField( indexedRows, definition ),
 		[ indexedRows, definition ]
 	);
+
+	// --- Reorder mode (player_order blocks only) ---
+	const visibleRows = indexedRows.filter( ( row ) => ! row._removed );
+	const [ reordering, setReordering ] = useState( false );
+	const [ order, setOrder ] = useState< number[] >( [] );
+	const [ dragPosition, setDragPosition ] = useState< number | null >( null );
+	const [ savingOrder, setSavingOrder ] = useState( false );
+	const [ orderError, setOrderError ] = useState< string | null >( null );
+
+	const startReorder = () => {
+		setOrder( visibleRows.map( ( _, i ) => i ) );
+		setOrderError( null );
+		setReordering( true );
+	};
+
+	const cancelReorder = () => {
+		setReordering( false );
+		setOrderError( null );
+	};
+
+	const saveOrder = async () => {
+		if ( ! gameSlug || characterId === undefined ) {
+			return;
+		}
+		setSavingOrder( true );
+		setOrderError( null );
+		const finalOrder = order.map( ( pos ) => visibleRows[ pos ].index );
+		const names = order.map( ( pos ) => visibleRows[ pos ].name );
+		try {
+			await api
+				.characters( gameSlug )
+				.saveOrder( characterId, blockSlug, finalOrder, names );
+			emit( finalOrder.map( ( i ) => data[ i ] ) );
+			setReordering( false );
+		} catch ( err ) {
+			setOrderError(
+				reorderErrorMessage(
+					err,
+					__(
+						'Could not save the new order. Please try again.',
+						'beyond-elysium'
+					)
+				)
+			);
+		} finally {
+			setSavingOrder( false );
+		}
+	};
 
 	const renderRow = ( row: EditableTrait & { index: number } ) => (
 		<li
@@ -227,11 +294,21 @@ export function TraitListEditor( {
 				<span className="be-trait-list-editor__summary-name">
 					{ row.name }
 				</span>
-				{ typeof row.count === 'number' && row.count > 0 && (
-					<span className="be-trait-list-editor__dots">
-						<WithDots text={ DOT.repeat( row.count ) } />
-					</span>
-				) }
+				{ typeof row.count === 'number' &&
+					row.count > 0 &&
+					( definition.count_is_cost && costNumbers ? (
+						<span className="be-trait-list-editor__summary-detail">
+							{ sprintf(
+								/* translators: %d: XP cost */
+								__( '%d XP', 'beyond-elysium' ),
+								row.count
+							) }
+						</span>
+					) : (
+						<span className="be-trait-list-editor__dots">
+							<WithDots text={ DOT.repeat( row.count ) } />
+						</span>
+					) ) }
 				{ row.specialization && (
 					<span className="be-trait-list-editor__summary-detail">
 						({ row.specialization })
@@ -272,43 +349,187 @@ export function TraitListEditor( {
 
 	return (
 		<div className="be-trait-list-editor" data-block-slug={ blockSlug }>
-			{ grouped ? (
-				grouped.map( ( { group, subgroups } ) => (
-					<div className="be-trait-list-editor__group" key={ group }>
-						<h4 className="be-trait-list-editor__category">
-							{ group }
-						</h4>
-						{ subgroups.map( ( { subgroup, items } ) => (
-							<div
-								className="be-trait-list-editor__subgroup"
-								key={ subgroup ?? '' }
-							>
-								{ subgroup && (
-									<h5 className="be-trait-list-editor__subcategory">
-										{ subgroup }
-									</h5>
-								) }
-								<ul className="be-trait-list-editor__rows">
-									{ items.map( renderRow ) }
-								</ul>
-							</div>
-						) ) }
-					</div>
-				) )
-			) : (
-				<ul className="be-trait-list-editor__rows">
-					{ indexedRows.map( renderRow ) }
-				</ul>
-			) }
-
-			{ ! readOnly && (
+			{ definition.count_is_cost && ! readOnly && (
 				<button
 					type="button"
-					className="be-trait-list-editor__add-trigger"
-					onClick={ openAdd }
+					className="be-trait-list-editor__cost-toggle"
+					onClick={ () => setCostNumbers( ! costNumbers ) }
+					aria-pressed={ costNumbers }
+					title={ __(
+						'Applies to every combo on this sheet',
+						'beyond-elysium'
+					) }
 				>
-					{ __( '+ Add', 'beyond-elysium' ) }
+					{ costNumbers
+						? __( 'Show as dots', 'beyond-elysium' )
+						: __( 'XP costs as numbers', 'beyond-elysium' ) }
 				</button>
+			) }
+			{ definition.player_order &&
+				! readOnly &&
+				gameSlug &&
+				characterId !== undefined &&
+				! reordering && (
+					<button
+						type="button"
+						className="be-trait-list-editor__reorder-trigger"
+						onClick={ startReorder }
+					>
+						{ __( 'Reorder', 'beyond-elysium' ) }
+					</button>
+				) }
+
+			{ reordering ? (
+				<>
+					<ul className="be-trait-list-editor__rows be-trait-list-editor__rows--reorder">
+						{ order.map( ( pos, uiIndex ) => {
+							const row = visibleRows[ pos ];
+							return (
+								<li
+									key={ `${ row.name }-${ row.index }` }
+									className="be-trait-list-editor__row"
+									draggable
+									onDragStart={ () =>
+										setDragPosition( uiIndex )
+									}
+									onDragOver={ ( e ) => e.preventDefault() }
+									onDrop={ () => {
+										if ( dragPosition !== null ) {
+											setOrder( ( prev ) =>
+												moveTo(
+													prev,
+													dragPosition,
+													uiIndex
+												)
+											);
+										}
+										setDragPosition( null );
+									} }
+								>
+									<span
+										className="be-trait-list-editor__drag-handle"
+										aria-hidden="true"
+									>
+										⠿
+									</span>
+									<span className="be-trait-list-editor__summary-name">
+										{ row.name }
+									</span>
+									<button
+										type="button"
+										aria-label={ sprintf(
+											/* translators: %1$s: trait or item name */
+											__(
+												'Move %1$s up',
+												'beyond-elysium'
+											),
+											row.name
+										) }
+										disabled={ uiIndex === 0 }
+										onClick={ () =>
+											setOrder( ( prev ) =>
+												moveUp( prev, uiIndex )
+											)
+										}
+									>
+										{ __( '▲', 'beyond-elysium' ) }
+									</button>
+									<button
+										type="button"
+										aria-label={ sprintf(
+											/* translators: %1$s: trait or item name */
+											__(
+												'Move %1$s down',
+												'beyond-elysium'
+											),
+											row.name
+										) }
+										disabled={
+											uiIndex === order.length - 1
+										}
+										onClick={ () =>
+											setOrder( ( prev ) =>
+												moveDown( prev, uiIndex )
+											)
+										}
+									>
+										{ __( '▼', 'beyond-elysium' ) }
+									</button>
+								</li>
+							);
+						} ) }
+					</ul>
+					{ orderError && (
+						<p
+							className="be-trait-list-editor__order-error"
+							role="alert"
+						>
+							{ orderError }
+						</p>
+					) }
+					<div className="be-trait-list-editor__order-actions">
+						<button
+							type="button"
+							onClick={ saveOrder }
+							disabled={ savingOrder }
+						>
+							{ savingOrder
+								? __( 'Saving…', 'beyond-elysium' )
+								: __( 'Save order', 'beyond-elysium' ) }
+						</button>
+						<button
+							type="button"
+							onClick={ cancelReorder }
+							disabled={ savingOrder }
+						>
+							{ __( 'Cancel', 'beyond-elysium' ) }
+						</button>
+					</div>
+				</>
+			) : (
+				<>
+					{ grouped ? (
+						grouped.map( ( { group, subgroups } ) => (
+							<div
+								className="be-trait-list-editor__group"
+								key={ group }
+							>
+								<h4 className="be-trait-list-editor__category">
+									{ group }
+								</h4>
+								{ subgroups.map( ( { subgroup, items } ) => (
+									<div
+										className="be-trait-list-editor__subgroup"
+										key={ subgroup ?? '' }
+									>
+										{ subgroup && (
+											<h5 className="be-trait-list-editor__subcategory">
+												{ subgroup }
+											</h5>
+										) }
+										<ul className="be-trait-list-editor__rows">
+											{ items.map( renderRow ) }
+										</ul>
+									</div>
+								) ) }
+							</div>
+						) )
+					) : (
+						<ul className="be-trait-list-editor__rows">
+							{ indexedRows.map( renderRow ) }
+						</ul>
+					) }
+
+					{ ! readOnly && (
+						<button
+							type="button"
+							className="be-trait-list-editor__add-trigger"
+							onClick={ openAdd }
+						>
+							{ __( '+ Add', 'beyond-elysium' ) }
+						</button>
+					) }
+				</>
 			) }
 
 			{ draft && (

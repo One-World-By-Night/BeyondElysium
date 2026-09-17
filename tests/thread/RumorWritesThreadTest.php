@@ -6,7 +6,6 @@ require_once __DIR__ . '/../support/RowLockProbe.php';
 
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
-use BeyondElysium\Services\Query_Engine;
 use BeyondElysium\Services\Rumor_Generator;
 use BeyondElysium\Tests\Support\RowLockProbe;
 use WP_REST_Request;
@@ -35,8 +34,6 @@ class RumorWritesThreadTest extends WP_UnitTestCase {
 
 		// Two rumors a date: Public Knowledge, and the character's own.
 		$this->game_id = (int) Game::create( [ 'slug' => $this->slug, 'name' => 'Rumor Writes', 'settings' => [ 'apr' => [ 'personal_rumors' => true ] ] ] );
-		// Recipients are remembered for the request; each test's character is new.
-		( new \ReflectionProperty( Query_Engine::class, 'target_query_cache' ) )->setValue( null, [] );
 		Character::create( [
 			'name' => 'Rumor Writes Character', 'stack_slug' => 'vampire', 'status' => 'active',
 			'owner_type' => 'chronicle', 'owner_slug' => $this->slug,

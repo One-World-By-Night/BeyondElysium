@@ -36,6 +36,16 @@ class Plot {
 	const PLOT_CATEGORIES = [ 'arc', 'subplot', 'season', 'episode' ];
 
 	/**
+	 * Valid stored `audience` values (1.1.0 §2.1) - duplicated from `Services\Audience::VALUES`
+	 * rather than imported, the same reasoning `actor_ownership_exclusion()` below already
+	 * gives for duplicating the literal `'apr_actor'`: Models does not depend on Services in
+	 * this codebase.
+	 *
+	 * @var string[]
+	 */
+	const AUDIENCE_VALUES = [ 'everyone', 'storytellers', 'restricted' ];
+
+	/**
 	 * Look up a single plot by its primary key. A row whose target_query or
 	 * faction_goals field fails to decode is treated as corrupt: the error is
 	 * logged and that field is returned as null rather than the plot being
@@ -155,6 +165,15 @@ class Plot {
 			array_push( $values, ...$character_plots[1] );
 		}
 
+		if ( array_key_exists( 'assigned_to', $args ) ) {
+			if ( $args['assigned_to'] === null ) {
+				$where[] = 'assigned_to IS NULL';
+			} else {
+				$where[]  = 'assigned_to = %d';
+				$values[] = (int) $args['assigned_to'];
+			}
+		}
+
 		// Aliased as p: actor_ownership_exclusion()'s NOT EXISTS clause correlates against p.id.
 		$sql = 'SELECT p.* FROM ' . $table . ' p WHERE ' . implode( ' AND ', $where );
 
@@ -222,6 +241,15 @@ class Plot {
 		if ( $character_plots !== null ) {
 			$where[] = $character_plots[0];
 			array_push( $values, ...$character_plots[1] );
+		}
+
+		if ( array_key_exists( 'assigned_to', $args ) ) {
+			if ( $args['assigned_to'] === null ) {
+				$where[] = 'assigned_to IS NULL';
+			} else {
+				$where[]  = 'assigned_to = %d';
+				$values[] = (int) $args['assigned_to'];
+			}
 		}
 
 		// A character's own plot holds that character's story; it isn't a storyline of its own.
@@ -372,6 +400,21 @@ class Plot {
 	}
 
 	/**
+	 * Every plot held for one release batch (§3.2) - a batch's own "Rumors" list, and
+	 * Release_Engine::release()'s recipient collection for the plot half of a batch.
+	 *
+	 * @param int $release_batch_id
+	 * @return object[]
+	 */
+	public static function for_release_batch( int $release_batch_id ): array {
+		$rows = Manager::get_results(
+			'SELECT * FROM ' . Manager::table( 'plots' ) . ' WHERE release_batch_id = %d ORDER BY updated_at DESC',
+			$release_batch_id
+		);
+		return array_map( [ self::class, 'decode_row' ], $rows );
+	}
+
+	/**
 	 * Derive a plot's lifecycle state from its dates relative to a reference
 	 * date, independent of the stored status column. Returns 'pending' when
 	 * as_of is before start_date, 'active' when within range or end_date is
@@ -458,6 +501,25 @@ class Plot {
 			return false;
 		}
 
+		if ( isset( $data['audience'] ) ) {
+			if ( ! in_array( $data['audience'], self::AUDIENCE_VALUES, true ) ) {
+				return false;
+			}
+			$insert['audience'] = $data['audience'];
+		}
+		if ( array_key_exists( 'audience_rules', $data ) ) {
+			$insert['audience_rules'] = self::encode_json_field( $data['audience_rules'] );
+			if ( $insert['audience_rules'] === false ) {
+				return false;
+			}
+		}
+		if ( array_key_exists( 'rumor_level_key', $data ) ) {
+			$insert['rumor_level_key'] = $data['rumor_level_key'];
+		}
+		if ( array_key_exists( 'rumor_level_match', $data ) ) {
+			$insert['rumor_level_match'] = $data['rumor_level_match'];
+		}
+
 		return Manager::insert( 'plots', $insert );
 	}
 
@@ -476,7 +538,8 @@ class Plot {
 			'title', 'description', 'status', 'initiated_by', 'first_introduced',
 			'start_date', 'end_date', 'game_date', 'resolution_details', 'resolution_impact',
 			'target_query', 'st_notes', 'parent_plot_id', 'plot_category', 'faction_goals',
-			'cliffhanger', 'image_id',
+			'cliffhanger', 'image_id', 'audience', 'audience_rules', 'held', 'release_batch_id',
+			'rumor_level_key', 'rumor_level_match', 'assigned_to',
 		];
 
 		$update = [];
@@ -490,6 +553,9 @@ class Plot {
 			return false;
 		}
 		if ( isset( $update['initiated_by'] ) && ! in_array( $update['initiated_by'], self::INITIATORS, true ) ) {
+			return false;
+		}
+		if ( isset( $update['audience'] ) && ! in_array( $update['audience'], self::AUDIENCE_VALUES, true ) ) {
 			return false;
 		}
 		if ( ! empty( $update['plot_category'] ) && ! in_array( $update['plot_category'], self::PLOT_CATEGORIES, true ) ) {
@@ -510,6 +576,15 @@ class Plot {
 				self::assert_no_cycle( $id, $update['parent_plot_id'] );
 			}
 		}
+		if ( array_key_exists( 'held', $update ) ) {
+			$update['held'] = $update['held'] ? 1 : 0;
+		}
+		if ( array_key_exists( 'release_batch_id', $update ) ) {
+			$update['release_batch_id'] = ! empty( $update['release_batch_id'] ) ? (int) $update['release_batch_id'] : null;
+		}
+		if ( array_key_exists( 'assigned_to', $update ) ) {
+			$update['assigned_to'] = ! empty( $update['assigned_to'] ) ? (int) $update['assigned_to'] : null;
+		}
 		if ( empty( $update ) ) {
 			return false;
 		}
@@ -520,7 +595,13 @@ class Plot {
 		if ( array_key_exists( 'faction_goals', $update ) ) {
 			$update['faction_goals'] = self::encode_json_field( $update['faction_goals'] );
 		}
-		if ( ( $update['target_query'] ?? null ) === false || ( $update['faction_goals'] ?? null ) === false ) {
+		if ( array_key_exists( 'audience_rules', $update ) ) {
+			$update['audience_rules'] = self::encode_json_field( $update['audience_rules'] );
+		}
+		if ( ( $update['target_query'] ?? null ) === false
+			|| ( $update['faction_goals'] ?? null ) === false
+			|| ( $update['audience_rules'] ?? null ) === false
+		) {
 			return false;
 		}
 
@@ -577,6 +658,11 @@ class Plot {
 
 		Plot_Entry::delete_for_plot( $id );
 		Connection::delete_for_entity( 'plot', $id );
+		// Row only - the file on disk is this class's caller's job (Plots_Controller::delete_item()),
+		// never this Model's: removing it needs Services\Attachment_Storage, and Models does not
+		// depend on Services in this codebase (the same reasoning Plot::AUDIENCE_VALUES's own
+		// docblock gives for duplicating a Services constant rather than importing it).
+		Attachment::delete_for_entity( 'plot', $id );
 		$result = Manager::delete( 'plots', [ 'id' => $id ] );
 
 		if ( $result === false ) {
@@ -638,7 +724,7 @@ class Plot {
 	 * @return object
 	 */
 	private static function decode_row( object $row ): object {
-		foreach ( [ 'target_query', 'faction_goals' ] as $field ) {
+		foreach ( [ 'target_query', 'faction_goals', 'audience_rules' ] as $field ) {
 			if ( ! property_exists( $row, $field ) || $row->$field === null ) {
 				continue;
 			}
@@ -655,6 +741,12 @@ class Plot {
 			}
 
 			$row->$field = $decoded;
+		}
+
+		// D51/D53's own bug class: $wpdb returns tinyint(1) as the string "0", which is
+		// truthy in JavaScript. Cast to a real bool per the 1.0.1 owner ruling.
+		if ( property_exists( $row, 'held' ) ) {
+			$row->held = (bool) $row->held;
 		}
 
 		return $row;

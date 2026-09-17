@@ -197,6 +197,22 @@ class Creature_Stack {
 	 * @param string $game_slug
 	 * @return array|null [ 'stack' => object, 'blocks' => array ] or null if not found.
 	 */
+	/**
+	 * Global blocks no stack's own `stack_definition` ever references, because they only ever
+	 * reach a character through an NPC template's layout instead (`npc_full`/`npc_quick`,
+	 * 1.1.0 §3.7) - not creature-specific, shared by every stack. Included unconditionally
+	 * below so `Creature_Stack::resolve()`'s own blocks map has them ready whenever a caller's
+	 * layout happens to reference one; an unreferenced entry here is simply never rendered,
+	 * the same as any other block a chronicle's layout doesn't currently use.
+	 *
+	 * Found as a real bug (not by design), while building the NPC casting brief (N2): every
+	 * `npc_full`/`npc_quick` template has referenced `npc-roleplaying-notes` since it shipped
+	 * in v0.21.28, but this method's own blocks map never included it, so the section has
+	 * silently never rendered anywhere - the character editor, the read-only sheet, or a
+	 * signed PDF - for any NPC, in any chronicle, ever.
+	 */
+	private const GLOBAL_NPC_BLOCK_SLUGS = [ 'npc-roleplaying-notes', 'npc-quick-stats' ];
+
 	public static function resolve( string $slug, string $game_slug = '' ) {
 		$stack = self::find_by_slug( $slug );
 		if ( ! $stack ) {
@@ -214,7 +230,7 @@ class Creature_Stack {
 			}
 		}
 
-		$block_slugs = array_values( array_unique( $block_slugs ) );
+		$block_slugs = array_values( array_unique( array_merge( $block_slugs, self::GLOBAL_NPC_BLOCK_SLUGS ) ) );
 		$blocks = Schema_Block::find_by_slugs_for_game( $block_slugs, $game_slug );
 
 		return [

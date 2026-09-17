@@ -191,6 +191,13 @@ return [
 			[ 'Powers', 'powers', 'field' ],
 			[ 'Abilities', 'abilities', 'field' ],
 			[ 'Negatives', 'negatives', 'field' ],
+			// 1.1.0 §3.12 item 2 - reads row.properties directly, deliberately bypassing
+			// Query_Engine/Field_Registry: uses_left/expires_on never existed in Grapevine's
+			// own qkdata.gvd, so they cannot join query-inventories.php's exact 1:1 mirror of
+			// it (QueryInventoryMapTest) without corrupting that invariant for a field that
+			// was never part of what it verifies.
+			[ 'Uses Left', 'usesleft', 'special' ],
+			[ 'Expires', 'expireson', 'special' ],
 		],
 	],
 
@@ -199,6 +206,10 @@ return [
 		'title'   => 'Rote Cards',
 		'shape'   => 'card',
 		'entity'  => 'rote',
+		// 1.1.0 §3.15, C1 - a non-manager needs their own character's resolved stack to
+		// include this block (the engine pattern kept: a rule reads a block, never a
+		// creature type), and only sees cards for rotes that character actually holds.
+		'holder_block' => 'mage-rotes',
 		'columns' => [
 			[ 'Name', 'name', 'field' ],
 			[ 'Level', 'level', 'field' ],

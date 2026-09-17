@@ -5,7 +5,7 @@ namespace BeyondElysium\Services\Display;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Renders a single trait's name, total, and note into one of eleven display-mode
+ * Renders a single trait's name, total, and note into one of twelve display-mode
  * strings (dot ratings, x-multipliers, cost annotations, and so on) that a trait
  * list's `display` setting selects per trait. Ported from the TypeScript
  * `displayTrait()` used by the on-screen character sheet so the signed PDF export
@@ -31,7 +31,7 @@ class Trait_Display {
 	 *                      (int|float|string) and `note` (string) properties.
 	 * @param string $mode  One of: simple, multiplier, multiplier_dot, dot, cost,
 	 *                      note_only, cost_only, dot_separate, simple_dots,
-	 *                      simple_number, simple_note.
+	 *                      simple_number, simple_note, cost_number.
 	 * @param string $dot   Glyph used by dot-rendering modes, defaulting to the one dot a
 	 *                      resource pool's points use too (1.0.0-review F-016).
 	 * @return string
@@ -65,9 +65,8 @@ class Trait_Display {
 			case 'dot':
 				$out = $trait->name;
 				$d   = self::dots( $total, $dot );
-				if ( $d !== '' ) {
-					$out .= " {$d}";
-				}
+				// 1.1.0 D1: the count always follows the dots, even at 0 (no dots to follow).
+				$out .= $d !== '' ? " {$d} {$total}" : " {$total}";
 				return $note !== '' ? "{$out} ({$note})" : $out;
 
 			case 'cost':
@@ -85,19 +84,31 @@ class Trait_Display {
 			case 'dot_separate':
 				// The note is folded into the repeated label rather than appended
 				// once; count is at least 1.
-				$label = $note !== '' ? "{$trait->name} ({$note})" : $trait->name;
-				$count = $total < 2 ? 1 : $total;
-				return implode( $dot, array_fill( 0, $count, $label ) );
+				$label    = $note !== '' ? "{$trait->name} ({$note})" : $trait->name;
+				$count    = $total < 2 ? 1 : $total;
+				$repeated = implode( $dot, array_fill( 0, $count, $label ) );
+				// 1.1.0 D1: the real total follows, even though the repeat count
+				// above is clamped to a minimum of 1 and so can't itself be read
+				// as the count.
+				return "{$repeated} {$total}";
 
 			case 'simple_dots':
-				// The name is dropped entirely; only dots are shown.
-				return self::dots( $total, $dot );
+				// The name is dropped entirely; only dots (and, per D1, the count) are shown.
+				$d = self::dots( $total, $dot );
+				return $d !== '' ? "{$d} {$total}" : (string) $total;
 
 			case 'simple_number':
 				return (string) $total;
 
 			case 'simple_note':
 				return $note;
+
+			case 'cost_number':
+				// 1.1.0 D3: for a count_is_cost block, the stored total is a flat
+				// XP cost, not a rating - drawn as a number instead of dots when
+				// the viewer's cost-numbers preference is on.
+				$out = "{$trait->name} {$total} XP";
+				return $note !== '' ? "{$out} ({$note})" : $out;
 
 			default:
 				return $trait->name;

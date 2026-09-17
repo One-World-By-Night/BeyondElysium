@@ -18,5 +18,9 @@
   { "name": "an imported note with a reason", "output": "Migrated from legacy sheet" },
   { "name": "an imported note with no reason", "output": "Imported note" },
   { "name": "an imported note with an empty reason", "output": "Imported note" },
-  { "name": "an unrecognized change type", "output": "Unknown change" }
+  { "name": "an unrecognized change type", "output": "Unknown change" },
+  { "name": "proposing a world object", "output": "Proposed item: Ashwood Stake" },
+  { "name": "proposing a world object with no object_type", "output": "Proposed item: Ashwood Stake" },
+  { "name": "proposing a faction", "output": "Proposed coterie: Coterie of Thorns" },
+  { "name": "proposing a faction with no faction_type", "output": "Proposed group: Coterie of Thorns" }
 ]

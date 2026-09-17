@@ -1,0 +1,35 @@
+/**
+ * The player-facing propose-a-group form (1.1.0 §3.10, F1). One column at every width - it is
+ * a short form, and a second column buys nothing here.
+ */
+
+.be-propose-faction {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	max-width: 44rem;
+}
+
+.be-propose-faction label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.be-propose-faction__field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.be-propose-faction__error {
+	padding: 0.75rem 1rem;
+	border: 1px solid #c00;
+	border-radius: 4px;
+	color: #c00;
+	background: #fff5f5;
+}
+
+.be-propose-faction button[type="submit"] {
+	align-self: flex-start;
+}

@@ -4,7 +4,10 @@ namespace BeyondElysium\REST;
 
 use BeyondElysium\Models\Attestation;
 use BeyondElysium\Models\Character;
+use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Item_Attestation;
+use BeyondElysium\Models\World_Object;
 use BeyondElysium\Services\Character_Exporter;
 use BeyondElysium\Services\Not_Exportable_Exception;
 
@@ -66,14 +69,30 @@ class Verify_Controller extends Base_Controller {
 			return self::not_found();
 		}
 
+		// 1.1.0 §3.13 - character attestations are checked first, then item attestations; a
+		// short code space shared via Services\Short_Code means the two can never collide, so
+		// this order is never ambiguous.
 		$attestation = Attestation::resolve( $code );
-		if ( $attestation === null ) {
-			return self::not_found();
+		if ( $attestation !== null ) {
+			if ( $attestation->expires_at !== null && strtotime( $attestation->expires_at ) < time() ) {
+				return self::not_found();
+			}
+			return $this->verify_character( $attestation );
 		}
 
-		if ( $attestation->expires_at !== null && strtotime( $attestation->expires_at ) < time() ) {
-			return self::not_found();
+		$item_attestation = Item_Attestation::resolve( $code );
+		if ( $item_attestation !== null ) {
+			return $this->verify_item( $item_attestation );
 		}
+
+		return self::not_found();
+	}
+
+	/**
+	 * @param object $attestation
+	 * @return \WP_REST_Response
+	 */
+	private function verify_character( object $attestation ) {
 
 		$game   = Game::find_by_slug( $attestation->game_slug );
 		$issuer = [
@@ -102,6 +121,64 @@ class Verify_Controller extends Base_Controller {
 			'attested'      => $attestation->attested,
 			'still_matches' => self::still_matches( $attestation ),
 			'as_of'         => current_time( 'mysql', true ),
+		] );
+	}
+
+	/**
+	 * The item-shaped verify response (1.1.0 §3.13) - public like a character's own: never the
+	 * item's description or powers, never a player's name, only what was attested at issue
+	 * time plus whether it still matches a live read.
+	 *
+	 * @param object $attestation A row from `Item_Attestation::resolve()`.
+	 * @return \WP_REST_Response
+	 */
+	private function verify_item( object $attestation ) {
+		$game      = Game::find_by_slug( $attestation->game_slug );
+		$attested  = $attestation->attested;
+
+		if ( $attestation->revoked_at !== null ) {
+			return $this->success( [
+				'kind'      => 'item',
+				'name'      => $attested['name'] ?? null,
+				'chronicle' => $game->name ?? $attestation->game_slug,
+				'issued_at' => $attestation->issued_at,
+				'revoked'   => true,
+			] );
+		}
+
+		$item = World_Object::find( (int) $attestation->world_object_id );
+
+		$current_holder_name = null;
+		if ( $item !== null ) {
+			foreach ( Connection::for_entity( 'world_object', (int) $item->id ) as $connection ) {
+				$character_id = $connection->source_type === 'character' ? $connection->source_id
+					: ( $connection->target_type === 'character' ? $connection->target_id : null );
+				if ( $character_id !== null ) {
+					$holder               = Character::find( (int) $character_id );
+					$current_holder_name  = $holder->name ?? null;
+					break;
+				}
+			}
+		}
+
+		$current_uses_left  = $item !== null ? ( $item->properties['uses_left'] ?? null ) : null;
+		$current_expires_on = $item !== null ? ( $item->properties['expires_on'] ?? null ) : null;
+
+		return $this->success( [
+			'kind'          => 'item',
+			'name'          => $attested['name'] ?? null,
+			'chronicle'     => $game->name ?? $attestation->game_slug,
+			'issued_at'     => $attestation->issued_at,
+			'revoked'       => false,
+			'still_matches' => [
+				'holder'    => $item !== null && $current_holder_name === ( $attested['holder'] ?? null ),
+				'uses_left' => $item !== null && (int) $current_uses_left === (int) ( $attested['uses_left'] ?? -1 ),
+				'expiry'    => $item !== null && $current_expires_on === ( $attested['expires_on'] ?? null ),
+			],
+			'current'       => [
+				'expired'  => $item !== null && World_Object::is_expired( $item ),
+				'used_up'  => $item !== null && World_Object::is_used_up( $item ),
+			],
 		] );
 	}
 

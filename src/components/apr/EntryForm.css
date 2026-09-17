@@ -32,6 +32,23 @@
 	flex: 0 0 auto;
 }
 
+.be-entry-form__audience.be-entry-form__audience {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.be-entry-form__character-picker.be-entry-form__character-picker {
+	list-style: none;
+	margin: 0;
+	padding: 0.5rem;
+	max-height: 160px;
+	overflow-y: auto;
+	border: 1px solid #d0d0d0;
+	border-radius: 4px;
+	background: #fafafa;
+}
+
 .be-entry-form__hint.be-entry-form__hint {
 	margin: 0;
 	color: #555;

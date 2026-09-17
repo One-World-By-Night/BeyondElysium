@@ -48,6 +48,14 @@ This tab has two views: an overview grid of every plot, and a single plot's own 
 - **ST notes** - a rich-text box (with AI Assist) always available to you and to other
   Storytellers and Narrators, never to a player even one who can otherwise read the plot.
   Write, then **Save ST notes** - empty until someone writes something, same as Cliffhanger.
+- **Who can see this** - **Everyone in the chronicle**, **Storytellers and Narrators only**
+  (the default for a new plot), or **Only characters matching rules I set**, the last opening
+  a query builder against your characters with a live count of who currently matches. Pick,
+  then **Save audience**. A player's own plot shows the same control, but only a Storyteller
+  can actually change it - the owner never widens their own.
+- **Files** - any images or PDFs attached to this plot, up to 20, 10 MB each, with a download
+  link per file. You, or a player plot's own owner, get an upload box and a **Remove** button
+  per file; everyone else who can see the plot only sees the list.
 - **Faction goals** - shown only when [Plot Features](chronicle-setup.md) is on, and only to
   managers. A repeatable list of faction, what they want, and optional key NPCs; **+ Add
   faction goal** adds a blank row, **Remove** drops one, **Save goals** persists the list.
@@ -55,15 +63,24 @@ This tab has two views: an overview grid of every plot, and a single plot's own 
 - **Under this plot** - any plots nested under this one (an allocated action, a rumor, or
   another plot manually nested), each a clickable card opening the same way.
 - **Timeline** - every entry so far, oldest first: its type (`action`, `response`, `note`, or
-  `resolution`), its date, and its content. An entry created by Allocate actions or a
+  `resolution`), a badge if it's **Private** or **Directed** (nothing shown for an ordinary
+  public entry), its date, and its content. An entry created by Allocate actions or a
   background use renders as a short summary of what was spent and the result, rather than raw
   text. Below it, a form with a rich-text box lets you post a new entry - a manager can pick
   `response`, `note`, `resolution`, or `action`; a player, on their own feed, can only ever
   post `action`. With
   Plot Features on, this form also offers an optional timeline date, separate from when the
-  entry was actually posted.
+  entry was actually posted. Every entry also has its own **Who can see this entry** choice:
+  you get **Public**, **Storytellers and Narrators only**, or **Directed to specific
+  characters** (pick from whoever can currently see the plot); a player composing their own
+  entry only ever sees the first two, and the entry's own author always sees it regardless of
+  choice.
 - **Cliffhanger** - a short rich-text box ("What's left unresolved…", with AI Assist) and its
   own **Save cliffhanger** button.
+- **Secrets** - a title and write-up you keep separate from the plot's own text, with its own
+  **Who can see this** and a **Reveal** to any character (optionally held for a release
+  batch). A player sees only secrets they've been revealed, under **What You Know** - see
+  [Secrets](secrets.md).
 - Action bar: **+ Rumor**, **+ Action**, **Connect character**, and **Mark resolved** (reads
   **Resolved** once it's been clicked).
 
@@ -105,6 +122,35 @@ This tab has two views: an overview grid of every plot, and a single plot's own 
    its action rounds, or **Without character plots** to see the chronicle's other plots.
 2. Type the character's name in the search box to go straight to theirs.
 
+### Send a reply only one player sees
+
+1. Open the plot.
+2. Write your reply, pick **Storytellers and Narrators only** from the entry's own audience
+   dropdown, and click **Post**. Only you, other managers, and the entry's own author can
+   read it.
+
+### Direct a message to specific characters only
+
+1. Open the plot.
+2. Write your reply and pick **Directed to specific characters**.
+3. Check off who should see it from the list (only characters who can currently see this
+   plot appear) and click **Post**.
+
+### Change who can see a plot
+
+1. Open the plot.
+2. Under **Who can see this**, pick a new option - for **Only characters matching rules I
+   set**, build at least one complete clause first.
+3. Click **Save audience**.
+
+### Attach a file to a plot
+
+1. Open the plot.
+2. Under **Files**, click **Choose File** and pick an image or PDF (10 MB max, up to 20 files
+   per plot).
+3. It appears in the list right away, with a download link. Click **Remove** to take it back
+   off.
+
 ### Nest an action or a rumor under a plot
 
 1. Open the plot you want it under.
@@ -137,6 +183,10 @@ This tab has two views: an overview grid of every plot, and a single plot's own 
   from a Narrator's own idea.
 - **Closing the Allocate actions or Rumors panel reloads what you were looking at**, so
   anything you just committed appears right away.
+- **A plot or entry can be held for a later release** instead of going out the moment you
+  write it - see [Releases](release-batches.md). A held plot or entry carries a "Draft" or "In
+  a release batch" badge here until its batch releases; you and other managers always see it
+  regardless, exactly as normal.
 - On a narrow screen this grid never scrolls sideways - it's already a stacking card layout.
 
 ## Troubleshooting
@@ -147,7 +197,11 @@ This tab has two views: an overview grid of every plot, and a single plot's own 
 - **"Failed to save."** Retry saving the overview or cliffhanger. If it keeps failing, reload
   the plot.
 - **"Failed to add this entry."** Try posting again. If it keeps failing, the plot may no
-  longer exist.
+  longer exist. Directing a post requires at least one character checked.
+- **"Failed to upload this file."** Only images (JPEG, PNG, GIF, WebP) and PDFs are allowed,
+  10 MB max - check the file and try again.
+- **"This plot already has the most files it may carry."** Remove one first - 20 for a plot,
+  one for an item.
 - **I don't see this tab at all.** You don't hold a Storyteller or Narrator role in the
   chronicle currently selected - switch chronicles, or ask an HST/AST to check your role.
 
@@ -159,7 +213,10 @@ This tab has two views: an overview grid of every plot, and a single plot's own 
 - [Rumors](rumors.md)
 - [Connections](connections.md)
 - [Background Uses](background-uses.md)
+- [Releases](release-batches.md)
+- [Downtime](downtime-queue.md)
 - [Storyteller Toolkit](storyteller-toolkit.md)
 - [Roles](roles.md)
 - [Storyteller-Only Content](storyteller-only.md)
+- [Admin Guide - Who Can See a Plot, Item, or Location](../admin-guide.md#who-can-see-a-plot-item-or-location)
 - [Storyteller Guide](../st-guide.md#8-plots-actions-and-rumors)

@@ -83,6 +83,9 @@ The two "Clear all" operations are Storyteller-only as well.
   character's most recent allocation, even if you've picked an older game date to look at.
 - **Each use counts as one**, no matter what it describes - there's no way from this screen to
   record a use worth more than one against the budget.
+- **Recording, editing, and clearing your own use all follow the game date's downtime
+  window**, when one is set - see [Downtime](downtime-queue.md). A Storyteller is never
+  affected by it.
 
 ## Troubleshooting
 
@@ -100,6 +103,7 @@ The two "Clear all" operations are Storyteller-only as well.
 
 - [Character Sheet](character-sheet.md)
 - [Allocate Actions](allocate-actions.md)
+- [Downtime](downtime-queue.md)
 - [Action & Rumor Settings](apr-settings.md)
 - [Player Guide](../player-guide.md#6-recording-background-uses)
 - [Storyteller Guide](../st-guide.md#9-action--rumor-settings-and-the-background-use-ledger)

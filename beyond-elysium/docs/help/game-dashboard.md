@@ -24,6 +24,9 @@ Five cards in a row:
   underneath.
 - **Pending Changes** - how many changes across the chronicle are currently awaiting review.
 - **Active Plots** - how many plots currently carry `active` status.
+- **Characters Needing Attention** - how many active characters are currently **Flagged** on
+  the spotlight check - no staff post in a while, or none ever. See
+  [Game Nights](game-nights.md)'s own Spotlight section for the full list.
 - **By Status** - the same total character count, broken down by status underneath.
 - **Players Without an Active Character** - a count; click it to expand the list of who they
   are, or collapse it again.
@@ -75,6 +78,7 @@ current status. It reads "Nothing yet." when there's none.
 - [Dashboard](player-dashboard.md)
 - [Approval Queue](approval-queue.md)
 - [Plots & Rumors](plot-manager.md)
+- [Game Nights](game-nights.md)
 - [Change History](sheet-history.md)
 - [My Chronicle](my-chronicle.md)
 - [Roles](roles.md)

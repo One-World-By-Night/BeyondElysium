@@ -6,6 +6,9 @@ use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Game_Session;
+use BeyondElysium\Models\Npc_Casting;
+use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\Sheet_Style;
 use BeyondElysium\Models\Template;
 use BeyondElysium\Services\Display\Change_Description;
@@ -48,6 +51,8 @@ defined( 'ABSPATH' ) || exit;
  *  - background       bool  Include the character's biography as a prose entry.
  *  - notes            bool  Include the character's notes as a prose entry.
  *  - xp_history       bool  Include the approved-change XP history table.
+ *  - cost_numbers     bool  A count_is_cost trait_list block's entries read as a
+ *                           number ("6 XP") instead of dots (1.1.0 D3).
  *
  * @see BE_PROCESS/design/signed-pdf-design.md Section 3a, SP-5
  */
@@ -81,6 +86,109 @@ class Sheet_Document {
 	}
 
 	/**
+	 * Resolves an NPC's own template type, respecting `npc_detail` (1.1.0 §3.7 item 1) -
+	 * `npc_quick`'s shorter layout unless it's been upgraded to `npc_full`. Null for a plain
+	 * PC, so a caller building a PC's ordinary sheet keeps its own `sheet_full` default.
+	 *
+	 * @param object $character
+	 * @return string|null
+	 */
+	private static function npc_template_type( object $character ): ?string {
+		if ( empty( $character->is_npc ) ) {
+			return null;
+		}
+		return ( $character->npc_detail ?? 'full' ) === 'quick' ? 'npc_quick' : 'npc_full';
+	}
+
+	/**
+	 * Resolves one NPC casting into the same presentation-neutral shape `for_characters()`
+	 * produces, for the casting brief screen and its PDF (1.1.0 §3.8). Always the cast
+	 * player's own restricted view, never a fuller one for a manager previewing it - a
+	 * Storyteller checking a brief sees exactly what the cast player will.
+	 *
+	 * Deliberately not `for_characters()` plus `$options`: the brief excludes fields that
+	 * method always includes (XP, status, the real player, change history) and includes one a
+	 * plain sheet never does (`npc-roleplaying-notes`, via `St_Visibility`'s new
+	 * `$allow_blocks` carve-out) - different enough that reusing `build()` unmodified would
+	 * mean threading brief-specific branches through a method four other things also share.
+	 *
+	 * @param int    $casting_id
+	 * @param string $game_slug
+	 * @return array<string,mixed>|null Null when the casting, its character, or its session no
+	 *                                  longer resolves.
+	 */
+	public static function for_casting( int $casting_id, string $game_slug ): ?array {
+		$game = Game::find_by_slug( $game_slug );
+		if ( $game === null ) {
+			return null;
+		}
+
+		$casting = Npc_Casting::find( $casting_id );
+		if ( $casting === null || (int) $casting->game_id !== (int) $game->id ) {
+			return null;
+		}
+
+		$session = Game_Session::find( (int) $casting->session_id );
+		if ( $session === null ) {
+			return null;
+		}
+
+		$character = Character::find( (int) $casting->character_id );
+		if ( $character === null ) {
+			return null;
+		}
+
+		// Always the cast player's own view of the brief text too - never a manager's
+		// escalation, matching every other visibility decision in this method.
+		St_Visibility::filter_casting( $casting, $game, false );
+
+		// Not St_Visibility::filter_character(): its blanket sheet_data strip has no
+		// allow_blocks carve-out, and would remove npc-roleplaying-notes before this method
+		// ever got a chance to keep it. sheet_data is filtered directly below instead, and
+		// nothing else filter_character() touches (rp_notes, biography, notes) is ever part
+		// of this document in the first place.
+		$resolved = Creature_Stack::resolve( $character->stack_slug, $game->slug );
+		if ( $resolved === null ) {
+			return null;
+		}
+		$blocks = $resolved['blocks'];
+
+		$template_type = self::npc_template_type( $character ) ?? 'npc_full';
+		$template      = Template::resolve( $character->stack_slug, $template_type, (int) $game->id );
+		$layout        = $template->layout ?? ( Layout_Generator::generate_for_stack( $character->stack_slug ) ?? [ 'sections' => [] ] );
+		$layout        = St_Visibility::filter_layout( $layout, false, $game->slug, null, [ 'npc-roleplaying-notes' ] );
+
+		$sheet_data = is_array( $character->sheet_data ) ? $character->sheet_data : [];
+		$sheet_data = St_Visibility::filter_sheet_data_blocks(
+			$sheet_data,
+			Schema_Block::storyteller_only_slugs( $game->slug ),
+			[ 'npc-roleplaying-notes' ]
+		);
+
+		$display_name = ( $character->public_name ?? '' ) !== '' ? (string) $character->public_name : $character->name;
+
+		return [
+			'title'  => sprintf( '%s - Casting Brief', $display_name ),
+			'header' => [
+				[ 'Character', $character->name ],
+				[ 'Also known as', $display_name !== $character->name ? $display_name : '—' ],
+				[ 'Session', (string) $session->game_date ],
+				[ 'Time', (string) ( $session->start_time ?? '—' ) ],
+				[ 'Place', (string) ( $session->place ?? '—' ) ],
+			],
+			'portrait_path'    => null,
+			'style'            => [],
+			'sections'         => self::build_sections( $layout['sections'] ?? [], $blocks, $sheet_data, [] ),
+			'prose'            => ! empty( $casting->brief ) ? [ [ 'Brief for this game', (string) $casting->brief ] ] : [],
+			'xp_history'       => [],
+			'provenance_lines' => [
+				(string) $character->uuid,
+				sprintf( '%s · %s · Beyond Elysium %s', $game->slug, current_time( 'Y-m-d' ), BE_VERSION ),
+			],
+		];
+	}
+
+	/**
 	 * @param array<string,mixed> $options
 	 * @return array<string,mixed>|null
 	 */
@@ -100,7 +208,7 @@ class Sheet_Document {
 		$stack  = $resolved['stack'];
 		$blocks = $resolved['blocks'];
 
-		$template_type = ! empty( $character->is_npc ) ? 'npc_full' : 'sheet_full';
+		$template_type = self::npc_template_type( $character ) ?? 'sheet_full';
 		$template      = Template::resolve( $character->stack_slug, $template_type, (int) $game->id );
 		$layout        = $template->layout ?? ( Layout_Generator::generate_for_stack( $character->stack_slug ) ?? [ 'sections' => [] ] );
 		$layout        = St_Visibility::filter_layout( $layout, $can_manage, $game->slug );
@@ -166,7 +274,15 @@ class Sheet_Document {
 
 			switch ( $block->section_type ) {
 				case 'trait_list':
-					$entry['groups'] = self::trait_list_groups( $section_data, $definition, $section );
+					$entry['groups'] = self::trait_list_groups( $section_data, $definition, $section, $options );
+					// 1.1.0 D1: a non-atomic section whose held entries all carry a
+					// numeric count shows its total after the title.
+					if ( empty( $definition->atomic ) ) {
+						$total = Trait_Grouping::section_total( Trait_Grouping::to_traits( $section_data ) );
+						if ( $total !== null ) {
+							$entry['title'] .= " \u{00B7} {$total}";
+						}
+					}
 					break;
 				case 'tiered_power':
 					$entry['rows'] = self::tiered_power_rows( $section_data, $definition, $options );
@@ -206,11 +322,25 @@ class Sheet_Document {
 	/**
 	 * @param mixed                $section_data Raw `sheet_data[block_slug]` value.
 	 * @param array<string,mixed>  $section      Raw layout section (for its own `display` override).
+	 * @param array<string,mixed>  $options      Document-level options (`cost_numbers`, 1.1.0 D3).
 	 * @return array<int,array{label:?string,rows:array<int,string>}>
 	 */
-	private static function trait_list_groups( mixed $section_data, object $definition, array $section ): array {
+	private static function trait_list_groups( mixed $section_data, object $definition, array $section, array $options = [] ): array {
 		$traits = Trait_Grouping::to_traits( $section_data );
-		$mode   = Trait_Grouping::resolve_display( $section['display'] ?? null, $definition->display ?? null );
+		// 1.1.0 D3: a count_is_cost block's stored total is a flat XP cost, not a
+		// rating - the cost_numbers option always wins over whatever display mode
+		// is otherwise configured, on or off.
+		$mode = ! empty( $definition->count_is_cost ) && ! empty( $options['cost_numbers'] )
+			? 'cost_number'
+			: Trait_Grouping::resolve_display( $section['display'] ?? null, $definition->display ?? null );
+
+		// 1.1.0 D4: a player_order block renders in stored array order - no
+		// alphabetizing, no field/category grouping. The player's own order is
+		// their grouping.
+		if ( ! empty( $definition->player_order ) ) {
+			return [ [ 'label' => null, 'rows' => self::render_traits( $traits, $mode ) ] ];
+		}
+
 		$nested = Trait_Grouping::group_traits_by_field( $traits, $definition );
 
 		$groups = [];

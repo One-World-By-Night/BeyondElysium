@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
 class Connection {
 
 	/** @var string[] Valid source_type / target_type values. */
-	private static $valid_entity_types = [ 'character', 'plot', 'world_object', 'tag' ];
+	private static $valid_entity_types = [ 'character', 'plot', 'world_object', 'tag', 'faction' ];
 
 	/**
 	 * Look up a single connection by its primary key. Returns the raw row

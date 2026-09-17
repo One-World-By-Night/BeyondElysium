@@ -1,5 +1,5 @@
 /**
- * Defines the eleven trait display modes and renders a single trait as a formatted
+ * Defines the twelve trait display modes and renders a single trait as a formatted
  * string according to the selected mode. Exports the `DisplayType` union, the `Trait`
  * shape it reads, and `displayTrait()`, the pure rendering function - the same input
  * always produces the same output, with no DOM or network access.
@@ -18,7 +18,8 @@ export type DisplayType =
 	| 'dot_separate'
 	| 'simple_dots'
 	| 'simple_number'
-	| 'simple_note';
+	| 'simple_note'
+	| 'cost_number';
 
 export interface Trait {
 	name: string;
@@ -31,7 +32,7 @@ export interface Trait {
  * first non-digit character. A numeric value passes through directly; a string that
  * doesn't begin with a number (e.g. "borrowed" rather than "3 (borrowed)") parses to 0.
  */
-function parseTotal( total: Trait[ 'total' ] ): number {
+export function parseTotal( total: Trait[ 'total' ] ): number {
 	if ( typeof total === 'number' ) {
 		return Number.isFinite( total ) ? Math.trunc( total ) : 0;
 	}
@@ -87,9 +88,8 @@ export function displayTrait(
 		case 'dot': {
 			let out = trait.name;
 			const d = dots( total );
-			if ( d ) {
-				out += ` ${ d }`;
-			}
+			// 1.1.0 D1: the count always follows the dots, even at 0 (no dots to follow).
+			out += d ? ` ${ d } ${ total }` : ` ${ total }`;
 			return note ? `${ out } (${ note })` : out;
 		}
 
@@ -110,18 +110,31 @@ export function displayTrait(
 			// The note is folded into the repeated label rather than appended once; count is at least 1.
 			const label = note ? `${ trait.name } (${ note })` : trait.name;
 			const count = total < 2 ? 1 : total;
-			return new Array( count ).fill( label ).join( dot );
+			const repeated = new Array( count ).fill( label ).join( dot );
+			// 1.1.0 D1: the real total follows, even though the repeat count above is
+			// clamped to a minimum of 1 and so can't itself be read as the count.
+			return `${ repeated } ${ total }`;
 		}
 
-		case 'simple_dots':
-			// The name is dropped entirely; only dots are shown.
-			return dots( total );
+		case 'simple_dots': {
+			// The name is dropped entirely; only dots (and, per D1, the count) are shown.
+			const d = dots( total );
+			return d ? `${ d } ${ total }` : `${ total }`;
+		}
 
 		case 'simple_number':
 			return String( total );
 
 		case 'simple_note':
 			return note;
+
+		case 'cost_number': {
+			// 1.1.0 D3: for a count_is_cost block, the stored total is a flat XP
+			// cost, not a rating - drawn as a number instead of dots when the
+			// viewer's cost-numbers preference is on.
+			const out = `${ trait.name } ${ total } XP`;
+			return note ? `${ out } (${ note })` : out;
+		}
 
 		default:
 			return trait.name;

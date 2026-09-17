@@ -61,6 +61,12 @@ $be_uninstall_current_site = static function (): void {
 	}
 
 	\BeyondElysium\Core\Capabilities::unregister();
+
+	// 1.1.0 §2.6: uploaded files live outside the media library, in this site's own
+	// uploads/beyond-elysium-private/ - the table rows above are already gone, so this is the
+	// only remaining trace of them, and `wp_upload_dir()` inside `remove_all()` resolves to
+	// this exact site regardless of which one `switch_to_blog()` has made current.
+	\BeyondElysium\Services\Attachment_Storage::remove_all();
 };
 
 if ( ! is_multisite() ) {

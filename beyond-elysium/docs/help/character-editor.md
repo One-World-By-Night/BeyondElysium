@@ -33,7 +33,11 @@ A Storyteller creating a character from wp-admin's Characters page lands on this
   arrived here already set to build a specific type.
 - **This is an NPC** - a checkbox, shown only to a Storyteller. Checking it switches the form
   to the richer NPC layout, which adds a Storyteller-only section for voice, mannerisms, and
-  plot hooks.
+  plot hooks, and reveals a second choice:
+  - **Full sheet** - the complete NPC layout, same as above.
+  - **Quick stats only** - a short layout with just enough (Physical/Social/Mental,
+    Willpower, Health, key Abilities/Powers/Equipment) to run this NPC in a scene without
+    building out a whole character. See **Make Full NPC** below for upgrading one later.
 - The stack's own sections below, exactly like the sheet sections described below - fill in
   whatever you want the character to start with.
 - **Create Character** - writes the character. Nothing you build here is priced or reviewed
@@ -52,8 +56,31 @@ become a player here only once a Storyteller approves it.
 - The character's name.
 - **This is an NPC** - a checkbox, shown only to a Storyteller looking at a character they can
   manage. Flipping it re-loads the sheet under the other layout immediately.
+- **Assigned to** - which Storyteller owns this NPC, shown once it's flagged as one. See
+  [My Queue](my-queue.md).
+- **Make Full NPC** - shown only on a Quick NPC. Switches it to the full layout for good;
+  there's no way back to Quick from here.
 - A note reading "You can view this sheet but not edit it" in place of every edit control, if
   you can see this character but can't change it.
+
+### Who's Who Profile (NPCs only)
+
+Shown only to a Storyteller editing an NPC, separate from the sheet above - what a player sees
+about this NPC in the chronicle's [Who's Who](whos-who.md) directory, not the sheet itself:
+
+- **Display Name** - shown instead of the character's real name in Who's Who, if set.
+- **Description** - the write-up a player reads. A `[ST]...[/ST]` marked passage is still
+  stripped out for a non-Storyteller viewer, same as everywhere else.
+- A portrait, separate from the sheet's own.
+- Who can see this profile at all - the same audience picker a plot or item uses. An NPC with
+  no profile set up simply doesn't appear in Who's Who for anyone but a Storyteller.
+- **Save Profile**.
+
+### Secrets (NPCs only)
+
+Shown only to a Storyteller editing an NPC, once it already exists - a write-up kept
+separate from the NPC's own sheet, with its own audience and reveals to specific characters.
+See [Secrets](secrets.md).
 
 ### Background and Notes
 
@@ -204,6 +231,8 @@ character here, a banner offers **Restore** or **Discard** for that saved draft.
 - [Resource Pools & Identity Fields](pools-identity-editor.md)
 - [Approval Queue](approval-queue.md)
 - [AI Writing Assist](writing-assist.md)
+- [Who's Who](whos-who.md)
+- [My Queue](my-queue.md)
 - [Roles](roles.md)
 - [How Approval Works](approval-flow.md)
 - [Player Guide](../player-guide.md#2-editing-your-sheet)

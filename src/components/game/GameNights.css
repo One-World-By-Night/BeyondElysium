@@ -1,0 +1,149 @@
+.be-game-nights {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.be-game-nights__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.be-game-nights__crumbs {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+.be-game-nights__crumbs button {
+	background: none;
+	border: none;
+	color: var(--be-st-accent, #a3225a);
+	cursor: pointer;
+	padding: 0;
+	text-decoration: underline;
+}
+
+.be-game-nights__error {
+	color: #b32d2e;
+}
+
+.be-game-nights__settings-card {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	align-items: flex-end;
+	border: 1px solid #d0d0d0;
+	border-radius: 4px;
+	padding: 0.75rem;
+	background: #fafafa;
+	margin-top: 0.5rem;
+}
+
+.be-game-nights__settings-card label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-size: 0.85rem;
+}
+
+.be-game-nights__spotlight {
+	border: 1px solid #d0d0d0;
+	border-radius: 4px;
+	padding: 0.75rem;
+	background: #fafafa;
+	margin-top: 0.5rem;
+}
+
+.be-game-nights__spotlight-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.be-game-nights__spotlight-list li {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: center;
+	padding: 0.5rem;
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+}
+
+.be-game-nights__spotlight-row--flagged {
+	border-color: #b32d2e !important;
+}
+
+.be-game-nights__new-form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: flex-start;
+}
+
+.be-game-nights__new-form-actions {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.be-game-nights__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 0.75rem;
+}
+
+.be-game-nights__session-card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	align-items: flex-start;
+	width: 100%;
+	text-align: left;
+	border: 1px solid #d0d0d0;
+	border-radius: 4px;
+	padding: 0.75rem;
+	background: #fff;
+	cursor: pointer;
+}
+
+.be-game-nights__detail {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.be-game-nights__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.be-game-nights__apr-note {
+	font-size: 0.85rem;
+	color: #666;
+	font-style: italic;
+}
+
+.be-game-nights__window-form {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 0.75rem;
+}
+
+.be-game-nights__window-form label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-size: 0.85rem;
+}

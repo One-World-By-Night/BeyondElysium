@@ -1,0 +1,31 @@
+.be-what-i-know__list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.be-what-i-know__item {
+	padding: 0.75rem;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+}
+
+.be-what-i-know__item-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 0.4rem;
+}
+
+.be-what-i-know__learned {
+	margin: 0.4rem 0 0;
+	font-size: 0.8rem;
+	color: #777;
+}
+
+.be-what-i-know__error {
+	padding: 0.75rem;
+	border: 1px solid #c00;
+	border-radius: 4px;
+	color: #c00;
+}

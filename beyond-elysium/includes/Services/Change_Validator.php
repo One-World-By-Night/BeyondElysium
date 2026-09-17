@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\Services;
 
+use BeyondElysium\Models\Faction;
 use BeyondElysium\Models\World_Object;
 
 defined( 'ABSPATH' ) || exit;
@@ -25,7 +26,7 @@ defined( 'ABSPATH' ) || exit;
 class Change_Validator {
 
 	/** Change types the REST route accepts. `import_note` is written by the importer itself, never submitted. */
-	const REST_CHANGE_TYPES = [ 'add_trait', 'remove_trait', 'modify_trait', 'modify_resource', 'modify_identity', 'xp_earn', 'xp_adjust', 'propose_world_object' ];
+	const REST_CHANGE_TYPES = [ 'add_trait', 'remove_trait', 'modify_trait', 'modify_resource', 'modify_identity', 'xp_earn', 'xp_adjust', 'propose_world_object', 'propose_faction' ];
 
 	/** Keys a trait_list entry may carry. */
 	const TRAIT_LIST_KEYS = [ 'name', 'count', 'specialization', 'note', 'custom', 'chosen_cost' ];
@@ -69,6 +70,11 @@ class Change_Validator {
 		// A proposed catalog item is not sheet data, so it names no block (1.0.1 D3).
 		if ( $type === 'propose_world_object' ) {
 			return self::validate_proposed_object( $data );
+		}
+
+		// A proposed faction is not sheet data either (1.1.0 F1).
+		if ( $type === 'propose_faction' ) {
+			return self::validate_proposed_faction( $data );
 		}
 
 		$block_slug = $data['block_slug'] ?? null;
@@ -175,6 +181,40 @@ class Change_Validator {
 		foreach ( [ 'rarity', 'cost' ] as $plain ) {
 			if ( isset( $data[ $plain ] ) && is_string( $data[ $plain ] ) ) {
 				$normalized[ $plain ] = self::text( $data[ $plain ], 100 );
+			}
+		}
+
+		return [ 'ok' => true, 'change_data' => $normalized ];
+	}
+
+	/**
+	 * A player's proposed faction - a coterie, pack, cabal, motley, or catch-all "other"
+	 * (1.1.0 §3.10). Restricted to `Faction::PLAYER_PROPOSABLE_TYPES` - a player may never
+	 * propose a whole sect, clan, chantry, court, sept, or house; only a Storyteller creates
+	 * those directly through `Factions_Controller`.
+	 *
+	 * @param array $data
+	 * @return array
+	 */
+	private static function validate_proposed_faction( array $data ): array {
+		$faction_type = (string) ( $data['faction_type'] ?? '' );
+		if ( ! in_array( $faction_type, Faction::PLAYER_PROPOSABLE_TYPES, true ) ) {
+			return self::fail( 'invalid_param', 'Choose what kind of group this is.' );
+		}
+
+		$name = is_string( $data['name'] ?? null ) ? self::text( $data['name'], 200 ) : '';
+		if ( $name === '' ) {
+			return self::fail( 'invalid_param', 'Give it a name.' );
+		}
+
+		$normalized = [
+			'faction_type' => $faction_type,
+			'name'         => $name,
+		];
+
+		foreach ( [ 'description', 'goals' ] as $rich ) {
+			if ( isset( $data[ $rich ] ) && is_string( $data[ $rich ] ) ) {
+				$normalized[ $rich ] = mb_substr( trim( wp_kses_post( $data[ $rich ] ) ), 0, self::MAX_TEXT );
 			}
 		}
 
@@ -337,12 +377,53 @@ class Change_Validator {
 		}
 		if ( array_key_exists( 'tradition', $trait ) ) {
 			$trait['tradition'] = is_string( $trait['tradition'] ) ? self::text( $trait['tradition'], 200 ) : '';
+			// 1.1.0 D5: the owner's Blood Magic ruling - any power in a flagged set prompts
+			// for a Tradition when taken, from the block's WHOLE traditions list, never
+			// narrowed to a power's own catalog-listed teachers. Never required here - an
+			// older or incomplete pick with no tradition at all is a Storyteller's own
+			// review to catch (Decision 057's UI-affordance pattern), not a server 400.
+			if ( ! empty( $definition->blood_magic ) && $trait['tradition'] !== '' ) {
+				$allowed = self::blood_magic_traditions( $definition );
+				if ( ! in_array( $trait['tradition'], $allowed, true ) ) {
+					return self::fail( 'unknown_tradition', '"%s" does not teach any power in this section.', [ self::text( $trait['tradition'], 200 ) ] );
+				}
+			}
 		}
 		if ( empty( $trait['custom'] ) ) {
 			unset( $trait['custom'] );
 		}
 
 		return [ 'ok' => true, 'change_data' => self::with_display_keys( $data, [ 'block_slug' => $block_slug, 'trait' => $trait ] ) ];
+	}
+
+	/**
+	 * The whole set of traditions a blood_magic block offers: its own declared list when
+	 * set, otherwise the pre-Blood-Magic "X: Power Name" prefix convention - the exact PHP
+	 * twin of `traditionOptionsFor()`'s own block-wide fallback in TieredPowerEditor.tsx
+	 * (1.1.0 D5), minus that function's own per-power reordering, which this membership
+	 * check has no need of.
+	 *
+	 * @param object $definition
+	 * @return string[]
+	 */
+	private static function blood_magic_traditions( object $definition ): array {
+		if ( ! empty( $definition->traditions ) && is_array( $definition->traditions ) ) {
+			return $definition->traditions;
+		}
+
+		$traditions = [];
+		foreach ( ( $definition->powers ?? [] ) as $power ) {
+			if ( ! isset( $power->name ) || ! is_string( $power->name ) ) {
+				continue;
+			}
+			$separator = strpos( $power->name, ': ' );
+			if ( $separator !== false ) {
+				$traditions[] = substr( $power->name, 0, $separator );
+			}
+		}
+		$traditions = array_values( array_unique( $traditions ) );
+		sort( $traditions );
+		return $traditions;
 	}
 
 	/**

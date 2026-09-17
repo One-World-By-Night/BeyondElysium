@@ -252,7 +252,7 @@ class Character {
 			'name', 'stack_slug', 'owner_type', 'owner_slug',
 			'wp_user_id', 'player_name', 'pending_player_email', 'status', 'is_npc',
 			'narrator', 'start_date', 'biography', 'notes',
-			'rp_notes', 'sheet_data', 'image_id',
+			'rp_notes', 'sheet_data', 'image_id', 'npc_detail',
 		];
 
 		$insert = [];
@@ -266,6 +266,8 @@ class Character {
 		$insert['status']     = $insert['status'] ?? 'active';
 		$insert['is_npc']     = isset( $insert['is_npc'] ) ? (int) $insert['is_npc'] : 0;
 		$insert['owner_type'] = $insert['owner_type'] ?? 'chronicle';
+		// Meaningful only on an NPC (1.1.0 §3.7); a PC simply never reads it.
+		$insert['npc_detail'] = in_array( $insert['npc_detail'] ?? null, [ 'full', 'quick' ], true ) ? $insert['npc_detail'] : 'full';
 
 		// Assigns a new UUID unless the caller supplied a valid one.
 		if ( ! isset( $data['uuid'] ) || ! Uuid::is_valid( (string) $data['uuid'] ) ) {
@@ -371,11 +373,16 @@ class Character {
 			return null;
 		}
 
+		// 'restricted', not the schema default 'everyone': this is the character's own private
+		// action plot, and the 'apr_actor' connection written right below is what Audience finds
+		// to make that one character its audience (Services\Audience::RESTRICTED, duplicated as a
+		// literal per this codebase's Models-doesn't-depend-on-Services rule - see Plot::AUDIENCE_VALUES).
 		$plot_id = Plot::create( [
 			'game_id'      => (int) $game->id,
 			'title'        => self::plot_title( (string) $character->name, $id ),
 			'initiated_by' => 'st',
 			'created_by'   => get_current_user_id(),
+			'audience'     => 'restricted',
 		] );
 		$linked  = $plot_id && Connection::create( [
 			'game_id'     => (int) $game->id,
@@ -426,13 +433,30 @@ class Character {
 		$allowed = [
 			'name', 'status', 'biography', 'notes', 'rp_notes',
 			'narrator', 'player_name', 'start_date', 'is_npc', 'image_id', 'wp_user_id',
-			'pending_player_email',
+			'pending_player_email', 'assigned_to', 'npc_detail',
+			'public_name', 'public_description', 'public_image_id', 'profile_audience', 'profile_audience_rules',
 		];
 
 		$update = [];
 		foreach ( $allowed as $field ) {
 			if ( array_key_exists( $field, $data ) ) {
 				$update[ $field ] = $data[ $field ];
+			}
+		}
+
+		if ( array_key_exists( 'assigned_to', $update ) ) {
+			$update['assigned_to'] = ! empty( $update['assigned_to'] ) ? (int) $update['assigned_to'] : null;
+		}
+		if ( array_key_exists( 'npc_detail', $update ) && ! in_array( $update['npc_detail'], [ 'full', 'quick' ], true ) ) {
+			return false;
+		}
+		if ( array_key_exists( 'public_image_id', $update ) ) {
+			$update['public_image_id'] = ! empty( $update['public_image_id'] ) ? (int) $update['public_image_id'] : null;
+		}
+		if ( array_key_exists( 'profile_audience_rules', $update ) ) {
+			$update['profile_audience_rules'] = self::encode_json_field( $update['profile_audience_rules'] );
+			if ( $update['profile_audience_rules'] === false ) {
+				return false;
 			}
 		}
 
@@ -743,6 +767,34 @@ class Character {
 		if ( $row && isset( $row->is_npc ) ) {
 			$row->is_npc = (bool) $row->is_npc;
 		}
+		// profile_audience_rules (1.1.0 §3.7) - null stays null; an unparseable value is logged
+		// and treated as null rather than the row being dropped, matching Plot::decode_row()'s
+		// own contract for its own audience_rules column.
+		if ( $row && property_exists( $row, 'profile_audience_rules' ) && is_string( $row->profile_audience_rules ) ) {
+			$decoded = json_decode( $row->profile_audience_rules, true );
+			if ( json_last_error() !== JSON_ERROR_NONE ) {
+				error_log( sprintf( 'Beyond Elysium: character id %d has corrupt profile_audience_rules JSON; treating as null.', (int) ( $row->id ?? 0 ) ) );
+				$decoded = null;
+			}
+			$row->profile_audience_rules = $decoded;
+		}
 		return $row;
+	}
+
+	/**
+	 * Encode a value for a JSON column, matching Plot::encode_json_field()'s exact contract:
+	 * null stays null, an array or object is JSON-encoded, anything else is cast to string.
+	 *
+	 * @param mixed $value
+	 * @return string|null|false False when wp_json_encode() itself cannot encode the value.
+	 */
+	private static function encode_json_field( $value ) {
+		if ( $value === null ) {
+			return null;
+		}
+		if ( is_array( $value ) || is_object( $value ) ) {
+			return wp_json_encode( $value );
+		}
+		return (string) $value;
 	}
 }

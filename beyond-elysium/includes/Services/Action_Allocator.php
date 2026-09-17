@@ -419,7 +419,9 @@ class Action_Allocator {
 			return null;
 		}
 
-		// Title format: game date followed by the character's name.
+		// Title format: game date followed by the character's name. 'restricted', not the schema
+		// default 'everyone': the ACTOR_LABEL connection written right below makes this one
+		// character its audience, same as the parent plot ensure_plot() creates.
 		$plot_id = Plot::create( [
 			'game_id'        => (int) $game->id,
 			'parent_plot_id' => $parent_plot_id,
@@ -427,6 +429,7 @@ class Action_Allocator {
 			'initiated_by'   => 'player',
 			'game_date'      => $game_date,
 			'created_by'     => get_current_user_id(),
+			'audience'       => Audience::RESTRICTED,
 		] );
 		if ( ! $plot_id ) {
 			return null;
@@ -454,6 +457,64 @@ class Action_Allocator {
 	 * @param string $game_date
 	 * @return int|null
 	 */
+	/**
+	 * Every action-allocation plot for a game date, across every character - the Downtime
+	 * queue's own source list (1.1.0 §3.3), unfiltered by character the way find_own_plot_id()
+	 * is.
+	 *
+	 * @param int    $game_id
+	 * @param string $game_date `Y-m-d`.
+	 * @return object[] Each: plot_id, character_id, assigned_to (§3.6, null when unassigned).
+	 */
+	public static function plots_for_date( int $game_id, string $game_date ): array {
+		global $wpdb;
+		$plots_table       = Manager::table( 'plots' );
+		$connections_table = Manager::table( 'connections' );
+
+		$rows = $wpdb->get_results( $wpdb->prepare(
+			"SELECT p.id AS plot_id, c.target_id AS character_id, p.assigned_to AS assigned_to
+			 FROM {$plots_table} p
+			 INNER JOIN {$connections_table} c ON c.source_type = 'plot' AND c.source_id = p.id
+			 WHERE c.target_type = 'character' AND c.label = %s
+			   AND p.game_id = %d AND p.game_date = %s",
+			self::ACTOR_LABEL,
+			$game_id,
+			$game_date
+		) );
+
+		return $rows ?: [];
+	}
+
+	/**
+	 * Every action-allocation plot assigned to one staff member, across every game date - the
+	 * My Queue downtime section's own source list (1.1.0 §3.6), unfiltered by date the way
+	 * plots_for_date() is. `game_date IS NOT NULL` excludes a character's own permanent home
+	 * plot (Character::ensure_plot()) - it carries the identical apr_actor connection every
+	 * dated round plot does, but it is never itself a round with actions to answer.
+	 *
+	 * @param int $wp_user_id
+	 * @param int $game_id
+	 * @return object[] Each: plot_id, character_id, game_date.
+	 */
+	public static function plots_assigned_to( int $wp_user_id, int $game_id ): array {
+		global $wpdb;
+		$plots_table       = Manager::table( 'plots' );
+		$connections_table = Manager::table( 'connections' );
+
+		$rows = $wpdb->get_results( $wpdb->prepare(
+			"SELECT p.id AS plot_id, c.target_id AS character_id, p.game_date AS game_date
+			 FROM {$plots_table} p
+			 INNER JOIN {$connections_table} c ON c.source_type = 'plot' AND c.source_id = p.id
+			 WHERE c.target_type = 'character' AND c.label = %s
+			   AND p.game_id = %d AND p.assigned_to = %d AND p.game_date IS NOT NULL",
+			self::ACTOR_LABEL,
+			$game_id,
+			$wp_user_id
+		) );
+
+		return $rows ?: [];
+	}
+
 	public static function find_own_plot_id( int $character_id, string $game_date ): ?int {
 		global $wpdb;
 		$plots_table       = Manager::table( 'plots' );

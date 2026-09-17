@@ -69,6 +69,14 @@ class Capabilities {
 		// visibility (NPC hiding, [ST]-marked text) is enforced inside
 		// Report_Document/Query_Engine, not by narrowing this grant.
 		'be_view_reports'          => [ 'administrator', 'editor', 'author', 'contributor', 'subscriber' ],
+		// Chronicle-scoped like be_manage_plots; game-roles.php also grants it to narrator
+		// explicitly (a Narrator often runs the door at a game night) rather than deriving it.
+		'be_manage_sessions'       => [ 'administrator', 'editor' ],
+		// 1.1.0 §3.10 (F1): sects, coteries, packs, courts and their positions - a
+		// dedicated capability rather than folding into be_manage_world_objects, since a
+		// faction is a chronicle-membership structure, not a catalog entity. hst/ast derive
+		// it via game-roles.php's own array_diff mechanism; narrator does not.
+		'be_manage_factions'       => [ 'administrator', 'editor' ],
 	];
 
 	/**

@@ -7,6 +7,7 @@ use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Game_Session;
 use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\World_Object;
 use BeyondElysium\Services\Change_Engine;
@@ -489,6 +490,31 @@ class Import_Controller extends Base_Controller {
 			if ( ! empty( $parsed[ $kind ] ) ) {
 				$created[ "skipped_{$kind}" ] = count( $parsed[ $kind ] );
 			}
+		}
+
+		// calendar.entries only ever appears in a full game file (GVBG) parse - absent or
+		// empty for an ordinary single-character exchange file (1.1.0 §3.1).
+		if ( ! empty( $parsed['calendar']['entries'] ) ) {
+			$imported_dates = 0;
+			$skipped_dates  = 0;
+			foreach ( $parsed['calendar']['entries'] as $entry ) {
+				// date part only - Game_Session::game_date is a date column, not a datetime one.
+				$game_date = substr( (string) ( $entry['date'] ?? '' ), 0, 10 );
+				if ( $game_date === '' || Game_Session::find_by_date( $game_id, $game_date ) ) {
+					++$skipped_dates;
+					continue;
+				}
+				Game_Session::create( [
+					'game_id'    => $game_id,
+					'game_date'  => $game_date,
+					'start_time' => ( $entry['time'] ?? '' ) !== '' ? $entry['time'] : null,
+					'place'      => ( $entry['place'] ?? '' ) !== '' ? $entry['place'] : null,
+					'notes'      => ( $entry['notes'] ?? '' ) !== '' ? $entry['notes'] : null,
+					'created_by' => isset( $options['submitted_by'] ) ? (int) $options['submitted_by'] : get_current_user_id(),
+				] );
+				++$imported_dates;
+			}
+			$created['calendar_entries'] = [ 'imported' => $imported_dates, 'skipped' => $skipped_dates ];
 		}
 
 		return $created;

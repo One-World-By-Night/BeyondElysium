@@ -462,6 +462,57 @@ offering a button that cannot work.
 
 See the [Secure Printing](help/secure-printing.md) help page for the full walkthrough.
 
+## Who Can See a Plot, Item, or Location
+
+Every plot, item, and location has a **Who can see this** setting: **Everyone in the
+chronicle**, **Storytellers and Narrators only**, or **Only characters matching rules I
+set**. A new plot starts Storytellers-only; a new item or location starts open to everyone.
+Widening a player's own plot is Storyteller-only — the player who owns it can never widen it
+themselves, though they get everything else a global plot has (public and private replies,
+directed posts, uploads).
+
+Picking **Only characters matching rules I set** opens the same clause-and-value query
+builder the Query Tool uses, against your chronicle's characters — "Clan is Tremere," "Sect
+is Sabbat," or several clauses combined with AND/OR. A live count shows how many characters
+currently match while you build it, plus a reminder that a character directly connected to
+the plot, item, or location (an owner, a holder, an invited co-narrator) always sees it too,
+whether or not it matches the rule. A rule with no complete clause yet is treated as "no rule
+set" rather than blocking the save — add at least one complete clause before it actually
+narrows anything.
+
+A plot entry (a reply on the Timeline) has its own, separate three-way choice: **Public**
+(everyone who can see the plot), **Storytellers and Narrators only** (private to you, other
+managers, and the entry's own author), or, Storyteller-only, **Directed to specific
+characters** — pick from a list of who can currently see the plot at all. A player composing
+their own entry only ever sees the first two choices.
+
+## File Uploads
+
+Plots, items, and locations can each carry uploaded files — images and PDFs, 10 MB each. A
+plot or location may carry up to 20; an item carries exactly one. An upload follows its
+entity's own audience automatically: whoever can open the plot, item, or location can open
+what's attached to it, and no one else. The upload control is a **Files** section on the
+plot's own detail view (Storyteller Toolkit → Plots & Rumors) and on an item or location's
+detail pane (Items & Locations); a Storyteller, or a player plot's own owner, sees an upload
+button and a Remove button per file, everyone else who can see the entity sees the list and
+a download link only.
+
+These files never go through the WordPress media library, because a media library file is a
+public URL anyone can open regardless of anything this plugin decides. Instead each one is
+written to its own randomly-named folder under `wp-content/uploads/beyond-elysium-private/`,
+served only through a signed-in request that re-checks the owning entity's audience every
+time — never a direct link.
+
+**Read this if your host runs nginx.** The private folder ships with a `.htaccess` file that
+tells Apache to refuse every direct request to it. Apache honors that file automatically.
+**nginx does not read `.htaccess` at all**, so on an nginx host that rule does nothing by
+itself — what still stands between a stranger and a file is that its folder name is 32 random
+hex characters, never shown anywhere, in a path nobody has reason to guess. That is real
+protection, but it is unguessable, not locked the way it is on Apache. If your host runs
+nginx and you want the same server-level guarantee Apache gets for free, add a rule to your
+site's own nginx config denying direct requests under `uploads/beyond-elysium-private/`; ask
+your host if you're not sure which web server you're on.
+
 ## Players Proposing Items
 
 A player can propose an item, location or rote for their own character from **My Chronicle →

@@ -35,13 +35,21 @@ Storyteller dashboard and controls; the same person in a chronicle where they on
 the player's.
   - **My Plots & Rumors** - plot threads you're connected to and any rumor that's reached
     you.
+  - **Who's Who** - the chronicle's NPC directory, showing only the NPCs a Storyteller has
+    made public and only what each one's profile shares. See [Who's Who](whos-who.md).
+  - **What I Know** - secrets that have been revealed to any of your characters. See
+    [What I Know](what-i-know.md).
+  - **After-Game Report** - what your character did, what you want next, and anything for
+    staff, one per character per session. See [After-Game Report](after-game-report.md).
   - **Reports** - a small picker among **Game Calendar**, **Location Cards**, and **Rote
     Cards**, open to every member, Storyteller or not. Game Calendar shows this chronicle's
     own honest note when it has no per-date schedule set up yet, rather than a blank page.
     Location Cards and Rote Cards each show one card per entry, with every field - including
     a Storyteller's own formatted Description or Appearance text - rendered the way it was
     written; a `[ST]...[/ST]` marked passage is still stripped out for you the same as
-    everywhere else. See [Reports](reports.md).
+    everywhere else. A **Scope to character** picker above the tabs lets a mage pick which of
+    their own characters to see Rote Cards for - the tab only appears once a character whose
+    stack actually holds rotes is picked. See [Reports](reports.md).
 
 The page keeps your chosen chronicle, tab, and character in its web address, so refreshing
 or bookmarking it returns you to the same view.
@@ -97,6 +105,9 @@ or bookmarking it returns you to the same view.
 - [Send a Grapevine File](send-grapevine-file.md)
 - [Character Sheet](character-sheet.md)
 - [Character Editor](character-editor.md)
+- [Who's Who](whos-who.md)
+- [What I Know](what-i-know.md)
+- [After-Game Report](after-game-report.md)
 - [Reports](reports.md)
 - [Roles](roles.md)
 - [Chronicles](chronicles.md)

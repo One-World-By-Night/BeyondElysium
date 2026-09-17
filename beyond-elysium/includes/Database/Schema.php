@@ -20,7 +20,7 @@ class Schema {
 	 * release version. Compared against the stored VERSION_OPTION value by
 	 * maybe_upgrade() to decide whether migrations need to run.
 	 */
-	const DB_VERSION = '1.0.3';
+	const DB_VERSION = '1.1.0';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -70,6 +70,21 @@ class Schema {
 		'character_attestations',
 		'character_transfers',
 		'character_submissions',
+		'attachments',
+		'game_sessions',
+		'attendance',
+		'release_batches',
+		'notification_queue',
+		'npc_castings',
+		'secrets',
+		'secret_reveals',
+		'item_events',
+		'item_attestations',
+		'after_game_reports',
+		'factions',
+		'faction_members',
+		'positions',
+		'position_history',
 	];
 
 	/**
@@ -182,6 +197,7 @@ class Schema {
 			pending_player_email varchar(255) DEFAULT NULL,
 			status varchar(20) NOT NULL DEFAULT 'active',
 			is_npc tinyint(1) NOT NULL DEFAULT 0,
+			npc_detail varchar(10) NOT NULL DEFAULT 'full',
 			narrator varchar(255) DEFAULT NULL,
 			start_date date DEFAULT NULL,
 			xp_earned int unsigned NOT NULL DEFAULT 0,
@@ -191,6 +207,12 @@ class Schema {
 			rp_notes longtext,
 			image_id bigint(20) unsigned DEFAULT NULL,
 			sheet_data json DEFAULT NULL,
+			assigned_to bigint(20) unsigned DEFAULT NULL,
+			public_name varchar(255) DEFAULT NULL,
+			public_description longtext,
+			public_image_id bigint(20) unsigned DEFAULT NULL,
+			profile_audience varchar(20) NOT NULL DEFAULT 'storytellers',
+			profile_audience_rules json DEFAULT NULL,
 			created_by bigint(20) unsigned NOT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -200,6 +222,7 @@ class Schema {
 			KEY idx_owner (owner_type, owner_slug),
 			KEY idx_wp_user (wp_user_id),
 			KEY idx_status (status),
+			KEY idx_assigned_to (assigned_to),
 			FULLTEXT KEY ft_text (biography, notes)
 		) $charset_collate;" );
 
@@ -352,6 +375,13 @@ class Schema {
 			cliffhanger longtext,
 			target_query json DEFAULT NULL,
 			st_notes longtext,
+			audience varchar(20) NOT NULL DEFAULT 'everyone',
+			audience_rules json DEFAULT NULL,
+			held tinyint(1) NOT NULL DEFAULT 0,
+			release_batch_id bigint(20) unsigned DEFAULT NULL,
+			rumor_level_key varchar(64) DEFAULT NULL,
+			rumor_level_match varchar(255) DEFAULT NULL,
+			assigned_to bigint(20) unsigned DEFAULT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
@@ -359,10 +389,17 @@ class Schema {
 			KEY idx_created_by (created_by),
 			KEY idx_game_date (game_id, game_date),
 			KEY idx_parent_plot (parent_plot_id),
+			KEY idx_release_batch (release_batch_id),
+			KEY idx_assigned_to (assigned_to),
 			FULLTEXT KEY ft_plot_text (title, description)
 		) $charset_collate;" );
 
 		// be_plot_entries: timeline entries attached to a plot; event_date is the in-fiction date.
+		// audience_character_ids only applies when audience = 'characters' (a Storyteller post
+		// aimed at specific characters, 1.1.0 §2.4); NULL otherwise. held/release_batch_id are
+		// the same release-batch gate as plots (1.1.0 §3.2). level (1-10) only applies to a
+		// 'rumor_level' entry (1.1.0 §3.4); it carries no held/release_batch_id of its own -
+		// a level text follows its plot's own release state, never its own.
 		dbDelta( "CREATE TABLE {$prefix}plot_entries (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			plot_id bigint(20) unsigned NOT NULL,
@@ -370,8 +407,14 @@ class Schema {
 			entry_type varchar(20) NOT NULL,
 			content longtext NOT NULL,
 			event_date date DEFAULT NULL,
+			audience varchar(20) NOT NULL DEFAULT 'plot',
+			audience_character_ids json DEFAULT NULL,
+			held tinyint(1) NOT NULL DEFAULT 0,
+			release_batch_id bigint(20) unsigned DEFAULT NULL,
+			level tinyint(3) unsigned DEFAULT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
+			KEY idx_release_batch (release_batch_id),
 			KEY idx_plot_date (plot_id, created_at)
 		) $charset_collate;" );
 
@@ -404,12 +447,18 @@ class Schema {
 			cost varchar(100) DEFAULT NULL,
 			limitations longtext,
 			properties json DEFAULT NULL,
+			audience varchar(20) NOT NULL DEFAULT 'everyone',
+			audience_rules json DEFAULT NULL,
+			parent_id bigint(20) unsigned DEFAULT NULL,
+			based_on_id bigint(20) unsigned DEFAULT NULL,
 			created_by bigint(20) unsigned NOT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			KEY idx_game_type (game_id, object_type),
 			KEY idx_rarity (rarity),
+			KEY idx_parent (parent_id),
+			KEY idx_based_on (based_on_id),
 			FULLTEXT KEY ft_object_text (name, description)
 		) $charset_collate;" );
 
@@ -477,6 +526,298 @@ class Schema {
 			KEY idx_wp_user (wp_user_id)
 		) $charset_collate;" );
 
+		// be_attachments: private uploads on a plot or world object (1.1.0 §2.6). The file itself
+		// lives outside the uploads tree the media library serves from - stored_name is a random
+		// 32-hex-char component of that private path, never the original filename, and is never
+		// echoed in any REST response. Visibility is the owning entity's own audience, checked by
+		// Attachments_Controller on every download - this table records what exists, not who may see it.
+		dbDelta( "CREATE TABLE {$prefix}attachments (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			entity_type varchar(20) NOT NULL,
+			entity_id bigint(20) unsigned NOT NULL,
+			original_name varchar(255) NOT NULL,
+			stored_name varchar(64) NOT NULL,
+			mime varchar(100) NOT NULL,
+			bytes bigint(20) unsigned NOT NULL,
+			created_by bigint(20) unsigned NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_entity (entity_type, entity_id),
+			KEY idx_game (game_id)
+		) $charset_collate;" );
+
+		// be_game_sessions: one row per game night (1.1.0 §3.1).
+		dbDelta( "CREATE TABLE {$prefix}game_sessions (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			game_date date NOT NULL,
+			start_time varchar(50) DEFAULT NULL,
+			place varchar(255) DEFAULT NULL,
+			notes longtext,
+			downtime_opens_at datetime DEFAULT NULL,
+			downtime_deadline_at datetime DEFAULT NULL,
+			downtime_extensions json DEFAULT NULL,
+			default_batch_id bigint(20) unsigned DEFAULT NULL,
+			reports_due_at datetime DEFAULT NULL,
+			attendance_xp_awarded_at datetime DEFAULT NULL,
+			attendance_xp_awarded_by bigint(20) unsigned DEFAULT NULL,
+			report_xp_awarded_at datetime DEFAULT NULL,
+			report_xp_awarded_by bigint(20) unsigned DEFAULT NULL,
+			created_by bigint(20) unsigned NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY game_date (game_id, game_date)
+		) $charset_collate;" );
+
+		// be_attendance: who signed in at a session - a character, or a visitor recorded by name.
+		dbDelta( "CREATE TABLE {$prefix}attendance (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			session_id bigint(20) unsigned NOT NULL,
+			game_id bigint(20) unsigned NOT NULL,
+			character_id bigint(20) unsigned DEFAULT NULL,
+			visitor_name varchar(255) DEFAULT NULL,
+			visitor_chronicle varchar(255) DEFAULT NULL,
+			recorded_by bigint(20) unsigned NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY session_character (session_id, character_id),
+			KEY idx_character (character_id)
+		) $charset_collate;" );
+
+		// be_release_batches: scheduled batches rumors and downtime answers go out in
+		// (1.1.0 §3.2, owner ruling - several releases between games, never immediate).
+		dbDelta( "CREATE TABLE {$prefix}release_batches (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			name varchar(255) NOT NULL,
+			release_at datetime DEFAULT NULL,
+			status varchar(20) NOT NULL DEFAULT 'draft',
+			released_at datetime DEFAULT NULL,
+			notified_at datetime DEFAULT NULL,
+			created_by bigint(20) unsigned NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_game_status (game_id, status),
+			KEY idx_due (status, release_at)
+		) $charset_collate;" );
+
+		// be_notification_queue: daily-digest plot-post notifications (1.1.0 §3.5) queued for a
+		// user who has opted into 'daily' rather than 'immediate' - Maintenance::run() sends one
+		// digest per user and deletes the rows it sent. payload is longtext, not the design
+		// doc's literal `json` type, matching how every other JSON-shaped column in this schema
+		// (plots.target_query, plots.audience_rules, ...) is already modeled.
+		dbDelta( "CREATE TABLE {$prefix}notification_queue (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			wp_user_id bigint(20) unsigned NOT NULL,
+			game_id bigint(20) unsigned NOT NULL,
+			kind varchar(20) NOT NULL,
+			payload longtext,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_user (wp_user_id)
+		) $charset_collate;" );
+
+		// be_npc_castings: a chronicle member cast to play one NPC for one session (1.1.0
+		// §3.8) - a per-session loan of "how to play this character tonight," separate from
+		// characters.assigned_to (S6's permanent staff owner). brief is longtext, not the
+		// design doc's literal wording, matching this schema's own JSON/free-text convention.
+		dbDelta( "CREATE TABLE {$prefix}npc_castings (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			session_id bigint(20) unsigned NOT NULL,
+			character_id bigint(20) unsigned NOT NULL,
+			wp_user_id bigint(20) unsigned NOT NULL,
+			brief longtext,
+			created_by bigint(20) unsigned NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY session_character (session_id, character_id),
+			KEY idx_wp_user (wp_user_id)
+		) $charset_collate;" );
+
+		// be_secrets: a Storyteller-authored secret attached to a plot, item, location, or NPC
+		// (1.1.0 §3.11) - a real Audience-shaped audience/audience_rules pair in its own
+		// right, not simply "hidden until revealed."
+		dbDelta( "CREATE TABLE {$prefix}secrets (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			entity_type varchar(20) NOT NULL,
+			entity_id bigint(20) unsigned NOT NULL,
+			title varchar(255) NOT NULL,
+			content longtext,
+			audience varchar(20) NOT NULL DEFAULT 'storytellers',
+			audience_rules json DEFAULT NULL,
+			created_by bigint(20) unsigned NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_game (game_id),
+			KEY idx_entity (entity_type, entity_id)
+		) $charset_collate;" );
+
+		// be_secret_reveals: one character learning one secret - held/release_batch_id is the
+		// same per-item gate plots/plot_entries already use (§3.2), applied per reveal rather
+		// than to the whole secret, since different characters can learn the same secret at
+		// different times.
+		dbDelta( "CREATE TABLE {$prefix}secret_reveals (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			secret_id bigint(20) unsigned NOT NULL,
+			character_id bigint(20) unsigned NOT NULL,
+			how varchar(20) NOT NULL DEFAULT 'game',
+			note text,
+			held tinyint(1) NOT NULL DEFAULT 0,
+			release_batch_id bigint(20) unsigned DEFAULT NULL,
+			revealed_by bigint(20) unsigned NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY secret_character (secret_id, character_id),
+			KEY idx_character (character_id),
+			KEY idx_release_batch (release_batch_id)
+		) $charset_collate;" );
+
+		// be_item_events: an item's own history (1.1.0 §3.12, I1/I2) - I1 writes only 'copied'
+		// for now; I2 adds given/taken/traded/stolen/lost/used/proposed/adjusted once it ships.
+		// The full column set is built now since I1 already needs the table to exist at all.
+		dbDelta( "CREATE TABLE {$prefix}item_events (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			world_object_id bigint(20) unsigned NOT NULL,
+			event varchar(20) NOT NULL,
+			character_id bigint(20) unsigned DEFAULT NULL,
+			from_character_id bigint(20) unsigned DEFAULT NULL,
+			note text,
+			recorded_by bigint(20) unsigned NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_object_created (world_object_id, created_at)
+		) $charset_collate;" );
+
+		// be_item_attestations: an item's own verification codes (1.1.0 §3.13) - the item
+		// sibling of be_character_attestations (GX-7), sharing Services\Short_Code so a
+		// character code and an item code can never collide against the one shared
+		// GET /be/v1/verify/{code} route. No expires_at/sheet_hash/kind of its own: an item has
+		// no document-format variant to distinguish and no canonicalized-export hash to compare
+		// against - still_matches instead re-derives name/holder/uses_left/expires_on live.
+		dbDelta( "CREATE TABLE {$prefix}item_attestations (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_slug varchar(100) NOT NULL,
+			world_object_id bigint(20) unsigned NOT NULL,
+			character_id bigint(20) unsigned DEFAULT NULL,
+			token char(43) NOT NULL,
+			short_code varchar(12) NOT NULL,
+			attested json NOT NULL,
+			issued_at datetime NOT NULL,
+			issued_by bigint(20) unsigned NOT NULL,
+			revoked_at datetime DEFAULT NULL,
+			last_checked_at datetime DEFAULT NULL,
+			check_count int(10) unsigned NOT NULL DEFAULT 0,
+			PRIMARY KEY  (id),
+			UNIQUE KEY uq_token (token),
+			UNIQUE KEY uq_short (short_code),
+			KEY idx_object (world_object_id)
+		) $charset_collate;" );
+
+		// be_after_game_reports: one player-written report per character per session (1.1.0
+		// §3.14, A1) - what did your character do, what do you want next, anything for staff.
+		// Storytellers read and mark read; they never edit a player's own words.
+		dbDelta( "CREATE TABLE {$prefix}after_game_reports (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			session_id bigint(20) unsigned NOT NULL,
+			character_id bigint(20) unsigned NOT NULL,
+			wp_user_id bigint(20) unsigned NOT NULL,
+			did longtext,
+			wants longtext,
+			to_staff longtext,
+			read_at datetime DEFAULT NULL,
+			read_by bigint(20) unsigned DEFAULT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY session_character (session_id, character_id),
+			KEY idx_character (character_id)
+		) $charset_collate;" );
+
+		// be_factions: sects, coteries, packs, chantries, courts and similar groups (1.1.0
+		// §3.10, F1). A real Audience-shaped audience/audience_rules pair, same discipline as
+		// be_secrets - visibility is a first-class rule, not "hidden until named." parent_id
+		// is a plain nullable self-reference like every other relationship in this schema -
+		// no FOREIGN KEY anywhere in this codebase, app-level integrity only.
+		dbDelta( "CREATE TABLE {$prefix}factions (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			parent_id bigint(20) unsigned DEFAULT NULL,
+			name varchar(255) NOT NULL,
+			faction_type varchar(30) NOT NULL DEFAULT 'other',
+			description longtext,
+			goals longtext,
+			status varchar(20) NOT NULL DEFAULT 'active',
+			created_via_proposal tinyint(1) NOT NULL DEFAULT 0,
+			audience varchar(20) NOT NULL DEFAULT 'storytellers',
+			audience_rules json DEFAULT NULL,
+			created_by bigint(20) unsigned NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_game_status (game_id, status)
+		) $charset_collate;" );
+
+		// be_faction_members: one row per character in a faction, at most one leader flag
+		// per member (not enforced at the row level - a faction may have more than one
+		// leader, checked in the model).
+		dbDelta( "CREATE TABLE {$prefix}faction_members (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			faction_id bigint(20) unsigned NOT NULL,
+			character_id bigint(20) unsigned NOT NULL,
+			member_rank varchar(100) DEFAULT NULL,
+			is_leader tinyint(1) NOT NULL DEFAULT 0,
+			added_by bigint(20) unsigned NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY faction_character (faction_id, character_id),
+			KEY idx_character (character_id)
+		) $charset_collate;" );
+
+		// be_positions: a chronicle office (Prince, Sheriff, Grand Elder, ...), optionally tied
+		// to a faction (a court seat) or standing alone (an independent title). holder_public
+		// controls whether a non-Storyteller sees who holds it or only that it is held.
+		dbDelta( "CREATE TABLE {$prefix}positions (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			faction_id bigint(20) unsigned DEFAULT NULL,
+			title varchar(100) NOT NULL,
+			character_id bigint(20) unsigned DEFAULT NULL,
+			since date DEFAULT NULL,
+			holder_public tinyint(1) NOT NULL DEFAULT 1,
+			audience varchar(20) NOT NULL DEFAULT 'everyone',
+			audience_rules json DEFAULT NULL,
+			notes longtext,
+			created_by bigint(20) unsigned NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_game (game_id),
+			KEY idx_faction (faction_id),
+			KEY idx_character (character_id)
+		) $charset_collate;" );
+
+		// be_position_history: one row per holder change, written whenever a position's
+		// character_id changes - never edited afterward, an append-only log.
+		dbDelta( "CREATE TABLE {$prefix}position_history (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			position_id bigint(20) unsigned NOT NULL,
+			character_id bigint(20) unsigned DEFAULT NULL,
+			started date NOT NULL,
+			ended date DEFAULT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_position (position_id)
+		) $charset_collate;" );
+
 		self::migrate();
 
 		// The schema version is recorded by the caller once every step after this one has run too,
@@ -516,6 +857,18 @@ class Schema {
 		self::record_fork_changes();
 		self::seed_character_plots();
 		self::preserve_existing_signing_choice();
+		self::add_audience_to_plots();
+		self::add_audience_to_plot_entries();
+		self::add_audience_to_world_objects();
+		self::migrate_actor_plots_to_restricted_audience();
+		self::add_rumor_levels_to_plots();
+		self::add_level_to_plot_entries();
+		self::migrate_rumors_to_release_batches();
+		self::add_assigned_to_to_plots();
+		self::add_assigned_to_to_characters();
+		self::add_npc_profile_to_characters();
+		self::add_parent_id_to_world_objects();
+		self::add_based_on_id_to_world_objects();
 	}
 
 	/**
@@ -539,6 +892,274 @@ class Schema {
 		}
 
 		add_option( \BeyondElysium\Services\Pdf_Signer::OPT_IN_OPTION, \BeyondElysium\Services\Pdf_Signer::availability()['ok'] );
+	}
+
+	/**
+	 * Adds one column to an existing table if it is not already there. Shared by the four
+	 * 1.1.0 audience migrations below rather than four independent copies of the same
+	 * information_schema probe - each still logs its own table/column on failure.
+	 *
+	 * @param string $table      Fully prefixed table name (from self::table()).
+	 * @param string $column     Column name to check for.
+	 * @param string $definition The full column definition clause, e.g. "varchar(20) NOT NULL DEFAULT 'everyone'".
+	 */
+	private static function add_column_if_missing( string $table, string $column, string $definition ): void {
+		global $wpdb;
+
+		$has_column = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM information_schema.columns
+				 WHERE table_schema = DATABASE() AND table_name = %s AND column_name = %s",
+				$table,
+				$column
+			)
+		);
+		if ( (int) $has_column === 0 ) {
+			$wpdb->query( "ALTER TABLE {$table} ADD COLUMN {$column} {$definition}" );
+			if ( $wpdb->last_error ) {
+				error_log( "Beyond Elysium: failed to add {$column} to {$table}: " . $wpdb->last_error );
+			}
+		}
+	}
+
+	/**
+	 * Gives an existing plots table its 1.1.0 audience columns. A fresh install already has
+	 * them from create_tables(); this brings an upgrade up to the same shape.
+	 */
+	public static function add_audience_to_plots(): void {
+		$table = self::table( 'plots' );
+		self::add_column_if_missing( $table, 'audience', "varchar(20) NOT NULL DEFAULT 'everyone' AFTER st_notes" );
+		self::add_column_if_missing( $table, 'audience_rules', 'json DEFAULT NULL AFTER audience' );
+	}
+
+	/**
+	 * Gives an existing plot_entries table its 1.1.0 audience columns.
+	 */
+	public static function add_audience_to_plot_entries(): void {
+		$table = self::table( 'plot_entries' );
+		self::add_column_if_missing( $table, 'audience', "varchar(20) NOT NULL DEFAULT 'plot' AFTER event_date" );
+		self::add_column_if_missing( $table, 'audience_character_ids', 'json DEFAULT NULL AFTER audience' );
+	}
+
+	/**
+	 * Gives an existing world_objects table its 1.1.0 audience columns.
+	 */
+	public static function add_audience_to_world_objects(): void {
+		$table = self::table( 'world_objects' );
+		self::add_column_if_missing( $table, 'audience', "varchar(20) NOT NULL DEFAULT 'everyone' AFTER properties" );
+		self::add_column_if_missing( $table, 'audience_rules', 'json DEFAULT NULL AFTER audience' );
+	}
+
+	/**
+	 * Gives an existing world_objects table its 1.1.0 "Inside of" column (§3.9 item 1) - a
+	 * location nested inside another location. Never meaningful for an item, rote, or boon;
+	 * nothing here enforces that at the schema level, matching how `object_type` itself is a
+	 * plain column with app-level validation, not a per-type table.
+	 */
+	public static function add_parent_id_to_world_objects(): void {
+		$table = self::table( 'world_objects' );
+		self::add_column_if_missing( $table, 'parent_id', 'bigint(20) unsigned DEFAULT NULL AFTER audience_rules' );
+	}
+
+	/**
+	 * Gives an existing world_objects table its 1.1.0 "based on" column (§3.12, I1) - the
+	 * source item an item copy was made from.
+	 */
+	public static function add_based_on_id_to_world_objects(): void {
+		$table = self::table( 'world_objects' );
+		self::add_column_if_missing( $table, 'based_on_id', 'bigint(20) unsigned DEFAULT NULL AFTER parent_id' );
+	}
+
+	/**
+	 * Preserves every existing plot's real visibility under 1.1.0's new audience column
+	 * (owner, 2026-09-16: "Player plots do what global can - but are ST/Narrator and player +
+	 * anyone added to it").
+	 *
+	 * A plot connected to a character via Action_Allocator::ACTOR_LABEL ('apr_actor') is that
+	 * character's own personal plot - already hidden from every other player by
+	 * Plot::actor_ownership_exclusion(). Setting its audience to 'restricted' with no rules
+	 * makes the new audience system agree with what Plot::actor_ownership_exclusion() already
+	 * enforces: restricted-with-no-rules-and-no-other-connections means "the owner only",
+	 * which is exactly today's behavior. The owner's connection itself is untouched, so
+	 * Audience::visible_character_ids() finds the owner through it - see Services\Audience.
+	 *
+	 * Every other existing plot is left at the column's own default, 'everyone' - unchanged
+	 * from how every non-personal plot behaves today. New plots created after this migration
+	 * get 1.1.0's own defaults (Storytellers-only for a global plot, owner-only for a player
+	 * plot) from Plots_Controller::create_item(), not from this one-time backfill.
+	 *
+	 * Idempotent via a dedicated option, since re-running the UPDATE is harmless but pointless
+	 * once done - a Storyteller may deliberately widen a personal plot's audience afterward,
+	 * and a later upgrade must never overwrite that choice back to 'restricted'.
+	 */
+	public static function migrate_actor_plots_to_restricted_audience(): void {
+		if ( get_option( 'be_actor_plots_audience_migrated' ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$plots       = self::table( 'plots' );
+		$connections = self::table( 'connections' );
+
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$plots} p
+				 INNER JOIN {$connections} c ON c.source_type = 'plot' AND c.source_id = p.id
+				   AND c.target_type = 'character' AND c.label = %s
+				 SET p.audience = 'restricted'
+				 WHERE p.audience = 'everyone'",
+				\BeyondElysium\Services\Action_Allocator::ACTOR_LABEL
+			)
+		);
+		if ( $wpdb->last_error ) {
+			error_log( 'Beyond Elysium: failed to migrate actor-plot audiences: ' . $wpdb->last_error );
+			return;
+		}
+
+		update_option( 'be_actor_plots_audience_migrated', 1 );
+	}
+
+	/**
+	 * Gives an existing plots table its 1.1.0 rumor-level columns (§3.4). A fresh install
+	 * already has them from create_tables(); this brings an upgrade up to the same shape.
+	 */
+	public static function add_rumor_levels_to_plots(): void {
+		$table = self::table( 'plots' );
+		self::add_column_if_missing( $table, 'rumor_level_key', 'varchar(64) DEFAULT NULL AFTER release_batch_id' );
+		self::add_column_if_missing( $table, 'rumor_level_match', 'varchar(255) DEFAULT NULL AFTER rumor_level_key' );
+	}
+
+	/**
+	 * Gives an existing plot_entries table its 1.1.0 `level` column (§3.4).
+	 */
+	public static function add_level_to_plot_entries(): void {
+		self::add_column_if_missing( self::table( 'plot_entries' ), 'level', 'tinyint(3) unsigned DEFAULT NULL AFTER release_batch_id' );
+	}
+
+	/**
+	 * Gives an existing plots table its 1.1.0 staff-assignment column (§3.6).
+	 */
+	public static function add_assigned_to_to_plots(): void {
+		self::add_column_if_missing( self::table( 'plots' ), 'assigned_to', 'bigint(20) unsigned DEFAULT NULL AFTER rumor_level_match' );
+	}
+
+	/**
+	 * Gives an existing characters table its 1.1.0 staff-assignment column (§3.6) - an NPC's
+	 * staff owner, unused on a player character.
+	 */
+	public static function add_assigned_to_to_characters(): void {
+		self::add_column_if_missing( self::table( 'characters' ), 'assigned_to', 'bigint(20) unsigned DEFAULT NULL AFTER sheet_data' );
+	}
+
+	/**
+	 * Gives an existing characters table its 1.1.0 quick-NPC and public-profile columns (§3.7).
+	 * `npc_detail`/the five profile fields are meaningful only on an NPC; unused on a PC.
+	 */
+	public static function add_npc_profile_to_characters(): void {
+		$table = self::table( 'characters' );
+		self::add_column_if_missing( $table, 'npc_detail', "varchar(10) NOT NULL DEFAULT 'full' AFTER is_npc" );
+		self::add_column_if_missing( $table, 'public_name', 'varchar(255) DEFAULT NULL AFTER assigned_to' );
+		self::add_column_if_missing( $table, 'public_description', 'longtext DEFAULT NULL AFTER public_name' );
+		self::add_column_if_missing( $table, 'public_image_id', 'bigint(20) unsigned DEFAULT NULL AFTER public_description' );
+		self::add_column_if_missing( $table, 'profile_audience', "varchar(20) NOT NULL DEFAULT 'storytellers' AFTER public_image_id" );
+		self::add_column_if_missing( $table, 'profile_audience_rules', 'json DEFAULT NULL AFTER profile_audience' );
+	}
+
+	/**
+	 * Preserves every existing rumor's visibility under 1.1.0's held-from-birth rule (§3.4):
+	 * every plot ever tagged `apr_rumor` gets `held = 1` and joins one already-`released`
+	 * batch per chronicle, named "Released before 1.1.0" - so a non-manager who could read a
+	 * rumor before this migration can still read it after, through the release-batch gate
+	 * instead of through an unheld plot. Their `audience` is never touched here - U1's own
+	 * migration already set it correctly, and a Storyteller may since have widened or
+	 * narrowed it deliberately.
+	 *
+	 * One batch per chronicle rather than one batch for every rumor, or one shared batch
+	 * across every chronicle: `Release_Batch` is game-scoped everywhere else in this
+	 * codebase (`for_game()`, the Releases tab), and a single cross-chronicle batch would be
+	 * the first row in this table not to be.
+	 *
+	 * Idempotent via a dedicated option: re-running would otherwise create a second
+	 * "Released before 1.1.0" batch per chronicle every upgrade, and a Storyteller may
+	 * deliberately move a rumor to a later draft/scheduled batch afterward, which a repeat
+	 * run must never overwrite back.
+	 */
+	public static function migrate_rumors_to_release_batches(): void {
+		if ( get_option( 'be_rumor_release_migrated' ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$plots       = self::table( 'plots' );
+		$connections = self::table( 'connections' );
+		$rumor_label = \BeyondElysium\Services\Rumor_Generator::RUMOR_LABEL;
+
+		$game_ids = $wpdb->get_col( $wpdb->prepare(
+			"SELECT DISTINCT p.game_id FROM {$plots} p
+			 INNER JOIN {$connections} c ON c.source_type = 'plot' AND c.source_id = p.id
+			   AND c.target_type = 'tag' AND c.label = %s
+			 WHERE p.held = 0",
+			$rumor_label
+		) );
+		if ( $wpdb->last_error ) {
+			error_log( 'Beyond Elysium: failed to find chronicles with pre-1.1.0 rumors: ' . $wpdb->last_error );
+			return;
+		}
+
+		foreach ( $game_ids as $game_id ) {
+			if ( ! self::migrate_one_chronicles_rumors_to_a_release_batch( (int) $game_id, $rumor_label ) ) {
+				return;
+			}
+		}
+
+		update_option( 'be_rumor_release_migrated', 1 );
+	}
+
+	/**
+	 * One chronicle's own share of `migrate_rumors_to_release_batches()`: a fresh "Released
+	 * before 1.1.0" batch, marked released immediately, and every one of this game's own
+	 * pre-1.1.0 rumors pointed at it. Split into its own method (rather than a loop body)
+	 * so each chronicle's own `$wpdb->last_error` check runs in a function scope with no
+	 * earlier check to be mistakenly narrowed against.
+	 *
+	 * @param int    $game_id
+	 * @param string $rumor_label
+	 * @return bool False on any failure - the caller stops there and leaves the option unset,
+	 *              so a later upgrade retries a chronicle that never got its batch.
+	 */
+	private static function migrate_one_chronicles_rumors_to_a_release_batch( int $game_id, string $rumor_label ): bool {
+		global $wpdb;
+
+		$batch_id = \BeyondElysium\Models\Release_Batch::create( [
+			'game_id'    => $game_id,
+			'name'       => 'Released before 1.1.0',
+			'created_by' => 0,
+		] );
+		if ( $batch_id === false ) {
+			error_log( "Beyond Elysium: failed to create the pre-1.1.0 release batch for game {$game_id}." );
+			return false;
+		}
+		$now = current_time( 'mysql' );
+		\BeyondElysium\Models\Release_Batch::mark_released( (int) $batch_id, $now, $now );
+
+		$plots       = self::table( 'plots' );
+		$connections = self::table( 'connections' );
+		$wpdb->query( $wpdb->prepare(
+			"UPDATE {$plots} p
+			 INNER JOIN {$connections} c ON c.source_type = 'plot' AND c.source_id = p.id
+			   AND c.target_type = 'tag' AND c.label = %s
+			 SET p.held = 1, p.release_batch_id = %d
+			 WHERE p.game_id = %d AND p.held = 0",
+			$rumor_label,
+			$batch_id,
+			$game_id
+		) );
+		if ( $wpdb->last_error ) {
+			error_log( 'Beyond Elysium: failed to migrate rumors to a release batch for game ' . $game_id . ': ' . $wpdb->last_error );
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

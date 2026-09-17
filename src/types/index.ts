@@ -125,6 +125,9 @@ export interface MyCapabilities {
 	be_manage_connections: boolean;
 	be_manage_boons: boolean;
 	be_manage_world_objects: boolean;
+	be_manage_sessions: boolean;
+	be_manage_apr: boolean;
+	be_manage_factions: boolean;
 }
 
 /**
@@ -225,6 +228,8 @@ export interface GameStats {
 	recent_activity: ActivityChange[];
 	/** Roster health: players with zero `active` characters - none at all, or only a retired/dead/pending one. */
 	players_without_active_character: number;
+	/** 1.1.0 §3.14 - flagged characters on the spotlight check right now. */
+	characters_needing_attention: number;
 }
 
 /** One player behind `GameStats.players_without_active_character`'s count. */
@@ -353,6 +358,10 @@ export interface TraitListDefinition {
 	negative?: boolean;
 	/** Whether re-adding a held trait appends a new entry instead of incrementing the existing one's count. */
 	atomic?: boolean;
+	/** The stored count is a flat XP cost, not a rating - seeded on vampire-combo-disciplines (1.1.0 D3). */
+	count_is_cost?: boolean;
+	/** Held entries display and reorder in sheet_data array order, never alphabetized or grouped - a flag, not a slug check, so any block could opt in (1.1.0 D4). */
+	player_order?: boolean;
 }
 
 // --- tiered_power ---
@@ -426,6 +435,8 @@ export interface TieredPowerDefinition {
 	blood_magic?: boolean;
 	/** The real traditions this block offers, for the Tradition picker - only meaningful when `blood_magic` is true. */
 	traditions?: string[];
+	/** Held entries display and reorder in sheet_data array order - a flag, not a slug check, so any block could opt in (1.1.0 D4). */
+	player_order?: boolean;
 }
 
 // --- resource_pool ---

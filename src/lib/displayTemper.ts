@@ -41,5 +41,14 @@ export function displayTemper( value: ResourcePoolValue ): string {
 	for ( let i = 0; i < glyphs.length; i += GROUP ) {
 		groups.push( glyphs.slice( i, i + GROUP ).join( '' ) );
 	}
-	return groups.join( ' ' );
+	const rendered = groups.join( ' ' );
+
+	// 1.1.0 D1: every dot readout also shows its number - bare when current equals
+	// permanent, "current/permanent" otherwise, so an over- or under-spent pool reads
+	// unambiguously rather than requiring the viewer to count dots.
+	const suffix =
+		temporary === permanent
+			? String( permanent )
+			: `${ temporary }/${ permanent }`;
+	return rendered === '' ? suffix : `${ rendered } ${ suffix }`;
 }

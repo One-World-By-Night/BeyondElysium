@@ -1,0 +1,34 @@
+.be-sign-in-roster__count {
+	font-weight: 600;
+}
+
+.be-sign-in-roster__list {
+	list-style: none;
+	margin: 0 0 1rem;
+	padding: 0;
+	max-height: 320px;
+	overflow-y: auto;
+}
+
+.be-sign-in-roster__list li {
+	padding: 0.25rem 0;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.be-sign-in-roster__player {
+	color: #666;
+	font-size: 0.85rem;
+}
+
+.be-sign-in-roster__error {
+	color: #b32d2e;
+	margin-bottom: 0.5rem;
+}
+
+.be-sign-in-roster__add-visitor {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}

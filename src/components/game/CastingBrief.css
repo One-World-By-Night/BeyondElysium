@@ -1,0 +1,47 @@
+.be-casting-brief__actions {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1rem;
+}
+
+.be-casting-brief__header {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+	gap: 0.5rem 1rem;
+	margin: 0 0 1rem;
+}
+
+.be-casting-brief__header dt {
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	color: #666;
+}
+
+.be-casting-brief__header dd {
+	margin: 0;
+}
+
+.be-casting-brief__prose {
+	margin-bottom: 1rem;
+}
+
+.be-casting-brief__sections {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+	gap: 1rem;
+}
+
+.be-casting-brief__section {
+	padding: 0.75rem;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+}
+
+.be-casting-brief__error {
+	padding: 0.75rem;
+	border: 1px solid #c00;
+	border-radius: 4px;
+	color: #c00;
+}

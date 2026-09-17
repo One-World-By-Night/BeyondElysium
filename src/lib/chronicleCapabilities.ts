@@ -20,3 +20,13 @@ export function canIn(
 	}
 	return !! window.beyondElysium?.capabilities?.[ capability ];
 }
+
+/** Whether the person holds any one of `capabilities` for this screen - an OR-gated route. */
+export function canAny(
+	capabilities: Array< keyof MyCapabilities >,
+	chronicle?: MyCapabilities
+): boolean {
+	return capabilities.some( ( capability ) =>
+		canIn( capability, chronicle )
+	);
+}

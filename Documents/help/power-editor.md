@@ -20,10 +20,16 @@ Arts, and similar, depending on the chronicle's own template).
 
 - **Add power…** - a searchable dropdown of every power in this section's catalog you don't
   already hold. Typing filters the list; where this section allows a custom entry, typing a
-  name that isn't in the list adds it, starting at level 1.
+  name that isn't in the list adds it, starting at level 1. **For Blood Magic**, choosing a
+  power doesn't add it right away - a **Paradigm** dropdown appears next to it, listing every
+  paradigm this section offers (the power's own real teachers first), and **Add** stays
+  disabled until you pick one.
 - **Add an Elder-and-above power…** - a second dropdown, shown only once you hold some level of
   at least one family with picks past the numbered ladder. Always a real catalog pick - never a
-  typed custom entry.
+  typed custom entry. Blood Magic gates this the same way as Add power - a paradigm before it's
+  actually added.
+- **Reorder** - Blood Magic only. Puts your held paths in whatever order you like instead of
+  the usual catalog order - see [Your Own Order](player-order.md).
 - Each held power, one row:
   - Its name, and either a **List each level** / **Use stepper** toggle plus one of:
     - **Stepper** (the default) - **−** and **+** buttons around the current level.
@@ -32,9 +38,9 @@ Arts, and similar, depending on the chronicle's own template).
       Checking a box raises the level to that rung; unchecking one lowers it to just below that
       rung.
   - **Tradition** - a free-text field with suggestions, for the power's own tradition or source.
-    For a blood-sorcery family specifically, it's marked required (the placeholder reads
-    "Tradition (required)") until you set one - a Storyteller's review is what actually enforces
-    it.
+    A Blood Magic power added before this section asked for one up front shows the placeholder
+    "Choose paradigm" until you set one - never forced, since a Storyteller's review is what
+    actually checks it.
   - **Remove** / **Undo** - marks the power for removal, or brings it back.
   - An Elder-and-above pick shows its family and power name together (for example, "Celerity:
     Precision") with no stepper or checklist - only Remove/Undo, since it's a single named pick,
@@ -48,8 +54,10 @@ in a small panel; the stepper or checklist stays on the row itself.
 ### Add a new power
 
 1. Open the section and use **Add power…**.
-2. Choose a name from the list (or type one, where allowed). It's added at level 1.
-3. Raise it with the stepper, or switch to **List each level** and check the rungs you hold.
+2. Choose a name from the list (or type one, where allowed). **For Blood Magic**, pick a
+   **Paradigm** and click **Add** - it stays disabled until you do.
+3. It's added at level 1. Raise it with the stepper, or switch to **List each level** and check
+   the rungs you hold.
 
 ### Raise or lower a power's level
 
@@ -59,7 +67,8 @@ in a small panel; the stepper or checklist stays on the row itself.
 ### Add an Elder-and-above pick
 
 1. Hold some level of the family it belongs to.
-2. Use **Add an Elder-and-above power…** and choose the pick.
+2. Use **Add an Elder-and-above power…** and choose the pick. **For Blood Magic**, pick a
+   **Paradigm** and click **Add**.
 
 ### Set a power's tradition
 
@@ -85,8 +94,12 @@ in a small panel; the stepper or checklist stays on the row itself.
   custom - only real catalog entries.
 - **An Elder-and-above pick is additive**, not a replacement - you keep your family's numbered
   level, and can hold several distinct Elder-and-above picks in it at once.
-- **The Tradition field's "required" marking is a nudge, not a lock.** You can save without it;
-  a Storyteller reviewing the change is the actual check.
+- **A paradigm is required to add a new Blood Magic power, but never to keep one.** A power
+  added before this section asked for a paradigm up front just shows "Choose paradigm" on its
+  row - a nudge, not a lock. A Storyteller reviewing the change is the actual check either way.
+- **Any paradigm this section offers works for any power in it.** A path's own catalog-listed
+  teachers are only listed first for convenience - picking a different real paradigm from the
+  list is allowed and correctly reviewed.
 - **Removing marks, it doesn't delete** - nothing leaves the sheet until you submit changes from
   the Edit tab.
 - **Every level display matches the sheet and a signed PDF exactly.**
@@ -108,6 +121,7 @@ in a small panel; the stepper or checklist stays on the row itself.
 
 - [Character Editor](character-editor.md)
 - [Trait Lists](trait-editor.md)
+- [Your Own Order](player-order.md)
 - [Resource Pools & Identity Fields](pools-identity-editor.md)
 - [Character Sheet](character-sheet.md)
 - [How Approval Works](approval-flow.md)

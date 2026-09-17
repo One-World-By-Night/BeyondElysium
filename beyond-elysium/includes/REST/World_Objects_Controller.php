@@ -2,10 +2,17 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Database\Transaction;
+use BeyondElysium\Models\Attachment;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Item_Attestation;
+use BeyondElysium\Models\Item_Event;
 use BeyondElysium\Models\World_Object;
+use BeyondElysium\Services\Attachment_Storage;
+use BeyondElysium\Services\Audience;
+use BeyondElysium\Services\Query_Engine;
 use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
@@ -57,6 +64,49 @@ class World_Objects_Controller extends Base_Controller {
 				'permission_callback' => $this->permission( 'be_manage_world_objects' ),
 			],
 		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/world-objects/(?P<id>\d+)/copy-for-character', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'copy_for_character' ],
+				'permission_callback' => $this->permission( 'be_manage_world_objects' ),
+			],
+		] );
+
+		// Broad on purpose (1.1.0 §3.12 item 2): a player whose own character holds the item
+		// may use it too. use_item() does the real ownership check itself, the same
+		// broad-route-narrow-handler shape Changes_Controller::create_item() already uses.
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/world-objects/(?P<id>\d+)/use', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'use_item' ],
+				'permission_callback' => $this->permission_any( [ 'be_manage_world_objects', 'be_edit_own_characters' ] ),
+			],
+		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/world-objects/(?P<id>\d+)/transfer', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'transfer_item' ],
+				'permission_callback' => $this->permission( 'be_manage_world_objects' ),
+			],
+		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/world-objects/(?P<id>\d+)/events', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_events' ],
+				'permission_callback' => $this->permission( 'be_manage_world_objects' ),
+			],
+		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/world-objects/(?P<id>\d+)/revoke-cards', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'revoke_cards' ],
+				'permission_callback' => $this->permission( 'be_manage_world_objects' ),
+			],
+		] );
 	}
 
 	/**
@@ -86,11 +136,23 @@ class World_Objects_Controller extends Base_Controller {
 			'search'      => $can_manage ? $search : '',
 			'orderby'     => $request->get_param( 'orderby' ) ?: 'name',
 			'order'       => $request->get_param( 'order' ) ?: 'ASC',
+			'copies'      => in_array( $request->get_param( 'copies' ), [ 'only', 'include' ], true ) ? $request->get_param( 'copies' ) : 'exclude',
 		];
 
 		$items = World_Object::for_game( (int) $game->id, $args );
+		// Audience first, before redaction: a row this viewer cannot see at all needs no
+		// [ST]-text redaction, and total below must count only what survives (1.1.0 §2.5) -
+		// the same "filter the full set before slicing a page" rule §2.3's own list uses,
+		// never a SQL-side cutoff applied before the audience check.
+		if ( ! $can_manage ) {
+			$items = Audience::filter_world_objects( $items, get_current_user_id(), $request['game_slug'], false );
+		}
 		foreach ( $items as $item ) {
 			St_Visibility::filter_world_object( $item, $game, $can_manage );
+			if ( $item->object_type === 'item' ) {
+				$item->used_up = World_Object::is_used_up( $item );
+				$item->expired = World_Object::is_expired( $item );
+			}
 		}
 		if ( ! $can_manage && $search !== '' ) {
 			$items = array_values( array_filter( $items, static function ( $item ) use ( $search ) {
@@ -190,7 +252,17 @@ class World_Objects_Controller extends Base_Controller {
 			return $this->error( 'not_found', __( 'World object not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
-		St_Visibility::filter_world_object( $object, $game, \BeyondElysium\Core\Authorization::can( 'be_manage_world_objects' ) );
+		$can_manage_objects = \BeyondElysium\Core\Authorization::can( 'be_manage_world_objects' );
+
+		// A rote or boon has no audience concept at all (1.1.0 §2.5); an item or location's own
+		// audience is checked against its own manage capability, matching how the list applies
+		// the identical rule via Audience::filter_world_objects().
+		if ( ! $can_manage_objects && in_array( $object->object_type, [ 'item', 'location' ], true )
+			&& ! Audience::can_see( $object, $object->object_type, get_current_user_id(), $request['game_slug'], false ) ) {
+			return $this->error( 'not_found', __( 'World object not found in this game.', 'beyond-elysium' ), 404 );
+		}
+
+		St_Visibility::filter_world_object( $object, $game, $can_manage_objects );
 
 		$connections = Connection::for_entity( 'world_object', (int) $object->id );
 		$can_manage  = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
@@ -209,6 +281,33 @@ class World_Objects_Controller extends Base_Controller {
 		}
 
 		$object->connected_characters = $characters;
+		// "Based on {source}" (1.1.0 §3.12 item 1) - an orphaned based_on_id (its source since
+		// deleted) is silently dropped rather than shown as a broken reference, matching how
+		// ancestors() already stops quietly at a missing parent.
+		$based_on = null;
+		if ( ! empty( $object->based_on_id ) ) {
+			$source   = World_Object::find( (int) $object->based_on_id );
+			$based_on = $source ? [ 'id' => (int) $source->id, 'name' => $source->name ] : null;
+		}
+		$object->based_on = $based_on;
+		// Uses and expiry (1.1.0 §3.12 item 2) - derived on every read, never stored.
+		if ( $object->object_type === 'item' ) {
+			$object->used_up = World_Object::is_used_up( $object );
+			$object->expired = World_Object::is_expired( $object );
+		}
+		// A rote or boon has no attachment concept (1.1.0 §2.6 applies to item/location only).
+		if ( in_array( $object->object_type, [ 'item', 'location' ], true ) ) {
+			$object->attachments = array_map( [ Attachment::class, 'public_shape' ], Attachment::for_entity( $object->object_type, (int) $object->id ) );
+		}
+		// "Inside of" (1.1.0 §3.9 item 1): the breadcrumb ("Downtown › Elysium") reads
+		// ancestors nearest-first; the nested location list reads children.
+		if ( $object->object_type === 'location' ) {
+			$object->ancestors = array_map( static fn( $a ) => [ 'id' => (int) $a->id, 'name' => $a->name ], World_Object::ancestors( (int) $object->id ) );
+			$object->children  = array_map( static fn( $c ) => [ 'id' => (int) $c->id, 'name' => $c->name ], World_Object::children( (int) $object->id ) );
+			// Display over Grapevine text (§3.9 item 3): a real owner/parent link wins over the
+			// typed owner/where text, which is untouched underneath either way.
+			$object->display = \BeyondElysium\Models\Location_Link::resolve_owner_and_where( $object );
+		}
 		return $this->success( $object );
 	}
 
@@ -250,7 +349,17 @@ class World_Objects_Controller extends Base_Controller {
 			return $fields;
 		}
 
-		$id = World_Object::create( [
+		$audience = $this->resolve_audience( $request );
+		if ( is_wp_error( $audience ) ) {
+			return $audience;
+		}
+
+		$parent_id = $this->resolve_parent_id( $request, $game, $object_type, null );
+		if ( is_wp_error( $parent_id ) ) {
+			return $parent_id;
+		}
+
+		$id = World_Object::create( array_merge( [
 			'game_id'     => (int) $game->id,
 			'object_type' => $object_type,
 			'name'        => $fields['name'],
@@ -259,14 +368,436 @@ class World_Objects_Controller extends Base_Controller {
 			'cost'        => $fields['cost'] ?? null,
 			'limitations' => ( $fields['limitations'] ?? '' ) !== '' ? $fields['limitations'] : null,
 			'properties'  => $properties,
+			'parent_id'   => $parent_id,
 			'created_by'  => get_current_user_id(),
-		] );
+		], $audience ) );
 
 		if ( ! $id ) {
 			return $this->error( 'create_failed', __( 'Failed to create world object.', 'beyond-elysium' ), 500 );
 		}
 
 		return $this->success( World_Object::find( $id ), 201 );
+	}
+
+	/**
+	 * Copies an item for a specific character (1.1.0 §3.12 item 1) - every field, property,
+	 * and audience_rules copied, the copy forced to `restricted` audience regardless of the
+	 * source's own, its upload (if any) copied to a brand-new private file so editing one
+	 * never touches the other, a `holds` connection from the character, and a `copied` item
+	 * event. All in one transaction: any failed step leaves nothing behind.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function copy_for_character( $request ) {
+		$object = $this->resolve_object( (int) $request['id'], $request['game_slug'] );
+		if ( is_wp_error( $object ) ) {
+			return $object;
+		}
+		if ( $object->object_type !== 'item' ) {
+			return $this->error( 'items_only', __( 'Only an item may be copied for a character.', 'beyond-elysium' ), 409 );
+		}
+
+		$character_id = (int) $request->get_param( 'character_id' );
+		if ( ! $character_id ) {
+			return $this->error( 'invalid_param', __( 'character_id is required.', 'beyond-elysium' ), 400 );
+		}
+		$character = Character::find( $character_id );
+		if ( ! $character || $character->owner_slug !== $request['game_slug'] ) {
+			return $this->error( 'invalid_param', __( 'character_id must be a real character in this game.', 'beyond-elysium' ), 400 );
+		}
+
+		$name = $request->get_param( 'name' );
+		$name = $name !== null && trim( (string) $name ) !== '' ? sanitize_text_field( (string) $name ) : $object->name;
+		if ( mb_strlen( $name ) > 255 ) {
+			/* translators: %d: maximum number of characters */
+			return $this->error( 'invalid_param', sprintf( __( 'Name can be at most %d characters.', 'beyond-elysium' ), 255 ), 400 );
+		}
+
+		$savepoint = Transaction::begin( 'be_item_copy' );
+
+		$copy_id = World_Object::create( [
+			'game_id'        => (int) $object->game_id,
+			'object_type'    => 'item',
+			'name'           => $name,
+			'description'    => $object->description,
+			'rarity'         => $object->rarity,
+			'cost'           => $object->cost,
+			'limitations'    => $object->limitations,
+			'properties'     => $object->properties,
+			'based_on_id'    => (int) $object->id,
+			'audience'       => 'restricted',
+			'audience_rules' => $object->audience_rules,
+			'created_by'     => get_current_user_id(),
+		] );
+
+		$attachment_ok = true;
+		$source_files  = Attachment::for_entity( 'item', (int) $object->id );
+		if ( $copy_id && ! empty( $source_files ) ) {
+			$duplicated = Attachment_Storage::duplicate( $source_files[0]->stored_name, $source_files[0]->original_name );
+			$attachment_ok = ! is_wp_error( $duplicated ) && (bool) Attachment::create( array_merge( $duplicated, [
+				'game_id'     => (int) $object->game_id,
+				'entity_type' => 'item',
+				'entity_id'   => $copy_id,
+				'created_by'  => get_current_user_id(),
+			] ) );
+		}
+
+		$connection_id = $copy_id ? Connection::create( [
+			'game_id'     => (int) $object->game_id,
+			'source_type' => 'character',
+			'source_id'   => $character_id,
+			'target_type' => 'world_object',
+			'target_id'   => $copy_id,
+			'label'       => 'holds',
+			'created_by'  => get_current_user_id(),
+		] ) : false;
+
+		$event_id = $copy_id ? Item_Event::record( [
+			'game_id'         => (int) $object->game_id,
+			'world_object_id' => $copy_id,
+			'event'           => 'copied',
+			'character_id'    => $character_id,
+			'recorded_by'     => get_current_user_id(),
+		] ) : false;
+
+		if ( ! $copy_id || ! $attachment_ok || ! $connection_id || ! $event_id ) {
+			Transaction::rollback( $savepoint );
+			return $this->error( 'create_failed', __( 'Failed to copy this item.', 'beyond-elysium' ), 500 );
+		}
+
+		Transaction::commit( $savepoint );
+
+		return $this->success( World_Object::find( $copy_id ), 201 );
+	}
+
+	/**
+	 * Spends one use of an item that has `uses_max` set (1.1.0 §3.12 item 2). Allowed for a
+	 * manager, or for a player whose own character both is `character_id` and actually holds
+	 * this item. Locks the row for the length of the decrement so two uses in flight at once
+	 * can never both succeed past zero.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function use_item( $request ) {
+		$object = $this->resolve_object( (int) $request['id'], $request['game_slug'] );
+		if ( is_wp_error( $object ) ) {
+			return $object;
+		}
+		if ( $object->object_type !== 'item' ) {
+			return $this->error( 'items_only', __( 'Only an item may be used.', 'beyond-elysium' ), 409 );
+		}
+
+		$character_id = (int) $request->get_param( 'character_id' );
+		if ( ! $character_id ) {
+			return $this->error( 'invalid_param', __( 'character_id is required.', 'beyond-elysium' ), 400 );
+		}
+		$character = Character::find( $character_id );
+		if ( ! $character || $character->owner_slug !== $request['game_slug'] ) {
+			return $this->error( 'invalid_param', __( 'character_id must be a real character in this game.', 'beyond-elysium' ), 400 );
+		}
+
+		$can_manage = \BeyondElysium\Core\Authorization::can( 'be_manage_world_objects' );
+		if ( ! $can_manage ) {
+			if ( (int) $character->wp_user_id !== get_current_user_id() ) {
+				return $this->error( 'ownership_denied', __( 'You may only use an item through your own character.', 'beyond-elysium' ), 403 );
+			}
+			if ( ! self::character_holds_item( $character_id, (int) $object->id ) ) {
+				return $this->error( 'not_holder', __( 'That character does not hold this item.', 'beyond-elysium' ), 403 );
+			}
+		}
+
+		$uses_max = $object->properties['uses_max'] ?? null;
+		if ( $uses_max === null || $uses_max === '' ) {
+			return $this->error( 'no_uses', __( 'This item has no uses to spend.', 'beyond-elysium' ), 400 );
+		}
+
+		$savepoint = Transaction::begin( 'be_item_use' );
+		$locked    = World_Object::find_for_update( (int) $object->id );
+
+		if ( ! $locked ) {
+			Transaction::rollback( $savepoint );
+			return $this->error( 'update_failed', __( 'Failed to record this use.', 'beyond-elysium' ), 500 );
+		}
+		$locked_uses_max = $locked->properties['uses_max'] ?? null;
+		if ( $locked_uses_max === null || $locked_uses_max === '' ) {
+			Transaction::rollback( $savepoint );
+			return $this->error( 'no_uses', __( 'This item has no uses to spend.', 'beyond-elysium' ), 400 );
+		}
+		if ( World_Object::is_used_up( $locked ) ) {
+			Transaction::rollback( $savepoint );
+			return $this->error( 'used_up', __( 'This item has no uses left.', 'beyond-elysium' ), 409 );
+		}
+		if ( World_Object::is_expired( $locked ) ) {
+			Transaction::rollback( $savepoint );
+			return $this->error( 'expired', __( 'This item has expired.', 'beyond-elysium' ), 409 );
+		}
+
+		$properties               = $locked->properties;
+		$properties['uses_left']  = max( 0, (int) ( $properties['uses_left'] ?? 0 ) - 1 );
+		$updated                  = World_Object::update( (int) $object->id, [ 'properties' => $properties ] );
+
+		$note     = $request->get_param( 'note' );
+		$event_id = $updated ? Item_Event::record( [
+			'game_id'         => (int) $object->game_id,
+			'world_object_id' => (int) $object->id,
+			'event'           => 'used',
+			'character_id'    => $character_id,
+			'note'            => $note !== null ? sanitize_textarea_field( (string) $note ) : null,
+			'recorded_by'     => get_current_user_id(),
+		] ) : false;
+
+		if ( ! $updated || ! $event_id ) {
+			Transaction::rollback( $savepoint );
+			return $this->error( 'update_failed', __( 'Failed to record this use.', 'beyond-elysium' ), 500 );
+		}
+
+		Transaction::commit( $savepoint );
+
+		return $this->success( World_Object::find( (int) $object->id ) );
+	}
+
+	/**
+	 * Transfers an item's holder connection(s) to a new character, or clears them with no new
+	 * holder for `how=lost` (1.1.0 §3.12 item 4). Removes every existing character connection
+	 * on the item first - a physical item transfer is exclusive, unlike the shared-connection
+	 * model `Connections_Controller` still allows for a co-held item added by hand. Revoking
+	 * the item's verifiable-card codes (1.1.0 §3.13) is a deliberate no-op for now - that
+	 * feature doesn't exist yet.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function transfer_item( $request ) {
+		$object = $this->resolve_object( (int) $request['id'], $request['game_slug'] );
+		if ( is_wp_error( $object ) ) {
+			return $object;
+		}
+		if ( $object->object_type !== 'item' ) {
+			return $this->error( 'items_only', __( 'Only an item may be transferred this way.', 'beyond-elysium' ), 409 );
+		}
+
+		$how_values = [ 'given', 'traded', 'stolen', 'lost' ];
+		$how        = (string) $request->get_param( 'how' );
+		if ( ! in_array( $how, $how_values, true ) ) {
+			return $this->error( 'invalid_param', sprintf( __( 'how must be one of: %s.', 'beyond-elysium' ), implode( ', ', $how_values ) ), 400 );
+		}
+
+		$to_character_id = null;
+		if ( $how !== 'lost' ) {
+			$raw = $request->get_param( 'to_character_id' );
+			if ( empty( $raw ) ) {
+				return $this->error( 'invalid_param', __( 'to_character_id is required unless how is lost.', 'beyond-elysium' ), 400 );
+			}
+			$to_character = Character::find( (int) $raw );
+			if ( ! $to_character || $to_character->owner_slug !== $request['game_slug'] ) {
+				return $this->error( 'invalid_param', __( 'to_character_id must be a real character in this game.', 'beyond-elysium' ), 400 );
+			}
+			$to_character_id = (int) $raw;
+		}
+
+		$note = $request->get_param( 'note' );
+		$note = $note !== null ? sanitize_textarea_field( (string) $note ) : null;
+
+		$savepoint = Transaction::begin( 'be_item_transfer' );
+
+		$existing_holder_id = null;
+		foreach ( Connection::for_entity( 'world_object', (int) $object->id ) as $connection ) {
+			$character_side_id = self::character_side_of( $connection );
+			if ( $character_side_id === null ) {
+				continue;
+			}
+			if ( $existing_holder_id === null ) {
+				$existing_holder_id = $character_side_id;
+			}
+			Connection::delete( (int) $connection->id );
+		}
+
+		$connection_ok = true;
+		if ( $to_character_id !== null ) {
+			$connection_ok = (bool) Connection::create( [
+				'game_id'     => (int) $object->game_id,
+				'source_type' => 'character',
+				'source_id'   => $to_character_id,
+				'target_type' => 'world_object',
+				'target_id'   => (int) $object->id,
+				'label'       => 'holds',
+				'created_by'  => get_current_user_id(),
+			] );
+		}
+
+		$event_id = Item_Event::record( [
+			'game_id'           => (int) $object->game_id,
+			'world_object_id'   => (int) $object->id,
+			'event'             => $how,
+			'character_id'      => $to_character_id,
+			'from_character_id' => $existing_holder_id,
+			'note'              => $note,
+			'recorded_by'       => get_current_user_id(),
+		] );
+
+		if ( ! $connection_ok || ! $event_id ) {
+			Transaction::rollback( $savepoint );
+			return $this->error( 'transfer_failed', __( 'Failed to transfer this item.', 'beyond-elysium' ), 500 );
+		}
+
+		Transaction::commit( $savepoint );
+
+		return $this->success( World_Object::find( (int) $object->id ) );
+	}
+
+	/**
+	 * An item's own history, oldest first (1.1.0 §3.12 item 3) - `be_manage_world_objects`
+	 * only, matching the design's own "staff can view" rule.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_events( $request ) {
+		$object = $this->resolve_object( (int) $request['id'], $request['game_slug'] );
+		if ( is_wp_error( $object ) ) {
+			return $object;
+		}
+		if ( $object->object_type !== 'item' ) {
+			return $this->error( 'items_only', __( 'Only an item keeps this kind of history.', 'beyond-elysium' ), 409 );
+		}
+
+		return $this->success( array_map( [ Item_Event::class, 'public_shape' ], Item_Event::for_object( (int) $object->id ) ) );
+	}
+
+	/**
+	 * Revokes every unrevoked verification code issued for one item (1.1.0 §3.13). Manual, on
+	 * request - never automatic on a transfer, which leaves an old card live so it can report
+	 * a holder mismatch instead of simply vanishing.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function revoke_cards( $request ) {
+		$object = $this->resolve_object( (int) $request['id'], $request['game_slug'] );
+		if ( is_wp_error( $object ) ) {
+			return $object;
+		}
+		if ( $object->object_type !== 'item' ) {
+			return $this->error( 'items_only', __( 'Only an item has verification codes to revoke.', 'beyond-elysium' ), 409 );
+		}
+
+		$revoked = Item_Attestation::revoke_for_object( (int) $object->id );
+		return $this->success( [ 'revoked' => $revoked ] );
+	}
+
+	/**
+	 * Whether a character has any connection to a world object at all - the "use" route's own
+	 * ownership check for a player (1.1.0 §3.12 item 2), and the "who's the existing holder"
+	 * check the transfer route needs before removing anything.
+	 *
+	 * @param int $character_id
+	 * @param int $world_object_id
+	 * @return bool
+	 */
+	private static function character_holds_item( int $character_id, int $world_object_id ): bool {
+		foreach ( Connection::for_entity( 'world_object', $world_object_id ) as $connection ) {
+			if ( self::character_side_of( $connection ) === $character_id ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * The character-side id of a connection touching a world object, whichever direction it
+	 * was written in, or null when the other side isn't a character at all (a plot, a tag).
+	 *
+	 * @param object $connection A row from `Connection::for_entity()`.
+	 * @return int|null
+	 */
+	private static function character_side_of( object $connection ): ?int {
+		if ( $connection->source_type === 'character' ) {
+			return (int) $connection->source_id;
+		}
+		if ( $connection->target_type === 'character' ) {
+			return (int) $connection->target_id;
+		}
+		return null;
+	}
+
+	/**
+	 * Validates a requested `audience`/`audience_rules` pair (1.1.0 §2.5) - applies to `item`
+	 * and `location` the same as `everyone`/`storytellers`/`restricted` anywhere else; a rote
+	 * or boon has no audience concept, so a request naming one for either is simply ignored
+	 * rather than rejected, since this route's own `object_type` check already refuses a boon
+	 * outright and a rote has no reason to ever send these fields in the first place. This
+	 * route is `be_manage_world_objects`-only already (unlike a plot, which has a player-owned
+	 * path), so every caller here may set any value - no per-role narrowing is needed.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return array{audience?:string,audience_rules?:?array}|\WP_Error
+	 */
+	private function resolve_audience( $request ) {
+		$data = [];
+
+		$audience = $request->get_param( 'audience' );
+		if ( $audience !== null ) {
+			if ( ! in_array( $audience, World_Object::AUDIENCE_VALUES, true ) ) {
+				return $this->error( 'invalid_param', sprintf( __( 'audience must be one of: %s.', 'beyond-elysium' ), implode( ', ', World_Object::AUDIENCE_VALUES ) ), 400 );
+			}
+			$data['audience'] = $audience;
+		}
+
+		if ( $request->has_param( 'audience_rules' ) ) {
+			$rules = $request->get_param( 'audience_rules' );
+			if ( $rules !== null ) {
+				if ( ! is_array( $rules ) || empty( $rules['conditions'] ) || ! is_array( $rules['conditions'] ) ) {
+					return $this->error( 'invalid_param', __( 'audience_rules must include a conditions array.', 'beyond-elysium' ), 400 );
+				}
+				$problem = Query_Engine::validate_conditions( $rules['conditions'] );
+				if ( $problem !== null ) {
+					return $this->error( 'invalid_param', $problem['message'], 400 );
+				}
+			}
+			$data['audience_rules'] = $rules;
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Validates a requested `parent_id` (1.1.0 §3.9 item 1 - "Inside of"): meaningless for
+	 * anything but a location, must name a real location in this same game, and - on an
+	 * update, where `$self_id` is the object being changed - never itself. Cycle detection is
+	 * `World_Object::update()`'s own job (it alone knows the full ancestor chain); this only
+	 * catches the two checks cheap enough to make before ever calling it, for a clean
+	 * `400 invalid_parent` instead of a generic failure.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @param object            $game
+	 * @param string            $object_type
+	 * @param int|null          $self_id Null on create, since nothing to compare against yet.
+	 * @return int|null|\WP_Error Null when no parent_id was sent at all.
+	 */
+	private function resolve_parent_id( $request, object $game, string $object_type, ?int $self_id ) {
+		if ( ! $request->has_param( 'parent_id' ) ) {
+			return null;
+		}
+		$raw = $request->get_param( 'parent_id' );
+		if ( empty( $raw ) ) {
+			return null;
+		}
+
+		$parent_id = (int) $raw;
+		if ( $object_type !== 'location' ) {
+			return $this->error( 'invalid_parent', __( 'Only a location may have a parent location.', 'beyond-elysium' ), 400 );
+		}
+		if ( $self_id !== null && $parent_id === $self_id ) {
+			return $this->error( 'invalid_parent', __( 'A location cannot be inside itself.', 'beyond-elysium' ), 400 );
+		}
+		$parent = World_Object::find( $parent_id );
+		if ( ! $parent || $parent->object_type !== 'location' || (int) $parent->game_id !== (int) $game->id ) {
+			return $this->error( 'invalid_parent', __( 'parent_id must be a real location in this game.', 'beyond-elysium' ), 400 );
+		}
+
+		return $parent_id;
 	}
 
 	/**
@@ -300,8 +831,45 @@ class World_Objects_Controller extends Base_Controller {
 			$data['properties'] = $properties;
 		}
 
-		if ( ! World_Object::update( (int) $object->id, $data ) && ! empty( $data ) ) {
-			return $this->error( 'update_failed', __( 'Failed to update world object.', 'beyond-elysium' ), 500 );
+		$audience = $this->resolve_audience( $request );
+		if ( is_wp_error( $audience ) ) {
+			return $audience;
+		}
+		$data = array_merge( $data, $audience );
+
+		if ( $request->has_param( 'parent_id' ) ) {
+			// The object's own game_id, not a fresh resolve_game() lookup - resolve_object()
+			// above already confirmed this object belongs to the URL's game.
+			$parent_id = $this->resolve_parent_id( $request, (object) [ 'id' => $object->game_id ], $object->object_type, (int) $object->id );
+			if ( is_wp_error( $parent_id ) ) {
+				return $parent_id;
+			}
+			$data['parent_id'] = $parent_id;
+		}
+
+		try {
+			if ( ! World_Object::update( (int) $object->id, $data ) && ! empty( $data ) ) {
+				return $this->error( 'update_failed', __( 'Failed to update world object.', 'beyond-elysium' ), 500 );
+			}
+		} catch ( \RuntimeException $e ) {
+			return $this->error( 'invalid_parent', $e->getMessage(), 400 );
+		}
+
+		// A Storyteller editing uses or expiry (1.1.0 §3.12 item 3, 'adjusted') - only when one
+		// of the three keys' value actually changed, never on an unrelated property edit.
+		if ( $object->object_type === 'item' && array_key_exists( 'properties', $data ) ) {
+			$watched      = [ 'uses_max', 'uses_left', 'expires_on' ];
+			$new_properties = (array) $data['properties'];
+			$before       = array_intersect_key( $object->properties, array_flip( $watched ) );
+			$after        = array_intersect_key( $new_properties, array_flip( $watched ) );
+			if ( $before != $after ) { // phpcs:ignore Universal.Operators.StrictComparisons -- both sides are plain scalar-valued arrays; a loose diff here only cares whether the values differ, not their types.
+				Item_Event::record( [
+					'game_id'         => (int) $object->game_id,
+					'world_object_id' => (int) $object->id,
+					'event'           => 'adjusted',
+					'recorded_by'     => get_current_user_id(),
+				] );
+			}
 		}
 
 		return $this->success( World_Object::find( (int) $object->id ) );
@@ -322,6 +890,17 @@ class World_Objects_Controller extends Base_Controller {
 		}
 		if ( $object->object_type === 'boon' ) {
 			return $this->boon_ledger_error();
+		}
+		if ( $object->object_type === 'location' && World_Object::has_children( (int) $object->id ) ) {
+			return $this->error( 'location_has_children', __( 'Move or delete this location\'s own children first.', 'beyond-elysium' ), 409 );
+		}
+
+		// Files first, while the rows naming them still exist: World_Object::delete() removes
+		// the attachment rows itself, but never the files (Models does not depend on Services).
+		if ( in_array( $object->object_type, [ 'item', 'location' ], true ) ) {
+			foreach ( Attachment::for_entity( $object->object_type, (int) $object->id ) as $attachment ) {
+				Attachment_Storage::delete( $attachment->stored_name, $attachment->original_name );
+			}
 		}
 
 		World_Object::delete( (int) $object->id );

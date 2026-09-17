@@ -21,8 +21,10 @@ describe( 'displayTrait — all 11 modes against the fixture trait', () => {
 		);
 	} );
 
-	it( 'dot: name, dots, note', () => {
-		expect( displayTrait( CELERITY, 'dot' ) ).toBe( 'Celerity ●●● (Fast)' );
+	it( 'dot: name, dots, count, note', () => {
+		expect( displayTrait( CELERITY, 'dot' ) ).toBe(
+			'Celerity ●●● 3 (Fast)'
+		);
 	} );
 
 	it( 'cost: name ({total}, {note})', () => {
@@ -39,14 +41,14 @@ describe( 'displayTrait — all 11 modes against the fixture trait', () => {
 		expect( displayTrait( CELERITY, 'cost_only' ) ).toBe( 'Celerity (3)' );
 	} );
 
-	it( 'dot_separate: name+note repeated total times, dot-joined', () => {
+	it( 'dot_separate: name+note repeated total times, dot-joined, then the real count', () => {
 		expect( displayTrait( CELERITY, 'dot_separate' ) ).toBe(
-			'Celerity (Fast)●Celerity (Fast)●Celerity (Fast)'
+			'Celerity (Fast)●Celerity (Fast)●Celerity (Fast) 3'
 		);
 	} );
 
-	it( 'simple_dots: dots only, name dropped', () => {
-		expect( displayTrait( CELERITY, 'simple_dots' ) ).toBe( '●●●' );
+	it( 'simple_dots: dots and count, name dropped', () => {
+		expect( displayTrait( CELERITY, 'simple_dots' ) ).toBe( '●●● 3' );
 	} );
 
 	it( 'simple_number: total only', () => {
@@ -71,27 +73,27 @@ describe( 'displayTrait — edge cases', () => {
 		).toBe( 'Fortitude x1 ●' );
 	} );
 
-	it( 'total 0 renders no dots but the mode still runs', () => {
+	it( 'total 0 renders no dots but the mode still runs, and the count (0) still shows', () => {
 		expect( displayTrait( { name: 'Flaw', total: 0 }, 'dot' ) ).toBe(
-			'Flaw'
+			'Flaw 0'
 		);
 		expect(
 			displayTrait( { name: 'Flaw', total: 0 }, 'simple_dots' )
-		).toBe( '' );
+		).toBe( '0' );
 		expect(
 			displayTrait( { name: 'Flaw', total: 0 }, 'simple_number' )
 		).toBe( '0' );
 	} );
 
-	it( 'dot_separate emits the name once for total 0 or 1', () => {
+	it( 'dot_separate emits the name once for total 0 or 1, then the real total', () => {
 		expect( displayTrait( { name: 'X', total: 0 }, 'dot_separate' ) ).toBe(
-			'X'
+			'X 0'
 		);
 		expect( displayTrait( { name: 'X', total: 1 }, 'dot_separate' ) ).toBe(
-			'X'
+			'X 1'
 		);
 		expect( displayTrait( { name: 'X', total: 2 }, 'dot_separate' ) ).toBe(
-			'X●X'
+			'X●X 2'
 		);
 	} );
 
@@ -109,7 +111,7 @@ describe( 'displayTrait — edge cases', () => {
 
 	it( 'empty note behaves like a missing note', () => {
 		expect( displayTrait( { name: 'X', total: 3, note: '' }, 'dot' ) ).toBe(
-			'X ●●●'
+			'X ●●● 3'
 		);
 		expect(
 			displayTrait( { name: 'X', total: 3, note: '' }, 'note_only' )
@@ -121,14 +123,35 @@ describe( 'displayTrait — edge cases', () => {
 			'X (3)'
 		);
 		expect( displayTrait( { name: 'X', total: 3 }, 'dot_separate' ) ).toBe(
-			'X●X●X'
+			'X●X●X 3'
 		);
 	} );
 
 	it( 'a custom dot glyph is honored', () => {
 		expect( displayTrait( CELERITY, 'dot', 'o' ) ).toBe(
-			'Celerity ooo (Fast)'
+			'Celerity ooo 3 (Fast)'
 		);
+	} );
+
+	it( 'cost_number: name, total, "XP", then note - never dots', () => {
+		expect(
+			displayTrait(
+				{ name: 'Bestial Charm', total: 6, note: 'Malkavian' },
+				'cost_number'
+			)
+		).toBe( 'Bestial Charm 6 XP (Malkavian)' );
+	} );
+
+	it( 'cost_number omits the parens with no note', () => {
+		expect(
+			displayTrait( { name: 'Bestial Charm', total: 6 }, 'cost_number' )
+		).toBe( 'Bestial Charm 6 XP' );
+	} );
+
+	it( 'cost_number shows 0 XP rather than nothing', () => {
+		expect(
+			displayTrait( { name: 'Free Combo', total: 0 }, 'cost_number' )
+		).toBe( 'Free Combo 0 XP' );
 	} );
 } );
 

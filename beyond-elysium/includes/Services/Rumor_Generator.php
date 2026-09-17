@@ -9,6 +9,7 @@ use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Plot;
+use BeyondElysium\Models\Plot_Entry;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -17,12 +18,16 @@ defined( 'ABSPATH' ) || exit;
  * Generates plots the same way Action_Allocator generates them: real chronicle
  * data in, `be_plots` rows out, no separate "rumor" table.
  *
- * `RumorClass`'s per-level text bodies are not ported. A generated rumor is a
- * plot shell (title + `target_query`); an ST fills in its actual content the
- * same way as any other plot, through `Entries_Controller` a level at a time
- * if they choose to.
+ * A generated rumor is a plot shell (title + `target_query`), held from birth with an
+ * audience derived from that target_query, and an ST fills in its actual description
+ * afterward the same way as any other plot. `RumorClass`'s per-level text bodies (1.1.0
+ * §3.4 item 4) are ported as far as an influence rumor's own `rumor_level_key`/
+ * `rumor_level_match` - the level texts themselves are written afterward through
+ * `Plots_Controller::update_rumor_levels()`, not generated here, except when a "copy
+ * previous" clone carries an earlier date's already-written levels forward.
  *
  * @see BE_PROCESS/releases/workflow-0.5.md Step 5
+ * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.4
  * @see BE_PROCESS/reference/GV-SOURCEMAP.md "Rumor auto-generation"
  */
 class Rumor_Generator {
@@ -174,8 +179,13 @@ class Rumor_Generator {
 
 			if ( $toggles['influence_rumors'] ) {
 				foreach ( $character['influences'] as $influence_name ) {
+					// Levels (1.1.0 §3.4 item 4): an influence rumor is the one candidate type
+					// with a real per-character rating to gate on - the Influence itself.
 					self::add_candidate( $candidates, $existing, "{$influence_name} Influence", 'influence', [
 						'field' => 'influences', 'operator' => 'contains', 'value' => $influence_name,
+					], [
+						'rumor_level_key'   => 'influences',
+						'rumor_level_match' => $influence_name,
 					] );
 				}
 			}
@@ -235,18 +245,20 @@ class Rumor_Generator {
 	 * @param string  $title
 	 * @param string  $category
 	 * @param array   $target_query
+	 * @param array   $extra Merged onto the candidate - `rumor_level_key`/`rumor_level_match`
+	 *                       for an influence rumor (1.1.0 §3.4 item 4), empty otherwise.
 	 * @return void
 	 */
-	private static function add_candidate( array &$candidates, array &$existing, string $title, string $category, array $target_query ): void {
+	private static function add_candidate( array &$candidates, array &$existing, string $title, string $category, array $target_query, array $extra = [] ): void {
 		if ( $title === '' || isset( $existing[ $title ] ) ) {
 			return;
 		}
-		$candidates[]      = [
+		$candidates[]      = array_merge( [
 			'title'        => $title,
 			'category'     => $category,
 			'target_query' => $target_query,
 			'description'  => '',
-		];
+		], $extra );
 		$existing[ $title ] = true;
 	}
 
@@ -286,7 +298,10 @@ class Rumor_Generator {
 	 * Clones the previous rumor-generation date's titles and target queries
 	 * forward, skipping anything already present at `$game_date`.
 	 * `$copy_previous` decides whether the cloned plot's `description` carries
-	 * over too.
+	 * over too - and, since a level text is part of a rumor's own written
+	 * content the same way its description is (1.1.0 §3.4 item 4: "'Copy
+	 * previous' copies levels too"), whether its `rumor_level_key`/`match` and
+	 * any level texts already written on it carry forward as well.
 	 *
 	 * "Previous date" is the most recent earlier date this game has any
 	 * rumor-tagged plot for.
@@ -308,12 +323,28 @@ class Rumor_Generator {
 			if ( isset( $existing[ $plot->title ] ) ) {
 				continue;
 			}
-			$candidates[] = [
+			$candidate = [
 				'title'        => $plot->title,
 				'category'     => 'previous',
 				'target_query' => $plot->target_query,
 				'description'  => $copy_previous ? (string) $plot->description : '',
 			];
+			if ( $copy_previous ) {
+				if ( ! empty( $plot->rumor_level_key ) && ! empty( $plot->rumor_level_match ) ) {
+					$candidate['rumor_level_key']   = $plot->rumor_level_key;
+					$candidate['rumor_level_match'] = $plot->rumor_level_match;
+				}
+				$levels = [];
+				foreach ( Plot_Entry::for_plot( (int) $plot->id, [ 'entry_type' => 'rumor_level' ] ) as $entry ) {
+					if ( $entry->level !== null ) {
+						$levels[ (int) $entry->level ] = (string) $entry->content;
+					}
+				}
+				if ( ! empty( $levels ) ) {
+					$candidate['levels'] = $levels;
+				}
+			}
+			$candidates[] = $candidate;
 		}
 		return $candidates;
 	}
@@ -321,25 +352,56 @@ class Rumor_Generator {
 	/**
 	 * Persists one candidate as a plot row, then tags it as a rumor via a
 	 * `tag`-type connection so it can be distinguished from manually-created
-	 * plots later.
+	 * plots later. Held from birth, with an audience derived from its own
+	 * target_query - Public Knowledge (no target_query) reaches everyone, any
+	 * other candidate is restricted to whoever its target_query matches
+	 * (1.1.0 §3.4 items 1-2), and, when the candidate carries them (an
+	 * influence rumor, or a "copy previous" clone of one), its rumor-level
+	 * key/match and any already-written level texts.
 	 *
 	 * @param int    $game_id
 	 * @param string $game_date
 	 * @param array  $candidate
-	 * @return bool False when the plot or its tag could not be written.
+	 * @return bool False when the plot, its levels, or its tag could not be written.
 	 */
 	private static function persist_one( int $game_id, string $game_date, array $candidate ): bool {
-		$plot_id = Plot::create( [
-			'game_id'      => $game_id,
-			'title'        => $candidate['title'],
-			'description'  => $candidate['description'] ?: null,
-			'initiated_by' => 'st',
-			'game_date'    => $game_date,
-			'target_query' => $candidate['target_query'],
-			'created_by'   => get_current_user_id(),
-		] );
+		$target_query = $candidate['target_query'];
 
-		return $plot_id !== false && self::tag_as_rumor( $plot_id, $game_id );
+		$plot_id = Plot::create( [
+			'game_id'           => $game_id,
+			'title'             => $candidate['title'],
+			'description'       => $candidate['description'] ?: null,
+			'initiated_by'      => 'st',
+			'game_date'         => $game_date,
+			'target_query'      => $target_query,
+			'audience'          => $target_query ? Audience::RESTRICTED : Audience::EVERYONE,
+			'audience_rules'    => $target_query ? [ 'logic' => 'AND', 'conditions' => [ Query_Engine::target_query_to_condition( $target_query ) ] ] : null,
+			'rumor_level_key'   => $candidate['rumor_level_key'] ?? null,
+			'rumor_level_match' => $candidate['rumor_level_match'] ?? null,
+			'created_by'        => get_current_user_id(),
+		] );
+		if ( $plot_id === false ) {
+			return false;
+		}
+
+		if ( ! Plot::update( $plot_id, [ 'held' => true ] ) ) {
+			return false;
+		}
+
+		foreach ( $candidate['levels'] ?? [] as $level => $content ) {
+			$entry_id = Plot_Entry::create( [
+				'plot_id'    => $plot_id,
+				'author_id'  => get_current_user_id(),
+				'entry_type' => 'rumor_level',
+				'content'    => $content,
+				'level'      => (int) $level,
+			] );
+			if ( ! $entry_id ) {
+				return false;
+			}
+		}
+
+		return self::tag_as_rumor( $plot_id, $game_id );
 	}
 
 	/**
@@ -361,6 +423,23 @@ class Rumor_Generator {
 			'label'       => self::RUMOR_LABEL,
 			'created_by'  => get_current_user_id(),
 		] );
+	}
+
+	/**
+	 * Whether a plot carries the `apr_rumor` tag - the read-side counterpart to
+	 * `tag_as_rumor()`, used by `Plots_Controller::update_item()` to know whether a
+	 * `target_query` change should re-derive the rumor's audience (1.1.0 §3.4 item 1).
+	 *
+	 * @param int $plot_id
+	 * @return bool
+	 */
+	public static function is_rumor( int $plot_id ): bool {
+		foreach ( Connection::for_source( 'plot', $plot_id ) as $connection ) {
+			if ( $connection->target_type === 'tag' && $connection->label === self::RUMOR_LABEL ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

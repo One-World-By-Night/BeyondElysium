@@ -226,6 +226,17 @@ button.be-st-button--quiet:hover:not(:disabled) {
 	color: var(--be-st-faint);
 }
 
+.be-st-badge--audience {
+	color: #8a3d00;
+	border-color: #d99a62;
+}
+
+.be-st-badge--held {
+	color: #8a3d00;
+	border-color: #d99a62;
+	background: #fdf0e0;
+}
+
 .be-plot-manager__empty {
 	padding: 2rem 1rem;
 	text-align: center;

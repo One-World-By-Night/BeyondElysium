@@ -1,0 +1,19 @@
+.be-audience-picker__options {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	margin-bottom: 0.5rem;
+}
+
+.be-audience-picker__rules {
+	border: 1px solid #d0d0d0;
+	border-radius: 4px;
+	padding: 0.75rem;
+	background: #fafafa;
+}
+
+.be-audience-picker__preview {
+	font-size: 0.85rem;
+	color: #555;
+	margin: 0.5rem 0 0;
+}

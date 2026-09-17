@@ -21,6 +21,9 @@ My Chronicle → Dashboard tab. It's the first tab, and where the page opens by 
   still waiting on a Storyteller. Each line names the character, describes the change in
   plain language, and shows a badge for its approval level (`auto` or `st`). "Nothing
   pending review." when there's nothing waiting.
+- **My Castings**, shown only when a Storyteller has cast you to play an NPC for an
+  upcoming session - "You're playing {NPC} on {date}." Click it to open the
+  [casting brief](npc-casting.md).
 - **My Plots** - the same feed as the My Plots & Rumors tab: every plot thread you're
   connected to and any rumor that's reached you.
 
@@ -64,5 +67,6 @@ My Chronicle → Dashboard tab. It's the first tab, and where the page opens by 
 - [Change History](sheet-history.md)
 - [How Approval Works](approval-flow.md)
 - [Game Dashboard](game-dashboard.md)
+- [NPC Casting Brief](npc-casting.md)
 - [Roles](roles.md)
 - [Player Guide](../player-guide.md#4-your-dashboard)

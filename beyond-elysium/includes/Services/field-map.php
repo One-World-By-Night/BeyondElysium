@@ -31,7 +31,17 @@ return [
 	// -- Identity / header -----------------------------------------------------------
 	'name'         => [ 'source' => 'column', 'column' => 'name' ],
 	'race'         => [ 'source' => 'column', 'column' => 'stack_slug' ],
-	'group'        => [ 'source' => 'unmapped', 'note' => 'no BE equivalent; GV faction grouping is not modeled as character data' ],
+	// 1.1.0 F1: the real GV "faction grouping" key this note used to say wasn't modeled -
+	// resolves to the character's active be_factions memberships, comma-joined (a plain
+	// 'field' type in qkdata.gvd, matching every other single-string GV field; 'contains'
+	// substring-matches the joined string, which is how "Group contains Coterie of Thorns"
+	// works for a character in more than one faction). The design doc's own prose names
+	// this query key "faction" - already a real, different key here (Wraith's own identity
+	// field, `field` => 'Faction', a few lines below) - so this uses "group" instead, the
+	// one already-unmapped real GV key whose own note anticipated exactly this feature,
+	// rather than repurposing "faction" and breaking Wraith's existing identity-field query
+	// support (Decision logged in the 1.1.0 F1 commit-plan entry).
+	'group'        => [ 'source' => 'derived', 'note' => 'resolved per-character from be_faction_members (Query_Engine::resolve_value())' ],
 	'subgroup'     => [ 'source' => 'unmapped', 'note' => 'no BE equivalent; GV faction grouping is not modeled as character data' ],
 	'xpearned'     => [ 'source' => 'column', 'column' => 'xp_earned' ],
 	'xpunspent'    => [ 'source' => 'column', 'column' => 'xp_unspent' ],
@@ -107,7 +117,9 @@ return [
 	'breed'      => [ 'source' => 'json', 'field' => 'Breed' ],
 	'auspice'    => [ 'source' => 'json', 'field' => 'Auspice' ],
 	'pack'       => [ 'source' => 'json', 'field' => 'Pack' ],
-	'position'   => [ 'source' => 'unmapped', 'note' => 'chronicle staff/player position, not character data' ],
+	// 1.1.0 F2: resolves to the titles this character currently holds, comma-joined - the
+	// same 'field'-type substring-match shape as 'group' above.
+	'position'   => [ 'source' => 'derived', 'note' => 'resolved per-character from be_positions (Query_Engine::resolve_value())' ],
 	'notoriety'  => [ 'source' => 'unmapped', 'note' => 'Garou spirit notoriety not modeled' ],
 	'totem'      => [ 'source' => 'json', 'field' => 'Totem' ],
 	'camp'       => [ 'source' => 'unmapped', 'note' => 'Garou camp affiliation not modeled' ],

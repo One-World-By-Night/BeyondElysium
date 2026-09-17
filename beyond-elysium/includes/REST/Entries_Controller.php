@@ -3,10 +3,17 @@
 namespace BeyondElysium\REST;
 
 use BeyondElysium\Core\Authorization;
+use BeyondElysium\Core\Notifications;
+use BeyondElysium\Models\Character;
+use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Game_Session;
 use BeyondElysium\Models\Plot;
 use BeyondElysium\Models\Plot_Entry;
+use BeyondElysium\Models\Release_Batch;
 use BeyondElysium\Services\Action_Allocator;
+use BeyondElysium\Services\Audience;
+use BeyondElysium\Services\Downtime_Window;
 use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
@@ -61,8 +68,11 @@ class Entries_Controller extends Base_Controller {
 	/**
 	 * Lists entries for a plot, chronological ascending.
 	 *
-	 * Supports filtering by entry type, and hides `note` entries from anyone
-	 * without `be_manage_plots`, since notes are ST-only.
+	 * Supports filtering by entry type, hides `note` entries from anyone
+	 * without `be_manage_plots` (notes are ST-only), and applies each
+	 * remaining entry's own audience (1.1.0 §2.4) - public, storytellers-only,
+	 * or directed to specific characters, with the entry's own author always
+	 * seeing it regardless.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -87,12 +97,19 @@ class Entries_Controller extends Base_Controller {
 		$entries = Plot_Entry::for_plot( (int) $plot->id, [ 'entry_type' => $request->get_param( 'entry_type' ) ] );
 
 		if ( ! $can_manage ) {
-			$entries = array_values( array_filter( $entries, static function ( $entry ) {
-				return $entry->entry_type !== "note";
+			$wp_user_id    = get_current_user_id();
+			$game_slug     = (string) $request['game_slug'];
+			$out_batch_ids = Release_Batch::out_ids( (int) $plot->game_id );
+			$entries       = array_values( array_filter( $entries, static function ( $entry ) use ( $wp_user_id, $game_slug, $out_batch_ids, $plot ) {
+				if ( $entry->entry_type === 'note' ) {
+					return false;
+				}
+				return Audience::can_see_entry( $entry, $wp_user_id, $game_slug, false, $out_batch_ids, $plot );
 			} ) );
 
-			// A note-type entry is dropped wholesale above; every other entry is ordinary
-			// rich text a Storyteller may have marked with [ST] mid-sentence.
+			// A note-type entry, and anything the viewer's own audience excludes, are dropped
+			// wholesale above; every entry that remains is ordinary rich text a Storyteller may
+			// have marked with [ST] mid-sentence.
 			$game = Game::find_by_slug( (string) $request["game_slug"] );
 			foreach ( $entries as $entry ) {
 				St_Visibility::filter_entry( $entry, $game, false );
@@ -123,6 +140,12 @@ class Entries_Controller extends Base_Controller {
 		if ( ! in_array( $entry_type, Plot_Entry::ENTRY_TYPES, true ) ) {
 			return $this->error( 'invalid_param', sprintf( __( 'entry_type must be one of: %s.', 'beyond-elysium' ), implode( ', ', Plot_Entry::ENTRY_TYPES ) ), 400 );
 		}
+		// A rumor level text (1.1.0 §3.4) is only ever written through PUT .../rumor-levels,
+		// which owns the 1-10 numbering and the delete-when-empty rule - never through this
+		// generic route, which has no way to supply a level number at all.
+		if ( $entry_type === 'rumor_level' ) {
+			return $this->error( 'invalid_param', __( 'Rumor levels are set through the rumor-levels route, not created directly.', 'beyond-elysium' ), 400 );
+		}
 
 		$can_manage = Authorization::can( 'be_manage_plots' );
 		if ( $entry_type === 'action' ) {
@@ -140,6 +163,16 @@ class Entries_Controller extends Base_Controller {
 			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
+		// Downtime windows (1.1.0 §3.3) are enforced for a non-manager's own action only -
+		// a Storyteller can always post, and a player plot or any other non-allocation plot
+		// is never windowed at all (downtime_window_error() returns null for both).
+		if ( ! $can_manage && $entry_type === 'action' ) {
+			$window_error = $this->downtime_window_error( $plot );
+			if ( $window_error !== null ) {
+				return $window_error;
+			}
+		}
+
 		$content = $request->get_param( 'content' );
 		if ( empty( $content ) ) {
 			return $this->error( 'invalid_param', __( 'Missing required field: content.', 'beyond-elysium' ), 400 );
@@ -149,20 +182,169 @@ class Entries_Controller extends Base_Controller {
 			return $this->reserved_entry_error();
 		}
 
-		$id = Plot_Entry::create( [
-			'plot_id'    => (int) $plot->id,
-			'author_id'  => get_current_user_id(),
-			'entry_type' => $entry_type,
-			'content'    => wp_kses_post( $content ),
+		$audience = $this->resolve_entry_audience( $request, $plot, $can_manage );
+		if ( is_wp_error( $audience ) ) {
+			return $audience;
+		}
+
+		$insert = [
+			'plot_id'                => (int) $plot->id,
+			'author_id'              => get_current_user_id(),
+			'entry_type'             => $entry_type,
+			'content'                => wp_kses_post( $content ),
 			// The entry's in-fiction date, independent of when it was actually written.
-			'event_date' => $request->get_param( 'event_date' ) ?: null,
-		] );
+			'event_date'             => $request->get_param( 'event_date' ) ?: null,
+			'audience'               => $audience['audience'],
+			'audience_character_ids' => $audience['audience_character_ids'],
+		];
+
+		// A Storyteller's response on an action plot is held by default (1.1.0 §3.3) - explicit
+		// held:false posts it immediately. Never applies to a plain plot's own response, only
+		// to an action-allocation plot's downtime answer.
+		if ( $entry_type === 'response' && Action_Allocator::actor_character_id( (int) $plot->id ) !== null ) {
+			$held = $request->get_param( 'held' );
+			if ( $held === null || $held ) {
+				$insert['held']             = true;
+				$insert['release_batch_id'] = $this->resolve_answer_batch_id( $request, $plot );
+			}
+		}
+
+		$id = Plot_Entry::create( $insert );
 
 		if ( ! $id ) {
 			return $this->error( 'create_failed', __( 'Failed to create entry.', 'beyond-elysium' ), 500 );
 		}
 
-		return $this->success( Plot_Entry::find( $id ), 201 );
+		$entry = Plot_Entry::find( $id );
+		if ( $entry ) {
+			$this->notify_new_post( $plot, $entry, (string) $request['game_slug'] );
+			Notifications::flush_posts();
+		}
+
+		return $this->success( $entry, 201 );
+	}
+
+	/**
+	 * Notifies whoever a new plot post is for (1.1.0 §3.5). A held entry notifies through its
+	 * own release batch instead (§3.2) - never here; a note is Storyteller-only content, and a
+	 * rumor_level can never reach this method at all (rejected earlier in create_item()).
+	 *
+	 * A player's `action` post notifies the plot's own assigned_to (§3.6) if set, otherwise
+	 * every hst/ast/narrator member of the chronicle - never the author. Any other entry type
+	 * is a Storyteller's post: it notifies the players of every character connected to the
+	 * plot by any label who can also see this specific entry - never the whole chronicle of an
+	 * `everyone` plot, never the author.
+	 *
+	 * @param object $plot
+	 * @param object $entry
+	 * @param string $game_slug
+	 * @return void
+	 */
+	private function notify_new_post( object $plot, object $entry, string $game_slug ): void {
+		if ( ! empty( $entry->held ) || in_array( $entry->entry_type, [ 'note', 'rumor_level' ], true ) ) {
+			return;
+		}
+
+		$game = Game::find( (int) $plot->game_id );
+		if ( ! $game ) {
+			return;
+		}
+
+		$author_id  = (int) $entry->author_id;
+		$plot_id    = property_exists( $plot, 'id' ) ? (int) $plot->id : 0;
+		$plot_title = property_exists( $plot, 'title' ) ? (string) $plot->title : '';
+
+		if ( $entry->entry_type === 'action' ) {
+			$label = $this->action_poster_label( $plot );
+			$link  = Notifications::storyteller_plot_url( $plot_id );
+
+			if ( ! empty( $plot->assigned_to ) ) {
+				$recipient_id = (int) $plot->assigned_to;
+				if ( $recipient_id !== $author_id ) {
+					Notifications::notify_post( $recipient_id, $game, $plot_id, $plot_title, $label, $link );
+				}
+				return;
+			}
+
+			foreach ( Notifications::staff_including_narrators( $game ) as $user ) {
+				if ( (int) $user->ID === $author_id ) {
+					continue;
+				}
+				Notifications::notify_post( (int) $user->ID, $game, $plot_id, $plot_title, $label, $link );
+			}
+			return;
+		}
+
+		$label = __( 'A Storyteller', 'beyond-elysium' );
+		$link  = Notifications::player_plot_url( $plot_id );
+		foreach ( Audience::connected_character_ids( $plot, 'plot' ) as $character_id ) {
+			$character = Character::find( $character_id );
+			$wp_user_id = $character ? (int) ( $character->wp_user_id ?? 0 ) : 0;
+			if ( ! $wp_user_id || $wp_user_id === $author_id ) {
+				continue;
+			}
+			if ( ! Audience::can_see_entry( $entry, $wp_user_id, $game_slug, false, null, $plot ) ) {
+				continue;
+			}
+			Notifications::notify_post( $wp_user_id, $game, $plot_id, $plot_title, $label, $link );
+		}
+	}
+
+	/**
+	 * "Who posted" for a player's own action entry: the action-allocation plot's own bound
+	 * character's name, or a generic fallback for an action posted on a plot with no bound
+	 * character at all (a player plot's own action, which has no single "the round is theirs"
+	 * character the way an allocation plot does).
+	 *
+	 * @param object $plot
+	 * @return string
+	 */
+	private function action_poster_label( object $plot ): string {
+		$character_id = Action_Allocator::actor_character_id( (int) $plot->id );
+		$character    = $character_id ? Character::find( $character_id ) : null;
+		return $character ? (string) $character->name : __( 'A player', 'beyond-elysium' );
+	}
+
+	/**
+	 * Validates a requested entry audience against 1.1.0 §2.4's rules and, for `characters`,
+	 * against the parent plot's own visible characters - the character picker for a directed
+	 * post offers only characters who can already see the plot, so a directed post can never
+	 * reference a plot its reader cannot open. Absent from the request entirely, this returns
+	 * `Plot_Entry::DEFAULT_AUDIENCE` (`plot`) with no ids - today's behavior, preserved.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @param object           $plot
+	 * @param bool             $can_manage
+	 * @return array{audience:string,audience_character_ids:?int[]}|\WP_Error
+	 */
+	private function resolve_entry_audience( $request, $plot, bool $can_manage ) {
+		$audience = $request->get_param( 'audience' );
+		if ( $audience === null ) {
+			return [ 'audience' => Plot_Entry::DEFAULT_AUDIENCE, 'audience_character_ids' => null ];
+		}
+		if ( ! in_array( $audience, Plot_Entry::AUDIENCE_VALUES, true ) ) {
+			return $this->error( 'invalid_param', sprintf( __( 'audience must be one of: %s.', 'beyond-elysium' ), implode( ', ', Plot_Entry::AUDIENCE_VALUES ) ), 400 );
+		}
+		// A player may direct a post no further than public or private - never to specific
+		// characters, which would let one player message another through the Storyteller's
+		// own thread (owner ruling, §2.4).
+		if ( ! $can_manage && $audience === Plot_Entry::AUDIENCE_CHARACTERS ) {
+			return $this->error( 'forbidden', __( 'You may only choose plot or storytellers for your own entry.', 'beyond-elysium' ), 403 );
+		}
+		if ( $audience !== Plot_Entry::AUDIENCE_CHARACTERS ) {
+			return [ 'audience' => $audience, 'audience_character_ids' => null ];
+		}
+
+		$target_ids = array_values( array_unique( array_map( 'intval', (array) $request->get_param( 'audience_character_ids' ) ) ) );
+		if ( empty( $target_ids ) ) {
+			return $this->error( 'invalid_param', __( 'audience_character_ids must name at least one character.', 'beyond-elysium' ), 400 );
+		}
+		$visible_ids = Audience::visible_character_ids( $plot, 'plot', $request['game_slug'] );
+		if ( array_diff( $target_ids, $visible_ids ) ) {
+			return $this->error( 'invalid_param', __( 'A directed post can only name a character who can already see this plot.', 'beyond-elysium' ), 400 );
+		}
+
+		return [ 'audience' => Plot_Entry::AUDIENCE_CHARACTERS, 'audience_character_ids' => $target_ids ];
 	}
 
 	/**
@@ -204,6 +386,13 @@ class Entries_Controller extends Base_Controller {
 			if ( $this->has_response_after( $plot, $entry ) ) {
 				return $this->error( 'entry_locked', __( 'This action has already been responded to and can no longer be edited.', 'beyond-elysium' ), 409 );
 			}
+			// Downtime windows (1.1.0 §3.3): closed even with no response yet reads to the
+			// player as "a Storyteller is already handling this," not a raw window error -
+			// the answer itself may still be sitting held in a draft batch.
+			$window_error = $this->downtime_window_error( $plot, true );
+			if ( $window_error !== null ) {
+				return $window_error;
+			}
 		}
 
 		$content = $request->get_param( 'content' );
@@ -219,6 +408,16 @@ class Entries_Controller extends Base_Controller {
 		$update = [ 'content' => wp_kses_post( $content ) ];
 		if ( $request->get_param( 'event_date' ) !== null ) {
 			$update['event_date'] = $request->get_param( 'event_date' ) ?: null;
+		}
+		// Left untouched entirely when not sent - a plain content edit never resets a
+		// deliberately-chosen audience back to plot.
+		if ( $request->get_param( 'audience' ) !== null ) {
+			$audience = $this->resolve_entry_audience( $request, $plot, $can_manage );
+			if ( is_wp_error( $audience ) ) {
+				return $audience;
+			}
+			$update['audience']               = $audience['audience'];
+			$update['audience_character_ids'] = $audience['audience_character_ids'];
 		}
 
 		Plot_Entry::update( (int) $entry->id, $update );
@@ -258,6 +457,74 @@ class Entries_Controller extends Base_Controller {
 	}
 
 	/**
+	 * The release batch a held downtime answer joins: the request's own release_batch_id,
+	 * else the plot's game date's own session default_batch_id, else null (a plain draft
+	 * with no batch at all) - the exact fallback order §3.3 specifies.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @param object            $plot
+	 * @return int|null
+	 */
+	private function resolve_answer_batch_id( $request, $plot ): ?int {
+		$release_batch_id = (int) $request->get_param( 'release_batch_id' );
+		if ( $release_batch_id > 0 ) {
+			return $release_batch_id;
+		}
+		if ( empty( $plot->game_date ) ) {
+			return null;
+		}
+		$game_id = property_exists( $plot, 'game_id' ) ? (int) $plot->game_id : 0;
+		$session = Game_Session::find_by_date( $game_id, (string) $plot->game_date );
+		return $session && ! empty( $session->default_batch_id ) ? (int) $session->default_batch_id : null;
+	}
+
+	/**
+	 * Refuses an action-entry write the character's downtime window doesn't allow (1.1.0
+	 * §3.3) - null for a manager's own call site (never invoked for one, but defensively
+	 * inert too), for a plot with no bound actor character (not an allocation plot at all -
+	 * "player plots and every other plot are never windowed"), or for one with no game_date
+	 * (the character's own undated home plot). $for_edit narrows the check to CLOSED only,
+	 * matching update_item()'s single "already closed" rule against create_item()'s own
+	 * NOT_OPEN/CLOSED pair.
+	 *
+	 * @param object $plot
+	 * @param bool   $for_edit
+	 * @return \WP_Error|null
+	 */
+	private function downtime_window_error( $plot, bool $for_edit = false ) {
+		$character_id = Action_Allocator::actor_character_id( (int) $plot->id );
+		if ( $character_id === null || empty( $plot->game_date ) ) {
+			return null;
+		}
+
+		$game_id = property_exists( $plot, 'game_id' ) ? (int) $plot->game_id : 0;
+		$state   = Downtime_Window::state( $game_id, (string) $plot->game_date, $character_id );
+
+		if ( $for_edit ) {
+			if ( $state === Downtime_Window::CLOSED ) {
+				return $this->error( 'entry_locked', __( 'A Storyteller is answering this action, so it can no longer be edited.', 'beyond-elysium' ), 409 );
+			}
+			return null;
+		}
+
+		if ( $state === Downtime_Window::NOT_OPEN ) {
+			return $this->error( 'downtime_not_open', sprintf(
+				/* translators: %s: game date, Y-m-d */
+				__( 'Downtime for %s has not opened yet.', 'beyond-elysium' ),
+				$plot->game_date
+			), 409 );
+		}
+		if ( $state === Downtime_Window::CLOSED ) {
+			return $this->error( 'downtime_closed', sprintf(
+				/* translators: %s: game date, Y-m-d */
+				__( 'Downtime for %s has closed.', 'beyond-elysium' ),
+				$plot->game_date
+			), 409 );
+		}
+		return null;
+	}
+
+	/**
 	 * Reports whether a plot entry is managed by the action-allocation/
 	 * background-ledger system - marked `source: 'allocator'` or
 	 * `source: 'ledger'` in its JSON content - and therefore off-limits to
@@ -285,15 +552,42 @@ class Entries_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Whether a plot is an action-allocation plot belonging to a character
-	 * the current user does not own.
+	 * Whether a plot is an action-allocation plot belonging to a character the
+	 * current user does not own AND is not an invited member of (1.1.0 §2.3a) -
+	 * kept in step with `Plots_Controller`'s own copy of this same check.
 	 *
 	 * @param object $plot
 	 * @return bool
 	 */
 	private static function is_unowned_allocation( $plot ): bool {
-		return Action_Allocator::actor_character_id( (int) $plot->id ) !== null
-			&& ! Action_Allocator::is_actor_owned_by( (int) $plot->id, get_current_user_id() );
+		$plot_id = (int) $plot->id;
+		if ( Action_Allocator::actor_character_id( $plot_id ) === null ) {
+			return false;
+		}
+		$wp_user_id = get_current_user_id();
+		return ! Action_Allocator::is_actor_owned_by( $plot_id, $wp_user_id )
+			&& ! self::viewer_is_a_plot_member( $plot_id, $wp_user_id );
+	}
+
+	/**
+	 * Whether one of `$wp_user_id`'s own characters holds a `plot_member` connection
+	 * to this plot (§2.3a) - an invited co-narrator, never the owner.
+	 *
+	 * @param int $plot_id
+	 * @param int $wp_user_id
+	 * @return bool
+	 */
+	private static function viewer_is_a_plot_member( int $plot_id, int $wp_user_id ): bool {
+		foreach ( Connection::for_source( 'plot', $plot_id ) as $connection ) {
+			if ( $connection->target_type !== 'character' || $connection->label !== 'plot_member' ) {
+				continue;
+			}
+			$character = Character::find( (int) $connection->target_id );
+			if ( $character && (int) $character->wp_user_id === $wp_user_id ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** @return \WP_Error The refusal for a body carrying the Action & Rumor marker. */

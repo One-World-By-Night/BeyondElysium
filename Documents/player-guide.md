@@ -88,6 +88,12 @@ that's reached you. Open one to read the full thread and, if it calls for a resp
 submit your action directly from there — the same review process as any other change
 applies to plot actions your Storyteller needs to approve.
 
+When you post, you choose who reads it: **Public** (everyone who can see the plot) or
+**Private - Storytellers and me only**. A Storyteller can also send a reply directed at your
+character specifically — you'll see it, but a player whose character wasn't named won't. A
+plot may also carry attached files (images or PDFs); if it's your own character's plot,
+you can attach one of your own from the same screen.
+
 ## 6. Recording Background Uses
 
 Once your Storyteller has allocated actions for a game date, your character sheet's

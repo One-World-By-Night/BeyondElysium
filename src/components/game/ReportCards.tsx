@@ -23,6 +23,8 @@ export interface ReportCardsProps {
 	gameSlug: string;
 	/** A report-registry key whose shape is 'card' - 'location-cards' or 'rote-cards' here. */
 	reportKey: string;
+	/** Scopes the report to one character (1.1.0 §3.15) - required for Rote Cards when the viewer isn't a manager. */
+	characterId?: number;
 }
 
 /**
@@ -32,7 +34,11 @@ export interface ReportCardsProps {
  * boundary `WorldObjectCard.tsx`/`HouseRules.tsx` already rely on for the same data: a plain
  * `string`/`int` field carries no markup to begin with, so rendering it as HTML is a no-op.
  */
-export function ReportCards( { gameSlug, reportKey }: ReportCardsProps ) {
+export function ReportCards( {
+	gameSlug,
+	reportKey,
+	characterId,
+}: ReportCardsProps ) {
 	const [ data, setData ] = useState< CardsDocument | null >( null );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
@@ -41,7 +47,7 @@ export function ReportCards( { gameSlug, reportKey }: ReportCardsProps ) {
 		setLoading( true );
 		setError( null );
 		api.reports( gameSlug )
-			.document( reportKey )
+			.document( reportKey, { characterId } )
 			.then( ( result ) => {
 				setData( result as unknown as CardsDocument );
 				setLoading( false );
@@ -52,7 +58,7 @@ export function ReportCards( { gameSlug, reportKey }: ReportCardsProps ) {
 				);
 				setLoading( false );
 			} );
-	}, [ gameSlug, reportKey ] );
+	}, [ gameSlug, reportKey, characterId ] );
 
 	if ( loading ) {
 		return <p>{ __( 'Loading…', 'beyond-elysium' ) }</p>;

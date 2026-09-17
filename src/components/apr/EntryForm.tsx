@@ -4,11 +4,15 @@
  * field, and a submit button that posts the entry through the API. A non-manager viewer
  * only ever sees the action entry type; a manager sees response, note, and resolution too.
  */
-import { useRef, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import HtmlEditor from '../shared/HtmlEditor';
-import type { EntryType } from '../../types/plot';
+import type {
+	CharacterOption,
+	EntryAudienceValue,
+	EntryType,
+} from '../../types/plot';
 import './EntryForm.css';
 
 export interface EntryFormProps {
@@ -19,6 +23,25 @@ export interface EntryFormProps {
 	onCreated: () => void;
 	/** Shows an optional Timeline date field when true. */
 	expandedEnabled?: boolean;
+}
+
+interface RestError {
+	message?: string;
+}
+
+/**
+ * Surfaces the server's own error message directly - e.g. a downtime-window 409 (1.1.0
+ * §3.3), which a generic fallback would otherwise swallow entirely.
+ */
+function errorMessage( error: unknown, fallback: string ): string {
+	if (
+		typeof error === 'object' &&
+		error !== null &&
+		( error as RestError ).message
+	) {
+		return ( error as RestError ).message as string;
+	}
+	return fallback;
 }
 
 /**
@@ -49,6 +72,46 @@ export function EntryForm( {
 	const [ submitting, setSubmitting ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
 
+	// A player may only choose plot (public) or storytellers (private to themself and
+	// staff); only a manager may direct a post to specific characters (1.1.0 §2.4).
+	const [ audience, setAudience ] = useState< EntryAudienceValue >( 'plot' );
+	const [ audienceCharacterIds, setAudienceCharacterIds ] = useState<
+		number[]
+	>( [] );
+	const [ visibleCharacters, setVisibleCharacters ] = useState<
+		CharacterOption[]
+	>( [] );
+
+	useEffect( () => {
+		if ( ! canManage ) {
+			return;
+		}
+		let cancelled = false;
+		api.plots( gameSlug )
+			.visibleCharacters( plotId )
+			.then( ( characters ) => {
+				if ( ! cancelled ) {
+					setVisibleCharacters( characters );
+				}
+			} )
+			.catch( () => {
+				if ( ! cancelled ) {
+					setVisibleCharacters( [] );
+				}
+			} );
+		return () => {
+			cancelled = true;
+		};
+	}, [ canManage, gameSlug, plotId ] );
+
+	function toggleAudienceCharacter( characterId: number ) {
+		setAudienceCharacterIds( ( ids ) =>
+			ids.includes( characterId )
+				? ids.filter( ( id ) => id !== characterId )
+				: [ ...ids, characterId ]
+		);
+	}
+
 	/**
 	 * Submits the entry form. Sends the trimmed content, selected entry type, and optional
 	 * event date to the API, then clears the content and date fields and notifies the
@@ -59,6 +122,15 @@ export function EntryForm( {
 		if ( ! contentDraft.current.trim() ) {
 			return;
 		}
+		if ( audience === 'characters' && audienceCharacterIds.length === 0 ) {
+			setError(
+				__(
+					'Choose at least one character to direct this post to.',
+					'beyond-elysium'
+				)
+			);
+			return;
+		}
 		setSubmitting( true );
 		setError( null );
 		try {
@@ -66,6 +138,11 @@ export function EntryForm( {
 				entry_type: entryType,
 				content: contentDraft.current.trim(),
 				event_date: eventDate || undefined,
+				audience,
+				audience_character_ids:
+					audience === 'characters'
+						? audienceCharacterIds
+						: undefined,
 			} );
 			contentDraft.current = '';
 			setHasContent( false );
@@ -74,9 +151,16 @@ export function EntryForm( {
 			// acceptance uses internally).
 			tinymce?.get( contentId )?.setContent( '' );
 			setEventDate( '' );
+			setAudience( 'plot' );
+			setAudienceCharacterIds( [] );
 			onCreated();
-		} catch {
-			setError( __( 'Failed to add this entry.', 'beyond-elysium' ) );
+		} catch ( err ) {
+			setError(
+				errorMessage(
+					err,
+					__( 'Failed to add this entry.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSubmitting( false );
 		}
@@ -114,6 +198,76 @@ export function EntryForm( {
 							'beyond-elysium'
 						) }
 					/>
+				) }
+			</div>
+			<div className="be-entry-form__audience">
+				<select
+					value={ audience }
+					onChange={ ( e ) =>
+						setAudience( e.target.value as EntryAudienceValue )
+					}
+					aria-label={ __(
+						'Who can see this entry',
+						'beyond-elysium'
+					) }
+				>
+					<option value="plot">
+						{ canManage
+							? __(
+									'Public - everyone who can see this plot',
+									'beyond-elysium'
+							  )
+							: __( 'Public', 'beyond-elysium' ) }
+					</option>
+					<option value="storytellers">
+						{ canManage
+							? __(
+									'Storytellers and Narrators only',
+									'beyond-elysium'
+							  )
+							: __(
+									'Private - Storytellers and me only',
+									'beyond-elysium'
+							  ) }
+					</option>
+					{ canManage && (
+						<option value="characters">
+							{ __(
+								'Directed to specific characters',
+								'beyond-elysium'
+							) }
+						</option>
+					) }
+				</select>
+				{ canManage && audience === 'characters' && (
+					<ul className="be-entry-form__character-picker">
+						{ visibleCharacters.length === 0 && (
+							<li className="be-entry-form__placeholder">
+								{ __(
+									'No characters can currently see this plot.',
+									'beyond-elysium'
+								) }
+							</li>
+						) }
+						{ visibleCharacters.map( ( character ) => (
+							<li key={ character.id }>
+								<label>
+									<input
+										type="checkbox"
+										checked={ audienceCharacterIds.includes(
+											character.id
+										) }
+										onChange={ () =>
+											toggleAudienceCharacter(
+												character.id
+											)
+										}
+									/>
+									{ character.name }
+								</label>
+							</li>
+						) ) }
+					</ul>
 				) }
 			</div>
 			<p className="be-entry-form__hint">

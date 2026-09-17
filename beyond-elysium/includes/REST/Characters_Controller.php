@@ -594,6 +594,8 @@ class Characters_Controller extends Base_Controller {
 			'status'      => $status,
 			// A non-manager's is_npc claim is never trusted.
 			'is_npc'      => $is_manager && $request->get_param( 'is_npc' ) ? 1 : 0,
+			// "New NPC asks Quick or Full" (1.1.0 §3.7 item 1) - meaningless on a PC either way.
+			'npc_detail'  => $is_manager && $request->get_param( 'npc_detail' ) === 'quick' ? 'quick' : 'full',
 			'narrator'    => $request->get_param( 'narrator' ) ? sanitize_text_field( $request->get_param( 'narrator' ) ) : null,
 			'start_date'  => $start_date,
 			// Biography and notes are rich text, sanitized with the same allowlist as post content.
@@ -660,7 +662,7 @@ class Characters_Controller extends Base_Controller {
 		// (1.0.0-review F-033).
 		$allowed_fields = [ 'name', 'biography', 'notes', 'player_name', 'start_date', 'image_id' ];
 		if ( $is_manager ) {
-			array_push( $allowed_fields, 'status', 'narrator', 'rp_notes', 'is_npc' );
+			array_push( $allowed_fields, 'status', 'narrator', 'rp_notes', 'is_npc', 'npc_detail' );
 		}
 
 		// Sanitized the same way create_item() sanitizes each field.
@@ -683,6 +685,12 @@ class Characters_Controller extends Base_Controller {
 
 		if ( isset( $data['status'] ) && ! in_array( $data['status'], self::STATUSES, true ) ) {
 			return $this->error( 'invalid_param', sprintf( __( 'status must be one of: %s.', 'beyond-elysium' ), implode( ', ', self::STATUSES ) ), 400 );
+		}
+
+		// "Make full NPC" (1.1.0 §3.7 item 1) - a plain field flip; sheet_data never depends on
+		// npc_detail, so nothing held is lost either direction.
+		if ( isset( $data['npc_detail'] ) && ! in_array( $data['npc_detail'], [ 'full', 'quick' ], true ) ) {
+			return $this->error( 'invalid_param', __( 'npc_detail must be one of: full, quick.', 'beyond-elysium' ), 400 );
 		}
 
 		// Manager-only; uses has_param() to distinguish an omitted field from an explicit unassign.
@@ -736,6 +744,22 @@ class Characters_Controller extends Base_Controller {
 
 		if ( isset( $data['is_npc'] ) ) {
 			$data['is_npc'] = $data['is_npc'] ? 1 : 0;
+		}
+
+		// Staff assignment (1.1.0 §3.6): an NPC's own staff owner. Gated on the character's
+		// current is_npc state, not a same-request change to it - assigned_to only ever makes
+		// sense on what already is an NPC. Manager-only, matching every other assignment field.
+		if ( $is_manager && $character->is_npc && $request->has_param( 'assigned_to' ) ) {
+			$raw = $request->get_param( 'assigned_to' );
+			if ( $raw === null || $raw === '' || (int) $raw === 0 ) {
+				$data['assigned_to'] = null;
+			} else {
+				$assignee = \BeyondElysium\Models\Game_Member::find( (int) $game->id, (int) $raw );
+				if ( ! $assignee || ! in_array( $assignee->role, \BeyondElysium\Models\Game_Member::STAFF_ROLES, true ) ) {
+					return $this->error( 'invalid_assignee', __( 'assigned_to must be a chronicle member with role hst, ast, or narrator.', 'beyond-elysium' ), 400 );
+				}
+				$data['assigned_to'] = (int) $raw;
+			}
 		}
 
 		Character::update_header( (int) $request['id'], $data );

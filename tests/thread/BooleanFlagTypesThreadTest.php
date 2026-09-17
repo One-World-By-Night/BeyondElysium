@@ -3,7 +3,11 @@
 namespace BeyondElysium\Tests\Thread;
 
 use BeyondElysium\Models\Creature_Stack;
+use BeyondElysium\Models\Faction;
+use BeyondElysium\Models\Faction_Member;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Game_Member;
+use BeyondElysium\Models\Position;
 use BeyondElysium\Models\Schema_Block;
 use WP_REST_Request;
 use WP_UnitTestCase;
@@ -87,5 +91,43 @@ class BooleanFlagTypesThreadTest extends WP_UnitTestCase {
 
 		$this->assertSame( false, $game["notifications_enabled"], "notifications_enabled must be boolean false so a disabled chronicle does not render as enabled." );
 		$this->assertSame( false, Game::find_by_slug( $this->game_slug )->notifications_enabled );
+	}
+
+	// -------------------------------------------------------------------------
+	// 1.1.0 F1/F2: factions, faction_members, positions each added a fresh
+	// tinyint(1) column - proof they were cast on arrival, not left for a D51 repeat.
+	// -------------------------------------------------------------------------
+
+	public function test_faction_created_via_proposal_is_a_boolean(): void {
+		$game_id    = (int) Game::create( [ 'slug' => 'thread-flag-faction', 'name' => 'Flag Faction Game' ] );
+		$faction_id = (int) Faction::create( [
+			'game_id' => $game_id, 'name' => 'A Faction', 'faction_type' => 'other',
+			'created_via_proposal' => true, 'created_by' => $this->admin_id,
+		] );
+
+		$this->assertSame( true, Faction::find( $faction_id )->created_via_proposal );
+	}
+
+	public function test_faction_member_is_leader_is_a_boolean(): void {
+		$game_id    = (int) Game::create( [ 'slug' => 'thread-flag-faction-member', 'name' => 'Flag Member Game' ] );
+		$faction_id = (int) Faction::create( [ 'game_id' => $game_id, 'name' => 'A Faction', 'faction_type' => 'other', 'created_by' => $this->admin_id ] );
+		$player_id  = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( $game_id, $player_id, 'player' );
+		$character_id = (int) \BeyondElysium\Models\Character::create( [
+			'name' => 'A Character', 'stack_slug' => 'vampire', 'owner_type' => 'chronicle',
+			'owner_slug' => 'thread-flag-faction-member', 'wp_user_id' => $player_id, 'created_by' => $this->admin_id,
+		] );
+		Faction_Member::add( $faction_id, $character_id, $this->admin_id, true );
+
+		$this->assertSame( true, Faction_Member::find_for( $faction_id, $character_id )->is_leader );
+	}
+
+	public function test_position_holder_public_is_a_boolean(): void {
+		$game_id     = (int) Game::create( [ 'slug' => 'thread-flag-position', 'name' => 'Flag Position Game' ] );
+		$position_id = (int) Position::create( [
+			'game_id' => $game_id, 'title' => 'Prince', 'holder_public' => false, 'created_by' => $this->admin_id,
+		] );
+
+		$this->assertSame( false, Position::find( $position_id )->holder_public );
 	}
 }

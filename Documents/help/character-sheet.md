@@ -22,14 +22,14 @@ selected, the Sheet tab goes straight to it.
 One list above the sheet holds everything you can do with it. Pick an action, click **Go**,
 and what it opens appears right below the list, in place of anything already open - **Close**
 puts it away. The `?` beside **Go** opens this help. On a phone, the list and what it opens
-sit below the sheet itself.
+sit at the top of the page, above the sheet itself.
 
 The list only offers what you can use:
 
-- **Print / Export** - opens the print panel: four checkboxes, **Background**, **Notes**,
-  **XP History**, and **Full power names**, then **Open PDF**, which opens a PDF of this sheet
-  in a new tab. It's signed with the site's certificate when one is set up; otherwise the panel
-  says prints are marked UNSIGNED.
+- **Print / Export** - opens the print panel: five checkboxes, **Background**, **Notes**,
+  **XP History**, **Full power names**, and **XP costs as numbers**, then **Open PDF**, which
+  opens a PDF of this sheet in a new tab. It's signed with the site's certificate when one is
+  set up; otherwise the panel says prints are marked UNSIGNED.
 - **Print My Items** - opens a PDF of just the items connected to this character, straight
   away. Every viewer has it, not only a Storyteller.
 - **Edit this character** - opens the Edit tab for this character. Only if you can edit it.
@@ -87,8 +87,8 @@ The same change-history list **View history** shows appears inline here once its
 
 1. Open the character's sheet.
 2. Pick **Print / Export** and click **Go**.
-3. Check whichever of **Background**, **Notes**, **XP History**, or **Full power names** you
-   want included.
+3. Check whichever of **Background**, **Notes**, **XP History**, **Full power names**, or
+   **XP costs as numbers** you want included.
 4. Click **Open PDF**. The PDF opens in a new tab.
 
 ### Print an item card
@@ -115,11 +115,20 @@ The same change-history list **View history** shows appears inline here once its
 
 - Storyteller-only text and NPC-only sections never reach a player's copy of this sheet - on
   screen or in any export or print - even on their own character.
+- A Quick NPC (see [Character Editor](character-editor.md)) shows its shorter Quick Stats
+  layout here instead of the full sheet, until a Storyteller upgrades it with **Make Full
+  NPC**. This is separate from the [Who's Who](whos-who.md) profile a player might see about
+  the same NPC.
 - Every dot - a trait's rating or a resource pool's point - is drawn the same size everywhere:
-  this sheet, the editor, and a signed PDF.
-- **XP History** and **Full power names** do double duty: ticking either also changes this page,
-  not only the file you print. **Background** and **Notes** only decide what goes into the PDF -
-  both always show at the bottom of this page.
+  this sheet, the editor, and a signed PDF. The number always follows the dots too (a resource
+  pool shows "current/permanent" when they differ), and a section whose held items all carry a
+  plain count - most trait lists, never a note-only one like Merits or Rituals - shows its own
+  total after its title.
+- **XP History**, **Full power names**, and **XP costs as numbers** do double duty: ticking any
+  of them also changes this page, not only the file you print. **Background** and **Notes** only
+  decide what goes into the PDF - both always show at the bottom of this page. **XP costs as
+  numbers** only affects Combo Disciplines here; while editing, a separate toggle right above
+  your held combos does the same thing and remembers your choice next time.
 - Without a signing certificate configured for this site, **Print / Export** and **Print My
   Items** still work, but every page comes back stamped UNSIGNED and the file name ends
   "-unsigned.pdf". Separately, a PDF reader saying "signature valid, signer not trusted"
@@ -141,8 +150,8 @@ The same change-history list **View history** shows appears inline here once its
   Storyteller to connect one.
 - **My PDF says UNSIGNED.** This site has no signing certificate configured yet - that's a
   hosting setup step, not a problem with the character.
-- **I ticked XP History and it appeared on the page.** That's expected - XP History and Full power
-  names change this page too, not only the printed file.
+- **I ticked XP History and it appeared on the page.** That's expected - XP History, Full power
+  names, and XP costs as numbers all change this page too, not only the printed file.
 - **I don't see my Background or Notes.** They only show when they have text - add some from the
   Edit tab.
 - **I can't find a character I know is in this chronicle.** If it isn't yours and you're not a
@@ -160,5 +169,6 @@ The same change-history list **View history** shows appears inline here once its
 - [Verify Character](verify.md)
 - [Signed Sheets](signed-sheets.md)
 - [Storyteller-Only Content](storyteller-only.md)
+- [Who's Who](whos-who.md)
 - [Player Guide](../player-guide.md#8-printing-your-sheet)
 - [Storyteller Guide](../st-guide.md#11-signed-character-sheets)

@@ -49,6 +49,7 @@ class Sheets_Controller extends Base_Controller {
 					'background'       => [ 'type' => 'boolean', 'default' => false ],
 					'notes'            => [ 'type' => 'boolean', 'default' => false ],
 					'xp_history'       => [ 'type' => 'boolean', 'default' => false ],
+					'cost_numbers'     => [ 'type' => 'boolean', 'default' => false ],
 				],
 			],
 		] );
@@ -125,6 +126,7 @@ class Sheets_Controller extends Base_Controller {
 			'background'       => (bool) $request->get_param( 'background' ),
 			'notes'            => (bool) $request->get_param( 'notes' ),
 			'xp_history'       => (bool) $request->get_param( 'xp_history' ),
+			'cost_numbers'     => (bool) $request->get_param( 'cost_numbers' ),
 		] );
 
 		// Signed only when an administrator switched secure printing on AND a usable

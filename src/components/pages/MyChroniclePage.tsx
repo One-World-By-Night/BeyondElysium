@@ -17,8 +17,12 @@ import { MyPlotsFeed } from '../apr/MyPlotsFeed';
 import { GameDashboard } from '../game/GameDashboard';
 import { GameCalendar } from '../game/GameCalendar';
 import { ReportCards } from '../game/ReportCards';
+import { WhosWho } from '../game/WhosWho';
+import { WhatIKnow } from '../game/WhatIKnow';
+import { AfterGameReport } from '../game/AfterGameReport';
 import { SendGrapevineFile } from '../character/SendGrapevineFile';
 import ProposeWorldObject from '../world/ProposeWorldObject';
+import ProposeFaction from '../faction/ProposeFaction';
 import {
 	newCharacterUrl,
 	playerTabUrl,
@@ -27,6 +31,8 @@ import {
 	PLAYER_TABS,
 } from '../../lib/pluginPages';
 import HelpButton from '../shared/HelpButton';
+import api from '../../api/client';
+import type { Character } from '../../types/character';
 import './MyChroniclePage.css';
 
 function readCharacterIdFromUrl(): number | undefined {
@@ -59,6 +65,47 @@ export function MyChroniclePage() {
 	);
 	const [ reportKey, setReportKey ] = useState( 'game-calendar' );
 
+	// Rote Cards for mages (1.1.0 §3.15, C1) - which character to scope card reports to, and
+	// whether Rote Cards is even available for them.
+	const [ reportCharacters, setReportCharacters ] = useState< Character[] >(
+		[]
+	);
+	const [ reportCharacterId, setReportCharacterId ] = useState( '' );
+	const [ reportAvailability, setReportAvailability ] = useState< Record<
+		string,
+		boolean
+	> | null >( null );
+
+	useEffect( () => {
+		if ( ! gameSlug ) {
+			return;
+		}
+		api.characters( gameSlug )
+			.myCharacters()
+			.then( setReportCharacters )
+			.catch( () => setReportCharacters( [] ) );
+	}, [ gameSlug ] );
+
+	useEffect( () => {
+		if ( ! gameSlug || ! reportCharacterId ) {
+			setReportAvailability( null );
+			if ( reportKey === 'rote-cards' ) {
+				setReportKey( 'game-calendar' );
+			}
+			return;
+		}
+		api.reports( gameSlug )
+			.availability( Number( reportCharacterId ) )
+			.then( ( result ) => {
+				setReportAvailability( result );
+				if ( reportKey === 'rote-cards' && ! result[ 'rote-cards' ] ) {
+					setReportKey( 'game-calendar' );
+				}
+			} )
+			.catch( () => setReportAvailability( null ) );
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ gameSlug, reportCharacterId ] );
+
 	useEffect( () => {
 		writeTabToUrl( tab );
 	}, [ tab ] );
@@ -79,12 +126,28 @@ export function MyChroniclePage() {
 			label: __( 'My Plots & Rumors', 'beyond-elysium' ),
 		},
 		{
+			key: PLAYER_TABS.whosWho,
+			label: __( "Who's Who", 'beyond-elysium' ),
+		},
+		{
+			key: PLAYER_TABS.whatIKnow,
+			label: __( 'What I Know', 'beyond-elysium' ),
+		},
+		{
+			key: PLAYER_TABS.afterGameReport,
+			label: __( 'After-Game Report', 'beyond-elysium' ),
+		},
+		{
 			key: PLAYER_TABS.reports,
 			label: __( 'Reports', 'beyond-elysium' ),
 		},
 		{
 			key: PLAYER_TABS.proposeItem,
 			label: __( 'Propose an Item', 'beyond-elysium' ),
+		},
+		{
+			key: PLAYER_TABS.proposeFaction,
+			label: __( 'Propose a Group', 'beyond-elysium' ),
 		},
 	];
 
@@ -98,7 +161,12 @@ export function MyChroniclePage() {
 			label: __( 'Location Cards', 'beyond-elysium' ),
 		},
 		{ key: 'rote-cards', label: __( 'Rote Cards', 'beyond-elysium' ) },
-	];
+	].filter(
+		( r ) =>
+			r.key !== 'rote-cards' ||
+			( reportCharacterId !== '' &&
+				reportAvailability?.[ 'rote-cards' ] === true )
+	);
 
 	return (
 		<div className="be-my-chronicle-page">
@@ -165,6 +233,22 @@ export function MyChroniclePage() {
 							<p>
 								{ __(
 									'Pick a character on the Characters tab first - an item is proposed for one of your characters.',
+									'beyond-elysium'
+								) }
+							</p>
+						) ) }
+
+					{ tab === PLAYER_TABS.proposeFaction &&
+						( characterId ? (
+							<ProposeFaction
+								key={ `${ gameSlug }-${ characterId }` }
+								gameSlug={ gameSlug }
+								characterId={ characterId }
+							/>
+						) : (
+							<p>
+								{ __(
+									'Pick a character on the Characters tab first - a group is proposed for one of your characters.',
 									'beyond-elysium'
 								) }
 							</p>
@@ -245,8 +329,50 @@ export function MyChroniclePage() {
 						<MyPlotsFeed key={ gameSlug } gameSlug={ gameSlug } />
 					) }
 
+					{ tab === PLAYER_TABS.whosWho && (
+						<WhosWho key={ gameSlug } gameSlug={ gameSlug } />
+					) }
+
+					{ tab === PLAYER_TABS.whatIKnow && (
+						<WhatIKnow key={ gameSlug } gameSlug={ gameSlug } />
+					) }
+
+					{ tab === PLAYER_TABS.afterGameReport && (
+						<AfterGameReport
+							key={ gameSlug }
+							gameSlug={ gameSlug }
+						/>
+					) }
+
 					{ tab === PLAYER_TABS.reports && (
 						<div className="be-my-chronicle-page__reports">
+							{ reportCharacters.length > 0 && (
+								<label className="be-my-chronicle-page__report-character">
+									<span>
+										{ __(
+											'Scope to character (for Rote Cards)',
+											'beyond-elysium'
+										) }
+									</span>
+									<select
+										value={ reportCharacterId }
+										onChange={ ( e ) =>
+											setReportCharacterId(
+												e.target.value
+											)
+										}
+									>
+										<option value="">
+											{ __( 'None', 'beyond-elysium' ) }
+										</option>
+										{ reportCharacters.map( ( c ) => (
+											<option key={ c.id } value={ c.id }>
+												{ c.name }
+											</option>
+										) ) }
+									</select>
+								</label>
+							) }
 							<div
 								className="be-my-chronicle-page__report-picker"
 								role="tablist"
@@ -278,9 +404,14 @@ export function MyChroniclePage() {
 							{ ( reportKey === 'location-cards' ||
 								reportKey === 'rote-cards' ) && (
 								<ReportCards
-									key={ `${ gameSlug }-${ reportKey }` }
+									key={ `${ gameSlug }-${ reportKey }-${ reportCharacterId }` }
 									gameSlug={ gameSlug }
 									reportKey={ reportKey }
+									characterId={
+										reportCharacterId
+											? Number( reportCharacterId )
+											: undefined
+									}
 								/>
 							) }
 						</div>

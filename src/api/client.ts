@@ -63,6 +63,8 @@ import type {
 	ExportCharacterOptions,
 	ExportCharacterResponse,
 	PointAudit,
+	NpcProfile,
+	UpdateNpcProfileRequest,
 } from '../types/character';
 import type {
 	Plot,
@@ -78,7 +80,62 @@ import type {
 	AllocateActionsResponse,
 	GenerateRumorsResponse,
 	EntityType,
+	EntryAudienceValue,
+	CharacterOption,
 } from '../types/plot';
+import type { Attachment, AttachmentEntityType } from '../types/attachment';
+import type {
+	GameSession,
+	SessionAttendance,
+	CreateSessionRequest,
+	UpdateSessionRequest,
+	RecordAttendanceRequest,
+	AwardAttendanceXpResponse,
+	SessionSettings,
+	AfterGameReport,
+	AfterGameReportRequest,
+	AwardReportXpResponse,
+	SpotlightRow,
+} from '../types/session';
+import type {
+	ReleaseBatch,
+	CreateReleaseBatchRequest,
+	UpdateReleaseBatchRequest,
+	ReleaseBatchItems,
+	ReleaseNowSingleRequest,
+} from '../types/releaseBatch';
+import type { DowntimeQueueRow } from '../types/downtime';
+import type {
+	StaffQueue,
+	StaffMember,
+	StaffQueueCastingRow,
+} from '../types/staffQueue';
+import type {
+	NpcCasting,
+	CreateNpcCastingRequest,
+	UpdateNpcCastingRequest,
+	EligibleMember,
+	CastingBriefDocument,
+} from '../types/npcCasting';
+import type {
+	Secret,
+	SecretEntityType,
+	CreateSecretRequest,
+	UpdateSecretRequest,
+	SecretReveal,
+	CreateSecretRevealRequest,
+	MySecretRow,
+} from '../types/secret';
+import type {
+	Faction,
+	FactionRequest,
+	FactionMember,
+	FactionMemberCandidate,
+	Position,
+	PositionRequest,
+	PositionHistoryRow,
+	PositionPresets,
+} from '../types/faction';
 import type {
 	AprSettings,
 	AprSettingsRequest,
@@ -102,9 +159,15 @@ import type {
 	CreateWorldObjectRequest,
 	UpdateWorldObjectRequest,
 	WorldObjectCollectionParams,
+	CopyForCharacterRequest,
+	ItemEvent,
+	TransferItemRequest,
+	UseItemRequest,
 	Boon,
 	CreateBoonRequest,
 	BoonLedgerParams,
+	LocationLink,
+	LocationLinkLabel,
 } from '../types/world';
 import type {
 	ImportPreview,
@@ -924,6 +987,25 @@ export const characters = ( gameSlug: string ) => ( {
 		apiFetch( { path: `${ BASE }/${ gameSlug }/characters/${ id }` } ),
 
 	/**
+	 * Saves a new held-entry order for a `player_order`-flagged block (Blood
+	 * Magic, Rituals - 1.1.0 D4). `order` lists the block's current array
+	 * indexes in their new sequence; `names` is the name at each of those
+	 * indexes as the caller last saw it, so the server can refuse a write with
+	 * a 409 `sheet_changed` error if the list changed since it was loaded.
+	 */
+	saveOrder: (
+		id: number,
+		blockSlug: string,
+		order: number[],
+		names: string[]
+	): Promise< { order: unknown[] } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/characters/${ id }/order/${ blockSlug }`,
+			method: 'PUT',
+			data: { order, names },
+		} ),
+
+	/**
 	 * Creates a new character in this chronicle from the given
 	 * request body. name and stack_slug are required. Returns the
 	 * newly created Character record.
@@ -1477,6 +1559,7 @@ export const sheets = ( gameSlug: string ) => ( {
 			notes?: boolean;
 			xpHistory?: boolean;
 			fullPowerNames?: boolean;
+			costNumbers?: boolean;
 		} = {}
 	): string => {
 		const params = new URLSearchParams( {
@@ -1493,6 +1576,9 @@ export const sheets = ( gameSlug: string ) => ( {
 		}
 		if ( options.fullPowerNames ) {
 			params.set( 'full_power_names', '1' );
+		}
+		if ( options.costNumbers ) {
+			params.set( 'cost_numbers', '1' );
 		}
 		params.set( '_wpnonce', window.beyondElysium?.nonce ?? '' );
 
@@ -1524,8 +1610,28 @@ export const reports = ( gameSlug: string ) => ( {
 	> => apiFetch( { path: `${ BASE }/${ gameSlug }/reports` } ),
 
 	/** The plain JSON form of one resolved report - for a live front-end widget/shortcode, never signed. */
-	document: ( reportKey: string ): Promise< Record< string, unknown > > =>
-		apiFetch( { path: `${ BASE }/${ gameSlug }/reports/${ reportKey }` } ),
+	document: (
+		reportKey: string,
+		options: { characterId?: number } = {}
+	): Promise< Record< string, unknown > > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/reports/${ reportKey }${ toQuery(
+				options.characterId ? { character_id: options.characterId } : {}
+			) }`,
+		} ),
+
+	/**
+	 * Whether each card report (item-cards, location-cards, rote-cards) is available for a
+	 * character (1.1.0 §3.15, C1) - only rote-cards can ever be false, for a non-mage.
+	 */
+	availability: (
+		characterId?: number
+	): Promise< Record< string, boolean > > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/reports/availability${ toQuery(
+				characterId ? { character_id: characterId } : {}
+			) }`,
+		} ),
 
 	/** Builds the signed-PDF download URL for one report. */
 	pdfUrl: (
@@ -1728,6 +1834,47 @@ export const plots = ( gameSlug: string ) => ( {
 			method: 'POST',
 			data: { game_date: gameDate, commit },
 		} ),
+
+	/**
+	 * Lists who may be invited into a player plot: active, non-NPC
+	 * characters not already connected to it (1.1.0 §2.3a). Only
+	 * the plot's own owner or a Storyteller may call this.
+	 */
+	memberCandidates: ( id: number ): Promise< CharacterOption[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/plots/${ id }/member-candidates`,
+		} ),
+
+	/**
+	 * Adds a character to a player plot as an invited co-narrator.
+	 * Returns the newly created Connection record.
+	 */
+	addMember: ( id: number, characterId: number ): Promise< Connection > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/plots/${ id }/members`,
+			method: 'POST',
+			data: { character_id: characterId },
+		} ),
+
+	/**
+	 * Removes a character from a player plot's membership by its
+	 * connection id (not the character id).
+	 */
+	removeMember: ( id: number, connectionId: number ): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/plots/${ id }/members/${ connectionId }`,
+			method: 'DELETE',
+		} ),
+
+	/**
+	 * Every character who can currently see this plot - the entry
+	 * form's "direct this post to specific characters" picker
+	 * (1.1.0 §2.4). Manager-only.
+	 */
+	visibleCharacters: ( id: number ): Promise< CharacterOption[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/plots/${ id }/visible-characters`,
+		} ),
 } );
 
 // ---------------------------------------------------------------------------
@@ -1863,14 +2010,23 @@ export const plotEntries = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Updates an existing entry's content by id. Returns the
-	 * updated PlotEntry record.
+	 * Updates an existing entry's content, and optionally its
+	 * audience, by id. Leaving audience out entirely never resets a
+	 * deliberately-chosen private/directed entry back to public.
+	 * Returns the updated PlotEntry record.
 	 */
-	update: ( id: number, content: string ): Promise< PlotEntry > =>
+	update: (
+		id: number,
+		data: {
+			content: string;
+			audience?: EntryAudienceValue;
+			audience_character_ids?: number[];
+		}
+	): Promise< PlotEntry > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/entries/${ id }`,
 			method: 'PUT',
-			data: { content },
+			data,
 		} ),
 
 	/**
@@ -2160,6 +2316,737 @@ export const worldObjects = ( gameSlug: string ) => ( {
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/world-objects/${ id }`,
 			method: 'DELETE',
+		} ),
+
+	/**
+	 * Copies an item for a specific character (1.1.0 §3.12 item 1).
+	 * Returns the new copy, restricted to that character.
+	 */
+	copyForCharacter: (
+		id: number,
+		data: CopyForCharacterRequest
+	): Promise< WorldObject > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/world-objects/${ id }/copy-for-character`,
+			method: 'POST',
+			data,
+		} ),
+
+	/**
+	 * Spends one use of an item (1.1.0 §3.12 item 2). Returns the
+	 * updated WorldObject record.
+	 */
+	use: ( id: number, data: UseItemRequest ): Promise< WorldObject > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/world-objects/${ id }/use`,
+			method: 'POST',
+			data,
+		} ),
+
+	/**
+	 * Transfers an item to a new character, or clears its holder for
+	 * `how: 'lost'` (1.1.0 §3.12 item 4). Returns the updated
+	 * WorldObject record.
+	 */
+	transfer: (
+		id: number,
+		data: TransferItemRequest
+	): Promise< WorldObject > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/world-objects/${ id }/transfer`,
+			method: 'POST',
+			data,
+		} ),
+
+	/**
+	 * Fetches an item's own history, oldest first (1.1.0 §3.12 item 3).
+	 * Staff only.
+	 */
+	events: ( id: number ): Promise< ItemEvent[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/world-objects/${ id }/events`,
+		} ),
+
+	/**
+	 * Revokes every verification code ever printed for one item
+	 * (1.1.0 §3.13).
+	 */
+	revokeCards: ( id: number ): Promise< { revoked: number } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/world-objects/${ id }/revoke-cards`,
+			method: 'POST',
+		} ),
+} );
+
+// ---------------------------------------------------------------------------
+// Location links (game-scoped, 1.1.0 §3.9)
+// ---------------------------------------------------------------------------
+
+/**
+ * REST client factory for a location's four named links (owner/domain/haven/based_at) and
+ * the "who's here" roster read through the same route.
+ */
+export const locations = ( gameSlug: string ) => ( {
+	/** Every link a manager can see, or just the "who's here" NPC roster for anyone else. */
+	links: ( locationId: number ): Promise< LocationLink[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/locations/${ locationId }/links`,
+		} ),
+
+	/** Creates a link. be_manage_world_objects only. */
+	createLink: (
+		locationId: number,
+		data: {
+			label: LocationLinkLabel;
+			source_type: 'character';
+			source_id: number;
+		}
+	): Promise< LocationLink > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/locations/${ locationId }/links`,
+			method: 'POST',
+			data,
+		} ),
+
+	/** Removes a link. be_manage_world_objects only. */
+	deleteLink: ( locationId: number, linkId: number ): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/locations/${ locationId }/links/${ linkId }`,
+			method: 'DELETE',
+		} ),
+} );
+
+// ---------------------------------------------------------------------------
+// Secrets and reveals (game-scoped, 1.1.0 §3.11)
+// ---------------------------------------------------------------------------
+
+/** REST client factory for Storyteller-authored secrets and their reveals. */
+export const secrets = ( gameSlug: string ) => ( {
+	/** Every secret on one entity the viewer can see - only once the entity itself is visible. */
+	list: (
+		entityType: SecretEntityType,
+		entityId: number
+	): Promise< Secret[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/secrets${ toQuery( {
+				entity_type: entityType,
+				entity_id: entityId,
+			} ) }`,
+		} ),
+
+	/** "What I Know" - every secret revealed to one of the caller's own characters. */
+	mine: (): Promise< MySecretRow[] > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/my/secrets` } ),
+
+	/** Creates a secret. be_manage_plots only. */
+	create: ( data: CreateSecretRequest ): Promise< Secret > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/secrets`,
+			method: 'POST',
+			data,
+		} ),
+
+	/** Updates a secret. be_manage_plots only. */
+	update: ( id: number, data: UpdateSecretRequest ): Promise< Secret > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/secrets/${ id }`,
+			method: 'PUT',
+			data,
+		} ),
+
+	/** Deletes a secret and every one of its reveals. be_manage_plots only. */
+	remove: ( id: number ): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/secrets/${ id }`,
+			method: 'DELETE',
+		} ),
+
+	/** Every reveal of one secret. be_manage_plots only. */
+	reveals: ( secretId: number ): Promise< SecretReveal[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/secrets/${ secretId }/reveals`,
+		} ),
+
+	/** Reveals a secret to a character. be_manage_plots only. */
+	createReveal: (
+		secretId: number,
+		data: CreateSecretRevealRequest
+	): Promise< SecretReveal > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/secrets/${ secretId }/reveals`,
+			method: 'POST',
+			data,
+		} ),
+
+	/** Removes a reveal. be_manage_plots only. */
+	deleteReveal: ( secretId: number, revealId: number ): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/secrets/${ secretId }/reveals/${ revealId }`,
+			method: 'DELETE',
+		} ),
+} );
+
+// ---------------------------------------------------------------------------
+// Factions and their members (game-scoped, 1.1.0 §3.10, F1)
+// ---------------------------------------------------------------------------
+
+/** REST client factory for chronicle factions and their membership. */
+export const factions = ( gameSlug: string ) => ( {
+	/**
+	 * Every faction the viewer can see - name/type/description for anyone it reaches,
+	 * goals as well for a member or manager.
+	 */
+	list: (): Promise< Faction[] > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/factions` } ),
+
+	get: ( id: number ): Promise< Faction > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/factions/${ id }` } ),
+
+	/** Creates a faction directly. be_manage_factions only. */
+	create: ( data: FactionRequest ): Promise< Faction > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/factions`,
+			method: 'POST',
+			data,
+		} ),
+
+	/** Updates a faction. be_manage_factions only. */
+	update: ( id: number, data: FactionRequest ): Promise< Faction > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/factions/${ id }`,
+			method: 'PUT',
+			data,
+		} ),
+
+	/** Deletes a faction and unlinks its positions. be_manage_factions only. */
+	remove: ( id: number ): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/factions/${ id }`,
+			method: 'DELETE',
+		} ),
+
+	/** The member roster with rank and leader flags. A member or manager only. */
+	members: ( id: number ): Promise< FactionMember[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/factions/${ id }/members`,
+		} ),
+
+	/** The name-only invite picker. A leader or manager only. */
+	memberCandidates: ( id: number ): Promise< FactionMemberCandidate[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/factions/${ id }/members/candidates`,
+		} ),
+
+	/** Adds a character to a faction. A leader or manager only. */
+	addMember: ( id: number, characterId: number ): Promise< FactionMember > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/factions/${ id }/members`,
+			method: 'POST',
+			data: { character_id: characterId },
+		} ),
+
+	/** Removes a member. A leader can't remove themself or another leader. */
+	removeMember: ( id: number, characterId: number ): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/factions/${ id }/members/${ characterId }`,
+			method: 'DELETE',
+		} ),
+} );
+
+// ---------------------------------------------------------------------------
+// Court/office positions (game-scoped, 1.1.0 §3.10, F2)
+// ---------------------------------------------------------------------------
+
+/** REST client factory for chronicle-wide offices, optionally scoped to a faction. */
+export const positions = ( gameSlug: string ) => ( {
+	/** Every position the viewer can see, optionally narrowed to one faction. */
+	list: ( factionId?: number ): Promise< Position[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/positions${ toQuery( {
+				faction_id: factionId,
+			} ) }`,
+		} ),
+
+	/** Creates a position. be_manage_factions only. */
+	create: ( data: PositionRequest ): Promise< Position > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/positions`,
+			method: 'POST',
+			data,
+		} ),
+
+	/** Updates a position, including its holder (recorded to history). be_manage_factions only. */
+	update: ( id: number, data: PositionRequest ): Promise< Position > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/positions/${ id }`,
+			method: 'PUT',
+			data,
+		} ),
+
+	/** Deletes a position and its holder history. be_manage_factions only. */
+	remove: ( id: number ): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/positions/${ id }`,
+			method: 'DELETE',
+		} ),
+
+	/** A position's own full holder history. be_manage_factions only. */
+	history: ( id: number ): Promise< PositionHistoryRow[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/positions/${ id }/history`,
+		} ),
+
+	/** The title preset groups for the picker. be_manage_factions only. */
+	presets: (): Promise< PositionPresets > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/position-presets` } ),
+} );
+
+// ---------------------------------------------------------------------------
+// Attachments (game-scoped)
+// ---------------------------------------------------------------------------
+
+/**
+ * REST client factory for file uploads on a plot, item, or location
+ * (1.1.0 §2.6). `downloadUrl()` mirrors `sheets().pdfUrl()`'s own
+ * direct nonce-bearing link pattern - the route serves raw bytes,
+ * not JSON, so a Promise-based apiFetch call can't be the download
+ * mechanism.
+ */
+export const attachments = ( gameSlug: string ) => ( {
+	/**
+	 * Uploads a file onto a plot, item, or location. Sends a real
+	 * multipart FormData body rather than JSON. Returns the newly
+	 * created Attachment's public metadata.
+	 */
+	upload: (
+		entityType: AttachmentEntityType,
+		entityId: number,
+		file: File
+	): Promise< Attachment > => {
+		const body = new FormData();
+		body.append( 'entity_type', entityType );
+		body.append( 'entity_id', String( entityId ) );
+		body.append( 'file', file );
+		return apiFetch( {
+			path: `${ BASE }/${ gameSlug }/attachments`,
+			method: 'POST',
+			body,
+		} );
+	},
+
+	/**
+	 * Builds the direct download URL for one attachment. Reads the
+	 * REST root and nonce from window.beyondElysium, the same as
+	 * every other direct-link download route in this client.
+	 */
+	downloadUrl: ( id: number ): string => {
+		const params = new URLSearchParams( {
+			_wpnonce: window.beyondElysium?.nonce ?? '',
+		} );
+		const root =
+			window.beyondElysium?.restUrl ??
+			`${ window.location.origin }/wp-json/be/v1/`;
+		return `${ root }${ gameSlug }/attachments/${ id }?${ params.toString() }`;
+	},
+
+	/**
+	 * Deletes an attachment by id: the database row and its file on
+	 * disk together. Resolves with no content on success.
+	 */
+	delete: ( id: number ): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/attachments/${ id }`,
+			method: 'DELETE',
+		} ),
+} );
+
+// ---------------------------------------------------------------------------
+// Game Sessions (game-scoped)
+// ---------------------------------------------------------------------------
+
+/**
+ * REST client factory for a single chronicle's game sessions (1.1.0 §3.1): the calendar,
+ * sign-in attendance, and awarding attendance XP.
+ */
+export const sessions = ( gameSlug: string ) => ( {
+	/** The chronicle's sessions, soonest first, optionally narrowed to a date range. */
+	list: (
+		params: { from?: string; to?: string } = {}
+	): Promise< GameSession[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/sessions${ toQuery(
+				params as Record< string, unknown >
+			) }`,
+		} ),
+
+	/** Creates a new session. game_date is required and must be unique in this chronicle. */
+	create: ( data: CreateSessionRequest ): Promise< GameSession > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/sessions`,
+			method: 'POST',
+			data,
+		} ),
+
+	/** Updates an existing session. The four downtime fields also require be_manage_apr. */
+	update: (
+		id: number,
+		data: UpdateSessionRequest
+	): Promise< GameSession > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/sessions/${ id }`,
+			method: 'PUT',
+			data,
+		} ),
+
+	/** Deletes a session; refused with a 409 if it already has attendance recorded. */
+	delete: ( id: number ): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/sessions/${ id }`,
+			method: 'DELETE',
+		} ),
+
+	/** Lists everyone recorded present at a session. */
+	getAttendance: ( sessionId: number ): Promise< SessionAttendance[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/sessions/${ sessionId }/attendance`,
+		} ),
+
+	/** Records a sign-in: a real character, or a visitor by name. */
+	addAttendance: (
+		sessionId: number,
+		data: RecordAttendanceRequest
+	): Promise< SessionAttendance > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/sessions/${ sessionId }/attendance`,
+			method: 'POST',
+			data,
+		} ),
+
+	/** Removes one attendance row from a session. */
+	removeAttendance: (
+		sessionId: number,
+		attendanceId: number
+	): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/sessions/${ sessionId }/attendance/${ attendanceId }`,
+			method: 'DELETE',
+		} ),
+
+	/**
+	 * Awards attendance XP once to everyone signed in at a session. Refused with a 409 if
+	 * already awarded for this session, unless force is set.
+	 */
+	awardAttendanceXp: (
+		sessionId: number,
+		options: { amount?: number; force?: boolean } = {}
+	): Promise< AwardAttendanceXpResponse > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/sessions/${ sessionId }/award-attendance-xp`,
+			method: 'POST',
+			data: options,
+		} ),
+
+	/** Updates this chronicle's session-related settings, merged into settings.sessions. */
+	updateSettings: ( data: SessionSettings ): Promise< SessionSettings > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/session-settings`,
+			method: 'PUT',
+			data,
+		} ),
+
+	/** Sets one character's own downtime deadline for this session (1.1.0 §3.3). */
+	addDowntimeExtension: (
+		sessionId: number,
+		characterId: number,
+		until: string
+	): Promise< Record< string, string > > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/sessions/${ sessionId }/downtime-extensions`,
+			method: 'POST',
+			data: { character_id: characterId, until },
+		} ),
+
+	/** Removes one character's downtime extension, returning them to the session's own deadline. */
+	removeDowntimeExtension: (
+		sessionId: number,
+		characterId: number
+	): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/sessions/${ sessionId }/downtime-extensions/${ characterId }`,
+			method: 'DELETE',
+		} ),
+
+	/**
+	 * After-game reports for a session (1.1.0 §3.14, A1) - staff see every report; a player
+	 * sees only their own.
+	 */
+	getReports: ( sessionId: number ): Promise< AfterGameReport[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/sessions/${ sessionId }/reports`,
+		} ),
+
+	/** Files a report for the caller's own character. Refused with 409 if one already exists. */
+	createReport: (
+		sessionId: number,
+		data: AfterGameReportRequest
+	): Promise< AfterGameReport > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/sessions/${ sessionId }/reports`,
+			method: 'POST',
+			data,
+		} ),
+
+	/** Edits the caller's own report, until the session's own reports_due_at. */
+	updateReport: (
+		sessionId: number,
+		data: AfterGameReportRequest
+	): Promise< AfterGameReport > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/sessions/${ sessionId }/reports`,
+			method: 'PUT',
+			data,
+		} ),
+
+	/** Marks a report read by a Storyteller. Staff read and mark; they never edit. */
+	markReportRead: ( reportId: number ): Promise< AfterGameReport > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/after-game-reports/${ reportId }/read`,
+			method: 'POST',
+		} ),
+
+	/**
+	 * Awards report XP once to every character with a report at a session. Refused with a 409
+	 * if already awarded, unless force is set.
+	 */
+	awardReportXp: (
+		sessionId: number,
+		options: { amount?: number; force?: boolean } = {}
+	): Promise< AwardReportXpResponse > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/sessions/${ sessionId }/award-report-xp`,
+			method: 'POST',
+			data: options,
+		} ),
+
+	/**
+	 * The spotlight check (1.1.0 §3.14, A2) - every active, non-NPC character's own attention
+	 * profile, flagged first then least recent attention.
+	 */
+	getSpotlight: (): Promise< SpotlightRow[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/spotlight`,
+		} ),
+} );
+
+// ---------------------------------------------------------------------------
+// NPC Castings (game-scoped, 1.1.0 §3.8)
+// ---------------------------------------------------------------------------
+
+/** REST client factory for NPC casting: who plays which NPC at which session, and their brief. */
+export const castings = ( gameSlug: string ) => ( {
+	/** Every casting for one session - a manager sees them all, anyone else sees only their own. */
+	list: ( sessionId: number ): Promise< NpcCasting[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/castings${ toQuery( {
+				session_id: sessionId,
+			} ) }`,
+		} ),
+
+	/** Casts a chronicle member to play an NPC for a session. be_manage_characters only. */
+	create: ( data: CreateNpcCastingRequest ): Promise< NpcCasting > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/castings`,
+			method: 'POST',
+			data,
+		} ),
+
+	/** Updates a casting's cast member and/or brief. */
+	update: (
+		id: number,
+		data: UpdateNpcCastingRequest
+	): Promise< NpcCasting > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/castings/${ id }`,
+			method: 'PUT',
+			data,
+		} ),
+
+	/** Removes a casting. */
+	remove: ( id: number ): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/castings/${ id }`,
+			method: 'DELETE',
+		} ),
+
+	/** Every chronicle member, any role - the casting screen's own member picker. */
+	eligibleMembers: (): Promise< EligibleMember[] > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/castings/members` } ),
+
+	/** The current viewer's own upcoming castings (today or later), joined with the NPC's name and the session's date. */
+	myUpcoming: (): Promise< StaffQueueCastingRow[] > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/castings/my-upcoming` } ),
+
+	/** The read-only brief: the NPC's resolved sections plus the casting's own brief text. */
+	brief: ( id: number ): Promise< CastingBriefDocument > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/castings/${ id }/brief` } ),
+
+	/**
+	 * Builds the signed-PDF download URL for one casting's brief - a direct, nonce-bearing
+	 * link, matching `sheets().pdfUrl()`'s own shape, since the route returns raw PDF bytes.
+	 */
+	briefPdfUrl: ( id: number ): string => {
+		const params = new URLSearchParams( {
+			_wpnonce: window.beyondElysium?.nonce ?? '',
+		} );
+		const root =
+			window.beyondElysium?.restUrl ??
+			`${ window.location.origin }/wp-json/be/v1/`;
+		return `${ root }${ gameSlug }/castings/${ id }/brief.pdf?${ params.toString() }`;
+	},
+} );
+
+// ---------------------------------------------------------------------------
+// Downtime queue (game-scoped)
+// ---------------------------------------------------------------------------
+
+/** REST client factory for the Storyteller downtime queue (1.1.0 §3.3). */
+export const downtime = ( gameSlug: string ) => ( {
+	/** One row per action plot for a game date, unanswered first. */
+	queue: ( gameDate: string ): Promise< DowntimeQueueRow[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/downtime/queue${ toQuery( {
+				game_date: gameDate,
+			} ) }`,
+		} ),
+} );
+
+// ---------------------------------------------------------------------------
+// My Queue and staff assignment (game-scoped, 1.1.0 §3.6)
+// ---------------------------------------------------------------------------
+
+/** REST client factory for My Queue and the staff picker it and every assignee field share. */
+export const myQueue = ( gameSlug: string ) => ( {
+	/** The four My Queue sections for the current viewer in this chronicle. */
+	get: (): Promise< StaffQueue > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/my/queue` } ),
+	/** Every hst/ast/narrator member of this chronicle - who a plot, downtime row, or NPC may be assigned to. */
+	staff: (): Promise< StaffMember[] > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/staff` } ),
+} );
+
+// ---------------------------------------------------------------------------
+// NPC public profiles ("Who's Who", game-scoped, 1.1.0 §3.7)
+// ---------------------------------------------------------------------------
+
+/** REST client factory for the Who's Who NPC directory and its public profiles. */
+export const npcs = ( gameSlug: string ) => ( {
+	/** Every NPC whose Who's Who profile the current viewer can see. */
+	list: (): Promise< NpcProfile[] > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/npcs` } ),
+
+	/** One NPC's Who's Who profile. */
+	get: ( id: number ): Promise< NpcProfile > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/npcs/${ id }` } ),
+
+	/** Updates an NPC's public-profile fields; be_manage_characters only. */
+	updateProfile: (
+		characterId: number,
+		data: UpdateNpcProfileRequest
+	): Promise< NpcProfile > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/characters/${ characterId }/profile`,
+			method: 'PUT',
+			data,
+		} ),
+} );
+
+// ---------------------------------------------------------------------------
+// Release Batches (game-scoped)
+// ---------------------------------------------------------------------------
+
+/**
+ * REST client factory for a single chronicle's release batches (1.1.0 §3.2): scheduling
+ * rumors and downtime answers to go out together, several between games.
+ */
+export const releaseBatches = ( gameSlug: string ) => ( {
+	/** This chronicle's release batches, newest created first, optionally narrowed by status. */
+	list: ( status?: ReleaseBatch[ 'status' ] ): Promise< ReleaseBatch[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/release-batches${ toQuery(
+				status ? { status } : {}
+			) }`,
+		} ),
+
+	/** Creates a batch: scheduled when release_at is given, draft otherwise. */
+	create: ( data: CreateReleaseBatchRequest ): Promise< ReleaseBatch > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/release-batches`,
+			method: 'POST',
+			data,
+		} ),
+
+	/** Updates a draft or scheduled batch's name, release_at, and/or status. */
+	update: (
+		id: number,
+		data: UpdateReleaseBatchRequest
+	): Promise< ReleaseBatch > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/release-batches/${ id }`,
+			method: 'PUT',
+			data,
+		} ),
+
+	/** Deletes a draft or scheduled batch, returning its items to draft. */
+	delete: ( id: number ): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/release-batches/${ id }`,
+			method: 'DELETE',
+		} ),
+
+	/** Lists a batch's held items: rumors, downtime answers, and (once K1 ships) reveals. */
+	getItems: ( id: number ): Promise< ReleaseBatchItems > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/release-batches/${ id }/items`,
+		} ),
+
+	/** Adds a plot or entry to a batch: sets held and this batch's id on it. */
+	addItem: (
+		id: number,
+		type: 'plot' | 'entry',
+		itemId: number
+	): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/release-batches/${ id }/items`,
+			method: 'POST',
+			data: { type, id: itemId },
+		} ),
+
+	/** Removes one item from a batch, returning it to draft. */
+	removeItem: (
+		id: number,
+		type: 'plot' | 'entry',
+		itemId: number
+	): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/release-batches/${ id }/items/${ type }/${ itemId }`,
+			method: 'DELETE',
+		} ),
+
+	/** Releases one existing batch immediately. */
+	releaseNow: ( id: number ): Promise< ReleaseBatch > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/release-batches/${ id }/release-now`,
+			method: 'POST',
+		} ),
+
+	/** Creates a batch, fills it with the given items, and releases it in one call. */
+	releaseNowSingle: (
+		data: ReleaseNowSingleRequest
+	): Promise< ReleaseBatch > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/release-batches/release-now`,
+			method: 'POST',
+			data,
 		} ),
 } );
 
@@ -2559,6 +3446,17 @@ const api = {
 	queryFields,
 	query,
 	worldObjects,
+	locations,
+	secrets,
+	factions,
+	positions,
+	attachments,
+	sessions,
+	castings,
+	releaseBatches,
+	downtime,
+	myQueue,
+	npcs,
 	boons,
 	gexImport,
 	gameImport,

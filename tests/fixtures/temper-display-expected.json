@@ -1,50 +1,50 @@
 [
     {
         "name": "a full pool renders one filled dot per point",
-        "output": "●●●"
+        "output": "●●● 3"
     },
     {
         "name": "zero pool renders empty",
-        "output": ""
+        "output": "0"
     },
     {
         "name": "temporary below permanent renders an empty dot for each spent point",
-        "output": "●●○○○"
+        "output": "●●○○○ 2/5"
     },
     {
         "name": "temporary above permanent renders a ringed dot for each extra point, not clamped",
-        "output": "●●●◉◉"
+        "output": "●●●◉◉ 5/3"
     },
     {
         "name": "temporary equal to permanent renders only filled dots",
-        "output": "●●●●"
+        "output": "●●●● 4"
     },
     {
         "name": "ten points group into two fives",
-        "output": "●●●●● ●●●●●"
+        "output": "●●●●● ●●●●● 10"
     },
     {
         "name": "eleven points stay eleven dots of one size, never a capital",
-        "output": "●●●●● ●●●●● ●"
+        "output": "●●●●● ●●●●● ● 11"
     },
     {
         "name": "a 15-point pool (e.g. Blood) is three groups of five",
-        "output": "●●●●● ●●●●● ●●●●●"
+        "output": "●●●●● ●●●●● ●●●●● 15"
     },
     {
         "name": "groups count every dot, whatever its state",
-        "output": "●●●○○ ○○"
+        "output": "●●●○○ ○○ 3/7"
     },
     {
         "name": "twelve spent points group in fives",
-        "output": "○○○○○ ○○○○○ ○○"
+        "output": "○○○○○ ○○○○○ ○○ 0/12"
     },
     {
         "name": "twelve points above zero permanent group in fives",
-        "output": "◉◉◉◉◉ ◉◉◉◉◉ ◉◉"
+        "output": "◉◉◉◉◉ ◉◉◉◉◉ ◉◉ 12/0"
     },
     {
         "name": "held and spent together group across the change",
-        "output": "●●●●● ●○○○○ ○○"
+        "output": "●●●●● ●○○○○ ○○ 6/12"
     }
 ]

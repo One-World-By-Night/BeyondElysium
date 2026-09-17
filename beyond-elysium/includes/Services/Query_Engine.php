@@ -4,7 +4,9 @@ namespace BeyondElysium\Services;
 
 use BeyondElysium\Database\Manager;
 use BeyondElysium\Models\Creature_Stack;
+use BeyondElysium\Models\Faction_Member;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Position;
 use BeyondElysium\Models\Schema_Block;
 
 defined( 'ABSPATH' ) || exit;
@@ -401,6 +403,28 @@ class Query_Engine {
 				if ( $field === 'random' ) {
 					// GV's qkRandom: `CInt(Rnd() * 100)`.
 					$value = mt_rand( 0, 99 );
+				} elseif ( $field === 'group' ) {
+					// 1.1.0 F1: the "Group" field (field-map.php's own comment on why it isn't
+					// "faction") - every active faction this character belongs to, comma-joined.
+					// A disbanded faction never counts as a current membership for matching.
+					$names = array_map(
+						static fn( $m ) => (string) $m->faction_name,
+						array_filter(
+							Faction_Member::for_character( (int) $row->id ),
+							static fn( $m ) => ( $m->faction_status ?? 'active' ) === 'active'
+						)
+					);
+					$value = implode( ', ', array_values( $names ) );
+				} elseif ( $field === 'position' ) {
+					// 1.1.0 F2: every title this character currently holds, comma-joined -
+					// regardless of that position's own audience/holder_public, which govern who
+					// may SEE the value elsewhere, not whether the Storyteller-only Query Tool can
+					// match against it.
+					$titles = array_map(
+						static fn( $p ) => (string) $p->title,
+						Position::for_character( (int) $row->id )
+					);
+					$value = implode( ', ', $titles );
 				}
 				break;
 
@@ -589,7 +613,14 @@ class Query_Engine {
 			if ( $map === null || $map['source'] === 'unmapped' ) {
 				return [ 'index' => $index, 'message' => "Field \"{$field}\" has no Beyond Elysium equivalent and cannot be queried." ];
 			}
-			if ( $map['source'] === 'derived' && $field !== 'random' ) {
+			// A 'derived' field is normally blocked here because it has nothing
+			// resolve_value() can actually compute for it - 'random' is the one
+			// pre-existing exception. 1.1.0 F1/F2's 'group'/'position' are a second,
+			// real one: resolve_value()'s own 'derived' case fully computes both,
+			// and blocking them here would make a Storyteller's "Restricted to Faction
+			// contains <coterie>" (§7 trace 5) - a real, load-bearing audience rule,
+			// not a Query Tool curiosity - permanently unusable.
+			if ( $map['source'] === 'derived' && ! in_array( $field, [ 'random', 'group', 'position' ], true ) ) {
 				return [ 'index' => $index, 'message' => "Field \"{$field}\" is not a stored value and cannot be queried." ];
 			}
 
@@ -1125,17 +1156,13 @@ class Query_Engine {
 
 	// Resolves a plot's target_query to the character IDs it reaches.
 
-	/** @var array<string,int[]> Memoized per (game_slug, target_query) within this request. */
-	private static array $target_query_cache = [];
-
 	/**
 	 * Resolves a plot's `target_query` to the character IDs it reaches.
 	 * `null` means "reaches everyone" - every character in the game, not just
 	 * active ones, since visibility is a question the caller controls separately.
 	 *
 	 * Uses the same engine as `execute()`: a `target_query` is just a
-	 * one-condition query. Memoized per request so that a feed of many plots
-	 * sharing the same query does not repeat the same full-game scan.
+	 * one-condition query.
 	 *
 	 * Always resolves against the `char` inventory, explicitly rather than
 	 * by relying on `find_matches()`'s own default - a plot's target_query
@@ -1143,30 +1170,114 @@ class Query_Engine {
 	 * this is pinned rather than threaded (query-beyond-characters-
 	 * design.md §7.5).
 	 *
+	 * Deliberately uncached (D54, 1.1.0 §3.4). This used to memoize per
+	 * `(game_slug, target_query)` with no entity id in the key, so two plots
+	 * sharing an identical target_query would collide with each other's result -
+	 * a static property, so the collision outlives one PHPUnit test method as
+	 * easily as it would outlive one production request, exactly the bug class
+	 * `resolve_audience_rules()`'s own docblock names (`v0.21.28`/D40). Fixed by
+	 * removing the cache entirely, matching that sibling method's own shape - a
+	 * caller resolving the same query across many rows in one request is
+	 * expected to memoize locally, on its own stack, if it needs to.
+	 *
 	 * @param string     $game_slug
 	 * @param array|null $target_query `{field, operator, value}` or null.
 	 * @return int[] Character IDs.
 	 */
 	public static function resolve_target_query( string $game_slug, ?array $target_query ): array {
-		$cache_key = $game_slug . '::' . wp_json_encode( $target_query );
-		if ( isset( self::$target_query_cache[ $cache_key ] ) ) {
-			return self::$target_query_cache[ $cache_key ];
-		}
-
 		if ( $target_query === null ) {
 			$matches = self::find_matches( $game_slug, [], 'AND', 'char' );
 		} else {
-			$condition = [
-				'field'    => $target_query['field'],
-				'operator' => $target_query['operator'],
-				'find'     => $target_query['value'] ?? '',
-				'value'    => $target_query['value'] ?? null,
-			];
-			$matches   = self::find_matches( $game_slug, [ $condition ], 'AND', 'char' );
+			$matches = self::find_matches( $game_slug, [ self::target_query_to_condition( $target_query ) ], 'AND', 'char' );
 		}
 
-		$ids = array_map( static fn( $c ) => (int) $c->id, $matches );
-		self::$target_query_cache[ $cache_key ] = $ids;
-		return $ids;
+		return array_map( static fn( $c ) => (int) $c->id, $matches );
+	}
+
+	/**
+	 * Widens a `{field, operator, value}` target_query into the condition shape
+	 * `evaluate_clause()`'s own type-specific evaluators actually read - `find` for a
+	 * `field`/`date`/`list` type, `value` for a `num` type or a `list` count operator
+	 * (`totals*`). A target_query only ever carries `value`, so every caller turning one
+	 * into a query condition - `resolve_target_query()` itself, and a rumor's own
+	 * `audience_rules` derived from its target_query (1.1.0 §3.4 item 1) - needs both keys
+	 * populated, not just the one a target_query happens to name.
+	 *
+	 * @param array $target_query `{field, operator, value}`.
+	 * @return array{field: mixed, operator: mixed, find: mixed, value: mixed}
+	 */
+	public static function target_query_to_condition( array $target_query ): array {
+		return [
+			'field'    => $target_query['field'],
+			'operator' => $target_query['operator'],
+			'find'     => $target_query['value'] ?? '',
+			'value'    => $target_query['value'] ?? null,
+		];
+	}
+
+	/**
+	 * A character's held count/level in a named entry of a trait-list-shaped block, resolved
+	 * through the same block/fork logic `resolve_value()` already uses for every other
+	 * caller (1.1.0 §3.4 - rumor levels: "Media x3 reads levels 1-3"). Goes *through*
+	 * `resolve_value()` rather than adding a new case inside it - a trait block's held list
+	 * is already exactly what that method returns for a `json`/`stack_relative_list` field
+	 * with no `field`/`pool` narrowing, so this is a thin reduction over that list, the same
+	 * one `evaluate_named_count()` already performs for the query operators.
+	 *
+	 * Returns 0 when the key resolves to nothing, or the named entry is absent - "no rating"
+	 * and "not held at all" are the same answer here, matching every other absent-trait
+	 * convention in this engine.
+	 *
+	 * @param object $character A decoded character row.
+	 * @param string $key       A field-map key resolving to a trait-list-shaped block (e.g. `influences`).
+	 * @param string $name      The held entry's name, matched case-insensitively.
+	 * @return int
+	 */
+	public static function trait_rating( object $character, string $key, string $name ): int {
+		$list = self::resolve_value( $character, $key )['value'];
+		if ( ! is_array( $list ) ) {
+			return 0;
+		}
+
+		foreach ( $list as $entry ) {
+			if ( strcasecmp( (string) ( $entry['name'] ?? '' ), $name ) === 0 ) {
+				return (int) ( $entry['count'] ?? 0 );
+			}
+		}
+		return 0;
+	}
+
+	/**
+	 * Resolves an audience's `rules` (1.1.0 §2.1) to the character IDs it reaches - the
+	 * multi-condition sibling of `resolve_target_query()`, which a plot's own delivery rule
+	 * still uses unchanged. Distinct from it because an audience rule can combine several
+	 * conditions with AND/OR (`Query_Engine::find_matches()` already supports this; a
+	 * `target_query` never has), and because a null/empty rule set here means "matches
+	 * nobody" - unlike `resolve_target_query( null )`, which means everyone. `restricted`
+	 * with no rules and no connections is meant to be nobody-but-the-connections; falling
+	 * back to "everyone" would silently defeat the audience it was set to narrow.
+	 *
+	 * Always resolves against the `char` inventory: an audience is a question of which
+	 * characters may see something, never items or locations.
+	 *
+	 * Deliberately uncached. Found writing `AudienceThreadTest`, which failed on a stale
+	 * cross-test result the moment two tests happened to share a rule set - `resolve_target_query()`
+	 * had the identical shape, logged as D54 and fixed the same way in 1.1.0 S4. A caller
+	 * resolving the same rules across many rows in one request (`Audience::filter()`) is
+	 * expected to memoize locally, on the stack, if it needs to.
+	 *
+	 * @param string     $game_slug
+	 * @param array|null $rules `{logic: 'AND'|'OR', conditions: array}` or null.
+	 * @return int[] Character IDs.
+	 */
+	public static function resolve_audience_rules( string $game_slug, ?array $rules ): array {
+		if ( empty( $rules['conditions'] ) ) {
+			return [];
+		}
+
+		$logic   = strtoupper( (string) ( $rules['logic'] ?? 'AND' ) ) === 'OR' ? 'OR' : 'AND';
+		$matches = self::find_matches( $game_slug, $rules['conditions'], $logic, 'char' );
+
+		return array_map( static fn( $c ) => (int) $c->id, $matches );
 	}
 }

@@ -7,6 +7,7 @@ use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Plot;
+use BeyondElysium\Services\Spotlight;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -91,6 +92,9 @@ class Game_Stats_Controller extends Base_Controller {
 			'active_plots'                      => Plot::count_for_game( (int) $game->id, [ 'status' => 'active', 'exclude_character_plots' => true ] ),
 			'recent_activity'                   => $recent_activity,
 			'players_without_active_character'  => count( Game_Member::ids_without_active_character( (int) $game->id, $game->slug ) ),
+			// 1.1.0 §3.14 - computed the identical way Spotlight's own flagged rows are, so
+			// this number and the Spotlight screen can never disagree.
+			'characters_needing_attention'      => Spotlight::flagged_count( (int) $game->id, $game->slug, $game->settings ? (array) $game->settings : [] ),
 		];
 
 		set_transient( $cache_key, $stats, self::CACHE_TTL );

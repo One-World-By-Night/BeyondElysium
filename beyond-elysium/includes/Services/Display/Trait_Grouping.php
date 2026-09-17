@@ -218,6 +218,48 @@ class Trait_Grouping {
 	}
 
 	/**
+	 * Sums a trait_list section's held entries into one total, shown after the
+	 * section title (1.1.0 D1) - but only when every entry genuinely carries a
+	 * numeric count; a block mixing counted and note-only entries (Rituals, Merits,
+	 * and similar atomic lists a caller should exclude before calling this at all)
+	 * has no honest total to show, so a single non-numeric or missing total
+	 * anywhere in the list makes the whole section total null rather than a
+	 * partial or fabricated sum. An exact PHP twin of `src/lib/sectionTotal.ts`.
+	 *
+	 * @param array<int,array{name:string,total:mixed,note:?string}> $traits Already bridged via to_traits().
+	 * @return int|null
+	 */
+	public static function section_total( array $traits ): ?int {
+		if ( empty( $traits ) ) {
+			return null;
+		}
+
+		$sum = 0;
+		foreach ( $traits as $trait ) {
+			$total = $trait['total'] ?? null;
+			if ( ! self::is_numeric_total( $total ) ) {
+				return null;
+			}
+			$sum += Trait_Display::parse_total( $total );
+		}
+		return $sum;
+	}
+
+	/** @param mixed $total */
+	private static function is_numeric_total( $total ): bool {
+		if ( is_int( $total ) ) {
+			return true;
+		}
+		if ( is_float( $total ) ) {
+			return is_finite( $total );
+		}
+		if ( is_string( $total ) ) {
+			return (bool) preg_match( '/^-?\d+$/', trim( $total ) );
+		}
+		return false;
+	}
+
+	/**
 	 * Finds a catalog item by exact name match. Linear search rather than a
 	 * name-keyed array, matching Trait_Mapper::find_by_name() - avoids PHP silently
 	 * coercing a purely-numeric trait name into an integer array key.

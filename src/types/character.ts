@@ -6,6 +6,7 @@
  * sheet style overrides.
  */
 import type { ApprovalLevel } from './index';
+import type { AudienceRules, AudienceValue } from './plot';
 import type { TravellingStatus } from './transfer';
 
 /**
@@ -52,6 +53,19 @@ export interface Character {
 	pending_match?: { id: number; display_name: string } | null;
 	status: 'active' | 'inactive' | 'retired' | 'dead' | 'pending' | string;
 	is_npc: boolean;
+	/** How much of the sheet an NPC needs; always 'full' on a player character (1.1.0 §3.7). */
+	npc_detail: 'full' | 'quick';
+	/** An NPC's staff owner (1.1.0 §3.6); always null on a player character. */
+	assigned_to: number | null;
+	/** Who's Who display name; null uses `name` as-is. NPC-only. */
+	public_name?: string | null;
+	/** Who's Who description, [ST]...[/ST] stripped for a non-manager viewer. NPC-only. */
+	public_description?: string | null;
+	/** WP attachment id for the Who's Who portrait; falls back to image_id when unset. NPC-only. */
+	public_image_id?: number | null;
+	/** Audience gating who can see this NPC's Who's Who profile at all (1.1.0 §3.7). */
+	profile_audience?: AudienceValue;
+	profile_audience_rules?: AudienceRules | null;
 	narrator: string | null;
 	start_date: string | null;
 	xp_earned: number;
@@ -90,6 +104,8 @@ export interface CreateCharacterRequest {
 	player_name?: string;
 	status?: string;
 	is_npc?: boolean;
+	/** Manager-only, meaningless on a PC; 'full' when omitted (1.1.0 §3.7). */
+	npc_detail?: 'full' | 'quick';
 	narrator?: string;
 	start_date?: string;
 	biography?: string;
@@ -114,11 +130,46 @@ export interface UpdateCharacterRequest {
 	player_name?: string;
 	start_date?: string;
 	is_npc?: boolean;
+	/** be_manage_characters only, either template on the same character (1.1.0 §3.7). */
+	npc_detail?: 'full' | 'quick';
 	image_id?: number | null;
 	/** null/0 unassigns; omitting the field entirely leaves it untouched. */
 	wp_user_id?: number | null;
 	/** Empty string clears it; omitting the field entirely leaves it untouched. */
 	pending_player_email?: string;
+	/** be_manage_characters and NPC only; must be a chronicle member with role hst, ast, or narrator. null unassigns. */
+	assigned_to?: number | null;
+}
+
+// ---------------------------------------------------------------------------
+// NPC public profile ("Who's Who", 1.1.0 §3.7)
+// ---------------------------------------------------------------------------
+
+/**
+ * The public projection of an NPC that `Npc_Profiles_Controller` returns -
+ * deliberately narrower than the full Character record: no sheet_data,
+ * player, XP, notes, or status. `titles`/`factions` are always empty until
+ * F1/F2 ship later in the same release.
+ */
+export interface NpcProfile {
+	id: number;
+	name: string;
+	public_description: string;
+	image_url: string | null;
+	titles: string[];
+	factions: string[];
+}
+
+/**
+ * Request body for updating an NPC's five public-profile fields. Every
+ * field is optional and only the fields included are changed.
+ */
+export interface UpdateNpcProfileRequest {
+	public_name?: string;
+	public_description?: string;
+	public_image_id?: number | null;
+	profile_audience?: AudienceValue;
+	profile_audience_rules?: AudienceRules | null;
 }
 
 /**
@@ -178,7 +229,10 @@ export type ChangeType =
 	| 'import_note'
 	// A player proposing a catalog item, location or rote for their own character (1.0.1 D3).
 	// Not sheet data: approving it writes a world object and connects it to the character.
-	| 'propose_world_object';
+	| 'propose_world_object'
+	// A player proposing a coterie/pack/cabal/motley for their own character (1.1.0 §3.10, F1).
+	// Not sheet data either: approving it writes a faction and makes the character its leader.
+	| 'propose_faction';
 
 /**
  * The data carried by a single character change. Its shape

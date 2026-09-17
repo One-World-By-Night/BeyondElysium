@@ -2,8 +2,10 @@
 /**
  * How MET-Mechanics CSV rows map onto schema blocks.
  *
- * Returns an array with these top-level keys: 'discipline_labels' and
- * 'ritual_labels' each map a CSV Subtype string to a display label;
+ * Returns an array with these top-level keys: 'discipline_caste_variant_subtypes' lists
+ * Discipline Subtypes whose Group value is really a caste/bloodline variant name, routed
+ * to vampire-disciplines rather than vampire-blood-magic (Seeder::build_met_disciplines());
+ * 'discipline_labels' and 'ritual_labels' each map a CSV Subtype string to a display label;
  * 'background_routing' maps a Background Subtype to the schema block
  * slug(s) it seeds; 'blood_magic' configures which Discipline Subtypes are
  * real, selectable Blood Magic traditions. Read by
@@ -16,7 +18,23 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// The four Quietus castes: a real Group value that names an Assamite caste, not a Blood
+// Magic tradition - genuinely an ordinary Discipline's own bloodline variant. Kept as its
+// own list, separate from blood_magic's own excluded_subtypes below, because "Hermetic"
+// belongs in that list for a different reason (duplicate data, not a caste) and must NOT
+// also be routed to vampire-disciplines the way these four are (Seeder::build_met_disciplines()).
+// A local variable, not a top-level const: this file is loaded with a plain require (not
+// require_once) every time met_csv_map() is called, and a const would fatal ("already
+// defined") the second time within the same request.
+$discipline_caste_variant_subtypes = [
+	'Quietus, Cruscitus / Warrior',
+	'Quietus, Hematus / Vizier',
+	'Quietus, Minhit Dume / Vizier',
+	'Quietus, Sorcerer',
+];
+
 return [
+	'discipline_caste_variant_subtypes' => $discipline_caste_variant_subtypes,
 
 	// Subtype -> display label for Discipline/Ritual items; "Hermetic" maps to Thaumaturgy.
 	'discipline_labels' => [
@@ -41,13 +59,10 @@ return [
 		// cross-reference placeholders with no real level data, already excluded by
 		// the same is_met_ref_placeholder() filter every other Discipline row passes
 		// through - verified 2026-09-11, not assumed.
-		'excluded_subtypes'    => [
-			'Hermetic',
-			'Quietus, Cruscitus / Warrior',
-			'Quietus, Hematus / Vizier',
-			'Quietus, Minhit Dume / Vizier',
-			'Quietus, Sorcerer',
-		],
+		'excluded_subtypes'    => array_merge(
+			[ 'Hermetic' ],
+			$discipline_caste_variant_subtypes
+		),
 		// A Group value's trailing " / Segment" is a caste/covenant restriction, not
 		// an alternate name, only when it matches one of these (case-insensitive).
 		// Verified against the real catalog 2026-09-11 - exactly three real rows match.

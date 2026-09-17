@@ -119,6 +119,13 @@ class Plugin {
 				// every other admin-only surface this capability gates - is mounted on ordinary
 				// front-end pages too (every non-admin widget carries the footer).
 				'be_manage_games'         => current_user_can( 'be_manage_games' ),
+				// Gates GameNights.tsx, mounted on the Storyteller Toolkit's Game Nights tab (1.1.0 §3.1).
+				'be_manage_sessions'      => current_user_can( 'be_manage_sessions' ),
+				// Gates GameNights.tsx's own downtime-window editor (1.1.0 §3.3) - real REST
+				// enforcement is chronicle-scoped, but this site-wide snapshot is the one
+				// existing front-end affordance pages that never resolve per-chronicle
+				// capabilities fall back to, matching every other capability in this list.
+				'be_manage_apr'           => current_user_can( 'be_manage_apr' ),
 			],
 		] );
 
@@ -182,6 +189,17 @@ class Plugin {
 			new \BeyondElysium\REST\Setup_Status_Controller(),
 			new \BeyondElysium\REST\Ai_Assist_Controller(),
 			new \BeyondElysium\REST\Signing_Controller(),
+			new \BeyondElysium\REST\Attachments_Controller(),
+			new \BeyondElysium\REST\Sessions_Controller(),
+			new \BeyondElysium\REST\Release_Batches_Controller(),
+			new \BeyondElysium\REST\Downtime_Controller(),
+			new \BeyondElysium\REST\Staff_Queue_Controller(),
+			new \BeyondElysium\REST\Npc_Profiles_Controller(),
+			new \BeyondElysium\REST\Npc_Castings_Controller(),
+			new \BeyondElysium\REST\Locations_Controller(),
+			new \BeyondElysium\REST\Secrets_Controller(),
+			new \BeyondElysium\REST\Character_Order_Controller(),
+			new \BeyondElysium\REST\Factions_Controller(),
 		];
 		foreach ( $controllers as $controller ) {
 			$controller->register_routes();

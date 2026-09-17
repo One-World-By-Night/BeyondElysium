@@ -5,6 +5,8 @@
  * ledger, and the per-object-type property schema used by the
  * editor form.
  */
+import type { AudienceValue, AudienceRules } from './plot';
+import type { Attachment } from './attachment';
 
 /**
  * The kind of world object: a physical item, a location, a mage
@@ -24,6 +26,39 @@ export interface ConnectedCharacter {
 }
 
 /**
+ * One of a location's four named links (1.1.0 §3.9 item 2): who owns it, whose domain it
+ * is, whose haven it is, or who's based there. Deliberately separate from the freeform
+ * `ConnectedCharacter` above - a location link always has one of these four exact labels.
+ */
+export type LocationLinkLabel = 'owner' | 'domain' | 'haven' | 'based_at';
+
+/** One location link, as `Locations_Controller::shape_link()` returns it. */
+export interface LocationLink {
+	id: number;
+	label: LocationLinkLabel;
+	source_type: 'character';
+	source_id: number;
+	name: string;
+}
+
+/** A location's own bare ancestor/child entry - just enough for a breadcrumb or a nested list. */
+export interface LocationSummary {
+	id: number;
+	name: string;
+}
+
+/**
+ * The display-over-Grapevine-text substitution (1.1.0 §3.9 item 3): the linked owner's name
+ * and the parent location's name, wherever a real link exists, falling back to the location's
+ * own typed `owner`/`where` properties otherwise. Only present on a location's single-object
+ * fetch.
+ */
+export interface LocationDisplay {
+	owner: string;
+	where: string;
+}
+
+/**
  * A single item, location, or rote belonging to a chronicle.
  * Holds its display fields plus a free-form properties bag whose
  * shape depends on object_type, matching WORLD_OBJECT_SCHEMAS.
@@ -38,12 +73,82 @@ export interface WorldObject {
 	cost: string | null;
 	limitations: string | null;
 	properties: Record< string, unknown >;
+	/** Meaningful for item/location only; ignored by the audience filter for rote/boon (1.1.0 §2.5). */
+	audience: AudienceValue;
+	/** Only meaningful when audience is `restricted`; null otherwise. */
+	audience_rules: AudienceRules | null;
+	/** "Inside of" (1.1.0 §3.9 item 1) - a location nested inside another; locations only. */
+	parent_id: number | null;
+	/** The source item this one was copied from (1.1.0 §3.12 item 1); items only. */
+	based_on_id: number | null;
 	created_by: number;
 	created_at: string;
 	updated_at: string;
 	/** Only present on the single-object fetch. */
 	connected_characters?: ConnectedCharacter[];
+	/** Only present on the single-object fetch, and only for item/location. */
+	attachments?: Attachment[];
+	/** Only present on a location's single-object fetch. Nearest ancestor first. */
+	ancestors?: LocationSummary[];
+	/** Only present on a location's single-object fetch. */
+	children?: LocationSummary[];
+	/** Only present on a location's single-object fetch. */
+	display?: LocationDisplay;
+	/** Only present on a single-object fetch of a copy (1.1.0 §3.12 item 1) - the source's own id and name, or null if the source has since been deleted. */
+	based_on?: { id: number; name: string } | null;
+	/** Items only (1.1.0 §3.12 item 2) - derived from `uses_max`/`uses_left`, never stored. */
+	used_up?: boolean;
+	/** Items only (1.1.0 §3.12 item 2) - derived from `expires_on`, never stored. */
+	expired?: boolean;
 }
+
+/** One entry in an item's own history (1.1.0 §3.12 item 3). */
+export interface ItemEvent {
+	id: number;
+	event:
+		| 'given'
+		| 'taken'
+		| 'traded'
+		| 'stolen'
+		| 'lost'
+		| 'used'
+		| 'copied'
+		| 'proposed'
+		| 'adjusted';
+	character_id: number | null;
+	from_character_id: number | null;
+	note: string | null;
+	recorded_by: number;
+	created_at: string;
+}
+
+/** How an item changed hands (1.1.0 §3.12 item 4). */
+export type ItemTransferHow = 'given' | 'traded' | 'stolen' | 'lost';
+
+/** Request body for transferring an item to a new character, or losing it. */
+export interface TransferItemRequest {
+	to_character_id?: number | null;
+	how: ItemTransferHow;
+	note?: string;
+}
+
+/** Request body for spending one use of an item (1.1.0 §3.12 item 2). */
+export interface UseItemRequest {
+	character_id: number;
+	note?: string;
+}
+
+/**
+ * Request body for copying an item for a specific character (1.1.0 §3.12 item 1). `name`
+ * defaults to the source item's own name when omitted.
+ */
+export interface CopyForCharacterRequest {
+	character_id: number;
+	name?: string;
+}
+
+/** Which copies a world-object listing should include (1.1.0 §3.12 item 1). Default 'exclude'. */
+export type CopiesFilter = 'exclude' | 'only' | 'include';
 
 /**
  * Request body for creating a new world object. object_type and
@@ -58,6 +163,10 @@ export interface CreateWorldObjectRequest {
 	cost?: string;
 	limitations?: string;
 	properties?: Record< string, unknown >;
+	audience?: AudienceValue;
+	audience_rules?: AudienceRules | null;
+	/** Locations only - the location this one is "inside of." */
+	parent_id?: number | null;
 }
 
 /**
@@ -72,6 +181,10 @@ export interface UpdateWorldObjectRequest {
 	cost?: string;
 	limitations?: string;
 	properties?: Record< string, unknown >;
+	audience?: AudienceValue;
+	audience_rules?: AudienceRules | null;
+	/** Locations only - the location this one is "inside of." null clears it. */
+	parent_id?: number | null;
 }
 
 /**
@@ -84,6 +197,8 @@ export interface WorldObjectCollectionParams {
 	object_type?: ObjectType;
 	rarity?: string;
 	search?: string;
+	/** Which copies to include (1.1.0 §3.12 item 1). Default 'exclude'. */
+	copies?: CopiesFilter;
 	page?: number;
 	per_page?: number;
 	[ propertyFilter: string ]: unknown;
@@ -156,6 +271,10 @@ export const WORLD_OBJECT_SCHEMAS: Record<
 		negatives: 'trait_list',
 		abilities: 'trait_list',
 		availability: 'trait_list',
+		// 1.1.0 §3.12 item 2 - used_up/expired derive from these, never stored.
+		uses_max: 'int',
+		uses_left: 'int',
+		expires_on: 'date',
 	},
 	location: {
 		location_type: 'string',

@@ -6,6 +6,14 @@
 	margin: 0.75em 0;
 }
 
+.be-my-chronicle-page__report-character {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	max-width: 320px;
+	margin: 1rem 0 0;
+}
+
 .be-my-chronicle-page__report-picker {
 	display: flex;
 	flex-wrap: wrap;

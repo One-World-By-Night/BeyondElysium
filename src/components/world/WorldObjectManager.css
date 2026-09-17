@@ -27,3 +27,9 @@
 	gap: 0.5rem;
 	margin-top: 0.75rem;
 }
+
+.be-world-manager__copy-form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}

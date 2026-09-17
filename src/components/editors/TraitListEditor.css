@@ -113,3 +113,72 @@
 	text-decoration: underline;
 	cursor: pointer;
 }
+
+/* 1.1.0 D3: matches .be-tiered-power-editor__view-toggle's own established look. */
+.be-trait-list-editor__cost-toggle {
+	display: block;
+	margin: 0 0 0.5rem;
+	padding: 0.1rem 0.4rem;
+	border: 1px solid #999;
+	border-radius: 3px;
+	background: transparent;
+	color: #555;
+	font-size: 0.75rem;
+	cursor: pointer;
+}
+
+.be-trait-list-editor__cost-toggle:hover,
+.be-trait-list-editor__cost-toggle:focus-visible {
+	background: #eee;
+}
+
+/* 1.1.0 D4: the Reorder entry point matches the cost-toggle's own established look. */
+.be-trait-list-editor__reorder-trigger {
+	display: block;
+	margin: 0 0 0.5rem;
+	padding: 0.1rem 0.4rem;
+	border: 1px solid #999;
+	border-radius: 3px;
+	background: transparent;
+	color: #555;
+	font-size: 0.75rem;
+	cursor: pointer;
+}
+
+.be-trait-list-editor__reorder-trigger:hover,
+.be-trait-list-editor__reorder-trigger:focus-visible {
+	background: #eee;
+}
+
+.be-trait-list-editor__rows--reorder .be-trait-list-editor__row {
+	align-items: center;
+}
+
+/* Drag handles are a desktop-only enhancement (1.1.0 D3.19's own wording); a touch
+ * viewport never sees a mouse-only drag gesture anyway, so hiding the handle there
+ * removes dead affordance rather than losing any real capability - Move up/Move
+ * down cover touch and keyboard everywhere. */
+.be-trait-list-editor__drag-handle {
+	flex: 0 0 auto;
+	cursor: grab;
+	color: #999;
+}
+
+@media ( max-width: 768px ) {
+
+	.be-trait-list-editor__drag-handle {
+		display: none;
+	}
+}
+
+.be-trait-list-editor__order-error {
+	margin: 0.3rem 0;
+	color: #b3261e;
+	font-size: 0.85rem;
+}
+
+.be-trait-list-editor__order-actions {
+	display: flex;
+	gap: 0.5rem;
+	margin: 0.5rem 0;
+}

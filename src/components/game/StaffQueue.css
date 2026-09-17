@@ -1,0 +1,40 @@
+.be-staff-queue {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+
+.be-staff-queue__error {
+	color: #b32d2e;
+}
+
+.be-staff-queue__section h3 {
+	margin-bottom: 0.5rem;
+}
+
+.be-staff-queue__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.be-staff-queue__list a,
+.be-staff-queue__list .be-staff-queue__link-button {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.6rem;
+	border: 1px solid #d0d0d0;
+	border-radius: 4px;
+	padding: 0.6rem 0.85rem;
+	background: #fff;
+	text-decoration: none;
+	color: inherit;
+	width: 100%;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}

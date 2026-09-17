@@ -119,6 +119,22 @@ class Change_Description {
 			case 'import_note':
 				return ! empty( $change_data['reason'] ) ? $change_data['reason'] : __( 'Imported note', 'beyond-elysium' );
 
+			case 'propose_world_object':
+				/* translators: 1: object type (item/location/rote), 2: its proposed name */
+				return sprintf(
+					__( 'Proposed %1$s: %2$s', 'beyond-elysium' ),
+					$change_data['object_type'] ?? __( 'item', 'beyond-elysium' ),
+					$change_data['name'] ?? __( 'Unknown', 'beyond-elysium' )
+				);
+
+			case 'propose_faction':
+				/* translators: 1: faction type (coterie/pack/cabal/motley/other), 2: its proposed name */
+				return sprintf(
+					__( 'Proposed %1$s: %2$s', 'beyond-elysium' ),
+					$change_data['faction_type'] ?? __( 'group', 'beyond-elysium' ),
+					$change_data['name'] ?? __( 'Unknown', 'beyond-elysium' )
+				);
+
 			default:
 				return __( 'Unknown change', 'beyond-elysium' );
 		}

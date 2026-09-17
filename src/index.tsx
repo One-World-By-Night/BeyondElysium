@@ -59,9 +59,10 @@ const widgetRegistry: Record<
 	'admin-creature-stacks': () =>
 		import( './components/admin/AdminCreatureStacks' ),
 	'admin-templates': () => import( './components/admin/AdminTemplates' ),
-	'admin-plots': () => import( './components/admin/AdminPlots' ),
+	'admin-plots': () => import( './components/admin/hubs/PlotsHub' ),
 	'admin-world-objects': () =>
 		import( './components/admin/AdminWorldObjects' ),
+	'admin-game-nights': () => import( './components/admin/AdminGameNights' ),
 	'admin-query': () => import( './components/admin/AdminQuery' ),
 	'admin-import': () => import( './components/admin/AdminImport' ),
 	'admin-chronicle-access': () =>

@@ -1,0 +1,33 @@
+.be-location-links {
+	margin-top: 1rem;
+}
+
+.be-location-links__list {
+	list-style: none;
+	margin: 0 0 0.75rem;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.be-location-links__list li {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.be-location-links__form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+.be-location-links__error {
+	padding: 0.5rem 0.75rem;
+	border: 1px solid #c00;
+	border-radius: 4px;
+	color: #c00;
+	margin-bottom: 0.5rem;
+}

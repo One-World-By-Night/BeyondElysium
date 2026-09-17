@@ -1,5 +1,40 @@
+.be-world-card__breadcrumb {
+	font-size: 0.85rem;
+	color: #777;
+	margin-bottom: 0.25rem;
+}
+
 .be-world-card__name {
 	margin-bottom: 0.25rem;
+}
+
+.be-world-card__based-on {
+	font-size: 0.85rem;
+	color: #777;
+	margin: 0 0 0.5rem;
+}
+
+.be-world-card__status-banner {
+	font-weight: 600;
+	color: #b3261e;
+	margin: 0 0 0.5rem;
+}
+
+.be-world-card__history-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.be-world-card__history-list li {
+	padding: 0.25rem 0;
+	border-bottom: 1px solid #eee;
+}
+
+.be-world-card__children {
+	list-style: none;
+	margin: 0 0 1rem;
+	padding: 0;
 }
 
 .be-world-card__description {

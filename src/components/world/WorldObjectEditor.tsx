@@ -5,12 +5,16 @@
  * code per type. Submits a create or update request depending on
  * whether an existing object was passed in.
  */
-import { useId, useRef, useState } from '@wordpress/element';
+import { useEffect, useId, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import HtmlEditor from '../shared/HtmlEditor';
+import AudiencePicker from '../shared/AudiencePicker';
+import LocationLinksPanel from './LocationLinksPanel';
+import SecretsPanel from '../shared/SecretsPanel';
 import { WORLD_OBJECT_SCHEMAS } from '../../types/world';
 import type { ObjectType, WorldObject } from '../../types/world';
+import type { AudienceValue, AudienceRules } from '../../types/plot';
 import './WorldObjectEditor.css';
 
 export interface WorldObjectEditorProps {
@@ -75,8 +79,41 @@ export function WorldObjectEditor( {
 	const [ properties, setProperties ] = useState<
 		Record< string, PropertyValue >
 	>( ( source?.properties as Record< string, PropertyValue > ) ?? {} );
+	// Duplicating never carries the source's own audience forward either - a one-off variant
+	// starts world-visible like any other new item, same as it starts with no connections.
+	const [ audience, setAudience ] = useState< AudienceValue >(
+		isDuplicating ? 'everyone' : object?.audience ?? 'everyone'
+	);
+	const [ audienceRules, setAudienceRules ] =
+		useState< AudienceRules | null >(
+			isDuplicating ? null : object?.audience_rules ?? null
+		);
 	const [ saving, setSaving ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
+
+	// "Inside of" (1.1.0 §3.9 item 1) - locations only.
+	const [ parentId, setParentId ] = useState< string >(
+		object?.parent_id ? String( object.parent_id ) : ''
+	);
+	const [ otherLocations, setOtherLocations ] = useState<
+		{ id: number; name: string }[]
+	>( [] );
+
+	useEffect( () => {
+		if ( objectType !== 'location' ) {
+			return;
+		}
+		api.worldObjects( gameSlug )
+			.list( { object_type: 'location', per_page: 500 } )
+			.then( ( items ) =>
+				setOtherLocations(
+					items
+						.filter( ( l ) => l.id !== object?.id )
+						.map( ( l ) => ( { id: l.id, name: l.name } ) )
+				)
+			)
+			.catch( () => setOtherLocations( [] ) );
+	}, [ gameSlug, objectType, object?.id ] );
 
 	function setProperty( key: string, value: PropertyValue ) {
 		setProperties( ( prev ) => ( { ...prev, [ key ]: value } ) );
@@ -92,6 +129,8 @@ export function WorldObjectEditor( {
 		setSaving( true );
 		setError( null );
 
+		const showsAudience =
+			objectType === 'item' || objectType === 'location';
 		const payload = {
 			name: name.trim(),
 			description: descriptionDraft.current.trim() || undefined,
@@ -99,6 +138,14 @@ export function WorldObjectEditor( {
 			cost: cost || undefined,
 			limitations: limitationsDraft.current.trim() || undefined,
 			properties,
+			...( showsAudience && {
+				audience,
+				audience_rules:
+					audience === 'restricted' ? audienceRules : null,
+			} ),
+			...( objectType === 'location' && {
+				parent_id: parentId ? Number( parentId ) : null,
+			} ),
 		};
 
 		try {
@@ -125,6 +172,16 @@ export function WorldObjectEditor( {
 				<div className="be-world-editor__error" role="alert">
 					{ error }
 				</div>
+			) }
+
+			{ object?.based_on && (
+				<p className="be-world-editor__based-on">
+					{ sprintf(
+						/* translators: %s: the source item's name */
+						__( 'Based on %s', 'beyond-elysium' ),
+						object.based_on.name
+					) }
+				</p>
 			) }
 
 			<label className="be-world-editor__field">
@@ -191,6 +248,40 @@ export function WorldObjectEditor( {
 				/>
 			</div>
 
+			{ ( objectType === 'item' || objectType === 'location' ) && (
+				<div className="be-world-editor__field">
+					<span>{ __( 'Who can see this', 'beyond-elysium' ) }</span>
+					<AudiencePicker
+						gameSlug={ gameSlug }
+						audience={ audience }
+						audienceRules={ audienceRules }
+						onChange={ ( nextAudience, nextRules ) => {
+							setAudience( nextAudience );
+							setAudienceRules( nextRules );
+						} }
+					/>
+				</div>
+			) }
+
+			{ objectType === 'location' && (
+				<label className="be-world-editor__field">
+					<span>{ __( 'Inside', 'beyond-elysium' ) }</span>
+					<select
+						value={ parentId }
+						onChange={ ( e ) => setParentId( e.target.value ) }
+					>
+						<option value="">
+							{ __( 'Nowhere (top-level)', 'beyond-elysium' ) }
+						</option>
+						{ otherLocations.map( ( l ) => (
+							<option key={ l.id } value={ l.id }>
+								{ l.name }
+							</option>
+						) ) }
+					</select>
+				</label>
+			) }
+
 			<h4>{ __( 'Properties', 'beyond-elysium' ) }</h4>
 			{ Object.entries( schema ).map( ( [ key, type ] ) => (
 				<PropertyField
@@ -202,6 +293,22 @@ export function WorldObjectEditor( {
 					gameSlug={ gameSlug }
 				/>
 			) ) }
+
+			{ objectType === 'location' && object && (
+				<LocationLinksPanel
+					gameSlug={ gameSlug }
+					locationId={ object.id }
+				/>
+			) }
+
+			{ ( objectType === 'item' || objectType === 'location' ) &&
+				object && (
+					<SecretsPanel
+						gameSlug={ gameSlug }
+						entityType={ objectType }
+						entityId={ object.id }
+					/>
+				) }
 
 			<div className="be-world-editor__actions">
 				<button type="submit" disabled={ saving }>

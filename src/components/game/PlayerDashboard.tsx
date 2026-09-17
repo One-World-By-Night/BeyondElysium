@@ -4,12 +4,15 @@
  * without manager capabilities.
  * Reuses MyPlotsFeed unchanged for the plot section.
  */
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
 import api from '../../api/client';
 import { describeChange } from '../../lib/describeChange';
 import { MyPlotsFeed } from '../apr/MyPlotsFeed';
+import { CastingBrief } from './CastingBrief';
 import type { Character, QueueChange } from '../../types/character';
+import type { StaffQueueCastingRow } from '../../types/staffQueue';
+import type { Faction, Position } from '../../types/faction';
 import HelpButton from '../shared/HelpButton';
 import './GameDashboard.css';
 
@@ -51,8 +54,16 @@ export function PlayerDashboard( {
 }: PlayerDashboardProps ) {
 	const [ characters, setCharacters ] = useState< Character[] >( [] );
 	const [ myChanges, setMyChanges ] = useState< QueueChange[] >( [] );
+	const [ myCastings, setMyCastings ] = useState< StaffQueueCastingRow[] >(
+		[]
+	);
+	const [ myFactions, setMyFactions ] = useState< Faction[] >( [] );
+	const [ myPositions, setMyPositions ] = useState< Position[] >( [] );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
+	const [ openCastingId, setOpenCastingId ] = useState< number | null >(
+		null
+	);
 
 	useEffect( () => {
 		setLoading( true );
@@ -60,12 +71,33 @@ export function PlayerDashboard( {
 		Promise.all( [
 			api.characters( gameSlug ).myCharacters(),
 			api.changes( gameSlug ).myChanges(),
+			api.castings( gameSlug ).myUpcoming(),
+			api.factions( gameSlug ).list(),
+			api.positions( gameSlug ).list(),
 		] )
-			.then( ( [ myCharacters, pending ] ) => {
-				setCharacters( myCharacters );
-				setMyChanges( pending );
-				setLoading( false );
-			} )
+			.then(
+				( [
+					myCharacters,
+					pending,
+					castings,
+					factions,
+					positions,
+				] ) => {
+					setCharacters( myCharacters );
+					setMyChanges( pending );
+					setMyCastings( castings );
+					const myCharacterIds = myCharacters.map( ( c ) => c.id );
+					setMyFactions( factions.filter( ( f ) => f.is_member ) );
+					setMyPositions(
+						positions.filter(
+							( p ) =>
+								p.character_id !== null &&
+								myCharacterIds.includes( p.character_id )
+						)
+					);
+					setLoading( false );
+				}
+			)
 			.catch( () => {
 				setError(
 					__( 'Failed to load your dashboard.', 'beyond-elysium' )
@@ -73,6 +105,18 @@ export function PlayerDashboard( {
 				setLoading( false );
 			} );
 	}, [ gameSlug ] );
+
+	if ( openCastingId !== null ) {
+		return (
+			<div className="be-game-dashboard be-game-dashboard--player">
+				<CastingBrief
+					gameSlug={ gameSlug }
+					castingId={ openCastingId }
+					onClose={ () => setOpenCastingId( null ) }
+				/>
+			</div>
+		);
+	}
 
 	return (
 		<div className="be-game-dashboard be-game-dashboard--player">
@@ -121,6 +165,26 @@ export function PlayerDashboard( {
 				) }
 			</section>
 
+			{ ( myFactions.length > 0 || myPositions.length > 0 ) && (
+				<section className="be-game-dashboard__section">
+					<h2>{ __( 'My Groups', 'beyond-elysium' ) }</h2>
+					<ul className="be-game-dashboard__list">
+						{ myFactions.map( ( faction ) => (
+							<li key={ `faction-${ faction.id }` }>
+								{ faction.name }
+								{ ' — ' }
+								{ faction.faction_type }
+							</li>
+						) ) }
+						{ myPositions.map( ( position ) => (
+							<li key={ `position-${ position.id }` }>
+								{ position.title }
+							</li>
+						) ) }
+					</ul>
+				</section>
+			) }
+
 			<section className="be-game-dashboard__section">
 				<h2>{ __( 'My Pending Changes', 'beyond-elysium' ) }</h2>
 				{ loading ? (
@@ -146,6 +210,35 @@ export function PlayerDashboard( {
 					</ul>
 				) }
 			</section>
+
+			{ myCastings.length > 0 && (
+				<section className="be-game-dashboard__section">
+					<h2>{ __( 'My Castings', 'beyond-elysium' ) }</h2>
+					<ul className="be-game-dashboard__list">
+						{ myCastings.map( ( casting ) => (
+							<li key={ casting.casting_id }>
+								<button
+									type="button"
+									className="be-game-dashboard__link-button"
+									onClick={ () =>
+										setOpenCastingId( casting.casting_id )
+									}
+								>
+									{ sprintf(
+										/* translators: 1: NPC name, 2: session date */
+										__(
+											"You're playing %1$s on %2$s",
+											'beyond-elysium'
+										),
+										casting.character_name,
+										casting.game_date
+									) }
+								</button>
+							</li>
+						) ) }
+					</ul>
+				</section>
+			) }
 
 			<section className="be-game-dashboard__section">
 				<h2>{ __( 'My Plots', 'beyond-elysium' ) }</h2>

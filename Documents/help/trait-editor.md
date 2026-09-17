@@ -24,6 +24,8 @@ Merits, Flaws, and similar, depending on the chronicle's own template).
   built.
 - **✎** on each row - opens the same modal used for adding one, for editing.
 - **+ Add** - opens a blank modal to add a new entry.
+- **Reorder** - Rituals only. Puts your held rituals in whatever order you like instead of the
+  usual alphabetical list - see [Your Own Order](player-order.md).
 
 ### The Add/Edit modal
 
@@ -93,6 +95,7 @@ Merits, Flaws, and similar, depending on the chronicle's own template).
 
 - [Character Editor](character-editor.md)
 - [Powers](power-editor.md)
+- [Your Own Order](player-order.md)
 - [Resource Pools & Identity Fields](pools-identity-editor.md)
 - [Character Sheet](character-sheet.md)
 - [How Approval Works](approval-flow.md)

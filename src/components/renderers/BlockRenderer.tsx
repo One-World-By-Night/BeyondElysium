@@ -29,6 +29,8 @@ export interface BlockRendererProps {
 	display?: DisplayType | null;
 	/** Stack display_preferences override, tiered_power only. */
 	displayMode?: 'named' | 'numeric';
+	/** Print/Export panel override for a count_is_cost trait_list block (1.1.0 D3), trait_list only. */
+	costNumbers?: boolean;
 	/** The character's full sheet_data, resource_pool only, for a pool whose display name depends on another block's value. */
 	sheetData?: Record< string, unknown >;
 }
@@ -46,6 +48,7 @@ export function BlockRenderer( {
 	data,
 	display,
 	displayMode,
+	costNumbers,
 	sheetData,
 }: BlockRendererProps ) {
 	switch ( sectionType ) {
@@ -56,6 +59,7 @@ export function BlockRenderer( {
 					data={ toTraits( data ) }
 					definition={ definition as TraitListDefinition }
 					display={ display ?? null }
+					costNumbers={ costNumbers }
 				/>
 			);
 

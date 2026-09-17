@@ -80,8 +80,9 @@ class TemperDisplayParityTest extends TestCase {
 		$overflow_glyph = mb_chr( 0x25C9, 'UTF-8' ); // ◉
 		$spent_glyph    = mb_chr( 0x25CB, 'UTF-8' ); // ○
 
-		// Not clamped to 3 filled dots: temporary - permanent = 2 overflow dots follow.
-		$this->assertSame( str_repeat( $dot, 3 ) . str_repeat( $overflow_glyph, 2 ), $actual );
+		// Not clamped to 3 filled dots: temporary - permanent = 2 overflow dots follow,
+		// then the 1.1.0 D1 "temporary/permanent" number suffix.
+		$this->assertSame( str_repeat( $dot, 3 ) . str_repeat( $overflow_glyph, 2 ) . ' 5/3', $actual );
 		$this->assertStringNotContainsString( $spent_glyph, $actual, 'overflow must never also render spent glyphs' );
 	}
 }

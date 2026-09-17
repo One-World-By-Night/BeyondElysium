@@ -3,6 +3,7 @@
 namespace BeyondElysium\Models;
 
 use BeyondElysium\Database\Manager;
+use BeyondElysium\Services\Short_Code;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -15,12 +16,12 @@ defined( 'ABSPATH' ) || exit;
  * without breaking that separate contract. Revoking one issuance never
  * touches another.
  *
+ * Token/short-code generation itself lives in `Services\Short_Code` (1.1.0 §3.13), shared with
+ * `Item_Attestation` so the two tables' codes can never collide.
+ *
  * @see BE_PROCESS/design/gex-export-transfer-design.md GX-7, §6.2
  */
 class Attestation {
-
-	/** Human-typeable alphabet for `short_code`: no 0/O, 1/I/L - nothing a person could misread aloud or by hand. */
-	private const SHORT_CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
 	/**
 	 * Issues a new attestation for a character: a fresh random token and
@@ -43,8 +44,8 @@ class Attestation {
 	 * @return object The newly created row, decoded (see `find()`).
 	 */
 	public static function issue( object $character, string $kind, string $sheet_hash, ?string $expires_at = null, ?string $document_hash = null ): object {
-		$token      = self::generate_token();
-		$short_code = self::generate_unique_short_code();
+		$token      = Short_Code::generate_token();
+		$short_code = Short_Code::generate_unique( [ 'character_attestations', 'item_attestations' ] );
 		$document_hash = $document_hash ?? $sheet_hash;
 
 		$id = Manager::insert( 'character_attestations', [
@@ -161,42 +162,5 @@ class Attestation {
 	private static function decode( object $row ): object {
 		$row->attested = json_decode( (string) $row->attested, true ) ?: [];
 		return $row;
-	}
-
-	/**
-	 * @return string 256-bit random token, base64url-encoded (43 characters, no padding).
-	 */
-	private static function generate_token(): string {
-		$bytes = random_bytes( 32 );
-		return rtrim( strtr( base64_encode( $bytes ), '+/', '-_' ), '=' );
-	}
-
-	/**
-	 * @return string A human-typeable code, e.g. "K3F7-QM2P", drawn from an
-	 *                alphabet with every visually-ambiguous character removed.
-	 */
-	private static function generate_short_code(): string {
-		$alphabet = self::SHORT_CODE_ALPHABET;
-		$max      = strlen( $alphabet ) - 1;
-		$chars    = '';
-		for ( $i = 0; $i < 8; $i++ ) {
-			$chars .= $alphabet[ random_int( 0, $max ) ];
-		}
-		return substr( $chars, 0, 4 ) . '-' . substr( $chars, 4, 4 );
-	}
-
-	/**
-	 * Regenerates on the vanishingly unlikely event of a collision against
-	 * the table's own UNIQUE KEY, rather than trusting randomness alone.
-	 *
-	 * @return string
-	 */
-	private static function generate_unique_short_code(): string {
-		$table = Manager::table( 'character_attestations' );
-		do {
-			$code = self::generate_short_code();
-			$exists = Manager::get_row( "SELECT id FROM {$table} WHERE short_code = %s", $code );
-		} while ( $exists !== null );
-		return $code;
 	}
 }

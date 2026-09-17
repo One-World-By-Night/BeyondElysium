@@ -119,4 +119,13 @@ if ( $be_wp_tests_dir && file_exists( $be_wp_tests_dir . '/includes/functions.ph
 			return $text;
 		}
 	}
+
+	// strip_html_for_game()'s other half (1.0.1 D1) - closes a tag the byte-offset cut left
+	// dangling. Same reasoning as wp_kses_post() just above: real callers pass plain text
+	// with no markup, so a pass-through is exact, not an approximation.
+	if ( ! function_exists( 'force_balance_tags' ) ) {
+		function force_balance_tags( string $text ): string { // phpcs:ignore
+			return $text;
+		}
+	}
 }

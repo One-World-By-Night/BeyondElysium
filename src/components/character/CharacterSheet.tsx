@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import type { CSSProperties } from 'react';
 import api from '../../api/client';
-import BlockRenderer from '../renderers/BlockRenderer';
+import BlockRenderer, { toTraits } from '../renderers/BlockRenderer';
 import SheetStyleEditor from './SheetStyleEditor';
 import ChangeHistory from '../changes/ChangeHistory';
 import PointAudit from './PointAudit';
@@ -26,10 +26,12 @@ import { characterEditorUrl, isPrintCanvasPath } from '../../lib/pluginPages';
 import { showsProseSection } from '../../lib/sheetProse';
 import { canIn } from '../../lib/chronicleCapabilities';
 import { sheetActions, type SheetAction } from '../../lib/sheetActions';
+import { sectionTotal } from '../../lib/sectionTotal';
 import type {
 	MyCapabilities,
 	ResolvedStack,
 	TemplateResolveResponse,
+	TraitListDefinition,
 } from '../../types';
 import type { Character, SheetStyle } from '../../types/character';
 import './CharacterSheet.css';
@@ -155,6 +157,12 @@ export function CharacterSheet( {
 	const [ printFullPowerNames, setPrintFullPowerNames ] = useState(
 		() => urlParams.get( 'print_full_power_names' ) === '1'
 	);
+	// 1.1.0 D3: a count_is_cost block's held entries (Combo Disciplines) read as a
+	// number ("6 XP") instead of dots - same "ticking either also changes this page"
+	// shape as printFullPowerNames above.
+	const [ printCostNumbers, setPrintCostNumbers ] = useState(
+		() => urlParams.get( 'print_cost_numbers' ) === '1'
+	);
 
 	// The viewer's own expand/collapse clicks, keyed by block_slug - only ever holds an
 	// entry once they've clicked a section, so a section they never touched still reads
@@ -173,9 +181,12 @@ export function CharacterSheet( {
 				const character = await api
 					.characters( gameSlug )
 					.get( characterId );
-				// An NPC gets the NPC sheet, which adds the Storyteller-only sections.
+				// An NPC gets the NPC sheet, which adds the Storyteller-only sections - npc_quick's
+				// shorter one when it hasn't been upgraded to npc_full (1.1.0 §3.7 item 1).
 				const resolvedType = character.is_npc
-					? 'npc_full'
+					? character.npc_detail === 'quick'
+						? 'npc_quick'
+						: 'npc_full'
 					: templateType;
 				const [ stack, resolved ] = await Promise.all( [
 					api.creatureStacks.resolve(
@@ -357,6 +368,21 @@ export function CharacterSheet( {
 			style.section_graphic_urls?.[ section.block_slug ];
 		const collapsed = isSectionCollapsed( section, collapseOverrides );
 
+		let title = resolveSectionTitle( section, character.sheet_data );
+		// 1.1.0 D1: a non-atomic trait_list section whose held entries all carry a
+		// numeric count shows its total after the title.
+		if (
+			block.section_type === 'trait_list' &&
+			! ( block.definition as TraitListDefinition ).atomic
+		) {
+			const total = sectionTotal(
+				toTraits( character.sheet_data[ section.block_slug ] )
+			);
+			if ( total !== null ) {
+				title = `${ title } \u{00B7} ${ total }`;
+			}
+		}
+
 		return (
 			<div
 				className="be-character-sheet__section"
@@ -385,7 +411,7 @@ export function CharacterSheet( {
 						>
 							{ collapsed ? '▸' : '▾' }
 						</span>
-						{ resolveSectionTitle( section, character.sheet_data ) }
+						{ title }
 					</button>
 				</h4>
 				{ /* Never unmounted - hidden keeps it out of view (and, on screen, out of layout)
@@ -409,6 +435,11 @@ export function CharacterSheet( {
 							printFullPowerNames &&
 							block.section_type === 'tiered_power'
 								? 'named'
+								: undefined
+						}
+						costNumbers={
+							block.section_type === 'trait_list'
+								? printCostNumbers
 								: undefined
 						}
 						sheetData={ character.sheet_data }
@@ -609,6 +640,21 @@ export function CharacterSheet( {
 												'beyond-elysium'
 											) }
 										</label>
+										<label>
+											<input
+												type="checkbox"
+												checked={ printCostNumbers }
+												onChange={ ( e ) =>
+													setPrintCostNumbers(
+														e.target.checked
+													)
+												}
+											/>
+											{ __(
+												'XP costs as numbers',
+												'beyond-elysium'
+											) }
+										</label>
 									</div>
 									{ pdfAvailability !== null &&
 										! pdfAvailability.ok && (
@@ -643,6 +689,8 @@ export function CharacterSheet( {
 															printXpHistory,
 														fullPowerNames:
 															printFullPowerNames,
+														costNumbers:
+															printCostNumbers,
 													} ),
 												'_blank'
 											)

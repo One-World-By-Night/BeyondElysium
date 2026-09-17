@@ -129,5 +129,20 @@
 		"trait": { "name": "Celerity", "total": 3, "note": "Fast" },
 		"mode": "dot",
 		"dot": "o"
+	},
+	{
+		"name": "cost_number: name, total, XP, note",
+		"trait": { "name": "Bestial Charm", "total": 6, "note": "Malkavian" },
+		"mode": "cost_number"
+	},
+	{
+		"name": "cost_number: no note",
+		"trait": { "name": "Bestial Charm", "total": 6 },
+		"mode": "cost_number"
+	},
+	{
+		"name": "cost_number: total 0 still shows the number, not dots",
+		"trait": { "name": "Free Combo", "total": 0 },
+		"mode": "cost_number"
 	}
 ]

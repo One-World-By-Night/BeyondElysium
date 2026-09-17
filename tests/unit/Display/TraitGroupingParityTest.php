@@ -116,4 +116,19 @@ class TraitGroupingParityTest extends TestCase {
 			);
 		}
 	}
+
+	/**
+	 * 1.1.0 D1: `section_total()` and its TypeScript twin `sectionTotal()`
+	 * (`src/lib/sectionTotal.test.ts` proves the other side) must agree - same
+	 * bridged trait rows in, same total (or null) out.
+	 */
+	public function test_section_total_matches_the_shared_fixture(): void {
+		$input    = $this->fixture( 'trait-grouping-input.json' );
+		$expected = $this->fixture( 'trait-grouping-expected.json' );
+
+		foreach ( $input->sectionTotal as $i => $case ) {
+			$actual = Trait_Grouping::section_total( $this->rows( $case->traits ) );
+			$this->assertSame( $expected->sectionTotal[ $i ], $actual, 'sectionTotal case: ' . $case->case );
+		}
+	}
 }

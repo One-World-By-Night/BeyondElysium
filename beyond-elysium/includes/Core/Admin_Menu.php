@@ -95,6 +95,16 @@ class Admin_Menu {
 			[ self::class, 'render_world_objects' ]
 		);
 
+		// Mounts the game-nights widget, gated on be_manage_sessions (1.1.0 §3.1).
+		add_submenu_page(
+			'beyond-elysium',
+			__( 'Game Nights', 'beyond-elysium' ),
+			__( 'Game Nights', 'beyond-elysium' ),
+			'be_manage_sessions',
+			'beyond-elysium-game-nights',
+			[ self::class, 'render_game_nights' ]
+		);
+
 		// Query Tool + Reports (owner's call: "fold into Query Tool"). Gated on the
 		// broader of the two tabs' capabilities; each tab hides itself individually.
 		add_submenu_page(
@@ -175,8 +185,9 @@ class Admin_Menu {
 
 	/**
 	 * Renders the Plots admin page. Outputs the mount point for the
-	 * admin-plots widget, which manages plots and rumors, followed by the
-	 * shared memorial footer.
+	 * admin-plots widget, a tabbed shell over Plots & Rumors and Releases
+	 * (1.1.0 §3.2) - both be_manage_plots surfaces - followed by the shared
+	 * memorial footer.
 	 */
 	public static function render_plots(): void {
 		self::render_mount( 'admin-plots' );
@@ -189,6 +200,15 @@ class Admin_Menu {
 	 */
 	public static function render_world_objects(): void {
 		self::render_mount( 'admin-world-objects' );
+	}
+
+	/**
+	 * Renders the Game Nights admin page. Outputs the mount point for the
+	 * admin-game-nights widget: a chronicle picker plus the shared
+	 * GameNights component (1.1.0 §3.1).
+	 */
+	public static function render_game_nights(): void {
+		self::render_mount( 'admin-game-nights' );
 	}
 
 	/**
@@ -338,6 +358,8 @@ class Admin_Menu {
 				'be_view_reports'          => current_user_can( 'be_view_reports' ),
 				'be_manage_templates'      => current_user_can( 'be_manage_templates' ),
 				'be_manage_approval_rules' => current_user_can( 'be_manage_approval_rules' ),
+				// Gates the wp-admin Game Nights page (1.1.0 §3.1).
+				'be_manage_sessions'       => current_user_can( 'be_manage_sessions' ),
 			],
 		] );
 

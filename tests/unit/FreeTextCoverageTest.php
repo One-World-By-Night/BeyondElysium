@@ -57,6 +57,27 @@ class FreeTextCoverageTest extends TestCase {
 		'connections.notes'                         => 'filter_connection',
 		'world_objects.description'                 => 'filter_world_object',
 		'world_objects.limitations'                 => 'filter_world_object',
+		'game_sessions.notes'                       => 'filter_session',
+		// Digest payload only - Notifications::send_daily_digests() reads and emails it, never
+		// exposed through any REST route or returned to any user, manager or player alike.
+		'notification_queue.payload'                => self::STRUCTURED,
+		'characters.public_description'             => 'filter_npc_profile',
+		'npc_castings.brief'                         => 'filter_casting',
+		'secrets.content'                            => 'filter_secret',
+		// A Storyteller's own annotation about a reveal, never surfaced through /my/secrets.
+		'secret_reveals.note'                        => self::MANAGER_ONLY,
+		// GET .../world-objects/{id}/events is be_manage_world_objects-only (1.1.0 §3.12 item 3).
+		'item_events.note'                           => self::MANAGER_ONLY,
+		// A player's own after-game report - the route itself never returns another player's
+		// report to a non-manager; this is defense in depth, not a gap the route relies on.
+		'after_game_reports.did'                     => 'filter_report',
+		'after_game_reports.wants'                   => 'filter_report',
+		'after_game_reports.to_staff'                => 'filter_report',
+		'factions.description'                       => 'filter_faction',
+		'factions.goals'                              => 'filter_faction',
+		// A manager-only field in full (Factions_Controller::project_position() never
+		// includes it in a non-manager's projection at all).
+		'positions.notes'                             => self::MANAGER_ONLY,
 	];
 
 	public function test_every_free_text_column_in_the_schema_is_accounted_for(): void {

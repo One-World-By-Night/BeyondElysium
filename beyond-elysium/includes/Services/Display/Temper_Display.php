@@ -54,7 +54,14 @@ class Temper_Display {
 		}
 
 		// Character-based, never byte-based: every dot is three bytes in UTF-8.
-		$groups = array_chunk( mb_str_split( $dots, 1, 'UTF-8' ), self::GROUP );
-		return implode( ' ', array_map( static fn( array $group ): string => implode( '', $group ), $groups ) );
+		$groups   = array_chunk( mb_str_split( $dots, 1, 'UTF-8' ), self::GROUP );
+		$rendered = implode( ' ', array_map( static fn( array $group ): string => implode( '', $group ), $groups ) );
+
+		// 1.1.0 D1: every dot readout also shows its number - bare when current
+		// equals permanent, "current/permanent" otherwise, so an over- or
+		// under-spent pool reads unambiguously rather than requiring the viewer
+		// to count dots.
+		$suffix = $temporary === $permanent ? (string) $permanent : "{$temporary}/{$permanent}";
+		return $rendered === '' ? $suffix : "{$rendered} {$suffix}";
 	}
 }

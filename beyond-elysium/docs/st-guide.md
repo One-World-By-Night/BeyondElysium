@@ -271,6 +271,13 @@ character. Only its player and the chronicle's Storytellers see it, each game da
 for the character sit under it unless you nest them elsewhere, and it goes when the character
 does - it can't be deleted on its own.
 
+A plot's **Who can see this** setting (Everyone / Storytellers and Narrators only / a rule you
+set against character traits) controls who reaches it at all; a new plot starts
+Storytellers-only. A player can post an action publicly or privately to Storytellers, and you
+can additionally direct a reply to specific characters only - see
+[Admin Guide → Who Can See a Plot, Item, or Location](admin-guide.md#who-can-see-a-plot-item-or-location)
+for the full picture, including images and PDFs attached under a plot's own **Files** section.
+
 ## 9. Action & Rumor Settings and the Background-Use Ledger
 
 Under **Beyond Elysium → Chronicle Setup → Action & Rumor Settings**, pick a chronicle to configure how many

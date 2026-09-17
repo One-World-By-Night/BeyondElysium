@@ -10,37 +10,39 @@ import temperExpected from '../../tests/fixtures/temper-display-expected.json';
  */
 describe( 'displayTemper', () => {
 	it( 'a full pool renders one filled dot per point', () => {
-		expect( displayTemper( { permanent: 3, temporary: 3 } ) ).toBe( '●●●' );
-	} );
-
-	it( 'zero pool renders empty', () => {
-		expect( displayTemper( { permanent: 0, temporary: 0 } ) ).toBe( '' );
-	} );
-
-	it( 'temporary below permanent renders an empty dot for each spent point', () => {
-		expect( displayTemper( { permanent: 5, temporary: 2 } ) ).toBe(
-			'●●○○○'
+		expect( displayTemper( { permanent: 3, temporary: 3 } ) ).toBe(
+			'●●● 3'
 		);
 	} );
 
-	it( 'temporary above permanent renders a ringed dot for each extra point, not clamped', () => {
+	it( 'zero pool renders no dots, just the bare number', () => {
+		expect( displayTemper( { permanent: 0, temporary: 0 } ) ).toBe( '0' );
+	} );
+
+	it( 'temporary below permanent renders an empty dot for each spent point, then temporary/permanent', () => {
+		expect( displayTemper( { permanent: 5, temporary: 2 } ) ).toBe(
+			'●●○○○ 2/5'
+		);
+	} );
+
+	it( 'temporary above permanent renders a ringed dot for each extra point, not clamped, then temporary/permanent', () => {
 		expect( displayTemper( { permanent: 3, temporary: 5 } ) ).toBe(
-			'●●●◉◉'
+			'●●●◉◉ 5/3'
 		);
 	} );
 
 	it( 'a large pool groups its dots in fives and never collapses them into a bigger glyph', () => {
 		expect( displayTemper( { permanent: 15, temporary: 15 } ) ).toBe(
-			'●●●●● ●●●●● ●●●●●'
+			'●●●●● ●●●●● ●●●●● 15'
 		);
 		expect( displayTemper( { permanent: 11, temporary: 11 } ) ).toBe(
-			'●●●●● ●●●●● ●'
+			'●●●●● ●●●●● ● 11'
 		);
 	} );
 
 	it( 'groups count every dot, whatever its state', () => {
 		expect( displayTemper( { permanent: 12, temporary: 6 } ) ).toBe(
-			'●●●●● ●○○○○ ○○'
+			'●●●●● ●○○○○ ○○ 6/12'
 		);
 	} );
 

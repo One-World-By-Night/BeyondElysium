@@ -18,6 +18,11 @@ import { ApprovalQueue } from '../changes/ApprovalQueue';
 import { PlotManager } from '../apr/PlotManager';
 import { BoonLedger } from '../world/BoonLedger';
 import { WorldObjectManager } from '../world/WorldObjectManager';
+import { GameNights } from '../game/GameNights';
+import { ReleaseBatches } from '../game/ReleaseBatches';
+import { DowntimeQueue } from '../game/DowntimeQueue';
+import { StaffQueue } from '../game/StaffQueue';
+import { FactionsAndPositions } from '../faction/FactionsAndPositions';
 import {
 	playerTabUrl,
 	readTabFromUrl,
@@ -43,6 +48,14 @@ export function StorytellerToolkitPage() {
 	const [ tab, setTab ] = useState( () =>
 		readTabFromUrl( STORYTELLER_TABS.dashboard )
 	);
+	// The Downtime queue's own "open the plot thread" link (1.1.0 §3.3) arrives as
+	// ?open_plot=; read once, not kept in sync with the URL afterward.
+	const [ openPlotId ] = useState( () => {
+		const raw = new URLSearchParams( window.location.search ).get(
+			'open_plot'
+		);
+		return raw ? Number( raw ) : null;
+	} );
 
 	useEffect( () => {
 		writeTabToUrl( tab );
@@ -52,6 +65,11 @@ export function StorytellerToolkitPage() {
 		capabilities.be_manage_characters && {
 			key: STORYTELLER_TABS.dashboard,
 			label: __( 'Dashboard', 'beyond-elysium' ),
+		},
+		( capabilities.be_manage_plots ||
+			capabilities.be_manage_characters ) && {
+			key: STORYTELLER_TABS.myQueue,
+			label: __( 'My Queue', 'beyond-elysium' ),
 		},
 		capabilities.be_manage_characters && {
 			key: STORYTELLER_TABS.approvalQueue,
@@ -68,6 +86,22 @@ export function StorytellerToolkitPage() {
 		capabilities.be_manage_world_objects && {
 			key: STORYTELLER_TABS.worldObjects,
 			label: __( 'Items & Locations', 'beyond-elysium' ),
+		},
+		capabilities.be_manage_sessions && {
+			key: STORYTELLER_TABS.gameNights,
+			label: __( 'Game Nights', 'beyond-elysium' ),
+		},
+		capabilities.be_manage_plots && {
+			key: STORYTELLER_TABS.releases,
+			label: __( 'Releases', 'beyond-elysium' ),
+		},
+		capabilities.be_manage_plots && {
+			key: STORYTELLER_TABS.downtime,
+			label: __( 'Downtime', 'beyond-elysium' ),
+		},
+		capabilities.be_manage_factions && {
+			key: STORYTELLER_TABS.factions,
+			label: __( 'Factions', 'beyond-elysium' ),
 		},
 	].filter( Boolean ) as Tab[];
 
@@ -123,6 +157,14 @@ export function StorytellerToolkitPage() {
 							/>
 						) }
 
+						{ tab === STORYTELLER_TABS.myQueue && (
+							<StaffQueue
+								key={ gameSlug }
+								gameSlug={ gameSlug }
+								capabilities={ capabilities }
+							/>
+						) }
+
 						{ tab === STORYTELLER_TABS.approvalQueue && (
 							<ApprovalQueue
 								key={ gameSlug }
@@ -135,6 +177,7 @@ export function StorytellerToolkitPage() {
 								key={ gameSlug }
 								gameSlug={ gameSlug }
 								capabilities={ capabilities }
+								initialSelectedPlotId={ openPlotId }
 							/>
 						) }
 
@@ -148,6 +191,37 @@ export function StorytellerToolkitPage() {
 
 						{ tab === STORYTELLER_TABS.worldObjects && (
 							<WorldObjectManager
+								key={ gameSlug }
+								gameSlug={ gameSlug }
+							/>
+						) }
+
+						{ tab === STORYTELLER_TABS.gameNights && (
+							<GameNights
+								key={ gameSlug }
+								gameSlug={ gameSlug }
+								capabilities={ capabilities }
+							/>
+						) }
+
+						{ tab === STORYTELLER_TABS.releases && (
+							<ReleaseBatches
+								key={ gameSlug }
+								gameSlug={ gameSlug }
+								capabilities={ capabilities }
+							/>
+						) }
+
+						{ tab === STORYTELLER_TABS.downtime && (
+							<DowntimeQueue
+								key={ gameSlug }
+								gameSlug={ gameSlug }
+								capabilities={ capabilities }
+							/>
+						) }
+
+						{ tab === STORYTELLER_TABS.factions && (
+							<FactionsAndPositions
 								key={ gameSlug }
 								gameSlug={ gameSlug }
 							/>

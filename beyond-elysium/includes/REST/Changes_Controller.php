@@ -288,6 +288,10 @@ class Changes_Controller extends Base_Controller {
 			if ( $catalog_denied ) {
 				return $catalog_denied;
 			}
+			$faction_denied = $this->faction_capability_denied( $change );
+			if ( $faction_denied ) {
+				return $faction_denied;
+			}
 			$result = Change_Engine::approve( (int) $request['id'], get_current_user_id(), $notes, $token );
 		} else {
 			$result = Change_Engine::reject( (int) $request['id'], get_current_user_id(), $notes, $token );
@@ -482,6 +486,30 @@ class Changes_Controller extends Base_Controller {
 	}
 
 	/**
+	 * The same shape as `catalog_capability_denied()`, for a `propose_faction` change
+	 * (1.1.0 §3.10): approving it writes a new `be_factions` row, which needs
+	 * `be_manage_factions` even from a reviewer who otherwise holds `be_manage_characters`.
+	 * A reviewer without it still sees the row and can reject it - they just cannot approve it.
+	 *
+	 * @param object $change
+	 * @return \WP_Error|null Null when approval may proceed.
+	 */
+	private function faction_capability_denied( $change ) {
+		if ( ( $change->change_type ?? '' ) !== 'propose_faction' ) {
+			return null;
+		}
+		if ( \BeyondElysium\Core\Authorization::can( 'be_manage_factions' ) ) {
+			return null;
+		}
+
+		return $this->error(
+			'faction_capability_denied',
+			__( 'Approving this creates a faction, which needs faction management rights. You can still reject it.', 'beyond-elysium' ),
+			403
+		);
+	}
+
+	/**
 	 * Strips `[ST]`-marked text from every change in a list for a non-manager.
 	 *
 	 * A player reads their own change history, and two of its three free-text
@@ -534,9 +562,10 @@ class Changes_Controller extends Base_Controller {
 				continue;
 			}
 
-			// A catalog-writing proposal in a batch is skipped, not silently approved, when the
-			// reviewer lacks catalog rights - the same gate the single-change route applies.
-			if ( $this->catalog_capability_denied( $change ) ) {
+			// A catalog-writing or faction-creating proposal in a batch is skipped, not
+			// silently approved, when the reviewer lacks the matching rights - the same
+			// gate the single-change route applies.
+			if ( $this->catalog_capability_denied( $change ) || $this->faction_capability_denied( $change ) ) {
 				$skipped[] = $change_id;
 				continue;
 			}

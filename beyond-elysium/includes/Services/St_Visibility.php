@@ -67,6 +67,25 @@ class St_Visibility {
 	}
 
 	/**
+	 * Strips `[ST]...[/ST]`-marked text from an NPC public-profile projection's own
+	 * `public_description` (1.1.0 §3.7) - a narrower sibling of filter_character() for a
+	 * projection object that never carries `rp_notes`/`sheet_data` in the first place, so
+	 * those two redactions would be pointless here.
+	 *
+	 * @param object      $profile
+	 * @param object|null $game
+	 * @param bool        $can_manage
+	 */
+	public static function filter_npc_profile( object $profile, ?object $game, bool $can_manage ): void {
+		if ( $can_manage ) {
+			return;
+		}
+		if ( property_exists( $profile, 'public_description' ) ) {
+			$profile->public_description = St_Filter::strip_html_for_game( (string) ( $profile->public_description ?? '' ), $game->settings ?? null );
+		}
+	}
+
+	/**
 	 * Strips `[ST]...[/ST]`-marked text from a plot in place - its
 	 * `description`, `cliffhanger`, `resolution_details` and
 	 * `resolution_impact`, all four rich text - for anyone who isn't a
@@ -96,6 +115,29 @@ class St_Visibility {
 	}
 
 	/**
+	 * Strips `[ST]...[/ST]`-marked text from a faction's `description` and `goals` in place
+	 * (1.1.0 §3.10, F1) - both are ordinary rich text a Storyteller may still mark with
+	 * `[ST]`, unlike `positions.notes`, which is manager-only in full and never reaches a
+	 * non-manager at all.
+	 *
+	 * @param object      $faction
+	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
+	 * @param bool        $can_manage
+	 */
+	public static function filter_faction( object $faction, ?object $game, bool $can_manage ): void {
+		if ( $can_manage ) {
+			return;
+		}
+
+		$settings = $game->settings ?? null;
+		foreach ( [ 'description', 'goals' ] as $column ) {
+			if ( isset( $faction->$column ) && is_string( $faction->$column ) ) {
+				$faction->$column = St_Filter::strip_html_for_game( $faction->$column, $settings );
+			}
+		}
+	}
+
+	/**
 	 * Strips `[ST]...[/ST]`-marked text from a plot entry's `content` in
 	 * place - every timeline entry, action, response, note and resolution -
 	 * for anyone who isn't a Storyteller of the chronicle.
@@ -111,6 +153,84 @@ class St_Visibility {
 
 		if ( isset( $entry->content ) && is_string( $entry->content ) ) {
 			$entry->content = St_Filter::strip_html_for_game( $entry->content, $game->settings ?? null );
+		}
+	}
+
+	/**
+	 * Strips `[ST]...[/ST]`-marked text from a game session's own `notes` in
+	 * place, for anyone who isn't a Storyteller of the chronicle (1.1.0 §3.1).
+	 *
+	 * @param object      $session
+	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
+	 * @param bool        $can_manage
+	 */
+	public static function filter_session( object $session, ?object $game, bool $can_manage ): void {
+		if ( $can_manage ) {
+			return;
+		}
+
+		if ( isset( $session->notes ) && is_string( $session->notes ) ) {
+			$session->notes = St_Filter::strip_html_for_game( $session->notes, $game->settings ?? null );
+		}
+	}
+
+	/**
+	 * Strips `[ST]...[/ST]`-marked text from an NPC casting's own `brief` in place (1.1.0
+	 * §3.8) - free text a Storyteller writes when casting a member to play an NPC, read by
+	 * that member even though they are very often not a Storyteller themselves, so a marker
+	 * pasted in from elsewhere must still come out.
+	 *
+	 * @param object      $casting
+	 * @param object|null $game
+	 * @param bool        $can_manage
+	 */
+	public static function filter_casting( object $casting, ?object $game, bool $can_manage ): void {
+		if ( $can_manage ) {
+			return;
+		}
+		if ( isset( $casting->brief ) && is_string( $casting->brief ) ) {
+			$casting->brief = St_Filter::strip_for_game( $casting->brief, $game->settings ?? null );
+		}
+	}
+
+	/**
+	 * Strips `[ST]...[/ST]`-marked text from a secret's own `content` in place (1.1.0 §3.11) -
+	 * a Storyteller's own meta-note pasted into a secret's write-up must still come out even
+	 * for a character the secret has genuinely been revealed to, the same reasoning
+	 * `filter_casting()`'s own docblock gives for a casting brief.
+	 *
+	 * @param object      $secret
+	 * @param object|null $game
+	 * @param bool        $can_manage
+	 */
+	public static function filter_secret( object $secret, ?object $game, bool $can_manage ): void {
+		if ( $can_manage ) {
+			return;
+		}
+		if ( isset( $secret->content ) && is_string( $secret->content ) ) {
+			$secret->content = St_Filter::strip_for_game( $secret->content, $game->settings ?? null );
+		}
+	}
+
+	/**
+	 * Strips `[ST]...[/ST]`-marked text from an after-game report's three own fields in place
+	 * (1.1.0 §3.14) - a player's own report never reaches anyone but its own author and staff
+	 * (the route itself never returns another player's report to a non-manager), so this is
+	 * defense in depth rather than a gap this route relies on closing.
+	 *
+	 * @param object    $report
+	 * @param object|null $game
+	 * @param bool      $can_manage
+	 * @return void
+	 */
+	public static function filter_report( object $report, ?object $game, bool $can_manage ): void {
+		if ( $can_manage ) {
+			return;
+		}
+		foreach ( [ 'did', 'wants', 'to_staff' ] as $field ) {
+			if ( isset( $report->$field ) && is_string( $report->$field ) ) {
+				$report->$field = St_Filter::strip_for_game( $report->$field, $game->settings ?? null );
+			}
 		}
 	}
 
@@ -265,9 +385,26 @@ class St_Visibility {
 			return;
 		}
 
-		foreach ( $hidden as $slug ) {
-			unset( $character->sheet_data[ $slug ] );
+		$character->sheet_data = self::filter_sheet_data_blocks( $character->sheet_data, $hidden );
+	}
+
+	/**
+	 * Removes every listed block's stored values from a `sheet_data` array, minus any named
+	 * in `$allow_blocks` - the NPC casting brief's own carve-out (1.1.0 §3.8): a cast player
+	 * reads `npc-roleplaying-notes` (normally Storyteller-only) alongside everything else in
+	 * that one projection, so it must survive the same pass that hides every other
+	 * Storyteller-only block. `strip_blocks()` above is this with an empty `$allow_blocks`.
+	 *
+	 * @param array<string,mixed> $sheet_data
+	 * @param array<string>       $hidden
+	 * @param array<string>       $allow_blocks
+	 * @return array<string,mixed>
+	 */
+	public static function filter_sheet_data_blocks( array $sheet_data, array $hidden, array $allow_blocks = [] ): array {
+		foreach ( array_diff( $hidden, $allow_blocks ) as $slug ) {
+			unset( $sheet_data[ $slug ] );
 		}
+		return $sheet_data;
 	}
 
 	/**
@@ -285,14 +422,17 @@ class St_Visibility {
 	 *                                     omit for a fresh lookup. Also lets this be exercised
 	 *                                     as a pure unit test, since `storyteller_only_slugs()`
 	 *                                     itself reads `$wpdb`.
+	 * @param array<string>       $allow_blocks A Storyteller-only block to keep visible anyway -
+	 *                                     the NPC casting brief's own carve-out (1.1.0 §3.8),
+	 *                                     used only there; every other caller leaves this empty.
 	 * @return array<string,mixed>
 	 */
-	public static function filter_layout( array $layout, bool $can_manage, string $game_slug, ?array $hidden = null ): array {
+	public static function filter_layout( array $layout, bool $can_manage, string $game_slug, ?array $hidden = null, array $allow_blocks = [] ): array {
 		if ( $can_manage || ! isset( $layout['sections'] ) || ! is_array( $layout['sections'] ) ) {
 			return $layout;
 		}
 
-		$hidden = $hidden ?? Schema_Block::storyteller_only_slugs( $game_slug );
+		$hidden = array_diff( $hidden ?? Schema_Block::storyteller_only_slugs( $game_slug ), $allow_blocks );
 		if ( empty( $hidden ) ) {
 			return $layout;
 		}

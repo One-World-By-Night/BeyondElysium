@@ -9,7 +9,10 @@ use BeyondElysium\Models\Snapshot;
 use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Connection;
+use BeyondElysium\Models\Faction;
+use BeyondElysium\Models\Faction_Member;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Item_Event;
 use BeyondElysium\Models\World_Object;
 
 defined( 'ABSPATH' ) || exit;
@@ -204,6 +207,21 @@ class Change_Engine {
 			return true;
 		}
 
+		// A proposed faction is not sheet data either (1.1.0 F1) - approving it writes a
+		// be_factions row and its proposer as leader, in the same savepoint as everything else.
+		if ( $change->change_type === 'propose_faction' ) {
+			if ( ! self::create_proposed_faction( $character, $change ) ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			if ( ! Change::update_status( $change_id, 'approved', $reviewed_by, $notes ) ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			Transaction::commit( $savepoint );
+			return true;
+		}
+
 		// Apply change to sheet_data.
 		$new_sheet = self::apply_to_sheet( $character, $change );
 		$written   = Character::update_sheet_data( (int) $character->id, $new_sheet );
@@ -333,7 +351,7 @@ class Change_Engine {
 			return false;
 		}
 
-		return (bool) Connection::create( [
+		$connected = (bool) Connection::create( [
 			'game_id'     => (int) $game->id,
 			'source_type' => 'character',
 			'source_id'   => (int) $character->id,
@@ -341,6 +359,59 @@ class Change_Engine {
 			'target_id'   => (int) $object_id,
 			'label'       => 'owns',
 		] );
+
+		// 1.1.0 §3.12 item 3 - a proposed item's own approval is the one 'proposed' item event;
+		// a proposed location/rote carries no history at all (Item_Event is items-only).
+		if ( $connected && ( $data['object_type'] ?? '' ) === 'item' ) {
+			Item_Event::record( [
+				'game_id'         => (int) $game->id,
+				'world_object_id' => (int) $object_id,
+				'event'           => 'proposed',
+				'character_id'    => (int) $character->id,
+				'recorded_by'     => (int) ( $change->submitted_by ?? 0 ),
+			] );
+		}
+
+		return $connected;
+	}
+
+	/**
+	 * Writes an approved faction proposal (1.1.0 §3.10): the faction row itself
+	 * (`active`, `audience = restricted`, `created_via_proposal = 1`), then the proposer
+	 * as a leader member - never a `Connection`, since faction membership is its own join
+	 * table (`Faction_Member`'s own docblock explains why). Both halves or neither, the
+	 * same discipline `create_proposed_object()` already establishes.
+	 *
+	 * @param object $character The proposing character.
+	 * @param object $change
+	 * @return bool
+	 */
+	private static function create_proposed_faction( $character, $change ): bool {
+		$data = is_array( $change->change_data ) ? $change->change_data : [];
+
+		$game = Game::find_by_slug( (string) $character->owner_slug );
+		if ( ! $game ) {
+			return false;
+		}
+
+		$submitted_by = (int) ( $change->submitted_by ?? 0 );
+
+		$faction_id = Faction::create( [
+			'game_id'              => (int) $game->id,
+			'name'                 => $data['name'] ?? '',
+			'faction_type'         => $data['faction_type'] ?? 'other',
+			'description'          => $data['description'] ?? null,
+			'goals'                => $data['goals'] ?? null,
+			'audience'             => 'restricted',
+			'created_via_proposal' => true,
+			'created_by'           => $submitted_by,
+		] );
+
+		if ( ! $faction_id ) {
+			return false;
+		}
+
+		return (bool) Faction_Member::add( (int) $faction_id, (int) $character->id, $submitted_by, true );
 	}
 
 	public static function apply_to_sheet( $character, $change ): array {
@@ -454,6 +525,17 @@ class Change_Engine {
 			if ( \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) ) {
 				return [ 'level' => 'auto', 'reason' => null ];
 			}
+			return [ 'level' => 'st', 'reason' => null ];
+		}
+
+		// 1.1.0 F1: a faction proposal carries no block_slug, so nothing below this line
+		// would ever set $level - it would fall all the way through to the chronicle's own
+		// auto_approve default and, on such a chronicle, submit() would approve() it
+		// immediately with no capability check at all (the same latent gap logged as D63
+		// for propose_world_object - out of scope to fix here, but not one to repeat).
+		// Always 'st': the design's own "an HST approves it from the Approval Queue" is a
+		// real requirement, not just the common case.
+		if ( $change->change_type === 'propose_faction' ) {
 			return [ 'level' => 'st', 'reason' => null ];
 		}
 

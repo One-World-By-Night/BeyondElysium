@@ -26,15 +26,25 @@ export const PLAYER_TABS = {
 	reports: 'reports',
 	sendFile: 'send-file',
 	proposeItem: 'propose-item',
+	proposeFaction: 'propose-faction',
+	whosWho: 'whos-who',
+	whatIKnow: 'what-i-know',
+	myGroups: 'my-groups',
+	afterGameReport: 'after-game-report',
 } as const;
 
 /** Tab keys for the Storyteller Toolkit page. */
 export const STORYTELLER_TABS = {
 	dashboard: 'dashboard',
+	myQueue: 'my-queue',
 	approvalQueue: 'approval-queue',
 	plots: 'plots',
 	boonLedger: 'boon-ledger',
 	worldObjects: 'world-objects',
+	gameNights: 'game-nights',
+	releases: 'releases',
+	downtime: 'downtime',
+	factions: 'factions',
 } as const;
 
 /** Builds the absolute URL of a provisioned plugin page from its slug. */

@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\Tests\Thread;
 
+use BeyondElysium\Models\Character;
 use WP_REST_Request;
 use WP_UnitTestCase;
 
@@ -43,6 +44,20 @@ class PlotsControllerTest extends WP_UnitTestCase {
 		return $player;
 	}
 
+	/**
+	 * A real character for a player, owned by them - 1.1.0 §2.3a requires a real
+	 * character_id to create a player plot, matching D33's own ownership rule.
+	 */
+	private function make_character( int $wp_user_id ): int {
+		return (int) Character::create( [
+			'name'       => 'Fixture Character',
+			'stack_slug' => 'vampire',
+			'owner_slug' => $this->game_slug,
+			'wp_user_id' => $wp_user_id,
+			'created_by' => $wp_user_id,
+		] );
+	}
+
 	private function dispatch( WP_REST_Request $request ) {
 		return rest_get_server()->dispatch( $request );
 	}
@@ -62,11 +77,13 @@ class PlotsControllerTest extends WP_UnitTestCase {
 	}
 
 	public function test_player_cannot_set_initiated_by_status_or_st_notes(): void {
-		$player = $this->make_player();
+		$player      = $this->make_player();
+		$character_id = $this->make_character( $player );
 		wp_set_current_user( $player );
 
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots" );
 		$request->set_param( 'title', 'Player Plot' );
+		$request->set_param( 'character_id', $character_id );
 		$request->set_param( 'initiated_by', 'st' );
 		$request->set_param( 'status', 'archived' );
 		$request->set_param( 'st_notes', 'sneaky' );
@@ -87,6 +104,11 @@ class PlotsControllerTest extends WP_UnitTestCase {
 		$create = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots" );
 		$create->set_param( 'title', 'Plot With A Note' );
 		$create->set_param( 'st_notes', 'top secret' );
+		// This test is about st_notes/note-entry visibility specifically, orthogonal to the
+		// 1.1.0 audience system - a new global plot defaults to storytellers-only, which
+		// would hide the whole plot from the unrelated player below before either assertion
+		// ever ran.
+		$create->set_param( 'audience', 'everyone' );
 		$plot_id = $this->dispatch( $create )->get_data()->id;
 
 		$note = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots/{$plot_id}/entries" );
@@ -133,12 +155,14 @@ class PlotsControllerTest extends WP_UnitTestCase {
 	}
 
 	public function test_player_cannot_edit_action_after_st_response(): void {
-		$st     = self::factory()->user->create( [ 'role' => 'administrator' ] );
-		$player = $this->make_player();
+		$st          = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$player      = $this->make_player();
+		$character_id = $this->make_character( $player );
 
 		wp_set_current_user( $player );
 		$create  = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots" );
 		$create->set_param( 'title', 'Response Locking Plot' );
+		$create->set_param( 'character_id', $character_id );
 		$plot_id = $this->dispatch( $create )->get_data()->id;
 
 		$action_req = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots/{$plot_id}/entries" );
@@ -256,11 +280,13 @@ class PlotsControllerTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_player_cannot_tag_their_own_plot_as_a_rumor(): void {
-		$player = $this->make_player();
+		$player      = $this->make_player();
+		$character_id = $this->make_character( $player );
 		wp_set_current_user( $player );
 
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots" );
 		$request->set_param( 'title', 'Player Attempted Rumor' );
+		$request->set_param( 'character_id', $character_id );
 		$request->set_param( 'is_rumor', true );
 		$plot_id = $this->dispatch( $request )->get_data()->id;
 
@@ -331,12 +357,17 @@ class PlotsControllerTest extends WP_UnitTestCase {
 		wp_set_current_user( $st );
 		$plot_req = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots" );
 		$plot_req->set_param( 'title', 'Parent Plot' );
+		// This test is about children inheriting the parent's st_notes-stripping, orthogonal
+		// to the 1.1.0 audience system - a new global plot defaults to storytellers-only,
+		// which would hide the parent from the unrelated player below entirely.
+		$plot_req->set_param( 'audience', 'everyone' );
 		$plot_id = $this->dispatch( $plot_req )->get_data()->id;
 
 		$child_req = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots" );
 		$child_req->set_param( 'title', 'Child With Secret Notes' );
 		$child_req->set_param( 'parent_plot_id', $plot_id );
 		$child_req->set_param( 'st_notes', 'ST eyes only' );
+		$child_req->set_param( 'audience', 'everyone' );
 		$this->dispatch( $child_req );
 
 		wp_set_current_user( $player );

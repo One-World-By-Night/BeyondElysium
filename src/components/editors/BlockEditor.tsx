@@ -32,8 +32,10 @@ export interface BlockEditorProps {
 	readOnly?: boolean;
 	/** The character's full sheet_data, used to resolve a pool's display name from another block's value. */
 	sheetData?: Record< string, unknown >;
-	/** Only consumed by identity_field's own textarea fields, for their AI Assist button (ai-writing-assist-design.md). */
+	/** Consumed by identity_field's own textarea fields (AI Assist) and a player_order block's "Save order" call (1.1.0 D4). */
 	gameSlug?: string;
+	/** Needed only for a player_order block's "Save order" call (1.1.0 D4). */
+	characterId?: number;
 }
 
 /**
@@ -52,6 +54,7 @@ export function BlockEditor( {
 	readOnly,
 	sheetData,
 	gameSlug,
+	characterId,
 }: BlockEditorProps ) {
 	switch ( sectionType ) {
 		case 'trait_list':
@@ -67,6 +70,8 @@ export function BlockEditor( {
 						) => void
 					}
 					readOnly={ readOnly }
+					gameSlug={ gameSlug }
+					characterId={ characterId }
 				/>
 			);
 
@@ -84,6 +89,8 @@ export function BlockEditor( {
 					}
 					costFor={ costFor }
 					readOnly={ readOnly }
+					gameSlug={ gameSlug }
+					characterId={ characterId }
 				/>
 			);
 

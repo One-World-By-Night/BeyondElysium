@@ -160,12 +160,39 @@ describe( 'traditionOptionsFor (0.99.2 Blood magic, BM-4)', () => {
 		sequential: false,
 	};
 
-	it( "narrows to a power's own real offering traditions, not the whole block's list", () => {
+	it( "puts a power's own real offering traditions first, but never narrows to just them (1.1.0 D5 - the Hunter's Wind/Dur An Ki bug)", () => {
 		expect( traditionOptionsFor( bloodMagic, 'Path of Blood' ) ).toEqual( [
 			'Akhu',
 			'Necromancy',
 			'Wanga',
+			'Bacaban',
+			'Sadhana',
 		] );
+	} );
+
+	it( "returns the whole block list, own traditions first, for a real Hunter's Wind/Dur An Ki shape", () => {
+		const vampireBloodMagic: TieredPowerDefinition = {
+			blood_magic: true,
+			traditions: [ 'Dur An Ki', 'Thaumaturgy (Camarilla)', 'Wanga' ],
+			powers: [
+				{
+					name: "Hunter's Wind",
+					traditions: { 'Thaumaturgy (Camarilla)': null },
+					levels: [
+						{
+							level: 1,
+							tier: 'basic',
+							power_name: 'Catch the Scent',
+						},
+					],
+				},
+			],
+			sequential: false,
+		};
+
+		expect(
+			traditionOptionsFor( vampireBloodMagic, "Hunter's Wind" )
+		).toEqual( [ 'Thaumaturgy (Camarilla)', 'Dur An Ki', 'Wanga' ] );
 	} );
 
 	it( "falls back to the block's own traditions list for a power not in the catalog (a custom pick)", () => {
