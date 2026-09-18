@@ -11,32 +11,13 @@ import type { MouseEvent } from 'react';
 import api from '../../api/client';
 import { helpTarget } from '../../lib/helpPage';
 import { useHelpStore } from '../../store/helpStore';
+import { errorMessage } from '../../lib/errorMessage';
 import HelpButton from '../shared/HelpButton';
 import HelpPanel from '../shared/HelpPanel';
 import './Admin.css';
 import './AdminDocs.css';
 
 type DocSlug = 'st-guide' | 'admin-guide' | 'player-guide' | 'rest-api';
-
-interface RestError {
-	message?: string;
-}
-
-/**
- * Extracts a human-readable message from a caught error value.
- * Falls back to a generic message when the error has no usable
- * `message` property.
- */
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Failed to load this document.', 'beyond-elysium' );
-}
 
 const TABS: { slug: DocSlug; label: string }[] = [
 	{ slug: 'st-guide', label: __( 'Storyteller Guide', 'beyond-elysium' ) },
@@ -107,7 +88,12 @@ export function AdminDocs() {
 				setLoading( false );
 			} )
 			.catch( ( err: unknown ) => {
-				setError( errorMessage( err ) );
+				setError(
+					errorMessage(
+						err,
+						__( 'Failed to load this document.', 'beyond-elysium' )
+					)
+				);
 				setLoading( false );
 			} );
 		// eslint-disable-next-line react-hooks/exhaustive-deps

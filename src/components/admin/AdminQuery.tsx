@@ -5,11 +5,10 @@
  * shared QueryTool widget for the selected game. Exports AdminQuery as
  * both a named and default export for use on the Beyond Elysium admin menu.
  */
-import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import api from '../../api/client';
 import QueryTool from '../query/QueryTool';
-import type { Game } from '../../types';
+import { useAdminGameSelector } from '../../lib/useAdminGameSelector';
+import { GameFilterBar } from './GameFilterBar';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
@@ -20,22 +19,7 @@ import './Admin.css';
  * and a message prompting game creation when none exist.
  */
 export function AdminQuery() {
-	const [ games, setGames ] = useState< Game[] >( [] );
-	const [ gameSlug, setGameSlug ] = useState( '' );
-	const [ loading, setLoading ] = useState( true );
-
-	useEffect( () => {
-		api.games
-			.list()
-			.then( ( result ) => {
-				setGames( result );
-				if ( result.length > 0 ) {
-					setGameSlug( result[ 0 ].slug );
-				}
-				setLoading( false );
-			} )
-			.catch( () => setLoading( false ) );
-	}, [] );
+	const { games, gameSlug, setGameSlug, loading } = useAdminGameSelector();
 
 	return (
 		<div className="be-admin">
@@ -44,38 +28,14 @@ export function AdminQuery() {
 				<HelpButton helpKey="query-tool" />
 			</div>
 
-			{ loading ? (
-				<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
-			) : games.length === 0 ? (
-				<p>
-					{ __(
-						'No games exist yet - create one under Beyond Elysium → System Config → Games first.',
-						'beyond-elysium'
-					) }
-				</p>
-			) : (
-				<>
-					<div className="be-admin__filters">
-						<label>
-							{ __( 'Game', 'beyond-elysium' ) }{ ' ' }
-							<select
-								value={ gameSlug }
-								onChange={ ( e ) =>
-									setGameSlug( e.target.value )
-								}
-							>
-								{ games.map( ( g ) => (
-									<option key={ g.slug } value={ g.slug }>
-										{ g.name }
-									</option>
-								) ) }
-							</select>
-						</label>
-					</div>
-
-					{ gameSlug && <QueryTool gameSlug={ gameSlug } /> }
-				</>
-			) }
+			<GameFilterBar
+				games={ games }
+				gameSlug={ gameSlug }
+				onGameChange={ setGameSlug }
+				loading={ loading }
+			>
+				{ gameSlug && <QueryTool gameSlug={ gameSlug } /> }
+			</GameFilterBar>
 		</div>
 	);
 }

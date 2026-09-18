@@ -20,20 +20,7 @@ import type { Game } from '../../types';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
-interface RestError {
-	message?: string;
-}
-
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
-}
+import { errorMessage } from '../../lib/errorMessage';
 
 type DisplayProvider = 'openai' | 'claude' | 'self_hosted';
 
@@ -67,7 +54,14 @@ export function AdminAiAssistChronicle() {
 					setGameSlug( found[ 0 ].slug );
 				}
 			} )
-			.catch( ( err: unknown ) => setError( errorMessage( err ) ) );
+			.catch( ( err: unknown ) =>
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				)
+			);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [] );
 
@@ -87,7 +81,14 @@ export function AdminAiAssistChronicle() {
 						result.openai_model !== '' );
 				setDisplay( isSelfHosted ? 'self_hosted' : result.provider );
 			} )
-			.catch( ( err: unknown ) => setError( errorMessage( err ) ) );
+			.catch( ( err: unknown ) =>
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				)
+			);
 	}, [ gameSlug ] );
 
 	async function toggleEnabled( enabled: boolean ) {
@@ -101,7 +102,12 @@ export function AdminAiAssistChronicle() {
 				await api.aiAssist( gameSlug ).updateSettings( { enabled } )
 			);
 		} catch ( err ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSaving( false );
 		}
@@ -118,7 +124,12 @@ export function AdminAiAssistChronicle() {
 				} )
 			);
 		} catch ( err ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSaving( false );
 		}
@@ -161,7 +172,12 @@ export function AdminAiAssistChronicle() {
 			setSelfHostedKey( '' );
 			setMessage( __( 'Saved.', 'beyond-elysium' ) );
 		} catch ( err ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSaving( false );
 		}
@@ -181,7 +197,12 @@ export function AdminAiAssistChronicle() {
 					)
 			);
 		} catch ( err ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSaving( false );
 		}
@@ -223,7 +244,10 @@ export function AdminAiAssistChronicle() {
 			setTestResult( {
 				which: display,
 				ok: false,
-				message: errorMessage( err ),
+				message: errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				),
 			} );
 		} finally {
 			setTesting( null );

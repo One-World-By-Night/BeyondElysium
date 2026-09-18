@@ -13,28 +13,9 @@ import type {
 	CreatureStack,
 	StackDefinition,
 } from '../../types';
+import { errorMessage } from '../../lib/errorMessage';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
-
-interface RestError {
-	message?: string;
-}
-
-/**
- * Extracts a human-readable message from a caught error value.
- * Falls back to a generic message when the error has no usable
- * `message` property.
- */
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
-}
 
 const EMPTY_FORM = {
 	slug: '',
@@ -75,7 +56,12 @@ export function AdminCreatureStacks() {
 				setLoading( false );
 			} )
 			.catch( ( err: unknown ) => {
-				setError( errorMessage( err ) );
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				);
 				setLoading( false );
 			} );
 	}
@@ -144,7 +130,12 @@ export function AdminCreatureStacks() {
 			cancel();
 			load();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSaving( false );
 		}
@@ -172,7 +163,12 @@ export function AdminCreatureStacks() {
 			await api.creatureStacks.delete( stack.slug );
 			load();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 

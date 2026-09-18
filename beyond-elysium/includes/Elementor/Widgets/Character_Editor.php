@@ -3,13 +3,12 @@
 namespace BeyondElysium\Elementor\Widgets;
 
 use Elementor\Controls_Manager;
-use Elementor\Widget_Base;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Elementor widget wrapper for the Character Editor. Registers the widget's
- * name, title, icon, and category with Elementor, exposes Content section
+ * name, title, and icon with Elementor, exposes Content section
  * controls for the target game slug, an optional character ID, and an
  * optional creature stack slug, and renders a single mount-point <div> that
  * the front-end script hydrates with the CharacterEditor React component.
@@ -18,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @see BE_PROCESS/releases/workflow-0.4.md Step 7a
  */
-class Character_Editor extends Widget_Base {
+class Character_Editor extends Base_Widget {
 
 	/**
 	 * Returns the internal widget name Elementor uses to identify this
@@ -45,18 +44,6 @@ class Character_Editor extends Widget_Base {
 	 */
 	public function get_icon(): string {
 		return 'eicon-form-horizontal';
-	}
-
-	/**
-	 * Returns the Elementor category slugs this widget belongs to, which
-	 * controls where it appears in the widget panel. Every Beyond Elysium
-	 * widget belongs to the single "beyond-elysium" category that Init
-	 * registers.
-	 *
-	 * @return string[]
-	 */
-	public function get_categories(): array {
-		return [ 'beyond-elysium' ];
 	}
 
 	/**
@@ -103,34 +90,40 @@ class Character_Editor extends Widget_Base {
 			),
 		] );
 
+		$this->add_control( 'template_type', [
+			'label'       => __( 'Template Type', 'beyond-elysium' ),
+			'type'        => Controls_Manager::SELECT,
+			'default'     => 'sheet_full',
+			'options'     => [
+				'sheet_full'    => __( 'Full Sheet', 'beyond-elysium' ),
+				'sheet_compact' => __( 'Compact Sheet', 'beyond-elysium' ),
+				'sheet_mobile'  => __( 'Mobile Sheet', 'beyond-elysium' ),
+			],
+			'description' => __(
+				'An NPC always edits against its own npc_full/npc_quick template regardless of this setting.',
+				'beyond-elysium'
+			),
+		] );
+
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Outputs the widget's front-end markup. Resolves the character ID from
-	 * either the widget setting or a character_id URL query var, builds a
-	 * configuration array from that ID plus the widget's other settings,
-	 * then prints a single empty <div> carrying the React mount-point
-	 * attribute and the config as a JSON-encoded data attribute.
-	 */
-	protected function render(): void {
-		$settings = $this->get_settings_for_display();
+	protected function widget_slug(): string {
+		return 'character-editor';
+	}
 
+	/** Resolves the character ID from the widget setting or a character_id URL query var. */
+	protected function widget_config( array $settings ): array {
 		$character_id = (int) $settings['character_id'];
 		if ( $character_id === 0 && isset( $_GET['character_id'] ) ) {
 			$character_id = absint( wp_unslash( $_GET['character_id'] ) );
 		}
 
-		$config = [
-			'characterId' => $character_id,
-			'gameSlug'    => $settings['game_slug'],
-			'stackSlug'   => $settings['stack_slug'],
+		return [
+			'characterId'  => $character_id,
+			'gameSlug'     => $settings['game_slug'],
+			'stackSlug'    => $settings['stack_slug'],
+			'templateType' => $settings['template_type'],
 		];
-
-		printf(
-			'<div data-be-widget="%s" data-be-config="%s"></div>',
-			esc_attr( 'character-editor' ),
-			esc_attr( (string) wp_json_encode( $config ) )
-		);
 	}
 }

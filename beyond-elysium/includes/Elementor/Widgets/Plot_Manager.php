@@ -3,21 +3,20 @@
 namespace BeyondElysium\Elementor\Widgets;
 
 use Elementor\Controls_Manager;
-use Elementor\Widget_Base;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Elementor widget wrapper for the Plot Manager, the Storyteller dashboard
  * for browsing plots, managing connections, allocating actions, and
- * generating rumors. Registers the widget's name, title, icon, and category
+ * generating rumors. Registers the widget's name, title, and icon
  * with Elementor, exposes Content section controls for the target game slug
  * and a default status filter, and renders a single mount-point <div> that
  * the front-end script hydrates with the PlotManager React component.
  *
  * @see BE_PROCESS/releases/workflow-0.5.md Step 7a
  */
-class Plot_Manager extends Widget_Base {
+class Plot_Manager extends Base_Widget {
 
 	/**
 	 * Returns the internal widget name Elementor uses to identify this
@@ -44,18 +43,6 @@ class Plot_Manager extends Widget_Base {
 	 */
 	public function get_icon(): string {
 		return 'eicon-post-list';
-	}
-
-	/**
-	 * Returns the Elementor category slugs this widget belongs to, which
-	 * controls where it appears in the widget panel. Every Beyond Elysium
-	 * widget belongs to the single "beyond-elysium" category that Init
-	 * registers.
-	 *
-	 * @return string[]
-	 */
-	public function get_categories(): array {
-		return [ 'beyond-elysium' ];
 	}
 
 	/**
@@ -97,25 +84,16 @@ class Plot_Manager extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Outputs the widget's front-end markup. Builds a configuration array
-	 * from this widget's Elementor settings, adding a defaultStatus entry
-	 * only when a filter was chosen, then prints a single empty <div>
-	 * carrying the React mount-point attribute and the config as a
-	 * JSON-encoded data attribute.
-	 */
-	protected function render(): void {
-		$settings = $this->get_settings_for_display();
+	protected function widget_slug(): string {
+		return 'plot-manager';
+	}
 
+	/** Adds a defaultStatus entry only when a filter was chosen. */
+	protected function widget_config( array $settings ): array {
 		$config = [ 'gameSlug' => $settings['game_slug'] ];
 		if ( ! empty( $settings['default_status'] ) ) {
 			$config['defaultStatus'] = $settings['default_status'];
 		}
-
-		printf(
-			'<div data-be-widget="%s" data-be-config="%s"></div>',
-			esc_attr( 'plot-manager' ),
-			esc_attr( (string) wp_json_encode( $config ) )
-		);
+		return $config;
 	}
 }

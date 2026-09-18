@@ -26,27 +26,8 @@ import type {
 	TieredPower,
 	TraitListItem,
 } from '../../types';
+import { errorMessage } from '../../lib/errorMessage';
 import './Admin.css';
-
-interface RestError {
-	message?: string;
-}
-
-/**
- * Extracts a human-readable message from a caught error value.
- * Falls back to a generic message when the error has no usable
- * `message` property.
- */
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
-}
 
 const EMPTY_FORM: ApprovalRuleRequest = {
 	block_slug: '',
@@ -130,7 +111,14 @@ export function AdminApprovalRules() {
 					found[ 0 ];
 				setGameSlug( preselect.slug );
 			} )
-			.catch( ( err: unknown ) => setError( errorMessage( err ) ) );
+			.catch( ( err: unknown ) =>
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				)
+			);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [] );
 
@@ -161,7 +149,14 @@ export function AdminApprovalRules() {
 				);
 				setError( null );
 			} )
-			.catch( ( err: unknown ) => setError( errorMessage( err ) ) )
+			.catch( ( err: unknown ) =>
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				)
+			)
 			.finally( () => setLoading( false ) );
 	}, [ gameSlug ] );
 
@@ -225,7 +220,12 @@ export function AdminApprovalRules() {
 				.setDefaultPolicy( auto );
 			setAutoApproveByDefault( policy.auto_approve );
 		} catch ( err ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSavingDefault( false );
 		}
@@ -257,7 +257,12 @@ export function AdminApprovalRules() {
 			setRules( refreshed );
 			startCreate();
 		} catch ( err ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSaving( false );
 		}
@@ -275,7 +280,12 @@ export function AdminApprovalRules() {
 			await api.approvalRules( gameSlug ).remove( rule.id );
 			setRules( ( prev ) => prev.filter( ( r ) => r.id !== rule.id ) );
 		} catch ( err ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 

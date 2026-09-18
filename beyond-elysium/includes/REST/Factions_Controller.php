@@ -86,6 +86,11 @@ class Factions_Controller extends Base_Controller {
 				'callback'            => [ $this, 'remove_member' ],
 				'permission_callback' => $this->permission( 'be_view_characters' ),
 			],
+			[
+				'methods'             => 'PATCH',
+				'callback'            => [ $this, 'update_member' ],
+				'permission_callback' => $this->permission( 'be_view_characters' ),
+			],
 		] );
 
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/positions', [
@@ -296,17 +301,27 @@ class Factions_Controller extends Base_Controller {
 			return $this->error( 'roster_denied', __( 'Only a member or a Storyteller may see this faction\'s roster.', 'beyond-elysium' ), 403 );
 		}
 
-		return $this->success( array_map( static function ( $member ) {
-			$character = Character::find( (int) $member->character_id );
-			return [
-				'id'            => (int) $member->id,
-				'character_id'  => (int) $member->character_id,
-				'character_name' => $character->name ?? null,
-				'rank'          => $member->member_rank,
-				'is_leader'     => (bool) $member->is_leader,
-				'created_at'    => $member->created_at,
-			];
-		}, Faction_Member::for_faction( (int) $faction->id ) ) );
+		return $this->success( array_map( [ $this, 'project_member' ], Faction_Member::for_faction( (int) $faction->id ) ) );
+	}
+
+	/**
+	 * The member roster's own display shape - `rank` for the model's `member_rank` column,
+	 * plus the character's current name. Shared by `get_members()` and `update_member()` so
+	 * both return the identical shape.
+	 *
+	 * @param object $member
+	 * @return array<string,mixed>
+	 */
+	private function project_member( object $member ): array {
+		$character = Character::find( (int) $member->character_id );
+		return [
+			'id'              => (int) $member->id,
+			'character_id'    => (int) $member->character_id,
+			'character_name'  => $character->name ?? null,
+			'rank'            => $member->member_rank,
+			'is_leader'       => (bool) $member->is_leader,
+			'created_at'      => $member->created_at,
+		];
 	}
 
 	/**
@@ -405,6 +420,52 @@ class Factions_Controller extends Base_Controller {
 		}
 
 		return $this->success( null, 204 );
+	}
+
+	/**
+	 * Sets a member's rank and/or leader flag. A leader or a Storyteller may set `rank` -
+	 * the same gate as inviting or removing a member. Only a Storyteller may change
+	 * `is_leader` - granting or revoking leadership is a bigger structural change than a
+	 * plain internal title, and §3.10's "a leader can't act on another leader" rule already
+	 * puts leadership changes out of a leader's own reach for removal; this keeps the same
+	 * boundary for promotion and demotion.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function update_member( $request ) {
+		$resolved = $this->resolve_visible_faction( $request );
+		if ( is_wp_error( $resolved ) ) {
+			return $resolved;
+		}
+		[ $faction, $can_manage ] = $resolved;
+		$character_id = (int) $request['character_id'];
+
+		$target = Faction_Member::find_for( (int) $faction->id, $character_id );
+		if ( ! $target ) {
+			return $this->error( 'member_not_found', __( 'This character is not a member of this faction.', 'beyond-elysium' ), 404 );
+		}
+
+		if ( ! $can_manage && ! $this->is_leader( (int) $faction->id, $request['game_slug'] ) ) {
+			return $this->error( 'ownership_denied', __( 'Only a leader or a Storyteller may update a member.', 'beyond-elysium' ), 403 );
+		}
+
+		if ( $request->get_param( 'is_leader' ) !== null ) {
+			if ( ! $can_manage ) {
+				return $this->error( 'ownership_denied', __( 'Only a Storyteller may change a member\'s leader status.', 'beyond-elysium' ), 403 );
+			}
+			if ( ! Faction_Member::set_leader( (int) $faction->id, $character_id, (bool) $request->get_param( 'is_leader' ) ) ) {
+				return $this->error( 'update_failed', __( 'Could not update this member - a faction needs at least one leader.', 'beyond-elysium' ), 400 );
+			}
+		}
+
+		if ( $request->get_param( 'rank' ) !== null || ( is_array( $request->get_json_params() ) && array_key_exists( 'rank', $request->get_json_params() ) ) ) {
+			$rank = $request->get_param( 'rank' );
+			Faction_Member::set_rank( (int) $faction->id, $character_id, $rank !== null ? sanitize_text_field( (string) $rank ) : null );
+		}
+
+		$updated = Faction_Member::find_for( (int) $faction->id, $character_id );
+		return $this->success( $updated ? $this->project_member( $updated ) : null );
 	}
 
 	// --- Positions ----------------------------------------------------------------

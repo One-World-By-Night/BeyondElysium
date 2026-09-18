@@ -90,8 +90,8 @@
 	margin-bottom: 0.25rem;
 }
 
-.be-faction-manager__rank {
-	color: #666;
+.be-faction-manager__members .be-faction-manager__rank-input {
+	width: 8em;
 	font-size: 0.85em;
 }
 

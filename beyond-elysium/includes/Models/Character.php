@@ -86,34 +86,8 @@ class Character {
 	 */
 	public static function all_for_game( string $game_slug, array $args = [] ): array {
 		global $wpdb;
-		$table  = Manager::table( 'characters' );
-		$where  = [ "owner_type = 'chronicle'", 'owner_slug = %s' ];
-		$values = [ $game_slug ];
-
-		if ( ! empty( $args['status'] ) ) {
-			$where[]  = 'status = %s';
-			$values[] = $args['status'];
-		}
-
-		if ( ! empty( $args['stack_slug'] ) ) {
-			$where[]  = 'stack_slug = %s';
-			$values[] = $args['stack_slug'];
-		}
-
-		if ( isset( $args['is_npc'] ) && $args['is_npc'] !== '' ) {
-			$where[]  = 'is_npc = %d';
-			$values[] = (int) $args['is_npc'];
-		}
-
-		if ( ! empty( $args['wp_user_id'] ) ) {
-			$where[]  = 'wp_user_id = %d';
-			$values[] = (int) $args['wp_user_id'];
-		}
-
-		if ( ! empty( $args['search'] ) ) {
-			$where[]  = 'name LIKE %s';
-			$values[] = '%' . $wpdb->esc_like( $args['search'] ) . '%';
-		}
+		$table = Manager::table( 'characters' );
+		[ $where, $values ] = self::build_where( $game_slug, $args );
 
 		$sql = 'SELECT * FROM ' . $table . ' WHERE ' . implode( ' AND ', $where );
 
@@ -144,7 +118,26 @@ class Character {
 	 */
 	public static function count_for_game( string $game_slug, array $args = [] ): int {
 		global $wpdb;
-		$table  = Manager::table( 'characters' );
+		$table = Manager::table( 'characters' );
+		[ $where, $values ] = self::build_where( $game_slug, $args );
+
+		$sql = 'SELECT COUNT(*) FROM ' . $table . ' WHERE ' . implode( ' AND ', $where );
+		$sql = $wpdb->prepare( $sql, $values );
+		return (int) $wpdb->get_var( $sql );
+	}
+
+	/**
+	 * The shared WHERE-clause builder behind `all_for_game()` and `count_for_game()` -
+	 * both accept the identical filter vocabulary (status, stack, NPC flag, owning user,
+	 * name search) and had built it twice, byte-for-byte, until this was extracted
+	 * (1.1.1 audit).
+	 *
+	 * @param string $game_slug
+	 * @param array  $args
+	 * @return array{0: string[], 1: array<int,mixed>} `[$where_clauses, $bind_values]`.
+	 */
+	private static function build_where( string $game_slug, array $args ): array {
+		global $wpdb;
 		$where  = [ "owner_type = 'chronicle'", 'owner_slug = %s' ];
 		$values = [ $game_slug ];
 
@@ -173,9 +166,7 @@ class Character {
 			$values[] = '%' . $wpdb->esc_like( $args['search'] ) . '%';
 		}
 
-		$sql  = 'SELECT COUNT(*) FROM ' . $table . ' WHERE ' . implode( ' AND ', $where );
-		$sql  = $wpdb->prepare( $sql, $values );
-		return (int) $wpdb->get_var( $sql );
+		return [ $where, $values ];
 	}
 
 	/**

@@ -23,20 +23,7 @@ import type { AiAssistSiteSettings } from '../../api/client';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
-interface RestError {
-	message?: string;
-}
-
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
-}
+import { errorMessage } from '../../lib/errorMessage';
 
 type DisplayProvider = 'openai' | 'claude' | 'self_hosted';
 
@@ -75,7 +62,14 @@ export function AdminAiAssistSite() {
 						result.openai_model !== '' );
 				setDisplay( isSelfHosted ? 'self_hosted' : result.provider );
 			} )
-			.catch( ( err: unknown ) => setError( errorMessage( err ) ) );
+			.catch( ( err: unknown ) =>
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				)
+			);
 	}, [] );
 
 	async function save( e: React.FormEvent ) {
@@ -117,7 +111,12 @@ export function AdminAiAssistSite() {
 			setSelfHostedKey( '' );
 			setMessage( __( 'Saved.', 'beyond-elysium' ) );
 		} catch ( err ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSaving( false );
 		}
@@ -132,7 +131,12 @@ export function AdminAiAssistSite() {
 			);
 			setSettings( updated );
 		} catch ( err ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSaving( false );
 		}
@@ -174,7 +178,10 @@ export function AdminAiAssistSite() {
 			setTestResult( {
 				which: display,
 				ok: false,
-				message: errorMessage( err ),
+				message: errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				),
 			} );
 		} finally {
 			setTesting( null );

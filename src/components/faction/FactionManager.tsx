@@ -355,6 +355,36 @@ function FactionDetail( {
 		}
 	}
 
+	async function updateMemberRank( characterId: number, rank: string ) {
+		try {
+			await api
+				.factions( gameSlug )
+				.updateMember( id, characterId, { rank: rank || null } );
+			load();
+		} catch {
+			setError(
+				__( "Couldn't update this member's rank.", 'beyond-elysium' )
+			);
+		}
+	}
+
+	async function toggleLeader( characterId: number, isLeader: boolean ) {
+		try {
+			await api
+				.factions( gameSlug )
+				.updateMember( id, characterId, { is_leader: isLeader } );
+			load();
+			onChanged();
+		} catch {
+			setError(
+				__(
+					"Couldn't update this member's leader status - a faction needs at least one leader.",
+					'beyond-elysium'
+				)
+			);
+		}
+	}
+
 	async function deleteFaction() {
 		try {
 			await api.factions( gameSlug ).remove( id );
@@ -433,11 +463,32 @@ function FactionDetail( {
 								{ __( 'leader', 'beyond-elysium' ) }
 							</span>
 						) }
-						{ member.rank && (
-							<span className="be-faction-manager__rank">
-								{ member.rank }
-							</span>
-						) }
+						<input
+							type="text"
+							className="be-faction-manager__rank-input"
+							defaultValue={ member.rank ?? '' }
+							placeholder={ __( 'Rank', 'beyond-elysium' ) }
+							onBlur={ ( e ) =>
+								e.target.value !== ( member.rank ?? '' ) &&
+								updateMemberRank(
+									member.character_id,
+									e.target.value
+								)
+							}
+						/>
+						<button
+							type="button"
+							onClick={ () =>
+								toggleLeader(
+									member.character_id,
+									! member.is_leader
+								)
+							}
+						>
+							{ member.is_leader
+								? __( 'Demote', 'beyond-elysium' )
+								: __( 'Make leader', 'beyond-elysium' ) }
+						</button>
 						<button
 							type="button"
 							onClick={ () =>

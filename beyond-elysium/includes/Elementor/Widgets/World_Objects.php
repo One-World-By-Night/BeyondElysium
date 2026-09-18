@@ -3,21 +3,20 @@
 namespace BeyondElysium\Elementor\Widgets;
 
 use Elementor\Controls_Manager;
-use Elementor\Widget_Base;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Elementor widget wrapper for World Objects, the item/location/rote catalog
  * with an optional create/edit form. Registers the widget's name, title,
- * icon, and category with Elementor, exposes Content section controls for
+ * and icon with Elementor, exposes Content section controls for
  * the target game slug, the default type tab, and whether editor controls
  * are shown, and renders a single mount-point <div> that the front-end
  * script hydrates with the WorldObjectManager React component.
  *
  * @see BE_PROCESS/releases/workflow-0.7.md Step 5a
  */
-class World_Objects extends Widget_Base {
+class World_Objects extends Base_Widget {
 
 	/**
 	 * Returns the internal widget name Elementor uses to identify this
@@ -44,18 +43,6 @@ class World_Objects extends Widget_Base {
 	 */
 	public function get_icon(): string {
 		return 'eicon-product-images';
-	}
-
-	/**
-	 * Returns the Elementor category slugs this widget belongs to, which
-	 * controls where it appears in the widget panel. Every Beyond Elysium
-	 * widget belongs to the single "beyond-elysium" category that Init
-	 * registers.
-	 *
-	 * @return string[]
-	 */
-	public function get_categories(): array {
-		return [ 'beyond-elysium' ];
 	}
 
 	/**
@@ -106,26 +93,16 @@ class World_Objects extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Outputs the widget's front-end markup. Builds a configuration array
-	 * from this widget's Elementor settings, defaulting the type to "item"
-	 * and normalizing the editor-visibility switcher to a boolean, then
-	 * prints a single empty <div> carrying the React mount-point attribute
-	 * and the config as a JSON-encoded data attribute.
-	 */
-	protected function render(): void {
-		$settings = $this->get_settings_for_display();
+	protected function widget_slug(): string {
+		return 'world-objects';
+	}
 
-		$config = [
+	/** Defaults the type to "item" and normalizes the editor-visibility switcher to a boolean. */
+	protected function widget_config( array $settings ): array {
+		return [
 			'gameSlug'    => $settings['game_slug'],
 			'defaultType' => $settings['default_type'] ?: 'item',
 			'showEditor'  => $settings['show_editor'] === 'yes',
 		];
-
-		printf(
-			'<div data-be-widget="%s" data-be-config="%s"></div>',
-			esc_attr( 'world-objects' ),
-			esc_attr( (string) wp_json_encode( $config ) )
-		);
 	}
 }

@@ -147,6 +147,46 @@ class FactionsThreadTest extends WP_UnitTestCase {
 		$this->assertCount( 2, Faction_Member::for_faction( $faction_id ) );
 	}
 
+	public function test_a_leader_can_set_a_members_rank(): void {
+		[ $leader_id, $leader_character_id ] = $this->make_player();
+		[ , $member_character_id ] = $this->make_player();
+		$faction_id = $this->make_faction( [ 'audience' => 'everyone' ] );
+		Faction_Member::add( $faction_id, $leader_character_id, $this->storyteller_id, true );
+		Faction_Member::add( $faction_id, $member_character_id, $this->storyteller_id );
+
+		wp_set_current_user( $leader_id );
+		$response = $this->send( 'PATCH', "/factions/{$faction_id}/members/{$member_character_id}", [ 'rank' => 'Whip' ] );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'Whip', Faction_Member::find_for( $faction_id, $member_character_id )->member_rank );
+	}
+
+	public function test_a_leader_cannot_promote_a_member_to_leader(): void {
+		[ $leader_id, $leader_character_id ] = $this->make_player();
+		[ , $member_character_id ] = $this->make_player();
+		$faction_id = $this->make_faction( [ 'audience' => 'everyone' ] );
+		Faction_Member::add( $faction_id, $leader_character_id, $this->storyteller_id, true );
+		Faction_Member::add( $faction_id, $member_character_id, $this->storyteller_id );
+
+		wp_set_current_user( $leader_id );
+		$response = $this->send( 'PATCH', "/factions/{$faction_id}/members/{$member_character_id}", [ 'is_leader' => true ] );
+
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertFalse( (bool) Faction_Member::find_for( $faction_id, $member_character_id )->is_leader );
+	}
+
+	public function test_a_manager_can_promote_a_member_to_leader(): void {
+		[ , $member_character_id ] = $this->make_player();
+		$faction_id = $this->make_faction( [ 'audience' => 'everyone' ] );
+		Faction_Member::add( $faction_id, $member_character_id, $this->storyteller_id );
+
+		wp_set_current_user( $this->storyteller_id );
+		$response = $this->send( 'PATCH', "/factions/{$faction_id}/members/{$member_character_id}", [ 'is_leader' => true ] );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( (bool) Faction_Member::find_for( $faction_id, $member_character_id )->is_leader );
+	}
+
 	public function test_a_leader_cannot_remove_another_leader(): void {
 		[ $leader_id, $leader_character_id ] = $this->make_player();
 		[ , $other_leader_id ] = $this->make_player();

@@ -13,31 +13,12 @@ import { batchApproval, toggleSelection } from '../../lib/queueSelection';
 import type { QueueSelection } from '../../lib/queueSelection';
 import type { ApprovalLevel } from '../../types';
 import type { Character, ChangeType, QueueChange } from '../../types/character';
+import { errorMessage } from '../../lib/errorMessage';
 import HelpButton from '../shared/HelpButton';
 import './ApprovalQueue.css';
 
 export interface ApprovalQueueProps {
 	gameSlug: string;
-}
-
-interface RestError {
-	message?: string;
-}
-
-/**
- * Extracts a human-readable message from a caught API error. Returns the error's own
- * message when present, otherwise falls back to a generic failure message so the UI
- * always has something readable to display.
- */
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Failed to load the approval queue.', 'beyond-elysium' );
 }
 
 /**
@@ -159,7 +140,15 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 				setLoading( false );
 			} )
 			.catch( ( err: unknown ) => {
-				setError( errorMessage( err ) );
+				setError(
+					errorMessage(
+						err,
+						__(
+							'Failed to load the approval queue.',
+							'beyond-elysium'
+						)
+					)
+				);
 				setLoading( false );
 			} );
 	}
@@ -212,7 +201,12 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 			// Refused as already reviewed or edited since it was shown: reload so the row is current.
 			// load() clears the error first, so the message is set after it.
 			load();
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Failed to load the approval queue.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 
@@ -236,7 +230,12 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 			load();
 		} catch ( err: unknown ) {
 			load();
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Failed to load the approval queue.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 
@@ -271,7 +270,12 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 				);
 			}
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Failed to load the approval queue.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 

@@ -26,16 +26,7 @@ export interface ProposeWorldObjectProps {
 
 type PropertyValue = string | number | boolean;
 
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as { message?: string } ).message
-	) {
-		return ( error as { message: string } ).message;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
-}
+import { errorMessage } from '../../lib/errorMessage';
 
 export function ProposeWorldObject( {
 	gameSlug,
@@ -96,7 +87,12 @@ export function ProposeWorldObject( {
 			} );
 			setSubmitted( true );
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSaving( false );
 		}

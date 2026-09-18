@@ -305,7 +305,65 @@ class GameSessionsThreadTest extends WP_UnitTestCase {
 		$second->set_param( 'report_xp', 5 );
 		$data = $this->dispatch( $second )->get_data();
 
-		$this->assertSame( 2, $data['attendance_xp'] );
-		$this->assertSame( 5, $data['report_xp'] );
+		$this->assertSame( 2, $data['sessions']['attendance_xp'] );
+		$this->assertSame( 5, $data['sessions']['report_xp'] );
+	}
+
+	// -------------------------------------------------------------------------
+	// release_schedule (1.1.1 §3) - a sibling of settings.sessions, saved and
+	// validated through the same route.
+	// -------------------------------------------------------------------------
+
+	public function test_release_schedule_rules_are_saved_and_returned(): void {
+		wp_set_current_user( $this->make_manager() );
+
+		$request = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/session-settings" );
+		$request->set_param( 'release_schedule', [
+			'rules' => [
+				[ 'type' => 'weekly', 'weekday' => 'friday', 'time' => '18:00' ],
+				[ 'type' => 'monthly', 'day_of_month' => 1, 'time' => '09:00' ],
+			],
+		] );
+		$data = $this->dispatch( $request )->get_data();
+
+		$this->assertCount( 2, $data['release_schedule']['rules'] );
+		$this->assertSame( 'weekly', $data['release_schedule']['rules'][0]['type'] );
+		$this->assertSame( 'friday', $data['release_schedule']['rules'][0]['weekday'] );
+		$this->assertSame( 'monthly', $data['release_schedule']['rules'][1]['type'] );
+		$this->assertSame( 1, $data['release_schedule']['rules'][1]['day_of_month'] );
+	}
+
+	public function test_a_malformed_release_schedule_rule_is_dropped_not_the_whole_request(): void {
+		wp_set_current_user( $this->make_manager() );
+
+		$request = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/session-settings" );
+		$request->set_param( 'release_schedule', [
+			'rules' => [
+				[ 'type' => 'weekly', 'weekday' => 'friday', 'time' => '18:00' ],
+				[ 'type' => 'weekly', 'weekday' => 'not-a-real-day', 'time' => '18:00' ],
+				[ 'type' => 'monthly', 'day_of_month' => 31, 'time' => '09:00' ],
+			],
+		] );
+		$data = $this->dispatch( $request )->get_data();
+
+		$this->assertCount( 1, $data['release_schedule']['rules'] );
+		$this->assertSame( 'friday', $data['release_schedule']['rules'][0]['weekday'] );
+	}
+
+	public function test_saving_release_schedule_does_not_disturb_session_settings(): void {
+		wp_set_current_user( $this->make_manager() );
+
+		$first = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/session-settings" );
+		$first->set_param( 'attendance_xp', 4 );
+		$this->dispatch( $first );
+
+		$second = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/session-settings" );
+		$second->set_param( 'release_schedule', [
+			'rules' => [ [ 'type' => 'weekly', 'weekday' => 'friday', 'time' => '18:00' ] ],
+		] );
+		$data = $this->dispatch( $second )->get_data();
+
+		$this->assertSame( 4, $data['sessions']['attendance_xp'] );
+		$this->assertCount( 1, $data['release_schedule']['rules'] );
 	}
 }

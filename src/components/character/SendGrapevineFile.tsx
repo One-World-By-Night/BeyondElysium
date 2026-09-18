@@ -19,20 +19,7 @@ import type {
 import HelpButton from '../shared/HelpButton';
 import './SendGrapevineFile.css';
 
-interface RestError {
-	message?: string;
-}
-
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
-}
+import { errorMessage } from '../../lib/errorMessage';
 
 const STATUS_LABEL: Record< Submission[ 'state' ], string > = {
 	waiting: __( 'Waiting for review', 'beyond-elysium' ),
@@ -109,7 +96,12 @@ export function SendGrapevineFile() {
 				setCharacterIndex( result.characters[ 0 ].index );
 			}
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setReading( false );
 		}
@@ -147,7 +139,12 @@ export function SendGrapevineFile() {
 			setHomeChronicle( '' );
 			loadMySubmissions();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSending( false );
 		}
@@ -174,7 +171,12 @@ export function SendGrapevineFile() {
 			await api.submissions( row.game_slug ?? '' ).withdraw( row.id );
 			loadMySubmissions();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 

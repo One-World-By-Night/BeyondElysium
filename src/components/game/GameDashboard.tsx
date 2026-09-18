@@ -8,6 +8,7 @@ import { __ } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
 import api from '../../api/client';
 import { describeChange } from '../../lib/describeChange';
+import { errorMessage } from '../../lib/errorMessage';
 import { PlayerDashboard } from './PlayerDashboard';
 import { canIn } from '../../lib/chronicleCapabilities';
 import type {
@@ -26,26 +27,6 @@ export interface GameDashboardProps {
 	plotsUrl?: string;
 	/** What the person can do in this chronicle, when the page resolved it; the site-wide snapshot otherwise (F-103). */
 	capabilities?: MyCapabilities;
-}
-
-interface RestError {
-	message?: string;
-}
-
-/**
- * Extracts a human-readable message from a caught API error. Returns the error's own
- * message when present, otherwise falls back to a generic failure message so the UI
- * always has something readable to display.
- */
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Failed to load the dashboard.', 'beyond-elysium' );
 }
 
 function sumCounts( counts: Record< string, number > ): number {
@@ -106,7 +87,12 @@ export function GameDashboard( {
 				setLoading( false );
 			} )
 			.catch( ( err: unknown ) => {
-				setError( errorMessage( err ) );
+				setError(
+					errorMessage(
+						err,
+						__( 'Failed to load the dashboard.', 'beyond-elysium' )
+					)
+				);
 				setLoading( false );
 			} );
 	}, [ gameSlug, canManage ] );

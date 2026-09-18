@@ -372,15 +372,6 @@ export interface ChangePreviewResult {
 }
 
 /**
- * Request body for previewing a batch of proposed changes before
- * submitting them. Carries the same change shapes accepted by the
- * real submit endpoint.
- */
-export interface PreviewChangesRequest {
-	changes: ChangeRequest[];
-}
-
-/**
  * Response from previewing a batch of proposed changes. Lists the
  * priced outcome of each change alongside the character's running
  * unspent XP total after applying every proposed cost.

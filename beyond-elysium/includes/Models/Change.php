@@ -164,27 +164,7 @@ class Change {
 		global $wpdb;
 		$changes    = Manager::table( 'character_changes' );
 		$characters = Manager::table( 'characters' );
-		$where      = [ 'c.owner_slug = %s' ];
-		$values     = [ $game_slug ];
-
-		if ( ! empty( $args['status'] ) ) {
-			$where[]  = 'ch.status = %s';
-			$values[] = $args['status'];
-		}
-		if ( ! empty( $args['change_type'] ) ) {
-			$where[]  = 'ch.change_type = %s';
-			$values[] = $args['change_type'];
-		}
-		if ( ! empty( $args['character_id'] ) ) {
-			$where[]  = 'ch.character_id = %d';
-			$values[] = (int) $args['character_id'];
-		}
-
-		// Filters to changes belonging to characters owned by this WP user.
-		if ( ! empty( $args['wp_user_id'] ) ) {
-			$where[]  = 'c.wp_user_id = %d';
-			$values[] = (int) $args['wp_user_id'];
-		}
+		[ $where, $values ] = self::build_where( $game_slug, $args );
 
 		$order = strtoupper( $args['order'] ?? 'DESC' ) === 'ASC' ? 'ASC' : 'DESC';
 		$sql   = "SELECT ch.* FROM {$changes} ch INNER JOIN {$characters} c ON c.id = ch.character_id "
@@ -212,8 +192,27 @@ class Change {
 		global $wpdb;
 		$changes    = Manager::table( 'character_changes' );
 		$characters = Manager::table( 'characters' );
-		$where      = [ 'c.owner_slug = %s' ];
-		$values     = [ $game_slug ];
+		[ $where, $values ] = self::build_where( $game_slug, $args );
+
+		$sql = "SELECT COUNT(*) FROM {$changes} ch INNER JOIN {$characters} c ON c.id = ch.character_id "
+			. 'WHERE ' . implode( ' AND ', $where );
+		$sql = $wpdb->prepare( $sql, $values );
+		return (int) $wpdb->get_var( $sql );
+	}
+
+	/**
+	 * The shared WHERE-clause builder behind `for_game()` and `count_for_game()` - both
+	 * accept the identical filter vocabulary (status, change_type, character_id,
+	 * wp_user_id) and had built it twice, byte-for-byte, until this was extracted
+	 * (1.1.1 audit).
+	 *
+	 * @param string $game_slug
+	 * @param array  $args
+	 * @return array{0: string[], 1: array<int,mixed>} `[$where_clauses, $bind_values]`.
+	 */
+	private static function build_where( string $game_slug, array $args ): array {
+		$where  = [ 'c.owner_slug = %s' ];
+		$values = [ $game_slug ];
 
 		if ( ! empty( $args['status'] ) ) {
 			$where[]  = 'ch.status = %s';
@@ -228,15 +227,13 @@ class Change {
 			$values[] = (int) $args['character_id'];
 		}
 
+		// Filters to changes belonging to characters owned by this WP user.
 		if ( ! empty( $args['wp_user_id'] ) ) {
 			$where[]  = 'c.wp_user_id = %d';
 			$values[] = (int) $args['wp_user_id'];
 		}
 
-		$sql = "SELECT COUNT(*) FROM {$changes} ch INNER JOIN {$characters} c ON c.id = ch.character_id "
-			. 'WHERE ' . implode( ' AND ', $where );
-		$sql = $wpdb->prepare( $sql, $values );
-		return (int) $wpdb->get_var( $sql );
+		return [ $where, $values ];
 	}
 
 	/**

@@ -10,28 +10,9 @@ import api from '../../api/client';
 import { describeChronicleContent } from '../../lib/chronicleContent';
 import HtmlEditor from '../shared/HtmlEditor';
 import type { Game } from '../../types';
+import { errorMessage } from '../../lib/errorMessage';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
-
-interface RestError {
-	message?: string;
-}
-
-/**
- * Extracts a human-readable message from a caught error value.
- * Falls back to a generic message when the error has no usable
- * `message` property.
- */
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
-}
 
 const EMPTY_FORM = { name: '', slug: '', game_type: 'met', description: '' };
 
@@ -64,7 +45,12 @@ export function AdminGames() {
 				setLoading( false );
 			} )
 			.catch( ( err: unknown ) => {
-				setError( errorMessage( err ) );
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				);
 				setLoading( false );
 			} );
 	}
@@ -145,7 +131,12 @@ export function AdminGames() {
 			cancel();
 			load();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSaving( false );
 		}
@@ -163,7 +154,12 @@ export function AdminGames() {
 				await api.games.contentCounts( game.slug )
 			);
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 			return;
 		}
 
@@ -192,7 +188,12 @@ export function AdminGames() {
 			await api.games.delete( game.slug, holds !== '' );
 			load();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 

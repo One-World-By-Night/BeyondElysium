@@ -3,7 +3,6 @@
 namespace BeyondElysium\Elementor\Widgets;
 
 use Elementor\Controls_Manager;
-use Elementor\Widget_Base;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -18,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @see BE_PROCESS/reference/DECISIONLOG.md Decision 094
  */
-class House_Rules extends Widget_Base {
+class House_Rules extends Base_Widget {
 
 	public function get_name(): string {
 		return 'be-house-rules';
@@ -30,13 +29,6 @@ class House_Rules extends Widget_Base {
 
 	public function get_icon(): string {
 		return 'eicon-post-list';
-	}
-
-	/**
-	 * @return string[]
-	 */
-	public function get_categories(): array {
-		return [ 'beyond-elysium' ];
 	}
 
 	protected function register_controls(): void {
@@ -60,15 +52,11 @@ class House_Rules extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	protected function render(): void {
-		$settings = $this->get_settings_for_display();
+	protected function widget_slug(): string {
+		return 'house-rules';
+	}
 
-		$config = [ 'gameSlug' => $settings['game_slug'] ];
-
-		printf(
-			'<div data-be-widget="%s" data-be-config="%s"></div>',
-			esc_attr( 'house-rules' ),
-			esc_attr( (string) wp_json_encode( $config ) )
-		);
+	protected function widget_config( array $settings ): array {
+		return [ 'gameSlug' => $settings['game_slug'] ];
 	}
 }

@@ -9,6 +9,7 @@ use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Session;
 use BeyondElysium\Services\Change_Engine;
+use BeyondElysium\Services\Release_Scheduler;
 use BeyondElysium\Services\Spotlight;
 use BeyondElysium\Services\St_Visibility;
 
@@ -718,8 +719,63 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
+	 * Validates one release-schedule rule (1.1.1 §3): `weekly` needs a real weekday name,
+	 * `monthly` needs a day of month from 1 to 28 (no 29/30/31 ambiguity across short
+	 * months). Returns a clean, minimal rule object, or null when the rule is malformed -
+	 * the caller drops a null rather than the whole request, since one bad rule shouldn't
+	 * block every other one already saved.
+	 *
+	 * @param mixed $rule
+	 * @return array{type:string,weekday?:string,day_of_month?:int,time:string}|null
+	 */
+	private function clean_release_rule( $rule ): ?array {
+		if ( ! is_array( $rule ) && ! is_object( $rule ) ) {
+			return null;
+		}
+		$rule = (array) $rule;
+		$time = preg_match( '/^\d{2}:\d{2}$/', (string) ( $rule['time'] ?? '' ) ) ? $rule['time'] : '00:00';
+
+		if ( ( $rule['type'] ?? '' ) === 'weekly' ) {
+			$weekday = strtolower( (string) ( $rule['weekday'] ?? '' ) );
+			if ( ! in_array( $weekday, Release_Scheduler::WEEKDAYS, true ) ) {
+				return null;
+			}
+			return [ 'type' => 'weekly', 'weekday' => $weekday, 'time' => $time ];
+		}
+
+		if ( ( $rule['type'] ?? '' ) === 'monthly' ) {
+			$day_of_month = (int) ( $rule['day_of_month'] ?? 0 );
+			if ( $day_of_month < 1 || $day_of_month > 28 ) {
+				return null;
+			}
+			return [ 'type' => 'monthly', 'day_of_month' => $day_of_month, 'time' => $time ];
+		}
+
+		return null;
+	}
+
+	/**
+	 * Normalizes a stored release_schedule value into plain arrays throughout - `Game`'s own
+	 * `decode_settings()` runs `json_decode()` without the assoc flag, so every rule object
+	 * nested inside `release_schedule.rules` comes back as stdClass, not the plain array
+	 * `clean_release_rule()` itself always returns. Left uncast, the REST response would
+	 * still serialize to identical JSON (a client never sees the difference), but this keeps
+	 * the PHP-side shape consistent for anything reading the response array directly.
+	 *
+	 * @param mixed $release_schedule
+	 * @return array{rules: array<int,array<string,mixed>>}
+	 */
+	private static function decode_release_schedule( $release_schedule ): array {
+		$release_schedule = is_array( $release_schedule ) || is_object( $release_schedule ) ? (array) $release_schedule : [];
+		$rules            = is_array( $release_schedule['rules'] ?? null ) ? $release_schedule['rules'] : [];
+		return [ 'rules' => array_map( static fn( $rule ) => (array) $rule, $rules ) ];
+	}
+
+	/**
 	 * Updates this chronicle's session-related settings (attendance_xp, report_xp,
-	 * spotlight_days), merged into settings.sessions - the rest of settings is preserved.
+	 * spotlight_days), merged into settings.sessions, and its recurring release-schedule
+	 * rules (§3), merged into the sibling settings.release_schedule - each stored
+	 * independently so saving one never clobbers the other.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -741,6 +797,15 @@ class Sessions_Controller extends Base_Controller {
 		$current              = isset( $settings['sessions'] ) ? (array) $settings['sessions'] : [];
 		$settings['sessions'] = array_merge( $current, $incoming );
 
+		$release_schedule = $request->get_param( 'release_schedule' );
+		if ( is_array( $release_schedule ) || is_object( $release_schedule ) ) {
+			$release_schedule = (array) $release_schedule;
+			$rules            = is_array( $release_schedule['rules'] ?? null ) ? $release_schedule['rules'] : [];
+			$settings['release_schedule'] = [
+				'rules' => array_values( array_filter( array_map( [ $this, 'clean_release_rule' ], $rules ) ) ),
+			];
+		}
+
 		if ( ! Game::update( $request['game_slug'], [ 'settings' => $settings ] ) ) {
 			return $this->error( 'update_failed', __( 'Failed to update session settings.', 'beyond-elysium' ), 500 );
 		}
@@ -750,7 +815,10 @@ class Sessions_Controller extends Base_Controller {
 			return $this->error( 'game_not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
 		}
 		$updated_settings = $updated->settings ? (array) $updated->settings : [];
-		return $this->success( isset( $updated_settings['sessions'] ) ? (array) $updated_settings['sessions'] : [] );
+		return $this->success( [
+			'sessions'         => isset( $updated_settings['sessions'] ) ? (array) $updated_settings['sessions'] : [],
+			'release_schedule' => self::decode_release_schedule( $updated_settings['release_schedule'] ?? null ),
+		] );
 	}
 
 	/**

@@ -121,3 +121,47 @@
 		align-items: flex-start;
 	}
 }
+
+.be-release-batches__schedule {
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+}
+
+.be-release-batches__schedule-toggle {
+	width: 100%;
+	text-align: left;
+	background: none;
+	border: none;
+	padding: 0.5rem 0.75rem;
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.be-release-batches__schedule-body {
+	padding: 0 0.75rem 0.75rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.be-release-batches__schedule-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.be-release-batches__schedule-list li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.be-release-batches__schedule-add {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}

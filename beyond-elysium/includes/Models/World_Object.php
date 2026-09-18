@@ -160,24 +160,9 @@ class World_Object {
 	 */
 	public static function for_game( int $game_id, array $args = [] ): array {
 		global $wpdb;
-		$table  = Manager::table( 'world_objects' );
-		$where  = [ 'game_id = %d' ];
-		$values = [ $game_id ];
+		$table = Manager::table( 'world_objects' );
+		[ $where, $values ] = self::build_where( $game_id, $args );
 
-		if ( ! empty( $args['object_type'] ) ) {
-			$where[]  = 'object_type = %s';
-			$values[] = $args['object_type'];
-		}
-		if ( ! empty( $args['rarity'] ) ) {
-			$where[]  = 'rarity = %s';
-			$values[] = $args['rarity'];
-		}
-		if ( ! empty( $args['search'] ) ) {
-			$where[]  = '(name LIKE %s OR description LIKE %s)';
-			$like     = '%' . $wpdb->esc_like( $args['search'] ) . '%';
-			$values[] = $like;
-			$values[] = $like;
-		}
 		if ( ( $args['copies'] ?? 'exclude' ) === 'exclude' ) {
 			$where[] = 'based_on_id IS NULL';
 		} elseif ( $args['copies'] === 'only' ) {
@@ -212,7 +197,28 @@ class World_Object {
 	 */
 	public static function count_for_game( int $game_id, array $args = [] ): int {
 		global $wpdb;
-		$table  = Manager::table( 'world_objects' );
+		$table = Manager::table( 'world_objects' );
+		[ $where, $values ] = self::build_where( $game_id, $args );
+
+		$sql = 'SELECT COUNT(*) FROM ' . $table . ' WHERE ' . implode( ' AND ', $where );
+		$sql = $wpdb->prepare( $sql, $values );
+		return (int) $wpdb->get_var( $sql );
+	}
+
+	/**
+	 * The shared WHERE-clause builder behind `for_game()` and `count_for_game()` - both
+	 * accept the same object_type/rarity/search filters and had built that part twice,
+	 * byte-for-byte, until this was extracted (1.1.1 audit). `copies` stays out of this
+	 * helper deliberately: only `for_game()` has ever applied it, and folding it in here
+	 * would change `count_for_game()`'s real behavior rather than just deduplicating it -
+	 * out of scope for a mechanical extraction.
+	 *
+	 * @param int   $game_id
+	 * @param array $args
+	 * @return array{0: string[], 1: array<int,mixed>} `[$where_clauses, $bind_values]`.
+	 */
+	private static function build_where( int $game_id, array $args ): array {
+		global $wpdb;
 		$where  = [ 'game_id = %d' ];
 		$values = [ $game_id ];
 
@@ -231,9 +237,7 @@ class World_Object {
 			$values[] = $like;
 		}
 
-		$sql = 'SELECT COUNT(*) FROM ' . $table . ' WHERE ' . implode( ' AND ', $where );
-		$sql = $wpdb->prepare( $sql, $values );
-		return (int) $wpdb->get_var( $sql );
+		return [ $where, $values ];
 	}
 
 	/**

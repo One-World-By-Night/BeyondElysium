@@ -15,28 +15,9 @@ import type {
 } from '../../types';
 import type { DataManagementSettings } from '../../api/client';
 import type { WpUserSummary } from '../../types/character';
+import { errorMessage } from '../../lib/errorMessage';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
-
-interface RestError {
-	message?: string;
-}
-
-/**
- * Extracts a human-readable message from a caught error value.
- * Falls back to a generic message when the error has no usable
- * `message` property.
- */
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
-}
 
 const ROLES: GameMemberRole[] = [ 'hst', 'ast', 'narrator', 'boons', 'player' ];
 
@@ -106,7 +87,14 @@ export function AdminChronicleAccess() {
 				// A chronicle already chosen stays chosen across a reload.
 				setSelectedSlug( ( current ) => current || preselect.slug );
 			} )
-			.catch( ( err: unknown ) => setError( errorMessage( err ) ) );
+			.catch( ( err: unknown ) =>
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				)
+			);
 	}
 
 	/**
@@ -126,7 +114,12 @@ export function AdminChronicleAccess() {
 				setLoadingMembers( false );
 			} )
 			.catch( ( err: unknown ) => {
-				setError( errorMessage( err ) );
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				);
 				setLoadingMembers( false );
 			} );
 	}
@@ -138,11 +131,25 @@ export function AdminChronicleAccess() {
 		api.authorizationSettings
 			.get()
 			.then( setAscSettings )
-			.catch( ( err: unknown ) => setError( errorMessage( err ) ) );
+			.catch( ( err: unknown ) =>
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				)
+			);
 		api.dataManagement
 			.get()
 			.then( setDataSettings )
-			.catch( ( err: unknown ) => setError( errorMessage( err ) ) );
+			.catch( ( err: unknown ) =>
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				)
+			);
 	}, [] );
 
 	const selectedGame = games.find( ( g ) => g.slug === selectedSlug ) ?? null;
@@ -159,7 +166,12 @@ export function AdminChronicleAccess() {
 			const result = await api.authorizationSettings.update( enabled );
 			setAscSettings( result );
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setAscSaving( false );
 		}
@@ -176,7 +188,12 @@ export function AdminChronicleAccess() {
 		try {
 			setDataSettings( await api.dataManagement.update( enabled ) );
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setDataSaving( false );
 		}
@@ -204,7 +221,12 @@ export function AdminChronicleAccess() {
 			link.click();
 			URL.revokeObjectURL( url );
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setExporting( false );
 		}
@@ -230,7 +252,12 @@ export function AdminChronicleAccess() {
 			setRoleEditingSlug( '' );
 			loadGames();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setAscRolePathSaving( false );
 		}
@@ -250,7 +277,12 @@ export function AdminChronicleAccess() {
 			} );
 			loadGames();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setNotificationsSaving( false );
 		}
@@ -267,7 +299,12 @@ export function AdminChronicleAccess() {
 			await api.gameMembers( selectedSlug ).set( wpUserId, role );
 			loadMembers( selectedSlug );
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 
@@ -297,7 +334,12 @@ export function AdminChronicleAccess() {
 			await api.gameMembers( selectedSlug ).remove( wpUserId );
 			loadMembers( selectedSlug );
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 
@@ -653,7 +695,12 @@ function AddMemberForm( {
 			await api.gameMembers( gameSlug ).set( wpUserId, role );
 			onAdded();
 		} catch ( err: unknown ) {
-			onError( errorMessage( err ) );
+			onError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 			setSubmitting( false );
 		}
 	}

@@ -4,16 +4,16 @@
  * reusing the shared CharacterList component with a toggle between
  * player characters and NPCs.
  */
-import { useEffect, useState } from '@wordpress/element';
+import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import api from '../../api/client';
 import CharacterList from '../character/CharacterList';
 import {
 	playerTabUrl,
 	PLAYER_TABS,
 	newCharacterUrl,
 } from '../../lib/pluginPages';
-import type { Game } from '../../types';
+import { useAdminGameSelector } from '../../lib/useAdminGameSelector';
+import { GameFilterBar } from './GameFilterBar';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
@@ -24,23 +24,8 @@ import './Admin.css';
  * checkbox to switch the roster between player characters and NPCs.
  */
 export function AdminCharacters() {
-	const [ games, setGames ] = useState< Game[] >( [] );
-	const [ gameSlug, setGameSlug ] = useState( '' );
-	const [ loading, setLoading ] = useState( true );
+	const { games, gameSlug, setGameSlug, loading } = useAdminGameSelector();
 	const [ showNpcs, setShowNpcs ] = useState( false );
-
-	useEffect( () => {
-		api.games
-			.list()
-			.then( ( result ) => {
-				setGames( result );
-				if ( result.length > 0 ) {
-					setGameSlug( result[ 0 ].slug );
-				}
-				setLoading( false );
-			} )
-			.catch( () => setLoading( false ) );
-	}, [] );
 
 	// URL of the read-only character sheet page that each roster row links to.
 	const sheetUrl = playerTabUrl( PLAYER_TABS.sheet );
@@ -52,33 +37,13 @@ export function AdminCharacters() {
 				<HelpButton helpKey="admin-characters" />
 			</div>
 
-			{ loading ? (
-				<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
-			) : games.length === 0 ? (
-				<p>
-					{ __(
-						'No games exist yet - create one under Beyond Elysium → System Config → Games first.',
-						'beyond-elysium'
-					) }
-				</p>
-			) : (
-				<>
-					<div className="be-admin__filters">
-						<label>
-							{ __( 'Game', 'beyond-elysium' ) }{ ' ' }
-							<select
-								value={ gameSlug }
-								onChange={ ( e ) =>
-									setGameSlug( e.target.value )
-								}
-							>
-								{ games.map( ( g ) => (
-									<option key={ g.slug } value={ g.slug }>
-										{ g.name }
-									</option>
-								) ) }
-							</select>
-						</label>
+			<GameFilterBar
+				games={ games }
+				gameSlug={ gameSlug }
+				onGameChange={ setGameSlug }
+				loading={ loading }
+				extraFilters={
+					<>
 						<label>
 							{ ' ' }
 							<input
@@ -101,17 +66,17 @@ export function AdminCharacters() {
 								{ __( '+ New Character', 'beyond-elysium' ) }
 							</a>
 						) }
-					</div>
-
-					{ gameSlug && (
-						<CharacterList
-							gameSlug={ gameSlug }
-							showNpcs={ showNpcs }
-							sheetPageUrl={ sheetUrl }
-						/>
-					) }
-				</>
-			) }
+					</>
+				}
+			>
+				{ gameSlug && (
+					<CharacterList
+						gameSlug={ gameSlug }
+						showNpcs={ showNpcs }
+						sheetPageUrl={ sheetUrl }
+					/>
+				) }
+			</GameFilterBar>
 		</div>
 	);
 }

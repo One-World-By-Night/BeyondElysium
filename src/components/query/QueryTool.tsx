@@ -173,7 +173,12 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 			setResultsFor( searchKey( inventory, conditions, logic ) );
 			loadSavedQueries();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Failed to run this query.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setLoading( false );
 		}
@@ -207,7 +212,12 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 		} catch ( err: unknown ) {
 			// Shows an explicit error instead of a null result indistinguishable from "nothing run yet."
 			setStatsResult( null );
-			setStatsError( errorMessage( err ) );
+			setStatsError(
+				errorMessage(
+					err,
+					__( 'Failed to run this query.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setStatsLoading( false );
 		}
@@ -227,7 +237,12 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 			setSaveName( '' );
 			loadSavedQueries();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Failed to run this query.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 
@@ -255,7 +270,12 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 			await api.query( gameSlug ).savedQueries.delete( id );
 			loadSavedQueries();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Failed to run this query.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 
@@ -274,7 +294,12 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 				.savedQueries.update( saved.id, { name: name.trim() } );
 			loadSavedQueries();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Failed to run this query.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 
@@ -456,19 +481,6 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 	);
 }
 
-interface RestError {
-	message?: string;
-}
-
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Failed to run this query.', 'beyond-elysium' );
-}
+import { errorMessage } from '../../lib/errorMessage';
 
 export default QueryTool;

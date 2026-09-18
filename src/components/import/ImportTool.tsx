@@ -11,18 +11,9 @@ import type {
 	ImportPreview as ImportPreviewData,
 	ImportCommitResult,
 	ImportResolutions,
-	DuplicateAction,
-	TraitResolution,
 } from '../../types/import';
 import { ImportPreview } from './ImportPreview';
-import {
-	blockingCount as countBlocking,
-	decisionsFor,
-	noDecisions,
-	previewKey,
-	withDecision,
-	type ImportDecisions,
-} from '../../lib/importDecisions';
+import { useImportDecisions } from '../../lib/useImportDecisions';
 import './ImportTool.css';
 
 export interface ImportToolProps {
@@ -58,54 +49,15 @@ export function ImportTool( { gameSlug }: ImportToolProps ) {
 
 	// Lifted here, not local to ImportPreview, so every stage that reads it sees the same resolution choices.
 	// Held against the job they were made on: Start Over and a new file begin with none (1.0.0-review F-057).
-	const [ decisions, setDecisions ] = useState< ImportDecisions >(
-		noDecisions()
-	);
-	const madeFor = preview ? previewKey( preview.job_id ) : '';
 	const {
-		traits: traitResolutions,
-		duplicates: duplicateActions,
-		worldObjects: worldObjectActions,
-	} = decisionsFor( decisions, madeFor );
-
-	function onTraitResolutionChange(
-		key: string,
-		resolution: TraitResolution | null
-	) {
-		setDecisions( ( prev ) =>
-			withDecision( prev, madeFor, 'traits', key, resolution )
-		);
-	}
-
-	function onDuplicateActionChange(
-		character: string,
-		action: DuplicateAction | null
-	) {
-		setDecisions( ( prev ) =>
-			withDecision( prev, madeFor, 'duplicates', character, action )
-		);
-	}
-
-	function onWorldObjectActionChange(
-		key: string,
-		action: DuplicateAction | null
-	) {
-		setDecisions( ( prev ) =>
-			withDecision( prev, madeFor, 'worldObjects', key, action )
-		);
-	}
-
-	/** How many trait/duplicate decisions still block a commit, after local resolutions. */
-	function blockingCount(): number {
-		return preview
-			? countBlocking(
-					preview,
-					traitResolutions,
-					duplicateActions,
-					worldObjectActions
-			  )
-			: 0;
-	}
+		traitResolutions,
+		duplicateActions,
+		worldObjectActions,
+		onTraitResolutionChange,
+		onDuplicateActionChange,
+		onWorldObjectActionChange,
+		blockingCount,
+	} = useImportDecisions( preview );
 
 	async function doCommit() {
 		if ( ! preview ) {
@@ -124,7 +76,12 @@ export function ImportTool( { gameSlug }: ImportToolProps ) {
 				.commit( preview.job_id, resolutions );
 			setResult( committed );
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Failed to parse this file.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setCommitting( false );
 		}
@@ -144,7 +101,12 @@ export function ImportTool( { gameSlug }: ImportToolProps ) {
 			setPreview( parsed );
 			setStage( 'preview' );
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Failed to parse this file.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setLoading( false );
 		}
@@ -469,19 +431,6 @@ export function ImportTool( { gameSlug }: ImportToolProps ) {
 	);
 }
 
-interface RestError {
-	message?: string;
-}
-
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Failed to parse this file.', 'beyond-elysium' );
-}
+import { errorMessage } from '../../lib/errorMessage';
 
 export default ImportTool;

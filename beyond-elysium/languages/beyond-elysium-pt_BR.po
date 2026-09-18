@@ -10865,3 +10865,155 @@ msgid ""
 msgstr ""
 "Escolha um personagem na aba Personagens primeiro - um grupo é proposto para "
 "um dos seus personagens."
+
+#: build/548.js:27
+#: build/887.js:18
+msgid "Sunday"
+msgstr "Domingo"
+
+#: build/548.js:27
+#: build/887.js:18
+msgid "Monday"
+msgstr "Segunda-feira"
+
+#: build/548.js:27
+#: build/887.js:18
+msgid "Tuesday"
+msgstr "Terça-feira"
+
+#: build/548.js:27
+#: build/887.js:18
+msgid "Wednesday"
+msgstr "Quarta-feira"
+
+#: build/548.js:27
+#: build/887.js:18
+msgid "Thursday"
+msgstr "Quinta-feira"
+
+#: build/548.js:27
+#: build/887.js:18
+msgid "Friday"
+msgstr "Sexta-feira"
+
+#: build/548.js:27
+#: build/887.js:18
+msgid "Saturday"
+msgstr "Sábado"
+
+#: build/548.js:30
+#: build/887.js:21
+msgid "Release schedule (%d)"
+msgstr "Agenda de lançamento (%d)"
+
+#: build/548.js:30
+#: build/887.js:21
+msgid "Weekly"
+msgstr "Semanal"
+
+#: build/548.js:30
+#: build/887.js:21
+msgid "Monthly"
+msgstr "Mensal"
+
+#: build/548.js:30
+#: build/887.js:21
+msgid "Weekday"
+msgstr "Dia da semana"
+
+#: build/548.js:30
+#: build/887.js:21
+msgid "Day of the month"
+msgstr "Dia do mês"
+
+#: build/548.js:30
+#: build/887.js:21
+msgid "Time of day"
+msgstr "Horário"
+
+#: build/548.js:30
+#: build/887.js:21
+msgid "On demand only - no recurring schedule set."
+msgstr "Somente sob demanda - nenhuma agenda recorrente definida."
+
+#: build/548.js:35
+msgid "Rank"
+msgstr "Patente"
+
+#: build/548.js:35
+msgid "Demote"
+msgstr "Rebaixar"
+
+#: includes/REST/Factions_Controller.php:446
+msgid "This character is not a member of this faction."
+msgstr "Este personagem não é membro desta facção."
+
+#: includes/REST/Factions_Controller.php:450
+msgid "Only a leader or a Storyteller may update a member."
+msgstr "Somente um líder ou um Narrador pode atualizar um membro."
+
+#: includes/REST/Factions_Controller.php:455
+msgid "Only a Storyteller may change a member's leader status."
+msgstr "Somente um Narrador pode alterar o status de líder de um membro."
+
+#: includes/REST/Factions_Controller.php:458
+msgid "Could not update this member - a faction needs at least one leader."
+msgstr ""
+"Não foi possível atualizar este membro - uma facção precisa de pelo menos um "
+"líder."
+
+#: includes/Services/Release_Scheduler.php:120
+msgid "Scheduled release - %s"
+msgstr "Lançamento agendado - %s"
+
+#: build/548.js:27
+#: build/887.js:18
+msgid "Failed to save the release schedule."
+msgstr "Falha ao salvar a agenda de lançamento."
+
+#: build/548.js:30
+#: build/887.js:21
+msgid "+ Add a weekly rule"
+msgstr "+ Adicionar uma regra semanal"
+
+#: build/548.js:30
+#: build/887.js:21
+msgid "+ Add a monthly rule"
+msgstr "+ Adicionar uma regra mensal"
+
+#: build/548.js:35
+msgid "Couldn't update this member's rank."
+msgstr "Não foi possível atualizar a patente deste membro."
+
+#: build/548.js:35
+msgid ""
+"Couldn't update this member's leader status - a faction needs at least one "
+"leader."
+msgstr ""
+"Não foi possível atualizar o status de líder deste membro - uma facção "
+"precisa de pelo menos um líder."
+
+#: build/548.js:35
+msgid "Make leader"
+msgstr "Tornar líder"
+
+#: includes/Elementor/Widgets/Character_Editor.php:102
+msgid ""
+"An NPC always edits against its own npc_full/npc_quick template regardless "
+"of this setting."
+msgstr ""
+"Um NPC sempre edita seu próprio modelo npc_full/npc_quick, independentemente "
+"desta configuração."
+
+#: build/548.js:30
+#: build/887.js:21
+msgid ""
+"This controls when, not what: on the day(s) below, every batch you've left "
+"as a draft goes out as-is. Nothing is created automatically - prepare a "
+"draft batch below whenever it's ready, and the schedule releases it for "
+"you."
+msgstr ""
+"Isto controla quando, não o quê: no(s) dia(s) abaixo, todo lote deixado "
+"como rascunho é enviado como está. Nada é criado automaticamente - prepare "
+"um lote de rascunho abaixo quando estiver pronto, e a agenda o lançará "
+"para você."

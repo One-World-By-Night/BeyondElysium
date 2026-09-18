@@ -3,13 +3,12 @@
 namespace BeyondElysium\Elementor\Widgets;
 
 use Elementor\Controls_Manager;
-use Elementor\Widget_Base;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Elementor widget wrapper for the Boon Ledger. Registers the widget's name,
- * title, icon, and category with Elementor, exposes Content section controls
+ * title, and icon with Elementor, exposes Content section controls
  * for the target game slug and an optional character ID, and renders a
  * single mount-point <div> that the front-end script hydrates with the
  * BoonLedger React component. A character ID of 0 shows the whole
@@ -17,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @see BE_PROCESS/releases/workflow-0.7.md Step 5b
  */
-class Boon_Ledger extends Widget_Base {
+class Boon_Ledger extends Base_Widget {
 
 	/**
 	 * Returns the internal widget name Elementor uses to identify this
@@ -44,18 +43,6 @@ class Boon_Ledger extends Widget_Base {
 	 */
 	public function get_icon(): string {
 		return 'eicon-price-list';
-	}
-
-	/**
-	 * Returns the Elementor category slugs this widget belongs to, which
-	 * controls where it appears in the widget panel. Every Beyond Elysium
-	 * widget belongs to the single "beyond-elysium" category that Init
-	 * registers.
-	 *
-	 * @return string[]
-	 */
-	public function get_categories(): array {
-		return [ 'beyond-elysium' ];
 	}
 
 	/**
@@ -92,25 +79,16 @@ class Boon_Ledger extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Outputs the widget's front-end markup. Builds a configuration array
-	 * from this widget's Elementor settings, adding a characterId entry
-	 * only when one was set, then prints a single empty <div> carrying the
-	 * React mount-point attribute and the config as a JSON-encoded data
-	 * attribute.
-	 */
-	protected function render(): void {
-		$settings = $this->get_settings_for_display();
+	protected function widget_slug(): string {
+		return 'boon-ledger';
+	}
 
+	/** Adds a characterId entry only when one was set - absent means the whole game's ledger. */
+	protected function widget_config( array $settings ): array {
 		$config = [ 'gameSlug' => $settings['game_slug'] ];
 		if ( ! empty( $settings['character_id'] ) ) {
 			$config['characterId'] = (int) $settings['character_id'];
 		}
-
-		printf(
-			'<div data-be-widget="%s" data-be-config="%s"></div>',
-			esc_attr( 'boon-ledger' ),
-			esc_attr( (string) wp_json_encode( $config ) )
-		);
+		return $config;
 	}
 }

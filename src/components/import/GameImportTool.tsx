@@ -12,18 +12,9 @@ import type {
 	GameImportCommitResult,
 	GameImportTarget,
 	ImportResolutions,
-	DuplicateAction,
-	TraitResolution,
 } from '../../types/import';
 import { ImportPreview } from './ImportPreview';
-import {
-	blockingCount as countBlocking,
-	decisionsFor,
-	noDecisions,
-	previewKey,
-	withDecision,
-	type ImportDecisions,
-} from '../../lib/importDecisions';
+import { useImportDecisions } from '../../lib/useImportDecisions';
 import './ImportTool.css';
 
 type Stage = 'upload' | 'preview' | 'target' | 'resolve' | 'commit';
@@ -66,54 +57,15 @@ export function GameImportTool() {
 
 	// Held against the job and target they were made on: Start Over, a new file, or another
 	// merge target begin with none (1.0.0-review F-057).
-	const [ decisions, setDecisions ] = useState< ImportDecisions >(
-		noDecisions()
-	);
-	const madeFor = preview ? previewKey( preview.job_id, previewTarget ) : '';
 	const {
-		traits: traitResolutions,
-		duplicates: duplicateActions,
-		worldObjects: worldObjectActions,
-	} = decisionsFor( decisions, madeFor );
-
-	function onTraitResolutionChange(
-		key: string,
-		resolution: TraitResolution | null
-	) {
-		setDecisions( ( prev ) =>
-			withDecision( prev, madeFor, 'traits', key, resolution )
-		);
-	}
-
-	function onDuplicateActionChange(
-		character: string,
-		action: DuplicateAction | null
-	) {
-		setDecisions( ( prev ) =>
-			withDecision( prev, madeFor, 'duplicates', character, action )
-		);
-	}
-
-	function onWorldObjectActionChange(
-		key: string,
-		action: DuplicateAction | null
-	) {
-		setDecisions( ( prev ) =>
-			withDecision( prev, madeFor, 'worldObjects', key, action )
-		);
-	}
-
-	/** The same count the server enforces - a trait kept as written, too, no longer blocks. */
-	function blockingCount(): number {
-		return preview
-			? countBlocking(
-					preview,
-					traitResolutions,
-					duplicateActions,
-					worldObjectActions
-			  )
-			: 0;
-	}
+		traitResolutions,
+		duplicateActions,
+		worldObjectActions,
+		onTraitResolutionChange,
+		onDuplicateActionChange,
+		onWorldObjectActionChange,
+		blockingCount,
+	} = useImportDecisions( preview, previewTarget );
 
 	async function upload( e: React.FormEvent ) {
 		e.preventDefault();
@@ -131,7 +83,12 @@ export function GameImportTool() {
 			setNewChronicleName( parsed.chronicle_title );
 			setStage( 'preview' );
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Failed to parse this file.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setLoading( false );
 		}
@@ -157,7 +114,12 @@ export function GameImportTool() {
 				setPreview( refreshed );
 				setPreviewTarget( target );
 			} catch ( err: unknown ) {
-				setError( errorMessage( err ) );
+				setError(
+					errorMessage(
+						err,
+						__( 'Failed to parse this file.', 'beyond-elysium' )
+					)
+				);
 				return;
 			} finally {
 				setLoading( false );
@@ -190,7 +152,12 @@ export function GameImportTool() {
 				.commit( preview.job_id, target, resolutions );
 			setResult( committed );
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Failed to parse this file.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setCommitting( false );
 		}
@@ -635,19 +602,6 @@ export function GameImportTool() {
 	);
 }
 
-interface RestError {
-	message?: string;
-}
-
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Failed to parse this file.', 'beyond-elysium' );
-}
+import { errorMessage } from '../../lib/errorMessage';
 
 export default GameImportTool;

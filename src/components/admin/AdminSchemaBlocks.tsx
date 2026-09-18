@@ -16,28 +16,9 @@ import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import SchemaBlockDefinitionEditor from './SchemaBlockDefinitionEditor';
 import type { SchemaBlock, SectionType } from '../../types';
+import { errorMessage } from '../../lib/errorMessage';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
-
-interface RestError {
-	message?: string;
-}
-
-/**
- * Extracts a human-readable message from a REST API error response.
- * Falls back to a generic message when the error object doesn't carry a
- * usable `message` field.
- */
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
-}
 
 const SECTION_TYPES: SectionType[] = [
 	'trait_list',
@@ -112,7 +93,12 @@ export function AdminSchemaBlocks() {
 				setLoading( false );
 			} )
 			.catch( ( err: unknown ) => {
-				setError( errorMessage( err ) );
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				);
 				setLoading( false );
 			} );
 	}
@@ -208,7 +194,12 @@ export function AdminSchemaBlocks() {
 			cancel();
 			load();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSaving( false );
 		}
@@ -239,7 +230,12 @@ export function AdminSchemaBlocks() {
 			await api.schemaBlocks.delete( block.slug, gameSlug || undefined );
 			load();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 

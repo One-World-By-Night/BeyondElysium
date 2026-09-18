@@ -15,20 +15,7 @@ import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 import './AdminAprSettings.css';
 
-interface RestError {
-	message?: string;
-}
-
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
-}
+import { errorMessage } from '../../lib/errorMessage';
 
 /** Grapevine's real defaults (APREngineClass.cls:69-84), offered only via Restore Grapevine defaults. */
 const GV_DEFAULTS: AprSettings = {
@@ -87,7 +74,14 @@ export function AdminAprSettings() {
 					setGameSlug( found[ 0 ].slug );
 				}
 			} )
-			.catch( ( err: unknown ) => setError( errorMessage( err ) ) );
+			.catch( ( err: unknown ) =>
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				)
+			);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [] );
 
@@ -105,7 +99,14 @@ export function AdminAprSettings() {
 				setOptions( opts );
 				setError( null );
 			} )
-			.catch( ( err: unknown ) => setError( errorMessage( err ) ) )
+			.catch( ( err: unknown ) =>
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				)
+			)
 			.finally( () => setLoading( false ) );
 	}, [ gameSlug ] );
 
@@ -124,7 +125,12 @@ export function AdminAprSettings() {
 			setSettings( updated );
 			setSavedNotice( true );
 		} catch ( err ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSaving( false );
 		}

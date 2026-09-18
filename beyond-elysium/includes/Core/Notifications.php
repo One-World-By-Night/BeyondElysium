@@ -28,9 +28,6 @@ class Notifications {
 	/** wp_user_id => list of { character_name, game_name, label, status } */
 	private static array $pending = [];
 
-	/** wp_user_id => [ game_name => rumor titles[] ] */
-	private static array $pending_rumors = [];
-
 	/** wp_user_id => [ batch_id => { game_name, character_names: string[], rumor_count, entry_count } ] */
 	private static array $pending_release = [];
 
@@ -101,101 +98,6 @@ class Notifications {
 			return (string) $trait_name;
 		}
 		return (string) ( $change->category ?: ( $change->change_type ?? '' ) );
-	}
-
-	/**
-	 * Queues one rumor's arrival for one recipient player. No-op when
-	 * should_notify() says not to. Call once per (player, rumor) pair the
-	 * rumor's target_query resolved to - a player with several matching
-	 * characters, or several new rumors in one generation pass, still gets
-	 * one summary email via flush_rumors().
-	 *
-	 * @param int         $wp_user_id
-	 * @param object|null $game        Decoded Game row - name, notifications_enabled.
-	 * @param string      $rumor_title
-	 * @return void
-	 */
-	public static function enqueue_rumor( int $wp_user_id, $game, string $rumor_title ): void {
-		if ( ! $wp_user_id || $rumor_title === '' || ! self::should_notify( $wp_user_id, $game ) ) {
-			return;
-		}
-
-		$game_name = (string) ( $game->name ?? '' );
-		if ( ! isset( self::$pending_rumors[ $wp_user_id ][ $game_name ] ) ) {
-			self::$pending_rumors[ $wp_user_id ][ $game_name ] = [];
-		}
-		if ( ! in_array( $rumor_title, self::$pending_rumors[ $wp_user_id ][ $game_name ], true ) ) {
-			self::$pending_rumors[ $wp_user_id ][ $game_name ][] = $rumor_title;
-		}
-	}
-
-	/**
-	 * Sends one summary email per queued rumor recipient, then empties the
-	 * queue. Safe to call when nothing is queued; iterates zero times and
-	 * sends nothing.
-	 *
-	 * @return void
-	 */
-	public static function flush_rumors(): void {
-		foreach ( self::$pending_rumors as $wp_user_id => $by_game ) {
-			$user = get_userdata( (int) $wp_user_id );
-			if ( ! $user || ! $user->user_email ) {
-				continue;
-			}
-
-			wp_mail( $user->user_email, self::rumor_subject( $by_game ), self::rumor_body( $user, $by_game ) );
-		}
-
-		self::$pending_rumors = [];
-	}
-
-	/**
-	 * Builds the rumor email subject line: names the single rumor when there
-	 * is exactly one queued across every game, or states a total count.
-	 *
-	 * @param array<string,string[]> $by_game game_name => rumor titles.
-	 * @return string
-	 */
-	private static function rumor_subject( array $by_game ): string {
-		$titles = array_merge( ...array_values( $by_game ) );
-		if ( count( $titles ) === 1 ) {
-			return sprintf(
-				/* translators: %s: rumor title */
-				__( '[Beyond Elysium] New rumor: %s', 'beyond-elysium' ),
-				$titles[0]
-			);
-		}
-		return sprintf(
-			/* translators: %d: number of new rumors */
-			__( '[Beyond Elysium] %d new rumors available', 'beyond-elysium' ),
-			count( $titles )
-		);
-	}
-
-	/**
-	 * Builds the plain-text rumor email body: a greeting line followed by
-	 * one line per queued rumor, naming the rumor and which game it's in.
-	 *
-	 * @param \WP_User                $user
-	 * @param array<string,string[]> $by_game game_name => rumor titles.
-	 * @return string
-	 */
-	private static function rumor_body( \WP_User $user, array $by_game ): string {
-		$lines   = [];
-		$lines[] = sprintf(
-			/* translators: %s: display name */
-			__( 'Hi %s,', 'beyond-elysium' ),
-			$user->display_name
-		);
-		$lines[] = '';
-
-		foreach ( $by_game as $game_name => $titles ) {
-			foreach ( $titles as $title ) {
-				$lines[] = sprintf( '- %1$s (%2$s)', $title, $game_name );
-			}
-		}
-
-		return implode( "\n", $lines );
 	}
 
 	/**

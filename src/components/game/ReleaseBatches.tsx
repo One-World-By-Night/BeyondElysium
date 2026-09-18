@@ -8,30 +8,26 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { canIn } from '../../lib/chronicleCapabilities';
+import { errorMessage } from '../../lib/errorMessage';
 import type { MyCapabilities } from '../../types';
 import type { ReleaseBatch, ReleaseBatchItems } from '../../types/releaseBatch';
+import type { ReleaseScheduleRule } from '../../types/session';
 import HelpButton from '../shared/HelpButton';
 import './ReleaseBatches.css';
+
+const WEEKDAYS: { value: string; label: string }[] = [
+	{ value: 'sunday', label: __( 'Sunday', 'beyond-elysium' ) },
+	{ value: 'monday', label: __( 'Monday', 'beyond-elysium' ) },
+	{ value: 'tuesday', label: __( 'Tuesday', 'beyond-elysium' ) },
+	{ value: 'wednesday', label: __( 'Wednesday', 'beyond-elysium' ) },
+	{ value: 'thursday', label: __( 'Thursday', 'beyond-elysium' ) },
+	{ value: 'friday', label: __( 'Friday', 'beyond-elysium' ) },
+	{ value: 'saturday', label: __( 'Saturday', 'beyond-elysium' ) },
+];
 
 export interface ReleaseBatchesProps {
 	gameSlug: string;
 	capabilities?: MyCapabilities;
-}
-
-interface RestError {
-	message?: string;
-}
-
-/** Surfaces the server's own error message directly, rather than re-deriving one from its code. */
-function errorMessage( error: unknown, fallback: string ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return fallback;
 }
 
 /** "Scheduled Fri 7:00pm" - the badge/list label for a batch's release time. */
@@ -77,6 +73,71 @@ export function ReleaseBatches( {
 	const [ newReleaseAt, setNewReleaseAt ] = useState( '' );
 	const [ creating, setCreating ] = useState( false );
 	const [ createError, setCreateError ] = useState< string | null >( null );
+
+	const [ rules, setRules ] = useState< ReleaseScheduleRule[] >( [] );
+	const [ scheduleOpen, setScheduleOpen ] = useState( false );
+	const [ savingSchedule, setSavingSchedule ] = useState( false );
+	const [ scheduleError, setScheduleError ] = useState< string | null >(
+		null
+	);
+
+	useEffect( () => {
+		api.games
+			.get( gameSlug )
+			.then( ( game ) => {
+				const settings = game.settings as {
+					release_schedule?: { rules?: ReleaseScheduleRule[] };
+				} | null;
+				setRules( settings?.release_schedule?.rules ?? [] );
+			} )
+			.catch( () => setRules( [] ) );
+	}, [ gameSlug ] );
+
+	async function saveSchedule( nextRules: ReleaseScheduleRule[] ) {
+		setSavingSchedule( true );
+		setScheduleError( null );
+		try {
+			const result = await api
+				.sessions( gameSlug )
+				.updateSettings( { release_schedule: { rules: nextRules } } );
+			setRules( result.release_schedule.rules );
+		} catch ( err ) {
+			setScheduleError(
+				errorMessage(
+					err,
+					__(
+						'Failed to save the release schedule.',
+						'beyond-elysium'
+					)
+				)
+			);
+		} finally {
+			setSavingSchedule( false );
+		}
+	}
+
+	function addRule( type: 'weekly' | 'monthly' ) {
+		const rule: ReleaseScheduleRule =
+			type === 'weekly'
+				? { type: 'weekly', weekday: 'friday', time: '18:00' }
+				: { type: 'monthly', day_of_month: 1, time: '09:00' };
+		saveSchedule( [ ...rules, rule ] );
+	}
+
+	function removeRule( index: number ) {
+		saveSchedule( rules.filter( ( _, i ) => i !== index ) );
+	}
+
+	function updateRule(
+		index: number,
+		change: Partial< ReleaseScheduleRule >
+	) {
+		saveSchedule(
+			rules.map( ( rule, i ) =>
+				i === index ? { ...rule, ...change } : rule
+			)
+		);
+	}
 
 	function load() {
 		setLoading( true );
@@ -375,6 +436,161 @@ export function ReleaseBatches( {
 			{ error && (
 				<div className="be-release-batches__error" role="alert">
 					{ error }
+				</div>
+			) }
+
+			{ ! selected && (
+				<div className="be-release-batches__schedule">
+					<button
+						type="button"
+						className="be-release-batches__schedule-toggle"
+						onClick={ () => setScheduleOpen( ! scheduleOpen ) }
+						aria-expanded={ scheduleOpen }
+					>
+						{ sprintf(
+							/* translators: %d: number of recurring release-schedule rules */
+							__( 'Release schedule (%d)', 'beyond-elysium' ),
+							rules.length
+						) }
+					</button>
+					{ scheduleOpen && (
+						<div className="be-release-batches__schedule-body">
+							<p>
+								{ __(
+									"This controls when, not what: on the day(s) below, every batch you've left as a draft goes out as-is. Nothing is created automatically - prepare a draft batch below whenever it's ready, and the schedule releases it for you.",
+									'beyond-elysium'
+								) }
+							</p>
+							{ scheduleError && (
+								<div
+									className="be-release-batches__error"
+									role="alert"
+								>
+									{ scheduleError }
+								</div>
+							) }
+							<ul className="be-release-batches__schedule-list">
+								{ rules.map( ( rule, i ) => (
+									<li key={ i }>
+										<span className="be-st-badge">
+											{ rule.type === 'weekly'
+												? __(
+														'Weekly',
+														'beyond-elysium'
+												  )
+												: __(
+														'Monthly',
+														'beyond-elysium'
+												  ) }
+										</span>
+										{ rule.type === 'weekly' ? (
+											<select
+												value={ rule.weekday }
+												disabled={ savingSchedule }
+												onChange={ ( e ) =>
+													updateRule( i, {
+														weekday: e.target.value,
+													} )
+												}
+												aria-label={ __(
+													'Weekday',
+													'beyond-elysium'
+												) }
+											>
+												{ WEEKDAYS.map( ( w ) => (
+													<option
+														key={ w.value }
+														value={ w.value }
+													>
+														{ w.label }
+													</option>
+												) ) }
+											</select>
+										) : (
+											<select
+												value={ rule.day_of_month }
+												disabled={ savingSchedule }
+												onChange={ ( e ) =>
+													updateRule( i, {
+														day_of_month: Number(
+															e.target.value
+														),
+													} )
+												}
+												aria-label={ __(
+													'Day of the month',
+													'beyond-elysium'
+												) }
+											>
+												{ Array.from(
+													{ length: 28 },
+													( _, n ) => n + 1
+												).map( ( d ) => (
+													<option
+														key={ d }
+														value={ d }
+													>
+														{ d }
+													</option>
+												) ) }
+											</select>
+										) }
+										<input
+											type="time"
+											value={ rule.time }
+											disabled={ savingSchedule }
+											onChange={ ( e ) =>
+												updateRule( i, {
+													time: e.target.value,
+												} )
+											}
+											aria-label={ __(
+												'Time of day',
+												'beyond-elysium'
+											) }
+										/>
+										<button
+											type="button"
+											disabled={ savingSchedule }
+											onClick={ () => removeRule( i ) }
+										>
+											{ __( 'Remove', 'beyond-elysium' ) }
+										</button>
+									</li>
+								) ) }
+								{ rules.length === 0 && (
+									<li>
+										{ __(
+											'On demand only - no recurring schedule set.',
+											'beyond-elysium'
+										) }
+									</li>
+								) }
+							</ul>
+							<div className="be-release-batches__schedule-add">
+								<button
+									type="button"
+									disabled={ savingSchedule }
+									onClick={ () => addRule( 'weekly' ) }
+								>
+									{ __(
+										'+ Add a weekly rule',
+										'beyond-elysium'
+									) }
+								</button>
+								<button
+									type="button"
+									disabled={ savingSchedule }
+									onClick={ () => addRule( 'monthly' ) }
+								>
+									{ __(
+										'+ Add a monthly rule',
+										'beyond-elysium'
+									) }
+								</button>
+							</div>
+						</div>
+					) }
 				</div>
 			) }
 

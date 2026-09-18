@@ -1282,6 +1282,38 @@ class GEX_Parser {
 		$totem    = $r->string();
 		$camp     = $r->string();
 		$position = $r->string();
+
+		return array_merge( [
+			'race'     => 'werewolf',
+			'name'     => $name,
+			'nature'   => $nature,
+			'demeanor' => $demeanor,
+			'tribe'    => $tribe,
+			'breed'    => $breed,
+			'auspice'  => $auspice,
+			'rank'     => $rank,
+			'pack'     => $pack,
+			'totem'    => $totem,
+			'camp'     => $camp,
+			'position' => $position,
+		], self::parse_werewolf_shaped_body( $r, $version, 'werewolf' ) );
+	}
+
+	/**
+	 * The shared field-read sequence behind `parse_character_werewolf()` and
+	 * `parse_character_fera()` (1.1.1 audit) - byte-identical from `notoriety`
+	 * through `notes`/the pool-max backfill; only each class's own leading
+	 * identity fields (read by the caller before this) and the `$race` string
+	 * threaded into `read_trait_lists()` differ. Confirmed byte-for-byte by
+	 * `GexParserTest::test_every_race_type_code_dispatches_and_round_trips()`,
+	 * which already builds and round-trips a real synthetic buffer for both.
+	 *
+	 * @param GV_Binary_Reader $r
+	 * @param float            $version
+	 * @param string           $race 'werewolf' or 'fera'.
+	 * @return array<string,mixed>
+	 */
+	private static function parse_werewolf_shaped_body( GV_Binary_Reader $r, float $version, string $race ): array {
 		$notoriety = $r->int16();
 
 		if ( $version >= 2.397 ) {
@@ -1344,7 +1376,7 @@ class GEX_Parser {
 		$last_modified = $r->date();
 
 		$experience  = self::parse_experience( $r, $version );
-		$trait_lists = self::read_trait_lists( $r, $version, 'werewolf' );
+		$trait_lists = self::read_trait_lists( $r, $version, $race );
 		[ $physical, $social, $mental ] = self::attribute_lists( $trait_lists );
 
 		$biography = $version >= 2.397 ? $r->string() : '';
@@ -1355,18 +1387,6 @@ class GEX_Parser {
 		}
 
 		return [
-			'race'           => 'werewolf',
-			'name'           => $name,
-			'nature'         => $nature,
-			'demeanor'       => $demeanor,
-			'tribe'          => $tribe,
-			'breed'          => $breed,
-			'auspice'        => $auspice,
-			'rank'           => $rank,
-			'pack'           => $pack,
-			'totem'          => $totem,
-			'camp'           => $camp,
-			'position'       => $position,
 			'notoriety'      => $notoriety,
 			'rage'           => $rage,
 			'temp_rage'      => $temp_rage,
@@ -2142,118 +2162,20 @@ class GEX_Parser {
 		$pack     = $r->string();
 		$totem    = $r->string();
 		$position = $r->string();
-		$notoriety = $r->int16();
 
-		if ( $version >= 2.397 ) {
-			$rage           = $r->int16();
-			$temp_rage      = $r->int16();
-			$gnosis         = $r->int16();
-			$temp_gnosis    = $r->int16();
-			$willpower      = $r->int16();
-			$temp_willpower = $r->int16();
-		} else {
-			$rage      = $r->int16();
-			$gnosis    = $r->int16();
-			$willpower = $r->int16();
-			$temp_rage      = $rage;
-			$temp_gnosis    = $gnosis;
-			$temp_willpower = $willpower;
-		}
-
-		if ( $version >= 2.395 ) {
-			$honor       = $r->int16();
-			$glory       = $r->int16();
-			$wisdom      = $r->int16();
-			$temp_honor  = $r->single();
-			$temp_glory  = $r->single();
-			$temp_wisdom = $r->single();
-		} else {
-			$temp_honor  = $r->single();
-			$honor       = (int) $temp_honor;
-			$temp_honor  = round( ( $temp_honor - $honor ) * 10, 1 );
-			$temp_glory  = $r->single();
-			$glory       = (int) $temp_glory;
-			$temp_glory  = round( ( $temp_glory - $glory ) * 10, 1 );
-			$temp_wisdom = $r->single();
-			$wisdom      = (int) $temp_wisdom;
-			$temp_wisdom = round( ( $temp_wisdom - $wisdom ) * 10, 1 );
-		}
-
-		$physical_max = 0;
-		$social_max   = 0;
-		$mental_max   = 0;
-		if ( $version >= 2.397 ) {
-			$physical_max = $r->int16();
-			$social_max   = $r->int16();
-			$mental_max   = $r->int16();
-		}
-
-		$player = $r->string();
-		$status = $r->string();
-		$id     = $r->string();
-
-		if ( $version >= 2.397 ) {
-			$start_date = $r->date();
-		} else {
-			$r->string();
-			$start_date = null;
-		}
-
-		$narrator      = $r->string();
-		$is_npc        = $r->bool();
-		$last_modified = $r->date();
-
-		$experience  = self::parse_experience( $r, $version );
-		$trait_lists = self::read_trait_lists( $r, $version, 'fera' );
-		[ $physical, $social, $mental ] = self::attribute_lists( $trait_lists );
-
-		$biography = $version >= 2.397 ? $r->string() : '';
-		$notes     = $r->string();
-
-		if ( $version < 2.397 ) {
-			[ $physical_max, $social_max, $mental_max ] = self::backfill_pool_max( $physical_max, $physical, $social, $mental );
-		}
-
-		return [
-			'race'           => 'fera',
-			'name'           => $name,
-			'nature'         => $nature,
-			'demeanor'       => $demeanor,
-			'fera'           => $fera,
-			'breed'          => $breed,
-			'auspice'        => $auspice,
-			'rank'           => $rank,
-			'pack'           => $pack,
-			'totem'          => $totem,
-			'position'       => $position,
-			'notoriety'      => $notoriety,
-			'rage'           => $rage,
-			'temp_rage'      => $temp_rage,
-			'gnosis'         => $gnosis,
-			'temp_gnosis'    => $temp_gnosis,
-			'willpower'      => $willpower,
-			'temp_willpower' => $temp_willpower,
-			'honor'          => $honor,
-			'glory'          => $glory,
-			'wisdom'         => $wisdom,
-			'temp_honor'     => $temp_honor,
-			'temp_glory'     => $temp_glory,
-			'temp_wisdom'    => $temp_wisdom,
-			'physical_max'   => $physical_max,
-			'social_max'     => $social_max,
-			'mental_max'     => $mental_max,
-			'player'         => $player,
-			'status'         => $status,
-			'id'             => $id,
-			'start_date'     => $start_date,
-			'narrator'       => $narrator,
-			'is_npc'         => $is_npc,
-			'last_modified'  => $last_modified,
-			'experience'     => $experience,
-			'trait_lists'    => $trait_lists,
-			'biography'      => $biography,
-			'notes'          => $notes,
-		];
+		return array_merge( [
+			'race'     => 'fera',
+			'name'     => $name,
+			'nature'   => $nature,
+			'demeanor' => $demeanor,
+			'fera'     => $fera,
+			'breed'    => $breed,
+			'auspice'  => $auspice,
+			'rank'     => $rank,
+			'pack'     => $pack,
+			'totem'    => $totem,
+			'position' => $position,
+		], self::parse_werewolf_shaped_body( $r, $version, 'fera' ) );
 	}
 
 	/**

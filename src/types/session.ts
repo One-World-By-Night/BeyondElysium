@@ -84,6 +84,31 @@ export interface SessionSettings {
 	attendance_xp?: number;
 	report_xp?: number;
 	spotlight_days?: number;
+	release_schedule?: ReleaseSchedule;
+}
+
+/**
+ * One recurring release-schedule rule (1.1.1 §3): a weekly rule names a weekday, a monthly
+ * rule a day of month (1-28, no 29/30/31 ambiguity across short months). `last_run_date`
+ * is the scheduler's own idempotency cursor - server-set, never sent by the client.
+ */
+export interface ReleaseScheduleRule {
+	type: 'weekly' | 'monthly';
+	weekday?: string;
+	day_of_month?: number;
+	time: string;
+	last_run_date?: string;
+}
+
+/** A chronicle's own recurring release-schedule rules, settings.release_schedule. */
+export interface ReleaseSchedule {
+	rules: ReleaseScheduleRule[];
+}
+
+/** Response from updating a chronicle's session-related and release-schedule settings. */
+export interface SessionSettingsResponse {
+	sessions: SessionSettings;
+	release_schedule: ReleaseSchedule;
 }
 
 /**

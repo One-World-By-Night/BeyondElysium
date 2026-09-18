@@ -92,6 +92,7 @@ import type {
 	RecordAttendanceRequest,
 	AwardAttendanceXpResponse,
 	SessionSettings,
+	SessionSettingsResponse,
 	AfterGameReport,
 	AfterGameReportRequest,
 	AwardReportXpResponse,
@@ -2551,6 +2552,21 @@ export const factions = ( gameSlug: string ) => ( {
 			path: `${ BASE }/${ gameSlug }/factions/${ id }/members/${ characterId }`,
 			method: 'DELETE',
 		} ),
+
+	/**
+	 * Sets a member's rank and/or leader flag. `rank` is a leader-or-manager change; only a
+	 * manager may change `is_leader`.
+	 */
+	updateMember: (
+		id: number,
+		characterId: number,
+		data: { rank?: string | null; is_leader?: boolean }
+	): Promise< FactionMember > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/factions/${ id }/members/${ characterId }`,
+			method: 'PATCH',
+			data,
+		} ),
 } );
 
 // ---------------------------------------------------------------------------
@@ -2746,8 +2762,13 @@ export const sessions = ( gameSlug: string ) => ( {
 			data: options,
 		} ),
 
-	/** Updates this chronicle's session-related settings, merged into settings.sessions. */
-	updateSettings: ( data: SessionSettings ): Promise< SessionSettings > =>
+	/**
+	 * Updates this chronicle's session-related settings and/or its recurring
+	 * release-schedule rules - each merged independently into its own settings key.
+	 */
+	updateSettings: (
+		data: SessionSettings
+	): Promise< SessionSettingsResponse > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/session-settings`,
 			method: 'PUT',

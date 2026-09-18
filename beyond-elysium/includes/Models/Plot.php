@@ -122,57 +122,8 @@ class Plot {
 	 */
 	public static function for_game( int $game_id, array $args = [] ): array {
 		global $wpdb;
-		$table  = Manager::table( 'plots' );
-		$where  = [ 'game_id = %d' ];
-		$values = [ $game_id ];
-
-		if ( ! empty( $args['status'] ) ) {
-			$where[]  = 'status = %s';
-			$values[] = $args['status'];
-		}
-
-		if ( ! empty( $args['initiated_by'] ) ) {
-			$where[]  = 'initiated_by = %s';
-			$values[] = $args['initiated_by'];
-		}
-
-		if ( ! empty( $args['search'] ) ) {
-			$where[]  = '(title LIKE %s OR description LIKE %s)';
-			$like     = '%' . $wpdb->esc_like( $args['search'] ) . '%';
-			$values[] = $like;
-			$values[] = $like;
-		}
-
-		if ( ! empty( $args['date_from'] ) ) {
-			$where[]  = 'created_at >= %s';
-			$values[] = $args['date_from'];
-		}
-
-		if ( ! empty( $args['date_to'] ) ) {
-			$where[]  = 'created_at <= %s';
-			$values[] = $args['date_to'];
-		}
-
-		if ( ! empty( $args['exclude_actor_plots_not_owned_by'] ) ) {
-			[ $clause, $clause_values ] = self::actor_ownership_exclusion( (int) $args['exclude_actor_plots_not_owned_by'] );
-			$where[]                    = $clause;
-			array_push( $values, ...$clause_values );
-		}
-
-		$character_plots = self::character_plot_filter( (string) ( $args['character_plots'] ?? '' ) );
-		if ( $character_plots !== null ) {
-			$where[] = $character_plots[0];
-			array_push( $values, ...$character_plots[1] );
-		}
-
-		if ( array_key_exists( 'assigned_to', $args ) ) {
-			if ( $args['assigned_to'] === null ) {
-				$where[] = 'assigned_to IS NULL';
-			} else {
-				$where[]  = 'assigned_to = %d';
-				$values[] = (int) $args['assigned_to'];
-			}
-		}
+		$table = Manager::table( 'plots' );
+		[ $where, $values ] = self::build_where( $game_id, $args );
 
 		// Aliased as p: actor_ownership_exclusion()'s NOT EXISTS clause correlates against p.id.
 		$sql = 'SELECT p.* FROM ' . $table . ' p WHERE ' . implode( ' AND ', $where );
@@ -204,7 +155,28 @@ class Plot {
 	 */
 	public static function count_for_game( int $game_id, array $args = [] ): int {
 		global $wpdb;
-		$table  = Manager::table( 'plots' );
+		$table = Manager::table( 'plots' );
+		[ $where, $values ] = self::build_where( $game_id, $args );
+
+		// Aliased as p: actor_ownership_exclusion()'s NOT EXISTS clause correlates against p.id.
+		$sql = 'SELECT COUNT(*) FROM ' . $table . ' p WHERE ' . implode( ' AND ', $where );
+		$sql = $wpdb->prepare( $sql, $values );
+		return (int) $wpdb->get_var( $sql );
+	}
+
+	/**
+	 * The shared WHERE-clause builder behind `for_game()` and `count_for_game()` - both
+	 * accept the identical filter vocabulary (status, initiated_by, search, date range,
+	 * actor-ownership exclusion, character-plot filtering, assigned_to, and
+	 * exclude_character_plots), and had built it twice, byte-for-byte, until this was
+	 * extracted (1.1.1 audit).
+	 *
+	 * @param int   $game_id
+	 * @param array $args
+	 * @return array{0: string[], 1: array<int,mixed>} `[$where_clauses, $bind_values]`.
+	 */
+	private static function build_where( int $game_id, array $args ): array {
+		global $wpdb;
 		$where  = [ 'game_id = %d' ];
 		$values = [ $game_id ];
 
@@ -261,10 +233,7 @@ class Plot {
 			$values[] = 'apr_actor';
 		}
 
-		// Aliased as p: actor_ownership_exclusion()'s NOT EXISTS clause correlates against p.id.
-		$sql = 'SELECT COUNT(*) FROM ' . $table . ' p WHERE ' . implode( ' AND ', $where );
-		$sql = $wpdb->prepare( $sql, $values );
-		return (int) $wpdb->get_var( $sql );
+		return [ $where, $values ];
 	}
 
 	/**
@@ -750,5 +719,28 @@ class Plot {
 		}
 
 		return $row;
+	}
+
+	/**
+	 * Whether one of `$wp_user_id`'s own characters holds a `plot_member` connection to
+	 * this plot (§2.3a) - an invited co-narrator, never the owner. Shared by
+	 * `Plots_Controller` and `Entries_Controller` (1.1.1 audit) - both had their own,
+	 * identical private copy of this check.
+	 *
+	 * @param int $plot_id
+	 * @param int $wp_user_id
+	 * @return bool
+	 */
+	public static function viewer_is_member( int $plot_id, int $wp_user_id ): bool {
+		foreach ( Connection::for_source( 'plot', $plot_id ) as $connection ) {
+			if ( $connection->target_type !== 'character' || $connection->label !== 'plot_member' ) {
+				continue;
+			}
+			$character = Character::find( (int) $connection->target_id );
+			if ( $character && (int) $character->wp_user_id === $wp_user_id ) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

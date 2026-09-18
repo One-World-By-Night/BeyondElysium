@@ -13,6 +13,7 @@ import type {
 	EntryAudienceValue,
 	EntryType,
 } from '../../types/plot';
+import { errorMessage } from '../../lib/errorMessage';
 import './EntryForm.css';
 
 export interface EntryFormProps {
@@ -23,25 +24,6 @@ export interface EntryFormProps {
 	onCreated: () => void;
 	/** Shows an optional Timeline date field when true. */
 	expandedEnabled?: boolean;
-}
-
-interface RestError {
-	message?: string;
-}
-
-/**
- * Surfaces the server's own error message directly - e.g. a downtime-window 409 (1.1.0
- * §3.3), which a generic fallback would otherwise swallow entirely.
- */
-function errorMessage( error: unknown, fallback: string ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return fallback;
 }
 
 /**

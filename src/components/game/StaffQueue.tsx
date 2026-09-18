@@ -20,20 +20,7 @@ export interface StaffQueueProps {
 	capabilities?: MyCapabilities;
 }
 
-interface RestError {
-	message?: string;
-}
-
-function errorMessage( error: unknown, fallback: string ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return fallback;
-}
+import { errorMessage } from '../../lib/errorMessage';
 
 const EMPTY: StaffQueueData = {
 	downtime: [],

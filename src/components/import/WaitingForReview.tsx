@@ -19,6 +19,7 @@ import { ImportPreview } from './ImportPreview';
 import { blockingCount } from '../../lib/importDecisions';
 import { mergeWaitingRows } from '../../lib/waitingForReview';
 import type { WaitingRow as Row } from '../../lib/waitingForReview';
+import { errorMessage } from '../../lib/errorMessage';
 import './ImportTool.css';
 
 export interface WaitingForReviewProps {
@@ -28,17 +29,6 @@ export interface WaitingForReviewProps {
 interface RestError {
 	message?: string;
 	data?: { status?: number };
-}
-
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
 }
 
 /**
@@ -106,7 +96,14 @@ export function WaitingForReview( { gameSlug }: WaitingForReviewProps ) {
 			.then( ( [ transferRows, submissionRows ] ) =>
 				setRows( mergeWaitingRows( transferRows, submissionRows ) )
 			)
-			.catch( ( err: unknown ) => setError( errorMessage( err ) ) );
+			.catch( ( err: unknown ) =>
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				)
+			);
 	}
 
 	useEffect( () => {
@@ -182,7 +179,12 @@ export function WaitingForReview( { gameSlug }: WaitingForReviewProps ) {
 				await api.transfers( gameSlug ).review( row.id )
 			);
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 
@@ -200,7 +202,12 @@ export function WaitingForReview( { gameSlug }: WaitingForReviewProps ) {
 				.then( setVerification )
 				.catch( () => setVerification( null ) );
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 
@@ -249,7 +256,12 @@ export function WaitingForReview( { gameSlug }: WaitingForReviewProps ) {
 			setTransferReview( null );
 			load();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setWorking( false );
 		}
@@ -295,7 +307,12 @@ export function WaitingForReview( { gameSlug }: WaitingForReviewProps ) {
 			setSubmissionReview( null );
 			load();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setWorking( false );
 		}
@@ -320,7 +337,12 @@ export function WaitingForReview( { gameSlug }: WaitingForReviewProps ) {
 			}
 			load();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setWorking( false );
 		}
@@ -341,7 +363,12 @@ export function WaitingForReview( { gameSlug }: WaitingForReviewProps ) {
 			setRefuseNote( '' );
 			load();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setWorking( false );
 		}

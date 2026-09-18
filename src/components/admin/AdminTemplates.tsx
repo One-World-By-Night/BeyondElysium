@@ -16,28 +16,9 @@ import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import TemplateLayoutEditor from './TemplateLayoutEditor';
 import type { Template, TemplateLayout } from '../../types';
+import { errorMessage } from '../../lib/errorMessage';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
-
-interface RestError {
-	message?: string;
-}
-
-/**
- * Extracts a human-readable message from a REST API error response.
- * Falls back to a generic message when the error object doesn't carry a
- * usable `message` field.
- */
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
-}
 
 const DEFAULT_LAYOUT: TemplateLayout = { version: 1, columns: 3, sections: [] };
 
@@ -97,7 +78,12 @@ export function AdminTemplates() {
 				setLoading( false );
 			} )
 			.catch( ( err: unknown ) => {
-				setError( errorMessage( err ) );
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				);
 				setLoading( false );
 			} );
 	}
@@ -175,7 +161,12 @@ export function AdminTemplates() {
 			cancel();
 			load();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSaving( false );
 		}
@@ -210,7 +201,12 @@ export function AdminTemplates() {
 			}
 			load();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 

@@ -15,6 +15,7 @@ import {
 	saveDraft,
 	type StoredDraft,
 } from '../lib/draftStorage';
+import { errorMessage } from '../lib/errorMessage';
 import type { ResolvedStack } from '../types';
 import type {
 	Character,
@@ -22,30 +23,6 @@ import type {
 	PreviewChangesResponse,
 	SheetData,
 } from '../types/character';
-
-/**
- * The minimal shape of an apiFetch rejection this store knows how
- * to read a message from, matching WordPress's api-fetch
- * package's own error shape.
- */
-interface RestError {
-	message?: string;
-	data?: { status?: number };
-}
-
-/**
- * Extracts a human-readable message from a caught error, falling
- * back to a generic message when the error does not carry one.
- */
-function errorMessage( error: unknown ): string {
-	if ( typeof error === 'object' && error !== null ) {
-		const restError = error as RestError;
-		if ( restError.message ) {
-			return restError.message;
-		}
-	}
-	return 'Something went wrong.';
-}
 
 /**
  * Deep-clones a JSON-serializable value via a serialize/parse
@@ -143,7 +120,9 @@ function refreshPreview(
 		} )
 		.catch( ( error ) => {
 			if ( request === previewRequest ) {
-				set( { error: errorMessage( error ) } );
+				set( {
+					error: errorMessage( error, 'Something went wrong.' ),
+				} );
 			}
 		} );
 }
@@ -212,7 +191,10 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 					restorableDraft,
 				} );
 			} catch ( error ) {
-				set( { loading: false, error: errorMessage( error ) } );
+				set( {
+					loading: false,
+					error: errorMessage( error, 'Something went wrong.' ),
+				} );
 			}
 		},
 
@@ -342,7 +324,10 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 				}
 				return {
 					saving: false,
-					error: failed.length > 0 ? errorMessage( lastError ) : null,
+					error:
+						failed.length > 0
+							? errorMessage( lastError, 'Something went wrong.' )
+							: null,
 					originalSheetData: nextOriginal,
 					previewCosts: null,
 					submittedChanges: [

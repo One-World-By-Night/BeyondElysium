@@ -7,6 +7,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import { canIn } from '../../lib/chronicleCapabilities';
+import { errorMessage } from '../../lib/errorMessage';
 import type { MyCapabilities } from '../../types';
 import type {
 	GameSession,
@@ -22,22 +23,6 @@ import './GameNights.css';
 export interface GameNightsProps {
 	gameSlug: string;
 	capabilities?: MyCapabilities;
-}
-
-interface RestError {
-	message?: string;
-}
-
-/** Surfaces the server's own error message directly, rather than re-deriving one from its code. */
-function errorMessage( error: unknown, fallback: string ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return fallback;
 }
 
 /** A MySQL datetime ("2026-10-02 17:00:00") to a <input type="datetime-local"> value. */
@@ -91,7 +76,10 @@ export function GameNights( { gameSlug, capabilities }: GameNightsProps ) {
 	const [ settingsOpen, setSettingsOpen ] = useState( false );
 	const [ attendanceXp, setAttendanceXp ] = useState( 1 );
 	const [ reportXp, setReportXp ] = useState( 0 );
-	const [ spotlightDays, setSpotlightDays ] = useState( 14 );
+	// D54: must match Spotlight::DEFAULT_SPOTLIGHT_DAYS - this panel showed 14 while the
+	// server actually enforced 42 until a save happened, so saving unchanged silently cut
+	// the real window.
+	const [ spotlightDays, setSpotlightDays ] = useState( 42 );
 	const [ savingSettings, setSavingSettings ] = useState( false );
 
 	// After-game reports (1.1.0 §3.14, A1) - read state and awarding report XP per session.
@@ -262,7 +250,7 @@ export function GameNights( { gameSlug, capabilities }: GameNightsProps ) {
 				} | null;
 				setAttendanceXp( settings?.sessions?.attendance_xp ?? 1 );
 				setReportXp( settings?.sessions?.report_xp ?? 0 );
-				setSpotlightDays( settings?.sessions?.spotlight_days ?? 14 );
+				setSpotlightDays( settings?.sessions?.spotlight_days ?? 42 );
 			} )
 			.catch( () => undefined );
 	}, [ gameSlug, canManageCharacters ] );

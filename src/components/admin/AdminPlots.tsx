@@ -4,11 +4,10 @@
  * giving staff a dedicated wp-admin surface for managing a chronicle's
  * plot threads.
  */
-import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import api from '../../api/client';
 import PlotManager from '../apr/PlotManager';
-import type { Game } from '../../types';
+import { useAdminGameSelector } from '../../lib/useAdminGameSelector';
+import { GameFilterBar } from './GameFilterBar';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
@@ -19,22 +18,7 @@ import './Admin.css';
  * time.
  */
 export function AdminPlots() {
-	const [ games, setGames ] = useState< Game[] >( [] );
-	const [ gameSlug, setGameSlug ] = useState( '' );
-	const [ loading, setLoading ] = useState( true );
-
-	useEffect( () => {
-		api.games
-			.list()
-			.then( ( result ) => {
-				setGames( result );
-				if ( result.length > 0 ) {
-					setGameSlug( result[ 0 ].slug );
-				}
-				setLoading( false );
-			} )
-			.catch( () => setLoading( false ) );
-	}, [] );
+	const { games, gameSlug, setGameSlug, loading } = useAdminGameSelector();
 
 	return (
 		<div className="be-admin">
@@ -43,41 +27,17 @@ export function AdminPlots() {
 				<HelpButton helpKey="admin-plots" />
 			</div>
 
-			{ loading ? (
-				<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
-			) : games.length === 0 ? (
-				<p>
-					{ __(
-						'No games exist yet - create one under Beyond Elysium → System Config → Games first.',
-						'beyond-elysium'
-					) }
-				</p>
-			) : (
-				<>
-					<div className="be-admin__filters">
-						<label>
-							{ __( 'Game', 'beyond-elysium' ) }{ ' ' }
-							<select
-								value={ gameSlug }
-								onChange={ ( e ) =>
-									setGameSlug( e.target.value )
-								}
-							>
-								{ games.map( ( g ) => (
-									<option key={ g.slug } value={ g.slug }>
-										{ g.name }
-									</option>
-								) ) }
-							</select>
-						</label>
-					</div>
-
-					{ /* key={gameSlug} remounts PlotManager so its internal state resets when the chronicle changes. */ }
-					{ gameSlug && (
-						<PlotManager key={ gameSlug } gameSlug={ gameSlug } />
-					) }
-				</>
-			) }
+			<GameFilterBar
+				games={ games }
+				gameSlug={ gameSlug }
+				onGameChange={ setGameSlug }
+				loading={ loading }
+			>
+				{ /* key={gameSlug} remounts PlotManager so its internal state resets when the chronicle changes. */ }
+				{ gameSlug && (
+					<PlotManager key={ gameSlug } gameSlug={ gameSlug } />
+				) }
+			</GameFilterBar>
 		</div>
 	);
 }

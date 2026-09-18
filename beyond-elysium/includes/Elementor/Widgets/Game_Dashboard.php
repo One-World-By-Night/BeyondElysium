@@ -3,13 +3,12 @@
 namespace BeyondElysium\Elementor\Widgets;
 
 use Elementor\Controls_Manager;
-use Elementor\Widget_Base;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Elementor widget wrapper for the Game Dashboard, a chronicle's landing
- * page. Registers the widget's name, title, icon, and category with
+ * page. Registers the widget's name, title, and icon with
  * Elementor, exposes Content section controls for the target game slug and
  * several optional quick-link page URLs, and renders a single mount-point
  * <div> that the front-end script hydrates with the GameDashboard React
@@ -19,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @see BE_PROCESS/releases/workflow-0.9.md Step 7c
  */
-class Game_Dashboard extends Widget_Base {
+class Game_Dashboard extends Base_Widget {
 
 	/**
 	 * Returns the internal widget name Elementor uses to identify this
@@ -46,18 +45,6 @@ class Game_Dashboard extends Widget_Base {
 	 */
 	public function get_icon(): string {
 		return 'eicon-dashboard';
-	}
-
-	/**
-	 * Returns the Elementor category slugs this widget belongs to, which
-	 * controls where it appears in the widget panel. Every Beyond Elysium
-	 * widget belongs to the single "beyond-elysium" category that Init
-	 * registers.
-	 *
-	 * @return string[]
-	 */
-	public function get_categories(): array {
-		return [ 'beyond-elysium' ];
 	}
 
 	/**
@@ -116,28 +103,17 @@ class Game_Dashboard extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Outputs the widget's front-end markup. Builds a configuration array
-	 * from this widget's Elementor settings, resolving each optional URL
-	 * control to an empty string when unset, then prints a single empty
-	 * <div> carrying the React mount-point attribute and the config as a
-	 * JSON-encoded data attribute.
-	 */
-	protected function render(): void {
-		$settings = $this->get_settings_for_display();
+	protected function widget_slug(): string {
+		return 'game-dashboard';
+	}
 
-		$config = [
+	protected function widget_config( array $settings ): array {
+		return [
 			'gameSlug'         => $settings['game_slug'],
 			'sheetPageUrl'     => $settings['sheet_page_url']['url'] ?? '',
 			'approvalQueueUrl' => $settings['approval_queue_url']['url'] ?? '',
 			'rosterUrl'        => $settings['roster_url']['url'] ?? '',
 			'plotsUrl'         => $settings['plots_url']['url'] ?? '',
 		];
-
-		printf(
-			'<div data-be-widget="%s" data-be-config="%s"></div>',
-			esc_attr( 'game-dashboard' ),
-			esc_attr( (string) wp_json_encode( $config ) )
-		);
 	}
 }

@@ -126,7 +126,12 @@ export function BackgroundLedger( {
 			setDrafts( { ...drafts, [ name ]: '' } );
 			reload();
 		} catch ( err ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 
@@ -135,7 +140,12 @@ export function BackgroundLedger( {
 			await api.apr( gameSlug ).updateUse( use.id, { result } );
 			reload();
 		} catch ( err ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 
@@ -144,7 +154,12 @@ export function BackgroundLedger( {
 			await api.apr( gameSlug ).deleteUse( use.id );
 			reload();
 		} catch ( err ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		}
 	}
 
@@ -359,19 +374,6 @@ export function BackgroundLedger( {
 	);
 }
 
-interface RestError {
-	message?: string;
-}
-
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
-}
+import { errorMessage } from '../../lib/errorMessage';
 
 export default BackgroundLedger;

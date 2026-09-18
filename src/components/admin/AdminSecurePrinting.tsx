@@ -15,16 +15,7 @@ import type { SigningStatus, GeneratedCertificate } from '../../api/client';
 import './Admin.css';
 import './AdminSecurePrinting.css';
 
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as { message?: string } ).message
-	) {
-		return ( error as { message: string } ).message;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
-}
+import { errorMessage } from '../../lib/errorMessage';
 
 export function AdminSecurePrinting() {
 	const [ status, setStatus ] = useState< SigningStatus | null >( null );
@@ -41,7 +32,14 @@ export function AdminSecurePrinting() {
 		api.signing
 			.status()
 			.then( setStatus )
-			.catch( ( err: unknown ) => setError( errorMessage( err ) ) );
+			.catch( ( err: unknown ) =>
+				setError(
+					errorMessage(
+						err,
+						__( 'Something went wrong.', 'beyond-elysium' )
+					)
+				)
+			);
 	}
 
 	useEffect( load, [] );
@@ -53,7 +51,12 @@ export function AdminSecurePrinting() {
 			await api.signing.updateSettings( enabled );
 			load();
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSaving( false );
 		}
@@ -73,7 +76,12 @@ export function AdminSecurePrinting() {
 			// The passphrase is not kept here either - it is in wp-config.php or nowhere.
 			setPassphrase( '' );
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setGenerating( false );
 		}

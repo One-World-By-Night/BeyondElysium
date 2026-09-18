@@ -796,19 +796,6 @@ export interface UpdateTemplateRequest {
 // ---------------------------------------------------------------------------
 
 /**
- * A generic paginated collection response. Wraps the current page
- * of items together with the total item count, total page count,
- * and the current page number and page size.
- */
-export interface PaginatedResponse< T > {
-	data: T[];
-	total: number;
-	total_pages: number;
-	page: number;
-	per_page: number;
-}
-
-/**
  * The common pagination and ordering parameters accepted by most
  * collection endpoints: page number, page size, sort field, and
  * sort direction.

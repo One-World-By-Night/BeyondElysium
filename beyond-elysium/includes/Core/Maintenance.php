@@ -7,6 +7,7 @@ use BeyondElysium\Models\Release_Batch;
 use BeyondElysium\Models\Submission;
 use BeyondElysium\Models\Transfer;
 use BeyondElysium\Services\Release_Engine;
+use BeyondElysium\Services\Release_Scheduler;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -95,11 +96,17 @@ class Maintenance {
 	}
 
 	/**
-	 * Runs the quarter-hour release-batch sweep (§3.2): releases every scheduled batch whose
-	 * release_at has passed. Release_Engine::release() is idempotent, so a batch a single
-	 * event already released here is a harmless no-op, not a second round of emails.
+	 * Runs the quarter-hour release-batch sweep (§3.2, and §3's own schedule-generation
+	 * step): first generates any batch a chronicle's own recurring release-schedule rules
+	 * call for right now (Release_Scheduler::run()), then releases every scheduled batch
+	 * whose release_at has passed - including one this same pass just generated, so a
+	 * scheduled batch is never left waiting a full quarter-hour for its own release.
+	 * Release_Engine::release() is idempotent, so a batch a single event already released
+	 * here is a harmless no-op, not a second round of emails.
 	 */
 	public static function run_release_sweep(): void {
+		Release_Scheduler::run();
+
 		foreach ( Release_Batch::due() as $batch ) {
 			Release_Engine::release( (int) $batch->id );
 		}

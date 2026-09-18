@@ -4,13 +4,12 @@ namespace BeyondElysium\Elementor\Widgets;
 
 use BeyondElysium\Models\Creature_Stack;
 use Elementor\Controls_Manager;
-use Elementor\Widget_Base;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Elementor widget wrapper for the Character List. Registers the widget's
- * name, title, icon, and category with Elementor, exposes Content section
+ * name, title, and icon with Elementor, exposes Content section
  * controls for the target game slug, creature type and status filters, an
  * optional sheet page URL, and a results-per-page setting, and renders a
  * single mount-point <div> that the front-end script hydrates with the
@@ -18,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @see BE_PROCESS/releases/workflow-0.3.md Step 7d
  */
-class Character_List extends Widget_Base {
+class Character_List extends Base_Widget {
 
 	/**
 	 * Returns the internal widget name Elementor uses to identify this
@@ -45,18 +44,6 @@ class Character_List extends Widget_Base {
 	 */
 	public function get_icon(): string {
 		return 'eicon-table-of-contents';
-	}
-
-	/**
-	 * Returns the Elementor category slugs this widget belongs to, which
-	 * controls where it appears in the widget panel. Every Beyond Elysium
-	 * widget belongs to the single "beyond-elysium" category that Init
-	 * registers.
-	 *
-	 * @return string[]
-	 */
-	public function get_categories(): array {
-		return [ 'beyond-elysium' ];
 	}
 
 	/**
@@ -126,28 +113,17 @@ class Character_List extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Outputs the widget's front-end markup. Builds a configuration array
-	 * from this widget's Elementor settings, including the roster's
-	 * default filters and page size, then prints a single empty <div>
-	 * carrying the React mount-point attribute and the config as a
-	 * JSON-encoded data attribute.
-	 */
-	protected function render(): void {
-		$settings = $this->get_settings_for_display();
+	protected function widget_slug(): string {
+		return 'character-list';
+	}
 
-		$config = [
+	protected function widget_config( array $settings ): array {
+		return [
 			'gameSlug'     => $settings['game_slug'],
 			'stackSlug'    => $settings['stack_slug'],
 			'status'       => $settings['default_status'],
 			'sheetPageUrl' => $settings['sheet_page_url']['url'] ?? '',
 			'perPage'      => (int) $settings['per_page'],
 		];
-
-		printf(
-			'<div data-be-widget="%s" data-be-config="%s"></div>',
-			esc_attr( 'character-list' ),
-			esc_attr( (string) wp_json_encode( $config ) )
-		);
 	}
 }

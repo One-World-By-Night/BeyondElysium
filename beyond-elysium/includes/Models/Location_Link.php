@@ -53,23 +53,6 @@ class Location_Link {
 	}
 
 	/**
-	 * The character ids `based_at` a location - "who's here" (§3.9 item 4)'s own read, before
-	 * the player-facing audience filter narrows it to NPCs whose public profile reaches them.
-	 *
-	 * @param int $location_id
-	 * @return int[]
-	 */
-	public static function based_at_character_ids( int $location_id ): array {
-		return array_values( array_unique( array_map(
-			static fn( $c ) => (int) $c->source_id,
-			array_filter(
-				self::for_location( $location_id ),
-				static fn( $c ) => $c->label === self::BASED_AT && $c->source_type === 'character'
-			)
-		) ) );
-	}
-
-	/**
 	 * The single character connected to a location under one label - `owner`, `domain`, or
 	 * `haven` (never `based_at`, which is a roster, not a single holder). Null when no such
 	 * link exists. Used by the display-over-Grapevine-text substitution (item 3): the first

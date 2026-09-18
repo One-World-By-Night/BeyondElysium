@@ -3,13 +3,12 @@
 namespace BeyondElysium\Elementor\Widgets;
 
 use Elementor\Controls_Manager;
-use Elementor\Widget_Base;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Elementor widget wrapper for the Character Sheet. Registers the widget's
- * name, title, icon, and category with Elementor, exposes Content section
+ * name, title, and icon with Elementor, exposes Content section
  * controls for the target game slug, an optional character ID, and a sheet
  * template type, and renders a single mount-point <div> that the front-end
  * script hydrates with the CharacterSheet React component. With no character
@@ -17,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @see BE_PROCESS/releases/workflow-0.3.md Step 7c
  */
-class Character_Sheet extends Widget_Base {
+class Character_Sheet extends Base_Widget {
 
 	/**
 	 * Returns the internal widget name Elementor uses to identify this
@@ -44,18 +43,6 @@ class Character_Sheet extends Widget_Base {
 	 */
 	public function get_icon(): string {
 		return 'eicon-post-list';
-	}
-
-	/**
-	 * Returns the Elementor category slugs this widget belongs to, which
-	 * controls where it appears in the widget panel. Every Beyond Elysium
-	 * widget belongs to the single "beyond-elysium" category that Init
-	 * registers.
-	 *
-	 * @return string[]
-	 */
-	public function get_categories(): array {
-		return [ 'beyond-elysium' ];
 	}
 
 	/**
@@ -103,32 +90,21 @@ class Character_Sheet extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Outputs the widget's front-end markup. Resolves the character ID
-	 * from either the widget setting or a character_id URL query var,
-	 * builds a configuration array from that ID plus the widget's other
-	 * settings, then prints a single empty <div> carrying the React
-	 * mount-point attribute and the config as a JSON-encoded data
-	 * attribute.
-	 */
-	protected function render(): void {
-		$settings = $this->get_settings_for_display();
+	protected function widget_slug(): string {
+		return 'character-sheet';
+	}
 
+	/** Resolves the character ID from the widget setting or a character_id URL query var. */
+	protected function widget_config( array $settings ): array {
 		$character_id = (int) $settings['character_id'];
 		if ( $character_id === 0 && isset( $_GET['character_id'] ) ) {
 			$character_id = absint( wp_unslash( $_GET['character_id'] ) );
 		}
 
-		$config = [
+		return [
 			'characterId'  => $character_id,
 			'gameSlug'     => $settings['game_slug'],
 			'templateType' => $settings['template_type'],
 		];
-
-		printf(
-			'<div data-be-widget="%s" data-be-config="%s"></div>',
-			esc_attr( 'character-sheet' ),
-			esc_attr( (string) wp_json_encode( $config ) )
-		);
 	}
 }

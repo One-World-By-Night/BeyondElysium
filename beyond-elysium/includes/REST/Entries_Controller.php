@@ -5,7 +5,6 @@ namespace BeyondElysium\REST;
 use BeyondElysium\Core\Authorization;
 use BeyondElysium\Core\Notifications;
 use BeyondElysium\Models\Character;
-use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Session;
 use BeyondElysium\Models\Plot;
@@ -553,8 +552,7 @@ class Entries_Controller extends Base_Controller {
 
 	/**
 	 * Whether a plot is an action-allocation plot belonging to a character the
-	 * current user does not own AND is not an invited member of (1.1.0 §2.3a) -
-	 * kept in step with `Plots_Controller`'s own copy of this same check.
+	 * current user does not own AND is not an invited member of (1.1.0 §2.3a).
 	 *
 	 * @param object $plot
 	 * @return bool
@@ -566,28 +564,7 @@ class Entries_Controller extends Base_Controller {
 		}
 		$wp_user_id = get_current_user_id();
 		return ! Action_Allocator::is_actor_owned_by( $plot_id, $wp_user_id )
-			&& ! self::viewer_is_a_plot_member( $plot_id, $wp_user_id );
-	}
-
-	/**
-	 * Whether one of `$wp_user_id`'s own characters holds a `plot_member` connection
-	 * to this plot (§2.3a) - an invited co-narrator, never the owner.
-	 *
-	 * @param int $plot_id
-	 * @param int $wp_user_id
-	 * @return bool
-	 */
-	private static function viewer_is_a_plot_member( int $plot_id, int $wp_user_id ): bool {
-		foreach ( Connection::for_source( 'plot', $plot_id ) as $connection ) {
-			if ( $connection->target_type !== 'character' || $connection->label !== 'plot_member' ) {
-				continue;
-			}
-			$character = Character::find( (int) $connection->target_id );
-			if ( $character && (int) $character->wp_user_id === $wp_user_id ) {
-				return true;
-			}
-		}
-		return false;
+			&& ! Plot::viewer_is_member( $plot_id, $wp_user_id );
 	}
 
 	/** @return \WP_Error The refusal for a body carrying the Action & Rumor marker. */

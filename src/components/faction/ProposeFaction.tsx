@@ -19,16 +19,7 @@ export interface ProposeFactionProps {
 	characterId: number;
 }
 
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as { message?: string } ).message
-	) {
-		return ( error as { message: string } ).message;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
-}
+import { errorMessage } from '../../lib/errorMessage';
 
 export function ProposeFaction( {
 	gameSlug,
@@ -70,7 +61,12 @@ export function ProposeFaction( {
 			} );
 			setSubmitted( true );
 		} catch ( err: unknown ) {
-			setError( errorMessage( err ) );
+			setError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSaving( false );
 		}

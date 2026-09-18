@@ -45,21 +45,7 @@ export interface CharacterEditorProps {
 	capabilities?: MyCapabilities;
 }
 
-interface RestError {
-	message?: string;
-	data?: { status?: number };
-}
-
-function errorMessage( error: unknown ): string {
-	if (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as RestError ).message
-	) {
-		return ( error as RestError ).message as string;
-	}
-	return __( 'Something went wrong.', 'beyond-elysium' );
-}
+import { errorMessage } from '../../lib/errorMessage';
 
 function sortedSections(
 	resolved: TemplateResolveResponse | null
@@ -165,7 +151,12 @@ export function CharacterEditor( {
 			}
 			setHeaderSaveMessage( __( 'Saved.', 'beyond-elysium' ) );
 		} catch ( err: unknown ) {
-			setHeaderSaveError( errorMessage( err ) );
+			setHeaderSaveError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSavingHeader( false );
 		}
@@ -191,7 +182,12 @@ export function CharacterEditor( {
 			// Reloads so the template re-resolves (sheet_full <-> npc_full follows is_npc directly).
 			await store.loadCharacter( effectiveCharacterId, gameSlug );
 		} catch ( err: unknown ) {
-			setHeaderSaveError( errorMessage( err ) );
+			setHeaderSaveError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSavingNpc( false );
 		}
@@ -211,7 +207,12 @@ export function CharacterEditor( {
 				.update( effectiveCharacterId, { assigned_to: assignedTo } );
 			await store.loadCharacter( effectiveCharacterId, gameSlug );
 		} catch ( err: unknown ) {
-			setHeaderSaveError( errorMessage( err ) );
+			setHeaderSaveError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSavingAssignee( false );
 		}
@@ -232,7 +233,12 @@ export function CharacterEditor( {
 				.update( effectiveCharacterId, { npc_detail: 'full' } );
 			await store.loadCharacter( effectiveCharacterId, gameSlug );
 		} catch ( err: unknown ) {
-			setHeaderSaveError( errorMessage( err ) );
+			setHeaderSaveError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSavingNpcDetail( false );
 		}
@@ -288,7 +294,12 @@ export function CharacterEditor( {
 			} );
 			setProfileSaveMessage( __( 'Saved.', 'beyond-elysium' ) );
 		} catch ( err: unknown ) {
-			setProfileSaveError( errorMessage( err ) );
+			setProfileSaveError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSavingProfile( false );
 		}
@@ -311,7 +322,12 @@ export function CharacterEditor( {
 				.update( effectiveCharacterId, { image_id: attachment.id } );
 			setPortraitUrl( attachment.url );
 		} catch ( err: unknown ) {
-			setHeaderSaveError( errorMessage( err ) );
+			setHeaderSaveError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setSavingPortrait( false );
 		}
@@ -457,7 +473,12 @@ export function CharacterEditor( {
 			setCreatedId( character.id );
 			await store.loadCharacter( character.id, gameSlug );
 		} catch ( error ) {
-			setCreateError( errorMessage( error ) );
+			setCreateError(
+				errorMessage(
+					error,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
 		} finally {
 			setCreating( false );
 		}
