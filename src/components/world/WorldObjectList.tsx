@@ -8,6 +8,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import type { CopiesFilter, ObjectType, WorldObject } from '../../types/world';
+import TabStrip from '../shared/TabStrip';
 import './WorldObjectList.css';
 
 export interface WorldObjectListProps {
@@ -91,18 +92,14 @@ export function WorldObjectList( {
 
 	return (
 		<div className="be-world-list">
-			<nav className="be-world-list__tabs">
-				{ CATALOG_TYPES.map( ( type ) => (
-					<button
-						key={ type }
-						type="button"
-						className={ objectType === type ? 'is-active' : '' }
-						onClick={ () => selectType( type ) }
-					>
-						{ TYPE_LABELS[ type ] }
-					</button>
-				) ) }
-			</nav>
+			<TabStrip
+				tabs={ CATALOG_TYPES.map( ( type ) => ( {
+					key: type,
+					label: TYPE_LABELS[ type ],
+				} ) ) }
+				active={ objectType }
+				onChange={ ( key ) => selectType( key as ObjectType ) }
+			/>
 
 			<div className="be-world-list__filters">
 				<input

@@ -7,26 +7,6 @@
 	color: #00701e;
 }
 
-.be-apr-settings__tabs {
-	display: flex;
-	gap: 0.5rem;
-	margin: 1rem 0;
-	border-bottom: 1px solid #dcdcde;
-}
-
-.be-apr-settings__tabs button {
-	padding: 0.5rem 1rem;
-	border: none;
-	background: none;
-	cursor: pointer;
-	border-bottom: 2px solid transparent;
-}
-
-.be-apr-settings__tabs button.is-active {
-	border-bottom-color: #2271b1;
-	font-weight: 600;
-}
-
 .be-apr-settings__panel {
 	max-width: 640px;
 }

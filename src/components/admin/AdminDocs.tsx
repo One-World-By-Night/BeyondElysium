@@ -14,6 +14,7 @@ import { useHelpStore } from '../../store/helpStore';
 import { errorMessage } from '../../lib/errorMessage';
 import HelpButton from '../shared/HelpButton';
 import HelpPanel from '../shared/HelpPanel';
+import TabStrip from '../shared/TabStrip';
 import './Admin.css';
 import './AdminDocs.css';
 
@@ -135,25 +136,14 @@ export function AdminDocs() {
 				<HelpButton helpKey="admin-docs" />
 			</div>
 
-			<div className="be-admin__tabs" role="tablist">
-				{ TABS.map( ( tab ) => (
-					<button
-						key={ tab.slug }
-						type="button"
-						role="tab"
-						aria-selected={ active === tab.slug }
-						className={
-							'be-admin__tab' +
-							( active === tab.slug
-								? ' be-admin__tab--active'
-								: '' )
-						}
-						onClick={ () => setActive( tab.slug ) }
-					>
-						{ tab.label }
-					</button>
-				) ) }
-			</div>
+			<TabStrip
+				tabs={ TABS.map( ( tab ) => ( {
+					key: tab.slug,
+					label: tab.label,
+				} ) ) }
+				active={ active }
+				onChange={ ( key ) => setActive( key as DocSlug ) }
+			/>
 
 			{ error && (
 				<div className="be-admin__error" role="alert">

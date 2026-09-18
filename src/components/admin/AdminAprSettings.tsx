@@ -12,6 +12,7 @@ import api from '../../api/client';
 import type { AprBackgroundOption, AprSettings } from '../../types/apr';
 import type { Game } from '../../types';
 import HelpButton from '../shared/HelpButton';
+import TabStrip from '../shared/TabStrip';
 import './Admin.css';
 import './AdminAprSettings.css';
 
@@ -265,26 +266,20 @@ export function AdminAprSettings() {
 
 			{ settings && (
 				<>
-					<div className="be-apr-settings__tabs" role="tablist">
-						<button
-							type="button"
-							role="tab"
-							aria-selected={ tab === 'actions' }
-							className={ tab === 'actions' ? 'is-active' : '' }
-							onClick={ () => setTab( 'actions' ) }
-						>
-							{ __( 'Actions', 'beyond-elysium' ) }
-						</button>
-						<button
-							type="button"
-							role="tab"
-							aria-selected={ tab === 'rumors' }
-							className={ tab === 'rumors' ? 'is-active' : '' }
-							onClick={ () => setTab( 'rumors' ) }
-						>
-							{ __( 'Rumors', 'beyond-elysium' ) }
-						</button>
-					</div>
+					<TabStrip
+						tabs={ [
+							{
+								key: 'actions',
+								label: __( 'Actions', 'beyond-elysium' ),
+							},
+							{
+								key: 'rumors',
+								label: __( 'Rumors', 'beyond-elysium' ),
+							},
+						] }
+						active={ tab }
+						onChange={ ( key ) => setTab( key as Tab ) }
+					/>
 
 					{ tab === 'actions' && (
 						<div className="be-apr-settings__panel">

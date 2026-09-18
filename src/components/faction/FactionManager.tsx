@@ -205,17 +205,41 @@ function FactionEditor( {
 			</label>
 			<label>
 				{ __( 'Type', 'beyond-elysium' ) }
-				<input
-					type="text"
-					list="be-faction-type-suggestions"
-					value={ factionType }
+				<select
+					value={
+						FACTION_TYPE_SUGGESTIONS.includes(
+							factionType as ( typeof FACTION_TYPE_SUGGESTIONS )[ number ]
+						)
+							? factionType
+							: 'other'
+					}
 					onChange={ ( e ) => setFactionType( e.target.value ) }
-				/>
-				<datalist id="be-faction-type-suggestions">
+				>
 					{ FACTION_TYPE_SUGGESTIONS.map( ( t ) => (
-						<option key={ t } value={ t } />
+						<option key={ t } value={ t }>
+							{ t }
+						</option>
 					) ) }
-				</datalist>
+				</select>
+				{ factionType === 'other' && (
+					<input
+						type="text"
+						placeholder={ __(
+							'Describe the type…',
+							'beyond-elysium'
+						) }
+						value={
+							FACTION_TYPE_SUGGESTIONS.includes(
+								factionType as ( typeof FACTION_TYPE_SUGGESTIONS )[ number ]
+							)
+								? ''
+								: factionType
+						}
+						onChange={ ( e ) =>
+							setFactionType( e.target.value || 'other' )
+						}
+					/>
+				) }
 			</label>
 			<label>
 				{ __( 'Parent faction', 'beyond-elysium' ) }

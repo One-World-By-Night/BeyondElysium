@@ -5040,6 +5040,9 @@ msgstr "Nome"
 msgid "Type"
 msgstr "Tipo"
 
+msgid "Describe the type…"
+msgstr "Descreva o tipo…"
+
 #: build/76.js:1 build/122.js:12 build/331.js:12 build/450.js:17
 #: build/548.js:37 build/596.js:1 build/699.js:102 build/699.js:104
 #: build/699.js:105 build/699.js:106 build/771.js:12 build/879.js:1

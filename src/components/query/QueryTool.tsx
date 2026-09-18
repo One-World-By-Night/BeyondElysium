@@ -20,6 +20,7 @@ import { QueryBuilder } from './QueryBuilder';
 import { QueryResults } from './QueryResults';
 import { searchKey } from '../../lib/querySelection';
 import { StatisticsView } from './StatisticsView';
+import TabStrip from '../shared/TabStrip';
 import './QueryTool.css';
 
 export interface QueryToolProps {
@@ -305,29 +306,21 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 
 	return (
 		<div className="be-query-tool">
-			<nav className="be-query-tool__tabs">
-				<button
-					type="button"
-					className={ tab === 'query' ? 'is-active' : '' }
-					onClick={ () => setTab( 'query' ) }
-				>
-					{ __( 'Search', 'beyond-elysium' ) }
-				</button>
-				<button
-					type="button"
-					className={ tab === 'statistics' ? 'is-active' : '' }
-					onClick={ () => setTab( 'statistics' ) }
-				>
-					{ __( 'Statistics', 'beyond-elysium' ) }
-				</button>
-				<button
-					type="button"
-					className={ tab === 'saved' ? 'is-active' : '' }
-					onClick={ () => setTab( 'saved' ) }
-				>
-					{ __( 'Saved Queries', 'beyond-elysium' ) }
-				</button>
-			</nav>
+			<TabStrip
+				tabs={ [
+					{ key: 'query', label: __( 'Search', 'beyond-elysium' ) },
+					{
+						key: 'statistics',
+						label: __( 'Statistics', 'beyond-elysium' ),
+					},
+					{
+						key: 'saved',
+						label: __( 'Saved Queries', 'beyond-elysium' ),
+					},
+				] }
+				active={ tab }
+				onChange={ ( key ) => setTab( key as Tab ) }
+			/>
 
 			{ error && (
 				<div className="be-query-tool__error" role="alert">

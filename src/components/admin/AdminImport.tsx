@@ -12,6 +12,7 @@ import GameImportTool from '../import/GameImportTool';
 import WaitingForReview from '../import/WaitingForReview';
 import type { Game } from '../../types';
 import HelpButton from '../shared/HelpButton';
+import TabStrip from '../shared/TabStrip';
 import './Admin.css';
 
 type Tab = 'gex' | 'gv3';
@@ -57,30 +58,23 @@ export function AdminImport() {
 			</div>
 
 			{ canImportGex && canImportGameFile && (
-				<div className="be-admin__tabs">
-					<button
-						type="button"
-						className={
-							tab === 'gex'
-								? 'be-admin__tab be-admin__tab--active'
-								: 'be-admin__tab'
-						}
-						onClick={ () => setTab( 'gex' ) }
-					>
-						{ __( 'Characters & World Objects', 'beyond-elysium' ) }
-					</button>
-					<button
-						type="button"
-						className={
-							tab === 'gv3'
-								? 'be-admin__tab be-admin__tab--active'
-								: 'be-admin__tab'
-						}
-						onClick={ () => setTab( 'gv3' ) }
-					>
-						{ __( 'Full Game File', 'beyond-elysium' ) }
-					</button>
-				</div>
+				<TabStrip
+					tabs={ [
+						{
+							key: 'gex',
+							label: __(
+								'Characters & World Objects',
+								'beyond-elysium'
+							),
+						},
+						{
+							key: 'gv3',
+							label: __( 'Full Game File', 'beyond-elysium' ),
+						},
+					] }
+					active={ tab }
+					onChange={ ( key ) => setTab( key as Tab ) }
+				/>
 			) }
 
 			{ tab === 'gex' &&

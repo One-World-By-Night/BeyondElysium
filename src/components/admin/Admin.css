@@ -119,28 +119,6 @@
 	margin-bottom: 1rem;
 }
 
-.be-admin__tabs {
-	display: flex;
-	gap: 0.25rem;
-	margin-bottom: 1rem;
-	border-bottom: 1px solid #ccd0d4;
-}
-
-.be-admin__tab {
-	padding: 0.5rem 1rem;
-	background: none;
-	border: 1px solid transparent;
-	border-bottom: none;
-	cursor: pointer;
-	font-weight: 600;
-}
-
-.be-admin__tab--active {
-	background: #fff;
-	border-color: #ccd0d4;
-	border-radius: 3px 3px 0 0;
-}
-
 .be-admin__filters select {
 	padding: 0.4rem;
 }

@@ -9,6 +9,7 @@ import api from '../../api/client';
 import { canIn } from '../../lib/chronicleCapabilities';
 import { storytellerTabUrl, STORYTELLER_TABS } from '../../lib/pluginPages';
 import { AssigneePicker } from '../shared/AssigneePicker';
+import TabStrip from '../shared/TabStrip';
 import type { MyCapabilities } from '../../types';
 import type { GameSession } from '../../types/session';
 import type { DowntimeQueueRow } from '../../types/downtime';
@@ -190,26 +191,19 @@ export function DowntimeQueue( {
 				{ deadlineNote && (
 					<span className="be-st-badge">{ deadlineNote }</span>
 				) }
-				<div className="be-downtime-queue__tabs" role="tablist">
-					<button
-						type="button"
-						role="tab"
-						aria-selected={ filter === 'unanswered' }
-						className={ filter === 'unanswered' ? 'is-active' : '' }
-						onClick={ () => setFilter( 'unanswered' ) }
-					>
-						{ __( 'Unanswered', 'beyond-elysium' ) }
-					</button>
-					<button
-						type="button"
-						role="tab"
-						aria-selected={ filter === 'all' }
-						className={ filter === 'all' ? 'is-active' : '' }
-						onClick={ () => setFilter( 'all' ) }
-					>
-						{ __( 'All', 'beyond-elysium' ) }
-					</button>
-				</div>
+				<TabStrip
+					tabs={ [
+						{
+							key: 'unanswered',
+							label: __( 'Unanswered', 'beyond-elysium' ),
+						},
+						{ key: 'all', label: __( 'All', 'beyond-elysium' ) },
+					] }
+					active={ filter }
+					onChange={ ( key ) =>
+						setFilter( key as 'unanswered' | 'all' )
+					}
+				/>
 			</div>
 
 			{ loading ? (

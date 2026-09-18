@@ -14,27 +14,3 @@
 	margin: 1rem 0 0;
 }
 
-.be-my-chronicle-page__report-picker {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.5rem;
-	margin: 1rem 0;
-	border-bottom: 1px solid #dcdcde;
-}
-
-/* D34: compound-class specificity beats hello-elementor's own button reset (border/
- * background/padding), the same defense every other front-end button here needs. */
-.be-my-chronicle-page__report-tab.be-my-chronicle-page__report-tab {
-	width: auto;
-	padding: 0.5rem 1rem;
-	border: none;
-	background: none;
-	color: inherit;
-	cursor: pointer;
-	border-bottom: 2px solid transparent;
-}
-
-.be-my-chronicle-page__report-tab.be-my-chronicle-page__report-tab.is-active {
-	border-bottom-color: #2271b1;
-	font-weight: 600;
-}

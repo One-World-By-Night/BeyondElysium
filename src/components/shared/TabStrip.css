@@ -1,22 +1,47 @@
 .be-tab-strip {
 	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
 	gap: 0.5rem;
 	margin: 1rem 0;
-	border-bottom: 1px solid #dcdcde;
 }
 
-.be-tab-strip button {
-	padding: 0.5rem 1rem;
+/* D34: compound-class specificity beats hello-elementor's own input[type=...]/button reset
+ * (border/background/padding/width) on the front-end pages this shared component also
+ * renders on (My Chronicle, Storyteller Toolkit) - the same defense every other front-end
+ * form control in this plugin needs. */
+.be-tab-strip__select.be-tab-strip__select {
+	width: auto;
+	min-width: 14rem;
+	max-width: 100%;
+	flex: 1 1 14rem;
+	padding: 0.4rem 0.6rem;
 	min-height: var(--be-tap-min, 32px);
-	border: none;
-	background: none;
-	cursor: pointer;
-	border-bottom: 2px solid transparent;
+	border: 1px solid #2271b1;
+	border-radius: 3px;
+	background: #fff;
+	color: inherit;
 	font-size: max(16px, var(--be-input-font-min, 1rem));
 }
 
-.be-tab-strip button.is-active {
-	border-bottom-color: #2271b1;
-	font-weight: 600;
+.be-tab-strip__go.be-tab-strip__go {
+	width: auto;
+	padding: 0.4rem 0.9rem;
+	min-height: var(--be-tap-min, 32px);
+	border: 1px solid #2271b1;
+	border-radius: 3px;
+	background: transparent;
+	color: #2271b1;
+	font-size: 0.85rem;
+	cursor: pointer;
+}
+
+.be-tab-strip__go.be-tab-strip__go:hover:not(:disabled) {
+	background: #2271b1;
+	color: #fff;
+}
+
+.be-tab-strip__go.be-tab-strip__go:disabled {
+	opacity: 0.6;
+	cursor: default;
 }

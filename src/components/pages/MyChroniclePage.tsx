@@ -373,28 +373,11 @@ export function MyChroniclePage() {
 									</select>
 								</label>
 							) }
-							<div
-								className="be-my-chronicle-page__report-picker"
-								role="tablist"
-							>
-								{ REPORT_KEYS.map( ( r ) => (
-									<button
-										type="button"
-										role="tab"
-										key={ r.key }
-										aria-selected={ reportKey === r.key }
-										className={
-											'be-my-chronicle-page__report-tab' +
-											( reportKey === r.key
-												? ' is-active'
-												: '' )
-										}
-										onClick={ () => setReportKey( r.key ) }
-									>
-										{ r.label }
-									</button>
-								) ) }
-							</div>
+							<TabStrip
+								tabs={ REPORT_KEYS }
+								active={ reportKey }
+								onChange={ setReportKey }
+							/>
 							{ reportKey === 'game-calendar' && (
 								<GameCalendar
 									key={ gameSlug }
