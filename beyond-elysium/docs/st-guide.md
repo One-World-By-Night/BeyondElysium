@@ -252,12 +252,14 @@ and your own plots — nothing from anyone else's sheet. Its **Characters**, **S
 Plots & Rumors** is your own plot feed.
 
 **Storyteller Toolkit** is Storyteller-only: its tabs (Dashboard, Approval Queue, Plots &
-Rumors, Boon Ledger) only appear when you actually hold a Storyteller-level role *in the
-chronicle currently selected in the switcher* — an AST who only narrates one chronicle sees
-fewer tabs there than in one they HST. Its own **Dashboard** tab shows character counts by
-creature type and status, the pending-change count, the active-plot count, a roster-health
-count of players with no active character (click it to see who), and a feed of recent
-activity across the whole chronicle.
+Rumors, Game Nights, Downtime, Releases, Boon Ledger) only appear when you actually hold a
+Storyteller-level role *in the chronicle currently selected in the switcher* — an AST who
+only narrates one chronicle sees fewer tabs there than in one they HST. Its own **Dashboard**
+tab shows character counts by creature type and status, the pending-change count, the
+active-plot count, a **Characters Needing Attention** count (how many active characters are
+currently flagged on the Spotlight check — see §16), a roster-health count of players with no
+active character (click it to see who), and a feed of recent activity across the whole
+chronicle.
 
 ## 8. Plots, Actions, and Rumors
 
@@ -458,6 +460,125 @@ the report. The coverage line ("Priced N of M lines") and the note beneath the t
 there for exactly this reason — read them before treating the total as an answer. A large gap
 between the total and a character's own recorded XP is normal today, not a sign the player
 owes you anything.
+
+## 14. Factions and Court Positions
+
+A **faction** is any in-fiction group your chronicle tracks - a sect, coterie, pack, chantry,
+court, cabal, or anything else - with its own roster, its own goals, and its own **Who can
+see this** setting separate from either. Storytellers (HST and AST) create, edit, and delete
+factions from **Storyteller Toolkit → Factions**; a player proposes one for their own
+character from **My Chronicle → Propose a Group** instead, and every proposal goes to the
+Approval Queue (§4) like any other change - a faction is a chronicle-membership structure,
+not sheet data, so even an auto-approve chronicle still routes it to a Storyteller.
+
+A faction's goals are member-and-Storyteller-only even when the faction itself is visible to
+everyone - a plain viewer reads its name, type, and description, never its goals or its
+roster. Each member row carries a **Rank** (an internal title, separate from a chronicle-wide
+position below) that a leader can set for their own faction directly; only a Storyteller can
+promote or demote a leader, and a faction can never be left with zero leaders while it still
+has members.
+
+A **position** is a chronicle-wide office - Prince, Sheriff, Grand Elder, and the like -
+optionally scoped to a faction (a court's own Seneschal) or standing on its own, managed from
+**Storyteller Toolkit → Factions → Positions**. Changing a position's holder writes its full
+history automatically - the outgoing holder's row closes, a new one opens for the
+replacement - and marking a position not "publicly known" hides *who* holds it from anyone
+but a Storyteller without hiding that it's held at all.
+
+See [Factions](help/factions.md) and [Positions](help/positions.md) for the full screen.
+
+## 15. Releases: Batches and the Recurring Schedule
+
+Rumors and downtime answers don't have to go out the moment you write them. **Storyteller
+Toolkit → Releases** (anyone with Plots & Rumors access) groups them into **batches**: leave
+a batch's release date blank to hold it as a **Draft**, or set one to move it to
+**Scheduled**. A batch releases everything it holds at once and sends each reached player one
+summary email naming their own characters - never the content itself.
+
+**Release schedule**, the collapsible panel above the batch list, is the chronicle-level
+alternative to picking a date by hand: add a weekly rule (a weekday and time) or a monthly
+rule (a day of the month and time), in any combination. The schedule controls *when*, never
+*what* - on the day and time a rule names, every batch you've left in **Draft** for this
+chronicle releases as-is, the same as clicking **Release now** on each yourself, just
+automatic. If nothing is sitting in Draft when a rule fires, nothing happens - it never
+fabricates a batch to release.
+
+See [Releases](help/release-batches.md) for the full screen, including moving items between
+batches and what "Released is final" means.
+
+## 16. Game Nights, Attendance, and the Spotlight Check
+
+**Storyteller Toolkit → Game Nights** (HST, AST, and Narrator - a Narrator often runs the
+door) is where a chronicle's sessions live: create one with a date, time, and place; sign in
+who showed up (your own roster, plus visitors from other chronicles by name); and award
+Attendance XP once the sign-in is settled - a one-time action per session, not a recurring
+one.
+
+Players file their own **After-Game Report** from **My Chronicle → After-Game Report**: what
+their character did, what they want next, and a staff-only field - one per character per
+session, editable until that session's reports-due time passes. Back on the session's own
+detail view, a Storyteller marks each report read and awards **Report XP** the same way
+Attendance XP works, keyed off who filed rather than who signed in.
+
+**Spotlight** (HST/AST only, from the Game Nights tab with no session selected) is a
+chronicle-wide list of every active, non-NPC character's own attention: flagged when no
+Storyteller or Narrator has posted anything but a private note on any of their plots within
+the chronicle's own Spotlight-days setting (42 by default, changeable under **Session
+settings** on the same tab) - or never has at all. Flagged characters list first. This is the
+exact number behind the Game Dashboard's **Characters Needing Attention** card (§7) - the two
+can never disagree, since both are computed the same way.
+
+See [Game Nights](help/game-nights.md) and [After-Game Report](help/after-game-report.md).
+
+## 17. The Downtime Queue
+
+**Storyteller Toolkit → Downtime** (same access as Releases) shows one game date's action
+plots at a glance: pick the date, filter to **Unanswered** or **All**, and see each
+character's submitted-action count, whether they've been answered, the answer's release
+state, and their own downtime window (Open, Not open yet, Closed, or No window - a session
+with neither an open time nor a deadline set enforces nothing, same as before this screen
+existed). Clicking a row opens that plot's thread directly to write or edit the answer, which
+is held per the Releases rules above (§15) unless you explicitly send it immediately.
+
+Each row also carries its own assignee - who owns following up on that character's downtime.
+Assigning yourself is what surfaces it under **My Queue**.
+
+See [Downtime](help/downtime-queue.md).
+
+## 18. NPC Casting
+
+From a session's own detail view (Game Nights → a session, §16), a Storyteller can cast any
+chronicle member - not staff only - to play an NPC for that one game, with an optional note
+just for that session. The cast member reads a **casting brief**: the NPC's name and public
+name if it has one, the session's date/time/place, your note, and the NPC's sheet minus every
+Storyteller-only section except its roleplaying notes - never its XP, status, connections,
+secrets, or real assigned player. The brief opens the moment they're cast and stays open
+through the day after the session, long enough to prep ahead.
+
+A Storyteller who's also been cast finds it under **My Queue**'s Castings section; a plain
+player finds it on their own Dashboard's **My Castings** card.
+
+See [NPC Casting Brief](help/npc-casting.md).
+
+## 19. Secrets and Who's Who
+
+A **secret** is a Storyteller-authored write-up kept separate from a plot's, item's,
+location's, or NPC's own text - who really owns the Chantry, what's actually in the crate -
+with its own **Who can see this** setting. Add one from the **Secrets** section at the bottom
+of that entity's own editor, then **Reveal to…** specific characters one at a time, noting how
+they learned it (In game, Downtime, Rumor, Other) and optionally holding the reveal for a
+release batch (§15). A secret defaults to Storytellers-only and *stays* that way even once
+revealed to someone - revealing only records who's been told; widening **Who can see this**
+is what actually lets that character read it. Players see everything revealed to their own
+characters under **My Chronicle → What I Know**.
+
+**Who's Who** (My Chronicle → Who's Who, any chronicle member) is the opt-in public directory
+of your NPCs - a display name, description, and portrait, never the sheet itself or who's
+assigned to it. An NPC only appears once a Storyteller sets up its Who's Who Profile from the
+NPC's own Character Editor (§3); nothing here happens automatically just by creating the NPC.
+
+See [Secrets](help/secrets.md), [What I Know](help/what-i-know.md), and
+[Who's Who](help/whos-who.md).
 
 ## Roles Reference
 
