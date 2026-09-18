@@ -1,6 +1,9 @@
 import {
 	isPortugueseLocale,
+	localizedFieldLabel,
+	localizedIdentityValue,
 	localizedItemName,
+	localizedPoolLabel,
 	localizedPowerName,
 } from './localizeName';
 
@@ -69,5 +72,78 @@ describe( 'localizeName', () => {
 				power_name_pt: 'Presteza',
 			} )
 		).toBe( 'Alacrity' );
+	} );
+
+	it( 'localizedFieldLabel follows the identical rule for an identity_field', () => {
+		setLocale( 'pt_BR' );
+		expect( localizedFieldLabel( { name: 'Clan', label_pt: 'Clã' } ) ).toBe(
+			'Clã'
+		);
+		expect( localizedFieldLabel( { name: 'Concept' } ) ).toBe( 'Concept' );
+
+		setLocale( 'en_US' );
+		expect( localizedFieldLabel( { name: 'Clan', label_pt: 'Clã' } ) ).toBe(
+			'Clan'
+		);
+	} );
+
+	it( 'localizedPoolLabel follows the identical rule for a resource_pool', () => {
+		setLocale( 'pt_BR' );
+		expect(
+			localizedPoolLabel( {
+				name: 'Willpower',
+				label_pt: 'Força de Vontade',
+			} )
+		).toBe( 'Força de Vontade' );
+
+		setLocale( 'en_US' );
+		expect(
+			localizedPoolLabel( {
+				name: 'Willpower',
+				label_pt: 'Força de Vontade',
+			} )
+		).toBe( 'Willpower' );
+	} );
+
+	it( 'localizedIdentityValue passes any value through untouched on an English site', () => {
+		setLocale( 'en_US' );
+		expect(
+			localizedIdentityValue(
+				{ options_pt: { Assamite: 'Assamita' } },
+				'Assamite'
+			)
+		).toBe( 'Assamite' );
+	} );
+
+	it( 'localizedIdentityValue translates a plain string value on a pt_BR site', () => {
+		setLocale( 'pt_BR' );
+		expect(
+			localizedIdentityValue(
+				{ options_pt: { Assamite: 'Assamita' } },
+				'Assamite'
+			)
+		).toBe( 'Assamita' );
+	} );
+
+	it( 'localizedIdentityValue translates each choice of a multiselect value independently', () => {
+		setLocale( 'pt_BR' );
+		expect(
+			localizedIdentityValue(
+				{ options_pt: { Ally: 'Aliado', Contact: 'Contato' } },
+				[ 'Ally', 'Contact', 'Resources' ]
+			)
+		).toEqual( [ 'Aliado', 'Contato', 'Resources' ] );
+	} );
+
+	it( 'localizedIdentityValue leaves a non-string value (a number field) untouched', () => {
+		setLocale( 'pt_BR' );
+		expect(
+			localizedIdentityValue( { options_pt: { '1': 'um' } }, 3 )
+		).toBe( 3 );
+	} );
+
+	it( 'localizedIdentityValue falls back to the value itself with no options_pt map at all', () => {
+		setLocale( 'pt_BR' );
+		expect( localizedIdentityValue( {}, 'Assamite' ) ).toBe( 'Assamite' );
 	} );
 } );

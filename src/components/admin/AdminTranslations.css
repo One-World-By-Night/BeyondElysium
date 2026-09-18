@@ -1,0 +1,92 @@
+.be-admin-translations__toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+
+.be-admin-translations__toolbar label {
+	display: flex;
+	flex-direction: column;
+	font-weight: 600;
+	gap: 0.25rem;
+}
+
+.be-admin-translations__progress {
+	margin-bottom: 1rem;
+}
+
+.be-admin-translations__bar {
+	width: 100%;
+	max-width: 32rem;
+	height: 0.75rem;
+	background: #e0e0e0;
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.be-admin-translations__bar-fill {
+	height: 100%;
+	background: #2271b1;
+}
+
+.be-admin-translations__status-breakdown {
+	color: #555;
+	font-size: 0.9rem;
+}
+
+.be-admin-translations__filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 0.75rem;
+}
+
+.be-admin-translations__filters label {
+	display: flex;
+	flex-direction: column;
+	font-weight: 600;
+	gap: 0.25rem;
+}
+
+.be-admin-translations__csv-actions {
+	display: flex;
+	gap: 0.5rem;
+	margin-left: auto;
+}
+
+.be-admin-translations__import-button {
+	cursor: pointer;
+}
+
+.be-admin-translations__import-preview {
+	max-width: 100%;
+}
+
+.be-admin-translations__table input[type="text"] {
+	width: 100%;
+	min-width: 12rem;
+}
+
+.be-admin-translations__footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	margin-top: 1rem;
+}
+
+.be-admin-translations__pagination {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+@container be-table ( width < 960px ) {
+
+	.be-admin-translations__csv-actions {
+		margin-left: 0;
+	}
+}

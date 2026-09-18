@@ -200,6 +200,7 @@ class Plugin {
 			new \BeyondElysium\REST\Secrets_Controller(),
 			new \BeyondElysium\REST\Character_Order_Controller(),
 			new \BeyondElysium\REST\Factions_Controller(),
+			new \BeyondElysium\REST\Translations_Controller(),
 		];
 		foreach ( $controllers as $controller ) {
 			$controller->register_routes();

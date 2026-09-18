@@ -20,7 +20,7 @@ class Schema {
 	 * release version. Compared against the stored VERSION_OPTION value by
 	 * maybe_upgrade() to decide whether migrations need to run.
 	 */
-	const DB_VERSION = '1.1.3';
+	const DB_VERSION = '1.2.0';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -85,6 +85,8 @@ class Schema {
 		'faction_members',
 		'positions',
 		'position_history',
+		'translation_strings',
+		'translations',
 	];
 
 	/**
@@ -818,6 +820,63 @@ class Schema {
 			KEY idx_position (position_id)
 		) $charset_collate;" );
 
+		// be_translation_strings: the locale-independent index of every distinct English catalog
+		// term (1.2.0 releases/1.2.0-design-workflow.md §4). One row per string, rebuilt by
+		// Catalog_Translator::rescan(); used_in records which blocks the string appears in - the
+		// design doc's own "usage" concept, renamed at the SQL layer only: USAGE is a MySQL 8
+		// reserved word and is invalid as a bare column identifier (confirmed live - dbDelta's
+		// CREATE TABLE fails with a syntax error naming it).
+		// first_seen/last_seen are datetime(6) - microsecond precision - not the plain-second
+		// datetime every other timestamp column in this file uses. Catalog_Translator::rescan()
+		// (B3) tells "orphaned" apart from "touched by this scan" by comparing a captured scan
+		// start time against last_seen, and the design doc itself says a full rescan "takes
+		// well under a second" - meaning two rescans landing in the same wall-clock second is
+		// the ordinary case, not an edge case. Confirmed live: with second precision, a term
+		// orphaned by a deletion between two fast rescans was silently missed, because its
+		// stale last_seen and the new scan's start time were the identical second-granularity
+		// string, and `<` is false on equality. Models\Translation_String::now_micro() is what
+		// every write to these two columns must go through instead of current_time('mysql').
+		// last_seen is nullable (first_seen is not): §8 step 4's migration recovers a CSV-only
+		// term matching no live catalog string with a NULL last_seen, deliberately - the string
+		// has never actually been confirmed present in the catalog, which is a different, more
+		// honest state than "seen once, now stale." Every write still sets first_seen for real.
+		dbDelta( "CREATE TABLE {$prefix}translation_strings (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			source_key varchar(191) NOT NULL,
+			source_text varchar(255) NOT NULL,
+			used_in json DEFAULT NULL,
+			first_seen datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+			last_seen datetime(6) DEFAULT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY source_key (source_key),
+			KEY idx_last_seen (last_seen)
+		) $charset_collate;" );
+
+		// be_translations: per-locale translated text for a be_translation_strings row. context is
+		// NULL for the default translation and a block slug for a homograph override - the same
+		// string-different-meaning shape as "Calm" (1.3.0 §5.1 rule 3: a Gift in one block, an
+		// unrelated Mental Trait in another). NOTE: MySQL does not treat two NULLs as equal in a
+		// UNIQUE key, so this constraint alone does not prevent two context-NULL rows for the same
+		// string+locale - Models\Translation's upsert must explicitly guard that case with a
+		// NULL-safe lookup before insert, not rely on ON DUPLICATE KEY UPDATE.
+		// note: only ever written by the §8 migration, for exactly the case its own text
+		// describes - "keep the first, set status = 'conflict', and record the loser in the
+		// row's own note so the reviewer can choose." No other write path sets it.
+		dbDelta( "CREATE TABLE {$prefix}translations (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			string_id bigint(20) unsigned NOT NULL,
+			locale varchar(10) NOT NULL,
+			context varchar(100) DEFAULT NULL,
+			translation longtext,
+			status varchar(20) NOT NULL DEFAULT 'draft',
+			note longtext,
+			updated_by bigint(20) unsigned DEFAULT NULL,
+			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY string_locale_context (string_id, locale, context),
+			KEY idx_locale_status (locale, status)
+		) $charset_collate;" );
+
 		self::migrate();
 
 		// The schema version is recorded by the caller once every step after this one has run too,
@@ -1017,6 +1076,165 @@ class Schema {
 		}
 
 		update_option( 'be_actor_plots_audience_migrated', 1 );
+	}
+
+	/**
+	 * §8's one-time recovery of translation work that already exists, into the new
+	 * source-string-keyed table (1.2.0 releases/1.2.0-design-workflow.md §8). Idempotent via
+	 * `be_catalog_translations_migrated`, the same pattern every migration in this file uses.
+	 *
+	 * 1. `Catalog_Translator::rescan()` builds the string index every pass below keys against.
+	 * 2. Pass 1 (database): every existing `name_pt`/`power_name_pt` pair already baked into
+	 *    the seeded catalog, first value per key wins, a second DIFFERING value marks the
+	 *    KEPT row `status = 'conflict'` and records the loser in its own `note` - never
+	 *    overwrites the kept translation, so a native speaker still sees the value that was
+	 *    actually live, with the alternative flagged for them to adjudicate.
+	 * 3. Pass 2 (CSV): `met-mechanics.csv`'s `Name`/`Name-PT`, filling only keys pass 1 did
+	 *    not touch. A CSV name matching no catalog string still gets a `translation_strings`
+	 *    row - with `last_seen` left `null`, since it has never actually been confirmed
+	 *    present in the catalog - kept rather than discarded, so a later catalog addition
+	 *    picks the translation up automatically the moment a real rescan finds it.
+	 * 4. Real counts logged, matching §8's own warning: "a migration whose real numbers are
+	 *    not measured is how the ~4,150 figure got into the changelog."
+	 */
+	public static function migrate_catalog_translations_to_table(): void {
+		if ( get_option( 'be_catalog_translations_migrated' ) ) {
+			return;
+		}
+
+		\BeyondElysium\Services\Catalog_Translator::rescan();
+
+		$counts = [
+			'db_added'      => 0,
+			'db_conflicts'  => 0,
+			'csv_added'     => 0,
+			'csv_conflicts' => 0,
+			'csv_orphaned'  => 0,
+		];
+
+		// Pass 1: database. $seen tracks, per key, the winning translation's own row id and
+		// value - first wins, everything after either matches (no-op) or conflicts.
+		$seen = [];
+		foreach ( \BeyondElysium\Services\Catalog_Translator::harvest_existing_pt_pairs() as [ $text, $pt ] ) {
+			$key    = \BeyondElysium\Services\Name_Key::for( $text );
+			$string = \BeyondElysium\Models\Translation_String::find_by_source_key( $key );
+			if ( ! $string ) {
+				continue; // Rescan just indexed every real catalog string; defensive only.
+			}
+
+			if ( isset( $seen[ $key ] ) ) {
+				if ( $seen[ $key ]['value'] !== $pt ) {
+					self::record_migration_conflict( (int) $seen[ $key ]['id'], $pt );
+					++$counts['db_conflicts'];
+				}
+				continue;
+			}
+
+			$id = \BeyondElysium\Models\Translation::create( [
+				'string_id'   => (int) $string->id,
+				'locale'      => 'pt_BR',
+				'translation' => $pt,
+				'status'      => 'draft',
+			] );
+			if ( $id ) {
+				$seen[ $key ] = [ 'id' => $id, 'value' => $pt, 'pass' => 1 ];
+				++$counts['db_added'];
+			}
+		}
+
+		// Pass 2: CSV, filling only what pass 1 did not. The CSV itself can disagree with
+		// itself (§8's own measurement: 18 keys internally inconsistent) - the same
+		// first-wins-then-conflict rule applies within this pass, not just against pass 1,
+		// or a second CSV row for an already-CSV-seen key would be silently discarded with
+		// no record anyone ever disagreed (the exact bug class B7's import() classification
+		// had, fixed there the same way).
+		if ( file_exists( \BeyondElysium\Database\Seeder::MET_CSV_PATH ) ) {
+			// 'Name-PT' is outside KEPT_COLUMNS (B9 retired it - Seeder never reads it again),
+			// but this one-time migration still needs it, straight from the file, exactly once.
+			$csv = \BeyondElysium\Services\MET_CSV_Parser::parse_file( \BeyondElysium\Database\Seeder::MET_CSV_PATH, [ 'Name-PT' ] );
+			foreach ( $csv['rows'] as $row ) {
+				$name    = trim( (string) ( $row['Name'] ?? '' ) );
+				$name_pt = trim( (string) ( $row['Name-PT'] ?? '' ) );
+				if ( '' === $name || '' === $name_pt ) {
+					continue;
+				}
+				$key = \BeyondElysium\Services\Name_Key::for( $name );
+
+				if ( isset( $seen[ $key ] ) ) {
+					if ( 1 === $seen[ $key ]['pass'] ) {
+						continue; // Pass 1 already has a value for this key - it wins, no conflict.
+					}
+					if ( $seen[ $key ]['value'] !== $name_pt ) {
+						self::record_migration_conflict( (int) $seen[ $key ]['id'], $name_pt );
+						++$counts['csv_conflicts'];
+					}
+					continue;
+				}
+
+				$string = \BeyondElysium\Models\Translation_String::find_by_source_key( $key );
+				if ( ! $string ) {
+					// Not in the live catalog - kept anyway, last_seen null (§8 step 4).
+					$new_id = \BeyondElysium\Models\Translation_String::create( [
+						'source_text' => $name,
+						'last_seen'   => null,
+					] );
+					if ( ! $new_id ) {
+						continue;
+					}
+					$string = \BeyondElysium\Models\Translation_String::find( (int) $new_id );
+					++$counts['csv_orphaned'];
+				}
+				if ( ! $string ) {
+					continue;
+				}
+
+				$id = \BeyondElysium\Models\Translation::create( [
+					'string_id'   => (int) $string->id,
+					'locale'      => 'pt_BR',
+					'translation' => $name_pt,
+					'status'      => 'draft',
+				] );
+				if ( $id ) {
+					$seen[ $key ] = [ 'id' => $id, 'value' => $name_pt, 'pass' => 2 ];
+					++$counts['csv_added'];
+				}
+			}
+		}
+
+		\BeyondElysium\Services\Catalog_Translator::bust_cache();
+
+		// A real, queryable record (§8: "report the counts into the upgrade log, and assert
+		// them in the migration's own test") - not error_log(), which every other migration in
+		// this file reserves for the failure case only, and which was found live to interact
+		// badly with PdfSignerTest's own @runInSeparateProcess isolation (the identical failure
+		// shape D48 already documented for a different stray-output cause).
+		update_option( 'be_catalog_translations_migration_counts', $counts, false );
+
+		update_option( 'be_catalog_translations_migrated', 1 );
+	}
+
+	/**
+	 * Marks an already-created translation row as a conflict and records the losing value in
+	 * its own note - appending, not overwriting, if a third or later value also collides on
+	 * the same key. The kept translation itself is never touched; first value wins.
+	 *
+	 * @param int    $translation_id
+	 * @param string $losing_value
+	 */
+	private static function record_migration_conflict( int $translation_id, string $losing_value ): void {
+		$existing = \BeyondElysium\Models\Translation::find( $translation_id );
+		if ( ! $existing ) {
+			return;
+		}
+
+		$note = empty( $existing->note )
+			? 'Also found: ' . $losing_value
+			: $existing->note . '; ' . $losing_value;
+
+		\BeyondElysium\Models\Translation::update( $translation_id, [
+			'status' => 'conflict',
+			'note'   => $note,
+		] );
 	}
 
 	/**
@@ -2589,6 +2807,17 @@ class Schema {
 	 */
 	private static function run_upgrade( bool $fresh_install ): void {
 		self::create_tables();
+
+		// Must run before seed_schema_blocks() below, not after - B9 (1.2.0 §8) means Seeder no
+		// longer writes name_pt/power_name_pt at all, so seed_schema_blocks() replacing a
+		// system block's whole definition (its own documented, correct behavior for everything
+		// GVM/CSV-sourced) would permanently erase a real site's pre-1.2.0 translation data
+		// before this migration ever ran, on the very upgrade meant to recover it. Found live,
+		// this exact ordering, measuring a fresh WP_UnitTestCase bootstrap against a real
+		// catalog: a fresh install (nothing to harvest either way) masked it completely, and
+		// only a database carrying genuine pre-1.2.0 name_pt - exactly what a real production
+		// site upgrading to 1.2.0 has - would have shown the loss.
+		self::migrate_catalog_translations_to_table();
 
 		// Refreshes system schema blocks/stacks so a block-map correction reaches existing installs.
 		Seeder::seed_schema_blocks();

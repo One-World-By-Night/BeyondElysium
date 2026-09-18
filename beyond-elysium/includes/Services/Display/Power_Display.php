@@ -47,17 +47,27 @@ class Power_Display {
 	 *
 	 * @param object                                                                       $definition
 	 * @param array{name:string,level?:int,power_name?:string,tier?:string,tradition?:string} $held
+	 * @param bool $use_pt Whether the caller has already resolved the viewer's locale to
+	 *                     Portuguese - this class makes no WordPress calls of its own (see the
+	 *                     class docblock), so the caller (Sheet_Document, which does) decides
+	 *                     and passes a plain bool, the same shape TieredPowerRenderer.tsx's own
+	 *                     localizedPowerName() import mirrors on the client (1.2.0 §5.4).
 	 */
-	public static function elder_label( object $definition, array $held ): string {
-		$power_name = $held['power_name'] ?? '';
+	public static function elder_label( object $definition, array $held, bool $use_pt = false ): string {
+		// Computed unconditionally, including the $held['level']-set branch below - found
+		// building B12, a real pre-existing PHP/TS divergence: the TS twin already looks this
+		// up before either branch, so an Elder pick with a stale/renamed catalog match had
+		// never actually matched the on-screen sheet even before translation existed.
+		$found      = self::find_by_power_name( self::find_power( $definition, $held['name'] ), $held['power_name'] ?? '' );
+		$found_pt   = $use_pt ? ( $found->power_name_pt ?? '' ) : '';
+		$power_name = $found_pt !== '' ? $found_pt : ( $held['power_name'] ?? '' );
 
 		if ( isset( $held['level'] ) ) {
 			return $held['name'] . ': ' . $power_name . ' ' . $held['level'];
 		}
 
 		// Prefers a fresh catalog tier lookup, then the entry's own stored tier, then 'elder'.
-		$found = self::find_by_power_name( self::find_power( $definition, $held['name'] ), $power_name );
-		$tier  = $found?->tier ?? ( $held['tier'] ?? 'elder' );
+		$tier = $found?->tier ?? ( $held['tier'] ?? 'elder' );
 
 		return $held['name'] . ': ' . $power_name . ' (' . $tier . ')';
 	}
@@ -70,9 +80,9 @@ class Power_Display {
 	 * @param object                                                                       $definition
 	 * @param array{name:string,level?:int,power_name?:string,tier?:string,tradition?:string} $held
 	 */
-	public static function numeric_label( object $definition, array $held ): string {
+	public static function numeric_label( object $definition, array $held, bool $use_pt = false ): string {
 		if ( ! empty( $held['power_name'] ) ) {
-			return self::elder_label( $definition, $held );
+			return self::elder_label( $definition, $held, $use_pt );
 		}
 		return isset( $held['level'] ) ? $held['name'] . ' ' . $held['level'] : $held['name'] . ' ?';
 	}
@@ -86,13 +96,17 @@ class Power_Display {
 	 * @param object                                                                       $definition
 	 * @param array{name:string,level?:int,power_name?:string,tier?:string,tradition?:string} $held
 	 */
-	public static function named_label( object $definition, array $held, ?int $level = null ): string {
+	public static function named_label( object $definition, array $held, ?int $level = null, bool $use_pt = false ): string {
 		if ( ! empty( $held['power_name'] ) ) {
-			return self::elder_label( $definition, $held );
+			return self::elder_label( $definition, $held, $use_pt );
 		}
 
 		$power_level = $level !== null ? self::find_level( self::find_power( $definition, $held['name'] ), $level ) : null;
-		return $power_level !== null ? ( $power_level->power_name ?? '' ) : self::numeric_label( $definition, $held );
+		if ( $power_level === null ) {
+			return self::numeric_label( $definition, $held, $use_pt );
+		}
+		$power_name_pt = $use_pt ? ( $power_level->power_name_pt ?? '' ) : '';
+		return $power_name_pt !== '' ? $power_name_pt : ( $power_level->power_name ?? '' );
 	}
 
 	/**
@@ -107,16 +121,16 @@ class Power_Display {
 	 * @param array{name:string,level?:int,power_name?:string,tier?:string,tradition?:string} $held
 	 * @return string[]
 	 */
-	public static function named_mode_rows( object $definition, array $held ): array {
+	public static function named_mode_rows( object $definition, array $held, bool $use_pt = false ): array {
 		if ( ! empty( $held['power_name'] ) ) {
-			return [ self::named_label( $definition, $held, $held['level'] ?? null ) ];
+			return [ self::named_label( $definition, $held, $held['level'] ?? null, $use_pt ) ];
 		}
 
 		$rows      = [];
 		$max_level = $held['level'] ?? 0;
 
 		for ( $level = 1; $level <= $max_level; $level++ ) {
-			$rows[] = self::named_label( $definition, $held, $level );
+			$rows[] = self::named_label( $definition, $held, $level, $use_pt );
 		}
 
 		return $rows;

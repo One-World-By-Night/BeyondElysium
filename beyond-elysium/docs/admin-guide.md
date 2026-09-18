@@ -22,7 +22,7 @@ own capability, so a page stays reachable even for a viewer who can't see every 
 | Query Tool | Query Tool (`be_run_queries`), Reports (`be_view_reports`) | — the same query builder as the front-end Query Tool, plus the 20-report/cards/batch-output layer |
 | Import | — (single page) | Import, below |
 | Chronicle Setup | Chronicle Setup (`be_view_characters`), Chronicle Access (`be_manage_games`), Action & Rumor Settings (`be_manage_apr`) | Chronicle-Scoped Access, below; Chronicle Setup itself is a live checklist for a chronicle's own setup, see the [Storyteller Guide](st-guide.md) |
-| System Config | Games (`be_manage_games`), Schema Blocks (`be_manage_schemas`), Creature Stacks (`be_manage_games`), Templates (`be_manage_templates`), Approval Rules (`be_manage_approval_rules`) | Schema Blocks and Creature Stacks, Templates, Descriptions and Approval Schedules, and Approval Rules, all below |
+| System Config | Games (`be_manage_games`), Schema Blocks (`be_manage_schemas`), Creature Stacks (`be_manage_games`), Templates (`be_manage_templates`), Approval Rules (`be_manage_approval_rules`), Translations (`be_manage_translations`) | Schema Blocks and Creature Stacks, Templates, Descriptions and Approval Schedules, Approval Rules, and Catalog Term Translation, all below |
 | Docs | — (single page, `be_view_characters`) | — this guide and its three siblings, rendered in-plugin |
 
 Two related pages live on the front end instead, not in wp-admin at all: the **Game
@@ -160,6 +160,50 @@ option, or the owning block's own `approval_rules.default`) had an opinion at al
 matters concretely: switching a chronicle from Pending to Auto-approve never silently
 approves something a Storyteller had explicitly flagged as needing review, even a flag with
 no reason text attached to it.
+
+## Catalog Term Translation
+
+Under **Beyond Elysium → System Config → Translations**, one screen manages every catalog
+term's translation - trait names, power names, identity-field labels and options - for
+whichever languages a chronicle actually needs. This is separate from the plugin's own
+UI-chrome translation (the labels, buttons, and messages the interface itself is built from,
+which install through an ordinary WordPress language pack): a catalog term like "Fortitude"
+or "Alertness" never appears as a literal string in any source file, only as a database row,
+so `wp i18n make-pot` can never see it and a `.po` file can never carry it.
+
+**Granting access.** `be_manage_translations` is its own capability, independent of
+`be_manage_schemas` - a native-speaking volunteer can be trusted to translate terms without
+also being trusted to edit the catalog's own mechanics. Grant it to a WordPress role, or add
+one to the `administrator`/`editor` role directly, the same way any other Beyond Elysium
+capability is granted.
+
+**The screen.** A language picker (**+ Add a language** starts a new one by typing its locale
+code, e.g. `es_ES` - no WordPress language pack install is required, since this is catalog
+data, not UI chrome) sits beside a **Rescan catalog** button, which re-walks every schema
+block - system and every chronicle's own fork - and refreshes the string index against
+whatever the real, current catalog actually contains. Below that, a progress bar and a
+per-status count (draft / needs review / approved / conflict) for the picked language.
+Filters narrow the table beneath: **Catalog** (one schema block or all of them), **Status**
+(including **Untranslated only**), and a free-text **Search**. Each row's translation is a
+plain text field - type, click away (or press Tab to jump straight to the next untranslated
+row), and it saves. A row's **Status** is its own dropdown, editable the same way. Checkboxes
+plus **Mark selected approved** apply that status to many rows in one click.
+
+**CSV round trip.** **Export CSV** downloads the current filtered view as `source_text`,
+`translation`, `status`. **Import CSV** reads the same three columns back, matched to the
+real catalog by name - a reordered or partially-filled file still imports correctly, and any
+row that doesn't match a real catalog term is reported, not silently dropped. Every import
+previews first: a dry-run summary (added / updated / unchanged / unmatched / conflicts) with
+a sample of what changed, and nothing is written until **Commit import**.
+
+**Why a CSV at all, when the table is authoritative:** the file is a convenience for the
+initial bulk pass - a volunteer exports 500 untranslated Werewolf Gift names, works through
+them in a spreadsheet over a week, imports, checks the dry-run counts, commits. It is an
+**export of a live table**, never the source of truth the way `data/met-mechanics.csv` used
+to be - importing it needs no repository, no build, no deploy, and no developer. The in-app
+inline edit is for the other half of the job: a Storyteller spots a wrong term mid-session,
+searches it, fixes one field, and it is right on every sheet, every chronicle fork, and every
+printed PDF on the next page load - no ticket, no file, no deploy.
 
 ## Adding a Creature Type Without Code
 

@@ -444,3 +444,24 @@ Site-wide, not game-scoped — lives on the Chronicle Access admin screen.
 | Method | Path | Capability | Notes |
 |---|---|---|---|
 | GET | `/{game_slug}/characters/{id}/point-audit` | `be_manage_characters` | The itemised point audit for one character — every held line, priced or explicitly marked unpriced with a machine-readable reason. Never `be_view_characters`/`be_edit_own_characters`: a grand total computed across a Storyteller-only block would leak its stored values arithmetically, so a non-manager gets `403`, never a reduced total. A character whose creature type no longer exists is `404 creature_stack_not_found`. `complete` is always `false` — this is not a bill, see [st-guide.md](st-guide.md) |
+
+## Translations (catalog term translation)
+
+Site-wide, not chronicle-scoped — one install, one language (Decision 106). Every route needs
+`be_manage_translations`, granted independently of `be_manage_schemas`. `locale` on every
+route below is a plain locale code (e.g. `pt_BR`), not validated against WordPress's own
+installed-language list — a chronicle in a language with no WordPress core translation
+installed can still be worked on here.
+
+| Method | Path | Capability | Notes |
+|---|---|---|---|
+| GET | `/translations` | `be_manage_translations` | One page of catalog terms for `?locale=`, left-joined with their translation. Filters: `status` (`untranslated` or a real `Translation::STATUSES` value), `block`, `search` (substring on the English term), `has_translation` (`1`/`0`). Paginated, `per_page` capped at 500 (§6's own D38/D52 warning against a missing-default truncation, against 8,298 rows) |
+| GET | `/translations/progress` | `be_manage_translations` | Per-locale totals, a per-status breakdown, and a per-block breakdown (total terms and how many are translated) — the progress bar and status line on the Translations screen |
+| GET | `/translations/locales` | `be_manage_translations` | Locales with at least one real translation row already (`with_rows`), plus every locale WordPress itself has installed (`installed`, `en_US` always first) — the language picker's own suggestions |
+| POST | `/translations` | `be_manage_translations` | Creates or replaces one term's translation for a locale. Accepts either `string_id` or `source_text` — naming a term `rescan()` hasn't indexed yet creates its string row rather than 404ing. Body: `locale`, `translation`, `status` (defaults `draft`), and one of `string_id`/`source_text` |
+| PATCH | `/translations/{id}` | `be_manage_translations` | Updates an existing translation row's own `translation` and/or `status`. `404 not_found` for an unknown id |
+| DELETE | `/translations/{id}` | `be_manage_translations` | Clears a translation row entirely (not the catalog term itself, which stays indexed for a future translation) |
+| POST | `/translations/bulk` | `be_manage_translations` | Sets many rows at once by `source_text`, matching `{ locale, rows: [{source_text, translation, status}] }` — backs "mark selected approved." One bad row is skipped and counted, never aborts the batch. Returns `{updated, skipped}` |
+| GET | `/translations/export` | `be_manage_translations` | Downloads a CSV honouring the same filters `GET /translations` accepts, `text/csv` with a UTF-8 BOM: `source_text`, `translation`, `status` columns |
+| POST | `/translations/import-csv` | `be_manage_translations` | Multipart CSV upload matching the export shape. `dry_run=1` reports `{added, updated, unchanged, unmatched, conflicts, sample}` without writing anything — a conflict is the file disagreeing with itself (two rows for the same term with two different translations), not the file disagreeing with what's already saved, which is an ordinary update |
+| POST | `/translations/rescan` | `be_manage_translations` | Re-walks the real, current catalog and refreshes the string index against it — every schema block, system and every chronicle fork. Returns `{added, updated, orphaned}` |

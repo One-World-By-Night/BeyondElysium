@@ -7,7 +7,12 @@
  * locale anywhere but the final render would corrupt that matching the
  * first time two chronicles on different locales exchanged a character.
  */
-import type { PowerLevel, TraitListItem } from '../types';
+import type {
+	IdentityField,
+	PowerLevel,
+	ResourcePool,
+	TraitListItem,
+} from '../types';
 
 const PT_BR = 'pt_BR';
 
@@ -39,4 +44,49 @@ export function localizedPowerName(
 		return level.power_name_pt;
 	}
 	return level.power_name;
+}
+
+/** Same fallback rule as localizedItemName(), for an identity_field's own name/label_pt pair. */
+export function localizedFieldLabel(
+	field: Pick< IdentityField, 'name' | 'label_pt' >
+): string {
+	if ( isPortugueseLocale() && field.label_pt ) {
+		return field.label_pt;
+	}
+	return field.name;
+}
+
+/** Same fallback rule as localizedItemName(), for a resource_pool's own name/label_pt pair. */
+export function localizedPoolLabel(
+	pool: Pick< ResourcePool, 'name' | 'label_pt' >
+): string {
+	if ( isPortugueseLocale() && pool.label_pt ) {
+		return pool.label_pt;
+	}
+	return pool.name;
+}
+
+/**
+ * An identity_field's held value, translated through its own `options_pt` map
+ * (1.2.0 §5.6) - a multiselect's every choice translated independently, a
+ * plain value looked up directly. A value not in `options_pt` (untranslated,
+ * or a legacy/hand-edited value not in `options` at all) falls back to
+ * itself, same rule as every other localized* helper here. Non-string values
+ * (a number field) have no option to translate and pass through unchanged.
+ */
+export function localizedIdentityValue(
+	field: Pick< IdentityField, 'options_pt' >,
+	value: string | number | string[] | null | undefined
+): string | number | string[] | null | undefined {
+	if ( ! isPortugueseLocale() || ! field.options_pt ) {
+		return value;
+	}
+	const optionsPt = field.options_pt;
+	if ( Array.isArray( value ) ) {
+		return value.map( ( v ) => optionsPt[ v ] ?? v );
+	}
+	if ( typeof value === 'string' ) {
+		return optionsPt[ value ] ?? value;
+	}
+	return value;
 }

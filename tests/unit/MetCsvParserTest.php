@@ -41,44 +41,40 @@ class MetCsvParserTest extends TestCase {
 	}
 
 	/**
-	 * Every `-PT` column except `Name-PT` (i18n-pt-br-design.md - the one column with
-	 * meaningful drafted content) and the source file's one literally-blank-named column
-	 * exist in the real header but are out of scope - confirm they never reach a parsed row.
-	 * Description is excluded for a different reason (see KEPT_COLUMNS' own doc comment) -
-	 * confirmed separately below.
+	 * 1.2.0 (§8/B9): `Name-PT` was the one `-PT` column this parser used to keep - the real
+	 * drafted translations it carries are recovered once, into the translations table, by
+	 * Schema::migrate_catalog_translations_to_table() (see CatalogTranslationMigrationThreadTest),
+	 * and this parser stops surfacing any of them. Confirm no `-PT` column, `Name-PT` included,
+	 * reaches a parsed row. Description is excluded for a different reason (see KEPT_COLUMNS'
+	 * own doc comment) - confirmed separately below.
 	 */
-	public function test_only_name_pt_survives_of_the_translation_columns(): void {
+	public function test_no_translation_column_survives(): void {
 		$parsed = MET_CSV_Parser::parse_file( $this->real_csv() );
 		$row    = $parsed['rows'][0];
 
-		$this->assertArrayHasKey( 'Name-PT', $row );
 		foreach ( array_keys( $row ) as $column ) {
-			if ( $column === 'Name-PT' ) {
-				continue;
-			}
 			$this->assertStringEndsNotWith( '-PT', $column );
 		}
 		$this->assertArrayNotHasKey( '', $row );
 	}
 
 	/**
-	 * Real, load-bearing case measured against the shipped file: every Discipline/Ritual/
-	 * Merit/Flaw row now has a real Portuguese translation drafted (i18n-pt-br-design.md),
-	 * confirming the merge that filled `data/met-mechanics.csv`'s `Name-PT` column actually
-	 * reached the file the parser reads, not just the research CSV it was drafted against.
+	 * Schema::migrate_catalog_translations_to_table()'s pass 2 (§8) still needs `Name-PT`
+	 * straight from the file, once, even though B9 dropped it from every ordinary parse - the
+	 * real bug this pins: dropping it from KEPT_COLUMNS with no way back would have silently
+	 * zeroed that migration's own CSV-recovery pass the moment it shipped, found live measuring
+	 * the real migration counts against local data (`csv_added` was 0, not the ~1,316 §8 itself
+	 * measured) before this parameter existed.
 	 */
-	public function test_name_pt_is_populated_for_the_major_catalog_types(): void {
-		$parsed = MET_CSV_Parser::parse_file( $this->real_csv() );
+	public function test_extra_columns_surfaces_name_pt_without_changing_the_default(): void {
+		$parsed = MET_CSV_Parser::parse_file( $this->real_csv(), [ 'Name-PT' ] );
+		$row    = $parsed['rows'][0];
 
-		foreach ( [ 'Discipline', 'Ritual', 'Merit', 'Flaw' ] as $type ) {
-			$rows           = $parsed['by_type'][ $type ] ?? [];
-			$without_pt     = array_filter( $rows, static fn( $row ) => $row['Name-PT'] === '' );
-			$this->assertSame(
-				0,
-				count( $without_pt ),
-				sprintf( 'every %s row should have a Name-PT value; found rows without one', $type )
-			);
-		}
+		$this->assertArrayHasKey( 'Name-PT', $row );
+
+		// The default (no $extra_columns) must still surface none of it - the whole point.
+		$default_row = MET_CSV_Parser::parse_file( $this->real_csv() )['rows'][0];
+		$this->assertArrayNotHasKey( 'Name-PT', $default_row );
 	}
 
 	/**

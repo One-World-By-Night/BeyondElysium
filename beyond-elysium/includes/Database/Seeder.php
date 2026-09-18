@@ -1383,9 +1383,6 @@ class Seeder {
 							// Control (a clan/bloodline restriction) rides alongside the tier rather than replacing it.
 							'note' => $row['Control'] !== '' ? "{$row['lName']} ({$row['Control']})" : $row['lName'],
 						];
-						if ( ! empty( $row['Name-PT'] ) ) {
-							$item['name_pt'] = $row['Name-PT'];
-						}
 						$cost = Seeder::normalize_met_cost( $row['Cost'] );
 						if ( $cost !== '' ) {
 							$item['cost'] = $cost;
@@ -1430,26 +1427,6 @@ class Seeder {
 			$items = $gvm_family['items'];
 			if ( $best_key !== null ) {
 				$matched[] = $best_key;
-
-				// i18n-pt-br-design.md: a GVM item and a same-named CSV item are the common
-				// case for a real published power - the GVM item wins (it's the richer,
-				// primary source) and the matching CSV item is discarded below, which would
-				// silently discard its name_pt too. Backfill name_pt onto the surviving GVM
-				// item by name match first, same PC-3 precedent as backfilling a missing cost.
-				$pt_by_key = [];
-				foreach ( $csv_families[ $best_key ]['items'] as $csv_item ) {
-					if ( ! empty( $csv_item['name_pt'] ) ) {
-						$pt_by_key[ self::met_name_comparison_key( $csv_item['name'] ) ] = $csv_item['name_pt'];
-					}
-				}
-				foreach ( $items as &$gvm_item ) {
-					$pt = $pt_by_key[ self::met_name_comparison_key( $gvm_item['name'] ) ] ?? null;
-					if ( $pt !== null && empty( $gvm_item['name_pt'] ) ) {
-						$gvm_item['name_pt'] = $pt;
-					}
-				}
-				unset( $gvm_item );
-
 				$have = array_map( [ self::class, 'met_name_comparison_key' ], array_column( $items, 'name' ) );
 				foreach ( $csv_families[ $best_key ]['items'] as $csv_item ) {
 					if ( ! in_array( self::met_name_comparison_key( $csv_item['name'] ), $have, true ) ) {
@@ -1587,9 +1564,6 @@ class Seeder {
 								'name' => $row['Name'],
 								'note' => $row['Control'] !== '' ? "{$row['lName']} ({$row['Control']})" : $row['lName'],
 							];
-							if ( ! empty( $row['Name-PT'] ) ) {
-								$item['name_pt'] = $row['Name-PT'];
-							}
 							$cost = Seeder::normalize_met_cost( $row['Cost'] );
 							if ( $cost !== '' ) {
 								$item['cost'] = $cost;
@@ -1766,25 +1740,12 @@ class Seeder {
 	private static function build_met_combo_disciplines( array $rows, array $gvm_combo_items = [] ): array {
 		$items = self::dedupe_met_rows_by_name( $rows );
 
-		// i18n-pt-br-design.md's own PC-3 precedent: the GVM item wins as the richer,
-		// primary source, but a same-named CSV row's own Name-PT must not be silently
-		// discarded along with the rest of that row - backfilled onto the surviving
-		// GVM-sourced item by name match below.
-		$superseded_pt = [];
-		foreach ( $items as $row ) {
-			if ( ! empty( $row['Name-PT'] ) ) {
-				$superseded_pt[ $row['Name'] ] = $row['Name-PT'];
-			}
-		}
 		$superseded = array_map( static fn( $item ) => $item['bare_name'], $gvm_combo_items );
 		$items      = array_values( array_filter( $items, static fn( $row ) => ! in_array( $row['Name'], $superseded, true ) ) );
 
 		$built = array_map(
 			static function ( $row ) {
 				$item = [ 'name' => $row['Name'] ];
-				if ( ! empty( $row['Name-PT'] ) ) {
-					$item['name_pt'] = $row['Name-PT'];
-				}
 
 				$cost = Seeder::normalize_met_cost( $row['Cost'] );
 				if ( $cost !== '' ) {
@@ -1817,10 +1778,6 @@ class Seeder {
 			if ( $gvm_item['source'] !== '' ) {
 				$item['source'] = $gvm_item['source'];
 			}
-			$pt = $superseded_pt[ $gvm_item['bare_name'] ] ?? null;
-			if ( $pt !== null ) {
-				$item['name_pt'] = $pt;
-			}
 			$built[] = $item;
 		}
 
@@ -1850,10 +1807,8 @@ class Seeder {
 		$note_overrides = $entry['note_overrides'] ?? [];
 
 		// resolve_block_source()'s own 'merge' case below applies this identical label/tier
-		// composition to the same $gvm_raw_items, in the same order (array_map over
-		// merge_menus()'s own output) - so $base[$i] below always corresponds to
-		// $gvm_raw_items[$i], and $gvm_keys can double as an index into $base for the
-		// name_pt backfill (i18n-pt-br-design.md), not just a membership set.
+		// composition to the same $gvm_raw_items - $gvm_keys is the resulting (label, name)
+		// membership set, checked below so a CSV row GVM already offers is never duplicated.
 		$base = self::resolve_block_source( $gvm, 'vampire-rituals', $entry )['items'];
 
 		$gvm_keys = [];
@@ -1884,13 +1839,6 @@ class Seeder {
 			$key   = strtolower( $label ) . "\x1f" . self::met_name_comparison_key( $row['Name'] );
 
 			if ( isset( $gvm_keys[ $key ] ) ) {
-				$base_index = $gvm_keys[ $key ];
-				if ( ! empty( $row['Name-PT'] ) && empty( $base[ $base_index ]['name_pt'] ) ) {
-					$tier = $row['lName'];
-					$base[ $base_index ]['name_pt'] = $tier !== ''
-						? "{$label}: {$row['Name-PT']} ({$tier})"
-						: "{$label}: {$row['Name-PT']}";
-				}
 				continue;
 			}
 
@@ -1898,9 +1846,6 @@ class Seeder {
 			$item = [
 				'name' => $tier !== '' ? "{$label}: {$row['Name']} ({$tier})" : "{$label}: {$row['Name']}",
 			];
-			if ( ! empty( $row['Name-PT'] ) ) {
-				$item['name_pt'] = $tier !== '' ? "{$label}: {$row['Name-PT']} ({$tier})" : "{$label}: {$row['Name-PT']}";
-			}
 			$cost = Seeder::normalize_met_cost( $row['Cost'] );
 			if ( $cost !== '' ) {
 				$item['cost'] = $cost;
@@ -2027,22 +1972,15 @@ class Seeder {
 				// The GVM base already has this name (`met_name_comparison_key()` matched) -
 				// backfill the CSV's own cost onto it when it has none of its own (PC-3:
 				// point-calculator-design.md §3.3), and never overwrite a cost the base
-				// already carries. Same rule for name_pt (i18n-pt-br-design.md) - the base
-				// item is what survives, so its own translation (if any) is never lost.
+				// already carries.
 				$base_index = $base_index_by_key[ $key ];
 				if ( $cost !== '' && empty( $base[ $base_index ]['cost'] ) ) {
 					$base[ $base_index ]['cost'] = $cost;
-				}
-				if ( ! empty( $row['Name-PT'] ) && empty( $base[ $base_index ]['name_pt'] ) ) {
-					$base[ $base_index ]['name_pt'] = $row['Name-PT'];
 				}
 				continue;
 			}
 
 			$item = [ 'name' => $row['Name'] ];
-			if ( ! empty( $row['Name-PT'] ) ) {
-				$item['name_pt'] = $row['Name-PT'];
-			}
 			if ( $cost !== '' ) {
 				$item['cost'] = $cost;
 			}
@@ -2097,21 +2035,15 @@ class Seeder {
 
 				if ( isset( $base_index_by_key[ $key ] ) ) {
 					// Same PC-3 backfill rule as build_met_merge_trait_list(): fill a missing
-					// cost, never overwrite an existing one. Same rule for name_pt.
+					// cost, never overwrite an existing one.
 					$base_index = $base_index_by_key[ $key ];
 					if ( $cost !== '' && empty( $base[ $base_index ]['cost'] ) ) {
 						$base[ $base_index ]['cost'] = $cost;
-					}
-					if ( ! empty( $row['Name-PT'] ) && empty( $base[ $base_index ]['name_pt'] ) ) {
-						$base[ $base_index ]['name_pt'] = $row['Name-PT'];
 					}
 					continue;
 				}
 
 				$item = [ 'name' => $row['Name'] ];
-				if ( ! empty( $row['Name-PT'] ) ) {
-					$item['name_pt'] = $row['Name-PT'];
-				}
 				if ( $cost !== '' ) {
 					$item['cost'] = $cost;
 				}
@@ -3271,11 +3203,6 @@ class Seeder {
 
 			$object = [ 'name' => $item['name'] ];
 
-			// Drafted Portuguese translation, display-only (i18n-pt-br-design.md) - never
-			// read for matching/storage, only src/lib/localizeName.ts's display swap.
-			if ( ! empty( $item['name_pt'] ) ) {
-				$object['name_pt'] = $item['name_pt'];
-			}
 			// Cost is free-text ('1', '1 or 3', '1-7'), never an integer.
 			if ( ! empty( $item['cost'] ) ) {
 				$object['cost'] = $item['cost'];
@@ -3451,10 +3378,6 @@ class Seeder {
 					'power_name' => is_array( $item ) ? $item['name'] : (string) $item,
 					'tier'       => $tier,
 				];
-
-				if ( is_array( $item ) && ! empty( $item['name_pt'] ) ) {
-					$level['power_name_pt'] = $item['name_pt'];
-				}
 
 				// Real cost from the menu, kept as the free-text string it is.
 				if ( is_array( $item ) && ! empty( $item['cost'] ) ) {

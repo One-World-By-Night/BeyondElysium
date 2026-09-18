@@ -337,8 +337,10 @@ class Sheet_Document {
 		// 1.1.0 D4: a player_order block renders in stored array order - no
 		// alphabetizing, no field/category grouping. The player's own order is
 		// their grouping.
+		$catalog_items = $definition->items ?? [];
+
 		if ( ! empty( $definition->player_order ) ) {
-			return [ [ 'label' => null, 'rows' => self::render_traits( $traits, $mode ) ] ];
+			return [ [ 'label' => null, 'rows' => self::render_traits( $traits, $mode, $catalog_items ) ] ];
 		}
 
 		$nested = Trait_Grouping::group_traits_by_field( $traits, $definition );
@@ -352,7 +354,7 @@ class Sheet_Document {
 						? $group['group'] . ' — ' . $subgroup['subgroup']
 						: $group['group'];
 					$items   = Trait_Grouping::sort_if_alphabetized( $subgroup['items'], $definition->alphabetize ?? null );
-					$groups[] = [ 'label' => $label, 'rows' => self::render_traits( $items, $mode ) ];
+					$groups[] = [ 'label' => $label, 'rows' => self::render_traits( $items, $mode, $catalog_items ) ];
 				}
 			}
 			return $groups;
@@ -360,7 +362,7 @@ class Sheet_Document {
 
 		foreach ( Trait_Grouping::group_by_category( $traits, $definition ) as $group ) {
 			$items    = Trait_Grouping::sort_if_alphabetized( $group['traits'], $definition->alphabetize ?? null );
-			$groups[] = [ 'label' => $group['label'], 'rows' => self::render_traits( $items, $mode ) ];
+			$groups[] = [ 'label' => $group['label'], 'rows' => self::render_traits( $items, $mode, $catalog_items ) ];
 		}
 
 		return $groups;
@@ -373,14 +375,49 @@ class Sheet_Document {
 	 * actually reads; the other two survive the reorder untouched at runtime, and
 	 * `display_trait()` reads both defensively via `??` regardless.
 	 *
+	 * Each held trait's own `name` is swapped for its catalog match's `name_pt` on a
+	 * `pt_BR` site (1.2.0 §5.4) - the exact swap `TraitListRenderer.tsx`'s own
+	 * `localizeTraitForDisplay()` makes before calling `displayTrait()`, so the signed PDF
+	 * matches the screen (T15). `$catalog_items` is `$definition->items` - already carrying
+	 * `name_pt` via `Catalog_Translator::decorate()`, wired into every schema-block read.
+	 *
 	 * @param array<int,array<string,mixed>> $traits
+	 * @param array<int,object>              $catalog_items
 	 * @return string[]
 	 */
-	private static function render_traits( array $traits, string $mode ): array {
+	private static function render_traits( array $traits, string $mode, array $catalog_items = [] ): array {
+		if ( self::use_portuguese() ) {
+			$by_name = [];
+			foreach ( $catalog_items as $item ) {
+				if ( isset( $item->name ) ) {
+					$by_name[ $item->name ] = $item;
+				}
+			}
+			$traits = array_map(
+				static function ( $trait ) use ( $by_name ) {
+					$name_pt = $by_name[ $trait['name'] ]->name_pt ?? null;
+					if ( ! empty( $name_pt ) ) {
+						$trait['name'] = $name_pt;
+					}
+					return $trait;
+				},
+				$traits
+			);
+		}
+
 		return array_values( array_map(
 			static fn( $trait ) => Trait_Display::display_trait( (object) $trait, $mode ),
 			$traits
 		) );
+	}
+
+	/**
+	 * Whether the site's own locale (Decision 106: one install, one language - never a
+	 * per-user preference) is Portuguese (Brazil), the server-side twin of
+	 * `src/lib/localizeName.ts`'s `isPortugueseLocale()`.
+	 */
+	private static function use_portuguese(): bool {
+		return get_locale() === 'pt_BR';
 	}
 
 	/**
@@ -392,12 +429,14 @@ class Sheet_Document {
 		$held_list = is_array( $section_data ) ? $section_data : [];
 		$mode      = ! empty( $options['full_power_names'] ) ? 'named' : 'numeric';
 
+		$use_pt = self::use_portuguese();
+
 		$rows = [];
 		foreach ( $held_list as $held ) {
 			$held  = is_array( $held ) ? $held : [];
 			$label = $mode === 'numeric'
-				? Power_Display::numeric_label( $definition, $held )
-				: implode( ', ', Power_Display::named_mode_rows( $definition, $held ) );
+				? Power_Display::numeric_label( $definition, $held, $use_pt )
+				: implode( ', ', Power_Display::named_mode_rows( $definition, $held, $use_pt ) );
 			$rows[] = Power_Display::with_tradition( $held, $label );
 		}
 		return $rows;

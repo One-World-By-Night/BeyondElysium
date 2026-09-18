@@ -7,6 +7,10 @@
 import { __ } from '@wordpress/i18n';
 import type { IdentityFieldDefinition } from '../../types';
 import { identityValueText } from '../../lib/identityValue';
+import {
+	localizedFieldLabel,
+	localizedIdentityValue,
+} from '../../lib/localizeName';
 import './IdentityFieldRenderer.css';
 
 export interface IdentityFieldRendererProps {
@@ -32,7 +36,9 @@ export function IdentityFieldRenderer( {
 			{ definition.fields.map( ( field ) => {
 				const value = data[ field.name ];
 				const display =
-					identityValueText( value ) ?? __( '—', 'beyond-elysium' );
+					identityValueText(
+						localizedIdentityValue( field, value )
+					) ?? __( '—', 'beyond-elysium' );
 
 				// A textarea field is rich text (1.0.1 D1) and has to render as markup or
 				// the reader sees escaped tags. Safe here for the same reason biography and
@@ -45,7 +51,7 @@ export function IdentityFieldRenderer( {
 
 				return (
 					<div className="be-identity-fields__row" key={ field.name }>
-						<dt>{ field.name }</dt>
+						<dt>{ localizedFieldLabel( field ) }</dt>
 						{ isRich ? (
 							<dd
 								className="be-identity-fields__prose"

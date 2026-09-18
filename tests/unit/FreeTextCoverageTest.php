@@ -31,6 +31,15 @@ class FreeTextCoverageTest extends TestCase {
 	private const MANAGER_ONLY = '<manager-only>';
 
 	/**
+	 * Real, human-authored prose that every viewer sees, always - no `[ST]` marker concept and
+	 * no player/manager split to filter on. Distinct from STRUCTURED (which is never prose a
+	 * person writes by hand) and from a `filter_*` method (which has nothing to strip). A
+	 * catalog term's translation is the clearest case: the whole point of 1.2.0's design
+	 * (releases/1.2.0-design-workflow.md §5.2, §5.4) is that a plain player reads it.
+	 */
+	private const PUBLIC_TERM = '<public-term>';
+
+	/**
 	 * Every free-text column, and the `St_Visibility` method that filters it - or the reason
 	 * it needs none. Adding a row here is a deliberate act; see the class docblock.
 	 */
@@ -78,6 +87,15 @@ class FreeTextCoverageTest extends TestCase {
 		// A manager-only field in full (Factions_Controller::project_position() never
 		// includes it in a non-manager's projection at all).
 		'positions.notes'                             => self::MANAGER_ONLY,
+		// The Portuguese (or any locale's) translated name - every viewer sees it, always. See
+		// PUBLIC_TERM's own docblock above.
+		'translations.translation'                    => self::PUBLIC_TERM,
+		// Only the §8 migration writes it, recording a conflict's losing value for the
+		// reviewer. Every Translations_Controller route requires be_manage_translations, so
+		// this never reaches a non-manager - the route drops it the same way every other
+		// MANAGER_ONLY field's route does, by requiring the capability on every route rather
+		// than filtering the field.
+		'translations.note'                           => self::MANAGER_ONLY,
 	];
 
 	public function test_every_free_text_column_in_the_schema_is_accounted_for(): void {
@@ -102,7 +120,7 @@ class FreeTextCoverageTest extends TestCase {
 		$missing = [];
 
 		foreach ( self::KNOWN as $qualified => $method ) {
-			if ( self::STRUCTURED === $method || self::MANAGER_ONLY === $method ) {
+			if ( self::STRUCTURED === $method || self::MANAGER_ONLY === $method || self::PUBLIC_TERM === $method ) {
 				continue;
 			}
 

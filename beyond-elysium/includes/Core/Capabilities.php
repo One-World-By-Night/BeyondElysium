@@ -77,6 +77,11 @@ class Capabilities {
 		// faction is a chronicle-membership structure, not a catalog entity. hst/ast derive
 		// it via game-roles.php's own array_diff mechanism; narrator does not.
 		'be_manage_factions'       => [ 'administrator', 'editor' ],
+		// Deliberately NOT folded into be_manage_schemas (1.2.0 releases/1.2.0-design-workflow.md
+		// §5.7): the person doing this work is a native speaker fixing one wrong catalog term,
+		// not someone who should be able to rewrite every catalog on the site. Site-wide, not
+		// chronicle-scoped - translations are site data and locale is per-install (Decision 106).
+		'be_manage_translations'  => [ 'administrator', 'editor' ],
 	];
 
 	/**

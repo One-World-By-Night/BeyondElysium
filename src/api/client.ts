@@ -3437,6 +3437,239 @@ export const verification = () => ( {
 } );
 
 // ---------------------------------------------------------------------------
+// Translations (1.2.0 §6) — site-wide, not chronicle-scoped (Decision 106:
+// one install, one language). Backs the Translations admin screen (B10).
+// ---------------------------------------------------------------------------
+
+export interface TranslationUsage {
+	block: string;
+	section_type: string;
+	role: string;
+}
+
+export type TranslationStatus =
+	| 'draft'
+	| 'needs_review'
+	| 'approved'
+	| 'conflict';
+
+/** One row of `list()`: a catalog term left-joined with its translation for the requested locale. */
+export interface TranslationRow {
+	id: string;
+	source_key: string;
+	source_text: string;
+	used_in: TranslationUsage[];
+	first_seen: string;
+	last_seen: string | null;
+	translation_id: string | null;
+	translation: string | null;
+	status: TranslationStatus | null;
+	context: string | null;
+}
+
+export interface TranslationFilters {
+	status?: 'untranslated' | TranslationStatus;
+	block?: string;
+	search?: string;
+	has_translation?: boolean;
+}
+
+export interface TranslationStats {
+	locale: string;
+	total: number;
+	translated: number;
+	untranslated: number;
+	by_status: Record< TranslationStatus, number >;
+	by_block: Record< string, { total: number; translated: number } >;
+}
+
+export interface TranslationLocales {
+	/** Locales with at least one real translation row already. */
+	with_rows: string[];
+	/** Every locale WordPress itself has installed, en_US always first. */
+	installed: string[];
+}
+
+export interface TranslationBulkRow {
+	source_text: string;
+	translation: string;
+	status?: TranslationStatus;
+}
+
+export interface TranslationBulkResult {
+	updated: number;
+	skipped: number;
+}
+
+export interface TranslationImportSample {
+	source_text: string;
+	outcome: 'added' | 'updated' | 'unmatched' | 'conflict';
+	existing?: string;
+	incoming?: string;
+}
+
+export interface TranslationImportResult {
+	added: number;
+	updated: number;
+	unchanged: number;
+	unmatched: number;
+	conflicts: number;
+	sample: TranslationImportSample[];
+	dry_run: boolean;
+}
+
+/**
+ * REST client for catalog term translation. `exportUrl()` mirrors
+ * `sheets().pdfUrl()`'s own direct nonce-bearing link pattern - the export
+ * route serves raw CSV bytes, not JSON. `import()` sends a real multipart
+ * FormData body, matching `attachments().upload()`'s established shape.
+ */
+export const translations = {
+	/** One page of catalog terms for `locale`, left-joined with their translation. */
+	list: (
+		locale: string,
+		filters: TranslationFilters = {},
+		page = 1,
+		perPage = 100
+	): Promise< {
+		items: TranslationRow[];
+		total: number;
+		totalPages: number;
+	} > =>
+		fetchPage< TranslationRow >( {
+			path: `${ BASE }/translations${ toQuery( {
+				locale,
+				...filters,
+				page,
+				per_page: perPage,
+			} as Record< string, unknown > ) }`,
+		} ),
+
+	/** Per-locale totals, per-status counts, and a per-block breakdown, for the progress display. */
+	stats: ( locale: string ): Promise< TranslationStats > =>
+		apiFetch( {
+			path: `${ BASE }/translations/progress${ toQuery( { locale } ) }`,
+		} ),
+
+	/** Locales with real rows already, plus every locale WordPress itself has installed. */
+	locales: (): Promise< TranslationLocales > =>
+		apiFetch( { path: `${ BASE }/translations/locales` } ),
+
+	/**
+	 * Creates or replaces one term's translation for a locale. Accepts either
+	 * an existing string_id or a bare source_text - naming a term rescan()
+	 * has not indexed yet creates its string row rather than 404ing.
+	 */
+	save: (
+		locale: string,
+		term: { stringId?: string; sourceText?: string },
+		translation: string,
+		status: TranslationStatus = 'draft'
+	): Promise< {
+		id: string;
+		string_id: string;
+		locale: string;
+		translation: string;
+		status: TranslationStatus;
+	} > =>
+		apiFetch( {
+			path: `${ BASE }/translations`,
+			method: 'POST',
+			data: {
+				locale,
+				string_id: term.stringId,
+				source_text: term.sourceText,
+				translation,
+				status,
+			},
+		} ),
+
+	/** Updates an existing translation row's own translation text and/or status. */
+	update: (
+		id: string,
+		data: Partial< { translation: string; status: TranslationStatus } >
+	): Promise< unknown > =>
+		apiFetch( {
+			path: `${ BASE }/translations/${ id }`,
+			method: 'PATCH',
+			data,
+		} ),
+
+	remove: ( id: string ): Promise< void > =>
+		apiFetch( {
+			path: `${ BASE }/translations/${ id }`,
+			method: 'DELETE',
+		} ),
+
+	/** Bulk-sets many rows at once by source_text - backs "mark selected approved." */
+	bulk: (
+		locale: string,
+		rows: TranslationBulkRow[]
+	): Promise< TranslationBulkResult > =>
+		apiFetch( {
+			path: `${ BASE }/translations/bulk`,
+			method: 'POST',
+			data: { locale, rows },
+		} ),
+
+	/**
+	 * Builds the CSV export download URL for the current filters, matching
+	 * `list()`'s own filter vocabulary exactly (§6: "honouring the same
+	 * filters as the list"). A direct link, not an apiFetch call, since the
+	 * route serves raw CSV bytes.
+	 */
+	exportUrl: ( locale: string, filters: TranslationFilters = {} ): string => {
+		const params = new URLSearchParams( { locale } );
+		if ( filters.status ) {
+			params.set( 'status', filters.status );
+		}
+		if ( filters.block ) {
+			params.set( 'block', filters.block );
+		}
+		if ( filters.search ) {
+			params.set( 'search', filters.search );
+		}
+		if ( filters.has_translation !== undefined ) {
+			params.set(
+				'has_translation',
+				filters.has_translation ? '1' : '0'
+			);
+		}
+		params.set( '_wpnonce', window.beyondElysium?.nonce ?? '' );
+
+		const root =
+			window.beyondElysium?.restUrl ??
+			`${ window.location.origin }/wp-json/be/v1/`;
+		return `${ root }translations/export?${ params.toString() }`;
+	},
+
+	/** Uploads a CSV for import; dryRun reports counts and a sample with nothing written (T12). */
+	import: (
+		locale: string,
+		file: File,
+		dryRun: boolean
+	): Promise< TranslationImportResult > => {
+		const body = new FormData();
+		body.append( 'locale', locale );
+		body.append( 'dry_run', dryRun ? '1' : '0' );
+		body.append( 'file', file );
+		return apiFetch( {
+			path: `${ BASE }/translations/import-csv`,
+			method: 'POST',
+			body,
+		} );
+	},
+
+	/** Re-walks the real catalog and refreshes the string index against it. */
+	rescan: (): Promise< {
+		added: number;
+		updated: number;
+		orphaned: number;
+	} > =>
+		apiFetch( { path: `${ BASE }/translations/rescan`, method: 'POST' } ),
+};
+
+// ---------------------------------------------------------------------------
 // Default export: grouped API object
 // ---------------------------------------------------------------------------
 
@@ -3496,5 +3729,6 @@ const api = {
 	aiAssist,
 	aiAssistSite,
 	signing,
+	translations,
 };
 export default api;

@@ -4,6 +4,7 @@ namespace BeyondElysium\Models;
 
 use BeyondElysium\Database\Fork_Merge;
 use BeyondElysium\Database\Manager;
+use BeyondElysium\Services\Catalog_Translator;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -115,7 +116,12 @@ class Schema_Block {
 			'game_slug'    => $game_slug,
 			'name'         => $global->name,
 			'section_type' => $global->section_type,
-			'definition'   => wp_json_encode( $global->definition ),
+			// $global came from find_by_slug(), which decorates (B4) - a fresh fork must not
+			// be born with _pt keys baked into its very first row, the same hazard §5.5
+			// describes for an admin's own PUT, reached here by a different path (T4's own
+			// scope named create()/update() only; this third site was found executing this
+			// box, not in the design doc's own text).
+			'definition'   => wp_json_encode( Catalog_Translator::strip( $global->definition ) ),
 			'is_system'    => 0,
 			// A copy of a Storyteller-only block starts Storyteller-only; the copy decides for
 			// its chronicle from here on (F-062).
@@ -410,15 +416,27 @@ class Schema_Block {
 			return false;
 		}
 
+		// §5.5's strip() guards against a caller echoing a DECORATED read back as a write -
+		// found live, an earlier version of this method applied it unconditionally and
+		// silently erased Seeder's own CSV-sourced name_pt on every reseed, which would have
+		// destroyed the pre-1.2.0 Portuguese localization work (Decision 106/107) the moment
+		// a production install's maybe_upgrade() next ran. B9 retired that CSV-sourced write
+		// path entirely, so strip() applies unconditionally here now - there is no longer a
+		// legitimate writer for strip() to guard against.
+		$definition = $data['definition'] ?? null;
+		if ( is_array( $definition ) || is_object( $definition ) ) {
+			$definition = Catalog_Translator::strip( $definition );
+		}
+
 		$insert = [
 			'slug'         => sanitize_title( $data['slug'] ),
 			// '' (never null) means the global/system catalog.
 			'game_slug'    => $data['game_slug'] ?? '',
 			'name'         => $data['name'],
 			'section_type' => $data['section_type'],
-			'definition'   => is_array( $data['definition'] ?? null ) || is_object( $data['definition'] ?? null )
-				? wp_json_encode( $data['definition'] )
-				: ( $data['definition'] ?? '{}' ),
+			'definition'   => is_array( $definition ) || is_object( $definition )
+				? wp_json_encode( $definition )
+				: ( $definition ?? '{}' ),
 			'is_system'    => (int) ( $data['is_system'] ?? 0 ),
 			'storyteller_only' => (int) ( $data['storyteller_only'] ?? 0 ),
 			'version'      => 1,
@@ -439,7 +457,7 @@ class Schema_Block {
 	 * later catalog update keeps it (1.0.0-review F-034).
 	 *
 	 * @param string $slug
-	 * @param array  $data Fields to update.
+	 * @param array  $data      Fields to update.
 	 * @param string $game_slug
 	 * @return bool
 	 */
@@ -455,6 +473,14 @@ class Schema_Block {
 
 		if ( empty( $update ) ) {
 			return false;
+		}
+
+		// strip() before anything else touches $update['definition'] - both the fork-diff
+		// computation just below and the final encode must see the same clean definition, or
+		// a _pt key a caller echoed back could survive into fork_changes even if the
+		// definition column itself were later cleaned (§5.5, T4).
+		if ( isset( $update['definition'] ) && ( is_array( $update['definition'] ) || is_object( $update['definition'] ) ) ) {
+			$update['definition'] = Catalog_Translator::strip( $update['definition'] );
 		}
 
 		if ( $game_slug !== '' && isset( $update['definition'] ) ) {
@@ -698,6 +724,18 @@ class Schema_Block {
 				$row->$flag = (bool) $row->$flag;
 			}
 		}
+
+		// The single choke point every read of a block passes through - find_by_slug(),
+		// find_by_slugs(), find_by_slugs_for_game() all route here, so this is the one place
+		// that needs to add display translations for the sheet, the admin editors, reports
+		// and the PDF writer all to get them without a second wiring point (1.2.0
+		// releases/1.2.0-design-workflow.md §5.2). One install, one language (Decision 106) -
+		// get_locale() needs no request-context threading, matching how Plugin.php and
+		// Admin_Menu.php already surface the site locale to the client.
+		if ( isset( $row->section_type, $row->definition ) && is_object( $row->definition ) ) {
+			Catalog_Translator::decorate( $row, get_locale() );
+		}
+
 		return $row;
 	}
 }

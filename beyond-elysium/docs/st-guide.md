@@ -580,6 +580,17 @@ NPC's own Character Editor (§3); nothing here happens automatically just by cre
 See [Secrets](help/secrets.md), [What I Know](help/what-i-know.md), and
 [Who's Who](help/whos-who.md).
 
+## 20. Fixing a Catalog Term You Spot in Play
+
+A player says a Ritual name, a Merit, or a Discipline reads wrong on their Portuguese sheet -
+this is a one-row fix, not a ticket. Under **Beyond Elysium → System Config → Translations**
+(a WordPress administrator can grant you `be_manage_translations` if you don't have it),
+search the term, correct the text in its own field, and it's right on every sheet, every
+chronicle's own fork, and every printed PDF the next time anyone loads it - no file, no
+deploy, no developer. See [Catalog Term Translation](help/translations.md) and the Admin
+Guide's own section of the same name for the full screen, including the offline CSV round
+trip a volunteer would use for a bulk translation pass rather than one term at a time.
+
 ## Roles Reference
 
 | Role | Access |

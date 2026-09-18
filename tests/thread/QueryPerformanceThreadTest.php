@@ -50,8 +50,15 @@ class QueryPerformanceThreadTest extends WP_UnitTestCase {
 		);
 
 		$this->assertSame( 20, $result['total'] );
-		// One row fetch plus a handful of block lookups - never one per row, let alone per comparison.
-		$this->assertLessThan( 10, $wpdb->num_queries - $before );
+		// One row fetch, a handful of block lookups, and - since 1.2.0 - Catalog_Translator::
+		// map()'s own one-time cold-cache cost (a version-option read, the transient miss,
+		// Translation::map_for_locale()'s join, and the two writes that cache it) the first time
+		// any block decodes in a request. Measured directly (SAVEQUERIES + a real query dump,
+		// not guessed): 1 characters + 4 pre-existing block lookups + 5 for map()'s cold miss =
+		// 10, exactly - never more, since map() is transient-cached for the rest of the request
+		// after that. 15 leaves real headroom above that ceiling while still catching a genuine
+		// regression back to one query per row (20+).
+		$this->assertLessThan( 15, $wpdb->num_queries - $before );
 	}
 
 	public function test_sorted_results_are_still_in_order(): void {

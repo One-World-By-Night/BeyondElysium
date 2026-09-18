@@ -122,15 +122,23 @@ abstract class Base_Controller extends \WP_REST_Controller {
 	 * Resolves pagination parameters from the request, applying defaults and limits.
 	 *
 	 * Reads `page` and `per_page` from the request, defaulting to page 1 and
-	 * 20 items per page, clamping `per_page` to a maximum of 100, and
-	 * computing the row offset those two values imply.
+	 * 20 items per page, clamping `per_page` to a maximum of `$max` (100 by
+	 * default), and computing the row offset those two values imply.
+	 *
+	 * `$max` exists for the rare screen that genuinely pages through
+	 * thousands of rows (Translations_Controller, §6: "a screen paging
+	 * through 8,298 rows is precisely where [a missing per_page] would
+	 * land") - every other caller omits it and keeps the existing 100 cap
+	 * unchanged, matching this method's own signature before this parameter
+	 * was added.
 	 *
 	 * @param \WP_REST_Request $request
+	 * @param int              $max
 	 * @return array{ page: int, per_page: int, offset: int }
 	 */
-	protected function get_pagination( \WP_REST_Request $request ): array {
+	protected function get_pagination( \WP_REST_Request $request, int $max = 100 ): array {
 		$page     = max( 1, (int) $request->get_param( 'page' ) ?: 1 );
-		$per_page = min( 100, max( 1, (int) $request->get_param( 'per_page' ) ?: 20 ) );
+		$per_page = min( $max, max( 1, (int) $request->get_param( 'per_page' ) ?: 20 ) );
 		$offset   = ( $page - 1 ) * $per_page;
 
 		return compact( 'page', 'per_page', 'offset' );

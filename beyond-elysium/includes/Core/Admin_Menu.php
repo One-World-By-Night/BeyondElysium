@@ -360,6 +360,8 @@ class Admin_Menu {
 				'be_manage_approval_rules' => current_user_can( 'be_manage_approval_rules' ),
 				// Gates the wp-admin Game Nights page (1.1.0 §3.1).
 				'be_manage_sessions'       => current_user_can( 'be_manage_sessions' ),
+				// Gates the System Config Translations tab (1.2.0 §6, B10).
+				'be_manage_translations'   => current_user_can( 'be_manage_translations' ),
 			],
 		] );
 

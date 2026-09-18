@@ -481,6 +481,8 @@ export interface ResourcePool {
 	free_dots?: number;
 	/** Per-value approval schedule, keyed on the pool's own PERMANENT value (never temporary - spending/regaining a point of Willpower in play never needs approval; permanently raising it via XP might). */
 	approval_by_value?: ApprovalRange[];
+	/** Drafted Portuguese translation of this pool's own name, display-only (1.2.0 §5.6). */
+	label_pt?: string;
 }
 
 /**
@@ -517,6 +519,10 @@ export interface IdentityField {
 		string,
 		{ approval: ApprovalLevel; reason?: string }
 	>;
+	/** Drafted Portuguese translation of this field's own name, display-only (1.2.0 §5.6). */
+	label_pt?: string;
+	/** Drafted Portuguese translation per option, keyed by the option's exact canonical string - additive, `options` itself stays untouched (1.2.0 §5.6). */
+	options_pt?: Record< string, string >;
 }
 
 /**

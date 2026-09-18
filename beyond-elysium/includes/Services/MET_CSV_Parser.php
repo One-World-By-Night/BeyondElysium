@@ -21,17 +21,19 @@ class MET_CSV_Parser {
 
 	/**
 	 * Header columns this parser keeps. The source file also carries a
-	 * Portuguese translation column for most of these (only `Name-PT` is
-	 * kept - see i18n-pt-br-design.md) and one blank-named column between
-	 * lName and Cost; both are read so fgetcsv() stays aligned, then
-	 * discarded except for `Name-PT`.
+	 * Portuguese translation column for most of these, including `Name-PT`
+	 * (kept until 1.2.0 - see 1.2.0-design-workflow.md §8/B9; the file's real
+	 * drafted translations are recovered from it once, into the
+	 * translations table, by Schema::migrate_catalog_translations_to_table())
+	 * and one blank-named column between lName and Cost; every `-PT` column
+	 * is read so fgetcsv() stays aligned, then discarded.
 	 *
 	 * Description is never kept: it holds full sourcebook rules text and is
 	 * already blanked in the source file. A block's own `description` field
 	 * stays empty and editable for a chronicle admin to fill in.
 	 */
 	const KEPT_COLUMNS = [
-		'Name', 'Name-PT', 'Type', 'Subtype', 'Group', 'Control', 'Rtg', 'lNum', 'lName',
+		'Name', 'Type', 'Subtype', 'Group', 'Control', 'Rtg', 'lNum', 'lName',
 		'Cost', 'Source', 'Prerequsites', 'House Rules', 'OrgRef',
 	];
 
@@ -41,16 +43,24 @@ class MET_CSV_Parser {
 	 * newlines inside quoted values parse correctly. Skips blank lines and any
 	 * row with no Type value.
 	 *
-	 * @param string $path Absolute path.
+	 * @param string   $path           Absolute path.
+	 * @param string[] $extra_columns  Header columns to keep beyond KEPT_COLUMNS, for a caller
+	 *                                 with its own narrow, one-off need (Schema::migrate_
+	 *                                 catalog_translations_to_table()'s one-time `Name-PT`
+	 *                                 recovery, §8/B9 - KEPT_COLUMNS itself stays scoped to what
+	 *                                 Seeder needs, so this reuses the one tested streaming
+	 *                                 implementation instead of a second parser drifting from it).
 	 * @return array{rows: array<int,array<string,string>>, by_type: array<string,array<int,array<string,string>>>}
 	 * @throws \RuntimeException When the file cannot be opened or its header is not what this parser expects.
 	 */
-	public static function parse_file( string $path ): array {
+	public static function parse_file( string $path, array $extra_columns = [] ): array {
 		$handle = @fopen( $path, 'r' );
 
 		if ( ! $handle ) {
 			throw new \RuntimeException( 'Cannot open MET-Mechanics CSV: ' . $path );
 		}
+
+		$kept_columns = $extra_columns === [] ? self::KEPT_COLUMNS : array_merge( self::KEPT_COLUMNS, $extra_columns );
 
 		try {
 			// Pass the escape character explicitly to avoid a PHP 8.1+ deprecation warning.
@@ -71,7 +81,7 @@ class MET_CSV_Parser {
 
 				$row = [];
 				foreach ( $header as $i => $column ) {
-					if ( in_array( $column, self::KEPT_COLUMNS, true ) ) {
+					if ( in_array( $column, $kept_columns, true ) ) {
 						$row[ $column ] = trim( (string) ( $raw[ $i ] ?? '' ) );
 					}
 				}
