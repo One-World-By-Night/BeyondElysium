@@ -22,6 +22,21 @@ Storyteller Toolkit → Releases tab, or wp-admin → Beyond Elysium → Plots �
   release time or a "Released" badge, and how many rumors and downtime answers it holds.
   Click one to open it.
 
+### Release schedule
+
+- A collapsible panel above the batch list. Click **Release schedule (N)** to open it.
+- **+ Add a weekly rule** - fires on a weekday and time you pick (defaults to Friday, 18:00).
+- **+ Add a monthly rule** - fires on a day of the month (1-28) and time you pick.
+- Add as many rules as you want, in any combination. Remove one with its own **Remove**
+  button.
+- The schedule controls *when*, never *what*: on the day and time a rule names, every batch
+  you've left in **Draft** for this chronicle is released as-is - the same as clicking
+  **Release now** on each of them yourself, just automatic. It never creates a batch for you.
+  If nothing is sitting in Draft when a rule fires, nothing happens - no empty batch, no email,
+  no error.
+- If more than one rule is due the same day, your draft batches still only go out once each -
+  the rules don't multiply anything.
+
 ### A single batch (detail view)
 
 - **All batches** - a link back to the lists.
@@ -49,6 +64,14 @@ Storyteller Toolkit → Releases tab, or wp-admin → Beyond Elysium → Plots �
 2. Nothing else to do: the moment that time passes, everyone it reaches can see it, and each
    player gets one summary email naming their own characters and how much is new. This
    happens whether or not anyone has opened the site in the meantime.
+
+### Release on a recurring schedule without a specific date
+
+1. Open **Release schedule** and add a weekly or monthly rule (or both).
+2. Whenever you're ready during the week, prepare a batch as a **draft** - add rumors and
+   downtime answers to it, don't set a release date.
+3. On the day and time the rule names, that draft (and any other draft batch for this
+   chronicle) releases automatically. Start a new draft for next time whenever you like.
 
 ### Release something right now
 

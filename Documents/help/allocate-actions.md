@@ -79,6 +79,9 @@ Storyteller Toolkit → Plots & Rumors → **Allocate actions** button (on the p
 - **A parent plot only takes effect the first time you commit** for a character and date;
   committing again later never moves the plot, even if you pick a different parent.
 - **This tool computes a budget - it doesn't touch XP or the character's sheet.**
+- **A player can only post actions while that date's downtime window is open.** See
+  [Downtime](downtime-queue.md) - this only applies when the game date's own session has an
+  open time or deadline set at all.
 - On a narrow screen the subaction table stacks into cards instead of scrolling sideways.
 
 ## Troubleshooting
@@ -99,6 +102,7 @@ Storyteller Toolkit → Plots & Rumors → **Allocate actions** button (on the p
 
 - [Plots & Rumors](plot-manager.md)
 - [Background Uses](background-uses.md)
+- [Downtime](downtime-queue.md)
 - [Action & Rumor Settings](apr-settings.md)
 - [My Plots & Rumors](my-plots.md)
 - [Roles](roles.md)
