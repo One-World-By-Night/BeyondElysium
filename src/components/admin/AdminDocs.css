@@ -1,8 +1,8 @@
 .be-admin-docs__content {
 	max-width: 860px;
 	padding: 1.5rem;
-	background: #fff;
-	border: 1px solid #e0e0e0;
+	background: var(--be-gray-29);
+	border: 1px solid var(--be-gray-21);
 	border-radius: 4px;
 	line-height: 1.6;
 }
@@ -37,7 +37,7 @@
 
 .be-admin-docs__content code {
 	padding: 0.1rem 0.3rem;
-	background: #f0f0f1;
+	background: var(--be-gray-24);
 	border-radius: 3px;
 	font-family: Consolas, Monaco, monospace;
 	font-size: 0.85em;
@@ -46,7 +46,7 @@
 .be-admin-docs__content pre {
 	padding: 0.75rem 1rem;
 	overflow-x: auto;
-	background: #f0f0f1;
+	background: var(--be-gray-24);
 	border-radius: 4px;
 }
 
@@ -66,23 +66,23 @@
 .be-admin-docs__content td {
 	text-align: left;
 	padding: 0.5rem 0.75rem;
-	border: 1px solid #e0e0e0;
+	border: 1px solid var(--be-gray-21);
 	vertical-align: top;
 }
 
 .be-admin-docs__content th {
-	background: #f6f7f7;
+	background: var(--be-gray-26);
 }
 
 .be-admin-docs__content hr {
 	margin: 1.5rem 0;
 	border: none;
-	border-top: 1px solid #e0e0e0;
+	border-top: 1px solid var(--be-gray-21);
 }
 
 .be-admin-docs__content blockquote {
 	margin: 0 0 1rem;
 	padding: 0.5rem 1rem;
-	border-left: 3px solid #ccd0d4;
-	color: #555;
+	border-left: 3px solid var(--be-gray-17);
+	color: var(--be-gray-6);
 }

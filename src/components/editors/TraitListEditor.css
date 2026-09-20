@@ -13,7 +13,7 @@
 	justify-content: space-between;
 	gap: 0.5rem;
 	padding: 0.3rem 0;
-	border-bottom: 1px solid #eee;
+	border-bottom: 1px solid var(--be-gray-23);
 }
 
 .be-trait-list-editor__row:last-child {
@@ -38,13 +38,13 @@
 .be-trait-list-editor__dots {
 	margin-left: 0.4rem;
 	letter-spacing: 0.1em;
-	color: #333;
+	color: var(--be-gray-4);
 }
 
 .be-trait-list-editor__summary-detail {
 	margin-left: 0.4rem;
 	font-size: 0.85rem;
-	color: #666;
+	color: var(--be-gray-8);
 }
 
 .be-trait-list-editor__edit {
@@ -52,10 +52,10 @@
 	width: 1.6rem;
 	height: 1.6rem;
 	padding: 0;
-	border: 1px solid #999;
+	border: 1px solid var(--be-gray-13);
 	border-radius: 3px;
 	background: transparent;
-	color: #333;
+	color: var(--be-gray-4);
 	font-size: 0.9rem;
 	line-height: 1;
 	cursor: pointer;
@@ -63,22 +63,22 @@
 
 .be-trait-list-editor__edit:hover,
 .be-trait-list-editor__edit:focus-visible {
-	background: #eee;
+	background: var(--be-gray-23);
 }
 
 .be-trait-list-editor__add-trigger {
 	padding: 0.35rem 0.9rem;
-	border: 1px solid #8b0000;
+	border: 1px solid var(--be-red-1);
 	border-radius: 3px;
 	background: transparent;
-	color: #8b0000;
+	color: var(--be-red-1);
 	cursor: pointer;
 }
 
 .be-trait-list-editor__add-trigger:hover,
 .be-trait-list-editor__add-trigger:focus-visible {
-	background: #8b0000;
-	color: #fff;
+	background: var(--be-red-1);
+	color: var(--be-gray-29);
 }
 
 .be-trait-list-editor__modal-field {
@@ -92,7 +92,7 @@
 	font-weight: 600;
 	font-size: 0.8rem;
 	text-transform: uppercase;
-	color: #555;
+	color: var(--be-gray-6);
 }
 
 .be-trait-list-editor__modal-field input[type="text"],
@@ -100,7 +100,7 @@
 	box-sizing: border-box;
 	width: 100%;
 	padding: 0.4rem 0.5rem;
-	border: 1px solid #999;
+	border: 1px solid var(--be-gray-13);
 	border-radius: 3px;
 }
 
@@ -109,7 +109,7 @@
 	padding: 0.15rem 0.4rem;
 	border: none;
 	background: none;
-	color: #b3261e;
+	color: var(--be-red-6);
 	text-decoration: underline;
 	cursor: pointer;
 }
@@ -119,17 +119,17 @@
 	display: block;
 	margin: 0 0 0.5rem;
 	padding: 0.1rem 0.4rem;
-	border: 1px solid #999;
+	border: 1px solid var(--be-gray-13);
 	border-radius: 3px;
 	background: transparent;
-	color: #555;
+	color: var(--be-gray-6);
 	font-size: 0.75rem;
 	cursor: pointer;
 }
 
 .be-trait-list-editor__cost-toggle:hover,
 .be-trait-list-editor__cost-toggle:focus-visible {
-	background: #eee;
+	background: var(--be-gray-23);
 }
 
 /* 1.1.0 D4: the Reorder entry point matches the cost-toggle's own established look. */
@@ -137,17 +137,17 @@
 	display: block;
 	margin: 0 0 0.5rem;
 	padding: 0.1rem 0.4rem;
-	border: 1px solid #999;
+	border: 1px solid var(--be-gray-13);
 	border-radius: 3px;
 	background: transparent;
-	color: #555;
+	color: var(--be-gray-6);
 	font-size: 0.75rem;
 	cursor: pointer;
 }
 
 .be-trait-list-editor__reorder-trigger:hover,
 .be-trait-list-editor__reorder-trigger:focus-visible {
-	background: #eee;
+	background: var(--be-gray-23);
 }
 
 .be-trait-list-editor__rows--reorder .be-trait-list-editor__row {
@@ -161,7 +161,7 @@
 .be-trait-list-editor__drag-handle {
 	flex: 0 0 auto;
 	cursor: grab;
-	color: #999;
+	color: var(--be-gray-13);
 }
 
 @media ( max-width: 768px ) {
@@ -173,7 +173,7 @@
 
 .be-trait-list-editor__order-error {
 	margin: 0.3rem 0;
-	color: #b3261e;
+	color: var(--be-red-6);
 	font-size: 0.85rem;
 }
 

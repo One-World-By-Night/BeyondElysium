@@ -117,6 +117,12 @@ class Power_Display {
 	 * 037 governs pricing cumulativeness, not display: a player who wants every
 	 * named rung listed sees the whole stack either way, sequential block or not.
 	 *
+	 * D66 (1.2.5-design-workflow.md §A2, owner: "anything where more than one power
+	 * exist on the same level... always show all") - a rung tied between several
+	 * named alternatives (`level: null` on all of them) pushes every one of their
+	 * names, never rolled up to one entry; twin of
+	 * `TieredPowerRenderer.tsx`'s own `namedModeRows()`.
+	 *
 	 * @param object                                                                       $definition
 	 * @param array{name:string,level?:int,power_name?:string,tier?:string,tradition?:string} $held
 	 * @return string[]
@@ -126,11 +132,20 @@ class Power_Display {
 			return [ self::named_label( $definition, $held, $held['level'] ?? null, $use_pt ) ];
 		}
 
+		$power     = self::find_power( $definition, $held['name'] );
 		$rows      = [];
 		$max_level = $held['level'] ?? 0;
 
 		for ( $level = 1; $level <= $max_level; $level++ ) {
-			$rows[] = self::named_label( $definition, $held, $level, $use_pt );
+			$at_rank = self::find_levels_at_rank( $power, $level );
+			if ( empty( $at_rank ) ) {
+				$rows[] = self::numeric_label( $definition, $held, $use_pt );
+				continue;
+			}
+			foreach ( $at_rank as $entry ) {
+				$name_pt = $use_pt ? ( $entry->power_name_pt ?? '' ) : '';
+				$rows[]  = $name_pt !== '' ? $name_pt : ( $entry->power_name ?? '' );
+			}
 		}
 
 		return $rows;
@@ -182,5 +197,55 @@ class Power_Display {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Maps a numbered rank (1=basic, 2=intermediate, ...) to its tier name. Mirrors
+	 * `Cost_Engine::tier_for_rank()`/`Database\Seeder::TIER_RANKS` and
+	 * `TieredPowerRenderer.tsx`'s own `TIER_FOR_RANK`, duplicated per-file rather
+	 * than shared, matching this codebase's established precedent for this lookup.
+	 *
+	 * @return array<int,string>
+	 */
+	private static function tier_for_rank_map(): array {
+		return [
+			1 => 'basic',
+			2 => 'intermediate',
+			3 => 'advanced',
+			4 => 'elder',
+			5 => 'master',
+			6 => 'ascended',
+			7 => 'methuselah',
+		];
+	}
+
+	/**
+	 * Every real power at a given rank on a family's ladder - normally the single
+	 * item whose own `level` matches exactly, but D66 leaves `level: null` on
+	 * every item when several share one tier, so falls back to matching by the
+	 * rank's tier instead. Twin of `TieredPowerRenderer.tsx`'s own
+	 * `findLevelsAtRank()`. Never rolled up to one entry.
+	 *
+	 * @return object[]
+	 */
+	private static function find_levels_at_rank( ?object $power, int $rank ): array {
+		if ( ! $power ) {
+			return [];
+		}
+		$exact = array_values( array_filter(
+			(array) ( $power->levels ?? [] ),
+			static fn( $entry ): bool => ( $entry->level ?? null ) === $rank
+		) );
+		if ( ! empty( $exact ) ) {
+			return $exact;
+		}
+		$tier = self::tier_for_rank_map()[ $rank ] ?? null;
+		if ( $tier === null ) {
+			return [];
+		}
+		return array_values( array_filter(
+			(array) ( $power->levels ?? [] ),
+			static fn( $entry ): bool => ( $entry->tier ?? null ) === $tier
+		) );
 	}
 }

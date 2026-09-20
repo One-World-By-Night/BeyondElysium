@@ -11,14 +11,14 @@
 }
 
 .be-after-game-report__closed {
-	color: #b3261e;
+	color: var(--be-red-6);
 	font-weight: 600;
 }
 
 .be-after-game-report__error {
-	color: #b3261e;
+	color: var(--be-red-6);
 }
 
 .be-after-game-report__saved {
-	color: #2e7d32;
+	color: var(--be-green-5);
 }

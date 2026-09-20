@@ -32,7 +32,7 @@
 
 .be-statistics-view__bar-track {
 	flex: 1;
-	background: #eee;
+	background: var(--be-gray-23);
 	height: 14px;
 	border-radius: 3px;
 	overflow: hidden;
@@ -41,7 +41,7 @@
 .be-statistics-view__bar-fill {
 	display: block;
 	height: 100%;
-	background: #1a4f9c;
+	background: var(--be-blue-3);
 }
 
 .be-statistics-view__bucket-value {
@@ -53,6 +53,6 @@
 	list-style: none;
 	padding-left: 1rem;
 	margin: 0.25rem 0 0.5rem 0;
-	color: #555;
+	color: var(--be-gray-6);
 	font-size: 0.85rem;
 }

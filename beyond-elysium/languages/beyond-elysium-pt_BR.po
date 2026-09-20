@@ -6831,6 +6831,62 @@ msgid_plural "%d transfers"
 msgstr[0] "%d transferência"
 msgstr[1] "%d transferências"
 
+#. translators: %d: number of factions
+#: build/292.js:10 build/699.js:21
+msgid "%d faction"
+msgid_plural "%d factions"
+msgstr[0] "%d facção"
+msgstr[1] "%d facções"
+
+#. translators: %d: number of court/office positions
+#: build/292.js:11 build/699.js:22
+msgid "%d position"
+msgid_plural "%d positions"
+msgstr[0] "%d cargo"
+msgstr[1] "%d cargos"
+
+#. translators: %d: number of game nights
+#: build/292.js:13 build/699.js:24
+msgid "%d game session"
+msgid_plural "%d game sessions"
+msgstr[0] "%d sessão de jogo"
+msgstr[1] "%d sessões de jogo"
+
+#. translators: %d: number of attendance records
+#: build/292.js:14 build/699.js:25
+msgid "%d attendance record"
+msgid_plural "%d attendance records"
+msgstr[0] "%d registro de presença"
+msgstr[1] "%d registros de presença"
+
+#. translators: %d: number of release batches
+#: build/292.js:15 build/699.js:26
+msgid "%d release batch"
+msgid_plural "%d release batches"
+msgstr[0] "%d lote de lançamento"
+msgstr[1] "%d lotes de lançamento"
+
+#. translators: %d: number of queued notifications
+#: build/292.js:16 build/699.js:27
+msgid "%d queued notification"
+msgid_plural "%d queued notifications"
+msgstr[0] "%d notificação na fila"
+msgstr[1] "%d notificações na fila"
+
+#. translators: %d: number of NPC castings
+#: build/292.js:17 build/699.js:28
+msgid "%d NPC casting"
+msgid_plural "%d NPC castings"
+msgstr[0] "%d escalação de NPC"
+msgstr[1] "%d escalações de NPC"
+
+#. translators: %d: number of after-game reports
+#: build/292.js:18 build/699.js:29
+msgid "%d after-game report"
+msgid_plural "%d after-game reports"
+msgstr[0] "%d relatório pós-jogo"
+msgstr[1] "%d relatórios pós-jogo"
+
 #. translators: %s: game/chronicle name.
 #. translators: %s: creature stack name.
 #: build/292.js:12 build/699.js:11 build/699.js:23 build/813.js:11

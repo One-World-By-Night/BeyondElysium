@@ -196,4 +196,36 @@ class PositionsThreadTest extends WP_UnitTestCase {
 
 		$this->assertSame( 403, $response->get_status() );
 	}
+
+	// -------------------------------------------------------------------------
+	// `notes` is now an HtmlEditor field (1.2.5-design-workflow.md §B2) -
+	// wp_kses_post(), not sanitize_textarea_field(), which would silently strip
+	// every real formatting tag a Storyteller actually types.
+	// -------------------------------------------------------------------------
+
+	public function test_notes_keeps_real_formatting_on_create(): void {
+		wp_set_current_user( $this->storyteller_id );
+		$position_id = $this->send( 'POST', '/positions', [
+			'title' => 'Sheriff', 'notes' => '<p>Reports to the <strong>Prince</strong>.</p>',
+		] )->get_data()['id'];
+
+		$data = current( array_filter(
+			$this->send( 'GET', '/positions' )->get_data(),
+			static fn( $p ) => $p['id'] === $position_id
+		) );
+		$this->assertSame( '<p>Reports to the <strong>Prince</strong>.</p>', $data['notes'] );
+	}
+
+	public function test_notes_keeps_real_formatting_on_update(): void {
+		wp_set_current_user( $this->storyteller_id );
+		$position_id = $this->send( 'POST', '/positions', [ 'title' => 'Sheriff' ] )->get_data()['id'];
+
+		$this->send( 'PUT', "/positions/{$position_id}", [ 'notes' => '<ul><li>First</li></ul>' ] );
+
+		$data = current( array_filter(
+			$this->send( 'GET', '/positions' )->get_data(),
+			static fn( $p ) => $p['id'] === $position_id
+		) );
+		$this->assertSame( '<ul><li>First</li></ul>', $data['notes'] );
+	}
 }

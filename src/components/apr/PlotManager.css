@@ -20,13 +20,13 @@
  * scoping the tokens to the shell would leave that surface unstyled.
  */
 :root {
-	--be-st-accent: #8b0000;
-	--be-st-border: #ddd;
-	--be-st-border-strong: #ccc;
-	--be-st-muted: #555;
-	--be-st-faint: #777;
-	--be-st-surface: #fff;
-	--be-st-surface-alt: #f7f7f7;
+	--be-st-accent: var(--be-red-1);
+	--be-st-border: var(--be-gray-20);
+	--be-st-border-strong: var(--be-gray-16);
+	--be-st-muted: var(--be-gray-6);
+	--be-st-faint: var(--be-gray-10);
+	--be-st-surface: var(--be-gray-29);
+	--be-st-surface-alt: var(--be-gray-27);
 	--be-st-radius: 4px;
 }
 
@@ -113,7 +113,7 @@ button.be-st-button {
 .be-st-button:hover:not(:disabled),
 button.be-st-button:hover:not(:disabled) {
 	background: var(--be-st-accent);
-	color: #fff;
+	color: var(--be-gray-29);
 }
 
 .be-st-button:disabled,
@@ -132,7 +132,7 @@ button.be-st-button--quiet {
 button.be-st-button--quiet:hover:not(:disabled) {
 	background: var(--be-st-muted);
 	border-color: var(--be-st-muted);
-	color: #fff;
+	color: var(--be-gray-29);
 }
 
 /* --- Overview: the card grid ------------------------------------------------ */
@@ -213,13 +213,13 @@ button.be-st-button--quiet:hover:not(:disabled) {
 }
 
 .be-st-badge--pending {
-	color: #8a6d00;
-	border-color: #d9bf62;
+	color: var(--be-gold-7);
+	border-color: var(--be-gold-13);
 }
 
 .be-st-badge--active {
-	color: #1a6e2e;
-	border-color: #79b98a;
+	color: var(--be-green-4);
+	border-color: var(--be-green-7);
 }
 
 .be-st-badge--finished {
@@ -227,14 +227,14 @@ button.be-st-button--quiet:hover:not(:disabled) {
 }
 
 .be-st-badge--audience {
-	color: #8a3d00;
-	border-color: #d99a62;
+	color: var(--be-gold-3);
+	border-color: var(--be-gold-12);
 }
 
 .be-st-badge--held {
-	color: #8a3d00;
-	border-color: #d99a62;
-	background: #fdf0e0;
+	color: var(--be-gold-3);
+	border-color: var(--be-gold-12);
+	background: var(--be-red-12);
 }
 
 .be-plot-manager__empty {
@@ -289,7 +289,7 @@ button.be-st-button--quiet:hover:not(:disabled) {
 	border: 1px solid var(--be-st-border-strong);
 	border-radius: var(--be-st-radius);
 	background: var(--be-st-surface);
-	box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.06);
+	box-shadow: 0 -2px 6px var(--be-shadow-1);
 }
 
 /* --- Modal bodies (reusing shared/Modal.tsx from Decision 053) --------------- */
@@ -316,10 +316,10 @@ button.be-st-button--quiet:hover:not(:disabled) {
 .be-plot-manager__error {
 	padding: 0.75rem;
 	margin-bottom: 1rem;
-	border: 1px solid #b3261e;
+	border: 1px solid var(--be-red-6);
 	border-radius: 3px;
-	background: #fdecea;
-	color: #611a15;
+	background: var(--be-red-11);
+	color: var(--be-red-2);
 }
 
 @media ( max-width: 768px ) {

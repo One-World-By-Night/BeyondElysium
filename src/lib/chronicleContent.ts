@@ -120,6 +120,134 @@ export function describeChronicleContent(
 			)
 		);
 	}
+	// D1 (1.2.5-design-workflow.md §D): these nine were real content the confirmation dialog
+	// never named, the same gap Game::delete_with_content() had at the storage layer.
+	if ( counts.factions > 0 ) {
+		phrases.push(
+			sprintf(
+				/* translators: %d: number of factions */
+				_n(
+					'%d faction',
+					'%d factions',
+					counts.factions,
+					'beyond-elysium'
+				),
+				counts.factions
+			)
+		);
+	}
+	if ( counts.positions > 0 ) {
+		phrases.push(
+			sprintf(
+				/* translators: %d: number of court/office positions */
+				_n(
+					'%d position',
+					'%d positions',
+					counts.positions,
+					'beyond-elysium'
+				),
+				counts.positions
+			)
+		);
+	}
+	if ( counts.secrets > 0 ) {
+		phrases.push(
+			sprintf(
+				/* translators: %d: number of secrets */
+				_n(
+					'%d secret',
+					'%d secrets',
+					counts.secrets,
+					'beyond-elysium'
+				),
+				counts.secrets
+			)
+		);
+	}
+	if ( counts.game_sessions > 0 ) {
+		phrases.push(
+			sprintf(
+				/* translators: %d: number of game nights */
+				_n(
+					'%d game session',
+					'%d game sessions',
+					counts.game_sessions,
+					'beyond-elysium'
+				),
+				counts.game_sessions
+			)
+		);
+	}
+	if ( counts.attendance > 0 ) {
+		phrases.push(
+			sprintf(
+				/* translators: %d: number of attendance records */
+				_n(
+					'%d attendance record',
+					'%d attendance records',
+					counts.attendance,
+					'beyond-elysium'
+				),
+				counts.attendance
+			)
+		);
+	}
+	if ( counts.release_batches > 0 ) {
+		phrases.push(
+			sprintf(
+				/* translators: %d: number of release batches */
+				_n(
+					'%d release batch',
+					'%d release batches',
+					counts.release_batches,
+					'beyond-elysium'
+				),
+				counts.release_batches
+			)
+		);
+	}
+	if ( counts.notification_queue > 0 ) {
+		phrases.push(
+			sprintf(
+				/* translators: %d: number of queued notifications */
+				_n(
+					'%d queued notification',
+					'%d queued notifications',
+					counts.notification_queue,
+					'beyond-elysium'
+				),
+				counts.notification_queue
+			)
+		);
+	}
+	if ( counts.npc_castings > 0 ) {
+		phrases.push(
+			sprintf(
+				/* translators: %d: number of NPC castings */
+				_n(
+					'%d NPC casting',
+					'%d NPC castings',
+					counts.npc_castings,
+					'beyond-elysium'
+				),
+				counts.npc_castings
+			)
+		);
+	}
+	if ( counts.after_game_reports > 0 ) {
+		phrases.push(
+			sprintf(
+				/* translators: %d: number of after-game reports */
+				_n(
+					'%d after-game report',
+					'%d after-game reports',
+					counts.after_game_reports,
+					'beyond-elysium'
+				),
+				counts.after_game_reports
+			)
+		);
+	}
 
 	return phrases.join( ', ' );
 }

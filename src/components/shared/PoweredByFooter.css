@@ -1,6 +1,6 @@
 .be-powered-by {
 	text-align: center;
-	color: #787c82;
+	color: var(--be-gray-11);
 	font-size: 12px;
 	margin: 2em 0 1em;
 }
@@ -10,7 +10,7 @@
 	border: none;
 	margin: 0;
 	padding: 0;
-	color: #2271b1;
+	color: var(--be-blue-4);
 	font: inherit;
 	line-height: inherit;
 	cursor: pointer;
@@ -18,7 +18,7 @@
 }
 
 .be-powered-by__error {
-	color: #b3261e;
+	color: var(--be-red-6);
 }
 
 .be-powered-by__memoriam-list {
@@ -28,7 +28,7 @@
 }
 
 .be-powered-by__memoriam-note {
-	color: #666;
+	color: var(--be-gray-8);
 }
 
 .be-powered-by__edit textarea {

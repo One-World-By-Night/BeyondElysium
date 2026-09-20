@@ -45,13 +45,13 @@
 /* Blood magic: a power with no tradition chosen yet - same compound-selector
    discipline as the rule above (D34/Decision 045), for the same reason. */
 .be-tiered-power-editor__row .be-tiered-power-editor__tradition--required {
-	border-color: #b32d2e;
+	border-color: var(--be-red-7);
 }
 
 .be-tiered-power-editor__row--needs-tradition
 .be-tiered-power-editor__name::after {
 	content: " *";
-	color: #b32d2e;
+	color: var(--be-red-7);
 }
 
 .be-tiered-power-editor__stepper {
@@ -73,10 +73,10 @@
 	width: 1.6rem;
 	height: 1.6rem;
 	padding: 0;
-	border: 1px solid #999;
+	border: 1px solid var(--be-gray-13);
 	border-radius: 3px;
 	background: transparent;
-	color: #333;
+	color: var(--be-gray-4);
 	font-size: 0.9rem;
 	line-height: 1;
 	text-align: center;
@@ -84,18 +84,18 @@
 }
 
 .be-tiered-power-editor__stepper-button:disabled {
-	color: #ccc;
-	border-color: #ddd;
+	color: var(--be-gray-16);
+	border-color: var(--be-gray-20);
 	cursor: default;
 }
 
 .be-tiered-power-editor__stepper-button:not(:disabled):hover,
 .be-tiered-power-editor__stepper-button:not(:disabled):focus-visible {
-	background: #eee;
+	background: var(--be-gray-23);
 }
 
 .be-tiered-power-editor__cost {
-	color: #555;
+	color: var(--be-gray-6);
 	font-size: 0.85rem;
 }
 
@@ -105,7 +105,7 @@
 	padding: 0.15rem 0.4rem;
 	border: none;
 	background: none;
-	color: #999;
+	color: var(--be-gray-13);
 	font-size: 0.8rem;
 	text-decoration: underline;
 	cursor: pointer;
@@ -113,11 +113,11 @@
 
 .be-tiered-power-editor__remove:hover,
 .be-tiered-power-editor__remove:focus-visible {
-	color: #b3261e;
+	color: var(--be-red-6);
 }
 
 .be-tiered-power-editor__row--removed .be-tiered-power-editor__remove {
-	color: #666;
+	color: var(--be-gray-8);
 	font-weight: 600;
 }
 
@@ -125,17 +125,17 @@
 .be-tiered-power-editor__view-toggle {
 	flex: 0 0 auto;
 	padding: 0.1rem 0.4rem;
-	border: 1px solid #999;
+	border: 1px solid var(--be-gray-13);
 	border-radius: 3px;
 	background: transparent;
-	color: #555;
+	color: var(--be-gray-6);
 	font-size: 0.75rem;
 	cursor: pointer;
 }
 
 .be-tiered-power-editor__view-toggle:hover,
 .be-tiered-power-editor__view-toggle:focus-visible {
-	background: #eee;
+	background: var(--be-gray-23);
 }
 
 /* flex-basis 100% forces this onto its own line below the name/toggle - the row's own
@@ -180,7 +180,7 @@
 	font-weight: 600;
 	font-size: 0.8rem;
 	text-transform: uppercase;
-	color: #555;
+	color: var(--be-gray-6);
 }
 
 /*
@@ -200,10 +200,10 @@
 		display: inline-block;
 		flex: 0 0 auto;
 		padding: 0.15rem 0.5rem;
-		border: 1px solid #999;
+		border: 1px solid var(--be-gray-13);
 		border-radius: 3px;
 		background: transparent;
-		color: #555;
+		color: var(--be-gray-6);
 		font-size: 0.8rem;
 		cursor: pointer;
 	}
@@ -214,17 +214,17 @@
 	display: block;
 	margin: 0 0 0.5rem;
 	padding: 0.1rem 0.4rem;
-	border: 1px solid #999;
+	border: 1px solid var(--be-gray-13);
 	border-radius: 3px;
 	background: transparent;
-	color: #555;
+	color: var(--be-gray-6);
 	font-size: 0.75rem;
 	cursor: pointer;
 }
 
 .be-tiered-power-editor__reorder-trigger:hover,
 .be-tiered-power-editor__reorder-trigger:focus-visible {
-	background: #eee;
+	background: var(--be-gray-23);
 }
 
 .be-tiered-power-editor__rows--reorder .be-tiered-power-editor__row {
@@ -232,7 +232,7 @@
 	align-items: center;
 	gap: 0.5rem;
 	padding: 0.3rem 0;
-	border-bottom: 1px solid #eee;
+	border-bottom: 1px solid var(--be-gray-23);
 }
 
 /* Drag handles are a desktop-only enhancement; a touch viewport never sees a
@@ -242,7 +242,7 @@
 .be-tiered-power-editor__drag-handle {
 	flex: 0 0 auto;
 	cursor: grab;
-	color: #999;
+	color: var(--be-gray-13);
 }
 
 @media ( max-width: 768px ) {
@@ -254,7 +254,7 @@
 
 .be-tiered-power-editor__order-error {
 	margin: 0.3rem 0;
-	color: #b3261e;
+	color: var(--be-red-6);
 	font-size: 0.85rem;
 }
 

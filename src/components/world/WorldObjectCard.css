@@ -1,6 +1,6 @@
 .be-world-card__breadcrumb {
 	font-size: 0.85rem;
-	color: #777;
+	color: var(--be-gray-10);
 	margin-bottom: 0.25rem;
 }
 
@@ -10,13 +10,13 @@
 
 .be-world-card__based-on {
 	font-size: 0.85rem;
-	color: #777;
+	color: var(--be-gray-10);
 	margin: 0 0 0.5rem;
 }
 
 .be-world-card__status-banner {
 	font-weight: 600;
-	color: #b3261e;
+	color: var(--be-red-6);
 	margin: 0 0 0.5rem;
 }
 
@@ -28,7 +28,7 @@
 
 .be-world-card__history-list li {
 	padding: 0.25rem 0;
-	border-bottom: 1px solid #eee;
+	border-bottom: 1px solid var(--be-gray-23);
 }
 
 .be-world-card__children {
@@ -38,7 +38,7 @@
 }
 
 .be-world-card__description {
-	color: #444;
+	color: var(--be-gray-5);
 	margin-bottom: 1rem;
 }
 
@@ -55,7 +55,7 @@
 
 .be-world-card__property dt {
 	font-weight: 600;
-	color: #555;
+	color: var(--be-gray-6);
 }
 
 .be-world-card__property dd {
@@ -79,14 +79,14 @@
 }
 
 .be-world-card__character-label {
-	color: #777;
+	color: var(--be-gray-10);
 	font-style: italic;
 }
 
 .be-world-card__error {
 	padding: 0.75rem;
-	border: 1px solid #b3261e;
-	background: #fdecea;
-	color: #611a15;
+	border: 1px solid var(--be-red-6);
+	background: var(--be-red-11);
+	color: var(--be-red-2);
 	border-radius: 3px;
 }

@@ -3296,12 +3296,25 @@ class Seeder {
 	}
 
 	/**
-	 * Number of real dot-levels a "named" power family can own as a plain
-	 * numeric total before Elder-and-above becomes an unordered pool of
-	 * individually held named powers. A flat, generous cap rather than a
-	 * per-family uniqueness detector.
+	 * A power's real rank, by tier - matches `Cost_Engine::TIER_COSTS`'s own vocabulary
+	 * and order exactly (innate excluded: free/automatic, never a numbered level).
+	 * `make_tiered_power_block()` (1.2.5-design-workflow.md §A, A1) assigns a level from
+	 * this map only when a family has exactly one item at that tier; two or more share
+	 * the rank and both get level=null, the same named-pool shape Decision 037 already
+	 * uses for Elder-and-above. Retires `NAMED_POWER_NUMBERED_LEVELS`'s old flat cap,
+	 * which nulled everything past position 10 regardless of whether a real tie existed
+	 * there - real ties inside the 1-5 range (a family's own basic/intermediate tiers
+	 * each carrying more than one named option, not just Elder+) were the actual defect.
 	 */
-	const NAMED_POWER_NUMBERED_LEVELS = 10;
+	const TIER_RANKS = [
+		'basic'        => 1,
+		'intermediate' => 2,
+		'advanced'     => 3,
+		'elder'        => 4,
+		'master'       => 5,
+		'ascended'     => 6,
+		'methuselah'   => 7,
+	];
 
 	/**
 	 * Normalizes a GVM item's free-text `note` ("basic", "elder assamite", "master
@@ -3334,9 +3347,11 @@ class Seeder {
 
 	/**
 	 * Builds a tiered_power block insert array.
-	 * Converts each resolved power into a `levels` list, assigning a
-	 * sequential numeric level to the first NAMED_POWER_NUMBERED_LEVELS
-	 * non-innate items and leaving the rest as an unordered named pool.
+	 * Converts each resolved power into a `levels` list, deriving each item's rank from
+	 * its tier (self::TIER_RANKS) rather than its position in the source list - a tier
+	 * with exactly one item gets that real rank number, a tier with several (several
+	 * powers legitimately sharing one rank) gets level=null on all of them, an unordered
+	 * named pool identified by power_name instead.
 	 *
 	 * @param string $slug
 	 * @param string $name
@@ -3359,25 +3374,58 @@ class Seeder {
 				continue;
 			}
 
-			$levels = [];
-			$index  = 0;
-
+			// Pass 1: normalize each item's tier and count how many items this family has
+			// at each tier - the rank fix (1.2.5-design-workflow.md §A, A1) needs this
+			// before it can decide whether a tier gets a real numbered level.
+			$raw_items       = [];
+			$counts_per_tier = [];
 			foreach ( $power['items'] as $item ) {
 				$note = is_array( $item ) ? (string) ( $item['note'] ?? '' ) : '';
 				$tier = self::normalize_tier( $note );
-
-				// Innate items (free, automatically known) don't consume a numbered-level slot.
-				$numbered = $tier !== 'innate';
-				if ( $numbered ) {
-					$index++;
+				$raw_items[] = [ 'item' => $item, 'note' => $note, 'tier' => $tier ];
+				// 'unknown' (no real MET tier wording in the note at all - e.g. Changeling
+				// Realms' flat per-dot cost items) never counts toward a tie; Pass 2 falls
+				// back to list-position numbering for these instead, since there is no real
+				// tier signal to derive a rank from.
+				if ( $tier !== 'innate' && $tier !== 'unknown' ) {
+					$counts_per_tier[ $tier ] = ( $counts_per_tier[ $tier ] ?? 0 ) + 1;
 				}
+			}
 
-				$level = [
-					// Only the first NAMED_POWER_NUMBERED_LEVELS non-innate items get a numeric level; the rest are a named pool.
-					'level'      => ( $numbered && $index <= self::NAMED_POWER_NUMBERED_LEVELS ) ? $index : null,
-					'power_name' => is_array( $item ) ? $item['name'] : (string) $item,
-					'tier'       => $tier,
-				];
+			// Pass 2: build each level. A tier with exactly one item in this family gets
+			// its real, fixed rank number (self::TIER_RANKS); a tier with more than one -
+			// several powers legitimately sharing one rank, the owner's own Garou/Numina
+			// example - gets level=null on every one of them, the same named-pool shape
+			// Decision 037 already established for Elder-and-above. An 'unknown'-tier item
+			// (no real tier wording at all) gets a real numbered level from its own position
+			// among the family's other unknown-tier items, exactly as this function always
+			// numbered every item before the D66 tier-rank fix - the only signal available
+			// for a family whose own source data carries no tier vocabulary. `sequential`
+			// families (vampire-disciplines, wraith-arcanoi, ...) still price a real numbered
+			// tier as a cumulative step and a tied tier as a flat per-pick cost - both paths
+			// already exist in Cost_Engine, unchanged by this fix.
+			$levels        = [];
+			$unknown_index = 0;
+			foreach ( $raw_items as $raw ) {
+				$item = $raw['item'];
+				$note = $raw['note'];
+				$tier = $raw['tier'];
+
+				if ( $tier === 'unknown' ) {
+					++$unknown_index;
+					$level = [
+						'level'      => $unknown_index,
+						'power_name' => is_array( $item ) ? $item['name'] : (string) $item,
+						'tier'       => $tier,
+					];
+				} else {
+					$tied  = ( $counts_per_tier[ $tier ] ?? 0 ) > 1;
+					$level = [
+						'level'      => ( $tier !== 'innate' && ! $tied ) ? ( self::TIER_RANKS[ $tier ] ?? null ) : null,
+						'power_name' => is_array( $item ) ? $item['name'] : (string) $item,
+						'tier'       => $tier,
+					];
+				}
 
 				// Real cost from the menu, kept as the free-text string it is.
 				if ( is_array( $item ) && ! empty( $item['cost'] ) ) {

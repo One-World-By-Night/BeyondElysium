@@ -16,7 +16,7 @@
 	flex: 0 0 auto;
 	min-width: 6rem;
 	font-weight: 600;
-	color: #555;
+	color: var(--be-gray-6);
 }
 
 .be-identity-fields__row dd {

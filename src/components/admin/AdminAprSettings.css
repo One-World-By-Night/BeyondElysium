@@ -1,10 +1,10 @@
 .be-apr-settings__saved {
 	padding: 0.5rem 1rem;
 	margin-bottom: 1rem;
-	border: 1px solid #00a32a;
+	border: 1px solid var(--be-green-6);
 	border-radius: 4px;
-	background: #edfaef;
-	color: #00701e;
+	background: var(--be-green-10);
+	color: var(--be-green-3);
 }
 
 .be-apr-settings__panel {
@@ -12,7 +12,7 @@
 }
 
 .be-apr-settings__hint {
-	color: #646970;
+	color: var(--be-gray-9);
 	font-size: 0.85rem;
 	margin-top: -0.5rem;
 }
@@ -25,7 +25,7 @@
 }
 
 .be-apr-settings__checkbox.is-disabled {
-	color: #787c82;
+	color: var(--be-gray-11);
 }
 
 .be-apr-settings__background-list {
@@ -33,12 +33,12 @@
 	margin: 0;
 	max-height: 320px;
 	overflow-y: auto;
-	border: 1px solid #dcdcde;
+	border: 1px solid var(--be-gray-19);
 	border-radius: 4px;
 	padding: 0.5rem 0.75rem;
 }
 
 .be-apr-settings__stacks {
-	color: #787c82;
+	color: var(--be-gray-11);
 	font-size: 0.8rem;
 }

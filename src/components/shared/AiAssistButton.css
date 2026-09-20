@@ -6,8 +6,8 @@
 
 .be-ai-assist-button__suggestion-text {
 	white-space: pre-wrap;
-	background: #f6f7f7;
-	border: 1px solid #dcdcde;
+	background: var(--be-gray-26);
+	border: 1px solid var(--be-gray-19);
 	border-radius: 4px;
 	padding: 0.75rem;
 	margin-top: 0.5rem;
@@ -16,5 +16,5 @@
 }
 
 .be-ai-assist-button__error {
-	color: #d63638;
+	color: var(--be-red-8);
 }

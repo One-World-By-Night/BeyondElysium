@@ -68,6 +68,22 @@ class Secret {
 	}
 
 	/**
+	 * Every secret in a chronicle, across every entity it's attached to - D1
+	 * (1.2.5-design-workflow.md §D), `Game::delete_with_content()`'s own cascade needs the
+	 * whole-game list, not one entity's slice.
+	 *
+	 * @param int $game_id
+	 * @return object[]
+	 */
+	public static function for_game( int $game_id ): array {
+		$rows = Manager::get_results(
+			'SELECT * FROM ' . Manager::table( 'secrets' ) . ' WHERE game_id = %d ORDER BY created_at ASC',
+			$game_id
+		);
+		return array_map( static fn( $row ): object => self::decode( $row ) ?? $row, $rows ?: [] );
+	}
+
+	/**
 	 * Creates a secret. Validates entity_type and audience against their known values;
 	 * defaults audience to `storytellers` when omitted, matching the schema's own default.
 	 *

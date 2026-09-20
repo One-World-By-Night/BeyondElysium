@@ -225,25 +225,48 @@ class MetCsvSeederTest extends TestCase {
 	 * regression guard for the Quietus caste-variant bug specifically (four families
 	 * capped at level 4 with a real, unbought level 5 sitting in the CSV all along).
 	 */
-	public function test_no_discipline_ladder_has_a_gap(): void {
+	/**
+	 * D66 (1.2.5-design-workflow.md §A, A1): a rank's real numeric `level` only
+	 * survives on an item when nothing else shares its tier - two or more items
+	 * at the same tier all get `level: null` (the named-pool shape Decision 037
+	 * already established for Elder-and-above). "No gap" is therefore checked
+	 * against the family's real TIER coverage, not the surviving numeric values,
+	 * which a tie can legitimately null out anywhere in the ladder.
+	 */
+	public function test_no_discipline_ladder_has_a_gap_in_its_tier_coverage(): void {
+		$tier_rank = [
+			'basic' => 1, 'intermediate' => 2, 'advanced' => 3, 'elder' => 4,
+			'master' => 5, 'ascended' => 6, 'methuselah' => 7,
+		];
 		foreach ( self::$blocks['vampire-disciplines']['definition']['powers'] as $power ) {
-			$numbered = array_filter( $power['levels'], static fn( $level ) => ( $level['level'] ?? null ) !== null );
-			$levels   = array_column( $numbered, 'level' );
-			if ( empty( $levels ) ) {
+			$ranks = [];
+			foreach ( $power['levels'] as $level ) {
+				$tier = $level['tier'] ?? null;
+				if ( isset( $tier_rank[ $tier ] ) ) {
+					$ranks[ $tier_rank[ $tier ] ] = true;
+				}
+			}
+			if ( empty( $ranks ) ) {
 				continue;
 			}
-			sort( $levels );
-			$max     = max( $levels );
-			$missing = array_diff( range( 1, $max ), $levels );
-			$this->assertSame( [], array_values( $missing ), "{$power['name']} is missing level(s) " . implode( ',', $missing ) . " below its own max of {$max}" );
+			$ranks = array_keys( $ranks );
+			sort( $ranks );
+			$max     = max( $ranks );
+			$missing = array_diff( range( 1, $max ), $ranks );
+			$this->assertSame( [], array_values( $missing ), "{$power['name']} is missing tier rank(s) " . implode( ',', $missing ) . " below its own max of {$max}" );
 		}
 	}
 
 	/**
-	 * The four Quietus caste variants specifically: each keeps its real GVM name and now
-	 * reaches its real, source-backed level 5 rather than stopping at 4.
+	 * The four Quietus caste variants specifically: each is a real 5-item family
+	 * (two tied basic powers, two tied intermediate powers, one untied advanced
+	 * power) topping out at Advanced - real source data, confirmed by direct
+	 * measurement, never reaching Elder or Master for any of the four. The old
+	 * array-position numberer (D66) counted these five items as levels 1-5
+	 * regardless of tier, which is exactly the fabricated-progression bug this
+	 * fix removes - "reaches level 5" was true only of that bug.
 	 */
-	public function test_quietus_caste_variants_reach_their_real_fifth_level(): void {
+	public function test_quietus_caste_variants_cover_basic_through_advanced_and_no_higher(): void {
 		$by_name = [];
 		foreach ( self::$blocks['vampire-disciplines']['definition']['powers'] as $power ) {
 			$by_name[ $power['name'] ] = $power;
@@ -251,12 +274,13 @@ class MetCsvSeederTest extends TestCase {
 
 		foreach ( [ 'Quietus, Cruscitus / Warrior', 'Quietus, Hematus / Vizier', 'Quietus, Minhit Dume / Vizier', 'Quietus, Sorcerer' ] as $name ) {
 			$this->assertArrayHasKey( $name, $by_name );
-			$levels = array_column(
-				array_filter( $by_name[ $name ]['levels'], static fn( $level ) => ( $level['level'] ?? null ) !== null ),
-				'level'
-			);
-			sort( $levels );
-			$this->assertSame( [ 1, 2, 3, 4, 5 ], $levels, "{$name} must reach a real, complete level 5" );
+
+			$tiers = array_unique( array_column( $by_name[ $name ]['levels'], 'tier' ) );
+			sort( $tiers );
+			$this->assertSame( [ 'advanced', 'basic', 'intermediate' ], $tiers, "{$name} must cover basic/intermediate/advanced and no higher" );
+
+			$numbered = array_values( array_filter( array_column( $by_name[ $name ]['levels'], 'level' ), static fn( $level ) => $level !== null ) );
+			$this->assertSame( [ 3 ], $numbered, "{$name}'s only untied tier (advanced) is the only item to get a real numeric level" );
 		}
 	}
 

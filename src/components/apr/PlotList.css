@@ -12,9 +12,9 @@
 	max-width: 34rem;
 	margin-bottom: 1.25rem;
 	padding: 0.85rem 1rem;
-	border: 1px solid var(--be-st-border-strong, #ccc);
+	border: 1px solid var(--be-st-border-strong, var(--be-gray-16));
 	border-radius: var(--be-st-radius, 4px);
-	background: var(--be-st-surface-alt, #f7f7f7);
+	background: var(--be-st-surface-alt, var(--be-gray-27));
 }
 
 .be-plot-list__new-form.be-plot-list__new-form input,
@@ -36,7 +36,7 @@
 	height: 3rem;
 	object-fit: cover;
 	border-radius: 3px;
-	border: 1px solid var(--be-st-border-strong, #ccc);
+	border: 1px solid var(--be-st-border-strong, var(--be-gray-16));
 }
 
 .be-plot-list__new-form-actions {
@@ -64,5 +64,5 @@
 	align-items: center;
 	margin-top: 1.25rem;
 	font-size: 0.85rem;
-	color: var(--be-st-faint, #777);
+	color: var(--be-st-faint, var(--be-gray-10));
 }

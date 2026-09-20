@@ -304,11 +304,11 @@ class Cost_Engine {
 		}
 
 		if ( $sequential ) {
-			return self::sequential_step_cost( $power, $old_level, $new_level, $modifier );
+			return self::sequential_step_cost( $definition, $power, $old_level, $new_level, $modifier );
 		}
 
-		$old_cost = $old_level > 0 ? self::level_base_cost( $power, $old_level ) + $modifier : 0;
-		$new_cost = $new_level > 0 ? self::level_base_cost( $power, $new_level ) + $modifier : 0;
+		$old_cost = $old_level > 0 ? self::level_base_cost( $definition, $power, $old_level ) + $modifier : 0;
+		$new_cost = $new_level > 0 ? self::level_base_cost( $definition, $power, $new_level ) + $modifier : 0;
 		return $new_cost - $old_cost;
 	}
 
@@ -481,16 +481,15 @@ class Cost_Engine {
 			return [ 'xp' => null, 'basis' => 'flat_level', 'unpriced_reason' => 'level_has_no_cost' ];
 		}
 
-		$level_entry = self::find_power_level( $power, $level );
-		if ( $level_entry === null || ! isset( $level_entry->cost ) ) {
+		if ( ! self::rank_is_valid_for_power( $power, $level ) ) {
 			return [ 'xp' => null, 'basis' => 'flat_level', 'unpriced_reason' => 'level_has_no_cost' ];
 		}
 
 		if ( ! empty( $definition->sequential ) ) {
-			return [ 'xp' => self::sequential_step_cost( $power, 0, $level, $modifier ), 'basis' => 'sequential_sum', 'unpriced_reason' => null ];
+			return [ 'xp' => self::sequential_step_cost( $definition, $power, 0, $level, $modifier ), 'basis' => 'sequential_sum', 'unpriced_reason' => null ];
 		}
 
-		return [ 'xp' => self::level_base_cost( $power, $level ) + $modifier, 'basis' => 'flat_level', 'unpriced_reason' => null ];
+		return [ 'xp' => self::level_base_cost( $definition, $power, $level ) + $modifier, 'basis' => 'flat_level', 'unpriced_reason' => null ];
 	}
 
 	/**
@@ -519,7 +518,10 @@ class Cost_Engine {
 	}
 
 	/**
-	 * Finds a tiered_power level entry by its numbered `level`.
+	 * Finds a tiered_power level entry by its exact numbered `level`. Returns
+	 * null for a D66 tied rank (several items share the tier, all `level: null`)
+	 * even when the rank itself is real - use `rank_is_valid_for_power()` to
+	 * check existence and `level_base_cost()` to price it regardless of ties.
 	 */
 	private static function find_power_level( $power, int $level ) {
 		foreach ( ( $power->levels ?? [] ) as $power_level ) {
@@ -528,6 +530,47 @@ class Cost_Engine {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * True when a numbered rank is a real, purchasable position in this power's
+	 * ladder - either a single untied item carries that exact `level` (with a
+	 * real cost), or the rank's tier (via `tier_for_rank()`) is present among
+	 * the family's items at all. D66: several items can share one tier, all
+	 * `level: null` - the rank itself is still real and priced via the
+	 * canonical tier ladder (`level_base_cost()`), regardless of whether any
+	 * one of the tied items happens to carry its own `cost` field.
+	 */
+	private static function rank_is_valid_for_power( $power, int $level ): bool {
+		$exact = self::find_power_level( $power, $level );
+		if ( $exact !== null ) {
+			return isset( $exact->cost );
+		}
+		$tier = self::tier_for_rank( $level );
+		if ( $tier === null ) {
+			return false;
+		}
+		foreach ( ( $power->levels ?? [] ) as $power_level ) {
+			if ( ( $power_level->tier ?? null ) === $tier ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Maps a numbered rank (1=basic, 2=intermediate, ...) to its tier name, using
+	 * `TIER_COSTS`' own key order (`innate` excluded - never a numbered rank).
+	 * Mirrors `Database\Seeder::TIER_RANKS` exactly; duplicated rather than
+	 * shared, since Services doesn't otherwise depend on the Database layer for
+	 * one lookup.
+	 */
+	private static function tier_for_rank( int $rank ): ?string {
+		static $numbered = null;
+		if ( $numbered === null ) {
+			$numbered = array_values( array_diff( array_keys( self::TIER_COSTS ), [ 'innate' ] ) );
+		}
+		return $numbered[ $rank - 1 ] ?? null;
 	}
 
 	/**
@@ -549,7 +592,7 @@ class Cost_Engine {
 	 * level-4 price. Lowering the level charges the same steps as a
 	 * negative value, a refund, uncapped.
 	 */
-	private static function sequential_step_cost( $power, int $old_level, int $new_level, int $modifier ): int {
+	private static function sequential_step_cost( $definition, $power, int $old_level, int $new_level, int $modifier ): int {
 		if ( $new_level === $old_level ) {
 			return 0;
 		}
@@ -559,27 +602,73 @@ class Cost_Engine {
 
 		$sum = 0;
 		for ( $level = $lo; $level <= $hi; $level++ ) {
-			$sum += self::level_base_cost( $power, $level ) + $modifier;
+			$sum += self::level_base_cost( $definition, $power, $level ) + $modifier;
 		}
 		return $direction * $sum;
 	}
 
 	/**
-	 * Looks up the base cost of one level of a tiered power. Finds the
-	 * matching level entry in the power's `levels` list and parses its
-	 * `cost` field as free text, the same rule used for trait_list item
-	 * costs, returning 0 when the level has no cost set.
+	 * Looks up the base cost of one level of a tiered power. A single untied
+	 * item carrying the exact `level` prices from its own `cost` field, parsed
+	 * as free text (the same rule used for trait_list item costs) - this is
+	 * how a real catalog-entered cost correction or edition variant stays
+	 * respected. A D66 tied rank (several items share the tier, no single item
+	 * carries the exact number) prices from `block_tier_costs()` - the block's
+	 * own real per-tier cost, derived empirically from its seeded data - rather
+	 * than guessing which tied item's own `cost` field to trust (real seeded
+	 * data is not perfectly uniform within a tier - a stray miskeyed cost on
+	 * one alternative is not the rank's real price) or a single hardcoded
+	 * table (a Mage Sphere's real tier costs, 5/10/15/20/25, are not a
+	 * Discipline's 3/6/9/12/15/18/21 - each block sets its own scale). Returns
+	 * 0 when the level has no cost set at all.
 	 */
-	private static function level_base_cost( $power, int $level ): int {
-		foreach ( ( $power->levels ?? [] ) as $power_level ) {
-			if ( (int) ( $power_level->level ?? 0 ) === $level ) {
-				if ( ! isset( $power_level->cost ) ) {
-					return 0;
+	private static function level_base_cost( $definition, $power, int $level ): int {
+		$exact = self::find_power_level( $power, $level );
+		if ( $exact !== null ) {
+			return isset( $exact->cost ) ? self::price_item_cost( (string) $exact->cost, null ) : 0;
+		}
+		$tier = self::tier_for_rank( $level );
+		return $tier !== null ? self::block_tier_costs( $definition )[ $tier ] ?? 0 : 0;
+	}
+
+	/**
+	 * Derives a block's real per-tier cost ladder from its own seeded data,
+	 * rather than a single hardcoded table - each block can set its own scale
+	 * (Mage Spheres are 5/10/15/20/25, Vampire Disciplines 3/6/9/12/15/18/21).
+	 * For each tier, takes the most common cost among every item across every
+	 * power in the block that carries that tier - a plurality vote across the
+	 * whole block outweighs the rare single miskeyed item (D66's own found
+	 * example: one Animalism "advanced" item costs 3 where its sibling, and
+	 * every other Discipline's real advanced-tier item, costs 9). Memoized per
+	 * request on the definition object itself; a definition is loaded once per
+	 * request and never mutated after seeding.
+	 */
+	private static function block_tier_costs( $definition ): array {
+		static $cache = null;
+		if ( $cache !== null && $cache[0] === $definition ) {
+			return $cache[1];
+		}
+
+		$tallies = [];
+		foreach ( ( $definition->powers ?? [] ) as $power ) {
+			foreach ( ( $power->levels ?? [] ) as $power_level ) {
+				$tier = $power_level->tier ?? null;
+				if ( $tier === null || $tier === 'innate' || ! isset( $power_level->cost ) ) {
+					continue;
 				}
-				return self::price_item_cost( (string) $power_level->cost, null );
+				$cost = self::price_item_cost( (string) $power_level->cost, null );
+				$tallies[ $tier ][ $cost ] = ( $tallies[ $tier ][ $cost ] ?? 0 ) + 1;
 			}
 		}
-		return 0;
+
+		$costs = [];
+		foreach ( $tallies as $tier => $by_cost ) {
+			arsort( $by_cost );
+			$costs[ $tier ] = (int) array_key_first( $by_cost );
+		}
+
+		$cache = [ $definition, $costs ];
+		return $costs;
 	}
 
 	// Free-text cost parsing.

@@ -17,23 +17,23 @@
 	height: 4.5rem;
 	object-fit: cover;
 	border-radius: 4px;
-	border: 1px solid #ccc;
+	border: 1px solid var(--be-gray-16);
 	flex: 0 0 auto;
 }
 
 .be-character-editor__portrait-button {
 	padding: 0.2rem 0.6rem;
-	border: 1px solid #999;
+	border: 1px solid var(--be-gray-13);
 	border-radius: 3px;
 	background: transparent;
-	color: #333;
+	color: var(--be-gray-4);
 	font-size: 0.8rem;
 	cursor: pointer;
 }
 
 .be-character-editor__portrait-button:hover:not(:disabled),
 .be-character-editor__portrait-button:focus-visible:not(:disabled) {
-	background: #eee;
+	background: var(--be-gray-23);
 }
 
 .be-character-editor__field {
@@ -47,7 +47,7 @@
 .be-character-editor__section {
 	margin-bottom: 1.5rem;
 	padding-bottom: 1rem;
-	border-bottom: 1px solid #e0e0e0;
+	border-bottom: 1px solid var(--be-gray-21);
 }
 
 /* Mirrors CharacterSheet.css's own grid exactly - six tracks, each section spanning 2/3/6
@@ -86,18 +86,18 @@
 .be-character-editor__error {
 	padding: 0.75rem;
 	margin-bottom: 1rem;
-	border: 1px solid #b3261e;
-	background: #fdecea;
-	color: #611a15;
+	border: 1px solid var(--be-red-6);
+	background: var(--be-red-11);
+	color: var(--be-red-2);
 	border-radius: 3px;
 }
 
 .be-character-editor__pending-notice {
 	padding: 0.75rem;
 	margin-bottom: 1rem;
-	border: 1px solid #b58900;
-	background: #fff8e1;
-	color: #6b5300;
+	border: 1px solid var(--be-gold-8);
+	background: var(--be-gold-16);
+	color: var(--be-gold-5);
 	border-radius: 3px;
 }
 
@@ -109,9 +109,9 @@
 	flex-wrap: wrap;
 	padding: 0.75rem;
 	margin-bottom: 1rem;
-	border: 1px solid #2271b1;
-	background: #f0f6fc;
-	color: #0a4b78;
+	border: 1px solid var(--be-blue-4);
+	background: var(--be-blue-7);
+	color: var(--be-blue-2);
 	border-radius: 3px;
 }
 
@@ -126,15 +126,15 @@
 }
 
 .be-character-editor__readonly-note {
-	color: #777;
+	color: var(--be-gray-10);
 	font-style: italic;
 }
 
 .be-character-editor__summary {
 	position: sticky;
 	bottom: 0;
-	background: #fff;
-	border: 1px solid #ccc;
+	background: var(--be-gray-29);
+	border: 1px solid var(--be-gray-16);
 	border-radius: 4px;
 	padding: 1rem;
 	margin-top: 1.5rem;
@@ -145,7 +145,7 @@
 }
 
 .be-character-editor__over-budget {
-	color: #b3261e;
+	color: var(--be-red-6);
 }
 
 .be-character-editor__actions {
@@ -170,6 +170,6 @@
 }
 
 .be-character-editor__header-text-status {
-	color: #2e7d32;
+	color: var(--be-green-5);
 	font-size: 0.85rem;
 }

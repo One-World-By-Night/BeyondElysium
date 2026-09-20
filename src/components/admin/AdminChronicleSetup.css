@@ -9,12 +9,12 @@
 
 .be-chronicle-setup__table td p {
 	margin: 0.15rem 0 0;
-	color: #555;
+	color: var(--be-gray-6);
 	font-size: 0.9rem;
 }
 
 .be-chronicle-setup__row--attention {
-	background: rgba(201, 166, 0, 0.06);
+	background: var(--be-gold-1);
 }
 
 .be-chronicle-setup__pill {
@@ -27,18 +27,18 @@
 }
 
 .be-chronicle-setup__row--attention .be-chronicle-setup__pill {
-	background: #c9a600;
-	color: #fff;
+	background: var(--be-gold-10);
+	color: var(--be-gray-29);
 }
 
 .be-chronicle-setup__row--ok .be-chronicle-setup__pill {
-	background: #2e7d32;
-	color: #fff;
+	background: var(--be-green-5);
+	color: var(--be-gray-29);
 }
 
 .be-chronicle-setup__row--info .be-chronicle-setup__pill {
-	background: #e0e0e0;
-	color: #333;
+	background: var(--be-gray-21);
+	color: var(--be-gray-4);
 }
 
 .be-chronicle-setup__not-actionable {

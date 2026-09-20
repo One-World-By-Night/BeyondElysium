@@ -412,6 +412,22 @@ class Game {
 		foreach ( World_Object::for_game( $game_id ) as $object ) {
 			$ok = World_Object::delete( (int) $object->id ) && $ok;
 		}
+		// D1/D2 (1.2.5-design-workflow.md §D): factions/positions/secrets each have their own
+		// join-table child (faction_members/position_history/secret_reveals) with no game_id
+		// of their own - Position::delete()/Faction::delete()/Secret::delete() already clean
+		// that join correctly, before deleting the parent row, exactly the ordering D2 exists
+		// to encode. Positions before factions: Faction::delete() only detaches a position
+		// (faction_id => null), it never deletes one, so the order between these two loops
+		// doesn't matter for correctness - kept this way for readability only.
+		foreach ( Position::for_game( $game_id ) as $position ) {
+			$ok = Position::delete( (int) $position->id ) && $ok;
+		}
+		foreach ( Faction::for_game( $game_id ) as $faction ) {
+			$ok = Faction::delete( (int) $faction->id ) && $ok;
+		}
+		foreach ( Secret::for_game( $game_id ) as $secret ) {
+			$ok = Secret::delete( (int) $secret->id ) && $ok;
+		}
 
 		$transfer_table = Manager::table( 'character_transfers' );
 		$deletes        = [
@@ -426,6 +442,21 @@ class Game {
 				$slug,
 				$slug
 			) ),
+			// D1: none of these six have a child table of their own referencing them, so a
+			// direct bulk delete by game_id is complete on its own - no per-row model loop
+			// needed. `Attendance`/`Npc_Casting` carry a real game_id column directly, not
+			// just a session_id join, so this doesn't depend on game_sessions' own deletion
+			// order either. `Release_Batch::delete()` is deliberately NOT used here - it
+			// refuses to delete an already-released batch (the correct single-row rule,
+			// wrong for a whole-chronicle wipe where most real batches are released) - by
+			// this point plots/plot_entries/secret_reveals referencing a batch are already
+			// gone (deleted above), so a plain bulk delete is safe and complete.
+			Manager::delete( 'attendance', [ 'game_id' => $game_id ] ),
+			Manager::delete( 'npc_castings', [ 'game_id' => $game_id ] ),
+			Manager::delete( 'after_game_reports', [ 'game_id' => $game_id ] ),
+			Manager::delete( 'notification_queue', [ 'game_id' => $game_id ] ),
+			Manager::delete( 'release_batches', [ 'game_id' => $game_id ] ),
+			Manager::delete( 'game_sessions', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'connections', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'game_members', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'games', [ 'id' => $game_id ] ),
@@ -447,22 +478,38 @@ class Game {
 	 * nobody would call them the chronicle's content - but they are deleted
 	 * with it.
 	 *
+	 * D1 (1.2.5-design-workflow.md §D): factions/positions/secrets/game_sessions/
+	 * attendance/release_batches/notification_queue/npc_castings were real content
+	 * `delete_with_content()` silently left behind - this is the same gap, one level up:
+	 * `delete_item()`'s safety gate (`array_sum( $counts ) > 0`) never saw any of them either,
+	 * so a plain row-only delete could previously succeed on a chronicle that still held all
+	 * of this, with no refusal and no warning.
+	 *
 	 * @param object $game A games row.
-	 * @return array{characters:int,plots:int,world_objects:int,templates:int,schema_blocks:int,saved_queries:int,attestations:int,transfers:int}
+	 * @return array{characters:int,plots:int,world_objects:int,templates:int,schema_blocks:int,saved_queries:int,attestations:int,transfers:int,factions:int,positions:int,secrets:int,game_sessions:int,attendance:int,release_batches:int,notification_queue:int,npc_castings:int,after_game_reports:int}
 	 */
 	public static function content_counts( object $game ): array {
 		$id   = (int) $game->id;
 		$slug = (string) $game->slug;
 
 		return [
-			'characters'    => self::count_rows( 'characters', "owner_type = 'chronicle' AND owner_slug = %s", $slug ),
-			'plots'         => self::count_rows( 'plots', 'game_id = %d', $id ),
+			'characters' => self::count_rows( 'characters', "owner_type = 'chronicle' AND owner_slug = %s", $slug ),
+			'plots' => self::count_rows( 'plots', 'game_id = %d', $id ),
 			'world_objects' => self::count_rows( 'world_objects', 'game_id = %d', $id ),
-			'templates'     => self::count_rows( 'templates', 'game_id = %d', $id ),
+			'templates' => self::count_rows( 'templates', 'game_id = %d', $id ),
 			'schema_blocks' => self::count_rows( 'schema_blocks', 'game_slug = %s', $slug ),
 			'saved_queries' => self::count_rows( 'queries', 'game_id = %d AND is_recent_search = 0', $id ),
-			'attestations'  => self::count_rows( 'character_attestations', 'game_slug = %s', $slug ),
-			'transfers'     => self::count_rows( 'character_transfers', "( direction = 'outbound' AND home_slug = %s ) OR ( direction = 'inbound' AND host_slug = %s )", $slug, $slug ),
+			'attestations' => self::count_rows( 'character_attestations', 'game_slug = %s', $slug ),
+			'transfers' => self::count_rows( 'character_transfers', "( direction = 'outbound' AND home_slug = %s ) OR ( direction = 'inbound' AND host_slug = %s )", $slug, $slug ),
+			'factions' => self::count_rows( 'factions', 'game_id = %d', $id ),
+			'positions' => self::count_rows( 'positions', 'game_id = %d', $id ),
+			'secrets' => self::count_rows( 'secrets', 'game_id = %d', $id ),
+			'game_sessions' => self::count_rows( 'game_sessions', 'game_id = %d', $id ),
+			'attendance' => self::count_rows( 'attendance', 'game_id = %d', $id ),
+			'release_batches' => self::count_rows( 'release_batches', 'game_id = %d', $id ),
+			'notification_queue' => self::count_rows( 'notification_queue', 'game_id = %d', $id ),
+			'npc_castings' => self::count_rows( 'npc_castings', 'game_id = %d', $id ),
+			'after_game_reports' => self::count_rows( 'after_game_reports', 'game_id = %d', $id ),
 		];
 	}
 

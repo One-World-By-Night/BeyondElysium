@@ -5,11 +5,12 @@
  * `be_manage_factions` reaches this page, so every position here is seen with its full,
  * manager-only projection regardless of its own `holder_public`.
  */
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import { everyPage } from '../../lib/everyPage';
 import HelpButton from '../shared/HelpButton';
+import HtmlEditor from '../shared/HtmlEditor';
 import type {
 	Faction,
 	Position,
@@ -202,7 +203,8 @@ function PositionEditor( {
 	const [ holderPublic, setHolderPublic ] = useState(
 		position?.holder_public ?? true
 	);
-	const [ notes, setNotes ] = useState( position?.notes ?? '' );
+	const notesDraft = useRef( position?.notes ?? '' );
+	const editorKey = position?.id ?? 'new';
 	const [ saving, setSaving ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
 
@@ -219,7 +221,7 @@ function PositionEditor( {
 				faction_id: factionId ? Number( factionId ) : null,
 				character_id: characterId ? Number( characterId ) : null,
 				holder_public: holderPublic,
-				notes: notes || null,
+				notes: notesDraft.current || null,
 			};
 			const saved = position
 				? await api.positions( gameSlug ).update( position.id, data )
@@ -301,13 +303,16 @@ function PositionEditor( {
 					'beyond-elysium'
 				) }
 			</label>
-			<label>
-				{ __( 'Notes', 'beyond-elysium' ) }
-				<textarea
-					value={ notes }
-					onChange={ ( e ) => setNotes( e.target.value ) }
+			<div className="be-faction-manager__field">
+				<span>{ __( 'Notes', 'beyond-elysium' ) }</span>
+				<HtmlEditor
+					id={ `be-position-notes-${ editorKey }` }
+					defaultValue={ notesDraft.current }
+					onChange={ ( html ) => {
+						notesDraft.current = html;
+					} }
 				/>
-			</label>
+			</div>
 			<div className="be-faction-manager__actions">
 				<button type="submit" disabled={ saving || ! title.trim() }>
 					{ __( 'Save', 'beyond-elysium' ) }
@@ -426,7 +431,12 @@ function PositionDetail( {
 					</span>
 				) }
 			</p>
-			{ position.notes && <p>{ position.notes }</p> }
+			{ position.notes && (
+				<div
+					// eslint-disable-next-line react/no-danger
+					dangerouslySetInnerHTML={ { __html: position.notes } }
+				/>
+			) }
 
 			<h4>{ __( 'History', 'beyond-elysium' ) }</h4>
 			<ul className="be-faction-manager__members">

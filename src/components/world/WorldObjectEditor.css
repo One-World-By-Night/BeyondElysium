@@ -7,7 +7,7 @@
 
 .be-world-editor__based-on {
 	font-size: 0.85rem;
-	color: #777;
+	color: var(--be-gray-10);
 	margin: 0 0 0.75rem;
 }
 
@@ -47,9 +47,9 @@
 
 .be-world-editor__error {
 	padding: 0.75rem;
-	border: 1px solid #b3261e;
-	background: #fdecea;
-	color: #611a15;
+	border: 1px solid var(--be-red-6);
+	background: var(--be-red-11);
+	color: var(--be-red-2);
 	border-radius: 3px;
 	margin-bottom: 1rem;
 }

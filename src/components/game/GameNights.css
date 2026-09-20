@@ -21,14 +21,14 @@
 .be-game-nights__crumbs button {
 	background: none;
 	border: none;
-	color: var(--be-st-accent, #a3225a);
+	color: var(--be-st-accent, var(--be-plum-1));
 	cursor: pointer;
 	padding: 0;
 	text-decoration: underline;
 }
 
 .be-game-nights__error {
-	color: #b32d2e;
+	color: var(--be-red-7);
 }
 
 .be-game-nights__settings-card {
@@ -36,10 +36,10 @@
 	flex-wrap: wrap;
 	gap: 0.75rem;
 	align-items: flex-end;
-	border: 1px solid #d0d0d0;
+	border: 1px solid var(--be-gray-18);
 	border-radius: 4px;
 	padding: 0.75rem;
-	background: #fafafa;
+	background: var(--be-gray-28);
 	margin-top: 0.5rem;
 }
 
@@ -51,10 +51,10 @@
 }
 
 .be-game-nights__spotlight {
-	border: 1px solid #d0d0d0;
+	border: 1px solid var(--be-gray-18);
 	border-radius: 4px;
 	padding: 0.75rem;
-	background: #fafafa;
+	background: var(--be-gray-28);
 	margin-top: 0.5rem;
 }
 
@@ -73,12 +73,12 @@
 	gap: 0.5rem;
 	align-items: center;
 	padding: 0.5rem;
-	border: 1px solid #e0e0e0;
+	border: 1px solid var(--be-gray-21);
 	border-radius: 4px;
 }
 
 .be-game-nights__spotlight-row--flagged {
-	border-color: #b32d2e !important;
+	border-color: var(--be-red-7) !important;
 }
 
 .be-game-nights__new-form {
@@ -109,10 +109,10 @@
 	align-items: flex-start;
 	width: 100%;
 	text-align: left;
-	border: 1px solid #d0d0d0;
+	border: 1px solid var(--be-gray-18);
 	border-radius: 4px;
 	padding: 0.75rem;
-	background: #fff;
+	background: var(--be-gray-29);
 	cursor: pointer;
 }
 
@@ -130,7 +130,7 @@
 
 .be-game-nights__apr-note {
 	font-size: 0.85rem;
-	color: #666;
+	color: var(--be-gray-8);
 	font-style: italic;
 }
 

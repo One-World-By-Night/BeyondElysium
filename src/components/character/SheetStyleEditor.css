@@ -1,5 +1,5 @@
 .be-sheet-style-editor {
-	border: 1px solid #ccc;
+	border: 1px solid var(--be-gray-16);
 	border-radius: 4px;
 	padding: 1rem;
 	margin-bottom: 1rem;
@@ -38,5 +38,5 @@
 }
 
 .be-sheet-style-editor__error {
-	color: #b00;
+	color: var(--be-red-4);
 }

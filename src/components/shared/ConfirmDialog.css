@@ -1,7 +1,7 @@
 .be-confirm-dialog__backdrop {
 	position: fixed;
 	inset: 0;
-	background: rgba(0, 0, 0, 0.5);
+	background: var(--be-shadow-5);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -14,12 +14,12 @@
 }
 
 .be-confirm-dialog {
-	background: #fff;
+	background: var(--be-gray-29);
 	border-radius: 4px;
 	padding: 1.5rem;
 	max-width: 420px;
 	width: 90%;
-	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+	box-shadow: 0 4px 16px var(--be-shadow-4);
 }
 
 .be-confirm-dialog__title {
@@ -45,12 +45,12 @@
 }
 
 .be-confirm-dialog__cancel {
-	border: 1px solid #999;
-	background: #fff;
+	border: 1px solid var(--be-gray-13);
+	background: var(--be-gray-29);
 }
 
 .be-confirm-dialog__confirm {
-	border: 1px solid #b3261e;
-	background: #b3261e;
-	color: #fff;
+	border: 1px solid var(--be-red-6);
+	background: var(--be-red-6);
+	color: var(--be-gray-29);
 }

@@ -23,5 +23,5 @@
 
 .be-chronicle-switcher__status {
 	font-style: italic;
-	color: #555;
+	color: var(--be-gray-6);
 }

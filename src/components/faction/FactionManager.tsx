@@ -5,11 +5,12 @@
  * manager's full projection (goals, audience_rules, the member roster with ranks and leader
  * flags) since only `be_manage_factions` reaches this page at all.
  */
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import AudiencePicker from '../shared/AudiencePicker';
 import HelpButton from '../shared/HelpButton';
+import HtmlEditor from '../shared/HtmlEditor';
 import {
 	FACTION_TYPE_SUGGESTIONS,
 	type Faction,
@@ -155,10 +156,9 @@ function FactionEditor( {
 	const [ parentId, setParentId ] = useState< string >(
 		faction?.parent_id ? String( faction.parent_id ) : ''
 	);
-	const [ description, setDescription ] = useState(
-		faction?.description ?? ''
-	);
-	const [ goals, setGoals ] = useState( faction?.goals ?? '' );
+	const descriptionDraft = useRef( faction?.description ?? '' );
+	const goalsDraft = useRef( faction?.goals ?? '' );
+	const editorKey = faction?.id ?? 'new';
 	const [ saving, setSaving ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
 
@@ -174,8 +174,8 @@ function FactionEditor( {
 				name: name.trim(),
 				faction_type: factionType,
 				parent_id: parentId ? Number( parentId ) : null,
-				description: description || null,
-				goals: goals || null,
+				description: descriptionDraft.current || null,
+				goals: goalsDraft.current || null,
 			};
 			const saved = faction
 				? await api.factions( gameSlug ).update( faction.id, data )
@@ -257,20 +257,26 @@ function FactionEditor( {
 						) ) }
 				</select>
 			</label>
-			<label>
-				{ __( 'Description', 'beyond-elysium' ) }
-				<textarea
-					value={ description }
-					onChange={ ( e ) => setDescription( e.target.value ) }
+			<div className="be-faction-manager__field">
+				<span>{ __( 'Description', 'beyond-elysium' ) }</span>
+				<HtmlEditor
+					id={ `be-faction-description-${ editorKey }` }
+					defaultValue={ descriptionDraft.current }
+					onChange={ ( html ) => {
+						descriptionDraft.current = html;
+					} }
 				/>
-			</label>
-			<label>
-				{ __( 'Goals', 'beyond-elysium' ) }
-				<textarea
-					value={ goals }
-					onChange={ ( e ) => setGoals( e.target.value ) }
+			</div>
+			<div className="be-faction-manager__field">
+				<span>{ __( 'Goals', 'beyond-elysium' ) }</span>
+				<HtmlEditor
+					id={ `be-faction-goals-${ editorKey }` }
+					defaultValue={ goalsDraft.current }
+					onChange={ ( html ) => {
+						goalsDraft.current = html;
+					} }
 				/>
-			</label>
+			</div>
 			<div className="be-faction-manager__actions">
 				<button type="submit" disabled={ saving || ! name.trim() }>
 					{ __( 'Save', 'beyond-elysium' ) }
@@ -462,12 +468,20 @@ function FactionDetail( {
 				{ faction.created_via_proposal &&
 					` · ${ __( 'Player-proposed', 'beyond-elysium' ) }` }
 			</p>
-			{ faction.description && <p>{ faction.description }</p> }
+			{ faction.description && (
+				<div
+					// eslint-disable-next-line react/no-danger
+					dangerouslySetInnerHTML={ { __html: faction.description } }
+				/>
+			) }
 			{ faction.goals && (
-				<p>
-					<strong>{ __( 'Goals:', 'beyond-elysium' ) }</strong>{ ' ' }
-					{ faction.goals }
-				</p>
+				<div>
+					<strong>{ __( 'Goals:', 'beyond-elysium' ) }</strong>
+					{ /* eslint-disable-next-line react/no-danger */ }
+					<div
+						dangerouslySetInnerHTML={ { __html: faction.goals } }
+					/>
+				</div>
 			) }
 
 			<AudiencePicker

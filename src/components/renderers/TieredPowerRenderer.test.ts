@@ -181,6 +181,51 @@ describe( 'namedModeRows (0.99.2, "Query beyond characters" sibling ask: full st
 			'Lightning Reflexes',
 		] );
 	} );
+
+	// D66 (1.2.5-design-workflow.md §A2, owner: "anything where more than one power
+	// exist on the same level... always show all") - several powers tied at one rank
+	// (`level: null` on all of them, matching real seeded data) must all appear, never
+	// rolled up to one entry.
+	describe( 'a rank tied between several named powers', () => {
+		const TIED_DEFINITION: TieredPowerDefinition = {
+			powers: [
+				{
+					name: 'Animalism',
+					levels: [
+						{
+							level: null,
+							tier: 'basic',
+							power_name: 'Feral Whispers',
+						},
+						{ level: null, tier: 'basic', power_name: 'Beckoning' },
+						{
+							level: 2,
+							tier: 'intermediate',
+							power_name: 'Quell the Beast',
+						},
+					],
+				},
+			],
+		};
+
+		it( 'lists every tied power at that rank, not just one', () => {
+			expect(
+				namedModeRows( TIED_DEFINITION, {
+					name: 'Animalism',
+					level: 1,
+				} )
+			).toEqual( [ 'Feral Whispers', 'Beckoning' ] );
+		} );
+
+		it( 'a tied rank and an untied rank both resolve correctly in the same stack', () => {
+			expect(
+				namedModeRows( TIED_DEFINITION, {
+					name: 'Animalism',
+					level: 2,
+				} )
+			).toEqual( [ 'Feral Whispers', 'Beckoning', 'Quell the Beast' ] );
+		} );
+	} );
 } );
 
 /**

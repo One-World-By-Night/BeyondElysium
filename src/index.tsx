@@ -11,6 +11,7 @@
 import { createRoot } from '@wordpress/element';
 import ErrorBoundary from './components/ErrorBoundary';
 import PoweredByFooter from './components/shared/PoweredByFooter';
+import './styles/theme.css';
 import './styles/breakpoints.css';
 
 /**

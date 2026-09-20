@@ -17,10 +17,10 @@
 	width: 1.75rem;
 	height: 1.75rem;
 	padding: 0;
-	border: 1px solid #c3c4c7;
+	border: 1px solid var(--be-gray-15);
 	border-radius: 50%;
-	background: #fff;
-	color: #1d2327;
+	background: var(--be-gray-29);
+	color: var(--be-gray-3);
 	font-size: 0.9rem;
 	font-weight: 600;
 	line-height: 1;
@@ -28,13 +28,13 @@
 }
 
 .be-help-button:hover {
-	border-color: #1a4f9c;
+	border-color: var(--be-blue-3);
 }
 
 .be-help-button[aria-expanded="true"] {
-	border-color: #1a4f9c;
-	background: #1a4f9c;
-	color: #fff;
+	border-color: var(--be-blue-3);
+	background: var(--be-blue-3);
+	color: var(--be-gray-29);
 }
 
 .be-help-panel {
@@ -47,9 +47,9 @@
 	flex-direction: column;
 	box-sizing: border-box;
 	width: min(28rem, 100vw);
-	background: #fff;
-	color: #1d2327;
-	box-shadow: -4px 0 24px rgba(0, 0, 0, 0.2);
+	background: var(--be-gray-29);
+	color: var(--be-gray-3);
+	box-shadow: -4px 0 24px var(--be-shadow-2);
 	animation: be-help-panel-in 0.18s ease-out;
 }
 
@@ -72,7 +72,7 @@
 	align-items: center;
 	gap: 0.5rem;
 	padding: 0.75rem 1rem;
-	border-bottom: 1px solid #e0e0e0;
+	border-bottom: 1px solid var(--be-gray-21);
 }
 
 .be-help-panel__title {
@@ -90,10 +90,10 @@
 .be-help-panel .be-help-panel__close {
 	flex: 0 0 auto;
 	padding: 0.25rem 0.6rem;
-	border: 1px solid #c3c4c7;
+	border: 1px solid var(--be-gray-15);
 	border-radius: 4px;
-	background: #fff;
-	color: #1d2327;
+	background: var(--be-gray-29);
+	color: var(--be-gray-3);
 	font-size: 0.9rem;
 	line-height: 1.2;
 	cursor: pointer;
@@ -125,7 +125,7 @@
 .be-help-panel__body code {
 	padding: 0 0.25em;
 	border-radius: 3px;
-	background: #f0f0f1;
+	background: var(--be-gray-24);
 }
 
 .be-help-panel__body pre {
@@ -152,7 +152,7 @@
 .be-help-panel .be-help-panel__body tr {
 	margin: 0 0 0.5rem;
 	padding: 0.5rem 0.75rem;
-	border: 1px solid #e0e0e0;
+	border: 1px solid var(--be-gray-21);
 	border-radius: 4px;
 }
 
@@ -163,7 +163,7 @@
 .be-help-panel .be-help-panel__body td::before {
 	content: attr(data-label);
 	display: block;
-	color: #50575e;
+	color: var(--be-gray-7);
 	font-size: 12px;
 	font-weight: 600;
 }

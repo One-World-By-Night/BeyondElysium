@@ -97,6 +97,16 @@ export interface ChronicleContentCounts {
 	saved_queries: number;
 	attestations: number;
 	transfers: number;
+	/** D1 (1.2.5-design-workflow.md §D): real content `delete_with_content()` used to silently leave behind. */
+	factions: number;
+	positions: number;
+	secrets: number;
+	game_sessions: number;
+	attendance: number;
+	release_batches: number;
+	notification_queue: number;
+	npc_castings: number;
+	after_game_reports: number;
 }
 
 /**

@@ -21,14 +21,14 @@
 .be-release-batches__crumbs button {
 	background: none;
 	border: none;
-	color: var(--be-st-accent, #a3225a);
+	color: var(--be-st-accent, var(--be-plum-1));
 	cursor: pointer;
 	padding: 0;
 	text-decoration: underline;
 }
 
 .be-release-batches__error {
-	color: #b32d2e;
+	color: var(--be-red-7);
 }
 
 .be-release-batches__new-form {
@@ -63,16 +63,16 @@
 	align-items: flex-start;
 	width: 100%;
 	text-align: left;
-	border: 1px solid #d0d0d0;
+	border: 1px solid var(--be-gray-18);
 	border-radius: 4px;
 	padding: 0.75rem;
-	background: #fff;
+	background: var(--be-gray-29);
 	cursor: pointer;
 }
 
 .be-release-batches__counts {
 	font-size: 0.8rem;
-	color: #666;
+	color: var(--be-gray-8);
 }
 
 .be-release-batches__detail {
@@ -102,7 +102,7 @@
 	justify-content: space-between;
 	align-items: center;
 	gap: 0.5rem;
-	border: 1px solid #e0e0e0;
+	border: 1px solid var(--be-gray-21);
 	border-radius: 4px;
 	padding: 0.5rem 0.75rem;
 }
@@ -123,7 +123,7 @@
 }
 
 .be-release-batches__schedule {
-	border: 1px solid #e0e0e0;
+	border: 1px solid var(--be-gray-21);
 	border-radius: 4px;
 }
 

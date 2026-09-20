@@ -534,8 +534,40 @@ class Trait_Mapper {
 			}
 		}
 
+		// D66 (1.2.5-design-workflow.md §A): a rank with several powers tied at one tier
+		// carries `level: null` on all of them, so no item above matches exactly - the
+		// rank itself is still real. Confirmed by tier presence instead: any item in the
+		// family whose tier resolves to this rank number makes the rung a genuine one.
+		$tier = self::tier_for_rank( $level_num );
+		if ( $tier !== null ) {
+			foreach ( (array) $power->levels as $level ) {
+				if ( ( $level->tier ?? null ) === $tier ) {
+					return [
+						'outcome'    => $outcome_if_found,
+						'block_slug' => $block_slug,
+						'family'     => $power->name,
+						'level'      => $level_num,
+					];
+				}
+			}
+		}
+
 		// The family is real but this exact numbered rung is not; not a name problem, so no suggestions to offer.
 		return [ 'outcome' => 'unresolved', 'suggestions' => [] ];
+	}
+
+	/**
+	 * Maps a numbered rank (1=basic, 2=intermediate, ...) to its tier name.
+	 * Mirrors `Cost_Engine::tier_for_rank()`/`Database\Seeder::TIER_RANKS`
+	 * exactly; duplicated rather than shared across Services classes for one
+	 * lookup, matching `Cost_Engine`'s own established precedent for this.
+	 */
+	private static function tier_for_rank( int $rank ): ?string {
+		static $numbered = [
+			1 => 'basic', 2 => 'intermediate', 3 => 'advanced', 4 => 'elder',
+			5 => 'master', 6 => 'ascended', 7 => 'methuselah',
+		];
+		return $numbered[ $rank ] ?? null;
 	}
 
 	/**

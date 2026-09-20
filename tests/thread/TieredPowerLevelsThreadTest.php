@@ -7,12 +7,15 @@ use BeyondElysium\Models\Schema_Block;
 use WP_UnitTestCase;
 
 /**
- * Decision 037: a "named" tiered_power block's Elder-and-above items must not get a
- * fabricated sequential level - confirmed against real seeded data (`$wpdb`-touching,
- * hence thread layer, not unit) rather than a hand-built fixture, since the whole point
- * is that this matches Grapevine's real menu data, not an idealized shape.
+ * D66 (1.2.5-design-workflow.md §A, A1): a tiered_power family's level is derived from
+ * its tier (Seeder::TIER_RANKS), not array position - two or more items sharing a tier
+ * share level=null, the same named-pool shape Decision 037 already established for
+ * Elder-and-above. Confirmed against real seeded data (`$wpdb`-touching, hence thread
+ * layer, not unit) rather than a hand-built fixture, since the whole point is that this
+ * matches Grapevine's real menu data, not an idealized shape.
  *
  * @see BE_PROCESS/reference/DECISIONLOG.md Decision 037
+ * @see BE_PROCESS/releases/1.2.5-design-workflow.md §A
  */
 class TieredPowerLevelsThreadTest extends WP_UnitTestCase {
 
@@ -36,35 +39,42 @@ class TieredPowerLevelsThreadTest extends WP_UnitTestCase {
 		$this->fail( 'Celerity not found in vampire-disciplines.' );
 	}
 
-	public function test_the_real_numeric_ladder_keeps_its_correct_levels_and_tiers(): void {
+	public function test_a_family_s_only_item_at_a_tier_gets_that_tier_s_real_rank(): void {
 		$levels = $this->celerity_levels();
 
-		$this->assertSame( 1, $levels['Alacrity']->level );
-		$this->assertSame( 'basic', $levels['Alacrity']->tier );
-		$this->assertSame( 2, $levels['Swiftness']->level );
-		$this->assertSame( 'basic', $levels['Swiftness']->tier );
-		$this->assertSame( 3, $levels['Rapidity']->level );
-		$this->assertSame( 'intermediate', $levels['Rapidity']->tier );
-		$this->assertSame( 5, $levels['Fleetness']->level );
+		// Fleetness, Zephyr, and Between the Ticks are each the ONLY real Celerity power
+		// at their own tier - unlike Alacrity/Swiftness (both basic) or Rapidity/Legerity
+		// (both intermediate), nothing else in the family shares their rank, so each gets
+		// self::TIER_RANKS' real fixed number rather than level=null.
+		$this->assertSame( 3, $levels['Fleetness']->level );
 		$this->assertSame( 'advanced', $levels['Fleetness']->tier );
+		$this->assertSame( 6, $levels['Zephyr']->level );
+		$this->assertSame( 'ascended', $levels['Zephyr']->tier );
+		$this->assertSame( 7, $levels['Between the Ticks']->level );
+		$this->assertSame( 'methuselah', $levels['Between the Ticks']->tier );
 	}
 
-	public function test_beyond_the_numbered_cap_gets_null_level_and_a_real_tier_label(): void {
+	public function test_two_items_sharing_a_tier_both_get_a_null_level_not_sequential_numbers(): void {
 		$levels = $this->celerity_levels();
 
-		// Between the Ticks is Celerity's real Methuselah-tier power (cost 21, the
-		// highest real tier in the menu data) - however many numbered rungs the ladder
-		// cap allows, this one is always beyond it in real data.
-		$this->assertNull( $levels['Between the Ticks']->level );
-		$this->assertSame( 'methuselah', $levels['Between the Ticks']->tier );
+		// Alacrity and Swiftness are both real basic-tier (cost 3) Celerity powers - the
+		// D66 defect this fix closes numbered them 1 and 2 as if one came before the
+		// other. Neither is more "basic" than the other, so both get level=null and share
+		// the real tier label, the same named-pool shape Decision 037 already established
+		// for Elder-and-above.
+		$this->assertNull( $levels['Alacrity']->level );
+		$this->assertSame( 'basic', $levels['Alacrity']->tier );
+		$this->assertNull( $levels['Swiftness']->level );
+		$this->assertSame( 'basic', $levels['Swiftness']->tier );
 	}
 
 	public function test_same_cost_tier_items_share_a_tier_label_not_sequential_numbers(): void {
 		$levels = $this->celerity_levels();
 
-		// Two real Elder-cost (12 XP) Celerity powers. Whether or not the flat numbering
-		// cap happens to still number them (Decision 037 deliberately uses a generous
-		// flat cap, not per-tier-uniqueness detection), they must always agree on tier.
+		// Two real Elder-cost (12 XP) Celerity powers - both null (tied), and must always
+		// agree on tier regardless.
+		$this->assertNull( $levels['Precision']->level );
+		$this->assertNull( $levels['Projectile']->level );
 		$this->assertSame( $levels['Precision']->tier, $levels['Projectile']->tier );
 		$this->assertSame( 'elder', $levels['Precision']->tier );
 	}
@@ -87,6 +97,11 @@ class TieredPowerLevelsThreadTest extends WP_UnitTestCase {
 		}
 
 		$this->assertSame( 'innate', $byName['Orienteering']->tier );
-		$this->assertSame( 1, $byName['Enshroud']->level, 'The first paid (basic) power still gets the real numeric level.' );
+		// Enshroud and Phantom Wings are both real basic-tier Argos powers and are tied
+		// (level=null); Flicker is Argos' only intermediate-tier power and is the first
+		// one in the family to get a real numeric level.
+		$this->assertNull( $byName['Enshroud']->level );
+		$this->assertSame( 2, $byName['Flicker']->level, 'Argos\' only intermediate-tier power gets the real numeric level.' );
+		$this->assertSame( 'intermediate', $byName['Flicker']->tier );
 	}
 }

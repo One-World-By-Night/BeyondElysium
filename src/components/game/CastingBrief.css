@@ -16,7 +16,7 @@
 	font-size: 0.75rem;
 	font-weight: 600;
 	text-transform: uppercase;
-	color: #666;
+	color: var(--be-gray-8);
 }
 
 .be-casting-brief__header dd {
@@ -35,13 +35,13 @@
 
 .be-casting-brief__section {
 	padding: 0.75rem;
-	border: 1px solid #ddd;
+	border: 1px solid var(--be-gray-20);
 	border-radius: 4px;
 }
 
 .be-casting-brief__error {
 	padding: 0.75rem;
-	border: 1px solid #c00;
+	border: 1px solid var(--be-red-5);
 	border-radius: 4px;
-	color: #c00;
+	color: var(--be-red-5);
 }

@@ -7,20 +7,20 @@
 
 .be-import-tool__step {
 	padding: 0.3rem 0.7rem;
-	border: 1px solid #ccc;
+	border: 1px solid var(--be-gray-16);
 	border-radius: 3px;
-	color: #777;
+	color: var(--be-gray-10);
 	font-size: 0.85rem;
 }
 
 .be-import-tool__step.is-active {
-	border-color: #333;
-	color: #111;
+	border-color: var(--be-gray-4);
+	color: var(--be-gray-2);
 	font-weight: 600;
 }
 
 .be-import-tool__step.is-done {
-	color: #2e7d32;
+	color: var(--be-green-5);
 }
 
 .be-import-tool__upload {
@@ -38,15 +38,15 @@
 
 .be-import-tool__error {
 	padding: 0.75rem;
-	border: 1px solid #b3261e;
-	background: #fdecea;
-	color: #611a15;
+	border: 1px solid var(--be-red-6);
+	background: var(--be-red-11);
+	color: var(--be-red-2);
 	border-radius: 3px;
 	margin-bottom: 1rem;
 }
 
 .be-import-tool__blocking-note {
-	color: #b3261e;
+	color: var(--be-red-6);
 }
 
 .be-import-tool__target {
@@ -64,9 +64,9 @@
 
 .be-import-tool__notice {
 	padding: 0.75rem;
-	border: 1px solid #2e7d32;
-	background: #edf7ed;
-	color: #1e4620;
+	border: 1px solid var(--be-green-5);
+	background: var(--be-green-9);
+	color: var(--be-green-1);
 	border-radius: 3px;
 	margin-bottom: 1rem;
 }
@@ -78,14 +78,14 @@
 .be-incoming-transfers__review {
 	margin-top: 1.25rem;
 	padding: 1rem;
-	border: 1px solid #ccc;
+	border: 1px solid var(--be-gray-16);
 	border-radius: 3px;
 }
 
 .be-incoming-transfers__verification[role="alert"] {
 	padding: 0.75rem;
-	border: 1px solid #b8860b;
-	background: #fff8e6;
+	border: 1px solid var(--be-gold-9);
+	background: var(--be-gold-18);
 	border-radius: 3px;
 	margin: 0.75rem 0;
 }

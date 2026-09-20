@@ -38,7 +38,7 @@
 }
 
 .be-faction-manager__type {
-	color: #666;
+	color: var(--be-gray-8);
 	font-size: 0.85em;
 	text-transform: capitalize;
 }
@@ -51,11 +51,11 @@
 }
 
 .be-faction-manager__empty {
-	color: #666;
+	color: var(--be-gray-8);
 }
 
 .be-faction-manager__error {
-	color: #c00;
+	color: var(--be-red-5);
 }
 
 .be-faction-manager__editor,
@@ -65,7 +65,8 @@
 	gap: 0.75rem;
 }
 
-.be-faction-manager__editor label {
+.be-faction-manager__editor label,
+.be-faction-manager__editor .be-faction-manager__field {
 	display: flex;
 	flex-direction: column;
 	gap: 0.25rem;

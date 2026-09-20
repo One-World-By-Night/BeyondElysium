@@ -1,9 +1,9 @@
 .be-admin-dashboard__cta {
 	padding: 1rem 1.25rem;
 	margin: 1rem 0 1.5rem;
-	border: 1px solid #2271b1;
+	border: 1px solid var(--be-blue-4);
 	border-radius: 4px;
-	background: #f0f6fc;
+	background: var(--be-blue-7);
 }
 
 .be-admin-dashboard__cta h2 {

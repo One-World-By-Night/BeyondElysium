@@ -13,5 +13,7 @@
     { "name": "lists every named rung from 1 up to the held level for a plain numbered holding", "output": ["Alacrity", "Rapid Reflexes", "Fleetness"] },
     { "name": "lists nothing for a held level of 0", "output": [] },
     { "name": "lists only the one specific power for an Elder-and-above pick - there is no stack beneath it", "output": ["Celerity: Blink (elder)"] },
-    { "name": "a non-sequential block still expands the full stack, not just the current rung", "output": ["Alacrity", "Rapid Reflexes", "Fleetness", "Blurred Motion", "Lightning Reflexes"] }
+    { "name": "a non-sequential block still expands the full stack, not just the current rung", "output": ["Alacrity", "Rapid Reflexes", "Fleetness", "Blurred Motion", "Lightning Reflexes"] },
+    { "name": "lists every tied power at that rank, not just one", "output": ["Feral Whispers", "Beckoning"] },
+    { "name": "a tied rank and an untied rank both resolve correctly in the same stack", "output": ["Feral Whispers", "Beckoning", "Quell the Beast"] }
 ]

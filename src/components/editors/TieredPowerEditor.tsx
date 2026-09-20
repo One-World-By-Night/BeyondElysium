@@ -20,7 +20,12 @@ import { useMemo, useState } from '@wordpress/element';
 import SearchableSelect from '../shared/SearchableSelect';
 import Modal from '../shared/Modal';
 import { usePowerDisplayMode } from '../../lib/powerDisplayMode';
-import { elderLabel, type HeldPower } from '../renderers/TieredPowerRenderer';
+import {
+	elderLabel,
+	findLevelsAtRank,
+	TIER_FOR_RANK,
+	type HeldPower,
+} from '../renderers/TieredPowerRenderer';
 import {
 	moveUp,
 	moveDown,
@@ -67,11 +72,25 @@ export interface TieredPowerEditorProps {
 /** The stepper's default maximum level when no per-power override applies. */
 const DEFAULT_TRUE_MAX = 5;
 
+/** Reverse of `TIER_FOR_RANK` - a tier's own numbered rank, when it has one. */
+const RANK_FOR_TIER: Partial< Record< string, number > > = Object.fromEntries(
+	Object.entries( TIER_FOR_RANK ).map( ( [ rank, tier ] ) => [
+		tier,
+		Number( rank ),
+	] )
+);
+
 /**
  * Returns the highest level a named power can be raised to: an explicit trueMaxFor
- * override when given, otherwise DEFAULT_TRUE_MAX clamped to the number of real
- * numbered levels the power's definition actually has. Levels with a null `level`
- * (Elder-and-above entries) are excluded from this count.
+ * override when given, otherwise DEFAULT_TRUE_MAX clamped to the highest real rank
+ * the power's definition actually reaches. D66 (1.2.5-design-workflow.md §A2): a
+ * tied top tier (several items sharing it, `level: null` on all of them) is still a
+ * real, purchasable rank - reading `level` alone would undercount the true max
+ * whenever the family's own highest tier happens to be tied, so this falls back to
+ * the tier's own derived rank whenever an item's `level` is null, preferring the
+ * item's own explicit `level` first when it has one (an untied rung, or a synthetic
+ * custom-power ladder that deliberately reuses a tier label across two distinct
+ * explicit levels).
  */
 export function maxLevel(
 	definition: TieredPowerDefinition,
@@ -84,17 +103,14 @@ export function maxLevel(
 	}
 
 	const power = definition.powers.find( ( p ) => p.name === name );
-	const numbered = ( power?.levels ?? [] ).filter(
-		( l ): l is typeof l & { level: number } => l.level != null
-	);
-	if ( numbered.length === 0 ) {
+	const ranks = ( power?.levels ?? [] )
+		.map( ( l ) => l.level ?? RANK_FOR_TIER[ l.tier ] ?? undefined )
+		.filter( ( r ): r is number => r != null );
+	if ( ranks.length === 0 ) {
 		// Guards against an empty ladder; falls back to the default max instead of pinning at 1.
 		return DEFAULT_TRUE_MAX;
 	}
-	return Math.min(
-		DEFAULT_TRUE_MAX,
-		Math.max( ...numbered.map( ( l ) => l.level ) )
-	);
+	return Math.min( DEFAULT_TRUE_MAX, Math.max( ...ranks ) );
 }
 
 const CUSTOM_LEVEL_NAMES = [ 'One', 'Two', 'Three', 'Four', 'Five' ];
@@ -179,10 +195,15 @@ export function traditionOptionsFor(
 }
 
 /**
- * The real catalog name for one specific numbered rung of a family (e.g. "Alacrity" for
- * Celerity's level 1), for the checklist view's per-box labels - falls back to a plain
- * "{name} {level}" when the catalog has no entry there (a custom power's synthetic ladder,
- * or a gap in the seeded data), so a box is never left unlabeled.
+ * The real catalog name(s) for one specific numbered rung of a family (e.g. "Alacrity"
+ * for Celerity's level 1), for the checklist view's per-box labels - falls back to a
+ * plain "{name} {level}" when the catalog has no entry there (a custom power's
+ * synthetic ladder, or a genuine gap in the seeded data), so a box is never left
+ * unlabeled. D66 (1.2.5-design-workflow.md §A2, "never roll up"): a rung tied between
+ * several named alternatives joins every one of their names, rather than falling
+ * through to the generic placeholder just because no single item carries that exact
+ * `level` - one checkbox still toggles the whole tied rank, matching how a character
+ * genuinely knows every power at a rank they've reached, not just one chosen pick.
  */
 export function levelName(
 	definition: TieredPowerDefinition,
@@ -190,8 +211,13 @@ export function levelName(
 	level: number
 ): string {
 	const power = definition.powers.find( ( p ) => p.name === name );
-	const found = power?.levels.find( ( l ) => l.level === level );
-	return found?.power_name || `${ name } ${ level }`;
+	const atRank = findLevelsAtRank( power, level );
+	if ( atRank.length === 0 ) {
+		return `${ name } ${ level }`;
+	}
+	return atRank
+		.map( ( l ) => l.power_name || `${ name } ${ level }` )
+		.join( ', ' );
 }
 
 /**

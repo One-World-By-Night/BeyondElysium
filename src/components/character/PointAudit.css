@@ -1,7 +1,7 @@
 .be-point-audit__summary {
 	margin-bottom: 1rem;
 	padding-bottom: 0.75rem;
-	border-bottom: 2px solid #333;
+	border-bottom: 2px solid var(--be-gray-4);
 }
 
 .be-point-audit__totals {
@@ -13,12 +13,12 @@
 
 .be-point-audit__coverage {
 	font-size: 0.9rem;
-	color: #555;
+	color: var(--be-gray-6);
 }
 
 .be-point-audit__caveat {
 	font-style: italic;
-	color: #555;
+	color: var(--be-gray-6);
 	margin: 0.35rem 0 0;
 }
 
@@ -31,7 +31,7 @@
 	font-size: 0.95rem;
 	text-transform: uppercase;
 	letter-spacing: 0.02em;
-	color: #666;
+	color: var(--be-gray-8);
 }
 
 .be-point-audit__lines {
@@ -49,12 +49,12 @@
 }
 
 .be-point-audit__line--priced {
-	border-left-color: #2e7d32;
+	border-left-color: var(--be-green-5);
 }
 
 .be-point-audit__line--unpriced {
-	border-left-color: #c9a600;
-	background: rgba(201, 166, 0, 0.08);
+	border-left-color: var(--be-gold-10);
+	background: var(--be-gold-2);
 }
 
 .be-point-audit__line-label {
@@ -68,24 +68,24 @@
 
 .be-point-audit__line-modifier {
 	font-size: 0.85rem;
-	color: #555;
+	color: var(--be-gray-6);
 }
 
 .be-point-audit__line-reason {
 	font-size: 0.85rem;
 	font-style: italic;
-	color: #7a6400;
+	color: var(--be-gold-6);
 	white-space: nowrap;
 }
 
 .be-point-audit__line-flag {
 	font-size: 0.75rem;
 	text-transform: uppercase;
-	color: #b3261e;
+	color: var(--be-red-6);
 	white-space: nowrap;
 }
 
 .be-point-audit__status {
-	color: #555;
+	color: var(--be-gray-6);
 	font-style: italic;
 }

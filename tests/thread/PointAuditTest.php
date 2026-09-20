@@ -132,32 +132,51 @@ class PointAuditTest extends WP_UnitTestCase {
 		$definition = $block->definition;
 		$this->assertNotEmpty( $definition->sequential ?? false );
 
+		// D66 (1.2.5-design-workflow.md §A): most seeded families tie several powers at
+		// one tier, so `level` is null on all of them - a real numbered `level === 5`
+		// item is now the exception, not the rule. The per-rank cost is the block's own
+		// real ladder, not any one family's own items - `Cost_Engine::block_tier_costs()`
+		// takes a plurality vote across every power in the block specifically because a
+		// single family can carry a rare miskeyed cost (D66's own found example:
+		// Animalism's "Drawing Out the Beast" costs 3 where every other real
+		// advanced-tier item, including its own sibling, costs 9); mirrored here rather
+		// than reading the block-scoped private method directly.
+		$tier_rank = [
+			'basic' => 1, 'intermediate' => 2, 'advanced' => 3, 'elder' => 4,
+			'master' => 5, 'ascended' => 6, 'methuselah' => 7,
+		];
+		$tallies = [];
+		foreach ( $definition->powers as $candidate ) {
+			foreach ( $candidate->levels as $level ) {
+				$tier = $level->tier ?? null;
+				if ( $tier === null || ! isset( $tier_rank[ $tier ] ) || ! isset( $level->cost ) ) {
+					continue;
+				}
+				$rank = $tier_rank[ $tier ];
+				$cost = (int) $level->cost;
+				$tallies[ $rank ][ $cost ] = ( $tallies[ $rank ][ $cost ] ?? 0 ) + 1;
+			}
+		}
+		$costs_by_rank = [];
+		foreach ( $tallies as $rank => $by_cost ) {
+			arsort( $by_cost );
+			$costs_by_rank[ $rank ] = (int) array_key_first( $by_cost );
+		}
+		$this->assertArrayHasKey( 5, $costs_by_rank, 'vampire-disciplines must reach a priced master (rank 5) tier' );
+
 		$power = null;
 		foreach ( $definition->powers as $candidate ) {
-			$has_five = false;
 			foreach ( $candidate->levels as $level ) {
-				if ( (int) ( $level->level ?? 0 ) === 5 && isset( $level->cost ) ) {
-					$has_five = true;
+				if ( ( $level->tier ?? null ) === 'master' ) {
+					$power = $candidate;
+					break 2;
 				}
 			}
-			if ( $has_five ) {
-				$power = $candidate;
-				break;
-			}
 		}
-		$this->assertNotNull( $power, 'at least one real seeded discipline must have a priced level 5' );
+		$this->assertNotNull( $power, 'at least one real seeded discipline must have a master-tier power' );
 
-		$level_5_cost = null;
-		$sum_1_through_5 = 0;
-		foreach ( $power->levels as $level ) {
-			$n = (int) ( $level->level ?? 0 );
-			if ( $n >= 1 && $n <= 5 && isset( $level->cost ) ) {
-				$sum_1_through_5 += (int) $level->cost;
-				if ( $n === 5 ) {
-					$level_5_cost = (int) $level->cost;
-				}
-			}
-		}
+		$level_5_cost    = $costs_by_rank[5];
+		$sum_1_through_5 = $costs_by_rank[1] + $costs_by_rank[2] + $costs_by_rank[3] + $costs_by_rank[4] + $costs_by_rank[5];
 
 		$character_id = Character::create( [
 			'name'       => 'Point Audit Cumulative Test',

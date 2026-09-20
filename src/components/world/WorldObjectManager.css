@@ -19,7 +19,7 @@
 }
 
 .be-world-manager__error {
-	color: #c00;
+	color: var(--be-red-5);
 }
 
 .be-world-manager__actions {

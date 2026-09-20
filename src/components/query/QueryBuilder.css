@@ -22,7 +22,7 @@
 	gap: 0.5rem;
 	align-items: center;
 	padding: 0.5rem 0;
-	border-bottom: 1px solid #e0e0e0;
+	border-bottom: 1px solid var(--be-gray-21);
 }
 
 .be-query-builder__not {
@@ -36,10 +36,10 @@
 	flex-basis: 100%;
 	margin: 0.25rem 0 0 0;
 	font-style: italic;
-	color: #555;
+	color: var(--be-gray-6);
 	font-size: 0.85rem;
 }
 
 .be-query-builder__error {
-	color: #c00;
+	color: var(--be-red-5);
 }

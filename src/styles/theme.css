@@ -1,0 +1,134 @@
+/**
+ * The plugin's global color token set (1.2.5-design-workflow.md §C). Every value below was
+ * measured directly out of `src/components/**\/*.css` (C1: 523 declarations, 84 distinct
+ * colors across 73 files) - this file does not invent a new palette, it names the one
+ * already in use so it lives in one place instead of being copy-pasted as raw hex/rgba into
+ * every component. Numbered darkest-to-lightest within each family rather than given
+ * invented semantic names (`--be-red-6` not `--be-error-text`) because most of these are
+ * organic near-duplicates from years of independent component work, not a deliberately
+ * designed scale - forcing false semantic distinctions on them would be less honest than a
+ * plain numbered list, and a component's own comment at each call site still says what role
+ * a given token plays there.
+ *
+ * Tokens-only, no toggle (owner ruling, 2026-09-19): dark-mode inversion is `wp-dark-mode`/
+ * `wp-dark-mode-ultimate`'s job, not this plugin's; this file exists so a real, external
+ * inverter (or `prefers-color-scheme`, if one is ever added) has real custom properties to
+ * target instead of the raw literal hex values `TieredPowerRenderer.css` and friends used to
+ * scatter across 73 separate files. Elementor theme compatibility (D34) is unaffected by this
+ * change - it is a selector-specificity concern, not a color-value one; see C4.
+ *
+ * One file, one `:root` block, imported once from `src/index.tsx` so source order wins over
+ * anything else on the page - the same shape `breakpoints.css` already established.
+ */
+
+:root {
+
+	/* red - includes the plugin's own brand/accent red (--be-red-1, #8b0000), already the
+	 * real value behind both pre-existing scoped tokens (PlotManager.css's --be-st-accent,
+	 * CharacterSheet.css's --be-sheet-accent) - not a fourth invented brand color. */
+	--be-red-1: #8b0000;
+	--be-red-2: #611a15;
+	--be-red-3: #a00;
+	--be-red-4: #b00;
+	--be-red-5: #c00;
+	--be-red-6: #b3261e;
+	--be-red-7: #b32d2e;
+	--be-red-8: #d63638;
+	--be-red-9: #c36;
+	--be-red-10: #f5c6c0;
+	--be-red-11: #fdecea;
+	--be-red-12: #fdf0e0;
+	--be-red-13: #fff5f5;
+
+	/* green - success states. */
+	--be-green-1: #1e4620;
+	--be-green-2: #1e5321;
+	--be-green-3: #00701e;
+	--be-green-4: #1a6e2e;
+	--be-green-5: #2e7d32;
+	--be-green-6: #00a32a;
+	--be-green-7: #79b98a;
+	--be-green-8: #eaf6ea;
+	--be-green-9: #edf7ed;
+	--be-green-10: #edfaef;
+
+	/* gold - warning states. Two visually distinct golds coexist in real use (a warmer
+	 * brown-gold and a brighter WordPress-admin-adjacent amber); kept as separate numbered
+	 * entries rather than merged, since collapsing them is a visual-design call this pass
+	 * deliberately does not make. */
+	--be-gold-1: rgba(201, 166, 0, 0.06);
+	--be-gold-2: rgba(201, 166, 0, 0.08);
+	--be-gold-3: #8a3d00;
+	--be-gold-4: #6b5100;
+	--be-gold-5: #6b5300;
+	--be-gold-6: #7a6400;
+	--be-gold-7: #8a6d00;
+	--be-gold-8: #b58900;
+	--be-gold-9: #b8860b;
+	--be-gold-10: #c9a600;
+	--be-gold-11: #dba617;
+	--be-gold-12: #d99a62;
+	--be-gold-13: #d9bf62;
+	--be-gold-14: #e0c46c;
+	--be-gold-15: #fff7e0;
+	--be-gold-16: #fff8e1;
+	--be-gold-17: #fcf9e8;
+	--be-gold-18: #fff8e6;
+
+	/* blue - info/link states. Several of these (--be-blue-4/#2271b1 in particular) are
+	 * WordPress admin's own literal color scale, not this plugin's invention - kept exact
+	 * rather than normalized, since it reads as familiar to an admin-screen user. */
+	--be-blue-1: #163f7d;
+	--be-blue-2: #0a4b78;
+	--be-blue-3: #1a4f9c;
+	--be-blue-4: #2271b1;
+	--be-blue-5: #a9c6f5;
+	--be-blue-6: #eef4ff;
+	--be-blue-7: #f0f6fc;
+
+	/* purple, plum - one real call site each. */
+	--be-purple-1: #f5f0ff;
+	--be-plum-1: #a3225a;
+
+	/* gray - text/border/surface neutrals, by far the largest family (214 color, 117
+	 * background, 137 border declarations across the whole inventory). Several of these
+	 * (--be-gray-3/7/9/11/15/17/19/24, #1d2327/#50575e/#646970/#787c82/#c3c4c7/#ccd0d4/
+	 * #dcdcde/#f0f0f1) are WordPress admin's own gray scale, kept exact for the same reason
+	 * as the blue family above. */
+	--be-gray-1: #000;
+	--be-gray-2: #111;
+	--be-gray-3: #1d2327;
+	--be-gray-4: #333;
+	--be-gray-5: #444;
+	--be-gray-6: #555;
+	--be-gray-7: #50575e;
+	--be-gray-8: #666;
+	--be-gray-9: #646970;
+	--be-gray-10: #777;
+	--be-gray-11: #787c82;
+	--be-gray-12: #888;
+	--be-gray-13: #999;
+	--be-gray-14: #b0b0b0;
+	--be-gray-15: #c3c4c7;
+	--be-gray-16: #ccc;
+	--be-gray-17: #ccd0d4;
+	--be-gray-18: #d0d0d0;
+	--be-gray-19: #dcdcde;
+	--be-gray-20: #ddd;
+	--be-gray-21: #e0e0e0;
+	--be-gray-22: #e8e8e8;
+	--be-gray-23: #eee;
+	--be-gray-24: #f0f0f1;
+	--be-gray-25: #f5f5f5;
+	--be-gray-26: #f6f7f7;
+	--be-gray-27: #f7f7f7;
+	--be-gray-28: #fafafa;
+	--be-gray-29: #fff;
+
+	/* shadow/overlay - box-shadow and modal-backdrop alpha values. */
+	--be-shadow-1: rgba(0, 0, 0, 0.06);
+	--be-shadow-2: rgba(0, 0, 0, 0.2);
+	--be-shadow-3: rgba(0, 0, 0, 0.25);
+	--be-shadow-4: rgba(0, 0, 0, 0.3);
+	--be-shadow-5: rgba(0, 0, 0, 0.5);
+}

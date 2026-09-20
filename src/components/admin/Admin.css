@@ -16,26 +16,26 @@
 .be-admin__error {
 	padding: 0.75rem 1rem;
 	margin-bottom: 1rem;
-	border: 1px solid #c00;
+	border: 1px solid var(--be-red-5);
 	border-radius: 4px;
-	color: #c00;
-	background: #fff5f5;
+	color: var(--be-red-5);
+	background: var(--be-red-13);
 }
 
 .be-admin__game-scope-notice {
 	padding: 0.6rem 1rem;
 	margin-bottom: 1rem;
-	border: 1px solid #2271b1;
+	border: 1px solid var(--be-blue-4);
 	border-radius: 4px;
-	background: #f0f6fc;
+	background: var(--be-blue-7);
 }
 
 .be-admin__field-warning {
 	margin: -0.5rem 0 1rem;
 	padding: 0.5rem 0.75rem;
-	border: 1px solid #dba617;
+	border: 1px solid var(--be-gold-11);
 	border-radius: 4px;
-	background: #fcf9e8;
+	background: var(--be-gold-17);
 	font-size: 0.85rem;
 }
 
@@ -43,14 +43,14 @@
 	width: 100%;
 	border-collapse: collapse;
 	margin-bottom: 1rem;
-	background: #fff;
+	background: var(--be-gray-29);
 }
 
 .be-admin__table th,
 .be-admin__table td {
 	text-align: left;
 	padding: 0.5rem 0.75rem;
-	border-bottom: 1px solid #e0e0e0;
+	border-bottom: 1px solid var(--be-gray-21);
 	vertical-align: top;
 }
 
@@ -62,8 +62,8 @@
 	max-width: 600px;
 	margin-top: 1rem;
 	padding: 1rem;
-	background: #fff;
-	border: 1px solid #e0e0e0;
+	background: var(--be-gray-29);
+	border: 1px solid var(--be-gray-21);
 	border-radius: 4px;
 }
 
@@ -94,7 +94,7 @@
 .be-admin__fieldset {
 	margin: 1rem 0;
 	padding: 0.75rem 1rem 0.5rem;
-	border: 1px solid #dcdcde;
+	border: 1px solid var(--be-gray-19);
 	border-radius: 4px;
 }
 
@@ -124,7 +124,7 @@
 }
 
 .be-admin__json-error {
-	color: #c00;
+	color: var(--be-red-5);
 	font-size: 0.85rem;
 	margin-top: 0.25rem;
 }
@@ -169,7 +169,7 @@
 
 .be-def-editor__table th,
 .be-def-editor__table td {
-	border: 1px solid #e0e0e0;
+	border: 1px solid var(--be-gray-21);
 	padding: 0.35rem;
 }
 
@@ -182,11 +182,11 @@
 }
 
 .be-def-editor__power {
-	border: 1px solid #d0d0d0;
+	border: 1px solid var(--be-gray-18);
 	border-radius: 4px;
 	padding: 0.75rem;
 	margin-bottom: 0.75rem;
-	background: #fafafa;
+	background: var(--be-gray-28);
 }
 
 .be-def-editor__power-header {

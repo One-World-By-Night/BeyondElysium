@@ -15,23 +15,23 @@
 .be-action-allocator__table td {
 	text-align: left;
 	padding: 0.4rem 0.6rem;
-	border-bottom: 1px solid #e0e0e0;
+	border-bottom: 1px solid var(--be-gray-21);
 }
 
 .be-action-allocator__committed {
-	color: #1a6e2e;
+	color: var(--be-green-4);
 	font-weight: 600;
 }
 
 .be-action-allocator__table tr.is-over-budget td {
-	background: #fdecea;
+	background: var(--be-red-11);
 }
 
 .be-action-allocator__error {
 	padding: 0.75rem;
-	border: 1px solid #b3261e;
-	background: #fdecea;
-	color: #611a15;
+	border: 1px solid var(--be-red-6);
+	background: var(--be-red-11);
+	color: var(--be-red-2);
 	border-radius: 3px;
 	margin-bottom: 1rem;
 }

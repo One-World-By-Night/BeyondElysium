@@ -9,7 +9,7 @@
 
 .be-world-list__table th {
 	text-align: left;
-	border-bottom: 2px solid #ccc;
+	border-bottom: 2px solid var(--be-gray-16);
 	padding: 0.4rem 0.6rem;
 }
 
@@ -19,11 +19,11 @@
 
 .be-world-list__row td {
 	padding: 0.4rem 0.6rem;
-	border-bottom: 1px solid #e0e0e0;
+	border-bottom: 1px solid var(--be-gray-21);
 }
 
 .be-world-list__row:hover {
-	background: #f5f5f5;
+	background: var(--be-gray-25);
 }
 
 .be-world-list__name {
@@ -39,9 +39,9 @@
 
 .be-world-list__error {
 	padding: 0.75rem;
-	border: 1px solid #b3261e;
-	background: #fdecea;
-	color: #611a15;
+	border: 1px solid var(--be-red-6);
+	background: var(--be-red-11);
+	color: var(--be-red-2);
 	border-radius: 3px;
 	margin-bottom: 1rem;
 }

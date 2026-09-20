@@ -21,7 +21,7 @@
 	box-sizing: border-box;
 	width: 100%;
 	padding: 0.35rem 0.5rem;
-	border: 1px solid #999;
+	border: 1px solid var(--be-gray-13);
 	border-radius: 3px;
 }
 
@@ -34,8 +34,8 @@
 	margin: 0;
 	padding: 0;
 	list-style: none;
-	background: #fff;
-	border: 1px solid #999;
+	background: var(--be-gray-29);
+	border: 1px solid var(--be-gray-13);
 	border-top: none;
 	max-height: 280px;
 	overflow-y: auto;
@@ -56,7 +56,7 @@
  * z-index-100000 label intercepting the pointer event at that exact position. */
 .be-searchable-select__list--portaled {
 	right: auto;
-	border-top: 1px solid #999;
+	border-top: 1px solid var(--be-gray-13);
 	z-index: 100001;
 }
 
@@ -66,10 +66,10 @@
 }
 
 .be-searchable-select__option--highlighted {
-	background: #e0e0e0;
+	background: var(--be-gray-21);
 }
 
 .be-searchable-select__option--custom {
 	font-style: italic;
-	border-top: 1px solid #ddd;
+	border-top: 1px solid var(--be-gray-20);
 }

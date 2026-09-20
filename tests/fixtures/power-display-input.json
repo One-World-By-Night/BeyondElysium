@@ -12,6 +12,14 @@
                     { "level": null, "tier": "elder", "power_name": "Blink" },
                     { "level": null, "tier": "elder", "power_name": "Unerring Aim" }
                 ]
+            },
+            {
+                "name": "Animalism",
+                "levels": [
+                    { "level": null, "tier": "basic", "power_name": "Feral Whispers" },
+                    { "level": null, "tier": "basic", "power_name": "Beckoning" },
+                    { "level": 2, "tier": "intermediate", "power_name": "Quell the Beast" }
+                ]
             }
         ]
     },
@@ -96,6 +104,16 @@
             "name": "a non-sequential block still expands the full stack, not just the current rung",
             "method": "named_mode_rows",
             "held": { "name": "Celerity", "level": 5 }
+        },
+        {
+            "name": "lists every tied power at that rank, not just one",
+            "method": "named_mode_rows",
+            "held": { "name": "Animalism", "level": 1 }
+        },
+        {
+            "name": "a tied rank and an untied rank both resolve correctly in the same stack",
+            "method": "named_mode_rows",
+            "held": { "name": "Animalism", "level": 2 }
         }
     ]
 }

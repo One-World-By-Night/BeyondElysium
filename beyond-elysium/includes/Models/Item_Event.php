@@ -35,6 +35,18 @@ class Item_Event {
 	}
 
 	/**
+	 * Deletes every event recorded for one world object - D1 (1.2.5-design-workflow.md §D):
+	 * `World_Object::delete()` never cleaned this table, the one real gap in an otherwise
+	 * complete single-item delete.
+	 *
+	 * @param int $world_object_id
+	 * @return bool
+	 */
+	public static function delete_for_object( int $world_object_id ): bool {
+		return Manager::delete( 'item_events', [ 'world_object_id' => $world_object_id ] ) !== false;
+	}
+
+	/**
 	 * Records one event. Returns the new row's id, or false when the event type is not
 	 * recognized or the insert fails.
 	 *

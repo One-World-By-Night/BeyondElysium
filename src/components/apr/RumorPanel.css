@@ -3,7 +3,7 @@
 .be-rumor-panel section + section {
 	margin-top: 1.25rem;
 	padding-top: 1rem;
-	border-top: 1px solid var(--be-st-border, #ddd);
+	border-top: 1px solid var(--be-st-border, var(--be-gray-20));
 }
 
 .be-rumor-panel__heading {
@@ -12,7 +12,7 @@
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.03em;
-	color: var(--be-st-muted, #555);
+	color: var(--be-st-muted, var(--be-gray-6));
 }
 
 /* D34: compound specificity, so hello-elementor's reset.css can't win. */
@@ -50,17 +50,17 @@
 
 .be-rumor-panel__items li {
 	padding: 0.35rem 0;
-	border-bottom: 1px solid var(--be-st-border, #ddd);
+	border-bottom: 1px solid var(--be-st-border, var(--be-gray-20));
 	font-size: 0.9rem;
 }
 
 .be-rumor-panel__none {
-	color: var(--be-st-faint, #777);
+	color: var(--be-st-faint, var(--be-gray-10));
 	font-size: 0.9rem;
 }
 
 .be-rumor-panel__ok {
-	color: #1a6e2e;
+	color: var(--be-green-4);
 	font-weight: 600;
 	font-size: 0.9rem;
 }

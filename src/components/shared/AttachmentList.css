@@ -12,17 +12,17 @@
 }
 
 .be-attachment-list__size {
-	color: #666;
+	color: var(--be-gray-8);
 	font-size: 0.85rem;
 }
 
 .be-attachment-list__empty {
 	font-style: italic;
-	color: #666;
+	color: var(--be-gray-8);
 }
 
 .be-attachment-list__error {
-	color: #b32d2e;
+	color: var(--be-red-7);
 	margin-bottom: 0.5rem;
 }
 

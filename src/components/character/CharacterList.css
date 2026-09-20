@@ -14,7 +14,7 @@
 .be-character-list__table td {
 	text-align: left;
 	padding: 0.4rem 0.6rem;
-	border-bottom: 1px solid #ddd;
+	border-bottom: 1px solid var(--be-gray-20);
 }
 
 .be-character-list__sort-button {
@@ -29,10 +29,10 @@
 .be-character-list__error {
 	padding: 0.75rem 1rem;
 	margin-bottom: 0.75rem;
-	border: 1px solid #c00;
+	border: 1px solid var(--be-red-5);
 	border-radius: 4px;
-	color: #c00;
-	background: #fff5f5;
+	color: var(--be-red-5);
+	background: var(--be-red-13);
 }
 
 .be-character-list__pagination {
@@ -51,8 +51,8 @@
 }
 
 .be-character-list__delete {
-	color: #b3261e;
-	border-color: #b3261e;
+	color: var(--be-red-6);
+	border-color: var(--be-red-6);
 }
 
 .be-character-list__assign {
@@ -60,33 +60,33 @@
 }
 
 .be-character-list__unassigned {
-	color: #787c82;
+	color: var(--be-gray-11);
 	font-style: italic;
 }
 
 .be-character-list__pending-match {
 	margin-top: 0.25rem;
 	font-size: 0.85rem;
-	color: #2271b1;
+	color: var(--be-blue-4);
 }
 
 /* .be-st-badge itself is defined once in PlotManager.css and reused plugin-wide. */
 .be-st-badge--travelling {
 	margin-left: 0.4rem;
-	color: #8a6d00;
-	border-color: #d9bf62;
+	color: var(--be-gold-7);
+	border-color: var(--be-gold-13);
 }
 
 .be-st-badge--visiting {
 	margin-left: 0.4rem;
-	color: #1a4f9c;
-	border-color: #a9c6f5;
+	color: var(--be-blue-3);
+	border-color: var(--be-blue-5);
 }
 
 .be-character-list__pending-email {
 	margin-top: 1rem;
 	font-size: 0.85rem;
-	color: #50575e;
+	color: var(--be-gray-7);
 }
 
 .be-character-list__pending-email input {
@@ -107,7 +107,7 @@
 	justify-content: space-between;
 	gap: 0.75rem;
 	padding: 0.4rem 0;
-	border-bottom: 1px solid #eee;
+	border-bottom: 1px solid var(--be-gray-23);
 }
 
 /* In a card, the buttons say what they do - no "Actions" label beside them. */
@@ -163,13 +163,13 @@
 
 	body {
 		margin: 0 !important;
-		background: #fff !important;
+		background: var(--be-gray-29) !important;
 	}
 
 	.be-character-list {
 		font-family: Georgia, "Times New Roman", serif;
 		font-size: 9pt;
-		color: #000;
+		color: var(--be-gray-1);
 	}
 
 	.be-character-list__table {
@@ -178,7 +178,7 @@
 
 	.be-character-list__table th,
 	.be-character-list__table td {
-		border-bottom: 1px solid #000;
+		border-bottom: 1px solid var(--be-gray-1);
 		padding: 0.25rem 0.4rem;
 	}
 

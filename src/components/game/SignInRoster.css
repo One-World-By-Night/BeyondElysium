@@ -18,12 +18,12 @@
 }
 
 .be-sign-in-roster__player {
-	color: #666;
+	color: var(--be-gray-8);
 	font-size: 0.85rem;
 }
 
 .be-sign-in-roster__error {
-	color: #b32d2e;
+	color: var(--be-red-7);
 	margin-bottom: 0.5rem;
 }
 

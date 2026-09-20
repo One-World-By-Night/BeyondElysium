@@ -24,13 +24,13 @@
 .be-approval-queue__table td {
 	text-align: left;
 	padding: 0.4rem 0.6rem;
-	border-bottom: 1px solid #e0e0e0;
+	border-bottom: 1px solid var(--be-gray-21);
 }
 
 .be-approval-queue__reason {
 	max-width: 22rem;
 	font-size: 0.85rem;
-	color: #6b5300;
+	color: var(--be-gold-5);
 }
 
 .be-approval-queue__actions {
@@ -42,9 +42,9 @@
 .be-approval-queue__error {
 	padding: 0.75rem;
 	margin-bottom: 1rem;
-	border: 1px solid #b3261e;
-	background: #fdecea;
-	color: #611a15;
+	border: 1px solid var(--be-red-6);
+	background: var(--be-red-11);
+	color: var(--be-red-2);
 	border-radius: 3px;
 }
 
@@ -91,7 +91,7 @@
 	.be-approval-queue__detail-toggle summary {
 		cursor: pointer;
 		font-weight: 600;
-		color: #555;
+		color: var(--be-gray-6);
 	}
 
 	.be-approval-queue__detail-list {
@@ -103,7 +103,7 @@
 
 	.be-approval-queue__detail-list dt {
 		font-weight: 600;
-		color: #555;
+		color: var(--be-gray-6);
 	}
 
 	.be-approval-queue__detail-list dd {

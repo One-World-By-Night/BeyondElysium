@@ -17,17 +17,17 @@
 
 .be-boon-ledger__table th {
 	text-align: left;
-	border-bottom: 2px solid #ccc;
+	border-bottom: 2px solid var(--be-gray-16);
 	padding: 0.4rem 0.6rem;
 }
 
 .be-boon-ledger__table td {
 	padding: 0.4rem 0.6rem;
-	border-bottom: 1px solid #e0e0e0;
+	border-bottom: 1px solid var(--be-gray-21);
 }
 
 .be-boon-ledger__row--repaid {
-	color: #888;
+	color: var(--be-gray-12);
 }
 
 .be-boon-ledger__repaid-note {
@@ -50,9 +50,9 @@
 
 .be-boon-ledger__error {
 	padding: 0.75rem;
-	border: 1px solid #b3261e;
-	background: #fdecea;
-	color: #611a15;
+	border: 1px solid var(--be-red-6);
+	background: var(--be-red-11);
+	color: var(--be-red-2);
 	border-radius: 3px;
 	margin-bottom: 1rem;
 }
@@ -86,22 +86,22 @@
 
 	body {
 		margin: 0 !important;
-		background: #fff !important;
+		background: var(--be-gray-29) !important;
 	}
 
 	.be-boon-ledger {
 		font-family: Georgia, "Times New Roman", serif;
 		font-size: 9pt;
-		color: #000;
+		color: var(--be-gray-1);
 	}
 
 	.be-boon-ledger__table th,
 	.be-boon-ledger__table td {
-		border-bottom: 1px solid #000;
+		border-bottom: 1px solid var(--be-gray-1);
 		padding: 0.25rem 0.4rem;
 	}
 
 	.be-boon-ledger__row--repaid {
-		color: #444;
+		color: var(--be-gray-5);
 	}
 }

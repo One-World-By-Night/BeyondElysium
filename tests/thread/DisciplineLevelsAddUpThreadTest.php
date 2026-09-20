@@ -27,16 +27,33 @@ class DisciplineLevelsAddUpThreadTest extends WP_UnitTestCase {
 		Game::create( [ 'slug' => $this->slug, 'name' => 'Levels Add Up' ] );
 	}
 
-	/** @return array<int,int> level => cost for one family of a real seeded block. */
+	/**
+	 * @return array<int,int> rank => cost for one family of a real seeded block, keyed by
+	 * tier rank rather than the item's own `level` field - D66 (1.2.5-design-workflow.md
+	 * §A) leaves `level: null` on every item sharing a tied tier, so reading `level`
+	 * directly would miss most ranks. A tier's cost is read from whichever of its items
+	 * (tied or not) happens to carry `cost` first; real seeded data agrees within a tier
+	 * with rare exceptions (D66's own found example), which this helper doesn't need to
+	 * guard against for the two specific real ranks these tests exercise.
+	 */
 	private function ladder( string $block, string $family ): array {
+		$tier_rank = [
+			'basic' => 1, 'intermediate' => 2, 'advanced' => 3, 'elder' => 4,
+			'master' => 5, 'ascended' => 6, 'methuselah' => 7,
+		];
 		foreach ( Schema_Block::find_by_slug( $block )->definition->powers as $power ) {
 			if ( $power->name !== $family ) {
 				continue;
 			}
 			$costs = [];
 			foreach ( $power->levels as $level ) {
-				if ( ( $level->level ?? null ) !== null && isset( $level->cost ) ) {
-					$costs[ (int) $level->level ] = (int) $level->cost;
+				$tier = $level->tier ?? null;
+				if ( $tier === null || ! isset( $tier_rank[ $tier ] ) || ! isset( $level->cost ) ) {
+					continue;
+				}
+				$rank = $tier_rank[ $tier ];
+				if ( ! isset( $costs[ $rank ] ) ) {
+					$costs[ $rank ] = (int) $level->cost;
 				}
 			}
 			return $costs;

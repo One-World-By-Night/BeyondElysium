@@ -519,7 +519,7 @@ class Factions_Controller extends Base_Controller {
 			'title'         => $title,
 			'character_id'  => $request->get_param( 'character_id' ) ? (int) $request->get_param( 'character_id' ) : null,
 			'holder_public' => $request->has_param( 'holder_public' ) ? (bool) $request->get_param( 'holder_public' ) : true,
-			'notes'         => $request->get_param( 'notes' ) ? sanitize_textarea_field( (string) $request->get_param( 'notes' ) ) : null,
+			'notes'         => $request->get_param( 'notes' ) ? wp_kses_post( (string) $request->get_param( 'notes' ) ) : null,
 			'created_by'    => get_current_user_id(),
 		], $audience ) );
 		if ( ! $id ) {
@@ -556,7 +556,7 @@ class Factions_Controller extends Base_Controller {
 		}
 		if ( $request->has_param( 'notes' ) ) {
 			$value          = $request->get_param( 'notes' );
-			$data['notes']  = $value ? sanitize_textarea_field( (string) $value ) : null;
+			$data['notes']  = $value ? wp_kses_post( (string) $value ) : null;
 		}
 
 		$audience = $this->resolve_audience( $request, Position::AUDIENCE_VALUES );

@@ -21,18 +21,18 @@
 	width: 100%;
 	max-width: 32rem;
 	height: 0.75rem;
-	background: #e0e0e0;
+	background: var(--be-gray-21);
 	border-radius: 4px;
 	overflow: hidden;
 }
 
 .be-admin-translations__bar-fill {
 	height: 100%;
-	background: #2271b1;
+	background: var(--be-blue-4);
 }
 
 .be-admin-translations__status-breakdown {
-	color: #555;
+	color: var(--be-gray-6);
 	font-size: 0.9rem;
 }
 

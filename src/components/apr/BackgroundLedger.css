@@ -6,11 +6,11 @@
 }
 
 .be-background-ledger__error {
-	color: #c00;
+	color: var(--be-red-5);
 }
 
 .be-background-ledger__subaction {
-	border: 1px solid #dcdcde;
+	border: 1px solid var(--be-gray-19);
 	border-radius: 4px;
 	padding: 0.75rem 1rem;
 }
@@ -26,17 +26,17 @@
 .be-background-ledger__spent {
 	font-size: 0.8rem;
 	font-weight: 400;
-	color: #646970;
+	color: var(--be-gray-9);
 }
 
 .be-background-ledger__spent.is-over {
-	color: #b32d2e;
+	color: var(--be-red-7);
 	font-weight: 600;
 }
 
 .be-background-ledger__hint {
 	font-size: 0.85rem;
-	color: #787c82;
+	color: var(--be-gray-11);
 	margin: 0 0 0.5rem;
 }
 
@@ -46,7 +46,7 @@
 	align-items: center;
 	gap: 0.5rem;
 	padding: 0.35rem 0;
-	border-bottom: 1px solid #f0f0f1;
+	border-bottom: 1px solid var(--be-gray-24);
 }
 
 .be-background-ledger__use-text {
@@ -56,7 +56,7 @@
 
 .be-background-ledger__use-result {
 	margin: 0;
-	color: #2271b1;
+	color: var(--be-blue-4);
 	font-style: italic;
 }
 
@@ -71,7 +71,7 @@
 }
 
 .be-background-ledger__unbudgeted {
-	border-top: 1px dashed #dcdcde;
+	border-top: 1px dashed var(--be-gray-19);
 	padding-top: 1rem;
 }
 

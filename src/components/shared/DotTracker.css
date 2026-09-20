@@ -15,7 +15,7 @@
 	width: 0.9rem;
 	font-size: 0.7rem;
 	font-weight: 600;
-	color: #888;
+	color: var(--be-gray-12);
 	text-align: center;
 }
 
@@ -38,29 +38,29 @@
 	width: 0.875rem;
 	height: 0.875rem;
 	padding: 0;
-	border: 1px solid #888;
+	border: 1px solid var(--be-gray-12);
 	border-radius: 2px;
-	background: #fff;
+	background: var(--be-gray-29);
 }
 
 .be-dot-tracker__dot--filled {
-	background: #333;
-	border-color: #333;
+	background: var(--be-gray-4);
+	border-color: var(--be-gray-4);
 }
 
 .be-dot-tracker__dot--spent {
-	background: #fff;
-	border-color: #888;
+	background: var(--be-gray-29);
+	border-color: var(--be-gray-12);
 }
 
 .be-dot-tracker__dot--overflow {
-	background: #b3261e;
-	border-color: #b3261e;
+	background: var(--be-red-6);
+	border-color: var(--be-red-6);
 }
 
 .be-dot-tracker__dot--empty {
-	background: #fff;
-	border-color: #ccc;
+	background: var(--be-gray-29);
+	border-color: var(--be-gray-16);
 }
 
 .be-dot-tracker__dot--temp {
@@ -86,10 +86,10 @@
 	width: 1.6rem;
 	height: 1.6rem;
 	padding: 0;
-	border: 1px solid #999;
+	border: 1px solid var(--be-gray-13);
 	border-radius: 3px;
 	background: transparent;
-	color: #333;
+	color: var(--be-gray-4);
 	font-size: 0.9rem;
 	line-height: 1;
 	text-align: center;
@@ -97,12 +97,12 @@
 }
 
 .be-dot-tracker__stepper-button:disabled {
-	color: #ccc;
-	border-color: #ddd;
+	color: var(--be-gray-16);
+	border-color: var(--be-gray-20);
 	cursor: default;
 }
 
 .be-dot-tracker__stepper-button:not(:disabled):hover,
 .be-dot-tracker__stepper-button:not(:disabled):focus-visible {
-	background: #eee;
+	background: var(--be-gray-23);
 }

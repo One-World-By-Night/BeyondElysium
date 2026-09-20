@@ -1,9 +1,9 @@
 .be-faction-restrictions__field {
-	border: 1px solid #d0d0d0;
+	border: 1px solid var(--be-gray-18);
 	border-radius: 4px;
 	padding: 0.75rem;
 	margin-bottom: 0.75rem;
-	background: #fafafa;
+	background: var(--be-gray-28);
 }
 
 .be-faction-restrictions__field h4 {
@@ -20,11 +20,11 @@
 }
 
 .be-faction-restrictions__warning {
-	color: #b32d2e;
+	color: var(--be-red-7);
 	font-size: 0.85rem;
 }
 
 .be-faction-restrictions__empty {
 	font-style: italic;
-	color: #666;
+	color: var(--be-gray-8);
 }

@@ -1,9 +1,9 @@
 .be-game-dashboard__error {
 	padding: 0.75rem;
 	margin-bottom: 1rem;
-	border: 1px solid #b3261e;
-	background: #fdecea;
-	color: #611a15;
+	border: 1px solid var(--be-red-6);
+	background: var(--be-red-11);
+	color: var(--be-red-2);
 	border-radius: 3px;
 }
 
@@ -17,9 +17,9 @@
 .be-game-dashboard__card {
 	flex: 1 1 180px;
 	padding: 1rem;
-	border: 1px solid #e0e0e0;
+	border: 1px solid var(--be-gray-21);
 	border-radius: 4px;
-	background: #fafafa;
+	background: var(--be-gray-28);
 }
 
 .be-game-dashboard__card-value {
@@ -32,7 +32,7 @@
 .be-game-dashboard__card-label {
 	display: block;
 	margin-top: 0.25rem;
-	color: #555;
+	color: var(--be-gray-6);
 }
 
 .be-game-dashboard__card-toggle {
@@ -52,7 +52,7 @@
 	padding: 0;
 	list-style: none;
 	font-size: 0.9rem;
-	color: #555;
+	color: var(--be-gray-6);
 }
 
 .be-game-dashboard__links {
@@ -74,7 +74,7 @@
 
 .be-game-dashboard__list li {
 	padding: 0.4rem 0;
-	border-bottom: 1px solid #e0e0e0;
+	border-bottom: 1px solid var(--be-gray-21);
 }
 
 .be-game-dashboard__link-button {
@@ -82,7 +82,7 @@
 	background: none;
 	padding: 0;
 	font: inherit;
-	color: #2271b1;
+	color: var(--be-blue-4);
 	text-decoration: underline;
 	cursor: pointer;
 }
@@ -91,6 +91,6 @@
 	display: inline-block;
 	padding: 0.1rem 0.5rem;
 	border-radius: 10px;
-	background: #e8e8e8;
+	background: var(--be-gray-22);
 	font-size: 0.8rem;
 }

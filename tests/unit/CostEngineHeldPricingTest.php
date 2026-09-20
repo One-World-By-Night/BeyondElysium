@@ -107,18 +107,14 @@ class CostEngineHeldPricingTest extends TestCase {
 		$definition = self::def( 'vampire-disciplines' );
 		$this->assertNotEmpty( $definition->sequential ?? false, 'the seeded Disciplines ladder adds up' );
 
-		$power = $this->find_power( $definition, 'Animalism' );
-		$sum   = 0;
-		foreach ( $power->levels as $level ) {
-			$n = (int) ( $level->level ?? 0 );
-			if ( $n >= 1 && $n <= 5 && isset( $level->cost ) ) {
-				$sum += (int) $level->cost;
-			}
-		}
-
+		// Real seeded Animalism (D66): every tier from basic through master is tied
+		// (2+ named alternatives sharing the tier, each `level: null`), so no single
+		// item carries a real numbered level anywhere in 1-5 - the sum is the
+		// block's own real tier ladder (3+6+9+12+15), derived from its seeded data
+		// (`Cost_Engine::block_tier_costs()`), not a per-item level lookup.
 		$result = Cost_Engine::price_held_tiered_power( $definition, [ 'name' => 'Animalism', 'level' => 5 ], true );
 
-		$this->assertSame( $sum, $result['xp'] );
+		$this->assertSame( 45, $result['xp'] );
 		$this->assertSame( 'sequential_sum', $result['basis'] );
 	}
 
@@ -126,17 +122,15 @@ class CostEngineHeldPricingTest extends TestCase {
 		$definition = self::def( 'mage-spheres' );
 		$this->assertNotEmpty( $definition->sequential ?? false, 'mage-spheres must be sequential for this test to mean anything' );
 
-		$power = $this->find_power( $definition, 'Correspondence' );
-		$sum   = 0;
-		foreach ( $power->levels as $level ) {
-			if ( (int) ( $level->level ?? 0 ) <= 3 && isset( $level->cost ) ) {
-				$sum += (int) $level->cost;
-			}
-		}
-
+		// Real seeded Correspondence (D66): basic and intermediate are each tied
+		// (Apprentice/Initiate both cost 5, Disciple/Adept both cost 10); only
+		// Master (advanced, cost 15) is untied and carries a real level=3. Sum is
+		// mage-spheres' own real tier ladder (5+10+15=30) - a different scale from
+		// vampire-disciplines' 3/6/9, confirming the fallback reads each block's
+		// own seeded costs rather than one hardcoded table.
 		$result = Cost_Engine::price_held_tiered_power( $definition, [ 'name' => 'Correspondence', 'level' => 3 ], true );
 
-		$this->assertSame( $sum, $result['xp'] );
+		$this->assertSame( 30, $result['xp'] );
 		$this->assertSame( 'sequential_sum', $result['basis'] );
 	}
 

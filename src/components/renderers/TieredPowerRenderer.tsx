@@ -62,6 +62,50 @@ function findLevel(
 	return power?.levels.find( ( entry ) => entry.level === level );
 }
 
+/**
+ * Maps a numbered rank (1=basic, 2=intermediate, ...) to its tier name. Mirrors
+ * `Cost_Engine::tier_for_rank()`/`Database\Seeder::TIER_RANKS` on the PHP side and
+ * `Power_Display::tier_for_rank()`, its own exact twin - duplicated per-file rather
+ * than shared, matching this codebase's established precedent for this one lookup.
+ */
+export const TIER_FOR_RANK: Record< number, string > = {
+	1: 'basic',
+	2: 'intermediate',
+	3: 'advanced',
+	4: 'elder',
+	5: 'master',
+	6: 'ascended',
+	7: 'methuselah',
+};
+
+/**
+ * Every real power at a given rank on a family's ladder - normally the single item
+ * whose own `level` matches exactly, but D66 (1.2.5-design-workflow.md §A2: "anything
+ * where more than one power exist on the same level... always show all") leaves
+ * `level: null` on every item when several share one tier, so falls back to matching
+ * by the rank's tier instead. Never rolled up to one entry - a caller that needs a
+ * single name is a caller from before this fix existed. Exported for
+ * `TieredPowerEditor.tsx`'s own `maxLevel()`/`levelName()`, which need the identical
+ * rank-from-tier logic rather than a third copy of it.
+ */
+export function findLevelsAtRank(
+	power: TieredPower | undefined,
+	rank: number
+): PowerLevel[] {
+	if ( ! power ) {
+		return [];
+	}
+	const exact = power.levels.filter( ( entry ) => entry.level === rank );
+	if ( exact.length > 0 ) {
+		return exact;
+	}
+	const tier = TIER_FOR_RANK[ rank ];
+	if ( ! tier ) {
+		return [];
+	}
+	return power.levels.filter( ( entry ) => entry.tier === tier );
+}
+
 /** Elder-and-above lookup: by the specific power's own name, not a number. */
 function findByPowerName(
 	power: TieredPower | undefined,
@@ -145,6 +189,12 @@ export function namedLabel(
  * a plain numbered holding. Decision 037 governs pricing cumulativeness, not display: a
  * player who wants every named rung listed sees the whole stack either way, sequential
  * block or not.
+ *
+ * D66 (1.2.5-design-workflow.md §A2, owner: "anything where more than one power exist on
+ * the same level... always show all") - a rung tied between several named alternatives
+ * (`level: null` on all of them) pushes every one of their names, never rolled up to one
+ * entry; MET disciplines/gifts/etc. genuinely grant every power at a rank a character has
+ * reached, not a single chosen pick, so this matches the real rule, not just the display.
  */
 export function namedModeRows(
 	definition: TieredPowerDefinition,
@@ -153,9 +203,17 @@ export function namedModeRows(
 	if ( held.power_name ) {
 		return [ namedLabel( definition, held, held.level ) ];
 	}
+	const power = findPower( definition, held.name );
 	const rows: string[] = [];
 	for ( let level = 1; level <= ( held.level ?? 0 ); level++ ) {
-		rows.push( namedLabel( definition, held, level ) );
+		const atRank = findLevelsAtRank( power, level );
+		if ( atRank.length === 0 ) {
+			rows.push( numericLabel( definition, held ) );
+			continue;
+		}
+		for ( const entry of atRank ) {
+			rows.push( localizedPowerName( entry ) );
+		}
 	}
 	return rows;
 }
@@ -189,13 +247,30 @@ export function TieredPowerRenderer( {
 		<div className="be-tiered-power" data-block-slug={ blockSlug }>
 			<ul className="be-tiered-power__items">
 				{ data.map( ( held, index ) => {
-					const label =
-						mode === 'numeric'
-							? numericLabel( definition, held )
-							: namedModeRows( definition, held ).join( ', ' );
+					if ( mode === 'numeric' ) {
+						return (
+							<li key={ `${ held.name }-${ index }` }>
+								{ withTradition(
+									held,
+									numericLabel( definition, held )
+								) }
+							</li>
+						);
+					}
+					// Named mode: every row stacks on its own line rather than joining
+					// into one comma-separated string, so a rank tied between many named
+					// alternatives (A2: "never roll up") stacks into cards instead of
+					// wrapping or scrolling sideways at phone width.
+					const rows = namedModeRows( definition, held );
 					return (
 						<li key={ `${ held.name }-${ index }` }>
-							{ withTradition( held, label ) }
+							<ul className="be-tiered-power__rank-rows">
+								{ rows.map( ( row, rowIndex ) => (
+									<li key={ rowIndex }>
+										{ withTradition( held, row ) }
+									</li>
+								) ) }
+							</ul>
 						</li>
 					);
 				} ) }

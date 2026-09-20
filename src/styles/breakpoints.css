@@ -108,7 +108,7 @@
 	}
 
 	.be-responsive-table tr {
-		border: 1px solid #ddd;
+		border: 1px solid var(--be-gray-20);
 		border-radius: 4px;
 		margin-bottom: 0.75rem;
 		padding: 0.5rem;
@@ -133,7 +133,7 @@
 		content: attr(data-label);
 		flex: 0 0 8rem;
 		font-weight: 600;
-		color: #555;
+		color: var(--be-gray-6);
 	}
 
 	.be-responsive-table td:empty {

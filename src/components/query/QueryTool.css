@@ -9,21 +9,21 @@
 
 .be-query-tool__inventories button {
 	padding: 0.3rem 0.85rem;
-	border: 1px solid #c3c4c7;
+	border: 1px solid var(--be-gray-15);
 	border-radius: 999px;
-	background: #fff;
-	color: #1d2327;
+	background: var(--be-gray-29);
+	color: var(--be-gray-3);
 	cursor: pointer;
 }
 
 .be-query-tool__inventories button:hover {
-	border-color: #1a4f9c;
+	border-color: var(--be-blue-3);
 }
 
 .be-query-tool__inventories button.is-active {
-	border-color: #1a4f9c;
-	background: #1a4f9c;
-	color: #fff;
+	border-color: var(--be-blue-3);
+	background: var(--be-blue-3);
+	color: var(--be-gray-29);
 	font-weight: 600;
 }
 
@@ -45,9 +45,9 @@
 
 .be-query-tool__error {
 	padding: 0.75rem;
-	border: 1px solid #b3261e;
-	background: #fdecea;
-	color: #611a15;
+	border: 1px solid var(--be-red-6);
+	background: var(--be-red-11);
+	color: var(--be-red-2);
 	border-radius: 3px;
 	margin-bottom: 1rem;
 }
@@ -62,7 +62,7 @@
 	gap: 0.75rem;
 	align-items: center;
 	padding: 0.4rem 0;
-	border-bottom: 1px solid #e0e0e0;
+	border-bottom: 1px solid var(--be-gray-21);
 }
 
 .be-query-tool__saved-list li span {

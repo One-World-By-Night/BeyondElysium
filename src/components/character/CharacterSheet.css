@@ -7,7 +7,7 @@
  */
 .be-character-sheet {
 	--be-sheet-font: inherit;
-	--be-sheet-accent: #8b0000;
+	--be-sheet-accent: var(--be-red-1);
 	--be-sheet-bg: transparent;
 	--be-sheet-text: inherit;
 	--be-sheet-bg-image: none;
@@ -94,7 +94,7 @@
 .be-character-sheet__action-close:hover,
 .be-character-sheet__gex-export:hover:not(:disabled) {
 	background: var(--be-sheet-accent);
-	color: #fff;
+	color: var(--be-gray-29);
 }
 
 .be-character-sheet__print:disabled,
@@ -127,8 +127,8 @@
 .be-character-sheet__travelling-notice {
 	padding: 0.6rem 0.75rem;
 	margin-bottom: 0.75rem;
-	border: 1px solid #b8860b;
-	background: #fff8e6;
+	border: 1px solid var(--be-gold-9);
+	background: var(--be-gold-18);
 	border-radius: 3px;
 	font-size: 0.9rem;
 }
@@ -144,7 +144,7 @@
 	padding: 0.35rem 0.5rem;
 	border: 1px solid var(--be-sheet-accent);
 	border-radius: 3px;
-	background: #fff;
+	background: var(--be-gray-29);
 	color: inherit;
 	font-size: 0.85rem;
 }
@@ -152,7 +152,7 @@
 .be-character-sheet__action-panel {
 	margin-bottom: 0.75rem;
 	padding: 0.75rem 1rem;
-	border: 1px solid #dcdcde;
+	border: 1px solid var(--be-gray-19);
 	border-radius: 4px;
 }
 
@@ -195,7 +195,7 @@
 	gap: 1rem;
 	margin-bottom: 0.75rem;
 	font-size: 0.85rem;
-	color: #555;
+	color: var(--be-gray-6);
 }
 
 .be-character-sheet__print-options label {
@@ -227,7 +227,7 @@
 	height: 5rem;
 	object-fit: cover;
 	border-radius: 4px;
-	border: 1px solid #ccc;
+	border: 1px solid var(--be-gray-16);
 	flex: 0 0 auto;
 }
 
@@ -238,16 +238,16 @@
 	gap: 1rem 2rem;
 	padding: 0.75rem 1rem;
 	margin-bottom: 1rem;
-	border: 1px solid #ccc;
+	border: 1px solid var(--be-gray-16);
 	border-radius: 4px;
-	background: #f7f7f7;
+	background: var(--be-gray-27);
 }
 
 .be-character-sheet__header dt {
 	font-weight: 600;
 	font-size: 0.75rem;
 	text-transform: uppercase;
-	color: #555;
+	color: var(--be-gray-6);
 }
 
 .be-character-sheet__header dd {
@@ -286,7 +286,7 @@
 }
 
 .be-character-sheet__section {
-	border: 1px solid #ddd;
+	border: 1px solid var(--be-gray-20);
 	border-radius: 4px;
 	padding: 0.75rem;
 }
@@ -312,14 +312,14 @@
 
 .be-character-sheet__skeleton {
 	padding: 1rem;
-	color: #777;
+	color: var(--be-gray-10);
 }
 
 .be-character-sheet__error {
 	padding: 1rem;
-	border: 1px solid #c00;
+	border: 1px solid var(--be-red-5);
 	border-radius: 4px;
-	color: #c00;
+	color: var(--be-red-5);
 }
 
 @media ( max-width: 768px ) {
@@ -405,7 +405,7 @@
 
 	body {
 		margin: 0 !important;
-		background: #fff !important;
+		background: var(--be-gray-29) !important;
 	}
 
 	/* Reserved for interactive-only UI (edit controls, print options themselves) - never
@@ -429,13 +429,13 @@
 		margin: 0 auto;
 		font-family: Georgia, "Times New Roman", serif;
 		font-size: 9pt;
-		color: #000;
-		background: #fff !important;
+		color: var(--be-gray-1);
+		background: var(--be-gray-29) !important;
 	}
 
 	.be-character-sheet__header {
 		border: none;
-		border-bottom: 1px solid #000;
+		border-bottom: 1px solid var(--be-gray-1);
 		border-radius: 0;
 		background: none;
 		padding: 0 0 0.4rem;

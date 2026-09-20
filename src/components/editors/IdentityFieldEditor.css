@@ -9,7 +9,7 @@
 	font-weight: 600;
 	font-size: 0.8rem;
 	text-transform: uppercase;
-	color: #555;
+	color: var(--be-gray-6);
 }
 
 .be-identity-field-editor__multiselect {
@@ -28,5 +28,5 @@
 
 .be-identity-field-editor__hint {
 	font-size: 0.75rem;
-	color: #777;
+	color: var(--be-gray-10);
 }

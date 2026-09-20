@@ -1,7 +1,7 @@
 .be-modal__backdrop {
 	position: fixed;
 	inset: 0;
-	background: rgba(0, 0, 0, 0.5);
+	background: var(--be-shadow-5);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -9,9 +9,9 @@
 }
 
 .be-modal {
-	background: #fff;
+	background: var(--be-gray-29);
 	border-radius: 6px;
-	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+	box-shadow: 0 4px 24px var(--be-shadow-3);
 	width: 100%;
 	max-width: 28rem;
 
@@ -31,7 +31,7 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: 0.9rem 1.1rem;
-	border-bottom: 1px solid #e0e0e0;
+	border-bottom: 1px solid var(--be-gray-21);
 }
 
 .be-modal__title {
@@ -44,14 +44,14 @@
 	background: none;
 	font-size: 1.4rem;
 	line-height: 1;
-	color: #666;
+	color: var(--be-gray-8);
 	cursor: pointer;
 	padding: 0 0.25rem;
 }
 
 .be-modal__close:hover,
 .be-modal__close:focus-visible {
-	color: #000;
+	color: var(--be-gray-1);
 }
 
 .be-modal__body {
@@ -64,5 +64,5 @@
 	justify-content: flex-end;
 	gap: 0.5rem;
 	padding: 0.9rem 1.1rem;
-	border-top: 1px solid #e0e0e0;
+	border-top: 1px solid var(--be-gray-21);
 }

@@ -24,7 +24,7 @@
 
 .be-connection-manager__items li {
 	padding: 0.4rem 0;
-	border-bottom: 1px solid #e0e0e0;
+	border-bottom: 1px solid var(--be-gray-21);
 }
 
 .be-connection-manager__row {
@@ -35,7 +35,7 @@
 
 .be-connection-manager__notes {
 	margin: 0.3rem 0 0;
-	color: #555;
+	color: var(--be-gray-6);
 	font-size: 0.9em;
 }
 
@@ -47,15 +47,15 @@
 }
 
 .be-connection-manager__label {
-	color: #555;
+	color: var(--be-gray-6);
 	font-style: italic;
 }
 
 .be-connection-manager__error {
 	padding: 0.75rem;
-	border: 1px solid #b3261e;
-	background: #fdecea;
-	color: #611a15;
+	border: 1px solid var(--be-red-6);
+	background: var(--be-red-11);
+	color: var(--be-red-2);
 	border-radius: 3px;
 	margin-bottom: 1rem;
 }

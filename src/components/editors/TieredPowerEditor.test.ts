@@ -76,6 +76,21 @@ describe( 'maxLevel (Decision 037)', () => {
 		const def = definition( [] );
 		expect( maxLevel( def, 'Nonexistent' ) ).toBe( 5 );
 	} );
+
+	// D66 (1.2.5-design-workflow.md §A2): a family whose top tier is tied (every item
+	// there has `level: null`) must not have its real max rank undercounted just
+	// because no single item carries the number.
+	it( 'derives the true max from tier when the top tier is tied (level: null on every item there)', () => {
+		const def = definition( [
+			{ level: null, power_name: 'Feral Whispers', tier: 'basic' },
+			{ level: null, power_name: 'Beckoning', tier: 'basic' },
+			{ level: 2, power_name: 'Quell the Beast', tier: 'intermediate' },
+			{ level: null, power_name: 'Song in the Dark', tier: 'elder' },
+			{ level: null, power_name: 'Species Speech', tier: 'elder' },
+		] );
+
+		expect( maxLevel( def, 'Celerity' ) ).toBe( 4 );
+	} );
 } );
 
 describe( 'withCustomLadders (workflow-0.9.md Step 0c)', () => {
@@ -252,6 +267,20 @@ describe( 'levelName (checklist view - "the gap": some players want every named 
 
 		expect( levelName( def, 'Nonexistent Power', 1 ) ).toBe(
 			'Nonexistent Power 1'
+		);
+	} );
+
+	// D66 (1.2.5-design-workflow.md §A2, owner: "never roll up") - a checklist rung
+	// tied between several named powers (`level: null` on all of them) joins every
+	// one of their names instead of falling through to the generic placeholder.
+	it( 'joins every tied power name at a rank, never rolling up to a placeholder', () => {
+		const def = definition( [
+			{ level: null, power_name: 'Feral Whispers', tier: 'basic' },
+			{ level: null, power_name: 'Beckoning', tier: 'basic' },
+		] );
+
+		expect( levelName( def, 'Celerity', 1 ) ).toBe(
+			'Feral Whispers, Beckoning'
 		);
 	} );
 } );

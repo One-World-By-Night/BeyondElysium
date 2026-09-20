@@ -15,3 +15,21 @@
 	padding: 0.15rem 0;
 	line-height: 1.35;
 }
+
+/**
+ * Named mode's per-rank rows (A2, 1.2.5-design-workflow.md §A: a rank tied between
+ * several named powers lists every one of them - "never roll up"). Stacks vertically
+ * regardless of viewport width rather than a comma-joined inline run, so a family with
+ * many tied ranks (a real Fera gift tree, dozens of options wide) never forces a
+ * sideways scroll at phone width.
+ */
+.be-tiered-power .be-tiered-power__rank-rows {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.be-tiered-power .be-tiered-power__rank-rows li {
+	padding: 0;
+	line-height: 1.35;
+}

@@ -538,6 +538,8 @@ class World_Object {
 			}
 		}
 		Connection::delete_for_entity( 'world_object', $id );
+		// D1 (1.2.5-design-workflow.md §D): the one real gap in this otherwise-complete delete.
+		Item_Event::delete_for_object( $id );
 		$result = Manager::delete( 'world_objects', [ 'id' => $id ] );
 
 		if ( $result === false ) {

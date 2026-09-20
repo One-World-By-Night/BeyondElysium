@@ -24,10 +24,10 @@
 
 .be-propose-faction__error {
 	padding: 0.75rem 1rem;
-	border: 1px solid #c00;
+	border: 1px solid var(--be-red-5);
 	border-radius: 4px;
-	color: #c00;
-	background: #fff5f5;
+	color: var(--be-red-5);
+	background: var(--be-red-13);
 }
 
 .be-propose-faction button[type="submit"] {

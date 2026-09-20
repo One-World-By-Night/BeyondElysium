@@ -6,7 +6,7 @@
 
 .be-what-i-know__item {
 	padding: 0.75rem;
-	border: 1px solid #ddd;
+	border: 1px solid var(--be-gray-20);
 	border-radius: 4px;
 }
 
@@ -20,12 +20,12 @@
 .be-what-i-know__learned {
 	margin: 0.4rem 0 0;
 	font-size: 0.8rem;
-	color: #777;
+	color: var(--be-gray-10);
 }
 
 .be-what-i-know__error {
 	padding: 0.75rem;
-	border: 1px solid #c00;
+	border: 1px solid var(--be-red-5);
 	border-radius: 4px;
-	color: #c00;
+	color: var(--be-red-5);
 }

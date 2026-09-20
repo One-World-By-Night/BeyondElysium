@@ -37,7 +37,7 @@
 .be-query-results__table td {
 	text-align: left;
 	padding: 0.4rem 0.6rem;
-	border-bottom: 1px solid #e0e0e0;
+	border-bottom: 1px solid var(--be-gray-21);
 }
 
 .be-query-results__sort {
@@ -62,8 +62,8 @@
 	flex-wrap: wrap;
 	margin-top: 0.75rem;
 	padding: 0.5rem;
-	background: #f6f7f7;
-	border: 1px solid #dcdcde;
+	background: var(--be-gray-26);
+	border: 1px solid var(--be-gray-19);
 }
 
 /* Two-class compound selector, not a bare input - D34/Decision 045: the live

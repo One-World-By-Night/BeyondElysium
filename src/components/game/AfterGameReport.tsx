@@ -4,10 +4,11 @@
  * anything for staff. Editable until the session's own reports_due_at; a Storyteller reads
  * and marks it read, never edits it.
  */
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import HelpButton from '../shared/HelpButton';
+import HtmlEditor from '../shared/HtmlEditor';
 import type { Character } from '../../types/character';
 import type {
 	AfterGameReport as Report,
@@ -25,9 +26,9 @@ export function AfterGameReport( { gameSlug }: AfterGameReportProps ) {
 	const [ sessionId, setSessionId ] = useState( '' );
 	const [ characterId, setCharacterId ] = useState( '' );
 	const [ existing, setExisting ] = useState< Report | null >( null );
-	const [ did, setDid ] = useState( '' );
-	const [ wants, setWants ] = useState( '' );
-	const [ toStaff, setToStaff ] = useState( '' );
+	const didDraft = useRef( '' );
+	const wantsDraft = useRef( '' );
+	const toStaffDraft = useRef( '' );
 	const [ closed, setClosed ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
 	const [ saving, setSaving ] = useState( false );
@@ -55,9 +56,9 @@ export function AfterGameReport( { gameSlug }: AfterGameReportProps ) {
 
 	useEffect( () => {
 		setExisting( null );
-		setDid( '' );
-		setWants( '' );
-		setToStaff( '' );
+		didDraft.current = '';
+		wantsDraft.current = '';
+		toStaffDraft.current = '';
 		setClosed( false );
 		setSaved( false );
 		if ( ! sessionId || ! characterId ) {
@@ -74,10 +75,13 @@ export function AfterGameReport( { gameSlug }: AfterGameReportProps ) {
 					( r ) => String( r.character_id ) === characterId
 				);
 				if ( mine ) {
+					didDraft.current = mine.did ?? '';
+					wantsDraft.current = mine.wants ?? '';
+					toStaffDraft.current = mine.to_staff ?? '';
+					// HtmlEditor is uncontrolled - setting the drafts alone would never
+					// reach an already-mounted TinyMCE instance, so this re-key (below)
+					// depends on `existing` to force a fresh mount with the real content.
 					setExisting( mine );
-					setDid( mine.did ?? '' );
-					setWants( mine.wants ?? '' );
-					setToStaff( mine.to_staff ?? '' );
 				}
 			} )
 			.catch( () => {} );
@@ -94,9 +98,9 @@ export function AfterGameReport( { gameSlug }: AfterGameReportProps ) {
 		try {
 			const data = {
 				character_id: Number( characterId ),
-				did,
-				wants,
-				to_staff: toStaff,
+				did: didDraft.current,
+				wants: wantsDraft.current,
+				to_staff: toStaffDraft.current,
 			};
 			const result = existing
 				? await api
@@ -113,6 +117,14 @@ export function AfterGameReport( { gameSlug }: AfterGameReportProps ) {
 			setSaving( false );
 		}
 	}
+
+	// HtmlEditor is uncontrolled (TinyMCE owns the DOM after mount) - a fresh key forces
+	// a real remount, the only way to load newly-fetched content into it. Changes on every
+	// session/character switch, and once more when an existing report's real content
+	// arrives asynchronously (the 'new'-to-real-id transition inside the effect above).
+	const editorKey = `${ sessionId || 'none' }-${ characterId || 'none' }-${
+		existing?.id ?? 'new'
+	}`;
 
 	return (
 		<div className="be-after-game-report">
@@ -170,52 +182,59 @@ export function AfterGameReport( { gameSlug }: AfterGameReportProps ) {
 							</p>
 						) }
 
-						<label className="be-after-game-report__field">
+						<div className="be-after-game-report__field">
 							<span>
 								{ __(
 									'What did your character do?',
 									'beyond-elysium'
 								) }
 							</span>
-							<textarea
-								value={ did }
-								onChange={ ( e ) => setDid( e.target.value ) }
-								disabled={ closed }
+							<HtmlEditor
+								id={ `be-agr-did-${ editorKey }` }
+								defaultValue={ didDraft.current }
+								readOnly={ closed }
 								rows={ 4 }
+								onChange={ ( html ) => {
+									didDraft.current = html;
+								} }
 							/>
-						</label>
+						</div>
 
-						<label className="be-after-game-report__field">
+						<div className="be-after-game-report__field">
 							<span>
 								{ __(
 									'What do you want next?',
 									'beyond-elysium'
 								) }
 							</span>
-							<textarea
-								value={ wants }
-								onChange={ ( e ) => setWants( e.target.value ) }
-								disabled={ closed }
+							<HtmlEditor
+								id={ `be-agr-wants-${ editorKey }` }
+								defaultValue={ wantsDraft.current }
+								readOnly={ closed }
 								rows={ 4 }
+								onChange={ ( html ) => {
+									wantsDraft.current = html;
+								} }
 							/>
-						</label>
+						</div>
 
-						<label className="be-after-game-report__field">
+						<div className="be-after-game-report__field">
 							<span>
 								{ __(
 									'Anything for staff?',
 									'beyond-elysium'
 								) }
 							</span>
-							<textarea
-								value={ toStaff }
-								onChange={ ( e ) =>
-									setToStaff( e.target.value )
-								}
-								disabled={ closed }
+							<HtmlEditor
+								id={ `be-agr-to-staff-${ editorKey }` }
+								defaultValue={ toStaffDraft.current }
+								readOnly={ closed }
 								rows={ 3 }
+								onChange={ ( html ) => {
+									toStaffDraft.current = html;
+								} }
 							/>
-						</label>
+						</div>
 
 						{ error && (
 							<p

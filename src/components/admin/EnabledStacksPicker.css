@@ -8,7 +8,7 @@
 }
 
 .be-enabled-stacks-picker__warning {
-	color: #b3261e;
+	color: var(--be-red-6);
 	font-size: 0.85rem;
 	margin: 0 0 0.5rem;
 }

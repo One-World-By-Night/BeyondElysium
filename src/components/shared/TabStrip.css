@@ -17,9 +17,9 @@
 	flex: 1 1 14rem;
 	padding: 0.4rem 0.6rem;
 	min-height: var(--be-tap-min, 32px);
-	border: 1px solid #2271b1;
+	border: 1px solid var(--be-blue-4);
 	border-radius: 3px;
-	background: #fff;
+	background: var(--be-gray-29);
 	color: inherit;
 	font-size: max(16px, var(--be-input-font-min, 1rem));
 }
@@ -28,17 +28,17 @@
 	width: auto;
 	padding: 0.4rem 0.9rem;
 	min-height: var(--be-tap-min, 32px);
-	border: 1px solid #2271b1;
+	border: 1px solid var(--be-blue-4);
 	border-radius: 3px;
 	background: transparent;
-	color: #2271b1;
+	color: var(--be-blue-4);
 	font-size: 0.85rem;
 	cursor: pointer;
 }
 
 .be-tab-strip__go.be-tab-strip__go:hover:not(:disabled) {
-	background: #2271b1;
-	color: #fff;
+	background: var(--be-blue-4);
+	color: var(--be-gray-29);
 }
 
 .be-tab-strip__go.be-tab-strip__go:disabled {
