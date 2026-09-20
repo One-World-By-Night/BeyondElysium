@@ -11,7 +11,7 @@
 	padding: 0;
 }
 
-.be-statistics-view__bucket-toggle {
+.be-statistics-view__bucket-toggle.be-statistics-view__bucket-toggle {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;

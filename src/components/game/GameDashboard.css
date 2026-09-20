@@ -35,7 +35,7 @@
 	color: var(--be-gray-6);
 }
 
-.be-game-dashboard__card-toggle {
+.be-game-dashboard__card-toggle.be-game-dashboard__card-toggle {
 	display: block;
 	width: 100%;
 	padding: 0;
@@ -77,7 +77,7 @@
 	border-bottom: 1px solid var(--be-gray-21);
 }
 
-.be-game-dashboard__link-button {
+.be-game-dashboard__link-button.be-game-dashboard__link-button {
 	border: none;
 	background: none;
 	padding: 0;

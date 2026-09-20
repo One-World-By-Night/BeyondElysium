@@ -102,7 +102,7 @@
 	gap: 0.75rem;
 }
 
-.be-game-nights__session-card {
+.be-game-nights__session-card.be-game-nights__session-card {
 	display: flex;
 	flex-direction: column;
 	gap: 0.25rem;

@@ -9,7 +9,20 @@
 	gap: 0.5rem;
 }
 
-.be-help-button {
+/*
+ * D34: hello-elementor's own reset.css ships
+ * `[type="button"], [type="submit"], button { background-color: transparent;
+ * border: 1px solid #c36; color: #c36; ... }` at specificity 0,3,0 (three
+ * attribute/type selectors) - a single bare `.be-help-button` class (0,1,0)
+ * loses that fight regardless of source order, painting the button pink
+ * instead of this plugin's own gray/blue styling. Confirmed live on
+ * kony-sabbat.net: the "?" help button rendered with hello-elementor's own
+ * pink border on every page, in both light and dark mode - not a dark-mode
+ * regression, a pre-existing loss this same check happened to expose clearly.
+ * Compound-class selectors (0,2,0) beat it without `!important`, the same fix
+ * already applied to SearchableSelect/TabStrip/TieredPowerEditor.
+ */
+.be-help-button.be-help-button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -27,11 +40,11 @@
 	cursor: pointer;
 }
 
-.be-help-button:hover {
+.be-help-button.be-help-button:hover {
 	border-color: var(--be-blue-3);
 }
 
-.be-help-button[aria-expanded="true"] {
+.be-help-button.be-help-button[aria-expanded="true"] {
 	border-color: var(--be-blue-3);
 	background: var(--be-blue-3);
 	color: var(--be-gray-29);
@@ -86,8 +99,8 @@
 	outline: none;
 }
 
-.be-help-panel .be-help-panel__back,
-.be-help-panel .be-help-panel__close {
+.be-help-panel .be-help-panel__back.be-help-panel__back,
+.be-help-panel .be-help-panel__close.be-help-panel__close {
 	flex: 0 0 auto;
 	padding: 0.25rem 0.6rem;
 	border: 1px solid var(--be-gray-15);
@@ -99,7 +112,7 @@
 	cursor: pointer;
 }
 
-.be-help-panel .be-help-panel__close {
+.be-help-panel .be-help-panel__close.be-help-panel__close {
 	font-size: 1.25rem;
 }
 

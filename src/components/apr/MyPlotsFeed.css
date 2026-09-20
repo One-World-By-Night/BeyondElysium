@@ -13,7 +13,7 @@
 	margin: 0;
 }
 
-.be-my-plots__item-button {
+.be-my-plots__item-button.be-my-plots__item-button {
 	display: flex;
 	justify-content: space-between;
 	width: 100%;
@@ -25,11 +25,11 @@
 	cursor: pointer;
 }
 
-.be-my-plots__item-button:hover {
+.be-my-plots__item-button.be-my-plots__item-button:hover {
 	background: var(--be-gray-25);
 }
 
-.be-my-plots__back {
+.be-my-plots__back.be-my-plots__back {
 	margin-bottom: 1rem;
 	background: none;
 	border: none;

@@ -21,7 +21,7 @@
 	flex: 0 0 auto;
 }
 
-.be-character-editor__portrait-button {
+.be-character-editor .be-character-editor__portrait-button {
 	padding: 0.2rem 0.6rem;
 	border: 1px solid var(--be-gray-13);
 	border-radius: 3px;
@@ -31,8 +31,11 @@
 	cursor: pointer;
 }
 
-.be-character-editor__portrait-button:hover:not(:disabled),
-.be-character-editor__portrait-button:focus-visible:not(:disabled) {
+/* stylelint-disable @stylistic/max-line-length -- real BEM class names, ancestor-
+   qualified for D34 specificity, genuinely don't fit in 80 columns. */
+.be-character-editor .be-character-editor__portrait-button:hover:not(:disabled),
+.be-character-editor .be-character-editor__portrait-button:focus-visible:not(:disabled) {
+	/* stylelint-enable @stylistic/max-line-length */
 	background: var(--be-gray-23);
 }
 

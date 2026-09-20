@@ -17,7 +17,7 @@
 	border-bottom: 1px solid var(--be-gray-20);
 }
 
-.be-character-list__sort-button {
+.be-character-list__sort-button.be-character-list__sort-button {
 	background: none;
 	border: none;
 	font: inherit;
@@ -50,12 +50,12 @@
 	display: block;
 }
 
-.be-character-list__delete {
+.be-character-list__delete.be-character-list__delete {
 	color: var(--be-red-6);
 	border-color: var(--be-red-6);
 }
 
-.be-character-list__assign {
+.be-character-list__assign.be-character-list__assign {
 	margin-right: 0.4rem;
 }
 
@@ -151,7 +151,7 @@
 		display: none !important;
 	}
 
-	/* Not hidden - `.be-character-list__sort-button` already renders as plain text on
+	/* Not hidden - `.be-character-list__sort-button.be-character-list__sort-button` already renders as plain text on
 	 * screen (no border/background of its own), and its label is the actual column
 	 * heading; hiding it would print a blank header row. The ▲/▼ sort indicator printing
 	 * alongside whichever column was last sorted on screen is harmless, not worth

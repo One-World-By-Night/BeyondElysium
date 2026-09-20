@@ -37,19 +37,19 @@
 	gap: 0.5rem;
 }
 
-.be-confirm-dialog__cancel,
-.be-confirm-dialog__confirm {
+.be-confirm-dialog__cancel.be-confirm-dialog__cancel,
+.be-confirm-dialog__confirm.be-confirm-dialog__confirm {
 	padding: 0.4rem 1rem;
 	border-radius: 3px;
 	cursor: pointer;
 }
 
-.be-confirm-dialog__cancel {
+.be-confirm-dialog__cancel.be-confirm-dialog__cancel {
 	border: 1px solid var(--be-gray-13);
 	background: var(--be-gray-29);
 }
 
-.be-confirm-dialog__confirm {
+.be-confirm-dialog__confirm.be-confirm-dialog__confirm {
 	border: 1px solid var(--be-red-6);
 	background: var(--be-red-6);
 	color: var(--be-gray-29);

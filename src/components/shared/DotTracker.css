@@ -79,10 +79,14 @@
 	font-variant-numeric: tabular-nums;
 }
 
-/* A bare class selector beats hello-elementor's `button{...}` reset (D34) without
- * needing `!important` - matching `.be-tiered-power-editor__stepper-button`'s own
- * precedent exactly, same live-theme collision, same fix. */
-.be-dot-tracker__stepper-button {
+/* Corrected (1.2.5-design-workflow.md §C, live testing): hello-elementor's real rule is
+ * `[type="button"], [type="submit"], button { ... }`, not a bare `button{...}` element
+ * selector - this stepper sets `type="button"` explicitly, so the `[type="button"]`
+ * alternative ties a single class on specificity (0,1,0 each) rather than losing to it,
+ * and a tie falls back to fragile source order (confirmed live on kony-sabbat.net:
+ * `.be-help-button`'s identical shape lost this exact tie). Compound-class (0,2,0) wins
+ * outright, matching `.be-tiered-power-editor__stepper-button`'s own corrected fix. */
+.be-dot-tracker .be-dot-tracker__stepper-button {
 	width: 1.6rem;
 	height: 1.6rem;
 	padding: 0;
@@ -96,13 +100,13 @@
 	cursor: pointer;
 }
 
-.be-dot-tracker__stepper-button:disabled {
+.be-dot-tracker .be-dot-tracker__stepper-button:disabled {
 	color: var(--be-gray-16);
 	border-color: var(--be-gray-20);
 	cursor: default;
 }
 
-.be-dot-tracker__stepper-button:not(:disabled):hover,
-.be-dot-tracker__stepper-button:not(:disabled):focus-visible {
+.be-dot-tracker .be-dot-tracker__stepper-button:not(:disabled):hover,
+.be-dot-tracker .be-dot-tracker__stepper-button:not(:disabled):focus-visible {
 	background: var(--be-gray-23);
 }

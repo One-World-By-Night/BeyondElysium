@@ -158,6 +158,16 @@ async function hydrateWidgets(): Promise< void > {
 		try {
 			const { default: Component } = await loader();
 			const config = parseConfig( el );
+			// wp-dark-mode/wp-dark-mode-ultimate force background-color/border-color/color
+			// with !important onto every plain <button> site-wide when active
+			// (html.wp-dark-mode-active body button:not(.wp-dark-mode-ignore, .wp-dark-mode-ignore *)),
+			// which wins over this plugin's own --be-* token styling regardless of selector
+			// specificity - found live testing kony-sabbat.net (a real button rendered with a
+			// clashing gold border and solid red fill neither this plugin nor the theme ever
+			// asked for). wp-dark-mode's own documented escape hatch excludes an element and
+			// every descendant from that one rule; applied once here, at the root every widget
+			// mounts into, rather than on each of the dozens of <button> elements individually.
+			el.classList.add( 'wp-dark-mode-ignore' );
 			const root = createRoot( el );
 			// Admin pages already carry their own PHP-rendered memorial footer
 			// (Admin_Menu::render_mount()) - this one is for front-end widgets only.

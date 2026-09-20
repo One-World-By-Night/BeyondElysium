@@ -74,10 +74,10 @@
 	margin-bottom: 0.75rem;
 }
 
-.be-character-sheet__print,
-.be-character-sheet__action-go,
-.be-character-sheet__action-close,
-.be-character-sheet__gex-export {
+.be-character-sheet__print.be-character-sheet__print,
+.be-character-sheet__action-go.be-character-sheet__action-go,
+.be-character-sheet__action-close.be-character-sheet__action-close,
+.be-character-sheet .be-character-sheet__gex-export {
 	display: inline-block;
 	padding: 0.4rem 0.9rem;
 	border: 1px solid var(--be-sheet-accent);
@@ -89,17 +89,17 @@
 	cursor: pointer;
 }
 
-.be-character-sheet__print:hover:not(:disabled),
-.be-character-sheet__action-go:hover:not(:disabled),
-.be-character-sheet__action-close:hover,
-.be-character-sheet__gex-export:hover:not(:disabled) {
+.be-character-sheet__print.be-character-sheet__print:hover:not(:disabled),
+.be-character-sheet__action-go.be-character-sheet__action-go:hover:not(:disabled),
+.be-character-sheet__action-close.be-character-sheet__action-close:hover,
+.be-character-sheet .be-character-sheet__gex-export:hover:not(:disabled) {
 	background: var(--be-sheet-accent);
 	color: var(--be-gray-29);
 }
 
-.be-character-sheet__print:disabled,
-.be-character-sheet__action-go:disabled,
-.be-character-sheet__gex-export:disabled {
+.be-character-sheet__print.be-character-sheet__print:disabled,
+.be-character-sheet__action-go.be-character-sheet__action-go:disabled,
+.be-character-sheet .be-character-sheet__gex-export:disabled {
 	opacity: 0.6;
 	cursor: default;
 }

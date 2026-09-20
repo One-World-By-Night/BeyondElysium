@@ -47,7 +47,7 @@
 	color: var(--be-gray-8);
 }
 
-.be-trait-list-editor__edit {
+.be-trait-list-editor__edit.be-trait-list-editor__edit {
 	flex: 0 0 auto;
 	width: 1.6rem;
 	height: 1.6rem;
@@ -61,12 +61,12 @@
 	cursor: pointer;
 }
 
-.be-trait-list-editor__edit:hover,
-.be-trait-list-editor__edit:focus-visible {
+.be-trait-list-editor__edit.be-trait-list-editor__edit:hover,
+.be-trait-list-editor__edit.be-trait-list-editor__edit:focus-visible {
 	background: var(--be-gray-23);
 }
 
-.be-trait-list-editor__add-trigger {
+.be-trait-list-editor .be-trait-list-editor__add-trigger {
 	padding: 0.35rem 0.9rem;
 	border: 1px solid var(--be-red-1);
 	border-radius: 3px;
@@ -75,8 +75,8 @@
 	cursor: pointer;
 }
 
-.be-trait-list-editor__add-trigger:hover,
-.be-trait-list-editor__add-trigger:focus-visible {
+.be-trait-list-editor .be-trait-list-editor__add-trigger:hover,
+.be-trait-list-editor .be-trait-list-editor__add-trigger:focus-visible {
 	background: var(--be-red-1);
 	color: var(--be-gray-29);
 }
@@ -104,7 +104,7 @@
 	border-radius: 3px;
 }
 
-.be-trait-list-editor__modal-remove {
+.be-trait-list-editor__modal-remove.be-trait-list-editor__modal-remove {
 	margin-right: auto;
 	padding: 0.15rem 0.4rem;
 	border: none;
@@ -114,8 +114,8 @@
 	cursor: pointer;
 }
 
-/* 1.1.0 D3: matches .be-tiered-power-editor__view-toggle's own established look. */
-.be-trait-list-editor__cost-toggle {
+/* 1.1.0 D3: matches .be-tiered-power-editor__view-toggle.be-tiered-power-editor__view-toggle's own established look. */
+.be-trait-list-editor .be-trait-list-editor__cost-toggle {
 	display: block;
 	margin: 0 0 0.5rem;
 	padding: 0.1rem 0.4rem;
@@ -127,13 +127,13 @@
 	cursor: pointer;
 }
 
-.be-trait-list-editor__cost-toggle:hover,
-.be-trait-list-editor__cost-toggle:focus-visible {
+.be-trait-list-editor .be-trait-list-editor__cost-toggle:hover,
+.be-trait-list-editor .be-trait-list-editor__cost-toggle:focus-visible {
 	background: var(--be-gray-23);
 }
 
 /* 1.1.0 D4: the Reorder entry point matches the cost-toggle's own established look. */
-.be-trait-list-editor__reorder-trigger {
+.be-trait-list-editor .be-trait-list-editor__reorder-trigger {
 	display: block;
 	margin: 0 0 0.5rem;
 	padding: 0.1rem 0.4rem;
@@ -145,8 +145,8 @@
 	cursor: pointer;
 }
 
-.be-trait-list-editor__reorder-trigger:hover,
-.be-trait-list-editor__reorder-trigger:focus-visible {
+.be-trait-list-editor .be-trait-list-editor__reorder-trigger:hover,
+.be-trait-list-editor .be-trait-list-editor__reorder-trigger:focus-visible {
 	background: var(--be-gray-23);
 }
 

@@ -65,11 +65,14 @@
 	text-align: center;
 }
 
-/* A bare class selector safely beats hello-elementor's `button{...}` element-selector reset
- * (live theme, never present on local dev - it gives every unstyled button a bold pink
- * border and 0.5rem/1rem padding, oversized for a compact +/- stepper) without needing
- * `!important`. */
-.be-tiered-power-editor__stepper-button {
+/* Corrected (1.2.5-design-workflow.md §C, live testing): hello-elementor's real rule is
+ * `[type="button"], [type="submit"], button { ... }`, not a bare `button{...}` element
+ * selector - since this stepper sets `type="button"` explicitly, the `[type="button"]`
+ * alternative applies at specificity 0,1,0, an exact TIE with a single class, not a loss
+ * the class safely avoids. A tie falls back to source order, which is fragile (confirmed
+ * live on kony-sabbat.net: `.be-help-button`'s identical shape lost this exact tie).
+ * Compound-class (0,2,0) wins outright, matching the fix already applied there. */
+.be-tiered-power-editor .be-tiered-power-editor__stepper-button {
 	width: 1.6rem;
 	height: 1.6rem;
 	padding: 0;
@@ -83,14 +86,17 @@
 	cursor: pointer;
 }
 
-.be-tiered-power-editor__stepper-button:disabled {
+.be-tiered-power-editor .be-tiered-power-editor__stepper-button:disabled {
 	color: var(--be-gray-16);
 	border-color: var(--be-gray-20);
 	cursor: default;
 }
 
-.be-tiered-power-editor__stepper-button:not(:disabled):hover,
-.be-tiered-power-editor__stepper-button:not(:disabled):focus-visible {
+/* stylelint-disable @stylistic/max-line-length -- real BEM class names, ancestor-
+   qualified for D34 specificity, genuinely don't fit in 80 columns. */
+.be-tiered-power-editor .be-tiered-power-editor__stepper-button:not(:disabled):hover,
+.be-tiered-power-editor .be-tiered-power-editor__stepper-button:not(:disabled):focus-visible {
+	/* stylelint-enable @stylistic/max-line-length */
 	background: var(--be-gray-23);
 }
 
@@ -100,7 +106,7 @@
 }
 
 /* Additive-first, matching TraitListEditor.css - see its own comment for the reasoning. */
-.be-tiered-power-editor__remove {
+.be-tiered-power-editor .be-tiered-power-editor__remove {
 	flex: 0 0 auto;
 	padding: 0.15rem 0.4rem;
 	border: none;
@@ -111,18 +117,20 @@
 	cursor: pointer;
 }
 
-.be-tiered-power-editor__remove:hover,
-.be-tiered-power-editor__remove:focus-visible {
+.be-tiered-power-editor .be-tiered-power-editor__remove:hover,
+.be-tiered-power-editor .be-tiered-power-editor__remove:focus-visible {
 	color: var(--be-red-6);
 }
 
-.be-tiered-power-editor__row--removed .be-tiered-power-editor__remove {
+/* stylelint-disable-next-line @stylistic/max-line-length -- real BEM class name,
+   ancestor-qualified for D34 specificity, genuinely doesn't fit in 80 columns. */
+.be-tiered-power-editor__row--removed .be-tiered-power-editor .be-tiered-power-editor__remove {
 	color: var(--be-gray-8);
 	font-weight: 600;
 }
 
 /* Same bare-class safety as the stepper buttons above (hello-elementor's element-selector reset). */
-.be-tiered-power-editor__view-toggle {
+.be-tiered-power-editor .be-tiered-power-editor__view-toggle {
 	flex: 0 0 auto;
 	padding: 0.1rem 0.4rem;
 	border: 1px solid var(--be-gray-13);
@@ -133,8 +141,8 @@
 	cursor: pointer;
 }
 
-.be-tiered-power-editor__view-toggle:hover,
-.be-tiered-power-editor__view-toggle:focus-visible {
+.be-tiered-power-editor .be-tiered-power-editor__view-toggle:hover,
+.be-tiered-power-editor .be-tiered-power-editor__view-toggle:focus-visible {
 	background: var(--be-gray-23);
 }
 
@@ -165,7 +173,7 @@
 	display: contents;
 }
 
-.be-tiered-power-editor__details-toggle {
+.be-tiered-power-editor .be-tiered-power-editor__details-toggle {
 	display: none;
 }
 
@@ -196,7 +204,7 @@
 		display: none;
 	}
 
-	.be-tiered-power-editor__details-toggle {
+	.be-tiered-power-editor .be-tiered-power-editor__details-toggle {
 		display: inline-block;
 		flex: 0 0 auto;
 		padding: 0.15rem 0.5rem;
@@ -209,8 +217,8 @@
 	}
 }
 
-/* 1.1.0 D4: matches .be-tiered-power-editor__view-toggle's own established look. */
-.be-tiered-power-editor__reorder-trigger {
+/* 1.1.0 D4: matches .be-tiered-power-editor .be-tiered-power-editor__view-toggle's own established look. */
+.be-tiered-power-editor .be-tiered-power-editor__reorder-trigger {
 	display: block;
 	margin: 0 0 0.5rem;
 	padding: 0.1rem 0.4rem;
@@ -222,8 +230,8 @@
 	cursor: pointer;
 }
 
-.be-tiered-power-editor__reorder-trigger:hover,
-.be-tiered-power-editor__reorder-trigger:focus-visible {
+.be-tiered-power-editor .be-tiered-power-editor__reorder-trigger:hover,
+.be-tiered-power-editor .be-tiered-power-editor__reorder-trigger:focus-visible {
 	background: var(--be-gray-23);
 }
 

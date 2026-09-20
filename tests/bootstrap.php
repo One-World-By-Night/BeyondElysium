@@ -110,6 +110,14 @@ if ( $be_wp_tests_dir && file_exists( $be_wp_tests_dir . '/includes/functions.ph
 		}
 	}
 
+	// Sheet_Document::use_portuguese() reads the site's own locale; with no WordPress and no
+	// site configured, that's WordPress's own default, `en_US` - never `pt_BR`.
+	if ( ! function_exists( 'get_locale' ) ) {
+		function get_locale(): string { // phpcs:ignore
+			return 'en_US';
+		}
+	}
+
 	// St_Filter::strip_html_for_game() re-sanitizes a cut string through this to close a
 	// dangling tag a byte-offset cut can leave open; every real caller passes plain text with
 	// no markup, so a pass-through is exact here, not an approximation of WordPress's own

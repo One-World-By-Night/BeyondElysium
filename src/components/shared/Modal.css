@@ -39,7 +39,7 @@
 	font-size: 1rem;
 }
 
-.be-modal__close {
+.be-modal__close.be-modal__close {
 	border: none;
 	background: none;
 	font-size: 1.4rem;
@@ -49,8 +49,8 @@
 	padding: 0 0.25rem;
 }
 
-.be-modal__close:hover,
-.be-modal__close:focus-visible {
+.be-modal__close.be-modal__close:hover,
+.be-modal__close.be-modal__close:focus-visible {
 	color: var(--be-gray-1);
 }
 

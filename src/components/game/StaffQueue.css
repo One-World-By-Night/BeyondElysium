@@ -22,7 +22,7 @@
 }
 
 .be-staff-queue__list a,
-.be-staff-queue__list .be-staff-queue__link-button {
+.be-staff-queue__list .be-staff-queue__link-button.be-staff-queue__link-button {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;

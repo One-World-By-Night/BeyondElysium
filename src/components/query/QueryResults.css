@@ -40,7 +40,7 @@
 	border-bottom: 1px solid var(--be-gray-21);
 }
 
-.be-query-results__sort {
+.be-query-results__sort.be-query-results__sort {
 	background: none;
 	border: none;
 	font-weight: 600;

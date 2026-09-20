@@ -96,8 +96,8 @@
  * The shared button look, matching CharacterSheet.css's print/edit/style buttons: flat,
  * bordered, accent text on transparent, filling solid on hover.
  */
-.be-st-button,
-button.be-st-button {
+.be-st-button.be-st-button,
+button.be-st-button.be-st-button {
 	display: inline-block;
 	padding: 0.4rem 0.9rem;
 	border: 1px solid var(--be-st-accent);
@@ -110,26 +110,26 @@ button.be-st-button {
 	cursor: pointer;
 }
 
-.be-st-button:hover:not(:disabled),
-button.be-st-button:hover:not(:disabled) {
+.be-st-button.be-st-button:hover:not(:disabled),
+button.be-st-button.be-st-button:hover:not(:disabled) {
 	background: var(--be-st-accent);
 	color: var(--be-gray-29);
 }
 
-.be-st-button:disabled,
-button.be-st-button:disabled {
+.be-st-button.be-st-button:disabled,
+button.be-st-button.be-st-button:disabled {
 	opacity: 0.5;
 	cursor: default;
 }
 
-.be-st-button--quiet,
-button.be-st-button--quiet {
+.be-st-button--quiet.be-st-button--quiet,
+button.be-st-button--quiet.be-st-button--quiet {
 	border-color: var(--be-st-border-strong);
 	color: var(--be-st-muted);
 }
 
-.be-st-button--quiet:hover:not(:disabled),
-button.be-st-button--quiet:hover:not(:disabled) {
+.be-st-button--quiet.be-st-button--quiet:hover:not(:disabled),
+button.be-st-button--quiet.be-st-button--quiet:hover:not(:disabled) {
 	background: var(--be-st-muted);
 	border-color: var(--be-st-muted);
 	color: var(--be-gray-29);
@@ -144,7 +144,7 @@ button.be-st-button--quiet:hover:not(:disabled) {
 	align-items: start;
 }
 
-.be-plot-card {
+.be-plot-card.be-plot-card {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
@@ -159,7 +159,7 @@ button.be-st-button--quiet:hover:not(:disabled) {
 	width: 100%;
 }
 
-.be-plot-card:hover {
+.be-plot-card.be-plot-card:hover {
 	border-color: var(--be-st-accent);
 }
 
