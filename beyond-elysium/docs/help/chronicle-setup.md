@@ -58,6 +58,12 @@ default.
   a timeline entry - extra structure most chronicles never need. One checkbox and no
   separate Save; a site administrator's change takes effect immediately. Anyone who can't
   change it reads "A site administrator sets this." instead.
+- **Branding** - beneath that, one color: this chronicle's own accent, used for the
+  Storyteller Toolkit's and My Chronicle's own chrome (highlights, primary buttons). Your
+  chronicle's HST picks a color and it saves as soon as chosen, or clicks **Use site
+  default** to remove the override and fall back to whatever the site administrator set in
+  [Branding](branding.md). Unlike Plot Features above, any HST can set this, not only a
+  site administrator - it changes nothing but this one chronicle's own look.
 - **Sub-Faction Restrictions** - beneath that, one level finer than the Creature
   types row above: within a creature type you've already enabled, narrow a real catalog field
   to only the values your chronicle runs - a Vampire Sect or Clan, a Werewolf Tribe, and any
@@ -153,6 +159,7 @@ default.
 - [Chronicle Access](chronicle-access.md)
 - [Send a Grapevine File](send-grapevine-file.md)
 - [Action & Rumor Settings](apr-settings.md)
+- [Branding](branding.md)
 - [AI Assist Settings (Chronicle)](writing-assist-chronicle.md)
 - [Games](games.md)
 - [Admin Characters](admin-characters.md)

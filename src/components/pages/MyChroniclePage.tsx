@@ -7,6 +7,7 @@
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import type { CSSProperties } from 'react';
 import { useChronicleSwitcher } from '../../lib/useChronicleSwitcher';
 import { ChronicleSwitcher } from '../shared/ChronicleSwitcher';
 import { TabStrip } from '../shared/TabStrip';
@@ -53,7 +54,12 @@ export function MyChroniclePage() {
 		loadingGames,
 		gamesFailed,
 		retryGames,
+		accentColor,
 	} = useChronicleSwitcher();
+	// 1.2.7-design-workflow.md §E3 - see StorytellerToolkitPage.tsx's own identical comment.
+	const accentStyle: CSSProperties | undefined = accentColor
+		? ( { '--be-st-accent': accentColor } as CSSProperties )
+		: undefined;
 	const [ tab, setTab ] = useState( () =>
 		readTabFromUrl( PLAYER_TABS.dashboard )
 	);
@@ -169,7 +175,7 @@ export function MyChroniclePage() {
 	);
 
 	return (
-		<div className="be-my-chronicle-page">
+		<div className="be-my-chronicle-page" style={ accentStyle }>
 			<div className="be-help-heading">
 				<h1>{ __( 'My Chronicle', 'beyond-elysium' ) }</h1>
 				<HelpButton helpKey="my-chronicle" />

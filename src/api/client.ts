@@ -357,8 +357,28 @@ export const games = {
 	 */
 	myCapabilities: (
 		slug: string
-	): Promise< { capabilities: MyCapabilities } > =>
+	): Promise< { capabilities: MyCapabilities; accent_color: string } > =>
 		apiFetch( { path: `${ BASE }/${ slug }/my/capabilities` } ),
+
+	/**
+	 * Fetches the site-wide brand accent default (1.2.7-design-workflow.md §E1) -
+	 * every chronicle's own fallback when it sets no override of its own.
+	 */
+	getBranding: (): Promise< { accent_color: string } > =>
+		apiFetch( { path: `${ BASE }/branding` } ),
+
+	/**
+	 * Sets the site-wide brand accent default. An empty string clears it
+	 * (every chronicle falls through to theme.css's own --be-red-1).
+	 */
+	updateBranding: (
+		accentColor: string
+	): Promise< { accent_color: string } > =>
+		apiFetch( {
+			path: `${ BASE }/branding`,
+			method: 'PUT',
+			data: { accent_color: accentColor },
+		} ),
 };
 
 // ---------------------------------------------------------------------------

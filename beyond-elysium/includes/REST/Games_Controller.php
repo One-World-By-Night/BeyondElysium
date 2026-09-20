@@ -108,6 +108,49 @@ class Games_Controller extends Base_Controller {
 				'permission_callback' => $this->permission( 'be_manage_chronicle_setup' ),
 			],
 		] );
+
+		// Site-wide brand accent default (1.2.7-design-workflow.md §E1) - a chronicle-agnostic
+		// plain option, not part of any one game's own settings, so it gets its own tiny route
+		// rather than living under /games/{slug}.
+		register_rest_route( $this->namespace, '/branding', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_branding' ],
+				'permission_callback' => $this->permission( 'be_manage_games' ),
+			],
+			[
+				'methods'             => 'PUT',
+				'callback'            => [ $this, 'update_branding' ],
+				'permission_callback' => $this->permission( 'be_manage_games' ),
+			],
+		] );
+	}
+
+	/**
+	 * Returns the site-wide brand accent default (System Config -> Branding).
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function get_branding() {
+		return $this->success( [
+			'accent_color' => (string) get_option( Game::ACCENT_COLOR_OPTION, '' ),
+		] );
+	}
+
+	/**
+	 * Sets the site-wide brand accent default. An empty string clears it
+	 * (every chronicle falls through to `theme.css`'s own `--be-red-1`).
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function update_branding( $request ) {
+		$value = (string) ( $request->get_param( 'accent_color' ) ?? '' );
+		if ( $value !== '' && ! self::is_valid_hex_color( $value ) ) {
+			return $this->error( 'invalid_param', __( 'accent_color must be a hex color like #1a1a1a.', 'beyond-elysium' ), 400 );
+		}
+		update_option( Game::ACCENT_COLOR_OPTION, $value );
+		return $this->success( [ 'accent_color' => $value ] );
 	}
 
 	/**
@@ -209,11 +252,21 @@ class Games_Controller extends Base_Controller {
 			'be_manage_factions',
 		];
 
-		if ( ! Game::find_by_slug( $request['game_slug'] ) ) {
-			return $this->success( [ 'capabilities' => array_fill_keys( $capability_list, false ) ] );
+		$game = Game::find_by_slug( $request['game_slug'] );
+		if ( ! $game ) {
+			return $this->success( [
+				'capabilities' => array_fill_keys( $capability_list, false ),
+				'accent_color' => '',
+			] );
 		}
 
-		return $this->success( [ 'capabilities' => Authorization::capabilities_for_request( $capability_list, $request ) ] );
+		return $this->success( [
+			'capabilities' => Authorization::capabilities_for_request( $capability_list, $request ),
+			// 1.2.7-design-workflow.md §E2 - resolved here (chronicle -> site default -> unset)
+			// rather than a separate route, since every chronicle-scoped page already calls
+			// this once per switch (useChronicleSwitcher()'s own second effect).
+			'accent_color' => Game::resolve_accent_color( $game ),
+		] );
 	}
 
 	/**
@@ -448,7 +501,10 @@ class Games_Controller extends Base_Controller {
 		}
 
 		$incoming = [];
-		foreach ( [ 'enabled_stacks', 'enabled_factions', 'require_new_character_approval' ] as $field ) {
+		// accent_color added 1.2.7-design-workflow.md §E2 - a narrow chronicle-level override
+		// of the site's own brand accent default, same bar as the other three (be_manage_chronicle_setup,
+		// not the full be_manage_games update_item() otherwise requires).
+		foreach ( [ 'enabled_stacks', 'enabled_factions', 'require_new_character_approval', 'accent_color' ] as $field ) {
 			$value = $request->get_param( $field );
 			if ( $value !== null ) {
 				$incoming[ $field ] = $value;
@@ -456,7 +512,14 @@ class Games_Controller extends Base_Controller {
 		}
 
 		if ( empty( $incoming ) ) {
-			return $this->error( 'invalid_param', __( 'At least one of enabled_stacks, enabled_factions, or require_new_character_approval is required.', 'beyond-elysium' ), 400 );
+			return $this->error( 'invalid_param', __( 'At least one of enabled_stacks, enabled_factions, require_new_character_approval, or accent_color is required.', 'beyond-elysium' ), 400 );
+		}
+
+		// Empty string clears the override (falls through to the site-wide default); anything
+		// else must be a real hex color, same validation Sheet_Style_Controller's own
+		// accent_color field already applies (Decision 041 precedent).
+		if ( isset( $incoming['accent_color'] ) && $incoming['accent_color'] !== '' && ! self::is_valid_hex_color( (string) $incoming['accent_color'] ) ) {
+			return $this->error( 'invalid_param', __( 'accent_color must be a hex color like #1a1a1a.', 'beyond-elysium' ), 400 );
 		}
 
 		$existing = (array) ( $game->settings ?? new \stdClass() );
@@ -587,6 +650,19 @@ class Games_Controller extends Base_Controller {
 			}
 		}
 		return $existing;
+	}
+
+	/**
+	 * Checks whether a string is a 6-digit hex color prefixed with a hash,
+	 * such as #1a1a1a - same rule `Sheet_Style_Controller`'s own accent_color
+	 * field already applies, duplicated rather than shared across two
+	 * controllers for one regex line.
+	 *
+	 * @param string $value
+	 * @return bool
+	 */
+	private static function is_valid_hex_color( string $value ): bool {
+		return (bool) preg_match( '/^#[0-9a-fA-F]{6}$/', $value );
 	}
 
 	/**

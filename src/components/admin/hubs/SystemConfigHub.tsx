@@ -16,6 +16,7 @@ import AdminApprovalRules from '../AdminApprovalRules';
 import AdminAiAssistSite from '../AdminAiAssistSite';
 import AdminSecurePrinting from '../AdminSecurePrinting';
 import AdminTranslations from '../AdminTranslations';
+import AdminBranding from '../AdminBranding';
 import type { Tab } from '../../shared/TabStrip';
 
 const TABS = {
@@ -27,6 +28,7 @@ const TABS = {
 	aiAssist: 'ai-assist',
 	securePrinting: 'secure-printing',
 	translations: 'translations',
+	branding: 'branding',
 };
 
 export function SystemConfigHub() {
@@ -72,6 +74,10 @@ export function SystemConfigHub() {
 			key: TABS.translations,
 			label: __( 'Translations', 'beyond-elysium' ),
 		},
+		capabilities?.be_manage_games && {
+			key: TABS.branding,
+			label: __( 'Branding', 'beyond-elysium' ),
+		},
 	].filter( Boolean ) as Tab[];
 
 	useEffect( () => {
@@ -103,6 +109,7 @@ export function SystemConfigHub() {
 			{ tab === TABS.aiAssist && <AdminAiAssistSite /> }
 			{ tab === TABS.securePrinting && <AdminSecurePrinting /> }
 			{ tab === TABS.translations && <AdminTranslations /> }
+			{ tab === TABS.branding && <AdminBranding /> }
 		</div>
 	);
 }

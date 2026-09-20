@@ -10,6 +10,7 @@
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import type { CSSProperties } from 'react';
 import { useChronicleSwitcher } from '../../lib/useChronicleSwitcher';
 import { ChronicleSwitcher } from '../shared/ChronicleSwitcher';
 import { TabStrip } from '../shared/TabStrip';
@@ -44,7 +45,15 @@ export function StorytellerToolkitPage() {
 		loadingGames,
 		gamesFailed,
 		retryGames,
+		accentColor,
 	} = useChronicleSwitcher();
+	// 1.2.7-design-workflow.md §E3 - only set when a chronicle (or the site) actually
+	// overrides the accent; an unset chronicle sends no inline style at all, so the six
+	// --be-st-accent consumers fall through to CharacterSheet.css's/PlotManager.css's own
+	// CSS default unchanged (Decision 041's "un-styled renders byte-identical" guarantee).
+	const accentStyle: CSSProperties | undefined = accentColor
+		? ( { '--be-st-accent': accentColor } as CSSProperties )
+		: undefined;
 	const [ tab, setTab ] = useState( () =>
 		readTabFromUrl( STORYTELLER_TABS.dashboard )
 	);
@@ -115,7 +124,7 @@ export function StorytellerToolkitPage() {
 	}, [ tabs.map( ( t ) => t.key ).join( ',' ) ] );
 
 	return (
-		<div className="be-storyteller-toolkit-page">
+		<div className="be-storyteller-toolkit-page" style={ accentStyle }>
 			<div className="be-help-heading">
 				<h1>{ __( 'Storyteller Toolkit', 'beyond-elysium' ) }</h1>
 				<HelpButton helpKey="storyteller-toolkit" />

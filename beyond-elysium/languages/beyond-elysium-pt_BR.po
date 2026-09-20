@@ -1856,13 +1856,18 @@ msgstr ""
 msgid "Failed to rename game."
 msgstr "Falha ao renomear o jogo."
 
-#: includes/REST/Games_Controller.php:459
+#: includes/REST/Games_Controller.php:150
+#: includes/REST/Games_Controller.php:522
+msgid "accent_color must be a hex color like #1a1a1a."
+msgstr "accent_color deve ser uma cor hexadecimal como #1a1a1a."
+
+#: includes/REST/Games_Controller.php:515
 msgid ""
-"At least one of enabled_stacks, enabled_factions, or "
-"require_new_character_approval is required."
+"At least one of enabled_stacks, enabled_factions, "
+"require_new_character_approval, or accent_color is required."
 msgstr ""
-"É necessário pelo menos um de enabled_stacks, enabled_factions ou "
-"require_new_character_approval."
+"É necessário pelo menos um de enabled_stacks, enabled_factions, "
+"require_new_character_approval ou accent_color."
 
 #: includes/REST/Games_Controller.php:522
 msgid ""
@@ -10194,6 +10199,40 @@ msgstr "Falha ao redefinir."
 #: build/906.js:9 build/985.js:48
 msgid "Reset to default"
 msgstr "Redefinir para o padrão"
+
+#: build/9.js:3
+msgid ""
+"This chronicle's own accent color, used for the Storyteller Toolkit's and My "
+"Chronicle's own chrome (buttons, highlights). Leave unset to use the site-"
+"wide default."
+msgstr ""
+"A cor de destaque própria desta crônica, usada nos elementos visuais do "
+"Kit do Narrador e Minha Crônica (botões, destaques). Deixe em branco para "
+"usar o padrão do site."
+
+#: build/259.js:116
+msgid ""
+"The site-wide default accent color for the Storyteller Toolkit's and My "
+"Chronicle's own chrome (buttons, highlights). Any chronicle can override "
+"this for itself in its own Chronicle Setup; this is only the fallback when a "
+"chronicle sets none."
+msgstr ""
+"A cor de destaque padrão do site para os elementos visuais do Kit do "
+"Narrador e Minha Crônica (botões, destaques). Qualquer crônica pode "
+"sobrescrever isso em sua própria Configuração da Crônica; este é apenas o "
+"padrão usado quando uma crônica não define o seu."
+
+#: build/9.js:3 build/167.js:13 build/259.js:116
+msgid "Branding"
+msgstr "Identidade Visual"
+
+#: build/9.js:3 build/167.js:13
+msgid "Use site default"
+msgstr "Usar o padrão do site"
+
+#: build/259.js:116
+msgid "Reset to plugin default"
+msgstr "Redefinir para o padrão do plugin"
 
 #: build/906.js:9 build/985.js:48
 msgid "Pending"

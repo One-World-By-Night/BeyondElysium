@@ -65,6 +65,13 @@ export interface ChronicleSwitcherState {
 	loadingCapabilities: boolean;
 	/** The chronicle `capabilities` were resolved for - until it matches `gameSlug`, they aren't this chronicle's yet. */
 	capabilitiesFor: string;
+	/**
+	 * This chronicle's resolved brand accent (1.2.7-design-workflow.md §E2) - its own
+	 * override, or the site-wide default, or '' when neither is set. '' means "apply no
+	 * inline style", never a color - the six `--be-st-accent` consumers fall through to
+	 * their own CSS default unchanged.
+	 */
+	accentColor: string;
 }
 
 export function useChronicleSwitcher(): ChronicleSwitcherState {
@@ -72,6 +79,7 @@ export function useChronicleSwitcher(): ChronicleSwitcherState {
 	const [ gameSlug, setGameSlug ] = useState( readGameSlugFromUrl );
 	const [ capabilities, setCapabilities ] =
 		useState< MyCapabilities >( EMPTY_CAPABILITIES );
+	const [ accentColor, setAccentColor ] = useState( '' );
 	const [ loadingGames, setLoadingGames ] = useState( true );
 	const [ gamesFailed, setGamesFailed ] = useState( false );
 	const [ gamesAttempt, setGamesAttempt ] = useState( 0 );
@@ -102,6 +110,7 @@ export function useChronicleSwitcher(): ChronicleSwitcherState {
 		if ( ! gameSlug ) {
 			setCapabilities( EMPTY_CAPABILITIES );
 			setCapabilitiesFor( '' );
+			setAccentColor( '' );
 			return;
 		}
 		writeGameSlugToUrl( gameSlug );
@@ -110,13 +119,17 @@ export function useChronicleSwitcher(): ChronicleSwitcherState {
 		let current = true;
 		api.games
 			.myCapabilities( gameSlug )
-			.then( ( { capabilities: caps } ) => caps )
-			.catch( () => EMPTY_CAPABILITIES )
-			.then( ( caps ) => {
+			.then( ( { capabilities: caps, accent_color: accent } ) => ( {
+				caps,
+				accent: accent ?? '',
+			} ) )
+			.catch( () => ( { caps: EMPTY_CAPABILITIES, accent: '' } ) )
+			.then( ( { caps, accent } ) => {
 				if ( ! current ) {
 					return;
 				}
 				setCapabilities( caps );
+				setAccentColor( accent );
 				setCapabilitiesFor( gameSlug );
 				setLoadingCapabilities( false );
 			} );
@@ -137,5 +150,6 @@ export function useChronicleSwitcher(): ChronicleSwitcherState {
 		retryGames,
 		loadingCapabilities,
 		capabilitiesFor,
+		accentColor,
 	};
 }

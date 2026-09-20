@@ -472,6 +472,29 @@ class Game {
 		return true;
 	}
 
+	/** Site-wide brand accent default (System Config -> Branding), 1.2.7-design-workflow.md §E1. */
+	const ACCENT_COLOR_OPTION = 'be_accent_color';
+
+	/**
+	 * Resolves this chronicle's effective brand accent color: its own override
+	 * (`settings.accent_color`, 1.2.7-design-workflow.md §E2), falling back to the
+	 * site-wide default, falling back to '' - which means "no override", not a
+	 * color - so `useChronicleSwitcher()` emits no inline style at all and every
+	 * `--be-st-accent` consumer falls through to its own CSS default unchanged
+	 * (Decision 041's "un-styled renders byte-identical" guarantee, reused).
+	 *
+	 * @param object $game A games row with `settings` already decoded.
+	 * @return string A hex color, or '' when nothing overrides the CSS default.
+	 */
+	public static function resolve_accent_color( object $game ): string {
+		$settings = $game->settings ?? null;
+		$own = ( $settings instanceof \stdClass ) ? ( $settings->accent_color ?? '' ) : '';
+		if ( is_string( $own ) && $own !== '' ) {
+			return $own;
+		}
+		return (string) get_option( self::ACCENT_COLOR_OPTION, '' );
+	}
+
 	/**
 	 * Counts everything stored under a chronicle that deleting its row alone
 	 * would leave behind. Recent searches and memberships are not counted -

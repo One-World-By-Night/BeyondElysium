@@ -20,7 +20,7 @@ class Schema {
 	 * release version. Compared against the stored VERSION_OPTION value by
 	 * maybe_upgrade() to decide whether migrations need to run.
 	 */
-	const DB_VERSION = '1.2.6';
+	const DB_VERSION = '1.2.7';
 
 	/**
 	 * Option key holding the installed schema version.

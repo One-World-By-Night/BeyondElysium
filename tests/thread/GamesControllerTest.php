@@ -395,4 +395,101 @@ class GamesControllerTest extends WP_UnitTestCase {
 		$game = \BeyondElysium\Models\Game::find_by_slug( $slug );
 		$this->assertNotSame( 'Renamed by an HST through the narrow route', $game->name );
 	}
+
+	/**
+	 * 1.2.7-design-workflow.md §E2/§E5 - accent_color joins the same three-field
+	 * whitelist above, same be_manage_chronicle_setup bar. An empty string clears the
+	 * override rather than being rejected as invalid.
+	 */
+	public function test_an_hst_can_save_and_clear_their_own_chronicles_accent_color(): void {
+		$slug    = $this->create_game( 'thread-test-hst-accent-color-game' )->get_data()->slug;
+		$game_id = \BeyondElysium\Models\Game::find_by_slug( $slug )->id;
+
+		$hst_id = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( (int) $game_id, $hst_id, 'hst' );
+		wp_set_current_user( $hst_id );
+
+		$set = new WP_REST_Request( 'PUT', "/be/v1/{$slug}/chronicle-setup" );
+		$set->set_url_params( [ 'game_slug' => $slug ] );
+		$set->set_param( 'accent_color', '#007a33' );
+		$response = rest_get_server()->dispatch( $set );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( '#007a33', $response->get_data()->settings->accent_color );
+
+		$clear = new WP_REST_Request( 'PUT', "/be/v1/{$slug}/chronicle-setup" );
+		$clear->set_url_params( [ 'game_slug' => $slug ] );
+		$clear->set_param( 'accent_color', '' );
+		$response = rest_get_server()->dispatch( $clear );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( '', $response->get_data()->settings->accent_color );
+	}
+
+	public function test_the_chronicle_setup_route_rejects_an_invalid_accent_color(): void {
+		$slug    = $this->create_game( 'thread-test-invalid-accent-game' )->get_data()->slug;
+		$game_id = \BeyondElysium\Models\Game::find_by_slug( $slug )->id;
+
+		$hst_id = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( (int) $game_id, $hst_id, 'hst' );
+		wp_set_current_user( $hst_id );
+
+		$request = new WP_REST_Request( 'PUT', "/be/v1/{$slug}/chronicle-setup" );
+		$request->set_url_params( [ 'game_slug' => $slug ] );
+		$request->set_param( 'accent_color', 'not-a-color' );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 400, $response->get_status() );
+	}
+
+	/**
+	 * 1.2.7-design-workflow.md §E1/§E2 - the full resolution order get_my_capabilities()
+	 * resolves: a chronicle's own override wins over the site-wide default, the site-wide
+	 * default applies when the chronicle sets none, and '' (never a color) means neither
+	 * is set - the signal useChronicleSwitcher() reads as "apply no inline style".
+	 */
+	public function test_my_capabilities_resolves_accent_color_chronicle_over_site_default(): void {
+		$slug    = $this->create_game( 'thread-test-accent-resolution-game' )->get_data()->slug;
+		$game_id = \BeyondElysium\Models\Game::find_by_slug( $slug )->id;
+
+		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( (int) $game_id, $player, 'player' );
+		wp_set_current_user( $player );
+
+		$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$slug}/my/capabilities" ) );
+		$this->assertSame( '', $response->get_data()['accent_color'], 'neither set - no override' );
+
+		update_option( \BeyondElysium\Models\Game::ACCENT_COLOR_OPTION, '#ffb81c' );
+		$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$slug}/my/capabilities" ) );
+		$this->assertSame( '#ffb81c', $response->get_data()['accent_color'], 'site default applies when the chronicle sets none' );
+
+		wp_set_current_user( $this->admin_id );
+		$override = new WP_REST_Request( 'PUT', "/be/v1/{$slug}/chronicle-setup" );
+		$override->set_url_params( [ 'game_slug' => $slug ] );
+		$override->set_param( 'accent_color', '#8b0000' );
+		rest_get_server()->dispatch( $override );
+
+		wp_set_current_user( $player );
+		$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$slug}/my/capabilities" ) );
+		$this->assertSame( '#8b0000', $response->get_data()['accent_color'], "the chronicle's own override wins over the site default" );
+	}
+
+	/** 1.2.7-design-workflow.md §E1 - the site-wide default, be_manage_games only. */
+	public function test_branding_route_round_trips_and_denies_a_non_admin(): void {
+		$get = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/be/v1/branding' ) );
+		$this->assertSame( 200, $get->get_status() );
+		$this->assertSame( '', $get->get_data()['accent_color'] );
+
+		$put = new WP_REST_Request( 'PUT', '/be/v1/branding' );
+		$put->set_param( 'accent_color', '#2E89FF' );
+		$response = rest_get_server()->dispatch( $put );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( '#2E89FF', $response->get_data()['accent_color'] );
+		$this->assertSame( '#2E89FF', get_option( \BeyondElysium\Models\Game::ACCENT_COLOR_OPTION ) );
+
+		$subscriber = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		wp_set_current_user( $subscriber );
+		$denied = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/be/v1/branding' ) );
+		$this->assertSame( 403, $denied->get_status() );
+	}
 }

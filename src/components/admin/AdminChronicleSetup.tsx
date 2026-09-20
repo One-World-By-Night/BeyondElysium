@@ -166,6 +166,18 @@ export function AdminChronicleSetup() {
 			.catch( saveFailed );
 	}
 
+	// 1.2.7-design-workflow.md §E5 - same narrow be_manage_chronicle_setup route as
+	// saveStacks()/saveApproval() above, not saveExpandedPlots()'s full be_manage_games
+	// update(). An empty string clears the override (falls through to the site default).
+	function saveAccentColor( color: string ) {
+		setSavingRow( 'accent_color' );
+		setSaveError( null );
+		api.games
+			.updateChronicleSetup( gameSlug, { accent_color: color } )
+			.then( applySaved )
+			.catch( saveFailed );
+	}
+
 	function saveExpandedPlots( enabled: boolean ) {
 		setSavingRow( 'plots_expanded_enabled' );
 		setSaveError( null );
@@ -430,6 +442,37 @@ export function AdminChronicleSetup() {
 					) }
 				</p>
 			) }
+
+			<h2>{ __( 'Branding', 'beyond-elysium' ) }</h2>
+			<p className="description">
+				{ __(
+					"This chronicle's own accent color, used for the Storyteller Toolkit's and My Chronicle's own chrome (buttons, highlights). Leave unset to use the site-wide default.",
+					'beyond-elysium'
+				) }
+			</p>
+			<div className="be-chronicle-setup__branding">
+				<input
+					type="color"
+					aria-label={ __( 'Accent color', 'beyond-elysium' ) }
+					value={
+						( currentGame?.settings?.accent_color as
+							| string
+							| undefined ) || '#8b0000'
+					}
+					disabled={ savingRow === 'accent_color' }
+					onChange={ ( e ) => saveAccentColor( e.target.value ) }
+				/>
+				<button
+					type="button"
+					disabled={
+						savingRow === 'accent_color' ||
+						! currentGame?.settings?.accent_color
+					}
+					onClick={ () => saveAccentColor( '' ) }
+				>
+					{ __( 'Use site default', 'beyond-elysium' ) }
+				</button>
+			</div>
 
 			<h2>{ __( 'Sub-Faction Restrictions', 'beyond-elysium' ) }</h2>
 			<p className="description">

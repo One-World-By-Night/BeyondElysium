@@ -178,6 +178,8 @@ export interface UpdateChronicleSetupRequest {
 	enabled_stacks?: string[];
 	enabled_factions?: Record< string, Record< string, string[] > >;
 	require_new_character_approval?: boolean;
+	/** 1.2.7-design-workflow.md §E2 - '' clears the override (falls through to the site default). */
+	accent_color?: string;
 }
 
 // ---------------------------------------------------------------------------

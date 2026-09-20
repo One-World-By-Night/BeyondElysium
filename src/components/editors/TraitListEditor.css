@@ -66,18 +66,21 @@
 	background: var(--be-gray-23);
 }
 
+/* 1.2.7-design-workflow.md §E6: the brand accent is one chain now, not two that happen to
+ * share a default - --be-st-accent (PlotManager.css's :root, falls through to --be-red-1
+ * unless a chronicle or the site overrides it) rather than --be-red-1 directly. */
 .be-trait-list-editor .be-trait-list-editor__add-trigger {
 	padding: 0.35rem 0.9rem;
-	border: 1px solid var(--be-red-1);
+	border: 1px solid var(--be-st-accent);
 	border-radius: 3px;
 	background: transparent;
-	color: var(--be-red-1);
+	color: var(--be-st-accent);
 	cursor: pointer;
 }
 
 .be-trait-list-editor .be-trait-list-editor__add-trigger:hover,
 .be-trait-list-editor .be-trait-list-editor__add-trigger:focus-visible {
-	background: var(--be-red-1);
+	background: var(--be-st-accent);
 	color: var(--be-gray-29);
 }
 
