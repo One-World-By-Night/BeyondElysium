@@ -67,9 +67,31 @@ class Power_Display {
 		}
 
 		// Prefers a fresh catalog tier lookup, then the entry's own stored tier, then 'elder'.
-		$tier = $found?->tier ?? ( $held['tier'] ?? 'elder' );
+		// A parser placeholder is skipped at each step - see displayable_tier().
+		$tier = self::displayable_tier( $found?->tier )
+			?? self::displayable_tier( $held['tier'] ?? null )
+			?? 'elder';
 
 		return $held['name'] . ': ' . $power_name . ' (' . $tier . ')';
+	}
+
+	/**
+	 * Returns a tier safe to show a player, or null when it is a parser placeholder
+	 * rather than a real rank. The importer writes `***` when it cannot map a raw
+	 * trait onto the catalog, and that sentinel was reaching real sheets verbatim -
+	 * "Combination: Sawafi Form (***)" (owner-reported live, 2026-09-21; 1,637
+	 * production holdings carry it). Exact twin of `displayableTier()` in
+	 * `src/components/renderers/TieredPowerRenderer.tsx`, so the signed PDF and the
+	 * on-screen sheet never disagree.
+	 *
+	 * @param string|null $tier
+	 * @return string|null
+	 */
+	public static function displayable_tier( ?string $tier ): ?string {
+		$trimmed = trim( (string) $tier );
+		return in_array( strtolower( $trimmed ), [ '***', '', 'unknown' ], true )
+			? null
+			: $trimmed;
 	}
 
 	/**

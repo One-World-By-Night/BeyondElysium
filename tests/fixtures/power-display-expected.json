@@ -1,19 +1,101 @@
 [
-    { "name": "a genuine catalog-matched Elder+ pick shows its real catalog tier", "output": "Celerity: Blink (elder)" },
-    { "name": "a keep_custom power with a real derived level shows that level, not \"(elder)\"", "output": "Dur-An-Ki: Awakening of the Steel 5" },
-    { "name": "a keep_custom power with no derivable level falls back to its own stored tier text, not the hardcoded default", "output": "Dur-An-Ki: Something Unrecognizable (unmatched, imported as-is)" },
-    { "name": "a keep_custom power with neither a level nor a stored tier still falls back to \"elder\", never undefined", "output": "Dur-An-Ki: Something Unrecognizable (elder)" },
-    { "name": "numericLabel: an ordinary numbered rung with no power_name just shows the level", "output": "Celerity 3" },
-    { "name": "numericLabel: a power_name entry defers to elderLabel even in numeric mode", "output": "Dur-An-Ki: Awakening of the Steel 5" },
-    { "name": "namedLabel: a power_name entry defers to elderLabel regardless of the level argument", "output": "Dur-An-Ki: Awakening of the Steel 5" },
-    { "name": "namedLabel: an ordinary numbered rung looks up the real power_name for that level", "output": "Alacrity" },
-    { "name": "prefixes \"Tradition: \" onto a rendered label when the held pick carries one", "output": "Necromancy: Path of Blood 3" },
-    { "name": "renders unchanged when the held pick carries no tradition - every ordinary discipline", "output": "Celerity 3" },
-    { "name": "named mode shows the specific level name, still tradition-prefixed - a player sees the flavor name, not just the bare path", "output": "Sadhana: Alacrity" },
-    { "name": "lists every named rung from 1 up to the held level for a plain numbered holding", "output": ["Alacrity", "Rapid Reflexes", "Fleetness"] },
-    { "name": "lists nothing for a held level of 0", "output": [] },
-    { "name": "lists only the one specific power for an Elder-and-above pick - there is no stack beneath it", "output": ["Celerity: Blink (elder)"] },
-    { "name": "a non-sequential block still expands the full stack, not just the current rung", "output": ["Alacrity", "Rapid Reflexes", "Fleetness", "Blurred Motion", "Lightning Reflexes"] },
-    { "name": "lists every tied power at that rank, not just one", "output": ["Feral Whispers", "Beckoning"] },
-    { "name": "a tied rank and an untied rank both resolve correctly in the same stack", "output": ["Feral Whispers", "Beckoning", "Quell the Beast"] }
+    {
+        "name": "a genuine catalog-matched Elder+ pick shows its real catalog tier",
+        "output": "Celerity: Blink (elder)"
+    },
+    {
+        "name": "a keep_custom power with a real derived level shows that level, not \"(elder)\"",
+        "output": "Dur-An-Ki: Awakening of the Steel 5"
+    },
+    {
+        "name": "a keep_custom power with no derivable level falls back to its own stored tier text, not the hardcoded default",
+        "output": "Dur-An-Ki: Something Unrecognizable (unmatched, imported as-is)"
+    },
+    {
+        "name": "a keep_custom power with neither a level nor a stored tier still falls back to \"elder\", never undefined",
+        "output": "Dur-An-Ki: Something Unrecognizable (elder)"
+    },
+    {
+        "name": "numericLabel: an ordinary numbered rung with no power_name just shows the level",
+        "output": "Celerity 3"
+    },
+    {
+        "name": "numericLabel: a power_name entry defers to elderLabel even in numeric mode",
+        "output": "Dur-An-Ki: Awakening of the Steel 5"
+    },
+    {
+        "name": "namedLabel: a power_name entry defers to elderLabel regardless of the level argument",
+        "output": "Dur-An-Ki: Awakening of the Steel 5"
+    },
+    {
+        "name": "namedLabel: an ordinary numbered rung looks up the real power_name for that level",
+        "output": "Alacrity"
+    },
+    {
+        "name": "prefixes \"Tradition: \" onto a rendered label when the held pick carries one",
+        "output": "Necromancy: Path of Blood 3"
+    },
+    {
+        "name": "renders unchanged when the held pick carries no tradition - every ordinary discipline",
+        "output": "Celerity 3"
+    },
+    {
+        "name": "named mode shows the specific level name, still tradition-prefixed - a player sees the flavor name, not just the bare path",
+        "output": "Sadhana: Alacrity"
+    },
+    {
+        "name": "lists every named rung from 1 up to the held level for a plain numbered holding",
+        "output": [
+            "Alacrity",
+            "Rapid Reflexes",
+            "Fleetness"
+        ]
+    },
+    {
+        "name": "lists nothing for a held level of 0",
+        "output": []
+    },
+    {
+        "name": "lists only the one specific power for an Elder-and-above pick - there is no stack beneath it",
+        "output": [
+            "Celerity: Blink (elder)"
+        ]
+    },
+    {
+        "name": "a non-sequential block still expands the full stack, not just the current rung",
+        "output": [
+            "Alacrity",
+            "Rapid Reflexes",
+            "Fleetness",
+            "Blurred Motion",
+            "Lightning Reflexes"
+        ]
+    },
+    {
+        "name": "lists every tied power at that rank, not just one",
+        "output": [
+            "Feral Whispers",
+            "Beckoning"
+        ]
+    },
+    {
+        "name": "a tied rank and an untied rank both resolve correctly in the same stack",
+        "output": [
+            "Feral Whispers",
+            "Beckoning",
+            "Quell the Beast"
+        ]
+    },
+    {
+        "name": "a parser-placeholder tier (***) is never shown to a player; falls through to elder",
+        "output": "Combination: Sawafi Form (elder)"
+    },
+    {
+        "name": "an unknown tier is a placeholder too",
+        "output": "Combination: Sawafi Form (elder)"
+    },
+    {
+        "name": "a real stored tier still shows unchanged (Decision 074)",
+        "output": "Dur-An-Ki: Something Unrecognizable (elder assamite)"
+    }
 ]

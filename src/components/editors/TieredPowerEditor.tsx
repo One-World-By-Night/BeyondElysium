@@ -832,62 +832,77 @@ export function TieredPowerEditor( {
 									 * already used for ApprovalQueue's own MS-9 disclosure. */ }
 									{ ! readOnly && (
 										<div className="be-tiered-power-editor__row-detail">
-											<datalist
-												id={ traditionListId( index ) }
-											>
-												{ traditionOptionsFor(
-													definition,
-													row.name
-												).map( ( t ) => (
-													<option
-														key={ t }
-														value={ t }
+											{ /* Blood magic only. A Discipline, Gift, Art or Arcanos has no
+											 * paradigm, so the field is meaningless on one - it rendered on
+											 * every tiered_power row until this gate, because only
+											 * `needsTradition` (the *required* styling) consulted the flag. */ }
+											{ ( definition.blood_magic ??
+												false ) && (
+												<>
+													<datalist
+														id={ traditionListId(
+															index
+														) }
+													>
+														{ traditionOptionsFor(
+															definition,
+															row.name
+														).map( ( t ) => (
+															<option
+																key={ t }
+																value={ t }
+															/>
+														) ) }
+													</datalist>
+													<input
+														type="text"
+														className={
+															'be-tiered-power-editor__tradition' +
+															( needsTradition
+																? ' be-tiered-power-editor__tradition--required'
+																: '' )
+														}
+														list={ traditionListId(
+															index
+														) }
+														value={
+															row.tradition ?? ''
+														}
+														placeholder={
+															needsTradition
+																? __(
+																		'Choose paradigm',
+																		'beyond-elysium'
+																  )
+																: __(
+																		'Tradition',
+																		'beyond-elysium'
+																  )
+														}
+														aria-label={ sprintf(
+															/* translators: %s: the power family's own name */
+															__(
+																'Tradition for %s',
+																'beyond-elysium'
+															),
+															row.name
+														) }
+														aria-required={
+															definition.blood_magic ??
+															false
+														}
+														disabled={
+															row._removed
+														}
+														onChange={ ( e ) =>
+															setTradition(
+																index,
+																e.target.value
+															)
+														}
 													/>
-												) ) }
-											</datalist>
-											<input
-												type="text"
-												className={
-													'be-tiered-power-editor__tradition' +
-													( needsTradition
-														? ' be-tiered-power-editor__tradition--required'
-														: '' )
-												}
-												list={ traditionListId(
-													index
-												) }
-												value={ row.tradition ?? '' }
-												placeholder={
-													needsTradition
-														? __(
-																'Choose paradigm',
-																'beyond-elysium'
-														  )
-														: __(
-																'Tradition',
-																'beyond-elysium'
-														  )
-												}
-												aria-label={ sprintf(
-													/* translators: %s: the power family's own name */
-													__(
-														'Tradition for %s',
-														'beyond-elysium'
-													),
-													row.name
-												) }
-												aria-required={
-													definition.blood_magic ??
-													false
-												}
-												disabled={ row._removed }
-												onChange={ ( e ) =>
-													setTradition(
-														index,
-														e.target.value
-													)
-												}
-											/>
+												</>
+											) }
 											<button
 												type="button"
 												className="be-tiered-power-editor__remove"
@@ -1051,39 +1066,44 @@ export function TieredPowerEditor( {
 						</button>
 					}
 				>
-					<div className="be-tiered-power-editor__modal-field">
-						<label
-							htmlFor={ `${ traditionListId(
-								detailsIndex
-							) }-modal` }
-						>
-							{ __( 'Tradition', 'beyond-elysium' ) }
-						</label>
-						<datalist
-							id={ `${ traditionListId(
-								detailsIndex
-							) }-modal-list` }
-						>
-							{ traditionOptionsFor(
-								definition,
-								data[ detailsIndex ].name
-							).map( ( t ) => (
-								<option key={ t } value={ t } />
-							) ) }
-						</datalist>
-						<input
-							id={ `${ traditionListId( detailsIndex ) }-modal` }
-							type="text"
-							list={ `${ traditionListId(
-								detailsIndex
-							) }-modal-list` }
-							value={ data[ detailsIndex ].tradition ?? '' }
-							disabled={ data[ detailsIndex ]._removed }
-							onChange={ ( e ) =>
-								setTradition( detailsIndex, e.target.value )
-							}
-						/>
-					</div>
+					{ /* Blood magic only, matching the desktop row above. */ }
+					{ ( definition.blood_magic ?? false ) && (
+						<div className="be-tiered-power-editor__modal-field">
+							<label
+								htmlFor={ `${ traditionListId(
+									detailsIndex
+								) }-modal` }
+							>
+								{ __( 'Tradition', 'beyond-elysium' ) }
+							</label>
+							<datalist
+								id={ `${ traditionListId(
+									detailsIndex
+								) }-modal-list` }
+							>
+								{ traditionOptionsFor(
+									definition,
+									data[ detailsIndex ].name
+								).map( ( t ) => (
+									<option key={ t } value={ t } />
+								) ) }
+							</datalist>
+							<input
+								id={ `${ traditionListId(
+									detailsIndex
+								) }-modal` }
+								type="text"
+								list={ `${ traditionListId(
+									detailsIndex
+								) }-modal-list` }
+								value={ data[ detailsIndex ].tradition ?? '' }
+								disabled={ data[ detailsIndex ]._removed }
+								onChange={ ( e ) =>
+									setTradition( detailsIndex, e.target.value )
+								}
+							/>
+						</div>
+					) }
 					<button
 						type="button"
 						className="be-tiered-power-editor__remove"

@@ -1,4 +1,5 @@
 import {
+	displayableTier,
 	elderLabel,
 	numericLabel,
 	namedLabel,
@@ -58,13 +59,19 @@ describe( 'elderLabel/numericLabel/namedLabel (Decision 074)', () => {
 	} );
 
 	it( 'a keep_custom power with no derivable level falls back to its own stored tier text, not the hardcoded default', () => {
+		// Decision 074's rule still holds: a real stored tier wins over the hardcoded
+		// default. This case originally used `***` as its example, which turned out to be
+		// the importer's "could not map this" sentinel rather than tier text - and it was
+		// reaching players verbatim ("Combination: Sawafi Form (***)", owner-reported
+		// 2026-09-21, 1,637 production holdings). The rule is unchanged; the example now
+		// uses tier text that actually means something. Placeholders are covered below.
 		const held = {
 			name: 'Dur-An-Ki',
 			power_name: 'Something Unrecognizable',
-			tier: '***',
+			tier: 'elder assamite',
 		};
 		expect( elderLabel( DEFINITION, held ) ).toBe(
-			'Dur-An-Ki: Something Unrecognizable (***)'
+			'Dur-An-Ki: Something Unrecognizable (elder assamite)'
 		);
 	} );
 
@@ -297,5 +304,53 @@ describe( 'label helpers — parity with Power_Display.php', () => {
 				expectedCases[ index ].output
 			);
 		} );
+	} );
+} );
+
+describe( 'placeholder tiers never reach a player (2026-09-21)', () => {
+	const DEF = {
+		powers: [ { name: 'Combination', levels: [] } ],
+		sequential: false,
+	} as never;
+
+	it( 'renders `***` as elder rather than printing the sentinel', () => {
+		const held = {
+			name: 'Combination',
+			tier: '***',
+			power_name: 'Sawafi Form',
+		} as never;
+		expect( elderLabel( DEF, held ) ).toBe(
+			'Combination: Sawafi Form (elder)'
+		);
+	} );
+
+	it( 'treats unknown and empty as placeholders too', () => {
+		for ( const tier of [ 'unknown', '', '   ' ] ) {
+			const held = {
+				name: 'Combination',
+				tier,
+				power_name: 'Sawafi Form',
+			} as never;
+			expect( elderLabel( DEF, held ) ).toBe(
+				'Combination: Sawafi Form (elder)'
+			);
+		}
+	} );
+
+	it( 'still shows a real tier unchanged', () => {
+		const held = {
+			name: 'Animalism',
+			tier: 'master',
+			power_name: 'Stampede',
+		} as never;
+		expect( elderLabel( DEF, held ) ).toBe(
+			'Animalism: Stampede (master)'
+		);
+	} );
+
+	it( 'displayableTier reports placeholders as undefined', () => {
+		expect( displayableTier( '***' ) ).toBeUndefined();
+		expect( displayableTier( 'UNKNOWN' ) ).toBeUndefined();
+		expect( displayableTier( 'elder' ) ).toBe( 'elder' );
 	} );
 } );

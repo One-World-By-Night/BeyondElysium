@@ -115,10 +115,26 @@ function findByPowerName(
 }
 
 /**
+ * A tier value that is a parser placeholder rather than a real rank. The importer
+ * writes `***` when it cannot map a raw trait onto the catalog, and that sentinel
+ * reached players verbatim - a real sheet rendered "Combination: Sawafi Form (***)"
+ * (owner-reported live, 2026-09-21). 1,637 production holdings carry it. These are
+ * never real ranks and must never be shown as one.
+ */
+const PLACEHOLDER_TIERS = new Set( [ '***', '', 'unknown' ] );
+
+/** Returns a tier safe to display, or undefined when it is a parser placeholder. */
+export function displayableTier( tier?: string | null ): string | undefined {
+	const trimmed = ( tier ?? '' ).trim();
+	return PLACEHOLDER_TIERS.has( trimmed.toLowerCase() ) ? undefined : trimmed;
+}
+
+/**
  * Builds a named label for an Elder-and-above held power: "Family: Power
  * (tier)" using the tier looked up from the catalog when the power is
  * found there, or "Family: Power {level}" when the entry carries its own
- * numbered level instead.
+ * numbered level instead. A placeholder tier falls through to `elder`
+ * rather than printing the sentinel.
  */
 export function elderLabel(
 	definition: TieredPowerDefinition,
@@ -137,9 +153,11 @@ export function elderLabel(
 	if ( held.level != null ) {
 		return `${ held.name }: ${ powerName } ${ held.level }`;
 	}
-	return `${ held.name }: ${ powerName } (${
-		found?.tier ?? held.tier ?? 'elder'
-	})`;
+	const tier =
+		displayableTier( found?.tier ) ??
+		displayableTier( held.tier ) ??
+		'elder';
+	return `${ held.name }: ${ powerName } (${ tier })`;
 }
 
 /**
