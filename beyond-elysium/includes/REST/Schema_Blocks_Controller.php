@@ -441,10 +441,11 @@ class Schema_Blocks_Controller extends Base_Controller {
 
 	/**
 	 * Normalizes a definition (a JSON string, stdClass, or already-plain
-	 * array) to a plain array and narrows every `description` field inside
-	 * it through Rich_Text_Sanitizer. Called only after validate_definition()
-	 * has already confirmed the required shape for section_type - this
-	 * method reshapes nothing else and validates nothing else.
+	 * array) to a plain array, narrows every `description` field inside it
+	 * through Rich_Text_Sanitizer, and narrows the three plain-text faceting
+	 * fields. Called only after validate_definition() has already confirmed
+	 * the required shape for section_type - this method reshapes nothing
+	 * else and validates nothing else.
 	 *
 	 * @param string $section_type
 	 * @param mixed  $definition
@@ -456,7 +457,51 @@ class Schema_Blocks_Controller extends Base_Controller {
 		} elseif ( is_object( $definition ) ) {
 			$definition = json_decode( (string) wp_json_encode( $definition ), true );
 		}
-		return Rich_Text_Sanitizer::sanitize_definition( (array) $definition, $section_type );
+		return self::sanitize_facets(
+			Rich_Text_Sanitizer::sanitize_definition( (array) $definition, $section_type ),
+			$section_type
+		);
+	}
+
+	/**
+	 * Narrows a trait_list item's `group`, `subgroup` and `tier` - the three faceting
+	 * fields the admin editor gained in 1.2.9 U6a (D73). They are plain catalog
+	 * vocabulary, never rich text, so `sanitize_text_field()` is the right treatment and
+	 * `Rich_Text_Sanitizer` is deliberately not the place for it: that class states its
+	 * only job is narrowing `description`, and quietly widening it would make its own
+	 * contract untrue.
+	 *
+	 * An empty value is removed rather than stored as `''` - a blank group must not
+	 * become a group of its own in a picker.
+	 *
+	 * @param array<string,mixed> $definition
+	 * @param string              $section_type
+	 * @return array<string,mixed>
+	 */
+	private static function sanitize_facets( array $definition, string $section_type ): array {
+		if ( $section_type !== 'trait_list' || ! isset( $definition['items'] ) || ! is_array( $definition['items'] ) ) {
+			return $definition;
+		}
+
+		foreach ( $definition['items'] as &$item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+			foreach ( [ 'group', 'subgroup', 'tier' ] as $field ) {
+				if ( ! isset( $item[ $field ] ) ) {
+					continue;
+				}
+				$clean = sanitize_text_field( (string) $item[ $field ] );
+				if ( '' === $clean ) {
+					unset( $item[ $field ] );
+				} else {
+					$item[ $field ] = $clean;
+				}
+			}
+		}
+		unset( $item );
+
+		return $definition;
 	}
 
 	/**

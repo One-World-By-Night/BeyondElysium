@@ -13,7 +13,23 @@ import { CastingBrief } from './CastingBrief';
 import type { MyCapabilities } from '../../types';
 import type { StaffQueue as StaffQueueData } from '../../types/staffQueue';
 import HelpButton from '../shared/HelpButton';
+import CollapsiblePanel from '../shared/CollapsiblePanel';
 import './StaffQueue.css';
+
+/**
+ * A queue's summary row keeps its count visible when folded - a collapsed "Plots" that
+ * doesn't say 3 hides the one fact that decides whether to open it.
+ */
+function queueHeading( label: string, count: number ): string {
+	return count === 0
+		? label
+		: sprintf(
+				/* translators: 1: queue name, 2: number of items waiting in it */
+				__( '%1$s (%2$d)', 'beyond-elysium' ),
+				label,
+				count
+		  );
+}
 
 export interface StaffQueueProps {
 	gameSlug: string;
@@ -110,8 +126,21 @@ export function StaffQueue( { gameSlug, capabilities }: StaffQueueProps ) {
 				<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
 			) : (
 				<>
-					<section className="be-staff-queue__section">
-						<h3>{ __( 'Downtime', 'beyond-elysium' ) }</h3>
+					{ /* U7e: each queue folds away, with its count still on the summary row -
+					 * a Storyteller working one queue shouldn't have to scroll past three
+					 * others to reach it. */ }
+					<CollapsiblePanel
+						id="staff-queue:downtime"
+						className="be-staff-queue__section"
+						heading={
+							<h3>
+								{ queueHeading(
+									__( 'Downtime', 'beyond-elysium' ),
+									data.downtime.length
+								) }
+							</h3>
+						}
+					>
 						{ data.downtime.length === 0 ? (
 							<p>
 								{ __(
@@ -151,10 +180,20 @@ export function StaffQueue( { gameSlug, capabilities }: StaffQueueProps ) {
 								) ) }
 							</ul>
 						) }
-					</section>
+					</CollapsiblePanel>
 
-					<section className="be-staff-queue__section">
-						<h3>{ __( 'Plots', 'beyond-elysium' ) }</h3>
+					<CollapsiblePanel
+						id="staff-queue:plots"
+						className="be-staff-queue__section"
+						heading={
+							<h3>
+								{ queueHeading(
+									__( 'Plots', 'beyond-elysium' ),
+									data.plots.length
+								) }
+							</h3>
+						}
+					>
 						{ data.plots.length === 0 ? (
 							<p>
 								{ __(
@@ -177,10 +216,20 @@ export function StaffQueue( { gameSlug, capabilities }: StaffQueueProps ) {
 								) ) }
 							</ul>
 						) }
-					</section>
+					</CollapsiblePanel>
 
-					<section className="be-staff-queue__section">
-						<h3>{ __( 'Castings', 'beyond-elysium' ) }</h3>
+					<CollapsiblePanel
+						id="staff-queue:castings"
+						className="be-staff-queue__section"
+						heading={
+							<h3>
+								{ queueHeading(
+									__( 'Castings', 'beyond-elysium' ),
+									data.castings.length
+								) }
+							</h3>
+						}
+					>
 						{ data.castings.length === 0 ? (
 							<p>
 								{ __(
@@ -212,10 +261,21 @@ export function StaffQueue( { gameSlug, capabilities }: StaffQueueProps ) {
 								) ) }
 							</ul>
 						) }
-					</section>
+					</CollapsiblePanel>
 
-					<section className="be-staff-queue__section">
-						<h3>{ __( 'Unassigned', 'beyond-elysium' ) }</h3>
+					<CollapsiblePanel
+						id="staff-queue:unassigned"
+						className="be-staff-queue__section"
+						heading={
+							<h3>
+								{ queueHeading(
+									__( 'Unassigned', 'beyond-elysium' ),
+									data.unassigned.downtime +
+										data.unassigned.plots
+								) }
+							</h3>
+						}
+					>
 						<p>
 							{ sprintf(
 								/* translators: 1: unanswered downtime count, 2: unanswered plot count */
@@ -227,7 +287,7 @@ export function StaffQueue( { gameSlug, capabilities }: StaffQueueProps ) {
 								data.unassigned.plots
 							) }
 						</p>
-					</section>
+					</CollapsiblePanel>
 				</>
 			) }
 		</div>

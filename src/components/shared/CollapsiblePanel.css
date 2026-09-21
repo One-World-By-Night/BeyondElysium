@@ -1,0 +1,87 @@
+/*
+ * CollapsiblePanel: the shared fold-away wrapper (D74, 1.2.9 U7).
+ *
+ * Deliberately unopinionated about the panel's own box - callers keep their existing
+ * background, border and padding on the `<details>` via `className`, so a folded
+ * CharacterEditor summary still looks like the CharacterEditor summary.
+ */
+
+.be-collapsible__summary {
+	cursor: pointer;
+	list-style: none;
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-weight: 600;
+}
+
+/*
+ * Callers pass a real heading element so the sheet's document outline survives the change -
+ * a panel that was an `<h4>` before it folded is still an `<h4>` after. The heading carries
+ * no visual weight of its own here; the summary row already supplies it.
+ */
+.be-collapsible__summary > :is(h2, h3, h4, h5, h6) {
+	margin: 0;
+	font: inherit;
+}
+
+/* Safari renders its own disclosure marker through this pseudo-element. */
+.be-collapsible__summary::-webkit-details-marker {
+	display: none;
+}
+
+/*
+ * Our own marker, so the affordance is visible and rotates on open. A summary with no
+ * visible marker reads as a plain heading and nobody discovers it can fold.
+ */
+.be-collapsible__summary::before {
+	content: "\25B8";
+	display: inline-block;
+	transition: transform 0.12s ease;
+	color: var(--be-gray-10);
+}
+
+.be-collapsible[open] > .be-collapsible__summary::before {
+	transform: rotate(90deg);
+}
+
+.be-collapsible__summary:focus-visible {
+	outline: 2px solid var(--be-focus-ring, currentColor);
+	outline-offset: 2px;
+}
+
+/*
+ * The body carries **no `overflow`**, deliberately. An `overflow` other than `visible`
+ * clips absolutely-positioned descendants, and this wrapper goes around every editor
+ * section - including the ones holding `SearchableSelect`, whose dropdown escaping its
+ * container was a real shipped bug (v0.99.21). Panels that genuinely need to scroll cap
+ * themselves, the way `.be-character-editor__pending-list` does.
+ *
+ * `min-width: 0` on both children keeps a long trait name from forcing the grid track
+ * wider than its `span N` allows, the standard grid/flex overflow guard.
+ */
+.be-collapsible__body,
+.be-collapsible__summary > * {
+	min-width: 0;
+}
+
+/*
+ * U7f: folding is a screen-only convenience, exactly as `[hidden]` is on a sheet section
+ * (see CharacterSheet.css's own print block) - a collapsed panel still prints in full.
+ *
+ * Both declarations are needed. `display: block` alone stopped being enough once browsers
+ * began applying `content-visibility: hidden` to a closed `<details>`'s content, which
+ * skips rendering regardless of `display`. The signed PDF is unaffected either way: it is
+ * rendered server-side by `Sheet_Document`, which never sees client state at all.
+ */
+@media print {
+
+	.be-collapsible > .be-collapsible__body {
+		display: block !important;
+		content-visibility: visible !important;
+	}
+
+	.be-collapsible > .be-collapsible__summary::before {
+		content: none;
+	}
+}

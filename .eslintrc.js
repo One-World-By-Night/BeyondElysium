@@ -13,7 +13,10 @@ module.exports = {
 	},
 	rules: {
 		// Every label here wraps its control, which associates the two as fully as `htmlFor`.
-		'jsx-a11y/label-has-associated-control': [ 'error', { assert: 'either' } ],
+		'jsx-a11y/label-has-associated-control': [
+			'error',
+			{ assert: 'either' },
+		],
 		// `== null` is the one comparison that means null or undefined.
 		eqeqeq: [ 'error', 'always', { null: 'ignore' } ],
 		// The admin screens confirm a delete with the browser's own dialog, as WordPress's admin does.
@@ -32,7 +35,10 @@ module.exports = {
 			},
 		},
 		{
-			files: [ '**/@(test|__tests__)/**/*.[jt]s?(x)', '**/?(*.)test.[jt]s?(x)' ],
+			files: [
+				'**/@(test|__tests__)/**/*.[jt]s?(x)',
+				'**/?(*.)test.[jt]s?(x)',
+			],
 			extends: [ 'plugin:@wordpress/eslint-plugin/test-unit' ],
 		},
 	],

@@ -60,6 +60,61 @@
                         "power_name": "Quell the Beast"
                     }
                 ]
+            },
+            {
+                "name": "Path of Blood's Curse",
+                "levels": [
+                    {
+                        "level": null,
+                        "tier": "basic",
+                        "note": "Basic (Sabbat)",
+                        "power_name": "Ravages of the Beast"
+                    },
+                    {
+                        "level": null,
+                        "tier": "advanced",
+                        "note": "Advanced (Sabbat)",
+                        "power_name": "The Withering of Ages"
+                    },
+                    {
+                        "level": null,
+                        "tier": "basic",
+                        "note": "Basic (Tremere)",
+                        "power_name": "Stigmatize"
+                    },
+                    {
+                        "level": null,
+                        "tier": "advanced",
+                        "note": "Advanced (Tremere)",
+                        "power_name": "Fall From Grace"
+                    }
+                ]
+            },
+            {
+                "name": "Path of the Warrior",
+                "levels": [
+                    {
+                        "level": 1,
+                        "tier": "basic",
+                        "note": "Basic (Setite)",
+                        "power_name": "Fear of the Void Below"
+                    },
+                    {
+                        "level": 2,
+                        "tier": "intermediate",
+                        "note": "Intermediate (Setite)",
+                        "power_name": "Great Ordeal"
+                    }
+                ]
+            },
+            {
+                "name": "Untiered Family",
+                "levels": [
+                    {
+                        "level": null,
+                        "power_name": "No Tier Here"
+                    }
+                ]
             }
         ]
     },
@@ -237,6 +292,38 @@
                 "name": "Dur-An-Ki",
                 "power_name": "Something Unrecognizable",
                 "tier": "elder assamite"
+            }
+        },
+        {
+            "name": "U5/D67: a concatenated family names the tradition beside the tier",
+            "method": "elder_label",
+            "held": {
+                "name": "Path of Blood's Curse",
+                "power_name": "Stigmatize"
+            }
+        },
+        {
+            "name": "U5/D67: the other ladder's power at the same tier is distinguishable",
+            "method": "elder_label",
+            "held": {
+                "name": "Path of Blood's Curse",
+                "power_name": "Ravages of the Beast"
+            }
+        },
+        {
+            "name": "U5/D67: a family whose levels all agree stays unchanged, however loud its notes",
+            "method": "named_mode_rows",
+            "held": {
+                "name": "Path of the Warrior",
+                "level": 2
+            }
+        },
+        {
+            "name": "a catalog level with no tier key at all falls through to elder, on both sides",
+            "method": "elder_label",
+            "held": {
+                "name": "Untiered Family",
+                "power_name": "No Tier Here"
             }
         }
     ]

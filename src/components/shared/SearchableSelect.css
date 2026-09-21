@@ -73,3 +73,44 @@
 	font-style: italic;
 	border-top: 1px solid var(--be-gray-20);
 }
+
+/*
+ * A section heading inside the dropdown (1.2.9 U4) - a Werewolf gift's tribe, a Fera
+ * species, a Mage rote's theme.
+ *
+ * Same vertical padding as an option, deliberately: the virtualized list measures one row
+ * and multiplies, so a taller heading would drift the scroll track by a few pixels per
+ * section - across 865 Fera gifts in 66 subgroups that is the difference between the
+ * thumb landing where the rows are and landing nowhere near them. Weight and a rule are
+ * what distinguish it, never height.
+ *
+ * `default` rather than `pointer`, and no hover state: a heading is a label, not a choice.
+ */
+.be-searchable-select__group {
+	padding: 0.35rem 0.5rem;
+
+	/* The virtualized list sets an explicit `height` here from the measured option row;
+	 * without border-box that height would be on top of this padding, not inclusive of it. */
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	cursor: default;
+	font-weight: 600;
+	font-size: 0.85em;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: var(--be-gray-10);
+	background: var(--be-gray-27);
+	border-top: 1px solid var(--be-gray-21);
+
+	/* A long species or tribe name truncates rather than wrapping onto a second line,
+	 * which would break the one-row-one-height rule the virtual scroll depends on. It
+	 * stays readable because the full text is still in the accessibility tree. */
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.be-searchable-select__group:first-child {
+	border-top: 0;
+}

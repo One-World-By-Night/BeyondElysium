@@ -26,7 +26,11 @@ const SKIP_DIRS = new Set( [
 	'languages',
 ] );
 
-/** Every .md file under `dir`, recursively. */
+/**
+ * Every .md file under `dir`, recursively.
+ * @param dir
+ * @param depth
+ */
 function markdownFiles( dir, depth = 0 ) {
 	// The repo root itself is scanned shallowly - README.md and friends - rather than
 	// recursively, since its subdirectories are covered by their own roots.

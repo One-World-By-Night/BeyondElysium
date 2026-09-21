@@ -5,12 +5,13 @@
  * and NPC editors alike - one shared component rather than four near-identical copies.
  */
 import { useEffect, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { everyPage } from '../../lib/everyPage';
 import AudiencePicker from './AudiencePicker';
 import HtmlEditor from './HtmlEditor';
 import HelpButton from './HelpButton';
+import CollapsiblePanel from './CollapsiblePanel';
 import type { AudienceRules, AudienceValue } from '../../types/plot';
 import type { Character } from '../../types/character';
 import type {
@@ -117,11 +118,24 @@ export function SecretsPanel( {
 	}
 
 	return (
-		<div className="be-secrets-panel">
-			<div className="be-help-heading">
-				<h4>{ __( 'Secrets', 'beyond-elysium' ) }</h4>
-				<HelpButton helpKey="secrets" />
-			</div>
+		<CollapsiblePanel
+			id={ `secrets:${ entityType }` }
+			className="be-secrets-panel"
+			heading={
+				<span className="be-help-heading">
+					<h4>
+						{ items.length
+							? sprintf(
+									/* translators: %d: number of secrets attached to this plot, item, location or NPC */
+									__( 'Secrets (%d)', 'beyond-elysium' ),
+									items.length
+							  )
+							: __( 'Secrets', 'beyond-elysium' ) }
+					</h4>
+					<HelpButton helpKey="secrets" />
+				</span>
+			}
+		>
 			{ error && (
 				<div className="be-secrets-panel__error" role="alert">
 					{ error }
@@ -167,7 +181,7 @@ export function SecretsPanel( {
 					{ __( 'Add Secret', 'beyond-elysium' ) }
 				</button>
 			</form>
-		</div>
+		</CollapsiblePanel>
 	);
 }
 

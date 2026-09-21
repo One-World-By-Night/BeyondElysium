@@ -97,5 +97,24 @@
     {
         "name": "a real stored tier still shows unchanged (Decision 074)",
         "output": "Dur-An-Ki: Something Unrecognizable (elder assamite)"
+    },
+    {
+        "name": "U5/D67: a concatenated family names the tradition beside the tier",
+        "output": "Path of Blood's Curse: Stigmatize (basic · Tremere)"
+    },
+    {
+        "name": "U5/D67: the other ladder's power at the same tier is distinguishable",
+        "output": "Path of Blood's Curse: Ravages of the Beast (basic · Sabbat)"
+    },
+    {
+        "name": "U5/D67: a family whose levels all agree stays unchanged, however loud its notes",
+        "output": [
+            "Fear of the Void Below",
+            "Great Ordeal"
+        ]
+    },
+    {
+        "name": "a catalog level with no tier key at all falls through to elder, on both sides",
+        "output": "Untiered Family: No Tier Here (elder)"
     }
 ]

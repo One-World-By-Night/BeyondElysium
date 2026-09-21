@@ -701,6 +701,69 @@ export function SchemaBlockDefinitionEditor( {
 // ---------------------------------------------------------------------------
 
 /**
+ * One of the three faceting fields on a catalog item - `group`, `subgroup`, `tier` -
+ * as a free-text box backed by a datalist of every value already used in this block
+ * (1.2.9 U6a, D73).
+ *
+ * Free text rather than a fixed `<select>`, deliberately: these fields hold real,
+ * open-ended catalog vocabulary (29 Werewolf gift groups, 66 Fera subgroups) that a
+ * chronicle may legitimately extend, and a closed list would make a new species or a
+ * house rule unenterable. The datalist gives the safety of a picker without the
+ * ceiling - which is what D71 actually needs, since its four broken tribe names are
+ * near-misses (`Bone Gnawers` for `Bone Gnawer`), not missing vocabulary.
+ */
+function CatalogFacetInput( {
+	field,
+	item,
+	index,
+	options,
+	onChange,
+}: {
+	field: 'group' | 'subgroup' | 'tier';
+	item: TraitListItem;
+	index: number;
+	options: string[];
+	onChange: ( index: number, patch: Partial< TraitListItem > ) => void;
+} ) {
+	const listId = `be-facet-${ field }`;
+	const label = {
+		/* translators: %s: the catalog item's own name */
+		group: __( 'Group for %s', 'beyond-elysium' ),
+		/* translators: %s: the catalog item's own name */
+		subgroup: __( 'Subgroup for %s', 'beyond-elysium' ),
+		/* translators: %s: the catalog item's own name */
+		tier: __( 'Tier for %s', 'beyond-elysium' ),
+	}[ field ];
+
+	return (
+		<>
+			{ /* One datalist per field for the whole table, not one per row - a block with
+			 * 865 items would otherwise mount 865 copies of the same option list. */ }
+			{ index === 0 && (
+				<datalist id={ listId }>
+					{ options.map( ( option ) => (
+						<option key={ option } value={ option } />
+					) ) }
+				</datalist>
+			) }
+			<input
+				type="text"
+				list={ listId }
+				aria-label={ sprintf( label, item.name ) }
+				value={ item[ field ] ?? '' }
+				onChange={ ( e ) =>
+					onChange( index, {
+						// Empty means "not set", never a stored empty string - a blank
+						// group must not become a group of its own in a picker.
+						[ field ]: e.target.value.trim() || undefined,
+					} )
+				}
+			/>
+		</>
+	);
+}
+
+/**
  * Structured editor for a trait_list section definition. Renders the
  * global flags (multiples, custom entries, alphabetize, negative list,
  * atomic, max per item) and an add/edit/remove table of individual trait
@@ -748,6 +811,22 @@ function TraitListEditor( {
 			items: items.filter( ( _, i ) => i !== index ),
 		} as unknown as Record< string, unknown > );
 	}
+
+	/*
+	 * 1.2.9 U6a (D73): every distinct value already in this block, offered back as a
+	 * datalist. Grouping is only as good as the strings agreeing with each other -
+	 * `Bone Gnawers` against a gift group of `Bone Gnawer` is D71, the single largest
+	 * gift group matching nothing at all. Picking from what is already there is how a
+	 * Storyteller avoids minting a forty-fifth spelling by hand.
+	 */
+	const existing = ( field: 'group' | 'subgroup' | 'tier' ): string[] =>
+		Array.from(
+			new Set(
+				items
+					.map( ( item ) => ( item[ field ] ?? '' ).trim() )
+					.filter( ( value ) => value !== '' )
+			)
+		).sort();
 
 	return (
 		<div className="be-def-editor__section">
@@ -830,172 +909,274 @@ function TraitListEditor( {
 					items.length
 				) }
 			</h3>
-			<table className="be-def-editor__table">
-				<thead>
-					<tr>
-						<th>{ __( 'Name', 'beyond-elysium' ) }</th>
-						<th>{ __( 'Cost', 'beyond-elysium' ) }</th>
-						<th>{ __( 'Category', 'beyond-elysium' ) }</th>
-						<th>{ __( 'Description', 'beyond-elysium' ) }</th>
-						<th>{ __( 'Approval', 'beyond-elysium' ) }</th>
-						<th>{ __( 'Reason', 'beyond-elysium' ) }</th>
-						<th>{ __( 'Approval by value', 'beyond-elysium' ) }</th>
-						<th />
-					</tr>
-				</thead>
-				<tbody>
-					{ items.map( ( item, i ) => (
-						<tr key={ i }>
-							<td>
-								<input
-									type="text"
-									aria-label={ sprintf(
-										/* translators: %d: the item's position in the list */
-										__(
-											'Name for item %d',
-											'beyond-elysium'
-										),
-										i + 1
-									) }
-									value={ item.name }
-									onChange={ ( e ) =>
-										updateItem( i, {
-											name: e.target.value,
-										} )
-									}
-								/>
-							</td>
-							<td>
-								<input
-									type="text"
-									aria-label={ sprintf(
-										/* translators: %s: the item's own name */
-										__( 'Cost for %s', 'beyond-elysium' ),
-										item.name
-									) }
-									value={ item.cost ?? '' }
-									// A cost range is written with a hyphen; the placeholder shows what to type.
-									// eslint-disable-next-line @wordpress/i18n-hyphenated-range
-									placeholder={ __(
-										'1, 1-3, 1 or 3…',
+			{ /* U6a: three more columns on an already-wide table. `be-table-box` +
+			 * `be-responsive-table` is this codebase's established answer (1.0.0-review
+			 * F-019) - each row stacks into a card below 960px rather than scrolling
+			 * sideways, which it would now certainly do on a phone. */ }
+			<div className="be-table-box">
+				<table className="be-def-editor__table be-responsive-table">
+					<thead>
+						<tr>
+							<th>{ __( 'Name', 'beyond-elysium' ) }</th>
+							<th>{ __( 'Cost', 'beyond-elysium' ) }</th>
+							<th>{ __( 'Category', 'beyond-elysium' ) }</th>
+							<th>{ __( 'Group', 'beyond-elysium' ) }</th>
+							<th>{ __( 'Subgroup', 'beyond-elysium' ) }</th>
+							<th>{ __( 'Tier', 'beyond-elysium' ) }</th>
+							<th>{ __( 'Description', 'beyond-elysium' ) }</th>
+							<th>{ __( 'Approval', 'beyond-elysium' ) }</th>
+							<th>{ __( 'Reason', 'beyond-elysium' ) }</th>
+							<th>
+								{ __( 'Approval by value', 'beyond-elysium' ) }
+							</th>
+							<th />
+						</tr>
+					</thead>
+					<tbody>
+						{ items.map( ( item, i ) => (
+							<tr key={ i }>
+								<td
+									data-label={ __(
+										'Name',
 										'beyond-elysium'
 									) }
-									onChange={ ( e ) =>
-										updateItem( i, {
-											cost: e.target.value,
-										} )
-									}
-								/>
-							</td>
-							<td>
-								<input
-									type="text"
-									aria-label={ sprintf(
-										/* translators: %s: the item's own name */
-										__(
-											'Category for %s',
-											'beyond-elysium'
-										),
-										item.name
-									) }
-									value={ item.category ?? '' }
-									onChange={ ( e ) =>
-										updateItem( i, {
-											category: e.target.value,
-										} )
-									}
-								/>
-							</td>
-							<td>
-								<DescriptionEditorButton
-									label={ item.name }
-									value={ item.description }
-									onSave={ ( value ) =>
-										updateItem( i, { description: value } )
-									}
-								/>
-							</td>
-							<td>
-								<select
-									aria-label={ sprintf(
-										/* translators: %s: the item's own name */
-										__(
-											'Approval level for %s',
-											'beyond-elysium'
-										),
-										item.name
-									) }
-									value={ item.approval ?? '' }
-									onChange={ ( e ) =>
-										updateItem( i, {
-											approval: ( e.target.value ||
-												undefined ) as
-												| ApprovalLevel
-												| undefined,
-										} )
-									}
 								>
-									<option value="">
-										{ __(
-											'Block default',
+									<input
+										type="text"
+										aria-label={ sprintf(
+											/* translators: %d: the item's position in the list */
+											__(
+												'Name for item %d',
+												'beyond-elysium'
+											),
+											i + 1
+										) }
+										value={ item.name }
+										onChange={ ( e ) =>
+											updateItem( i, {
+												name: e.target.value,
+											} )
+										}
+									/>
+								</td>
+								<td
+									data-label={ __(
+										'Cost',
+										'beyond-elysium'
+									) }
+								>
+									<input
+										type="text"
+										aria-label={ sprintf(
+											/* translators: %s: the item's own name */
+											__(
+												'Cost for %s',
+												'beyond-elysium'
+											),
+											item.name
+										) }
+										value={ item.cost ?? '' }
+										// A cost range is written with a hyphen; the placeholder shows what to type.
+										// eslint-disable-next-line @wordpress/i18n-hyphenated-range
+										placeholder={ __(
+											'1, 1-3, 1 or 3…',
 											'beyond-elysium'
 										) }
-									</option>
-									{ APPROVAL_LEVELS.map( ( level ) => (
-										<option key={ level } value={ level }>
-											{ level }
-										</option>
-									) ) }
-								</select>
-							</td>
-							<td>
-								<input
-									type="text"
-									aria-label={ sprintf(
-										/* translators: %s: the item's own name */
-										__(
-											'Approval reason for %s',
-											'beyond-elysium'
-										),
-										item.name
-									) }
-									value={ item.reason ?? '' }
-									placeholder={ __(
-										'Requires Tremere Coordinator approval…',
+										onChange={ ( e ) =>
+											updateItem( i, {
+												cost: e.target.value,
+											} )
+										}
+									/>
+								</td>
+								<td
+									data-label={ __(
+										'Category',
 										'beyond-elysium'
 									) }
-									onChange={ ( e ) =>
-										updateItem( i, {
-											reason: e.target.value || undefined,
-										} )
-									}
-								/>
-							</td>
-							<td>
-								<ApprovalByValueEditorButton
-									label={ item.name }
-									value={ item.approval_by_value }
-									onSave={ ( ranges ) =>
-										updateItem( i, {
-											approval_by_value: ranges.length
-												? ranges
-												: undefined,
-										} )
-									}
-								/>
-							</td>
-							<td>
-								<button
-									type="button"
-									onClick={ () => removeItem( i ) }
 								>
-									{ __( 'Remove', 'beyond-elysium' ) }
-								</button>
-							</td>
-						</tr>
-					) ) }
-				</tbody>
-			</table>
+									<input
+										type="text"
+										aria-label={ sprintf(
+											/* translators: %s: the item's own name */
+											__(
+												'Category for %s',
+												'beyond-elysium'
+											),
+											item.name
+										) }
+										value={ item.category ?? '' }
+										onChange={ ( e ) =>
+											updateItem( i, {
+												category: e.target.value,
+											} )
+										}
+									/>
+								</td>
+								{ /* U6a (D73): group / subgroup / tier. All three are typed on
+								 * TraitListItem and carry real values on all 865 Fera gifts and
+								 * all 510 Werewolf ones, and until now no screen could edit any
+								 * of them - so every wrong value was a seeder change and a
+								 * release. U4's grouping is only as good as these strings. */ }
+								<td
+									data-label={ __(
+										'Group',
+										'beyond-elysium'
+									) }
+								>
+									<CatalogFacetInput
+										field="group"
+										item={ item }
+										index={ i }
+										options={ existing( 'group' ) }
+										onChange={ updateItem }
+									/>
+								</td>
+								<td
+									data-label={ __(
+										'Subgroup',
+										'beyond-elysium'
+									) }
+								>
+									<CatalogFacetInput
+										field="subgroup"
+										item={ item }
+										index={ i }
+										options={ existing( 'subgroup' ) }
+										onChange={ updateItem }
+									/>
+								</td>
+								<td
+									data-label={ __(
+										'Tier',
+										'beyond-elysium'
+									) }
+								>
+									<CatalogFacetInput
+										field="tier"
+										item={ item }
+										index={ i }
+										options={ existing( 'tier' ) }
+										onChange={ updateItem }
+									/>
+								</td>
+								<td
+									data-label={ __(
+										'Description',
+										'beyond-elysium'
+									) }
+								>
+									<DescriptionEditorButton
+										label={ item.name }
+										value={ item.description }
+										onSave={ ( value ) =>
+											updateItem( i, {
+												description: value,
+											} )
+										}
+									/>
+								</td>
+								<td
+									data-label={ __(
+										'Approval',
+										'beyond-elysium'
+									) }
+								>
+									<select
+										aria-label={ sprintf(
+											/* translators: %s: the item's own name */
+											__(
+												'Approval level for %s',
+												'beyond-elysium'
+											),
+											item.name
+										) }
+										value={ item.approval ?? '' }
+										onChange={ ( e ) =>
+											updateItem( i, {
+												approval: ( e.target.value ||
+													undefined ) as
+													| ApprovalLevel
+													| undefined,
+											} )
+										}
+									>
+										<option value="">
+											{ __(
+												'Block default',
+												'beyond-elysium'
+											) }
+										</option>
+										{ APPROVAL_LEVELS.map( ( level ) => (
+											<option
+												key={ level }
+												value={ level }
+											>
+												{ level }
+											</option>
+										) ) }
+									</select>
+								</td>
+								<td
+									data-label={ __(
+										'Reason',
+										'beyond-elysium'
+									) }
+								>
+									<input
+										type="text"
+										aria-label={ sprintf(
+											/* translators: %s: the item's own name */
+											__(
+												'Approval reason for %s',
+												'beyond-elysium'
+											),
+											item.name
+										) }
+										value={ item.reason ?? '' }
+										placeholder={ __(
+											'Requires Tremere Coordinator approval…',
+											'beyond-elysium'
+										) }
+										onChange={ ( e ) =>
+											updateItem( i, {
+												reason:
+													e.target.value || undefined,
+											} )
+										}
+									/>
+								</td>
+								<td
+									data-label={ __(
+										'Approval by value',
+										'beyond-elysium'
+									) }
+								>
+									<ApprovalByValueEditorButton
+										label={ item.name }
+										value={ item.approval_by_value }
+										onSave={ ( ranges ) =>
+											updateItem( i, {
+												approval_by_value: ranges.length
+													? ranges
+													: undefined,
+											} )
+										}
+									/>
+								</td>
+								<td>
+									<button
+										type="button"
+										onClick={ () => removeItem( i ) }
+									>
+										{ __( 'Remove', 'beyond-elysium' ) }
+									</button>
+								</td>
+							</tr>
+						) ) }
+					</tbody>
+				</table>
+			</div>
 			<button type="button" onClick={ addItem }>
 				{ __( '+ Add item', 'beyond-elysium' ) }
 			</button>

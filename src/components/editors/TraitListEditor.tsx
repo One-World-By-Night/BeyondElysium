@@ -10,6 +10,8 @@ import SearchableSelect from '../shared/SearchableSelect';
 import Modal from '../shared/Modal';
 import WithDots from '../shared/Dots';
 import { groupTraitsByField } from '../../lib/groupTraitsByField';
+import { groupCatalogItems } from '../../lib/catalogGroups';
+import { identityGroupValues } from '../../lib/identityGroups';
 import { costChoices } from '../../lib/costChoices';
 import { DOT } from '../../lib/displayTemper';
 import { useCostDisplayMode } from '../../lib/costDisplayMode';
@@ -46,6 +48,11 @@ export interface TraitListEditorProps {
 	/** Needed only for a player_order block's "Save order" call (1.1.0 D4). */
 	gameSlug?: string;
 	characterId?: number;
+	/**
+	 * The whole sheet, read only to find this character's own identity values so their
+	 * matching pick-list sections sort first (1.2.9 U4c). Never written.
+	 */
+	sheetData?: Record< string, unknown >;
 }
 
 /** `index === null` means the modal is adding a new trait, not editing an existing row. */
@@ -82,11 +89,30 @@ export function TraitListEditor( {
 	readOnly,
 	gameSlug,
 	characterId,
+	sheetData,
 }: TraitListEditorProps ) {
 	// Memoized: large catalogs make this expensive to recompute on every keystroke.
 	const itemNames = useMemo(
 		() => definition.items.map( ( item ) => item.name ),
 		[ definition.items ]
+	);
+
+	/*
+	 * U4: sections, when the catalog carries any. `groupCatalogItems` returns an empty
+	 * array for a block with no groups at all (Merits, Flaws, Rituals, Combos - 2,523
+	 * items between them), and the picker stays exactly as flat as it has always been.
+	 *
+	 * The character's own breed, auspice and tribe sort to the front. Sorting only -
+	 * every other section is still there, still searchable, still purchasable at the
+	 * out-of-type price. See catalogGroups.ts.
+	 */
+	const preferredGroups = useMemo(
+		() => identityGroupValues( sheetData ),
+		[ sheetData ]
+	);
+	const itemGroups = useMemo(
+		() => groupCatalogItems( definition.items, preferredGroups ),
+		[ definition.items, preferredGroups ]
 	);
 	const [ draft, setDraft ] = useState< DraftState | null >( null );
 	const [ costNumbers, setCostNumbers ] = useCostDisplayMode();
@@ -590,7 +616,9 @@ export function TraitListEditor( {
 									</label>
 									<SearchableSelect
 										id={ `${ blockSlug }-trait-name` }
-										options={ itemNames }
+										{ ...( itemGroups.length > 0
+											? { groups: itemGroups }
+											: { options: itemNames } ) }
 										value={ draft.name }
 										allowCustom={
 											definition.allow_custom ?? false

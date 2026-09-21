@@ -20,6 +20,7 @@ import { useMemo, useState } from '@wordpress/element';
 import SearchableSelect from '../shared/SearchableSelect';
 import Modal from '../shared/Modal';
 import { usePowerDisplayMode } from '../../lib/powerDisplayMode';
+import { seamQualifier } from '../../lib/levelQualifier';
 import {
 	elderLabel,
 	findLevelsAtRank,
@@ -215,8 +216,16 @@ export function levelName(
 	if ( atRank.length === 0 ) {
 		return `${ name } ${ level }`;
 	}
+	// U5/D67: where a family is two ladders concatenated, one rung's box can hold powers
+	// from both - `Path of Blood's Curse` ties two Sabbat and two Tremere powers at basic.
+	// Naming the tradition per power is what tells them apart; `seamQualifier` stays silent
+	// on a family that agrees with itself, so an ordinary ladder is unchanged.
 	return atRank
-		.map( ( l ) => l.power_name || `${ name } ${ level }` )
+		.map( ( l ) => {
+			const label = l.power_name || `${ name } ${ level }`;
+			const qualifier = seamQualifier( power, l );
+			return qualifier ? `${ label } (${ qualifier })` : label;
+		} )
 		.join( ', ' );
 }
 
@@ -262,8 +271,16 @@ export function elderPickOptions(
 			if ( heldPicks.has( `${ familyName }\0${ level.power_name }` ) ) {
 				continue;
 			}
+			// U5/D67: `value` is both the option's label and the string `addElderPick()`
+			// matches on - never anything stored - so naming the tradition here is safe and
+			// is the one place it matters most, since this is where a player chooses
+			// between two ladders that otherwise look identical. `family`/`powerName`,
+			// which is what actually reaches the sheet, stay untouched.
+			const qualifier = seamQualifier( power, level );
 			options.push( {
-				value: `${ familyName }: ${ level.power_name }`,
+				value: qualifier
+					? `${ familyName }: ${ level.power_name } (${ qualifier })`
+					: `${ familyName }: ${ level.power_name }`,
 				family: familyName,
 				powerName: level.power_name,
 			} );
@@ -415,6 +432,26 @@ export function TieredPowerEditor( {
 		() => elderPickOptions( definition, data, trueMaxFor ),
 		[ definition, data, trueMaxFor ]
 	);
+	/*
+	 * U4b: sectioned by family. `elderOptions` already knows each pick's family, and a
+	 * flat list repeats that family name on every single row - a character standing in
+	 * several disciplines reads "Animalism: …" a dozen times before reaching Celerity.
+	 * The option string itself is unchanged, so `addElderPick()` still matches on it.
+	 */
+	const elderGroups = useMemo( () => {
+		const byFamily = new Map< string, string[] >();
+		for ( const option of elderOptions ) {
+			if ( ! byFamily.has( option.family ) ) {
+				byFamily.set( option.family, [] );
+			}
+			( byFamily.get( option.family ) as string[] ).push( option.value );
+		}
+		return Array.from( byFamily, ( [ label, options ] ) => ( {
+			label,
+			options,
+		} ) );
+	}, [ elderOptions ] );
+
 	const addElderPick = ( value: string ) => {
 		const found = elderOptions.find( ( o ) => o.value === value );
 		if ( ! found ) {
@@ -982,7 +1019,7 @@ export function TieredPowerEditor( {
 					{ ! readOnly && ! pendingAdd && elderOptions.length > 0 && (
 						<div className="be-tiered-power-editor__add">
 							<SearchableSelect
-								options={ elderOptions.map( ( o ) => o.value ) }
+								groups={ elderGroups }
 								value=""
 								placeholder={ __(
 									'Add an Elder-and-above power…',

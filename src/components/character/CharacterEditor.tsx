@@ -15,6 +15,7 @@ import HelpButton from '../shared/HelpButton';
 import AssigneePicker from '../shared/AssigneePicker';
 import AudiencePicker from '../shared/AudiencePicker';
 import SecretsPanel from '../shared/SecretsPanel';
+import CollapsiblePanel from '../shared/CollapsiblePanel';
 import { spanFor, sortedForFlow } from '../../lib/templateLayout';
 import { resolveSectionTitle } from '../../lib/resolveCrossBlockRef';
 import { pickMediaImage } from '../../lib/pickMediaImage';
@@ -1060,7 +1061,14 @@ export function CharacterEditor( {
 						return null;
 					}
 					return (
-						<div
+						<CollapsiblePanel
+							/*
+							 * U7e: block slugs are stack-wide, so a player who folds
+							 * Backgrounds away finds it folded on their next character of
+							 * the same creature type too - which is the point. Namespaced
+							 * to keep the editor's own state distinct from the sheet's.
+							 */
+							id={ `character-editor-section:${ section.block_slug }` }
 							className="be-character-editor__section"
 							key={ section.block_slug }
 							style={ {
@@ -1068,35 +1076,39 @@ export function CharacterEditor( {
 									section.width
 								) }`,
 							} }
+							heading={
+								<span className="be-help-heading">
+									<h4>
+										{ resolveSectionTitle(
+											section,
+											store.sheetData
+										) }
+									</h4>
+									{ block.section_type === 'trait_list' && (
+										<HelpButton helpKey="trait-editor" />
+									) }
+									{ block.section_type === 'tiered_power' && (
+										<HelpButton helpKey="power-editor" />
+									) }
+									{ ( block.section_type ===
+										'resource_pool' ||
+										block.section_type ===
+											'identity_field' ) && (
+										<HelpButton helpKey="pools-identity-editor" />
+									) }
+									{ ( block.section_type === 'trait_list' ||
+										block.section_type ===
+											'tiered_power' ) &&
+										(
+											block.definition as
+												| TraitListDefinition
+												| TieredPowerDefinition
+										 ).player_order && (
+											<HelpButton helpKey="player-order" />
+										) }
+								</span>
+							}
 						>
-							<div className="be-help-heading">
-								<h4>
-									{ resolveSectionTitle(
-										section,
-										store.sheetData
-									) }
-								</h4>
-								{ block.section_type === 'trait_list' && (
-									<HelpButton helpKey="trait-editor" />
-								) }
-								{ block.section_type === 'tiered_power' && (
-									<HelpButton helpKey="power-editor" />
-								) }
-								{ ( block.section_type === 'resource_pool' ||
-									block.section_type ===
-										'identity_field' ) && (
-									<HelpButton helpKey="pools-identity-editor" />
-								) }
-								{ ( block.section_type === 'trait_list' ||
-									block.section_type === 'tiered_power' ) &&
-									(
-										block.definition as
-											| TraitListDefinition
-											| TieredPowerDefinition
-									 ).player_order && (
-										<HelpButton helpKey="player-order" />
-									) }
-							</div>
 							<BlockEditor
 								blockSlug={ section.block_slug }
 								sectionType={ block.section_type }
@@ -1108,24 +1120,42 @@ export function CharacterEditor( {
 								gameSlug={ gameSlug }
 								characterId={ effectiveCharacterId }
 							/>
-						</div>
+						</CollapsiblePanel>
 					);
 				} ) }
 			</div>
 
 			{ ! readOnly && (
-				<div className="be-character-editor__summary">
-					<h4>
-						{ sprintf(
-							/* translators: %d: number of unsaved pending changes */
-							__( 'Pending Changes (%d)', 'beyond-elysium' ),
-							pendingTotal
-						) }
-					</h4>
+				<CollapsiblePanel
+					id="character-editor-pending"
+					className="be-character-editor__summary"
+					/*
+					 * D74/U7c: re-open when a change is queued, even if the player folded the
+					 * panel away. Keyed on the count so 0 -> N forces it open and nobody
+					 * submits blind to what they changed; it never forces it shut, so folding
+					 * it again while changes are pending sticks.
+					 */
+					forceOpenKey={ pendingTotal }
+					heading={
+						<h4>
+							{ sprintf(
+								/* translators: %d: number of unsaved pending changes */
+								__( 'Pending Changes (%d)', 'beyond-elysium' ),
+								pendingTotal
+							) }
+						</h4>
+					}
+				>
 					{ pendingTotal === 0 && (
 						<p>{ __( 'No unsaved changes.', 'beyond-elysium' ) }</p>
 					) }
-					<ul>
+					{ /* D74: this list is unbounded - one entry per queued change - inside a
+					 * `position: sticky; bottom: 0` panel. Without a height cap it grew over
+					 * the editor it belongs to (7-8 changes covered 37-68% of the viewport,
+					 * owner-reported live 2026-09-21). The cap lives on the list, not the
+					 * panel, so the heading and the XP totals below stay visible while it
+					 * scrolls - the totals are the whole reason the panel exists. */ }
+					<ul className="be-character-editor__pending-list">
 						{ store.pendingChanges.map( ( change, i ) => {
 							const preview = store.previewCosts?.results[ i ];
 							return (
@@ -1226,7 +1256,7 @@ export function CharacterEditor( {
 							) }
 						</p>
 					) }
-				</div>
+				</CollapsiblePanel>
 			) }
 
 			<ConfirmDialog

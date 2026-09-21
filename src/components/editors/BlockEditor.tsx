@@ -72,6 +72,7 @@ export function BlockEditor( {
 					readOnly={ readOnly }
 					gameSlug={ gameSlug }
 					characterId={ characterId }
+					sheetData={ sheetData }
 				/>
 			);
 

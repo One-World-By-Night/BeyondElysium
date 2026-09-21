@@ -286,6 +286,19 @@ button.be-st-button--quiet.be-st-button--quiet:hover:not(:disabled) {
 	gap: 0.5rem;
 	margin-top: 1rem;
 	padding: 0.75rem 1rem;
+
+	/*
+	 * D74's defect class, second instance. This bar's content is bounded - a fixed set of
+	 * buttons - so it cannot grow without limit the way `CharacterEditor`'s pending-changes
+	 * list did. But on a narrow viewport enough buttons wrap to make a sticky bar tall
+	 * enough to cover what it is pinned over, and there is no reason for a bar pinned to the
+	 * viewport to ever exceed a third of it. Capped so the rule in
+	 * `stickyOverflow.test.ts` holds with no exceptions. The `padding-bottom` reserve on
+	 * `__detail` above is a different fix for a different problem - short-page flow
+	 * reservation - and stays.
+	 */
+	max-height: 33vh;
+	overflow-y: auto;
 	border: 1px solid var(--be-st-border-strong);
 	border-radius: var(--be-st-radius);
 	background: var(--be-st-surface);

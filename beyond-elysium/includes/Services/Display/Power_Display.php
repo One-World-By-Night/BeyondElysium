@@ -58,7 +58,8 @@ class Power_Display {
 		// building B12, a real pre-existing PHP/TS divergence: the TS twin already looks this
 		// up before either branch, so an Elder pick with a stale/renamed catalog match had
 		// never actually matched the on-screen sheet even before translation existed.
-		$found      = self::find_by_power_name( self::find_power( $definition, $held['name'] ), $held['power_name'] ?? '' );
+		$power      = self::find_power( $definition, $held['name'] );
+		$found      = self::find_by_power_name( $power, $held['power_name'] ?? '' );
 		$found_pt   = $use_pt ? ( $found->power_name_pt ?? '' ) : '';
 		$power_name = $found_pt !== '' ? $found_pt : ( $held['power_name'] ?? '' );
 
@@ -68,11 +69,110 @@ class Power_Display {
 
 		// Prefers a fresh catalog tier lookup, then the entry's own stored tier, then 'elder'.
 		// A parser placeholder is skipped at each step - see displayable_tier().
-		$tier = self::displayable_tier( $found?->tier )
+		//
+		// `$found->tier ?? null`, not `$found?->tier`: the nullsafe operator guards a null
+		// `$found` but says nothing about a *found* level that simply has no `tier` key, and
+		// PHP 8 raises "Undefined property" for that - a real pre-existing crash on the
+		// signed-PDF path, reproduced by SheetDocumentTranslationThreadTest against a
+		// fixture whose levels carry only `level`/`power_name`. `??` covers both cases. The
+		// TypeScript twin was never affected: a missing property there is just `undefined`.
+		$tier = self::displayable_tier( $found->tier ?? null )
 			?? self::displayable_tier( $held['tier'] ?? null )
 			?? 'elder';
 
+		// 1.2.9 U5/D67: on a family that is two ladders concatenated, the tier alone cannot
+		// tell them apart - see seam_qualifier().
+		$qualifier = self::seam_qualifier( $power, $found );
+		if ( null !== $qualifier ) {
+			return $held['name'] . ': ' . $power_name . ' (' . $tier . ' · ' . $qualifier . ')';
+		}
+
 		return $held['name'] . ': ' . $power_name . ' (' . $tier . ')';
+	}
+
+	/**
+	 * The tier vocabulary, mirroring `Seeder::normalize_tier()`'s own map - the function
+	 * that derived a level's `tier` from its `note` in the first place.
+	 *
+	 * @return string[]
+	 */
+	private static function tier_needles(): array {
+		return [
+			'innate',
+			'basic',
+			'intermediate',
+			'int',
+			'advanced',
+			'adv',
+			'elder',
+			'master',
+			'ascended',
+			'asc',
+			'methuselah',
+			'meth',
+		];
+	}
+
+	/**
+	 * Whatever a level's free-text note says beyond its tier word - "Sabbat", "ritual",
+	 * "dark ages" - or null when the note is nothing but a tier, which is the common case.
+	 * Exact twin of `levelQualifier()` in `src/lib/levelQualifier.ts`.
+	 *
+	 * @param string|null $note
+	 * @return string|null
+	 */
+	public static function level_qualifier( ?string $note ): ?string {
+		$raw = trim( (string) $note );
+		if ( '' === $raw ) {
+			return null;
+		}
+
+		$lower = strtolower( $raw );
+		$at    = false;
+		$len   = 0;
+		foreach ( self::tier_needles() as $needle ) {
+			$found = strpos( $lower, $needle );
+			if ( false !== $found ) {
+				$at  = $found;
+				$len = strlen( $needle );
+				break;
+			}
+		}
+		if ( false === $at ) {
+			return null;
+		}
+
+		$rest = substr( $raw, 0, $at ) . substr( $raw, $at + $len );
+		$rest = trim( (string) preg_replace( '/^[\s.,;:-]+|[\s.,;:-]+$/', '', $rest ) );
+		$rest = trim( (string) preg_replace( '/^\((.*)\)$/', '$1', $rest ) );
+
+		return '' === $rest ? null : $rest;
+	}
+
+	/**
+	 * The qualifier to show beside one level, or null when there is nothing useful to say -
+	 * either the level carries none, or every level in its family agrees and naming it
+	 * would repeat itself down the list. Exact twin of `seamQualifier()` in
+	 * `src/lib/levelQualifier.ts`, so the signed PDF and the on-screen sheet never disagree.
+	 *
+	 * @param object|null $power
+	 * @param object|null $level
+	 * @return string|null
+	 */
+	public static function seam_qualifier( ?object $power, ?object $level ): ?string {
+		if ( null === $power || null === $level ) {
+			return null;
+		}
+
+		$seen = [];
+		foreach ( $power->levels ?? [] as $entry ) {
+			$seen[ self::level_qualifier( $entry->note ?? null ) ?? '' ] = true;
+			if ( count( $seen ) > 1 ) {
+				return self::level_qualifier( $level->note ?? null );
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -165,8 +265,12 @@ class Power_Display {
 				continue;
 			}
 			foreach ( $at_rank as $entry ) {
-				$name_pt = $use_pt ? ( $entry->power_name_pt ?? '' ) : '';
-				$rows[]  = $name_pt !== '' ? $name_pt : ( $entry->power_name ?? '' );
+				$name_pt   = $use_pt ? ( $entry->power_name_pt ?? '' ) : '';
+				$label     = $name_pt !== '' ? $name_pt : ( $entry->power_name ?? '' );
+				// 1.2.9 U5/D67: one rung of a concatenated family can hold powers from both
+				// ladders - see seam_qualifier(). Twin of TieredPowerEditor's levelName().
+				$qualifier = self::seam_qualifier( $power, $entry );
+				$rows[]    = null !== $qualifier ? $label . ' (' . $qualifier . ')' : $label;
 			}
 		}
 

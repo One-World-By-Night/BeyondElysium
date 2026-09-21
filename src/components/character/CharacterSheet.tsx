@@ -27,6 +27,13 @@ import { showsProseSection } from '../../lib/sheetProse';
 import { canIn } from '../../lib/chronicleCapabilities';
 import { sheetActions, type SheetAction } from '../../lib/sheetActions';
 import { sectionTotal } from '../../lib/sectionTotal';
+import { readCollapsed, setCollapsed } from '../../lib/panelCollapse';
+
+/**
+ * Sheet sections share the panel-collapse store with every other foldable panel, so their
+ * keys are namespaced - a block slug is not guaranteed distinct from a panel id.
+ */
+const SECTION_COLLAPSE_PREFIX = 'sheet-section:';
 import type {
 	MyCapabilities,
 	ResolvedStack,
@@ -167,9 +174,23 @@ export function CharacterSheet( {
 	// The viewer's own expand/collapse clicks, keyed by block_slug - only ever holds an
 	// entry once they've clicked a section, so a section they never touched still reads
 	// straight from the template's own `collapsed` flag (isSectionCollapsed()).
+	//
+	// 1.2.9 U7e: seeded from, and written back to, the same per-viewer store the shared
+	// CollapsiblePanel uses, so folding a section away survives a reload. Sections keep
+	// this hand-rolled toggle rather than moving to CollapsiblePanel because a closed
+	// `<details>` renders nothing at all - it would silently drop the section from a
+	// printed sheet, which the `hidden` attribute below deliberately does not.
 	const [ collapseOverrides, setCollapseOverrides ] = useState<
 		Record< string, boolean >
-	>( {} );
+	>( () => {
+		const out: Record< string, boolean > = {};
+		for ( const [ key, value ] of Object.entries( readCollapsed() ) ) {
+			if ( key.startsWith( SECTION_COLLAPSE_PREFIX ) ) {
+				out[ key.slice( SECTION_COLLAPSE_PREFIX.length ) ] = value;
+			}
+		}
+		return out;
+	} );
 
 	useEffect( () => {
 		let cancelled = false;
@@ -398,12 +419,16 @@ export function CharacterSheet( {
 						type="button"
 						className="be-character-sheet__section-toggle"
 						aria-expanded={ ! collapsed }
-						onClick={ () =>
+						onClick={ () => {
+							setCollapsed(
+								SECTION_COLLAPSE_PREFIX + section.block_slug,
+								! collapsed
+							);
 							setCollapseOverrides( ( prev ) => ( {
 								...prev,
 								[ section.block_slug ]: ! collapsed,
-							} ) )
-						}
+							} ) );
+						} }
 					>
 						<span
 							className="be-character-sheet__section-toggle-icon"

@@ -12,6 +12,7 @@ import type {
 	PointAudit as PointAuditReport,
 	PointAuditLine,
 } from '../../types/character';
+import CollapsiblePanel from '../shared/CollapsiblePanel';
 import './PointAudit.css';
 
 export interface PointAuditProps {
@@ -185,15 +186,26 @@ export function PointAudit( { characterId, gameSlug }: PointAuditProps ) {
 				<p className="be-point-audit__caveat">{ report.caveat }</p>
 			</div>
 
+			{ /* U7e: an audit of a long-lived character runs to hundreds of lines. The totals
+			 * strip above is what most viewers came for; the per-section breakdown folds
+			 * away so reaching one section doesn't mean scrolling past the rest. */ }
 			{ groupBySection( report.lines ).map(
 				( [ sectionLabel, lines ] ) => (
-					<div
+					<CollapsiblePanel
+						id={ `point-audit:${ sectionLabel }` }
 						className="be-point-audit__section"
 						key={ sectionLabel }
+						heading={
+							<h5 className="be-point-audit__section-title">
+								{ sprintf(
+									/* translators: 1: sheet section name, 2: number of audited lines in it */
+									__( '%1$s (%2$d)', 'beyond-elysium' ),
+									sectionLabel,
+									lines.length
+								) }
+							</h5>
+						}
 					>
-						<h5 className="be-point-audit__section-title">
-							{ sectionLabel }
-						</h5>
 						<ul className="be-point-audit__lines">
 							{ lines.map( ( line, i ) => (
 								<AuditLine
@@ -202,7 +214,7 @@ export function PointAudit( { characterId, gameSlug }: PointAuditProps ) {
 								/>
 							) ) }
 						</ul>
-					</div>
+					</CollapsiblePanel>
 				)
 			) }
 		</div>

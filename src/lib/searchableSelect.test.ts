@@ -1,7 +1,11 @@
 import {
+	buildOptionRows,
 	canUseCustomEntry,
 	filterOptions,
+	flattenGroups,
+	nextSelectableRow,
 	resolveBlurCommit,
+	type OptionGroup,
 } from './searchableSelect';
 
 describe( 'filterOptions', () => {
@@ -106,5 +110,119 @@ describe( 'resolveBlurCommit (Decision 076)', () => {
 			value: 'Zzz New Thing',
 			isCustom: true,
 		} );
+	} );
+} );
+
+/*
+ * 1.2.9 U4 - grouped pick lists. The constraint these tests exist to hold is that
+ * **grouping is a sort, never a filter**: an out-of-type Gift is legal (LotW Revised
+ * charges +1 for one outside breed, auspice or tribe - a surcharge means purchasable),
+ * so no section may be hidden, greyed, gated or excluded from search.
+ */
+describe( 'buildOptionRows', () => {
+	const gifts: OptionGroup[] = [
+		{ label: 'Homid', options: [ 'Persuasion', 'Smell of Man' ] },
+		{
+			label: 'Get of Fenris',
+			options: [ 'Razor Claws', 'Visage of Fenris' ],
+		},
+	];
+
+	it( 'lays every group out in the order given, heading first', () => {
+		expect( buildOptionRows( gifts, '' ) ).toEqual( [
+			{ kind: 'heading', label: 'Homid' },
+			{ kind: 'option', value: 'Persuasion' },
+			{ kind: 'option', value: 'Smell of Man' },
+			{ kind: 'heading', label: 'Get of Fenris' },
+			{ kind: 'option', value: 'Razor Claws' },
+			{ kind: 'option', value: 'Visage of Fenris' },
+		] );
+	} );
+
+	it( 'searches across every section, not just the first', () => {
+		// The out-of-tribe section is reachable by search exactly like the in-type one.
+		expect( buildOptionRows( gifts, 'fenris' ) ).toEqual( [
+			{ kind: 'heading', label: 'Get of Fenris' },
+			{ kind: 'option', value: 'Visage of Fenris' },
+		] );
+	} );
+
+	it( 'drops a section only when nothing in it survives the query', () => {
+		const rows = buildOptionRows( gifts, 'persuasion' );
+		expect( rows ).toEqual( [
+			{ kind: 'heading', label: 'Homid' },
+			{ kind: 'option', value: 'Persuasion' },
+		] );
+	} );
+
+	it( 'never hides a section for being out of type - every group given is laid out', () => {
+		// A Homid/Galliard/Fianna character may take a Get of Fenris gift; it costs 4
+		// instead of 3, and pricing is Cost_Engine's job, never this picker's.
+		const rows = buildOptionRows( gifts, '' );
+		expect( rows.filter( ( r ) => r.kind === 'heading' ) ).toHaveLength(
+			2
+		);
+	} );
+
+	it( 'renders an unlabeled group with no heading at all', () => {
+		// How mage-rotes' 134 ungrouped entries reach the list without an invented name.
+		expect(
+			buildOptionRows( [ { label: '', options: [ 'Loose Rote' ] } ], '' )
+		).toEqual( [ { kind: 'option', value: 'Loose Rote' } ] );
+	} );
+
+	it( 'returns nothing when no option in any section matches', () => {
+		expect( buildOptionRows( gifts, 'zzz' ) ).toEqual( [] );
+	} );
+} );
+
+describe( 'nextSelectableRow', () => {
+	const rows = buildOptionRows(
+		[
+			{ label: 'Homid', options: [ 'Persuasion' ] },
+			{ label: 'Get of Fenris', options: [ 'Razor Claws' ] },
+		],
+		''
+	);
+	// [heading, option, heading, option]
+	const rowCount = rows.length;
+
+	it( 'skips a leading heading so a freshly opened list can be committed with Enter', () => {
+		expect( nextSelectableRow( rows, 0, 1, rowCount ) ).toBe( 1 );
+	} );
+
+	it( 'steps past the heading between two sections', () => {
+		expect( nextSelectableRow( rows, 2, 1, rowCount ) ).toBe( 3 );
+	} );
+
+	it( 'steps backwards past a heading too', () => {
+		expect( nextSelectableRow( rows, 2, -1, rowCount ) ).toBe( 1 );
+	} );
+
+	it( 'reports -1 at the end rather than wrapping onto a heading', () => {
+		expect( nextSelectableRow( rows, 4, 1, rowCount ) ).toBe( -1 );
+		expect( nextSelectableRow( rows, -1, -1, rowCount ) ).toBe( -1 );
+	} );
+
+	it( 'treats the trailing custom-entry index as selectable', () => {
+		// rowCount is one past the rows when a custom row is appended.
+		expect(
+			nextSelectableRow( rows, rows.length, 1, rows.length + 1 )
+		).toBe( rows.length );
+	} );
+} );
+
+describe( 'flattenGroups', () => {
+	it( 'returns every option across every section, in order', () => {
+		expect(
+			flattenGroups( [
+				{ label: 'A', options: [ 'one', 'two' ] },
+				{ label: 'B', options: [ 'three' ] },
+			] )
+		).toEqual( [ 'one', 'two', 'three' ] );
+	} );
+
+	it( 'is empty for no groups', () => {
+		expect( flattenGroups( [] ) ).toEqual( [] );
 	} );
 } );

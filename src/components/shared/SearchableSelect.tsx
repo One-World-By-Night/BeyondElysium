@@ -1,8 +1,13 @@
 /**
- * Searchable combobox input: filters a flat list of string options as the
- * user types, supports keyboard navigation and optional entry of a value
- * not in the list, and virtualizes its dropdown when the filtered list is
- * long. Used anywhere a plain <select> would be too long to scan.
+ * Searchable combobox input: filters a list of string options as the user types,
+ * supports keyboard navigation and optional entry of a value not in the list, and
+ * virtualizes its dropdown when the filtered list is long. Used anywhere a plain
+ * <select> would be too long to scan.
+ *
+ * Options arrive either flat (`options`) or sectioned (`groups`, 1.2.9 U4) - a Fera
+ * player picking a Gift faced **865 unsorted names in one list** while the catalog
+ * knew every one of their species all along. Both shapes render through the same flat
+ * row list, so grouping adds a heading row and changes nothing else.
  */
 import {
 	createPortal,
@@ -15,14 +20,16 @@ import {
 import { __, sprintf } from '@wordpress/i18n';
 import type { KeyboardEvent } from 'react';
 import {
+	buildOptionRows,
 	canUseCustomEntry,
-	filterOptions,
+	flattenGroups,
+	nextSelectableRow,
 	resolveBlurCommit,
+	type OptionGroup,
 } from '../../lib/searchableSelect';
 import './SearchableSelect.css';
 
-export interface SearchableSelectProps {
-	options: string[];
+interface SearchableSelectCommonProps {
 	value: string;
 	/** Called with the committed value and whether it came from the custom-entry row rather than the option list. */
 	onChange: ( value: string, isCustom: boolean ) => void;
@@ -34,6 +41,16 @@ export interface SearchableSelectProps {
 	/** Lets an external <label htmlFor> target this component's internal <input>. */
 	id?: string;
 }
+
+/**
+ * Exactly one of `options` or `groups`, enforced by the union rather than by a runtime
+ * check - a caller cannot pass both and leave it ambiguous which list is authoritative.
+ */
+export type SearchableSelectProps = SearchableSelectCommonProps &
+	(
+		| { options: string[]; groups?: never }
+		| { groups: OptionGroup[]; options?: never }
+	);
 
 /** Above this many filtered options, only a scroll window of rows is rendered. */
 const VIRTUALIZE_THRESHOLD = 200;
@@ -55,6 +72,7 @@ const VISIBLE_ROWS = 10;
  */
 export function SearchableSelect( {
 	options,
+	groups,
 	value,
 	onChange,
 	allowCustom,
@@ -125,17 +143,40 @@ export function SearchableSelect( {
 		}
 	};
 
-	const filtered = useMemo(
-		() => filterOptions( options, query ),
-		[ options, query ]
+	// One list whether the caller grouped or not: an ungrouped caller is simply a single
+	// group with no heading, so there is one code path below rather than two.
+	const sections = useMemo(
+		() => groups ?? [ { label: '', options: options ?? [] } ],
+		[ groups, options ]
+	);
+	const allOptions = useMemo( () => flattenGroups( sections ), [ sections ] );
+	const rows = useMemo(
+		() => buildOptionRows( sections, query ),
+		[ sections, query ]
 	);
 	const showCustomRow = useMemo(
-		() => canUseCustomEntry( query, options, allowCustom ?? false ),
-		[ query, options, allowCustom ]
+		() => canUseCustomEntry( query, allOptions, allowCustom ?? false ),
+		[ query, allOptions, allowCustom ]
 	);
 
-	// The custom row, when shown, is appended after the filtered options as a navigable row.
-	const rowCount = filtered.length + ( showCustomRow ? 1 : 0 );
+	// The custom row, when shown, is appended after every section as a navigable row.
+	const rowCount = rows.length + ( showCustomRow ? 1 : 0 );
+
+	// Row 0 can be a heading, and re-filtering can turn the highlighted row into one, so
+	// the highlight snaps to the first genuinely selectable row whenever the list changes
+	// under it. Without this, Enter on a freshly opened or freshly filtered grouped list
+	// commits nothing and reads as broken.
+	useEffect( () => {
+		const current = rows[ highlighted ];
+		if (
+			highlighted < rowCount &&
+			( ! current || current.kind === 'option' )
+		) {
+			return;
+		}
+		const next = nextSelectableRow( rows, 0, 1, rowCount );
+		setHighlighted( next === -1 ? 0 : next );
+	}, [ rows, rowCount, highlighted ] );
 
 	/**
 	 * Commits the option (or the custom-entry row) at `index`: updates the
@@ -143,12 +184,18 @@ export function SearchableSelect( {
 	 * was a custom entry, and closes the dropdown.
 	 */
 	const selectIndex = ( index: number ) => {
-		if ( index === filtered.length && showCustomRow ) {
+		if ( index === rows.length && showCustomRow ) {
 			onChange( query.trim(), true );
 			setQuery( query.trim() );
-		} else if ( filtered[ index ] !== undefined ) {
-			onChange( filtered[ index ], false );
-			setQuery( filtered[ index ] );
+		} else {
+			const row = rows[ index ];
+			// A heading is a label, not a choice - clicking or Entering one does nothing
+			// and leaves the dropdown open rather than committing a section name.
+			if ( ! row || row.kind !== 'option' ) {
+				return;
+			}
+			onChange( row.value, false );
+			setQuery( row.value );
 		}
 		setOpen( false );
 	};
@@ -170,10 +217,18 @@ export function SearchableSelect( {
 
 		if ( e.key === 'ArrowDown' ) {
 			e.preventDefault();
-			setHighlighted( ( i ) => Math.min( i + 1, rowCount - 1 ) );
+			// Steps past a heading rather than onto it; -1 means there is nothing further
+			// in that direction, so the highlight stays where it is.
+			setHighlighted( ( i ) => {
+				const next = nextSelectableRow( rows, i + 1, 1, rowCount );
+				return next === -1 ? i : next;
+			} );
 		} else if ( e.key === 'ArrowUp' ) {
 			e.preventDefault();
-			setHighlighted( ( i ) => Math.max( i - 1, 0 ) );
+			setHighlighted( ( i ) => {
+				const prev = nextSelectableRow( rows, i - 1, -1, rowCount );
+				return prev === -1 ? i : prev;
+			} );
 		} else if ( e.key === 'Enter' ) {
 			e.preventDefault();
 			selectIndex( highlighted );
@@ -182,17 +237,21 @@ export function SearchableSelect( {
 		}
 	};
 
-	const virtualized = filtered.length > VIRTUALIZE_THRESHOLD;
+	// Virtualization measures one row height and multiplies, so every row - heading
+	// included - is pinned to that same height in the style below. A heading is one line
+	// of text like an option is; matching them keeps the scroll-track arithmetic exact
+	// instead of drifting by a few pixels per section over 865 Fera gifts.
+	const virtualized = rows.length > VIRTUALIZE_THRESHOLD;
 	const listHeight = rowHeight * VISIBLE_ROWS;
 	const firstVisible = virtualized
 		? Math.max( 0, Math.floor( scrollTop / rowHeight ) - 2 )
 		: 0;
 	const lastVisible = virtualized
-		? Math.min( filtered.length, firstVisible + VISIBLE_ROWS + 4 )
-		: filtered.length;
-	const visibleOptions = virtualized
-		? filtered.slice( firstVisible, lastVisible )
-		: filtered;
+		? Math.min( rows.length, firstVisible + VISIBLE_ROWS + 4 )
+		: rows.length;
+	const visibleRows = virtualized
+		? rows.slice( firstVisible, lastVisible )
+		: rows;
 
 	const dropdown = open && rowCount > 0 && listRect && (
 		<ul
@@ -219,46 +278,75 @@ export function SearchableSelect( {
 			{ virtualized && (
 				<li style={ { height: firstVisible * rowHeight } } />
 			) }
-			{ visibleOptions.map( ( option, i ) => {
-				const index = virtualized ? firstVisible + i : i;
-				return (
-					<li
-						key={ option }
-						id={ optionId( index ) }
-						ref={ i === 0 ? measureFirstOption : undefined }
-						role="option"
-						aria-selected={ index === highlighted }
-						className={
-							'be-searchable-select__option' +
-							( index === highlighted
-								? ' be-searchable-select__option--highlighted'
-								: '' )
-						}
-						onMouseDown={ () => selectIndex( index ) }
-					>
-						{ option }
-					</li>
-				);
-			} ) }
+			{ ( () => {
+				// The height probe has to land on a real option, not on whatever happens
+				// to be first in the visible slice - a grouped list opens on a heading,
+				// and attaching the ref there left `rowHeight` pinned to its 28px fallback
+				// while real options measured 44px on a phone. A 36% error in the scroll
+				// track over 510 Werewolf gifts.
+				let probed = false;
+				return visibleRows.map( ( row, i ) => {
+					const index = virtualized ? firstVisible + i : i;
+					if ( row.kind === 'heading' ) {
+						return (
+							<li
+								key={ `heading-${ index }` }
+								// `presentation`, not `group` or `option`: this row is a label
+								// inside a listbox, never something a screen reader should
+								// announce as selectable.
+								role="presentation"
+								className="be-searchable-select__group"
+								style={
+									virtualized
+										? { height: rowHeight }
+										: undefined
+								}
+							>
+								{ row.label }
+							</li>
+						);
+					}
+					const isProbe = ! probed;
+					probed = true;
+					return (
+						<li
+							key={ `option-${ index }` }
+							id={ optionId( index ) }
+							ref={ isProbe ? measureFirstOption : undefined }
+							role="option"
+							aria-selected={ index === highlighted }
+							className={
+								'be-searchable-select__option' +
+								( index === highlighted
+									? ' be-searchable-select__option--highlighted'
+									: '' )
+							}
+							onMouseDown={ () => selectIndex( index ) }
+						>
+							{ row.value }
+						</li>
+					);
+				} );
+			} )() }
 			{ virtualized && (
 				<li
 					style={ {
-						height: ( filtered.length - lastVisible ) * rowHeight,
+						height: ( rows.length - lastVisible ) * rowHeight,
 					} }
 				/>
 			) }
 			{ showCustomRow && (
 				<li
-					id={ optionId( filtered.length ) }
+					id={ optionId( rows.length ) }
 					role="option"
-					aria-selected={ filtered.length === highlighted }
+					aria-selected={ rows.length === highlighted }
 					className={
 						'be-searchable-select__option be-searchable-select__option--custom' +
-						( filtered.length === highlighted
+						( rows.length === highlighted
 							? ' be-searchable-select__option--highlighted'
 							: '' )
 					}
-					onMouseDown={ () => selectIndex( filtered.length ) }
+					onMouseDown={ () => selectIndex( rows.length ) }
 				>
 					{ sprintf(
 						/* translators: %1$s: the free-text value typed, offered as a custom option */
@@ -294,7 +382,7 @@ export function SearchableSelect( {
 					// Commits a typed value on blur even when no dropdown row was explicitly picked.
 					const commit = resolveBlurCommit(
 						query,
-						options,
+						allOptions,
 						allowCustom ?? false
 					);
 					if ( commit ) {

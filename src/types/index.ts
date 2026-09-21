@@ -397,6 +397,14 @@ export interface PowerLevel {
 		| 'methuselah'
 		| string;
 	power_name: string;
+	/**
+	 * The source menu's own free-text label for this level, which `tier` was derived from
+	 * (`Seeder::normalize_tier()`) - "basic", "Basic (Sabbat)", "int. ritual", "adv., wyld
+	 * west". It has always been written; nothing read it until 1.2.9 U5, which uses the
+	 * half beyond the tier word to name the seam in a concatenated family (D67). See
+	 * src/lib/levelQualifier.ts.
+	 */
+	note?: string;
 	/** Drafted Portuguese (Brazil) translation of power_name, display-only - see src/lib/localizeName.ts. */
 	power_name_pt?: string;
 	description?: CatalogDescription;

@@ -11206,3 +11206,30 @@ msgstr "BeyondElysium"
 
 #~ msgid "Scheduled release - %s"
 #~ msgstr "Lançamento agendado - %s"
+
+#. translators: %d: number of secrets attached to this plot, item, location or NPC
+msgid "Secrets (%d)"
+msgstr "Segredos (%d)"
+
+#. translators: 1: queue name, 2: number of items waiting in it
+msgid "%1$s (%2$d)"
+msgstr "%1$s (%2$d)"
+
+#. U4/U6: pick-list section headings and the catalog facet columns.
+msgid "Group"
+msgstr "Grupo"
+
+msgid "Subgroup"
+msgstr "Subgrupo"
+
+#. The catalog items that carry no group of their own; shown as the last section.
+msgid "Ungrouped"
+msgstr "Sem grupo"
+
+#. translators: %s: the catalog item's own name
+msgid "Group for %s"
+msgstr "Grupo de %s"
+
+#. translators: %s: the catalog item's own name
+msgid "Subgroup for %s"
+msgstr "Subgrupo de %s"

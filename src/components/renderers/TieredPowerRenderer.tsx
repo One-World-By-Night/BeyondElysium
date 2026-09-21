@@ -7,6 +7,7 @@
  */
 import { __ } from '@wordpress/i18n';
 import { localizedPowerName } from '../../lib/localizeName';
+import { seamQualifier } from '../../lib/levelQualifier';
 import type {
 	TieredPowerDefinition,
 	TieredPower,
@@ -157,7 +158,17 @@ export function elderLabel(
 		displayableTier( found?.tier ) ??
 		displayableTier( held.tier ) ??
 		'elder';
-	return `${ held.name }: ${ powerName } (${ tier })`;
+	// U5/D67: on a family that is two ladders concatenated, the tier alone is ambiguous -
+	// `Path of Blood's Curse` has two basic Sabbat powers and two basic Tremere ones.
+	// `seamQualifier` names the tradition only where a family actually disagrees with
+	// itself, so a consistent family reads exactly as it did before.
+	const qualifier = seamQualifier(
+		findPower( definition, held.name ),
+		found
+	);
+	return qualifier
+		? `${ held.name }: ${ powerName } (${ tier } · ${ qualifier })`
+		: `${ held.name }: ${ powerName } (${ tier })`;
 }
 
 /**
@@ -230,7 +241,11 @@ export function namedModeRows(
 			continue;
 		}
 		for ( const entry of atRank ) {
-			rows.push( localizedPowerName( entry ) );
+			// U5/D67: one rung of a concatenated family can hold powers from both ladders -
+			// see seamQualifier(). Twin of Power_Display::named_mode_rows().
+			const label = localizedPowerName( entry );
+			const qualifier = seamQualifier( power, entry );
+			rows.push( qualifier ? `${ label } (${ qualifier })` : label );
 		}
 	}
 	return rows;

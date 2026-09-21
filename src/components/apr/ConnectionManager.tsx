@@ -9,6 +9,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { everyPage } from '../../lib/everyPage';
 import { SearchableSelect } from '../shared/SearchableSelect';
+import { groupCatalogItems } from '../../lib/catalogGroups';
 import type { Character } from '../../types/character';
 import type { Connection, EntityType, Plot } from '../../types/plot';
 import type { ObjectType, WorldObject } from '../../types/world';
@@ -281,6 +282,26 @@ export function ConnectionManager( {
 	}, [ worldObjects ] );
 	const worldObjectOptions = Array.from( worldObjectDisplayToId.keys() );
 
+	/*
+	 * U4d: sectioned by object type, but only when the list actually holds more than one -
+	 * this picker is often already narrowed by `objectTypeFilter`, and a single section
+	 * headed "item" over every row is noise, not structure. `groupCatalogItems` returns []
+	 * for a one-type list, which is exactly the "stay flat" signal.
+	 */
+	const worldObjectGroups = useMemo( () => {
+		const byId = new Map( worldObjects.map( ( w ) => [ w.id, w ] ) );
+		const types = new Set( worldObjects.map( ( w ) => w.object_type ) );
+		if ( types.size < 2 ) {
+			return [];
+		}
+		return groupCatalogItems(
+			Array.from( worldObjectDisplayToId, ( [ display, id ] ) => ( {
+				name: display,
+				group: byId.get( id )?.object_type,
+			} ) )
+		);
+	}, [ worldObjects, worldObjectDisplayToId ] );
+
 	return (
 		<div className="be-connection-manager">
 			<form
@@ -311,7 +332,9 @@ export function ConnectionManager( {
 					/>
 				) : mode === 'tag' ? null : mode === 'world_object' ? (
 					<SearchableSelect
-						options={ worldObjectOptions }
+						{ ...( worldObjectGroups.length > 0
+							? { groups: worldObjectGroups }
+							: { options: worldObjectOptions } ) }
 						value={ worldObjectQuery }
 						onChange={ ( display ) => {
 							setWorldObjectQuery( display );
