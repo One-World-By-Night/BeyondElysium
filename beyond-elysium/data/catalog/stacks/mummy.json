@@ -1,0 +1,107 @@
+{
+  "format": 1,
+  "slug": "mummy",
+  "name": "Mummy",
+  "kind": "stack",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_creature_stacks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "game_line": "met",
+    "sections": [
+      {
+        "block_slug": "mummy-identity",
+        "label": "Identity",
+        "display_order": 1,
+        "required": true
+      },
+      {
+        "block_slug": "met-archetypes",
+        "label": "Archetypes",
+        "display_order": 20,
+        "required": false
+      },
+      {
+        "block_slug": "mummy-abilities",
+        "label": "Abilities",
+        "display_order": 30,
+        "required": true
+      },
+      {
+        "block_slug": "mummy-backgrounds",
+        "label": "Backgrounds",
+        "display_order": 40,
+        "required": false
+      },
+      {
+        "block_slug": "met-physical-traits",
+        "label": "Physical Traits",
+        "display_order": 50,
+        "required": true,
+        "negative_block_slug": "met-physical-traits-neg"
+      },
+      {
+        "block_slug": "met-social-traits",
+        "label": "Social Traits",
+        "display_order": 51,
+        "required": true,
+        "negative_block_slug": "met-social-traits-neg"
+      },
+      {
+        "block_slug": "met-mental-traits",
+        "label": "Mental Traits",
+        "display_order": 52,
+        "required": true,
+        "negative_block_slug": "met-mental-traits-neg"
+      },
+      {
+        "block_slug": "mummy-hekau",
+        "label": "Hekau",
+        "display_order": 60,
+        "required": true
+      },
+      {
+        "block_slug": "mummy-formulae",
+        "label": "Spells and Rituals",
+        "display_order": 61,
+        "required": false
+      },
+      {
+        "block_slug": "mummy-resources",
+        "label": "Resources",
+        "display_order": 80,
+        "required": true
+      },
+      {
+        "block_slug": "mummy-health",
+        "label": "Health",
+        "display_order": 82,
+        "required": false
+      },
+      {
+        "block_slug": "mummy-merits",
+        "label": "Merits",
+        "display_order": 90,
+        "required": false
+      },
+      {
+        "block_slug": "mummy-flaws",
+        "label": "Flaws",
+        "display_order": 91,
+        "required": false
+      },
+      {
+        "block_slug": "met-derangements",
+        "label": "Derangements",
+        "display_order": 92,
+        "required": false
+      }
+    ],
+    "display_preferences": {},
+    "creation_rules": null
+  }
+}

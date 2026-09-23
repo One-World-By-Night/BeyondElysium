@@ -1,0 +1,220 @@
+{
+  "format": 1,
+  "slug": "wyldwest-fera_gifts",
+  "name": "Gifts (Laws of the Wyld West)",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "variant": {
+    "of": "fera-gifts",
+    "id": "wyld-west",
+    "label": "Laws of the Wyld West",
+    "mode": "add"
+  },
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh (fera-gifts)",
+      "Carried as a variant, not base content (format §4b): \"wyld-west\""
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced"
+      ],
+      "ladder": {},
+      "costs": {
+        "basic": 3,
+        "intermediate": 6,
+        "advanced": 9
+      },
+      "out_of_type": {
+        "basic": "+1",
+        "intermediate": "+1",
+        "advanced": "+1"
+      },
+      "levels": {
+        "basic": 1,
+        "intermediate": 3,
+        "advanced": 5
+      },
+      "categories": [
+        "species",
+        "subgroup"
+      ],
+      "untiered": null
+    },
+    "atomic": true,
+    "allow_custom": true,
+    "powers": [
+      {
+        "name": "Bastet: Homid",
+        "category_values": {
+          "species": "Bastet",
+          "subgroup": "Homid"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Jam Gun",
+              "cost": "3",
+              "source": "Homid, Bastet"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Nuwisha",
+        "category_values": {
+          "species": "Nuwisha"
+        },
+        "levels": [],
+        "elder": {
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Laughing at Death",
+              "cost": "6",
+              "source": "Gifts, Nuwisha"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Umbral Target",
+              "cost": "9",
+              "source": "Gifts, Nuwisha"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Nuwisha: Homid",
+        "category_values": {
+          "species": "Nuwisha",
+          "subgroup": "Homid"
+        },
+        "levels": [],
+        "elder": {
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Weave of Steel",
+              "cost": "9",
+              "source": "Homid, Werewolf"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Nuwisha: Latrani",
+        "category_values": {
+          "species": "Nuwisha",
+          "subgroup": "Latrani"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Spook the Herd",
+              "cost": "3",
+              "source": "Lupus"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Dispel the Golden Plague",
+              "cost": "9",
+              "source": "Lupus"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Venom Jaws",
+              "cost": "9",
+              "source": "Lupus"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Nuwisha: Ragabash",
+        "category_values": {
+          "species": "Nuwisha",
+          "subgroup": "Ragabash"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Carried on the Wind",
+              "cost": "3",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Spider's Song",
+              "cost": "3",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Walk Under the New Moon",
+              "cost": "3",
+              "source": "Ragabash"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Bald-Faced Lie",
+              "cost": "6",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Hide in Plain Sight",
+              "cost": "6",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Man with No Name",
+              "cost": "6",
+              "source": "Ragabash"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Mark of Shame",
+              "cost": "9",
+              "source": "Ragabash"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

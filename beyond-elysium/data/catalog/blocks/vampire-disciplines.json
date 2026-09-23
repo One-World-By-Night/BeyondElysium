@@ -1,0 +1,3003 @@
+{
+  "format": 1,
+  "slug": "vampire-disciplines",
+  "name": "Disciplines",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "provenance": {
+    "sources": [
+      "Laws of the Night Revised (WW05013) - Discipline 3/6/9 across a 2/2/1 ladder; Elder/Master/Ascended/Methuselah 12/15/18/21 (Camarilla Guide), per MET-POWER-ACQUISITION.md",
+      "GVM: Disciplines (container) and met-mechanics.csv, as seeded by 1.2.10 (be_dev snapshot)",
+      "samples/research/vampire/ (owbn, met, tt) for spelling and short-ladder rulings - 1.3.0 §2 precedence"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/build_vampire.py + rulings/vampire-disciplines.json"
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced",
+        "elder",
+        "master",
+        "ascended",
+        "methuselah"
+      ],
+      "ladder": {
+        "basic": 2,
+        "intermediate": 2,
+        "advanced": 1
+      },
+      "costs": {
+        "basic": 3,
+        "intermediate": 6,
+        "advanced": 9,
+        "elder": 12,
+        "master": 15,
+        "ascended": 18,
+        "methuselah": 21
+      },
+      "out_of_type": {
+        "basic": "+1",
+        "intermediate": "+1",
+        "advanced": "+1",
+        "elder": "+1",
+        "master": "+1",
+        "ascended": "+1",
+        "methuselah": "+1"
+      },
+      "levels": null,
+      "categories": null,
+      "untiered": null,
+      "in_type_source": "vampire-identity.Clan"
+    },
+    "atomic": true,
+    "sequential": true,
+    "allow_custom": true,
+    "blood_magic": false,
+    "traditions": [],
+    "powers": [
+      {
+        "name": "Animalism",
+        "source": "Animalism",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Feral Whispers",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Beckoning",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Quell the Beast",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Subsume the Spirit",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Drawing Out the Beast",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Animal Succulence",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Eye of the Szlachta",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Quell the Herd",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Shared Soul",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Song in the Dark",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Species Speech",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Conquer the Beast",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Stampede",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Crimson Fury",
+              "cost": "18"
+            },
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Taunt the Caged Beast",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Eyes of the Forest",
+              "cost": "21"
+            },
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Unchain the Beast",
+              "cost": "21"
+            }
+          ]
+        },
+        "pick_restrictions": {
+          "Eye of the Szlachta": "Tzimisce",
+          "Quell the Herd": "Gangrel",
+          "Song in the Dark": "Nosferatu",
+          "Stampede": "Gangrel",
+          "Crimson Fury": "Gangrel",
+          "Eyes of the Forest": "Gangrel"
+        }
+      },
+      {
+        "name": "Auspex",
+        "source": "Auspex",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Heightened Senses",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Aura Perception",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Spirit's Touch",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Telepathy",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Psychic Projection",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Babble",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Clairvoyance",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Crocodile's Tongue",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Prediction",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Sibyl's Tongue",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Soul Scan",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Telepathic Communication",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Farsight",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Anima Gathering",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Karmic Sight",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Mirror Reflex",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "The Call",
+              "cost": "18"
+            },
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Psychic Assault",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "False Slumber",
+              "cost": "21"
+            }
+          ]
+        },
+        "pick_restrictions": {
+          "Babble": "Malkavian",
+          "Crocodile's Tongue": "Toreador",
+          "Sibyl's Tongue": "Malkavian",
+          "Anima Gathering": "Assamite",
+          "The Call": "Malkavian"
+        },
+        "pick_editions": {
+          "Farsight": "dark-ages"
+        }
+      },
+      {
+        "name": "Celerity",
+        "source": "Celerity",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Alacrity",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Swiftness",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Rapidity",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Legerity",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Fleetness",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Precision",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Projectile",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Flower of Death",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Quickness",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Stutter-Step",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Velocity",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Zephyr",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Between the Ticks",
+              "cost": "21"
+            }
+          ]
+        },
+        "pick_restrictions": {
+          "Precision": "Assamite",
+          "Stutter-Step": "Brujah"
+        }
+      },
+      {
+        "name": "Chimerstry",
+        "source": "Chimerstry",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Ignis Fatuus",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Fata Morgana",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Apparition",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Permanency",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Horrid Reality",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "False Resonance",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Fatuus Mastery",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Mass Reality",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Pseudo Blindness",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Shared Nightmare",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Mass Horror",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Far Fatuus",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Suspension of Disbelief",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Occlusion",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Mayaparisatya",
+              "cost": "21"
+            }
+          ]
+        },
+        "pick_editions": {
+          "Mass Horror": "dark-ages"
+        }
+      },
+      {
+        "name": "Dementation",
+        "source": "Dementation",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Passion",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "The Haunting",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Eyes of Chaos",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Voice of Madness",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Total Insanity",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Babble",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "The Call",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Kindred Spirits",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Lingering Malaise",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Mind of a Killer",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Shattered Mirror",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Kiss of the Moon",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Childmind",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Restructure",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Sleep of Reason",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Deny",
+              "cost": "18"
+            },
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Personal Scourge",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Lunatic Eruption",
+              "cost": "21"
+            }
+          ]
+        },
+        "pick_editions": {
+          "Kiss of the Moon": "dark-ages"
+        }
+      },
+      {
+        "name": "Dominate",
+        "source": "Dominate",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Command",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Mesmerism",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Forgetful Mind",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Conditioning",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Possession",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Chain the Psyche",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Loyalty",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Obedience",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Oberon's Grail",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Rationale",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Fealty",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Mass Manipulation",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Still the Mortal Flesh",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Far Mastery",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Speak Through the Blood",
+              "cost": "21"
+            }
+          ]
+        },
+        "pick_restrictions": {
+          "Oberon's Grail": "Tremere"
+        },
+        "pick_editions": {
+          "Fealty": "dark-ages"
+        }
+      },
+      {
+        "name": "Fortitude",
+        "source": "Fortitude",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Endurance",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Mettle",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Resilience",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Resistance",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Aegis",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Imperviousness",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Invulnerability",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Personal Armor",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Sensory Shield",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Indestructible",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Shared Strength",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Resilient Mind",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Adamantine",
+              "cost": "18"
+            },
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "King of the Mountain",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Juggernaut",
+              "cost": "21"
+            }
+          ]
+        },
+        "pick_restrictions": {
+          "Sensory Shield": "Gangrel",
+          "Resilient Mind": "Gangrel",
+          "King of the Mountain": "Gangrel"
+        }
+      },
+      {
+        "name": "Obfuscate",
+        "source": "Obfuscate",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Cloak of Shadows",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Unseen Presence",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Mask of a Thousand Faces",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Vanish from the Mind's Eye",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Cloak the Gathering",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Blithe Acceptance",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Confusion of the Eye",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Cloak the Aura",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Conceal",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Mental Maze",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Mind Blank",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Scrawl",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Soul Mask",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Cache",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Veil of Blissful Ignorance",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Phantom Haunter",
+              "cost": "18"
+            },
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Old Friend",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Create Name",
+              "cost": "21"
+            }
+          ]
+        },
+        "pick_restrictions": {
+          "Blithe Acceptance": "Assamite",
+          "Confusion of the Eye": "Followers of Set",
+          "Mental Maze": "Followers of Set",
+          "Scrawl": "Malkavian",
+          "Phantom Haunter": "Malkavian"
+        }
+      },
+      {
+        "name": "Obtenebration",
+        "source": "Obtenebration",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Shadow Play",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Shroud of Night",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Arms of the Abyss",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Black Metamorphosis",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Shadow Body",
+            "cost": "9",
+            "aliases": [
+              "Tenebrous Form"
+            ]
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Darkness Within",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Eyes of the Night",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Shadowstep",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Walk the Abyss",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Shadow Twin",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Oubliette",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Ahriman's Demesne",
+              "cost": "21"
+            }
+          ]
+        },
+        "pick_editions": {
+          "Walk the Abyss": "dark-ages"
+        }
+      },
+      {
+        "name": "Potence",
+        "source": "Potence",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Prowess",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Might",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Vigor",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Intensity",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Puissance",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Demolition",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Force",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Gentle Rebuke",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Relentless Pursuit",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Imprint",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Earthshock",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Flick",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Destruction",
+              "cost": "21"
+            }
+          ]
+        },
+        "pick_restrictions": {
+          "Gentle Rebuke": "Brujah",
+          "Relentless Pursuit": "Brujah"
+        }
+      },
+      {
+        "name": "Presence",
+        "source": "Presence",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Awe",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Dread Gaze",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Entrancement",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Summon",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Majesty",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Absent Sway",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Love",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Mind Numb",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Paralyzing Glance",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Passion",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Spark of Rage",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Temptation",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Cooperation",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Father Knows Best",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Phobia",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Corruption",
+              "cost": "18"
+            },
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Ironclad Command",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Pulse of the City",
+              "cost": "21"
+            }
+          ]
+        },
+        "pick_restrictions": {
+          "Absent Sway": "Toreador",
+          "Temptation": "Followers of Set",
+          "Phobia": "Followers of Set",
+          "Corruption": "Followers of Set"
+        },
+        "pick_editions": {
+          "Passion": "dark-ages"
+        }
+      },
+      {
+        "name": "Protean",
+        "source": "Protean",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Eyes of the Beast",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Feral Claws",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Earth Meld",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Shape of the Beast",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Mist Form",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Earth Control",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Flesh of Marble",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Form of the Ghost",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Shape Mastery",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Blissful Slumber",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Animal Swarm",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Restore the Mortal Visage",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Shape of the Beast's Wrath",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Spectral Body",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Mythic Form",
+              "cost": "18"
+            },
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Purify the Impaled Breast",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Inward Focus",
+              "cost": "21"
+            }
+          ]
+        },
+        "pick_editions": {
+          "Blissful Slumber": "dark-ages"
+        }
+      },
+      {
+        "name": "Quietus",
+        "source": "Quietus",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Silence of Death",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Scorpion's Touch",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dagon's Call",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Baal's Caress",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Taste of Death",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Blood Sweat",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Foul Blood",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Selective Silence",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Ripples of the Heart",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Purification",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Baal's Bloody Talons",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Hinder the Cainite Vitae",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Poison the Well of Life",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Songs of Distant Vitae",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Condemn the Sins of the Father",
+              "cost": "21"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Serpentis",
+        "source": "Serpentis",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Eyes of the Serpent",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Tongue of the Asp",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Skin of the Adder",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Form of the Cobra",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Heart of Darkness",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Cobra Fangs",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Heart's Tempation",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Obsession",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Temptation",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Breathe the Sandstorm",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Darkest Fear",
+              "cost": "15"
+            },
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Divine Image",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Heart Thief",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Shadow of Apep",
+              "cost": "21"
+            }
+          ]
+        },
+        "pick_editions": {
+          "Breathe the Sandstorm": "dark-ages"
+        }
+      },
+      {
+        "name": "Vicissitude",
+        "source": "Vicissitude",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Malleable Visage",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Fleshcraft",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Bonecraft",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Horrid Form",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Bloodform",
+            "cost": "9",
+            "aliases": [
+              "Blood Form"
+            ]
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Blood of Acid",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Body Arsenal",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Chiropteran Marauder",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Ecstatic Agony",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Plasmic Form",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Cocoon",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Breath of the Dragon",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Earth's Vast Haven",
+              "cost": "21"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Abombwe",
+        "source": "Abombwe",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Predator's Communion",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Taming the Beast",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Whistling Up the Beast",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Beast-Channel",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Taking the Skin",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Predator's Mastery",
+              "cost": "12"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Bardo",
+        "source": "Bardo",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Restore Humanitas",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Banishing Sign of Thoth",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Boon of Anubis",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Pillar of Osiris",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Ra's Blessing",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Mummification Ritual",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Bring Forth the Dawn",
+              "cost": "12"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Daimoinon",
+        "source": "Daimoinon",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Sense the Sin",
+            "cost": "3",
+            "aliases": [
+              "Sens the Sin"
+            ]
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Fear of the Void",
+            "cost": "3",
+            "aliases": [
+              "Fear the Void Below"
+            ]
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Conflagration",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Psychomachia",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Condemnation",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Concordance",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Hell-Born Investiture",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Summon the Herald of Topheth",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Contagion",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Call the Great Beast",
+              "cost": "21"
+            }
+          ]
+        },
+        "pick_editions": {
+          "Hell-Born Investiture": "dark-ages"
+        }
+      },
+      {
+        "name": "Deimos",
+        "source": "Deimos",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Whispers to the Soul",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Kiss of the Dark Mother",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Ichor",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Dark Humours",
+            "cost": "6",
+            "filled_from": "Faith and Fire's Path of the Four Humours, intermediate (vampire-blood-magic Four Humours; met/the-long-night-bloodline-disciplines.json notes the two share their basic and advanced powers)"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Black Breath",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Clutching the Shroud",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Lilith's Summons",
+              "cost": "12"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Flight",
+        "source": "Flight",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Glide",
+            "cost": "3",
+            "aliases": [
+              "Level One"
+            ]
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Fly",
+            "cost": "3",
+            "aliases": [
+              "Level Two"
+            ]
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Swoop",
+            "cost": "6",
+            "aliases": [
+              "Level Three"
+            ]
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Soar",
+            "cost": "6",
+            "aliases": [
+              "Level Four"
+            ]
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Flight of the Eagle",
+            "cost": "9",
+            "aliases": [
+              "Level Five"
+            ]
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "One with the Wind",
+              "cost": "12"
+            }
+          ]
+        },
+        "options": [
+          "Pounce",
+          "Slam",
+          "Dive"
+        ],
+        "options_note": "Combat maneuvers usable once the corresponding Flight level is known - not separately purchased (Faith and Fire; the book names Pounce, Plunge and Dive, Grapevine names the second Slam)."
+      },
+      {
+        "name": "Way of Sorrow",
+        "source": "Way of Sorrow",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Frustrations of Nestrecha",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Insults of Krivda",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Weeping of Kruchina",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Misfortune of Chernogolov",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Starvation of Marena",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Melpominee",
+        "source": "Melpominee",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "The Missing Voice",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Phantom Speaker",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Madrigal",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Siren's Beckoning",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Virtuosa",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Art's Traumatic Essence",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Shattering Crescendo",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Persistent Echo",
+              "cost": "15"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Mortis",
+        "source": "Mortis",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Masque of Death",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Blight",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Awaken",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Death's Whisper",
+            "cost": "6",
+            "filled_from": "Vampire: The Dark Ages (WW02800) p. 152-154 - Mortis runs Masque of Death (1), Blight (2), Awaken (3), Death's Whisper (4), Black Death (5), with Vigor Mortis at six"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Black Death",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Plague Wind",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Sense Death's Imminence",
+              "cost": "12"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Mytherceria",
+        "source": "Mytherceria",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Folderol",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Fae Sight",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Aura Absorption",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Chanjelin Ward",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Riddle Phantastique",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Earth Sword",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Steal the Mind",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Absorb the Mind",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "The Grandest Trick",
+              "cost": "18"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Obeah",
+        "source": "Obeah",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Sense Vitality",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Anesthetic Touch",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Corpore Sano",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Mens Sana",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Unburdening the Bestial Soul",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Pain for Pleasure",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Renewed Vigor",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Vitae Block",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Safe Passage",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Purification",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Unbind the Flesh-Clad Soul",
+              "cost": "21"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Ogham",
+        "source": "Ogham",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Consecrate the Grove",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Crimson Woad",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Inscribe the Curse",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Moon and Sun",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Drink Dry the Earth",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Inscribe the Forgotten Names",
+              "cost": "12"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Sanguinus",
+        "source": "Sanguinus",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Brother's Blood",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Octopod",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Gestalt",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Walk of Caine",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Coagulated Entity",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Spiritus",
+        "source": "Spiritus",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Speak with Spirit",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Summon Spirit Beasts",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Aspect of the Beast",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Engling Fury",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "The Wildebeest",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Spirit Form",
+              "cost": "12"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Temporis",
+        "source": "Temporis",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Time Attunement",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Internal Recursion",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Lapse",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Subjective Suspension",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Clotho's Gift",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Kiss of Lachesis",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Hall of Hades' Court",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Clio's Kiss",
+              "cost": "18"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Tangle Atropos' Hand",
+              "cost": "21"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Thanatosis",
+        "source": "Thanatosis",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Hag's Wrinkles",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Putrefaction",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Ashes to Ashes",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Withering",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Necrosis",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Compress",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Creeping Infection",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Dust to Dust",
+              "cost": "15"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Putrescent Servitude",
+              "cost": "18"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Valeren",
+        "source": "Valeren",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Sense Vitality",
+            "cost": "3",
+            "aliases": [
+              "Sense Vitaility"
+            ]
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Anesthetic Touch",
+            "cost": "3",
+            "aliases": [
+              "Anethetic Touch"
+            ]
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Burning Touch",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Ending the Watch",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Vengeance of Samiel",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Blissful Agony",
+              "cost": "12"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Healer",
+        "source": "Valeren, Healer",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Sense Life",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Gift of Sleep",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Healing Touch",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Shepherd's Watch",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "The Ailing Spirit",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Warding the Beast",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Safe Passage",
+              "cost": "12"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Warrior",
+        "source": "Valeren, Warrior",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Sense Death",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Morphean Blow",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Burning Touch",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Armor of Caine's Fury",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Vengeance of Samiel",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Fiery Agony",
+              "cost": "12"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Visceratika",
+        "source": "Visceratika",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Skin of the Chameleon",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Scry the Hearthstone",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Bond with the Mountain",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Armor of Terra",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Flow Within the Mountain",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Dark Statue",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Stonestrength",
+              "cost": "12"
+            },
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Rockheart",
+              "cost": "12"
+            }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Crawling Chamber",
+              "cost": "15"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Quietus, Cruscitus / Warrior",
+        "source": "Quietus, Cruscitus / Warrior",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Blood Essence",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Scorpion's Touch",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dagon's Call",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Baal's Caress",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Quicken the Mortal's Blood",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Quietus, Hematus / Vizier",
+        "source": "Quietus, Hematus / Vizier",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Blood Tempering",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Truth of Blood",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Cleansed in Blood",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Ripples of the Blood",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Blood Sweat",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Quietus, Minhit Dume / Vizier",
+        "source": "Quietus, Minhit Dume / Vizier",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Silence of Death",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Ishtar's Touch",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dagon's Call",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Baal's Caress",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Taste of Bliss",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Quietus, Sorcerer",
+        "source": "Quietus, Sorcerer",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Silence of Death",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Scorpion's Curse",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dagon's Call",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Baal's Caress",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Taste of Death",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      }
+    ]
+  }
+}

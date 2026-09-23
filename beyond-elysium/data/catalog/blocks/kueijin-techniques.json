@@ -1,0 +1,152 @@
+{
+  "format": 1,
+  "slug": "kueijin-techniques",
+  "name": "Techniques",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "GVM: Bone Flower Techniques, Resplendent Crane Techniques (moved out of kueijin-disciplines - a Technique is one power with prerequisites, not a rated ladder)"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/build_kueijin_disciplines.py"
+  },
+  "definition": {
+    "alphabetize": false,
+    "atomic": true,
+    "allow_custom": true,
+    "allow_multiples": false,
+    "has_specializations": false,
+    "negative": false,
+    "flat_cost": false,
+    "categories": null,
+    "items": [
+      {
+        "name": "Taking the Face",
+        "cost": "9",
+        "tier": null,
+        "group": "Bone Flower",
+        "subgroup": null,
+        "source": "Grapevine Menus: Bone Flower Techniques",
+        "note": "first int. bone + first basic flesh",
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [],
+        "moved_from": {
+          "block": "kueijin-disciplines",
+          "name": "Bone Flower Techniques"
+        }
+      },
+      {
+        "name": "Spider's Blessing",
+        "cost": "3",
+        "tier": null,
+        "group": "Bone Flower",
+        "subgroup": null,
+        "source": "Grapevine Menus: Bone Flower Techniques",
+        "note": "second basic yin prana",
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [],
+        "moved_from": {
+          "block": "kueijin-disciplines",
+          "name": "Bone Flower Techniques"
+        }
+      },
+      {
+        "name": "Gentle Yielding",
+        "cost": "6",
+        "tier": null,
+        "group": "Bone Flower",
+        "subgroup": null,
+        "source": "Grapevine Menus: Bone Flower Techniques",
+        "note": "first int. flesh",
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [],
+        "moved_from": {
+          "block": "kueijin-disciplines",
+          "name": "Bone Flower Techniques"
+        }
+      },
+      {
+        "name": "Taking What is Given",
+        "cost": "6",
+        "tier": null,
+        "group": "Bone Flower",
+        "subgroup": null,
+        "source": "Grapevine Menus: Bone Flower Techniques",
+        "note": "second int. flesh",
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [],
+        "moved_from": {
+          "block": "kueijin-disciplines",
+          "name": "Bone Flower Techniques"
+        }
+      },
+      {
+        "name": "Bitter Yin Cloud",
+        "cost": "9",
+        "tier": null,
+        "group": "Bone Flower",
+        "subgroup": null,
+        "source": "Grapevine Menus: Bone Flower Techniques",
+        "note": "adv. yin prana",
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [],
+        "moved_from": {
+          "block": "kueijin-disciplines",
+          "name": "Bone Flower Techniques"
+        }
+      },
+      {
+        "name": "Bitter Yin Caress",
+        "cost": "6",
+        "tier": null,
+        "group": "Bone Flower",
+        "subgroup": null,
+        "source": "Grapevine Menus: Bone Flower Techniques",
+        "note": "second int. yin prana",
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [],
+        "moved_from": {
+          "block": "kueijin-disciplines",
+          "name": "Bone Flower Techniques"
+        }
+      },
+      {
+        "name": "The Fire Which Illuminates",
+        "cost": "7",
+        "tier": null,
+        "group": "Resplendent Crane",
+        "subgroup": null,
+        "source": "Grapevine Menus: Resplendent Crane Techniques",
+        "note": "int. ghost flame, int. cultivation",
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [],
+        "moved_from": {
+          "block": "kueijin-disciplines",
+          "name": "Resplendent Crane Techniques"
+        }
+      }
+    ]
+  }
+}

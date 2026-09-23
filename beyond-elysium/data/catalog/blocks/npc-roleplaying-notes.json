@@ -1,0 +1,74 @@
+{
+  "format": 1,
+  "slug": "npc-roleplaying-notes",
+  "name": "NPC Roleplaying Notes",
+  "kind": "block",
+  "section_type": "identity_field",
+  "storyteller_only": true,
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "fields": [
+      {
+        "name": "Wants",
+        "field_type": "textarea",
+        "required": false
+      },
+      {
+        "name": "Knows",
+        "field_type": "textarea",
+        "required": false
+      },
+      {
+        "name": "Will Do If Unopposed",
+        "field_type": "textarea",
+        "required": false
+      },
+      {
+        "name": "Voice & Tone",
+        "field_type": "textarea",
+        "required": false
+      },
+      {
+        "name": "Emotional Range",
+        "field_type": "textarea",
+        "required": false
+      },
+      {
+        "name": "Posture & Movement",
+        "field_type": "textarea",
+        "required": false
+      },
+      {
+        "name": "Public Behavior",
+        "field_type": "textarea",
+        "required": false
+      },
+      {
+        "name": "Private Behavior",
+        "field_type": "textarea",
+        "required": false
+      },
+      {
+        "name": "Combat Style",
+        "field_type": "textarea",
+        "required": false
+      },
+      {
+        "name": "Philosophy & Beliefs",
+        "field_type": "textarea",
+        "required": false
+      },
+      {
+        "name": "Theme Statement",
+        "field_type": "textarea",
+        "required": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "format": 1,
+  "slug": "wraith-resources",
+  "name": "Wraith Resources",
+  "kind": "block",
+  "section_type": "resource_pool",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "pools": [
+      {
+        "name": "Pathos",
+        "value_type": "integer",
+        "default_start": 3,
+        "max": 10
+      },
+      {
+        "name": "Corpus",
+        "value_type": "integer",
+        "default_start": 7,
+        "max": 10
+      },
+      {
+        "name": "Willpower",
+        "value_type": "integer",
+        "default_start": 3,
+        "max": 20
+      },
+      {
+        "name": "Angst",
+        "value_type": "integer",
+        "default_start": 0,
+        "max": 10
+      }
+    ]
+  }
+}

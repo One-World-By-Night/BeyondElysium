@@ -75,7 +75,11 @@ return [
 			'met-merits'           => [ [ 'name' => 'Natural Leader' ] ],
 			'met-flaws'            => [ [ 'name' => 'Overconfident', 'count' => 1 ] ],
 			'werewolf-backgrounds' => [ [ 'name' => 'Ancestors', 'count' => 2 ] ],
-			'werewolf-gifts'       => [ [ 'name' => "Falcon's Grasp" ], [ 'name' => 'King of the Beasts' ] ],
+			// 1.3.2: werewolf-gifts is now tiered_power (the A4a conversion) - a held Gift is
+			// identified by its family plus power_name, not a bare item name. Falcon's Grasp
+			// is a Silver Fangs pick, King of the Beasts a Philodox pick, both basic rank
+			// (werewolf-gifts.json).
+			'werewolf-gifts'       => [ [ 'name' => 'Silver Fangs', 'power_name' => "Falcon's Grasp" ], [ 'name' => 'Philodox', 'power_name' => 'King of the Beasts' ] ],
 			'werewolf-rites'       => [ [ 'name' => 'Rite of Passage' ] ],
 			'werewolf-resources'   => [ 'Rage' => [ 'permanent' => 5, 'temporary' => 5 ], 'Gnosis' => [ 'permanent' => 3, 'temporary' => 3 ], 'Willpower' => [ 'permanent' => 6, 'temporary' => 6 ] ],
 			'werewolf-renown'      => [ 'Honor' => [ 'permanent' => 4, 'temporary' => 4 ], 'Glory' => [ 'permanent' => 2, 'temporary' => 2 ], 'Wisdom' => [ 'permanent' => 5, 'temporary' => 5 ] ],
@@ -97,7 +101,8 @@ return [
 			'met-merits'           => [ [ 'name' => 'Common Sense' ] ],
 			'met-flaws'            => [ [ 'name' => 'Territorial', 'count' => 2 ] ],
 			'werewolf-backgrounds' => [ [ 'name' => 'Kinfolk', 'count' => 2 ], [ 'name' => 'Rites', 'count' => 1 ] ],
-			'werewolf-gifts'       => [ [ 'name' => "Predator's Leap" ], [ 'name' => 'Eye of the Hunter' ] ],
+			// 1.3.2: both are Red Talons picks, basic rank (werewolf-gifts.json).
+			'werewolf-gifts'       => [ [ 'name' => 'Red Talons', 'power_name' => "Predator's Leap" ], [ 'name' => 'Red Talons', 'power_name' => 'Eye of the Hunter' ] ],
 			'werewolf-rites'       => [ [ 'name' => 'Moot Rite' ] ],
 			'werewolf-resources'   => [ 'Rage' => [ 'permanent' => 4, 'temporary' => 4 ], 'Gnosis' => [ 'permanent' => 4, 'temporary' => 4 ], 'Willpower' => [ 'permanent' => 5, 'temporary' => 5 ] ],
 			'werewolf-renown'      => [ 'Glory' => [ 'permanent' => 3, 'temporary' => 3 ], 'Honor' => [ 'permanent' => 2, 'temporary' => 2 ], 'Wisdom' => [ 'permanent' => 3, 'temporary' => 3 ] ],
@@ -249,7 +254,9 @@ return [
 			'met-merits'          => [ [ 'name' => 'Guardian Angel', 'count' => 6 ] ],
 			'met-flaws'           => [ [ 'name' => 'Deep Sleeper' ] ],
 			'fera-backgrounds'    => [ [ 'name' => 'Kinfolk', 'count' => 2 ], [ 'name' => 'Pure Breed', 'count' => 1 ] ],
-			'fera-gifts'          => [ [ 'name' => 'Resist Pain' ], [ 'name' => 'Heightened Senses' ] ],
+			// 1.3.2: fera-gifts is now tiered_power - Resist Pain is an Ananasi pick, Heightened
+			// Senses a Gurahl: Ursine pick, both basic rank (fera-gifts.json).
+			'fera-gifts'          => [ [ 'name' => 'Ananasi', 'power_name' => 'Resist Pain' ], [ 'name' => 'Gurahl: Ursine', 'power_name' => 'Heightened Senses' ] ],
 			'werewolf-rites'      => [ [ 'name' => 'Rite of Motherhood' ] ],
 			'werewolf-resources'  => [ 'Rage' => [ 'permanent' => 3, 'temporary' => 3 ], 'Gnosis' => [ 'permanent' => 5, 'temporary' => 5 ], 'Willpower' => [ 'permanent' => 6, 'temporary' => 6 ] ],
 			'werewolf-renown'     => [ 'Honor' => [ 'permanent' => 3, 'temporary' => 3 ], 'Glory' => [ 'permanent' => 2, 'temporary' => 2 ], 'Wisdom' => [ 'permanent' => 4, 'temporary' => 4 ] ],
@@ -271,7 +278,9 @@ return [
 			'met-merits'          => [ [ 'name' => 'Oracular Ability', 'count' => 3 ] ],
 			'met-flaws'           => [ [ 'name' => 'Dangerous Secret' ] ],
 			'fera-backgrounds'    => [ [ 'name' => 'Mnesis', 'count' => 2 ], [ 'name' => 'Secrets', 'count' => 1 ] ],
-			'fera-gifts'          => [ [ 'name' => 'Sense Wyrm' ], [ 'name' => 'Falling Touch' ] ],
+			// 1.3.2: Sense Wyrm is a Kitsune: Shinju pick, Falling Touch a Kitsune: Eji pick,
+			// both basic rank (fera-gifts.json).
+			'fera-gifts'          => [ [ 'name' => 'Kitsune: Shinju', 'power_name' => 'Sense Wyrm' ], [ 'name' => 'Kitsune: Eji', 'power_name' => 'Falling Touch' ] ],
 			'werewolf-rites'      => [ [ 'name' => 'Fertility Rite' ] ],
 			'werewolf-resources'  => [ 'Rage' => [ 'permanent' => 2, 'temporary' => 2 ], 'Gnosis' => [ 'permanent' => 6, 'temporary' => 6 ], 'Willpower' => [ 'permanent' => 5, 'temporary' => 5 ] ],
 			'werewolf-renown'     => [ 'Wisdom' => [ 'permanent' => 5, 'temporary' => 5 ], 'Glory' => [ 'permanent' => 2, 'temporary' => 2 ], 'Honor' => [ 'permanent' => 2, 'temporary' => 2 ] ],
@@ -295,7 +304,8 @@ return [
 			'met-merits'          => [ [ 'name' => 'Danger Sense', 'count' => 2 ] ],
 			'met-flaws'           => [ [ 'name' => 'Phobia', 'count' => 3 ] ],
 			'fera-backgrounds'    => [ [ 'name' => 'Freak Factor', 'count' => 2 ], [ 'name' => 'Secrets', 'count' => 1 ] ],
-			'fera-gifts'          => [ [ 'name' => 'Heightened Senses' ], [ 'name' => 'Sense Wyrm' ] ],
+			// 1.3.2: same two picks as above, reused for this character - both basic rank.
+			'fera-gifts'          => [ [ 'name' => 'Gurahl: Ursine', 'power_name' => 'Heightened Senses' ], [ 'name' => 'Kitsune: Shinju', 'power_name' => 'Sense Wyrm' ] ],
 			'werewolf-rites'      => [ [ 'name' => 'Rite of Passage' ] ],
 			'werewolf-resources'  => [ 'Rage' => [ 'permanent' => 3, 'temporary' => 3 ], 'Gnosis' => [ 'permanent' => 4, 'temporary' => 4 ], 'Willpower' => [ 'permanent' => 5, 'temporary' => 5 ] ],
 			'werewolf-renown'     => [ 'Wisdom' => [ 'permanent' => 3, 'temporary' => 3 ], 'Glory' => [ 'permanent' => 2, 'temporary' => 2 ], 'Honor' => [ 'permanent' => 2, 'temporary' => 2 ] ],
@@ -317,7 +327,8 @@ return [
 			'met-merits'          => [ [ 'name' => 'Ambidextrous' ] ],
 			'met-flaws'           => [ [ 'name' => 'Short', 'count' => 1 ] ],
 			'fera-backgrounds'    => [ [ 'name' => 'Colony', 'count' => 2 ], [ 'name' => 'Go-en', 'count' => 1 ] ],
-			'fera-gifts'          => [ [ 'name' => 'Resist Pain' ], [ 'name' => 'Razor Claws' ] ],
+			// 1.3.2: Razor Claws is a Bastet: Khan pick, basic rank (fera-gifts.json).
+			'fera-gifts'          => [ [ 'name' => 'Ananasi', 'power_name' => 'Resist Pain' ], [ 'name' => 'Bastet: Khan', 'power_name' => 'Razor Claws' ] ],
 			'werewolf-rites'      => [ [ 'name' => 'Rite of Passage' ] ],
 			'werewolf-resources'  => [ 'Rage' => [ 'permanent' => 4, 'temporary' => 4 ], 'Gnosis' => [ 'permanent' => 3, 'temporary' => 3 ], 'Willpower' => [ 'permanent' => 4, 'temporary' => 4 ] ],
 			'werewolf-renown'     => [ 'Glory' => [ 'permanent' => 2, 'temporary' => 2 ], 'Honor' => [ 'permanent' => 3, 'temporary' => 3 ], 'Wisdom' => [ 'permanent' => 2, 'temporary' => 2 ] ],
@@ -361,7 +372,11 @@ return [
 			'met-merits'          => [ [ 'name' => 'Iron Will', 'count' => 5 ] ],
 			'met-flaws'           => [ [ 'name' => 'Vengeance', 'count' => 2 ] ],
 			'kueijin-backgrounds' => [ [ 'name' => 'Nushi', 'count' => 1 ], [ 'name' => 'Jade Talisman', 'count' => 1 ] ],
-			'kueijin-disciplines' => [ [ 'name' => 'Black Wind', 'level' => 2 ], [ 'name' => 'Bone Shintai', 'level' => 1 ] ],
+			// 1.3.2: Black Wind split into three aspect families (owner ruling 2026-09-17,
+			// 1.3.1-design-workflow.md §11.7 item 2) - pointed at one aspect, Ten Thousand
+			// Steps, per that ruling's own example. The held level is unaffected; each aspect
+			// keeps the same 1-5 ladder the merged family had.
+			'kueijin-disciplines' => [ [ 'name' => 'Black Wind: Ten Thousand Steps', 'level' => 2 ], [ 'name' => 'Bone Shintai', 'level' => 1 ] ],
 			'kueijin-resources'   => [ 'Hun' => [ 'permanent' => 3, 'temporary' => 3 ], 'Po' => [ 'permanent' => 5, 'temporary' => 5 ], 'Yin Chi' => [ 'permanent' => 3, 'temporary' => 3 ], 'Yang Chi' => [ 'permanent' => 4, 'temporary' => 4 ], 'Demon Chi' => [ 'permanent' => 1, 'temporary' => 1 ] ],
 		],
 	],

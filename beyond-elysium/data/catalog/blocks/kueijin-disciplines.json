@@ -1,0 +1,733 @@
+{
+  "format": 1,
+  "slug": "kueijin-disciplines",
+  "name": "Disciplines",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "provenance": {
+    "sources": [
+      "Laws of the East (WW05016), p. 125 (Discipline 4/7/10, no out-of-type modifier), p. 133-160 (Disciplines)",
+      "GVM: Disciplines, Kuei-Jin (family list and power names)",
+      "Owner rulings 2026-09-17 (samples/research/kuei-jin/NOTES.md): Equilibrium added; Black Wind is three separately rated powers"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/build_kueijin_disciplines.py + rulings/kueijin-disciplines.json"
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced"
+      ],
+      "ladder": {
+        "basic": 2,
+        "intermediate": 2,
+        "advanced": 1
+      },
+      "costs": {
+        "basic": 4,
+        "intermediate": 7,
+        "advanced": 10
+      },
+      "out_of_type": null,
+      "levels": null,
+      "categories": null,
+      "untiered": null
+    },
+    "atomic": true,
+    "sequential": true,
+    "allow_custom": true,
+    "shape": "named",
+    "blood_magic": false,
+    "traditions": [],
+    "powers": [
+      {
+        "name": "Black Wind: Hell's Howling Typhoon",
+        "source": "Black Wind",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Level 1",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Level 2",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Level 3",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Level 4",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Level 5",
+            "cost": "10"
+          }
+        ],
+        "elder": {},
+        "split_from": "Black Wind"
+      },
+      {
+        "name": "Black Wind: Ten Thousand Steps",
+        "source": "Black Wind",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Level 1",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Level 2",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Level 3",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Level 4",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Level 5",
+            "cost": "10"
+          }
+        ],
+        "elder": {},
+        "split_from": "Black Wind"
+      },
+      {
+        "name": "Black Wind: Tiger Slashing Heaven",
+        "source": "Black Wind",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Level 1",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Level 2",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Level 3",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Level 4",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Level 5",
+            "cost": "10"
+          }
+        ],
+        "elder": {},
+        "split_from": "Black Wind"
+      },
+      {
+        "name": "Blood Shintai",
+        "source": "Blood Shintai",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Permeate",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Blood Atemi",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Flow Like Blood",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Bloodlash",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Blood Awakening",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Bone Shintai",
+        "source": "Bone Shintai",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Corpse Skin",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "White Tiger Corpse",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Bone Obedience",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Five Poison Cloud",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Ch'ing Shih",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Chi'iu Muh",
+        "source": "Chi'iu Muh",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Rasa",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Chi Sight",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dragon Ward",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Purification",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Spirit-Eating",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Cultivation",
+        "source": "Cultivation",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Scrutinize",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Cleave the Demon",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Lash the Demon",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Yoke the Demon",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Two Become One",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Demon Shintai",
+        "source": "Demon Shintai",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Level 1",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Level 2",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Level 3",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Level 4",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Level 5",
+            "cost": "10"
+          }
+        ],
+        "elder": {},
+        "options": [
+          "Blinding Breath",
+          "Claws",
+          "Demon Armor",
+          "Demon Weapon",
+          "Extra Arms",
+          "Foulness",
+          "Horror",
+          "The Host",
+          "Huge Size",
+          "Maw",
+          "Spikes",
+          "Tail",
+          "Third Eye",
+          "Wings"
+        ],
+        "options_note": "Each level adds one Physical Trait in Demon form and one form characteristic chosen from this list (Laws of the East p. 142-143)."
+      },
+      {
+        "name": "Flesh Shintai",
+        "source": "Flesh Shintai",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Long-Neck",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Detach Limb",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Lotus Cloud",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Pelesit",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "The Thousand Forms",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Ghost-Flame Shintai",
+        "source": "Ghost-Flame Shintai",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Goblin Face",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Goblin Spark",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Goblin Shapes",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Goblin Scorch",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Goblin Lantern",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Hellweaving",
+        "source": "Hellweaving",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Glimpse of Yomi",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Razor Winds",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Favor of the Yama Kings",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Invocation of the Yomi Soul",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Weaving the Yomi World",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Internalize",
+        "source": "Internalize",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "No Mind",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Blood Yoga",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Distant Death Kata",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Iron Soul",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Harmony with the All",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Jade Shintai",
+        "source": "Jade Shintai",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Stand upon the Dragon's Back",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Tread the Thrashing Dragon's Tail",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Placate the Earth Dragon",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Harnessing the Dragon's Breath",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Jade Servant of the August Personage",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Obligation",
+        "source": "Obligation",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Evaluate",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Soul Bridge",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Authority",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Thousand Hell Stare",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Soul Shackles",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Tapestry",
+        "source": "Tapestry",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Spirit Call",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Chi Ward",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Chi-Shaping",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Ride the Dragon",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Chi Rift",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Yang Prana",
+        "source": "Yang Prana",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Principle of Motion",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Yang Mantle",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dragon Dance",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Eightfold Yang Mantle",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Semblance of the Scarlet Queen",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Yin Prana",
+        "source": "Yin Prana",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Shrouded Moon",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Yin Mantle",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Bone Dance",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Eightfold Yin Mantle",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Semblance of the Ebon Dragon",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Equilibrium",
+        "source": "Laws of the East",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Master Flow",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Adjust Balance",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Shift the Balance",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Chi Interrupt",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Chi Mastery",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      }
+    ]
+  }
+}

@@ -359,12 +359,36 @@ export interface TraitListItem {
 }
 
 /**
+ * Declared mechanics for a trait_list block that has none of its own - today, a rating
+ * derived from another block's rating rather than an intrinsic per-item cost. Mirrors
+ * `TieredPowerMeta.untiered` (1.3.2): `mage-rotes` declares
+ * `{ derived_from: "mage-spheres", per_level: 1 }` at the same top-level `_meta` key a
+ * tiered_power block would, since Rotes are a plain trait_list, not a ladder. Read path
+ * only, this release - nothing in `Cost_Engine` consumes it yet (1.4.0's rules engine
+ * reads `_meta` directly); this exists so the declared file's own field survives ingestion
+ * into `schema_blocks.definition` unmodified rather than being silently dropped by a
+ * decoder that only knew about `items`.
+ */
+export interface TraitListMeta {
+	untiered?: {
+		/** Flat XP per level, for a track with no intrinsic cost of its own. */
+		cost_per_level?: number;
+		/** Slug of the block this track's cost is read from, e.g. `mage-spheres` for Rotes. */
+		derived_from?: string;
+		/** XP per level of the derived-from block's own rating - Rotes are 1 per Sphere level. */
+		per_level?: number;
+	};
+}
+
+/**
  * The full definition of a trait_list block: its catalog of
  * selectable items plus the rules governing how many may be
  * chosen, how they are displayed, and how they are grouped.
  */
 export interface TraitListDefinition {
 	items: TraitListItem[];
+	/** Declared mechanics, when this list's own rating derives from another block's (1.3.2). Absent on every ordinary trait_list. */
+	_meta?: TraitListMeta;
 	/**
 	 * The block-wide default for `TraitListItem.allow_multiples`: whether a held row's identity
 	 * is its name plus its specialization label rather than its name alone (1.2.11 D86). An

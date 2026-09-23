@@ -1,0 +1,5045 @@
+{
+  "format": 1,
+  "slug": "vampire-blood-magic",
+  "name": "Blood Magic",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "provenance": {
+    "sources": [
+      "Tremere packet / Laws of the Night Revised - blood-magic paths 3/6/9 on the Discipline ladder, stored and exported as Disciplines (1.2.10 A3)",
+      "GVM: Disciplines (container) and met-mechanics.csv, as seeded by 1.2.10 (be_dev snapshot)",
+      "samples/research/vampire/ (owbn, met, tt) for spelling and short-ladder rulings - 1.3.0 §2 precedence"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/build_vampire.py + rulings/vampire-blood-magic.json"
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced"
+      ],
+      "ladder": {
+        "basic": 2,
+        "intermediate": 2,
+        "advanced": 1
+      },
+      "costs": {
+        "basic": 3,
+        "intermediate": 6,
+        "advanced": 9
+      },
+      "out_of_type": null,
+      "levels": null,
+      "categories": null,
+      "untiered": null
+    },
+    "atomic": true,
+    "sequential": true,
+    "allow_custom": true,
+    "player_order": true,
+    "blood_magic": true,
+    "traditions": [
+      "Akhu",
+      "Bacaban",
+      "Dark Thaumaturgy",
+      "Dur An Ki",
+      "Judicium",
+      "Koldunism",
+      "Mortis",
+      "Nahuallotl",
+      "Necromancy",
+      "Sadhana",
+      "Sielanic",
+      "Thaumaturgy (Anarch)",
+      "Thaumaturgy (Camarilla)",
+      "Wanga"
+    ],
+    "powers": [
+      {
+        "name": "Alchemy",
+        "source": "Alchemy",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Commuta",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Conforma",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Scinde",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Mutate",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Transmutate",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": null,
+          "Sadhana": "Rasayana",
+          "Dur An Ki": "Enki's Gift",
+          "Thaumaturgy (Camarilla)": null
+        }
+      },
+      {
+        "name": "Ash Path",
+        "source": "Ash Path",
+        "moved_from": [ { "block": "vampire-disciplines", "name": "Ash Path" } ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Shroudsight",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Lifeless Tongues",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dead Hand",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Ex Nihilo",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Shroud Mastery",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Wanga": null,
+          "Sadhana": null
+        }
+      },
+      {
+        "name": "Awakening the Steel",
+        "source": "Awakening the Steel",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Confer with the Blade",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Grasp of the Mountain",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Pierce Steel's Skin",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Razor's Shield",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Strike at the True Flesh",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        },
+        "moved_from": [
+          {
+            "block": "vampire-disciplines",
+            "name": "Awakening of the Steel"
+          }
+        ]
+      },
+      {
+        "name": "Biothaumaturgy",
+        "source": "Biothaumaturgy",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Thaumaturgical Forensics",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Thaumaturgical Surgery",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Lesser Animation",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Greater Animation",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Cognizant Construction",
+            "cost": "9",
+            "note": "Tremere"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Thaumaturgy (Camarilla)": null
+        }
+      },
+      {
+        "name": "Bone Path",
+        "source": "Bone Path",
+        "moved_from": [ { "block": "vampire-disciplines", "name": "Bone Path" } ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Tremens",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Apprentice's Brooms",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Shambling Hordes",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Soul Stealing",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Daemonic Possession",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Wanga": null,
+          "Sadhana": null
+        }
+      },
+      {
+        "name": "Cadaverous Animation",
+        "source": "Cadaverous Animation",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Trace of Life",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Call the Homuncular Servant",
+            "cost": "3",
+            "note": "Giovanni",
+            "aliases": [
+              "Call the Homuncular Servent"
+            ]
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Raise the Corpse to Service",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Call of Athanatos",
+            "cost": "6",
+            "note": "Giovanni",
+            "aliases": [
+              "Call the Athanatos"
+            ]
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Muster the Corpse Army",
+            "cost": "9",
+            "note": "Giovanni"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Necromancy": null
+        }
+      },
+      {
+        "name": "Cenotaph",
+        "source": "Cenotaph",
+        "aliases": [
+          "Path of Abombo"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "A Touch of Death",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Reveal the Catene",
+            "cost": "3",
+            "aliases": [
+              "Revela the Catene"
+            ]
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Tread Upon the Grave",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Death Knell",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Ephemeral Binding",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sadhana": null,
+          "Wanga": "Path of Abombo"
+        },
+        "moved_from": [
+          {
+            "block": "vampire-disciplines",
+            "name": "Cenotaph Path"
+          }
+        ]
+      },
+      {
+        "name": "Corpse in the Monster",
+        "source": "Corpse in the Monster",
+        "moved_from": [ { "block": "vampire-disciplines", "name": "Corpse in the Monster" } ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Masque of Death",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Cold of the Grave",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Curse of Life",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Gift of the Corpse",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Gift of Life",
+            "cost": "9",
+            "note": "Giovanni"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Necromancy": null
+        }
+      },
+      {
+        "name": "Covenant of Nergal",
+        "source": "Covenant of Nergal",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Maskim's Touch",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Breath of Ereskhigal",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Nergal's Blessing",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Nergal's Wrath",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Ill Wind",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Divine Hand",
+        "source": "Divine Hand",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Hand of Ptah",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Hand of Khnum",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Hand of Anubis",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Hand of Thoth",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Hand of Heka",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": null
+        }
+      },
+      {
+        "name": "Dragon Path",
+        "source": "Dragon Path",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Chi Sight",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Spirit Call",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Chi Ward",
+            "cost": "6",
+            "note": "Setite",
+            "aliases": [
+              "Chi Word"
+            ]
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Dragon Bone Prison",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Chi Rift",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Wanga": null
+        }
+      },
+      {
+        "name": "Echoes of Allah's Wrath",
+        "source": "Echoes of Allah's Wrath",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Curse of Lifeless Mien",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Curse of Heavenly Dolor",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Curse of Unfettered Rage",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Curse of Boundless Thirst",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Curse of Forbidden Sol",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Elemental Mastery",
+        "source": "Elemental Mastery",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Elemental Strength",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Wooden Tongues",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Animate the Unmoving",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Elemental Form",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Summon Elemental",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Bacaban": null,
+          "Sadhana": "Yaksha-Vidya",
+          "Dur An Ki": "Annunaki's Command",
+          "Thaumaturgy (Camarilla)": null
+        },
+        "moved_from": [
+          {
+            "block": "vampire-disciplines",
+            "name": "Rego Elementum"
+          }
+        ]
+      },
+      {
+        "name": "Evil Eye",
+        "source": "Evil Eye",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Humiliation",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Loss",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Peril",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Enemy",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Chasm Zakhm",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Ex Inferis",
+        "source": "Ex Inferis",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Pervideo (Survey)",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Venatio (The Chase)",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Adversor (Oppose)",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Nominatim (By Name)",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Periurium (Break the Oath)",
+            "cost": "9",
+            "note": "Assamite",
+            "aliases": [
+              "Periurium​ ​(Break​ ​the​ ​Oath)"
+            ]
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Faux Path",
+        "source": "Faux Path",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Hello, Goodbye",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Disciplinary Identification",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Thaumaturgical Identification",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Ritual Madness",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Disciplinary Affectation",
+            "cost": "9",
+            "note": "Tremere"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Thaumaturgy (Camarilla)": null
+        }
+      },
+      {
+        "name": "Fires of the Inferno",
+        "source": "Fires of the Inferno",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Flash Blind",
+            "cost": "3",
+            "note": "Demon"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Flame Lance",
+            "cost": "3",
+            "note": "Demon"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Ring of Fire",
+            "cost": "6",
+            "note": "Demon"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Incinerate",
+            "cost": "6",
+            "note": "Demon"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Furnaces of Hell",
+            "cost": "9",
+            "note": "Demon"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dark Thaumaturgy": null
+        }
+      },
+      {
+        "name": "Flow of Ashe",
+        "source": "Flow of Ashe",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Touch of Life",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Strength of Root and Stone",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Breath of Life",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Favor of the Orishas",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Gift of Ashe",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Wanga": null
+        }
+      },
+      {
+        "name": "Focused Mind",
+        "source": "Focused Mind",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Readiness",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Centering",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "One-Tracked Mind",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Dual Thought",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Perfect Clarity",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": "Path of Thoth",
+          "Sadhana": "Echos of Nirvana",
+          "Dur An Ki": "Echoes of Nirvana",
+          "Thaumaturgy (Camarilla)": null
+        }
+      },
+      {
+        "name": "Four Humours",
+        "source": "Four Humours",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Whispers to the Soul",
+            "cost": "3",
+            "note": "Giovanni",
+            "aliases": [
+              "Whispers of the Soul"
+            ]
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Kiss of the Dark Mother",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dark Humours",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Clutching the Shroud",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Black Breath",
+            "cost": "9",
+            "note": "Giovanni"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Necromancy": null
+        }
+      },
+      {
+        "name": "Gift of Morpheus",
+        "source": "Gift of Morpheus",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Cause Sleep",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Mass Slumber",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Enchanted Slumber",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Dreamscape",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Dream Mastery",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Mortis": null,
+          "Bacaban": null,
+          "Thaumaturgy (Camarilla)": "Path of Morpheus"
+        },
+        "restriction": "Sabbat"
+      },
+      {
+        "name": "Gift of the Heart",
+        "source": "Gift of the Heart",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Hikma min Allah (Wisdom of God)",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Idrak' min Allah (Insight form God)",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Sultat el-Mabi (Authority of the Prophet)",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Sawt el-Nabi (Voice of the Prophet)",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Nar el-Iman (Fire of Faith)",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Gifts of Faith",
+        "source": "Gifts of Faith",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Saut Allah (Voice of God)",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Nuzra Allah (Prescience of God)",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Rug Allah (Spirit of God)",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Ghadub Allah (Wrath of God)",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Kubda Allah (Fist of God)",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Grave's Decay",
+        "source": "Grave's Decay",
+        "moved_from": [ { "block": "vampire-disciplines", "name": "Grave's Decay" } ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Destroy the Husk",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Rigor Mortis",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Wither",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Corrupt the Undead Flesh",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Dissolve the Flesh",
+            "cost": "9",
+            "note": "Giovanni",
+            "aliases": [
+              "Disolve the Flesh"
+            ]
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Necromancy": null
+        }
+      },
+      {
+        "name": "Green Path",
+        "source": "Green Path",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Herbal Wisdom",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Speed the Season's Passing",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dance of Vines",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Verdant Haven",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Awaken the Forest Giants",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null,
+          "Thaumaturgy (Camarilla)": null
+        }
+      },
+      {
+        "name": "Hands of Destruction",
+        "source": "Hands of Destruction",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Decay",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Gnarl Wood",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Acidic Touch",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Atrophy",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Turn to Dust",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Bacaban": null,
+          "Sadhana": "Hands of Mahakala",
+          "Dur An Ki": "Fists of the Djinn",
+          "Dark Thaumaturgy": null,
+          "Thaumaturgy (Camarilla)": null
+        },
+        "moved_from": [
+          {
+            "block": "vampire-disciplines",
+            "name": "Perdo Materia"
+          }
+        ]
+      },
+      {
+        "name": "Hearth Path",
+        "source": "Hearth Path",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Guest's Herald",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Master's Order",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Rhyme of Discord",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Temportal",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "The Cauldron's Rede",
+            "cost": "9",
+            "note": "Tremere"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Thaumaturgy (Camarilla)": null
+        }
+      },
+      {
+        "name": "Hunter's Wind",
+        "source": "Hunter's Wind",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Scent of Deception",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Skin of the Chameleon",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Unassuming Pose",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Whiff of Kalif",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Ghost Body",
+            "cost": "9",
+            "note": "Tremere"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Thaumaturgy (Camarilla)": null
+        }
+      },
+      {
+        "name": "Immanence of Set",
+        "source": "Immanence of Set",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Whisper of the Sands",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Tongue of the Tempter",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Voice of the Prophet",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Lord of Storms",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Dark Invocation",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": null
+        }
+      },
+      {
+        "name": "Keeper's Way",
+        "source": "Keeper's Way",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Sense the Ripples",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "The Gift of Haqim",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "The Distant Crimson",
+            "cost": "6",
+            "note": "Tremere",
+            "aliases": [
+              "The Distance Crimson"
+            ]
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Know the Fate of One",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Cast into the Pool of Blood",
+            "cost": "9",
+            "note": "Tremere"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        },
+        "restriction": "Loyalist Only"
+      },
+      {
+        "name": "Lash of Xipe Totec",
+        "source": "Lash of Xipe Totec",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Another's Burden",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Obsidian Shattered",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Burden Another",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Obsidian's Edge",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Flay",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sadhana": null
+        }
+      },
+      {
+        "name": "Lure of Flames",
+        "source": "Lure of Flames",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Hand of Flame",
+            "cost": "3",
+            "aliases": [
+              "Hand of Flames"
+            ]
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Flame Bolt",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Wall of Fire",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Engulf",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Firestorm",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Mortis": null,
+          "Bacaban": null,
+          "Sadhana": "Breath of Agni",
+          "Dur An Ki": "Hands of the Magi",
+          "Thaumaturgy (Camarilla)": null
+        },
+        "moved_from": [
+          {
+            "block": "vampire-disciplines",
+            "name": "Creo Ignem"
+          }
+        ]
+      },
+      {
+        "name": "Maleficia",
+        "source": "Maleficia",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Evil Eye, The",
+            "cost": "3",
+            "note": "Demon"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Minor Curse",
+            "cost": "3",
+            "note": "Demon"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Psalm of the Damned",
+            "cost": "6",
+            "note": "Demon"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Barrenness",
+            "cost": "6",
+            "note": "Demon"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Greater Curse",
+            "cost": "9",
+            "note": "Demon"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dark Thaumaturgy": null
+        }
+      },
+      {
+        "name": "Mastery of the Mortal Shell",
+        "source": "Mastery of the Mortal Shell",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Vertigo",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Contortion",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Seizure",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Body Failure",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Marionette",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": "Vengeance of Khnum",
+          "Thaumaturgy (Camarilla)": null
+        }
+      },
+      {
+        "name": "Mortuus Path",
+        "source": "Mortuus Path",
+        "moved_from": [ { "block": "vampire-disciplines", "name": "Mortuus Path" } ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Reaper's Shroud",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Blight",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Resume the Coil",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "True Death",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Mercy for Seth",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sadhana": null
+        }
+      },
+      {
+        "name": "Movement of the Mind",
+        "source": "Movement of the Mind",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Force Bolt",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Manipulate",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Flight",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Repulse",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Control",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Bacaban": null,
+          "Sadhana": "Rishi's Hand",
+          "Dur An Ki": "Enlil's Breath",
+          "Nahuallotl": null,
+          "Thaumaturgy (Camarilla)": null
+        },
+        "moved_from": [
+          {
+            "block": "vampire-disciplines",
+            "name": "Creo Motus"
+          },
+          {
+            "block": "vampire-disciplines",
+            "name": "Rego Motus"
+          }
+        ]
+      },
+      {
+        "name": "Music of the Spheres",
+        "source": "Music of the Spheres",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Song of Mercury",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Song of Venus",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Song of Mars",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Song of Jupiter",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Song of Saturn",
+            "cost": "9",
+            "note": "Tremere"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Thaumaturgy (Anarch)": null
+        }
+      },
+      {
+        "name": "Neptune's Might",
+        "source": "Neptune's Might",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Eyes of the Sea",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Prison of Water",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Blood To Water",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Flowing Wall",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Dehydrate",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Thaumaturgy (Anarch)": "The Covenant of Enki",
+          "Thaumaturgy (Camarilla)": null
+        }
+      },
+      {
+        "name": "Nightshade Path",
+        "source": "Nightshade Path",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Tend the Body Garden",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Witch's Fruit",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Raise the Green One",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Wails and Whispers",
+            "cost": "6",
+            "note": "Setite",
+            "aliases": [
+              "Walls and Whispers"
+            ]
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Chthonic Womb",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sadhana": null
+        }
+      },
+      {
+        "name": "Nigrimancy",
+        "source": "Nigrimancy",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Witness of Death",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Summon Soul",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Compel the Shade",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Fetter the Dead",
+            "cost": "6",
+            "note": "Setite",
+            "aliases": [
+              "Fetter the dEad"
+            ]
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Usurer's Scales",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sadhana": null
+        }
+      },
+      {
+        "name": "Oneiromancy",
+        "source": "Oneiromancy",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Portents",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Foresee",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dreamspeak",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Augury",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Reveal the Heart's Dreams",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sadhana": "Lakshmi's Wishes",
+          "Thaumaturgy (Camarilla)": null
+        }
+      },
+      {
+        "name": "Orisha's Fortune",
+        "source": "Orisha's Fortune",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Sheltering Hand",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Fortune's Blessing",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Fortune's Curse",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Fortune's Favor",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Smiting Hand",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Wanga": null
+        }
+      },
+      {
+        "name": "Path of Blood",
+        "source": "Path of Blood",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Taste for Blood",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Blood Rage",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Blood of Potency",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Theft of Vitae",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Cauldron of Blood",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": null,
+          "Wanga": null,
+          "Bacaban": null,
+          "Sadhana": "Path of Kali",
+          "Dur An Ki": "Path of Life's Water",
+          "Necromancy": null,
+          "Thaumaturgy (Camarilla)": null
+        },
+        "moved_from": [
+          {
+            "block": "vampire-disciplines",
+            "name": "Rego Vitae"
+          }
+        ]
+      },
+      {
+        "name": "Path of Blood Nectar",
+        "source": "Path of Blood Nectar",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Path of Blood Nectar / Covenant of Inanna",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Path of Blood Nectar / Covenant of Inanna",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Path of Blood Nectar / Covenant of Inanna",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Path of Blood Nectar / Covenant of Inanna",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Path of Blood Nectar / Covenant of Inanna",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sadhana": null,
+          "Thaumaturgy (Anarch)": "Covenant of Inanna"
+        }
+      },
+      {
+        "name": "Path of Blood's Curse",
+        "source": "Path of Blood's Curse",
+        "aliases": [
+          "Blood's Curse"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Ravages of the Beast",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Weight of the Sun",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Abated Tooth",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Treacherous Bonds",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "The Withering of Ages",
+            "cost": "9",
+            "aliases": [
+              "Withering of Ages"
+            ]
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Bacaban": null,
+          "Thaumaturgy (Anarch)": "Fouling Life's Waters",
+          "Thaumaturgy (Camarilla)": null
+        },
+        "moved_from": [
+          {
+            "block": "vampire-disciplines",
+            "name": "Path of the Blood's Curse"
+          }
+        ]
+      },
+      {
+        "name": "Path of Conjuring",
+        "source": "Path of Conjuring",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Summon the Simple Form",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Permanency",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Magic of the Smith",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Reverse Conjuration",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Power over Life",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": "Path of Ptah",
+          "Wanga": null,
+          "Bacaban": null,
+          "Sadhana": "Brahma-Vidya",
+          "Necromancy": null,
+          "Thaumaturgy (Anarch)": "Will of Nammu",
+          "Thaumaturgy (Camarilla)": null
+        },
+        "moved_from": [
+          {
+            "block": "vampire-disciplines",
+            "name": "Creo Materia"
+          }
+        ]
+      },
+      {
+        "name": "Path of Corruption",
+        "source": "Path of Corruption",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Contradict",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Subvert",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dissociate",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Addiction",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Dependence",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": "The False Heart",
+          "Wanga": null,
+          "Dark Thaumaturgy": null
+        }
+      },
+      {
+        "name": "Path of Curses",
+        "source": "Path of Curses",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Stigmatize",
+            "cost": "3",
+            "aliases": [
+              "Stigma"
+            ]
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Malady",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Pariah",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Corrupt Body",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Fall From Grace",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": "Sebau's Touch",
+          "Wanga": null,
+          "Dark Thaumaturgy": "Hexing",
+          "Thaumaturgy (Camarilla)": null
+        }
+      },
+      {
+        "name": "Path of Duat",
+        "source": "Path of Duat",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "A Sending of Serpents",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Darkness of Duat",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Suffocation of the Tomb",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "The Narrow House",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Consignment to Duat",
+            "cost": "9",
+            "aliases": [
+              "Consignment of Duat"
+            ]
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": null,
+          "Sadhana": "Path of Yama",
+          "Thaumaturgy (Anarch)": "Covenant of Ereshkigal"
+        }
+      },
+      {
+        "name": "Path of Father's Vengeance",
+        "source": "Path of Father's Vengeance",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Zillah's Litany",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "The Crone's Pride",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Feast of Ashes",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Uriel's Disfavor",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Valediction",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Bacaban": null,
+          "Judicium": null,
+          "Necromancy": null,
+          "Thaumaturgy (Anarch)": "Path of the Ailing Jackal",
+          "Thaumaturgy (Camarilla)": null
+        }
+      },
+      {
+        "name": "Path of Haunting",
+        "source": "Path of Haunting",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Song of the Dead",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Summon Wisp",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Harrowing",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Phantasms",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Torment",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Wanga": null,
+          "Sadhana": null
+        }
+      },
+      {
+        "name": "Path of Hoodoo",
+        "source": "Path of Hoodoo",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Death Echo",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Brick Dust",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Ill Omen",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Curse Object",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Vodoun Doll",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sadhana": null
+        }
+      },
+      {
+        "name": "Path of Israfil",
+        "source": "Path of Israfil",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Masque of Death",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Visage of the Damned",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Corpse Breed Carapace",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Sanguine Lash",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Gift of the Corpse",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sadhana": null
+        }
+      },
+      {
+        "name": "Path of Karma",
+        "source": "Path of Karma",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Threads of the Past",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Weave of the Future",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Certain Fate",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Past Lives",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Master of Samsara",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sadhana": null
+        }
+      },
+      {
+        "name": "Path of Levinbolt",
+        "source": "Path of Levinbolt",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Spark",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Illuminate",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Power Array",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Zeus' Fury",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Eye of the Storm",
+            "cost": "9",
+            "note": "Giovanni"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Mortis": null
+        },
+        "moved_from": [
+          {
+            "block": "vampire-disciplines",
+            "name": "Path of the Levinbolt"
+          }
+        ]
+      },
+      {
+        "name": "Path of Maelstrom Manipulation",
+        "source": "Path of Maelstrom Manipulation",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Sense the Tumult",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Bulwark",
+            "cost": "3",
+            "note": "Setite",
+            "aliases": [
+              "Boulwark"
+            ]
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Sigil of the Storm",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Command the Cyclone",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Birth the Maelstrom",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sadhana": null
+        }
+      },
+      {
+        "name": "Path of Mars",
+        "source": "Path of Mars",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "War Cry",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Strike True",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Wind Dance",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Fearless Heart",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Comrades at Arms",
+            "cost": "9",
+            "aliases": [
+              "Comrade at Arms"
+            ]
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": "Valor of Sutekh",
+          "Bacaban": null,
+          "Judicium": null,
+          "Thaumaturgy (Anarch)": null
+        },
+        "restriction": "Warrior Only"
+      },
+      {
+        "name": "Path of Mercury",
+        "source": "Path of Mercury",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Path of Mercury",
+            "cost": "3",
+            "note": "Sabbat"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Path of Mercury",
+            "cost": "3",
+            "note": "Sabbat"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Path of Mercury",
+            "cost": "6",
+            "note": "Sabbat"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Path of Mercury",
+            "cost": "6",
+            "note": "Sabbat"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Path of Mercury",
+            "cost": "9",
+            "note": "Sabbat"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Judicium": null
+        }
+      },
+      {
+        "name": "Path of Pain",
+        "source": "Path of Pain",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "The Numbing",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Anguish",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Shattering",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Agony Within",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Hundred Deaths",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Path of Pestilence",
+        "source": "Path of Pestilence",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Illness",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Infection",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Miasma",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Parasitic Possession",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Vector",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Path of Phobos",
+        "source": "Path of Phobos",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Induce Fear",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Spook",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Terrorize",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Fear-Plague",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Leech of Fear",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Path of Pleasure",
+        "source": "Path of Pleasure",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Ecstasy",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Intrusion",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Daisy Chain",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Deadening",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "The Garden of Earthly Delights",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Path of Praabti",
+        "source": "Path of Praabti",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "10 Yards",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "50 Yards",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "500 Yards",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "5 Miles",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "500 Miles",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sadhana": null
+        }
+      },
+      {
+        "name": "Path of Shadow Crafting",
+        "source": "Path of Shadow Crafting",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Out Light",
+            "cost": "3",
+            "note": "Sabbat"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Shadow Taunt",
+            "cost": "3",
+            "note": "Sabbat"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Coruscating Shadow",
+            "cost": "6",
+            "note": "Sabbat"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Night's Veil",
+            "cost": "6",
+            "note": "Sabbat"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Abyssal Pact",
+            "cost": "9",
+            "note": "Sabbat"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Judicium": null
+        },
+        "moved_from": [
+          {
+            "block": "vampire-disciplines",
+            "name": "Path of Shadowcrafting"
+          }
+        ]
+      },
+      {
+        "name": "Path of Skulls",
+        "source": "Path of Skulls",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Calvaria Emissicius",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Consilium Mortuus",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Ammorsus Vicarius",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Exedo Animus",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Degulo",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sadhana": null
+        }
+      },
+      {
+        "name": "Path of Technomancy",
+        "source": "Path of Technomancy",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Analyze",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Burnout",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Encrypt/Decrypt",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Remote Access",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Telecommute",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Judicium": null,
+          "Thaumaturgy (Anarch)": null,
+          "Thaumaturgy (Camarilla)": null
+        },
+        "moved_from": [
+          {
+            "block": "vampire-disciplines",
+            "name": "Technomancy"
+          }
+        ]
+      },
+      {
+        "name": "Path of the Defiler",
+        "source": "Path of the Defiler",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Call the Weakness",
+            "cost": "3",
+            "note": "Assamite",
+            "aliases": [
+              "​Call the Weakness"
+            ]
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Tainted",
+            "cost": "3",
+            "note": "Assamite",
+            "aliases": [
+              "​Tainted"
+            ]
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Degradation",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Poisoned Soul",
+            "cost": "6",
+            "note": "Assamite",
+            "aliases": [
+              "​Poisoned Soul"
+            ]
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Chancrous Blossom",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Path of the Dry Nile",
+        "source": "Path of the Dry Nile",
+        "aliases": [
+          "Path of Dry Nile"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Beauty Fades",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Trust Withers",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Love Dies",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Hope Dissolves",
+            "cost": "6",
+            "aliases": [
+              "HopeDisolves"
+            ]
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Thrones Crumble",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Wanga": "Binding Chango",
+          "Akhu": null
+        }
+      },
+      {
+        "name": "Path of the Shadow World",
+        "source": "Path of the Shadow World",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "See the Dead",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Repel the Angry Dead",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Command the Freshly Dead",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Army of Souls",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Walk the Road of Shadows",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Path of the Shepherd",
+        "source": "Path of the Sheppard",
+        "aliases": [
+          "Path of the Sheppard"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Sheep from the Goats",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "The Armor of Faith",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Console the Inflicted",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Subvert the Legion",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Banishment",
+            "cost": "9",
+            "note": "Tremere"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sielanic": null
+        }
+      },
+      {
+        "name": "Path of the Twilight Garden",
+        "source": "Path of the Twilight Garden",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Whisper to the Soul",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Kiss of the Dark Mother",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dark Humors",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Caul of the Neverborn",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Lament of Dhainu",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sadhana": null
+        }
+      },
+      {
+        "name": "Path of the Unspoken",
+        "source": "Path of the Unspoken",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Whispers of the Unborn",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Scribing the Unknown",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Shadow Thoughts",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Fragments of the Forgotten",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Forsaken",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Path of the World's Blood",
+        "source": "Path of the World's Blood",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Eyes of the Earth",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Roots of Power",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Arbor of Protection",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Course of the Beast",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Way of the Stone",
+            "cost": "9",
+            "note": "Tremere"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Sielanic": null
+        }
+      },
+      {
+        "name": "Path of Transmutation",
+        "source": "Path of Transmutation",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Fortify the Solid Form",
+            "cost": "3",
+            "note": "Sabbat"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Crystallize the Liquid Form",
+            "cost": "3",
+            "note": "Sabbat",
+            "aliases": [
+              "Crystalize the Liquid Form"
+            ]
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Liquefy the Solid Form",
+            "cost": "6",
+            "note": "Sabbat",
+            "aliases": [
+              "Liquify the Solid Form"
+            ]
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Gaol",
+            "cost": "6",
+            "note": "Sabbat"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Ghost Wall",
+            "cost": "9",
+            "note": "Sabbat"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Judicium": null
+        }
+      },
+      {
+        "name": "Path of Woe",
+        "source": "Path of Woe",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Finding the Locus",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Expurgate the Damned",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Blood Scourge",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Cursed Eucharist",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Purge the Apostate's Soul",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Wanga": null,
+          "Sadhana": null
+        }
+      },
+      {
+        "name": "Perdo Magica",
+        "source": "Perdo Magica",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Level 1",
+            "cost": "3",
+            "note": "Sabbat"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Level 2",
+            "cost": "3",
+            "note": "Sabbat"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Level 3",
+            "cost": "6",
+            "note": "Sabbat"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Level 4",
+            "cost": "6",
+            "note": "Sabbat"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Level 5",
+            "cost": "9",
+            "note": "Sabbat"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Judicium": null
+        }
+      },
+      {
+        "name": "Power of the Mirror",
+        "source": "Power of the Mirror",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Mirror Forge",
+            "cost": "3",
+            "note": "Sabbat"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Reality of the Mirror Image",
+            "cost": "3",
+            "note": "Sabbat"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Mastery of the Mirror Image",
+            "cost": "6",
+            "note": "Sabbat"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "The Thousand Eyes",
+            "cost": "6",
+            "note": "Sabbat"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Mirror Dungeon",
+            "cost": "9",
+            "note": "Sabbat"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Judicium": "Mact der Spiegel"
+        }
+      },
+      {
+        "name": "Rego Manes",
+        "source": "Rego Manes",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Summon Imp",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Summon Fiend",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Summon Shade",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Summon Servitor",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Summon Pit Lord",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": "Path of Spirit"
+        }
+      },
+      {
+        "name": "Rego Venalis",
+        "source": "Rego Venalis",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Rego Venalis (Path of Corruption)",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Rego Venalis (Path of Corruption)",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Rego Venalis (Path of Corruption)",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Rego Venalis (Path of Corruption)",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Rego Venalis (Path of Corruption)",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": "Path of Corruption"
+        }
+      },
+      {
+        "name": "Revelations of Duat",
+        "source": "Revelations of Duat",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Sight of the Jackal",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Weigh the Virtues",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Pharaoh's Sentry",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Imbue with the Grace of Anubis",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "The Sorcery of Life",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": null
+        }
+      },
+      {
+        "name": "Revelations of Eden",
+        "source": "Revelations of Eden",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Tear",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Rend",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Rip",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Ravage",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Shatter",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": null
+        }
+      },
+      {
+        "name": "Revelations of Midgard",
+        "source": "Revelations of Midgard",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Bestowment of Scales",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Suffer for Jormungandr",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Swallow the Tail",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Cycle of the Midgard Serpent",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Apep's Transformation",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": null
+        }
+      },
+      {
+        "name": "Sepulchre Path",
+        "source": "Sepulchre Path",
+        "moved_from": [ { "block": "vampire-disciplines", "name": "Sepulchre Path" } ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Insight",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Summon Soul",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Compel Soul",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Haunting",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Torment",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Wanga": null
+        }
+      },
+      {
+        "name": "Snake Inside",
+        "source": "Snake Inside",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "First Taste",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Cross-Addiction",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "The Jones",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Fatal Compulsion",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Temperance",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": null,
+          "Wanga": "Zarabanda's Malice",
+          "Sadhana": "Temptation of Mara"
+        }
+      },
+      {
+        "name": "Soul of the Serpent",
+        "source": "Soul of the Serpent",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Serpentine Sense",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Scaleskin",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Venom Curse",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Touch of Typhon",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Form of the Hydra",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": null,
+          "Koldunism": null
+        }
+      },
+      {
+        "name": "Spirit Manipulation",
+        "source": "Spirit Manipulation",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Hermetic Sight",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Astral Cant",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Voice of Command",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Entrap Ephemera",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Duality",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": "Path of Anubis",
+          "Wanga": null,
+          "Sadhana": "Asura-Raja",
+          "Dur An Ki": "Suleiman's Laws",
+          "Koldunism": null,
+          "Necromancy": null,
+          "Dark Thaumaturgy": null
+        }
+      },
+      {
+        "name": "Spirit Thaumaturgy",
+        "source": "Spirit Thaumaturgy",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Evil Eye",
+            "cost": "3",
+            "note": "Tzimisce"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Spirit Eyes",
+            "cost": "3",
+            "note": "Tzimisce"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Spirit Slave",
+            "cost": "6",
+            "note": "Tzimisce"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Journey",
+            "cost": "6",
+            "note": "Tzimisce"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Fetishes",
+            "cost": "9",
+            "note": "Tzimisce"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Koldunism": null
+        }
+      },
+      {
+        "name": "Strigia",
+        "source": "Strigia",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Strix",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Scobax",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Masca",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Hexe",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Fractura",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Taking of the Spirit",
+        "source": "Taking of the Spirit",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Mind Leech",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Stigmatize",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Drain Resolve",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Sap Will",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Gift of Servitude",
+            "cost": "9",
+            "note": "Assamite",
+            "aliases": [
+              "The Gift of Servatitude"
+            ]
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Thaumaturgical Countermagic",
+        "source": "Thaumaturgical Countermagic",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Level One",
+            "cost": "3",
+            "note": "Giovanni",
+            "aliases": [
+              "Level 1"
+            ]
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Level Two",
+            "cost": "3",
+            "note": "Giovanni",
+            "aliases": [
+              "Level 2"
+            ]
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Level Three",
+            "cost": "6",
+            "note": "Giovanni",
+            "aliases": [
+              "Level 3"
+            ]
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Level Four",
+            "cost": "6",
+            "note": "Giovanni",
+            "aliases": [
+              "Level 4"
+            ]
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Level Five",
+            "cost": "9",
+            "note": "Giovanni",
+            "aliases": [
+              "Level 5"
+            ]
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Mortis": null
+        }
+      },
+      {
+        "name": "Transitus Velociter",
+        "source": "Transitus Velociter",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Mount",
+            "cost": "3",
+            "note": "Tzimisce"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Wagon",
+            "cost": "3",
+            "note": "Tzimisce"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Supply Train",
+            "cost": "6",
+            "note": "Tzimisce"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Seige Engine",
+            "cost": "6",
+            "note": "Tzimisce"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Battle Front",
+            "cost": "9",
+            "note": "Tzimisce"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Koldunism": "Way of Passage"
+        }
+      },
+      {
+        "name": "Tyranny of the Wyrm",
+        "source": "Tyranny of the Wyrm",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Malfean Infection",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Bane of the Soul",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dissonant Miserere",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Feed the Wyrm",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "House of Maelin",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": null
+        }
+      },
+      {
+        "name": "Ushabti",
+        "source": "Ushabti",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Laborer",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Servitor",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Guard",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Overseer",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Gift of Khnum",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": null
+        }
+      },
+      {
+        "name": "Veil Path",
+        "source": "Veil Path",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Entropy's Grasp",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Piercing the Veil",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Burial Shroud",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Persephone's Portal",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Embodiment of Death",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Wanga": null
+        }
+      },
+      {
+        "name": "Video Nefas",
+        "source": "Video Nefas",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "See the Unseen",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Learn the Heart's Pain",
+            "cost": "3",
+            "note": "Assamite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Seize the Moment",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Casting the Bones",
+            "cost": "6",
+            "note": "Assamite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Recall the Bloody Deed",
+            "cost": "9",
+            "note": "Assamite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Dur An Ki": "Path of Evil Revelations"
+        }
+      },
+      {
+        "name": "Vine of Dionysus",
+        "source": "Vine of Dionysus",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Methyskein",
+            "cost": "3",
+            "aliases": [
+              "Methyskien"
+            ]
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Omophagy",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Hamartia",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Enthousiasmos",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Oinos Aimatos",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": null,
+          "Dur An Ki": null,
+          "Koldunism": null
+        }
+      },
+      {
+        "name": "Vitreous Path",
+        "source": "Vitreous Path",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Eyes of the Dead",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Hour of Death",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Soul Judgement",
+            "cost": "6",
+            "note": "Setite",
+            "aliases": [
+              "Soul Judgment"
+            ]
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Breath of Thanatos",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Soul Feasting",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Wanga": null
+        }
+      },
+      {
+        "name": "Voice of the Wild",
+        "source": "Voice of the Wild",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Scent of the Beast",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Hide from the Hunter's Eyes",
+            "cost": "3",
+            "note": "Setite"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Marking the Prey",
+            "cost": "6",
+            "note": "Setite"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Guiding Spirit",
+            "cost": "6",
+            "note": "Setite",
+            "aliases": [
+              "Guding Spirit"
+            ]
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Mantle of the Beast",
+            "cost": "9",
+            "note": "Setite"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Wanga": null
+        }
+      },
+      {
+        "name": "Way of Earth",
+        "source": "Way of Earth",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Grasping Soil",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Endurance of Stone",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Hungry Earth",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Root of Vitality",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Kupala's Fury",
+            "cost": "9",
+            "note": "Giovanni"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Necromancy": null
+        }
+      },
+      {
+        "name": "Way of Fire",
+        "source": "Way of Fire",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Fiery Courage",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Combust",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Wall of Magma",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Heat Wave",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Volcanic Blast",
+            "cost": "9",
+            "note": "Giovanni"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Necromancy": null
+        }
+      },
+      {
+        "name": "Way of Levinbolt",
+        "source": "Way of Levinbolt",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Spark",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Illuminate",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Body of Light",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Jupiter's Aegis",
+            "cost": "6",
+            "note": "Giovanni",
+            "aliases": [
+              "Jupitor's Aegis"
+            ]
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Lightning Dance",
+            "cost": "9",
+            "note": "Giovanni"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Mortis": null
+        }
+      },
+      {
+        "name": "Way of Spirit",
+        "source": "Way of Spirit",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "First",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Second",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Third",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Fourth",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Fifth",
+            "cost": "9",
+            "note": "Giovanni"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Necromancy": null
+        }
+      },
+      {
+        "name": "Way of Warding",
+        "source": "Way of Warding",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Bar the Common Passage",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Glyph of Scrying",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Runes of Power",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Glyph of Enlightenment",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Secure the Sacred Domain",
+            "cost": "9",
+            "note": "Giovanni"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Mortis": "Path of Warding"
+        }
+      },
+      {
+        "name": "Way of Water",
+        "source": "Way of Water",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Pool of Lies",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Watery Haven",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Fog over Sea",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Minions of the Deep",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Doom Tides",
+            "cost": "9",
+            "note": "Giovanni"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Necromancy": null
+        }
+      },
+      {
+        "name": "Way of Wind",
+        "source": "Way of Wind",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Breath of Whispers",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Biting Gale",
+            "cost": "3",
+            "note": "Giovanni"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Breeze of Lethargy",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Ride the Tempest",
+            "cost": "6",
+            "note": "Giovanni"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Fury of the Night Sky",
+            "cost": "9",
+            "note": "Giovanni"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Necromancy": null
+        }
+      },
+      {
+        "name": "Weather Control",
+        "source": "Weather Control",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Fog",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Rain or Snow",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "High Winds",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Storm",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Lightning Strike",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Akhu": "Breath of Set",
+          "Wanga": null,
+          "Mortis": null,
+          "Dur An Ki": "Nergal's Blessing",
+          "Necromancy": null,
+          "Dark Thaumaturgy": null
+        },
+        "moved_from": [
+          {
+            "block": "vampire-disciplines",
+            "name": "Creo Tempestas"
+          },
+          {
+            "block": "vampire-disciplines",
+            "name": "Rego Tempestas"
+          }
+        ]
+      },
+      {
+        "name": "Whispers of the Heavens",
+        "source": "Whispers of the Heavens",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Map the Skies",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Read the Heaven's Plans",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Call Down the Hunter's Moon",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Trace the Soul's Favor",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Ripple on the Sea of Stars",
+            "cost": "9",
+            "note": "Tremere"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Thaumaturgy (Camarilla)": null
+        }
+      },
+      {
+        "name": "Winter's Sorrow",
+        "source": "Winter's Sorrow",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Frost Bite",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Blizzard",
+            "cost": "3",
+            "note": "Tremere"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Icy Chill of Despair",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Frost Blades",
+            "cost": "6",
+            "note": "Tremere"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "The Mask of Winters",
+            "cost": "9",
+            "note": "Tremere"
+          }
+        ],
+        "elder": {},
+        "traditions": {
+          "Thaumaturgy (Camarilla)": null
+        }
+      }
+    ]
+  }
+}

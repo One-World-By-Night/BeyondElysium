@@ -146,13 +146,17 @@ class IdentityFieldOptionsTest extends TestCase {
 		$conscience   = $this->pool( 'vampire-virtues', 'Conscience' );
 		$self_control = $this->pool( 'vampire-virtues', 'Self-Control' );
 
-		$this->assertSame(
+		// assertEquals, not assertSame: a declared JSON file's own key order
+		// (`reference/CATALOG-JSON-FORMAT.md` principle 4, "human-first ordering") need not
+		// match a PHP array literal's, and the two keys here are read by name, never by
+		// position.
+		$this->assertEquals(
 			[ 'block_slug' => 'vampire-identity', 'field' => 'Conscience or Conviction' ],
 			$conscience['name_lookup']['keyed_by']
 		);
 		$this->assertSame( [ 'Conviction' => 'Conviction' ], $conscience['name_lookup']['table'] );
 
-		$this->assertSame(
+		$this->assertEquals(
 			[ 'block_slug' => 'vampire-identity', 'field' => 'Self-Control or Instinct' ],
 			$self_control['name_lookup']['keyed_by']
 		);

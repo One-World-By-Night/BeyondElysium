@@ -92,19 +92,30 @@ const DEFAULT_LADDER_CEILING = 5;
 
 /**
  * The number of rungs the declared ladder actually has: `sum(_meta.ladder)`, or
- * `DEFAULT_LADDER_CEILING` when the block carries no `_meta` at all (S3 - the seeder
- * has not yet re-emitted every block against the declared-JSON shape) or declares an
- * empty/zero-sum ladder. **This is the whole of the D68 fix on the stepper side**: the
- * ceiling is read, never inferred from tie counts or a family's own level count, so it
- * cannot drift per-family the way `maxLevel()` (1.2.9 and earlier) did.
+ * `DEFAULT_LADDER_CEILING` only when the block carries no `_meta.ladder` **at all** (S3 -
+ * the seeder has not yet re-emitted this block against the declared-JSON shape).
+ *
+ * **1.3.2 fix.** A block that declares `ladder: {}` explicitly - a genuinely pick-only
+ * track such as Werewolf/Fera Gifts (`reference/CATALOG-JSON-FORMAT.md` §4.2, "a pick-only
+ * track... says so by declaring `ladder` as an explicit empty object") - must ceiling at
+ * **0**, not 5: every power on that block is bought by name from `elder`, never rated on a
+ * stepper at all, so a phantom 5-rung stepper would let a Gift be "raised" to a rating
+ * nothing in the catalog prices. The previous rule treated an empty object the same as a
+ * present-but-zero-sum ladder and fell back to 5 for both, which is right only for the
+ * latter (a real authoring gap) and wrong for the former (a deliberate declaration). The
+ * distinction is `ladder === undefined` (no `_meta` yet, or `_meta` with no `ladder` key at
+ * all) versus `ladder` being present as `{}` - only the first falls back.
+ *
+ * This is still the whole of the D68 fix on the stepper side: the ceiling is read, never
+ * inferred from tie counts or a family's own level count, so it cannot drift per-family the
+ * way `maxLevel()` (1.2.9 and earlier) did.
  */
 export function ladderCeiling( definition: TieredPowerDefinition ): number {
 	const ladder = definition._meta?.ladder;
-	if ( ! ladder ) {
+	if ( ladder === undefined || ladder === null ) {
 		return DEFAULT_LADDER_CEILING;
 	}
-	const sum = Object.values( ladder ).reduce( ( a, b ) => a + b, 0 );
-	return sum > 0 ? sum : DEFAULT_LADDER_CEILING;
+	return Object.values( ladder ).reduce( ( a, b ) => a + b, 0 );
 }
 
 /**

@@ -146,6 +146,44 @@ class CatalogValidatorTest extends TestCase {
 		$this->assertRejects( $this->tiered( [ $bad ] ), 'has no `power_name`' );
 	}
 
+	// --- The runtime list shape, the only accepted one (owner ruling, 2026-09-22) ---
+
+	public function test_powers_keyed_by_family_name_are_rejected(): void {
+		// The map shape both releases once wrote and the validator used to wave through.
+		$data                          = $this->tiered( [] );
+		$data['definition']['powers'] = [ 'Animalism' => $this->ladder_family() ];
+		$this->assertRejects( $data, '`definition.powers` must be a list' );
+	}
+
+	public function test_a_family_without_a_string_name_is_rejected(): void {
+		$bad = $this->ladder_family();
+		unset( $bad['name'] );
+		$this->assertRejects( $this->tiered( [ $bad ] ), 'has no string `name`' );
+
+		$bad['name'] = 7;
+		$this->assertRejects( $this->tiered( [ $bad ] ), 'has no string `name`' );
+	}
+
+	public function test_a_rung_named_with_name_instead_of_power_name_is_rejected(): void {
+		$bad                        = $this->ladder_family();
+		$bad['levels'][0]['name']  = $bad['levels'][0]['power_name'];
+		unset( $bad['levels'][0]['power_name'] );
+		$this->assertRejects( $this->tiered( [ $bad ] ), 'levels[0] has no `power_name`' );
+	}
+
+	public function test_a_bare_string_pick_is_rejected(): void {
+		$bad          = $this->ladder_family();
+		$bad['elder'] = [ 'elder' => [ 'Animal Succulence' ] ];
+		$this->assertRejects( $this->tiered( [ $bad ] ), 'is not an object' );
+	}
+
+	public function test_an_untiered_level_needs_a_power_name_too(): void {
+		$this->assertRejects(
+			$this->untiered( [ 'cost_per_level' => 2 ], [ [ 'level' => 1, 'name' => 'One' ] ] ),
+			'levels[0] has no `power_name`'
+		);
+	}
+
 	// --- Rule 5: no orphans ---------------------------------------------------
 
 	public function test_a_non_empty_overflow_is_rejected_as_an_uncommitted_D67_family(): void {
@@ -240,5 +278,149 @@ class CatalogValidatorTest extends TestCase {
 		$data = $this->untiered( [ 'cost_per_level' => 2 ] );
 		$data['definition']['powers'][0]['elder'] = [ 'elder' => [ [ 'power_name' => 'Nope' ] ] ];
 		$this->assertRejects( $data, 'no ranks to file them under' );
+	}
+	// --- A pick-only track: ranks, no rating (Gifts) --------------------------
+
+	/** @param array<int,array<string,mixed>> $powers */
+	private function pick_only( array $powers, bool $declare_ladder = true ): array {
+		$meta = [
+			'ranks'  => [ 'basic', 'intermediate', 'advanced' ],
+			'costs'  => [ 'basic' => 3, 'intermediate' => 6, 'advanced' => 9 ],
+			'levels' => [ 'basic' => 1, 'intermediate' => 3, 'advanced' => 5 ],
+		];
+		if ( $declare_ladder ) {
+			$meta['ladder'] = [];
+		}
+		return $this->block( 'tiered_power', [ '_meta' => $meta, 'powers' => $powers ] );
+	}
+
+	private function gift_family(): array {
+		// Two Intermediate Gifts and no Basic one: legal, and must not be flagged (1.2.10 §B).
+		return [
+			'name'            => 'Bone Gnawer',
+			'category_values' => [ 'tribe' => 'Bone Gnawer' ],
+			'levels'          => [],
+			'elder'           => [
+				'intermediate' => [
+					[ 'tier' => 'intermediate', 'power_name' => 'Cooking' ],
+					[ 'tier' => 'intermediate', 'power_name' => 'Tagalong' ],
+				],
+			],
+		];
+	}
+
+	public function test_a_pick_only_track_declaring_an_empty_ladder_passes(): void {
+		$this->assertSame( [], Catalog_Validator::validate_block( $this->pick_only( [ $this->gift_family() ] ), 'test-block' ) );
+	}
+
+	public function test_a_track_that_omits_its_ladder_is_still_rejected(): void {
+		// Silence is not a declaration: only an explicit `{}` means "no rungs".
+		$this->assertRejects( $this->pick_only( [ $this->gift_family() ], false ), 'sums to zero' );
+	}
+
+	public function test_a_pick_only_family_may_not_carry_rungs(): void {
+		$bad           = $this->gift_family();
+		$bad['levels'] = [ [ 'level' => 1, 'tier' => 'basic', 'power_name' => 'Smell of Man' ] ];
+		$this->assertRejects( $this->pick_only( [ $bad ] ), 'against a declared ceiling of 0' );
+	}
+	// --- Whole files: the envelope, stacks, templates, presets, references ------
+
+	/** @param array<string,mixed> $definition */
+	private function file( string $kind, string $slug, array $definition, array $extra = [] ): array {
+		return array_merge( [
+			'format'     => 1,
+			'slug'       => $slug,
+			'name'       => 'Test',
+			'kind'       => $kind,
+			'provenance' => [ 'sources' => [ 'a real book, p. 1' ] ],
+			'definition' => $definition,
+		], $extra );
+	}
+
+	private function stack_definition(): array {
+		return [
+			'game_line'      => 'met',
+			'sections'       => [
+				[ 'block_slug' => 'werewolf-identity', 'label' => 'Identity', 'display_order' => 1, 'required' => true ],
+				[ 'block_slug' => 'werewolf-gifts', 'label' => 'Gifts', 'display_order' => 60, 'required' => true, 'in_type_source' => 'werewolf-tribes.Tribe' ],
+				[ 'block_slug' => 'met-physical-traits', 'label' => 'Physical', 'display_order' => 50, 'required' => true, 'negative_block_slug' => 'met-physical-traits-neg' ],
+			],
+			'creation_rules' => [ 'steps' => [ [ 'step' => 3, 'sections' => [ 'met-abilities' ] ] ] ],
+		];
+	}
+
+	/** @param string[] $blocks */
+	private function assertRefErrors( array $data, string $stem, array $blocks, array $stacks, string $needle ): void {
+		$errors = Catalog_Validator::validate_references( $data, $stem, $blocks, $stacks );
+		$this->assertStringContainsString( $needle, implode( ' | ', $errors ) );
+	}
+
+	public function test_an_unknown_format_is_rejected(): void {
+		$data = $this->file( 'preset', 'position-presets', [ 'A' => [ 'B' ] ], [ 'format' => 2 ] );
+		$this->assertStringContainsString( '`format` must be', implode( ' | ', Catalog_Validator::validate_file( $data, 'position-presets' ) ) );
+	}
+
+	public function test_a_file_with_no_provenance_is_rejected(): void {
+		$data = $this->file( 'preset', 'position-presets', [ 'A' => [ 'B' ] ], [ 'provenance' => [] ] );
+		$this->assertStringContainsString( 'provenance.sources', implode( ' | ', Catalog_Validator::validate_file( $data, 'position-presets' ) ) );
+	}
+
+	public function test_an_unknown_kind_is_rejected(): void {
+		$data = $this->file( 'spreadsheet', 'x', [ 'a' ] );
+		$this->assertStringContainsString( 'is not one of', implode( ' | ', Catalog_Validator::validate_file( $data, 'x' ) ) );
+	}
+
+	public function test_a_valid_stack_file_passes(): void {
+		$this->assertSame( [], Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $this->stack_definition() ), 'werewolf' ) );
+	}
+
+	public function test_a_stack_section_without_an_order_is_rejected(): void {
+		$def = $this->stack_definition();
+		unset( $def['sections'][0]['display_order'] );
+		$this->assertStringContainsString( 'integer `display_order`', implode( ' | ', Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def ), 'werewolf' ) ) );
+	}
+
+	public function test_a_malformed_in_type_join_is_rejected(): void {
+		$def = $this->stack_definition();
+		$def['sections'][1]['in_type_source'] = 'Tribe';
+		$this->assertStringContainsString( '"block_slug.Field" join', implode( ' | ', Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def ), 'werewolf' ) ) );
+	}
+
+	public function test_a_template_slug_must_name_a_real_template_type(): void {
+		$data = $this->file( 'template', 'werewolf.poster', [ 'sections' => [ [ 'block_slug' => 'werewolf-identity' ] ] ] );
+		$this->assertStringContainsString( '"<stack>.<type>"', implode( ' | ', Catalog_Validator::validate_file( $data, 'werewolf.poster' ) ) );
+	}
+
+	public function test_a_valid_template_and_preset_pass(): void {
+		$tpl = $this->file( 'template', 'werewolf.sheet_full', [ 'columns' => 2, 'sections' => [ [ 'block_slug' => 'werewolf-identity', 'column' => 1 ] ] ] );
+		$this->assertSame( [], Catalog_Validator::validate_file( $tpl, 'werewolf.sheet_full' ) );
+		$this->assertSame( [], Catalog_Validator::validate_file( $this->file( 'preset', 'approval-reason-presets', [ 'Coordinator Approval' ] ), 'approval-reason-presets' ) );
+	}
+
+	public function test_a_block_still_answers_to_every_block_rule_through_validate_file(): void {
+		$data = array_merge( $this->tiered( [ $this->ladder_family() ], [ 'ranks' => [] ] ), [ 'format' => 1, 'name' => 'T', 'kind' => 'block', 'provenance' => [ 'sources' => [ 'x' ] ] ] );
+		$this->assertStringContainsString( '`_meta.ranks` is empty', implode( ' | ', Catalog_Validator::validate_file( $data, 'test-block' ) ) );
+	}
+
+	public function test_every_block_a_stack_names_must_have_a_file(): void {
+		// Rule 6, and each place a stack can name a block: section, negative block, in-type
+		// join (pointed at a block no section lists, so only the join can name it) and a creation
+		// step. Drop each in turn and the complaint names it.
+		$data  = $this->file( 'stack', 'werewolf', $this->stack_definition() );
+		$every = [ 'werewolf-identity', 'werewolf-gifts', 'werewolf-tribes', 'met-physical-traits', 'met-physical-traits-neg', 'met-abilities' ];
+		$this->assertSame( [], Catalog_Validator::validate_references( $data, 'werewolf', $every, [ 'werewolf' ] ) );
+		foreach ( $every as $slug ) {
+			$this->assertRefErrors( $data, 'werewolf', array_values( array_diff( $every, [ $slug ] ) ), [ 'werewolf' ], "\"{$slug}\"" );
+		}
+	}
+
+	public function test_a_template_needs_its_stack_file(): void {
+		$tpl = $this->file( 'template', 'werewolf.sheet_full', [ 'sections' => [ [ 'block_slug' => 'werewolf-identity' ] ] ] );
+		$this->assertRefErrors( $tpl, 'werewolf.sheet_full', [ 'werewolf-identity' ], [], 'stack "werewolf"' );
+	}
+
+	public function test_a_variant_needs_its_base_file(): void {
+		$v = $this->file( 'block', 'owbn-wraith_arcanoi', [ 'powers' => [] ], [ 'variant' => [ 'of' => 'wraith-arcanoi', 'id' => 'owbn', 'mode' => 'replace' ] ] );
+		$this->assertRefErrors( $v, 'owbn-wraith_arcanoi', [ 'owbn-wraith_arcanoi' ], [], 'block "wraith-arcanoi"' );
 	}
 }

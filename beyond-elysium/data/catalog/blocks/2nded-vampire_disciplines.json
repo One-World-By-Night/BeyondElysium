@@ -1,0 +1,548 @@
+{
+  "format": 1,
+  "slug": "2nded-vampire_disciplines",
+  "name": "Disciplines (2nd ed.)",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "variant": {
+    "of": "vampire-disciplines",
+    "id": "2nd-ed",
+    "label": "Mind's Eye Theatre 2nd edition printings",
+    "mode": "add"
+  },
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: The Masquerade 2nd Edition (WW05200) via samples/research/vampire/met/laws-of-the-night-2e-disciplines.json where it lists the family",
+      "Modern GVM levels noted '2nd ed.', split out of the base families by 1.3.1; untagged rungs are the shared printing"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/build_vampire.py + rulings/vampire-disciplines.json"
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced",
+        "elder",
+        "master",
+        "ascended",
+        "methuselah"
+      ],
+      "ladder": {
+        "basic": 2,
+        "intermediate": 2,
+        "advanced": 1
+      },
+      "costs": {
+        "basic": 3,
+        "intermediate": 6,
+        "advanced": 9,
+        "elder": 12,
+        "master": 15,
+        "ascended": 18,
+        "methuselah": 21
+      },
+      "out_of_type": {
+        "basic": "+1",
+        "intermediate": "+1",
+        "advanced": "+1",
+        "elder": "+1",
+        "master": "+1",
+        "ascended": "+1",
+        "methuselah": "+1"
+      },
+      "levels": null,
+      "categories": null,
+      "untiered": null,
+      "in_type_source": "vampire-identity.Clan"
+    },
+    "atomic": true,
+    "sequential": true,
+    "allow_custom": true,
+    "blood_magic": false,
+    "traditions": [],
+    "powers": [
+      {
+        "name": "Animalism (2nd ed.)",
+        "source": "Animalism",
+        "aliases": [
+          "Animalism"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Beast Within",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Beckoning",
+            "cost": "3",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Song of Serenity",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Quell the Beast",
+            "cost": "6",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Embrace the Beast",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Animalism"
+      },
+      {
+        "name": "Chimerstry (2nd ed.)",
+        "source": "Chimerstry",
+        "aliases": [
+          "Chimerstry"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Ignis Fatuus",
+            "cost": "3",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Minor Illusion",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Apparition",
+            "cost": "6",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Complex Illusion",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Horrid Reality",
+            "cost": "9",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          }
+        ],
+        "elder": {},
+        "split_from": "Chimerstry"
+      },
+      {
+        "name": "Dementation (2nd ed.)",
+        "source": "Dementation",
+        "aliases": [
+          "Dementation"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Passion",
+            "cost": "3",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Mind Tricks",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Eyes of Chaos",
+            "cost": "6",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Confusion",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Total Insanity",
+            "cost": "9",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          }
+        ],
+        "elder": {},
+        "split_from": "Dementation"
+      },
+      {
+        "name": "Protean (2nd ed.)",
+        "source": "Protean",
+        "aliases": [
+          "Protean"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Wolf Claws",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Eyes of the Beast",
+            "cost": "3",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Earth Meld",
+            "cost": "6",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Shadow of the Beast",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Form of Mist",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Protean"
+      },
+      {
+        "name": "Quietus (2nd ed.)",
+        "source": "Quietus",
+        "aliases": [
+          "Quietus"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Silence of Death",
+            "cost": "3",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Scorpion's Touch",
+            "cost": "3",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dagon's Call",
+            "cost": "6",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Poison Blade",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Taste of Death",
+            "cost": "9",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          }
+        ],
+        "elder": {},
+        "split_from": "Quietus"
+      },
+      {
+        "name": "Serpentis (2nd ed.)",
+        "source": "Serpentis",
+        "aliases": [
+          "Serpentis"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Eyes of the Serpent",
+            "cost": "3",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Tongue of the Asp",
+            "cost": "3",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Skin of the Adder",
+            "cost": "6",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Serpent's Tongue",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Form of the Serpent",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Serpentis"
+      },
+      {
+        "name": "Vicissitude (2nd ed.)",
+        "source": "Vicissitude",
+        "aliases": [
+          "Vicissitude"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Malleable Visage",
+            "cost": "3",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Changeling",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Bonecraft",
+            "cost": "6",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Horrid Form",
+            "cost": "6",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Bloodform",
+            "cost": "9",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          }
+        ],
+        "elder": {},
+        "split_from": "Vicissitude"
+      },
+      {
+        "name": "Melpominee (2nd ed.)",
+        "source": "Melpominee",
+        "aliases": [
+          "Melpominee"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "The Missing Voice",
+            "cost": "3",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Tourett's Voice",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Madrigal",
+            "cost": "6",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Toreador's Bane",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Death of the Drum",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Melpominee"
+      },
+      {
+        "name": "Mytherceria (2nd ed.)",
+        "source": "Mytherceria",
+        "aliases": [
+          "Mytherceria"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Folderol",
+            "cost": "3",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Darkling Trickery",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Aura Absorption",
+            "cost": "6",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Faerie Wards",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Stone Travel",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Mytherceria"
+      },
+      {
+        "name": "Obeah (2nd ed.)",
+        "source": "Obeah",
+        "aliases": [
+          "Obeah"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Sense Vitality",
+            "cost": "3",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Healing Touch",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Corpore Sano",
+            "cost": "6",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Neutral Guard",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Healing of the Mind",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Obeah"
+      },
+      {
+        "name": "Visceratika (2nd ed.)",
+        "source": "Visceratika",
+        "aliases": [
+          "Visceratika"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Skin of the Chameleon",
+            "cost": "3",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Whispers of the Chamber",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Bond with the Mountain",
+            "cost": "6",
+            "filled_from": "shared with the base printing (Grapevine tags only the powers whose 2nd edition printing differs)"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Voices of the Castle",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Bond with Terra",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Visceratika"
+      }
+    ]
+  }
+}

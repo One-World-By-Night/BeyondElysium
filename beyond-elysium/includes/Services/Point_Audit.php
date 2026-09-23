@@ -132,10 +132,10 @@ class Point_Audit {
 
 		switch ( $block->section_type ) {
 			case 'trait_list':
-				return self::trait_list_lines( $definition, $entry, is_array( $held ) ? $held : [] );
+				return self::trait_list_lines( $definition, $entry, is_array( $held ) ? $held : [], $blocks );
 			case 'tiered_power':
 				$in_type = Cost_Engine::in_type_check( $character, $block->slug ?? $entry['slug'], $stack, $blocks );
-				return self::tiered_power_lines( $in_type, $definition, $entry, is_array( $held ) ? $held : [] );
+				return self::tiered_power_lines( $in_type, $definition, $entry, is_array( $held ) ? $held : [], $blocks );
 			case 'resource_pool':
 				return self::resource_pool_lines( $definition, $entry, is_array( $held ) ? $held : [] );
 			case 'identity_field':
@@ -146,13 +146,14 @@ class Point_Audit {
 	}
 
 	/**
+	 * @param array<string,object> $blocks The character's blocks by slug, already loaded - threaded through for 1.3.2's `moved_from` cross-block resolution.
 	 * @return array<int,array<string,mixed>>
 	 */
-	private static function trait_list_lines( object $definition, array $entry, array $held_list ): array {
+	private static function trait_list_lines( object $definition, array $entry, array $held_list, array $blocks = [] ): array {
 		$lines = [];
 		foreach ( $held_list as $held ) {
 			$held  = (array) $held;
-			$price = Cost_Engine::price_held_trait_list_item( $definition, $held );
+			$price = Cost_Engine::price_held_trait_list_item( $definition, $held, $entry['slug'], $blocks );
 			$name  = (string) ( $held['name'] ?? '?' );
 			$count = (int) ( $held['count'] ?? 1 );
 
@@ -179,15 +180,16 @@ class Point_Audit {
 
 	/**
 	 * @param callable(string):bool $is_in_type The block's in-type check, looked up once for every held power (F-087).
+	 * @param array<string,object>  $blocks     The character's blocks by slug, already loaded - threaded through for 1.3.2's `moved_from` cross-block resolution.
 	 * @return array<int,array<string,mixed>>
 	 */
-	private static function tiered_power_lines( callable $is_in_type, object $definition, array $entry, array $held_list ): array {
+	private static function tiered_power_lines( callable $is_in_type, object $definition, array $entry, array $held_list, array $blocks = [] ): array {
 		$lines = [];
 		foreach ( $held_list as $held ) {
 			$held       = (array) $held;
 			$trait_name = (string) ( $held['name'] ?? '' );
 			$in_type    = $trait_name !== '' ? $is_in_type( $trait_name ) : true;
-			$price      = Cost_Engine::price_held_tiered_power( $definition, $held, $in_type );
+			$price      = Cost_Engine::price_held_tiered_power( $definition, $held, $in_type, $entry['slug'], $blocks );
 
 			$label = $trait_name;
 			if ( ! empty( $held['power_name'] ) ) {

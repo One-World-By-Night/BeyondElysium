@@ -1,0 +1,1385 @@
+{
+  "format": 1,
+  "slug": "owbn-wraith_arcanoi",
+  "name": "Arcanoi (OWBN)",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "variant": {
+    "of": "wraith-arcanoi",
+    "id": "owbn",
+    "label": "OWBN Arcanoi packet (2016)",
+    "mode": "replace"
+  },
+  "provenance": {
+    "sources": [
+      "OWBN0124 Wraith Arcanoi packet (2016), Christian DeBats - Basic 4 / Intermediate 7 / Advanced 10; Innate Abilities free with the first Basic",
+      "Arcanoi the packet does not cover are carried from the base file unchanged"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "innate",
+        "basic",
+        "intermediate",
+        "advanced"
+      ],
+      "ladder": {
+        "basic": 2,
+        "intermediate": 2,
+        "advanced": 1
+      },
+      "costs": {
+        "innate": 0,
+        "basic": 4,
+        "intermediate": 7,
+        "advanced": 10
+      },
+      "out_of_type": {
+        "innate": "+0",
+        "basic": "-1",
+        "intermediate": "-1",
+        "advanced": "-1"
+      },
+      "levels": null,
+      "categories": null,
+      "untiered": null
+    },
+    "shape": "named",
+    "atomic": true,
+    "sequential": true,
+    "allow_custom": true,
+    "powers": [
+      {
+        "name": "Argos",
+        "source": "Argos",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Enshroud",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Phantom Wings",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Flicker",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Jump",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Oubliette",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Orienteering",
+              "cost": "0"
+            },
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Tempest Peek",
+              "cost": "0"
+            },
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Tempest Threshold",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Behest (Right Hand)",
+        "source": "Behest",
+        "aliases": [
+          "Behest"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Delve",
+            "cost": "4",
+            "note": "W:tO 2nd ed. PDF p. 528-531: Delve and Trace open both Hands; Scry and Divine are the Right Hand, Divine \"the uppermost such ability for a Moriman dwelling in Stygia\"; Veer is the Arcanos' own capstone and requires Scry"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Trace",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Scry",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Divine",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Veer",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Link",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Behest (Left Hand)",
+        "source": "Behest",
+        "aliases": [
+          "Behest"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Delve",
+            "cost": "4",
+            "note": "W:tO 2nd ed. PDF p. 531-532: Twitch is \"the first level of the Left Hand\", Murmur \"the second level of the Left Hand\", both gated on a successful Scry; Veer closes the ladder for either Hand"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Trace",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Twitch",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Murmur",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Veer",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Link",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Castigate",
+        "source": "Castigate",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Coax",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Dark Secrets",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Purify",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "House Cleaning",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Defiance",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Bulwark",
+              "cost": "0"
+            },
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Soulsight",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Chains of the Emperor",
+        "source": "Chains of the Emperor",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Brilliance",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Shackles",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Snare",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Lariat",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Net",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Soul Anchor",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Displace",
+        "source": "Displace",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Wraithride",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Deflect",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Transfuse",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Reconfigure",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Transmogrify",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Straddle",
+              "cost": "0"
+            },
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Sense Rider",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Embody",
+        "source": "Embody",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Whispers",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Phantom",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Statue",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Life-in-Death",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Materialize",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Ghostly Touch",
+              "cost": "0"
+            },
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Maintain the Material Form",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Fascinate",
+        "source": "Fascinate",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Distraction",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Remembrance",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Charge of Duty",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Driving Urge",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Target Lock",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Tuning In",
+              "cost": "0"
+            },
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Deja Vu",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Fatalism",
+        "source": "Fatalism",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Fatal Vision",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Foreshadow",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Interpretation",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Guesswork",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Luck",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Kismet",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Flux",
+        "source": "Flux",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Rot",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Strengthen",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Decay",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Puppet Theater",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Automaton",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Grave Mold",
+              "cost": "0"
+            },
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Sense Fluxion",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Inhabit",
+        "source": "Inhabit",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Surge",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Ride the Electron Highway",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Gremlinize",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Claim",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Empower",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Sense Gremlin",
+              "cost": "0"
+            },
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Shellride",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Intimation",
+        "source": "Intimation",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "The Gleaming",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Quash",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Deep Desiring",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "The Craving",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Cupitatis",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Twinge",
+              "cost": "0"
+            },
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Self-Intimation",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Keening",
+        "source": "Keening",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Dirge",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Ballad",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Muse",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Crescendo",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Requiem",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Perfect Pitch",
+              "cost": "0"
+            },
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Sotto Voce",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Kinesis",
+        "source": "Kinesis",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Bind",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Reliquary",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Haywire",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Claim",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Ludd's Grip",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Straddle",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lifeweb",
+        "source": "Lifeweb",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Sense Strand",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Web Presence",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Splice Strand",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Sever Strand",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Soul Pact",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Locate Fetter",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Mnemosynis",
+        "source": "Mnemosynis",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "In Memoriam",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Mnemotechnics",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Mindspeak",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Casting the Scene",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Onslaught",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Rewind",
+              "cost": "0"
+            },
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Sense Intellect",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Moliate",
+        "source": "Moliate",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Imitate",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Sculpt",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Martialry",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Rend",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Bodyshape",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Glow",
+              "cost": "0"
+            },
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Shapesense",
+              "cost": "0"
+            },
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Return to Death's Visage",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Outrage",
+        "source": "Outrage",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Ping",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Wraithgrasp",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Stonehand Punch",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Death's Touch",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Obliviate",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Leap of Rage",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Pandemonium",
+        "source": "Pandemonium",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Weirdness",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Befuddlement",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dark Ether",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Foul Humour",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Tempus Fugit",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Sense Chaos",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Phantasm",
+        "source": "Phantasm",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Elysia",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Lucidity",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dreams of Sleep",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Phantasmagoria",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Agon",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Sleepsense",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Puppetry",
+        "source": "Puppetry",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Skinride",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Sudden Movement",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Master's Voice",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Rein in the Mind",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Obliterate the Soul",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Detect Possession",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Usury",
+        "source": "Usury",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Transfer",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Charitable Trust",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Early Withdrawal",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Exchange Rate",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Investment",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Assessment",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Way of the Artisan",
+        "source": "Way of the Artisan",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Shape True Jade",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Work White Jade",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Rework Relics",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Empower Jade",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Create White Jade",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Hear Jade's Tale",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Way of the Farmer",
+        "source": "Way of the Farmer",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Finding the Hidden Ghost",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Cowing the Bestial Spirit",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Purify",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Deaden Spirit",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Reap the Hungry Ghost",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Kuei Howl",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Way of the Merchant",
+        "source": "Way of the Merchant",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Transfer",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Cash Money",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Withdraw Essense",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Returning the Favor",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Mint Money",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Jingle Jingle",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Way of the Scholar",
+        "source": "Way of the Scholar",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Discern the Lie",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Inquiry",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Word of Yu Huang",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Filial Duty",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "The Emperor's Servant",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Studious Nature",
+              "cost": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Way of the Soul",
+        "source": "Way of the Soul",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Coax",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Nullify Thorns",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Give Higher Passions",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Alter Demeanor",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Inner Peace",
+            "cost": "10"
+          }
+        ],
+        "elder": {
+          "innate": [
+            {
+              "level": null,
+              "tier": "innate",
+              "power_name": "Negotiation",
+              "cost": "0"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

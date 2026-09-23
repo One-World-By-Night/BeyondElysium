@@ -28,6 +28,180 @@ class Catalog_Validator {
 	/** Section types a block file may declare. */
 	private const SECTION_TYPES = [ 'trait_list', 'tiered_power', 'identity_field', 'resource_pool' ];
 
+	/** Envelope `format` versions this validator understands (format §3). */
+	private const FORMATS = [ 1 ];
+
+	/** Record kinds a catalog file may carry (format §3). */
+	private const KINDS = [ 'block', 'stack', 'template', 'preset' ];
+
+	/** Template types, the second half of a template's `<stack>.<type>` slug (format §6). */
+	private const TEMPLATE_TYPES = [ 'sheet_full', 'npc_full', 'npc_quick' ];
+
+	/**
+	 * Validates one decoded file of any kind: the shared envelope (rule 1 plus format §3's
+	 * required keys), then the payload for its kind. Cross-file references (rules 6 and 7) need
+	 * every file at once, so they are {@see validate_references()}'s job, not this one's.
+	 *
+	 * @param array<string,mixed> $data Decoded file contents.
+	 * @param string              $stem The filename without extension.
+	 * @return string[]
+	 */
+	public static function validate_file( array $data, string $stem ): array {
+		$errors = [];
+		if ( ! in_array( $data['format'] ?? null, self::FORMATS, true ) ) {
+			$errors[] = sprintf( '`format` must be one of: %s', implode( ', ', self::FORMATS ) );
+		}
+		if ( ! is_string( $data['name'] ?? null ) || $data['name'] === '' ) {
+			$errors[] = 'missing `name`';
+		}
+		if ( ! is_array( $data['provenance'] ?? null ) || empty( $data['provenance']['sources'] ) ) {
+			$errors[] = '`provenance.sources` is empty - a reviewer must be able to see where the content came from';
+		}
+		$kind = (string) ( $data['kind'] ?? '' );
+		if ( ! in_array( $kind, self::KINDS, true ) ) {
+			$errors[] = sprintf( '`kind` "%s" is not one of: %s', $kind, implode( ', ', self::KINDS ) );
+			return $errors;
+		}
+		if ( $kind === 'block' ) {
+			return array_merge( $errors, self::validate_block( $data, $stem ) );
+		}
+
+		$slug = (string) ( $data['slug'] ?? '' );
+		if ( $slug !== $stem ) {
+			$errors[] = sprintf( '`slug` is "%s" but the file is named "%s.json" - they must match', $slug, $stem );
+		}
+		$definition = $data['definition'] ?? null;
+		if ( ! is_array( $definition ) || $definition === [] ) {
+			$errors[] = '`definition` must be a non-empty object or list';
+			return $errors;
+		}
+		if ( $kind === 'stack' ) {
+			$errors = array_merge( $errors, self::validate_stack( $definition ) );
+		} elseif ( $kind === 'template' ) {
+			if ( ! preg_match( '/^[a-z0-9-]+\\.(' . implode( '|', self::TEMPLATE_TYPES ) . ')$/', $slug ) ) {
+				$errors[] = sprintf( 'a template slug is "<stack>.<type>" with type one of %s - "%s" is not', implode( ', ', self::TEMPLATE_TYPES ), $slug );
+			}
+			$errors = array_merge( $errors, self::validate_sections( (array) ( $definition['sections'] ?? [] ), 'sections', false ) );
+			if ( ! isset( $definition['sections'] ) || ! is_array( $definition['sections'] ) || $definition['sections'] === [] ) {
+				$errors[] = 'a template lays out a non-empty `definition.sections` list';
+			}
+		}
+		// A preset is a flat list (or a map of lists) of free text - nothing further to check.
+		return $errors;
+	}
+
+	/**
+	 * Rule 6's shape half: a stack's sections each name a block, a label and an order, and an
+	 * `in_type_source` is a `"block_slug.Field"` join.
+	 *
+	 * @param array<string,mixed> $definition
+	 * @return string[]
+	 */
+	private static function validate_stack( array $definition ): array {
+		$errors = [];
+		if ( ! is_array( $definition['sections'] ?? null ) || $definition['sections'] === [] ) {
+			return [ 'a stack declares a non-empty `definition.sections` list' ];
+		}
+		$errors = self::validate_sections( $definition['sections'], 'sections', true );
+		$rules  = $definition['creation_rules'] ?? null;
+		if ( $rules !== null && ! is_array( $rules ) ) {
+			$errors[] = '`creation_rules` must be an object or null';
+		}
+		return $errors;
+	}
+
+	/**
+	 * @param array<int|string,mixed> $sections
+	 * @return string[]
+	 */
+	private static function validate_sections( array $sections, string $at, bool $is_stack ): array {
+		$errors = [];
+		foreach ( $sections as $i => $section ) {
+			$where = sprintf( '%s[%s]', $at, (string) $i );
+			if ( ! is_array( $section ) || ! is_string( $section['block_slug'] ?? null ) || $section['block_slug'] === '' ) {
+				$errors[] = "{$where} names no `block_slug`";
+				continue;
+			}
+			if ( $is_stack ) {
+				if ( ! is_string( $section['label'] ?? null ) || $section['label'] === '' ) {
+					$errors[] = sprintf( '%s ("%s") has no `label`', $where, $section['block_slug'] );
+				}
+				if ( ! is_int( $section['display_order'] ?? null ) ) {
+					$errors[] = sprintf( '%s ("%s") needs an integer `display_order`', $where, $section['block_slug'] );
+				}
+				$join = $section['in_type_source'] ?? null;
+				if ( $join !== null && ( ! is_string( $join ) || ! preg_match( '/^[a-z0-9_-]+\\.[^.]+$/', $join ) ) ) {
+					$errors[] = sprintf( '%s ("%s") has `in_type_source` "%s" - it is a "block_slug.Field" join', $where, $section['block_slug'], is_string( $join ) ? $join : gettype( $join ) );
+				}
+			}
+		}
+		return $errors;
+	}
+
+	/**
+	 * The block slugs a stack or template file points at - its sections, a stack's negative
+	 * blocks, its `in_type_source` joins and its `creation_rules` steps - plus a variant's base.
+	 *
+	 * @param array<string,mixed> $data
+	 * @return string[]
+	 */
+	public static function referenced_blocks( array $data ): array {
+		$refs       = [];
+		$definition = is_array( $data['definition'] ?? null ) ? $data['definition'] : [];
+		$kind       = (string) ( $data['kind'] ?? '' );
+		if ( $kind === 'block' && is_array( $data['variant'] ?? null ) ) {
+			$refs[] = (string) ( $data['variant']['of'] ?? '' );
+		}
+		if ( $kind === 'stack' || $kind === 'template' ) {
+			foreach ( (array) ( $definition['sections'] ?? [] ) as $section ) {
+				if ( ! is_array( $section ) ) {
+					continue;
+				}
+				foreach ( [ 'block_slug', 'negative_block_slug' ] as $key ) {
+					if ( is_string( $section[ $key ] ?? null ) && $section[ $key ] !== '' ) {
+						$refs[] = $section[ $key ];
+					}
+				}
+				if ( is_string( $section['in_type_source'] ?? null ) ) {
+					$refs[] = explode( '.', $section['in_type_source'] )[0];
+				}
+			}
+			$rules = $definition['creation_rules'] ?? null;
+			foreach ( is_array( $rules ) ? (array) ( $rules['steps'] ?? [] ) : [] as $step ) {
+				foreach ( is_array( $step ) ? (array) ( $step['sections'] ?? [] ) : [] as $slug ) {
+					$refs[] = (string) $slug;
+				}
+			}
+		}
+		return array_values( array_unique( $refs ) );
+	}
+
+	/**
+	 * Rules 6 and 7: every slug a file references resolves to a real file. A stack whose block
+	 * has no file would seed a section that renders nothing; a template for a stack that does
+	 * not exist is unreachable. Both fail rather than degrade.
+	 *
+	 * @param array<string,mixed> $data
+	 * @param string[]            $block_slugs Every block file's slug in the catalog.
+	 * @param string[]            $stack_slugs Every stack file's slug in the catalog.
+	 * @return string[]
+	 */
+	public static function validate_references( array $data, string $stem, array $block_slugs, array $stack_slugs ): array {
+		$errors = [];
+		foreach ( self::referenced_blocks( $data ) as $slug ) {
+			if ( ! in_array( $slug, $block_slugs, true ) ) {
+				$errors[] = sprintf( 'references block "%s", which has no file in the catalog', $slug );
+			}
+		}
+		if ( ( $data['kind'] ?? '' ) === 'template' ) {
+			$stack = explode( '.', $stem )[0];
+			if ( ! in_array( $stack, $stack_slugs, true ) ) {
+				$errors[] = sprintf( 'is a template for stack "%s", which has no file in the catalog', $stack );
+			}
+		}
+		return $errors;
+	}
+
 	/**
 	 * Validates one decoded block file.
 	 *
@@ -123,6 +297,22 @@ class Catalog_Validator {
 		$errors = [];
 		$meta   = is_array( $definition['_meta'] ?? null ) ? $definition['_meta'] : [];
 
+		// The runtime list shape is the only accepted one (owner ruling, 2026-09-22): it is what
+		// the engine and `TieredPowerDefinition.powers: TieredPower[]` read. 1.3.0 and 1.3.1 once
+		// wrote two shapes - a map keyed by family name, bare-string picks, `name` on a rung -
+		// and this validator accepted both, so the disagreement surfaced only when a consumer
+		// indexed a key that one shape did not have. Nothing below can be trusted until the
+		// shape itself is right, so a map stops here.
+		if ( ! array_is_list( (array) $definition['powers'] ) ) {
+			$errors[] = '`definition.powers` must be a list of family objects, each carrying its own `name` - not a map keyed by family name';
+			return $errors;
+		}
+		foreach ( (array) $definition['powers'] as $i => $power ) {
+			if ( is_array( $power ) && ( ! isset( $power['name'] ) || ! is_string( $power['name'] ) || $power['name'] === '' ) ) {
+				$errors[] = sprintf( 'powers[%s] has no string `name` - a family is identified by name, and the list shape carries it on the family', (string) $i );
+			}
+		}
+
 		// An **untiered** track (S7) has no rank vocabulary by design - Changeling Realms are a
 		// flat 2 per level and Mage Rotes derive from the Sphere level invoked. Every rule keyed
 		// on ranks is therefore inapplicable, not merely satisfiable. Without this branch the
@@ -152,8 +342,13 @@ class Catalog_Validator {
 		foreach ( $ladder as $rungs ) {
 			$ceiling += (int) $rungs;
 		}
-		if ( $ceiling < 1 ) {
-			$errors[] = '`_meta.ladder` sums to zero - the sum is the ceiling, so a block with no ladder can hold no rating';
+		// A **pick-only** track (Werewolf and Fera Gifts) has ranks but no rating at all: every
+		// Gift is bought by name, and holding six Intermediate Gifts with no Basic ones is legal
+		// (1.2.10 §B). It says so by declaring `ladder` as an explicit empty object. An omitted
+		// ladder is still an error - "nobody declared this" must not read as "this has no rungs".
+		$pick_only = array_key_exists( 'ladder', $meta ) && $ladder === [];
+		if ( $ceiling < 1 && ! $pick_only ) {
+			$errors[] = '`_meta.ladder` sums to zero - the sum is the ceiling, so a block with no ladder can hold no rating. A pick-only track declares `"ladder": {}` explicitly';
 		}
 
 		foreach ( (array) $definition['powers'] as $key => $power ) {
@@ -211,9 +406,10 @@ class Catalog_Validator {
 			}
 			$levels = (array) ( $power['levels'] ?? [] );
 			$seen   = [];
-			foreach ( $levels as $level ) {
+			foreach ( $levels as $i => $level ) {
 				if ( is_array( $level ) ) {
 					$seen[] = (int) ( $level['level'] ?? 0 );
+					$errors = array_merge( $errors, self::rung_power_name( $level, $name, $i ) );
 				}
 			}
 			if ( $levels !== [] && $seen !== range( 1, count( $levels ) ) ) {
@@ -228,6 +424,21 @@ class Catalog_Validator {
 		}
 
 		return $errors;
+	}
+
+	/**
+	 * A rung names its power in `power_name`, the key `PowerLevel` and every consumer read. A
+	 * rung carrying only `name` is the retired authoring shape and would render as a blank rung.
+	 *
+	 * @param array<string,mixed> $level
+	 * @param int|string          $i
+	 * @return string[]
+	 */
+	private static function rung_power_name( array $level, string $name, $i ): array {
+		if ( ! isset( $level['power_name'] ) || ! is_string( $level['power_name'] ) || $level['power_name'] === '' ) {
+			return [ sprintf( '"%s" levels[%s] has no `power_name` - a rung names its power in `power_name`, not `name`', $name, (string) $i ) ];
+		}
+		return [];
 	}
 
 	/**
@@ -261,6 +472,7 @@ class Catalog_Validator {
 				continue;
 			}
 			$seen[] = (int) ( $level['level'] ?? 0 );
+			$errors = array_merge( $errors, self::rung_power_name( $level, $name, $i ) );
 			$tier   = (string) ( $level['tier'] ?? '' );
 			if ( $tier !== '' && ! in_array( $tier, $ranks, true ) ) {
 				$errors[] = sprintf( '"%s" levels[%s] has tier "%s", which is not in `_meta.ranks`', $name, (string) $i, $tier );
@@ -269,7 +481,7 @@ class Catalog_Validator {
 				$errors[] = sprintf( '"%s" levels[%s] has tier "%s", which contributes no rungs to `_meta.ladder` - a rung must be a ladder rank', $name, (string) $i, $tier );
 			}
 		}
-		$expected = range( 1, max( 1, $ceiling ) );
+		$expected = $ceiling > 0 ? range( 1, $ceiling ) : [];
 		if ( $levels !== [] && $seen !== $expected ) {
 			$errors[] = sprintf( '"%s" numbers its rungs %s - they must run 1..%d consecutively', $name, '[' . implode( ',', $seen ) . ']', $ceiling );
 		}
@@ -284,7 +496,11 @@ class Catalog_Validator {
 				$errors[] = sprintf( '"%s" files picks under "%s", which is a ladder rank - a rank is rungs or picks, never both', $name, $rank );
 			}
 			foreach ( (array) $picks as $j => $pick ) {
-				if ( is_array( $pick ) && ( $pick['power_name'] ?? '' ) === '' ) {
+				if ( ! is_array( $pick ) ) {
+					$errors[] = sprintf( '"%s" elder.%s[%s] is not an object - a pick is `{level: null, tier, power_name, ...}`, never a bare name', $name, $rank, (string) $j );
+					continue;
+				}
+				if ( ( $pick['power_name'] ?? '' ) === '' ) {
 					$errors[] = sprintf( '"%s" elder.%s[%s] has no `power_name` - a pick is identified by name, never by a number', $name, $rank, (string) $j );
 				}
 			}

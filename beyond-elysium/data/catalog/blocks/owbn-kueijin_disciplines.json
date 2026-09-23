@@ -1,0 +1,722 @@
+{
+  "format": 1,
+  "slug": "owbn-kueijin_disciplines",
+  "name": "Disciplines (OWBN)",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "variant": {
+    "of": "kueijin-disciplines",
+    "id": "owbn",
+    "label": "OWBN Kuei-Jin Genre Packet (2022)",
+    "mode": "add"
+  },
+  "provenance": {
+    "sources": [
+      "OWBN Kuei-Jin Genre Packet (2022) - converted Disciplines and the three OWBN custom Disciplines, tiers as printed; priced by Laws of the East p. 125 (4/7/10)"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/build_kueijin_disciplines.py"
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced"
+      ],
+      "ladder": {
+        "basic": 2,
+        "intermediate": 2,
+        "advanced": 1
+      },
+      "costs": {
+        "basic": 4,
+        "intermediate": 7,
+        "advanced": 10
+      },
+      "out_of_type": null,
+      "levels": null,
+      "categories": null,
+      "untiered": null
+    },
+    "atomic": true,
+    "sequential": true,
+    "allow_custom": true,
+    "shape": "named",
+    "blood_magic": false,
+    "traditions": [],
+    "powers": [
+      {
+        "name": "Feng Shui",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Wind Water Eye",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Broom of Heaven",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Hand of Darkness",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Inharmonious Alignment",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Chi Ward",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Kiai",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Focusing Shout",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Aspect of the Timid Sparrow",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Ngilai",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "The Song of the Tormented Soul",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Greater Ngilai",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Beast Shintai",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Cower before the Beast",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Animal Spy",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Conjuring the Animal Kami",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Sway the Beast",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Unleash the Beast Spirit",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Smoke Shintai",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Smoke without Fire",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Words of Smoke",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "The Hampering Smoke of Chou Zeng",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Wisp Maya",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Volcano Fist",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Storm Shintai",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Conjure the Duke of Wind",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Thunderbolt's Kiss",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Thunderbolt's Caress",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Cloud Chariot",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "The Flight of the Dragons",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Mibasham",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Lens of the Self",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Pors'dan",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Stepping Stones",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "A Stumble on the Path",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Riddle of Maya",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Tzu Wei",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Fate of the One",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Joss Weaving",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Fate of the Wu",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Grand Duke's Theorem",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Realigning the Stars",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Inward Way",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Inner Balance",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Rest Upon the Blade",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Scales of Need",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Feed the Soul",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Flowing with the Tao",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Tempest of the Inward Focus",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Swirling Winds Style",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Meditation of Metal",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Kata of Mounting Fury",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Fighting Cloud Style",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Illusion Shattering Strike",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Prayer Eating",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Hear Prayers",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Prayer Appraisal",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Fulfill Prayers",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Prayer Eating",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Unbreakable Soulbonds",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Poison Shintai",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Stinging Touch",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Inharmonious Excretion",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Flow like Sewage",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Bilious Expectoration",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Phlegmatic Sting",
+            "cost": "10"
+          }
+        ],
+        "elder": {},
+        "group": "Bile Shintai"
+      },
+      {
+        "name": "Decay Shintai",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Stink of the Grave",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Deadly Waft",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Bone Shrapnel",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Splenetic Exhalation",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Harbinger of Decay",
+            "cost": "10"
+          }
+        ],
+        "elder": {},
+        "group": "Bile Shintai"
+      },
+      {
+        "name": "Radiation Shintai",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Treacherous Earth",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Repulsive Touch",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "The Bowels of the Earth",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Burn Out",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Destroy with a Touch",
+            "cost": "10"
+          }
+        ],
+        "elder": {},
+        "group": "Bile Shintai"
+      },
+      {
+        "name": "Disease Shintai",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Acrimonious Flesh",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Dead Hands",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Fevered Delirium",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Servile Plague",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "The Soul of Sickness",
+            "cost": "10"
+          }
+        ],
+        "elder": {},
+        "group": "Bile Shintai"
+      },
+      {
+        "name": "Balefire Shintai",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Burning Kiss",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Baleful light",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Death Breath",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Invading the Dragon",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Body of Burning Filth",
+            "cost": "10"
+          }
+        ],
+        "elder": {},
+        "group": "Bile Shintai"
+      },
+      {
+        "name": "Dianxue",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Meridian",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Strike the Center",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Treatment",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Stunning Touch",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Rupture the Heart",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Book of Songs",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Song of Harmony",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Song of Cleansing",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Song of Discord",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Song of Turmoil",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Song of the Soul",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Coils of Soma",
+        "source": "OWBN Kuei-Jin Genre Packet (2022)",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Soma's Dance",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "The Mekong in Flood",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Diverting the Flow of Chi",
+            "cost": "7"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Spirit Whirlpool",
+            "cost": "7"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Chi Dousing Wave",
+            "cost": "10"
+          }
+        ],
+        "elder": {}
+      }
+    ]
+  }
+}

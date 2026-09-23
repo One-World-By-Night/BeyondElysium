@@ -1,0 +1,42 @@
+{
+  "format": 1,
+  "slug": "werewolf-resources",
+  "name": "Werewolf Resources",
+  "kind": "block",
+  "section_type": "resource_pool",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "pools": [
+      {
+        "name": "Rage",
+        "value_type": "integer",
+        "default_start": 1,
+        "max": 10,
+        "cost_per_dot": 3,
+        "free_dots": 3
+      },
+      {
+        "name": "Gnosis",
+        "value_type": "integer",
+        "default_start": 1,
+        "max": 10,
+        "cost_per_dot": 3,
+        "free_dots": 3
+      },
+      {
+        "name": "Willpower",
+        "value_type": "integer",
+        "default_start": 3,
+        "max": 20,
+        "cost_per_dot": 3,
+        "free_dots": 3
+      }
+    ]
+  }
+}

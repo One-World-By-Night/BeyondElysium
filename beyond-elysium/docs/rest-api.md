@@ -1,29 +1,14 @@
 # REST API Reference
 
-All routes are under the `be/v1` namespace — e.g. `/wp-json/be/v1/games`. Every write route
-requires a logged-in WordPress user; every route's permission is enforced server-side
-regardless of what any client UI shows or hides.
+All routes are under the `be/v1` namespace — e.g. `/wp-json/be/v1/games`. Every write route requires a logged-in WordPress user; every route's permission is enforced server-side regardless of what any client UI shows or hides.
 
-`{game_slug}` scopes a route to one chronicle. A request naming a game slug the caller has
-no relationship to returns `404` (not `403`), so a chronicle's existence is never leaked to
-someone outside it.
+`{game_slug}` scopes a route to one chronicle. A request naming a game slug the caller has no relationship to returns `404` (not `403`), so a chronicle's existence is never leaked to someone outside it.
 
-**Manually maintained against the controllers, not auto-generated** — the "generated so it
-cannot drift" tooling this ideally deserves (Step 9b, workflow-0.9.md) was not built this
-pass. A full re-audit against every `register_routes()` method in `includes/REST/` (2026-09-13)
-found this reference had drifted well past a single missed route — eleven whole controllers
-undocumented and two capabilities stated backwards - proof this really does need re-checking
-by hand after every release that touches a controller, not just when a route "feels" new.
-Worth building the real generator as a follow-up; until then, treat a controller you don't
-see a section for here as a sign this doc is behind, not a sign the controller doesn't exist.
+**Manually maintained against the controllers, not auto-generated** — the "generated so it cannot drift" tooling this ideally deserves (Step 9b, workflow-0.9.md) was not built this pass. A full re-audit against every `register_routes()` method in `includes/REST/` (2026-09-13) found this reference had drifted well past a single missed route — eleven whole controllers undocumented and two capabilities stated backwards - proof this really does need re-checking by hand after every release that touches a controller, not just when a route "feels" new. Worth building the real generator as a follow-up; until then, treat a controller you don't see a section for here as a sign this doc is behind, not a sign the controller doesn't exist.
 
 ## Authorization
 
-Every route below is gated by exactly one WordPress capability (or, where noted, any-of or
-all-of several), checked chronicle-scoped: `Authorization::check_request()` tries
-accessSchema first when enabled and reachable, then falls back to the caller's plain
-capability plus their row in `be_game_members` for that chronicle. See the
-[Storyteller Guide](st-guide.md#1-creating-a-game) for what each role typically maps to.
+Every route below is gated by exactly one WordPress capability (or, where noted, any-of or all-of several), checked chronicle-scoped: `Authorization::check_request()` tries accessSchema first when enabled and reachable, then falls back to the caller's plain capability plus their row in `be_game_members` for that chronicle. See the [Storyteller Guide](st-guide.md#1-creating-a-game) for what each role typically maps to.
 
 ## Games
 
@@ -51,26 +36,11 @@ capability plus their row in `be_game_members` for that chronicle. See the
 | PUT | `/{game_slug}/schema-blocks/{slug}` | `be_manage_schemas` | Update this chronicle's own fork, making it on the first edit. `500 save_failed` when the save didn't land - neither the change nor a new copy is kept |
 | DELETE | `/{game_slug}/schema-blocks/{slug}` | `be_manage_schemas` | Delete this chronicle's own fork, reverting to the global block |
 
-An item, tiered-power level/family, resource pool, or identity field's `definition` entry may
-also carry an approval schedule beyond its flat `approval`: `approval_by_value` (trait_list
-items and resource_pool pools — an array of `{from, to, approval, reason?}` ranges resolved
-against the resulting value, a pool's schedule checked against its permanent rating only), a
-plain `approval` on a tiered_power level (each level is already its own row), or
-`approval_by_option` (identity_field — `{optionValue: {approval, reason?}}`, every value in a
-multiselect checked, strictest wins). See the
-[Admin Guide](admin-guide.md#approval-by-value-and-approval-by-option) for the editing UI.
+An item, tiered-power level/family, resource pool, or identity field's `definition` entry may also carry an approval schedule beyond its flat `approval`: `approval_by_value` (trait_list items and resource_pool pools — an array of `{from, to, approval, reason?}` ranges resolved against the resulting value, a pool's schedule checked against its permanent rating only), a plain `approval` on a tiered_power level (each level is already its own row), or `approval_by_option` (identity_field — `{optionValue: {approval, reason?}}`, every value in a multiselect checked, strictest wins). See the [Admin Guide](admin-guide.md#approval-by-value-and-approval-by-option) for the editing UI.
 
 ## Approval Rules
 
-The editing surface for the schedules described just above — one rule per catalog
-item/power/level/value-range/option that carries an approval override or a reason, across
-this chronicle's own trait_list, tiered_power, resource_pool, and identity_field blocks. A
-rule's `target_type` is one of `item`, `item_range`, `power`, `level`, `pool_range`, or
-`field_option`; `item_range`/`pool_range` address one `{from, to}` entry in the target's own
-`approval_by_value` array (both fields required on create/update), `field_option` addresses
-one option in the target field's `approval_by_option` map (`option` required), and `level`
-addresses one power level by its `level` number. A rule's response/list shape carries this as
-`extra` (`[from, to]`, the option string, or `null`) alongside the existing `level` field.
+The editing surface for the schedules described just above — one rule per catalog item/power/level/value-range/option that carries an approval override or a reason, across this chronicle's own trait_list, tiered_power, resource_pool, and identity_field blocks. A rule's `target_type` is one of `item`, `item_range`, `power`, `level`, `pool_range`, or `field_option`; `item_range`/`pool_range` address one `{from, to}` entry in the target's own `approval_by_value` array (both fields required on create/update), `field_option` addresses one option in the target field's `approval_by_option` map (`option` required), and `level` addresses one power level by its `level` number. A rule's response/list shape carries this as `extra` (`[from, to]`, the option string, or `null`) alongside the existing `level` field.
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
@@ -82,14 +52,7 @@ addresses one power level by its `level` number. A rule's response/list shape ca
 | PUT | `/{game_slug}/approval-rules/{id}` | `be_manage_approval_rules` | Update one rule. `500 save_failed` when it didn't save |
 | DELETE | `/{game_slug}/approval-rules/{id}` | `be_manage_approval_rules` | Clear one rule, back to no override. `500 save_failed` when it didn't save |
 
-**Default Approval Policy.** A chronicle's own baseline — used only when nothing above (an
-item, a power, a level, a value range, a field option, or the owning block's own
-`approval_rules.default`) resolved a level at all — is the plain `settings.auto_approve`
-boolean on the game itself (`false`/absent: everything needs `st` review by default; `true`:
-everything is `auto` by default), read and written through `/{game_slug}/approval-rules/default`, so
-the Storytellers who manage the rules can set it. A
-granular rule always wins over this default in either direction, in both the `resolve_approval_level()`
-resolution logic and by construction of the merge itself.
+**Default Approval Policy.** A chronicle's own baseline — used only when nothing above (an item, a power, a level, a value range, a field option, or the owning block's own `approval_rules.default`) resolved a level at all — is the plain `settings.auto_approve` boolean on the game itself (`false`/absent: everything needs `st` review by default; `true`: everything is `auto` by default), read and written through `/{game_slug}/approval-rules/default`, so the Storytellers who manage the rules can set it. A granular rule always wins over this default in either direction, in both the `resolve_approval_level()` resolution logic and by construction of the merge itself.
 
 ## Creature Stacks
 
@@ -145,9 +108,7 @@ resolution logic and by construction of the merge itself.
 
 ## Bulk Operations (Query Tool's own result-set actions)
 
-Three bulk actions a Storyteller can run against a query's own selected results, all sharing
-the same shape: pick rows in the Query Tool, then apply one action to the whole selection at
-once rather than one character at a time.
+Three bulk actions a Storyteller can run against a query's own selected results, all sharing the same shape: pick rows in the Query Tool, then apply one action to the whole selection at once rather than one character at a time.
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
@@ -212,11 +173,7 @@ once rather than one character at a time.
 
 ## AI Assist
 
-Server-side AI writing-assist integration (Admin Guide's "AI Writing Assist" section). Two
-route pairs, both handled the same way: a site-wide pair for fields that belong to no
-chronicle, and a chronicle-scoped pair for everything else. The generate route's own required
-capability is resolved server-side from the request's `field_context`, never trusted from the
-client.
+Server-side AI writing-assist integration (Admin Guide's "AI Writing Assist" section). Two route pairs, both handled the same way: a site-wide pair for fields that belong to no chronicle, and a chronicle-scoped pair for everything else. The generate route's own required capability is resolved server-side from the request's `field_context`, never trusted from the client.
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
@@ -275,9 +232,7 @@ Recording what a player actually did with an allocated downtime action, and an S
 
 ## Attachments
 
-Files on a plot, item, or location (1.1.0 §2.6) - images and PDFs, 10 MB each, up to 20 for a
-plot/location or exactly 1 for an item. Never served from the WordPress media library; see
-Admin Guide "File Uploads."
+Files on a plot, item, or location (1.1.0 §2.6) - images and PDFs, 10 MB each, up to 20 for a plot/location or exactly 1 for an item. Never served from the WordPress media library; see Admin Guide "File Uploads."
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
@@ -287,10 +242,7 @@ Admin Guide "File Uploads."
 
 ## Boons
 
-`be_manage_boons` is granted site-wide to every WordPress role, including `subscriber` — the
-real per-chronicle gate is still the caller's own `be_game_members` role there (`boons`,
-`hst`, or `ast`); a logged-in visitor with no membership in this chronicle still gets `403`
-from the write routes below.
+`be_manage_boons` is granted site-wide to every WordPress role, including `subscriber` — the real per-chronicle gate is still the caller's own `be_game_members` role there (`boons`, `hst`, or `ast`); a logged-in visitor with no membership in this chronicle still gets `403` from the write routes below.
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
@@ -322,11 +274,7 @@ from the write routes below.
 
 ## Transfers (chronicle-to-chronicle character transfer)
 
-Sending a character to a different chronicle — on this install, or a different Beyond
-Elysium site entirely — with a real handshake and attestation rather than a plain export/
-re-import. A Storyteller approves each side: the home chronicle's sends it, and the receiving
-chronicle's reviews the offer and accepts or refuses it. Nothing is written to the receiving
-chronicle before that.
+Sending a character to a different chronicle — on this install, or a different Beyond Elysium site entirely — with a real handshake and attestation rather than a plain export/ re-import. A Storyteller approves each side: the home chronicle's sends it, and the receiving chronicle's reviews the offer and accepts or refuses it. Nothing is written to the receiving chronicle before that.
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
@@ -342,17 +290,11 @@ chronicle before that.
 | POST | `/{game_slug}/transfers/{id}/send-home` | `be_manage_characters` | Host side: end a visit (`visiting` → `sent_home`) |
 | POST | `/{game_slug}/transfers/{id}/retain` | `be_manage_characters` | Host side: keep a visiting character for good (`visiting` → `retained`) |
 
-A character matched by its identity (uuid) is only this chronicle's to overwrite when it lives
-here. One that lives in another chronicle on this site is reported as `matched_by:
-"uuid_elsewhere"` and can be skipped or imported as a new character with its own identity -
-never overwritten. This applies to every import, not only transfers.
+A character matched by its identity (uuid) is only this chronicle's to overwrite when it lives here. One that lives in another chronicle on this site is reported as `matched_by: "uuid_elsewhere"` and can be skipped or imported as a new character with its own identity - never overwritten. This applies to every import, not only transfers.
 
 ## Submissions (a player sending their own Grapevine file straight to a chronicle)
 
-The player-initiated counterpart to Transfers: no Storyteller on the sending end at all -
-anyone signed in can send an exported `.gex` to any chronicle, joining it or visiting for a
-game. It reuses the same review/accept/refuse shape Transfers already established, keyed on
-`game_id` rather than a slug so a chronicle rename can't orphan a waiting file.
+The player-initiated counterpart to Transfers: no Storyteller on the sending end at all - anyone signed in can send an exported `.gex` to any chronicle, joining it or visiting for a game. It reuses the same review/accept/refuse shape Transfers already established, keyed on `game_id` rather than a slug so a chronicle rename can't orphan a waiting file.
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
@@ -447,11 +389,7 @@ Site-wide, not game-scoped — lives on the Chronicle Access admin screen.
 
 ## Translations (catalog term translation)
 
-Site-wide, not chronicle-scoped — one install, one language (Decision 106). Every route needs
-`be_manage_translations`, granted independently of `be_manage_schemas`. `locale` on every
-route below is a plain locale code (e.g. `pt_BR`), not validated against WordPress's own
-installed-language list — a chronicle in a language with no WordPress core translation
-installed can still be worked on here.
+Site-wide, not chronicle-scoped — one install, one language (Decision 106). Every route needs `be_manage_translations`, granted independently of `be_manage_schemas`. `locale` on every route below is a plain locale code (e.g. `pt_BR`), not validated against WordPress's own installed-language list — a chronicle in a language with no WordPress core translation installed can still be worked on here.
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|

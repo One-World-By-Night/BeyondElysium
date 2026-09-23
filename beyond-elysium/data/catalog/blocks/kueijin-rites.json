@@ -1,0 +1,219 @@
+{
+  "format": 1,
+  "slug": "kueijin-rites",
+  "name": "Rites",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "Laws of the East (WW05016), p. 165-168",
+      "MET-POWER-ACQUISITION.md §3 (Kuei-Jin) - Rite 2/4/6, requiring the Rites Background at the matching level"
+    ],
+    "extracted": "2026-09-21",
+    "tool": "manual - samples/research/kuei-jin/rites.json (laws_of_the_east array), cross-checked against MET-POWER-ACQUISITION.md"
+  },
+  "definition": {
+    "alphabetize": false,
+    "atomic": true,
+    "allow_custom": false,
+    "allow_multiples": false,
+    "has_specializations": false,
+    "negative": false,
+    "flat_cost": false,
+    "categories": ["Chi Rites", "Individual Rites", "Social Rites", "Rites of Wind and Water"],
+    "items": [
+      {
+        "name": "Trace the Dragon's Blood",
+        "cost": "2",
+        "tier": "basic",
+        "group": "Chi Rites",
+        "subgroup": "Polishing the Dragon's Scales",
+        "source": "Laws of the East",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          { "block_slug": "kueijin-backgrounds", "power": "Rites", "min_level": 1 }
+        ]
+      },
+      {
+        "name": "Behold the Spirit's Doorway",
+        "cost": "2",
+        "tier": "basic",
+        "group": "Chi Rites",
+        "subgroup": "Polishing the Dragon's Scales",
+        "source": "Laws of the East",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          { "block_slug": "kueijin-backgrounds", "power": "Rites", "min_level": 1 }
+        ]
+      },
+      {
+        "name": "Imbuing the Jade",
+        "cost": "4",
+        "tier": "intermediate",
+        "group": "Chi Rites",
+        "subgroup": "Polishing the Dragon's Scales",
+        "source": "Laws of the East",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          { "block_slug": "kueijin-backgrounds", "power": "Rites", "min_level": 2 }
+        ]
+      },
+      {
+        "name": "Rite of Supplication",
+        "cost": "4",
+        "tier": "intermediate",
+        "group": "Chi Rites",
+        "subgroup": "Polishing the Dragon's Scales",
+        "source": "Laws of the East",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          { "block_slug": "kueijin-backgrounds", "power": "Rites", "min_level": 2 }
+        ]
+      },
+      {
+        "name": "Cloak the Dragon's Passage",
+        "cost": "6",
+        "tier": "advanced",
+        "group": "Chi Rites",
+        "subgroup": "Polishing the Dragon's Scales",
+        "source": "Laws of the East",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          { "block_slug": "kueijin-backgrounds", "power": "Rites", "min_level": 3 }
+        ]
+      },
+      {
+        "name": "Creating the Rivergate",
+        "cost": "6",
+        "tier": "advanced",
+        "group": "Chi Rites",
+        "subgroup": "Polishing the Dragon's Scales",
+        "source": "Laws of the East",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          { "block_slug": "kueijin-backgrounds", "power": "Rites", "min_level": 3 }
+        ]
+      },
+      {
+        "name": "The Way of the Lone Walker",
+        "cost": "2",
+        "tier": "basic",
+        "group": "Individual Rites",
+        "subgroup": "Traveling the Inner Paths",
+        "source": "Laws of the East",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          { "block_slug": "kueijin-backgrounds", "power": "Rites", "min_level": 1 }
+        ]
+      },
+      {
+        "name": "Taking the Left-Hand Path",
+        "cost": "2",
+        "tier": "basic",
+        "group": "Individual Rites",
+        "subgroup": "Traveling the Inner Paths",
+        "source": "Laws of the East",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          { "block_slug": "kueijin-backgrounds", "power": "Rites", "min_level": 1 }
+        ]
+      },
+      {
+        "name": "Restoring the Dharmic Balance",
+        "cost": "4",
+        "tier": "intermediate",
+        "group": "Individual Rites",
+        "subgroup": "Traveling the Inner Paths",
+        "source": "Laws of the East",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          { "block_slug": "kueijin-backgrounds", "power": "Rites", "min_level": 2 }
+        ]
+      },
+      {
+        "name": "Embrace the Spirit's Change",
+        "cost": "2",
+        "tier": "basic",
+        "group": "Social Rites",
+        "subgroup": null,
+        "source": "Laws of the East",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          { "block_slug": "kueijin-backgrounds", "power": "Rites", "min_level": 1 }
+        ]
+      },
+      {
+        "name": "Harmonious Shielding of the Guarded Home",
+        "cost": "2",
+        "tier": "basic",
+        "group": "Rites of Wind and Water",
+        "subgroup": null,
+        "source": "Laws of the East",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          { "block_slug": "kueijin-backgrounds", "power": "Rites", "min_level": 1 }
+        ]
+      },
+      {
+        "name": "Construct the Dragon Bone Prison",
+        "cost": "4",
+        "tier": "intermediate",
+        "group": "Rites of Wind and Water",
+        "subgroup": null,
+        "source": "Laws of the East",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          { "block_slug": "kueijin-backgrounds", "power": "Rites", "min_level": 2 }
+        ]
+      }
+    ]
+  }
+}

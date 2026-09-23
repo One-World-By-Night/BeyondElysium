@@ -1,0 +1,271 @@
+{
+  "format": 1,
+  "slug": "mortal.npc_full",
+  "name": "Mortal NPC Sheet",
+  "kind": "template",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_templates (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "columns": 6,
+    "version": 1,
+    "sections": [
+      {
+        "order": 1,
+        "title": "Identity",
+        "width": "half",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "mortal-identity"
+      },
+      {
+        "order": 2,
+        "title": "Archetypes",
+        "width": "half",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "met-archetypes"
+      },
+      {
+        "order": 3,
+        "title": "Resources",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "mortal-resources"
+      },
+      {
+        "order": 4,
+        "title": "Health",
+        "width": "half",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "mortal-health"
+      },
+      {
+        "order": 5,
+        "title": "Physical Traits (Positive)",
+        "width": "third",
+        "column": 1,
+        "display": "multiplier_dot",
+        "collapsed": false,
+        "block_slug": "met-physical-traits"
+      },
+      {
+        "order": 6,
+        "title": "Social Traits (Positive)",
+        "width": "third",
+        "column": 1,
+        "display": "multiplier_dot",
+        "collapsed": false,
+        "block_slug": "met-social-traits"
+      },
+      {
+        "order": 7,
+        "title": "Mental Traits (Positive)",
+        "width": "third",
+        "column": 1,
+        "display": "multiplier_dot",
+        "collapsed": false,
+        "block_slug": "met-mental-traits"
+      },
+      {
+        "order": 8,
+        "title": "Physical Traits (Negative)",
+        "width": "third",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "met-physical-traits-neg"
+      },
+      {
+        "order": 9,
+        "title": "Social Traits (Negative)",
+        "width": "third",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "met-social-traits-neg"
+      },
+      {
+        "order": 10,
+        "title": "Mental Traits (Negative)",
+        "width": "third",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "met-mental-traits-neg"
+      },
+      {
+        "order": 11,
+        "title": "Abilities",
+        "width": "half",
+        "column": 1,
+        "display": "multiplier_dot",
+        "collapsed": false,
+        "block_slug": "mortal-abilities"
+      },
+      {
+        "order": 12,
+        "title": "Mortal Backgrounds",
+        "width": "half",
+        "column": 1,
+        "display": "multiplier_dot",
+        "collapsed": false,
+        "block_slug": "mortal-backgrounds"
+      },
+      {
+        "order": 13,
+        "title": "Mortal Numina",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "mortal-psychic"
+      },
+      {
+        "order": 14,
+        "title": "Hedge Magic",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "mortal-hedge-magic"
+      },
+      {
+        "order": 15,
+        "title": "Spells and Rituals",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "mortal-hedge-magic-formulae"
+      },
+      {
+        "order": 16,
+        "title": "Theurgy",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "mortal-theurgy"
+      },
+      {
+        "order": 17,
+        "title": "Martial Arts",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "mortal-martial-arts"
+      },
+      {
+        "order": 18,
+        "title": "Fomori Powers",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "mortal-fomori"
+      },
+      {
+        "order": 19,
+        "title": "Bioenhancements",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "mortal-bioenhancements"
+      },
+      {
+        "order": 20,
+        "title": "Disciplines (ghouls)",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "vampire-disciplines"
+      },
+      {
+        "order": 21,
+        "title": "Gifts (kinfolk)",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "werewolf-gifts"
+      },
+      {
+        "order": 22,
+        "title": "Gifts (Fera kinfolk)",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "fera-gifts"
+      },
+      {
+        "order": 23,
+        "title": "Arts (kinain)",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "changeling-arts"
+      },
+      {
+        "order": 24,
+        "title": "Realms (kinain)",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "changeling-realms"
+      },
+      {
+        "order": 14,
+        "title": "Merits",
+        "width": "third",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "mortal-merits"
+      },
+      {
+        "order": 15,
+        "title": "Flaws",
+        "width": "third",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "mortal-flaws"
+      },
+      {
+        "order": 16,
+        "title": "Derangements",
+        "width": "third",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "met-derangements"
+      },
+      {
+        "order": 17,
+        "title": "Roleplaying Notes",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "npc-roleplaying-notes"
+      }
+    ]
+  }
+}

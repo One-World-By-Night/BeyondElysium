@@ -1,0 +1,75 @@
+{
+  "format": 1,
+  "slug": "kueijin-identity",
+  "name": "Kuei-Jin Identity",
+  "kind": "block",
+  "section_type": "identity_field",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh",
+      "Balance: GVM menu(s) \"Balance\" (3 options)",
+      "Station: GVM menu(s) \"Station\" (7 options)"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py",
+    "notes": "1.3.0 gap-audit class B: options from the Grapevine menus, `allow_custom` on so held free-text values stay valid."
+  },
+  "definition": {
+    "fields": [
+      {
+        "name": "Dharma",
+        "field_type": "select",
+        "required": true,
+        "options": [
+          "Dance of the Thrashing Dragon",
+          "Howl of the Devil-Tiger",
+          "Path of a Thousand Whispers",
+          "Song of the Shadow",
+          "Way of the Resplendent Crane",
+          "Face of the Gods",
+          "Flame of the Rising Phoenix",
+          "Spirit of the Living Earth",
+          "Tempest of the Inward Focus"
+        ]
+      },
+      {
+        "name": "Direction",
+        "field_type": "select",
+        "required": false,
+        "options": [
+          "Center",
+          "East",
+          "North",
+          "South",
+          "West"
+        ]
+      },
+      {
+        "name": "Balance",
+        "field_type": "select",
+        "required": false,
+        "options": [
+          "Yang",
+          "Balance",
+          "Yin"
+        ],
+        "allow_custom": true
+      },
+      {
+        "name": "Station",
+        "field_type": "select",
+        "required": false,
+        "options": [
+          "Ancestor",
+          "Arhat",
+          "Bodhisattva",
+          "Jina",
+          "Mandarin",
+          "Minister",
+          "Thunder"
+        ],
+        "allow_custom": true
+      }
+    ]
+  }
+}

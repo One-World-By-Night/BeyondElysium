@@ -307,11 +307,28 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 
 	// ------------------------------------------------------------------------------ rescan() ----
 
-	/** T5: against the real seeded catalog - not a fixture - rescan() finds the measured volume and orphans nothing on a clean seed. */
+	/**
+	 * T5: against the real seeded catalog - not a fixture - rescan() finds the measured volume
+	 * and orphans nothing new against its own immediately-prior scan.
+	 *
+	 * **1.3.2 note, corrected.** A prior pass here asserted `38` on the theory that "this
+	 * environment's very first reseed is the one that replaces the GVM-built catalog with the
+	 * declared one," so `rescan()` would see the retirement as a delta. That does not hold:
+	 * `Catalog_Reader::available()` only checks that `data/catalog/blocks/` exists on disk -
+	 * true unconditionally, from this install's very first activation - so a fresh
+	 * `WP_UnitTestCase` bootstrap never has a GVM-only phase for an earlier scan to have run
+	 * against. The retirement is real (D67 concatenated families resolved, Black Wind split
+	 * into aspects, the 2nd-ed. Necromancy drop, Gifts moving a power's own name out from
+	 * under `name` into `power_name`), but only visible as a genuine upgrade's before/after
+	 * delta, on a database that already has a pre-declared-catalog baseline scan - not
+	 * reproducible from a single from-scratch install. The orphan mechanism itself is proven
+	 * correctly, with a synthetic before/after fixture, by
+	 * test_rescan_orphans_a_term_whose_block_is_deleted() below.
+	 */
 	public function test_rescan_against_the_real_seeded_catalog_finds_the_measured_volume(): void {
 		$result = Catalog_Translator::rescan();
 		$this->assertGreaterThanOrEqual( 8000, $result['added'] + $result['updated'], '§1.2 measured 8,298 distinct strings across the real catalog' );
-		$this->assertSame( 0, $result['orphaned'], 'a rescan against the exact catalog it already indexed must orphan nothing' );
+		$this->assertSame( 0, $result['orphaned'], 'a from-scratch install has no prior scan to retire anything against' );
 	}
 
 	public function test_a_second_rescan_of_an_unchanged_catalog_updates_rather_than_re_adds(): void {
@@ -319,6 +336,8 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 		$second = Catalog_Translator::rescan();
 		$this->assertSame( 0, $second['added'], 'nothing new exists on an unchanged catalog' );
 		$this->assertGreaterThan( 0, $second['updated'] );
+		// Same corrected 1.3.2 note as above: a from-scratch install has no prior scan to
+		// retire anything against, on the first rescan() or the second alike.
 		$this->assertSame( 0, $second['orphaned'] );
 	}
 

@@ -1,0 +1,102 @@
+{
+  "format": 1,
+  "slug": "darkages-fera_gifts",
+  "name": "Gifts (Dark Ages printings)",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "variant": {
+    "of": "fera-gifts",
+    "id": "dark-ages",
+    "label": "Dark Ages printings",
+    "mode": "add"
+  },
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh (fera-gifts)",
+      "Carried as a variant, not base content (format §4b): \"dark-ages\""
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced"
+      ],
+      "ladder": {},
+      "costs": {
+        "basic": 3,
+        "intermediate": 6,
+        "advanced": 9
+      },
+      "out_of_type": {
+        "basic": "+1",
+        "intermediate": "+1",
+        "advanced": "+1"
+      },
+      "levels": {
+        "basic": 1,
+        "intermediate": 3,
+        "advanced": 5
+      },
+      "categories": [
+        "species",
+        "subgroup"
+      ],
+      "untiered": null
+    },
+    "atomic": true,
+    "allow_custom": true,
+    "powers": [
+      {
+        "name": "Nuwisha: Homid",
+        "category_values": {
+          "species": "Nuwisha",
+          "subgroup": "Homid"
+        },
+        "levels": [],
+        "elder": {
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Speech of the World",
+              "cost": "6",
+              "source": "Homid, Werewolf"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Nuwisha: Ragabash",
+        "category_values": {
+          "species": "Nuwisha",
+          "subgroup": "Ragabash"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Snow Running",
+              "cost": "3",
+              "source": "Ragabash"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Reynard's Lie",
+              "cost": "6",
+              "source": "Ragabash"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

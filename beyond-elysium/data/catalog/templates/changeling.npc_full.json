@@ -1,0 +1,190 @@
+{
+  "format": 1,
+  "slug": "changeling.npc_full",
+  "name": "Changeling NPC Sheet",
+  "kind": "template",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_templates (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "columns": 6,
+    "version": 1,
+    "sections": [
+      {
+        "order": 1,
+        "title": "Identity",
+        "width": "half",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "changeling-identity"
+      },
+      {
+        "order": 2,
+        "title": "Archetypes",
+        "width": "half",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "met-archetypes"
+      },
+      {
+        "order": 3,
+        "title": "Resources",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "changeling-resources"
+      },
+      {
+        "order": 4,
+        "title": "Health",
+        "width": "half",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "changeling-health"
+      },
+      {
+        "order": 5,
+        "title": "Physical Traits (Positive)",
+        "width": "third",
+        "column": 1,
+        "display": "multiplier_dot",
+        "collapsed": false,
+        "block_slug": "met-physical-traits"
+      },
+      {
+        "order": 6,
+        "title": "Social Traits (Positive)",
+        "width": "third",
+        "column": 1,
+        "display": "multiplier_dot",
+        "collapsed": false,
+        "block_slug": "met-social-traits"
+      },
+      {
+        "order": 7,
+        "title": "Mental Traits (Positive)",
+        "width": "third",
+        "column": 1,
+        "display": "multiplier_dot",
+        "collapsed": false,
+        "block_slug": "met-mental-traits"
+      },
+      {
+        "order": 8,
+        "title": "Physical Traits (Negative)",
+        "width": "third",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "met-physical-traits-neg"
+      },
+      {
+        "order": 9,
+        "title": "Social Traits (Negative)",
+        "width": "third",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "met-social-traits-neg"
+      },
+      {
+        "order": 10,
+        "title": "Mental Traits (Negative)",
+        "width": "third",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "met-mental-traits-neg"
+      },
+      {
+        "order": 11,
+        "title": "Abilities",
+        "width": "half",
+        "column": 1,
+        "display": "multiplier_dot",
+        "collapsed": false,
+        "block_slug": "changeling-abilities"
+      },
+      {
+        "order": 12,
+        "title": "Changeling Backgrounds",
+        "width": "half",
+        "column": 1,
+        "display": "multiplier_dot",
+        "collapsed": false,
+        "block_slug": "changeling-backgrounds"
+      },
+      {
+        "order": 13,
+        "title": "Changeling Arts",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "changeling-arts"
+      },
+      {
+        "order": 14,
+        "title": "Changeling Realms",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "changeling-realms"
+      },
+      {
+        "order": 15,
+        "title": "Stigmas",
+        "width": "half",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "changeling-stigmas"
+      },
+      {
+        "order": 16,
+        "title": "Merits",
+        "width": "half",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "changeling-merits"
+      },
+      {
+        "order": 17,
+        "title": "Flaws",
+        "width": "half",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "changeling-flaws"
+      },
+      {
+        "order": 18,
+        "title": "Derangements",
+        "width": "half",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "met-derangements"
+      },
+      {
+        "order": 19,
+        "title": "Roleplaying Notes",
+        "width": "full",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "npc-roleplaying-notes"
+      }
+    ]
+  }
+}

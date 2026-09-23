@@ -20,7 +20,7 @@ class Schema {
 	 * release version. Compared against the stored VERSION_OPTION value by
 	 * maybe_upgrade() to decide whether migrations need to run.
 	 */
-	const DB_VERSION = '1.2.11';
+	const DB_VERSION = '1.3.2';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -2054,7 +2054,10 @@ class Schema {
 		$catalogs = [];
 		foreach ( [ 'werewolf-gifts', 'fera-gifts' ] as $slug ) {
 			$block = \BeyondElysium\Models\Schema_Block::find_by_slug( $slug );
-			if ( ! $block ) {
+			if ( ! $block || ! is_array( $block->definition->items ?? null ) ) {
+				// 1.3.2's A4a conversion moved both blocks to `tiered_power` (`powers`, not
+				// `items`) - this migration's compound-string premise predates that and no
+				// longer applies to either slug; skip rather than warn on a missing property.
 				continue;
 			}
 			$names = [];
@@ -3039,6 +3042,15 @@ class Schema {
 		// Must run last of the template repairs: it completes both sheet_full and npc_full from
 		// each stack's own declaration, so it needs the layouts above already correct (1.2.11 D92).
 		self::complete_full_sheet_templates();
+
+		// 1.3.2: re-syncs `translation_strings` against whatever `seed_schema_blocks()` and the
+		// migrations above just wrote - format §4a mitigation 1. A declared file can rename or
+		// alias a catalog term (43 rung aliases, 4 family aliases, 14 moved families per the
+		// 1.3.1 doc), and `Name_Key::for()` derives a translation key from the current name, so
+		// the current name must be re-indexed after every reseed or its translation coverage
+		// looks like it silently dropped. Upsert-based and already exposed on demand via the
+		// Translations REST route, so this is safe to run on every upgrade, not just this one.
+		\BeyondElysium\Services\Catalog_Translator::rescan();
 
 		// Demo data, seeded on a fresh install only.
 		Seeder::seed_demo_characters( $fresh_install );

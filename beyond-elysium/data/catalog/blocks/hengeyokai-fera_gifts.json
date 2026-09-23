@@ -1,0 +1,104 @@
+{
+  "format": 1,
+  "slug": "hengeyokai-fera_gifts",
+  "name": "Gifts (Hengeyokai: Way of the Beast Courts)",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "variant": {
+    "of": "fera-gifts",
+    "id": "beast-courts",
+    "label": "Hengeyokai: Way of the Beast Courts",
+    "mode": "add"
+  },
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh (fera-gifts)",
+      "Carried as a variant, not base content (format §4b): \"beast-courts\""
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced"
+      ],
+      "ladder": {},
+      "costs": {
+        "basic": 3,
+        "intermediate": 6,
+        "advanced": 9
+      },
+      "out_of_type": {
+        "basic": "+1",
+        "intermediate": "+1",
+        "advanced": "+1"
+      },
+      "levels": {
+        "basic": 1,
+        "intermediate": 3,
+        "advanced": 5
+      },
+      "categories": [
+        "species",
+        "subgroup"
+      ],
+      "untiered": null
+    },
+    "atomic": true,
+    "allow_custom": true,
+    "powers": [
+      {
+        "name": "Fera",
+        "category_values": {
+          "species": "Fera",
+          "subgroup": "Hengeyokai"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Blaze Talons",
+              "cost": "3",
+              "source": "Hengeyokai"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Sense Imbalance",
+              "cost": "3",
+              "source": "Hengeyokai"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Exorcism",
+              "cost": "6",
+              "source": "Hengeyokai"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Part the Wall",
+              "cost": "6",
+              "source": "Hengeyokai"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Waking Dream of Unity",
+              "cost": "6",
+              "source": "Hengeyokai"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

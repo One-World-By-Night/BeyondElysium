@@ -1,0 +1,42 @@
+{
+  "format": 1,
+  "slug": "changeling-resources",
+  "name": "Changeling Resources",
+  "kind": "block",
+  "section_type": "resource_pool",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh",
+      "The Shining Host (WW05009) p. 117 - \"New Banality - Two experience per Trait\" (the OWBN C20 translations packet prices it 1: a variant, not the base)"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "pools": [
+      {
+        "name": "Glamour",
+        "value_type": "integer",
+        "default_start": 3,
+        "max": 10,
+        "cost_per_dot": 3,
+        "free_dots": 4
+      },
+      {
+        "name": "Banality",
+        "value_type": "integer",
+        "default_start": 3,
+        "max": 10,
+        "cost_per_dot": 2
+      },
+      {
+        "name": "Willpower",
+        "value_type": "integer",
+        "default_start": 3,
+        "max": 20,
+        "cost_per_dot": 3,
+        "free_dots": 3
+      }
+    ]
+  }
+}

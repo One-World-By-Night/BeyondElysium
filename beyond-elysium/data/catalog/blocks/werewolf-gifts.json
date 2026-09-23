@@ -1,0 +1,3236 @@
+{
+  "format": 1,
+  "slug": "werewolf-gifts",
+  "name": "Gifts",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh (werewolf-gifts, a trait_list until 1.3.2's A4a conversion)",
+      "Rank, variant and qualifier parsed from each gift's own GVM tier note (\"int., wyld west\")",
+      "Category axis joined from werewolf-identity's Breed / Auspice / Tribe options (format §9 pilot)"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py",
+    "notes": "Pick-only: every Gift is bought by name, so the ladder is declared empty. \"legend\" is the GVM's own rank for two cost-12 tribal Gifts (owner question). "
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced",
+        "legend"
+      ],
+      "ladder": {},
+      "costs": {
+        "basic": 3,
+        "intermediate": 6,
+        "advanced": 9,
+        "legend": 12
+      },
+      "out_of_type": {
+        "basic": "+1",
+        "intermediate": "+1",
+        "advanced": "+1",
+        "legend": "+1"
+      },
+      "levels": {
+        "basic": 1,
+        "intermediate": 3,
+        "advanced": 5
+      },
+      "categories": [
+        "breed",
+        "tribe",
+        "auspice"
+      ],
+      "untiered": null
+    },
+    "atomic": true,
+    "allow_custom": true,
+    "powers": [
+      {
+        "name": "Homid",
+        "category_values": {
+          "breed": "Homid"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Jam Technology",
+              "cost": "3",
+              "source": "Homid, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Master of Fire",
+              "cost": "3",
+              "source": "Homid, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Paralyzing Stare",
+              "cost": "3",
+              "source": "Homid, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Persuasion",
+              "cost": "3",
+              "source": "Homid, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Smell of Man",
+              "cost": "3",
+              "source": "Homid, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Staredown",
+              "cost": "3",
+              "source": "Homid, Werewolf"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Cocoon",
+              "cost": "6",
+              "source": "Homid, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Disquiet",
+              "cost": "6",
+              "source": "Homid, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Reshape Object",
+              "cost": "6",
+              "source": "Homid, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Spirit Ward",
+              "cost": "6",
+              "source": "Homid, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Tongues",
+              "cost": "6",
+              "source": "Homid, Werewolf"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Assimilation",
+              "cost": "9",
+              "source": "Homid, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Part the Veil",
+              "cost": "9",
+              "source": "Homid, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Reduce Delirium",
+              "cost": "9",
+              "source": "Homid, Werewolf"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Metis",
+        "category_values": {
+          "breed": "Metis"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Burrow",
+              "cost": "3",
+              "source": "Metis, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Create Element",
+              "cost": "3",
+              "source": "Metis, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Curse of Hatred",
+              "cost": "3",
+              "source": "Metis, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Primal Anger",
+              "cost": "3",
+              "source": "Metis, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Sense Wyrm",
+              "cost": "3",
+              "source": "Metis, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Shed",
+              "cost": "3",
+              "source": "Metis, Werewolf"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Eyes of the Cat",
+              "cost": "6",
+              "source": "Metis, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Gift of the Porcupine",
+              "cost": "6",
+              "source": "Metis, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Grovel",
+              "cost": "6",
+              "source": "Metis, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Mental Speech",
+              "cost": "6",
+              "source": "Metis, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Wither Limb",
+              "cost": "6",
+              "source": "Metis, Werewolf"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Madness",
+              "cost": "9",
+              "source": "Metis, Werewolf"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Totem Gift",
+              "cost": "9",
+              "source": "Metis, Werewolf"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lupus",
+        "category_values": {
+          "breed": "Lupus"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Heightened Senses",
+              "cost": "3",
+              "source": "Lupus"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Hare's Leap",
+              "cost": "3",
+              "source": "Lupus"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Scent of Sight",
+              "cost": "3",
+              "source": "Lupus"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Scent of the True Form",
+              "cost": "3",
+              "source": "Lupus"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Sense Prey",
+              "cost": "3",
+              "source": "Lupus"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Sense the Unnatural",
+              "cost": "3",
+              "source": "Lupus"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Beast Life",
+              "cost": "6",
+              "source": "Lupus"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Catfeet",
+              "cost": "6",
+              "source": "Lupus"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Gnaw",
+              "cost": "6",
+              "source": "Lupus"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Name the Spirit",
+              "cost": "6",
+              "source": "Lupus"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Elemental Gift",
+              "cost": "9",
+              "source": "Lupus"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Song of the Great Beast",
+              "cost": "9",
+              "source": "Lupus"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Venom",
+              "cost": "9",
+              "source": "Lupus"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Ragabash",
+        "category_values": {
+          "auspice": "Ragabash"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Alter Scent",
+              "cost": "3",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Blissful Ignorance",
+              "cost": "3",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Blur of the Milky Eye",
+              "cost": "3",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Open Seal",
+              "cost": "3",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Scent of Running Water",
+              "cost": "3",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Sense of the Prey",
+              "cost": "3",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Taking the Forgotten",
+              "cost": "3",
+              "source": "Ragabash"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Gremlins",
+              "cost": "6",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Fool's Luck",
+              "cost": "6",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Luna's Blessing",
+              "cost": "6",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Open the Moon Bridge",
+              "cost": "6",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Whelp Body",
+              "cost": "6",
+              "source": "Ragabash"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Thieving Talons of the Magpie",
+              "cost": "9",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Thousand Forms",
+              "cost": "9",
+              "source": "Ragabash"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Violation",
+              "cost": "9",
+              "source": "Ragabash"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Theurge",
+        "category_values": {
+          "auspice": "Theurge"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Command Spirit",
+              "cost": "3",
+              "source": "Theurge"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Mother's Touch",
+              "cost": "3",
+              "source": "Theurge"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Sight from Beyond",
+              "cost": "3",
+              "source": "Theurge"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Spirit Speech",
+              "cost": "3",
+              "source": "Theurge"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Exorcism",
+              "cost": "6",
+              "source": "Theurge"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Grasp the Beyond",
+              "cost": "6",
+              "source": "Theurge"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Pulse of the Invisible",
+              "cost": "6",
+              "source": "Theurge"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Spirit Drain",
+              "cost": "6",
+              "source": "Theurge"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Feral Lobotomy",
+              "cost": "9",
+              "source": "Theurge"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Malleable Spirit",
+              "cost": "9",
+              "source": "Theurge"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Spirit Vessel",
+              "cost": "9",
+              "source": "Theurge"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Philodox",
+        "category_values": {
+          "auspice": "Philodox"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Call to Duty",
+              "cost": "3",
+              "source": "Philodox"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "King of the Beasts",
+              "cost": "3",
+              "source": "Philodox"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Resist Pain",
+              "cost": "3",
+              "source": "Philodox"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Strength of Purpose",
+              "cost": "3",
+              "source": "Philodox"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Truth of Gaia",
+              "cost": "3",
+              "source": "Philodox"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Roll Over",
+              "cost": "6",
+              "source": "Philodox"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Scent of Beyond",
+              "cost": "6",
+              "source": "Philodox"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Weak Arm",
+              "cost": "6",
+              "source": "Philodox"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Wisdom of the Ancient Ways",
+              "cost": "6",
+              "source": "Philodox"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Geas",
+              "cost": "9",
+              "source": "Philodox"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Take the True Form",
+              "cost": "9",
+              "source": "Philodox"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Wall of Granite",
+              "cost": "9",
+              "source": "Philodox"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Galliard",
+        "category_values": {
+          "auspice": "Galliard"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Beast Speech",
+              "cost": "3",
+              "source": "Galliard"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Call of the Wyld",
+              "cost": "3",
+              "source": "Galliard"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Call of the Wyrm",
+              "cost": "3",
+              "source": "Galliard"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Distractions",
+              "cost": "3",
+              "source": "Galliard"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Dreamspeak",
+              "cost": "3",
+              "source": "Galliard"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Mindspeak",
+              "cost": "3",
+              "source": "Galliard"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Bridge Walker",
+              "cost": "6",
+              "source": "Galliard"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Eyes of the Cobra",
+              "cost": "6",
+              "source": "Galliard"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Shadows by the Firelight",
+              "cost": "6",
+              "source": "Galliard"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Song of Rage",
+              "cost": "6",
+              "source": "Galliard"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Fabric of the Mind",
+              "cost": "9",
+              "source": "Galliard"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Head Games",
+              "cost": "9",
+              "source": "Galliard"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Song of the Siren",
+              "cost": "9",
+              "source": "Galliard"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Ahroun",
+        "category_values": {
+          "auspice": "Ahroun"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Falling Touch",
+              "cost": "3",
+              "source": "Ahroun"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Inspiration",
+              "cost": "3",
+              "source": "Ahroun"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Razor Claws",
+              "cost": "3",
+              "source": "Ahroun"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Sense Silver",
+              "cost": "3",
+              "source": "Ahroun"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Spirit of the Fray",
+              "cost": "3",
+              "source": "Ahroun"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "True Fear",
+              "cost": "3",
+              "source": "Ahroun"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Clenched Jaw",
+              "cost": "6",
+              "source": "Ahroun"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Heart of Fury",
+              "cost": "6",
+              "source": "Ahroun"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Silver Claws",
+              "cost": "6",
+              "source": "Ahroun"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Stoking Fury's Furnace",
+              "cost": "6",
+              "source": "Ahroun"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Kiss of Helios",
+              "cost": "9",
+              "source": "Ahroun"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Strength of Will",
+              "cost": "9",
+              "source": "Ahroun"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Black Furies",
+        "category_values": {
+          "tribe": "Black Furies"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Breath of the Wyld",
+              "cost": "3",
+              "source": "Black Furies"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Curse of Aeolus",
+              "cost": "3",
+              "source": "Black Furies"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Kali's Tongue",
+              "cost": "3",
+              "source": "Black Furies"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Stoking the Soul's Fire",
+              "cost": "3",
+              "note": "maiden",
+              "source": "Black Furies"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Watchful Eyes",
+              "cost": "3",
+              "source": "Black Furies"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Barring the Will",
+              "cost": "6",
+              "note": "mother",
+              "source": "Black Furies"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Body Wrack",
+              "cost": "6",
+              "source": "Black Furies"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Bolster the True Name",
+              "cost": "6",
+              "note": "crone",
+              "source": "Black Furies"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Coup de Grace",
+              "cost": "6",
+              "source": "Black Furies"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Flames of Hestia",
+              "cost": "6",
+              "source": "Black Furies"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Visceral Agony",
+              "cost": "6",
+              "source": "Black Furies"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Wasp Talons",
+              "cost": "6",
+              "source": "Black Furies"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Bacchantes' Rage",
+              "cost": "9",
+              "source": "Black Furies"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Wyld Warp",
+              "cost": "9",
+              "source": "Black Furies"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Black Spiral Dancers",
+        "category_values": {
+          "tribe": "Black Spiral Dancers"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Bane Protector",
+              "cost": "3",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Bat Ears",
+              "cost": "3",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Cover Scent",
+              "cost": "3",
+              "note": "galliard",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Defuse Tension",
+              "cost": "3",
+              "note": "ragabash",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Distract Spirit",
+              "cost": "3",
+              "note": "theurge",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Horns of the Impaler",
+              "cost": "3",
+              "note": "ahroun",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Madness Induction",
+              "cost": "3",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Smell Fear",
+              "cost": "3",
+              "note": "philodox",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "A Thousand Voices",
+              "cost": "3",
+              "note": "philodox",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Wyrm Hide",
+              "cost": "3",
+              "source": "Black Spiral Dancers"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Allies Below",
+              "cost": "6",
+              "note": "galliard",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Beautiful Lie",
+              "cost": "6",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Blood Omen",
+              "cost": "6",
+              "note": "theurge",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Call Elemental",
+              "cost": "6",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Crawling Poison",
+              "cost": "6",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Dagger of the Mind",
+              "cost": "6",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Disguise Deformity",
+              "cost": "6",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Open Wounds",
+              "cost": "6",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Patagia",
+              "cost": "6",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Sharing Madness",
+              "cost": "6",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Touch of the Eel",
+              "cost": "6",
+              "note": "ragabash",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Unseelie Faerie Kin",
+              "cost": "6",
+              "source": "Black Spiral Dancers"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Balefire",
+              "cost": "9",
+              "source": "Black Spiral Dancers"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Totem Form",
+              "cost": "9",
+              "source": "Black Spiral Dancers"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Bone Gnawers",
+        "category_values": {
+          "tribe": "Bone Gnawers"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Cooking",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Dead End",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Declamation",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Hootenanny",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "The Hungry Hound",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "I Got a Rock",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Kitchen Chemistry",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "The Mark",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Odious Aroma",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "On Patrol",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Resist Toxin",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Road Ward",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Scent of Sweet Honey",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Smell of Success",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Stone-Throwing",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Tagalong",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Urban Ward",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Cooter's Revenge",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Dumpster Diving",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Face in the Crowd",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Laugh of the Hyena",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Lucky Bastard",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Rant and Rave",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Shadow of the Rat",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Streets Tell Stories",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Trust Me",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Attunement",
+              "cost": "6",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Friend in Need",
+              "cost": "6",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Gift of the Skunk",
+              "cost": "6",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Gift of the Termite",
+              "cost": "6",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Infest",
+              "cost": "6",
+              "source": "Bone Gnawer"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Help Me",
+              "cost": "9",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Piping",
+              "cost": "9",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Riot",
+              "cost": "9",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Survivor",
+              "cost": "9",
+              "source": "Bone Gnawer"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Children of Gaia",
+        "category_values": {
+          "tribe": "Children of Gaia"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Calm",
+              "cost": "3",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Domestic Seeming",
+              "cost": "3",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Grandmother's Touch",
+              "cost": "3",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Jam Weapon",
+              "cost": "3",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Luna's Armor",
+              "cost": "3",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Mule's Bane",
+              "cost": "3",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Mercy",
+              "cost": "3",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Swallow Rage",
+              "cost": "3",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Water-Conning",
+              "cost": "3",
+              "source": "Children of Gaia"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "The Cleaving Hoof",
+              "cost": "6",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Dazzle",
+              "cost": "6",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Guilty Mind",
+              "cost": "6",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Lover's Touch",
+              "cost": "6",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Soothe the Savage Beast",
+              "cost": "6",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Spirit Friend",
+              "cost": "6",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Strike the Air",
+              "cost": "6",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Serenity",
+              "cost": "6",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Serpent-Driving",
+              "cost": "6",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Uncaught Since the Primal Morn",
+              "cost": "6",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Unicorn's Grace",
+              "cost": "6",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Words of the Alpha",
+              "cost": "6",
+              "source": "Children of Gaia"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Halo of the Sun",
+              "cost": "9",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "The Living Wood",
+              "cost": "9",
+              "source": "Children of Gaia"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Trust of Gaia",
+              "cost": "9",
+              "source": "Children of Gaia"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Fianna",
+        "category_values": {
+          "tribe": "Fianna"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Faerie Light",
+              "cost": "3",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Fair Fortune",
+              "cost": "3",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Fire in the Belly",
+              "cost": "3",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Glib Tongue",
+              "cost": "3",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Howl of the Banshee",
+              "cost": "3",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Howl of the Unseen",
+              "cost": "3",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Reverie",
+              "cost": "3",
+              "note": "galliard",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Salmon Leap",
+              "cost": "3",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Spear Dancing",
+              "cost": "3",
+              "source": "Fianna"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Balor's Gaze",
+              "cost": "6",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Faerie Blood",
+              "cost": "6",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Faerie Kin",
+              "cost": "6",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Fog of War",
+              "cost": "6",
+              "note": "ragabash/galliard",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Phantasm",
+              "cost": "6",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Pin the Eagle's Wing",
+              "cost": "6",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Woadling",
+              "cost": "6",
+              "source": "Fianna"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Call the Hunt",
+              "cost": "9",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Forms of Cernunnos",
+              "cost": "9",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Gift of the Spriggan",
+              "cost": "9",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Havgan's Healing",
+              "cost": "9",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Troll's Bridge",
+              "cost": "9",
+              "source": "Fianna"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Get of Fenris",
+        "category_values": {
+          "tribe": "Get of Fenris"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Beastmind",
+              "cost": "3",
+              "note": "glorious fist of wotan",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Halt the Coward's Flight",
+              "cost": "3",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Safe Haven",
+              "cost": "3",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Sense Guilt",
+              "cost": "3",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Snarl of the Predator",
+              "cost": "3",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Troll Skin",
+              "cost": "3",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Visage of Fenris",
+              "cost": "3",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Wearing the Bear Shirt",
+              "cost": "3",
+              "source": "Get of Fenris"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Berserker's Song",
+              "cost": "6",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Chill of Early Frost",
+              "cost": "6",
+              "note": "ymir's sweat",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Glory-Scars",
+              "cost": "6",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Hero's Stand",
+              "cost": "6",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Loki's Touch",
+              "cost": "6",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Might of Thor",
+              "cost": "6",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Scream of Gaia",
+              "cost": "6",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Venom Blood",
+              "cost": "6",
+              "source": "Get of Fenris"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Fenris' Bite",
+              "cost": "9",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "The Good Death",
+              "cost": "9",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Horde of Valhalla",
+              "cost": "9",
+              "source": "Get of Fenris"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Strength of the Ancestors",
+              "cost": "9",
+              "source": "Get of Fenris"
+            }
+          ],
+          "legend": [
+            {
+              "level": null,
+              "tier": "legend",
+              "power_name": "Call Great Fenris",
+              "cost": "12",
+              "source": "Get of Fenris"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Glass Walkers",
+        "category_values": {
+          "tribe": "Glass Walkers"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Control Simple Machine",
+              "cost": "3",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Cybersenses",
+              "cost": "3",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Diagnostics",
+              "cost": "3",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Pennies From Heaven",
+              "cost": "3",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Power Surge",
+              "cost": "3",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Steel Fur",
+              "cost": "3",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Skyscraper Vision",
+              "cost": "3",
+              "source": "Glass Walkers"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Control Complex Machine",
+              "cost": "6",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Doppelganger",
+              "cost": "6",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Electroshock",
+              "cost": "6",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Elemental Favor",
+              "cost": "6",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Heat Metal",
+              "cost": "6",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Intrusion",
+              "cost": "6",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Tech Speak",
+              "cost": "6",
+              "source": "Glass Walkers"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Calm the Flock",
+              "cost": "9",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Chaos Mechanics",
+              "cost": "9",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Long Running",
+              "cost": "9",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Custom Built",
+              "cost": "9",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Phone Travel",
+              "cost": "9",
+              "source": "Glass Walkers"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Summon Net-Spider",
+              "cost": "9",
+              "source": "Glass Walkers"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Red Talons",
+        "category_values": {
+          "tribe": "Red Talons"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Eye of the Hunter",
+              "cost": "3",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Hidden Killer",
+              "cost": "3",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Howl to the Pack",
+              "cost": "3",
+              "note": "howl",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Predator's Leap",
+              "cost": "3",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Primal Howl",
+              "cost": "3",
+              "note": "howl",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Purify Meat",
+              "cost": "3",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Rampage",
+              "cost": "3",
+              "note": "winter pack",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Silence the Slain",
+              "cost": "3",
+              "note": "winter pack",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Wolf at the Door",
+              "cost": "3",
+              "source": "Red Talons"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Babble",
+              "cost": "6",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Gorge",
+              "cost": "6",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Howl of Death",
+              "cost": "6",
+              "note": "howl",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Howl of Hunger",
+              "cost": "6",
+              "note": "howl",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Mother's Rage",
+              "cost": "6",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Rot Weavertech",
+              "cost": "6",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Territory",
+              "cost": "6",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Trackless Waste",
+              "cost": "6",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Quicksand",
+              "cost": "6",
+              "source": "Red Talons"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Blessing of the First Pack",
+              "cost": "9",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Curse of Dionysius",
+              "cost": "9",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Curse of Lycaon",
+              "cost": "9",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Gaia's Vengeance",
+              "cost": "9",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Shattering Howl",
+              "cost": "9",
+              "note": "howl",
+              "source": "Red Talons"
+            }
+          ],
+          "legend": [
+            {
+              "level": null,
+              "tier": "legend",
+              "power_name": "Home in All Lands",
+              "cost": "12",
+              "source": "Red Talons"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Shadow Lords",
+        "category_values": {
+          "tribe": "Shadow Lords"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Aura of Confidence",
+              "cost": "3",
+              "source": "Shadow Lords"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Clap of Thunder",
+              "cost": "3",
+              "source": "Shadow Lords"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Cold Voice of Reason",
+              "cost": "3",
+              "source": "Shadow Lords"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Disfigurement",
+              "cost": "3",
+              "source": "Shadow Lords"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Fatal Flaw",
+              "cost": "3",
+              "source": "Shadow Lords"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Seizing the Edge",
+              "cost": "3",
+              "source": "Shadow Lords"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Whisper Catching",
+              "cost": "3",
+              "source": "Shadow Lords"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Call the Storm",
+              "cost": "6",
+              "source": "Shadow Lords"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Direct the Storm",
+              "cost": "6",
+              "source": "Shadow Lords"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Icy Chill of Despair",
+              "cost": "6",
+              "source": "Shadow Lords"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Raven's Wings",
+              "cost": "6",
+              "source": "Shadow Lords"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Shadow Cutting",
+              "cost": "6",
+              "source": "Shadow Lords"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Strength of the Dominator",
+              "cost": "6",
+              "source": "Shadow Lords"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Obedience",
+              "cost": "9",
+              "source": "Shadow Lords"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Shadow Pack",
+              "cost": "9",
+              "source": "Shadow Lords"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Wounding Lies",
+              "cost": "9",
+              "source": "Shadow Lords"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Silent Striders",
+        "category_values": {
+          "tribe": "Silent Striders"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Heaven's Guidance",
+              "cost": "3",
+              "source": "Silent Striders"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Messenger's Fortitude",
+              "cost": "3",
+              "source": "Silent Striders"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Silence",
+              "cost": "3",
+              "source": "Silent Striders"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Speed of Thought",
+              "cost": "3",
+              "source": "Silent Striders"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Tireless Running",
+              "cost": "3",
+              "source": "Silent Striders"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Tread Sebek's Back",
+              "cost": "3",
+              "source": "Silent Striders"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Adaptation",
+              "cost": "6",
+              "source": "Silent Striders"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Dam the Heartflood",
+              "cost": "6",
+              "source": "Silent Striders"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Great Leap",
+              "cost": "6",
+              "source": "Silent Striders"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Scale of Ma'at",
+              "cost": "6",
+              "source": "Silent Striders"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Speed Beyond Thought",
+              "cost": "6",
+              "source": "Silent Striders"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Summon Talisman",
+              "cost": "6",
+              "source": "Silent Striders"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Gate of the Moon",
+              "cost": "9",
+              "source": "Silent Striders"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Open Moon Gate",
+              "cost": "9",
+              "source": "Silent Striders"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Reach the Umbra",
+              "cost": "9",
+              "source": "Silent Striders"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Silver Fangs",
+        "category_values": {
+          "tribe": "Silver Fangs"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Empathy",
+              "cost": "3",
+              "source": "Silver Fangs"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Falcon's Grasp",
+              "cost": "3",
+              "source": "Silver Fangs"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Lambent Flame",
+              "cost": "3",
+              "source": "Silver Fangs"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Mastery",
+              "cost": "6",
+              "source": "Silver Fangs"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Mindblock",
+              "cost": "6",
+              "source": "Silver Fangs"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Wrath of Gaia",
+              "cost": "6",
+              "source": "Silver Fangs"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Ignore Wound",
+              "cost": "9",
+              "source": "Silver Fangs"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Luna's Avenger",
+              "cost": "9",
+              "source": "Silver Fangs"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Paws of the Newborn Cub",
+              "cost": "9",
+              "source": "Silver Fangs"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Stargazers",
+        "category_values": {
+          "tribe": "Stargazers"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Balance",
+              "cost": "3",
+              "source": "Stargazers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Inner Strength",
+              "cost": "3",
+              "source": "Stargazers"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Surface Attunement",
+              "cost": "3",
+              "source": "Stargazers"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Clarity",
+              "cost": "6",
+              "source": "Stargazers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Merciful Blow",
+              "cost": "6",
+              "source": "Stargazers"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Prenatural Awareness",
+              "cost": "6",
+              "source": "Stargazers"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Circular Attack",
+              "cost": "9",
+              "source": "Stargazers"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Wisdom of the Seer",
+              "cost": "9",
+              "source": "Stargazers"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Uktena",
+        "category_values": {
+          "tribe": "Uktena"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Sense Magic",
+              "cost": "3",
+              "source": "Uktena"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Shroud",
+              "cost": "3",
+              "source": "Uktena"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Spirit of the Bird",
+              "cost": "3",
+              "source": "Uktena"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Spirit of the Fish",
+              "cost": "3",
+              "source": "Uktena"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Banish Totem",
+              "cost": "6",
+              "source": "Uktena"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Call Flame Spirit",
+              "cost": "6",
+              "source": "Uktena"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Hand of the Earth Lords",
+              "cost": "6",
+              "source": "Uktena"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Invisibility",
+              "cost": "6",
+              "source": "Uktena"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Secrets",
+              "cost": "6",
+              "source": "Uktena"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Fetish Doll",
+              "cost": "9",
+              "source": "Uktena"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Pointing the Bone",
+              "cost": "9",
+              "source": "Uktena"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Wendigo",
+        "category_values": {
+          "tribe": "Wendigo"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Call the Breeze",
+              "cost": "3",
+              "source": "Wendigo"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Camouflage",
+              "cost": "3",
+              "source": "Wendigo"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Cutting Wind",
+              "cost": "3",
+              "source": "Wendigo"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Speak with the Wind Spirits",
+              "cost": "3",
+              "source": "Wendigo"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Bloody Feast",
+              "cost": "6",
+              "source": "Wendigo"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Call the Cannibal Spirit",
+              "cost": "6",
+              "source": "Wendigo"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Sky Running",
+              "cost": "6",
+              "source": "Wendigo"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Heart of Ice",
+              "cost": "9",
+              "source": "Wendigo"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Invoke the Spirits of the Storm",
+              "cost": "9",
+              "source": "Wendigo"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Boli Zouhisze",
+        "category_values": {
+          "tribe": "Boli Zouhisze"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Sheng-Nong's Eyes",
+              "cost": "3",
+              "source": "Boli Zouhisze"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Fu Xi's Honor",
+              "cost": "3",
+              "source": "Boli Zouhisze"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Yao's Commands",
+              "cost": "6",
+              "source": "Boli Zouhisze"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Yu's Endurance",
+              "cost": "6",
+              "source": "Boli Zouhisze"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Huang Di's Sacrifice",
+              "cost": "9",
+              "source": "Boli Zouhisze"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Bunyip",
+        "category_values": {
+          "tribe": "Bunyip"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Dreamwalk",
+              "cost": "3",
+              "source": "Bunyip"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Leap of the Kangaroo",
+              "cost": "3",
+              "source": "Bunyip"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Possum's Feet",
+              "cost": "3",
+              "source": "Bunyip"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Landspeak",
+              "cost": "6",
+              "source": "Bunyip"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Lonesome Voice of the Bunyip",
+              "cost": "6",
+              "source": "Bunyip"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Vice-Jaw",
+              "cost": "6",
+              "source": "Bunyip"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Billabong Bridge",
+              "cost": "9",
+              "source": "Bunyip"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Bloody-Mindedness",
+              "cost": "9",
+              "source": "Bunyip"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Guardians of the Dreamtime",
+              "cost": "9",
+              "source": "Bunyip"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Iron Riders",
+        "category_values": {
+          "tribe": "Iron Riders"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Iron Fur",
+              "cost": "3",
+              "source": "Iron Riders"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Iron Claws",
+              "cost": "3",
+              "source": "Iron Riders"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Iron Coat",
+              "cost": "3",
+              "source": "Iron Riders"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Pulse of the Railroad",
+              "cost": "3",
+              "source": "Iron Riders"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Rope Tricks",
+              "cost": "3",
+              "source": "Iron Riders"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Sense Weaver",
+              "cost": "3",
+              "source": "Iron Riders"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Well-Oiled Running",
+              "cost": "3",
+              "source": "Iron Riders"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Double Walker",
+              "cost": "6",
+              "source": "Iron Riders"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Gift of the Iron Horse",
+              "cost": "6",
+              "source": "Iron Riders"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Lightning Rage",
+              "cost": "6",
+              "source": "Iron Riders"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Repel Metal",
+              "cost": "6",
+              "source": "Iron Riders"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Ten Thousand Bullets",
+              "cost": "6",
+              "source": "Iron Riders"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Dynamite Blast",
+              "cost": "9",
+              "source": "Iron Riders"
+            },
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Quell the Storm",
+              "cost": "9",
+              "source": "Iron Riders"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Tetrasomians",
+        "category_values": {
+          "tribe": "Tetrasomians"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Angel Tricks",
+              "cost": "3",
+              "source": "Tetrasomians"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Hera's Fur",
+              "cost": "3",
+              "source": "Tetrasomians"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Persephone's Soul",
+              "cost": "3",
+              "source": "Tetrasomians"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Tune of Orpheus",
+              "cost": "3",
+              "source": "Tetrasomians"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Fury of Zeus",
+              "cost": "6",
+              "source": "Tetrasomians"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Judgment of Hades",
+              "cost": "9",
+              "source": "Tetrasomians"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Warders of Man",
+        "category_values": {
+          "tribe": "Warders of Man"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Artisan's Command",
+              "cost": "3",
+              "source": "Warders of Man"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Gift of Salt",
+              "cost": "3",
+              "source": "Warders of Man"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Mask of the Predator",
+              "cost": "3",
+              "source": "Warders of Man"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Smith's Blessing",
+              "cost": "3",
+              "source": "Warders of Man"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Weaponmaster",
+              "cost": "6",
+              "source": "Warders of Man"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

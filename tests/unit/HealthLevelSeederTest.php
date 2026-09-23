@@ -77,7 +77,10 @@ class HealthLevelSeederTest extends TestCase {
 			$this->assertSame( 'trait_list', $block['section_type'], "{$stack}-health" );
 			$this->assertFalse( $block['definition']['allow_custom'], "{$stack}-health must not allow free-text add" );
 			foreach ( $block['definition']['items'] as $item ) {
-				$this->assertArrayNotHasKey( 'cost', $item, "{$stack}-health's '{$item['name']}' must have no cost key" );
+				// 1.3.2: the declared file states `"cost": null` explicitly rather than
+				// omitting the key - isset() reads false either way, so this still asserts
+				// "no real cost" under both shapes.
+				$this->assertFalse( isset( $item['cost'] ), "{$stack}-health's '{$item['name']}' must carry no real cost" );
 			}
 		}
 	}

@@ -295,7 +295,14 @@ class SeederMapTest extends TestCase {
 			// container (Paths, wrongly landing here instead of in vampire-disciplines).
 			// The real Rituals menu is 'merge'-sourced (trait_list shape, not tiered_power -
 			// see gvm-block-map.php's own comment), so this checks 'items', not 'powers'.
-			'rituals'             => [ 'vampire-rituals', 207, 'items' ],
+			// 207 -> 205, 1.3.0 C8: only two rituals are genuine same-final-label duplicates
+			// ("Grasp the Ghostly," "Healing Blood" - a note_overrides match makes both
+			// occurrences resolve to the identical label). Four more look like duplicates by
+			// raw name alone but resolve to real, distinct labeled rows ("Craft Bloodstone,"
+			// "Dominoe of Life," "Impassable Trail" each Thaumaturgy vs Sabbat; "Eyes of the
+			// Grave" Mortis vs Necromancy) and correctly do not collapse - see
+			// MetCsvSeederTest::test_ritual_count()'s own comment for the full list.
+			'rituals'             => [ 'vampire-rituals', 205, 'items' ],
 			// Names that did not exist in any form.
 			'ritae merged'        => [ 'vampire-ritae', 25, 'items' ],
 			'vampire status'      => [ 'vampire-statuses', 45, 'items' ],
@@ -509,5 +516,57 @@ class SeederMapTest extends TestCase {
 				);
 			}
 		}
+	}
+
+	/**
+	 * T-C10 (1.3.0-design-workflow.md §5.1/§7), against the real `Calm` data named in the
+	 * design doc's own table, not a fixture: "Calm" prints four times in the real GVM file
+	 * (Children of Gaia -> werewolf-gifts; Gifts, Gurahl General + Noonday Sun ->
+	 * fera-gifts, same cost; Mental -> met-mental-traits, an unrelated Mental Trait).
+	 */
+	public function test_calm_resolves_per_1_3_0s_four_rules(): void {
+		$map = Seeder::block_map();
+
+		// Rule 1, amended by a real owner decision (2026-09-20, AskUserQuestion) against
+		// §5.1's own literal "Calm" example: Gurahl General and Noonday Sun read as one
+		// same-name/same-cost duplicate right up until group resolves them - "Noonday
+		// Sun" is a real Mokole submenu (`Gifts, Mokole -> Noonday Sun`, confirmed
+		// against the real GVM file), not a second Gurahl listing. Collapsing them to
+		// §5.1's literal one row would have hidden the gift from Mokole characters
+		// browsing by breed entirely - a real regression a flat name-only dedup can't
+		// see. Kept as two rows, one per real group, not collapsed.
+		$fera_gifts = Seeder::resolve_block_source( self::$gvm, 'fera-gifts', $map['fera-gifts'] );
+		$fera_calm  = array_values( array_filter(
+			$fera_gifts['items'],
+			static fn( $item ) => $item['name'] === 'Calm'
+		) );
+		$this->assertCount( 2, $fera_calm, 'Gurahl and Mokole are real, different groups - two rows, not one.' );
+		$by_group = [];
+		foreach ( $fera_calm as $c ) {
+			$by_group[ $c['group'] ] = $c;
+		}
+		$this->assertArrayHasKey( 'Gurahl', $by_group );
+		$this->assertArrayHasKey( 'Mokole', $by_group );
+		$this->assertSame( 'Noonday Sun', $by_group['Mokole']['subgroup'] );
+		$this->assertSame( [], $by_group['Gurahl']['_cost_conflicts'], 'Same cost either way - not a conflict, just a different group.' );
+
+		// Rule 3: met-mental-traits keeps its own unrelated Calm - dedup is keyed on
+		// (block, name), never name alone, so this must be untouched and uncompared.
+		$mental_traits = Seeder::resolve_block_source( self::$gvm, 'met-mental-traits', $map['met-mental-traits'] );
+		$mental_calm   = array_values( array_filter(
+			$mental_traits['items'],
+			static fn( $item ) => $item['name'] === 'Calm'
+		) );
+		$this->assertCount( 1, $mental_calm );
+		$this->assertSame( [], $mental_calm[0]['_parent_menus'], 'The Mental Trait Calm must never merge with the Gift Calm.' );
+
+		// Rule 4: werewolf-gifts and fera-gifts each keep their own separate Calm row.
+		$werewolf_gifts = Seeder::resolve_block_source( self::$gvm, 'werewolf-gifts', $map['werewolf-gifts'] );
+		$werewolf_calm  = array_values( array_filter(
+			$werewolf_gifts['items'],
+			static fn( $item ) => $item['name'] === 'Calm'
+		) );
+		$this->assertCount( 1, $werewolf_calm );
+		$this->assertSame( 'Children of Gaia', $werewolf_calm[0]['source'] );
 	}
 }

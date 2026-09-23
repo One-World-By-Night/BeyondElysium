@@ -39,3 +39,8 @@ data-samples/
 # Real credentials for live hosts (e.g. kony-sabbat.net's be-admin account) - never tracked,
 # never shipped. See BE_PROCESS/_credentials.md.
 BE_PROCESS/_credentials.md
+
+# Working output of tools/catalog/ (the local catalog dump, pending stacks/templates, the
+# uncommitted mortal-numina build, the run report) - reproducible, never tracked.
+tools/catalog/out/
+tools/catalog/__pycache__/

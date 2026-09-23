@@ -1,0 +1,539 @@
+{
+  "format": 1,
+  "slug": "darkages-vampire_disciplines",
+  "name": "Disciplines (Dark Ages)",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "variant": {
+    "of": "vampire-disciplines",
+    "id": "dark-ages",
+    "label": "Dark Ages (Grapevine's Dark Ages Menus, for Faith and Fire)",
+    "mode": "add"
+  },
+  "provenance": {
+    "sources": [
+      "Grapevine 3.0 'Dark Ages Menus.gvm' (for Faith and Fire, WW05038) - fills rungs the modern menu's 'dark ages' tags leave empty",
+      "Modern GVM levels noted 'dark ages', split out of the base families by 1.3.1"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/build_vampire.py + rulings/vampire-disciplines.json"
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced",
+        "elder",
+        "master",
+        "ascended",
+        "methuselah"
+      ],
+      "ladder": {
+        "basic": 2,
+        "intermediate": 2,
+        "advanced": 1
+      },
+      "costs": {
+        "basic": 3,
+        "intermediate": 6,
+        "advanced": 9,
+        "elder": 12,
+        "master": 15,
+        "ascended": 18,
+        "methuselah": 21
+      },
+      "out_of_type": {
+        "basic": "+1",
+        "intermediate": "+1",
+        "advanced": "+1",
+        "elder": "+1",
+        "master": "+1",
+        "ascended": "+1",
+        "methuselah": "+1"
+      },
+      "levels": null,
+      "categories": null,
+      "untiered": null,
+      "in_type_source": "vampire-identity.Clan"
+    },
+    "atomic": true,
+    "sequential": true,
+    "allow_custom": true,
+    "blood_magic": false,
+    "traditions": [],
+    "powers": [
+      {
+        "name": "Animalism (Dark Ages)",
+        "source": "Animalism",
+        "aliases": [
+          "Animalism"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Feral Speech",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Noah's Call",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Cowing the Beast",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Ride the Wild Mind",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Drawing Out the Beast",
+            "cost": "9",
+            "filled_from": "Dark Ages Menus.gvm: Animalism"
+          }
+        ],
+        "elder": {},
+        "split_from": "Animalism"
+      },
+      {
+        "name": "Auspex (Dark Ages)",
+        "source": "Auspex",
+        "aliases": [
+          "Auspex"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Heightened Senses",
+            "cost": "3",
+            "filled_from": "Dark Ages Menus.gvm: Auspex"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Soulsight",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Spirit's Touch",
+            "cost": "6",
+            "filled_from": "Dark Ages Menus.gvm: Auspex"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Steal Secrets",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Anima Walk",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Auspex"
+      },
+      {
+        "name": "Chimerstry (Dark Ages)",
+        "source": "Chimerstry",
+        "aliases": [
+          "Chimerstry"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Ignis Fatuus",
+            "cost": "3",
+            "filled_from": "Dark Ages Menus.gvm: Chimerstry"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Dweomer",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Apparition",
+            "cost": "6",
+            "filled_from": "Dark Ages Menus.gvm: Chimerstry"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Permanency",
+            "cost": "6",
+            "filled_from": "Dark Ages Menus.gvm: Chimerstry"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Horrid Reality",
+            "cost": "9",
+            "filled_from": "Dark Ages Menus.gvm: Chimerstry"
+          }
+        ],
+        "elder": {},
+        "split_from": "Chimerstry"
+      },
+      {
+        "name": "Dementation (Dark Ages)",
+        "source": "Dementation",
+        "aliases": [
+          "Dementation"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Incubus Passion",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Haunt the Soul",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Eyes of Chaos",
+            "cost": "6",
+            "filled_from": "Dark Ages Menus.gvm: Dementation"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Silence the Sane Mind",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Howling Lunacy",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Dementation"
+      },
+      {
+        "name": "Dominate (Dark Ages)",
+        "source": "Dominate",
+        "aliases": [
+          "Dominate"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Observance of the Spoken Word",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Murmur of the False Will",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Reveler's Memory",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Lure of Subtle Whispers",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Vessel",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Dominate"
+      },
+      {
+        "name": "Obtenebration (Dark Ages)",
+        "source": "Obtenebration",
+        "aliases": [
+          "Obtenebration"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Shadow Play",
+            "cost": "3",
+            "filled_from": "Dark Ages Menus.gvm: Obtenebration"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Nocturne",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Arms of Ahriman",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Nightshades",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Tenebrous Avatar",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Obtenebration"
+      },
+      {
+        "name": "Protean (Dark Ages)",
+        "source": "Protean",
+        "aliases": [
+          "Protean"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Witness of Darkness",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Talons of the Beast",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Interred in Earth",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Form of the Beast",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Body of Spirit",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Protean"
+      },
+      {
+        "name": "Quietus (Dark Ages)",
+        "source": "Quietus",
+        "aliases": [
+          "Quietus"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Silence of Fiery Blood",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Scorpion's Touch",
+            "cost": "3",
+            "filled_from": "Dark Ages Menus.gvm: Quietus"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dagon's Call",
+            "cost": "6",
+            "filled_from": "Dark Ages Menus.gvm: Quietus"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Baal's Caress",
+            "cost": "6",
+            "filled_from": "Dark Ages Menus.gvm: Quietus"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Blood Essence",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Quietus"
+      },
+      {
+        "name": "Serpentis (Dark Ages)",
+        "source": "Serpentis",
+        "aliases": [
+          "Serpentis"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Eyes of the Serpent",
+            "cost": "3",
+            "filled_from": "Dark Ages Menus.gvm: Serpentis"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Tongue of the Asp",
+            "cost": "3",
+            "filled_from": "Dark Ages Menus.gvm: Serpentis"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Skin of the Adder",
+            "cost": "6",
+            "filled_from": "Dark Ages Menus.gvm: Serpentis"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Form of the Cobra",
+            "cost": "6",
+            "filled_from": "Dark Ages Menus.gvm: Serpentis"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Cheat the Scale of Anubis",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Serpentis"
+      },
+      {
+        "name": "Vicissitude (Dark Ages)",
+        "source": "Vicissitude",
+        "aliases": [
+          "Vicissitude"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Malleable Visage",
+            "cost": "3",
+            "filled_from": "Dark Ages Menus.gvm: Vicissitude"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Transmogrify the Mortal Clay",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Rend the Osseus Frame",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Awaken the Zulo Shape",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Ascendancy of the Sanguine Humour",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Vicissitude"
+      },
+      {
+        "name": "Daimoinon (Dark Ages)",
+        "source": "Daimoinon",
+        "aliases": [
+          "Daimoinon"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Sense the Sin",
+            "cost": "3",
+            "filled_from": "Dark Ages Menus.gvm: Daimoinon"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Fear of the Void",
+            "cost": "3",
+            "filled_from": "Dark Ages Menus.gvm: Daimoinon"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Essence of the Netherworld",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Psychomachia",
+            "cost": "6",
+            "filled_from": "Dark Ages Menus.gvm: Daimoinon"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Curse",
+            "cost": "9"
+          }
+        ],
+        "elder": {},
+        "split_from": "Daimoinon"
+      }
+    ]
+  }
+}

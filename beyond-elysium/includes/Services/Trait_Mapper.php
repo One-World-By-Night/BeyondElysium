@@ -112,6 +112,25 @@ class Trait_Mapper {
 			];
 		}
 
+		// Alias match (1.3.2 alias routing): the raw name is a recorded former name for a
+		// real catalog item (`Meditiation` -> `Meditation`) - as trustworthy as an exact
+		// match once it resolves, so it is checked before a fuzzy guess rather than after
+		// one.
+		$alias_hits = self::hits_in_blocks( $raw_name, $blocks, static function ( $item_name, $item ) use ( $raw_name ) {
+			foreach ( (array) ( $item->aliases ?? [] ) as $alias ) {
+				if ( $alias === $raw_name ) {
+					return true;
+				}
+			}
+			return false;
+		} );
+		if ( count( $alias_hits ) > 1 ) {
+			return [ 'outcome' => 'ambiguous', 'candidates' => array_column( $alias_hits, 'block_slug' ) ];
+		}
+		if ( count( $alias_hits ) === 1 ) {
+			return [ 'outcome' => 'exact', 'block_slug' => $alias_hits[0]['block_slug'], 'matched_name' => $alias_hits[0]['item_name'] ];
+		}
+
 		// Fuzzy match, across every candidate block's catalog pooled together.
 		$all_names = [];
 		foreach ( $blocks as $block ) {
@@ -411,6 +430,18 @@ class Trait_Mapper {
 			return $power_name === '' ? null : [ $best, $power_name ];
 		}
 
+		// A ladder family whose own name carries a colon (Kuei-Jin's three "Black Wind: X"
+		// aspects) is not a named pick at all - it is `raw_name` in full, exported bare with a
+		// `level`, not a "family: power" pair. Without this check the fallback below reads its
+		// own internal colon as a split, manufacturing a "Black Wind" family that does not
+		// exist and losing the real one. Checked only after the prefix loop above finds no
+		// "family: power_name" match, so a real named pick under a compound family is unaffected.
+		foreach ( $powers as $power ) {
+			if ( ( $power->name ?? null ) === $raw_name ) {
+				return null;
+			}
+		}
+
 		if ( ! preg_match( '/^([^:]+):\s*(.+)$/', $raw_name, $m ) ) {
 			return null;
 		}
@@ -430,7 +461,12 @@ class Trait_Mapper {
 	 * @return array{outcome:string,block_slug?:string,family?:string,power_name?:string,tier?:string,suggestions?:string[]}
 	 */
 	private static function resolve_named_power( string $family_name, string $power_name, array $powers, string $block_slug ): array {
-		$power = self::find_by_name( $powers, $family_name );
+		// 1.3.2 alias routing: an exact family-name match first, then a recorded `aliases`
+		// or `split_from` rename that stayed in this same block (`1.3.1-design-workflow.md`
+		// §11.7 item 1) - refused rather than guessed when more than one family answers
+		// (`Trait_Alias_Resolver`'s own ambiguity rule, e.g. Kuei-Jin's three `Black Wind`
+		// aspects).
+		$power = Trait_Alias_Resolver::find_power_by_name( $powers, $family_name );
 		if ( $power === null ) {
 			return [ 'outcome' => 'unresolved', 'suggestions' => [] ];
 		}
@@ -445,7 +481,10 @@ class Trait_Mapper {
 		}
 
 		foreach ( $candidates as $candidate ) {
-			$exact = self::find_by_name( $levels, $candidate, 'power_name' );
+			// A rung/pick's own recorded `aliases` (`Grave's Decay`'s rung answering to
+			// both `Dissolve the Flesh` and `Disolve`) are checked at the same "exact"
+			// confidence as the literal `power_name` - both are catalog-recorded facts.
+			$exact = Trait_Alias_Resolver::find_level_by_name( $levels, $candidate );
 			if ( $exact !== null ) {
 				return [
 					'outcome'    => 'exact',
@@ -497,6 +536,17 @@ class Trait_Mapper {
 		$exact = self::find_by_name( $powers, $raw_name );
 		$power = $exact;
 		$outcome_if_found = 'exact';
+
+		if ( $power === null ) {
+			// 1.3.2 alias routing: a recorded `aliases` or `split_from` rename that stayed
+			// in this block - as trustworthy as an exact name, so checked before a
+			// normalized/fuzzy guess. Refused (not guessed) when more than one family
+			// answers (`Trait_Alias_Resolver`'s own ambiguity rule).
+			$power = Trait_Alias_Resolver::find_power_by_name( $powers, $raw_name );
+			if ( $power !== null ) {
+				$outcome_if_found = 'exact';
+			}
+		}
 
 		if ( $power === null ) {
 			$needle = Fuzzy_Matcher::normalize( $raw_name );
@@ -595,16 +645,19 @@ class Trait_Mapper {
 	 * resolve_trait() to find exact and normalized matches across multiple
 	 * candidate blocks at once.
 	 *
-	 * @param string   $raw_name
+	 * @param string   $raw_name  Unused directly here - kept so every call site reads the
+	 *                            same way; each predicate closure captures it itself.
 	 * @param object[] $blocks
-	 * @param callable $predicate
+	 * @param callable(string,object):bool $predicate Receives the item's own `name` and the
+	 *                            item itself, the latter for a 1.3.2 alias check against
+	 *                            `$item->aliases`.
 	 * @return array<int,array{block_slug:string,item_name:string}>
 	 */
 	private static function hits_in_blocks( string $raw_name, array $blocks, callable $predicate ): array {
 		$hits = [];
 		foreach ( $blocks as $block ) {
 			foreach ( self::items_of( $block ) as $item ) {
-				if ( $predicate( $item->name ) ) {
+				if ( $predicate( $item->name, $item ) ) {
 					$hits[] = [ 'block_slug' => $block->slug, 'item_name' => $item->name ];
 					break; // one hit per block is enough to count the block as a match
 				}

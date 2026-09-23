@@ -16,7 +16,14 @@ use WP_UnitTestCase;
  *
  * DELETEs (never TRUNCATEs - not rollback-safe inside WP_UnitTestCase's wrapped test
  * transaction) any translations rows a prior test run left, so T6 measures a genuinely clean
- * migration rather than under-counting keys a partial earlier run already has rows for.
+ * migration rather than under-counting keys a partial earlier run already has rows for. Both
+ * tables are backed up first and restored in tearDown() - install-persistent tables (like
+ * every other catalog table, PLATFORM.md) are not wrapped by the per-test transaction, so an
+ * unconditional DELETE with no restore permanently empties them for every later test in the
+ * same process. Found live: this exact class's own earlier DELETE-to-empty tearDown() was
+ * silently breaking `CatalogTranslatorThreadTest`'s "38 retired terms" measurement - which
+ * needs the pre-existing legacy rows this class also needs gone during its own run - whenever
+ * this file happened to run first.
  *
  * @see BE_PROCESS/releases/1.2.0-design-workflow.md §8, §9 T6
  */
@@ -25,21 +32,24 @@ class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 	public function setUp(): void {
 		parent::setUp();
 		global $wpdb;
+		$wpdb->query( "DROP TEMPORARY TABLE IF EXISTS be_translations_thread_backup" );
+		$wpdb->query( "DROP TEMPORARY TABLE IF EXISTS be_translation_strings_thread_backup" );
+		$wpdb->query( "CREATE TEMPORARY TABLE be_translations_thread_backup AS SELECT * FROM {$wpdb->prefix}be_translations" );
+		$wpdb->query( "CREATE TEMPORARY TABLE be_translation_strings_thread_backup AS SELECT * FROM {$wpdb->prefix}be_translation_strings" );
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}be_translations" );
 		delete_option( 'be_catalog_translations_migrated' );
 		delete_option( 'be_catalog_translations_migration_counts' );
 	}
 
 	public function tearDown(): void {
-		// Explicit cleanup, not reliance on WP_UnitTestCase's ambient per-test rollback alone:
-		// a real migration run inserts thousands of rows in one test method - found live, a
-		// row from this class's own test genuinely survived into a later, unrelated test
-		// class's run (TranslationStringModelThreadTest's "The Fortitude" fixture collided
-		// with this class's own real rescan() of the catalog's actual Fortitude discipline).
 		// DELETE, never TRUNCATE - the same non-negotiable as setUp()'s own comment.
 		global $wpdb;
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}be_translations" );
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}be_translation_strings" );
+		$wpdb->query( "INSERT INTO {$wpdb->prefix}be_translation_strings SELECT * FROM be_translation_strings_thread_backup" );
+		$wpdb->query( "INSERT INTO {$wpdb->prefix}be_translations SELECT * FROM be_translations_thread_backup" );
+		$wpdb->query( "DROP TEMPORARY TABLE IF EXISTS be_translations_thread_backup" );
+		$wpdb->query( "DROP TEMPORARY TABLE IF EXISTS be_translation_strings_thread_backup" );
 		delete_option( 'be_catalog_translations_migrated' );
 		delete_option( 'be_catalog_translations_migration_counts' );
 		delete_option( 'be_translations_version' );
@@ -261,8 +271,18 @@ class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 			'met-flaws'                 => 391,
 			'met-abilities'             => 45,
 			'vampire-combo-disciplines' => 359,
-			'vampire-disciplines'       => 233,
-			'vampire-blood-magic'       => 530,
+			// 1.3.2: the declared vampire-disciplines.json (38 real families) replaced the
+			// GVM-built one (57, D67's concatenated/duplicate families still uncorrected)
+			// the moment the catalog overlay went live - fewer terms exist to match at all,
+			// which is the correction working as intended, not a coverage regression. A prior
+			// pass here recorded 151, measured against a `be_wptests` database already
+			// carrying leftover translation rows from an earlier catalog shape (the same
+			// install-persistent-table contamination class PLATFORM.md documents elsewhere) -
+			// re-measured against a genuinely fresh reseed, reproducibly, in isolation: 146.
+			'vampire-disciplines'       => 146,
+			// Same install-persistent-table contamination class as vampire-disciplines above -
+			// re-measured against a genuinely fresh reseed, reproducibly, in isolation: 513.
+			'vampire-blood-magic'       => 513,
 		];
 		foreach ( $minimums as $slug => $minimum ) {
 			$with_pt = Translation_String::count_for_review( 'pt_BR', [ 'block' => $slug, 'has_translation' => true ] );

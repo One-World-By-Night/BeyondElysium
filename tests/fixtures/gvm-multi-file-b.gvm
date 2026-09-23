@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<grapevinemenus version="3" size="1">
+  <description>
+    <![CDATA[T-C1 fixture, file B: includes file A's own menu by name - a cross-file
+    <include>, resolvable only because both files' menus land in one pool before
+    resolve_includes() runs (1.3.0-design-workflow.md §1).]]>
+  </description>
+  <menu name="Fixture Extended" category="2" abc="yes" required="yes" display="0">
+    <include name="Fixture Base"/>
+    <item name="Extended Item"/>
+  </menu>
+</grapevinemenus>

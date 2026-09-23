@@ -258,6 +258,18 @@ class Change_Validator {
 		$held_names = array_values( array_filter( array_map( static fn( $row ) => is_array( $row ) ? ( $row['name'] ?? null ) : null, $held ), 'is_string' ) );
 
 		$resolved = self::resolve_name( $trait['name'], $catalog_names );
+		if ( $resolved === null && ! in_array( $trait['name'], $held_names, true ) ) {
+			// 1.3.2 alias routing: nothing carries this literal name today, but the catalog
+			// may recognize it as a recorded `aliases` rename (1.3.1-design-workflow.md
+			// §11.7 item 1). Checked only once "already held under this exact spelling" is
+			// ruled out, so a rename can never repoint the identity of a row `sheet_data`
+			// still stores under the old spelling - `Trait_Identity`/`trait_row_conflict()`
+			// below match on the submitted name, unchanged.
+			$aliased = Trait_Alias_Resolver::find_item_by_name( (array) ( $definition->items ?? [] ), $trait['name'] );
+			if ( $aliased !== null && isset( $aliased->name ) && is_string( $aliased->name ) ) {
+				$resolved = $aliased->name;
+			}
+		}
 		if ( $resolved !== null ) {
 			// A catalog name is priced from the catalog - never as a free custom entry.
 			$trait['name'] = $resolved;
@@ -464,6 +476,17 @@ class Change_Validator {
 		$power_name = isset( $trait['power_name'] ) && is_string( $trait['power_name'] ) && $trait['power_name'] !== '' ? $trait['power_name'] : null;
 
 		$family = self::resolve_name( $trait['name'], array_keys( $families ) );
+		if ( $family === null && ! $held_pick( $trait['name'], $power_name ) ) {
+			// 1.3.2 alias routing: nothing carries this literal family name today, but the
+			// catalog may recognize it as a recorded `aliases` rename or a `split_from`
+			// (1.3.1-design-workflow.md §11.7 item 1). Checked only once "already held under
+			// this exact spelling" is ruled out, for the same non-destructive reason as
+			// `validate_trait_list()`'s own alias check above.
+			$aliased = Trait_Alias_Resolver::find_power_by_name( (array) ( $definition->powers ?? [] ), $trait['name'] );
+			if ( $aliased !== null && isset( $aliased->name ) && is_string( $aliased->name ) ) {
+				$family = $aliased->name;
+			}
+		}
 		if ( $family !== null ) {
 			$trait['name'] = $family;
 			unset( $trait['custom'] );
@@ -483,6 +506,18 @@ class Change_Validator {
 					}
 				}
 				$pick = self::resolve_name( $power_name, $picks );
+				if ( $pick === null && ! $held_pick( $family, $power_name ) ) {
+					// 1.3.2 alias routing: a rung/pick's own recorded `aliases`
+					// (`vampire-blood-magic`'s `Grave's Decay` rung answers to `Dissolve the
+					// Flesh` and `Disolve` alike).
+					$aliased_level = Trait_Alias_Resolver::find_level_by_name(
+						\BeyondElysium\Services\Power_Levels::all( $families[ $family ] ),
+						$power_name
+					);
+					if ( $aliased_level !== null && isset( $aliased_level->power_name ) && is_string( $aliased_level->power_name ) ) {
+						$pick = $aliased_level->power_name;
+					}
+				}
 				if ( $pick !== null ) {
 					$trait['power_name'] = $pick;
 				} elseif ( $type !== 'add_trait' && $held_pick( $family, $power_name ) ) {

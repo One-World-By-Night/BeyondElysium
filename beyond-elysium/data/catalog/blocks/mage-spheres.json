@@ -1,0 +1,420 @@
+{
+  "format": 1,
+  "slug": "mage-spheres",
+  "name": "Spheres",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "provenance": {
+    "sources": [
+      "Laws of Ascension (WW05022) - Sphere 4/4/8/8/12 across Initiate, Apprentice, Disciple, Adept, Master; non-specialty 5/10/15 (MET-POWER-ACQUISITION.md, Mage)",
+      "GVM: Spheres / Sphere Levels (family list and rank names)"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/build_mage_spheres.py + rulings/mage-spheres.json"
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced"
+      ],
+      "ladder": {
+        "basic": 2,
+        "intermediate": 2,
+        "advanced": 1
+      },
+      "costs": {
+        "basic": 4,
+        "intermediate": 8,
+        "advanced": 12
+      },
+      "out_of_type": {
+        "basic": "+1",
+        "intermediate": "+2",
+        "advanced": "+3"
+      },
+      "levels": null,
+      "categories": null,
+      "untiered": null
+    },
+    "atomic": true,
+    "sequential": true,
+    "allow_custom": true,
+    "shape": "shared_levels",
+    "blood_magic": false,
+    "traditions": [],
+    "powers": [
+      {
+        "name": "Correspondence",
+        "source": "Sphere Levels",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Initiate",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Apprentice",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Disciple",
+            "cost": "8"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Adept",
+            "cost": "8"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Master",
+            "cost": "12"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Dimensional Science",
+        "source": "Sphere Levels",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Initiate",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Apprentice",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Disciple",
+            "cost": "8"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Adept",
+            "cost": "8"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Master",
+            "cost": "12"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Entropy",
+        "source": "Sphere Levels",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Initiate",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Apprentice",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Disciple",
+            "cost": "8"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Adept",
+            "cost": "8"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Master",
+            "cost": "12"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Forces",
+        "source": "Sphere Levels",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Initiate",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Apprentice",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Disciple",
+            "cost": "8"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Adept",
+            "cost": "8"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Master",
+            "cost": "12"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Life",
+        "source": "Sphere Levels",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Initiate",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Apprentice",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Disciple",
+            "cost": "8"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Adept",
+            "cost": "8"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Master",
+            "cost": "12"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Matter",
+        "source": "Sphere Levels",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Initiate",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Apprentice",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Disciple",
+            "cost": "8"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Adept",
+            "cost": "8"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Master",
+            "cost": "12"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Mind",
+        "source": "Sphere Levels",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Initiate",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Apprentice",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Disciple",
+            "cost": "8"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Adept",
+            "cost": "8"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Master",
+            "cost": "12"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Prime",
+        "source": "Sphere Levels",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Initiate",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Apprentice",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Disciple",
+            "cost": "8"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Adept",
+            "cost": "8"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Master",
+            "cost": "12"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Spirit",
+        "source": "Sphere Levels",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Initiate",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Apprentice",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Disciple",
+            "cost": "8"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Adept",
+            "cost": "8"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Master",
+            "cost": "12"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Time",
+        "source": "Sphere Levels",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Initiate",
+            "cost": "4"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Apprentice",
+            "cost": "4"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Disciple",
+            "cost": "8"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Adept",
+            "cost": "8"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Master",
+            "cost": "12"
+          }
+        ],
+        "elder": {}
+      }
+    ]
+  }
+}

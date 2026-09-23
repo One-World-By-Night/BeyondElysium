@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<grapevinemenus version="3" size="1">
+  <description>
+    <![CDATA[T-C1 fixture, file A: defines the menu file B cross-includes.]]>
+  </description>
+  <menu name="Fixture Base" abc="yes" required="yes" display="0">
+    <item name="Base Item One"/>
+    <item name="Base Item Two"/>
+  </menu>
+</grapevinemenus>

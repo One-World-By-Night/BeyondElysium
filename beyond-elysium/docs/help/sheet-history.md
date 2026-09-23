@@ -1,18 +1,14 @@
 # Change History
 
-The full record of every change ever submitted for a character - approved, rejected, and
-still pending - newest first.
+The full record of every change ever submitted for a character - approved, rejected, and still pending - newest first.
 
 ## Who can use this
 
-Anyone who can open the character's sheet - a player for their own character, Storytellers
-(HST and AST) for any character in the chronicle.
+Anyone who can open the character's sheet - a player for their own character, Storytellers (HST and AST) for any character in the chronicle.
 
 ## How to get there
 
-Character Sheet → pick **View history** in the actions list and click **Go**. The same content
-also appears inline on the sheet whenever **XP History** is checked in the **Print / Export**
-panel - see [Print / Export](sheet-print-export.md).
+Character Sheet → pick **View history** in the actions list and click **Go**. The same content also appears inline on the sheet whenever **XP History** is checked in the **Print / Export** panel - see [Print / Export](sheet-print-export.md).
 
 ## The screen
 
@@ -34,8 +30,7 @@ panel - see [Print / Export](sheet-print-export.md).
 
 1. Open the character's Sheet.
 2. Pick **View history** and click **Go**.
-3. Find the change - **Pending** means it's still waiting on a Storyteller; **Approved** or
-   **Rejected** means it's been decided.
+3. Find the change - **Pending** means it's still waiting on a Storyteller; **Approved** or **Rejected** means it's been decided.
 
 ### Read a Storyteller's note on a change
 
@@ -48,22 +43,16 @@ panel - see [Print / Export](sheet-print-export.md).
 
 ## Things to know
 
-- This is the complete record - approved and rejected changes stay here, not just pending
-  ones.
+- This is the complete record - approved and rejected changes stay here, not just pending ones.
 - A rejected change never touched the sheet, so rejecting it undoes nothing.
-- This list shows what happened to a change, not why it needed Storyteller review in the
-  first place - a Storyteller sees that reasoning while it's still in the
-  [Approval Queue](approval-queue.md).
-- The submitter's note and a Storyteller's reviewing note are always kept separate here, even
-  on the same change.
+- This list shows what happened to a change, not why it needed Storyteller review in the first place - a Storyteller sees that reasoning while it's still in the [Approval Queue](approval-queue.md).
+- The submitter's note and a Storyteller's reviewing note are always kept separate here, even on the same change.
 
 ## Troubleshooting
 
-- **"No changes yet," even though I've made edits.** Nothing has been submitted for this
-  character yet, or you're looking at a different character than you expected.
+- **"No changes yet," even though I've made edits.** Nothing has been submitted for this character yet, or you're looking at a different character than you expected.
 - **"Failed to load change history."** Refresh the page.
-- **A change I remember submitting isn't here.** Each character keeps its own separate
-  history - make sure you're on the right one.
+- **A change I remember submitting isn't here.** Each character keeps its own separate history - make sure you're on the right one.
 
 ## Related
 

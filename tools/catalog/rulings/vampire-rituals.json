@@ -1,0 +1,14 @@
+{
+  "group_spelling": {
+    "map": {"Ahku": "Akhu"},
+    "evidence": "47 items file their tradition as 'Ahku'; every other block, the blood-magic traditions list and the research spell it 'Akhu'. The group facet is corrected; the item names (which held data matches) are not."
+  },
+  "costs": {
+    "items": {
+      "Gargoyle: Defender of the Haven (int)": {
+        "cost": "4",
+        "evidence": "Faith and Fire lists Defender of the Haven as an Intermediate Gargoyle ritual (met/faith-and-fire-gargoyle-powers.json); rituals are 2/4/6 and its two intermediate siblings are seeded at 4. Seeded at 2."
+      }
+    }
+  }
+}

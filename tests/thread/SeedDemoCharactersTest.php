@@ -100,7 +100,7 @@ class SeedDemoCharactersTest extends WP_UnitTestCase {
 				} elseif ( $block->section_type === 'identity_field' ) {
 					foreach ( (array) $definition->fields as $field ) {
 						$value = $held[ $field->name ] ?? null;
-						if ( $value !== null && $field->field_type === 'select' && ! empty( $field->options ) && ! in_array( $value, (array) $field->options, true ) ) {
+						if ( $value !== null && $field->field_type === 'select' && empty( $field->allow_custom ) && ! empty( $field->options ) && ! in_array( $value, (array) $field->options, true ) ) {
 							$problems[] = "{$fixture['name']}: {$slug} {$field->name} offers no {$value}";
 						}
 					}

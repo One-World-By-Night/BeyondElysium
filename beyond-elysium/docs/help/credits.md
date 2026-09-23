@@ -1,18 +1,14 @@
 # Powered by BeyondElysium
 
-A small attribution line under every front-end Beyond Elysium page, and the Credits modal it
-opens: a link to beyondelysium.com, a short credits note, and an in-memoriam list.
+A small attribution line under every front-end Beyond Elysium page, and the Credits modal it opens: a link to beyondelysium.com, a short credits note, and an in-memoriam list.
 
 ## Who can use this
 
-Anyone - this appears under every front-end screen the plugin renders, in every chronicle,
-regardless of your role. Editing the credits text or the in-memoriam list is limited to a
-site administrator.
+Anyone - this appears under every front-end screen the plugin renders, in every chronicle, regardless of your role. Editing the credits text or the in-memoriam list is limited to a site administrator.
 
 ## How to get there
 
-Nothing to navigate to - it appears automatically at the bottom of any front-end Beyond
-Elysium page or widget you're already using. Click **BeyondElysium** in that line to open it.
+Nothing to navigate to - it appears automatically at the bottom of any front-end Beyond Elysium page or widget you're already using. Click **BeyondElysium** in that line to open it.
 
 ## The screen
 
@@ -43,21 +39,15 @@ Elysium page or widget you're already using. Click **BeyondElysium** in that lin
 
 ## Things to know
 
-- **This text is shared across the whole site, not per chronicle.** Every chronicle's front
-  end shows the same credits text and the same in-memoriam list.
-- **wp-admin has its own, separate footer.** The dedication shown on the plugin's wp-admin
-  screens is fixed and doesn't read this text - only the front-end modal described here is
-  editable.
-- **Saving replaces the whole in-memoriam list.** Removing a name and saving takes it off the
-  list for good; there's no separate undo beyond typing it back in before you save.
+- **This text is shared across the whole site, not per chronicle.** Every chronicle's front end shows the same credits text and the same in-memoriam list.
+- **wp-admin has its own, separate footer.** The dedication shown on the plugin's wp-admin screens is fixed and doesn't read this text - only the front-end modal described here is editable.
+- **Saving replaces the whole in-memoriam list.** Removing a name and saving takes it off the list for good; there's no separate undo beyond typing it back in before you save.
 
 ## Troubleshooting
 
 - **"Failed to load credits."** Refresh and try again.
-- **"Failed to save changes."** Try again; if it keeps happening, check that you're still
-  signed in as a site administrator.
-- **I don't see an Edit button.** Editing is limited to a site administrator - anyone else
-  sees the read-only content only.
+- **"Failed to save changes."** Try again; if it keeps happening, check that you're still signed in as a site administrator.
+- **I don't see an Edit button.** Editing is limited to a site administrator - anyone else sees the read-only content only.
 
 ## Related
 

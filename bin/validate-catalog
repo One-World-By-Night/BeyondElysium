@@ -1,7 +1,8 @@
 #!/usr/bin/env php
 <?php
 /**
- * Validates every declared catalog file against reference/CATALOG-JSON-FORMAT.md §7.
+ * Validates every declared catalog file against reference/CATALOG-JSON-FORMAT.md §7 - each
+ * file's envelope and payload, then (rules 6 and 7) that every slug it references has a file.
  *
  * Run from bin/verify, which fails the build on any error - a malformed catalog must never
  * reach a seed. Exits 0 and says so when no catalog directory exists yet: the files arrive
@@ -43,26 +44,44 @@ if ( $files === [] ) {
 
 $total_errors = 0;
 $bad_files    = 0;
+$decoded      = [];
+$block_slugs  = [];
+$stack_slugs  = [];
 
+// Pass 1: decode everything, so rules 6 and 7 can check references against the whole set.
 foreach ( $files as $path ) {
-	$stem = pathinfo( $path, PATHINFO_FILENAME );
 	$raw  = (string) file_get_contents( $path );
 	$data = json_decode( $raw, true );
-
 	if ( json_last_error() !== JSON_ERROR_NONE ) {
-		printf( "  %s\n      not valid JSON: %s\n", $path, json_last_error_msg() );
-		$total_errors++;
-		$bad_files++;
+		$decoded[ $path ] = 'not valid JSON: ' . json_last_error_msg();
 		continue;
 	}
 	if ( ! is_array( $data ) ) {
-		printf( "  %s\n      top level must be an object\n", $path );
+		$decoded[ $path ] = 'top level must be an object';
+		continue;
+	}
+	$decoded[ $path ] = $data;
+	$slug             = (string) ( $data['slug'] ?? '' );
+	if ( ( $data['kind'] ?? '' ) === 'block' ) {
+		$block_slugs[] = $slug;
+	} elseif ( ( $data['kind'] ?? '' ) === 'stack' ) {
+		$stack_slugs[] = $slug;
+	}
+}
+
+// Pass 2: each file on its own, then its references.
+foreach ( $decoded as $path => $data ) {
+	if ( is_string( $data ) ) {
+		printf( "  %s\n      %s\n", $path, $data );
 		$total_errors++;
 		$bad_files++;
 		continue;
 	}
-
-	$errors = Catalog_Validator::validate_block( $data, $stem );
+	$stem   = pathinfo( $path, PATHINFO_FILENAME );
+	$errors = array_merge(
+		Catalog_Validator::validate_file( $data, $stem ),
+		Catalog_Validator::validate_references( $data, $stem, $block_slugs, $stack_slugs )
+	);
 	if ( $errors === [] ) {
 		continue;
 	}

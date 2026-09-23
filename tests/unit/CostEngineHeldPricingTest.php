@@ -66,7 +66,12 @@ class CostEngineHeldPricingTest extends TestCase {
 	public function test_a_catalog_item_with_no_cost_is_unpriced_never_zero(): void {
 		$definition = self::def( 'met-physical-traits' );
 		$item       = self::$definitions['met-physical-traits']->items[0];
-		$this->assertObjectNotHasProperty( 'cost', $item, 'every met-physical-traits item has no cost field (point-calculator-design.md §0)' );
+		// 1.3.2: the declared file states `"cost": null` explicitly rather than omitting the
+		// key at all (format §4.1 - tier/group/subgroup/cost are present even when null, so
+		// "nobody set this" is distinguishable from "this file predates the field"). `isset()`
+		// reads false for both an absent key and a present-null one, so this still asserts
+		// exactly what it always has - no real cost - under either shape.
+		$this->assertFalse( isset( $item->cost ), 'every met-physical-traits item carries no real cost (point-calculator-design.md §0)' );
 
 		$result = Cost_Engine::price_held_trait_list_item( $definition, [ 'name' => $item->name, 'count' => 3 ] );
 
@@ -127,17 +132,18 @@ class CostEngineHeldPricingTest extends TestCase {
 		$this->assertNotEmpty( $definition->sequential ?? false, 'mage-spheres must be sequential for this test to mean anything' );
 
 		// Three rungs of mage-spheres' declared 2/2/1 ladder are basic, basic,
-		// intermediate - `5+5+10 = 20`, against the 30 this asserted when every rank
-		// mapped to its own tier. The scale still comes from the block's own seeded data
-		// (5/10/15, not vampire-disciplines' 3/6/9), which is the point this test has
-		// always made and still makes.
+		// intermediate. The scale comes from the block's own seeded data, which is the
+		// point this test has always made and still makes - only the data itself has
+		// changed since.
 		//
-		// D70 says that seeded 5/10/15 is itself the non-specialty price and the base
-		// should be 4/8/12. That is a **catalog** correction and belongs to 1.3.0 - this
-		// release changes the ladder arithmetic, never a price.
+		// D70: the GVM-seeded 5/10/15 was itself the non-specialty price, with the base
+		// meant to be 4/8/12 (owner ruling: reprice with no adjustment to existing XP).
+		// That catalog correction landed for real in 1.3.0's declared `mage-spheres.json`,
+		// ingested here for the first time - `4+4+8 = 16`, not the pre-correction `20`
+		// (`5+5+10`) this asserted before a declared file existed for this block.
 		$result = Cost_Engine::price_held_tiered_power( $definition, [ 'name' => 'Correspondence', 'level' => 3 ], true );
 
-		$this->assertSame( 20, $result['xp'] );
+		$this->assertSame( 16, $result['xp'] );
 		$this->assertSame( 'sequential_sum', $result['basis'] );
 	}
 
@@ -397,6 +403,11 @@ class CostEngineHeldPricingTest extends TestCase {
 			[ 'mage-resources',       'Willpower', 3, 5 ],
 			[ 'changeling-resources', 'Glamour',   3, 4 ],
 			[ 'changeling-resources', 'Willpower', 3, 3 ],
+			// 1.3.2: Banality was unpriced under the GVM path; the declared
+			// `changeling-resources.json` prices it for real (§2 of the 1.3 review index -
+			// "Changeling Banality | 2 (was unpriced) | 1.3.0"), landing here for the first
+			// time via ingestion rather than a GVM/CSV change. No free_dots declared.
+			[ 'changeling-resources', 'Banality',  2, null ],
 		];
 
 		foreach ( $cases as [ $block_slug, $pool_name, $expected_cost, $expected_free ] ) {
@@ -410,13 +421,15 @@ class CostEngineHeldPricingTest extends TestCase {
 		$never_priced = [
 			[ 'vampire-resources', 'Blood' ],
 			[ 'vampire-resources', 'Morality' ],
-			[ 'changeling-resources', 'Banality' ],
 			[ 'mage-resources', 'Quintessence' ],
 			[ 'mage-resources', 'Paradox' ],
 		];
 		foreach ( $never_priced as [ $block_slug, $pool_name ] ) {
 			$pool = $this->find_pool( self::def( $block_slug ), $pool_name );
-			$this->assertObjectNotHasProperty( 'cost_per_dot', $pool, "{$block_slug}.{$pool_name} must stay unpriced" );
+			// 1.3.2: a declared resource_pool file states `"cost_per_dot": null` explicitly
+			// rather than omitting the key - see the identical note on the trait_list case
+			// above. isset() reads false either way.
+			$this->assertFalse( isset( $pool->cost_per_dot ), "{$block_slug}.{$pool_name} must stay unpriced" );
 		}
 	}
 

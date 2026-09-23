@@ -1,0 +1,269 @@
+{
+  "format": 1,
+  "slug": "mortal-theurgy",
+  "name": "Theurgy",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "provenance": {
+    "sources": [
+      "Grapevine Menus XML.gvm: the \"Theurgy, Revised\" container with \"Theurgy\" filling any path it lacks",
+      "Rungs, costs and tiers from each item's own GVM cost and note (3/3/6/6/9); spells, rituals and formulae are separate purchases and go to mortal-hedge-magic-formulae"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py",
+    "notes": "1.3.0 decision 8 - split out of the mortal-numina container, which copied other stacks' catalogues instead of referencing them."
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced"
+      ],
+      "ladder": {
+        "basic": 2,
+        "intermediate": 2,
+        "advanced": 1
+      },
+      "costs": {
+        "basic": 3,
+        "intermediate": 6,
+        "advanced": 9
+      },
+      "out_of_type": {
+        "basic": "+1",
+        "intermediate": "+1",
+        "advanced": "+1"
+      },
+      "levels": null,
+      "categories": null,
+      "untiered": null
+    },
+    "atomic": true,
+    "allow_custom": true,
+    "powers": [
+      {
+        "name": "Via Geniorum",
+        "source": "GVM: Via Geniorum",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "First Grade",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Second Grade",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Third Grade",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Fourth Grade",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Fifth Grade",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Via Ignis",
+        "source": "GVM: Via Ignis",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Burning",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Searing",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Branding",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Cleansing",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Purifying",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Via Medicamenti",
+        "source": "GVM: Via Medicamenti",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Ease Suffering",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Heal Minor Wounds",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Heal Major Injuries",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Heal Chronic Condition",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Hand of the Christ",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Via Necromantiae",
+        "source": "GVM: Via Necromantiae",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Seance",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Communion",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Influence",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Vision",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Pierce the Veil",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Via Oraculi",
+        "source": "GVM: Via Oraculi",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "First Grade",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Second Grade",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Third Grade",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Fourth Grade",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Fifth Grade",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Via Defensorum",
+        "source": "GVM: Warding",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Halting the Approach",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Glancing Blow",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Neutral Guard",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Force Shield",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Barrier",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      }
+    ]
+  }
+}

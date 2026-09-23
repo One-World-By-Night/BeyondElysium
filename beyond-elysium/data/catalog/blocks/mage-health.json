@@ -1,0 +1,112 @@
+{
+  "format": 1,
+  "slug": "mage-health",
+  "name": "Health",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "allow_custom": false,
+    "allow_multiples": false,
+    "items": [
+      {
+        "name": "Healthy",
+        "cost": null,
+        "tier": null,
+        "group": null,
+        "subgroup": null,
+        "source": null,
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": []
+      },
+      {
+        "name": "Bruised",
+        "cost": null,
+        "tier": null,
+        "group": null,
+        "subgroup": null,
+        "source": null,
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": []
+      },
+      {
+        "name": "Wounded",
+        "cost": null,
+        "tier": null,
+        "group": null,
+        "subgroup": null,
+        "source": null,
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": []
+      },
+      {
+        "name": "Incapacitated",
+        "cost": null,
+        "tier": null,
+        "group": null,
+        "subgroup": null,
+        "source": null,
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": []
+      },
+      {
+        "name": "Mortally Wounded",
+        "cost": null,
+        "tier": null,
+        "group": null,
+        "subgroup": null,
+        "source": null,
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": []
+      }
+    ],
+    "default_held": [
+      {
+        "name": "Healthy",
+        "count": 2
+      },
+      {
+        "name": "Bruised",
+        "count": 3
+      },
+      {
+        "name": "Wounded",
+        "count": 2
+      },
+      {
+        "name": "Incapacitated",
+        "count": 1
+      },
+      {
+        "name": "Mortally Wounded",
+        "count": 1
+      }
+    ]
+  }
+}

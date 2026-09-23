@@ -11,6 +11,13 @@ use PHPUnit\Framework\TestCase;
  * for the GVM-only path this overlay sits on top of.
  *
  * @see BE_PROCESS/releases/workflow-0.10.md
+ *
+ * **1.3.2 note.** `vampire-disciplines`/`vampire-combo-disciplines`/`vampire-blood-magic`
+ * now also have declared JSON files, preferred over these GVM/CSV-built blocks in the real
+ * seed list (`Seeder::get_blocks_to_seed()`). This test is about the CSV overlay mechanism
+ * itself, not about which block ships today, so it reads `get_gvm_blocks_to_seed()` (the
+ * pre-overlay path) directly and stays exactly as it was before the declared catalog
+ * existed.
  */
 class MetCsvSeederTest extends TestCase {
 
@@ -19,7 +26,7 @@ class MetCsvSeederTest extends TestCase {
 
 	public static function setUpBeforeClass(): void {
 		self::$blocks = [];
-		foreach ( Seeder::get_blocks_to_seed() as $block ) {
+		foreach ( Seeder::get_gvm_blocks_to_seed() as $block ) {
 			self::$blocks[ $block['slug'] ] = $block;
 		}
 	}
@@ -358,6 +365,21 @@ class MetCsvSeederTest extends TestCase {
 	/**
 	 * Measured against the real shipped CSV + GVM data. A change here means one of the two
 	 * source files changed - re-measure, don't just widen the assertion.
+	 *
+	 * Stays 1291, 1.3.0 C8 (1.3.0-design-workflow.md §5.1 rules 1/2): the raw GVM side of
+	 * this merge counted six same-name rituals twice, but dedup has to run on each item's
+	 * real *final* (labeled) name, not its raw one - "Craft Bloodstone," "Dominoe of
+	 * Life," and "Impassable Trail" each print at the same cost in both "Rituals, Basic"
+	 * and "Rituals, Sabbat, Basic," but resolve to genuinely different labeled rows
+	 * ("Thaumaturgy: ..." vs "Sabbat: ...") - real, distinct catalog entries, not a
+	 * duplicate. "Eyes of the Grave" (Mortis + Necromancy) is the same shape - "Mortis: ..."
+	 * and "Necromancy: ..." stay separate. Only "Grasp the Ghostly" and "Healing Blood"
+	 * are genuine duplicates: their own notes ("adv. necro"/"adv. assamite") trigger
+	 * `note_overrides`, which resolves both occurrences to the identical final label
+	 * ("Necromancy: Grasp the Ghostly (adv)", "Assamite: Healing Blood (adv)") - those two
+	 * collapse to one row each (205 raw items, not 207); the CSV overlay's own downstream
+	 * total is unaffected either way, since it was already independently deduping this
+	 * exact overlap on its own end.
 	 */
 	public function test_ritual_count(): void {
 		$this->assertCount( 1291, self::$blocks['vampire-rituals']['definition']['items'] );

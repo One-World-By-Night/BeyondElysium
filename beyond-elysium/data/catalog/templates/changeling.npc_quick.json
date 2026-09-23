@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "slug": "changeling.npc_quick",
+  "name": "Changeling NPC Sheet (Quick)",
+  "kind": "template",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_templates (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "columns": 2,
+    "version": 1,
+    "sections": [
+      {
+        "order": 1,
+        "title": null,
+        "width": "half",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "changeling-identity"
+      },
+      {
+        "order": 2,
+        "title": "Quick Stats",
+        "width": "half",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "npc-quick-stats"
+      },
+      {
+        "order": 1,
+        "title": "Roleplaying Notes",
+        "width": "half",
+        "column": 2,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "npc-roleplaying-notes"
+      }
+    ]
+  }
+}

@@ -13,6 +13,13 @@ use PHPUnit\Framework\TestCase;
  * the same split (Group-less rows) and vampire-combo-disciplines (untouched by this split).
  *
  * @see BE_PROCESS/releases/0.99.2-workflow.md
+ *
+ * **1.3.2 note.** `vampire-blood-magic` now also has a declared JSON file, which
+ * `Seeder::get_blocks_to_seed()` prefers over this GVM/CSV-built block in the real seed
+ * list. This test is about the GVM/CSV merge mechanism itself - the heuristic that
+ * resolves competing candidate ladders, tested against the real shipped CSV - not about
+ * which block ships today, so it reads `get_gvm_blocks_to_seed()` (the pre-overlay path)
+ * directly and stays exactly as it was before the declared catalog existed.
  */
 class BloodMagicSeederTest extends TestCase {
 
@@ -21,7 +28,7 @@ class BloodMagicSeederTest extends TestCase {
 
 	public static function setUpBeforeClass(): void {
 		self::$blocks = [];
-		foreach ( Seeder::get_blocks_to_seed() as $block ) {
+		foreach ( Seeder::get_gvm_blocks_to_seed() as $block ) {
 			self::$blocks[ $block['slug'] ] = $block;
 		}
 	}

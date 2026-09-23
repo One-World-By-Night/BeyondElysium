@@ -1,0 +1,1185 @@
+{
+  "format": 1,
+  "slug": "demon-evocations",
+  "name": "Lores (Evocations)",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "provenance": {
+    "sources": [
+      "OWBN Fallen Genre Packet (2021), OWBN0052-Demon-Fallen Genre-2021.pdf, Chapter 3 (Subtle Instruments: Lores), printed p. 44-129",
+      "MET-POWER-ACQUISITION.md §3 (Demon) - Lore 3/6/9, +1 outside House/Common"
+    ],
+    "extracted": "2026-09-21",
+    "tool": "samples/research/demon/owbn/lores.json (extract_lores.py) restructured by hand into the 1.2.10 _meta/levels/elder shape"
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced",
+        "visage",
+        "bonus"
+      ],
+      "ladder": {
+        "basic": 2,
+        "intermediate": 2,
+        "advanced": 1
+      },
+      "costs": {
+        "basic": 3,
+        "intermediate": 6,
+        "advanced": 9,
+        "visage": null,
+        "bonus": null
+      },
+      "out_of_type": {
+        "basic": "+1",
+        "intermediate": "+1",
+        "advanced": "+1",
+        "visage": "+1",
+        "bonus": "+1"
+      },
+      "levels": null,
+      "categories": [
+        "house"
+      ],
+      "untiered": null
+    },
+    "blood_magic": false,
+    "traditions": [],
+    "powers": [
+      {
+        "name": "Lore of Humanity",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Common"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Translate",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Insinuate",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Fade",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Confess",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Alter Memory",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Lore of the Celestials",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Devils"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Lamp of Faith",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Send Vision",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Pillar of Faith",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Fire of Heaven",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Hand of Faith",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Bel, the Visage of the Celestials",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of Flame",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Devils"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Fuel",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Ignite",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Command the Flame",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Holocaust",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Ride the Flames",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Nusku, the Visage of the Flames",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of Radiance",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Devils"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Voice of Heaven",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Exalt",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Aura of Legend",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "The Mark of the Celestials",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Revelation",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Qingu, the Visage of Radiance",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of Awakening",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Scourges"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Find the Faithful",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Cleanse",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Heal",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Animate",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Restore Life",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Dagan, The Visage of Awakening",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of the Firmament",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Scourges"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Remote Viewing",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Scry",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Mouth of the Damned",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Touch from Afar",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Many Places at Once",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Anshar, the Visage of the Firmament",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of the Winds",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Scourges"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Summon Wind",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Fist of Air",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Command the Wind",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Wall of Air",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Cyclone",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Ellil, the Visage of the Winds",
+              "cost": null
+            }
+          ],
+          "bonus": [
+            {
+              "level": null,
+              "tier": "bonus",
+              "power_name": "Immune to Falling Damage",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of the Earth",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Malefactors"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Earth Meld",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Roil the Earth",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Mold Earth",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Earth Storm",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Earthquake",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Kishar, the Visage of the Earth",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of Paths",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Malefactors"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Find Path",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Lay Path",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Conceal Path",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Close Path",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Warp Path",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Antu, the Visage of Paths",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of the Forge",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Malefactors"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Enhance Object",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Activate Object",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Shape Object",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Enchant Object",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Imbue Object",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Mummu, the Visage of the Forge",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of Patterns",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Fiends"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Sense Congruence",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Trace Pattern",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Foresee",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Causal Influence",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Twist Time",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Ninsun, the Visage of Patterns",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of Portals",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Fiends"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Create Ward",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Open/Close Portals",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Teleport",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Co-Locate",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Doorway into Darkness",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Nedu, the Visage of Portals",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of Light",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Fiends"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Light",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Bend Light",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Phantasm",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Illusion",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Coherent Light",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Shamash, the Visage of Light",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of Longing",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Defilers"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Read Emotion",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Empathic Response",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Manipulate Senses",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Obsession",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Inspire",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Ishhara, the Visage of Longing",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of Storms",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Defilers"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Summon Water",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Water Form",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Manipulate Weather",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Command the Storm",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Invoke the Storm",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Adad, the Visage of Storms",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of Transfiguration",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Defilers"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Mimic",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Alter Appearance",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Alter Shape",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Doppelganger",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Shapechange",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Mammetum, the Visage of Transfiguration",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of the Beast",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Devourers"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Summon Animals",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Command Animals",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Possess Animals",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Animal Form",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Create Chimera",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Zaltu, the Visage of the Beast",
+              "cost": null
+            }
+          ],
+          "bonus": [
+            {
+              "level": null,
+              "tier": "bonus",
+              "power_name": "Previously Published MET Animal Forms",
+              "cost": null
+            },
+            {
+              "level": null,
+              "tier": "bonus",
+              "power_name": "Animal Characteristics",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of the Wild",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Devourers"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Wilderness Sense",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Quicken Growth",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Command the Wild",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Possess Plant",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Mutate Plant",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Ninurtu, the Visage of the Wild",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of the Flesh",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Devourers"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Body Control",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Manipulate Nerves",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Manipulate Flesh",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Restore Flesh",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Shape Flesh",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Aruru, the Visage of Flesh",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of Death",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Slayers"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Read Fate",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Decay",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Vision of Mortality",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Extinguish Life",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Unlife",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Namtar, the Visage of Death",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of the Spirit",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Slayers"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Speak with the Dead",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Summon the Dead",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Command the Dead",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Anchor the Soul",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Restore the Dead",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Nergal, the Visage of the Spirit",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of the Realms",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Slayers"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Sense the Barrier",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Step Beyond the Veil",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Ghostwalk",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Reach Across the Barrier",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Pierce the Barrier",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "visage": [
+            {
+              "level": null,
+              "tier": "visage",
+              "power_name": "Ereshkigal, the Visage of the Realms",
+              "cost": null
+            }
+          ]
+        }
+      },
+      {
+        "name": "Lore of the Fundament",
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "category_values": {
+          "house": "Common"
+        },
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Manipulate Gravity",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Manipulate Adhesion",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Manipulate Inertia",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Manipulate Acceleration",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Manipulate Cohesion",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      }
+    ]
+  }
+}

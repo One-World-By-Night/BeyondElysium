@@ -1,0 +1,63 @@
+{
+  "format": 1,
+  "slug": "npc-quick-stats",
+  "name": "NPC Quick Stats",
+  "kind": "block",
+  "section_type": "identity_field",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "fields": [
+      {
+        "name": "Physical",
+        "field_type": "number",
+        "required": false
+      },
+      {
+        "name": "Social",
+        "field_type": "number",
+        "required": false
+      },
+      {
+        "name": "Mental",
+        "field_type": "number",
+        "required": false
+      },
+      {
+        "name": "Willpower",
+        "field_type": "number",
+        "required": false
+      },
+      {
+        "name": "Health",
+        "field_type": "text",
+        "required": false
+      },
+      {
+        "name": "Key Abilities",
+        "field_type": "textarea",
+        "required": false
+      },
+      {
+        "name": "Powers",
+        "field_type": "textarea",
+        "required": false
+      },
+      {
+        "name": "Equipment",
+        "field_type": "textarea",
+        "required": false
+      },
+      {
+        "name": "Notes",
+        "field_type": "textarea",
+        "required": false
+      }
+    ]
+  }
+}

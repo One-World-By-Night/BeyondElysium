@@ -1,0 +1,654 @@
+{
+  "format": 1,
+  "slug": "vampire-identity",
+  "name": "Vampire Identity",
+  "kind": "block",
+  "section_type": "identity_field",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh",
+      "Title: GVM menu(s) \"Title, Vampire\" (31 options)"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py",
+    "notes": "1.3.0 gap-audit class B: options from the Grapevine menus, `allow_custom` on so held free-text values stay valid."
+  },
+  "definition": {
+    "fields": [
+      {
+        "name": "Clan",
+        "field_type": "select",
+        "required": true,
+        "options": [
+          "Ahrimanes",
+          "Akunanse",
+          "Anda",
+          "Angellis Ater",
+          "Assamite",
+          "Assamite Antitribu",
+          "Assamite Sorcerers",
+          "Assamite Vizier",
+          "Assamites",
+          "Azaneali",
+          "Baali",
+          "Bedouin Warrior Assamite",
+          "Blood Brothers",
+          "Brotherhood of Midgard",
+          "Brujah",
+          "Brujah Antitribu",
+          "Byzantine Vizier Assamite",
+          "Caitiff",
+          "Cappadocian",
+          "Cappadocians",
+          "Children of Damballah",
+          "Children of Osiris",
+          "Daitya",
+          "Dark Age Gargoyles",
+          "Dark Age Sorcerer Assamite",
+          "Daughter of Cacophony",
+          "Daughters of Cacophony",
+          "Dominate Malkavians",
+          "Epicene Brujah",
+          "Followers of Set",
+          "Gangrel",
+          "Gangrel Antitribu",
+          "Gargoyles",
+          "Gargoyles, Dark Ages",
+          "Ghost Singer Gangrel",
+          "Ghoul",
+          "Giovanni",
+          "Guruhi",
+          "Harbingers of Skulls",
+          "Impundula",
+          "Ishtarri",
+          "Kairos Brujah",
+          "Kiasyd",
+          "Laibon",
+          "Lamia",
+          "Lasombra",
+          "Lasombra Antitribu",
+          "Lhiannan",
+          "Malkavian",
+          "Malkavian Antitribu",
+          "Mnemosyne",
+          "Nagaraja",
+          "Niktuku",
+          "Noiad",
+          "Nosferatu",
+          "Nosferatu Antitribu",
+          "Old Clan Tzimisce",
+          "Osebo",
+          "Panders",
+          "Ramanga",
+          "Ravenous Malkavian",
+          "Ravnos",
+          "Ravnos Antitribu",
+          "Salubri",
+          "Salubri Antitribu",
+          "Samedi",
+          "Scout Gargoyles",
+          "Sentinel Gargoyles",
+          "Serpents of the Light",
+          "Setite Warriors",
+          "Shango",
+          "Telyavelic Tremere",
+          "The Dracul",
+          "Tlacique",
+          "Toreador",
+          "Toreador Antitribu",
+          "Tremere",
+          "Tremere Antitribu",
+          "True Brujah",
+          "Tryphosan Malkavian",
+          "Tzimisce",
+          "Tzimisce, Old Clan",
+          "Ventrue",
+          "Ventrue Antitribu",
+          "Warrior Gargoyles",
+          "Witches of Echidna",
+          "Wu Zao"
+        ],
+        "allow_custom": true
+      },
+      {
+        "name": "Sect",
+        "field_type": "select",
+        "required": false,
+        "options": [
+          "Anarch",
+          "Autark",
+          "Cainite Heresy",
+          "Camarilla",
+          "Furores",
+          "Inconnu",
+          "Order of Bitter Ashes",
+          "Prometheans",
+          "Sabbat"
+        ]
+      },
+      {
+        "name": "Generation",
+        "field_type": "number",
+        "required": true,
+        "default": 13,
+        "min": 3,
+        "max": 15
+      },
+      {
+        "name": "Sire",
+        "field_type": "text",
+        "required": false
+      },
+      {
+        "name": "Title",
+        "field_type": "select",
+        "required": false,
+        "options": [
+          "Abbot",
+          "Archbishop",
+          "Archon",
+          "Berserk",
+          "Bishop",
+          "Cardinal",
+          "Chamberlain",
+          "Don",
+          "Dona",
+          "Ductus",
+          "Harpy",
+          "Huskarl",
+          "Jarl",
+          "Justicar",
+          "Keeper of Elysium",
+          "Lieutenant",
+          "Lord",
+          "Pack Lieutenant",
+          "Pack Priest",
+          "Paladin",
+          "Primogen",
+          "Prince",
+          "Priscus",
+          "Regent",
+          "Scourge",
+          "Seneschal",
+          "Sheriff",
+          "Skald",
+          "Templar",
+          "Warleader",
+          "Whip"
+        ],
+        "allow_custom": true
+      },
+      {
+        "name": "Morality Path",
+        "field_type": "select",
+        "required": true,
+        "options": [
+          "DA Road of Sin",
+          "Eastern Road of Paradox",
+          "Humanity",
+          "Path of Allied Night",
+          "Path of Apep",
+          "Path of Blood",
+          "Path of Bones",
+          "Path of Breath",
+          "Path of Caine",
+          "Path of Cathari",
+          "Path of Chivalry",
+          "Path of Christ",
+          "Path of Community",
+          "Path of Cruelty",
+          "Path of Daena",
+          "Path of Death and the Soul",
+          "Path of Devaraja",
+          "Path of Diamond",
+          "Path of Divinity",
+          "Path of Ecstacy",
+          "Path of Ecstasy",
+          "Path of Entelechy",
+          "Path of Evil Revelation",
+          "Path of Evil Revelations",
+          "Path of Harmony",
+          "Path of Hashshashin",
+          "Path of Honorable Accord",
+          "Path of Illumination",
+          "Path of Journeys",
+          "Path of Liberation",
+          "Path of Life",
+          "Path of Lightless Night",
+          "Path of Lilith",
+          "Path of Making",
+          "Path of Metamorphosis",
+          "Path of Night",
+          "Path of Nocturnal Redemption",
+          "Path of Orion",
+          "Path of Paradox",
+          "Path of Penitence",
+          "Path of Pleasure",
+          "Path of Power and the Inner Voice",
+          "Path of Redemption",
+          "Path of Retribution",
+          "Path of Revelations",
+          "Path of Righteous Night",
+          "Path of Righteousness",
+          "Path of Screams",
+          "Path of Self-Focus",
+          "Path of Set",
+          "Path of Set’s Honor",
+          "Path of Sutekh",
+          "Path of Tears",
+          "Path of Thorns",
+          "Path of Typhon",
+          "Path of the Abyss",
+          "Path of the Archangel",
+          "Path of the Beast",
+          "Path of the Devil",
+          "Path of the Feral Heart",
+          "Path of the Grey Hunter",
+          "Path of the Hive",
+          "Path of the Hunter",
+          "Path of the Merchant",
+          "Path of the Nomad",
+          "Path of the Prophet",
+          "Path of the Pure",
+          "Path of the Savage",
+          "Path of the Scorched Heart",
+          "Path of the Tyrant",
+          "Path of the Vizier",
+          "Path of the Warrior",
+          "Road of Ahura Mazda",
+          "Road of Angra Mainyu",
+          "Road of Blood",
+          "Road of Bones",
+          "Road of Chivalry",
+          "Road of Community",
+          "Road of Heaven",
+          "Road of Humanity",
+          "Road of Kings",
+          "Road of Lilith",
+          "Road of Metamorphosis",
+          "Road of Night",
+          "Road of Paradox",
+          "Road of Service",
+          "Road of Sin",
+          "Road of Typhon",
+          "Road of War",
+          "Road of Yasa",
+          "Road of Zarathustra",
+          "Road of the Abyss",
+          "Road of the Beast",
+          "Road of the Bones",
+          "Road of the Devil",
+          "Road of the Nomad",
+          "Road of the Serpent",
+          "Shariel El-Sama",
+          "Via Aesgard",
+          "Via Aesirgard",
+          "Via Einherjar",
+          "Western Road of Paradox",
+          "Zantosa"
+        ],
+        "allow_custom": true
+      },
+      {
+        "name": "Conscience or Conviction",
+        "field_type": "select",
+        "required": false,
+        "options": [
+          "Conscience",
+          "Conviction"
+        ]
+      },
+      {
+        "name": "Self-Control or Instinct",
+        "field_type": "select",
+        "required": false,
+        "options": [
+          "Self-Control",
+          "Instinct"
+        ]
+      }
+    ],
+    "clan_disciplines": {
+      "Anda": [
+        "Animalism",
+        "Fortitude",
+        "Protean"
+      ],
+      "Baali": [
+        "Daimoinon",
+        "Obfuscate",
+        "Presence"
+      ],
+      "Lamia": [
+        "Fortitude",
+        "Necromancy",
+        "Potence"
+      ],
+      "Noiad": [
+        "Animalism",
+        "Auspex",
+        "Protean"
+      ],
+      "Osebo": [
+        "Auspex",
+        "Celerity",
+        "Potence"
+      ],
+      "Brujah": [
+        "Celerity",
+        "Potence",
+        "Presence"
+      ],
+      "Daitya": [
+        "Obfuscate",
+        "Presence",
+        "Sadhana"
+      ],
+      "Guruhi": [
+        "Animalism",
+        "Potence",
+        "Presence"
+      ],
+      "Kiasyd": [
+        "Dominate",
+        "Mytherceria",
+        "Obtenebration"
+      ],
+      "Ravnos": [
+        "Animalism",
+        "Chimerstry",
+        "Fortitude"
+      ],
+      "Samedi": [
+        "Fortitude",
+        "Obfuscate",
+        "Thanatosis"
+      ],
+      "Shango": [
+        "Celerity",
+        "Dur-An-Ki",
+        "Obfuscate"
+      ],
+      "Gangrel": [
+        "Animalism",
+        "Fortitude",
+        "Protean"
+      ],
+      "Niktuku": [
+        "Auspex",
+        "Celerity",
+        "Potence"
+      ],
+      "Ramanga": [
+        "Obfuscate",
+        "Obtenebration",
+        "Presence"
+      ],
+      "Tremere": [
+        "Auspex",
+        "Dominate",
+        "Thaumaturgy"
+      ],
+      "Ventrue": [
+        "Dominate",
+        "Fortitude",
+        "Presence"
+      ],
+      "Akunanse": [
+        "Abombwe",
+        "Animalism",
+        "Fortitude"
+      ],
+      "Assamite": [
+        "Celerity",
+        "Obfuscate",
+        "Quietus"
+      ],
+      "Giovanni": [
+        "Dominate",
+        "Necromancy",
+        "Potence"
+      ],
+      "Ishtarri": [
+        "Celerity",
+        "Fortitude",
+        "Presence"
+      ],
+      "Lasombra": [
+        "Dominate",
+        "Obtenebration",
+        "Potence"
+      ],
+      "Lhiannan": [
+        "Animalism",
+        "Ogham",
+        "Presence"
+      ],
+      "Nagaraja": [
+        "Auspex",
+        "Dominate",
+        "Necromancy"
+      ],
+      "Tlacique": [
+        "Obfuscate",
+        "Presence",
+        "Protean"
+      ],
+      "Toreador": [
+        "Auspex",
+        "Celerity",
+        "Presence"
+      ],
+      "Tzimisce": [
+        "Animalism",
+        "Auspex",
+        "Vicissitude"
+      ],
+      "Assamites": [
+        "Celerity",
+        "Obfuscate",
+        "Quietus"
+      ],
+      "Gargoyles": [
+        "Fortitude",
+        "Potence",
+        "Visceratika"
+      ],
+      "Impundula": [
+        "Fortitude",
+        "Necromancy",
+        "Presence"
+      ],
+      "Malkavian": [
+        "Auspex",
+        "Dementation",
+        "Obfuscate"
+      ],
+      "Nosferatu": [
+        "Animalism",
+        "Obfuscate",
+        "Potence"
+      ],
+      "Cappadocian": [
+        "Auspex",
+        "Fortitude",
+        "Necromancy"
+      ],
+      "True Brujah": [
+        "Potence",
+        "Presence",
+        "Temporis"
+      ],
+      "Cappadocians": [
+        "Auspex",
+        "Fortitude",
+        "Necromancy"
+      ],
+      "Kairos Brujah": [
+        "Potence",
+        "Presence",
+        "Temporis"
+      ],
+      "Blood Brothers": [
+        "Fortitude",
+        "Potence",
+        "Sanguinus"
+      ],
+      "Epicene Brujah": [
+        "Potence",
+        "Presence",
+        "Temporis"
+      ],
+      "Assamite Vizier": [
+        "Auspex",
+        "Celerity",
+        "Quietus"
+      ],
+      "Scout Gargoyles": [
+        "Auspex",
+        "Flight",
+        "Obfuscate"
+      ],
+      "Setite Warriors": [
+        "Potence",
+        "Presence",
+        "Serpentis"
+      ],
+      "Brujah Antitribu": [
+        "Celerity",
+        "Potence",
+        "Presence"
+      ],
+      "Followers of Set": [
+        "Obfuscate",
+        "Presence",
+        "Serpentis"
+      ],
+      "Ravnos Antitribu": [
+        "Animalism",
+        "Chimerstry",
+        "Fortitude"
+      ],
+      "Old Clan Tzimisce": [
+        "Animalism",
+        "Auspex",
+        "Dominate"
+      ],
+      "Salubri Antitribu": [
+        "Auspex",
+        "Fortitude",
+        "Valeren"
+      ],
+      "Tremere Antitribu": [
+        "Auspex",
+        "Dominate",
+        "Thaumaturgy"
+      ],
+      "Ventrue Antitribu": [
+        "Dominate",
+        "Fortitude",
+        "Presence"
+      ],
+      "Warrior Gargoyles": [
+        "Flight",
+        "Fortitude",
+        "Protean"
+      ],
+      "Assamite Antitribu": [
+        "Celerity",
+        "Obfuscate",
+        "Quietus"
+      ],
+      "Assamite Sorcerers": [
+        "Assamite Sorcery",
+        "Obfuscate",
+        "Quietus"
+      ],
+      "Dark Age Gargoyles": [
+        "Fortitude",
+        "Potence",
+        "Visceratika"
+      ],
+      "Lasombra Antitribu": [
+        "Dominate",
+        "Obtenebration",
+        "Potence"
+      ],
+      "Sentinel Gargoyles": [
+        "Flight",
+        "Fortitude",
+        "Potence"
+      ],
+      "Telyavelic Tremere": [
+        "Auspex",
+        "Presence",
+        "Thaumaturgy"
+      ],
+      "Toreador Antitribu": [
+        "Auspex",
+        "Celerity",
+        "Presence"
+      ],
+      "Tzimisce, Old Clan": [
+        "Animalism",
+        "Auspex",
+        "Dominate"
+      ],
+      "Witches of Echidna": [
+        "Animalism",
+        "Presence",
+        "Setite Sorcery"
+      ],
+      "Dominate Malkavians": [
+        "Auspex",
+        "Dominate",
+        "Obfuscate"
+      ],
+      "Malkavian Antitribu": [
+        "Auspex",
+        "Dementation",
+        "Obfuscate"
+      ],
+      "Nosferatu Antitribu": [
+        "Animalism",
+        "Obfuscate",
+        "Potence"
+      ],
+      "Gargoyles, Dark Ages": [
+        "Fortitude",
+        "Potence",
+        "Visceratika"
+      ],
+      "Ghost Singer Gangrel": [
+        "Animalism",
+        "Auspex",
+        "Protean"
+      ],
+      "Harbingers of Skulls": [
+        "Auspex",
+        "Fortitude",
+        "Necromancy"
+      ],
+      "Children of Damballah": [
+        "Auspex",
+        "Presence",
+        "Serpentis"
+      ],
+      "Daughter of Cacophony": [
+        "Fortitude",
+        "Melpominee",
+        "Presence"
+      ],
+      "Serpents of the Light": [
+        "Obfuscate",
+        "Presence",
+        "Serpentis"
+      ],
+      "Daughters of Cacophony": [
+        "Fortitude",
+        "Melpominee",
+        "Presence"
+      ]
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "format": 1,
+  "slug": "vampire-virtues",
+  "name": "Vampire Virtues",
+  "kind": "block",
+  "section_type": "resource_pool",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "pools": [
+      {
+        "name": "Conscience",
+        "value_type": "integer",
+        "default_start": 1,
+        "max": 5,
+        "name_lookup": {
+          "table": {
+            "Conviction": "Conviction"
+          },
+          "keyed_by": {
+            "field": "Conscience or Conviction",
+            "block_slug": "vampire-identity"
+          }
+        }
+      },
+      {
+        "name": "Self-Control",
+        "value_type": "integer",
+        "default_start": 1,
+        "max": 5,
+        "name_lookup": {
+          "table": {
+            "Instinct": "Instinct"
+          },
+          "keyed_by": {
+            "field": "Self-Control or Instinct",
+            "block_slug": "vampire-identity"
+          }
+        }
+      },
+      {
+        "name": "Courage",
+        "value_type": "integer",
+        "default_start": 1,
+        "max": 5
+      }
+    ]
+  }
+}

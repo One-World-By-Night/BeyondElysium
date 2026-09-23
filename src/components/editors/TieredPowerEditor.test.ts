@@ -130,6 +130,43 @@ describe( 'ladderCeiling (1.2.10 §A - the D68 fix)', () => {
 		const def = metaDefinition( [ bloated ] );
 		expect( ladderCeiling( def ) ).toBe( 5 );
 	} );
+
+	/**
+	 * 1.3.2 regression, watched failing first against the unfixed function (which read
+	 * `ladder: {}` the same as "no ladder at all" and fell back to 5). Werewolf/Fera Gifts
+	 * are declared exactly this way (`reference/CATALOG-JSON-FORMAT.md` §4.2, "a pick-only
+	 * track... says so by declaring `ladder` as an explicit empty object") - every power is
+	 * bought by name from `elder`, never rated on a stepper, so the ceiling must be 0, not a
+	 * phantom 5-rung stepper nothing in the catalog prices.
+	 */
+	it( 'ceilings at 0 for a declared pick-only track, never the 5 fallback', () => {
+		const def: TieredPowerDefinition = {
+			powers: [],
+			sequential: false,
+			_meta: {
+				ranks: [ 'basic', 'intermediate', 'advanced' ],
+				ladder: {},
+				costs: { basic: 3, intermediate: 6, advanced: 9 },
+			},
+		};
+		expect( ladderCeiling( def ) ).toBe( 0 );
+	} );
+
+	it( 'still falls back to 5 when _meta exists but declares no ladder key at all', () => {
+		// A pre-1.2.10 block re-emitted with a partial `_meta` and no `ladder` key -
+		// distinct from `ladder: {}`, which is a real declaration. `ladder` is normally
+		// required on `TieredPowerMeta`; the cast below constructs the "not even attempted"
+		// shape this branch exists to distinguish from "attempted and empty".
+		const def = {
+			powers: [],
+			sequential: false,
+			_meta: {
+				ranks: [ 'basic', 'intermediate', 'advanced' ],
+				costs: { basic: 3, intermediate: 6, advanced: 9 },
+			},
+		} as unknown as TieredPowerDefinition;
+		expect( ladderCeiling( def ) ).toBe( 5 );
+	} );
 } );
 
 describe( 'incrementLevel / decrementLevel / clampToCeiling (E1 - a pick is never reachable from the stepper)', () => {

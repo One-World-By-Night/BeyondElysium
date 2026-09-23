@@ -1,0 +1,386 @@
+{
+  "format": 1,
+  "slug": "changeling-realms",
+  "name": "Changeling Realms",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh",
+      "Realms cost 2 per level, no tier vocabulary (1.2.10 S7; 1.3.0 D8)"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [],
+      "ladder": {},
+      "costs": {},
+      "out_of_type": null,
+      "levels": null,
+      "categories": null,
+      "untiered": {
+        "cost_per_level": 2
+      }
+    },
+    "shape": "named",
+    "atomic": true,
+    "sequential": true,
+    "allow_custom": true,
+    "powers": [
+      {
+        "name": "Actor",
+        "source": "Actor",
+        "levels": [
+          {
+            "level": 1,
+            "power_name": "True Friend",
+            "cost": "2"
+          },
+          {
+            "level": 2,
+            "power_name": "Personal Contact",
+            "cost": "2"
+          },
+          {
+            "level": 3,
+            "power_name": "Familiar Face",
+            "cost": "2"
+          },
+          {
+            "level": 4,
+            "power_name": "Complete Stranger",
+            "cost": "2"
+          },
+          {
+            "level": 5,
+            "power_name": "Dire Enemy",
+            "cost": "2"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Fae",
+        "source": "Fae",
+        "levels": [
+          {
+            "level": 1,
+            "power_name": "Hearty Commoner",
+            "cost": "2"
+          },
+          {
+            "level": 2,
+            "power_name": "Lofty Noble",
+            "cost": "2"
+          },
+          {
+            "level": 3,
+            "power_name": "Manifold Chimera",
+            "cost": "2"
+          },
+          {
+            "level": 4,
+            "power_name": "Elusive Gallain",
+            "cost": "2"
+          },
+          {
+            "level": 5,
+            "power_name": "Dweomer of Glamour",
+            "cost": "2"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Nature",
+        "source": "Nature",
+        "levels": [
+          {
+            "level": 1,
+            "power_name": "Raw Material",
+            "cost": "2"
+          },
+          {
+            "level": 2,
+            "power_name": "Verdant Forest",
+            "cost": "2"
+          },
+          {
+            "level": 3,
+            "power_name": "Feral Animal",
+            "cost": "2"
+          },
+          {
+            "level": 4,
+            "power_name": "Natural Phenomena",
+            "cost": "2"
+          },
+          {
+            "level": 5,
+            "power_name": "Base Element",
+            "cost": "2"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Prop",
+        "source": "Prop",
+        "levels": [
+          {
+            "level": 1,
+            "power_name": "Ornate Garb",
+            "cost": "2"
+          },
+          {
+            "level": 2,
+            "power_name": "Crafted Tool",
+            "cost": "2"
+          },
+          {
+            "level": 3,
+            "power_name": "Mechanical Device",
+            "cost": "2"
+          },
+          {
+            "level": 4,
+            "power_name": "Complex Machine",
+            "cost": "2"
+          },
+          {
+            "level": 5,
+            "power_name": "Arcane Artifact",
+            "cost": "2"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Scene",
+        "source": "Scene",
+        "levels": [
+          {
+            "level": 1,
+            "power_name": "Closet",
+            "cost": "2"
+          },
+          {
+            "level": 2,
+            "power_name": "Bathroom",
+            "cost": "2"
+          },
+          {
+            "level": 3,
+            "power_name": "Guest Room",
+            "cost": "2"
+          },
+          {
+            "level": 4,
+            "power_name": "Ground Floor",
+            "cost": "2"
+          },
+          {
+            "level": 5,
+            "power_name": "House",
+            "cost": "2"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Time",
+        "source": "Time",
+        "levels": [
+          {
+            "level": 1,
+            "power_name": "That Instant",
+            "cost": "2"
+          },
+          {
+            "level": 2,
+            "power_name": "Just a Moment",
+            "cost": "2"
+          },
+          {
+            "level": 3,
+            "power_name": "One Mighty Minute",
+            "cost": "2"
+          },
+          {
+            "level": 4,
+            "power_name": "Nice Siesta",
+            "cost": "2"
+          },
+          {
+            "level": 5,
+            "power_name": "What Was I Saying?",
+            "cost": "2"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Air",
+        "source": "Scene",
+        "levels": [
+          {
+            "level": 1,
+            "power_name": "Closet",
+            "cost": "2"
+          },
+          {
+            "level": 2,
+            "power_name": "Bathroom",
+            "cost": "2"
+          },
+          {
+            "level": 3,
+            "power_name": "Guest Room",
+            "cost": "2"
+          },
+          {
+            "level": 4,
+            "power_name": "Ground Floor",
+            "cost": "2"
+          },
+          {
+            "level": 5,
+            "power_name": "House",
+            "cost": "2"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Earth",
+        "source": "Prop",
+        "levels": [
+          {
+            "level": 1,
+            "power_name": "Ornate Garb",
+            "cost": "2"
+          },
+          {
+            "level": 2,
+            "power_name": "Crafted Tool",
+            "cost": "2"
+          },
+          {
+            "level": 3,
+            "power_name": "Mechanical Device",
+            "cost": "2"
+          },
+          {
+            "level": 4,
+            "power_name": "Complex Machine",
+            "cost": "2"
+          },
+          {
+            "level": 5,
+            "power_name": "Arcane Artifact",
+            "cost": "2"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Fire",
+        "source": "Nature",
+        "levels": [
+          {
+            "level": 1,
+            "power_name": "Raw Material",
+            "cost": "2"
+          },
+          {
+            "level": 2,
+            "power_name": "Verdant Forest",
+            "cost": "2"
+          },
+          {
+            "level": 3,
+            "power_name": "Feral Animal",
+            "cost": "2"
+          },
+          {
+            "level": 4,
+            "power_name": "Natural Phenomena",
+            "cost": "2"
+          },
+          {
+            "level": 5,
+            "power_name": "Base Element",
+            "cost": "2"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Spirit",
+        "source": "Fae",
+        "levels": [
+          {
+            "level": 1,
+            "power_name": "Hearty Commoner",
+            "cost": "2"
+          },
+          {
+            "level": 2,
+            "power_name": "Lofty Noble",
+            "cost": "2"
+          },
+          {
+            "level": 3,
+            "power_name": "Manifold Chimera",
+            "cost": "2"
+          },
+          {
+            "level": 4,
+            "power_name": "Elusive Gallain",
+            "cost": "2"
+          },
+          {
+            "level": 5,
+            "power_name": "Dweomer of Glamour",
+            "cost": "2"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Water",
+        "source": "Time",
+        "levels": [
+          {
+            "level": 1,
+            "power_name": "That Instant",
+            "cost": "2"
+          },
+          {
+            "level": 2,
+            "power_name": "Just a Moment",
+            "cost": "2"
+          },
+          {
+            "level": 3,
+            "power_name": "One Mighty Minute",
+            "cost": "2"
+          },
+          {
+            "level": 4,
+            "power_name": "Nice Siesta",
+            "cost": "2"
+          },
+          {
+            "level": 5,
+            "power_name": "What Was I Saying?",
+            "cost": "2"
+          }
+        ],
+        "elder": {}
+      }
+    ]
+  }
+}

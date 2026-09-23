@@ -1,0 +1,867 @@
+{
+  "format": 1,
+  "slug": "mortal-psychic",
+  "name": "Psychic Phenomena",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "provenance": {
+    "sources": [
+      "Grapevine Menus XML.gvm: the \"Psychic Phenomena\" container",
+      "Rungs, costs and tiers from each item's own GVM cost and note (3/3/6/6/9); spells, rituals and formulae are separate purchases and go to mortal-hedge-magic-formulae"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py",
+    "notes": "1.3.0 decision 8 - split out of the mortal-numina container, which copied other stacks' catalogues instead of referencing them."
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced"
+      ],
+      "ladder": {
+        "basic": 2,
+        "intermediate": 2,
+        "advanced": 1
+      },
+      "costs": {
+        "basic": 3,
+        "intermediate": 6,
+        "advanced": 9
+      },
+      "out_of_type": {
+        "basic": "+1",
+        "intermediate": "+1",
+        "advanced": "+1"
+      },
+      "levels": null,
+      "categories": null,
+      "untiered": null
+    },
+    "atomic": true,
+    "allow_custom": true,
+    "powers": [
+      {
+        "name": "Animal Psychic",
+        "source": "GVM: Animal Psychic",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Communication",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Command",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Mass Communication",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Mind Link",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Domination",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Anti-Psychic",
+        "source": "GVM: Anti-Psychic",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "5-yard radius",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "10-yard radius",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "15-yard radius",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "20-yard radius",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "25-yard radius",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Astral Projection",
+        "source": "GVM: Astral Projection",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Seeker",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Visitor",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Journeyman",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Traveler",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Wayfarer",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Biocontrol",
+        "source": "GVM: Biocontrol",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Self Control",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Self-Healing",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Hysterical Strength",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Ignore Pain Response",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Mind Over Matter",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Channeling",
+        "source": "GVM: Channeling",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Channeler",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Seer",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Medium",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Mystic",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Necromancer",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Clairvoyance",
+        "source": "GVM: Clairvoyance",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Secret Glimpses",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Whispers of the Hidden",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Sense of Beyond",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Hauntings of the Mind's Eye",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Cosmic Awareness",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Cyberkinesis",
+        "source": "GVM: Cyberkinesis",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Switch",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Link",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Scramble",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Password",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Run Hot",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Cyberpathy",
+        "source": "GVM: Cyberpathy",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Analyze Structure",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Read-Only Mode",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Download",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Remote Access",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Decrypt",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Ectoplasmic Generation",
+        "source": "GVM: Ectoplasmic Generation",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "The Big Sneeze",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "The Mists",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Pea Soup",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Dream Shape",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Tulpa",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Mind Shield",
+        "source": "GVM: Mind Shield",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Knock-Knock",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Locked Out",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Mental Wall",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "I Hear You Knocking",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Deadbolt",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Precognition",
+        "source": "GVM: Precognition",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Intuition",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Insight",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Danger Sense",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Show Me the Cards",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Clear Vision",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Psychic Healing",
+        "source": "GVM: Psychic Healing",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Diagnosis",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "A Good Night's Sleep",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Basic Healing",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Triage",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Psychic Surgery",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Psychic Hypnosis",
+        "source": "GVM: Psychic Hypnosis",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Trance State",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Sideshow Suggestion",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Delayed Action",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Fast Trance",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Manchurian Candidate",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Psychic Invisibility",
+        "source": "GVM: Psychic Invisibility",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Hide",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Slow Movement",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Invisibility",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Selective Invisibility",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Forget You Ever Saw Me",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Psychic Vampirism",
+        "source": "GVM: Psychic Vampirism",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Rush",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Sapping the Will",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Energy Transference",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Life Leech",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Emotional Vortex",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Psychokinesis",
+        "source": "GVM: Psychokinesis",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Nudge",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Propel",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Phantom Arm",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Hidden Forces",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Manipulation",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Psychometry",
+        "source": "GVM: Psychometry",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Emotional Connection",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Flashback",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Time and Place",
+            "cost": "6",
+            "alternatives": [
+              {
+                "power_name": "Days Gone By",
+                "note": "GVM: Psychometry prints a third intermediate power for a two-rung band"
+              }
+            ]
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "The Hidden Menagerie",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Touch the Soul",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Psychoportation",
+        "source": "GVM: Psychoportation",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Short Hop",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Simple Jump",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Long Jump",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Very Long Jump",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Blind Jump",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Pyrokinesis I",
+        "source": "GVM: Pyrokinesis I",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Candleflame",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Fan the Flame",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Combustion",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Bonfire",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Conflagration",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Pyrokinesis II",
+        "source": "GVM: Pyrokinesis II",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Matches",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Ignite",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Fireworks",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Pyrotechnics",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Inferno",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Telekinesis",
+        "source": "GVM: Telekinesis",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Nudge",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Fling",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Phantom Arm",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Hidden Forces",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Psychic Levitation",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Telepathy",
+        "source": "GVM: Telepathy",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Emotional Contact",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "The Unspoken Heart",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Psychic Link",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Mind Probe",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Secrets Revealed",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      }
+    ]
+  }
+}

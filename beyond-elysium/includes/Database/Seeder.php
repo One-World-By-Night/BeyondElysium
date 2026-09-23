@@ -25,13 +25,20 @@ defined( 'ABSPATH' ) || exit;
 class Seeder {
 
 	/**
-	 * Path to the GVM XML source, relative to this file.
+	 * Paths to every GVM source file, relative to this file - the pristine menu set plus,
+	 * from 1.3.0 onward, the per-line files C7 emits (`shared.gvm` + nine `<line>.gvm`).
+	 * Today this holds exactly one entry; the multi-file machinery below (1.3.0-design-
+	 * workflow.md §1/C1) has nothing else to load until C7 lands.
 	 *
 	 * Reads from data/, not GV301Source/. The full Grapevine source archive is reference
 	 * material and is excluded from the deployed artifact by .distignore; data/ holds the
 	 * small subset the plugin needs at runtime. See data/README.md.
+	 *
+	 * @var string[]
 	 */
-	const GVM_PATH = __DIR__ . '/../../data/Grapevine Menus XML.gvm';
+	const GVM_PATH = [
+		__DIR__ . '/../../data/Grapevine Menus XML.gvm',
+	];
 
 	/**
 	 * Path to the MET-Mechanics CSV, relative to this file. Layered on top of the GVM-sourced
@@ -531,38 +538,61 @@ class Seeder {
 	// ---------------------------------------------------------------------------
 
 	/**
-	 * Parses the GVM XML file and returns an array of [ name => [ items ] ]
-	 * maps. Falls back to an empty array, logged, when the source file is
-	 * missing or fails to parse.
+	 * Parses every GVM source file (self::GVM_PATH) and returns an array of
+	 * [ name => [ items ] ] maps. Each file's menus merge into one pool before any
+	 * <include> is resolved, so a cross-file include (a per-line file including a menu
+	 * shared.gvm defines) needs no different handling than a same-file one - the fact
+	 * that makes multi-file work at all (1.3.0-design-workflow.md §1).
+	 *
+	 * One file missing or failing to parse is logged and skipped, not fatal to the
+	 * others - the same graceful-degradation posture the single-file version always had,
+	 * extended per file instead of per source. Falls back to an empty array, logged,
+	 * only when every file is missing/unparsable and there is nothing left to seed from.
 	 *
 	 * @return array Menu name => [ 'items' => string[], 'submenus' => array[], 'category' => int ]
 	 */
 	public static function parse_gvm(): array {
-		$path = self::GVM_PATH;
-		if ( ! file_exists( $path ) ) {
+		$all_raw      = [];
+		$source_files = [];
+
+		foreach ( self::GVM_PATH as $path ) {
+			if ( ! file_exists( $path ) ) {
+				error_log(
+					'Beyond Elysium: GVM source not found at ' . $path . ' - skipping it.'
+				);
+				continue;
+			}
+
+			// Delegates to the shared GVM_Parser::parse_xml() front end rather than duplicating XML parsing here.
+			try {
+				$parsed = GVM_Parser::parse_xml( $path );
+			} catch ( \RuntimeException $e ) {
+				error_log(
+					'Beyond Elysium: GVM source at ' . $path . ' failed to parse - skipping it.'
+				);
+				continue;
+			}
+
+			// Include resolution is a seeder concern; GVM_Parser's front ends return raw, unresolved includes.
+			// A later file's menu of the same name overwrites an earlier one entirely (not merged item-by-item) -
+			// two files are never expected to define the same menu name; C7 only ever emits each menu once,
+			// in exactly one file.
+			$all_raw = array_merge( $all_raw, $parsed['menus'] );
+			foreach ( array_keys( $parsed['menus'] ) as $menu_name ) {
+				$source_files[ $menu_name ] = basename( $path );
+			}
+		}
+
+		if ( empty( $all_raw ) ) {
 			error_log(
-				'Beyond Elysium: GVM source not found at ' . $path
-				. ' - falling back to hardcoded schema blocks.'
+				'Beyond Elysium: no GVM source could be read - falling back to hardcoded schema blocks.'
 			);
 			return [];
 		}
 
-		// Delegates to the shared GVM_Parser::parse_xml() front end rather than duplicating XML parsing here.
-		try {
-			$parsed = GVM_Parser::parse_xml( $path );
-		} catch ( \RuntimeException $e ) {
-			error_log(
-				'Beyond Elysium: GVM source at ' . $path
-				. ' failed to parse - falling back to hardcoded schema blocks.'
-			);
-			return [];
-		}
-
-		// Include resolution is a seeder concern; GVM_Parser's front ends return raw, unresolved includes.
-		$raw      = $parsed['menus'];
 		$resolved = [];
-		foreach ( $raw as $name => $data ) {
-			$resolved[ $name ] = self::resolve_includes( $name, $data, $raw, [] );
+		foreach ( $all_raw as $name => $data ) {
+			$resolved[ $name ] = self::resolve_includes( $name, $data, $all_raw, [], $source_files );
 		}
 
 		return $resolved;
@@ -576,21 +606,33 @@ class Seeder {
 	 * with a genuine include cycle would otherwise seed a quietly
 	 * incomplete menu with no signal that anything was wrong.
 	 *
-	 * @param string $name    Current menu name.
-	 * @param array  $data    Current menu raw data.
-	 * @param array  $all_raw All raw menus.
-	 * @param array  $visited Guard against circular includes - the chain from the top-
-	 *                        level menu down to (not including) $name.
+	 * @param string $name          Current menu name.
+	 * @param array  $data          Current menu raw data.
+	 * @param array  $all_raw       All raw menus.
+	 * @param array  $visited       Guard against circular includes - the chain from the top-
+	 *                              level menu down to (not including) $name.
+	 * @param array  $source_files  Menu name => the basename of the file it came from -
+	 *                              optional, only used to annotate a cycle exception (T-C3,
+	 *                              1.3.0-design-workflow.md §7); a cross-file cycle is
+	 *                              structurally identical to a same-file one otherwise, since
+	 *                              both draw from the one merged $all_raw pool.
 	 * @return array Resolved data with all included items merged in.
 	 * @throws \RuntimeException When $name is already in $visited - a real cycle.
 	 */
-	private static function resolve_includes( string $name, array $data, array $all_raw, array $visited ): array {
+	private static function resolve_includes( string $name, array $data, array $all_raw, array $visited, array $source_files = [] ): array {
 		if ( in_array( $name, $visited, true ) ) {
+			$chain = array_map(
+				static function ( string $menu_name ) use ( $source_files ): string {
+					return isset( $source_files[ $menu_name ] )
+						? "{$menu_name} ({$source_files[ $menu_name ]})"
+						: $menu_name;
+				},
+				array_merge( $visited, [ $name ] )
+			);
 			throw new \RuntimeException(
 				sprintf(
-					'Circular <include> reference in the menu set: %s -> %s',
-					implode( ' -> ', $visited ),
-					$name
+					'Circular <include> reference in the menu set: %s',
+					implode( ' -> ', $chain )
 				)
 			);
 		}
@@ -601,15 +643,17 @@ class Seeder {
 
 		foreach ( $data['includes'] as $include_name ) {
 			if ( isset( $all_raw[ $include_name ] ) ) {
-				$included = self::resolve_includes( $include_name, $all_raw[ $include_name ], $all_raw, $visited );
+				$included = self::resolve_includes( $include_name, $all_raw[ $include_name ], $all_raw, $visited, $source_files );
 				$merged_items    = array_merge( $merged_items, $included['items'] );
 				$merged_submenus = array_merge( $merged_submenus, $included['submenus'] );
 			}
 		}
 
-		// Own items come after included items (creature-specific extras after base).
+		// Own items come after included items (creature-specific extras after base), and
+		// 'last' is what makes that ordering actually win: the menu's own item beats
+		// anything inherited via <include> (1.3.0-design-workflow.md §5).
 		$merged_items = array_merge( $merged_items, $data['items'] );
-		$merged_items = self::unique_items( $merged_items );
+		$merged_items = self::unique_items( $merged_items, 'last' );
 
 		return [
 			'category'     => $data['category'],
@@ -623,28 +667,123 @@ class Seeder {
 	}
 
 	/**
-	 * Deduplicate parsed menu items by name, keeping the first occurrence.
+	 * Deduplicate parsed menu items by name, applying 1.3.0-design-workflow.md §5.1's
+	 * rules 1/2 (rules 3/4 - never comparing across a block or a line - hold structurally,
+	 * because every caller already scopes $items to one block's own menus before this
+	 * runs; there is nothing here that could cross either boundary).
 	 *
-	 * Included items come before the menu's own, so a creature-specific override of a
-	 * base item keeps the base definition. That matches Grapevine, where an include
-	 * splices the base list in ahead of the local additions.
+	 * $prefer picks which occurrence's own value (cost/note) survives when two same-name
+	 * items disagree:
+	 * - 'last' - resolve_includes()'s own case. A menu's own item must beat anything
+	 *   arriving through an <include> (§5); included items are merged in before the
+	 *   menu's own, so "own" is always the last occurrence of a given name.
+	 * - 'first' - aggregate_menus()/merge_menus()'s own case. Sibling menus have no
+	 *   inclusion hierarchy between them, so keeping the first-encountered value is
+	 *   simply stable - it doesn't reorder itself if a later menu is added to the map.
 	 *
-	 * @param array[] $items Item arrays with a 'name' key.
+	 * Every occurrence beyond the first is recorded on the surviving item, split by
+	 * whether the cost actually agreed:
+	 * - `_parent_menus` - rule 1 (§5.1), a same-cost citation. The dominant case; Calm
+	 *   prints identically in four parent menus and should stay one boring row.
+	 * - `_cost_conflicts` - rule 2 (§5.1), `{source, cost}` for an occurrence whose cost
+	 *   genuinely differs - a real finding, not a theoretical one: measured directly
+	 *   against the real GVM file, 8 werewolf-gifts and 24 fera-gifts names collapse
+	 *   several same-named-but-differently-priced entries (e.g. "Catfeet" is 3pt for a
+	 *   Stargazer-sourced menu, 6pt for a Lupus-sourced one - tribe-conditional MET
+	 *   pricing, the same shape `Cost_Engine::is_in_type_pure()` already resolves for
+	 *   clan-restricted Disciplines, not examined here for whether it needs the same
+	 *   treatment for Gifts - flagged for whoever runs C6 on Werewolf/Fera). Before this
+	 *   fix, a real cost disagreement was silently swallowed by plain first-wins with
+	 *   zero trace - this doesn't resolve which cost is right, it stops hiding that a
+	 *   disagreement exists at all.
+	 *
+	 * Both fields are deliberately not `also_printed_in` - that field already means
+	 * something else in this codebase (a real *book* source, `{source, cost}` once C5
+	 * lands); this is GVM *menu* structure, which is all Seeder.php ever sees. Transient
+	 * today, same as `_container`/`_display` below - nothing reads either yet, C5/C9 will.
+	 *
+	 * **Callers must dedup on the item's real, final identity, after any label/group
+	 * transform - not before.** `resolve_block_source()`'s 'merge' and 'pattern' cases
+	 * both rename or group items *after* their own `merge_menus()`/`aggregate_menus()`
+	 * call returns (a source-menu-keyed label for 'merge', a derived `group`/`subgroup`
+	 * for 'pattern') - so this now runs there, post-transform, not inside either of
+	 * those two functions. Found live, not theoretical: "Calm" collapsing
+	 * "Gifts, Gurahl General" into "Noonday Sun" looks like rule 1's dominant case (same
+	 * name, same cost) right up until `$key` notices "Noonday Sun" is really a Mokole
+	 * submenu (`Gifts, Mokole -> Noonday Sun`, confirmed against the real GVM file) -
+	 * collapsing it into Gurahl's own row would have silently hidden the gift from Mokole
+	 * characters entirely, not merely mislabeled it. `vampire-rituals` had the identical
+	 * shape for a different reason: "Craft Bloodstone" from "Rituals, Basic" (labeled
+	 * "Thaumaturgy") and from "Rituals, Sabbat, Basic" (labeled "Sabbat") are the *same*
+	 * cost but genuinely different, sect-flavored catalog rows once labeled - caught by a
+	 * live orphaned-translation-string check (`Catalog_Translator::rescan()`), not by
+	 * inspection.
+	 *
+	 * @param array[]       $items  Item arrays with a 'name' key and, when the caller
+	 *                              tracks it, a 'source' key naming the menu the item
+	 *                              came from.
+	 * @param string        $prefer 'first' or 'last' - which occurrence's value wins.
+	 * @param ?callable      $key   Computes the dedup key for an item; defaults to its
+	 *                              (already label/group-transformed, when applicable)
+	 *                              'name'. Pass one that also folds in 'group'/'subgroup'
+	 *                              when those exist, so two same-named items in different
+	 *                              groups are never treated as the same term.
 	 * @return array[]
 	 */
-	private static function unique_items( array $items ): array {
-		$seen   = [];
-		$unique = [];
+	private static function unique_items( array $items, string $prefer = 'first', ?callable $key = null ): array {
+		$key ??= static fn( array $item ) => $item['name'];
+		$by_name = [];
 
 		foreach ( $items as $item ) {
-			if ( isset( $seen[ $item['name'] ] ) ) {
+			$name = $key( $item );
+
+			if ( ! isset( $by_name[ $name ] ) ) {
+				$item['_parent_menus']   = [];
+				$item['_cost_conflicts'] = [];
+				$by_name[ $name ]        = $item;
 				continue;
 			}
-			$seen[ $item['name'] ] = true;
-			$unique[]              = $item;
+
+			$existing = $by_name[ $name ];
+			/** @var string[] $parent_menus */
+			$parent_menus = $existing['_parent_menus'];
+			/** @var array<int,array{source:string,cost:string}> $cost_conflicts */
+			$cost_conflicts = $existing['_cost_conflicts'];
+
+			// Decide the winner/loser once, then always describe the LOSER in whatever
+			// gets recorded - regardless of which direction $prefer points, the citation/
+			// conflict is about the value that did NOT survive.
+			if ( $prefer === 'last' ) {
+				$winner = $item;
+				$loser  = $existing;
+			} else {
+				$winner = $existing;
+				$loser  = $item;
+			}
+
+			$loser_source  = $loser['source'] ?? null;
+			$winner_source = $winner['source'] ?? null;
+			$agrees        = ( $loser['cost'] ?? null ) === ( $winner['cost'] ?? null );
+
+			if ( $loser_source !== null && $loser_source !== $winner_source ) {
+				if ( $agrees ) {
+					if ( ! in_array( $loser_source, $parent_menus, true ) ) {
+						$parent_menus[] = $loser_source;
+					}
+				} else {
+					$cost_conflicts[] = [
+						'source' => $loser_source,
+						'cost'   => $loser['cost'] ?? '',
+					];
+				}
+			}
+
+			$winner['_parent_menus']   = $parent_menus;
+			$winner['_cost_conflicts'] = $cost_conflicts;
+			$by_name[ $name ]          = $winner;
 		}
 
-		return $unique;
+		return array_values( $by_name );
 	}
 
 	// ---------------------------------------------------------------------------
@@ -813,6 +952,10 @@ class Seeder {
 						$out['items']
 					);
 				}
+				// Dedup runs here, after any labels transform above, so it keys on the item's
+				// real final name - not its raw pre-label one (1.3.0-design-workflow.md §5.1;
+				// see merge_menus()'s own comment for why it can't do this itself).
+				$out['items'] = self::unique_items( $out['items'], 'first' );
 				// Merged menus are conventionally consistent; the first menu present stands in for the group.
 				foreach ( $entry['menus'] as $menu_name ) {
 					if ( isset( $gvm[ $menu_name ] ) ) {
@@ -873,6 +1016,17 @@ class Seeder {
 						$out['items']
 					);
 				}
+				// Dedup runs here, after any group/subgroup transform above, keyed on the full
+				// (name, group, subgroup) identity - not name alone (1.3.0-design-workflow.md
+				// §5.1; see aggregate_menus()'s own comment for why it can't do this itself).
+				// A block with no 'label' at all (e.g. werewolf-rites) never gets 'group'/
+				// 'subgroup' set, so the key falls back to plain name for it, unchanged from
+				// before this dedup moved here.
+				$out['items'] = self::unique_items(
+					$out['items'],
+					'first',
+					static fn( array $item ) => $item['name'] . '|' . ( $item['group'] ?? '' ) . '|' . ( $item['subgroup'] ?? '' )
+				);
 				break;
 
 			case 'none':
@@ -1027,8 +1181,13 @@ class Seeder {
 			}
 		}
 
-		// The same power can be reachable by more than one route; keep the first.
-		return self::unique_items( $collected );
+		// Deliberately not deduped here (1.3.0-design-workflow.md §5.1) - resolve_block_source()'s
+		// own 'pattern' case still needs every raw occurrence's '_container'/'_display' to
+		// compute each item's real group/subgroup below, and two occurrences of the same
+		// name are only the SAME catalog row once that's known: "Calm" via "Gifts, Gurahl
+		// General" and via "Noonday Sun" (a Mokole submenu) looks like one duplicate name
+		// until group resolves them to "Gurahl" and "Mokole" - two real rows, not one.
+		return $collected;
 	}
 
 	/**
@@ -1053,6 +1212,13 @@ class Seeder {
 			}
 		}
 
+		// Deliberately not deduped here (1.3.0-design-workflow.md §5.1) - this function
+		// doesn't know whether its caller's block-map entry applies a 'labels' rename
+		// afterward, and dedup has to run on the item's real final name, not its raw one:
+		// "Craft Bloodstone" from "Rituals, Basic" and from "Rituals, Sabbat, Basic" are the
+		// same cost but become "Thaumaturgy: Craft Bloodstone (basic)" and "Sabbat: Craft
+		// Bloodstone (basic)" once labeled - two real rows, not a duplicate. See
+		// resolve_block_source()'s own 'merge' case.
 		return $merged;
 	}
 
@@ -1070,6 +1236,25 @@ class Seeder {
 	 * @return array[]
 	 */
 	public static function get_blocks_to_seed(): array {
+		return self::overlay_declared_blocks( self::get_gvm_blocks_to_seed() );
+	}
+
+	/**
+	 * The GVM/hardcoded + MET-CSV-built blocks alone, with no declared-file overlay - what
+	 * `get_blocks_to_seed()` returned before 1.3.2, and still the whole of what it returns
+	 * wherever no declared file exists for a slug yet (`met-backgrounds`, `mortal-numina`'s
+	 * two residual pick-shaped families, ...).
+	 *
+	 * Exists as its own named entry point so a test asserting the GVM/CSV mechanism's own
+	 * shape - a merge heuristic (`BloodMagicSeederTest`), a CSV override count
+	 * (`MetCsvSeederTest`) - keeps testing that mechanism in isolation once a slug also has
+	 * a declared file superseding it in the real seed list. 1.3.2's own build brief: "confirm
+	 * the GVM fallback path is untouched and its own existing tests still pass unmodified" -
+	 * this is what makes that possible without re-deriving GVM-era counts by hand.
+	 *
+	 * @return array[]
+	 */
+	public static function get_gvm_blocks_to_seed(): array {
 		$gvm = self::parse_gvm();
 
 		$blocks = ! empty( $gvm ) ? self::build_blocks_from_gvm( $gvm ) : self::hardcoded_blocks();
@@ -1077,6 +1262,50 @@ class Seeder {
 		$csv = self::parse_met_csv();
 		if ( ! empty( $csv['rows'] ) ) {
 			$blocks = self::apply_met_csv_overrides( $blocks, $csv, $gvm );
+		}
+
+		return $blocks;
+	}
+
+	/**
+	 * 1.3.2: a declared file at `data/catalog/blocks/<slug>.json` is preferred over whatever
+	 * the GVM/CSV path built for that same slug - direct decode of a reviewed, validated file
+	 * rather than derivation from free text (owner ruling 2026-09-21: "Curated JSON should
+	 * REPLACE GVM entirely"). Anything not yet declared keeps coming from
+	 * `parse_gvm()`/`hardcoded_blocks()`/`apply_met_csv_overrides()` exactly as before - this
+	 * never deletes or disables that path, only adds a preferred one in front of it. The
+	 * known gaps (`met-backgrounds`, `mortal-numina`'s two residual pick-shaped families, and
+	 * any block 1.3.0/1.3.1 has not authored yet) simply have no declared file, so they fall
+	 * straight through untouched.
+	 *
+	 * A slug with a declared file replaces the GVM-built block of the same slug in place,
+	 * preserving that block's original position; a slug with no GVM/hardcoded counterpart at
+	 * all (Demon Evocations and Rituals, the ten `{stack}-abilities` blocks, ...) is appended.
+	 *
+	 * @param array[] $blocks GVM/hardcoded/CSV-built blocks, keyed positionally.
+	 * @return array[]
+	 */
+	private static function overlay_declared_blocks( array $blocks ): array {
+		if ( ! \BeyondElysium\Services\Catalog_Reader::available() ) {
+			return $blocks;
+		}
+
+		$declared = \BeyondElysium\Services\Catalog_Reader::blocks_to_seed();
+		if ( $declared === [] ) {
+			return $blocks;
+		}
+
+		$by_slug = [];
+		foreach ( $blocks as $i => $block ) {
+			$by_slug[ $block['slug'] ] = $i;
+		}
+
+		foreach ( $declared as $slug => $block ) {
+			if ( isset( $by_slug[ $slug ] ) ) {
+				$blocks[ $by_slug[ $slug ] ] = $block;
+			} else {
+				$blocks[] = $block;
+			}
 		}
 
 		return $blocks;

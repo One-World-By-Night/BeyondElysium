@@ -62,9 +62,7 @@ Beyond Elysium runs standalone on plain, game-scoped WordPress capabilities, and
 
 ## What's Next
 
-Toward 1.0: an 11-item closed scope, each already given a full design pass. Four are now
-complete (chronicle rename; the read-only sheet's phone-width fix; the background-use ledger
-and its settings; query beyond characters). What remains:
+Toward 1.0: an 11-item closed scope, each already given a full design pass. Four are now complete (chronicle rename; the read-only sheet's phone-width fix; the background-use ledger and its settings; query beyond characters). What remains:
 
 1. Print as a signed, verifiable PDF, plus the reports/cards/batch-output layer that shares its generator
 2. A point calculator (in-editor XP cost preview)

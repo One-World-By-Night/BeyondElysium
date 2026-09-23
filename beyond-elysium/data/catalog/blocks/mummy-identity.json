@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "slug": "mummy-identity",
+  "name": "Mummy Identity",
+  "kind": "block",
+  "section_type": "identity_field",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh",
+      "Amenti: GVM menu(s) \"Amenti\", \"Capachoca\" (18 options)"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py",
+    "notes": "1.3.0 gap-audit class B: options from the Grapevine menus, `allow_custom` on so held free-text values stay valid."
+  },
+  "definition": {
+    "fields": [
+      {
+        "name": "Amenti",
+        "field_type": "select",
+        "required": false,
+        "options": [
+          "Kher-Minu",
+          "Khri-Habi",
+          "Mesektet",
+          "Sakhmu",
+          "Sefekhi",
+          "Udja-Sen",
+          "Apepnu",
+          "Cabiri",
+          "Imhku",
+          "Ishmaelite",
+          "Shemsu-Heru",
+          "Wu T'ian",
+          "Other",
+          "Chaskimallki",
+          "Intimallki",
+          "Pachamallki",
+          "Teomallki",
+          "Uchumallki"
+        ],
+        "allow_custom": true
+      }
+    ]
+  }
+}

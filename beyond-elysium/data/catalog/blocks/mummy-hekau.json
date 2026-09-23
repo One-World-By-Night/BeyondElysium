@@ -1,0 +1,292 @@
+{
+  "format": 1,
+  "slug": "mummy-hekau",
+  "name": "Mummy Hekau",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh",
+      "Laws of the Resurrection (WW05035) p. 116 - Hekau 3/6/9, +1 outside the primary path",
+      "Laws of the Resurrection p. 120, \"Working Magic\" - the path rating is the ladder; spells and rituals are bought separately (mummy-formulae)",
+      "Ren-Hekau = Nomenclature, Ushabti = Effigy (research/mummy/NOTES.md; core book: \"Effigy (called Ushabti in ancient Egypt)\")"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py",
+    "notes": "1.3.0 D5/D6. The formula menus split out to mummy-formulae; the 40 unknown-tier rungs resolve to basic/basic/intermediate/intermediate/advanced by the book's path-rating rule."
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced",
+        "master"
+      ],
+      "ladder": {
+        "basic": 2,
+        "intermediate": 2,
+        "advanced": 1
+      },
+      "costs": {
+        "basic": 3,
+        "intermediate": 6,
+        "advanced": 9,
+        "master": 12
+      },
+      "out_of_type": {
+        "basic": "+1",
+        "intermediate": "+1",
+        "advanced": "+1",
+        "master": "+1"
+      },
+      "levels": null,
+      "categories": null,
+      "untiered": null
+    },
+    "shape": "named",
+    "atomic": true,
+    "sequential": true,
+    "allow_custom": true,
+    "powers": [
+      {
+        "name": "Alchemy",
+        "source": "Laws of the Resurrection, Hekau",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "First Basic Path",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Second Basic Path",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "First Intermediate Path",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Second Intermediate Path",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Advanced Path",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Amulets",
+        "source": "Laws of the Resurrection, Hekau",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "First Basic Path",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Second Basic Path",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "First Intermediate Path",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Second Intermediate Path",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Advanced Path",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Celestial",
+        "source": "Laws of the Resurrection, Hekau",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Touch the Air",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Lightning Strike",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Gust of Wind",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Clap of Thunder",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Lightning Storm",
+            "cost": "9"
+          }
+        ],
+        "elder": {
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Open the Sky",
+              "cost": "12",
+              "note": "master-level working"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Effigy",
+        "source": "Laws of the Resurrection, Hekau",
+        "aliases": [
+          "Ushabti"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Lesser Ushtabi",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Simple Ushtabi",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Greater Ushtabi",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Princely Ushtabi",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Living Ushtabi",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Necromancy",
+        "source": "Laws of the Resurrection, Hekau",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "First Basic Path",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Second Basic Path",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "First Intermediate Path",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Second Intermediate Path",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Advanced Path",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Nomenclature",
+        "source": "Laws of the Resurrection, Hekau",
+        "aliases": [
+          "Ren-Hekau"
+        ],
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Simple Names",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Natural Names",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Commanding Names",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Transforming Names",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Universal Names",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      }
+    ]
+  }
+}

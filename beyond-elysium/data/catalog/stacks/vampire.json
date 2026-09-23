@@ -1,0 +1,191 @@
+{
+  "format": 1,
+  "slug": "vampire",
+  "name": "Vampire",
+  "kind": "stack",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_creature_stacks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "game_line": "met",
+    "sections": [
+      {
+        "block_slug": "vampire-identity",
+        "label": "Identity",
+        "display_order": 1,
+        "required": true
+      },
+      {
+        "block_slug": "met-archetypes",
+        "label": "Archetypes",
+        "display_order": 20,
+        "required": false
+      },
+      {
+        "block_slug": "vampire-abilities",
+        "label": "Abilities",
+        "display_order": 30,
+        "required": true
+      },
+      {
+        "block_slug": "vampire-backgrounds",
+        "label": "Backgrounds",
+        "display_order": 40,
+        "required": false
+      },
+      {
+        "block_slug": "met-physical-traits",
+        "label": "Physical Traits",
+        "display_order": 50,
+        "required": true,
+        "negative_block_slug": "met-physical-traits-neg"
+      },
+      {
+        "block_slug": "met-social-traits",
+        "label": "Social Traits",
+        "display_order": 51,
+        "required": true,
+        "negative_block_slug": "met-social-traits-neg"
+      },
+      {
+        "block_slug": "met-mental-traits",
+        "label": "Mental Traits",
+        "display_order": 52,
+        "required": true,
+        "negative_block_slug": "met-mental-traits-neg"
+      },
+      {
+        "block_slug": "vampire-disciplines",
+        "label": "Disciplines",
+        "display_order": 60,
+        "required": true,
+        "in_type_source": "vampire-identity.Clan"
+      },
+      {
+        "block_slug": "vampire-blood-magic",
+        "label": "Blood Magic",
+        "display_order": 61,
+        "required": false
+      },
+      {
+        "block_slug": "vampire-combo-disciplines",
+        "label": "Combo Disciplines",
+        "display_order": 62,
+        "required": false
+      },
+      {
+        "block_slug": "vampire-rituals",
+        "label": "Rituals",
+        "display_order": 63,
+        "required": false
+      },
+      {
+        "block_slug": "vampire-ritae",
+        "label": "Ritae",
+        "display_order": 64,
+        "required": false
+      },
+      {
+        "block_slug": "vampire-statuses",
+        "label": "Status",
+        "display_order": 70,
+        "required": false
+      },
+      {
+        "block_slug": "vampire-resources",
+        "label": "Resources",
+        "display_order": 80,
+        "required": true
+      },
+      {
+        "block_slug": "vampire-virtues",
+        "label": "Virtues",
+        "display_order": 81,
+        "required": true
+      },
+      {
+        "block_slug": "vampire-health",
+        "label": "Health",
+        "display_order": 82,
+        "required": false
+      },
+      {
+        "block_slug": "vampire-merits",
+        "label": "Merits",
+        "display_order": 90,
+        "required": false
+      },
+      {
+        "block_slug": "vampire-flaws",
+        "label": "Flaws",
+        "display_order": 91,
+        "required": false
+      },
+      {
+        "block_slug": "met-derangements",
+        "label": "Derangements",
+        "display_order": 92,
+        "required": false
+      }
+    ],
+    "display_preferences": {
+      "discipline_display": "named"
+    },
+    "creation_rules": {
+      "steps": [
+        {
+          "step": 1,
+          "label": "Inspiration",
+          "sections": [
+            "vampire-identity"
+          ]
+        },
+        {
+          "step": 2,
+          "label": "Attributes",
+          "budget": {
+            "primary": 7,
+            "tertiary": 3,
+            "secondary": 5
+          },
+          "sections": [
+            "met-physical-traits",
+            "met-social-traits",
+            "met-mental-traits"
+          ],
+          "prioritize": true
+        },
+        {
+          "step": 3,
+          "label": "Advantages",
+          "budgets": {
+            "vampire-abilities": 5,
+            "vampire-backgrounds": 5,
+            "vampire-disciplines": 3
+          },
+          "sections": [
+            "vampire-abilities",
+            "vampire-disciplines",
+            "vampire-backgrounds"
+          ]
+        },
+        {
+          "step": 4,
+          "label": "Last Touches",
+          "sections": [
+            "vampire-resources",
+            "vampire-virtues",
+            "vampire-merits",
+            "vampire-flaws",
+            "met-derangements"
+          ],
+          "free_traits": 5
+        }
+      ]
+    }
+  }
+}

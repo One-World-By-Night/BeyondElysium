@@ -3,6 +3,7 @@
 namespace BeyondElysium\Tests\Unit;
 
 use BeyondElysium\Database\Seeder;
+use BeyondElysium\Services\GVM_Parser;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -22,7 +23,7 @@ class SeederGvmTest extends TestCase {
 
 	public function test_gvm_source_file_is_present_in_the_repo(): void {
 		$this->assertFileExists(
-			Seeder::GVM_PATH,
+			Seeder::GVM_PATH[0],
 			'The GVM source must resolve inside the plugin. A path outside it is defect D2.'
 		);
 	}
@@ -38,7 +39,7 @@ class SeederGvmTest extends TestCase {
 	}
 
 	public function test_declared_size_matches_the_actual_menu_count(): void {
-		$xml = simplexml_load_file( Seeder::GVM_PATH );
+		$xml = simplexml_load_file( Seeder::GVM_PATH[0] );
 
 		$this->assertNotFalse( $xml );
 		$this->assertSame( self::EXPECTED_MENUS, (int) $xml['size'] );
@@ -212,14 +213,77 @@ class SeederGvmTest extends TestCase {
 	 * @param string                            $start
 	 * @return array<string,mixed>
 	 */
-	private function resolve_includes( array $raw, string $start ) {
+	private function resolve_includes( array $raw, string $start, array $source_files = [] ) {
 		$method = new \ReflectionMethod( Seeder::class, 'resolve_includes' );
 		$method->setAccessible( true );
-		return $method->invoke( null, $start, $raw[ $start ], $raw, [] );
+		return $method->invoke( null, $start, $raw[ $start ], $raw, [], $source_files );
 	}
 
 	private function menu( array $includes = [] ): array {
 		return [ 'category' => 0, 'alphabetized' => false, 'display' => 0, 'items' => [], 'submenus' => [], 'includes' => $includes ];
+	}
+
+	/**
+	 * T-C1 (1.3.0-design-workflow.md §7): two files' menus merge into one pool, and a
+	 * cross-file <include> - fixture B including fixture A's own menu by name - resolves
+	 * exactly like a same-file one. `GVM_PATH` is a hardcoded const, not overridable per
+	 * call, so this exercises the same merge-then-resolve sequence `parse_gvm()` itself
+	 * runs (GVM_Parser::parse_xml() per file, array_merge into one pool, resolve_includes()
+	 * against the merged pool) directly against two real fixture files, rather than the one
+	 * real GVM file in this repo, which has no reason to include across a file boundary
+	 * that doesn't exist yet.
+	 */
+	public function test_menus_from_two_files_merge_and_a_cross_file_include_resolves(): void {
+		$dir = dirname( __DIR__ ) . '/fixtures/';
+		$a   = GVM_Parser::parse_xml( $dir . 'gvm-multi-file-a.gvm' );
+		$b   = GVM_Parser::parse_xml( $dir . 'gvm-multi-file-b.gvm' );
+
+		$all_raw = array_merge( $a['menus'], $b['menus'] );
+
+		// Both files' own menus land in the one merged pool.
+		$this->assertArrayHasKey( 'Fixture Base', $all_raw );
+		$this->assertArrayHasKey( 'Fixture Extended', $all_raw );
+
+		$resolved = $this->resolve_includes( $all_raw, 'Fixture Extended' );
+
+		$this->assertSame(
+			[ 'Base Item One', 'Base Item Two', 'Extended Item' ],
+			array_column( $resolved['items'], 'name' ),
+			'Fixture Extended (file B) must inherit Fixture Base (file A) via a cross-file <include>.'
+		);
+	}
+
+	/**
+	 * T-C2 (1.3.0-design-workflow.md §5/§7): a menu's own item beats one of the same name
+	 * arriving through an <include> - "own items come after included items" only actually
+	 * wins once dedup prefers the last occurrence, which is what C8 changed. The displaced
+	 * (included) value is recorded on the survivor, not silently dropped.
+	 */
+	public function test_a_menus_own_item_beats_an_included_item_of_the_same_name(): void {
+		$raw = [
+			'Base' => array_merge(
+				$this->menu(),
+				[ 'items' => [ [ 'name' => 'Shared Term', 'cost' => '1', 'note' => 'general rule', 'source' => 'Base' ] ] ]
+			),
+			'PerLine' => array_merge(
+				$this->menu( [ 'Base' ] ),
+				[ 'items' => [ [ 'name' => 'Shared Term', 'cost' => '3', 'note' => 'per-line override', 'source' => 'PerLine' ] ] ]
+			),
+		];
+
+		$resolved = $this->resolve_includes( $raw, 'PerLine' );
+
+		$this->assertCount( 1, $resolved['items'], 'One name, one row - not a duplicate.' );
+		$this->assertSame( '3', $resolved['items'][0]['cost'], "PerLine's own value must win over Base's." );
+		$this->assertSame( 'per-line override', $resolved['items'][0]['note'] );
+
+		// The displaced (included) value is recorded, not dropped - Base's own cost (1)
+		// genuinely differs from PerLine's (3), so it lands in _cost_conflicts, not the
+		// plain same-value _parent_menus list.
+		$this->assertSame(
+			[ [ 'source' => 'Base', 'cost' => '1' ] ],
+			$resolved['items'][0]['_cost_conflicts']
+		);
 	}
 
 	public function test_a_self_referential_include_throws_naming_the_cycle(): void {
@@ -240,6 +304,25 @@ class SeederGvmTest extends TestCase {
 		$this->expectException( \RuntimeException::class );
 		$this->expectExceptionMessageMatches( '/A -> B -> C -> A/' );
 		$this->resolve_includes( $raw, 'A' );
+	}
+
+	/**
+	 * T-C3 (1.3.0-design-workflow.md §7): a genuine <include> cycle spanning two files
+	 * still throws, and names both files - resolve_includes() itself doesn't distinguish
+	 * "same file" from "different file" (both draw from one merged pool by the time it
+	 * runs), so the only thing this adds over the plain-name cycle tests above is the
+	 * source_files annotation `parse_gvm()` now builds and passes through.
+	 */
+	public function test_a_cross_file_include_cycle_throws_naming_both_files(): void {
+		$raw = [
+			'A' => $this->menu( [ 'B' ] ),
+			'B' => $this->menu( [ 'A' ] ),
+		];
+		$source_files = [ 'A' => 'shared.gvm', 'B' => 'werewolf.gvm' ];
+
+		$this->expectException( \RuntimeException::class );
+		$this->expectExceptionMessageMatches( '/A \(shared\.gvm\) -> B \(werewolf\.gvm\) -> A \(shared\.gvm\)/' );
+		$this->resolve_includes( $raw, 'A', $source_files );
 	}
 
 	public function test_a_non_circular_diamond_include_still_resolves_normally(): void {

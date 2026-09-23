@@ -1,0 +1,356 @@
+{
+  "format": 1,
+  "slug": "darkages-werewolf_gifts",
+  "name": "Gifts (Dark Ages printings)",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "variant": {
+    "of": "werewolf-gifts",
+    "id": "dark-ages",
+    "label": "Dark Ages printings",
+    "mode": "add"
+  },
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh (werewolf-gifts, a trait_list until 1.3.2's A4a conversion)",
+      "Rank, variant and qualifier parsed from each gift's own GVM tier note (\"int., wyld west\")",
+      "Category axis joined from werewolf-identity's Breed / Auspice / Tribe options (format §9 pilot)",
+      "Carried as a variant, not base content (format §4b): \"dark-ages\""
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced"
+      ],
+      "ladder": {},
+      "costs": {
+        "basic": 3,
+        "intermediate": 6,
+        "advanced": 9
+      },
+      "out_of_type": {
+        "basic": "+1",
+        "intermediate": "+1",
+        "advanced": "+1"
+      },
+      "levels": {
+        "basic": 1,
+        "intermediate": 3,
+        "advanced": 5
+      },
+      "categories": [
+        "breed",
+        "tribe",
+        "auspice"
+      ],
+      "untiered": null
+    },
+    "atomic": true,
+    "allow_custom": true,
+    "powers": [
+      {
+        "name": "Homid",
+        "category_values": {
+          "breed": "Homid"
+        },
+        "levels": [],
+        "elder": {
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Speech of the World",
+              "cost": "6",
+              "source": "Homid, Werewolf"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Ragabash",
+        "category_values": {
+          "auspice": "Ragabash"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Snow Running",
+              "cost": "3",
+              "source": "Ragabash"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Reynard's Lie",
+              "cost": "6",
+              "source": "Ragabash"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Galliard",
+        "category_values": {
+          "auspice": "Galliard"
+        },
+        "levels": [],
+        "elder": {
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Call for Vengeance",
+              "cost": "9",
+              "source": "Galliard"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Ahroun",
+        "category_values": {
+          "auspice": "Ahroun"
+        },
+        "levels": [],
+        "elder": {
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Gift of the Salamander",
+              "cost": "6",
+              "source": "Ahroun"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Black Furies",
+        "category_values": {
+          "tribe": "Black Furies"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Man's Skin",
+              "cost": "3",
+              "source": "Black Furies"
+            }
+          ],
+          "advanced": [
+            {
+              "level": null,
+              "tier": "advanced",
+              "power_name": "Arrow of Artemis",
+              "cost": "9",
+              "source": "Black Furies"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Bone Gnawers",
+        "category_values": {
+          "tribe": "Bone Gnawers"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Trail of the Larder",
+              "cost": "3",
+              "source": "Bone Gnawer"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Call the Rust",
+              "cost": "6",
+              "source": "Bone Gnawer"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Plague Visage",
+              "cost": "6",
+              "source": "Bone Gnawer"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Children of Gaia",
+        "category_values": {
+          "tribe": "Children of Gaia"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Eve's Blessing",
+              "cost": "3",
+              "source": "Children of Gaia"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Angel's Semblance",
+              "cost": "6",
+              "source": "Children of Gaia"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Fianna",
+        "category_values": {
+          "tribe": "Fianna"
+        },
+        "levels": [],
+        "elder": {
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Lleu's Spear",
+              "cost": "6",
+              "source": "Fianna"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Warp Spasm",
+              "cost": "6",
+              "source": "Fianna"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Get of Fenris",
+        "category_values": {
+          "tribe": "Get of Fenris"
+        },
+        "levels": [],
+        "elder": {
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Iron Can't Bite",
+              "cost": "6",
+              "source": "Get of Fenris"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Red Talons",
+        "category_values": {
+          "tribe": "Red Talons"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Prey's Cry",
+              "cost": "3",
+              "source": "Red Talons"
+            },
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Snuff Flames",
+              "cost": "3",
+              "source": "Red Talons"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Snap Man's Chains",
+              "cost": "6",
+              "source": "Red Talons"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Shadow Lords",
+        "category_values": {
+          "tribe": "Shadow Lords"
+        },
+        "levels": [],
+        "elder": {
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Dolorous Stroke",
+              "cost": "6",
+              "source": "Shadow Lords"
+            },
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Raven's Curse",
+              "cost": "6",
+              "source": "Shadow Lords"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Silver Fangs",
+        "category_values": {
+          "tribe": "Silver Fangs"
+        },
+        "levels": [],
+        "elder": {
+          "basic": [
+            {
+              "level": null,
+              "tier": "basic",
+              "power_name": "Eye of the Falcon",
+              "cost": "3",
+              "source": "Silver Fangs"
+            }
+          ],
+          "intermediate": [
+            {
+              "level": null,
+              "tier": "intermediate",
+              "power_name": "Divine Regalia",
+              "cost": "6",
+              "source": "Silver Fangs"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

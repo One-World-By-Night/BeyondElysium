@@ -1,41 +1,25 @@
 # Powers
 
-The editor for a tiered-power section of a character's sheet - leveled catalogs like
-Disciplines, Gifts, Arts, and Spheres, where each held power has a numbered level or, past the
-numbered ladder, an Elder-and-above pick.
+The editor for a tiered-power section of a character's sheet - leveled catalogs like Disciplines, Gifts, Arts, and Spheres, where each held power has a numbered level or, past the numbered ladder, an Elder-and-above pick.
 
 ## Who can use this
 
-Anyone editing a character sees this inside the Edit tab - a player editing their own
-character, or a Storyteller editing any character in the chronicle. If you can only view the
-character, every power here shows as a plain read-only list with no Add, stepper, or Remove
-control. See [Character Editor](character-editor.md) for who can open the Edit tab at all.
+Anyone editing a character sees this inside the Edit tab - a player editing their own character, or a Storyteller editing any character in the chronicle. If you can only view the character, every power here shows as a plain read-only list with no Add, stepper, or Remove control. See [Character Editor](character-editor.md) for who can open the Edit tab at all.
 
 ## How to get there
 
-My Chronicle → Edit tab, inside any section built as a leveled power list (Disciplines, Gifts,
-Arts, and similar, depending on the chronicle's own template).
+My Chronicle → Edit tab, inside any section built as a leveled power list (Disciplines, Gifts, Arts, and similar, depending on the chronicle's own template).
 
 ## The screen
 
-- **Add power…** - a searchable dropdown of every power in this section's catalog you don't
-  already hold. Typing filters the list; where this section allows a custom entry, typing a
-  name that isn't in the list adds it, starting at level 1. **For Blood Magic**, choosing a
-  power doesn't add it right away - a **Paradigm** dropdown appears next to it, listing every
-  paradigm this section offers (the power's own real teachers first), and **Add** stays
-  disabled until you pick one.
-- **Add an Elder-and-above power…** - a second dropdown, shown only once you hold some level of
-  at least one family with picks past the numbered ladder. Always a real catalog pick - never a
-  typed custom entry. Blood Magic gates this the same way as Add power - a paradigm before it's
-  actually added.
-- **Reorder** - Blood Magic only. Puts your held paths in whatever order you like instead of
-  the usual catalog order - see [Your Own Order](player-order.md).
+- **Add power…** - a searchable dropdown of every power in this section's catalog you don't already hold. Typing filters the list; where this section allows a custom entry, typing a name that isn't in the list adds it, starting at level 1. **For Blood Magic**, choosing a power doesn't add it right away - a **Paradigm** dropdown appears next to it, listing every paradigm this section offers (the power's own real teachers first), and **Add** stays disabled until you pick one.
+- **Add an Elder-and-above power…** - a second dropdown, shown only once you hold some level of at least one family with picks past the numbered ladder. Always a real catalog pick - never a typed custom entry. Blood Magic gates this the same way as Add power - a paradigm before it's actually added.
+- **Reorder** - Blood Magic only. Puts your held paths in whatever order you like instead of the usual catalog order - see [Your Own Order](player-order.md).
 - Each held power, one row:
   - Its name, and either a **List each level** / **Use stepper** toggle plus one of:
     - **Stepper** (the default) - **−** and **+** buttons around the current level.
     - **Checklist** - one box per rung on this section's ladder, each labeled with that rung's
-      real named power (for example, Celerity's "Alacrity," "Swiftness," and so on). Checking a
-      box raises the level to that rung; unchecking one lowers it to just below that rung.
+      real named power (for example, Celerity's "Alacrity," "Swiftness," and so on). Checking a box raises the level to that rung; unchecking one lowers it to just below that rung.
     The ladder is the same length for every power in a section - five rungs for Disciplines,
     Arcanoi, Arts, Spheres and Realms alike - so the stepper stops at the same place whichever
     power you are on.
@@ -48,23 +32,17 @@ Arts, and similar, depending on the chronicle's own template).
     Precision") with no stepper or checklist - only Remove/Undo, since it's a single named pick,
     not a rated level. Where an imported power's own name is all the catalog has, it shows once
     rather than twice.
-- **Your Elder-and-above picks sit in their own list below the rated powers**, grouped under a
-  heading per rank - Elder, Master, Ascended, Methuselah. A rank you hold nothing at simply
-  isn't shown. There is deliberately **no count and no progress bar**: holding two Master powers
-  and no Elder ones is perfectly legal, and nothing here treats a rank as something to fill.
+- **Your Elder-and-above picks sit in their own list below the rated powers**, grouped under a heading per rank - Elder, Master, Ascended, Methuselah. A rank you hold nothing at simply isn't shown. There is deliberately **no count and no progress bar**: holding two Master powers and no Elder ones is perfectly legal, and nothing here treats a rank as something to fill.
 
-On a narrow screen, Tradition and Remove/Undo move behind a **Details** button that opens them
-in a small panel; the stepper or checklist stays on the row itself.
+On a narrow screen, Tradition and Remove/Undo move behind a **Details** button that opens them in a small panel; the stepper or checklist stays on the row itself.
 
 ## Common tasks
 
 ### Add a new power
 
 1. Open the section and use **Add power…**.
-2. Choose a name from the list (or type one, where allowed). **For Blood Magic**, pick a
-   **Paradigm** and click **Add** - it stays disabled until you do.
-3. It's added at level 1. Raise it with the stepper, or switch to **List each level** and check
-   the rungs you hold.
+2. Choose a name from the list (or type one, where allowed). **For Blood Magic**, pick a **Paradigm** and click **Add** - it stays disabled until you do.
+3. It's added at level 1. Raise it with the stepper, or switch to **List each level** and check the rungs you hold.
 
 ### Raise or lower a power's level
 
@@ -74,8 +52,7 @@ in a small panel; the stepper or checklist stays on the row itself.
 ### Add an Elder-and-above pick
 
 1. Hold some level of the family it belongs to.
-2. Use **Add an Elder-and-above power…** and choose the pick. **For Blood Magic**, pick a
-   **Paradigm** and click **Add**.
+2. Use **Add an Elder-and-above power…** and choose the pick. **For Blood Magic**, pick a **Paradigm** and click **Add**.
 
 ### Set a power's tradition
 
@@ -90,44 +67,23 @@ in a small panel; the stepper or checklist stays on the row itself.
 
 ## Things to know
 
-- **Numbered powers add up.** Buying a fresh power at level 3 costs levels 1, 2, and 3 together,
-  not level 3 alone - reflected in whatever cost the Edit tab's Pending Changes shows, not here.
-- **List each level / Use stepper is one choice for your whole sheet**, remembered on this
-  device - switching it on any power switches every power, on every sheet you open here, and it
-  stays that way next time.
-- **A custom name always needs review.** Typing a name that isn't in the catalog only saves
-  where this section allows it, and even then it always goes to a Storyteller for approval, no
-  matter how your chronicle has auto-approval configured. Elder-and-above picks are never
-  custom - only real catalog entries.
-- **An Elder-and-above pick is additive**, not a replacement - you keep your family's numbered
-  level, and can hold several distinct Elder-and-above picks in it at once.
-- **A paradigm is required to add a new Blood Magic power, but never to keep one.** A power
-  added before this section asked for a paradigm up front just shows "Choose paradigm" on its
-  row - a nudge, not a lock. A Storyteller reviewing the change is the actual check either way.
-- **Any paradigm this section offers works for any power in it.** A path's own catalog-listed
-  teachers are only listed first for convenience - picking a different real paradigm from the
-  list is allowed and correctly reviewed.
-- **Removing marks, it doesn't delete** - nothing leaves the sheet until you submit changes from
-  the Edit tab.
+- **Numbered powers add up.** Buying a fresh power at level 3 costs levels 1, 2, and 3 together, not level 3 alone - reflected in whatever cost the Edit tab's Pending Changes shows, not here.
+- **List each level / Use stepper is one choice for your whole sheet**, remembered on this device - switching it on any power switches every power, on every sheet you open here, and it stays that way next time.
+- **A custom name always needs review.** Typing a name that isn't in the catalog only saves where this section allows it, and even then it always goes to a Storyteller for approval, no matter how your chronicle has auto-approval configured. Elder-and-above picks are never custom - only real catalog entries.
+- **An Elder-and-above pick is additive**, not a replacement - you keep your family's numbered level, and can hold several distinct Elder-and-above picks in it at once.
+- **A paradigm is required to add a new Blood Magic power, but never to keep one.** A power added before this section asked for a paradigm up front just shows "Choose paradigm" on its row - a nudge, not a lock. A Storyteller reviewing the change is the actual check either way.
+- **Any paradigm this section offers works for any power in it.** A path's own catalog-listed teachers are only listed first for convenience - picking a different real paradigm from the list is allowed and correctly reviewed.
+- **Removing marks, it doesn't delete** - nothing leaves the sheet until you submit changes from the Edit tab.
 - **Every level display matches the sheet and a signed PDF exactly.**
 
 ## Troubleshooting
 
-- **I don't see Add power… or a stepper.** You're viewing a character you can't edit - see
-  [Character Editor](character-editor.md).
-- **I don't see Add an Elder-and-above power….** You don't yet hold any level in a family that
-  has picks past the numbered ladder.
-- **A name I typed says it isn't in the catalog.** Check the spelling. If it's genuinely new,
-  this section may not accept custom entries at all - ask a Storyteller.
-- **The stepper won't go higher.** You're at the top of this section's ladder - an
-  Elder-and-above pick, if the family has any, is a separate control below the list.
-- **A power of mine shows a number higher than the ladder goes.** Some characters migrated in
-  with a single total covering the whole ladder *plus* powers above it - "Celerity 9" meaning
-  nine Celerity powers, not a ninth rung. Those keep their number and are left alone. The
-  stepper steps such a holding **down one at a time** rather than snapping it back to the top of
-  the ladder, so nothing is quietly dropped.
-- **Switching List each level / Use stepper changed every other power too.** That's expected -
-  it's one setting for your whole sheet, not per power.
+- **I don't see Add power… or a stepper.** You're viewing a character you can't edit - see [Character Editor](character-editor.md).
+- **I don't see Add an Elder-and-above power….** You don't yet hold any level in a family that has picks past the numbered ladder.
+- **A name I typed says it isn't in the catalog.** Check the spelling. If it's genuinely new, this section may not accept custom entries at all - ask a Storyteller.
+- **The stepper won't go higher.** You're at the top of this section's ladder - an Elder-and-above pick, if the family has any, is a separate control below the list.
+- **A power of mine shows a number higher than the ladder goes.** Some characters migrated in with a single total covering the whole ladder *plus* powers above it - "Celerity 9" meaning nine Celerity powers, not a ninth rung. Those keep their number and are left alone. The stepper steps such a holding **down one at a time** rather than snapping it back to the top of the ladder, so nothing is quietly dropped.
+- **Switching List each level / Use stepper changed every other power too.** That's expected - it's one setting for your whole sheet, not per power.
 
 ## Related
 

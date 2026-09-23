@@ -1,0 +1,213 @@
+{
+  "edition_rule": "Same rule as vampire-blood-magic: a ladder-rank level noted 'dark ages' or '2nd ed.' leaves the base family before the ladder fills and goes to darkages-vampire_disciplines.json or 2nded-vampire_disciplines.json. Above-ladder picks carrying the same note stay where they are (they are valid picks, not overflow) and keep the tag in `pick_editions`.",
+  "families": {
+    "Necromancy": {
+      "action": "drop",
+      "reason": "superseded",
+      "superseded_by": "vampire-blood-magic (Sepulchre Path, Bone Path, Ash Path)",
+      "evidence": "Owner ruling 2026-09-22, closing Q5: drop it. Every ladder level of this family was noted '2nd ed.' (Summon Spirit, Insight, Compel Spirit, Soul Stealing, source menu 'Necromancy, Vampire'), and the lookup the same day found no book that prints it as a five-rung ladder: The Masquerade Second Edition (WW05200) has no Necromancy at all, and the 2nd-edition compilation that does carry these names - Laws of the Night, 'information from Masquerade 2nd Edition, The Masquerade Players' Guide and Antagonists' - gives Necromancy one power per tier (Summon Spirit basic, Compel Spirit intermediate, Soul Stealing advanced). Grapevine's fourth entry, Insight, is the Sepulchre Path's own first power, from a different book. So the family is a Grapevine compilation of a superseded printing, and filling its fifth rung would have meant inventing a power. vampire-blood-magic already carries the three real MET Necromancy paths. Production holds none of it: read-only counts on both live sites found 12 Necromancy-named holdings on kony and 8 on Boston, every one a ritual or a blood-magic path, and zero in vampire-disciplines - so the drop strands nobody. **No alias and no moved_from, deliberately:** a held 'Necromancy N' in this block has no single target - the compilation's three names span two different real paths and the blood-magic families print their own (Insight, Summon Soul, Compel Soul, Haunting, Torment) - so any mapping would be invented rather than recorded, and there is no holding anywhere for it to route."
+    },
+    "Cenotaph Path": {
+      "action": "move_to_block",
+      "block": "vampire-blood-magic",
+      "into": "Cenotaph",
+      "level_aliases": {},
+      "renames": {
+        "Revela the Catene": "Reveal the Catene"
+      },
+      "evidence": "B-5. A necromantic path filed as a Discipline: same five powers as vampire-blood-magic's Cenotaph (rung 2 misspelled 'Revela')."
+    },
+    "Creo Ignem": {
+      "action": "move_to_block",
+      "block": "vampire-blood-magic",
+      "into": "Lure of Flames",
+      "evidence": "B-5 / §5-c. Dark Ages Hermetic name for Lure of Flames (its source menu); identical ladder to vampire-blood-magic's Lure of Flames once 'Hand of Flame(s)' is reconciled."
+    },
+    "Creo Materia": {
+      "action": "move_to_block",
+      "block": "vampire-blood-magic",
+      "into": "Path of Conjuring",
+      "evidence": "B-5 / §5-c. Hermetic name for Path of Conjuring (its source menu); identical ladder, including the same 2nd ed. power pushing Permanency into overflow."
+    },
+    "Creo Motus": {
+      "action": "move_to_block",
+      "block": "vampire-blood-magic",
+      "into": "Movement of the Mind",
+      "evidence": "B-5 / §5-c. Source menu Movement of the Mind; identical ladder and identical 2nd ed. overflow."
+    },
+    "Rego Motus": {
+      "action": "move_to_block",
+      "block": "vampire-blood-magic",
+      "into": "Movement of the Mind",
+      "evidence": "B-5 / §5-c. Second Hermetic name over the same source menu as Creo Motus; identical ladder."
+    },
+    "Creo Tempestas": {
+      "action": "move_to_block",
+      "block": "vampire-blood-magic",
+      "into": "Weather Control",
+      "evidence": "B-5 / §5-c. Source menu Weather Control; identical ladder and identical dark ages overflow."
+    },
+    "Rego Tempestas": {
+      "action": "move_to_block",
+      "block": "vampire-blood-magic",
+      "into": "Weather Control",
+      "evidence": "B-5 / §5-c. Second Hermetic name over Weather Control; identical ladder."
+    },
+    "Perdo Materia": {
+      "action": "move_to_block",
+      "block": "vampire-blood-magic",
+      "into": "Hands of Destruction",
+      "evidence": "B-5 / §5-c. Source menu Hands of Destruction; identical ladder."
+    },
+    "Rego Elementum": {
+      "action": "move_to_block",
+      "block": "vampire-blood-magic",
+      "into": "Elemental Mastery",
+      "evidence": "B-5 / §5-c. Source menu Elemental Mastery; identical ladder and identical dark ages overflow."
+    },
+    "Rego Vitae": {
+      "action": "move_to_block",
+      "block": "vampire-blood-magic",
+      "into": "Path of Blood",
+      "evidence": "B-5 / §5-c. Source menu Path of Blood; identical ladder and identical 2nd ed. overflow."
+    },
+    "Path of Shadowcrafting": {
+      "action": "move_to_block",
+      "block": "vampire-blood-magic",
+      "into": "Path of Shadow Crafting",
+      "evidence": "B-5 / §5-c. Same path as vampire-blood-magic's Path of Shadow Crafting (identical ladder), spelled as one word."
+    },
+    "Path of the Blood's Curse": {
+      "action": "move_to_block",
+      "block": "vampire-blood-magic",
+      "into": "Path of Blood's Curse",
+      "renames": {
+        "Withering of Ages": "The Withering of Ages"
+      },
+      "evidence": "B-5 / B-6 / §5-b. The third copy of the Path of the Blood's Curse; identical ladder. Rung 5 carried without its article ('Withering of Ages'); the blood-magic copies print 'The Withering of Ages'."
+    },
+    "Path of the Levinbolt": {
+      "action": "move_to_block",
+      "block": "vampire-blood-magic",
+      "into": "Path of Levinbolt",
+      "evidence": "B-5 / §5-c. Identical ladder to vampire-blood-magic's Path of Levinbolt."
+    },
+    "Technomancy": {
+      "action": "move_to_block",
+      "block": "vampire-blood-magic",
+      "into": "Path of Technomancy",
+      "evidence": "B-5 / §5-c. Identical ladder to vampire-blood-magic's Path of Technomancy; the Camarilla Guide prints it as a Thaumaturgy path (met/camarilla-guide-thaumaturgy-paths.json)."
+    },
+    "Awakening of the Steel": {
+      "action": "move_to_block",
+      "block": "vampire-blood-magic",
+      "into": "Awakening the Steel",
+      "evidence": "B-5. Identical ladder to vampire-blood-magic's Awakening the Steel (a Dur-An-Ki path). Grapevine nests it under the Assamite menu, which is how it reached the Discipline block."
+    },
+    "Obtenebration": {
+      "level_aliases": {
+        "Tenebrous Form": "Shadow Body"
+      },
+      "evidence": "Overflow 'Tenebrous Form' (note 'Advanced', the CSV's capitalisation) is the advanced rung under its other printed name: same rank, same cost, one per source (GVM 'Shadow Body', MET CSV 'Tenebrous Form'). Kept as an alias of the rung, not a second advanced power. The dark ages overflow moves by the edition rule."
+    },
+    "Vicissitude": {
+      "level_aliases": {
+        "Blood Form": "Bloodform"
+      },
+      "evidence": "Overflow 'Blood Form' (note 'Advanced') is rung 5 spelled as two words."
+    },
+    "Bardo": {
+      "retier": {
+        "Mummification Ritual": "elder"
+      },
+      "evidence": "Two advanced powers for one advanced rung (Mummification Ritual, Ra's Blessing). V20 (tt/v20-bloodline-disciplines.json) prints Mummification at eight dots - above the ladder - so Mummification Ritual becomes an elder pick and Ra's Blessing takes rung 5. Reprices Mummification Ritual 9 -> 12, forward only. See Owner questions: the other two sources disagree on names past rung 2."
+    },
+    "Daimoinon": {
+      "level_aliases": {
+        "Sens the Sin": "Sense the Sin",
+        "Fear the Void Below": "Fear of the Void"
+      },
+      "evidence": "Overflow 'Sens the Sin' / 'Fear the Void Below' are rungs 1-2 under a typo and an alternate wording (Faith and Fire prints 'Sense the Sin', 'Fear of the Void'). The dark ages overflow (Essence of the Netherworld, Curse) moves by the edition rule and matches Faith and Fire's Dark Ages ladder."
+    },
+    "Deimos": {
+      "fill": [
+        {
+          "tier": "intermediate",
+          "name": "Dark Humours",
+          "filled_from": "Faith and Fire's Path of the Four Humours, intermediate (vampire-blood-magic Four Humours; met/the-long-night-bloodline-disciplines.json notes the two share their basic and advanced powers)"
+        }
+      ],
+      "evidence": "Short ladder: 2/1/1. The Long Night prints only four Deimos powers; its note says Faith and Fire's version of the same discipline (Path of the Four Humours) shares Whispers to the Soul, Kiss of the Dark Mother and Black Breath. Faith and Fire's second intermediate, Dark Humours, fills the rung. Clutching the Shroud stays an elder pick as Grapevine prices it."
+    },
+    "Flight": {
+      "level_aliases": {
+        "Level One": "Glide",
+        "Level Two": "Fly",
+        "Level Three": "Swoop",
+        "Level Four": "Soar",
+        "Level Five": "Flight of the Eagle"
+      },
+      "drop_levels": {
+        "Pounce": "maneuver",
+        "Slam": "maneuver",
+        "Dive": "maneuver"
+      },
+      "options": [
+        "Pounce",
+        "Slam",
+        "Dive"
+      ],
+      "options_note": "Combat maneuvers usable once the corresponding Flight level is known - not separately purchased (Faith and Fire; the book names Pounce, Plunge and Dive, Grapevine names the second Slam).",
+      "evidence": "Overflow was the five rungs again as 'Level One'..'Level Five' (placeholder duplicates), plus Pounce/Slam/Dive at an unclassified cost of 2. Faith and Fire (met/faith-and-fire-gargoyle-powers.json) says the maneuvers are not bought; they become the family's options."
+    },
+    "Gargoyle Powers": {
+      "action": "to_trait_list",
+      "block": "vampire-gargoyle-powers",
+      "evidence": "Faith and Fire: 'non-progressive body modification powers purchased individually (not leveled)', XP 3/6/9 by power (met/faith-and-fire-gargoyle-powers.json). Eight 'unknown'-tier items can never fill a ladder. Moved to a sibling trait_list per 1.2.10 A4. See Owner questions."
+    },
+    "Ritual": {
+      "action": "drop",
+      "duplicate_of": "vampire-rituals (group Gargoyle, 9 items)",
+      "evidence": "Source menu 'Rituals, Gargoyle' - the same nine rituals already seeded in vampire-rituals as 'Gargoyle: <name> (<tier>)', priced 2/4/6 as rituals. A ritual list reached the Discipline block through the Gargoyle Powers submenu."
+    },
+    "Long Night Combo": {
+      "action": "drop",
+      "duplicate_of": "vampire-combo-disciplines (all 11 present; 'Illness Unveiled' there as 'The Illness Unveiled')",
+      "evidence": "Source menu 'Disciplines, Long Night Combo' is vampire-combo-disciplines' own source menu (gvm-block-map.php). Eleven combination powers, not a ladder."
+    },
+    "Mortis": {
+      "fill": [
+        {
+          "tier": "intermediate",
+          "name": "Death's Whisper",
+          "filled_from": "Vampire: The Dark Ages (WW02800) p. 152-154 - Mortis runs Masque of Death (1), Blight (2), Awaken (3), Death's Whisper (4), Black Death (5), with Vigor Mortis at six"
+        }
+      ],
+      "evidence": "Short ladder: 2/1/1 (Masque of Death, Blight, Awaken, Black Death). **Looked up 2026-09-22 on the owner's ruling.** Mind's Eye Theatre: Faith and Fire (WW05038) does not print this ladder at all - its Mortis is three separate paths (Grave's Decay, Corpse in the Monster, Cadaverous Animation, plus the Lamia's Four Humours), every one of which vampire-blood-magic already carries under the Mortis tradition. The ladder Grapevine seeded is the tabletop one, Vampire: The Dark Ages (WW02800) p. 152-154, where every other name in this family matches exactly and the fourth dot is Death's Whisper. That fills the rung from the family's own source; the placeholder is gone. Recorded for a later boundary ruling, not acted on here: this family covers concepts blood magic already carries as three paths."
+    },
+    "Spiritus": {
+      "retier": {
+        "Engling Fury": "intermediate"
+      },
+      "evidence": "Short ladder: 2/1/1 with Engling Fury as an elder pick. The Sabbat Storyteller's Handbook (tt/storytellers-handbook-sabbat-bloodline-disciplines.json) numbers Spiritus 1 Speak with Spirits, 2 Summon Spirit Beasts, 3 Aspect of the Beast, 4 Engling Fury, 5 The Wildebeest - so Engling Fury is rung 4. Reprices it 12 -> 6, forward only."
+    },
+    "Valeren": {
+      "renames": {
+        "Anethetic Touch": "Anesthetic Touch"
+      },
+      "level_aliases": {
+        "Sense Vitaility": "Sense Vitality"
+      },
+      "evidence": "T-T5. Overflow was rungs 1-2 printed again - 'Sense Vitaility' (typo) and 'Anesthetic Touch' (the correct spelling of rung 2, which was the typo 'Anethetic'; the Sabbat Guide prints 'Anesthetic Touch'). Healer and Warrior stay their own families."
+    }
+  },
+  "variant_fill": {},
+  "variant_retier": {
+    "dark-ages:Protean": {
+      "Interred in Earth": "intermediate"
+    }
+  },
+  "variant_retier_evidence": {
+    "dark-ages:Protean": "Grapevine's Dark Ages Protean prints three basics (Witness of Darkness, Talons of the Beast, Interred in Earth), one intermediate and one advanced - five powers in book order on a 2/1/1-plus-one shape. The third power is the third rung, and the ladder is the rule, so Interred in Earth is the first intermediate; its modern counterpart, Earth Meld, is intermediate too. Reprices it 3 -> 6 in the variant only."
+  }
+}

@@ -1,0 +1,1780 @@
+{
+  "format": 1,
+  "slug": "demon-rituals",
+  "name": "Rituals",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "OWBN Fallen Genre Packet (2021), OWBN0052-Demon-Fallen Genre-2021.pdf, Chapter 5 (A Chorus of Angels: Rituals), printed p. 141-190"
+    ],
+    "extracted": "2026-09-21",
+    "tool": "samples/research/demon/owbn/rituals.json (extract_rituals.py), field-mapped by hand into the catalog JSON format"
+  },
+  "definition": {
+    "alphabetize": true,
+    "atomic": true,
+    "allow_custom": false,
+    "allow_multiples": false,
+    "has_specializations": false,
+    "negative": false,
+    "flat_cost": true,
+    "categories": [
+      "Bastion Rituals",
+      "Defilers",
+      "Devils",
+      "Devourers",
+      "Fiends",
+      "Malefactors",
+      "Scourges",
+      "Slayers"
+    ],
+    "items": [
+      {
+        "name": "Baptism of Faith",
+        "cost": "4",
+        "tier": null,
+        "group": "Devils",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 16 minutes; Backlash: 1 Lethal to all Characters in a 9 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 145"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Celestials",
+            "min_level": 2
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Longing",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Defeat Scry",
+        "cost": "4",
+        "tier": null,
+        "group": "Devils",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 16 minutes; Backlash: 1 Lethal to all Characters in a 9 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 145"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Celestials",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Firmament",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Resist Fire",
+        "cost": "4",
+        "tier": null,
+        "group": "Devils",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 16 minutes; Backlash: 1 Lethal to all Characters in a 9 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 145"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Flame",
+            "min_level": 2
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Flesh",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Ghostly Inferno",
+        "cost": "5",
+        "tier": null,
+        "group": "Devils",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 25 minutes; Backlash: 2 Lethal to all Characters in a 10 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 145"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Flame",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Realms",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Firestorm",
+        "cost": "8",
+        "tier": null,
+        "group": "Devils",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 64 minutes; Backlash: 4 Lethal to all Characters in a 13 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 146"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Flame",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Winds",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Faith of Steel",
+        "cost": "9",
+        "tier": null,
+        "group": "Devils",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 36 minutes; Backlash: 2 Lethal to all Characters in an 11 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 147"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Radiance",
+            "min_level": 2
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Awakening ••, Lore of Longing",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Create Elemental",
+        "cost": "18",
+        "tier": null,
+        "group": "Devils",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 81 minutes; Backlash: 5 Lethal to all Characters in a 14 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 148"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Flame",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Awakening ••; Lore of the Celestials ••; Lore of the Fundament",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Reshape the Soul",
+        "cost": "18",
+        "tier": null,
+        "group": "Devils",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 144 minutes; Backlash: 8 Lethal to all Characters in an 17 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 149"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Radiance",
+            "min_level": 5
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Humanity •••••, Lore of Longing",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Micarael's Sight",
+        "cost": "4",
+        "tier": null,
+        "group": "Scourges",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 16 minutes; Backlash: 1 Lethal to all Characters in a 9 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 150"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Firmament",
+            "min_level": 2
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Realms",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Dust Swarm",
+        "cost": "5",
+        "tier": null,
+        "group": "Scourges",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 25 minutes; Backlash: 2 Lethal to all Characters in a 10 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 151"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Awakening",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Earth",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Rain of Frogs",
+        "cost": "12",
+        "tier": null,
+        "group": "Scourges",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 64 minutes; Backlash: 4 Lethal to all Characters in a 13 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 151"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Winds",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Beasts •••, Lore of Awakening",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Vacuum",
+        "cost": "5",
+        "tier": null,
+        "group": "Scourges",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 25 minutes; Backlash: 2 Lethal to all Characters in a 10 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 152"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Winds",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Death",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Cloud Chariot",
+        "cost": "5",
+        "tier": null,
+        "group": "Scourges",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": null,
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 152"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Winds",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Fundament",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Inoculate",
+        "cost": "5",
+        "tier": null,
+        "group": "Scourges",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 25 minutes; Backlash: 2 Lethal to all Characters in a 10 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 153"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Awakening",
+            "min_level": 2
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Patterns",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Fog of War",
+        "cost": "6",
+        "tier": null,
+        "group": "Scourges",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 36 minutes; Backlash: 2 Lethal to all Characters in a 11 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 154"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Winds",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Humanity",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Create Elemental",
+        "cost": "18",
+        "tier": null,
+        "group": "Scourges",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 81 minutes; Backlash: 5 Lethal to all Characters in a 14 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 155"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Winds",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Awakening ••; Lore of the Celestials ••; Lore of the Fundament",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Plague of Boils",
+        "cost": "22",
+        "tier": null,
+        "group": "Scourges",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 121 minutes; Backlash: 7 Lethal to all Characters in a 16 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 156"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Flesh",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Radiance •••, Lore of Patterns •••, Lore of Awakening",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Disarm",
+        "cost": "5",
+        "tier": null,
+        "group": "Malefactors",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 25 minutes; Backlash: 2 Lethal to all Characters in a",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 156"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Forge",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Local Interference",
+        "cost": "6",
+        "tier": null,
+        "group": "Malefactors",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 16 minutes; Backlash: 1 Lethal to all Characters in a 9 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 157"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Forge",
+            "min_level": 2
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Earth •, Lore of the Fundament",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Volcano",
+        "cost": "7",
+        "tier": null,
+        "group": "Malefactors",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 49 minutes; Backlash: 3 Lethal to all Characters in a 12 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 158"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Earth",
+            "min_level": 5
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Flame",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Chalice of Faith",
+        "cost": "10",
+        "tier": null,
+        "group": "Malefactors",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 100 minutes; Backlash: 5 Lethal to all Characters in a 15 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 159"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Forge",
+            "min_level": 5
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Celestials",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Rain of Brimstone",
+        "cost": "11",
+        "tier": null,
+        "group": "Malefactors",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 49 minutes; Backlash: 3 Lethal to all Characters in a 12 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 160"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Earth",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Flame ••, Lore of the Winds",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Age Landscape",
+        "cost": "12",
+        "tier": null,
+        "group": "Malefactors",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 64 minutes; Backlash: 4 Lethal to all Characters in a 13 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 160"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Earth",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Wild •••, Lore of Death",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Create Elemental",
+        "cost": "18",
+        "tier": null,
+        "group": "Malefactors",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 81 minutes; Backlash: 5 Lethal to all Characters in a 14 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 161"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Earth",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Awakening ••; Lore of the Celestials ••; Lore of the Fundament",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Seal Area",
+        "cost": "24",
+        "tier": null,
+        "group": "Malefactors",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 144 minutes; Backlash: 8 Lethal to all Characters in a 17 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 162"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Paths",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Fundament •••, Lore of Portals •••, Lore of the Wild",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Hadrisel's Libration",
+        "cost": "3",
+        "tier": null,
+        "group": "Defilers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 9 minutes; Backlash: 1 Lethal to all Characters in a 8 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 163"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Storms",
+            "min_level": 2
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Awakening",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Horn of True Sight",
+        "cost": "3",
+        "tier": null,
+        "group": "Defilers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 9 minutes; Backlash: 1 Lethal to all Characters in an 8 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 163"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Longing",
+            "min_level": 2
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Patterns",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Liquid Assassin",
+        "cost": "4",
+        "tier": null,
+        "group": "Defilers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 16 minutes; Backlash: 1 Lethal to all Characters in a 9 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 164"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Storms",
+            "min_level": 2
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Fundament",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Prenatal Guardian",
+        "cost": "9",
+        "tier": null,
+        "group": "Defilers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": null,
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 164"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Transfiguration",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Storms ••, Lore of Flesh",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Siren's Song",
+        "cost": "9",
+        "tier": null,
+        "group": "Defilers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 36 minutes; Backlash: 2 Lethal to all Characters in an 11 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 165"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Longing",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Song of Ecstatic Battle",
+        "cost": "11",
+        "tier": null,
+        "group": "Defilers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 49 minutes; Backlash: 2 Lethal to all Characters in a 12 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 166"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Longing",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Awakening ••, Lore of Transfiguration",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Part the Waters",
+        "cost": "14",
+        "tier": null,
+        "group": "Defilers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 81 minutes; Backlash: 5 Lethal to all Characters in a 14 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 167"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Storms",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Fundament •••; Lore of Paths",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Fiery Vision",
+        "cost": "16",
+        "tier": null,
+        "group": "Defilers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": null,
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 167"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Longing",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Light ••; Lore of Radiance ••; Lore of Humanity",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Create Elemental",
+        "cost": "18",
+        "tier": null,
+        "group": "Defilers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 81 minutes; Backlash: 5 Lethal to all Characters in a 14 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 168"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Storms",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Awakening ••; Lore of the Celestials ••; Lore of the Fundament",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Water Elemental",
+        "cost": "22",
+        "tier": null,
+        "group": "Defilers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 121 minutes; Backlash: 7 Lethal to all Characters in a 16 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 169"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Storms",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Firmament •••; Lore of the Winds ••; Lore of Humanity",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "River of Blood",
+        "cost": "24",
+        "tier": null,
+        "group": "Defilers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 144 minutes; Backlash: 8 Lethal to all Characters in a 17 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 170"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Storms",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Flesh •••; Lore of Portals •••; Lore of Transfiguration",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Shooting Star",
+        "cost": "7",
+        "tier": null,
+        "group": "Fiends",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 49 minutes; Backlash: 3 Lethal to all Characters in a 12 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 171"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Patterns",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Fundament",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Time Watch",
+        "cost": "7",
+        "tier": null,
+        "group": "Fiends",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 49 minutes; Backlash: 3 Lethal to all Characters in a 12 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 171"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Patterns",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Humanity",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Prophetic Dream",
+        "cost": "11",
+        "tier": null,
+        "group": "Fiends",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 49 minutes; Backlash: 3 Lethal to all Characters in a 12 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 172"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Patterns",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Firmament ••, Lore of the Spirit",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Tapestry of Light",
+        "cost": "12",
+        "tier": null,
+        "group": "Fiends",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 64 minutes; Backlash: 4 Lethal to all Characters in a 13 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 173"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Light",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Forge •••, Lore of the Fundament",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Replicate",
+        "cost": "12",
+        "tier": null,
+        "group": "Fiends",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 64 minutes; Backlash: 4 Lethal to all Characters in a 13 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 173"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Portals",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Light •••, Lore of the Firmament",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Darkness Eternal",
+        "cost": "17",
+        "tier": null,
+        "group": "Fiends",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 121 minutes; Backlash: 7 Lethal to all Characters in a 16 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 174"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Light",
+            "min_level": 5
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Fundament ••••, Lore of Death",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "RItual of Eternal Imprisonment",
+        "cost": "18",
+        "tier": null,
+        "group": "Fiends",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 144 minutes; Backlash: 8 Lethal to all Characters in a 15 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 175"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Portals",
+            "min_level": 5
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Patterns",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Beast Tongue",
+        "cost": "3",
+        "tier": null,
+        "group": "Devourers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 9 minutes; Backlash: 1 Lethal to all Characters in an 8 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 175"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Beast",
+            "min_level": 2
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Humanity",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Fruit of Perfection",
+        "cost": "4",
+        "tier": null,
+        "group": "Devourers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 16 minutes; Backlash: 1 Lethal to all Characters in a 9 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 176"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Wild",
+            "min_level": 2
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Radiance",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Heart of Stone",
+        "cost": "5",
+        "tier": null,
+        "group": "Devourers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 25 minutes; Backlash: 2 Lethal to all Characters in a 10 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 177"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Flesh",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Earth",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Bountiful Harvest",
+        "cost": "6",
+        "tier": null,
+        "group": "Devourers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 16 minutes; Backlash: 1 Lethal to all Characters in a 9 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 177"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Wild",
+            "min_level": 2
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Earth •, Lore of Storms",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Wild Path",
+        "cost": "6",
+        "tier": null,
+        "group": "Devourers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 36 minutes; Backlash: 2 Lethal to all Characters in a 11 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 178"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Wild",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Paths",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Defeat Path",
+        "cost": "7",
+        "tier": null,
+        "group": "Devourers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 49 minutes; Backlash: 3 Lethal to all Characters in a 12 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 178"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Wild",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Celestials",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Animated Plant",
+        "cost": "9",
+        "tier": null,
+        "group": "Devourers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 81 minutes; Backlash: 5 Lethal to all Characters in a 14 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 179"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Wild",
+            "min_level": 5
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Beast",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Forest Ward",
+        "cost": "11",
+        "tier": null,
+        "group": "Devourers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 49 minutes; Backlash: 3 Lethal to all Characters in a 12 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 180"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Wild",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Awakening ••, Lore of Paths",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Beast of Babel",
+        "cost": "18",
+        "tier": null,
+        "group": "Devourers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 81 minutes; Backlash: 5 Lethal to all Characters in a 12 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 180"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Beast",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Flesh ••, Lore of the Firmament ••, Lore of Humanity",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Wind of Years",
+        "cost": "22",
+        "tier": null,
+        "group": "Devourers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 121 minutes; Backlash: 7 Lethal to all Characters in a 16 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 181"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Flesh",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Wind •••, Lore of Death ••, Lore of the Fundament",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Shadow Dark",
+        "cost": "4",
+        "tier": null,
+        "group": "Slayers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 16 minutes; Backlash: 1 Lethal to all Characters in a 9 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 181"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Realms",
+            "min_level": 2
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Light",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Spirit Garden",
+        "cost": "4",
+        "tier": null,
+        "group": "Slayers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 16 minutes; Backlash: 1 Lethal to all Characters in a 9 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 182"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Spirit",
+            "min_level": 2
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Wild",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Visit Soul Prison",
+        "cost": "9",
+        "tier": null,
+        "group": "Slayers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 36 minutes; Backlash: 2 Lethal to all Characters in a 11 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 183"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Realms",
+            "min_level": 2
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Paths ••, Lore of Portals",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "The Veil of Cerberus",
+        "cost": "9",
+        "tier": null,
+        "group": "Slayers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 81 minutes; Backlash: 5 Lethal to all Characters in a 14 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 183"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Realms",
+            "min_level": 5
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Portals",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Incarnate Spirit",
+        "cost": "11",
+        "tier": null,
+        "group": "Slayers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 49 minutes; Backlash: 3 Lethal to all Characters in a 12 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 184"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Spirit",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Flesh ••, Lore of Realms",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Prison of Flesh",
+        "cost": "12",
+        "tier": null,
+        "group": "Slayers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 64 minutes; Backlash: 4 Lethal to all Characters in a 13 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 184"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Spirit",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Flesh •••, Lore of Death",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Reborn in New Skin",
+        "cost": "17",
+        "tier": null,
+        "group": "Slayers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 121 minutes; Backlash: 7 Lethal to all Characters in a 16 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 185"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Spirit",
+            "min_level": 5
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Death ••••, Lore of the Winds",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Create Specter",
+        "cost": "24",
+        "tier": null,
+        "group": "Slayers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 144 minutes; Backlash: 8 Lethal to all Characters in a 17 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 186"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Death",
+            "min_level": 5
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Flesh •••, Lore of the Spirit ••, Lore of the Winds",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Fate of the Firstborn",
+        "cost": "24",
+        "tier": null,
+        "group": "Slayers",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 144 minutes; Backlash: 8 Lethal to all Characters in a 17 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 187"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Death",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Celestials •••, Lore of Patterns •••, Lore of Radiance",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Citadel",
+        "cost": "11",
+        "tier": null,
+        "group": "Bastion Rituals",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 49 minutes; Backlash: 3 Lethal to all Characters in a 12 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 188"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Forge",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Earth ••, Lore of Portals",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Refuge",
+        "cost": "12",
+        "tier": null,
+        "group": "Bastion Rituals",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 64 minutes; Backlash: 4 Lethal to all Characters in a 13 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 188"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Forge",
+            "min_level": 3
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of Portals •••, Lore of the Realms",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Bastion",
+        "cost": "24",
+        "tier": null,
+        "group": "Bastion Rituals",
+        "subgroup": null,
+        "source": "OWBN Fallen Genre Packet (2021)",
+        "note": "Minimum casting time: 144 minutes; Backlash: 8 Lethal to all Characters in a 17 Yard radius",
+        "description": {
+          "reference": "OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 189"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Forge",
+            "min_level": 4
+          },
+          {
+            "block_slug": "demon-evocations",
+            "power": "Lore of the Earth •••, Lore of the Realms •••, Lore of Portals",
+            "min_level": 2
+          }
+        ]
+      }
+    ]
+  }
+}

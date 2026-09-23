@@ -1,0 +1,171 @@
+{
+  "format": 1,
+  "slug": "changeling-stigmas",
+  "name": "Stigmas",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "Laws of the Hunt Revised (WW05014) p. 229-231, via samples/research/hunter/mortal/resolved.json (dauntain_stigmas)",
+      "The Autumn People (WW07004) p. 65-66, \"Stigmas\" (page-image OCR) - the tabletop source, seven of the nine",
+      "Moved out of changeling-arts, where GVM filed six of them alphabetically as a fake five-rung Art"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "alphabetize": true,
+    "atomic": true,
+    "allow_custom": true,
+    "allow_multiples": false,
+    "has_specializations": false,
+    "negative": false,
+    "flat_cost": false,
+    "items": [
+      {
+        "name": "Conversion",
+        "cost": null,
+        "tier": null,
+        "group": null,
+        "subgroup": null,
+        "source": "Laws of the Hunt Revised",
+        "note": "Dauntain Stigma - gained at Storyteller discretion; each adds one permanent Banality",
+        "description": {
+          "reference": "Laws of the Hunt Revised (WW05014), p. 229"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": []
+      },
+      {
+        "name": "Disbelief",
+        "cost": null,
+        "tier": null,
+        "group": null,
+        "subgroup": null,
+        "source": "Laws of the Hunt Revised",
+        "note": "Dauntain Stigma - gained at Storyteller discretion; each adds one permanent Banality",
+        "description": {
+          "reference": "Laws of the Hunt Revised (WW05014), p. 229"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": []
+      },
+      {
+        "name": "Erasure",
+        "cost": null,
+        "tier": null,
+        "group": null,
+        "subgroup": null,
+        "source": "Laws of the Hunt Revised",
+        "note": "Dauntain Stigma - gained at Storyteller discretion; each adds one permanent Banality",
+        "description": {
+          "reference": "Laws of the Hunt Revised (WW05014), p. 230"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": []
+      },
+      {
+        "name": "Hatred",
+        "cost": null,
+        "tier": null,
+        "group": null,
+        "subgroup": null,
+        "source": "Laws of the Hunt Revised",
+        "note": "Dauntain Stigma - gained at Storyteller discretion; each adds one permanent Banality",
+        "description": {
+          "reference": "Laws of the Hunt Revised (WW05014), p. 230"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": []
+      },
+      {
+        "name": "Herd Mentality",
+        "cost": null,
+        "tier": null,
+        "group": null,
+        "subgroup": null,
+        "source": "Laws of the Hunt Revised",
+        "note": "Dauntain Stigma - gained at Storyteller discretion; each adds one permanent Banality",
+        "description": {
+          "reference": "Laws of the Hunt Revised (WW05014), p. 230"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": []
+      },
+      {
+        "name": "Iron Ward",
+        "cost": null,
+        "tier": null,
+        "group": null,
+        "subgroup": null,
+        "source": "Laws of the Hunt Revised",
+        "note": "Dauntain Stigma - gained at Storyteller discretion; each adds one permanent Banality",
+        "description": {
+          "reference": "Laws of the Hunt Revised (WW05014), p. 230"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": []
+      },
+      {
+        "name": "Numb",
+        "cost": null,
+        "tier": null,
+        "group": null,
+        "subgroup": null,
+        "source": "Laws of the Hunt Revised",
+        "note": "Dauntain Stigma - gained at Storyteller discretion; each adds one permanent Banality",
+        "description": {
+          "reference": "Laws of the Hunt Revised (WW05014), p. 230"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": []
+      },
+      {
+        "name": "Ravage",
+        "cost": null,
+        "tier": null,
+        "group": null,
+        "subgroup": null,
+        "source": "Laws of the Hunt Revised",
+        "note": "Dauntain Stigma - gained at Storyteller discretion; each adds one permanent Banality",
+        "description": {
+          "reference": "Laws of the Hunt Revised (WW05014), p. 231"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": []
+      },
+      {
+        "name": "Shunt",
+        "cost": null,
+        "tier": null,
+        "group": null,
+        "subgroup": null,
+        "source": "Laws of the Hunt Revised",
+        "note": "Dauntain Stigma - gained at Storyteller discretion; each adds one permanent Banality",
+        "description": {
+          "reference": "Laws of the Hunt Revised (WW05014), p. 231"
+        },
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": []
+      }
+    ]
+  }
+}

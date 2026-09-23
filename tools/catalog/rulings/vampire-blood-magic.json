@@ -1,0 +1,206 @@
+{
+  "edition_rule": "A ladder-rank level whose note says 'dark ages' or '2nd ed.' is a different printing, not a sixth rung (format §4b: edition qualifiers become variants). It leaves the base family before the ladder fills and goes to darkages-vampire_blood-magic.json or 2nded-vampire_blood-magic.json under '<Family> (Dark Ages)' / '<Family> (2nd ed.)', split_from the base family. Evidence is the note itself, on every level moved.",
+  "families": {
+    "Blood's Curse": {
+      "action": "merge_into",
+      "into": "Path of Blood's Curse",
+      "evidence": "B-6 / §5-b. Identical five-power ladder (Ravages of the Beast, Weight of the Sun, Abated Tooth, Treacherous Bonds, The Withering of Ages) at identical tiers. OWBN's Tremere path index names the path 'Path of the Blood's Curse' (owbn/tremere-thaumaturgy-path-index.json) - one path, three spellings across two blocks. Its Thaumaturgy (Camarilla) pairing is kept on the merged family."
+    },
+    "Path of Blood's Curse": {
+      "drop_levels": {
+        "Stigmatize": "Path of Curses rung 1",
+        "Malady": "Path of Curses rung 2",
+        "Pariah": "Path of Curses rung 3",
+        "Corrupt Body": "Path of Curses rung 4",
+        "Fall From Grace": "Path of Curses rung 5"
+      },
+      "evidence": "§5-a, the fused family. Rungs 1-5 (Sabbat) are the Path of the Blood's Curse. Rungs 6-10 (Tremere) are not a second printing of it: they are Path of Curses, name for name and tier for tier, and Path of Curses already exists in this block carrying Thaumaturgy (Camarilla). OWBN's Tremere path index lists 'Path of the Blood's Curse' and 'Path of Curses' as two separate paths. So the seam is proven by the index and the duplicate is dropped, not split into a third family. Nothing is lost: all five powers are Path of Curses' own rungs."
+    },
+    "Path of Abombo": {
+      "action": "merge_into",
+      "into": "Cenotaph",
+      "tradition_name": "Path of Abombo",
+      "evidence": "B-6's named pattern: a paradigm-specific name for a path whose mechanical ladder is identical. Path of Abombo (Wanga) and Cenotaph (Sadhana) carry the same five powers at the same tiers (A Touch of Death, Reveal the Catene, Tread Upon the Grave, Death Knell, Ephemeral Binding). Merged into Cenotaph with Wanga valued 'Path of Abombo' in the traditions map - the alias mechanism §4 says already exists."
+    },
+    "Path of Dry Nile": {
+      "action": "merge_into",
+      "into": "Path of the Dry Nile",
+      "renames": {
+        "HopeDisolves": "Hope Dissolves"
+      },
+      "evidence": "§5-d. Identical ladder. The Followers of Set packet extraction names it 'Path of the Dry Nile' (owbn/setite-sorcery-paths.json). Akhu pairing carried onto the merged family."
+    },
+    "Path of the Dry Nile": {
+      "renames": {
+        "HopeDisolves": "Hope Dissolves"
+      },
+      "evidence": "Rung 4 spelling per owbn/setite-sorcery-paths.json."
+    },
+    "Cadaverous Animation": {
+      "renames": {
+        "Call the Homuncular Servent": "Call the Homuncular Servant"
+      },
+      "level_aliases": {
+        "Call the Athanatos": "Call of Athanatos"
+      },
+      "evidence": "Overflow held the GVM spelling of two rungs the CSV had already placed (same tier, same cost): a duplicate printing, not extra rungs. 'Servent' is a typo; the GVM spelling is kept. 'Call the Athanatos' vs 'Call of Athanatos' has no source to break the tie, so the rung keeps its seeded name and the other becomes its alias."
+    },
+    "Elemental Mastery": {
+      "evidence": "Overflow was Earth-Born Strength (basic, dark ages) - the edition rule moves it to the Dark Ages variant."
+    },
+    "Four Humours": {
+      "renames": {
+        "Whispers of the Soul": "Whispers to the Soul"
+      },
+      "evidence": "Overflow held 'Whispers to the Soul', the same rung under the spelling The Long Night and Grapevine's Deimos use (met/the-long-night-bloodline-disciplines.json). One rung, the printed name kept, the other an alias."
+    },
+    "Grave's Decay": {
+      "renames": {
+        "Disolve the Flesh": "Dissolve the Flesh"
+      },
+      "evidence": "Overflow held the correctly spelled twin of rung 5 (same tier, same cost)."
+    },
+    "Lure of Flames": {
+      "renames": {
+        "Hand of Flames": "Hand of Flame"
+      },
+      "evidence": "Overflow held 'Hand of Flame', rung 1's twin; MET 2e prints 'Hand of Flame' (met/laws-of-the-night-2e-disciplines.json) and so does Grapevine."
+    },
+    "Movement of the Mind": {
+      "evidence": "Overflow was 'Flight / Snare' and 'Major Manipulation / Lifting / Control', both 2nd ed. - the edition rule moves them."
+    },
+    "Path of Blood": {
+      "evidence": "Overflow was three 2nd ed. powers - the edition rule moves them. MET 2e's own ladder (met/laws-of-the-night-2e-disciplines.json) fills the variant."
+    },
+    "Path of Conjuring": {
+      "evidence": "'Summoning the Spirit' (basic, 2nd ed.) had taken rung 2 by source order, pushing the base printing's Permanency into overflow. The edition rule moves the 2nd ed. power out and Permanency takes its rung."
+    },
+    "Path of Corruption": {
+      "evidence": "Overflow was four 2nd ed. powers - the edition rule moves them."
+    },
+    "Path of Curses": {
+      "level_aliases": {
+        "Stigma": "Stigmatize"
+      },
+      "evidence": "Overflow 'Stigma' is rung 1 under the MET Storyteller Guide's spelling (met/vampire-storyteller-guide-thaumaturgy-paths.json)."
+    },
+    "Path of Mars": {
+      "renames": {
+        "Comrade at Arms": "Comrades at Arms"
+      },
+      "evidence": "Overflow held 'Comrades at Arms', rung 5's twin; the Sabbat Guide prints 'Comrades at Arms' (met/sabbat-guide-thaumaturgy-necromancy-2.json)."
+    },
+    "Path of Transmutation": {
+      "renames": {
+        "Crystalize the Liquid Form": "Crystallize the Liquid Form",
+        "Liquify the Solid Form": "Liquefy the Solid Form"
+      },
+      "evidence": "Overflow held the correctly spelled twins of rungs 2 and 3; the MET Storyteller Guide prints them that way (met/vampire-storyteller-guide-thaumaturgy-paths.json)."
+    },
+    "Taking of the Spirit": {
+      "renames": {
+        "The Gift of Servatitude": "Gift of Servitude"
+      },
+      "evidence": "Overflow held 'Gift of Servitude', rung 5's correctly spelled twin."
+    },
+    "Thaumaturgical Countermagic": {
+      "level_aliases": {
+        "Level 1": "Level One",
+        "Level 2": "Level Two",
+        "Level 3": "Level Three",
+        "Level 4": "Level Four",
+        "Level 5": "Level Five"
+      },
+      "evidence": "Overflow was the same five placeholder rungs spelled with digits. A duplicate, not a second ladder."
+    },
+    "Vine of Dionysus": {
+      "level_aliases": {
+        "Methyskien": "Methyskein"
+      },
+      "evidence": "Overflow 'Methyskien' is a misspelling of rung 1."
+    },
+    "Vitreous Path": {
+      "level_aliases": {
+        "Soul Judgment": "Soul Judgement"
+      },
+      "evidence": "Overflow 'Soul Judgment' is rung 3 in the other spelling."
+    },
+    "Weather Control": {
+      "evidence": "Overflow was a complete second ladder tagged 'dark ages' (Cloak of Fog, Downpour, Tempest, Hide the Burning Sun, Call Lightning) - the edition rule moves it whole. MET 2e prints four of the five as its Weather Control too, so these may be as much 2nd ed. as Dark Ages; Grapevine's tag is followed and the overlap recorded."
+    },
+    "Dragon Path": {
+      "renames": {
+        "Chi Word": "Chi Ward"
+      },
+      "evidence": "B-7 spelling, owbn/giovanni-necromancy-paths.json ('The Dragon Path')."
+    },
+    "Ex Inferis": {
+      "renames": {
+        "Periurium​ ​(Break​ ​the​ ​Oath)": "Periurium (Break the Oath)"
+      },
+      "evidence": "Zero-width spaces pasted into the name; owbn/assamite-dur-an-ki-paths.json has it clean."
+    },
+    "Keeper's Way": {
+      "renames": {
+        "The Distance Crimson": "The Distant Crimson"
+      },
+      "evidence": "B-7 spelling, owbn/assamite-dur-an-ki-paths.json."
+    },
+    "Nightshade Path": {
+      "renames": {
+        "Walls and Whispers": "Wails and Whispers"
+      },
+      "evidence": "B-7 spelling, owbn/giovanni-necromancy-paths.json."
+    },
+    "Nigrimancy": {
+      "renames": {
+        "Fetter the dEad": "Fetter the Dead"
+      },
+      "evidence": "B-7 spelling, owbn/giovanni-necromancy-paths.json."
+    },
+    "Path of Duat": {
+      "renames": {
+        "Consignment of Duat": "Consignment to Duat"
+      },
+      "evidence": "B-7 spelling, owbn/setite-sorcery-paths.json."
+    },
+    "Path of Maelstrom Manipulation": {
+      "renames": {
+        "Boulwark": "Bulwark"
+      },
+      "evidence": "B-7 spelling, owbn/giovanni-necromancy-paths.json."
+    },
+    "Path of Pestilence": {
+      "renames_by_position": {
+        "4": "Parasitic Possession",
+        "5": "Vector"
+      },
+      "evidence": "Rungs 4 and 5 were placeholders carrying the path's own name. The OWBN Dark Thaumaturgy extraction names them Parasitic Possession (intermediate) and Vector (advanced) (owbn/dark-thaumaturgy-paths.json)."
+    },
+    "Path of the Defiler": {
+      "renames": {
+        "​Call the Weakness": "Call the Weakness",
+        "​Tainted": "Tainted",
+        "​Poisoned Soul": "Poisoned Soul"
+      },
+      "evidence": "Leading zero-width spaces; owbn/dark-thaumaturgy-paths.json has them clean."
+    },
+    "Path of the Sheppard": {
+      "family_rename": "Path of the Shepherd",
+      "evidence": "B-7 spelling of the family name, owbn/giovanni-necromancy-paths.json. The old name is kept as a family alias."
+    },
+    "Voice of the Wild": {
+      "renames": {
+        "Guding Spirit": "Guiding Spirit"
+      },
+      "evidence": "B-7 spelling, owbn/setite-sorcery-paths.json."
+    },
+    "Way of Levinbolt": {
+      "renames": {
+        "Jupitor's Aegis": "Jupiter's Aegis"
+      },
+      "evidence": "B-7 spelling, owbn/assamite-dur-an-ki-paths.json."
+    }
+  },
+  "variant_fill": {}
+}

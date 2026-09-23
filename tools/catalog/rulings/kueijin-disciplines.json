@@ -1,0 +1,39 @@
+{
+  "costs": {
+    "values": {"basic": 4, "intermediate": 7, "advanced": 10},
+    "evidence": "Laws of the East (WW05016) p. 125: Discipline Basic 4, Intermediate 7, Advanced 10. Owner ruling 2026-09-21: book costs stand, OWBN overrides none. The snapshot's 3/6/9 was the Vampire ladder applied to the wrong genre. Forward-only - nothing is refunded or migrated."
+  },
+  "families": {
+    "Black Wind": {
+      "action": "split_rated",
+      "into": [
+        "Black Wind: Hell's Howling Typhoon",
+        "Black Wind: Ten Thousand Steps",
+        "Black Wind: Tiger Slashing Heaven"
+      ],
+      "evidence": "Owner ruling 2026-09-17 (samples/research/kuei-jin/NOTES.md): Black Wind is three separate powers, each rated 1-5 - not aspects of one family and not Basic/Intermediate/Advanced picks. Laws of the East p. 143-144. The book names no power per dot, so each rung is the rating itself ('Level 1'..'Level 5'), exactly as the seeded family already was. Held 'Black Wind' entries cannot say which aspect they are; a Storyteller reassigns them (same ruling)."
+    },
+    "Demon Shintai": {
+      "action": "rated_with_options",
+      "options_note": "Each level adds one Physical Trait in Demon form and one form characteristic chosen from this list (Laws of the East p. 142-143).",
+      "evidence": "Laws of the East p. 142-143: Demon Shintai is rated 1-5; each level grants one characteristic chosen from 14. The snapshot seeded the 14 characteristics as fourteen 'unknown'-tier rungs (5 on the ladder, 9 in overflow), which is not how the book works. The ladder becomes the rating; the 14 become the family's `options` list, every snapshot name accounted for."
+    },
+    "Bone Flower Techniques": {
+      "action": "move_to_techniques",
+      "group": "Bone Flower",
+      "evidence": "Six items, each a single power whose note names what it stands in for or requires ('first int. bone + first basic flesh', 'second basic yin prana'), costs 3/6/9 by the power replaced. Not a rated ladder: the snapshot could only fill it by treating six unrelated powers as rungs, leaving one in overflow. The OWBN packet lists these as named alternate powers (p. 18). Moved to a sibling trait_list, kueijin-techniques, per 1.2.10 A4 (secondary tracks are sibling blocks). Grapevine's own menu name is kept as the group."
+    },
+    "Resplendent Crane Techniques": {
+      "action": "move_to_techniques",
+      "group": "Resplendent Crane",
+      "evidence": "One item (The Fire Which Illuminates, 'int. ghost flame, int. cultivation') - a one-power 'family' cannot fill a five-rung ladder and is not a ladder at all. Same move as Bone Flower Techniques."
+    },
+    "Bone Shintai": {
+      "action": "keep",
+      "evidence": "Laws of the East p. 150 prints Five Poison Cloud under Advanced (2/1/2). The declared ladder is 2/2/1 and the ladder is the rule (owner ruling 2026-09-22), so Five Poison Cloud stays at intermediate as Grapevine and the snapshot already have it. Recorded, not a conflict."
+    }
+  },
+  "add_from_laws_of_the_east": {
+    "Equilibrium": "Owner ruling 2026-09-17: Equilibrium is added - Master Flow, Adjust Balance (Basic); Shift the Balance, Chi Interrupt (Intermediate); Chi Mastery (Advanced). Laws of the East p. 133-134."
+  }
+}

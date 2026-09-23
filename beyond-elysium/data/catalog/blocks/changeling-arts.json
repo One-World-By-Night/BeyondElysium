@@ -1,0 +1,1100 @@
+{
+  "format": 1,
+  "slug": "changeling-arts",
+  "name": "Changeling Arts",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh",
+      "OWBN0019 Changeling Mechanics Packet (2017) ch. 5 p. 28-38 - every Art in 2/2/1",
+      "The Shining Host (WW05009) p. 130-140; Changeling Players Guide (WW07100) Autumn People errata",
+      "Laws of the Hunt Revised (WW05014) p. 232-236 - the Dauntain Agendas Burnout, Stultify, Webcraft at 2/2/1",
+      "The Autumn People (WW07004) p. 51-52 (Burnout, Stultify) and p. 65-66 (Stigmas)",
+      "Laws of the Wild-style dot mapping: 1-2 Basic, 3-4 Intermediate, 5 Advanced; Arts 3/6/9 (OWBN0016 p. 7)"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py",
+    "notes": "Every correction and its evidence: tools/catalog/rulings.py (CHANGELING_*)."
+  },
+  "definition": {
+    "_meta": {
+      "ranks": [
+        "basic",
+        "intermediate",
+        "advanced"
+      ],
+      "ladder": {
+        "basic": 2,
+        "intermediate": 2,
+        "advanced": 1
+      },
+      "costs": {
+        "basic": 3,
+        "intermediate": 6,
+        "advanced": 9
+      },
+      "out_of_type": {
+        "basic": "+1",
+        "intermediate": "+1",
+        "advanced": "+1"
+      },
+      "levels": null,
+      "categories": null,
+      "untiered": null
+    },
+    "shape": "named",
+    "atomic": true,
+    "sequential": true,
+    "allow_custom": true,
+    "powers": [
+      {
+        "name": "Aphrodesia",
+        "source": "Aphrodesia",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Lover's Eyes",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Fancy",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Number One Crush",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Passion's Mirror",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Yearning of the Soul",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Aquis",
+        "source": "Aquis",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Aura Perception",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Friction",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Hold",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Healing Waters",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Tempus Fugit",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Burnout",
+        "source": "Burnout",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Mindblock",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Heartbind",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Obsession",
+            "cost": "6",
+            "note": "added to fill the ladder - see provenance"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Acquisition",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Geek Out",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Chicanery",
+        "source": "Chicanery",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Fuddle",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Veiled Eyes",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Tip of the Tongue",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Switcheroo",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Captive Heart",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Chronos",
+        "source": "Chronos",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Wyrd",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Backward Glance",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Dream Time",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Permanency",
+            "cost": "6",
+            "note": "added to fill the ladder - see provenance"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Reversal of Fortune",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Contempt",
+        "source": "Contempt",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Mockery",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Disobedience",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Insolence",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Devil's Advocate",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Condemnation",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Delusion",
+        "source": "Delusion",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Innocence",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Facade",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Mists of Memory",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Depths of Will",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Darkest Heart",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Dream Craft",
+        "source": "Dream Craft",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Walk the Silver Path",
+            "cost": "3",
+            "alternatives": [
+              {
+                "power_name": "Find the Silver Path",
+                "note": "OWBN0019 p. 31 names the first Basic this way; BE's \"Walk the Silver Path\" is the same cantrip under The Shining Host's name"
+              }
+            ]
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "The Merry Dance",
+            "cost": "3",
+            "alternatives": [
+              {
+                "power_name": "Determinism",
+                "note": "OWBN0019 p. 31 prints this as the second Basic in place of \"The Merry Dance\""
+              }
+            ]
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Homestead",
+            "cost": "6",
+            "alternatives": [
+              {
+                "power_name": "Anchor",
+                "note": "BE's seeded third cantrip; OWBN0019 p. 31 does not place it, giving Homestead and Attunement as the two Intermediates"
+              }
+            ]
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Attunement",
+            "cost": "6",
+            "note": "added to fill the ladder - see provenance",
+            "alternatives": [
+              {
+                "power_name": "Dream Riding",
+                "note": "BE's seeded fifth cantrip; OWBN0019 p. 31 does not place it"
+              }
+            ]
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Dream Weaving",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Infusion",
+        "source": "Infusion",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Harden",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Toughen",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "FUBAR Generation",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Animantis",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Gilgul",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Kryos",
+        "source": "Kryos",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Cold Shock",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Gelid Rime",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Frost Facsimile",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Crystal Prison",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Coldheart",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Legerdemain",
+        "source": "Legerdemain",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Gimmix",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Mooch",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Effigy",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Ensnare",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Phantom Shadows",
+            "cost": "9",
+            "alternatives": [
+              {
+                "power_name": "Rattle",
+                "note": "The Shining Host p. 135 prints it as a second Advanced; OWBN0019 p. 33 keeps Phantom Shadows alone"
+              }
+            ]
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Metamorphosis",
+        "source": "Metamorphosis",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Hidden Form",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Impersonate",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Go Ask Alice",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Merlin's Lessons",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Mythic Transformation",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Naming",
+        "source": "Naming",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Seek'n'Spell",
+            "cost": "3",
+            "note": "added to fill the ladder - see provenance"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Rune",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Runic Circle",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Saining",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Reweaving",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Oneiromancy",
+        "source": "Oneiromancy, Fae",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Oneirodynia",
+            "cost": "3",
+            "alternatives": [
+              {
+                "power_name": "Embrace of Morpheus",
+                "note": "OWBN0019 p. 35: an invented LARP level, learnable in place of a basic"
+              }
+            ]
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Oneirocritia",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Oneirataxia",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Syncope",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Expiation",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Petros",
+        "source": "Petros",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Living Rock",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Stoneskin",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Ironarm",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Stasis",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Quake",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Primal",
+        "source": "Primal",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Willow-Whisper",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Eldritch Prime",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Heather Balm",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Oakenshield",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Holly Strike",
+            "cost": "9",
+            "alternatives": [
+              {
+                "power_name": "Elder-Form",
+                "note": "The Shining Host p. 140 prints it as a second Advanced; OWBN0019 p. 35 names one Advanced (Primal Form)"
+              }
+            ]
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Pyretics",
+        "source": "Pyretics",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Will-o'-the-Wisp",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Willow Light",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Prometheus' Fist",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Burn and Boil",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Star Body",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Pyros",
+        "source": "Pyros",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Flame",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Tortured Heart",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Ares' Fist",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Strings of the Soul",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Inferno",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Skycraft",
+        "source": "Skycraft",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Thunderclap",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Compass Winds",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Willard's World",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Stormcraft",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Call Lightning",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Soothsay",
+        "source": "Soothsay",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Omen",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Fair is Foul and Foul is Fair",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Tattletale",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Augury",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Dance of Destiny",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Sovereign",
+        "source": "Sovereign",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Protocol",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Dictum",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Grandeur",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Weaver Ward",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Geasa",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Spirit Link",
+        "source": "Spirit Link",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "World Sight",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Ancestor Speech",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Vision Quest",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Placate",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Ghost Dance",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Stratus",
+        "source": "Stratus",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Marathon",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Conceal/Confuse",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Flight",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Illusion",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Phantasm",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Stultify",
+        "source": "Stultify",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Rosetint",
+            "cost": "3",
+            "note": "added to fill the ladder - see provenance"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Dull Impulse",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Proselytize",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Procedural Addiction",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Micro-Management",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Verdage",
+        "source": "Verdage",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Solarium",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Babel",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Coalesce",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Web of Life",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Mold",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Wayfare",
+        "source": "Wayfare",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Hopscotch",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Quicksilver",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Portal Passage",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Wind Runner",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Flicker Flash",
+            "cost": "9"
+          }
+        ],
+        "elder": {}
+      },
+      {
+        "name": "Webcraft",
+        "source": "Webcraft",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Weave Web",
+            "cost": "3"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Overwhelming Wincing",
+            "cost": "3"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Warp Will",
+            "cost": "6"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Wend your Way",
+            "cost": "6"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Cry \"Woof\"",
+            "cost": "9",
+            "note": "added to fill the ladder - see provenance"
+          }
+        ],
+        "elder": {}
+      }
+    ]
+  }
+}

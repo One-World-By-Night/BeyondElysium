@@ -1,0 +1,21 @@
+{
+  "format": 1,
+  "slug": "approval-reason-presets",
+  "name": "Approval Reason Presets",
+  "kind": "preset",
+  "provenance": {
+    "sources": [
+      "includes/Database/approval-reason-presets.php"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": [
+    "Coordinator Approval",
+    "Coordinator Notify",
+    "Majority Vote",
+    "2/3 Majority Vote",
+    "Storyteller Approval",
+    "Disallowed"
+  ]
+}

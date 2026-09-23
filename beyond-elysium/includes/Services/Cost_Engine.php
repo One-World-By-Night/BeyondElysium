@@ -388,10 +388,12 @@ class Cost_Engine {
 	 * exists to price this" (point-calculator-design.md §4.1, the governing
 	 * rule of the whole item).
 	 *
-	 * @param array $held One entry from `sheet_data[block_slug]`: `name`, `count?`, `chosen_cost?`, `custom?`.
+	 * @param array                 $held       One entry from `sheet_data[block_slug]`: `name`, `count?`, `chosen_cost?`, `custom?`.
+	 * @param string                $block_slug The slug this row is held under (`1.3.2` cross-block alias routing - omit to skip it).
+	 * @param array<string,object>  $blocks     The character's other blocks, keyed by slug, for `moved_from` resolution - `Point_Audit`'s own already-loaded set.
 	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
 	 */
-	public static function price_held_trait_list_item( $definition, array $held ): array {
+	public static function price_held_trait_list_item( $definition, array $held, string $block_slug = '', array $blocks = [] ): array {
 		$name = $held['name'] ?? null;
 		if ( $name === null ) {
 			return [ 'xp' => null, 'basis' => 'catalog_cost', 'unpriced_reason' => 'held_block_not_in_catalog' ];
@@ -407,6 +409,22 @@ class Cost_Engine {
 		}
 
 		$item = self::find_item( $definition, $name );
+		if ( $item === null && $block_slug !== '' && $blocks !== [] ) {
+			// 1.3.2 alias routing: the item left this block entirely (`vampire-gargoyle
+			// -powers`' own items each carry `moved_from` pointing back at
+			// `vampire-disciplines`). Prices from where it lives now, on its own terms -
+			// never this block's `definition` (e.g. `negative`), which no longer applies.
+			$moved = Trait_Alias_Resolver::find_moved_item( $blocks, $block_slug, $name );
+			if ( $moved !== null && isset( $moved['item']->name ) && is_string( $moved['item']->name ) ) {
+				// Re-key the held row to its item's own current name before recursing - the
+				// recursive call re-derives `$item` by name, and `moved_from` (unlike
+				// `aliases`/`split_from`) is not something `find_item()` itself matches on.
+				return self::price_held_trait_list_item(
+					is_object( $moved['block']->definition ?? null ) ? $moved['block']->definition : (object) [],
+					array_merge( $held, [ 'name' => $moved['item']->name ] )
+				);
+			}
+		}
 		if ( $item === null ) {
 			return [ 'xp' => null, 'basis' => 'catalog_cost', 'unpriced_reason' => 'name_not_in_catalog' ];
 		}
@@ -438,10 +456,12 @@ class Cost_Engine {
 	 * the owner's "levels add up" ruling (1.0.0-review F-040) - or one flat
 	 * `level_base_cost()` for a block a chronicle has switched to flat pricing.
 	 *
-	 * @param array $held One entry from `sheet_data[block_slug]`: `name`, `level?`, `power_name?`, `custom?`/`keep_custom?`, `chosen_cost?`.
+	 * @param array                $held       One entry from `sheet_data[block_slug]`: `name`, `level?`, `power_name?`, `custom?`/`keep_custom?`, `chosen_cost?`.
+	 * @param string               $block_slug The slug this row is held under (1.3.2 cross-block alias routing - omit to skip it).
+	 * @param array<string,object> $blocks     The character's other blocks, keyed by slug, for `moved_from` resolution - `Point_Audit`'s own already-loaded set.
 	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
 	 */
-	public static function price_held_tiered_power( $definition, array $held, bool $in_type ): array {
+	public static function price_held_tiered_power( $definition, array $held, bool $in_type, string $block_slug = '', array $blocks = [] ): array {
 		$name = $held['name'] ?? null;
 		if ( $name === null ) {
 			return [ 'xp' => null, 'basis' => 'flat_level', 'unpriced_reason' => 'held_block_not_in_catalog' ];
@@ -455,6 +475,27 @@ class Cost_Engine {
 		// placeholder on 1,637 production holdings. See price_held_custom_pick().
 		if ( ! empty( $held['custom'] ) || ! empty( $held['keep_custom'] ) ) {
 			return self::price_held_custom_pick( $power, $held, $modifier );
+		}
+
+		if ( $power === null && $block_slug !== '' && $blocks !== [] ) {
+			// 1.3.2 alias routing: the family left this block entirely (`vampire-blood
+			// -magic`'s `Lure of Flames` carries `moved_from` pointing back at
+			// `vampire-disciplines`' own `Creo Ignem`). Prices from where it lives now, on
+			// its own `_meta`/costs/out_of_type - never this block's, which no longer
+			// governs it. `$in_type` is left as the caller resolved it against the
+			// ADDRESSED block; re-deriving it against the new block's own join is the
+			// engine-side work `1.3.1-design-workflow.md` §11.7 item 1 still leaves open.
+			$moved = Trait_Alias_Resolver::find_moved_power( $blocks, $block_slug, $name );
+			if ( $moved !== null && isset( $moved['power']->name ) && is_string( $moved['power']->name ) ) {
+				// Re-key the held row to its family's own current name before recursing -
+				// the recursive call re-derives `$power` by name, and `moved_from` (unlike
+				// `aliases`/`split_from`) is not something `find_power()` itself matches on.
+				return self::price_held_tiered_power(
+					is_object( $moved['block']->definition ?? null ) ? $moved['block']->definition : (object) [],
+					array_merge( $held, [ 'name' => $moved['power']->name ] ),
+					$in_type
+				);
+			}
 		}
 
 		if ( $power === null ) {
@@ -703,14 +744,14 @@ class Cost_Engine {
 	 * a named pick lives in `elder` once a block declares `_meta`, and searching `levels`
 	 * alone silently stopped finding every Elder-and-above power the moment a block was
 	 * split, pricing every purchase and every held pick at 0 XP.
+	 *
+	 * Falls back to `Trait_Alias_Resolver` for a rung/pick's own recorded `aliases` (1.3.2
+	 * alias routing) when no level carries `power_name` directly - `vampire-blood-magic`'s
+	 * `Cadaverous Animation` rung answers to `Call the Homuncular Servant` and `Call of
+	 * Athanatos` too.
 	 */
 	private static function find_power_level_by_name( $power, string $power_name ) {
-		foreach ( Power_Levels::all( $power ) as $power_level ) {
-			if ( ( $power_level->power_name ?? '' ) === $power_name ) {
-				return $power_level;
-			}
-		}
-		return null;
+		return Trait_Alias_Resolver::find_level_by_name( Power_Levels::all( $power ), $power_name );
 	}
 
 	/**
@@ -987,31 +1028,28 @@ class Cost_Engine {
 	// Lookups.
 
 	/**
-	 * Finds a catalog item by name within a trait_list block definition.
-	 * Scans the definition's `items` list for an entry whose name matches
-	 * exactly, returning null when no match is found.
+	 * Finds a catalog item by name within a trait_list block definition. An exact match on
+	 * the item's own `name` first; when nothing carries that name directly, falls back to
+	 * `Trait_Alias_Resolver` for a recorded alias (1.3.2 alias routing) - a renamed catalog
+	 * entry (`Meditiation` -> `Meditation`) prices exactly as it did under its old name,
+	 * never `name_not_in_catalog` for having been spelled correctly all along.
 	 */
 	private static function find_item( $definition, string $name ) {
-		foreach ( ( $definition->items ?? [] ) as $item ) {
-			if ( ( $item->name ?? null ) === $name ) {
-				return $item;
-			}
-		}
-		return null;
+		return Trait_Alias_Resolver::find_item_by_name( (array) ( $definition->items ?? [] ), $name );
 	}
 
 	/**
-	 * Finds a power by name within a tiered_power block definition. Scans
-	 * the definition's `powers` list for an entry whose name matches
-	 * exactly, returning null when no match is found.
+	 * Finds a power by name within a tiered_power block definition. An exact match on the
+	 * family's own `name` first; when nothing carries that name directly, falls back to
+	 * `Trait_Alias_Resolver` for a recorded `aliases` or `split_from` rename that stayed in
+	 * this same block (1.3.2 alias routing) - a family the catalog renamed or split from
+	 * still prices under its held name instead of reading `family_not_in_catalog`. A `moved
+	 * _from` family - one that left this block entirely - is not found here; see
+	 * `price_held_tiered_power()`'s own cross-block fallback, which is the one place this
+	 * class has the other blocks a held row's family might now live in.
 	 */
 	private static function find_power( $definition, string $name ) {
-		foreach ( ( $definition->powers ?? [] ) as $power ) {
-			if ( ( $power->name ?? null ) === $name ) {
-				return $power;
-			}
-		}
-		return null;
+		return Trait_Alias_Resolver::find_power_by_name( (array) ( $definition->powers ?? [] ), $name );
 	}
 
 	/**

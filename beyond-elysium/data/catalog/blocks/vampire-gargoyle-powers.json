@@ -1,0 +1,171 @@
+{
+  "format": 1,
+  "slug": "vampire-gargoyle-powers",
+  "name": "Gargoyle Powers",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "Faith and Fire (WW05038), Chapter Four - Gargoyle body-modification powers, 'non-progressive... purchased individually (not leveled)', XP 3/6/9 by power",
+      "GVM: Gargoyle Powers (moved out of vampire-disciplines)"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/build_vampire.py"
+  },
+  "definition": {
+    "alphabetize": true,
+    "atomic": true,
+    "allow_custom": true,
+    "allow_multiples": false,
+    "has_specializations": false,
+    "negative": false,
+    "flat_cost": false,
+    "categories": null,
+    "items": [
+      {
+        "name": "Embrace",
+        "cost": "9",
+        "tier": null,
+        "group": "Gargoyle",
+        "subgroup": null,
+        "source": "Faith and Fire (WW05038)",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [],
+        "moved_from": {
+          "block": "vampire-disciplines",
+          "name": "Gargoyle Powers"
+        }
+      },
+      {
+        "name": "Extra Arms",
+        "cost": "6",
+        "tier": null,
+        "group": "Gargoyle",
+        "subgroup": null,
+        "source": "Faith and Fire (WW05038)",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [],
+        "moved_from": {
+          "block": "vampire-disciplines",
+          "name": "Gargoyle Powers"
+        }
+      },
+      {
+        "name": "Foulness",
+        "cost": "3",
+        "tier": null,
+        "group": "Gargoyle",
+        "subgroup": null,
+        "source": "Faith and Fire (WW05038)",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [],
+        "moved_from": {
+          "block": "vampire-disciplines",
+          "name": "Gargoyle Powers"
+        }
+      },
+      {
+        "name": "Heightened Senses",
+        "cost": "6",
+        "tier": null,
+        "group": "Gargoyle",
+        "subgroup": null,
+        "source": "Faith and Fire (WW05038)",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [],
+        "moved_from": {
+          "block": "vampire-disciplines",
+          "name": "Gargoyle Powers"
+        }
+      },
+      {
+        "name": "Horror",
+        "cost": "9",
+        "tier": null,
+        "group": "Gargoyle",
+        "subgroup": null,
+        "source": "Faith and Fire (WW05038)",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [],
+        "moved_from": {
+          "block": "vampire-disciplines",
+          "name": "Gargoyle Powers"
+        }
+      },
+      {
+        "name": "Huge Size",
+        "cost": "6",
+        "tier": null,
+        "group": "Gargoyle",
+        "subgroup": null,
+        "source": "Faith and Fire (WW05038)",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [],
+        "moved_from": {
+          "block": "vampire-disciplines",
+          "name": "Gargoyle Powers"
+        }
+      },
+      {
+        "name": "Talons or Claws",
+        "cost": "6",
+        "tier": null,
+        "group": "Gargoyle",
+        "subgroup": null,
+        "source": "Faith and Fire (WW05038)",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [],
+        "moved_from": {
+          "block": "vampire-disciplines",
+          "name": "Gargoyle Powers"
+        }
+      },
+      {
+        "name": "Terrifying Visage",
+        "cost": "3",
+        "tier": null,
+        "group": "Gargoyle",
+        "subgroup": null,
+        "source": "Faith and Fire (WW05038)",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [],
+        "moved_from": {
+          "block": "vampire-disciplines",
+          "name": "Gargoyle Powers"
+        }
+      }
+    ]
+  }
+}

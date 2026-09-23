@@ -589,8 +589,16 @@ class Character_Exporter {
 		}
 
 		foreach ( $held as $entry ) {
+			// A tiered_power pick (Elder-and-above, or a pick-only track like Werewolf/Fera
+			// Gifts) is identified by family plus power_name, not the bare family name alone -
+			// writing only `name` here silently drops which power was actually held, and for a
+			// family whose own name contains ": " (e.g. "Gurahl: Ursine") it re-imports as an
+			// unresolvable fragment rather than merely an ambiguous one.
+			$name = isset( $entry['power_name'] ) && $entry['power_name'] !== ''
+				? "{$entry['name']}: {$entry['power_name']}"
+				: (string) ( $entry['name'] ?? '' );
 			$writer->begin_tag( 'trait' )
-				->write_attribute( 'name', (string) ( $entry['name'] ?? '' ) )
+				->write_attribute( 'name', $name )
 				->write_attribute( 'val', (string) ( $entry['count'] ?? $entry['level'] ?? 1 ), '1' )
 				->write_attribute( 'note', self::filter_note( (string) ( $entry['note'] ?? '' ), $hide_st, $settings ), '' )
 				->end_tag();

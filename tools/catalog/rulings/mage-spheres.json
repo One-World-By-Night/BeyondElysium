@@ -1,0 +1,10 @@
+{
+  "rank_order": {
+    "names": ["Initiate", "Apprentice", "Disciple", "Adept", "Master"],
+    "evidence": "Laws of Ascension (WW05022) names the five Sphere ranks in the order Initiate, Apprentice, Disciple, Adept, Master (MET-POWER-ACQUISITION.md, Mage). The GVM 'Sphere Levels' menu prints Apprentice before Initiate. Both are basic-rank rungs at the same cost, so only the label on rungs 1 and 2 moves; no stored level changes meaning."
+  },
+  "costs": {
+    "values": {"basic": 4, "intermediate": 8, "advanced": 12},
+    "evidence": "1.3.0 D2 / 1.2.10 E2, owner ruling 2026-09-21: the book is the base. The snapshot's 5/10/15 is Laws of Ascension's non-specialty column; the surcharge stays in _meta.out_of_type as +1/+2/+3. Forward-only repricing - no XP is refunded, adjusted or migrated."
+  }
+}

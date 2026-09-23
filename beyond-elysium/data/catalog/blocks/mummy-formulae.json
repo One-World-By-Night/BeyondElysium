@@ -1,0 +1,1776 @@
+{
+  "format": 1,
+  "slug": "mummy-formulae",
+  "name": "Spells and Rituals",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh - the second-edition formula menus inside mummy-hekau",
+      "Laws of the Resurrection (WW05035) p. 116 - \"New spell or ritual - One Experience for Basic, three for Intermediate and five for Advanced\", +1 outside the primary path",
+      "Laws of the Resurrection p. 120 - a formula needs the path rating its note names (\"first basic\" 1 ... \"adv.\" 5)"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py",
+    "notes": "1.3.0 D5. group = Hekau path, subgroup = spell / ritual / formula as the note names it. Costs repriced from the GVM's 2/4/6 to the book's 1/3/5 - forward-only, nothing refunded."
+  },
+  "definition": {
+    "alphabetize": false,
+    "atomic": true,
+    "allow_custom": true,
+    "allow_multiples": false,
+    "has_specializations": false,
+    "negative": false,
+    "flat_cost": false,
+    "categories": [
+      "Alchemy",
+      "Amulets",
+      "Celestial",
+      "Effigy",
+      "Necromancy",
+      "Nomenclature"
+    ],
+    "items": [
+      {
+        "name": "Drink of Seven Days' Rest",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Potion of Resilience",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Complex Elixirs",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Complex Philtres",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Potent Elixirs",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Simple Elixirs",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Simple Philtres",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Simple Poisons",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Simple Tonics",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Perfume of Longing",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Blood of the Snake",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Complex Poisons",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Complex Tonics",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Eyes of the Ka",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "One Hundred Thousand Tongues",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "The Tears of Isis",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Potion of Valor",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Potion of the Seperable Ka",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Potent Philtres",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Potent Poisons",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Potent Tonics",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Potion of the Armor of Ra",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Potion of the Vile Body",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Alchemy",
+        "subgroup": "formula",
+        "source": "Alchemy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Alchemy",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Simple Ward",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Amulets",
+        "subgroup": "ritual",
+        "source": "Amulets, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Amulets",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Wood Ward",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Amulets",
+        "subgroup": "ritual",
+        "source": "Amulets, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Amulets",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Metal Ward",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Amulets",
+        "subgroup": "ritual",
+        "source": "Amulets, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Amulets",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Minor Ward",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Amulets",
+        "subgroup": "ritual",
+        "source": "Amulets, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Amulets",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Buckle of Isis",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Amulets",
+        "subgroup": "ritual",
+        "source": "Amulets, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Amulets",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Lesser Talisman",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Amulets",
+        "subgroup": "ritual",
+        "source": "Amulets, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Amulets",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Amulet of Cloud Walking",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Amulets",
+        "subgroup": "ritual",
+        "source": "Amulets, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Amulets",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Scarab",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Amulets",
+        "subgroup": "ritual",
+        "source": "Amulets, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Amulets",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Charm of Invisibility to Animals",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Amulets",
+        "subgroup": "ritual",
+        "source": "Amulets, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Amulets",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Nature Ward",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Amulets",
+        "subgroup": "ritual",
+        "source": "Amulets, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Amulets",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Greater Talisman",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Amulets",
+        "subgroup": "ritual",
+        "source": "Amulets, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Amulets",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Major Ward",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Amulets",
+        "subgroup": "ritual",
+        "source": "Amulets, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Amulets",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Grip the Water",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Celestial",
+        "subgroup": "ritual",
+        "source": "Celestial, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Celestial",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Call the Stars",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Celestial",
+        "subgroup": "ritual",
+        "source": "Celestial, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Celestial",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Basic Weather Magic I",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Celestial",
+        "subgroup": "ritual",
+        "source": "Celestial, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Celestial",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Read the Stars",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Celestial",
+        "subgroup": "ritual",
+        "source": "Celestial, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Celestial",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Basic Weather Magic II",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Celestial",
+        "subgroup": "ritual",
+        "source": "Celestial, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Celestial",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Intermediate Weather Magic I",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Celestial",
+        "subgroup": "ritual",
+        "source": "Celestial, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Celestial",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Read the Tree of Life",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Celestial",
+        "subgroup": "ritual",
+        "source": "Celestial, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Celestial",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Intermediate Weather Magic II",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Celestial",
+        "subgroup": "ritual",
+        "source": "Celestial, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Celestial",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Apep Thrashes the Ground",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Celestial",
+        "subgroup": "ritual",
+        "source": "Celestial, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Celestial",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Advanced Weather Magic",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Celestial",
+        "subgroup": "ritual",
+        "source": "Celestial, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Celestial",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Body Preservation",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Necromancy",
+        "subgroup": "ritual",
+        "source": "Necromancy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Necromancy",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Separate Ba",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Necromancy",
+        "subgroup": "ritual",
+        "source": "Necromancy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Necromancy",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Stormwalk",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Necromancy",
+        "subgroup": "ritual",
+        "source": "Necromancy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Necromancy",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Seperate Ka",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Necromancy",
+        "subgroup": "ritual",
+        "source": "Necromancy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Necromancy",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Summon the Dead",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Necromancy",
+        "subgroup": "ritual",
+        "source": "Necromancy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Necromancy",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Revisit Death",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Necromancy",
+        "subgroup": "ritual",
+        "source": "Necromancy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Necromancy",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Banish the Dead",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Necromancy",
+        "subgroup": "ritual",
+        "source": "Necromancy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Necromancy",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Animate Corpse",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Necromancy",
+        "subgroup": "ritual",
+        "source": "Necromancy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Necromancy",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Call the Khaibit",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Necromancy",
+        "subgroup": "ritual",
+        "source": "Necromancy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Necromancy",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Reshaping the Lost Soul",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Necromancy",
+        "subgroup": "ritual",
+        "source": "Necromancy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Necromancy",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Entrap the Ba",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Necromancy",
+        "subgroup": "ritual",
+        "source": "Necromancy, Mummy, 2nd",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Necromancy",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Asking the Trees",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Nomenclature",
+        "subgroup": "ritual",
+        "source": "Ren-Hekau",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Nomenclature",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Forgetting the Stone",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Nomenclature",
+        "subgroup": "ritual",
+        "source": "Ren-Hekau",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Nomenclature",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Naming the Warning",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Nomenclature",
+        "subgroup": "ritual",
+        "source": "Ren-Hekau",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Nomenclature",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Command the Beast",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Nomenclature",
+        "subgroup": "ritual",
+        "source": "Ren-Hekau",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Nomenclature",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Becoming the Tree",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Nomenclature",
+        "subgroup": "ritual",
+        "source": "Ren-Hekau",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Nomenclature",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Inviting the Stone In",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Nomenclature",
+        "subgroup": "ritual",
+        "source": "Ren-Hekau",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Nomenclature",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Mend Flesh",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Nomenclature",
+        "subgroup": "ritual",
+        "source": "Ren-Hekau",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Nomenclature",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Become Animal",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Nomenclature",
+        "subgroup": "ritual",
+        "source": "Ren-Hekau",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Nomenclature",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Command the Thinking",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Nomenclature",
+        "subgroup": "ritual",
+        "source": "Ren-Hekau",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Nomenclature",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Enslave",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Nomenclature",
+        "subgroup": "ritual",
+        "source": "Ren-Hekau",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Nomenclature",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Fortify Flesh",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Nomenclature",
+        "subgroup": "ritual",
+        "source": "Ren-Hekau",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Nomenclature",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Naming the Body's Destruction",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Nomenclature",
+        "subgroup": "ritual",
+        "source": "Ren-Hekau",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Nomenclature",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Forgetting the Person's Name",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Nomenclature",
+        "subgroup": "ritual",
+        "source": "Ren-Hekau",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Nomenclature",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Whispers to My Body",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Nomenclature",
+        "subgroup": "ritual",
+        "source": "Ren-Hekau",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Nomenclature",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Lesser Creatures",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Overseer",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Lesser Servitors",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 1
+          }
+        ]
+      },
+      {
+        "name": "Simple Chattels",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Simple Creatures",
+        "cost": "1",
+        "tier": "basic",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 2
+          }
+        ]
+      },
+      {
+        "name": "Greater Chattels",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Lesser Relics",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Superior Creatures",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 3
+          }
+        ]
+      },
+      {
+        "name": "Great Creatures",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Greater Relics",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Guard",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Lesser Bond of Fate",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Princely Chattels",
+        "cost": "3",
+        "tier": "intermediate",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 4
+          }
+        ]
+      },
+      {
+        "name": "Greater Bond of Fate",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Ka Vessel",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Living Bond of Fate",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 5
+          }
+        ]
+      },
+      {
+        "name": "Princely Relics",
+        "cost": "5",
+        "tier": "advanced",
+        "group": "Effigy",
+        "subgroup": "ritual",
+        "source": "Ushabti",
+        "note": null,
+        "description": null,
+        "approval": null,
+        "reason": null,
+        "approval_by_value": [],
+        "prerequisites": [
+          {
+            "block_slug": "mummy-hekau",
+            "power": "Effigy",
+            "min_level": 5
+          }
+        ]
+      }
+    ]
+  }
+}

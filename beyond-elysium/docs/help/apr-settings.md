@@ -1,12 +1,10 @@
 # Action & Rumor Settings
 
-Sets how many downtime actions a character gets on each game date, and which categories of
-rumor your chronicle generates automatically.
+Sets how many downtime actions a character gets on each game date, and which categories of rumor your chronicle generates automatically.
 
 ## Who can use this
 
-Storytellers (HST and AST). A Narrator, the chronicle's Harpy, and a player never see this
-tab.
+Storytellers (HST and AST). A Narrator, the chronicle's Harpy, and a player never see this tab.
 
 ## How to get there
 
@@ -15,39 +13,25 @@ wp-admin sidebar → Beyond Elysium → Chronicle Setup → Action & Rumor Setti
 ## The screen
 
 - **Chronicle** - a dropdown of every chronicle on the install.
-- A note that every value shown is Beyond Elysium's own default unless this chronicle has
-  changed it.
+- A note that every value shown is Beyond Elysium's own default unless this chronicle has changed it.
 - Two tabs, **Actions** and **Rumors**.
 
 ### Actions tab
 
-- **Personal actions per character** - a number, 0-100. Every character gets this many
-  actions no matter what they hold.
-- **Copy Unused Values from Previous Action** - carries an unused budget forward from a
-  character's most recent earlier allocation.
+- **Personal actions per character** - a number, 0-100. Every character gets this many actions no matter what they hold.
+- **Copy Unused Values from Previous Action** - carries an unused budget forward from a character's most recent earlier allocation.
 - **Always add Common Actions** - checkbox.
-- **Actions per level** - a table (Rating, Actions granted, and a **Remove** button) listing
-  only the ratings you've overridden; any rating with no row here uses the plugin's own
-  default of 2 actions per dot. **+ Add a level** asks which rating (1-20) and adds it at 0,
-  ready to edit.
-- **Backgrounds that grant an action** - every Background and Influence in this chronicle's
-  own catalog, each showing which creature stacks it belongs to. An Influence is always
-  checked and disabled - it always grants an action. A Background grants one only when you
-  check it here.
+- **Actions per level** - a table (Rating, Actions granted, and a **Remove** button) listing only the ratings you've overridden; any rating with no row here uses the plugin's own default of 2 actions per dot. **+ Add a level** asks which rating (1-20) and adds it at 0, ready to edit.
+- **Backgrounds that grant an action** - every Background and Influence in this chronicle's own catalog, each showing which creature stacks it belongs to. An Influence is always checked and disabled - it always grants an action. A Background grants one only when you check it here.
 
 ### Rumors tab
 
-Eight checkboxes: **Public rumors**, **Personal rumors**, **Race rumors**, **Group rumors
-(Clan, Tribe, Kith, Tradition…)**, **Subgroup rumors (Sect, Auspice, Seeming, Guild…)**,
-**Influence rumors**, **Carry forward previous rumors**, **Copy previous rumor descriptions**.
+Eight checkboxes: **Public rumors**, **Personal rumors**, **Race rumors**, **Group rumors (Clan, Tribe, Kith, Tradition…)**, **Subgroup rumors (Sect, Auspice, Seeming, Guild…)**, **Influence rumors**, **Carry forward previous rumors**, **Copy previous rumor descriptions**.
 
 ### Actions common to both tabs
 
 - **Save** - writes every tab's changes together, whichever tab you're currently looking at.
-- **Restore Grapevine defaults** - after one confirmation, resets personal actions, the two
-  action checkboxes, the actions-per-level table, and the background list to Grapevine's own
-  original 1998 values. Every rumor toggle is left exactly as it is. This only changes what's
-  on screen - click **Save** afterward to keep it.
+- **Restore Grapevine defaults** - after one confirmation, resets personal actions, the two action checkboxes, the actions-per-level table, and the background list to Grapevine's own original 1998 values. Every rumor toggle is left exactly as it is. This only changes what's on screen - click **Save** afterward to keep it.
 
 ## Common tasks
 
@@ -84,34 +68,21 @@ Eight checkboxes: **Public rumors**, **Personal rumors**, **Race rumors**, **Gro
 
 ## Things to know
 
-- **Nothing here saves until you click Save.** Switching tabs, or clicking Restore Grapevine
-  defaults, only changes what's on screen.
-- **Restore Grapevine defaults never touches the Rumors tab** - only the Actions tab's numbers
-  and background list.
-- **An Influence always grants an action.** The checklist shows it checked and disabled as a
-  reminder, not as something you can turn off.
-- **A rating with no row in Actions per level just uses the default of 2 actions per dot** -
-  you only need a row here for a rating you want to be different.
-- **A background name has to be real** - only a name in this chronicle's own catalog is
-  accepted, never a custom or misspelled one.
-- **Group and subgroup rumors read a character's own identity fields.** Group is Clan, Tribe,
-  Kith, Tradition, or the equivalent on other creature types; subgroup is Sect, Auspice,
-  Seeming, Guild, or the equivalent.
-- **These settings feed [Allocate Actions](allocate-actions.md) and [Rumors](rumors.md)
-  directly.** A change here changes what those tools compute the next time they run - never
-  anything already committed.
+- **Nothing here saves until you click Save.** Switching tabs, or clicking Restore Grapevine defaults, only changes what's on screen.
+- **Restore Grapevine defaults never touches the Rumors tab** - only the Actions tab's numbers and background list.
+- **An Influence always grants an action.** The checklist shows it checked and disabled as a reminder, not as something you can turn off.
+- **A rating with no row in Actions per level just uses the default of 2 actions per dot** - you only need a row here for a rating you want to be different.
+- **A background name has to be real** - only a name in this chronicle's own catalog is accepted, never a custom or misspelled one.
+- **Group and subgroup rumors read a character's own identity fields.** Group is Clan, Tribe, Kith, Tradition, or the equivalent on other creature types; subgroup is Sect, Auspice, Seeming, Guild, or the equivalent.
+- **These settings feed [Allocate Actions](allocate-actions.md) and [Rumors](rumors.md) directly.** A change here changes what those tools compute the next time they run - never anything already committed.
 
 ## Troubleshooting
 
 - **"personal_actions must be between 0 and 100."** Pick a number in that range.
-- **"actions_per_level keys must be levels 1 through 20." / "...values must be between 0 and
-  999."** Check the rating and the number you typed.
-- **'"X" is not a background or influence name in this chronicle's catalog.'** Only the names
-  this screen itself lists can be checked - reload and try again.
+- **"actions_per_level keys must be levels 1 through 20." / "...values must be between 0 and 999."** Check the rating and the number you typed.
+- **'"X" is not a background or influence name in this chronicle's catalog.'** Only the names this screen itself lists can be checked - reload and try again.
 - **I don't see this tab.** You need a Storyteller role in the chronicle currently selected.
-- **A row I added to Actions per level disappeared.** Remove deletes that row - the rating
-  just falls back to the default of 2 the next time you save. Add it back with **+ Add a
-  level** if that wasn't what you meant.
+- **A row I added to Actions per level disappeared.** Remove deletes that row - the rating just falls back to the default of 2 the next time you save. Add it back with **+ Add a level** if that wasn't what you meant.
 
 ## Related
 
