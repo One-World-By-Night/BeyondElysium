@@ -75,6 +75,10 @@ npm test --silent
 echo "==> doc links"
 node bin/check-doc-links.js
 
+# A malformed declared catalog file must fail the build rather than seed a broken catalog
+# (CATALOG-JSON-FORMAT.md §7). Skips cleanly until the files land with 1.3.0.
+"$PHP" bin/validate-catalog
+
 echo "==> npm run build"
 npm run build --silent
 

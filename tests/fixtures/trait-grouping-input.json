@@ -57,6 +57,14 @@
         { "case": "falls_back_to_block_default", "sectionDisplay": null, "blockDisplay": "cost" },
         { "case": "falls_back_to_simple_when_neither_set", "sectionDisplay": null, "blockDisplay": null }
     ],
+    "resolveMode": [
+        { "case": "ordinary_block_is_unaffected_by_show_cost", "definition": { "items": [] }, "sectionDisplay": "dot", "showCost": true },
+        { "case": "ordinary_block_with_show_cost_off_is_still_unaffected", "definition": { "items": [] }, "sectionDisplay": "dot", "showCost": false },
+        { "case": "count_is_cost_defaults_to_the_labelled_price", "definition": { "items": [], "count_is_cost": true }, "sectionDisplay": null, "showCost": null },
+        { "case": "count_is_cost_never_falls_through_to_a_rating_display", "definition": { "items": [], "count_is_cost": true }, "sectionDisplay": "dot", "showCost": null },
+        { "case": "count_is_cost_with_show_cost_on", "definition": { "items": [], "count_is_cost": true }, "sectionDisplay": null, "showCost": true },
+        { "case": "count_is_cost_with_the_price_hidden_keeps_the_note", "definition": { "items": [], "count_is_cost": true }, "sectionDisplay": "dot", "showCost": false }
+    ],
     "groupByCategory": [
         {
             "case": "no_categories_defined_returns_flat",

@@ -719,6 +719,10 @@ class Changes_Controller extends Base_Controller {
 			'unknown_trait'        => __( '"%s" is not in this section\'s catalog.', 'beyond-elysium' ),
 			/* translators: %s: the power name as submitted */
 			'unknown_power'        => __( '"%s" is not in this section\'s catalog.', 'beyond-elysium' ),
+			/* translators: %s: the trait name as submitted, with its specialization in parentheses where that is part of what identifies it */
+			'trait_already_held'   => __( '"%s" is already on this sheet - change the entry you hold rather than adding a second one.', 'beyond-elysium' ),
+			/* translators: %s: the trait name as submitted, with its specialization in parentheses where that is part of what identifies it */
+			'trait_not_held'       => __( '"%s" is not on this sheet - add it instead of changing it.', 'beyond-elysium' ),
 			/* translators: 1: the power name as submitted, 2: the discipline it was submitted under */
 			'unknown_power_pick'   => __( '"%1$s" is not a power of %2$s.', 'beyond-elysium' ),
 			/* translators: %s: the pool name as submitted */

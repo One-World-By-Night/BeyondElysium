@@ -144,5 +144,20 @@
 		"name": "cost_number: total 0 still shows the number, not dots",
 		"trait": { "name": "Free Combo", "total": 0 },
 		"mode": "cost_number"
+	},
+	{
+		"name": "cost_xp: the price sits in parentheses after the name",
+		"trait": { "name": "Draw Fire", "total": 12 },
+		"mode": "cost_xp"
+	},
+	{
+		"name": "cost_xp: a note joins the price inside the same parens",
+		"trait": { "name": "Emerge Unscathed", "total": 8, "note": "Tremere" },
+		"mode": "cost_xp"
+	},
+	{
+		"name": "cost_xp: a zero price is still labelled, never blank",
+		"trait": { "name": "Free Combo", "total": 0 },
+		"mode": "cost_xp"
 	}
 ]

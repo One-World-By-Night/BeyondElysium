@@ -14,13 +14,14 @@ import { groupCatalogItems } from '../../lib/catalogGroups';
 import { identityGroupValues } from '../../lib/identityGroups';
 import { costChoices } from '../../lib/costChoices';
 import { DOT } from '../../lib/displayTemper';
-import { useCostDisplayMode } from '../../lib/costDisplayMode';
+import { useCostVisibility } from '../../lib/costDisplayMode';
 import {
 	moveUp,
 	moveDown,
 	moveTo,
 	reorderErrorMessage,
 } from '../../lib/reorderArray';
+import { traitRowIdentity } from '../../lib/traitIdentity';
 import api from '../../api/client';
 import type { TraitListDefinition } from '../../types';
 import './TraitListEditor.css';
@@ -76,6 +77,127 @@ const EMPTY_DRAFT: Omit< DraftState, 'index' > = {
 };
 
 /**
+ * The index of the held row a drafted trait belongs to - the one it merges into rather than
+ * sitting beside - or -1 when it is genuinely a new holding.
+ *
+ * An `atomic` block is exempt by declaration: it appends a fresh row every time (Merits,
+ * Flaws, Rituals). A row already marked for removal is not a merge target. `excludeIndex`
+ * is the row being edited, which can never collide with itself.
+ */
+export function findTraitRowIndex(
+	rows: EditableTrait[],
+	definition: TraitListDefinition,
+	row: { name: string; specialization?: string },
+	excludeIndex: number | null = null
+): number {
+	if ( definition.atomic ) {
+		return -1;
+	}
+	const wanted = traitRowIdentity( definition, row );
+	return rows.findIndex(
+		( candidate, index ) =>
+			index !== excludeIndex &&
+			! candidate._removed &&
+			traitRowIdentity( definition, candidate ) === wanted
+	);
+}
+
+/**
+ * The label a merged row keeps: its own, when it has one, and otherwise the incoming draft's.
+ * A merge never silently discards a label the player has just typed onto a row that had none.
+ */
+export function mergedSpecialization(
+	existing?: string,
+	incoming?: string
+): string | undefined {
+	return existing && existing !== '' ? existing : incoming || undefined;
+}
+
+/** One drafted trait as it will be stored, independent of the modal's own state shape. */
+export interface TraitDraft {
+	name: string;
+	count: number;
+	specialization?: string;
+	note?: string;
+	custom?: boolean;
+	chosen_cost?: number;
+}
+
+/**
+ * Applies one drafted trait to the held rows and returns the next list - the single place
+ * the row-identity rule is enforced, for adding (`index` null) and for editing alike.
+ *
+ * Adding a name whose identity is already held raises that row rather than sitting beside
+ * it, and an edit that moves a row onto another row's identity merges into that
+ * pre-existing target and drops the edited row (Decision 082's convention, kept). An edit
+ * that leaves the identity alone is an ordinary in-place update: on a block where the label
+ * is not part of the identity, that is every edit, since a row's name is fixed once it
+ * exists.
+ */
+export function saveTraitDraft(
+	rows: EditableTrait[],
+	definition: TraitListDefinition,
+	draft: TraitDraft,
+	index: number | null = null
+): EditableTrait[] {
+	const label = draft.specialization || undefined;
+	const identity = { name: draft.name, specialization: label };
+	const chosen =
+		draft.chosen_cost !== undefined
+			? { chosen_cost: draft.chosen_cost }
+			: {};
+
+	const unchanged =
+		index !== null &&
+		traitRowIdentity( definition, rows[ index ] ) ===
+			traitRowIdentity( definition, identity );
+	const mergeIndex = unchanged
+		? -1
+		: findTraitRowIndex( rows, definition, identity, index );
+
+	if ( mergeIndex !== -1 ) {
+		const next = [ ...rows ];
+		const target = next[ mergeIndex ];
+		const kept = mergedSpecialization( target.specialization, label );
+		next[ mergeIndex ] = {
+			...target,
+			count: ( target.count ?? 1 ) + draft.count,
+			...( kept ? { specialization: kept } : {} ),
+			// A chosen cost follows a new purchase, never a row being edited - unchanged here.
+			...( index === null ? chosen : {} ),
+		};
+		if ( index !== null ) {
+			next.splice( index, 1 );
+		}
+		return next;
+	}
+
+	if ( index === null ) {
+		return [
+			...rows,
+			{
+				name: draft.name,
+				count: draft.count,
+				custom: !! draft.custom,
+				...( label ? { specialization: label } : {} ),
+				...( draft.note ? { note: draft.note } : {} ),
+				...chosen,
+			},
+		];
+	}
+
+	const next = [ ...rows ];
+	next[ index ] = {
+		...next[ index ],
+		count: draft.count,
+		specialization: label,
+		note: draft.note || undefined,
+		...chosen,
+	};
+	return next;
+}
+
+/**
  * Renders the trait list for a trait_list block: each held row shows as a compact
  * read-only summary (name plus a dot/count) with an edit button, and a "+ Add"
  * button opens the same modal blank for a new trait. Grouped blocks render their
@@ -115,7 +237,7 @@ export function TraitListEditor( {
 		[ definition.items, preferredGroups ]
 	);
 	const [ draft, setDraft ] = useState< DraftState | null >( null );
-	const [ costNumbers, setCostNumbers ] = useCostDisplayMode();
+	const [ showCost, setShowCost ] = useCostVisibility();
 
 	const emit = ( next: EditableTrait[] ) => onChange( blockSlug, next );
 
@@ -153,78 +275,21 @@ export function TraitListEditor( {
 			return;
 		}
 
-		if ( draft.index === null ) {
-			// A non-atomic list increments an already-held trait's count instead of duplicating the row.
-			if ( ! definition.atomic ) {
-				// Merges only into a row matching both name and specialization, so distinct specializations stay separate rows.
-				const existingIndex = data.findIndex(
-					( row ) =>
-						row.name === draft.name &&
-						! row._removed &&
-						( row.specialization ?? '' ) ===
-							( draft.specialization ?? '' )
-				);
-				if ( existingIndex !== -1 ) {
-					const next = [ ...data ];
-					const existing = next[ existingIndex ];
-					next[ existingIndex ] = {
-						...existing,
-						count: ( existing.count ?? 1 ) + draft.count,
-						...chosen,
-					};
-					emit( next );
-					closeDraft();
-					return;
-				}
-			}
-
-			emit( [
-				...data,
+		emit(
+			saveTraitDraft(
+				data,
+				definition,
 				{
 					name: draft.name,
 					count: draft.count,
+					specialization: draft.specialization,
+					note: draft.note,
 					custom: draft.isCustom,
-					...( definition.has_specializations && draft.specialization
-						? { specialization: draft.specialization }
-						: {} ),
-					...( draft.note ? { note: draft.note } : {} ),
 					...chosen,
 				},
-			] );
-		} else {
-			// Same name+specialization uniqueness rule as adding: merges into the matching row instead of duplicating it.
-			const newSpecialization = draft.specialization || undefined;
-			const collisionIndex = ! definition.atomic
-				? data.findIndex(
-						( row, i ) =>
-							i !== draft.index &&
-							row.name === draft.name &&
-							! row._removed &&
-							( row.specialization ?? '' ) ===
-								( newSpecialization ?? '' )
-				  )
-				: -1;
-
-			const next = [ ...data ];
-			if ( collisionIndex !== -1 ) {
-				const target = next[ collisionIndex ];
-				next[ collisionIndex ] = {
-					...target,
-					count: ( target.count ?? 1 ) + draft.count,
-				};
-				next.splice( draft.index, 1 );
-			} else {
-				next[ draft.index ] = {
-					...next[ draft.index ],
-					count: draft.count,
-					specialization: newSpecialization,
-					note: draft.note || undefined,
-					...chosen,
-				};
-			}
-			emit( next );
-		}
-
+				draft.index
+			)
+		);
 		closeDraft();
 	};
 
@@ -322,14 +387,18 @@ export function TraitListEditor( {
 				</span>
 				{ typeof row.count === 'number' &&
 					row.count > 0 &&
-					( definition.count_is_cost && costNumbers ? (
-						<span className="be-trait-list-editor__summary-detail">
-							{ sprintf(
-								/* translators: %d: XP cost */
-								__( '%d XP', 'beyond-elysium' ),
-								row.count
-							) }
-						</span>
+					// 1.2.11 D94: a count_is_cost row's number is a price, so it is
+					// never drawn as dots. The preference only hides it.
+					( definition.count_is_cost ? (
+						showCost && (
+							<span className="be-trait-list-editor__summary-detail">
+								{ sprintf(
+									/* translators: %d: XP cost */
+									__( '(%d XP)', 'beyond-elysium' ),
+									row.count
+								) }
+							</span>
+						)
 					) : (
 						<span className="be-trait-list-editor__dots">
 							<WithDots text={ DOT.repeat( row.count ) } />
@@ -379,16 +448,16 @@ export function TraitListEditor( {
 				<button
 					type="button"
 					className="be-trait-list-editor__cost-toggle"
-					onClick={ () => setCostNumbers( ! costNumbers ) }
-					aria-pressed={ costNumbers }
+					onClick={ () => setShowCost( ! showCost ) }
+					aria-pressed={ showCost }
 					title={ __(
 						'Applies to every combo on this sheet',
 						'beyond-elysium'
 					) }
 				>
-					{ costNumbers
-						? __( 'Show as dots', 'beyond-elysium' )
-						: __( 'XP costs as numbers', 'beyond-elysium' ) }
+					{ showCost
+						? __( 'Hide XP costs', 'beyond-elysium' )
+						: __( 'Show XP costs', 'beyond-elysium' ) }
 				</button>
 			) }
 			{ definition.player_order &&

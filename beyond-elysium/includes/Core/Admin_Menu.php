@@ -335,6 +335,9 @@ class Admin_Menu {
 		// Capability flags mirror Plugin::enqueue_frontend()'s payload; REST routes enforce the real checks server-side.
 		wp_localize_script( 'beyond-elysium-admin', 'beyondElysium', [
 			'restUrl' => rest_url( 'be/v1/' ),
+			// See Plugin::enqueue_frontend()'s identical field for why a link is built from
+			// this and never from window.location.origin (1.2.9.1, D95).
+			'homeUrl' => trailingslashit( home_url() ),
 			'nonce'   => wp_create_nonce( 'wp_rest' ),
 			'version' => BE_VERSION,
 			// See Plugin::enqueue_frontend()'s identical field for why this is site locale,

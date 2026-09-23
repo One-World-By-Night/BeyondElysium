@@ -8,6 +8,7 @@
 import { __ } from '@wordpress/i18n';
 import { localizedPowerName } from '../../lib/localizeName';
 import { seamQualifier } from '../../lib/levelQualifier';
+import { allLevels } from '../../lib/powerLevels';
 import type {
 	TieredPowerDefinition,
 	TieredPower,
@@ -86,8 +87,8 @@ export const TIER_FOR_RANK: Record< number, string > = {
  * `level: null` on every item when several share one tier, so falls back to matching
  * by the rank's tier instead. Never rolled up to one entry - a caller that needs a
  * single name is a caller from before this fix existed. Exported for
- * `TieredPowerEditor.tsx`'s own `maxLevel()`/`levelName()`, which need the identical
- * rank-from-tier logic rather than a third copy of it.
+ * `TieredPowerEditor.tsx`'s own `ladderRungLabel()` (1.2.10), which needs the
+ * identical rank-from-tier logic rather than a third copy of it.
  */
 export function findLevelsAtRank(
 	power: TieredPower | undefined,
@@ -107,12 +108,22 @@ export function findLevelsAtRank(
 	return power.levels.filter( ( entry ) => entry.tier === tier );
 }
 
-/** Elder-and-above lookup: by the specific power's own name, not a number. */
+/**
+ * Elder-and-above lookup: by the specific power's own name, not a number.
+ *
+ * Searches all three containers (1.2.10 E3). A pick lives in `elder` once a block declares
+ * `_meta`, so searching `levels` alone found nothing and every pick above the elder rank
+ * fell through to `elderLabel()`'s hardcoded `'elder'` default - measured on the real
+ * catalog, `Celerity: Zephyr` (ascended) and `Animalism: Stampede` (master) both printed
+ * "(elder)", on screen and in the signed PDF alike.
+ */
 function findByPowerName(
 	power: TieredPower | undefined,
 	powerName: string
 ): PowerLevel | undefined {
-	return power?.levels.find( ( entry ) => entry.power_name === powerName );
+	return allLevels( power ).find(
+		( entry ) => entry.power_name === powerName
+	);
 }
 
 /**
@@ -145,14 +156,23 @@ export function elderLabel(
 	// the same lookup also backs the localized power name below (i18n-pt-br-design.md); the
 	// family name (held.name, e.g. "Celerity") has no translation in this pass and is never
 	// swapped, only the specific power's own name.
+	// D80: an unmatched import whose raw name carries no colon is stored with `power_name`
+	// equal to `name` (`custom_tiered_power_result()` splits on the first `": "` and falls
+	// back to the whole string for both), so the default format printed the family twice -
+	// "Valaren (Warrior): Valaren (Warrior) 4". Where the two are the same string there is
+	// no family/power distinction to draw, so the name is printed once.
+	const selfNamed = held.power_name === held.name;
+
 	const found = findByPowerName(
 		findPower( definition, held.name ),
 		held.power_name as string
 	);
 	const powerName = found ? localizedPowerName( found ) : held.power_name;
 
+	const stem = selfNamed ? held.name : `${ held.name }: ${ powerName }`;
+
 	if ( held.level != null ) {
-		return `${ held.name }: ${ powerName } ${ held.level }`;
+		return `${ stem } ${ held.level }`;
 	}
 	const tier =
 		displayableTier( found?.tier ) ??
@@ -167,8 +187,8 @@ export function elderLabel(
 		found
 	);
 	return qualifier
-		? `${ held.name }: ${ powerName } (${ tier } · ${ qualifier })`
-		: `${ held.name }: ${ powerName } (${ tier })`;
+		? `${ stem } (${ tier } · ${ qualifier })`
+		: `${ stem } (${ tier })`;
 }
 
 /**

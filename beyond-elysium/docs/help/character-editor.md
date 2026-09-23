@@ -98,14 +98,13 @@ layout the read-only sheet uses:
 - **Trait lists** (Abilities, Backgrounds, Merits, and the like) - each held entry shows as a
   compact row with an edit button. **+ Add** opens the same form for a new one: choose a name
   from the catalog or type your own where the section allows it, set a count or level,
-  optionally a specialization and a note. Removing a held entry marks it for removal rather
-  than deleting it outright, so you can still undo it before you submit. See
-  [Trait Lists](trait-editor.md).
+  optionally a specialization and a note. **Adding a name you already hold raises that entry instead of starting a second one** - a specialization labels one holding, so a different focus does not buy a second Brawl; only entries the catalog marks as repeatable (two Retainers, two fields of study) get a row each, one per label. Removing a held entry marks it for removal rather than deleting it outright, so you can still undo it before you submit. See [Trait Lists](trait-editor.md).
 - **Powers** (Disciplines, Gifts, Arts, and other leveled catalogs) - add a power, then raise
   or lower it with a +/− stepper, or switch to a checklist that names every rung up to your
-  current level. A separate box below the main power list offers any Elder-and-above pick your
-  character already qualifies for. A blood-sorcery power also asks for a tradition. See
-  [Powers](power-editor.md).
+  current level. **Rated powers and Elder-and-above picks are two separate lists**: the rating
+  is a number on the ladder, a pick is a named power above it, and the two never share a count.
+  Picks sit below the rated powers, grouped by rank. A blood-sorcery power also asks for a
+  tradition. See [Powers](power-editor.md).
 - **Resource pools** (Willpower, Blood Pool, Rage, and the like) - a permanent and a temporary
   row per pool, each with its own +/− stepper and dot display.
 - **Identity fields** (Clan, Nature, Generation, and similar named fields) - a dropdown,

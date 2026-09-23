@@ -128,6 +128,16 @@ if ( $be_wp_tests_dir && file_exists( $be_wp_tests_dir . '/includes/functions.ph
 		}
 	}
 
+	// Seeder::mark_admin_additions()/stamp_admin_meta() normalize a stored definition through
+	// a JSON round trip before diffing it. WordPress's own wrapper only adds a depth guard and
+	// a pre-encode sanitize pass over invalid UTF-8; a definition here is already valid UTF-8
+	// decoded from the same column, so plain json_encode() is exact for this path.
+	if ( ! function_exists( 'wp_json_encode' ) ) {
+		function wp_json_encode( $data, int $options = 0, int $depth = 512 ) { // phpcs:ignore
+			return json_encode( $data, $options, $depth );
+		}
+	}
+
 	// strip_html_for_game()'s other half (1.0.1 D1) - closes a tag the byte-offset cut left
 	// dangling. Same reasoning as wp_kses_post() just above: real callers pass plain text
 	// with no markup, so a pass-through is exact, not an approximation.

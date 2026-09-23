@@ -206,7 +206,7 @@ class Cost_Engine {
 		$negative = ! empty( $definition->negative );
 		$sign     = $negative ? -1 : 1;
 
-		$held       = self::find_held_trait( $sheet_data, $block_slug, $name );
+		$held       = self::find_held_trait( $sheet_data, $block_slug, $definition, $trait, is_array( $change_data['previous'] ?? null ) ? $change_data['previous'] : null );
 		$old_count  = $held['count'] ?? 0;
 		$old_chosen = $held['chosen_cost'] ?? null;
 
@@ -447,19 +447,20 @@ class Cost_Engine {
 			return [ 'xp' => null, 'basis' => 'flat_level', 'unpriced_reason' => 'held_block_not_in_catalog' ];
 		}
 
+		$power    = self::find_power( $definition, $name );
+		$modifier = $in_type ? 0 : (int) ( $definition->out_of_type_cost_modifier ?? 0 );
+
+		// C2 (1.2.10 §A2d): a custom/keep_custom holding is always a pick, never a ladder
+		// rung, regardless of what its own `tier` says - including the importer's "***"
+		// placeholder on 1,637 production holdings. See price_held_custom_pick().
 		if ( ! empty( $held['custom'] ) || ! empty( $held['keep_custom'] ) ) {
-			if ( array_key_exists( 'chosen_cost', $held ) && $held['chosen_cost'] !== null ) {
-				return [ 'xp' => (int) $held['chosen_cost'], 'basis' => 'chosen_cost', 'unpriced_reason' => null ];
-			}
-			return [ 'xp' => null, 'basis' => 'flat_level', 'unpriced_reason' => 'custom_no_catalog_entry' ];
+			return self::price_held_custom_pick( $power, $held, $modifier );
 		}
 
-		$power = self::find_power( $definition, $name );
 		if ( $power === null ) {
 			return [ 'xp' => null, 'basis' => 'flat_level', 'unpriced_reason' => 'family_not_in_catalog' ];
 		}
 
-		$modifier   = $in_type ? 0 : (int) ( $definition->out_of_type_cost_modifier ?? 0 );
 		$power_name = ( $held['power_name'] ?? '' ) !== '' ? $held['power_name'] : null;
 
 		if ( $power_name !== null ) {
@@ -471,6 +472,12 @@ class Cost_Engine {
 			if ( $tier === 'innate' && ! isset( $level_entry->cost ) ) {
 				return [ 'xp' => 0, 'basis' => 'innate_free', 'unpriced_reason' => null ];
 			}
+			// Decision 090: never a fabricated 0 standing in for "unpriced" (D77/S6b) - a
+			// level with neither its own cost nor a recognized tier has no real price to
+			// report, where elder_tier_cost()'s own `?? 0` fallback would otherwise give one.
+			if ( ! isset( $level_entry->cost ) && ! isset( self::TIER_COSTS[ $tier ] ) ) {
+				return [ 'xp' => null, 'basis' => 'elder_pick', 'unpriced_reason' => 'catalog_item_has_no_cost' ];
+			}
 			$cost  = self::elder_tier_cost( $power, $power_name ) + $modifier;
 			$basis = isset( $level_entry->cost ) ? 'elder_pick' : 'tier_fallback';
 			return [ 'xp' => $cost, 'basis' => $basis, 'unpriced_reason' => null ];
@@ -481,7 +488,19 @@ class Cost_Engine {
 			return [ 'xp' => null, 'basis' => 'flat_level', 'unpriced_reason' => 'level_has_no_cost' ];
 		}
 
-		if ( ! self::rank_is_valid_for_power( $power, $level ) ) {
+		// C1 (1.2.10 §A'/§A''): a stored level is a TOTAL, not a rung. At or below the
+		// ceiling this is unchanged; above it - the seven approved production PCs kept
+		// since inbound migration (D41) - every rung is held plus (level - ceiling)
+		// unnamed picks at the first rank above the ladder. Nothing migrates: the stored
+		// number is read, never rewritten.
+		if ( self::declares_ladder( $definition ) && ! empty( $definition->sequential ) ) {
+			$ceiling = count( self::ladder_tiers( $definition ) );
+			if ( $level > $ceiling ) {
+				return self::price_above_ceiling_total( $definition, $power, $ceiling, $level, $modifier );
+			}
+		}
+
+		if ( ! self::rank_is_valid_for_power( $definition, $power, $level ) ) {
 			return [ 'xp' => null, 'basis' => 'flat_level', 'unpriced_reason' => 'level_has_no_cost' ];
 		}
 
@@ -490,6 +509,54 @@ class Cost_Engine {
 		}
 
 		return [ 'xp' => self::level_base_cost( $definition, $power, $level ) + $modifier, 'basis' => 'flat_level', 'unpriced_reason' => null ];
+	}
+
+	/**
+	 * C1's above-ceiling case: the full declared ladder plus `(level - ceiling)` unnamed
+	 * picks, each priced at the first rank above the ladder (`elder`, for a Discipline).
+	 * Honestly unpriced - never a guess - when the block declares no rank past its own
+	 * ladder to price the remainder from (Wraith today: `ranks` stops at `advanced`).
+	 *
+	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
+	 */
+	private static function price_above_ceiling_total( $definition, $power, int $ceiling, int $level, int $modifier ): array {
+		$pick_rank = self::first_pick_rank( $definition );
+		$pick_cost = $pick_rank !== null ? ( self::block_tier_costs( $definition )[ $pick_rank ] ?? null ) : null;
+		if ( $pick_cost === null ) {
+			return [ 'xp' => null, 'basis' => 'sequential_sum', 'unpriced_reason' => 'level_above_ceiling_no_pick_rank' ];
+		}
+
+		$ladder_cost = self::sequential_step_cost( $definition, $power, 0, $ceiling, $modifier );
+		$picks       = $level - $ceiling;
+		return [ 'xp' => $ladder_cost + $picks * ( $pick_cost + $modifier ), 'basis' => 'sequential_sum', 'unpriced_reason' => null ];
+	}
+
+	/**
+	 * Prices a held custom/keep_custom tiered_power entry (1.2.10 §C2/§A2d). Always a pick,
+	 * never a ladder rung, regardless of the held entry's own `tier` - including the
+	 * importer's "***" placeholder (`reference/MET-POWER-ACQUISITION.md`, "the tier: ***
+	 * fallback"). Prices from a real stored cost where one exists - the catalog has
+	 * sometimes since learned this power by name via an ST's own add_to_catalog opt-in, or
+	 * the holding itself carries a `chosen_cost` - and is honestly unpriced otherwise.
+	 * Nothing is guessed (owner ruling, 2026-09-21: no reconciliation, no inferred price).
+	 *
+	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
+	 */
+	private static function price_held_custom_pick( $power, array $held, int $modifier ): array {
+		$power_name = ( $held['power_name'] ?? '' ) !== '' ? $held['power_name'] : null;
+
+		if ( $power !== null && $power_name !== null ) {
+			$level_entry = self::find_power_level_by_name( $power, $power_name );
+			if ( $level_entry !== null && isset( $level_entry->cost ) ) {
+				return [ 'xp' => self::price_item_cost( (string) $level_entry->cost, null ) + $modifier, 'basis' => 'elder_pick', 'unpriced_reason' => null ];
+			}
+		}
+
+		if ( array_key_exists( 'chosen_cost', $held ) && $held['chosen_cost'] !== null ) {
+			return [ 'xp' => (int) $held['chosen_cost'], 'basis' => 'chosen_cost', 'unpriced_reason' => null ];
+		}
+
+		return [ 'xp' => null, 'basis' => 'elder_pick', 'unpriced_reason' => 'custom_no_catalog_entry' ];
 	}
 
 	/**
@@ -522,9 +589,12 @@ class Cost_Engine {
 	 * null for a D66 tied rank (several items share the tier, all `level: null`)
 	 * even when the rank itself is real - use `rank_is_valid_for_power()` to
 	 * check existence and `level_base_cost()` to price it regardless of ties.
+	 *
+	 * Reads the declared ladder only (`Power_Levels::ladder()`), never a pick or an
+	 * overflow level (D77/S6b) - a numbered rank can only ever be a rung.
 	 */
 	private static function find_power_level( $power, int $level ) {
-		foreach ( ( $power->levels ?? [] ) as $power_level ) {
+		foreach ( Power_Levels::ladder( $power ) as $power_level ) {
 			if ( (int) ( $power_level->level ?? 0 ) === $level ) {
 				return $power_level;
 			}
@@ -540,17 +610,20 @@ class Cost_Engine {
 	 * `level: null` - the rank itself is still real and priced via the
 	 * canonical tier ladder (`level_base_cost()`), regardless of whether any
 	 * one of the tied items happens to carry its own `cost` field.
+	 *
+	 * The ladder only (D77/S6b) - a pick or an overflow level must never validate a
+	 * numbered rank, even one that happens to share the same tier name.
 	 */
-	private static function rank_is_valid_for_power( $power, int $level ): bool {
+	private static function rank_is_valid_for_power( $definition, $power, int $level ): bool {
 		$exact = self::find_power_level( $power, $level );
 		if ( $exact !== null ) {
 			return isset( $exact->cost );
 		}
-		$tier = self::tier_for_rank( $level );
+		$tier = self::tier_for_rank( $definition, $level );
 		if ( $tier === null ) {
 			return false;
 		}
-		foreach ( ( $power->levels ?? [] ) as $power_level ) {
+		foreach ( Power_Levels::ladder( $power ) as $power_level ) {
 			if ( ( $power_level->tier ?? null ) === $tier ) {
 				return true;
 			}
@@ -565,24 +638,129 @@ class Cost_Engine {
 	 * shared, since Services doesn't otherwise depend on the Database layer for
 	 * one lookup.
 	 */
-	private static function tier_for_rank( int $rank ): ?string {
-		static $numbered = null;
-		if ( $numbered === null ) {
-			$numbered = array_values( array_diff( array_keys( self::TIER_COSTS ), [ 'innate' ] ) );
+	private static function tier_for_rank( $definition, int $rank ): ?string {
+		return self::ladder_tiers( $definition )[ $rank - 1 ] ?? null;
+	}
+
+	/**
+	 * The block's ladder expanded to one tier name per rung (1.2.10 S6).
+	 *
+	 * **This is the D68/F-040 pricing correction.** The old lookup walked `TIER_COSTS`' key
+	 * order one tier per rank - rank 1 basic, rank 2 *intermediate*, rank 3 advanced, rank 4
+	 * elder, rank 5 master - which silently assumed every tier contributes exactly one rung.
+	 * No genre works that way. A real 2/2/1 ladder is basic, basic, intermediate,
+	 * intermediate, advanced, so a Discipline held at 5 was summing `3+6+9+12+15 = 45` and
+	 * charging **elder and master rates for ladder rungs**. The declared ladder says 27.
+	 *
+	 * A block with no `_meta` yet - anything the seeder has not re-emitted - falls back to
+	 * the old one-tier-per-rank sequence, so nothing that predates the split changes.
+	 *
+	 * @param object|array $definition
+	 * @return string[]
+	 */
+	private static function ladder_tiers( $definition ): array {
+		$ladder = null;
+		if ( is_object( $definition ) && isset( $definition->_meta->ladder ) ) {
+			$ladder = (array) $definition->_meta->ladder;
+		} elseif ( is_array( $definition ) && isset( $definition['_meta']['ladder'] ) ) {
+			$ladder = (array) $definition['_meta']['ladder'];
 		}
-		return $numbered[ $rank - 1 ] ?? null;
+
+		if ( $ladder === null ) {
+			static $fallback = null;
+			if ( $fallback === null ) {
+				$fallback = array_values( array_diff( array_keys( self::TIER_COSTS ), [ 'innate' ] ) );
+			}
+			return $fallback;
+		}
+
+		// **Expanded in `_meta.ranks` order, never the ladder map's own key order.** A decoded
+		// JSON object preserves whatever order it was written in, and the seeded ladder comes
+		// back as `{"basic":2,"advanced":1,"intermediate":2}` - advanced before intermediate.
+		// Walking the map directly therefore produced the rung sequence basic, basic,
+		// **advanced**, intermediate, intermediate, so rung 3 priced 9 instead of 6. The
+		// five-rung total is unaffected because addition commutes, which is precisely why
+		// every test on totals passed while a single-level purchase charged the wrong rate.
+		// Caught by 1.2.10's pre-deploy trace against real production data, not by a test.
+		$ranks = self::meta_ranks( $definition );
+		$order = $ranks !== null
+			? array_values( array_filter( $ranks, static fn( $r ): bool => isset( $ladder[ $r ] ) ) )
+			: array_keys( $ladder );
+
+		$tiers = [];
+		foreach ( $order as $tier ) {
+			for ( $i = 0; $i < (int) $ladder[ $tier ]; $i++ ) {
+				$tiers[] = (string) $tier;
+			}
+		}
+		return $tiers;
 	}
 
 	/**
 	 * Finds a tiered_power level entry by its Elder-and-above `power_name`.
+	 *
+	 * Reads all three containers (`Power_Levels::all()`), not just the ladder (D77/S6b) -
+	 * a named pick lives in `elder` once a block declares `_meta`, and searching `levels`
+	 * alone silently stopped finding every Elder-and-above power the moment a block was
+	 * split, pricing every purchase and every held pick at 0 XP.
 	 */
 	private static function find_power_level_by_name( $power, string $power_name ) {
-		foreach ( ( $power->levels ?? [] ) as $power_level ) {
+		foreach ( Power_Levels::all( $power ) as $power_level ) {
 			if ( ( $power_level->power_name ?? '' ) === $power_name ) {
 				return $power_level;
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * The block's declared rank vocabulary (`_meta.ranks`), in book order. Null when the
+	 * block predates `_meta`.
+	 *
+	 * @param object|array $definition
+	 * @return string[]|null
+	 */
+	private static function meta_ranks( $definition ): ?array {
+		if ( is_object( $definition ) && isset( $definition->_meta->ranks ) ) {
+			return array_map( 'strval', (array) $definition->_meta->ranks );
+		}
+		if ( is_array( $definition ) && isset( $definition['_meta']['ranks'] ) ) {
+			return array_map( 'strval', (array) $definition['_meta']['ranks'] );
+		}
+		return null;
+	}
+
+	/**
+	 * The first rank above the declared ladder (1.2.10 §A') - `elder` for a Discipline,
+	 * `null` for a block (Wraith today) whose `_meta.ranks` declares nothing past it.
+	 * Walks `_meta.ranks` in its own book order past the ladder's own last tier, rather
+	 * than assuming a fixed name - Wraith's ladder sits *after* `innate`, not at the start
+	 * of `ranks`, so "the first rank the ladder doesn't cover" is not the same question.
+	 */
+	private static function first_pick_rank( $definition ): ?string {
+		$ranks = self::meta_ranks( $definition );
+		if ( $ranks === null ) {
+			return null;
+		}
+		// Walk `ranks` - book order - and take the rank after the last one the ladder covers.
+		// Reading the last element of `ladder_tiers()` instead trusted the ladder map's key
+		// order, which is not book order: the seeded ladder decodes as basic, advanced,
+		// intermediate, so this returned `advanced` and every above-ceiling pick priced 9
+		// instead of 12. Real effect on real data - `Dominate 9` audited 63 where it owes 75.
+		$ladder = self::meta_ladder( $definition );
+		if ( $ladder === [] ) {
+			return null;
+		}
+		$last = -1;
+		foreach ( $ranks as $i => $rank ) {
+			if ( array_key_exists( $rank, $ladder ) ) {
+				$last = (int) $i;
+			}
+		}
+		if ( $last < 0 ) {
+			return null;
+		}
+		return $ranks[ $last + 1 ] ?? null;
 	}
 
 	/**
@@ -623,12 +801,40 @@ class Cost_Engine {
 	 * 0 when the level has no cost set at all.
 	 */
 	private static function level_base_cost( $definition, $power, int $level ): int {
+		$tier = self::tier_for_rank( $definition, $level );
+
+		// 1.2.10 S6: on a block that declares its ladder, **a rung costs its rank's price**,
+		// not the individual item's. The ladder is the mechanic; the item is one of several
+		// names sharing that rung.
+		//
+		// This is also what keeps D66's known miskeyed data out of a real XP charge: one
+		// Animalism "advanced" item carries cost 3 where its sibling - and every other
+		// Discipline's advanced item - carries 9. The per-tier plurality vote in
+		// block_tier_costs() was built to outweigh exactly that, and reading the item first
+		// would hand the miskeyed row authority again, pricing Animalism 5 at 21 instead of
+		// 27. Measured, not hypothetical.
+		if ( $tier !== null && self::declares_ladder( $definition ) ) {
+			return self::block_tier_costs( $definition )[ $tier ] ?? 0;
+		}
+
 		$exact = self::find_power_level( $power, $level );
 		if ( $exact !== null ) {
 			return isset( $exact->cost ) ? self::price_item_cost( (string) $exact->cost, null ) : 0;
 		}
-		$tier = self::tier_for_rank( $level );
 		return $tier !== null ? self::block_tier_costs( $definition )[ $tier ] ?? 0 : 0;
+	}
+
+	/**
+	 * Whether this block declares its own ladder (`_meta.ladder`). A block the seeder has
+	 * not re-emitted yet has none, and keeps the pre-1.2.10 item-first pricing unchanged.
+	 *
+	 * @param object|array $definition
+	 */
+	private static function declares_ladder( $definition ): bool {
+		if ( is_object( $definition ) ) {
+			return isset( $definition->_meta->ladder );
+		}
+		return is_array( $definition ) && isset( $definition['_meta']['ladder'] );
 	}
 
 	/**
@@ -642,6 +848,11 @@ class Cost_Engine {
 	 * every other Discipline's real advanced-tier item, costs 9). Memoized per
 	 * request on the definition object itself; a definition is loaded once per
 	 * request and never mutated after seeding.
+	 *
+	 * Prefers the block's own declared `_meta.costs` (D77/S6b) - the real number every
+	 * rank was priced from at seed time, including every rank above the ladder, which the
+	 * empirical tally below can no longer see once a block's `levels` narrows to the
+	 * ladder alone. The tally survives as the fallback for a block that predates `_meta`.
 	 */
 	private static function block_tier_costs( $definition ): array {
 		static $cache = null;
@@ -649,9 +860,16 @@ class Cost_Engine {
 			return $cache[1];
 		}
 
+		$meta_costs = self::meta_costs( $definition );
+		if ( $meta_costs !== null ) {
+			$costs = array_map( 'intval', $meta_costs );
+			$cache = [ $definition, $costs ];
+			return $costs;
+		}
+
 		$tallies = [];
 		foreach ( ( $definition->powers ?? [] ) as $power ) {
-			foreach ( ( $power->levels ?? [] ) as $power_level ) {
+			foreach ( Power_Levels::all( $power ) as $power_level ) {
 				$tier = $power_level->tier ?? null;
 				if ( $tier === null || $tier === 'innate' || ! isset( $power_level->cost ) ) {
 					continue;
@@ -669,6 +887,39 @@ class Cost_Engine {
 
 		$cache = [ $definition, $costs ];
 		return $costs;
+	}
+
+	/**
+	 * The block's declared ladder (`_meta.ladder`) - rank => rungs contributed.
+	 *
+	 * @param object|array $definition
+	 * @return array<string,int>
+	 */
+	private static function meta_ladder( $definition ): array {
+		if ( is_object( $definition ) && isset( $definition->_meta->ladder ) ) {
+			return (array) $definition->_meta->ladder;
+		}
+		if ( is_array( $definition ) && isset( $definition['_meta']['ladder'] ) ) {
+			return (array) $definition['_meta']['ladder'];
+		}
+		return [];
+	}
+
+	/**
+	 * The block's own declared per-rank costs (`_meta.costs`). Null when the block
+	 * predates `_meta`.
+	 *
+	 * @param object|array $definition
+	 * @return array<string,int>|null
+	 */
+	private static function meta_costs( $definition ): ?array {
+		if ( is_object( $definition ) && isset( $definition->_meta->costs ) ) {
+			return (array) $definition->_meta->costs;
+		}
+		if ( is_array( $definition ) && isset( $definition['_meta']['costs'] ) ) {
+			return (array) $definition['_meta']['costs'];
+		}
+		return null;
 	}
 
 	// Free-text cost parsing.
@@ -764,16 +1015,31 @@ class Cost_Engine {
 	}
 
 	/**
-	 * Finds a character's currently held instance of a trait within a
-	 * block. Scans the block's stored items for one whose name matches,
-	 * returning its count and chosen cost, or null when the character
-	 * does not hold the trait.
+	 * Finds the held row a change actually names, and returns its count and chosen cost, or
+	 * null when the character holds no such row.
 	 *
+	 * Matched on **identity**, not on name (1.2.11 D88): where an item is multiples-capable a
+	 * character can hold `Retainers (John Doe)` and `Retainers (Sue Smith)` at once, and
+	 * raising one must price that one's own dots. Reading the first row of that name instead
+	 * priced Sue's 2 -> 3 as John's 3 -> 3 = **0 XP**, and removing Sue refunded **John's 3**.
+	 * This is the trait_list counterpart of `find_held_power()`, which has always identified a
+	 * pick by `power_name` for exactly the same reason.
+	 *
+	 * @param array       $sheet_data
+	 * @param string      $block_slug
+	 * @param object|null $definition The block definition the caller already resolved.
+	 * @param array       $trait      The change's own trait payload.
+	 * @param array|null  $previous   The change's `previous` snapshot, which names the row a relabel addresses.
 	 * @return array{count: int, chosen_cost: int|null}|null
 	 */
-	private static function find_held_trait( array $sheet_data, string $block_slug, string $name ): ?array {
+	private static function find_held_trait( array $sheet_data, string $block_slug, $definition, array $trait, ?array $previous = null ): ?array {
+		$identity = Trait_Identity::target_of( $definition, $trait, $previous );
+		if ( $identity === null ) {
+			return null;
+		}
+
 		foreach ( ( $sheet_data[ $block_slug ] ?? [] ) as $item ) {
-			if ( ( $item['name'] ?? null ) === $name ) {
+			if ( is_array( $item ) && Trait_Identity::of_row( $definition, $item ) === $identity ) {
 				return [
 					'count'       => (int) ( $item['count'] ?? 1 ),
 					'chosen_cost' => $item['chosen_cost'] ?? null,
@@ -841,7 +1107,7 @@ class Cost_Engine {
 	 * individually priced cost. Returns 0 when the name matches nothing.
 	 */
 	private static function elder_tier_cost( $power, string $power_name ): int {
-		foreach ( ( $power->levels ?? [] ) as $power_level ) {
+		foreach ( Power_Levels::all( $power ) as $power_level ) {
 			if ( ( $power_level->power_name ?? '' ) !== $power_name ) {
 				continue;
 			}

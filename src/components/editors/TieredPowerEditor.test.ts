@@ -1,165 +1,567 @@
 import {
-	maxLevel,
-	withCustomLadders,
+	ladderCeiling,
+	incrementLevel,
+	decrementLevel,
+	clampToCeiling,
+	ladderRungLabel,
+	ladderRung,
 	traditionOptionsFor,
-	levelName,
-	elderPickOptions,
+	pickOptionsFor,
+	groupPickOptions,
+	orderRanks,
+	pickRankOf,
 } from './TieredPowerEditor';
 import type { EditableHeldPower } from './TieredPowerEditor';
-import type { TieredPowerDefinition } from '../../types';
+import type { TieredPower, TieredPowerDefinition } from '../../types';
 
-function definition(
-	levels: Array< { level: number | null; power_name: string; tier: string } >
-): TieredPowerDefinition {
+/** A vampire-disciplines-shaped block: 2/2/1 ladder, real `_meta`. */
+function metaDefinition( powers: TieredPower[] ): TieredPowerDefinition {
 	return {
-		powers: [
-			{
-				name: 'Celerity',
-				levels: levels.map( ( l ) => ( {
-					...l,
-					tier: l.tier as never,
-				} ) ),
-			},
-		],
+		powers,
 		sequential: false,
+		_meta: {
+			ranks: [
+				'basic',
+				'intermediate',
+				'advanced',
+				'elder',
+				'master',
+				'ascended',
+				'methuselah',
+			],
+			ladder: { basic: 2, intermediate: 2, advanced: 1 },
+			costs: {
+				basic: 3,
+				intermediate: 6,
+				advanced: 9,
+				elder: 12,
+				master: 15,
+				ascended: 18,
+				methuselah: 21,
+			},
+		},
 	};
 }
 
-describe( 'maxLevel (Decision 037)', () => {
-	it( 'defaults to 5 when the data has at least 5 real numbered levels', () => {
-		const def = definition( [
-			{ level: 1, power_name: 'A', tier: 'basic' },
-			{ level: 2, power_name: 'B', tier: 'basic' },
-			{ level: 3, power_name: 'C', tier: 'intermediate' },
-			{ level: 4, power_name: 'D', tier: 'intermediate' },
-			{ level: 5, power_name: 'E', tier: 'advanced' },
-			{ level: 6, power_name: 'F', tier: 'elder' },
-			{ level: null, power_name: 'G', tier: 'elder' },
-		] );
+function animalism(): TieredPower {
+	return {
+		name: 'Animalism',
+		levels: [
+			{ level: 1, tier: 'basic', power_name: 'Feral Whispers' },
+			{ level: 2, tier: 'basic', power_name: 'Beckoning' },
+			{ level: 3, tier: 'intermediate', power_name: 'Quell the Beast' },
+			{
+				level: 4,
+				tier: 'intermediate',
+				power_name: 'Subsume the Spirit',
+			},
+			{
+				level: 5,
+				tier: 'advanced',
+				power_name: 'Drawing Out the Beast',
+			},
+		],
+		elder: {
+			elder: [
+				{ level: null, tier: 'elder', power_name: 'Animal Succulence' },
+				{
+					level: null,
+					tier: 'elder',
+					power_name: 'Eye of the Szlachta',
+				},
+			],
+			master: [
+				{
+					level: null,
+					tier: 'master',
+					power_name: 'Conquer the Beast',
+				},
+				{ level: null, tier: 'master', power_name: 'Stampede' },
+			],
+			ascended: [
+				{ level: null, tier: 'ascended', power_name: 'Crimson Fury' },
+			],
+			methuselah: [
+				{
+					level: null,
+					tier: 'methuselah',
+					power_name: 'Unchain the Beast',
+				},
+			],
+		},
+	};
+}
 
-		expect( maxLevel( def, 'Celerity' ) ).toBe( 5 );
+describe( 'ladderCeiling (1.2.10 §A - the D68 fix)', () => {
+	it( 'sums _meta.ladder when the block declares one', () => {
+		const def = metaDefinition( [ animalism() ] );
+		expect( ladderCeiling( def ) ).toBe( 5 );
 	} );
 
-	it( 'never claims a level the data does not have, even under the default of 5', () => {
-		const def = definition( [
-			{ level: 1, power_name: 'A', tier: 'basic' },
-			{ level: 2, power_name: 'B', tier: 'basic' },
-			{ level: 3, power_name: 'C', tier: 'intermediate' },
-		] );
-
-		expect( maxLevel( def, 'Celerity' ) ).toBe( 3 );
+	it( 'sums a non-standard ladder exactly as declared, not assumed at 5', () => {
+		const def: TieredPowerDefinition = {
+			powers: [],
+			sequential: false,
+			_meta: {
+				ranks: [ 'basic', 'intermediate' ],
+				ladder: { basic: 1, intermediate: 1 },
+				costs: { basic: 3, intermediate: 6 },
+			},
+		};
+		expect( ladderCeiling( def ) ).toBe( 2 );
 	} );
 
-	it( 'a trueMaxFor override wins over the default entirely, even past what the data shows', () => {
-		const def = definition( [
-			{ level: 1, power_name: 'A', tier: 'basic' },
-			{ level: 2, power_name: 'B', tier: 'basic' },
-		] );
-
-		expect( maxLevel( def, 'Celerity', () => 9 ) ).toBe( 9 );
+	it( 'falls back to 5 when the block carries no _meta at all', () => {
+		const def: TieredPowerDefinition = {
+			powers: [ animalism() ],
+			sequential: false,
+		};
+		expect( ladderCeiling( def ) ).toBe( 5 );
 	} );
 
-	it( 'a trueMaxFor that returns undefined for this power falls through to the default', () => {
-		const def = definition( [
-			{ level: 1, power_name: 'A', tier: 'basic' },
-			{ level: 2, power_name: 'B', tier: 'basic' },
-		] );
-
-		expect(
-			maxLevel( def, 'Celerity', ( name ) =>
-				name === 'Someone Else' ? 9 : undefined
-			)
-		).toBe( 2 );
-	} );
-
-	it( 'workflow-0.9.md Step 0c-2: an unknown power name with no levels at all defaults to the real 1-5 ladder, not a pinned 1', () => {
-		const def = definition( [] );
-		expect( maxLevel( def, 'Nonexistent' ) ).toBe( 5 );
-	} );
-
-	// D66 (1.2.5-design-workflow.md §A2): a family whose top tier is tied (every item
-	// there has `level: null`) must not have its real max rank undercounted just
-	// because no single item carries the number.
-	it( 'derives the true max from tier when the top tier is tied (level: null on every item there)', () => {
-		const def = definition( [
-			{ level: null, power_name: 'Feral Whispers', tier: 'basic' },
-			{ level: null, power_name: 'Beckoning', tier: 'basic' },
-			{ level: 2, power_name: 'Quell the Beast', tier: 'intermediate' },
-			{ level: null, power_name: 'Song in the Dark', tier: 'elder' },
-			{ level: null, power_name: 'Species Speech', tier: 'elder' },
-		] );
-
-		expect( maxLevel( def, 'Celerity' ) ).toBe( 4 );
+	it( 'is unaffected by how many elder or overflow entries a family carries', () => {
+		const bloated: TieredPower = {
+			...animalism(),
+			overflow: [
+				{ level: 6, tier: 'basic', power_name: 'Merged Rung A' },
+				{ level: 7, tier: 'intermediate', power_name: 'Merged Rung B' },
+			],
+		};
+		const def = metaDefinition( [ bloated ] );
+		expect( ladderCeiling( def ) ).toBe( 5 );
 	} );
 } );
 
-describe( 'withCustomLadders (workflow-0.9.md Step 0c)', () => {
-	const baseDefinition: TieredPowerDefinition = {
-		powers: [],
-		sequential: false,
-	};
+describe( 'incrementLevel / decrementLevel / clampToCeiling (E1 - a pick is never reachable from the stepper)', () => {
+	it( 'increments normally below the ceiling', () => {
+		expect( incrementLevel( 2, 5 ) ).toBe( 3 );
+	} );
 
-	function row( overrides: Partial< EditableHeldPower > ): EditableHeldPower {
-		return { name: 'My Homebrew Path', level: 1, ...overrides };
+	it( 'refuses to increment past the ceiling', () => {
+		expect( incrementLevel( 5, 5 ) ).toBe( 5 );
+	} );
+
+	it( 'repeated increments can never exceed the ceiling, however many times called', () => {
+		let level = 1;
+		const ceiling = 5;
+		for ( let i = 0; i < 20; i++ ) {
+			level = incrementLevel( level, ceiling );
+		}
+		expect( level ).toBe( 5 );
+	} );
+
+	it( 'decrements one step at a time and floors at 1', () => {
+		expect( decrementLevel( 3 ) ).toBe( 2 );
+		expect( decrementLevel( 1 ) ).toBe( 1 );
+	} );
+
+	it( 'a legacy total above the ceiling steps down one rung at a time, never jumping straight to the ceiling', () => {
+		// 1.2.10-design-workflow.md §A′: Celerity 9 on a 5-rung ladder is a real,
+		// approved total (5 rungs + 4 unnamed picks). Clicking "-" once must land on
+		// 8, not silently collapse to the ceiling and discard the picks it represents.
+		expect( decrementLevel( 9 ) ).toBe( 8 );
+	} );
+
+	it( 'clampToCeiling bounds an explicit target into [1, ceiling], used only by the checklist', () => {
+		expect( clampToCeiling( 0, 5 ) ).toBe( 1 );
+		expect( clampToCeiling( 3, 5 ) ).toBe( 3 );
+		expect( clampToCeiling( 9, 5 ) ).toBe( 5 );
+	} );
+} );
+
+describe( 'ladderRungLabel (checklist labels, no synthetic ladder for a custom power)', () => {
+	it( 'looks up the real catalog name for a rung', () => {
+		const def = metaDefinition( [ animalism() ] );
+		expect( ladderRungLabel( def, 'Animalism', 2 ) ).toBe( 'Beckoning' );
+	} );
+
+	it( 'falls back to a plain "{name} {rung}" label for a custom power with no catalog entry at all', () => {
+		const def: TieredPowerDefinition = { powers: [], sequential: false };
+		expect( ladderRungLabel( def, 'My Homebrew Path', 1 ) ).toBe(
+			'My Homebrew Path 1'
+		);
+	} );
+
+	/**
+	 * 1.2.11 D93, amending this case. It previously asserted the comma-join
+	 * (`'Feral Claws, Eyes of the Beast'`) - one checkbox whose label was every name at
+	 * the rank run together, which the owner reported from the real sheet. A rung is one
+	 * thing you buy, so it gets one name; the others are carried as alternates rather
+	 * than dropped. D66's "never roll up to a placeholder" still holds - no name is lost,
+	 * and nothing renders as a bare `Protean 1`.
+	 */
+	it( 'names a tied rung once and carries the rest as alternates, never comma-joined (D66/D93)', () => {
+		const tied: TieredPower = {
+			name: 'Protean',
+			levels: [
+				{ level: null, tier: 'basic', power_name: 'Feral Claws' },
+				{ level: null, tier: 'basic', power_name: 'Eyes of the Beast' },
+				{
+					level: 3,
+					tier: 'intermediate',
+					power_name: 'Earth Meld',
+				},
+				{ level: 4, tier: 'intermediate', power_name: 'Shapechange' },
+				{ level: 5, tier: 'advanced', power_name: 'Metamorphosis' },
+			],
+		};
+		const def = metaDefinition( [ tied ] );
+
+		expect( ladderRungLabel( def, 'Protean', 1 ) ).toBe( 'Feral Claws' );
+		expect( ladderRung( def, 'Protean', 1 ).alternates ).toEqual( [
+			'Eyes of the Beast',
+		] );
+	} );
+} );
+
+/**
+ * 1.2.11 D93 - the owner's own report, from a real sheet: the "List each level" view ran
+ * every name at a rank together with commas. On pre-1.2.10 (production-shaped) data,
+ * Animalism's rung 1 rendered
+ * `Feral Whispers, Beckoning, Beast Within (2nd ed), Feral Speech (dark ages), Noah's Call (dark ages)`
+ * in a single checkbox label.
+ *
+ * A rung is one purchase, so it shows one name: the line in play, which is the unqualified
+ * printing. `seamQualifier()` is what says which that is - a level whose note carries
+ * nothing beyond its tier word is the base printing, and an edition or tradition variant
+ * carries `2nd ed` / `dark ages` / `Sabbat`.
+ */
+describe( 'ladderRung (D93 - one name per rung, the rest as alternates)', () => {
+	/** The real pre-split shape: every basic-tier name tied at rung 1, variants noted. */
+	function preSplitAnimalism(): TieredPower {
+		return {
+			name: 'Animalism',
+			levels: [
+				{
+					level: null,
+					tier: 'basic',
+					power_name: 'Feral Whispers',
+					note: 'basic',
+				},
+				{
+					level: null,
+					tier: 'basic',
+					power_name: 'Beckoning',
+					note: 'basic',
+				},
+				{
+					level: null,
+					tier: 'basic',
+					power_name: 'Beast Within',
+					note: 'basic, 2nd ed',
+				},
+				{
+					level: null,
+					tier: 'basic',
+					power_name: 'Feral Speech',
+					note: 'basic, dark ages',
+				},
+				{
+					level: null,
+					tier: 'basic',
+					power_name: "Noah's Call",
+					note: 'basic, dark ages',
+				},
+				{
+					level: 3,
+					tier: 'intermediate',
+					power_name: 'Quell the Beast',
+					note: 'int.',
+				},
+			],
+		};
 	}
 
-	it( 'gives a held custom power a real five-level placeholder ladder', () => {
-		const withLadders = withCustomLadders( baseDefinition, [
-			row( { custom: true } ),
+	it( 'shows the unqualified printing and carries every variant as an alternate', () => {
+		const def = metaDefinition( [ preSplitAnimalism() ] );
+
+		const rung = ladderRung( def, 'Animalism', 1 );
+
+		expect( rung.label ).toBe( 'Feral Whispers' );
+		expect( rung.label ).not.toContain( ',' );
+		expect( rung.alternates ).toEqual( [
+			'Beckoning',
+			'Beast Within (2nd ed)',
+			'Feral Speech (dark ages)',
+			"Noah's Call (dark ages)",
 		] );
+	} );
 
-		expect( maxLevel( withLadders, 'My Homebrew Path' ) ).toBe( 5 );
+	it( 'falls back to source order when every name at the rank is qualified', () => {
+		const allQualified: TieredPower = {
+			name: "Path of Blood's Curse",
+			levels: [
+				{
+					level: null,
+					tier: 'basic',
+					power_name: 'Stigmatize',
+					note: 'basic, Tremere',
+				},
+				{
+					level: null,
+					tier: 'basic',
+					power_name: 'Ravages of the Beast',
+					note: 'basic, Sabbat',
+				},
+			],
+		};
+		const def = metaDefinition( [ allQualified ] );
 
-		const power = withLadders.powers.find(
-			( p ) => p.name === 'My Homebrew Path'
+		const rung = ladderRung( def, "Path of Blood's Curse", 1 );
+
+		expect( rung.label ).toBe( 'Stigmatize (Tremere)' );
+		expect( rung.alternates ).toEqual( [
+			'Ravages of the Beast (Sabbat)',
+		] );
+	} );
+
+	it( 'leaves an ordinary single-name rung exactly as it was', () => {
+		const def = metaDefinition( [ animalism() ] );
+
+		const rung = ladderRung( def, 'Animalism', 2 );
+
+		expect( rung.label ).toBe( 'Beckoning' );
+		expect( rung.alternates ).toEqual( [] );
+	} );
+
+	it( 'still falls back to "{name} {rung}" when the catalog has no entry at all', () => {
+		const def: TieredPowerDefinition = { powers: [], sequential: false };
+
+		const rung = ladderRung( def, 'My Homebrew Path', 1 );
+
+		expect( rung.label ).toBe( 'My Homebrew Path 1' );
+		expect( rung.alternates ).toEqual( [] );
+	} );
+} );
+
+describe( 'pickOptionsFor / groupPickOptions (E2 - rank-grouped, elder container only)', () => {
+	it( 'offers every not-yet-held pick from a held family, one entry per rank', () => {
+		const def = metaDefinition( [ animalism() ] );
+		const data: EditableHeldPower[] = [ { name: 'Animalism', level: 3 } ];
+
+		const options = pickOptionsFor( def, data );
+
+		expect( options.map( ( o ) => o.value ).sort() ).toEqual(
+			[
+				'Animalism: Animal Succulence',
+				'Animalism: Eye of the Szlachta',
+				'Animalism: Conquer the Beast',
+				'Animalism: Stampede',
+				'Animalism: Crimson Fury',
+				'Animalism: Unchain the Beast',
+			].sort()
 		);
-		expect( power?.levels.map( ( l ) => l.power_name ) ).toEqual( [
-			'One',
-			'Two',
-			'Three',
-			'Four',
-			'Five',
-		] );
-		// Matches the real seeded 1-5 tier mapping (vampire-disciplines' own data).
-		expect( power?.levels.map( ( l ) => l.tier ) ).toEqual( [
-			'basic',
-			'basic',
-			'intermediate',
-			'intermediate',
-			'advanced',
-		] );
 	} );
 
-	it( 'leaves the definition untouched when nothing held is custom', () => {
-		const withLadders = withCustomLadders( baseDefinition, [
-			row( { custom: false } ),
+	it( 'does not offer a family the character does not hold at all yet', () => {
+		const def = metaDefinition( [
+			animalism(),
+			{
+				name: 'Fortitude',
+				levels: [
+					{ level: 1, tier: 'basic', power_name: 'Toughness' },
+				],
+				elder: {
+					elder: [
+						{
+							level: null,
+							tier: 'elder',
+							power_name: 'Draught of Endurance',
+						},
+					],
+				},
+			},
 		] );
-		expect( withLadders ).toBe( baseDefinition );
+		const data: EditableHeldPower[] = [ { name: 'Animalism', level: 2 } ];
+
+		expect(
+			pickOptionsFor( def, data ).some(
+				( o ) => o.family === 'Fortitude'
+			)
+		).toBe( false );
 	} );
 
-	it( 'does not shadow a real seeded power of the same name', () => {
-		const seeded: TieredPowerDefinition = {
+	it( 'excludes a pick already held, but still offers a sibling pick in the same family and rank', () => {
+		const def = metaDefinition( [ animalism() ] );
+		const data: EditableHeldPower[] = [
+			{ name: 'Animalism', level: 2 },
+			{ name: 'Animalism', power_name: 'Animal Succulence' },
+		];
+
+		const options = pickOptionsFor( def, data );
+
+		expect(
+			options.some( ( o ) => o.powerName === 'Animal Succulence' )
+		).toBe( false );
+		expect(
+			options.some( ( o ) => o.powerName === 'Eye of the Szlachta' )
+		).toBe( true );
+	} );
+
+	it( 'never offers an overflow entry - overflow is never a pick', () => {
+		const family: TieredPower = {
+			...animalism(),
+			overflow: [
+				{ level: 6, tier: 'basic', power_name: 'Merged Rung' },
+			],
+		};
+		const def = metaDefinition( [ family ] );
+		const data: EditableHeldPower[] = [ { name: 'Animalism', level: 5 } ];
+
+		const options = pickOptionsFor( def, data );
+
+		expect( options.some( ( o ) => o.powerName === 'Merged Rung' ) ).toBe(
+			false
+		);
+	} );
+
+	it( 'returns nothing for a family with no elder container at all', () => {
+		const def: TieredPowerDefinition = {
+			sequential: false,
 			powers: [
 				{
-					name: 'Celerity',
+					name: 'Fortitude',
 					levels: [
-						{ level: 1, tier: 'basic', power_name: 'Alacrity' },
+						{ level: 1, tier: 'basic', power_name: 'Toughness' },
 					],
 				},
 			],
-			sequential: false,
 		};
-		const withLadders = withCustomLadders( seeded, [
-			row( { name: 'Celerity', custom: true } ),
-		] );
+		const data: EditableHeldPower[] = [ { name: 'Fortitude', level: 1 } ];
 
-		// Both entries exist - a real family a player also (incorrectly) marked custom
-		// still finds its real seeded ladder first via Array.prototype.find().
-		expect( maxLevel( withLadders, 'Celerity' ) ).toBe( 1 );
+		expect( pickOptionsFor( def, data ) ).toEqual( [] );
+	} );
+
+	it( 'groups options by rank in _meta.ranks order, and a rank with picks held while a lower rank has none is legal and unflagged', () => {
+		// Elder has nothing left to offer (both already held); Master and above do.
+		const def = metaDefinition( [ animalism() ] );
+		const data: EditableHeldPower[] = [
+			{ name: 'Animalism', level: 2 },
+			{ name: 'Animalism', power_name: 'Animal Succulence' },
+			{ name: 'Animalism', power_name: 'Eye of the Szlachta' },
+		];
+
+		const groups = groupPickOptions( def, data );
+
+		expect( groups.map( ( g ) => g.rank ) ).toEqual( [
+			'master',
+			'ascended',
+			'methuselah',
+		] );
+		// 'elder' never appears - not as an empty/disabled section, simply absent.
+		expect( groups.some( ( g ) => g.rank === 'elder' ) ).toBe( false );
+		const master = groups.find( ( g ) => g.rank === 'master' );
+		expect( master?.options.map( ( o ) => o.powerName ).sort() ).toEqual(
+			[ 'Conquer the Beast', 'Stampede' ].sort()
+		);
+	} );
+
+	it( 'works for a block with no _meta at all - grouping falls back to encounter order', () => {
+		const def: TieredPowerDefinition = {
+			sequential: false,
+			powers: [ animalism() ],
+		};
+		const data: EditableHeldPower[] = [ { name: 'Animalism', level: 5 } ];
+
+		const groups = groupPickOptions( def, data );
+
+		expect( groups.length ).toBeGreaterThan( 0 );
+		expect( groups.every( ( g ) => g.options.length > 0 ) ).toBe( true );
 	} );
 } );
 
-describe( 'traditionOptionsFor (0.99.2 Blood magic, BM-4)', () => {
+describe( 'orderRanks', () => {
+	it( 'sorts present ranks by their position in the declared vocabulary', () => {
+		expect(
+			orderRanks(
+				[ 'methuselah', 'elder', 'master' ],
+				[
+					'basic',
+					'intermediate',
+					'advanced',
+					'elder',
+					'master',
+					'ascended',
+					'methuselah',
+				]
+			)
+		).toEqual( [ 'elder', 'master', 'methuselah' ] );
+	} );
+
+	it( 'places an undeclared rank after every declared one, without dropping it', () => {
+		expect(
+			orderRanks( [ 'mystery', 'elder' ], [ 'elder', 'master' ] )
+		).toEqual( [ 'elder', 'mystery' ] );
+	} );
+
+	it( 'keeps the given order when nothing is declared', () => {
+		expect( orderRanks( [ 'master', 'elder' ] ) ).toEqual( [
+			'master',
+			'elder',
+		] );
+	} );
+} );
+
+describe( 'pickRankOf', () => {
+	const def = metaDefinition( [ animalism() ] );
+
+	it( 'resolves a held pick to its real rank via the elder container', () => {
+		expect(
+			pickRankOf( def, {
+				name: 'Animalism',
+				power_name: 'Conquer the Beast',
+			} )
+		).toBe( 'master' );
+	} );
+
+	it( 'falls back to the overflow container’s own tier for a merged-but-held entry', () => {
+		const family: TieredPower = {
+			...animalism(),
+			overflow: [
+				{ level: 6, tier: 'basic', power_name: 'Merged Rung' },
+			],
+		};
+		const withOverflow = metaDefinition( [ family ] );
+
+		expect(
+			pickRankOf( withOverflow, {
+				name: 'Animalism',
+				power_name: 'Merged Rung',
+			} )
+		).toBe( 'basic' );
+	} );
+
+	it( 'falls back to the row’s own stored tier when the catalog has no match', () => {
+		expect(
+			pickRankOf( def, {
+				name: 'Animalism',
+				power_name: 'Some Untracked Pick',
+				tier: 'methuselah',
+			} )
+		).toBe( 'methuselah' );
+	} );
+
+	it( 'falls back to "elder" as the last resort', () => {
+		expect(
+			pickRankOf( def, {
+				name: 'Animalism',
+				power_name: 'Truly Unknown',
+			} )
+		).toBe( 'elder' );
+	} );
+
+	it( 'never reads the placeholder tier "***" as a real rank', () => {
+		expect(
+			pickRankOf( def, {
+				name: 'Animalism',
+				power_name: 'Imported Unresolved',
+				tier: '***',
+			} )
+		).toBe( 'elder' );
+	} );
+} );
+
+describe( 'traditionOptionsFor (0.99.2 Blood magic, BM-4 - unaffected by the levels/elder split)', () => {
 	const bloodMagic: TieredPowerDefinition = {
 		blood_magic: true,
 		traditions: [ 'Akhu', 'Bacaban', 'Necromancy', 'Sadhana', 'Wanga' ],
@@ -183,31 +585,6 @@ describe( 'traditionOptionsFor (0.99.2 Blood magic, BM-4)', () => {
 			'Bacaban',
 			'Sadhana',
 		] );
-	} );
-
-	it( "returns the whole block list, own traditions first, for a real Hunter's Wind/Dur An Ki shape", () => {
-		const vampireBloodMagic: TieredPowerDefinition = {
-			blood_magic: true,
-			traditions: [ 'Dur An Ki', 'Thaumaturgy (Camarilla)', 'Wanga' ],
-			powers: [
-				{
-					name: "Hunter's Wind",
-					traditions: { 'Thaumaturgy (Camarilla)': null },
-					levels: [
-						{
-							level: 1,
-							tier: 'basic',
-							power_name: 'Catch the Scent',
-						},
-					],
-				},
-			],
-			sequential: false,
-		};
-
-		expect(
-			traditionOptionsFor( vampireBloodMagic, "Hunter's Wind" )
-		).toEqual( [ 'Thaumaturgy (Camarilla)', 'Dur An Ki', 'Wanga' ] );
 	} );
 
 	it( "falls back to the block's own traditions list for a power not in the catalog (a custom pick)", () => {
@@ -239,143 +616,5 @@ describe( 'traditionOptionsFor (0.99.2 Blood magic, BM-4)', () => {
 		};
 
 		expect( traditionOptionsFor( ordinary, 'Fortitude' ) ).toEqual( [] );
-	} );
-} );
-
-describe( 'levelName (checklist view - "the gap": some players want every named rung listed)', () => {
-	it( 'looks up the real catalog name for a numbered rung', () => {
-		const def = definition( [
-			{ level: 1, power_name: 'Alacrity', tier: 'basic' },
-			{ level: 2, power_name: 'Rapid Reflexes', tier: 'basic' },
-		] );
-
-		expect( levelName( def, 'Celerity', 2 ) ).toBe( 'Rapid Reflexes' );
-	} );
-
-	it( 'falls back to a plain "{name} {level}" label when the catalog has no entry there', () => {
-		const def = definition( [
-			{ level: 1, power_name: 'Alacrity', tier: 'basic' },
-		] );
-
-		expect( levelName( def, 'Celerity', 3 ) ).toBe( 'Celerity 3' );
-	} );
-
-	it( 'falls back the same way for a power the catalog does not have at all (a custom power)', () => {
-		const def = definition( [
-			{ level: 1, power_name: 'Alacrity', tier: 'basic' },
-		] );
-
-		expect( levelName( def, 'Nonexistent Power', 1 ) ).toBe(
-			'Nonexistent Power 1'
-		);
-	} );
-
-	// D66 (1.2.5-design-workflow.md §A2, owner: "never roll up") - a checklist rung
-	// tied between several named powers (`level: null` on all of them) joins every
-	// one of their names instead of falling through to the generic placeholder.
-	it( 'joins every tied power name at a rank, never rolling up to a placeholder', () => {
-		const def = definition( [
-			{ level: null, power_name: 'Feral Whispers', tier: 'basic' },
-			{ level: null, power_name: 'Beckoning', tier: 'basic' },
-		] );
-
-		expect( levelName( def, 'Celerity', 1 ) ).toBe(
-			'Feral Whispers, Beckoning'
-		);
-	} );
-} );
-
-describe( 'elderPickOptions (0.99.2-workflow.md "Cost_Engine cannot price an Elder-tier purchase" - the picker UI)', () => {
-	const MULTI_FAMILY_DEFINITION: TieredPowerDefinition = {
-		sequential: false,
-		powers: [
-			{
-				name: 'Celerity',
-				levels: [
-					{ level: 1, power_name: 'Alacrity', tier: 'basic' },
-					{ level: 2, power_name: 'Rapid Reflexes', tier: 'basic' },
-					{ level: 6, power_name: 'Precision', tier: 'elder' },
-					{ level: null, power_name: 'Velocity', tier: 'master' },
-				],
-			},
-			{
-				name: 'Fortitude',
-				levels: [
-					{ level: 1, power_name: 'Toughness', tier: 'basic' },
-					{
-						level: null,
-						power_name: 'Draught of Endurance',
-						tier: 'elder',
-					},
-				],
-			},
-		],
-	};
-
-	it( 'offers only Elder-and-above entries beyond the checklist range, for families already held', () => {
-		const data: EditableHeldPower[] = [ { name: 'Celerity', level: 2 } ];
-
-		const options = elderPickOptions( MULTI_FAMILY_DEFINITION, data );
-
-		expect( options.map( ( o ) => o.value ) ).toEqual( [
-			'Celerity: Precision',
-			'Celerity: Velocity',
-		] );
-	} );
-
-	it( 'does not offer a family the character does not hold at all yet', () => {
-		const data: EditableHeldPower[] = [ { name: 'Celerity', level: 2 } ];
-
-		const options = elderPickOptions( MULTI_FAMILY_DEFINITION, data );
-
-		expect( options.some( ( o ) => o.family === 'Fortitude' ) ).toBe(
-			false
-		);
-	} );
-
-	it( 'excludes a pick already held, but still offers a sibling pick in the same family', () => {
-		const data: EditableHeldPower[] = [
-			{ name: 'Celerity', level: 2 },
-			{ name: 'Celerity', power_name: 'Precision' },
-		];
-
-		const options = elderPickOptions( MULTI_FAMILY_DEFINITION, data );
-
-		expect( options.map( ( o ) => o.value ) ).toEqual( [
-			'Celerity: Velocity',
-		] );
-	} );
-
-	it( 'respects a trueMaxFor override when deciding what counts as "beyond the checklist"', () => {
-		const data: EditableHeldPower[] = [ { name: 'Celerity', level: 2 } ];
-
-		// Raising the true max to 6 makes Precision (level 6) reachable via the
-		// checklist/stepper instead, so the picker should no longer offer it.
-		const options = elderPickOptions(
-			MULTI_FAMILY_DEFINITION,
-			data,
-			() => 6
-		);
-
-		expect( options.map( ( o ) => o.value ) ).toEqual( [
-			'Celerity: Velocity',
-		] );
-	} );
-
-	it( 'returns nothing for a family with no Elder-and-above entries in the catalog at all', () => {
-		const data: EditableHeldPower[] = [ { name: 'Fortitude', level: 1 } ];
-		const def: TieredPowerDefinition = {
-			sequential: false,
-			powers: [
-				{
-					name: 'Fortitude',
-					levels: [
-						{ level: 1, power_name: 'Toughness', tier: 'basic' },
-					],
-				},
-			],
-		};
-
-		expect( elderPickOptions( def, data ) ).toEqual( [] );
 	} );
 } );

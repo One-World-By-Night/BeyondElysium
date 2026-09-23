@@ -27,5 +27,8 @@
 	{ "name": "a custom dot glyph is honored", "output": "Celerity ooo 3 (Fast)" },
 	{ "name": "cost_number: name, total, XP, note", "output": "Bestial Charm 6 XP (Malkavian)" },
 	{ "name": "cost_number: no note", "output": "Bestial Charm 6 XP" },
-	{ "name": "cost_number: total 0 still shows the number, not dots", "output": "Free Combo 0 XP" }
+	{ "name": "cost_number: total 0 still shows the number, not dots", "output": "Free Combo 0 XP" },
+	{ "name": "cost_xp: the price sits in parentheses after the name", "output": "Draw Fire (12 XP)" },
+	{ "name": "cost_xp: a note joins the price inside the same parens", "output": "Emerge Unscathed (8 XP, Tremere)" },
+	{ "name": "cost_xp: a zero price is still labelled, never blank", "output": "Free Combo (0 XP)" }
 ]

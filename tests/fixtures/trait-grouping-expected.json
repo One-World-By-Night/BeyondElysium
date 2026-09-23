@@ -34,6 +34,7 @@
         ]
     ],
     "resolveDisplay": [ "dot", "cost", "simple" ],
+    "resolveMode": [ "dot", "dot", "cost_xp", "cost_xp", "cost_xp", "note_only" ],
     "groupByCategory": [
         [ { "label": null, "traits": [ { "name": "Occult", "total": 2 } ] } ],
         [

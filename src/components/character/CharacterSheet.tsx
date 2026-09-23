@@ -164,11 +164,12 @@ export function CharacterSheet( {
 	const [ printFullPowerNames, setPrintFullPowerNames ] = useState(
 		() => urlParams.get( 'print_full_power_names' ) === '1'
 	);
-	// 1.1.0 D3: a count_is_cost block's held entries (Combo Disciplines) read as a
-	// number ("6 XP") instead of dots - same "ticking either also changes this page"
+	// 1.2.11 D94: a count_is_cost block's held entries (Combo Disciplines) always name
+	// their XP price - this only chooses whether that price is shown at all, and it is
+	// shown unless the URL says otherwise. Same "ticking either also changes this page"
 	// shape as printFullPowerNames above.
-	const [ printCostNumbers, setPrintCostNumbers ] = useState(
-		() => urlParams.get( 'print_cost_numbers' ) === '1'
+	const [ printShowCost, setPrintShowCost ] = useState(
+		() => urlParams.get( 'print_hide_cost' ) !== '1'
 	);
 
 	// The viewer's own expand/collapse clicks, keyed by block_slug - only ever holds an
@@ -462,9 +463,9 @@ export function CharacterSheet( {
 								? 'named'
 								: undefined
 						}
-						costNumbers={
+						showCost={
 							block.section_type === 'trait_list'
-								? printCostNumbers
+								? printShowCost
 								: undefined
 						}
 						sheetData={ character.sheet_data }
@@ -668,15 +669,15 @@ export function CharacterSheet( {
 										<label>
 											<input
 												type="checkbox"
-												checked={ printCostNumbers }
+												checked={ printShowCost }
 												onChange={ ( e ) =>
-													setPrintCostNumbers(
+													setPrintShowCost(
 														e.target.checked
 													)
 												}
 											/>
 											{ __(
-												'XP costs as numbers',
+												'Show XP costs',
 												'beyond-elysium'
 											) }
 										</label>
@@ -714,8 +715,7 @@ export function CharacterSheet( {
 															printXpHistory,
 														fullPowerNames:
 															printFullPowerNames,
-														costNumbers:
-															printCostNumbers,
+														showCost: printShowCost,
 													} ),
 												'_blank'
 											)

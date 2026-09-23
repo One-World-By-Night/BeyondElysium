@@ -19,7 +19,8 @@ export type DisplayType =
 	| 'simple_dots'
 	| 'simple_number'
 	| 'simple_note'
-	| 'cost_number';
+	| 'cost_number'
+	| 'cost_xp';
 
 export interface Trait {
 	name: string;
@@ -134,6 +135,18 @@ export function displayTrait(
 			// viewer's cost-numbers preference is on.
 			const out = `${ trait.name } ${ total } XP`;
 			return note ? `${ out } (${ note })` : out;
+		}
+
+		case 'cost_xp': {
+			// 1.2.11 D94: the default for a count_is_cost block - "Draw Fire (12 XP)".
+			// The unit is part of the rendering, not a preference, because the number
+			// is a price and reads as a rating without it. The note joins the price
+			// inside the same parentheses rather than opening a second pair, matching
+			// 'cost' above.
+			const priced = `${ total } XP`;
+			return `${ trait.name } (${
+				note ? `${ priced }, ${ note }` : priced
+			})`;
 		}
 
 		default:

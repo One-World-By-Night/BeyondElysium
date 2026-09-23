@@ -2,6 +2,8 @@
 
 namespace BeyondElysium\Services\Display;
 
+use BeyondElysium\Services\Power_Levels;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -63,8 +65,18 @@ class Power_Display {
 		$found_pt   = $use_pt ? ( $found->power_name_pt ?? '' ) : '';
 		$power_name = $found_pt !== '' ? $found_pt : ( $held['power_name'] ?? '' );
 
+		// D80: an unmatched import whose raw name carries no colon is stored with
+		// `power_name` equal to `name` (`custom_tiered_power_result()` splits on the first
+		// `": "` and falls back to the whole string for both), so the default format printed
+		// the family twice - "Valaren (Warrior): Valaren (Warrior) 4". Where the two are the
+		// same string there is no family/power distinction to draw, so the name prints once.
+		// Twin of TieredPowerRenderer.tsx's `elderLabel()`.
+		$stem = ( ( $held['power_name'] ?? null ) === $held['name'] )
+			? $held['name']
+			: $held['name'] . ': ' . $power_name;
+
 		if ( isset( $held['level'] ) ) {
-			return $held['name'] . ': ' . $power_name . ' ' . $held['level'];
+			return $stem . ' ' . $held['level'];
 		}
 
 		// Prefers a fresh catalog tier lookup, then the entry's own stored tier, then 'elder'.
@@ -84,10 +96,10 @@ class Power_Display {
 		// tell them apart - see seam_qualifier().
 		$qualifier = self::seam_qualifier( $power, $found );
 		if ( null !== $qualifier ) {
-			return $held['name'] . ': ' . $power_name . ' (' . $tier . ' · ' . $qualifier . ')';
+			return $stem . ' (' . $tier . ' · ' . $qualifier . ')';
 		}
 
-		return $held['name'] . ': ' . $power_name . ' (' . $tier . ')';
+		return $stem . ' (' . $tier . ')';
 	}
 
 	/**
@@ -164,8 +176,10 @@ class Power_Display {
 			return null;
 		}
 
+		// Every container (1.2.10 pre-deploy, 2026-09-22) - D67's seam sits between two merged
+		// ladders, and the split files the second one in `overflow`. Twin of levelQualifier.ts.
 		$seen = [];
-		foreach ( $power->levels ?? [] as $entry ) {
+		foreach ( Power_Levels::all( $power ) as $entry ) {
 			$seen[ self::level_qualifier( $entry->note ?? null ) ?? '' ] = true;
 			if ( count( $seen ) > 1 ) {
 				return self::level_qualifier( $level->note ?? null );
@@ -317,7 +331,13 @@ class Power_Display {
 		if ( ! $power ) {
 			return null;
 		}
-		foreach ( ( $power->levels ?? [] ) as $entry ) {
+		// All three containers (1.2.10 E3). A pick lives in `elder` once a block declares
+		// `_meta`, so searching `levels` alone found nothing and every pick above the elder
+		// rank fell through to elder_label()'s hardcoded 'elder' default - measured on the
+		// real catalog, `Celerity: Zephyr` (ascended) and `Animalism: Stampede` (master)
+		// both printed "(elder)" into the signed PDF. Twin of TieredPowerRenderer.tsx's
+		// `findByPowerName()`, which reads `src/lib/powerLevels.ts`'s `allLevels()`.
+		foreach ( Power_Levels::all( $power ) as $entry ) {
 			if ( ( $entry->power_name ?? null ) === $power_name ) {
 				return $entry;
 			}

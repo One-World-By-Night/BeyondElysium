@@ -435,7 +435,7 @@ class Trait_Mapper {
 			return [ 'outcome' => 'unresolved', 'suggestions' => [] ];
 		}
 
-		$levels = (array) ( $power->levels ?? [] );
+		$levels = Power_Levels::all( $power );
 
 		// Tries the name exactly as given first, then with a trailing parenthetical tier removed.
 		$candidates = [ $power_name ];
@@ -523,7 +523,7 @@ class Trait_Mapper {
 		}
 
 		$level_num = (int) $raw_total;
-		foreach ( (array) $power->levels as $level ) {
+		foreach ( Power_Levels::all( $power ) as $level ) {
 			if ( ( $level->level ?? null ) === $level_num ) {
 				return [
 					'outcome'    => $outcome_if_found,
@@ -540,7 +540,7 @@ class Trait_Mapper {
 		// family whose tier resolves to this rank number makes the rung a genuine one.
 		$tier = self::tier_for_rank( $level_num );
 		if ( $tier !== null ) {
-			foreach ( (array) $power->levels as $level ) {
+			foreach ( Power_Levels::all( $power ) as $level ) {
 				if ( ( $level->tier ?? null ) === $tier ) {
 					return [
 						'outcome'    => $outcome_if_found,

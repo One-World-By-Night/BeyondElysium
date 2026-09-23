@@ -296,7 +296,135 @@ class Change_Validator {
 			unset( $trait['custom'] );
 		}
 
-		return [ 'ok' => true, 'change_data' => self::with_display_keys( $data, [ 'block_slug' => $block_slug, 'trait' => $trait ] ) ];
+		$previous = self::previous_snapshot( $data );
+
+		// Last, so the comparison reads the resolved name and the normalized label rather
+		// than whatever spelling and whitespace arrived (1.2.11 D86).
+		$conflict = self::trait_row_conflict( $type, $definition, $held, $trait, $previous );
+		if ( $conflict !== null ) {
+			return $conflict;
+		}
+
+		$normalized = self::with_display_keys( $data, [ 'block_slug' => $block_slug, 'trait' => $trait ] );
+		// The engine addresses a relabelled row by this one key, so what it reads is what was
+		// checked above - never the raw string as submitted.
+		if ( isset( $previous['specialization'], $normalized['previous'] ) && is_array( $normalized['previous'] ) ) {
+			$normalized['previous']['specialization'] = $previous['specialization'];
+		}
+
+		return [ 'ok' => true, 'change_data' => $normalized ];
+	}
+
+	/**
+	 * The `previous` snapshot narrowed to the one field that identifies rather than decorates.
+	 *
+	 * `previous` is display-only everywhere else (`with_display_keys()`), but a relabel cannot
+	 * be expressed without it: the trait's own label is the NEW value, so the only thing that
+	 * can say which holding is being renamed is what it was called before
+	 * (`Trait_Identity::target_of()`). It is normalized the same way the trait's own label is,
+	 * and its `name` is deliberately dropped - the trait's name has already been resolved to
+	 * the catalog's spelling, and a raw echo of it here would only mismatch that.
+	 *
+	 * @param array $data
+	 * @return array|null
+	 */
+	private static function previous_snapshot( array $data ): ?array {
+		$previous = $data['previous'] ?? null;
+		if ( ! is_array( $previous ) || ! isset( $previous['specialization'] ) || ! is_string( $previous['specialization'] ) ) {
+			return null;
+		}
+		return [ 'specialization' => self::text( $previous['specialization'] ) ];
+	}
+
+	/**
+	 * Refuses a change that would leave two held rows the sheet cannot tell apart - the same
+	 * rule the editor enforces by merging, enforced here so a crafted request cannot create
+	 * the row the editor refuses to (1.2.11 D86).
+	 *
+	 * The check is a **simulation of what `Change_Engine::apply_to_sheet()` will actually do**,
+	 * not a second opinion: an `add_trait` is appended, and a `modify_trait` lands on the row
+	 * whose identity the change names (`Trait_Identity::target_of()` - the label it had before
+	 * the edit, where the client states one). So build the identities this block's rows of
+	 * that name carry now, apply the change the same way, and refuse only when the change
+	 * ITSELF creates a collision. A sheet that already holds a duplicate - an importer appends
+	 * rows, it does not merge them - is left editable rather than frozen.
+	 *
+	 * An `atomic` block is exempt by declaration: it appends a fresh row every time (Merits,
+	 * Flaws, Rituals), which is what `atomic` means.
+	 *
+	 * @param string     $type
+	 * @param object     $definition
+	 * @param array      $held
+	 * @param array      $trait    The normalized trait.
+	 * @param array|null $previous The change's `previous` snapshot, which names the row a relabel addresses.
+	 * @return array|null A failure, or null when the change is fine.
+	 */
+	private static function trait_row_conflict( string $type, $definition, array $held, array $trait, ?array $previous = null ): ?array {
+		if ( ! empty( $definition->atomic ) || ! in_array( $type, [ 'add_trait', 'modify_trait' ], true ) ) {
+			return null;
+		}
+
+		$name  = (string) $trait['name'];
+		$label = array_key_exists( 'specialization', $trait ) && is_string( $trait['specialization'] ) ? $trait['specialization'] : null;
+
+		// Only rows sharing this name can ever collide, since every identity starts with it.
+		$before = [];
+		foreach ( $held as $row ) {
+			if ( ! is_array( $row ) || ( $row['name'] ?? null ) !== $name ) {
+				continue;
+			}
+			$before[] = (string) Trait_Identity::of_row( $definition, $row );
+		}
+
+		$after = $before;
+		if ( $type === 'add_trait' ) {
+			$after[] = Trait_Identity::of( $definition, $name, $label ?? '' );
+		} else {
+			// Which row the engine will land on, and what it will become.
+			$target = Trait_Identity::target_of( $definition, $trait, $previous );
+			$at     = $target === null ? false : array_search( $target, $before, true );
+			if ( $at === false ) {
+				/*
+				 * Nothing of that identity is held, so the engine would modify no row at all:
+				 * the change would queue, get approved, and do nothing.
+				 *
+				 * Refused only where the label is part of the identity, which is exactly where
+				 * this release introduced the silent no-op - before it, a modify naming a held
+				 * name but an unheld label landed on the first row of that name, wrongly.
+				 * Where the identity is the name alone a modify for an unheld trait was
+				 * already a no-op long before 1.2.11, and changing that is not this release's
+				 * to do. The real editor always states `previous`, so neither is reachable
+				 * from the UI.
+				 */
+				if ( Trait_Identity::allows_multiples( $definition, $name ) ) {
+					return self::fail( 'trait_not_held', '"%s" is not on this sheet - add it instead of changing it.', [ self::display_name( $definition, $name, $label ) ] );
+				}
+				return null;
+			}
+			$after[ $at ] = Trait_Identity::of( $definition, $name, $label ?? '' );
+		}
+
+		if ( ( count( $after ) - count( array_unique( $after ) ) ) <= ( count( $before ) - count( array_unique( $before ) ) ) ) {
+			return null;
+		}
+
+		return self::fail( 'trait_already_held', '"%s" is already on this sheet - change the entry you hold rather than adding a second one.', [ self::display_name( $definition, $name, $label ) ] );
+	}
+
+	/**
+	 * How a holding is named back to the player: its label included only where the label is
+	 * part of what identifies it, so a message never implies a distinction the block does not
+	 * actually make.
+	 *
+	 * @param object      $definition
+	 * @param string      $name
+	 * @param string|null $label
+	 * @return string
+	 */
+	private static function display_name( $definition, string $name, ?string $label ): string {
+		return Trait_Identity::allows_multiples( $definition, $name ) && ( $label ?? '' ) !== ''
+			? "{$name} ({$label})"
+			: $name;
 	}
 
 	/**
@@ -341,8 +469,15 @@ class Change_Validator {
 			unset( $trait['custom'] );
 
 			if ( $power_name !== null ) {
+				// Every container, not the ladder alone (1.2.10 pre-deploy trace, 2026-09-22). A pick
+				// lives in `elder` once a block is split, so reading `->levels` rejected every
+				// Elder-and-above purchase with "not a power of <family>" - and the preview route
+				// turned that rejection into a silent "+0 XP", so the screen showed the power as
+				// free while the submit route would refuse it. The fourth consumer found reading
+				// `levels` directly, after Cost_Engine (D77), the renderers (D79) and the reorder
+				// list (D78). Services\Power_Levels exists precisely so nothing does this.
 				$picks = [];
-				foreach ( ( $families[ $family ]->levels ?? [] ) as $rung ) {
+				foreach ( \BeyondElysium\Services\Power_Levels::all( $families[ $family ] ) as $rung ) {
 					if ( isset( $rung->power_name ) && is_string( $rung->power_name ) && $rung->power_name !== '' ) {
 						$picks[] = $rung->power_name;
 					}

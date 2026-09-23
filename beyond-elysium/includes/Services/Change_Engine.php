@@ -75,9 +75,10 @@ class Change_Engine {
 		// when this submission would itself be pending - an auto-approved change is already a
 		// done deal, never a "duplicate pending" concern.
 		if ( $level !== 'auto' ) {
-			$duplicate_key = self::pending_duplicate_key( $change_data['change_type'], (array) ( $change_data['change_data'] ?? [] ) );
+			$owner_slug    = (string) ( $character->owner_slug ?? '' );
+			$duplicate_key = self::pending_duplicate_key( $change_data['change_type'], (array) ( $change_data['change_data'] ?? [] ), $owner_slug );
 			if ( $duplicate_key !== null ) {
-				$existing_id = self::find_pending_duplicate( $character_id, $change_data['change_type'], $duplicate_key );
+				$existing_id = self::find_pending_duplicate( $character_id, $change_data['change_type'], $duplicate_key, $owner_slug );
 				if ( $existing_id !== null ) {
 					return Change::update_pending_data( $existing_id, $insert ) ? $existing_id : 0;
 				}
@@ -106,8 +107,9 @@ class Change_Engine {
 	 *
 	 * @param string               $change_type
 	 * @param array<string,mixed>  $inner_data change_data's own nested payload (block_slug plus a trait/values/fields key).
+	 * @param string               $owner_slug The character's chronicle, so the block's own definition - the chronicle's fork where one exists - decides what identifies a holding.
 	 */
-	private static function pending_duplicate_key( string $change_type, array $inner_data ): ?string {
+	private static function pending_duplicate_key( string $change_type, array $inner_data, string $owner_slug = '' ): ?string {
 		$block_slug = $inner_data['block_slug'] ?? null;
 		if ( ! is_string( $block_slug ) || $block_slug === '' ) {
 			return null;
@@ -117,8 +119,20 @@ class Change_Engine {
 			case 'add_trait':
 			case 'remove_trait':
 			case 'modify_trait':
-				$name = $inner_data['trait']['name'] ?? null;
-				return is_string( $name ) && $name !== '' ? "{$block_slug}:{$name}" : null;
+				// The holding, not the name (1.2.11 D88/D89). `Retainers (John Doe)` and
+				// `Retainers (Sue Smith)` are two purchases where the item allows multiples,
+				// and `Celerity: Precision` and `Celerity: Zephyr` are two picks - keyed by
+				// name alone, the second submission silently took over the first's queued row.
+				$trait = is_array( $inner_data['trait'] ?? null ) ? $inner_data['trait'] : [];
+				if ( ! is_string( $trait['name'] ?? null ) || $trait['name'] === '' ) {
+					return null;
+				}
+				$identity = Trait_Identity::target_of(
+					self::block_definition( $owner_slug, $block_slug ),
+					$trait,
+					is_array( $inner_data['previous'] ?? null ) ? $inner_data['previous'] : null
+				);
+				return $identity === null ? null : "{$block_slug}:{$identity}";
 
 			case 'modify_resource':
 				$keys = array_keys( (array) ( $inner_data['values'] ?? [] ) );
@@ -142,14 +156,34 @@ class Change_Engine {
 	 *
 	 * @return int|null The existing change's id, or null when there is no duplicate.
 	 */
-	private static function find_pending_duplicate( int $character_id, string $change_type, string $duplicate_key ): ?int {
+	private static function find_pending_duplicate( int $character_id, string $change_type, string $duplicate_key, string $owner_slug = '' ): ?int {
 		foreach ( Change::for_character( $character_id, [ 'status' => 'pending', 'change_type' => $change_type ] ) as $candidate ) {
-			$candidate_key = self::pending_duplicate_key( $change_type, (array) ( $candidate->change_data ?? [] ) );
+			$candidate_key = self::pending_duplicate_key( $change_type, (array) ( $candidate->change_data ?? [] ), $owner_slug );
 			if ( $candidate_key === $duplicate_key ) {
 				return (int) $candidate->id;
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * One block's definition for this chronicle - its own fork where it has one, the global
+	 * catalog otherwise. The identity of a held row is a property of the block that declares
+	 * it (`allow_multiples`, per item or as a block default), so every consumer that asks
+	 * "which row does this change mean" resolves the block the same way, and a chronicle that
+	 * has forked a block gets its own answer.
+	 *
+	 * Deliberately not cached in a static: a block edited mid-request must be read as it now
+	 * is, and the lookup is one indexed row - `resolve_rule_level()` already makes the same
+	 * one on every submit.
+	 *
+	 * @param string $owner_slug
+	 * @param string $block_slug
+	 * @return object|null
+	 */
+	private static function block_definition( string $owner_slug, string $block_slug ) {
+		$block = Schema_Block::find_for_game( $block_slug, $owner_slug );
+		return $block->definition ?? null;
 	}
 
 	/**
@@ -429,15 +463,22 @@ class Change_Engine {
 				}
 				break;
 
+			// Both of these address ONE holding, and a holding is identified by more than its
+			// name (1.2.11 D88/D89): a `trait_list` row by its label where the item allows
+			// multiples, a `tiered_power` row by its own `power_name`. Matching on the name
+			// alone, `remove_trait` deleted every Retainer at once and every Elder pick of a
+			// family at once, and `modify_trait` raised whichever row happened to come first.
 			case 'remove_trait':
 				if ( $block_slug && isset( $sheet[ $block_slug ] ) && is_array( $sheet[ $block_slug ] ) ) {
-					$remove_name = $change_data['trait']['name'] ?? $change_data['name'] ?? null;
-					if ( $remove_name !== null ) {
+					$trait      = is_array( $change_data['trait'] ?? null ) ? $change_data['trait'] : $change_data;
+					$definition = self::block_definition( (string) ( $character->owner_slug ?? '' ), $block_slug );
+					$identity   = Trait_Identity::target_of( $definition, $trait, is_array( $change_data['previous'] ?? null ) ? $change_data['previous'] : null );
+					if ( $identity !== null ) {
 						$sheet[ $block_slug ] = array_values(
 							array_filter(
 								$sheet[ $block_slug ],
-								function ( $item ) use ( $remove_name ) {
-									return ( $item['name'] ?? null ) !== $remove_name;
+								static function ( $item ) use ( $definition, $identity ) {
+									return ! is_array( $item ) || Trait_Identity::of_row( $definition, $item ) !== $identity;
 								}
 							)
 						);
@@ -446,11 +487,12 @@ class Change_Engine {
 				break;
 
 			case 'modify_trait':
-				if ( $block_slug && isset( $sheet[ $block_slug ] ) && is_array( $sheet[ $block_slug ] ) ) {
-					$target_name = $change_data['trait']['name'] ?? null;
-					if ( $target_name !== null ) {
+				if ( $block_slug && isset( $sheet[ $block_slug ] ) && is_array( $sheet[ $block_slug ] ) && is_array( $change_data['trait'] ?? null ) ) {
+					$definition = self::block_definition( (string) ( $character->owner_slug ?? '' ), $block_slug );
+					$identity   = Trait_Identity::target_of( $definition, $change_data['trait'], is_array( $change_data['previous'] ?? null ) ? $change_data['previous'] : null );
+					if ( $identity !== null ) {
 						foreach ( $sheet[ $block_slug ] as &$item ) {
-							if ( ( $item['name'] ?? null ) === $target_name ) {
+							if ( is_array( $item ) && Trait_Identity::of_row( $definition, $item ) === $identity ) {
 								$item = array_merge( $item, $change_data['trait'] );
 								break;
 							}

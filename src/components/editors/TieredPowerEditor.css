@@ -147,12 +147,17 @@
 }
 
 /* flex-basis 100% forces this onto its own line below the name/toggle - the row's own
-   flex-wrap (above) is what lets it actually drop there instead of overflowing. */
+   flex-wrap (above) is what lets it actually drop there instead of overflowing.
+   One rung per line, numbered (1.2.11 D93): the owner reads this as a ladder, so it is a
+   real <ol> in a column rather than a wrapped row of chips. The native marker is
+   suppressed because the checkbox comes first - the number is drawn after it, inside the
+   label - while the <ol> keeps the list semantics a screen reader and the print sheet
+   need. */
 .be-tiered-power-editor__checklist {
 	display: flex;
 	flex: 1 1 100%;
-	flex-wrap: wrap;
-	gap: 0.15rem 0.75rem;
+	flex-direction: column;
+	gap: 0.15rem;
 	list-style: none;
 	margin: 0;
 	padding: 0;
@@ -164,6 +169,41 @@
 	gap: 0.25rem;
 	font-size: 0.85em;
 	white-space: nowrap;
+}
+
+/* Tabular width so 1..5 line up and the names start at the same column. */
+.be-tiered-power-editor__rung-number {
+	min-width: 1.2em;
+	color: var(--be-gray-6);
+	font-variant-numeric: tabular-nums;
+}
+
+/* The other names filed at this same rung, kept as a note rather than run together on the
+   line. Muted and tiny so a rung is no taller than it was without one. */
+.be-tiered-power-editor__rung-alternates {
+	color: var(--be-gray-8);
+	font-size: 0.85em;
+	cursor: help;
+}
+
+/* Same bare-class safety as the stepper buttons (hello-elementor's element-selector
+   reset, D34) - this sits directly under the ladder it belongs to. */
+.be-tiered-power-editor .be-tiered-power-editor__add-elder {
+	align-self: flex-start;
+	flex: 0 0 auto;
+	margin-top: 0.25rem;
+	padding: 0.1rem 0.4rem;
+	border: 1px solid var(--be-gray-13);
+	border-radius: 3px;
+	background: none;
+	color: var(--be-gray-4);
+	font-size: 0.8rem;
+	cursor: pointer;
+}
+
+.be-tiered-power-editor .be-tiered-power-editor__add-elder:hover,
+.be-tiered-power-editor .be-tiered-power-editor__add-elder:focus-visible {
+	background: var(--be-gray-23);
 }
 
 /* Desktop: the tradition field and remove button stay inline exactly as before; the
@@ -270,6 +310,32 @@
 	display: flex;
 	gap: 0.5rem;
 	margin: 0.5rem 0;
+}
+
+/*
+ * E2 (1.2.10): the elder-and-above pick list, grouped by rank - a completely separate
+ * area from the ladder rows above, never sharing a count or a control with them.
+ */
+.be-tiered-power-editor__picks {
+	margin: 0.5rem 0;
+}
+
+.be-tiered-power-editor__picks-rank {
+	margin: 0 0 0.5rem;
+}
+
+.be-tiered-power-editor__picks-heading {
+	margin: 0 0 0.15rem;
+	font-size: 0.8rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	color: var(--be-gray-6);
+}
+
+.be-tiered-power-editor__picks-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
 }
 
 /* 1.1.0 D5: a blood_magic block's add flow pauses here until a paradigm is chosen. */

@@ -67,10 +67,9 @@ Merits, Flaws, and similar, depending on the chronicle's own template).
 
 ## Things to know
 
-- **Adding the same name again adds to it, not a duplicate row** - for most sections, choosing
-  a name you already hold (with the same specialization, if it has one) raises its existing
-  count instead of creating a second entry. A few sections - Merits and Flaws, for example -
-  always keep each pick as its own row instead.
+- **Adding the same name again adds to it, not a duplicate row** - for most sections, choosing a name you already hold raises its existing count instead of creating a second entry, whatever specialization you type alongside it. A specialization labels one holding, so `Brawl 5 (Wrestling)` is a single Brawl at 5: picking a different focus doesn't buy you a second Brawl, it re-labels or adds to the one you have.
+- **A few entries really can be held more than once**, and those are the ones where the label is part of what you hold - two different Retainers, or two fields of study under one Ability. Your chronicle's own catalog says which entries work that way; for them, a new label is a new row with its own dots and its own cost, and repeating a label you already hold raises that row instead. A few sections - Merits and Flaws, for example - always keep each pick as its own row, however it is named.
+- **Re-labelling onto a label you already hold merges the two** - where a name can be held more than once, editing one row's label to match another row's combines them into the one you already had, rather than leaving two rows nothing can tell apart.
 - **A custom name always needs review.** Typing a name that isn't in the catalog only saves
   where this section allows custom entries at all, and even then it always goes to a
   Storyteller for approval, no matter how your chronicle has auto-approval configured.

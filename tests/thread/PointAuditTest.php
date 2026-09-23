@@ -141,42 +141,47 @@ class PointAuditTest extends WP_UnitTestCase {
 		// Animalism's "Drawing Out the Beast" costs 3 where every other real
 		// advanced-tier item, including its own sibling, costs 9); mirrored here rather
 		// than reading the block-scoped private method directly.
-		$tier_rank = [
-			'basic' => 1, 'intermediate' => 2, 'advanced' => 3, 'elder' => 4,
-			'master' => 5, 'ascended' => 6, 'methuselah' => 7,
-		];
-		$tallies = [];
-		foreach ( $definition->powers as $candidate ) {
-			foreach ( $candidate->levels as $level ) {
-				$tier = $level->tier ?? null;
-				if ( $tier === null || ! isset( $tier_rank[ $tier ] ) || ! isset( $level->cost ) ) {
-					continue;
-				}
-				$rank = $tier_rank[ $tier ];
-				$cost = (int) $level->cost;
-				$tallies[ $rank ][ $cost ] = ( $tallies[ $rank ][ $cost ] ?? 0 ) + 1;
+		// 1.2.10 S6. This built its expected costs by mapping one tier per rank - basic 1,
+		// intermediate 2, advanced 3, elder 4, master 5 - and so expected a level-5 holding
+		// to cost through the **master** rate. That is the inference the release deletes: a
+		// declared 2/2/1 ladder makes rank 5 the *advanced* rung, and elder and master are
+		// picks that no rating ever passes through.
+		//
+		// Expected costs now come from the block's declared ladder and its per-rank prices,
+		// read the same way the engine reads them.
+		$meta   = $definition->_meta;
+		$ladder = (array) $meta->ladder;
+		$prices = (array) $meta->costs;
+
+		// Book order from `_meta.ranks`, never the ladder's stored key order (MySQL's JSON
+		// column re-sorts it to basic, advanced, intermediate).
+		$order = array_values( array_filter( (array) ( $meta->ranks ?? array_keys( $ladder ) ), static fn( $r ): bool => isset( $ladder[ $r ] ) ) );
+
+		$costs_by_rank = [];
+		$rung          = 0;
+		foreach ( $order as $tier ) {
+			$rungs = $ladder[ $tier ];
+			for ( $i = 0; $i < (int) $rungs; $i++ ) {
+				$costs_by_rank[ ++$rung ] = (int) ( $prices[ $tier ] ?? 0 );
 			}
 		}
-		$costs_by_rank = [];
-		foreach ( $tallies as $rank => $by_cost ) {
-			arsort( $by_cost );
-			$costs_by_rank[ $rank ] = (int) array_key_first( $by_cost );
-		}
-		$this->assertArrayHasKey( 5, $costs_by_rank, 'vampire-disciplines must reach a priced master (rank 5) tier' );
+		$ceiling = array_sum( $ladder );
+		$this->assertArrayHasKey( $ceiling, $costs_by_rank, 'the declared ladder must price every rung' );
 
+		// Any family with a full ladder will do - the assertion is about the arithmetic, and
+		// the per-rank price is the block's, not this family's (D66: one Animalism advanced
+		// row carries 3 where every sibling carries 9, which the plurality vote outweighs).
 		$power = null;
 		foreach ( $definition->powers as $candidate ) {
-			foreach ( $candidate->levels as $level ) {
-				if ( ( $level->tier ?? null ) === 'master' ) {
-					$power = $candidate;
-					break 2;
-				}
+			if ( count( $candidate->levels ) === $ceiling ) {
+				$power = $candidate;
+				break;
 			}
 		}
-		$this->assertNotNull( $power, 'at least one real seeded discipline must have a master-tier power' );
+		$this->assertNotNull( $power, 'at least one seeded discipline must have a full ladder' );
 
-		$level_5_cost    = $costs_by_rank[5];
-		$sum_1_through_5 = $costs_by_rank[1] + $costs_by_rank[2] + $costs_by_rank[3] + $costs_by_rank[4] + $costs_by_rank[5];
+		$level_5_cost    = $costs_by_rank[ $ceiling ];
+		$sum_1_through_5 = array_sum( $costs_by_rank );
 
 		$character_id = Character::create( [
 			'name'       => 'Point Audit Cumulative Test',

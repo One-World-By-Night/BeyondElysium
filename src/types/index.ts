@@ -347,6 +347,15 @@ export interface TraitListItem {
 	subgroup?: string;
 	/** Rank label within the group, such as basic, intermediate, or advanced. */
 	tier?: string;
+	/**
+	 * Whether this one item may be held more than once, each holding labelled by its own
+	 * specialization - `Retainers x3 (John Doe)` and `Retainers x2 (Sue Smith)` are two real
+	 * purchases, while `Brawl 5 (Wrestling)` is one Brawl however the focus is labelled
+	 * (1.2.11 D86). This is what makes the label part of a held row's identity; without it a
+	 * row is identified by `name` alone. The item value overrides the block's own
+	 * `allow_multiples` default in both directions; leave it unset to take the block default.
+	 */
+	allow_multiples?: boolean;
 }
 
 /**
@@ -356,6 +365,11 @@ export interface TraitListItem {
  */
 export interface TraitListDefinition {
 	items: TraitListItem[];
+	/**
+	 * The block-wide default for `TraitListItem.allow_multiples`: whether a held row's identity
+	 * is its name plus its specialization label rather than its name alone (1.2.11 D86). An
+	 * item that states its own value overrides this, in both directions.
+	 */
 	allow_multiples?: boolean;
 	allow_custom?: boolean;
 	has_specializations?: boolean;
@@ -424,7 +438,44 @@ export interface PowerLevel {
 export interface TieredPower {
 	name: string;
 	source?: string;
+	/**
+	 * The numbered ladder, and **only** the ladder (1.2.10 §A/S2). One entry per rung, in
+	 * rung order, as many entries as `_meta.ladder` sums to.
+	 *
+	 * This is the D68 fix. The stepper reads `levels`; the pick list reads `elder`. They
+	 * cannot be confused because they are not the same array - no `kind` flag, no
+	 * tie-counting, no rule at all. Under the old flat shape `level: null` meant both "dots
+	 * 1 and 2" and "six elder powers" in one array, so the stepper read it as a ladder and
+	 * the checklist read it as a pool, and each was right about half the data. Switching
+	 * views was then read as levels removed, and the engine offered a refund for XP never
+	 * spent.
+	 */
 	levels: PowerLevel[];
+	/**
+	 * Above-ladder picks, keyed by **rank** - `elder`, `master`, `ascended`, `methuselah`.
+	 *
+	 * `elder` is the *section*; the keys inside it are ranks, so `Animalism.elder.master` is
+	 * unambiguous. **A consumer must never flatten those two depths**: merging them recreates
+	 * exactly the ambiguity that caused D68.
+	 *
+	 * Picks are non-sequential in both dimensions. Holding two Master powers and no Elder
+	 * ones is legal and must never be flagged, back-filled or reordered.
+	 */
+	elder?: Record< string, PowerLevel[] >;
+	/**
+	 * Ladder-rank levels that do not fit the declared ladder (§A1b) - 262 of them across 69
+	 * families on the first seeder run, `Animalism` carrying 12 and `Protean` 13.
+	 *
+	 * They are not `elder`, because their rank is basic/intermediate/advanced; and they are
+	 * not rungs, because the ladder is full. **Never offered by the stepper and never counted
+	 * in a rating**; rendered as held content so a player can see the family is merged.
+	 *
+	 * **D67 empties this.** A family whose two ladders are split correctly has none, so a
+	 * non-empty `overflow` is precisely the signal that this family still needs its human
+	 * ruling - which makes the container 1.3.1's worklist rather than a dumping ground.
+	 * Validation rejects an above-ladder rank here: that would be a seeder bug, not data.
+	 */
+	overflow?: PowerLevel[];
 	approval_override?: ApprovalLevel;
 	description?: CatalogDescription;
 	/**
@@ -437,6 +488,30 @@ export interface TieredPower {
 	traditions?: Record< string, string | null >;
 	/** Blood magic only: a caste/covenant restriction on who may take this path (e.g. "Sabbat", "Warrior Only"), not an alternate name. */
 	restriction?: string | null;
+	/**
+	 * Which category value this family is filed under, keyed by axis (1.2.10 S4) - every
+	 * key must be one of `_meta.categories`. A Werewolf Gift family is
+	 * `{ tribe: "Bone Gnawer" }`; a Fera one needs both levels,
+	 * `{ species: "Bastet", subgroup: "Bagheera" }`.
+	 *
+	 * **This is the thing BE keeps nowhere today.** Measured 2026-09-21: all 510
+	 * `werewolf-gifts` items carry `group: "Bone Gnawer"` and all 865 `fera-gifts` carry a
+	 * species plus (639 of them) a subgroup - but **not one item records that "Bone Gnawer"
+	 * *is* a tribe**, so the axis has to be rediscovered by joining each value against every
+	 * `*-identity` block's own option lists (1.2.9 U4 does exactly that). Declaring it makes
+	 * the axis data rather than inference, and is what lets a pick list cross group against
+	 * rank without guessing which of the 29 values belongs to which of the three axes.
+	 *
+	 * A map rather than §A2's nested `breed`/`tribe`/`auspice` containers: the containers
+	 * would be dynamic top-level keys on the definition, which no consumer could type, and
+	 * a family's own `name` already carries the value. Same information, one field.
+	 *
+	 * **The expression only, this release.** Gifts are `trait_list` today and the values
+	 * arrive when the declared JSON files are authored (1.3.0/1.3.1) and ingested as
+	 * tiered_power blocks (1.3.2) - see that document's own cutover note. Nothing in 1.2.10
+	 * populates or reads this.
+	 */
+	category_values?: Record< string, string >;
 }
 
 /**
@@ -444,8 +519,101 @@ export interface TieredPower {
  * powers plus the rules governing out-of-type cost, whether
  * levels must be taken in sequence, and approval.
  */
+/**
+ * What a `tiered_power` block declares about its own mechanics (1.2.10 §A).
+ *
+ * The point of this block is that **nothing downstream infers structure any more**. Four
+ * separate ceiling-derivation rules were written against the old flat `levels[]` array and
+ * all four failed, because three blocks encoded "which level is a rung" three incompatible
+ * ways and the boundary was destroyed before the array existed. A declared file carries
+ * what no rule could recover.
+ */
+export interface TieredPowerMeta {
+	/**
+	 * This block's own rank vocabulary, lowest first. Per block, because genre vocabularies
+	 * genuinely differ: Wraith declares `innate` ahead of `basic`, and Kuei-Jin uses the
+	 * same three words as Vampire at different prices. One global table cannot express
+	 * either, which is why `Seeder::TIER_RANKS` stops being a ranking authority.
+	 */
+	ranks: string[];
+	/**
+	 * How many numbered rungs each rank contributes to the ladder. **The ceiling is this
+	 * sum**, never an inference - `{ basic: 2, intermediate: 2, advanced: 1 }` is 5.
+	 *
+	 * Every track measured so far is 2/2/1. A block declaring anything else should be
+	 * suspected before it is believed: an earlier draft had Wraith at 2/1/1 = 4, and the
+	 * OWBN Arcanoi packet showed that was a data defect, not a genre difference.
+	 */
+	ladder: Record< string, number >;
+	/** XP per rank. Keyed by rank name, covering ladder ranks and above-ladder ranks alike. */
+	costs: Record< string, number >;
+	/**
+	 * The out-of-type modifier **per rank**, as an expression rather than a number - which
+	 * is what absorbs the two cases a scalar broke on. Mage Spheres scale (`+1`, `+2`, `+3`
+	 * as 4/8/12 becomes 5/10/15) and Demon Form Powers double (`×2`), and Wraith's "−1
+	 * except Innate" stops needing an exemption flag because Innate is simply `+0`.
+	 *
+	 * Absent means no modifier at all, which is Kuei-Jin: its chart carries none, and the
+	 * owner ruled 2026-09-21 that OWBN's 4/7/10 overrides any book cost.
+	 */
+	out_of_type?: Record< string, string >;
+	/**
+	 * Where the in-type test reads the character's own value from, as `block-slug.Field`.
+	 * **D75: only the vampire stack has ever declared this**, so every other genre's
+	 * surcharge has been silently inert - `Cost_Engine::in_type_check()` returns
+	 * always-in-type the moment it is absent.
+	 */
+	in_type_source?: string;
+	/** Category axes a family is filed under - Gifts by breed/auspice/tribe, Fera by species. */
+	categories?: string[];
+	/**
+	 * Rank → the level number that rank sits at, for a genre whose ranks do **not** occupy
+	 * consecutive positions (1.2.10 S5). Gifts are `{ basic: 1, intermediate: 3, advanced: 5 }`
+	 * - LotW Revised puts them at levels 1, 3 and 5, never 1, 2, 3. Absent means consecutive,
+	 * which is every other genre measured.
+	 *
+	 * **Not to be confused with `TieredPower.levels`**, which is the ladder array. This is a
+	 * rank→number map on the block; that is a list of rungs on a family. The format doc names
+	 * both `levels` (`reference/CATALOG-JSON-FORMAT.md` §`_meta`) and the files are authored
+	 * against it, so the name matches the spec rather than avoiding the collision.
+	 *
+	 * The expression only, this release; the values arrive with the declared files (1.3.0/1.3.1).
+	 */
+	levels?: Record< string, number >;
+	/**
+	 * Declares a track that has **no rank vocabulary at all** (1.2.10 S7) - so it stops
+	 * depending on `make_tiered_power_block()`'s no-tier-vocabulary fallback, which reaches
+	 * the right answer for the wrong reason and explains itself to nobody.
+	 *
+	 * Two shapes, per `reference/CATALOG-JSON-FORMAT.md`: a flat per-level cost
+	 * (`{ cost_per_level: 2 }`, Changeling Realms) or a cost derived from another block
+	 * (`{ derived_from: "mage-spheres", per_level: 1 }`, Mage Rotes - one XP per Sphere level
+	 * invoked). Absent means the block is ranked normally.
+	 *
+	 * Owner ruling 2026-09-21: untiered tracks are declared explicitly **and must be
+	 * UI-adjustable** - the input is E7, and no field in this design ships without one. The
+	 * expression only, this release; the values are 1.3.0's.
+	 */
+	untiered?: {
+		/** Flat XP per level, for a track with no ranks - Changeling Realms are 2. */
+		cost_per_level?: number;
+		/** Slug of the block this track's cost is read from, e.g. `mage-spheres` for Rotes. */
+		derived_from?: string;
+		/** XP per level of the derived-from block's own rating - Rotes are 1 per Sphere level. */
+		per_level?: number;
+	};
+}
+
 export interface TieredPowerDefinition {
 	powers: TieredPower[];
+	/** Declared mechanics (§A). Absent on a block the seeder has not yet re-emitted. */
+	_meta?: TieredPowerMeta;
+	/**
+	 * @deprecated Superseded by `_meta.out_of_type`, which is keyed per rank and holds an
+	 * expression. A single number cannot express Mage's scaling or Demon's doubling, and
+	 * every block carrying this declared the same inert `1` (D75). Read only as a fallback
+	 * while blocks that predate `_meta` are still seeded.
+	 */
 	out_of_type_cost_modifier?: number;
 	sequential?: boolean;
 	approval_rules?: ApprovalRules;
@@ -499,6 +667,24 @@ export interface ResourcePool {
 	cost_per_dot?: number;
 	/** Dots granted free before cost_per_dot applies - ported per-race from Grapevine's own point estimator, see Seeder.php's citations. */
 	free_dots?: number;
+	/**
+	 * A cost that scales with the dot being bought, rather than a flat `cost_per_dot`
+	 * (1.2.10 S8). `{ equals_level: true }` is Mummy Balance - *"a number of Experience
+	 * Traits equal to the level desired"* (Laws of the Resurrection), the only
+	 * per-level-scaling pool in any genre, and something `cost_per_dot` structurally cannot
+	 * express. Absent means the flat rate applies.
+	 *
+	 * Owner ruling 2026-09-21: give it a real rule rather than logging it. The expression
+	 * only, this release; the value is 1.3.0's, and its input is E7.
+	 *
+	 * Deliberately does **not** cover Wraith's Pathos, which the book prices at *2 Traits per
+	 * 1 XP* - a sub-1-XP rate that `cost_per_dot`'s integer cannot hold either. A separate
+	 * gap, recorded rather than folded in here.
+	 */
+	sliding_cost?: {
+		/** The dot costs its own number: the 4th dot costs 4. */
+		equals_level?: boolean;
+	};
 	/** Per-value approval schedule, keyed on the pool's own PERMANENT value (never temporary - spending/regaining a point of Willpower in play never needs approval; permanently raising it via XP might). */
 	approval_by_value?: ApprovalRange[];
 	/** Drafted Portuguese translation of this pool's own name, display-only (1.2.0 §5.6). */

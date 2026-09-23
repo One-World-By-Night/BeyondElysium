@@ -1,19 +1,35 @@
 /**
  * TieredPowerEditor renders the held-power list for a tiered_power block - leveled
- * catalogs such as Disciplines, Arcanoi, or Gifts. Lets a player add a power, raise
- * or lower its level with a stepper, set its tradition, or mark it removed. Accepts
- * a catalog entry or, when the block allows it, a free-text custom power name.
+ * catalogs such as Disciplines, Arcanoi, or Gifts. 1.2.10 replaces this component
+ * outright (owner ruling, 2026-09-21 - "That is NOT a fix. That is the PROBLEM"):
+ * `TieredPower` no longer carries one flat `levels[]` array that means both "ladder
+ * rung" and "above-ladder pick" at once (D68 - a stepper set to 5, viewed as a
+ * checklist, read as five levels removed and offered a refund for XP never spent).
+ *
+ * The catalog now declares three separate containers (`src/types/index.ts`):
+ *   - `levels`  - the numbered ladder ONLY, one entry per rung, `sum(_meta.ladder)`
+ *                 rungs (fallback 5 when a block predates `_meta`).
+ *   - `elder`   - above-ladder (and, for Wraith, below-ladder Innate) picks, keyed
+ *                 by rank. Never flattened into `levels` - that is the bug this
+ *                 release exists to remove.
+ *   - `overflow`- ladder-rank levels beyond the declared ladder (D67's concatenated
+ *                 families, still awaiting a human ruling in 1.3.1). Never a rung,
+ *                 never offered here, never counted in the rating.
+ *
+ * Two controls, not one (1.2.10-design-workflow.md §B): the stepper/checklist below
+ * drives the ladder rating and can never reach a pick; the "Elder-and-above" list
+ * below it reads `elder` only, grouped by rank, with no counts, no progress
+ * affordance, and no rank rendered as unavailable because a neighbour is empty -
+ * holding two Master powers and zero Elder ones is legal.
  *
  * The tradition field is a free-text input with datalist suggestions for every
- * tiered_power block, not just Blood Magic - it predates the Blood Magic redesign
- * (BE_PROCESS/releases/0.99.2-workflow.md) as a generic "annotate which sorcery tradition taught
- * this" field. For a `blood_magic`-flagged block, adding a power requires a paradigm up
- * front - the picker shows every tradition the whole block offers, the power's own
- * teaching traditions first, never narrowed to just them (1.1.0 D5: that narrowing is
- * exactly what made Hunter's Wind untakeable as Dur An Ki). A held power with no
- * paradigm (older data) still shows "Choose paradigm" on its row, never forced - a
- * Storyteller reviewing the change is the actual check, not a client-side hard block
- * (Decision 057's UI-affordance pattern).
+ * tiered_power block, not just Blood Magic (0.99.2-workflow.md). For a
+ * `blood_magic`-flagged block, adding a power requires a paradigm up front - the
+ * picker shows every tradition the whole block offers, the power's own teaching
+ * traditions first, never narrowed to just them (1.1.0 D5: that narrowing is exactly
+ * what made Hunter's Wind untakeable as Dur An Ki). A held power with no paradigm
+ * (older data) still shows "Choose paradigm", never forced - a Storyteller reviewing
+ * the change is the actual check (Decision 057's UI-affordance pattern).
  */
 import { __, sprintf } from '@wordpress/i18n';
 import { useMemo, useState } from '@wordpress/element';
@@ -24,7 +40,7 @@ import { seamQualifier } from '../../lib/levelQualifier';
 import {
 	elderLabel,
 	findLevelsAtRank,
-	TIER_FOR_RANK,
+	displayableTier,
 	type HeldPower,
 } from '../renderers/TieredPowerRenderer';
 import {
@@ -33,12 +49,9 @@ import {
 	moveTo,
 	reorderErrorMessage,
 } from '../../lib/reorderArray';
+import type { OptionGroup } from '../../lib/searchableSelect';
 import api from '../../api/client';
-import type {
-	PowerLevel,
-	TieredPower,
-	TieredPowerDefinition,
-} from '../../types';
+import type { TieredPowerDefinition } from '../../types';
 import './TieredPowerEditor.css';
 
 /** Marked for removal rather than deleted outright; removal is applied when changes are submitted. */
@@ -53,6 +66,8 @@ interface PendingAdd {
 	name: string;
 	isCustom?: boolean;
 	powerName?: string;
+	/** Set only for an elder-and-above pick - the rank it was found under, stored on the row for display (see pickRankOf()'s own doc comment). */
+	rank?: string;
 }
 
 export interface TieredPowerEditorProps {
@@ -62,98 +77,146 @@ export interface TieredPowerEditorProps {
 	onChange: ( blockSlug: string, nextData: EditableHeldPower[] ) => void;
 	/** Returns the XP cost for a held power at its current level; omitted callers show no cost. */
 	costFor?: ( power: EditableHeldPower ) => number | null;
-	/** Overrides the stepper's maximum level for a named power; undefined falls back to the default. */
-	trueMaxFor?: ( name: string ) => number | undefined;
 	readOnly?: boolean;
 	/** Needed only for a player_order block's "Save order" call (1.1.0 D4). */
 	gameSlug?: string;
 	characterId?: number;
 }
 
-/** The stepper's default maximum level when no per-power override applies. */
-const DEFAULT_TRUE_MAX = 5;
-
-/** Reverse of `TIER_FOR_RANK` - a tier's own numbered rank, when it has one. */
-const RANK_FOR_TIER: Partial< Record< string, number > > = Object.fromEntries(
-	Object.entries( TIER_FOR_RANK ).map( ( [ rank, tier ] ) => [
-		tier,
-		Number( rank ),
-	] )
-);
+/**
+ * The stepper/checklist ceiling when a block predates `_meta` entirely. Every real
+ * ladder measured so far (1.2.10-design-workflow.md §A) is `2/2/1 = 5`, so this is a
+ * genuine fallback, not a guess dressed up as one.
+ */
+const DEFAULT_LADDER_CEILING = 5;
 
 /**
- * Returns the highest level a named power can be raised to: an explicit trueMaxFor
- * override when given, otherwise DEFAULT_TRUE_MAX clamped to the highest real rank
- * the power's definition actually reaches. D66 (1.2.5-design-workflow.md §A2): a
- * tied top tier (several items sharing it, `level: null` on all of them) is still a
- * real, purchasable rank - reading `level` alone would undercount the true max
- * whenever the family's own highest tier happens to be tied, so this falls back to
- * the tier's own derived rank whenever an item's `level` is null, preferring the
- * item's own explicit `level` first when it has one (an untied rung, or a synthetic
- * custom-power ladder that deliberately reuses a tier label across two distinct
- * explicit levels).
+ * The number of rungs the declared ladder actually has: `sum(_meta.ladder)`, or
+ * `DEFAULT_LADDER_CEILING` when the block carries no `_meta` at all (S3 - the seeder
+ * has not yet re-emitted every block against the declared-JSON shape) or declares an
+ * empty/zero-sum ladder. **This is the whole of the D68 fix on the stepper side**: the
+ * ceiling is read, never inferred from tie counts or a family's own level count, so it
+ * cannot drift per-family the way `maxLevel()` (1.2.9 and earlier) did.
  */
-export function maxLevel(
-	definition: TieredPowerDefinition,
-	name: string,
-	trueMaxFor?: ( name: string ) => number | undefined
-): number {
-	const override = trueMaxFor?.( name );
-	if ( override != null ) {
-		return override;
+export function ladderCeiling( definition: TieredPowerDefinition ): number {
+	const ladder = definition._meta?.ladder;
+	if ( ! ladder ) {
+		return DEFAULT_LADDER_CEILING;
 	}
-
-	const power = definition.powers.find( ( p ) => p.name === name );
-	const ranks = ( power?.levels ?? [] )
-		.map( ( l ) => l.level ?? RANK_FOR_TIER[ l.tier ] ?? undefined )
-		.filter( ( r ): r is number => r != null );
-	if ( ranks.length === 0 ) {
-		// Guards against an empty ladder; falls back to the default max instead of pinning at 1.
-		return DEFAULT_TRUE_MAX;
-	}
-	return Math.min( DEFAULT_TRUE_MAX, Math.max( ...ranks ) );
+	const sum = Object.values( ladder ).reduce( ( a, b ) => a + b, 0 );
+	return sum > 0 ? sum : DEFAULT_LADDER_CEILING;
 }
 
-const CUSTOM_LEVEL_NAMES = [ 'One', 'Two', 'Three', 'Four', 'Five' ];
-/** Tier for each of the five custom levels: 1-2 basic, 3-4 intermediate, 5 advanced. */
-const CUSTOM_LEVEL_TIERS: PowerLevel[ 'tier' ][] = [
-	'basic',
-	'basic',
-	'intermediate',
-	'intermediate',
-	'advanced',
-];
+/**
+ * One step up, or the same level unchanged once the ladder ceiling is reached. This is
+ * the load-bearing guarantee E1 exists for: however many times this is called, the
+ * result can never exceed `ceiling`, so the stepper structurally cannot wander into
+ * pick territory the way an uncapped "+"/a stale per-family max once could.
+ */
+export function incrementLevel( level: number, ceiling: number ): number {
+	return level >= ceiling ? level : level + 1;
+}
 
 /**
- * Returns a copy of the block definition with a synthetic five-level ladder added
- * for every custom (free-text) power held in data, using placeholder names "One"
- * through "Five". Computed fresh from the held rows on each call rather than stored,
- * so maxLevel() can look up a real ladder for a custom power the same way it does
- * for any catalog power.
+ * One step down, floored at 1. Deliberately does **not** clamp against `ceiling` - a
+ * legacy holding above the ceiling (1.2.10-design-workflow.md §A′: a stored level is a
+ * TOTAL, e.g. Celerity 9 on a 5-rung ladder) must step down one rung at a time, never
+ * jump straight to the ceiling the instant it is touched. That jump would silently
+ * discard the picks the total represents - the exact shape of bug this release exists
+ * to remove, just triggered by a click instead of a view switch.
  */
-export function withCustomLadders(
+export function decrementLevel( level: number ): number {
+	return Math.max( 1, level - 1 );
+}
+
+/**
+ * Clamps an explicit target level into `[1, ceiling]` - used only by the checklist,
+ * whose rungs are never anything but `1..ceiling` to begin with, so this can never
+ * trigger the same silent-drop hazard `decrementLevel()`'s own doc comment describes.
+ */
+export function clampToCeiling( level: number, ceiling: number ): number {
+	return Math.max( 1, Math.min( level, ceiling ) );
+}
+
+/** One rung of the declared ladder, as the checklist shows it. */
+export interface LadderRung {
+	/** The single name on the checkbox line - the printing in play. */
+	label: string;
+	/** Every other name filed at that rank, kept as a note rather than dropped. */
+	alternates: string[];
+}
+
+/**
+ * One rung of the declared ladder, named once (1.2.11 D93).
+ *
+ * **A rung is one thing you buy, so it gets one name.** This used to join every name at
+ * the rank with ", ", which the owner reported from a real sheet: on pre-1.2.10
+ * (production-shaped) data, Animalism's rung 1 read
+ * `Feral Whispers, Beckoning, Beast Within (2nd ed), Feral Speech (dark ages), Noah's Call (dark ages)`
+ * inside a single checkbox label.
+ *
+ * **Which name.** The line in play is the base printing - the one whose note carries
+ * nothing beyond its tier word. `seamQualifier()` is the right input for that and is used
+ * rather than any list of edition words: it returns a qualifier only where a family
+ * genuinely disagrees with itself, so `2nd ed`, `dark ages` and `Sabbat` surface exactly
+ * where they distinguish something. Where every name at the rank is qualified - a
+ * concatenated family like `Path of Blood's Curse`, whose rung 1 is Tremere *and* Sabbat -
+ * the first in source order wins, carrying its own qualifier so the line still says which
+ * ladder it belongs to.
+ *
+ * **Nothing is dropped.** The rest come back as `alternates` for the caller to show as a
+ * note, which keeps D66's "never roll up to a placeholder" intact - the names are all
+ * still reachable, just not run together on one line.
+ *
+ * Falls back to a plain "{name} {rung}" when the catalog has no entry at that rank - a
+ * custom power, or a genuine gap in the seeded data - so a box is never unlabeled.
+ *
+ * The read-only sheet is deliberately untouched: `TieredPowerRenderer.namedModeRows()`
+ * lists every name at a rank as its own row, because there it is listing what a character
+ * holds rather than labelling one purchase.
+ */
+export function ladderRung(
 	definition: TieredPowerDefinition,
-	data: EditableHeldPower[]
-): TieredPowerDefinition {
-	const customNames = new Set(
-		data.filter( ( row ) => row.custom ).map( ( row ) => row.name )
-	);
-	if ( customNames.size === 0 ) {
-		return definition;
+	name: string,
+	rung: number
+): LadderRung {
+	const power = definition.powers.find( ( p ) => p.name === name );
+	const atRank = findLevelsAtRank( power, rung );
+	if ( atRank.length === 0 ) {
+		return { label: `${ name } ${ rung }`, alternates: [] };
 	}
-	const synthetic: TieredPower[] = Array.from( customNames ).map(
-		( name ) => ( {
-			name,
-			levels: CUSTOM_LEVEL_NAMES.map(
-				( powerName, i ): PowerLevel => ( {
-					level: i + 1,
-					tier: CUSTOM_LEVEL_TIERS[ i ],
-					power_name: powerName,
-				} )
-			),
-		} )
-	);
-	return { ...definition, powers: [ ...definition.powers, ...synthetic ] };
+
+	const named = atRank.map( ( level ) => {
+		const base = level.power_name || `${ name } ${ rung }`;
+		const qualifier = seamQualifier( power, level );
+		return {
+			label: qualifier ? `${ base } (${ qualifier })` : base,
+			qualified: !! qualifier,
+		};
+	} );
+
+	// The base printing where there is one, otherwise source order.
+	const chosen = named.findIndex( ( entry ) => ! entry.qualified );
+	const at = chosen === -1 ? 0 : chosen;
+
+	return {
+		label: named[ at ].label,
+		alternates: named
+			.filter( ( _entry, i ) => i !== at )
+			.map( ( entry ) => entry.label ),
+	};
+}
+
+/**
+ * One rung's own checkbox label. Thin wrapper over `ladderRung()`; see it for why a rung
+ * names one power rather than all of them.
+ */
+export function ladderRungLabel(
+	definition: TieredPowerDefinition,
+	name: string,
+	rung: number
+): string {
+	return ladderRung( definition, name, rung ).label;
 }
 
 /**
@@ -164,6 +227,9 @@ export function withCustomLadders(
  * list) when the power itself has no per-power map, and further back to the
  * pre-Blood-Magic convention of harvesting distinct `"X: "` prefixes straight out of the
  * power catalog for any other tiered_power block that still names powers that way.
+ *
+ * Unaffected by the levels/elder/overflow split - `traditions` lives beside those
+ * containers on `TieredPower`, not inside any of them.
  */
 export function traditionOptionsFor(
 	definition: TieredPowerDefinition,
@@ -195,54 +261,31 @@ export function traditionOptionsFor(
 	return [ ...ownTraditions, ...rest ];
 }
 
-/**
- * The real catalog name(s) for one specific numbered rung of a family (e.g. "Alacrity"
- * for Celerity's level 1), for the checklist view's per-box labels - falls back to a
- * plain "{name} {level}" when the catalog has no entry there (a custom power's
- * synthetic ladder, or a genuine gap in the seeded data), so a box is never left
- * unlabeled. D66 (1.2.5-design-workflow.md §A2, "never roll up"): a rung tied between
- * several named alternatives joins every one of their names, rather than falling
- * through to the generic placeholder just because no single item carries that exact
- * `level` - one checkbox still toggles the whole tied rank, matching how a character
- * genuinely knows every power at a rank they've reached, not just one chosen pick.
- */
-export function levelName(
-	definition: TieredPowerDefinition,
-	name: string,
-	level: number
-): string {
-	const power = definition.powers.find( ( p ) => p.name === name );
-	const atRank = findLevelsAtRank( power, level );
-	if ( atRank.length === 0 ) {
-		return `${ name } ${ level }`;
-	}
-	// U5/D67: where a family is two ladders concatenated, one rung's box can hold powers
-	// from both - `Path of Blood's Curse` ties two Sabbat and two Tremere powers at basic.
-	// Naming the tradition per power is what tells them apart; `seamQualifier` stays silent
-	// on a family that agrees with itself, so an ordinary ladder is unchanged.
-	return atRank
-		.map( ( l ) => {
-			const label = l.power_name || `${ name } ${ level }`;
-			const qualifier = seamQualifier( power, l );
-			return qualifier ? `${ label } (${ qualifier })` : label;
-		} )
-		.join( ', ' );
+/** One not-yet-held elder-and-above pick offered by the "Add" picker below. */
+export interface PickOption {
+	/** The string SearchableSelect matches on - never stored, only used to find this option again in addPick(). */
+	value: string;
+	family: string;
+	/** The rank this pick sits under in the family's own `elder` container. */
+	rank: string;
+	powerName: string;
 }
 
 /**
- * Every not-yet-held Elder-and-above pick across families the character already holds
- * some form of, as `{value, label}` pairs labeled "{Family}: {PowerName}" for the picker
- * below - scoped to already-held families only, since reaching Elder-and-above within a
- * discipline presumes some standing in it already, matching how the real catalog data is
- * shaped (0.99.2-workflow.md "Cost_Engine cannot price an Elder-tier purchase"). A family
- * can hold several distinct Elder+ picks at once, so this never excludes a family just for
- * already holding one - only the specific picks it already has are excluded.
+ * Every not-yet-held elder-and-above pick across families the character already holds
+ * some form of (a ladder rung or another pick), reading each family's `elder`
+ * container ONLY - never `overflow` (never a pick, §A1b) and never `levels` (the
+ * ladder, a different control entirely). Scoped to already-held families, matching
+ * 0.99.2-workflow.md's own reasoning: reaching Elder-and-above within a discipline
+ * presumes some standing in it already.
+ *
+ * A family can hold several distinct picks at once - this never excludes a family for
+ * already holding one, only the specific picks it already has.
  */
-export function elderPickOptions(
+export function pickOptionsFor(
 	definition: TieredPowerDefinition,
-	data: EditableHeldPower[],
-	trueMaxFor?: ( name: string ) => number | undefined
-): { value: string; family: string; powerName: string }[] {
+	data: EditableHeldPower[]
+): PickOption[] {
 	const heldFamilies = new Set(
 		data.filter( ( row ) => ! row._removed ).map( ( row ) => row.name )
 	);
@@ -252,48 +295,152 @@ export function elderPickOptions(
 			.map( ( row ) => `${ row.name }\0${ row.power_name }` )
 	);
 
-	const options: { value: string; family: string; powerName: string }[] = [];
+	const options: PickOption[] = [];
 	for ( const familyName of heldFamilies ) {
 		const power = definition.powers.find( ( p ) => p.name === familyName );
-		if ( ! power ) {
+		if ( ! power?.elder ) {
 			continue;
 		}
-		const cap = maxLevel( definition, familyName, trueMaxFor );
-		for ( const level of power.levels ) {
-			if ( ! level.power_name ) {
-				continue;
+		for ( const [ rank, levels ] of Object.entries( power.elder ) ) {
+			for ( const level of levels ) {
+				if ( ! level.power_name ) {
+					continue;
+				}
+				if (
+					heldPicks.has( `${ familyName }\0${ level.power_name }` )
+				) {
+					continue;
+				}
+				options.push( {
+					value: `${ familyName }: ${ level.power_name }`,
+					family: familyName,
+					rank,
+					powerName: level.power_name,
+				} );
 			}
-			// Already reachable via the stepper/checklist (a real numbered rung within the
-			// displayed range) - only rungs beyond that range are this picker's concern.
-			if ( level.level != null && level.level <= cap ) {
-				continue;
-			}
-			if ( heldPicks.has( `${ familyName }\0${ level.power_name }` ) ) {
-				continue;
-			}
-			// U5/D67: `value` is both the option's label and the string `addElderPick()`
-			// matches on - never anything stored - so naming the tradition here is safe and
-			// is the one place it matters most, since this is where a player chooses
-			// between two ladders that otherwise look identical. `family`/`powerName`,
-			// which is what actually reaches the sheet, stay untouched.
-			const qualifier = seamQualifier( power, level );
-			options.push( {
-				value: qualifier
-					? `${ familyName }: ${ level.power_name } (${ qualifier })`
-					: `${ familyName }: ${ level.power_name }`,
-				family: familyName,
-				powerName: level.power_name,
-			} );
 		}
 	}
 	return options;
 }
 
 /**
+ * Orders whatever ranks are actually present against the block's own declared
+ * `_meta.ranks` vocabulary - a rank absent from the declaration (a block predating
+ * `_meta`) sorts after every declared one but is never dropped. Never invents a rank
+ * that has no options: a caller passes only ranks it already found real entries under,
+ * so an empty rank simply never reaches this function, and there is nothing here that
+ * could render it as a disabled or greyed-out section.
+ */
+export function orderRanks( present: string[], declared?: string[] ): string[] {
+	if ( ! declared || declared.length === 0 ) {
+		return present;
+	}
+	return [ ...present ].sort( ( a, b ) => {
+		const ia = declared.indexOf( a );
+		const ib = declared.indexOf( b );
+		return (
+			( ia === -1 ? declared.length : ia ) -
+			( ib === -1 ? declared.length : ib )
+		);
+	} );
+}
+
+/** One rank's worth of grouped pick options, for the "Add an Elder-and-above power" picker. */
+export interface PickRankGroup {
+	rank: string;
+	options: PickOption[];
+}
+
+/**
+ * `pickOptionsFor()`'s results, sectioned by rank in `_meta.ranks` order - the E2
+ * "rank-grouped, elder container only" picker. A rank with real options renders; a
+ * rank with none simply is not a key here, never a present-but-empty section, so a
+ * character holding two Master powers and no Elder ones sees an Elder section only if
+ * an Elder pick actually exists to offer, never a gated/greyed placeholder.
+ */
+export function groupPickOptions(
+	definition: TieredPowerDefinition,
+	data: EditableHeldPower[]
+): PickRankGroup[] {
+	const options = pickOptionsFor( definition, data );
+	const byRank = new Map< string, PickOption[] >();
+	for ( const option of options ) {
+		if ( ! byRank.has( option.rank ) ) {
+			byRank.set( option.rank, [] );
+		}
+		( byRank.get( option.rank ) as PickOption[] ).push( option );
+	}
+	const order = orderRanks(
+		Array.from( byRank.keys() ),
+		definition._meta?.ranks
+	);
+	return order.map( ( rank ) => ( {
+		rank,
+		options: byRank.get( rank ) as PickOption[],
+	} ) );
+}
+
+/**
+ * The rank a held pick sits under, for grouping the "held" list the same way the "add"
+ * picker is grouped. Prefers a live catalog match in `elder` (the common case); falls
+ * back to `overflow` (a legacy/imported holding that happens to name an overflow-tier
+ * power - still rendered, per §A1b, "as held content", never as a pick to add); falls
+ * back to whatever tier the row itself already carries (an unresolved import, D67/the
+ * `tier: "***"` placeholder handled by `displayableTier()`); and only then to the
+ * generic `'elder'` bucket every prior release has used for "no better answer".
+ */
+export function pickRankOf(
+	definition: TieredPowerDefinition,
+	row: EditableHeldPower
+): string {
+	const power = definition.powers.find( ( p ) => p.name === row.name );
+	if ( power?.elder ) {
+		for ( const [ rank, levels ] of Object.entries( power.elder ) ) {
+			if ( levels.some( ( l ) => l.power_name === row.power_name ) ) {
+				return rank;
+			}
+		}
+	}
+	if ( power?.overflow ) {
+		const found = power.overflow.find(
+			( l ) => l.power_name === row.power_name
+		);
+		const tier = displayableTier( found?.tier );
+		if ( tier ) {
+			return tier;
+		}
+	}
+	return displayableTier( row.tier ) ?? 'elder';
+}
+
+/** Capitalizes a rank word ("elder" -> "Elder") for a section heading; a rank the catalog never lowercases still renders unchanged. */
+function rankHeading( rank: string ): string {
+	return rank.length === 0 ? rank : rank[ 0 ].toUpperCase() + rank.slice( 1 );
+}
+
+/**
+ * A safe display label for the reorder-mode drag list, which lists every held row
+ * regardless of kind - a ladder holding (no `power_name`) or a pick (`power_name`
+ * set). `elderLabel()` is built to describe a pick; calling it on a plain ladder
+ * holding looks up a `power_name` that was never set and prints "undefined" (a
+ * latent bug in the pre-1.2.10 component, never reached live because `player_order`
+ * is not known to combine with a plain ladder holding in production data, but not
+ * worth reproducing here either).
+ */
+function reorderRowLabel(
+	definition: TieredPowerDefinition,
+	row: EditableHeldPower
+): string {
+	if ( row.power_name ) {
+		return elderLabel( definition, row );
+	}
+	return row.level != null ? `${ row.name } ${ row.level }` : row.name;
+}
+
+/**
  * Renders the held-power list for a tiered_power block: add a power, raise or lower
- * its level with a stepper, set its tradition, or mark it removed. A sequential block
- * treats level n as holding every level from 1 to n, so each power gets a single
- * stepper rather than a row of individual checkboxes.
+ * its ladder rating with a stepper (or the equivalent per-rung checklist), add or
+ * remove an elder-and-above pick, set its tradition, or mark a row removed.
  */
 export function TieredPowerEditor( {
 	blockSlug,
@@ -301,28 +448,28 @@ export function TieredPowerEditor( {
 	definition,
 	onChange,
 	costFor,
-	trueMaxFor,
 	readOnly,
 	gameSlug,
 	characterId,
 }: TieredPowerEditorProps ) {
 	const emit = ( next: EditableHeldPower[] ) => onChange( blockSlug, next );
 
-	// A single per-sheet, player-persisted preference, not a per-power one (user's own
-	// correction, 2026-09-13): "it's per sheet - I can change it as a player if I want it
-	// one way or the other." Every held power on every tiered_power block on this sheet
-	// shows the same way; toggling it anywhere changes all of them, and the choice
-	// survives a reload (0.99.2-workflow.md, "the gap" - accounting for both display needs).
+	const ceiling = useMemo(
+		() => ladderCeiling( definition ),
+		[ definition ]
+	);
+
+	// A single per-sheet, player-persisted preference, not a per-power one (Decision
+	// 100): every held power on every tiered_power block on this sheet shows the same
+	// way, and the choice survives a reload. This toggles the LADDER view only - it
+	// never touches `data`, which is what keeps a view switch from being read as an
+	// edit (the exact D68 symptom: "switch view, lose levels").
 	const [ showChecklist, setShowChecklist ] = usePowerDisplayMode();
 
 	// Phone width only (mobile-sheet-design.md §4.5(4)) - the tradition field and the
-	// remove action move behind this modal, the same summary-row-plus-modal shape
-	// TraitListEditor already established (Decision 053), rather than the six-control
-	// inline row that survives only by wrapping raggedly at 375px. The stepper stays
-	// inline everywhere: it is the primary, most-frequent interaction, not a rare one.
+	// remove action move behind this modal, matching TraitListEditor's own pattern.
 	const [ detailsIndex, setDetailsIndex ] = useState< number | null >( null );
 
-	// Memoized: large power catalogs make this expensive to recompute on every keystroke.
 	const heldNames = useMemo(
 		() =>
 			new Set(
@@ -338,11 +485,6 @@ export function TieredPowerEditor( {
 				.map( ( p ) => p.name )
 				.filter( ( name ) => ! heldNames.has( name ) ),
 		[ definition.powers, heldNames ]
-	);
-	// Used only for level-capping below; suggestions still use the real catalog, not placeholder names.
-	const definitionWithCustomLadders = useMemo(
-		() => withCustomLadders( definition, data ),
-		[ definition, data ]
 	);
 
 	// --- Reorder mode (player_order blocks only, 1.1.0 D4) ---
@@ -424,47 +566,67 @@ export function TieredPowerEditor( {
 		] );
 	};
 
-	// A family can hold several distinct Elder-and-above picks at once (0.99.2-workflow.md:
-	// "you can have multiple powers at those levels") - this is additive alongside a
-	// family's own numbered holding, never a replacement for it, so it stays a separate
-	// picker rather than folded into "Add power" above (which starts a brand-new family).
-	const elderOptions = useMemo(
-		() => elderPickOptions( definition, data, trueMaxFor ),
-		[ definition, data, trueMaxFor ]
+	// E2: rank-grouped, `elder` container only - never a count, never a rank rendered
+	// unavailable because a neighbour is empty (groupPickOptions() only ever returns
+	// ranks that genuinely have an option).
+	const pickGroups = useMemo(
+		() => groupPickOptions( definition, data ),
+		[ definition, data ]
 	);
-	/*
-	 * U4b: sectioned by family. `elderOptions` already knows each pick's family, and a
-	 * flat list repeats that family name on every single row - a character standing in
-	 * several disciplines reads "Animalism: …" a dozen times before reaching Celerity.
-	 * The option string itself is unchanged, so `addElderPick()` still matches on it.
-	 */
-	const elderGroups = useMemo( () => {
-		const byFamily = new Map< string, string[] >();
-		for ( const option of elderOptions ) {
-			if ( ! byFamily.has( option.family ) ) {
-				byFamily.set( option.family, [] );
-			}
-			( byFamily.get( option.family ) as string[] ).push( option.value );
-		}
-		return Array.from( byFamily, ( [ label, options ] ) => ( {
-			label,
-			options,
-		} ) );
-	}, [ elderOptions ] );
+	const pickOptions = useMemo(
+		() => pickOptionsFor( definition, data ),
+		[ definition, data ]
+	);
+	const pickSearchGroups: OptionGroup[] = useMemo(
+		() =>
+			pickGroups.map( ( group ) => ( {
+				label: rankHeading( group.rank ),
+				options: group.options.map( ( o ) => o.value ),
+			} ) ),
+		[ pickGroups ]
+	);
 
-	const addElderPick = ( value: string ) => {
-		const found = elderOptions.find( ( o ) => o.value === value );
+	/**
+	 * The one Elder-and-above picker's own input (1.2.11 D93).
+	 *
+	 * `[Add Elder]` sits under each family's ladder, where the owner expects it, but it
+	 * drives this single picker rather than duplicating it. The picker is **block-scoped** -
+	 * `pickOptionsFor( definition, data )` spans every held family and each option carries
+	 * its own `family` - so there is no one ladder to move it under once a block holds more
+	 * than one family, which is the normal case for Disciplines and Blood Magic. One picker,
+	 * reachable from each ladder, keeps its existing behaviour exactly.
+	 */
+	const pickPickerId = `${ blockSlug }-add-elder`;
+	const focusPickPicker = () => {
+		const input = document.getElementById( pickPickerId );
+		if ( ! input ) {
+			return;
+		}
+		input.scrollIntoView( { block: 'nearest' } );
+		input.focus();
+	};
+
+	const addPick = ( value: string ) => {
+		const found = pickOptions.find( ( o ) => o.value === value );
 		if ( ! found ) {
 			return;
 		}
 		if ( definition.blood_magic ) {
-			setPendingAdd( { name: found.family, powerName: found.powerName } );
+			setPendingAdd( {
+				name: found.family,
+				powerName: found.powerName,
+				rank: found.rank,
+			} );
 			setPendingParadigm( '' );
 			return;
 		}
 		emit( [
 			...data,
-			{ name: found.family, power_name: found.powerName },
+			{
+				name: found.family,
+				power_name: found.powerName,
+				tier: found.rank,
+			},
 		] );
 	};
 
@@ -478,6 +640,7 @@ export function TieredPowerEditor( {
 				? {
 						name: pendingAdd.name,
 						power_name: pendingAdd.powerName,
+						...( pendingAdd.rank ? { tier: pendingAdd.rank } : {} ),
 						tradition: pendingParadigm,
 				  }
 				: {
@@ -496,20 +659,10 @@ export function TieredPowerEditor( {
 		setPendingParadigm( '' );
 	};
 
-	const setLevel = ( index: number, level: number ) => {
-		const clamped = Math.max(
-			1,
-			Math.min(
-				level,
-				maxLevel(
-					definitionWithCustomLadders,
-					data[ index ].name,
-					trueMaxFor
-				)
-			)
-		);
+	/** Writes a new, already-safe level onto one row - never re-clamps a caller's value, so the two hazards documented on incrementLevel()/decrementLevel() stay real guarantees rather than being undone here. */
+	const applyLevel = ( index: number, level: number ) => {
 		const next = [ ...data ];
-		next[ index ] = { ...next[ index ], level: clamped };
+		next[ index ] = { ...next[ index ], level: Math.max( 1, level ) };
 		emit( next );
 	};
 
@@ -536,6 +689,37 @@ export function TieredPowerEditor( {
 
 	const traditionListId = ( index: number ) =>
 		`be-tradition-${ blockSlug }-${ index }`;
+
+	// The two controls, split at the data level so a view switch cannot read as an
+	// edit: `ladderRows` drives the stepper/checklist, `pickRows` is grouped by rank
+	// below it. Both keep their original index into `data` for every mutation.
+	const indexed = useMemo(
+		() => data.map( ( row, index ) => ( { row, index } ) ),
+		[ data ]
+	);
+	const ladderRows = useMemo(
+		() => indexed.filter( ( item ) => ! item.row.power_name ),
+		[ indexed ]
+	);
+	const pickRowGroups = useMemo( () => {
+		const rows = indexed.filter( ( item ) => !! item.row.power_name );
+		const byRank = new Map< string, typeof rows >();
+		for ( const item of rows ) {
+			const rank = pickRankOf( definition, item.row );
+			if ( ! byRank.has( rank ) ) {
+				byRank.set( rank, [] );
+			}
+			( byRank.get( rank ) as typeof rows ).push( item );
+		}
+		const rankOrder = orderRanks(
+			Array.from( byRank.keys() ),
+			definition._meta?.ranks
+		);
+		return rankOrder.map( ( rank ) => ( {
+			rank,
+			rows: byRank.get( rank ) as typeof rows,
+		} ) );
+	}, [ indexed, definition ] );
 
 	return (
 		<div className="be-tiered-power-editor" data-block-slug={ blockSlug }>
@@ -586,7 +770,7 @@ export function TieredPowerEditor( {
 										⠿
 									</span>
 									<span className="be-tiered-power-editor__name">
-										{ elderLabel( definition, row ) }
+										{ reorderRowLabel( definition, row ) }
 									</span>
 									<button
 										type="button"
@@ -661,16 +845,12 @@ export function TieredPowerEditor( {
 				</>
 			) : (
 				<>
+					{ /* E1: the ladder. Bounded by `ceiling` alone - never able to reach or
+					 * represent a pick. */ }
 					<ul className="be-tiered-power-editor__rows">
-						{ data.map( ( row, index ) => {
+						{ ladderRows.map( ( { row, index } ) => {
 							const cost = costFor?.( row ) ?? null;
-							// Rows created here always have a numeric level; this default is only type narrowing.
 							const level = row.level ?? 1;
-							// Blood magic only: a power taken from a blood_magic-flagged block has no
-							// meaning without knowing which tradition taught it - visually required,
-							// though the actual gate on an incomplete pick is the Storyteller's review
-							// (Decision 057's UI-affordance pattern: the client nudges, the person
-							// approving the change is the real check).
 							const needsTradition =
 								( definition.blood_magic ?? false ) &&
 								! row._removed &&
@@ -688,58 +868,52 @@ export function TieredPowerEditor( {
 											: '' )
 									}
 								>
-									{ row.power_name ? (
-										// An Elder-and-above pick (Decision 037) is a discrete choice already
-										// made via the picker below, not a dot rating - no stepper or checklist
-										// to raise or lower, only removal.
-										<span className="be-tiered-power-editor__name">
-											{ elderLabel( definition, row ) }
-										</span>
-									) : (
-										<>
-											<span className="be-tiered-power-editor__name">
-												{ row.name }
-											</span>
-											{ ! readOnly && (
-												<button
-													type="button"
-													className="be-tiered-power-editor__view-toggle"
-													onClick={ () =>
-														setShowChecklist(
-															! showChecklist
-														)
-													}
-													aria-pressed={
-														showChecklist
-													}
-													title={ __(
-														'Applies to every power on this sheet, not just this one',
-														'beyond-elysium'
-													) }
-												>
-													{ showChecklist
-														? __(
-																'Use stepper',
-																'beyond-elysium'
-														  )
-														: __(
-																'List each level',
-																'beyond-elysium'
-														  ) }
-												</button>
+									<span className="be-tiered-power-editor__name">
+										{ row.name }
+									</span>
+									{ ! readOnly && (
+										<button
+											type="button"
+											className="be-tiered-power-editor__view-toggle"
+											onClick={ () =>
+												setShowChecklist(
+													! showChecklist
+												)
+											}
+											aria-pressed={ showChecklist }
+											title={ __(
+												'Applies to every power on this sheet, not just this one',
+												'beyond-elysium'
 											) }
-											{ showChecklist ? (
-												<ul className="be-tiered-power-editor__checklist">
-													{ Array.from(
-														{
-															length: maxLevel(
-																definitionWithCustomLadders,
-																row.name,
-																trueMaxFor
-															),
-														},
-														( _unused, i ) => i + 1
-													).map( ( rung ) => (
+										>
+											{ showChecklist
+												? __(
+														'Use stepper',
+														'beyond-elysium'
+												  )
+												: __(
+														'List each level',
+														'beyond-elysium'
+												  ) }
+										</button>
+									) }
+									{ showChecklist ? (
+										<>
+											<ol className="be-tiered-power-editor__checklist">
+												{ Array.from(
+													{ length: ceiling },
+													( _unused, i ) => i + 1
+												).map( ( rung ) => {
+													const ladder = ladderRung(
+														definition,
+														row.name,
+														rung
+													);
+													const alternates =
+														ladder.alternates.join(
+															', '
+														);
+													return (
 														<li key={ rung }>
 															<label>
 																<input
@@ -753,94 +927,146 @@ export function TieredPowerEditor( {
 																		row._removed
 																	}
 																	onChange={ () =>
-																		setLevel(
+																		applyLevel(
 																			index,
-																			level >=
-																				rung
-																				? rung -
-																						1
-																				: rung
+																			clampToCeiling(
+																				level >=
+																					rung
+																					? rung -
+																							1
+																					: rung,
+																				ceiling
+																			)
 																		)
 																	}
 																/>
-																{ levelName(
-																	definitionWithCustomLadders,
-																	row.name,
-																	rung
+																<span className="be-tiered-power-editor__rung-number">
+																	{ sprintf(
+																		/* translators: %d: the rung's number on the ladder */
+																		__(
+																			'%d.',
+																			'beyond-elysium'
+																		),
+																		rung
+																	) }
+																</span>
+																{ ladder.label }
+																{ alternates && (
+																	<span
+																		className="be-tiered-power-editor__rung-alternates"
+																		title={ sprintf(
+																			/* translators: %s: the other power names filed at this same rung */
+																			__(
+																				'Also at this level: %s',
+																				'beyond-elysium'
+																			),
+																			alternates
+																		) }
+																		aria-label={ sprintf(
+																			/* translators: %s: the other power names filed at this same rung */
+																			__(
+																				'Also at this level: %s',
+																				'beyond-elysium'
+																			),
+																			alternates
+																		) }
+																	>
+																		{ sprintf(
+																			/* translators: %d: how many other names share this rung */
+																			__(
+																				'+%d',
+																				'beyond-elysium'
+																			),
+																			ladder
+																				.alternates
+																				.length
+																		) }
+																	</span>
 																) }
 															</label>
 														</li>
-													) ) }
-												</ul>
-											) : (
-												<div className="be-tiered-power-editor__stepper">
+													);
+												} ) }
+											</ol>
+											{ ! readOnly &&
+												! row._removed &&
+												pickSearchGroups.length > 0 && (
 													<button
 														type="button"
-														className="be-tiered-power-editor__stepper-button"
-														disabled={
-															readOnly ||
-															row._removed ||
-															level <= 1
+														className="be-tiered-power-editor__add-elder"
+														onClick={
+															focusPickPicker
 														}
-														onClick={ () =>
-															setLevel(
-																index,
-																level - 1
-															)
-														}
-														aria-label={ sprintf(
-															/* translators: %s: the power family's own name */
-															__(
-																'Decrease %s',
-																'beyond-elysium'
-															),
-															row.name
-														) }
 													>
 														{ __(
-															'−',
+															'Add Elder',
 															'beyond-elysium'
 														) }
 													</button>
-													<span className="be-tiered-power-editor__level">
-														{ level }
-													</span>
-													<button
-														type="button"
-														className="be-tiered-power-editor__stepper-button"
-														disabled={
-															readOnly ||
-															row._removed ||
-															level >=
-																maxLevel(
-																	definitionWithCustomLadders,
-																	row.name,
-																	trueMaxFor
-																)
-														}
-														onClick={ () =>
-															setLevel(
-																index,
-																level + 1
-															)
-														}
-														aria-label={ sprintf(
-															/* translators: %s: the power family's own name */
-															__(
-																'Increase %s',
-																'beyond-elysium'
-															),
-															row.name
-														) }
-													>
-														{ __(
-															'+',
-															'beyond-elysium'
-														) }
-													</button>
-												</div>
-											) }
+												) }
 										</>
+									) : (
+										<div className="be-tiered-power-editor__stepper">
+											<button
+												type="button"
+												className="be-tiered-power-editor__stepper-button"
+												disabled={
+													readOnly ||
+													row._removed ||
+													level <= 1
+												}
+												onClick={ () =>
+													applyLevel(
+														index,
+														decrementLevel( level )
+													)
+												}
+												aria-label={ sprintf(
+													/* translators: %s: the power family's own name */
+													__(
+														'Decrease %s',
+														'beyond-elysium'
+													),
+													row.name
+												) }
+											>
+												{ __( '−', 'beyond-elysium' ) }
+											</button>
+											<span className="be-tiered-power-editor__level">
+												{ level }
+											</span>
+											<button
+												type="button"
+												className="be-tiered-power-editor__stepper-button"
+												disabled={
+													readOnly ||
+													row._removed ||
+													incrementLevel(
+														level,
+														ceiling
+													) === level
+												}
+												onClick={ () =>
+													applyLevel(
+														index,
+														incrementLevel(
+															level,
+															ceiling
+														)
+													)
+												}
+												aria-label={ sprintf(
+													/* translators: %s: the power family's own name */
+													__(
+														'Increase %s',
+														'beyond-elysium'
+													),
+													row.name
+												) }
+											>
+												{ __( '+', 'beyond-elysium' ) }
+											</button>
+										</div>
 									) }
 
 									{ readOnly && row.tradition && (
@@ -862,17 +1088,8 @@ export function TieredPowerEditor( {
 										</span>
 									) }
 
-									{ /* Desktop: tradition + remove stay inline, exactly as before. Phone width
-									 * (§4.5(4)): both collapse behind the "Details" trigger and its modal below -
-									 * .be-tiered-power-editor__row-detail is display:none there, the trigger is
-									 * display:none everywhere else, matching the CSS-only dual-markup pattern
-									 * already used for ApprovalQueue's own MS-9 disclosure. */ }
 									{ ! readOnly && (
 										<div className="be-tiered-power-editor__row-detail">
-											{ /* Blood magic only. A Discipline, Gift, Art or Arcanos has no
-											 * paradigm, so the field is meaningless on one - it rendered on
-											 * every tiered_power row until this gate, because only
-											 * `needsTradition` (the *required* styling) consulted the flag. */ }
 											{ ( definition.blood_magic ??
 												false ) && (
 												<>
@@ -1016,24 +1233,112 @@ export function TieredPowerEditor( {
 						</div>
 					) }
 
-					{ ! readOnly && ! pendingAdd && elderOptions.length > 0 && (
-						<div className="be-tiered-power-editor__add">
-							<SearchableSelect
-								groups={ elderGroups }
-								value=""
-								placeholder={ __(
-									'Add an Elder-and-above power…',
-									'beyond-elysium'
-								) }
-								ariaLabel={ __(
-									'Add an Elder-and-above power',
-									'beyond-elysium'
-								) }
-								allowCustom={ false }
-								onChange={ addElderPick }
-							/>
+					{ /* E2: rank-grouped, `elder` container only. No count anywhere on
+					 * this list - what a family holds at each rank is simply present or
+					 * not, never "N of M". */ }
+					{ pickRowGroups.length > 0 && (
+						<div className="be-tiered-power-editor__picks">
+							{ pickRowGroups.map( ( group ) => (
+								<div
+									key={ group.rank }
+									className="be-tiered-power-editor__picks-rank"
+								>
+									<h4 className="be-tiered-power-editor__picks-heading">
+										{ rankHeading( group.rank ) }
+									</h4>
+									<ul className="be-tiered-power-editor__picks-list">
+										{ group.rows.map(
+											( { row, index } ) => {
+												const cost =
+													costFor?.( row ) ?? null;
+												return (
+													<li
+														key={ `${ row.name }-${ index }` }
+														className={
+															'be-tiered-power-editor__row' +
+															( row._removed
+																? ' be-tiered-power-editor__row--removed'
+																: '' )
+														}
+													>
+														<span className="be-tiered-power-editor__name">
+															{ elderLabel(
+																definition,
+																row
+															) }
+														</span>
+														{ readOnly &&
+															row.tradition && (
+																<span className="be-tiered-power-editor__tradition-text">
+																	{
+																		row.tradition
+																	}
+																</span>
+															) }
+														{ cost !== null && (
+															<span className="be-tiered-power-editor__cost">
+																{ sprintf(
+																	/* translators: %1$d: XP cost */
+																	__(
+																		'%1$d XP',
+																		'beyond-elysium'
+																	),
+																	cost
+																) }
+															</span>
+														) }
+														{ ! readOnly && (
+															<button
+																type="button"
+																className="be-tiered-power-editor__remove"
+																onClick={ () =>
+																	toggleRemoved(
+																		index
+																	)
+																}
+															>
+																{ row._removed
+																	? __(
+																			'Undo',
+																			'beyond-elysium'
+																	  )
+																	: __(
+																			'Remove',
+																			'beyond-elysium'
+																	  ) }
+															</button>
+														) }
+													</li>
+												);
+											}
+										) }
+									</ul>
+								</div>
+							) ) }
 						</div>
 					) }
+
+					{ ! readOnly &&
+						! pendingAdd &&
+						pickSearchGroups.length > 0 && (
+							<div className="be-tiered-power-editor__add">
+								<SearchableSelect
+									id={ pickPickerId }
+									groups={ pickSearchGroups }
+									value=""
+									placeholder={ __(
+										'Add an Elder-and-above power…',
+										'beyond-elysium'
+									) }
+									ariaLabel={ __(
+										'Add an Elder-and-above power',
+										'beyond-elysium'
+									) }
+									allowCustom={ false }
+									onChange={ addPick }
+								/>
+							</div>
+						) }
 
 					{ pendingAdd && (
 						<div className="be-tiered-power-editor__pending-add">
@@ -1103,7 +1408,6 @@ export function TieredPowerEditor( {
 						</button>
 					}
 				>
-					{ /* Blood magic only, matching the desktop row above. */ }
 					{ ( definition.blood_magic ?? false ) && (
 						<div className="be-tiered-power-editor__modal-field">
 							<label

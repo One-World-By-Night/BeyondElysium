@@ -1,5 +1,6 @@
 import {
 	resolveDisplay,
+	resolveTraitListMode,
 	groupByCategory,
 	sortIfAlphabetized,
 	groupsAndSorts,
@@ -23,6 +24,19 @@ describe( 'TraitListRenderer helpers — parity with Trait_Grouping', () => {
 					testCase.blockDisplay as unknown as DisplayType | undefined
 				);
 				expect( result ).toEqual( expected.resolveDisplay[ i ] );
+			} );
+		} );
+	} );
+
+	describe( 'resolveTraitListMode', () => {
+		input.resolveMode.forEach( ( testCase, i ) => {
+			it( `matches the shared fixture: ${ testCase.case }`, () => {
+				const result = resolveTraitListMode(
+					testCase.definition as unknown as TraitListDefinition,
+					testCase.sectionDisplay as unknown as DisplayType | null,
+					( testCase.showCost as boolean | null ) ?? undefined
+				);
+				expect( result ).toEqual( expected.resolveMode[ i ] );
 			} );
 		} );
 	} );

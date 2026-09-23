@@ -42,6 +42,10 @@ class Activator {
 		// Repairs any default template layouts that drifted from current definitions.
 		Schema::repair_stale_default_layouts();
 
+		// Completes every full sheet from its own stack, so a fresh install shows a block the
+		// hand-written default layout never listed - Health Levels above all (1.2.11 D92).
+		Schema::complete_full_sheet_templates();
+
 		// Seeds demo characters into the be-demo game, on a fresh install only.
 		Seeder::seed_demo_characters( $fresh_install );
 

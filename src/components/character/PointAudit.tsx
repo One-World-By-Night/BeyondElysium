@@ -28,6 +28,10 @@ const UNPRICED_REASON_LABEL: Record< string, string > = {
 	name_not_in_catalog: __( 'name not in catalog', 'beyond-elysium' ),
 	family_not_in_catalog: __( 'family not in catalog', 'beyond-elysium' ),
 	level_has_no_cost: __( 'level has no cost', 'beyond-elysium' ),
+	level_above_ceiling_no_pick_rank: __(
+		'held above the ladder, no priced rank above it yet',
+		'beyond-elysium'
+	),
 	custom_no_catalog_entry: __( 'custom, no catalog entry', 'beyond-elysium' ),
 	identity_field_no_catalog_cost: __(
 		'identity field, no catalog cost',

@@ -275,12 +275,26 @@ class MetCsvSeederTest extends TestCase {
 		foreach ( [ 'Quietus, Cruscitus / Warrior', 'Quietus, Hematus / Vizier', 'Quietus, Minhit Dume / Vizier', 'Quietus, Sorcerer' ] as $name ) {
 			$this->assertArrayHasKey( $name, $by_name );
 
-			$tiers = array_unique( array_column( $by_name[ $name ]['levels'], 'tier' ) );
+			// 1.2.10 S2: a family's levels now live in three containers, so the tier check
+			// reads across all of them - the assertion is about what the caste variant
+			// *covers*, which the split must not change.
+			$power = $by_name[ $name ];
+			$all   = $power['levels'];
+			foreach ( ( $power['elder'] ?? [] ) as $picks ) {
+				$all = array_merge( $all, $picks );
+			}
+			$all = array_merge( $all, $power['overflow'] ?? [] );
+
+			$tiers = array_unique( array_column( $all, 'tier' ) );
 			sort( $tiers );
 			$this->assertSame( [ 'advanced', 'basic', 'intermediate' ], $tiers, "{$name} must cover basic/intermediate/advanced and no higher" );
 
-			$numbered = array_values( array_filter( array_column( $by_name[ $name ]['levels'], 'level' ), static fn( $level ) => $level !== null ) );
-			$this->assertSame( [ 3 ], $numbered, "{$name}'s only untied tier (advanced) is the only item to get a real numeric level" );
+			// Rungs are numbered by their place on the declared ladder now, not by which
+			// tier happened to be untied - so a caste variant covering all three ladder
+			// ranks numbers them consecutively from 1, with no gaps.
+			$numbered = array_column( $power['levels'], 'level' );
+			$this->assertSame( range( 1, count( $numbered ) ), $numbered, "{$name}'s rungs number consecutively from 1" );
+			$this->assertLessThanOrEqual( 5, count( $numbered ), "{$name} cannot exceed the declared 2+2+1 ladder" );
 		}
 	}
 

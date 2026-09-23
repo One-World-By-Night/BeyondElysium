@@ -840,7 +840,10 @@ function TraitListEditor( {
 							updateFlag( 'allow_multiples', e.target.checked )
 						}
 					/>{ ' ' }
-					{ __( 'Allow multiple selections', 'beyond-elysium' ) }
+					{ __(
+						'Allow multiples (a specialization identifies each holding, so one name can be held more than once)',
+						'beyond-elysium'
+					) }
 				</label>
 				<label>
 					<input

@@ -6,7 +6,8 @@
  * per-section-type diffing helpers are internal to this module.
  */
 
-import type { SchemaBlock } from '../types';
+import type { SchemaBlock, TraitListDefinition } from '../types';
+import { allowsMultiples, traitRowIdentity } from './traitIdentity';
 import type { ChangeRequest, SheetData } from '../types/character';
 import type { EditableTrait } from '../components/editors/TraitListEditor';
 import type { EditableHeldPower } from '../components/editors/TieredPowerEditor';
@@ -15,108 +16,165 @@ import type { IdentityFieldValue } from '../components/editors/IdentityFieldEdit
 
 export type { SheetData };
 
-/** Groups rows into a map keyed by `name`, preserving each row's order within its group. */
-function groupByName< T extends { name: string } >(
-	rows: T[]
-): Map< string, T[] > {
-	const groups = new Map< string, T[] >();
-	for ( const row of rows ) {
-		const bucket = groups.get( row.name ) ?? [];
-		bucket.push( row );
-		groups.set( row.name, bucket );
+/**
+ * Pairs held rows across the two sheets, in two passes (1.2.11 D88).
+ *
+ * Pass one matches rows of the same **identity** - the holding itself, which for an item that
+ * allows multiples includes its label. Pass two pairs off whatever is left within each name,
+ * in arrival order, which is what a relabel looks like: the identity moved, but it is still
+ * the same holding being edited rather than one destroyed and another bought.
+ *
+ * Name-order pairing alone read "remove Retainers (John Doe)" as "relabel John to Sue, then
+ * remove a Retainer" - and that removal named no label, so the engine deleted both holdings.
+ * Identity pairing alone would read every relabel as a remove plus an add, refunding and
+ * recharging a holding whose only change was its spelling.
+ */
+function pairTraitRows(
+	definition: TraitListDefinition,
+	original: EditableTrait[],
+	current: EditableTrait[]
+): {
+	pairs: Array< [ EditableTrait, EditableTrait ] >;
+	added: EditableTrait[];
+	removed: EditableTrait[];
+} {
+	const pairs: Array< [ EditableTrait, EditableTrait ] > = [];
+	const origLeft = [ ...original ];
+	const curLeft = [ ...current ];
+
+	const take = (
+		pool: EditableTrait[],
+		match: ( row: EditableTrait ) => boolean
+	) => {
+		const at = pool.findIndex( match );
+		return at === -1 ? null : pool.splice( at, 1 )[ 0 ];
+	};
+
+	for ( const row of [ ...origLeft ] ) {
+		const identity = traitRowIdentity( definition, row );
+		const partner = take(
+			curLeft,
+			( candidate ) =>
+				traitRowIdentity( definition, candidate ) === identity
+		);
+		if ( partner ) {
+			take( origLeft, ( candidate ) => candidate === row );
+			pairs.push( [ row, partner ] );
+		}
 	}
-	return groups;
+
+	for ( const row of [ ...origLeft ] ) {
+		const partner = take(
+			curLeft,
+			( candidate ) => candidate.name === row.name
+		);
+		if ( partner ) {
+			take( origLeft, ( candidate ) => candidate === row );
+			pairs.push( [ row, partner ] );
+		}
+	}
+
+	return { pairs, added: curLeft, removed: origLeft };
 }
 
 /**
- * Diffs an original and current trait list into add/remove/modify change requests,
- * matching entries by name rather than array position so a reordered list produces no
- * changes. Duplicate names are paired off in arrival order via per-name queues rather
- * than colliding on a single map key.
+ * Diffs an original and current trait list into add/remove/modify change requests, matching
+ * entries by identity rather than array position so a reordered list produces no changes and
+ * a holding that may legitimately be held twice is diffed as itself (`pairTraitRows`).
  */
 function diffTraitList(
 	blockSlug: string,
+	definition: TraitListDefinition,
 	original: EditableTrait[],
 	current: EditableTrait[]
 ): ChangeRequest[] {
 	const changes: ChangeRequest[] = [];
 	const effectiveCurrent = current.filter( ( row ) => ! row._removed );
 
-	const origByName = groupByName( original );
-	const curByName = groupByName( effectiveCurrent );
-	const allNames = new Set( [ ...origByName.keys(), ...curByName.keys() ] );
+	const { pairs, added, removed } = pairTraitRows(
+		definition,
+		original,
+		effectiveCurrent
+	);
 
-	for ( const name of allNames ) {
-		const origQueue = origByName.get( name ) ?? [];
-		const curQueue = curByName.get( name ) ?? [];
-		const pairCount = Math.min( origQueue.length, curQueue.length );
-
-		for ( let i = 0; i < pairCount; i++ ) {
-			const o = origQueue[ i ];
-			const c = curQueue[ i ];
-			const changed: Partial< EditableTrait > = {};
-			if ( ( o.count ?? 1 ) !== ( c.count ?? 1 ) ) {
-				changed.count = c.count ?? 1;
-			}
-			if ( ( o.specialization ?? '' ) !== ( c.specialization ?? '' ) ) {
-				changed.specialization = c.specialization;
-			}
-			if ( ( o.note ?? '' ) !== ( c.note ?? '' ) ) {
-				changed.note = c.note;
-			}
-			if ( o.chosen_cost !== c.chosen_cost ) {
-				changed.chosen_cost = c.chosen_cost;
-			}
-			if ( Object.keys( changed ).length > 0 ) {
-				changes.push( {
-					change_type: 'modify_trait',
-					category: blockSlug,
-					change_data: {
-						block_slug: blockSlug,
-						trait: { name, ...changed },
-						// Display-only: the change-apply step only reads `.trait`, not this key.
-						previous: {
-							name,
-							count: o.count ?? 1,
-							specialization: o.specialization,
-							note: o.note,
-							chosen_cost: o.chosen_cost,
-						},
-					},
-				} );
-			}
+	for ( const [ o, c ] of pairs ) {
+		const name = c.name;
+		const changed: Partial< EditableTrait > = {};
+		if ( ( o.count ?? 1 ) !== ( c.count ?? 1 ) ) {
+			changed.count = c.count ?? 1;
 		}
-
-		for ( let i = pairCount; i < curQueue.length; i++ ) {
-			const row = curQueue[ i ];
+		if ( ( o.specialization ?? '' ) !== ( c.specialization ?? '' ) ) {
+			changed.specialization = c.specialization;
+		}
+		if ( ( o.note ?? '' ) !== ( c.note ?? '' ) ) {
+			changed.note = c.note;
+		}
+		if ( o.chosen_cost !== c.chosen_cost ) {
+			changed.chosen_cost = c.chosen_cost;
+		}
+		if ( Object.keys( changed ).length > 0 ) {
 			changes.push( {
-				change_type: 'add_trait',
+				change_type: 'modify_trait',
 				category: blockSlug,
 				change_data: {
 					block_slug: blockSlug,
-					trait: {
-						name,
-						count: row.count ?? 1,
-						...( row.specialization
-							? { specialization: row.specialization }
-							: {} ),
-						...( row.note ? { note: row.note } : {} ),
-						...( row.custom ? { custom: true } : {} ),
-						...( row.chosen_cost !== undefined
-							? { chosen_cost: row.chosen_cost }
-							: {} ),
+					trait: { name, ...changed },
+					/*
+					 * Display-only, with one exception: `specialization` is how the server
+					 * knows WHICH holding a relabel addresses, since the trait's own label is
+					 * the new value (Trait_Identity::target_of, 1.2.11 D88). Everything else
+					 * here is still only shown to the reviewer.
+					 */
+					previous: {
+						name: o.name,
+						count: o.count ?? 1,
+						specialization: o.specialization,
+						note: o.note,
+						chosen_cost: o.chosen_cost,
 					},
 				},
 			} );
 		}
+	}
 
-		for ( let i = pairCount; i < origQueue.length; i++ ) {
-			changes.push( {
-				change_type: 'remove_trait',
-				category: blockSlug,
-				change_data: { block_slug: blockSlug, trait: { name } },
-			} );
-		}
+	for ( const row of added ) {
+		changes.push( {
+			change_type: 'add_trait',
+			category: blockSlug,
+			change_data: {
+				block_slug: blockSlug,
+				trait: {
+					name: row.name,
+					count: row.count ?? 1,
+					...( row.specialization
+						? { specialization: row.specialization }
+						: {} ),
+					...( row.note ? { note: row.note } : {} ),
+					...( row.custom ? { custom: true } : {} ),
+					...( row.chosen_cost !== undefined
+						? { chosen_cost: row.chosen_cost }
+						: {} ),
+				},
+			},
+		} );
+	}
+
+	// A removal must name WHICH holding is leaving wherever the label is part of what
+	// identifies it - `{name}` alone is right for an ordinary trait and, on a multiples item,
+	// would take every row of that name with it.
+	for ( const row of removed ) {
+		const labelled =
+			allowsMultiples( definition, row.name ) && row.specialization
+				? { specialization: row.specialization }
+				: {};
+		changes.push( {
+			change_type: 'remove_trait',
+			category: blockSlug,
+			change_data: {
+				block_slug: blockSlug,
+				trait: { name: row.name, ...labelled },
+			},
+		} );
 	}
 
 	return changes;
@@ -331,6 +389,9 @@ export function computeChanges(
 				changes.push(
 					...diffTraitList(
 						blockSlug,
+						( block.definition as TraitListDefinition ) ?? {
+							items: [],
+						},
 						( original[ blockSlug ] as
 							| EditableTrait[]
 							| undefined ) ?? [],

@@ -22,8 +22,8 @@ export interface TraitListRendererProps {
 	definition: TraitListDefinition;
 	/** Template section override. Null falls through to the block's own default. */
 	display: DisplayType | null;
-	/** Print/Export panel override for a count_is_cost block (1.1.0 D3) - a flat XP cost drawn as a number instead of dots. */
-	costNumbers?: boolean;
+	/** Whether a count_is_cost block's flat XP price is shown at all (1.2.11 D94). Unset shows it. */
+	showCost?: boolean;
 }
 
 interface TraitGroup {
@@ -37,6 +37,30 @@ export function resolveDisplay(
 	blockDisplay: DisplayType | undefined
 ): DisplayType {
 	return sectionDisplay ?? blockDisplay ?? 'simple';
+}
+
+/**
+ * Resolves the display mode a whole trait_list section renders at: `resolveDisplay()` for
+ * every ordinary block, and never `resolveDisplay()` for a `count_is_cost` one.
+ *
+ * 1.2.11 D94: a `count_is_cost` block (Combo Disciplines) stores a flat XP price in the
+ * field every other block stores a rating in, so handing it to a rating display prints a
+ * price as dots or as a bare number with no unit. The price is therefore always labelled
+ * - `Draw Fire (12 XP)` - whatever `display` the block or template section carries. The
+ * viewer preference chooses only whether the price is shown; hidden, the number is
+ * dropped entirely rather than falling back to a rating.
+ *
+ * The PHP twin is `Trait_Grouping::resolve_mode()`, proven against the same fixture.
+ */
+export function resolveTraitListMode(
+	definition: TraitListDefinition,
+	sectionDisplay: DisplayType | null,
+	showCost?: boolean
+): DisplayType {
+	if ( ! definition.count_is_cost ) {
+		return resolveDisplay( sectionDisplay, definition.display );
+	}
+	return showCost === false ? 'note_only' : 'cost_xp';
 }
 
 /**
@@ -135,15 +159,9 @@ export function TraitListRenderer( {
 	data,
 	definition,
 	display,
-	costNumbers,
+	showCost,
 }: TraitListRendererProps ) {
-	// 1.1.0 D3: a count_is_cost block's stored total is a flat XP cost, not a
-	// rating - the Print/Export panel's override always wins over whatever
-	// display mode is otherwise configured, on or off.
-	const mode =
-		definition.count_is_cost && costNumbers
-			? 'cost_number'
-			: resolveDisplay( display, definition.display );
+	const mode = resolveTraitListMode( definition, display, showCost );
 	const nested = groupsAndSorts( definition )
 		? groupTraitsByField( data, definition )
 		: null;

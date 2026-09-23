@@ -27,7 +27,7 @@ sit at the top of the page, above the sheet itself.
 The list only offers what you can use:
 
 - **Print / Export** - opens the print panel: five checkboxes, **Background**, **Notes**,
-  **XP History**, **Full power names**, and **XP costs as numbers**, then **Open PDF**, which
+  **XP History**, **Full power names**, and **Show XP costs**, then **Open PDF**, which
   opens a PDF of this sheet in a new tab. It's signed with the site's certificate when one is
   set up; otherwise the panel says prints are marked UNSIGNED.
 - **Print My Items** - opens a PDF of just the items connected to this character, straight
@@ -87,8 +87,9 @@ The same change-history list **View history** shows appears inline here once its
 
 1. Open the character's sheet.
 2. Pick **Print / Export** and click **Go**.
-3. Check whichever of **Background**, **Notes**, **XP History**, **Full power names**, or
-   **XP costs as numbers** you want included.
+3. Check whichever of **Background**, **Notes**, **XP History**, or **Full power names** you
+   want included. **Show XP costs** starts ticked - untick it to leave Combo Discipline prices
+   off the sheet entirely.
 4. Click **Open PDF**. The PDF opens in a new tab.
 
 ### Print an item card
@@ -124,10 +125,12 @@ The same change-history list **View history** shows appears inline here once its
   pool shows "current/permanent" when they differ), and a section whose held items all carry a
   plain count - most trait lists, never a note-only one like Merits or Rituals - shows its own
   total after its title.
-- **XP History**, **Full power names**, and **XP costs as numbers** do double duty: ticking any
-  of them also changes this page, not only the file you print. **Background** and **Notes** only
-  decide what goes into the PDF - both always show at the bottom of this page. **XP costs as
-  numbers** only affects Combo Disciplines here; while editing, a separate toggle right above
+- **XP History**, **Full power names**, and **Show XP costs** do double duty: ticking any of
+  them also changes this page, not only the file you print. **Background** and **Notes** only
+  decide what goes into the PDF - both always show at the bottom of this page. **Show XP costs**
+  only affects Combo Disciplines, where the number beside a combo is its flat XP price rather
+  than a rating, so it always reads "Draw Fire (12 XP)". It starts ticked; unticking it drops
+  the price rather than turning it back into dots. While editing, a separate toggle right above
   your held combos does the same thing and remembers your choice next time.
 - Without a signing certificate configured for this site, **Print / Export** and **Print My
   Items** still work, but every page comes back stamped UNSIGNED and the file name ends
@@ -151,7 +154,7 @@ The same change-history list **View history** shows appears inline here once its
 - **My PDF says UNSIGNED.** This site has no signing certificate configured yet - that's a
   hosting setup step, not a problem with the character.
 - **I ticked XP History and it appeared on the page.** That's expected - XP History, Full power
-  names, and XP costs as numbers all change this page too, not only the printed file.
+  names, and Show XP costs all change this page too, not only the printed file.
 - **I don't see my Background or Notes.** They only show when they have text - add some from the
   Edit tab.
 - **I can't find a character I know is in this chronicle.** If it isn't yours and you're not a

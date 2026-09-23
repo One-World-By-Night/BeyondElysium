@@ -93,6 +93,11 @@ class Plugin {
 
 		wp_localize_script( 'beyond-elysium', 'beyondElysium', [
 			'restUrl'  => rest_url( 'be/v1/' ),
+			// This site's own base URL. The client builds links to the provisioned pages
+			// from it - never from window.location.origin, which drops the path on a
+			// multisite subsite (chronicles.owbn.net/bbf/) and lands every link on the
+			// network root.
+			'homeUrl'  => trailingslashit( home_url() ),
 			'nonce'    => wp_create_nonce( 'wp_rest' ),
 			'version'  => BE_VERSION,
 			// Per-install, not per-user (i18n-pt-br-design.md, Decision 106) - the site's own

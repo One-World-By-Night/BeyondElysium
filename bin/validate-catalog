@@ -1,0 +1,89 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Validates every declared catalog file against reference/CATALOG-JSON-FORMAT.md §7.
+ *
+ * Run from bin/verify, which fails the build on any error - a malformed catalog must never
+ * reach a seed. Exits 0 and says so when no catalog directory exists yet: the files arrive
+ * with 1.3.0/1.3.1 and this validator is deliberately built first (owner ruling, 2026-09-21)
+ * so every one of them is machine-checked as it is generated rather than at cutover.
+ *
+ * Usage:
+ *   bin/validate-catalog            validate data/catalog/**
+ *   bin/validate-catalog <dir>      validate a directory of files instead
+ */
+
+// The service guards on ABSPATH, as every shipped file does; define it before requiring.
+defined( 'ABSPATH' ) || define( 'ABSPATH', __DIR__ . '/' );
+
+require_once __DIR__ . '/../beyond-elysium/includes/Services/Catalog_Validator.php';
+
+use BeyondElysium\Services\Catalog_Validator;
+
+$root = $argv[1] ?? __DIR__ . '/../beyond-elysium/data/catalog';
+
+if ( ! is_dir( $root ) ) {
+	echo "==> validate-catalog  SKIPPED (no {$root} yet - files arrive with 1.3.0)\n";
+	exit( 0 );
+}
+
+$files = [];
+$it    = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $root, FilesystemIterator::SKIP_DOTS ) );
+foreach ( $it as $file ) {
+	if ( $file->isFile() && strtolower( $file->getExtension() ) === 'json' ) {
+		$files[] = $file->getPathname();
+	}
+}
+sort( $files );
+
+if ( $files === [] ) {
+	echo "==> validate-catalog  no .json files under {$root}\n";
+	exit( 0 );
+}
+
+$total_errors = 0;
+$bad_files    = 0;
+
+foreach ( $files as $path ) {
+	$stem = pathinfo( $path, PATHINFO_FILENAME );
+	$raw  = (string) file_get_contents( $path );
+	$data = json_decode( $raw, true );
+
+	if ( json_last_error() !== JSON_ERROR_NONE ) {
+		printf( "  %s\n      not valid JSON: %s\n", $path, json_last_error_msg() );
+		$total_errors++;
+		$bad_files++;
+		continue;
+	}
+	if ( ! is_array( $data ) ) {
+		printf( "  %s\n      top level must be an object\n", $path );
+		$total_errors++;
+		$bad_files++;
+		continue;
+	}
+
+	$errors = Catalog_Validator::validate_block( $data, $stem );
+	if ( $errors === [] ) {
+		continue;
+	}
+
+	$bad_files++;
+	printf( "  %s  (%d)\n", $path, count( $errors ) );
+	// Cap the per-file listing: a systematic authoring error can produce one line per row,
+	// and 11,519 of them buries the one file that actually needs looking at.
+	foreach ( array_slice( $errors, 0, 15 ) as $e ) {
+		echo "      - {$e}\n";
+	}
+	if ( count( $errors ) > 15 ) {
+		printf( "      ... and %d more\n", count( $errors ) - 15 );
+	}
+	$total_errors += count( $errors );
+}
+
+printf(
+	"==> validate-catalog  %d file(s), %s\n",
+	count( $files ),
+	$total_errors === 0 ? 'all valid' : "{$total_errors} error(s) across {$bad_files} file(s)"
+);
+
+exit( $total_errors === 0 ? 0 : 1 );

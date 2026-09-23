@@ -3522,6 +3522,10 @@ msgid "level has no cost"
 msgstr "nível não tem custo"
 
 #: includes/Services/Point_Audit.php:338 build/906.js:15 build/985.js:54
+msgid "held above the ladder, no priced rank above it yet"
+msgstr "mantido acima da escada, ainda sem patamar precificado acima dela"
+
+#: includes/Services/Point_Audit.php:339 build/906.js:15 build/985.js:54
 msgid "custom, no catalog entry"
 msgstr "personalizado, sem entrada no catálogo"
 
@@ -8753,6 +8757,19 @@ msgstr "Aplica-se a toda combinação nesta ficha"
 msgid "Show as dots"
 msgstr "Mostrar como pontos"
 
+#. translators: %d: XP cost
+#: build/601.js:4 build/985.js:15
+msgid "(%d XP)"
+msgstr "(%d XP)"
+
+#: build/601.js:4 build/906.js:25 build/985.js:15 build/985.js:64
+msgid "Show XP costs"
+msgstr "Mostrar custos de XP"
+
+#: build/601.js:4 build/985.js:15
+msgid "Hide XP costs"
+msgstr "Ocultar custos de XP"
+
 #: build/601.js:4 build/906.js:25 build/985.js:15 build/985.js:64
 msgid "XP costs as numbers"
 msgstr "Custos de XP como números"
@@ -11233,3 +11250,38 @@ msgstr "Grupo de %s"
 #. translators: %s: the catalog item's own name
 msgid "Subgroup for %s"
 msgstr "Subgrupo de %s"
+
+#. translators: %s: the trait name as submitted, with its specialization in parentheses where that is part of what identifies it
+#, php-format
+msgid "\"%s\" is already on this sheet - change the entry you hold rather than adding a second one."
+msgstr "\"%s\" já está nesta ficha - altere a entrada que você possui em vez de adicionar uma segunda."
+
+msgid ""
+"Allow multiples (a specialization identifies each holding, so one name can "
+"be held more than once)"
+msgstr ""
+"Permitir múltiplos (uma especialização identifica cada posse, então um mesmo "
+"nome pode ser possuído mais de uma vez)"
+
+#. translators: %s: the trait name as submitted, with its specialization in parentheses where that is part of what identifies it
+#, php-format
+msgid "\"%s\" is not on this sheet - add it instead of changing it."
+msgstr "\"%s\" não está nesta ficha - adicione-a em vez de alterá-la."
+
+#. translators: %d: the rung's number on the ladder
+#, php-format
+msgid "%d."
+msgstr "%d."
+
+#. translators: %d: how many other names share this rung
+#, php-format
+msgid "+%d"
+msgstr "+%d"
+
+#. translators: %s: the other power names filed at this same rung
+#, php-format
+msgid "Also at this level: %s"
+msgstr "Também neste nível: %s"
+
+msgid "Add Elder"
+msgstr "Adicionar Ancião"

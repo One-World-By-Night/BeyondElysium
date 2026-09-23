@@ -153,6 +153,28 @@ describe( 'displayTrait — edge cases', () => {
 			displayTrait( { name: 'Free Combo', total: 0 }, 'cost_number' )
 		).toBe( 'Free Combo 0 XP' );
 	} );
+
+	// 1.2.11 D94: the owner's chosen shape for a count_is_cost block's default.
+	it( 'cost_xp: the price sits in parentheses after the name', () => {
+		expect(
+			displayTrait( { name: 'Draw Fire', total: 12 }, 'cost_xp' )
+		).toBe( 'Draw Fire (12 XP)' );
+	} );
+
+	it( 'cost_xp: a note joins the price inside the same parens', () => {
+		expect(
+			displayTrait(
+				{ name: 'Emerge Unscathed', total: 8, note: 'Tremere' },
+				'cost_xp'
+			)
+		).toBe( 'Emerge Unscathed (8 XP, Tremere)' );
+	} );
+
+	it( 'cost_xp: a zero price is still labelled, never blank', () => {
+		expect(
+			displayTrait( { name: 'Free Combo', total: 0 }, 'cost_xp' )
+		).toBe( 'Free Combo (0 XP)' );
+	} );
 } );
 
 interface TraitDisplayFixtureCase {

@@ -142,6 +142,14 @@ class Seeder {
 			}
 		}
 
+		// `_meta` cannot use the rule above: the seeder emits it on every run, so it is never
+		// absent and that branch could never fire. Only the keys an administrator actually
+		// changed are carried forward - everything else takes the fresh value, which is what
+		// keeps 1.3.0's catalog corrections arriving (1.2.10 E5).
+		if ( isset( $old['_meta'] ) && is_array( $old['_meta'] ) && isset( $new['_meta'] ) && is_array( $new['_meta'] ) ) {
+			$new['_meta'] = self::apply_admin_meta( $new['_meta'], $old['_meta'] );
+		}
+
 		foreach ( [ 'items', 'pools', 'fields' ] as $list ) {
 			if ( isset( $old[ $list ] ) && is_array( $old[ $list ] ) ) {
 				$new[ $list ] = self::merge_admin_entries( (array) ( $new[ $list ] ?? [] ), $old[ $list ], self::ADMIN_OWNED_ENTRY_KEYS[ $list ], 'name' );
@@ -284,7 +292,168 @@ class Seeder {
 			unset( $entry );
 		}
 
+		$incoming = self::stamp_admin_meta( (array) ( $old['_meta'] ?? [] ), $incoming );
+
 		return $incoming;
+	}
+
+	/**
+	 * Records which `_meta` keys a human actually changed, so a reseed can keep those and
+	 * still deliver every correction to the ones they did not (1.2.10 E5; owner ruling,
+	 * 2026-09-22: *"per-key stamp - record which keys the admin set"*).
+	 *
+	 * **Derived server-side by diffing, never supplied by the client** - the same shape
+	 * `mark_admin_additions()` already uses for `admin_added`, and the reason E5's editor and
+	 * its persistence turned out not to be coupled after all: the screen sends an edited
+	 * definition exactly as it always has, and this notices what moved.
+	 *
+	 * **Why per *path* and not per top-level key.** `costs`, `ladder`, `out_of_type` and
+	 * `levels` are themselves maps. Stamping the whole `costs` map because a chronicle
+	 * house-ruled `basic` would freeze `elder` too - so 1.3.0's D69/D70 corrections would
+	 * stop arriving for every rank in that block, which is exactly the failure this stamp
+	 * exists to avoid. Paths go one level in: `costs.basic`, `untiered.cost_per_level`.
+	 * `ranks` and `categories` are ordered lists where a single changed element changes the
+	 * meaning of the rest, so those stamp whole.
+	 *
+	 * @param array<string,mixed> $old_meta
+	 * @param array<string,mixed> $incoming
+	 * @return array<string,mixed>
+	 */
+	public static function stamp_admin_meta( array $old_meta, array $incoming ): array {
+		if ( ! isset( $incoming['_meta'] ) || ! is_array( $incoming['_meta'] ) ) {
+			return $incoming;
+		}
+		$new_meta = $incoming['_meta'];
+
+		$stamped = array_values( array_filter(
+			(array) ( $old_meta['_admin_set'] ?? [] ),
+			'is_string'
+		) );
+
+		foreach ( self::admin_meta_paths( $old_meta, $new_meta ) as $path ) {
+			if ( self::meta_at( $old_meta, $path ) !== self::meta_at( $new_meta, $path ) && ! in_array( $path, $stamped, true ) ) {
+				$stamped[] = $path;
+			}
+		}
+
+		sort( $stamped );
+		if ( $stamped !== [] ) {
+			$new_meta['_admin_set'] = $stamped;
+		}
+		$incoming['_meta'] = $new_meta;
+		return $incoming;
+	}
+
+	/**
+	 * Every comparable path across the old and new meta - top-level keys, plus one level
+	 * into the map-valued ones. A key present on only one side still yields a path, so
+	 * adding or clearing a value counts as an edit.
+	 *
+	 * @param array<string,mixed> $old_meta
+	 * @param array<string,mixed> $new_meta
+	 * @return string[]
+	 */
+	private static function admin_meta_paths( array $old_meta, array $new_meta ): array {
+		$whole = [ 'ranks', 'categories' ];
+		$paths = [];
+
+		foreach ( array_unique( array_merge( array_keys( $old_meta ), array_keys( $new_meta ) ) ) as $key ) {
+			$key = (string) $key;
+			if ( $key === '_admin_set' ) {
+				continue;
+			}
+			$old_value = $old_meta[ $key ] ?? null;
+			$new_value = $new_meta[ $key ] ?? null;
+			$nested    = ! in_array( $key, $whole, true )
+				&& ( self::is_string_keyed( $old_value ) || self::is_string_keyed( $new_value ) );
+
+			if ( ! $nested ) {
+				$paths[] = $key;
+				continue;
+			}
+			$sub = array_unique( array_merge(
+				array_keys( is_array( $old_value ) ? $old_value : [] ),
+				array_keys( is_array( $new_value ) ? $new_value : [] )
+			) );
+			foreach ( $sub as $sub_key ) {
+				$paths[] = $key . '.' . (string) $sub_key;
+			}
+		}
+		return $paths;
+	}
+
+	/** True for a map (string keys), false for a list or a scalar. */
+	private static function is_string_keyed( $value ): bool {
+		if ( ! is_array( $value ) || $value === [] ) {
+			return false;
+		}
+		foreach ( array_keys( $value ) as $k ) {
+			if ( is_string( $k ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Reads a dotted path out of a meta array; null when any step is absent.
+	 *
+	 * @param array<string,mixed> $meta
+	 */
+	private static function meta_at( array $meta, string $path ) {
+		$parts = explode( '.', $path, 2 );
+		$head  = $meta[ $parts[0] ] ?? null;
+		if ( count( $parts ) === 1 ) {
+			return $head;
+		}
+		return is_array( $head ) ? ( $head[ $parts[1] ] ?? null ) : null;
+	}
+
+	/**
+	 * Carries an administrator's own `_meta` values across a reseed - and **only** those,
+	 * so every key they never touched still takes the fresh seeded value (1.2.10 E5).
+	 *
+	 * This is the half that makes the whole thing safe. Keeping a stored `_meta` wholesale
+	 * would mean 1.3.0's Wraith (D69) and Mage (D70) cost corrections could never reach any
+	 * installed site, since every install has a stored `_meta` after its first seed.
+	 *
+	 * @param array<string,mixed> $fresh_meta  What the seeder just built.
+	 * @param array<string,mixed> $stored_meta What the site currently holds.
+	 * @return array<string,mixed>
+	 */
+	public static function apply_admin_meta( array $fresh_meta, array $stored_meta ): array {
+		$stamped = array_values( array_filter(
+			(array) ( $stored_meta['_admin_set'] ?? [] ),
+			'is_string'
+		) );
+		if ( $stamped === [] ) {
+			return $fresh_meta;
+		}
+
+		foreach ( $stamped as $path ) {
+			$parts = explode( '.', $path, 2 );
+			$value = self::meta_at( $stored_meta, $path );
+
+			if ( count( $parts ) === 1 ) {
+				if ( $value === null ) {
+					unset( $fresh_meta[ $parts[0] ] );
+				} else {
+					$fresh_meta[ $parts[0] ] = $value;
+				}
+				continue;
+			}
+			if ( ! isset( $fresh_meta[ $parts[0] ] ) || ! is_array( $fresh_meta[ $parts[0] ] ) ) {
+				$fresh_meta[ $parts[0] ] = [];
+			}
+			if ( $value === null ) {
+				unset( $fresh_meta[ $parts[0] ][ $parts[1] ] );
+			} else {
+				$fresh_meta[ $parts[0] ][ $parts[1] ] = $value;
+			}
+		}
+
+		$fresh_meta['_admin_set'] = $stamped;
+		return $fresh_meta;
 	}
 
 	/**
@@ -3306,6 +3475,86 @@ class Seeder {
 	 * there - real ties inside the 1-5 range (a family's own basic/intermediate tiers
 	 * each carrying more than one named option, not just Elder+) were the actual defect.
 	 */
+	/**
+	 * Per-block declared mechanics, emitted as `definition._meta` (1.2.10 §A/S3b).
+	 *
+	 * **This table is the GVM bridge, and it is deliberately temporary.** The GVM states no
+	 * mechanics at all - it is a menu dump - so while it remains the content source something
+	 * has to declare the ladder split, the rank vocabulary and the out-of-type modifier. At
+	 * 1.3.2 the shipped JSON carries all of it and this constant is deleted.
+	 *
+	 * `ranks` is per block because genre vocabularies genuinely differ: Wraith needs `innate`
+	 * below basic, Kuei-Jin uses Vampire's three words at its own prices. A single global
+	 * TIER_RANKS cannot express either, which is why that constant stops being a ranking
+	 * authority here.
+	 *
+	 * `ladder` names only the ranks that contribute **numbered rungs**. A rank in `ranks` but
+	 * absent from `ladder` is a **pick**, keyed by its own rank inside `elder` - which covers
+	 * above-ladder ranks (elder, master, ascended, methuselah) and equally Wraith's `innate`,
+	 * which `reference/MET-POWER-ACQUISITION.md` establishes is "neither a rung nor an
+	 * above-ladder pick... it sits below the ladder, is never counted in the rating."
+	 *
+	 * `out_of_type` is an **expression per rank**, never a number. That is what absorbs the
+	 * two cases a scalar broke on - Mage scales (+1/+2/+3) and Demon doubles - and it retires
+	 * Wraith's Innate exemption, which is simply `+0`.
+	 *
+	 * **No cost is declared here, deliberately.** `costs` is derived from each block's own
+	 * seeded level data (see meta_costs_for()), so 1.2.10 changes no price on any sheet. The
+	 * known-wrong values - Wraith's 94 mispriced levels (D69), Mage's non-specialty base
+	 * (D70) - are corrected in 1.3.0 against the real books, not smuggled in here.
+	 */
+	const TIERED_POWER_META = [
+		'vampire-disciplines' => [
+			'ranks'          => [ 'basic', 'intermediate', 'advanced', 'elder', 'master', 'ascended', 'methuselah' ],
+			'ladder'         => [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ],
+			'out_of_type'    => [ 'basic' => '+1', 'intermediate' => '+1', 'advanced' => '+1', 'elder' => '+1', 'master' => '+1', 'ascended' => '+1', 'methuselah' => '+1' ],
+			'in_type_source' => 'vampire-identity.Clan',
+		],
+		'vampire-blood-magic' => [
+			'ranks'  => [ 'basic', 'intermediate', 'advanced' ],
+			'ladder' => [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ],
+		],
+		'wraith-arcanoi' => [
+			// `innate` is in `ranks` but not in `ladder`: a pick below the ladder.
+			'ranks'       => [ 'innate', 'basic', 'intermediate', 'advanced' ],
+			'ladder'      => [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ],
+			// The Guild's apprenticeship discount, and Innate's exemption from it as `+0`.
+			'out_of_type' => [ 'innate' => '+0', 'basic' => '-1', 'intermediate' => '-1', 'advanced' => '-1' ],
+		],
+		'mage-spheres' => [
+			'ranks'       => [ 'basic', 'intermediate', 'advanced' ],
+			'ladder'      => [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ],
+			// Non-specialty scales rather than adding a flat surcharge: 4/8/12 -> 5/10/15.
+			'out_of_type' => [ 'basic' => '+1', 'intermediate' => '+2', 'advanced' => '+3' ],
+		],
+		'changeling-arts' => [
+			'ranks'  => [ 'basic', 'intermediate', 'advanced' ],
+			'ladder' => [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ],
+		],
+		'mummy-hekau' => [
+			'ranks'       => [ 'basic', 'intermediate', 'advanced', 'master' ],
+			'ladder'      => [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ],
+			'out_of_type' => [ 'basic' => '+1', 'intermediate' => '+1', 'advanced' => '+1', 'master' => '+1' ],
+		],
+		'kueijin-disciplines' => [
+			// No modifier in the chart at all, and OWBN's own 4/7/10 overrides any book cost
+			// (owner ruling, 2026-09-21) - so `out_of_type` is genuinely absent, not empty.
+			'ranks'  => [ 'basic', 'intermediate', 'advanced' ],
+			'ladder' => [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ],
+		],
+		'mortal-numina' => [
+			'ranks'  => [ 'basic', 'intermediate', 'advanced', 'elder', 'master', 'ascended', 'methuselah' ],
+			'ladder' => [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ],
+		],
+		'changeling-realms' => [
+			// Realms carry no tier vocabulary at all - a flat per-dot track. S7 declares that
+			// properly; until then every level reads as `unknown` and fills the ladder in
+			// source order, exactly as it did before this change.
+			'ranks'  => [ 'basic', 'intermediate', 'advanced' ],
+			'ladder' => [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ],
+		],
+	];
+
 	const TIER_RANKS = [
 		'basic'        => 1,
 		'intermediate' => 2,
@@ -3442,11 +3691,24 @@ class Seeder {
 				$levels[] = $level;
 			}
 
+			// 1.2.10 S2/S2b: the ladder, the picks and the overflow become three containers
+			// rather than one array. This is the D68 fix - the stepper reads `levels` and the
+			// pick list reads `elder`, and they cannot be confused because they are not the
+			// same array. The flat `levels` built above is still the input; `split_levels()`
+			// is the only thing that decides where each entry belongs.
+			$split = self::split_levels( $slug, $levels );
+
 			$built = [
 				'name'   => $power['name'],
 				'source' => $power['source'] ?? $power['name'],
-				'levels' => $levels,
+				'levels' => $split['levels'],
 			];
+			if ( $split['elder'] !== [] ) {
+				$built['elder'] = $split['elder'];
+			}
+			if ( $split['overflow'] !== [] ) {
+				$built['overflow'] = $split['overflow'];
+			}
 			// Pass through any additional per-power field unchanged (blood magic's
 			// 'traditions' map and 'restriction' are the only current users).
 			$passthrough = array_diff_key( $power, [ 'name' => true, 'source' => true, 'items' => true ] );
@@ -3461,6 +3723,7 @@ class Seeder {
 			'section_type' => 'tiered_power',
 			'definition'   => array_merge( [
 				'powers'                    => $powers,
+				'_meta'                     => self::meta_for( $slug, $powers ),
 				// Levels add up (F-040); a chronicle can still switch its own copy to flat pricing.
 				'sequential'                => true,
 				'out_of_type_cost_modifier' => 1,
@@ -3470,6 +3733,238 @@ class Seeder {
 			'is_system'    => 1,
 			'created_by'   => 0,
 		];
+	}
+
+	/**
+	 * Splits one family's flat level list into the three declared containers (1.2.10 §A/§A1b).
+	 *
+	 * The rule is entirely positional against the block's own declared `ladder`, with no
+	 * inference left in it:
+	 *
+	 * - A level whose rank **contributes rungs** fills the ladder, in rank order then source
+	 *   order, and is renumbered 1..n where n is the ladder sum.
+	 * - A level whose rank is in `ranks` but **not** in `ladder` is a **pick**, filed under
+	 *   its own rank inside `elder`. That covers above-ladder ranks and equally Wraith's
+	 *   `innate`, which `reference/MET-POWER-ACQUISITION.md` establishes "sits below the
+	 *   ladder, is never counted in the rating."
+	 * - A ladder-rank level **beyond** the ladder sum goes to `overflow`. 262 of these exist
+	 *   across 69 families on the first run (`Animalism` 12, `Protean` 13). Nothing is
+	 *   discarded and the problem is visible per family. **D67 empties it** - a non-empty
+	 *   overflow is exactly the signal that a family still needs its human ruling, which is
+	 *   1.3.1's worklist.
+	 *
+	 * `unknown` counts as a ladder rank here: a family whose source carries no tier wording
+	 * at all (Changeling Realms' flat per-dot track) numbered positionally before this change
+	 * and still does. S7 declares that track properly.
+	 *
+	 * @param string $slug
+	 * @param array  $levels
+	 * @return array{levels:array,elder:array,overflow:array}
+	 */
+	/**
+	 * Re-splits one already-stored `tiered_power` definition into the three containers and
+	 * gives it a `_meta`, using **the same `split_levels()`/`meta_for()` the seeder uses** -
+	 * never a second copy of the rule that could drift from it.
+	 *
+	 * **Why this exists (1.2.10, found pre-deploy 2026-09-22).** `seed_schema_blocks()`
+	 * refreshes `is_system = 1` rows only, which is correct - a chronicle's own edited block
+	 * must never be overwritten by a reseed. But it means a **fork keeps the flat pre-1.2.10
+	 * shape forever**, and a flat block has no `_meta`, so `Cost_Engine` falls through to the
+	 * pre-1.2.10 one-tier-per-rank fallback. Measured against the real definition: a forked
+	 * block prices a Discipline at 5 as **45 XP** where the reseeded global prices **27**.
+	 * Two prices for the same Discipline on one install, on exactly the chronicles engaged
+	 * enough to have house rules - and it never self-heals.
+	 *
+	 * Idempotent: a definition that already declares `_meta` is returned untouched, so this
+	 * is safe to run on every upgrade.
+	 *
+	 * @param string              $slug       The block's own slug - picks the declared ladder.
+	 * @param array<string,mixed> $definition A decoded tiered_power definition.
+	 * @return array<string,mixed>|null The rewritten definition, or null when nothing changed.
+	 */
+	public static function split_stored_definition( string $slug, array $definition ): ?array {
+		if ( isset( $definition['_meta'] ) ) {
+			return null; // Already declared - a later reseed or an earlier run of this.
+		}
+		if ( ! isset( $definition['powers'] ) || ! is_array( $definition['powers'] ) ) {
+			return null;
+		}
+
+		$powers = [];
+		foreach ( $definition['powers'] as $power ) {
+			if ( ! is_array( $power ) || ! isset( $power['levels'] ) || ! is_array( $power['levels'] ) ) {
+				$powers[] = $power;
+				continue;
+			}
+			// A fork's own levels, not the global's - the whole point of a fork is that they
+			// differ. `split_levels()` is positional against the declared ladder, so it reads
+			// any family's own list.
+			$split = self::split_levels( $slug, $power['levels'] );
+
+			$power['levels'] = $split['levels'];
+			unset( $power['elder'], $power['overflow'] );
+			if ( $split['elder'] !== [] ) {
+				$power['elder'] = $split['elder'];
+			}
+			if ( $split['overflow'] !== [] ) {
+				$power['overflow'] = $split['overflow'];
+			}
+			$powers[] = $power;
+		}
+
+		$definition['powers'] = $powers;
+		$definition['_meta']  = self::meta_for( $slug, $powers );
+
+		return $definition;
+	}
+
+	private static function split_levels( string $slug, array $levels ): array {
+		$meta     = self::TIERED_POWER_META[ $slug ] ?? null;
+		$ladder   = $meta['ladder'] ?? [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ];
+		$ceiling  = array_sum( $ladder );
+		$is_rung  = static fn( string $tier ): bool => isset( $ladder[ $tier ] ) || 'unknown' === $tier;
+
+		$rungs    = [];
+		$elder    = [];
+		$overflow = [];
+
+		foreach ( $levels as $level ) {
+			$tier = (string) ( $level['tier'] ?? 'unknown' );
+			if ( ! $is_rung( $tier ) ) {
+				// A pick, keyed by its own rank - never flattened into one list, because
+				// merging the two depths is what recreated D68.
+				//
+				// And **never a rung number**. The pre-split shape numbered some
+				// above-ladder powers positionally (Celerity's `Zephyr` carried 6), and
+				// carrying that through would leave a pick claiming a place on a ladder it
+				// is not on - exactly the ambiguity this release removes.
+				$level['level']   = null;
+				$elder[ $tier ][] = $level;
+				continue;
+			}
+			$rungs[] = $level;
+		}
+
+		// Each rank fills **its own declared quota**, in rank order, and every level past that
+		// rank's quota is overflow - never promoted into a neighbouring rank's rungs.
+		//
+		// Filling the ladder positionally instead was wrong, and measurably so: Animalism
+		// carries more than two basic items, so all five rungs came out basic and a level-5
+		// holding priced 3+3+3+3+3 instead of 3+3+6+6+9. The declared ladder is a quota per
+		// rank, not just a total.
+		$by_rank = [];
+		foreach ( $rungs as $level ) {
+			$by_rank[ (string) ( $level['tier'] ?? 'unknown' ) ][] = $level;
+		}
+
+		$final  = [];
+		$number = 0;
+		foreach ( $ladder as $rank => $quota ) {
+			$available = $by_rank[ (string) $rank ] ?? [];
+			foreach ( $available as $position => $level ) {
+				if ( $position < (int) $quota ) {
+					// The rung's number is its place on the declared ladder. Nothing infers it.
+					$level['level'] = ++$number;
+					$final[]        = $level;
+					continue;
+				}
+				// This rank is full. Not a rung, so it carries no rung number.
+				$level['level'] = null;
+				$overflow[]     = $level;
+			}
+			unset( $by_rank[ (string) $rank ] );
+		}
+
+		// `unknown` - a family whose source states no tier at all (Changeling Realms' flat
+		// per-dot track) - has no declared quota to fill, so it takes whatever the ladder has
+		// left in source order. S7 declares that track properly and this branch retires.
+		foreach ( $by_rank as $leftover ) {
+			foreach ( $leftover as $level ) {
+				if ( $number < $ceiling ) {
+					$level['level'] = ++$number;
+					$final[]        = $level;
+					continue;
+				}
+				$level['level'] = null;
+				$overflow[]     = $level;
+			}
+		}
+
+		return [ 'levels' => $final, 'elder' => $elder, 'overflow' => $overflow ];
+	}
+
+	/**
+	 * Builds a block's `_meta` (1.2.10 §A/S1).
+	 *
+	 * Structure comes from self::TIERED_POWER_META, which is declared. **Costs do not** -
+	 * they are read back out of the block's own just-built levels, so this release changes no
+	 * price on any sheet. The known-wrong values (D69's 94 mispriced Wraith levels, D70's Mage
+	 * base) are corrected in 1.3.0 against the real books; smuggling them in here would make
+	 * a schema release silently reprice live characters.
+	 *
+	 * @param string $slug
+	 * @param array  $powers
+	 * @return array
+	 */
+	private static function meta_for( string $slug, array $powers ): array {
+		$declared = self::TIERED_POWER_META[ $slug ] ?? [
+			'ranks'  => array_keys( self::TIER_RANKS ),
+			'ladder' => [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ],
+		];
+
+		// Only ranks this block actually declares. Without the filter, D72's corrupted
+		// `mortal-numina` tiers - roughly twenty combo-Discipline names leaked into the tier
+		// field, plus `legend` - would be emitted as though they were real ranks with real
+		// prices, which is the structure inventing vocabulary rather than declaring it.
+		// `unknown` survives because it is a sentinel the engine already understands and is
+		// the only cost `changeling-realms` has until S7 declares its untiered track.
+		// Both branches above always set `ranks`, so no null-coalesce here - PHPStan reads the
+		// constant's literal shape and flags a `??` on it as dead code, correctly.
+		$allowed = array_flip( array_merge( $declared['ranks'], [ 'unknown' ] ) );
+		$costs   = array_intersect_key( self::meta_costs_for( $powers ), $allowed );
+		if ( $costs !== [] ) {
+			$declared['costs'] = $costs;
+		}
+		return $declared;
+	}
+
+	/**
+	 * The per-rank cost a block's own seeded data actually uses, by plurality across every
+	 * level carrying one - the same "read the block's real scale, never one hardcoded table"
+	 * approach 1.2.5 established, since Mage's 5/10/15 and Vampire's 3/6/9/12 are both real.
+	 *
+	 * A rank whose levels carry no cost at all is omitted rather than defaulted to 0: absent
+	 * means "this block never says", which is true and useful, where 0 would read as free.
+	 *
+	 * @param array $powers
+	 * @return array<string,int>
+	 */
+	private static function meta_costs_for( array $powers ): array {
+		$seen = [];
+		foreach ( $powers as $power ) {
+			$containers = [ $power['levels'] ?? [], $power['overflow'] ?? [] ];
+			foreach ( ( $power['elder'] ?? [] ) as $picks ) {
+				$containers[] = $picks;
+			}
+			foreach ( $containers as $levels ) {
+				foreach ( $levels as $level ) {
+					$tier = (string) ( $level['tier'] ?? '' );
+					$cost = $level['cost'] ?? null;
+					if ( '' === $tier || null === $cost || ! is_numeric( trim( (string) $cost ) ) ) {
+						continue;
+					}
+					$value = (int) trim( (string) $cost );
+					$seen[ $tier ][ $value ] = ( $seen[ $tier ][ $value ] ?? 0 ) + 1;
+				}
+			}
+		}
+
+		$costs = [];
+		foreach ( $seen as $tier => $tally ) {
+			arsort( $tally );
+			$costs[ $tier ] = (int) array_key_first( $tally );
+		}
+		return $costs;
 	}
 
 	/**

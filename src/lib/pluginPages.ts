@@ -47,9 +47,27 @@ export const STORYTELLER_TABS = {
 	factions: 'factions',
 } as const;
 
-/** Builds the absolute URL of a provisioned plugin page from its slug. */
+/**
+ * Builds the absolute URL of a provisioned plugin page from its slug.
+ *
+ * **From this site's own base URL, never from the origin alone** (1.2.11 D95). On a
+ * multisite subsite the origin drops the subsite path, so `chronicles.owbn.net/bbf/`
+ * became `chronicles.owbn.net/` and every link the plugin built landed on the network
+ * root instead of the chronicle. `homeUrl` is `home_url()` as the server knows it, handed
+ * over by both localize payloads.
+ *
+ * The origin fallback stays: a page rendered before the payload exists, or one served by
+ * an install still running a build from before that field, must still produce a usable
+ * link. On a single-site install the two are identical anyway.
+ *
+ * Recovered from the deployed `1.2.9.1` on `chronicles.owbn.net`, which had no counterpart
+ * in this repository at all - see the release document.
+ */
 export function pluginPageUrl( slug: string ): string {
-	return `${ window.location.origin }/${ slug }/`;
+	const base = (
+		window.beyondElysium?.homeUrl ?? `${ window.location.origin }/`
+	).replace( /\/+$/, '' );
+	return `${ base }/${ slug }/`;
 }
 
 /** Base URL for one tab of the My Chronicle page, with no character/chronicle selection yet. */

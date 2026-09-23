@@ -81,6 +81,14 @@ Backgrounds, tiered powers like Disciplines and Gifts, resource pools like Blood
 Willpower, identity fields like Nature and Demeanor). **Creature stacks** assemble blocks
 into a complete sheet for one creature type — Vampire, Werewolf, Mage, and so on.
 
+A **tiered power** keeps two things apart on purpose: its **ladder** — the numbered rungs a
+rating counts, five for every track in the game — and its **picks**, the named powers above the
+ladder (Elder, Master, Ascended, Methuselah, and Wraith's Innate below it). A player's rating
+is the ladder; a pick is a separate named thing they hold as well. They are stored separately
+and edited separately, and a rating can never wander into pick territory. A block also declares
+its own rank vocabulary and per-rank costs, so Kuei-Jin's 4/7/10 and a Discipline's 3/6/9 sit
+side by side without either being "the default".
+
 Every install ships with the full MET-mechanics catalog already seeded — you do not need to
 build these from scratch. Under **Beyond Elysium → System Config → Schema Blocks** and
 **→ Creature Stacks** you can review what exists and, if your chronicle needs a house rule or a

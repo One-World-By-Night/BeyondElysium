@@ -51,8 +51,10 @@ defined( 'ABSPATH' ) || exit;
  *  - background       bool  Include the character's biography as a prose entry.
  *  - notes            bool  Include the character's notes as a prose entry.
  *  - xp_history       bool  Include the approved-change XP history table.
- *  - cost_numbers     bool  A count_is_cost trait_list block's entries read as a
- *                           number ("6 XP") instead of dots (1.1.0 D3).
+ *  - show_cost        bool  Whether a count_is_cost trait_list block's flat XP price
+ *                           is shown at all. Default true. When it is shown it is
+ *                           always labelled "(12 XP)" and never drawn as a rating
+ *                           (1.1.0 D3, corrected by 1.2.11 D94).
  *
  * @see BE_PROCESS/design/signed-pdf-design.md Section 3a, SP-5
  */
@@ -322,17 +324,19 @@ class Sheet_Document {
 	/**
 	 * @param mixed                $section_data Raw `sheet_data[block_slug]` value.
 	 * @param array<string,mixed>  $section      Raw layout section (for its own `display` override).
-	 * @param array<string,mixed>  $options      Document-level options (`cost_numbers`, 1.1.0 D3).
+	 * @param array<string,mixed>  $options      Document-level options (`show_cost`, 1.2.11 D94).
 	 * @return array<int,array{label:?string,rows:array<int,string>}>
 	 */
 	private static function trait_list_groups( mixed $section_data, object $definition, array $section, array $options = [] ): array {
 		$traits = Trait_Grouping::to_traits( $section_data );
-		// 1.1.0 D3: a count_is_cost block's stored total is a flat XP cost, not a
-		// rating - the cost_numbers option always wins over whatever display mode
-		// is otherwise configured, on or off.
-		$mode = ! empty( $definition->count_is_cost ) && ! empty( $options['cost_numbers'] )
-			? 'cost_number'
-			: Trait_Grouping::resolve_display( $section['display'] ?? null, $definition->display ?? null );
+		// 1.1.0 D3 / 1.2.11 D94: a count_is_cost block's stored total is a flat XP cost,
+		// not a rating, so it is always labelled as a price and never handed to a rating
+		// display. `show_cost` only chooses whether the price appears at all.
+		$mode = Trait_Grouping::resolve_mode(
+			$definition,
+			$section['display'] ?? null,
+			array_key_exists( 'show_cost', $options ) ? (bool) $options['show_cost'] : null
+		);
 
 		// 1.1.0 D4: a player_order block renders in stored array order - no
 		// alphabetizing, no field/category grouping. The player's own order is

@@ -20,7 +20,7 @@ class Schema {
 	 * release version. Compared against the stored VERSION_OPTION value by
 	 * maybe_upgrade() to decide whether migrations need to run.
 	 */
-	const DB_VERSION = '1.2.9';
+	const DB_VERSION = '1.2.11';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -906,6 +906,8 @@ class Schema {
 		self::add_schema_block_game_scoping();
 		self::add_storyteller_only_to_schema_blocks();
 		self::add_fork_changes_to_schema_blocks();
+		// Must run after the columns above exist; rewrites row content, never structure.
+		self::split_forked_tiered_powers();
 		self::add_owbn_chronicle_post_id();
 		self::backfill_owbn_chronicle_post_ids();
 		self::add_review_notes_to_character_changes();
@@ -2658,6 +2660,185 @@ class Schema {
 	 * Must run after repair_stale_default_layouts(), which is what makes the `sheet_full`
 	 * this reads from correct in the first place.
 	 */
+	/**
+	 * Completes every system `sheet_full` and `npc_full` from its own stack: any block the
+	 * stack declares that the template does not already show is inserted beside its own kind
+	 * (1.2.11, the seeded half of D92).
+	 *
+	 * **The defect this closes.** Template rows have only ever been inserted from
+	 * `Seeder::default_template_sections()`, a hand-written per-stack list, so a block added to
+	 * a stack after that list was written is declared, resolved, seeded onto characters - and
+	 * shown by nothing. Measured identically on `be_dev` and on kony before this shipped: 22
+	 * full sheets, **every one of the 20 whose stack declares a health block missing it**, and
+	 * `met-derangements` missing from 18 of 22. Health Levels have been applied to every
+	 * character at creation since v0.99.23 and have never appeared on a single sheet.
+	 *
+	 * **Generic on purpose.** It reads each stack's own declared sections rather than a second
+	 * hand-written list, because a hand-written list is exactly what caused this - a third
+	 * block added tomorrow needs no change here. 1.3.0's declared template files fix the same
+	 * defect on the file side; this fixes every install already seeded, which 1.3.2's cutover
+	 * is too late to help.
+	 *
+	 * **Placement.** Each missing block is inserted directly after the template row of the
+	 * nearest block the stack declares *before* it and the template already shows, so Health
+	 * lands beside Virtues and Resources rather than at the end. With no such anchor - the
+	 * missing block is the first the stack declares - it goes to the front. The new row
+	 * inherits its anchor's `width`, which keeps the row rhythm the rest of the sheet already
+	 * has, and takes its title from the stack's own declared `label`.
+	 *
+	 * **What it deliberately does not touch.**
+	 * - `npc_quick`, by design: all ten are identity + `npc-quick-stats` +
+	 *   `npc-roleplaying-notes`, a reference card rather than a sheet, and completing one from
+	 *   its stack would turn it into a full sheet.
+	 * - A chronicle's own template (`is_system = 0`). Its absences are an ST's arrangement, and
+	 *   from the outside a deliberate trim and a never-added section are the same thing - the
+	 *   rule `repair_stale_default_layouts()`, `repair_stale_npc_layouts()` and
+	 *   `add_missing_blood_magic_template_section()` all already follow, established by
+	 *   `VampireTemplateRepairTest::test_a_template_already_on_the_new_shape_is_left_untouched`.
+	 * - `npc-roleplaying-notes`, which no stack declares, so it is never inserted - and is
+	 *   moved back to the end afterwards so an insertion cannot strand it mid-sheet, matching
+	 *   `repair_stale_npc_layouts()`'s own convention.
+	 *
+	 * A storyteller-only block would be inserted like any other if a stack ever declared one
+	 * (none does today); `St_Visibility` is what keeps it off a player's sheet, at render time,
+	 * for every template alike - this is not the layer that decides visibility.
+	 *
+	 * Must run after `repair_stale_npc_layouts()`, which is what makes the layouts this
+	 * completes correct in the first place. Idempotent: a template already showing everything
+	 * its stack declares is not written at all.
+	 */
+	public static function complete_full_sheet_templates(): void {
+		foreach ( \BeyondElysium\Models\Creature_Stack::all() as $stack ) {
+			$declared = [];
+			foreach ( $stack->stack_definition->sections ?? [] as $section ) {
+				if ( ! empty( $section->block_slug ) ) {
+					$declared[ (string) $section->block_slug ] = (string) ( $section->label ?? '' );
+				}
+			}
+			if ( ! $declared ) {
+				continue;
+			}
+
+			foreach ( [ 'sheet_full', 'npc_full' ] as $template_type ) {
+				foreach ( \BeyondElysium\Models\Template::globals( [
+					'stack_slug'    => $stack->slug,
+					'template_type' => $template_type,
+				] ) as $template ) {
+					/** @var object{id:int,is_system:int,layout:array} $template */
+					if ( empty( $template->is_system ) ) {
+						continue;
+					}
+
+					$sections = $template->layout['sections'] ?? [];
+					if ( ! $sections ) {
+						continue;
+					}
+
+					$missing = array_diff( array_keys( $declared ), array_column( $sections, 'block_slug' ) );
+					if ( ! $missing ) {
+						continue; // Already complete.
+					}
+
+					foreach ( $missing as $slug ) {
+						$sections = self::insert_declared_section( $sections, array_keys( $declared ), $slug, $declared[ $slug ] );
+					}
+
+					// Roleplaying notes stay last on an npc_full, as repair_stale_npc_layouts() has it.
+					$notes = null;
+					foreach ( $sections as $i => $section ) {
+						if ( $section['block_slug'] === 'npc-roleplaying-notes' ) {
+							$notes = $section;
+							unset( $sections[ $i ] );
+							break;
+						}
+					}
+					$sections = array_values( $sections );
+					if ( $notes !== null ) {
+						$sections[] = $notes;
+					}
+
+					foreach ( $sections as $i => &$section ) {
+						$section['order'] = $i + 1;
+					}
+					unset( $section );
+
+					$layout             = $template->layout;
+					$layout['sections'] = $sections;
+
+					if ( ! \BeyondElysium\Models\Template::update( (int) $template->id, [ 'layout' => $layout ] ) ) {
+						error_log( 'Beyond Elysium: failed to complete ' . $stack->slug . ' ' . $template_type . ' template id ' . (int) $template->id );
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Inserts one declared block into a layout directly after the nearest earlier-declared
+	 * block the layout already shows, inheriting that anchor's width. Front of the list when
+	 * the block is the first its stack declares.
+	 *
+	 * @param array    $sections      The layout's sections.
+	 * @param string[] $declared_order Every block the stack declares, in its declared order.
+	 * @param string   $slug          The block to insert.
+	 * @param string   $label         The stack's own label for it.
+	 * @return array The sections with the block inserted; `order` is renumbered by the caller.
+	 */
+	private static function insert_declared_section( array $sections, array $declared_order, string $slug, string $label ): array {
+		$shown    = array_column( $sections, 'block_slug' );
+		$position = array_search( $slug, $declared_order, true );
+
+		$insert_at = 0;
+		$width     = 'full';
+		if ( $position !== false ) {
+			for ( $i = (int) $position - 1; $i >= 0; $i-- ) {
+				$anchor = array_search( $declared_order[ $i ], $shown, true );
+				if ( $anchor !== false ) {
+					$insert_at = (int) $anchor + 1;
+					$width     = (string) ( $sections[ $anchor ]['width'] ?? 'full' );
+					break;
+				}
+			}
+		}
+
+		array_splice( $sections, $insert_at, 0, [
+			[
+				'block_slug' => $slug,
+				'column'     => 1,
+				'order'      => 0, // Renumbered by the caller once every insertion is done.
+				// The stack's own label in every real case; the same generic fallback
+				// Seeder::block_label() uses for a slug its own map does not name.
+				'title'      => $label !== '' ? $label : ucwords( str_replace( '-', ' ', $slug ) ),
+				'display'    => self::default_display_for_block( $slug ),
+				'collapsed'  => false,
+				'width'      => $width,
+			],
+		] );
+
+		return $sections;
+	}
+
+	/**
+	 * How a newly inserted section should render its held rows.
+	 *
+	 * A counted `trait_list` - Health boxes, Abilities, Backgrounds - is a name plus a rating,
+	 * so it renders as dots; without this a health block lists five bare words and the box
+	 * counts that are the whole point of it (`Bruised 3`) are invisible. An `atomic` list is
+	 * name-only by declaration (Merits, Flaws, Derangements, Rituals), and every other section
+	 * type carries its own renderer, so both take the null the hand-written defaults give them.
+	 *
+	 * Matches what `Seeder::default_template_sections()` already writes by hand for every one
+	 * of these blocks, derived from the block instead of restated - and only ever applied to a
+	 * section this repair inserts, never to one an install already has.
+	 */
+	private static function default_display_for_block( string $slug ): ?string {
+		$block = \BeyondElysium\Models\Schema_Block::find_by_slug( $slug );
+		if ( ! $block || $block->section_type !== 'trait_list' ) {
+			return null;
+		}
+		return empty( $block->definition->atomic ) ? 'multiplier_dot' : null;
+	}
+
 	public static function repair_stale_npc_layouts(): void {
 		foreach ( \BeyondElysium\Models\Creature_Stack::all() as $stack ) {
 			foreach ( \BeyondElysium\Models\Template::globals( [
@@ -2855,6 +3036,10 @@ class Schema {
 		// make the sheet_full layout this reads from correct in the first place.
 		self::repair_stale_npc_layouts();
 
+		// Must run last of the template repairs: it completes both sheet_full and npc_full from
+		// each stack's own declaration, so it needs the layouts above already correct (1.2.11 D92).
+		self::complete_full_sheet_templates();
+
 		// Demo data, seeded on a fresh install only.
 		Seeder::seed_demo_characters( $fresh_install );
 
@@ -2874,4 +3059,69 @@ class Schema {
 		global $wpdb;
 		return $wpdb->prefix . 'be_' . $name;
 	}
+
+	/**
+	 * Re-splits every **chronicle-forked** `tiered_power` block into 1.2.10's three containers.
+	 *
+	 * `Seeder::seed_schema_blocks()` refreshes `is_system = 1` rows only, which is right - a
+	 * reseed must never overwrite a chronicle's own edited block. The consequence, found
+	 * during pre-deploy checks on 2026-09-22, is that **a fork would keep the flat pre-1.2.10
+	 * shape forever**: no `_meta`, so `Cost_Engine` falls through to the pre-1.2.10
+	 * one-tier-per-rank fallback and prices a Discipline at 5 as **45 XP** where the reseeded
+	 * global prices **27**. Two prices for the same Discipline on one install, on precisely
+	 * the chronicles engaged enough to have forked something - and no reseed ever heals it.
+	 *
+	 * So the fork is migrated instead of refreshed: its **own** powers and its own edits are
+	 * kept, and only the container split and `_meta` are added, using the same
+	 * `split_levels()`/`meta_for()` the seeder uses rather than a second copy of the rule.
+	 *
+	 * Idempotent by construction - a definition that already declares `_meta` is skipped, so
+	 * this is safe on every upgrade and a no-op on an install that has already run it. A
+	 * failure on one fork is logged and the rest continue: one malformed chronicle block must
+	 * not stop an upgrade.
+	 */
+	private static function split_forked_tiered_powers(): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'be_schema_blocks';
+
+		$forks = $wpdb->get_results(
+			"SELECT id, slug, game_slug, definition FROM {$table}
+			  WHERE section_type = 'tiered_power' AND is_system = 0"
+		);
+		if ( ! $forks ) {
+			return;
+		}
+
+		$migrated = 0;
+		foreach ( $forks as $fork ) {
+			try {
+				$definition = json_decode( (string) $fork->definition, true );
+				if ( ! is_array( $definition ) ) {
+					continue;
+				}
+				$split = \BeyondElysium\Database\Seeder::split_stored_definition( (string) $fork->slug, $definition );
+				if ( $split === null ) {
+					continue;
+				}
+				$wpdb->update(
+					$table,
+					[ 'definition' => (string) wp_json_encode( $split ) ],
+					[ 'id' => (int) $fork->id ]
+				);
+				$migrated++;
+			} catch ( \Throwable $e ) {
+				error_log( sprintf(
+					'Beyond Elysium: could not split forked block %s/%s: %s',
+					(string) $fork->slug,
+					(string) $fork->game_slug,
+					$e->getMessage()
+				) );
+			}
+		}
+
+		if ( $migrated > 0 ) {
+			error_log( "Beyond Elysium: split {$migrated} forked tiered_power block(s) into the 1.2.10 containers." );
+		}
+	}
+
 }

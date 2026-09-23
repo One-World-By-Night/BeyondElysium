@@ -121,7 +121,7 @@ class Catalog_Translator {
 	private static function decorate_tiered_power( object $definition, array $map ): void {
 		foreach ( $definition->powers ?? [] as $power ) {
 			self::set_pt( $power, 'name', 'name_pt', $map );
-			foreach ( $power->levels ?? [] as $level ) {
+			foreach ( Power_Levels::all( $power ) as $level ) {
 				self::set_pt( $level, 'power_name', 'power_name_pt', $map );
 			}
 		}
@@ -350,7 +350,7 @@ class Catalog_Translator {
 					if ( ! empty( $power->name ) && ! empty( $power->name_pt ) ) {
 						$pairs[] = [ $power->name, $power->name_pt ];
 					}
-					foreach ( $power->levels ?? [] as $level ) {
+					foreach ( Power_Levels::all( $power ) as $level ) {
 						if ( ! empty( $level->power_name ) && ! empty( $level->power_name_pt ) ) {
 							$pairs[] = [ $level->power_name, $level->power_name_pt ];
 						}
@@ -389,7 +389,7 @@ class Catalog_Translator {
 					if ( ! empty( $power->name ) ) {
 						$terms[] = [ $power->name, 'family' ];
 					}
-					foreach ( $power->levels ?? [] as $level ) {
+					foreach ( Power_Levels::all( $power ) as $level ) {
 						if ( ! empty( $level->power_name ) ) {
 							$terms[] = [ $level->power_name, 'level' ];
 						}

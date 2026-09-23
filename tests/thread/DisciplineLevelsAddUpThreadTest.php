@@ -37,28 +37,37 @@ class DisciplineLevelsAddUpThreadTest extends WP_UnitTestCase {
 	 * guard against for the two specific real ranks these tests exercise.
 	 */
 	private function ladder( string $block, string $family ): array {
-		$tier_rank = [
-			'basic' => 1, 'intermediate' => 2, 'advanced' => 3, 'elder' => 4,
-			'master' => 5, 'ascended' => 6, 'methuselah' => 7,
-		];
-		foreach ( Schema_Block::find_by_slug( $block )->definition->powers as $power ) {
-			if ( $power->name !== $family ) {
-				continue;
-			}
-			$costs = [];
-			foreach ( $power->levels as $level ) {
-				$tier = $level->tier ?? null;
-				if ( $tier === null || ! isset( $tier_rank[ $tier ] ) || ! isset( $level->cost ) ) {
-					continue;
-				}
-				$rank = $tier_rank[ $tier ];
-				if ( ! isset( $costs[ $rank ] ) ) {
-					$costs[ $rank ] = (int) $level->cost;
-				}
-			}
-			return $costs;
+		// 1.2.10 S6. This helper used to map one tier per rank - basic 1, intermediate 2,
+		// advanced 3, elder 4 - which is the inference the release deletes, and the reason a
+		// level-5 Discipline charged elder and master rates for ladder rungs. The expected
+		// cost of rung N is now the cost of **the rank that rung belongs to** under the
+		// block's own declared ladder, so this reads `_meta` exactly as the engine does.
+		$definition = Schema_Block::find_by_slug( $block )->definition;
+		$meta       = $definition->_meta ?? null;
+		if ( null === $meta ) {
+			return [];
 		}
-		return [];
+
+		$ladder = (array) $meta->ladder;
+		$prices = (array) ( $meta->costs ?? [] );
+
+		// Walk `_meta.ranks` (book order), never the ladder's own key order - the stored ladder
+		// decodes as basic, advanced, intermediate, and walking it that way prices rung 3 at the
+		// advanced rate. The engine had the same bug (1.2.10 pre-deploy trace 2).
+		$order = array_values( array_filter( (array) ( $meta->ranks ?? array_keys( $ladder ) ), static fn( $r ): bool => isset( $ladder[ $r ] ) ) );
+
+		$costs = [];
+		$rung  = 0;
+		foreach ( $order as $tier ) {
+			$rungs = $ladder[ $tier ];
+			for ( $i = 0; $i < (int) $rungs; $i++ ) {
+				++$rung;
+				if ( isset( $prices[ $tier ] ) ) {
+					$costs[ $rung ] = (int) $prices[ $tier ];
+				}
+			}
+		}
+		return $costs;
 	}
 
 	private function brujah( array $disciplines = [] ): object {

@@ -1,330 +1,539 @@
 {
-    "definition": {
-        "powers": [
-            {
-                "name": "Celerity",
-                "levels": [
-                    {
-                        "level": 1,
-                        "tier": "basic",
-                        "power_name": "Alacrity"
-                    },
-                    {
-                        "level": 2,
-                        "tier": "basic",
-                        "power_name": "Rapid Reflexes"
-                    },
-                    {
-                        "level": 3,
-                        "tier": "intermediate",
-                        "power_name": "Fleetness"
-                    },
-                    {
-                        "level": 4,
-                        "tier": "intermediate",
-                        "power_name": "Blurred Motion"
-                    },
-                    {
-                        "level": 5,
-                        "tier": "advanced",
-                        "power_name": "Lightning Reflexes"
-                    },
-                    {
-                        "level": null,
-                        "tier": "elder",
-                        "power_name": "Blink"
-                    },
-                    {
-                        "level": null,
-                        "tier": "elder",
-                        "power_name": "Unerring Aim"
-                    }
-                ]
-            },
-            {
-                "name": "Animalism",
-                "levels": [
-                    {
-                        "level": null,
-                        "tier": "basic",
-                        "power_name": "Feral Whispers"
-                    },
-                    {
-                        "level": null,
-                        "tier": "basic",
-                        "power_name": "Beckoning"
-                    },
-                    {
-                        "level": 2,
-                        "tier": "intermediate",
-                        "power_name": "Quell the Beast"
-                    }
-                ]
-            },
-            {
-                "name": "Path of Blood's Curse",
-                "levels": [
-                    {
-                        "level": null,
-                        "tier": "basic",
-                        "note": "Basic (Sabbat)",
-                        "power_name": "Ravages of the Beast"
-                    },
-                    {
-                        "level": null,
-                        "tier": "advanced",
-                        "note": "Advanced (Sabbat)",
-                        "power_name": "The Withering of Ages"
-                    },
-                    {
-                        "level": null,
-                        "tier": "basic",
-                        "note": "Basic (Tremere)",
-                        "power_name": "Stigmatize"
-                    },
-                    {
-                        "level": null,
-                        "tier": "advanced",
-                        "note": "Advanced (Tremere)",
-                        "power_name": "Fall From Grace"
-                    }
-                ]
-            },
-            {
-                "name": "Path of the Warrior",
-                "levels": [
-                    {
-                        "level": 1,
-                        "tier": "basic",
-                        "note": "Basic (Setite)",
-                        "power_name": "Fear of the Void Below"
-                    },
-                    {
-                        "level": 2,
-                        "tier": "intermediate",
-                        "note": "Intermediate (Setite)",
-                        "power_name": "Great Ordeal"
-                    }
-                ]
-            },
-            {
-                "name": "Untiered Family",
-                "levels": [
-                    {
-                        "level": null,
-                        "power_name": "No Tier Here"
-                    }
-                ]
-            }
-        ]
-    },
-    "cases": [
-        {
-            "name": "a genuine catalog-matched Elder+ pick shows its real catalog tier",
-            "method": "elder_label",
-            "held": {
-                "name": "Celerity",
-                "power_name": "Blink"
-            }
-        },
-        {
-            "name": "a keep_custom power with a real derived level shows that level, not \"(elder)\"",
-            "method": "elder_label",
-            "held": {
-                "name": "Dur-An-Ki",
-                "power_name": "Awakening of the Steel",
-                "level": 5
-            }
-        },
-        {
-            "name": "a keep_custom power with no derivable level falls back to its own stored tier text, not the hardcoded default",
-            "method": "elder_label",
-            "held": {
-                "name": "Dur-An-Ki",
-                "power_name": "Something Unrecognizable",
-                "tier": "unmatched, imported as-is"
-            }
-        },
-        {
-            "name": "a keep_custom power with neither a level nor a stored tier still falls back to \"elder\", never undefined",
-            "method": "elder_label",
-            "held": {
-                "name": "Dur-An-Ki",
-                "power_name": "Something Unrecognizable"
-            }
-        },
-        {
-            "name": "numericLabel: an ordinary numbered rung with no power_name just shows the level",
-            "method": "numeric_label",
-            "held": {
-                "name": "Celerity",
-                "level": 3
-            }
-        },
-        {
-            "name": "numericLabel: a power_name entry defers to elderLabel even in numeric mode",
-            "method": "numeric_label",
-            "held": {
-                "name": "Dur-An-Ki",
-                "power_name": "Awakening of the Steel",
-                "level": 5
-            }
-        },
-        {
-            "name": "namedLabel: a power_name entry defers to elderLabel regardless of the level argument",
-            "method": "named_label",
-            "held": {
-                "name": "Dur-An-Ki",
-                "power_name": "Awakening of the Steel",
-                "level": 5
-            },
-            "level": 5
-        },
-        {
-            "name": "namedLabel: an ordinary numbered rung looks up the real power_name for that level",
-            "method": "named_label",
-            "held": {
-                "name": "Celerity",
-                "level": 1
-            },
-            "level": 1
-        },
-        {
-            "name": "prefixes \"Tradition: \" onto a rendered label when the held pick carries one",
-            "method": "with_tradition",
-            "label_method": "numeric_label",
-            "held": {
-                "name": "Path of Blood",
-                "level": 3,
-                "tradition": "Necromancy"
-            }
-        },
-        {
-            "name": "renders unchanged when the held pick carries no tradition - every ordinary discipline",
-            "method": "with_tradition",
-            "label_method": "numeric_label",
-            "held": {
-                "name": "Celerity",
-                "level": 3
-            }
-        },
-        {
-            "name": "named mode shows the specific level name, still tradition-prefixed - a player sees the flavor name, not just the bare path",
-            "method": "with_tradition",
-            "label_method": "named_label",
+  "definition": {
+    "powers": [
+      {
+        "name": "Celerity",
+        "levels": [
+          {
             "level": 1,
-            "held": {
-                "name": "Celerity",
-                "level": 1,
-                "tradition": "Sadhana"
+            "tier": "basic",
+            "power_name": "Alacrity"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Rapid Reflexes"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Fleetness"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Blurred Motion"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Lightning Reflexes"
+          },
+          {
+            "level": null,
+            "tier": "elder",
+            "power_name": "Blink"
+          },
+          {
+            "level": null,
+            "tier": "elder",
+            "power_name": "Unerring Aim"
+          }
+        ]
+      },
+      {
+        "name": "Animalism",
+        "levels": [
+          {
+            "level": null,
+            "tier": "basic",
+            "power_name": "Feral Whispers"
+          },
+          {
+            "level": null,
+            "tier": "basic",
+            "power_name": "Beckoning"
+          },
+          {
+            "level": 2,
+            "tier": "intermediate",
+            "power_name": "Quell the Beast"
+          }
+        ]
+      },
+      {
+        "name": "Path of Blood's Curse",
+        "levels": [
+          {
+            "level": null,
+            "tier": "basic",
+            "note": "Basic (Sabbat)",
+            "power_name": "Ravages of the Beast"
+          },
+          {
+            "level": null,
+            "tier": "advanced",
+            "note": "Advanced (Sabbat)",
+            "power_name": "The Withering of Ages"
+          },
+          {
+            "level": null,
+            "tier": "basic",
+            "note": "Basic (Tremere)",
+            "power_name": "Stigmatize"
+          },
+          {
+            "level": null,
+            "tier": "advanced",
+            "note": "Advanced (Tremere)",
+            "power_name": "Fall From Grace"
+          }
+        ]
+      },
+      {
+        "name": "Path of the Warrior",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "note": "Basic (Setite)",
+            "power_name": "Fear of the Void Below"
+          },
+          {
+            "level": 2,
+            "tier": "intermediate",
+            "note": "Intermediate (Setite)",
+            "power_name": "Great Ordeal"
+          }
+        ]
+      },
+      {
+        "name": "Untiered Family",
+        "levels": [
+          {
+            "level": null,
+            "power_name": "No Tier Here"
+          }
+        ]
+      },
+      {
+        "name": "Protean",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Eyes of the Beast"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Feral Claws"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Earth Meld"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Shape of the Beast"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "Mist Form"
+          }
+        ],
+        "elder": {
+          "elder": [
+            {
+              "level": null,
+              "tier": "elder",
+              "power_name": "Flesh of Marble"
             }
+          ],
+          "master": [
+            {
+              "level": null,
+              "tier": "master",
+              "power_name": "Form of Doom"
+            }
+          ],
+          "ascended": [
+            {
+              "level": null,
+              "tier": "ascended",
+              "power_name": "Shape of the Cobra"
+            }
+          ],
+          "methuselah": [
+            {
+              "level": null,
+              "tier": "methuselah",
+              "power_name": "Eternal Vigil"
+            }
+          ]
         },
-        {
-            "name": "lists every named rung from 1 up to the held level for a plain numbered holding",
-            "method": "named_mode_rows",
-            "held": {
-                "name": "Celerity",
-                "level": 3
-            }
-        },
-        {
-            "name": "lists nothing for a held level of 0",
-            "method": "named_mode_rows",
-            "held": {
-                "name": "Celerity",
-                "level": 0
-            }
-        },
-        {
-            "name": "lists only the one specific power for an Elder-and-above pick - there is no stack beneath it",
-            "method": "named_mode_rows",
-            "held": {
-                "name": "Celerity",
-                "power_name": "Blink"
-            }
-        },
-        {
-            "name": "a non-sequential block still expands the full stack, not just the current rung",
-            "method": "named_mode_rows",
-            "held": {
-                "name": "Celerity",
-                "level": 5
-            }
-        },
-        {
-            "name": "lists every tied power at that rank, not just one",
-            "method": "named_mode_rows",
-            "held": {
-                "name": "Animalism",
-                "level": 1
-            }
-        },
-        {
-            "name": "a tied rank and an untied rank both resolve correctly in the same stack",
-            "method": "named_mode_rows",
-            "held": {
-                "name": "Animalism",
-                "level": 2
-            }
-        },
-        {
-            "name": "a parser-placeholder tier (***) is never shown to a player; falls through to elder",
-            "method": "elder_label",
-            "held": {
-                "name": "Combination",
-                "power_name": "Sawafi Form",
-                "tier": "***"
-            }
-        },
-        {
-            "name": "an unknown tier is a placeholder too",
-            "method": "elder_label",
-            "held": {
-                "name": "Combination",
-                "power_name": "Sawafi Form",
-                "tier": "unknown"
-            }
-        },
-        {
-            "name": "a real stored tier still shows unchanged (Decision 074)",
-            "method": "elder_label",
-            "held": {
-                "name": "Dur-An-Ki",
-                "power_name": "Something Unrecognizable",
-                "tier": "elder assamite"
-            }
-        },
-        {
-            "name": "U5/D67: a concatenated family names the tradition beside the tier",
-            "method": "elder_label",
-            "held": {
-                "name": "Path of Blood's Curse",
-                "power_name": "Stigmatize"
-            }
-        },
-        {
-            "name": "U5/D67: the other ladder's power at the same tier is distinguishable",
-            "method": "elder_label",
-            "held": {
-                "name": "Path of Blood's Curse",
-                "power_name": "Ravages of the Beast"
-            }
-        },
-        {
-            "name": "U5/D67: a family whose levels all agree stays unchanged, however loud its notes",
-            "method": "named_mode_rows",
-            "held": {
-                "name": "Path of the Warrior",
-                "level": 2
-            }
-        },
-        {
-            "name": "a catalog level with no tier key at all falls through to elder, on both sides",
-            "method": "elder_label",
-            "held": {
-                "name": "Untiered Family",
-                "power_name": "No Tier Here"
-            }
-        }
+        "overflow": [
+          {
+            "level": null,
+            "tier": "basic",
+            "power_name": "Interred Slumber"
+          }
+        ]
+      },
+      {
+        "name": "Path of the Split Ladder",
+        "levels": [
+          {
+            "level": 1,
+            "tier": "basic",
+            "power_name": "Ravages of the Beast",
+            "note": "Basic (Sabbat)"
+          },
+          {
+            "level": 2,
+            "tier": "basic",
+            "power_name": "Curse of Gehenna",
+            "note": "Basic (Sabbat)"
+          },
+          {
+            "level": 3,
+            "tier": "intermediate",
+            "power_name": "Thief of Vitae",
+            "note": "Int. (Sabbat)"
+          },
+          {
+            "level": 4,
+            "tier": "intermediate",
+            "power_name": "Ruin",
+            "note": "Int. (Sabbat)"
+          },
+          {
+            "level": 5,
+            "tier": "advanced",
+            "power_name": "The Withering of Ages",
+            "note": "Adv. (Sabbat)"
+          }
+        ],
+        "overflow": [
+          {
+            "level": null,
+            "tier": "basic",
+            "power_name": "Stigmatize",
+            "note": "Basic (Tremere)"
+          },
+          {
+            "level": null,
+            "tier": "basic",
+            "power_name": "Fall From Grace",
+            "note": "Basic (Tremere)"
+          }
+        ]
+      }
     ]
+  },
+  "cases": [
+    {
+      "name": "a genuine catalog-matched Elder+ pick shows its real catalog tier",
+      "method": "elder_label",
+      "held": {
+        "name": "Celerity",
+        "power_name": "Blink"
+      }
+    },
+    {
+      "name": "a keep_custom power with a real derived level shows that level, not \"(elder)\"",
+      "method": "elder_label",
+      "held": {
+        "name": "Dur-An-Ki",
+        "power_name": "Awakening of the Steel",
+        "level": 5
+      }
+    },
+    {
+      "name": "a keep_custom power with no derivable level falls back to its own stored tier text, not the hardcoded default",
+      "method": "elder_label",
+      "held": {
+        "name": "Dur-An-Ki",
+        "power_name": "Something Unrecognizable",
+        "tier": "unmatched, imported as-is"
+      }
+    },
+    {
+      "name": "a keep_custom power with neither a level nor a stored tier still falls back to \"elder\", never undefined",
+      "method": "elder_label",
+      "held": {
+        "name": "Dur-An-Ki",
+        "power_name": "Something Unrecognizable"
+      }
+    },
+    {
+      "name": "numericLabel: an ordinary numbered rung with no power_name just shows the level",
+      "method": "numeric_label",
+      "held": {
+        "name": "Celerity",
+        "level": 3
+      }
+    },
+    {
+      "name": "numericLabel: a power_name entry defers to elderLabel even in numeric mode",
+      "method": "numeric_label",
+      "held": {
+        "name": "Dur-An-Ki",
+        "power_name": "Awakening of the Steel",
+        "level": 5
+      }
+    },
+    {
+      "name": "namedLabel: a power_name entry defers to elderLabel regardless of the level argument",
+      "method": "named_label",
+      "held": {
+        "name": "Dur-An-Ki",
+        "power_name": "Awakening of the Steel",
+        "level": 5
+      },
+      "level": 5
+    },
+    {
+      "name": "namedLabel: an ordinary numbered rung looks up the real power_name for that level",
+      "method": "named_label",
+      "held": {
+        "name": "Celerity",
+        "level": 1
+      },
+      "level": 1
+    },
+    {
+      "name": "prefixes \"Tradition: \" onto a rendered label when the held pick carries one",
+      "method": "with_tradition",
+      "label_method": "numeric_label",
+      "held": {
+        "name": "Path of Blood",
+        "level": 3,
+        "tradition": "Necromancy"
+      }
+    },
+    {
+      "name": "renders unchanged when the held pick carries no tradition - every ordinary discipline",
+      "method": "with_tradition",
+      "label_method": "numeric_label",
+      "held": {
+        "name": "Celerity",
+        "level": 3
+      }
+    },
+    {
+      "name": "named mode shows the specific level name, still tradition-prefixed - a player sees the flavor name, not just the bare path",
+      "method": "with_tradition",
+      "label_method": "named_label",
+      "level": 1,
+      "held": {
+        "name": "Celerity",
+        "level": 1,
+        "tradition": "Sadhana"
+      }
+    },
+    {
+      "name": "lists every named rung from 1 up to the held level for a plain numbered holding",
+      "method": "named_mode_rows",
+      "held": {
+        "name": "Celerity",
+        "level": 3
+      }
+    },
+    {
+      "name": "lists nothing for a held level of 0",
+      "method": "named_mode_rows",
+      "held": {
+        "name": "Celerity",
+        "level": 0
+      }
+    },
+    {
+      "name": "lists only the one specific power for an Elder-and-above pick - there is no stack beneath it",
+      "method": "named_mode_rows",
+      "held": {
+        "name": "Celerity",
+        "power_name": "Blink"
+      }
+    },
+    {
+      "name": "a non-sequential block still expands the full stack, not just the current rung",
+      "method": "named_mode_rows",
+      "held": {
+        "name": "Celerity",
+        "level": 5
+      }
+    },
+    {
+      "name": "lists every tied power at that rank, not just one",
+      "method": "named_mode_rows",
+      "held": {
+        "name": "Animalism",
+        "level": 1
+      }
+    },
+    {
+      "name": "a tied rank and an untied rank both resolve correctly in the same stack",
+      "method": "named_mode_rows",
+      "held": {
+        "name": "Animalism",
+        "level": 2
+      }
+    },
+    {
+      "name": "a parser-placeholder tier (***) is never shown to a player; falls through to elder",
+      "method": "elder_label",
+      "held": {
+        "name": "Combination",
+        "power_name": "Sawafi Form",
+        "tier": "***"
+      }
+    },
+    {
+      "name": "an unknown tier is a placeholder too",
+      "method": "elder_label",
+      "held": {
+        "name": "Combination",
+        "power_name": "Sawafi Form",
+        "tier": "unknown"
+      }
+    },
+    {
+      "name": "a real stored tier still shows unchanged (Decision 074)",
+      "method": "elder_label",
+      "held": {
+        "name": "Dur-An-Ki",
+        "power_name": "Something Unrecognizable",
+        "tier": "elder assamite"
+      }
+    },
+    {
+      "name": "U5/D67: a concatenated family names the tradition beside the tier",
+      "method": "elder_label",
+      "held": {
+        "name": "Path of Blood's Curse",
+        "power_name": "Stigmatize"
+      }
+    },
+    {
+      "name": "U5/D67: the other ladder's power at the same tier is distinguishable",
+      "method": "elder_label",
+      "held": {
+        "name": "Path of Blood's Curse",
+        "power_name": "Ravages of the Beast"
+      }
+    },
+    {
+      "name": "U5/D67: a family whose levels all agree stays unchanged, however loud its notes",
+      "method": "named_mode_rows",
+      "held": {
+        "name": "Path of the Warrior",
+        "level": 2
+      }
+    },
+    {
+      "name": "a catalog level with no tier key at all falls through to elder, on both sides",
+      "method": "elder_label",
+      "held": {
+        "name": "Untiered Family",
+        "power_name": "No Tier Here"
+      }
+    },
+    {
+      "name": "a pick in the elder container resolves its own rank, not the hardcoded default",
+      "method": "elder_label",
+      "held": {
+        "name": "Protean",
+        "power_name": "Flesh of Marble"
+      }
+    },
+    {
+      "name": "a MASTER pick reads master, the case that regressed when levels narrowed to the ladder",
+      "method": "elder_label",
+      "held": {
+        "name": "Protean",
+        "power_name": "Form of Doom"
+      }
+    },
+    {
+      "name": "an ASCENDED pick reads ascended, never elder",
+      "method": "elder_label",
+      "held": {
+        "name": "Protean",
+        "power_name": "Shape of the Cobra"
+      }
+    },
+    {
+      "name": "a METHUSELAH pick reads methuselah, never elder",
+      "method": "elder_label",
+      "held": {
+        "name": "Protean",
+        "power_name": "Eternal Vigil"
+      }
+    },
+    {
+      "name": "an overflow level is still found by name and keeps its own tier",
+      "method": "elder_label",
+      "held": {
+        "name": "Protean",
+        "power_name": "Interred Slumber"
+      }
+    },
+    {
+      "name": "a ladder rung is still found by name when held as a named pick",
+      "method": "elder_label",
+      "held": {
+        "name": "Protean",
+        "power_name": "Mist Form"
+      }
+    },
+    {
+      "name": "D80: a colon-less custom import names the family once, not twice, with a level",
+      "method": "elder_label",
+      "held": {
+        "name": "Valaren (Warrior)",
+        "power_name": "Valaren (Warrior)",
+        "level": 4,
+        "tier": "***"
+      }
+    },
+    {
+      "name": "D80: the same, with no level - the placeholder tier still never prints",
+      "method": "elder_label",
+      "held": {
+        "name": "Kineticism (~)",
+        "power_name": "Kineticism (~)",
+        "tier": "***"
+      }
+    },
+    {
+      "name": "a genuinely two-part custom name still prints family and power",
+      "method": "elder_label",
+      "held": {
+        "name": "Mortis",
+        "power_name": "The Bones Path",
+        "level": 5,
+        "tier": "***"
+      }
+    },
+    {
+      "name": "split shape: a D67 seam across levels and overflow still names the ladder's tradition",
+      "method": "elder_label",
+      "held": {
+        "name": "Path of the Split Ladder",
+        "power_name": "Ravages of the Beast"
+      }
+    },
+    {
+      "name": "split shape: the second ladder, filed in overflow, names its own tradition too",
+      "method": "elder_label",
+      "held": {
+        "name": "Path of the Split Ladder",
+        "power_name": "Stigmatize"
+      }
+    }
+  ]
 }

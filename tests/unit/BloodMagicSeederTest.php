@@ -301,13 +301,26 @@ class BloodMagicSeederTest extends TestCase {
 	/**
 	 * Two genuinely informative candidates (real, mostly-distinct names on both sides) still
 	 * merge exactly as before this fix - only placeholder candidates are treated specially.
-	 * "Path of Blood" gains three real Elder-tier names (Akhu/Bacaban/etc.'s shared five plus
-	 * Necromancy's or Wanga's three additional named levels) for eight total.
+	 * "Path of Blood" gains three real additional names beyond the shared five, for eight.
+	 *
+	 * **1.2.10 S2:** the merge is unchanged - all eight still arrive - but they no longer sit
+	 * in one array. `levels` is the declared 2/2/1 ladder and the three beyond it are
+	 * `overflow`, which is precisely the signal `vampire-blood-magic` still owes D67 a ruling
+	 * on this family. This test therefore counts the merge across every container rather than
+	 * asserting a flat length, which would only re-assert the shape the release removed.
 	 */
 	public function test_two_informative_candidates_still_merge_normally(): void {
 		$power = self::power( 'Path of Blood' );
 		$this->assertNotNull( $power );
-		$this->assertCount( 8, $power['levels'] );
-		$this->assertSame( count( $power['levels'] ), count( array_unique( array_column( $power['levels'], 'power_name' ) ) ) );
+
+		$names = array_column( $power['levels'], 'power_name' );
+		foreach ( ( $power['elder'] ?? [] ) as $picks ) {
+			$names = array_merge( $names, array_column( $picks, 'power_name' ) );
+		}
+		$names = array_merge( $names, array_column( $power['overflow'] ?? [], 'power_name' ) );
+
+		$this->assertCount( 8, $names, 'every merged name still arrives, across the three containers' );
+		$this->assertCount( 5, $power['levels'], 'the ladder itself is the declared 2+2+1' );
+		$this->assertSame( count( $names ), count( array_unique( $names ) ), 'and none is duplicated across containers' );
 	}
 }

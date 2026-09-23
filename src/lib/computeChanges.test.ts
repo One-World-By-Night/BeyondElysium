@@ -422,3 +422,112 @@ describe( 'computeChanges — identity_field', () => {
 		expect( computeChanges( original, current, blocks ) ).toEqual( [] );
 	} );
 } );
+
+/**
+ * 1.2.11 D88 consumer 4 - the diff pairs held rows by identity, not by name in arrival order.
+ * Where an item allows multiples, `Retainers (John Doe)` and `Retainers (Sue Smith)` are two
+ * holdings: removing the first must not read as "relabel John to Sue, then remove a Retainer",
+ * which is what name-order pairing produced - and that removal names no label, so the engine
+ * would have deleted both.
+ */
+describe( 'computeChanges — trait_list rows that may be held more than once', () => {
+	const blocks = {
+		backgrounds: {
+			...block( 'backgrounds', 'trait_list' ),
+			definition: {
+				items: [
+					{ name: 'Retainers', allow_multiples: true },
+					{ name: 'Generation' },
+				],
+			},
+		},
+	};
+
+	const two: SheetData = {
+		backgrounds: [
+			{ name: 'Retainers', count: 3, specialization: 'John Doe' },
+			{ name: 'Retainers', count: 2, specialization: 'Sue Smith' },
+		],
+	};
+
+	it( 'removes exactly the holding that left, and names it', () => {
+		const current: SheetData = {
+			backgrounds: [
+				{ name: 'Retainers', count: 2, specialization: 'Sue Smith' },
+			],
+		};
+
+		expect( computeChanges( two, current, blocks ) ).toEqual( [
+			{
+				change_type: 'remove_trait',
+				category: 'backgrounds',
+				change_data: {
+					block_slug: 'backgrounds',
+					trait: { name: 'Retainers', specialization: 'John Doe' },
+				},
+			},
+		] );
+	} );
+
+	it( 'raises one holding without touching the other', () => {
+		const current: SheetData = {
+			backgrounds: [
+				{ name: 'Retainers', count: 3, specialization: 'John Doe' },
+				{ name: 'Retainers', count: 4, specialization: 'Sue Smith' },
+			],
+		};
+
+		const changes = computeChanges( two, current, blocks );
+
+		expect( changes ).toHaveLength( 1 );
+		expect( changes[ 0 ].change_type ).toBe( 'modify_trait' );
+		expect( changes[ 0 ].change_data ).toMatchObject( {
+			trait: { name: 'Retainers', count: 4 },
+			previous: { specialization: 'Sue Smith' },
+		} );
+	} );
+
+	it( 'reads a relabel as a relabel, naming the label it had before', () => {
+		const original: SheetData = {
+			backgrounds: [
+				{ name: 'Retainers', count: 3, specialization: 'John Doe' },
+			],
+		};
+		const current: SheetData = {
+			backgrounds: [
+				{ name: 'Retainers', count: 3, specialization: 'Jack Doe' },
+			],
+		};
+
+		const changes = computeChanges( original, current, blocks );
+
+		expect( changes ).toHaveLength( 1 );
+		expect( changes[ 0 ].change_type ).toBe( 'modify_trait' );
+		expect( changes[ 0 ].change_data ).toMatchObject( {
+			trait: { name: 'Retainers', specialization: 'Jack Doe' },
+			previous: { specialization: 'John Doe' },
+		} );
+	} );
+
+	it( 'still ignores the label where the item cannot be held twice', () => {
+		const original: SheetData = {
+			backgrounds: [
+				{ name: 'Generation', count: 2, specialization: '8th' },
+			],
+		};
+		const current: SheetData = {
+			backgrounds: [
+				{ name: 'Generation', count: 2, specialization: '7th' },
+			],
+		};
+
+		const changes = computeChanges( original, current, blocks );
+
+		expect( changes ).toHaveLength( 1 );
+		expect( changes[ 0 ].change_type ).toBe( 'modify_trait' );
+		expect( changes[ 0 ].change_data.trait ).toEqual( {
+			name: 'Generation',
+			specialization: '7th',
+		} );
+	} );
+} );

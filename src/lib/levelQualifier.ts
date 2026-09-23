@@ -19,6 +19,7 @@
  * tier are not the same ladder.
  */
 import type { PowerLevel, TieredPower } from '../types';
+import { allLevels } from './powerLevels';
 
 /**
  * The tier vocabulary, longest-matching-intent first, mirroring
@@ -95,8 +96,12 @@ export function familyHasSeam( power?: TieredPower ): boolean {
 	if ( ! power ) {
 		return false;
 	}
+	// Every container, not the ladder alone (1.2.10 pre-deploy, 2026-09-22). D67's seam is
+	// *between* two concatenated ladders, and after the split the second ladder is filed in
+	// `overflow` - so reading `levels` alone saw one tradition and quietly dropped the
+	// "(Sabbat)"/"(Tremere)" qualifier on exactly the families U5 exists to flag.
 	const seen = new Set< string >();
-	for ( const level of power.levels ) {
+	for ( const level of allLevels( power ) ) {
 		seen.add( levelQualifier( level.note ) ?? '' );
 		if ( seen.size > 1 ) {
 			return true;

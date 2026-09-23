@@ -1580,7 +1580,8 @@ export const sheets = ( gameSlug: string ) => ( {
 			notes?: boolean;
 			xpHistory?: boolean;
 			fullPowerNames?: boolean;
-			costNumbers?: boolean;
+			/** 1.2.11 D94: default true server-side, so only an explicit false is sent. */
+			showCost?: boolean;
 		} = {}
 	): string => {
 		const params = new URLSearchParams( {
@@ -1598,11 +1599,25 @@ export const sheets = ( gameSlug: string ) => ( {
 		if ( options.fullPowerNames ) {
 			params.set( 'full_power_names', '1' );
 		}
-		if ( options.costNumbers ) {
-			params.set( 'cost_numbers', '1' );
+		if ( options.showCost === false ) {
+			params.set( 'show_cost', '0' );
 		}
 		params.set( '_wpnonce', window.beyondElysium?.nonce ?? '' );
 
+		/*
+		 * The fallback is unreachable in practice and deliberately left alone (1.2.11 D95).
+		 * `restUrl` is set by both localize payloads, and there are exactly two
+		 * `wp_enqueue_script()` call sites for this bundle - `Plugin::enqueue_frontend()`
+		 * and `Admin_Menu::enqueue_assets()` - each immediately followed by
+		 * `wp_localize_script()` on the same handle, which prints before the script runs.
+		 * Production corroborates it: on the multisite install where D95's page links were
+		 * landing on the network root, REST itself kept working, which it could not have
+		 * done had this fallback been firing. If it ever does fire on a subsite it would
+		 * build a network-root REST URL, so it is a real (if currently unreachable) hazard
+		 * rather than a harmless default.
+		 */
+		// Same unreachable-but-real fallback as the first of these five - see the note on
+		// `sheets.pdfUrl()`'s own `root` for why it is left as it is (1.2.11 D95).
 		const root =
 			window.beyondElysium?.restUrl ??
 			`${ window.location.origin }/wp-json/be/v1/`;
@@ -1675,6 +1690,8 @@ export const reports = ( gameSlug: string ) => ( {
 		}
 		params.set( '_wpnonce', window.beyondElysium?.nonce ?? '' );
 
+		// Same unreachable-but-real fallback as the first of these five - see the note on
+		// `sheets.pdfUrl()`'s own `root` for why it is left as it is (1.2.11 D95).
 		const root =
 			window.beyondElysium?.restUrl ??
 			`${ window.location.origin }/wp-json/be/v1/`;
@@ -2679,6 +2696,8 @@ export const attachments = ( gameSlug: string ) => ( {
 		const params = new URLSearchParams( {
 			_wpnonce: window.beyondElysium?.nonce ?? '',
 		} );
+		// Same unreachable-but-real fallback as the first of these five - see the note on
+		// `sheets.pdfUrl()`'s own `root` for why it is left as it is (1.2.11 D95).
 		const root =
 			window.beyondElysium?.restUrl ??
 			`${ window.location.origin }/wp-json/be/v1/`;
@@ -2939,6 +2958,8 @@ export const castings = ( gameSlug: string ) => ( {
 		const params = new URLSearchParams( {
 			_wpnonce: window.beyondElysium?.nonce ?? '',
 		} );
+		// Same unreachable-but-real fallback as the first of these five - see the note on
+		// `sheets.pdfUrl()`'s own `root` for why it is left as it is (1.2.11 D95).
 		const root =
 			window.beyondElysium?.restUrl ??
 			`${ window.location.origin }/wp-json/be/v1/`;
@@ -3657,6 +3678,8 @@ export const translations = {
 		}
 		params.set( '_wpnonce', window.beyondElysium?.nonce ?? '' );
 
+		// Same unreachable-but-real fallback as the first of these five - see the note on
+		// `sheets.pdfUrl()`'s own `root` for why it is left as it is (1.2.11 D95).
 		const root =
 			window.beyondElysium?.restUrl ??
 			`${ window.location.origin }/wp-json/be/v1/`;

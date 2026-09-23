@@ -79,6 +79,13 @@ interface Window {
  */
 interface BeyondElysiumGlobal {
 	restUrl: string;
+	/**
+	 * This site's own `home_url()`, trailing-slashed. Links to the provisioned pages are
+	 * built from this rather than `window.location.origin`, which drops the subsite path
+	 * on multisite (1.2.11 D95). Optional: a build from before this field existed, or a
+	 * page rendered before the payload lands, falls back to the origin.
+	 */
+	homeUrl?: string;
 	nonce: string;
 	version: string;
 	/** UI affordance only; every REST route re-checks the real capability server-side. */

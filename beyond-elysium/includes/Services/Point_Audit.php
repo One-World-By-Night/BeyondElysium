@@ -160,7 +160,12 @@ class Point_Audit {
 				'block_slug'          => $entry['slug'],
 				'section_label'       => $entry['label'],
 				'section_type'        => 'trait_list',
-				'label'               => $count > 1 ? sprintf( '%s ×%d', $name, $count ) : $name,
+				// 1.2.11 D94: on a count_is_cost block the stored count is a flat XP
+				// price, so `×8` would read as eight copies of a power held once. The
+				// price is always named, including at 1, which `×N` hid entirely.
+				'label'               => ! empty( $definition->count_is_cost )
+					? sprintf( '%s (%d XP)', $name, $count )
+					: ( $count > 1 ? sprintf( '%s ×%d', $name, $count ) : $name ),
 				'xp'                  => $price['xp'],
 				'direction'           => ! empty( $definition->negative ) ? 'earned' : 'spent',
 				'basis'               => $price['basis'],
@@ -335,6 +340,7 @@ class Point_Audit {
 			'name_not_in_catalog'            => __( 'name not in catalog', 'beyond-elysium' ),
 			'family_not_in_catalog'          => __( 'family not in catalog', 'beyond-elysium' ),
 			'level_has_no_cost'              => __( 'level has no cost', 'beyond-elysium' ),
+			'level_above_ceiling_no_pick_rank' => __( 'held above the ladder, no priced rank above it yet', 'beyond-elysium' ),
 			'custom_no_catalog_entry'        => __( 'custom, no catalog entry', 'beyond-elysium' ),
 			'identity_field_no_catalog_cost' => __( 'identity field, no catalog cost', 'beyond-elysium' ),
 			'resource_pool_no_pricing_rule'  => __( 'resource pool has no pricing rule yet', 'beyond-elysium' ),

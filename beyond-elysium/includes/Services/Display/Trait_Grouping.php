@@ -150,6 +150,30 @@ class Trait_Grouping {
 	}
 
 	/**
+	 * Resolves the display mode a whole trait_list section renders at, which is
+	 * `resolve_display()` for every ordinary block and never `resolve_display()` for a
+	 * `count_is_cost` one.
+	 *
+	 * 1.2.11 D94: a `count_is_cost` block (Combo Disciplines) stores a flat XP price in
+	 * the field every other block stores a rating in, so handing it to a rating display
+	 * prints a price as dots or as a bare number with no unit. The price is therefore
+	 * always labelled - `Draw Fire (12 XP)` - whatever `display` the block or the
+	 * template section carries. The viewer preference chooses only whether the price is
+	 * shown at all; hidden, the number is dropped entirely (`note_only`) rather than
+	 * falling back to a rating, which is the defect this exists to make unreachable.
+	 *
+	 * @param object      $definition      The block's decoded definition.
+	 * @param string|null $section_display The template section's own override.
+	 * @param bool|null   $show_cost       The viewer's preference; null means unset, and unset shows it.
+	 */
+	public static function resolve_mode( object $definition, ?string $section_display, ?bool $show_cost = null ): string {
+		if ( empty( $definition->count_is_cost ) ) {
+			return self::resolve_display( $section_display, $definition->display ?? null );
+		}
+		return false === $show_cost ? 'note_only' : 'cost_xp';
+	}
+
+	/**
 	 * Groups held traits by `definition->categories`, in that array's declared order,
 	 * by looking each trait's catalog entry up in `definition->items` for its
 	 * `category`. Uncategorized or unrecognized-category traits land in a trailing

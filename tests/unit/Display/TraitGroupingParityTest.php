@@ -89,6 +89,21 @@ class TraitGroupingParityTest extends TestCase {
 		}
 	}
 
+	/**
+	 * 1.2.11 D94: a `count_is_cost` block's number is a price, so it is never handed to a
+	 * rating display - `resolve_mode()` short-circuits `resolve_display()` entirely for one.
+	 * The viewer preference only chooses whether the price is shown at all.
+	 */
+	public function test_resolve_mode_matches_the_shared_fixture(): void {
+		$input    = $this->fixture( 'trait-grouping-input.json' );
+		$expected = $this->fixture( 'trait-grouping-expected.json' );
+
+		foreach ( $input->resolveMode as $i => $case ) {
+			$actual = Trait_Grouping::resolve_mode( $case->definition, $case->sectionDisplay, $case->showCost );
+			$this->assertSame( $expected->resolveMode[ $i ], $actual, 'resolveMode case: ' . $case->case );
+		}
+	}
+
 	public function test_group_by_category_matches_the_shared_fixture(): void {
 		$input    = $this->fixture( 'trait-grouping-input.json' );
 		$expected = $this->fixture( 'trait-grouping-expected.json' );

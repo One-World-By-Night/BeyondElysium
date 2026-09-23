@@ -23,7 +23,58 @@ beforeEach( () => {
 } );
 
 describe( 'pluginPageUrl', () => {
+	afterEach( () => {
+		delete window.beyondElysium;
+	} );
+
 	it( 'builds an absolute URL from a slug', () => {
+		expect( pluginPageUrl( 'be-player' ) ).toBe( `${ ORIGIN }/be-player/` );
+	} );
+
+	/**
+	 * 1.2.11 D95, recovered from the live `chronicles.owbn.net` install rather than from
+	 * git: on a multisite subsite the origin alone drops the subsite path, so every link
+	 * the plugin built landed on the network root instead of the chronicle. The origin is
+	 * deliberately left as it is here - `homeUrl` winning is the whole point, and jsdom
+	 * will not let a test move the document across origins anyway.
+	 */
+	it( 'keeps a multisite subsite path, building from homeUrl rather than the origin', () => {
+		window.beyondElysium = {
+			restUrl: 'https://chronicles.owbn.net/bbf/wp-json/be/v1/',
+			homeUrl: 'https://chronicles.owbn.net/bbf/',
+			nonce: 'n',
+			version: '1.2.11',
+		};
+
+		expect( pluginPageUrl( 'be-player' ) ).toBe(
+			'https://chronicles.owbn.net/bbf/be-player/'
+		);
+		expect( pluginPageUrl( 'be-player' ) ).not.toBe(
+			'https://chronicles.owbn.net/be-player/'
+		);
+	} );
+
+	it( 'tolerates a homeUrl with no trailing slash, and never doubles the separator', () => {
+		window.beyondElysium = {
+			restUrl: 'https://chronicles.owbn.net/bbf/wp-json/be/v1/',
+			homeUrl: 'https://chronicles.owbn.net/bbf',
+			nonce: 'n',
+			version: '1.2.11',
+		};
+
+		expect( pluginPageUrl( 'be-player' ) ).toBe(
+			'https://chronicles.owbn.net/bbf/be-player/'
+		);
+	} );
+
+	/** A payload from before this field existed must still build a usable link. */
+	it( 'falls back to the origin when homeUrl is absent', () => {
+		window.beyondElysium = {
+			restUrl: `${ ORIGIN }/wp-json/be/v1/`,
+			nonce: 'n',
+			version: '1.2.11',
+		};
+
 		expect( pluginPageUrl( 'be-player' ) ).toBe( `${ ORIGIN }/be-player/` );
 	} );
 } );

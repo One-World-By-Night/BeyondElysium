@@ -31,7 +31,7 @@ class Trait_Display {
 	 *                      (int|float|string) and `note` (string) properties.
 	 * @param string $mode  One of: simple, multiplier, multiplier_dot, dot, cost,
 	 *                      note_only, cost_only, dot_separate, simple_dots,
-	 *                      simple_number, simple_note, cost_number.
+	 *                      simple_number, simple_note, cost_number, cost_xp.
 	 * @param string $dot   Glyph used by dot-rendering modes, defaulting to the one dot a
 	 *                      resource pool's points use too (1.0.0-review F-016).
 	 * @return string
@@ -109,6 +109,16 @@ class Trait_Display {
 				// the viewer's cost-numbers preference is on.
 				$out = "{$trait->name} {$total} XP";
 				return $note !== '' ? "{$out} ({$note})" : $out;
+
+			case 'cost_xp':
+				// 1.2.11 D94: the default for a count_is_cost block - "Draw Fire
+				// (12 XP)". The unit is part of the rendering, not a preference,
+				// because the number is a price and reads as a rating without it.
+				// The note joins the price inside the same parentheses rather than
+				// opening a second pair, matching 'cost' above.
+				$priced = "{$total} XP";
+				$inner  = $note !== '' ? "{$priced}, {$note}" : $priced;
+				return "{$trait->name} ({$inner})";
 
 			default:
 				return $trait->name;
