@@ -49,7 +49,7 @@ class Point_Audit {
 
 		$walk_entries  = self::build_walk_entries( $stack->stack_definition->sections ?? [], array_keys( $sheet_data ) );
 		$union_slugs   = array_column( $walk_entries, 'slug' );
-		$blocks        = Schema_Block::find_by_slugs_for_game( $union_slugs, (string) ( $character->owner_slug ?? '' ) );
+		$blocks        = Purchase_Scope::widen_blocks( Schema_Block::find_by_slugs_for_game( $union_slugs, (string) ( $character->owner_slug ?? '' ) ), (string) ( $character->owner_slug ?? '' ) );
 
 		$lines = [];
 		foreach ( $walk_entries as $entry ) {

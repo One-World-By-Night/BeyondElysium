@@ -202,6 +202,9 @@ class Cutover_Command {
 			case 'nothing_to_roll_back':
 				\WP_CLI::success( 'Nothing to roll back: this install is not on the declared catalog and holds no cutover records.' );
 				return;
+			case 'started_declared':
+				\WP_CLI::success( 'Nothing to roll back: this install started on the declared catalog, so there is no earlier state to return to.' );
+				return;
 			case 'locked':
 				\WP_CLI::error( 'Another cutover run holds the lock. If none is running it clears itself after 30 minutes.' );
 			case 'blocked':

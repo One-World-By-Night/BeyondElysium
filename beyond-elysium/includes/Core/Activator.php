@@ -4,6 +4,7 @@ namespace BeyondElysium\Core;
 
 use BeyondElysium\Database\Schema;
 use BeyondElysium\Database\Seeder;
+use BeyondElysium\Services\Catalog_Cutover;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -28,6 +29,15 @@ class Activator {
 
 		Schema::create_tables();
 		Capabilities::register();
+
+		// A new install starts on the per-creature catalog. Only one that predates 1.3.4 is ever on the
+		// shared lists, and it stays there until `wp be cutover apply`. Declared before anything is
+		// seeded, because the stacks, the default templates and the demo characters each read the
+		// switch as they are built.
+		if ( $fresh_install ) {
+			Catalog_Cutover::declare_fresh_install();
+		}
+
 		Seeder::seed_schema_blocks();
 		Seeder::seed_creature_stacks();
 

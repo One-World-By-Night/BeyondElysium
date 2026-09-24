@@ -18,6 +18,8 @@ The one control worth calling out: **Creature types**. By default every chronicl
 
 **Sub-Faction Restrictions**, right below the checklist, goes one level finer: within a creature type you've already enabled, you can narrow a real catalog field to only the values your chronicle runs — a Vampire Sect or Clan, a Werewolf Tribe, and similarly shaped fields on any other type. "Vampire yes, but no Sabbat" is exactly this. It's built the same way as Creature types above: absent or fully-checked means every option stays open, and narrowing it only ever changes what a *new* character can pick — a character who already held a value that's since been restricted (a Sabbat vampire from before you added the restriction) keeps that value and can still be viewed, edited, and approved normally. Every field offered here is read live from your chronicle's own catalog, so a custom field you've added to a schema block shows up automatically; nothing needs to be told about it by name.
 
+**Purchase Lists**, below that, decides what your players can buy. Each creature type has its own Abilities, Backgrounds, Merits and Flaws, and by default a character buys only from its own. Three switches (Abilities, Backgrounds, and Merits and Flaws) open a list to every creature type in your chronicle: a Vampire can then take a Mage-only Ability, priced from the Mage list. They work in any combination, and each is all or nothing. You can't open a list to some creature types and not others. The lists themselves stay separate, and a character who already holds something keeps it if you switch the list off again.
+
 ### accessSchema and chronicle roles
 
 Under **Beyond Elysium → Chronicle Setup → Chronicle Access**, you can:

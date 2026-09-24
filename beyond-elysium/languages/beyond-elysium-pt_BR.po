@@ -1864,10 +1864,10 @@ msgstr "accent_color deve ser uma cor hexadecimal como #1a1a1a."
 #: includes/REST/Games_Controller.php:515
 msgid ""
 "At least one of enabled_stacks, enabled_factions, "
-"require_new_character_approval, or accent_color is required."
+"require_new_character_approval, accent_color, or purchase_scope is required."
 msgstr ""
 "É necessário pelo menos um de enabled_stacks, enabled_factions, "
-"require_new_character_approval ou accent_color."
+"require_new_character_approval, accent_color ou purchase_scope."
 
 #: includes/REST/Games_Controller.php:522
 msgid ""
@@ -11379,3 +11379,32 @@ msgstr "= %d XP"
 
 msgid "The site is being moved to the new catalog and can't save anything for a moment. Try again in a minute."
 msgstr "O site está sendo movido para o novo catálogo e não pode salvar nada por um instante. Tente novamente em um minuto."
+
+#: includes/REST/Games_Controller.php:531
+msgid "purchase_scope must switch abilities, backgrounds, or merits_flaws on or off."
+msgstr "purchase_scope deve ativar ou desativar abilities, backgrounds ou merits_flaws."
+
+#: build/510.js:3
+#: build/915.js:13
+msgid "Purchase Lists"
+msgstr "Listas de Compra"
+
+#: build/510.js:3
+#: build/915.js:13
+msgid "Each creature type buys from its own lists: its own Abilities, Backgrounds, Merits and Flaws. Turn a list on to let every creature type in this chronicle buy from every creature type's entries for it, priced from the list each entry comes from. The lists themselves stay separate. All off by default."
+msgstr "Cada tipo de criatura compra das próprias listas: suas Habilidades, Antecedentes, Qualidades e Defeitos. Ative uma lista para que todos os tipos de criatura desta crônica possam comprar as entradas de todos os tipos de criatura, com o preço da lista de onde cada entrada vem. As listas continuam separadas. Tudo vem desativado por padrão."
+
+#: build/510.js:2
+#: build/915.js:12
+msgid "Abilities from every creature type"
+msgstr "Habilidades de todos os tipos de criatura"
+
+#: build/510.js:2
+#: build/915.js:12
+msgid "Backgrounds from every creature type"
+msgstr "Antecedentes de todos os tipos de criatura"
+
+#: build/510.js:2
+#: build/915.js:12
+msgid "Merits and Flaws from every creature type"
+msgstr "Qualidades e Defeitos de todos os tipos de criatura"

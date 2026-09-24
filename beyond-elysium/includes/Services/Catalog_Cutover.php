@@ -55,6 +55,32 @@ class Catalog_Cutover {
 	}
 
 	/**
+	 * Puts a brand-new install straight onto the declared catalog (1.3.4). Activation calls it once,
+	 * before anything is seeded, so the stacks, the default templates and the demo characters are all
+	 * built on the per-creature blocks and there is nothing to re-key. It never touches an install that
+	 * already exists: one already declared, one that holds a character, and a build with no declared
+	 * catalog are all left as they are, and the rest stay on the shared lists until `apply()`.
+	 */
+	public static function declare_fresh_install(): bool {
+		if ( self::is_declared() || ! static::catalog_available() || self::character_count() > 0 ) {
+			return false;
+		}
+		update_option( self::OPTION, 'declared', true );
+		update_option( self::RECORD_OPTION, [
+			'applied_at'     => gmdate( 'c' ),
+			'actor'          => 0,
+			'plugin_version' => defined( 'BE_VERSION' ) ? BE_VERSION : null,
+			'fresh_install'  => true,
+		], false );
+		return true;
+	}
+
+	private static function character_count(): int {
+		global $wpdb;
+		return (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . Manager::table( 'characters' ) );
+	}
+
+	/**
 	 * Whether an `apply()` or `rollback()` run is in flight right now. The REST write guard asks it: a
 	 * save that lands between a character's re-key and the site's flip is written to the retired block
 	 * of a sheet that has already moved, and `live_slug()` cannot map it until the flip.
@@ -79,6 +105,7 @@ class Catalog_Cutover {
 		return [
 			'available'          => static::catalog_available(),
 			'declared'           => self::is_declared(),
+			'fresh_install'      => ! empty( $record['fresh_install'] ),
 			'locked'             => $held > 0 && ( time() - $held ) < self::LOCK_TTL,
 			'applied_at'         => $record['applied_at'] ?? null,
 			'actor'              => isset( $record['actor'] ) ? (int) $record['actor'] : null,
@@ -799,6 +826,11 @@ class Catalog_Cutover {
 		$record   = get_option( self::RECORD_OPTION );
 		if ( $standing === [] && ! is_array( $record ) && ! self::is_declared() ) {
 			return [ 'status' => 'nothing_to_roll_back' ];
+		}
+		// An install created on the declared catalog was never on the shared lists, so there is nothing
+		// to return it to, and flipping the switch off would strand stacks that were seeded declared.
+		if ( $standing === [] && is_array( $record ) && ! empty( $record['fresh_install'] ) ) {
+			return [ 'status' => 'started_declared' ];
 		}
 
 		// Phase 1, no writes: is every character still exactly what apply() wrote?

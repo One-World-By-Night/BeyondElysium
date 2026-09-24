@@ -54,6 +54,14 @@ that value and can still be viewed, edited, and approved normally. Every field o
 read live from your chronicle's own catalog, so a custom field you've added to a schema block
 shows up automatically; nothing needs to be told about it by name.
 
+**Purchase Lists**, below that, decides what your players can buy. Each creature type has
+its own Abilities, Backgrounds, Merits and Flaws, and by default a character buys only from
+its own. Three switches (Abilities, Backgrounds, and Merits and Flaws) open a list to every
+creature type in your chronicle: a Vampire can then take a Mage-only Ability, priced from
+the Mage list. They work in any combination, and each is all or nothing. You can't open a
+list to some creature types and not others. The lists themselves stay separate, and a
+character who already holds something keeps it if you switch the list off again.
+
 ### accessSchema and chronicle roles
 
 Under **Beyond Elysium → Chronicle Setup → Chronicle Access**, you can:

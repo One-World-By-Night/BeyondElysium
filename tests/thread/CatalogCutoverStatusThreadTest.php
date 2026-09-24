@@ -52,11 +52,12 @@ class CatalogCutoverStatusThreadTest extends WP_UnitTestCase {
 		] );
 	}
 
-	public function test_a_fresh_install_reads_as_not_applied(): void {
+	public function test_an_install_on_the_shared_lists_reads_as_not_applied(): void {
 		$status = Catalog_Cutover::status();
 
 		$this->assertTrue( $status['available'] );
 		$this->assertFalse( $status['declared'] );
+		$this->assertFalse( $status['fresh_install'] );
 		$this->assertFalse( $status['locked'] );
 		$this->assertNull( $status['applied_at'] );
 		$this->assertNull( $status['actor'] );

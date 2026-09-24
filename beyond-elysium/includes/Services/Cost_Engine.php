@@ -83,7 +83,7 @@ class Cost_Engine {
 		}
 
 		// Prefer this character's chronicle-specific fork of the block, if one exists.
-		$block = Schema_Block::find_for_game( $block_slug, (string) ( $character->owner_slug ?? '' ) );
+		$block = Purchase_Scope::widen( Schema_Block::find_for_game( $block_slug, (string) ( $character->owner_slug ?? '' ) ), (string) ( $character->owner_slug ?? '' ) );
 		if ( ! $block ) {
 			// A missing block has no cost rule to apply; default to zero.
 			return self::quoted( 0 );

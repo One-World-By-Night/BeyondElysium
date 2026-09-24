@@ -479,10 +479,11 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Saves exactly the three Chronicle Setup settings an HST may set for their own
+	 * Saves exactly the Chronicle Setup settings an HST may set for their own
 	 * chronicle (owner ruling, 1.0.0-checklist.md item 18): enabled_stacks (creature
-	 * types), enabled_factions (sub-faction restrictions), and
-	 * require_new_character_approval. Merges into the chronicle's existing settings
+	 * types), enabled_factions (sub-faction restrictions),
+	 * require_new_character_approval, accent_color, and purchase_scope (1.3.4: which
+	 * purchase lists are open to every creature type). Merges into the chronicle's existing settings
 	 * object the same way update_item() does - never a wholesale replace - since both
 	 * routes write the same shared `settings` column (R6). Only these three field
 	 * names are ever read from the request; every other game field (name, slug,
@@ -504,7 +505,7 @@ class Games_Controller extends Base_Controller {
 		// accent_color added 1.2.7-design-workflow.md §E2 - a narrow chronicle-level override
 		// of the site's own brand accent default, same bar as the other three (be_manage_chronicle_setup,
 		// not the full be_manage_games update_item() otherwise requires).
-		foreach ( [ 'enabled_stacks', 'enabled_factions', 'require_new_character_approval', 'accent_color' ] as $field ) {
+		foreach ( [ 'enabled_stacks', 'enabled_factions', 'require_new_character_approval', 'accent_color', 'purchase_scope' ] as $field ) {
 			$value = $request->get_param( $field );
 			if ( $value !== null ) {
 				$incoming[ $field ] = $value;
@@ -512,7 +513,7 @@ class Games_Controller extends Base_Controller {
 		}
 
 		if ( empty( $incoming ) ) {
-			return $this->error( 'invalid_param', __( 'At least one of enabled_stacks, enabled_factions, require_new_character_approval, or accent_color is required.', 'beyond-elysium' ), 400 );
+			return $this->error( 'invalid_param', __( 'At least one of enabled_stacks, enabled_factions, require_new_character_approval, accent_color, or purchase_scope is required.', 'beyond-elysium' ), 400 );
 		}
 
 		// Empty string clears the override (falls through to the site-wide default); anything
@@ -522,12 +523,28 @@ class Games_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'accent_color must be a hex color like #1a1a1a.', 'beyond-elysium' ), 400 );
 		}
 
+		// Each area is switched on or off by itself, so a write may carry one and leave the others as
+		// they are (1.3.4). An unknown area or a value that is not plainly on or off is refused.
+		if ( isset( $incoming['purchase_scope'] ) ) {
+			$switches = \BeyondElysium\Services\Purchase_Scope::sanitize( $incoming['purchase_scope'] );
+			if ( $switches === null ) {
+				return $this->error( 'invalid_param', __( 'purchase_scope must switch abilities, backgrounds, or merits_flaws on or off.', 'beyond-elysium' ), 400 );
+			}
+			$incoming['purchase_scope'] = $switches;
+		}
+
 		$existing = (array) ( $game->settings ?? new \stdClass() );
 		// Same one-stack-at-a-time merge update_item() itself applies (1.0.0-review F-066).
 		if ( isset( $incoming['enabled_factions'] ) && is_array( $incoming['enabled_factions'] ) ) {
 			$incoming['enabled_factions'] = self::merge_faction_restrictions(
 				json_decode( (string) wp_json_encode( $existing['enabled_factions'] ?? [] ), true ) ?: [],
 				$incoming['enabled_factions']
+			);
+		}
+		if ( isset( $incoming['purchase_scope'] ) ) {
+			$incoming['purchase_scope'] = array_merge(
+				\BeyondElysium\Services\Purchase_Scope::normalize( $existing['purchase_scope'] ?? null ),
+				$incoming['purchase_scope']
 			);
 		}
 

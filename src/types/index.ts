@@ -180,6 +180,10 @@ export interface UpdateChronicleSetupRequest {
 	require_new_character_approval?: boolean;
 	/** 1.2.7-design-workflow.md §E2 - '' clears the override (falls through to the site default). */
 	accent_color?: string;
+	/** 1.3.4 - the purchase lists opened to every creature type; a write carries only the areas it changes. */
+	purchase_scope?: Partial<
+		Record< 'abilities' | 'backgrounds' | 'merits_flaws', boolean >
+	>;
 }
 
 // ---------------------------------------------------------------------------

@@ -9,6 +9,14 @@ A site administrator with WP-CLI on the server. There is no button for it in wp-
 changes every character on the install at once, so it runs from the command line, where it
 can ask you to confirm.
 
+## New installs
+
+A new install starts on the per-creature catalog, so there is nothing to switch and `plan`
+on it reads 0 characters. This page is for a site that was set up before 1.3.4 and is still
+on the shared lists: `wp be cutover status` says `declared: no`. A site that started on the
+new catalog has no earlier state to return to, so `rollback` on it says so and changes
+nothing.
+
 ## What it does
 
 Older installs share a few sections across every creature type: Abilities, Merits, Flaws and

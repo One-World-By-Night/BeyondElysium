@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**`v1.2.7` — released and running in production chronicles.**
+**`v1.3.4` — released and running in production chronicles.**
 
 ## What It Does
 
@@ -14,6 +14,8 @@ BeyondElysium runs character sheets, player submissions, and Storyteller approva
 - Approval rules a chronicle sets for itself, down to a single trait value, power level, or identity-field option.
 - Point audit: a line-by-line account of what a sheet is worth in XP, marking honestly what can't be priced rather than guessing.
 - Health levels, resource pools, blood magic paths, Elder-tier discipline pricing — the mechanics, not an approximation of them.
+- A catalog for each creature type: its own Abilities, Backgrounds, Merits, Flaws and powers, with their own prices and groupings, declared in reviewable files that ship with the plugin. A new install starts on it, and a chronicle's HST can open any of those purchase lists to every creature type from Chronicle Setup, one area at a time.
+- Homebrew that isn't in the catalog waits for a Storyteller to set its price at approval. Nothing custom is approved for free.
 
 **Grapevine interoperability**
 
@@ -46,7 +48,7 @@ BeyondElysium runs character sheets, player submissions, and Storyteller approva
 
 ## Installation
 
-Download `beyond-elysium-1.2.7.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
+Download `beyond-elysium-1.3.4.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
 
 That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder here is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder into `wp-content/plugins/` will not work. To build it yourself:
 
@@ -56,6 +58,8 @@ npm install && npm run build
 ./bin/dist          # writes dist/beyond-elysium-<version>.zip
 ./bin/verify        # lint, static analysis, and the test suite
 ```
+
+An install from before 1.3.4 keeps the older Abilities, Merits and Flaws lists, shared by every creature type, until an administrator switches it with `wp be cutover plan` and then `apply`. The switch never touches XP and can be rolled back; see [Switching a Site to the Declared Catalog](Documents/help/catalog-cutover.md). A new install needs none of that.
 
 Requires PHP 8.2, WordPress 6.0 or newer, and [Elementor](https://wordpress.org/plugins/elementor/). On WordPress 6.5+ the dependency is declared in the plugin header, so WordPress offers to install Elementor for you and won't activate this plugin without it. Tested against PHP 8.2.33, MySQL 8.4.6, and WordPress 7.1.
 
@@ -79,6 +83,9 @@ The plugin ships its own in-app documentation — four guides and a per-screen h
 - [Admin Guide](Documents/admin-guide.md) — schema blocks, creature stacks, adding a creature type without code.
 - [Player Guide](Documents/player-guide.md) — creating and editing a character, submitting changes, experience, plots.
 - [REST API Reference](Documents/rest-api.md) — every route, its capability, and what it does.
+- [Switching a Site to the Declared Catalog](Documents/help/catalog-cutover.md) — for a site set up before 1.3.4.
+
+The page behind every in-app Help button is in [Documents/help](Documents/help/) as well.
 
 ## Dark Pack
 

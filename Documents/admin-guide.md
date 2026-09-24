@@ -207,10 +207,11 @@ printed PDF on the next page load - no ticket, no file, no deploy.
 
 ## Switching a Site to the Declared Catalog
 
-Beyond Elysium ships two catalogs. Installs from before 1.3.3 use the old one, where
-Abilities, Merits, Flaws and Werewolf rites are shared by every creature type. The newer one
-gives each creature type its own lists, prices and groupings. A site changes from one to the
-other once, with WP-CLI, and can change back.
+Beyond Elysium ships two catalogs. The old one shares Abilities, Merits, Flaws and Werewolf
+rites across every creature type. The newer one gives each creature type its own lists,
+prices and groupings. **A new install starts on the newer one**, so none of this applies to
+it. A site set up before 1.3.4 stays on the old one until someone switches it, once, with
+WP-CLI, and it can change back.
 
 ```
 wp be cutover plan

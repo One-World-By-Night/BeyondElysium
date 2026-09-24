@@ -233,6 +233,12 @@ class Creature_Stack {
 		$block_slugs = array_values( array_unique( array_merge( $block_slugs, self::GLOBAL_NPC_BLOCK_SLUGS ) ) );
 		$blocks = Schema_Block::find_by_slugs_for_game( $block_slugs, $game_slug );
 
+		// A chronicle that has opened a purchase list (1.3.4) buys from every creature type's entries
+		// for that area, so the editor, the sheet and the validator all read the wider list.
+		if ( $game_slug !== '' ) {
+			$blocks = \BeyondElysium\Services\Purchase_Scope::widen_blocks( $blocks, $game_slug );
+		}
+
 		return [
 			'stack'  => $stack,
 			'blocks' => $blocks,

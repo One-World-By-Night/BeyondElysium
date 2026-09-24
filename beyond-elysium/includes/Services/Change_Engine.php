@@ -183,7 +183,7 @@ class Change_Engine {
 	 * @return object|null
 	 */
 	private static function block_definition( string $owner_slug, string $block_slug ) {
-		$block = Schema_Block::find_for_game( $block_slug, $owner_slug );
+		$block = Purchase_Scope::widen( Schema_Block::find_for_game( $block_slug, $owner_slug ), $owner_slug );
 		return $block->definition ?? null;
 	}
 
@@ -658,7 +658,7 @@ class Change_Engine {
 
 		if ( $block_slug ) {
 			// Prefer this character's chronicle-specific fork of the block, if one exists.
-			$block = Schema_Block::find_for_game( $block_slug, (string) ( $character->owner_slug ?? '' ) );
+			$block = Purchase_Scope::widen( Schema_Block::find_for_game( $block_slug, (string) ( $character->owner_slug ?? '' ) ), (string) ( $character->owner_slug ?? '' ) );
 			// $block->definition decodes as a plain object, not an associative array.
 			if ( $block && $block->definition ) {
 				$definition = $block->definition;

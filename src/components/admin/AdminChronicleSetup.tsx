@@ -11,9 +11,14 @@ import type { ReactNode } from 'react';
 import api from '../../api/client';
 import EnabledStacksPicker from './EnabledStacksPicker';
 import FactionRestrictionsPicker from './FactionRestrictionsPicker';
+import PurchaseListsPicker from './PurchaseListsPicker';
 import type { Game, SetupStatus, SetupStatusItem } from '../../types';
 import HelpButton from '../shared/HelpButton';
 import { sendFileLinkUrl } from '../../lib/pluginPages';
+import {
+	purchaseScopeChange,
+	type PurchaseArea,
+} from '../../lib/purchaseScope';
 import './AdminChronicleSetup.css';
 
 const STATUS_LABEL: Record< SetupStatusItem[ 'status' ], string > = {
@@ -204,6 +209,17 @@ export function AdminChronicleSetup() {
 					[ stackSlug ]: { [ fieldName ]: allowed },
 				},
 			} )
+			.then( applySaved )
+			.catch( saveFailed );
+	}
+
+	// 1.3.4: one purchase-list switch. Only the area being switched is sent, so the server keeps the
+	// other two exactly as they were.
+	function savePurchaseScope( area: PurchaseArea, on: boolean ) {
+		setSavingRow( `purchase:${ area }` );
+		setSaveError( null );
+		api.games
+			.updateChronicleSetup( gameSlug, purchaseScopeChange( area, on ) )
 			.then( applySaved )
 			.catch( saveFailed );
 	}
@@ -502,6 +518,36 @@ export function AdminChronicleSetup() {
 								? savingRow.slice( 'faction:'.length )
 								: null
 						}
+					/>
+				) : (
+					<p className="be-chronicle-setup__not-actionable">
+						{ __(
+							"Your chronicle's HST sets these.",
+							'beyond-elysium'
+						) }
+					</p>
+				) ) }
+
+			<h2>{ __( 'Purchase Lists', 'beyond-elysium' ) }</h2>
+			<p className="description">
+				{ __(
+					"Each creature type buys from its own lists: its own Abilities, Backgrounds, Merits and Flaws. Turn a list on to let every creature type in this chronicle buy from every creature type's entries for it, priced from the list each entry comes from. The lists themselves stay separate. All off by default.",
+					'beyond-elysium'
+				) }
+			</p>
+			{ /* Saved with the creature types above, so offered to whoever that row lets act. */ }
+			{ status &&
+				( enabledStacksItem?.actionable ? (
+					<PurchaseListsPicker
+						scope={ currentGame?.settings?.purchase_scope }
+						savingArea={
+							savingRow?.startsWith( 'purchase:' )
+								? ( savingRow.slice(
+										'purchase:'.length
+								  ) as PurchaseArea )
+								: null
+						}
+						onChange={ savePurchaseScope }
 					/>
 				) : (
 					<p className="be-chronicle-setup__not-actionable">
