@@ -16,6 +16,7 @@ import type {
 import type { DataManagementSettings } from '../../api/client';
 import type { WpUserSummary } from '../../types/character';
 import { errorMessage } from '../../lib/errorMessage';
+import { preselectedChronicle, writeGameToUrl } from '../../lib/pluginPages';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
@@ -73,19 +74,12 @@ export function AdminChronicleAccess() {
 				if ( result.length === 0 ) {
 					return;
 				}
-				// §6.7/§3.4: a URL-supplied chronicle wins outright (a setup-checklist deep
-				// link); otherwise prefer any real chronicle over "Beyond Elysium Demo",
-				// which sorts first alphabetically on both production sites today and would
-				// otherwise silently become the thing an administrator edits by default.
-				const fromUrl = new URLSearchParams(
-					window.location.search
-				).get( 'game' );
-				const preselect =
-					result.find( ( g ) => g.slug === fromUrl ) ??
-					result.find( ( g ) => g.slug !== 'be-demo' ) ??
-					result[ 0 ];
 				// A chronicle already chosen stays chosen across a reload.
-				setSelectedSlug( ( current ) => current || preselect.slug );
+				setSelectedSlug(
+					( current ) =>
+						current ||
+						( preselectedChronicle( result )?.slug ?? '' )
+				);
 			} )
 			.catch( ( err: unknown ) =>
 				setError(
@@ -126,6 +120,12 @@ export function AdminChronicleAccess() {
 
 	useEffect( loadGames, [] );
 	useEffect( () => loadMembers( selectedSlug ), [ selectedSlug ] );
+
+	useEffect( () => {
+		if ( selectedSlug ) {
+			writeGameToUrl( selectedSlug );
+		}
+	}, [ selectedSlug ] );
 
 	useEffect( () => {
 		api.authorizationSettings

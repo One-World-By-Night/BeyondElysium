@@ -239,7 +239,7 @@ class Admin_Menu {
 	 * three "configure this one chronicle" (admin-menu-consolidation-design.md).
 	 */
 	public static function render_chronicle_setup_hub(): void {
-		// GS-8's fix link for row 4 (Setup_Status_Controller::row_front_end_pages()) - a
+		// GS-8's fix link for row 4 (Setup_Status::row_front_end_pages()) - a
 		// plain admin-page link rather than a REST call, matching this row's own "link,
 		// not duplicated UI" shape (§6.7). Capability-gated the same as the page itself.
 		// page-consolidation-design.md: the four fixed pages are chronicle-independent, so

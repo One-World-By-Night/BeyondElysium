@@ -145,3 +145,30 @@ export function writeTabToUrl( tab: string ): void {
 	url.searchParams.set( 'tab', tab );
 	window.history.replaceState( {}, '', url.toString() );
 }
+
+/**
+ * Which chronicle a setup screen opens on: the one named in `?game=` when it is a real one, otherwise
+ * the first that is not the demo fixture (it sorts first alphabetically and would quietly become the
+ * thing an administrator edits), otherwise the first there is. One rule for every screen, so a link
+ * that carries a chronicle and a screen opened bare agree on what they show.
+ */
+export function preselectedChronicle< T extends { slug: string } >(
+	chronicles: T[]
+): T | null {
+	if ( chronicles.length === 0 ) {
+		return null;
+	}
+	const wanted = new URLSearchParams( window.location.search ).get( 'game' );
+	return (
+		chronicles.find( ( c ) => c.slug === wanted ) ??
+		chronicles.find( ( c ) => c.slug !== 'be-demo' ) ??
+		chronicles[ 0 ]
+	);
+}
+
+/** Writes the chronicle on screen into `?game=` without a reload, so a tab switch, Back or refresh keeps it. */
+export function writeGameToUrl( slug: string ): void {
+	const url = new URL( window.location.href );
+	url.searchParams.set( 'game', slug );
+	window.history.replaceState( {}, '', url.toString() );
+}

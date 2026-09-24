@@ -26,14 +26,22 @@ plots, changes, and queries are all scoped to one game and never visible from an
 
 Right under Games is **Chronicle Setup** — a checklist for the chronicle you just created,
 not a one-time wizard. Every row's status is computed live from what actually exists: pick
-your chronicle from the dropdown and it shows exactly what still needs doing (creature
-types, a Storyteller besides you, new-character approval, front-end pages, at least one
-character) alongside informational rows about what's already using Beyond Elysium's own
-defaults (approval rules, catalog and template customisation, downtime/rumor settings).
-Nothing here is a one-time setup you complete and forget — if an AST leaves and nobody
-replaces them, that row goes back to amber on its own, on your very next visit. A row you
+your chronicle from the dropdown and each row is amber (*Needs attention*), green (*Done*)
+or grey (*Info*, optional and not set yet), and the summary line says how far through you
+are ("5 of 14 done"). Five rows can ask for attention: creature types, a Storyteller besides
+you, new-character approval, front-end pages, and at least one character. Everything else is
+optional and turns from grey to green as soon as your chronicle has set something of its
+own: approval rules (a rule, or a default policy you chose), catalog and template
+customisation, downtime and rumor settings, plot features, branding, sub-faction
+restrictions, purchase lists, and the Grapevine link once a player has used it. A row that
+lives on another page has a **Go** button; a setting on this page has **Set up** (**Change**
+once it's done) and opens its controls right under the row. Rows that need attention start
+open and everything else starts folded. Nothing here is a one-time setup you complete and
+forget — if an AST leaves and nobody replaces them, that row goes back to amber on its own,
+and if you delete a template override the Sheet templates row goes back to grey. A row you
 can't act on (because you're an HST, not a site administrator) still shows its real status,
-greyed rather than hidden, so you know what to ask for and from whom.
+greyed rather than hidden, so you know what to ask for and from whom. While a chronicle has
+no characters yet, a dismissible notice on your WordPress Dashboard points you here.
 
 The one control worth calling out: **Creature types**. By default every chronicle offers
 all eleven World of Darkness creature types when creating a character. Most real OWBN
@@ -43,26 +51,26 @@ retired Wraith stays fully readable, exportable, and approvable even if you late
 Wraith from the list — narrowing this only changes what a *new* character can be, never what
 an existing one is).
 
-**Sub-Faction Restrictions**, right below the checklist, goes one level finer: within a
-creature type you've already enabled, you can narrow a real catalog field to only the values
-your chronicle runs — a Vampire Sect or Clan, a Werewolf Tribe, and similarly shaped fields on
-any other type. "Vampire yes, but no Sabbat" is exactly this. It's built the same way as
-Creature types above: absent or fully-checked means every option stays open, and narrowing it
-only ever changes what a *new* character can pick — a character who already held a value
-that's since been restricted (a Sabbat vampire from before you added the restriction) keeps
-that value and can still be viewed, edited, and approved normally. Every field offered here is
-read live from your chronicle's own catalog, so a custom field you've added to a schema block
-shows up automatically; nothing needs to be told about it by name.
+**Sub-faction restrictions**, a row further down the same list, goes one level finer: within
+a creature type you've already enabled, you can narrow a real catalog field to only the
+values your chronicle runs — a Vampire Sect or Clan, a Werewolf Tribe, and similarly shaped
+fields on any other type. "Vampire yes, but no Sabbat" is exactly this. It's built the same
+way as Creature types above: absent or fully-checked means every option stays open, and
+narrowing it only ever changes what a *new* character can pick — a character who already
+held a value that's since been restricted (a Sabbat vampire from before you added the
+restriction) keeps that value and can still be viewed, edited, and approved normally. Every
+field offered here is read live from your chronicle's own catalog, so a custom field you've
+added to a schema block shows up automatically; nothing needs to be told about it by name.
 
-**Purchase Lists**, below that, decides what your players can buy. Each creature type has
-its own Abilities, Backgrounds, Merits and Flaws, and by default a character buys only from
-its own. Three switches (Abilities, Backgrounds, and Merits and Flaws) open a list to every
-creature type in your chronicle: a Vampire can then take a Mage-only Ability, priced from
-the Mage list. They work in any combination, and each is all or nothing. You can't open a
-list to some creature types and not others. The lists themselves stay separate. A Grapevine
-file imported into the chronicle matches against the wider list too, so that Mage-only
-Ability arrives as a catalog entry rather than a custom one waiting for a price. A character
-who already holds something keeps it if you switch the list off again.
+**Purchase lists**, the row after that, decides what your players can buy. Each creature
+type has its own Abilities, Backgrounds, Merits and Flaws, and by default a character buys
+only from its own. Three switches (Abilities, Backgrounds, and Merits and Flaws) open a list
+to every creature type in your chronicle: a Vampire can then take a Mage-only Ability,
+priced from the Mage list. They work in any combination, and each is all or nothing. You
+can't open a list to some creature types and not others. The lists themselves stay separate.
+A Grapevine file imported into the chronicle matches against the wider list too, so that
+Mage-only Ability arrives as a catalog entry rather than a custom one waiting for a price. A
+character who already holds something keeps it if you switch the list off again.
 
 ### accessSchema and chronicle roles
 

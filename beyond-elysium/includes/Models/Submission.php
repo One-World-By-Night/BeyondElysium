@@ -184,6 +184,18 @@ class Submission {
 	}
 
 	/**
+	 * How many files have ever been sent to a chronicle, whatever became of them - the Chronicle
+	 * Setup checklist's evidence that its Grapevine link has been used.
+	 *
+	 * @param int $game_id
+	 * @return int
+	 */
+	public static function count_for_game( int $game_id ): int {
+		$table = Manager::table( 'character_submissions' );
+		return (int) Manager::get_var( "SELECT COUNT(*) FROM {$table} WHERE game_id = %d", $game_id );
+	}
+
+	/**
 	 * How many submissions are currently waiting for a chronicle - the real
 	 * check behind the 50-waiting-files cap (§12 of the design).
 	 *

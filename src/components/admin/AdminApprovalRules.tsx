@@ -27,6 +27,7 @@ import type {
 	TraitListItem,
 } from '../../types';
 import { errorMessage } from '../../lib/errorMessage';
+import { preselectedChronicle, writeGameToUrl } from '../../lib/pluginPages';
 import './Admin.css';
 
 const EMPTY_FORM: ApprovalRuleRequest = {
@@ -100,16 +101,7 @@ export function AdminApprovalRules() {
 				if ( gameSlug || found.length === 0 ) {
 					return;
 				}
-				// §6.7/§3.4: same precedence as Chronicle Access - a URL-supplied chronicle,
-				// else any real chronicle over the alphabetically-first demo fixture.
-				const fromUrl = new URLSearchParams(
-					window.location.search
-				).get( 'game' );
-				const preselect =
-					found.find( ( g ) => g.slug === fromUrl ) ??
-					found.find( ( g ) => g.slug !== 'be-demo' ) ??
-					found[ 0 ];
-				setGameSlug( preselect.slug );
+				setGameSlug( preselectedChronicle( found )?.slug ?? '' );
 			} )
 			.catch( ( err: unknown ) =>
 				setError(
@@ -126,6 +118,7 @@ export function AdminApprovalRules() {
 		if ( ! gameSlug ) {
 			return;
 		}
+		writeGameToUrl( gameSlug );
 		setLoading( true );
 		Promise.all( [
 			api.approvalRules( gameSlug ).list(),

@@ -115,6 +115,22 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
+	 * How many rules this chronicle has set itself: the rules its own forks carry. A rule is only
+	 * ever written into a fork, so there is nothing inherited to subtract, and only the chronicle's
+	 * forks are read.
+	 *
+	 * @param string $game_slug
+	 * @return int
+	 */
+	public static function own_rule_count( string $game_slug ): int {
+		$count = 0;
+		foreach ( Schema_Block::forks_for_game_by_types( self::APPLICABLE_SECTION_TYPES, $game_slug ) as $block ) {
+			$count += count( self::extract_rules( $block ) );
+		}
+		return $count;
+	}
+
+	/**
 	 * Returns the chronicle's default approval policy - whether a change no
 	 * rule has an opinion on is approved automatically.
 	 *

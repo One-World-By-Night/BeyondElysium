@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**`v1.3.5` — released and running in production chronicles.**
+**`v1.3.6` — released and running in production chronicles.**
 
 ## What It Does
 
@@ -35,7 +35,7 @@ BeyondElysium runs character sheets, player submissions, and Storyteller approva
 - Query engine across characters, items, locations, and rotes, with bulk XP, status, and pool operations straight off a result set.
 - Twenty reports — rosters, sign-in sheets, item/location/rote cards, statistics, House Rules — all as signed PDFs.
 - Items, locations, rotes, and a full Harpy boon ledger.
-- Guided setup checklist, computed live, for standing a new chronicle up.
+- One setup checklist for standing a chronicle up, computed live: every row goes green as it is done, and settings open right under their row.
 
 **Everywhere else**
 
@@ -48,7 +48,7 @@ BeyondElysium runs character sheets, player submissions, and Storyteller approva
 
 ## Installation
 
-Download `beyond-elysium-1.3.5.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
+Download `beyond-elysium-1.3.6.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
 
 That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder here is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder into `wp-content/plugins/` will not work. To build it yourself:
 

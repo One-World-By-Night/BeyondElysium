@@ -11408,3 +11408,142 @@ msgstr "Antecedentes de todos os tipos de criatura"
 #: build/915.js:12
 msgid "Merits and Flaws from every creature type"
 msgstr "Qualidades e Defeitos de todos os tipos de criatura"
+
+#. translators: 1: chronicle name, 2: number of checklist items needing attention
+#: includes/Core/Setup_Notice.php:121
+#, php-format
+msgid "%1$s is not set up yet: %2$d item needs attention."
+msgid_plural "%1$s is not set up yet: %2$d items need attention."
+msgstr[0] "A crônica %1$s ainda não está configurada: %2$d item precisa de atenção."
+msgstr[1] "A crônica %1$s ainda não está configurada: %2$d itens precisam de atenção."
+
+#. translators: %d: number of chronicles with no characters yet
+#: includes/Core/Setup_Notice.php:128
+#, php-format
+msgid "%d chronicles are not set up yet."
+msgstr "%d crônicas ainda não estão configuradas."
+
+#: includes/Core/Setup_Notice.php:138
+msgid "Open Chronicle Setup"
+msgstr "Abrir Configuração da Crônica"
+
+#: includes/Core/Setup_Notice.php:140
+msgid "Dismiss"
+msgstr "Dispensar"
+
+#. translators: %d: number of approval rules
+#: includes/Services/Setup_Status.php:209
+#, php-format
+msgid "%d approval rule(s) set for this chronicle. A change no rule covers is approved automatically."
+msgstr "%d regra(s) de aprovação definida(s) para esta crônica. Uma mudança que nenhuma regra cobre é aprovada automaticamente."
+
+#. translators: %d: number of approval rules
+#: includes/Services/Setup_Status.php:210
+#, php-format
+msgid "%d approval rule(s) set for this chronicle. A change no rule covers waits for Storyteller approval."
+msgstr "%d regra(s) de aprovação definida(s) para esta crônica. Uma mudança que nenhuma regra cobre aguarda a aprovação do Narrador."
+
+#: includes/Services/Setup_Status.php:213
+msgid "No individual rules yet. A change no rule covers is approved automatically."
+msgstr "Nenhuma regra individual ainda. Uma mudança que nenhuma regra cobre é aprovada automaticamente."
+
+#: includes/Services/Setup_Status.php:214
+msgid "No individual rules yet. A change no rule covers waits for Storyteller approval."
+msgstr "Nenhuma regra individual ainda. Uma mudança que nenhuma regra cobre aguarda a aprovação do Narrador."
+
+#: includes/Services/Setup_Status.php:294
+msgid "Plot features"
+msgstr "Recursos de trama"
+
+#: includes/Services/Setup_Status.php:296
+msgid "Faction Goals, plot categories and timeline dates are on."
+msgstr "Objetivos de Facção, categorias de trama e datas de linha do tempo estão ativados."
+
+#: includes/Services/Setup_Status.php:297
+msgid "Off. Turn on to add Faction Goals, plot categories and timeline dates."
+msgstr "Desativado. Ative para adicionar Objetivos de Facção, categorias de trama e datas de linha do tempo."
+
+#. translators: %s: a hex color such as #8b0000
+#: includes/Services/Setup_Status.php:313
+#, php-format
+msgid "This chronicle has its own accent color (%s)."
+msgstr "Esta crônica tem sua própria cor de destaque (%s)."
+
+#. translators: %s: a hex color such as #8b0000
+#: includes/Services/Setup_Status.php:314
+msgid "Using the site-wide accent color."
+msgstr "Usando a cor de destaque de todo o site."
+
+#: includes/Services/Setup_Status.php:338
+msgid "Sub-faction restrictions"
+msgstr "Restrições de subfacção"
+
+#. translators: %d: number of catalog fields with their own list of allowed values
+#: includes/Services/Setup_Status.php:340
+#, php-format
+msgid "%d field(s) have their own list of allowed values."
+msgstr "%d campo(s) têm sua própria lista de valores permitidos."
+
+#. translators: %d: number of catalog fields with their own list of allowed values
+#: includes/Services/Setup_Status.php:341
+msgid "Every value of every field is open. Narrow a field such as Clan or Tribe to what this chronicle runs."
+msgstr "Todos os valores de todos os campos estão abertos. Restrinja um campo como Clã ou Tribo ao que esta crônica usa."
+
+#: includes/Services/Setup_Status.php:351
+msgid "Abilities"
+msgstr "Habilidades"
+
+#: includes/Services/Setup_Status.php:352
+msgid "Backgrounds"
+msgstr "Antecedentes"
+
+#: includes/Services/Setup_Status.php:353
+msgid "Merits and Flaws"
+msgstr "Qualidades e Defeitos"
+
+#: includes/Services/Setup_Status.php:365
+msgid "Purchase lists"
+msgstr "Listas de compra"
+
+#. translators: %s: comma-separated list of the areas that are open, such as Abilities, Backgrounds
+#: includes/Services/Setup_Status.php:367
+#, php-format
+msgid "Open to every creature type: %s."
+msgstr "Aberto a todos os tipos de criatura: %s."
+
+#. translators: %s: comma-separated list of the areas that are open, such as Abilities, Backgrounds
+#: includes/Services/Setup_Status.php:368
+msgid "All three lists are off, so each creature type buys from its own."
+msgstr "As três listas estão desativadas, então cada tipo de criatura compra da sua própria."
+
+#: includes/Services/Setup_Status.php:382
+msgid "Players' Grapevine files"
+msgstr "Arquivos do Grapevine dos jogadores"
+
+#. translators: %d: number of files players have sent
+#: includes/Services/Setup_Status.php:384
+#, php-format
+msgid "%d player file(s) have come in through the link."
+msgstr "%d arquivo(s) de jogadores chegaram pelo link."
+
+#. translators: %d: number of files players have sent
+#: includes/Services/Setup_Status.php:385
+msgid "Share the link so players can send their Grapevine files. Nothing is added until a Storyteller accepts."
+msgstr "Compartilhe o link para que os jogadores enviem seus arquivos do Grapevine. Nada é adicionado até que um Narrador aceite."
+
+#: build/510.js:2
+#: build/915.js:12
+msgid "Done"
+msgstr "Concluído"
+
+#: build/510.js:2
+#: build/915.js:12
+msgid "Set up"
+msgstr "Configurar"
+
+#. translators: 1: number of checklist items done, 2: number of checklist items in all
+#: build/510.js:4
+#: build/915.js:14
+#, js-format
+msgid "%1$d of %2$d done."
+msgstr "%1$d de %2$d concluídos."

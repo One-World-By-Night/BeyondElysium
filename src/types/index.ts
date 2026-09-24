@@ -271,7 +271,7 @@ export interface SetupStatusItem {
 
 export interface SetupStatus {
 	items: SetupStatusItem[];
-	summary: { attention: number; ok: number; info: number };
+	summary: { attention: number; ok: number; info: number; total: number };
 }
 
 // ---------------------------------------------------------------------------

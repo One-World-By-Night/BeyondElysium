@@ -5,6 +5,9 @@ namespace BeyondElysium\Tests\Thread;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
+use BeyondElysium\Models\Schema_Block;
+use BeyondElysium\Models\Submission;
+use BeyondElysium\Models\Template;
 use WP_REST_Request;
 use WP_UnitTestCase;
 
@@ -221,5 +224,217 @@ class SetupStatusControllerTest extends WP_UnitTestCase {
 
 		$after = $this->row( $this->dispatch( $this->admin_id )->get_data()['items'], 'enabled_stacks' );
 		$this->assertSame( 'ok', $after['status'], 'a cached response here would still read attention' );
+	}
+
+	/** @return array{0:string,1:string} A global trait_list block's slug and its first item's name. */
+	private function a_ruleable_item(): array {
+		foreach ( Schema_Block::all_for_game_by_types( [ 'trait_list' ], '' ) as $block ) {
+			$first = $block->definition->items[0]->name ?? null;
+			if ( $first !== null ) {
+				return [ $block->slug, $first ];
+			}
+		}
+		$this->fail( 'the test database has no trait_list block with an item' );
+	}
+
+	private function status_of( string $id ): string {
+		return $this->row( $this->dispatch( $this->admin_id )->get_data()['items'], $id )['status'];
+	}
+
+	private function detail_of( string $id ): string {
+		return $this->row( $this->dispatch( $this->admin_id )->get_data()['items'], $id )['detail'];
+	}
+
+	/**
+	 * 1.3.6: these four rows were `info` whatever the chronicle did, so a finished function never
+	 * showed as finished. Each now reads `info` until the chronicle has set something of its own.
+	 */
+	public function test_the_four_optional_rows_read_info_until_the_chronicle_sets_something(): void {
+		foreach ( [ 'approval_rules', 'catalog_customisation', 'sheet_templates', 'downtime_and_rumors' ] as $id ) {
+			$this->assertSame( 'info', $this->status_of( $id ), $id );
+		}
+	}
+
+	public function test_saving_downtime_and_rumor_settings_turns_that_row_green(): void {
+		Game::update( $this->game_slug, [ 'settings' => [ 'apr' => [ 'personal_actions' => 7 ] ] ] );
+
+		$this->assertSame( 'ok', $this->status_of( 'downtime_and_rumors' ) );
+		$this->assertSame( 'This chronicle has its own downtime and rumor settings.', $this->detail_of( 'downtime_and_rumors' ) );
+	}
+
+	public function test_an_empty_downtime_settings_object_is_not_a_choice(): void {
+		Game::update( $this->game_slug, [ 'settings' => [ 'apr' => [] ] ] );
+
+		$this->assertSame( 'info', $this->status_of( 'downtime_and_rumors' ) );
+	}
+
+	public function test_overriding_a_sheet_template_turns_that_row_green_and_removing_it_turns_it_back(): void {
+		$game   = Game::find_by_slug( $this->game_slug );
+		$global = Template::resolve( 'vampire', 'sheet_full', null );
+		$this->assertNotNull( $global, 'the test database has a global vampire sheet_full template' );
+
+		$id = Template::create( [
+			'game_id'       => (int) $game->id,
+			'stack_slug'    => 'vampire',
+			'name'          => 'Setup status template',
+			'template_type' => 'sheet_full',
+			'layout'        => json_decode( (string) wp_json_encode( $global->layout ), true ),
+		] );
+		$this->assertGreaterThan( 0, $id );
+		$this->assertSame( 'ok', $this->status_of( 'sheet_templates' ) );
+
+		Template::delete( $id );
+
+		$this->assertSame( 'info', $this->status_of( 'sheet_templates' ), 'the page is a mirror, not a memory' );
+	}
+
+	public function test_forking_a_block_turns_the_catalog_row_green_and_removing_the_fork_turns_it_back(): void {
+		[ $slug ] = $this->a_ruleable_item();
+		$this->assertNotNull( Schema_Block::find_or_create_fork_for_game( $slug, $this->game_slug ) );
+		$this->assertSame( 'ok', $this->status_of( 'catalog_customisation' ) );
+
+		Schema_Block::delete( $slug, $this->game_slug );
+
+		$this->assertSame( 'info', $this->status_of( 'catalog_customisation' ) );
+	}
+
+	public function test_choosing_a_default_approval_policy_turns_the_approval_row_green_either_way(): void {
+		foreach ( [ [ true, 'approved automatically' ], [ false, 'waits for Storyteller approval' ] ] as [ $auto, $wording ] ) {
+			Game::update( $this->game_slug, [ 'settings' => [ 'auto_approve' => $auto ] ] );
+
+			$this->assertSame( 'ok', $this->status_of( 'approval_rules' ), 'auto_approve ' . var_export( $auto, true ) );
+			$this->assertStringContainsString( $wording, $this->detail_of( 'approval_rules' ) );
+		}
+	}
+
+	public function test_a_rule_the_chronicle_created_turns_the_approval_row_green_and_is_counted(): void {
+		[ $slug, $item ] = $this->a_ruleable_item();
+
+		wp_set_current_user( $this->admin_id );
+		$request = new WP_REST_Request( 'POST', '/be/v1/' . $this->game_slug . '/approval-rules' );
+		$request->set_header( 'content-type', 'application/json' );
+		$request->set_body( wp_json_encode( [ 'block_slug' => $slug, 'target_type' => 'item', 'target_name' => $item, 'approval' => 'auto', 'reason' => 'setup status test' ] ) );
+		$this->assertSame( 201, rest_get_server()->dispatch( $request )->get_status() );
+
+		$this->assertSame( 'ok', $this->status_of( 'approval_rules' ) );
+		$this->assertStringContainsString( '1 approval rule(s) set', $this->detail_of( 'approval_rules' ) );
+	}
+
+	public function test_a_fork_with_no_rule_in_it_is_not_an_approval_rule(): void {
+		[ $slug ] = $this->a_ruleable_item();
+		Schema_Block::find_or_create_fork_for_game( $slug, $this->game_slug );
+
+		$this->assertSame( 'info', $this->status_of( 'approval_rules' ), 'a customised block is not a rule' );
+		$this->assertSame( 'ok', $this->status_of( 'catalog_customisation' ) );
+	}
+
+	/**
+	 * 1.3.6: the five settings that used to sit below the checklist are rows of it, each `info`
+	 * until the chronicle has set something of its own.
+	 */
+	public function test_the_five_setting_rows_read_info_until_the_chronicle_sets_something(): void {
+		foreach ( [ 'plot_features', 'branding', 'faction_restrictions', 'purchase_lists', 'grapevine_files' ] as $id ) {
+			$this->assertSame( 'info', $this->status_of( $id ), $id );
+		}
+	}
+
+	public function test_opening_a_purchase_list_turns_that_row_green_and_names_what_is_open(): void {
+		Game::update( $this->game_slug, [ 'settings' => [ 'purchase_scope' => [ 'abilities' => true, 'backgrounds' => false, 'merits_flaws' => true ] ] ] );
+
+		$this->assertSame( 'ok', $this->status_of( 'purchase_lists' ) );
+		$this->assertSame( 'Open to every creature type: Abilities, Merits and Flaws.', $this->detail_of( 'purchase_lists' ) );
+
+		Game::update( $this->game_slug, [ 'settings' => [ 'purchase_scope' => [ 'abilities' => false, 'backgrounds' => false, 'merits_flaws' => false ] ] ] );
+
+		$this->assertSame( 'info', $this->status_of( 'purchase_lists' ), 'every switch off is the default again' );
+	}
+
+	public function test_turning_on_plot_features_turns_that_row_green(): void {
+		Game::update( $this->game_slug, [ 'settings' => [ 'plots' => [ 'expanded_enabled' => true ] ] ] );
+		$this->assertSame( 'ok', $this->status_of( 'plot_features' ) );
+
+		Game::update( $this->game_slug, [ 'settings' => [ 'plots' => [ 'expanded_enabled' => false ] ] ] );
+		$this->assertSame( 'info', $this->status_of( 'plot_features' ) );
+	}
+
+	public function test_a_chronicle_accent_color_turns_the_branding_row_green(): void {
+		Game::update( $this->game_slug, [ 'settings' => [ 'accent_color' => '#123456' ] ] );
+		$this->assertSame( 'ok', $this->status_of( 'branding' ) );
+		$this->assertStringContainsString( '#123456', $this->detail_of( 'branding' ) );
+
+		Game::update( $this->game_slug, [ 'settings' => [ 'accent_color' => '' ] ] );
+		$this->assertSame( 'info', $this->status_of( 'branding' ), 'an emptied override is the site default again' );
+	}
+
+	public function test_a_stored_list_of_allowed_values_turns_the_sub_faction_row_green(): void {
+		Game::update( $this->game_slug, [ 'settings' => [ 'enabled_factions' => [ 'vampire' => [ 'Sect' => [ 'Camarilla' ] ] ] ] ] );
+		$this->assertSame( 'ok', $this->status_of( 'faction_restrictions' ) );
+		$this->assertStringContainsString( '1 field(s)', $this->detail_of( 'faction_restrictions' ) );
+
+		Game::update( $this->game_slug, [ 'settings' => [ 'enabled_factions' => [ 'vampire' => [ 'Sect' => [] ] ] ] ] );
+		$this->assertSame( 'info', $this->status_of( 'faction_restrictions' ), 'an empty list is no choice' );
+	}
+
+	public function test_a_file_a_player_sent_turns_the_grapevine_row_green(): void {
+		$game = Game::find_by_slug( $this->game_slug );
+		Submission::create( [
+			'game_id'        => (int) $game->id,
+			'submitted_by'   => $this->subscriber_id,
+			'arrival'        => 'new',
+			'character_name' => 'Setup Status Sender',
+			'stack_slug'     => 'vampire',
+			'source_file'    => 'sender.gex',
+			'format'         => 'gex',
+			'file_hash'      => str_repeat( 'a', 64 ),
+			'parsed'         => '{}',
+		] );
+
+		$this->assertSame( 'ok', $this->status_of( 'grapevine_files' ) );
+		$this->assertStringContainsString( '1 player file(s)', $this->detail_of( 'grapevine_files' ) );
+	}
+
+	public function test_the_summary_counts_every_row_and_the_rows_there_are_to_do(): void {
+		$summary = $this->dispatch( $this->admin_id )->get_data()['summary'];
+
+		$this->assertSame( 14, $summary['total'] );
+		$this->assertSame( $summary['total'], $summary['attention'] + $summary['ok'] + $summary['info'] );
+
+		Game::update( $this->game_slug, [ 'settings' => [ 'accent_color' => '#123456' ] ] );
+		$after = $this->dispatch( $this->admin_id )->get_data()['summary'];
+		$this->assertSame( $summary['ok'] + 1, $after['ok'] );
+		$this->assertSame( 14, $after['total'] );
+	}
+
+	public function test_the_demo_chronicles_own_row_is_not_something_to_do(): void {
+		$data = $this->dispatch_for_game( $this->admin_id, 'be-demo' )->get_data();
+
+		$this->assertCount( 15, $data['items'] );
+		$this->assertSame( 14, $data['summary']['total'], 'the demo row asks for nothing' );
+		$this->assertSame( 15, $data['summary']['attention'] + $data['summary']['ok'] + $data['summary']['info'] );
+	}
+
+	public function test_an_hst_can_act_on_the_setting_rows_a_site_administrator_does_not_have_to_be_for(): void {
+		$game = Game::find_by_slug( $this->game_slug );
+		Game_Member::set_role( (int) $game->id, $this->editor_id, 'hst' );
+
+		$items = $this->dispatch( $this->editor_id )->get_data()['items'];
+
+		foreach ( [ 'purchase_lists', 'faction_restrictions', 'branding', 'grapevine_files' ] as $id ) {
+			$this->assertTrue( $this->row( $items, $id )['actionable'], $id );
+		}
+		$this->assertFalse( $this->row( $items, 'plot_features' )['actionable'], 'Plot features stay a site administrator\'s alone' );
+	}
+
+	public function test_an_ast_reads_the_setting_rows_and_can_only_copy_the_grapevine_link(): void {
+		$game   = Game::find_by_slug( $this->game_slug );
+		$ast_id = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( (int) $game->id, $ast_id, 'ast' );
+
+		$items = $this->dispatch( $ast_id )->get_data()['items'];
+
+		foreach ( [ 'purchase_lists', 'faction_restrictions', 'branding', 'plot_features' ] as $id ) {
+			$this->assertFalse( $this->row( $items, $id )['actionable'], $id );
+		}
+		$this->assertTrue( $this->row( $items, 'grapevine_files' )['actionable'] );
 	}
 }

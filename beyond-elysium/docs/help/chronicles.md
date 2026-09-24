@@ -45,7 +45,7 @@ There's no single screen - a chronicle is the thing you pick at the top of [My C
 
 ### See what's customized for your chronicle versus shared
 
-1. Open [Chronicle Setup](chronicle-setup.md) - its **Approval rules**, **Catalog customisation**, and **Sheet templates** rows each report whether your chronicle has its own or is using Beyond Elysium's defaults.
+1. Open [Chronicle Setup](chronicle-setup.md) - its **Approval rules**, **Catalog customisation**, and **Sheet templates** rows each report whether your chronicle has its own or is using Beyond Elysium's defaults, and turn green once it has its own.
 
 ### Add a new player to your chronicle (Storyteller)
 

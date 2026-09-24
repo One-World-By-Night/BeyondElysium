@@ -323,7 +323,7 @@ The player-initiated counterpart to Transfers: no Storyteller on the sending end
 | Method | Path | Capability | Notes |
 |---|---|---|---|
 | PUT | `/{game_slug}/chronicle-setup` | `be_manage_chronicle_setup` | The settings an HST may change for their own chronicle without the full `be_manage_games`: `enabled_stacks`, `enabled_factions` (one field at a time), `require_new_character_approval`, `accent_color`, and `purchase_scope`. `purchase_scope` switches the purchase lists that are open to every creature type: `abilities`, `backgrounds` and `merits_flaws`, each true or false. A write carries only the areas it changes and the others stay as they were; an unknown area, or a value that is not plainly on or off, is a `400`. Merges into the chronicle's stored settings. |
-| GET | `/{game_slug}/setup-status` | `be_manage_characters` | The Chronicle Setup checklist's rows, computed live against real data every time — never stored, so nothing here goes stale between visits. Staff only (an HST or AST): a player is refused. |
+| GET | `/{game_slug}/setup-status` | `be_manage_characters` | The Chronicle Setup checklist's rows, computed live against real data every time — never stored, so nothing here goes stale between visits. Each row has `id`, `status` (`attention`, `ok` or `info`), `title`, `detail`, `fix` and `actionable`; there are fourteen, plus one more on the demo chronicle. An optional row reads `info` until the chronicle has set something of its own, then `ok`. `summary` gives `attention`, `ok`, `info` and `total`, the rows there are to do (the demo row isn't counted). Staff only (an HST or AST): a player is refused. |
 
 ## Authorization Settings
 

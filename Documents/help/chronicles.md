@@ -66,7 +66,7 @@ the shared template, and a later change there needs making again, by hand.
 
 1. Open [Chronicle Setup](chronicle-setup.md) - its **Approval rules**, **Catalog
    customisation**, and **Sheet templates** rows each report whether your chronicle has its
-   own or is using Beyond Elysium's defaults.
+   own or is using Beyond Elysium's defaults, and turn green once it has its own.
 
 ### Add a new player to your chronicle (Storyteller)
 

@@ -28,6 +28,7 @@ class Plugin {
 		\BeyondElysium\Elementor\Init::register();
 		User_Settings::register();
 		Health_Notice::register();
+		Setup_Notice::register();
 		Admin_Menu::register();
 		Page_Provisioner::register();
 		Print_Canvas::register();

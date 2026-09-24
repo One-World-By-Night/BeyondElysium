@@ -17,6 +17,7 @@ import './Admin.css';
 import './AdminAprSettings.css';
 
 import { errorMessage } from '../../lib/errorMessage';
+import { preselectedChronicle, writeGameToUrl } from '../../lib/pluginPages';
 
 /** Grapevine's real defaults (APREngineClass.cls:69-84), offered only via Restore Grapevine defaults. */
 const GV_DEFAULTS: AprSettings = {
@@ -72,7 +73,7 @@ export function AdminAprSettings() {
 			.then( ( found ) => {
 				setGames( found );
 				if ( ! gameSlug && found.length > 0 ) {
-					setGameSlug( found[ 0 ].slug );
+					setGameSlug( preselectedChronicle( found )?.slug ?? '' );
 				}
 			} )
 			.catch( ( err: unknown ) =>
@@ -90,6 +91,7 @@ export function AdminAprSettings() {
 		if ( ! gameSlug ) {
 			return;
 		}
+		writeGameToUrl( gameSlug );
 		setLoading( true );
 		Promise.all( [
 			api.apr( gameSlug ).getSettings(),

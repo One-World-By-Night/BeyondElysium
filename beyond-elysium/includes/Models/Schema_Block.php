@@ -345,6 +345,31 @@ class Schema_Block {
 	}
 
 	/**
+	 * A chronicle's own forks of the given section types and nothing else: no global block is
+	 * read, so asking what a chronicle has customised never loads the shared catalog. Unordered
+	 * for the reason all_for_game_by_types() gives.
+	 *
+	 * @param string[] $section_types
+	 * @param string   $game_slug
+	 * @return array
+	 */
+	public static function forks_for_game_by_types( array $section_types, string $game_slug ): array {
+		if ( $game_slug === '' || $section_types === [] ) {
+			return [];
+		}
+
+		global $wpdb;
+		$table        = Manager::table( 'schema_blocks' );
+		$placeholders = implode( ', ', array_fill( 0, count( $section_types ), '%s' ) );
+		$rows         = $wpdb->get_results( $wpdb->prepare(
+			"SELECT * FROM {$table} WHERE game_slug = %s AND section_type IN ({$placeholders})",
+			array_merge( [ $game_slug ], $section_types )
+		) ) ?: [];
+
+		return array_map( [ self::class, 'decode_row' ], $rows );
+	}
+
+	/**
 	 * Find multiple schema blocks by a list of slugs, always the
 	 * global/system definitions regardless of any chronicle forks. Returns
 	 * an empty array immediately when $slugs is empty.

@@ -7,6 +7,8 @@ import {
 	pluginPageUrl,
 	readTabFromUrl,
 	writeTabToUrl,
+	preselectedChronicle,
+	writeGameToUrl,
 	sendFileLinkUrl,
 	PLAYER_TABS,
 	STORYTELLER_TABS,
@@ -158,5 +160,62 @@ describe( 'readTabFromUrl / writeTabToUrl', () => {
 		const params = new URLSearchParams( window.location.search );
 		expect( params.get( 'tab' ) ).toBe( 'edit' );
 		expect( params.get( 'game_slug' ) ).toBe( 'kony' );
+	} );
+} );
+
+describe( 'preselectedChronicle', () => {
+	const kony = { slug: 'kony', name: 'Kony' };
+	const boston = { slug: 'boston', name: 'Boston' };
+	const demo = { slug: 'be-demo', name: 'Beyond Elysium Demo' };
+
+	it( 'opens the chronicle the URL names', () => {
+		setLocation( `${ ORIGIN }/?game=boston` );
+		expect( preselectedChronicle( [ demo, kony, boston ] ) ).toBe( boston );
+	} );
+
+	it( 'ignores a chronicle that does not exist and falls back to the first real one', () => {
+		setLocation( `${ ORIGIN }/?game=gone` );
+		expect( preselectedChronicle( [ demo, kony, boston ] ) ).toBe( kony );
+	} );
+
+	it( 'prefers a real chronicle to the demo fixture that sorts first', () => {
+		expect( preselectedChronicle( [ demo, kony ] ) ).toBe( kony );
+	} );
+
+	it( 'opens the demo when it is the only chronicle', () => {
+		expect( preselectedChronicle( [ demo ] ) ).toBe( demo );
+	} );
+
+	it( 'returns null when there are no chronicles', () => {
+		expect( preselectedChronicle( [] ) ).toBeNull();
+	} );
+} );
+
+describe( 'writeGameToUrl', () => {
+	it( 'writes the chronicle without disturbing the tab or other params', () => {
+		setLocation( `${ ORIGIN }/wp-admin/admin.php?page=x&tab=apr` );
+		writeGameToUrl( 'boston' );
+		const params = new URLSearchParams( window.location.search );
+		expect( params.get( 'game' ) ).toBe( 'boston' );
+		expect( params.get( 'tab' ) ).toBe( 'apr' );
+		expect( params.get( 'page' ) ).toBe( 'x' );
+	} );
+
+	it( 'replaces a chronicle already in the URL', () => {
+		setLocation( `${ ORIGIN }/?game=kony` );
+		writeGameToUrl( 'boston' );
+		expect(
+			new URLSearchParams( window.location.search ).getAll( 'game' )
+		).toEqual( [ 'boston' ] );
+	} );
+
+	it( 'is what a later tab switch reads back', () => {
+		setLocation( `${ ORIGIN }/?tab=setup` );
+		writeGameToUrl( 'boston' );
+		writeTabToUrl( 'access' );
+		expect(
+			preselectedChronicle( [ { slug: 'kony' }, { slug: 'boston' } ] )
+				?.slug
+		).toBe( 'boston' );
 	} );
 } );
