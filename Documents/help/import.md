@@ -178,6 +178,11 @@ A five-stage wizard: **1. Upload**, **2. Preview**, **3. Choose Target**, **4. R
 - **XML files carry no player identity.** A binary export includes player email addresses
   Beyond Elysium can match automatically; an XML export doesn't, so every character needs its
   player assigned by hand afterward, from the roster.
+- **A chronicle's open purchase lists count.** If the chronicle has switched on Abilities,
+  Backgrounds, or Merits and Flaws in [Chronicle Setup](chronicle-setup.md), an entry in the
+  file that only another creature type lists (a Mage-only Ability in a Vampire's file, say)
+  matches as the catalog entry it is, and it is not offered as a custom one that waits for a
+  Storyteller's price. With the list off, it still comes in as custom.
 - **A creature type with no Grapevine equivalent** can still arrive inside an imported file,
   but can't be exported, transferred, or given a verification code afterward.
 - **A transfer needs your review too.** Accepting one under Waiting for Review is the same

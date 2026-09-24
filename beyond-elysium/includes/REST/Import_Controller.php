@@ -16,6 +16,7 @@ use BeyondElysium\Services\GEX_Parser;
 use BeyondElysium\Services\GEX_Xml_Parser;
 use BeyondElysium\Services\GV_Binary_Reader;
 use BeyondElysium\Services\Not_Exportable_Exception;
+use BeyondElysium\Services\Purchase_Scope;
 use BeyondElysium\Services\Trait_Mapper;
 use BeyondElysium\Utils\Uuid;
 
@@ -650,8 +651,10 @@ class Import_Controller extends Base_Controller {
 				continue;
 			}
 
-			// Prefers this chronicle's own fork of the block when one exists.
-			$block = Schema_Block::find_for_game( $classification['block_slug'], $game_slug );
+			// Prefers this chronicle's own fork of the block when one exists, and its wider purchase list
+			// when the chronicle has opened one, so an entry only another creature type lists imports as
+			// the catalog entry it is (1.3.5).
+			$block = Purchase_Scope::widen( Schema_Block::find_for_game( $classification['block_slug'], $game_slug ), $game_slug );
 			if ( ! $block || ! in_array( $block->section_type, [ 'trait_list', 'tiered_power' ], true ) ) {
 				continue; // Neither shape this importer knows how to build sheet_data for.
 			}
@@ -1618,8 +1621,8 @@ class Import_Controller extends Base_Controller {
 
 				$block_slug = $classification['block_slug'];
 				if ( ! array_key_exists( $block_slug, $block_cache ) ) {
-					// Uses this chronicle's own fork, if any, so preview classification matches commit exactly.
-					$block_cache[ $block_slug ] = Schema_Block::find_for_game( $block_slug, $game_slug );
+					// Uses this chronicle's own fork, if any, and its wider purchase list, so preview classification matches commit exactly.
+					$block_cache[ $block_slug ] = Purchase_Scope::widen( Schema_Block::find_for_game( $block_slug, $game_slug ), $game_slug );
 				}
 				$block = $block_cache[ $block_slug ];
 				if ( ! $block ) {

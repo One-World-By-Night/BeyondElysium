@@ -35,11 +35,22 @@ find beyond-elysium/includes -name '*.php' -not -path '*/accessschema-client/*' 
 "$PHP" -l beyond-elysium/beyond-elysium.php > /dev/null
 echo "    ok"
 
+# PHPStan prints an upgrade banner on every run, so its output is held and shown only when it fails.
+# `--quiet` on its own printed nothing at all on a failure: the gate stopped after the step's name and
+# gave no reason (found at the 1.3.4 gate).
+run_phpstan() {
+    local out
+    if ! out="$("$PHP" beyond-elysium/vendor/bin/phpstan analyse --no-progress --memory-limit=1G "$@" 2>&1)"; then
+        printf '%s\n' "$out" >&2
+        exit 1
+    fi
+}
+
 echo "==> phpstan (level 5)"
-"$PHP" beyond-elysium/vendor/bin/phpstan analyse --no-progress --memory-limit=1G --quiet
+run_phpstan
 
 echo "==> phpstan (null and false handling, level 8)"
-"$PHP" beyond-elysium/vendor/bin/phpstan analyse --no-progress --memory-limit=1G --quiet -c phpstan-null-safety.neon
+run_phpstan -c phpstan-null-safety.neon
 
 echo "==> phpunit :: unit"
 "$PHP" beyond-elysium/vendor/bin/phpunit --testsuite unit --no-coverage

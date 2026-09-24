@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**`v1.3.4` — released and running in production chronicles.**
+**`v1.3.5` — released and running in production chronicles.**
 
 ## What It Does
 
@@ -14,7 +14,7 @@ BeyondElysium runs character sheets, player submissions, and Storyteller approva
 - Approval rules a chronicle sets for itself, down to a single trait value, power level, or identity-field option.
 - Point audit: a line-by-line account of what a sheet is worth in XP, marking honestly what can't be priced rather than guessing.
 - Health levels, resource pools, blood magic paths, Elder-tier discipline pricing — the mechanics, not an approximation of them.
-- A catalog for each creature type: its own Abilities, Backgrounds, Merits, Flaws and powers, with their own prices and groupings, declared in reviewable files that ship with the plugin. A new install starts on it, and a chronicle's HST can open any of those purchase lists to every creature type from Chronicle Setup, one area at a time.
+- A catalog for each creature type: its own Abilities, Backgrounds, Merits, Flaws and powers, with their own prices and groupings, declared in reviewable files that ship with the plugin. A new install starts on it, and a chronicle's HST can open any of those purchase lists to every creature type from Chronicle Setup, one area at a time, and a Grapevine import matches against them too.
 - Homebrew that isn't in the catalog waits for a Storyteller to set its price at approval. Nothing custom is approved for free.
 
 **Grapevine interoperability**
@@ -48,7 +48,7 @@ BeyondElysium runs character sheets, player submissions, and Storyteller approva
 
 ## Installation
 
-Download `beyond-elysium-1.3.4.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
+Download `beyond-elysium-1.3.5.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
 
 That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder here is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder into `wp-content/plugins/` will not work. To build it yourself:
 

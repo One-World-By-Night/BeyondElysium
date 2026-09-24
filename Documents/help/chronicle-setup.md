@@ -81,11 +81,13 @@ or
   **Backgrounds**, and **Merits and Flaws**. Each creature type buys from its own lists.
   Turn a switch on and every creature type in this chronicle can buy from every creature
   type's entries for that area, priced from the list each entry comes from - a Vampire could
-  take a Mage-only Ability, for instance. The lists themselves stay separate. The switches
-  work in any combination (Abilities on and the rest off is fine), and each one is all or
-  nothing: there is no way to open a list to some creature types and not others. Each switch
-  saves as soon as you check it. Anyone who isn't the chronicle's HST reads "Your
-  chronicle's HST sets these." in place of the switches.
+  take a Mage-only Ability, for instance. The lists themselves stay separate, and importing
+  a Grapevine file into the chronicle matches names against the wider list too, so a
+  Mage-only Ability in a Vampire's file comes in as a catalog entry rather than a custom
+  one. The switches work in any combination (Abilities on and the rest off is fine), and
+  each one is all or nothing: there is no way to open a list to some creature types and not
+  others. Each switch saves as soon as you check it. Anyone who isn't the chronicle's HST
+  reads "Your chronicle's HST sets these." in place of the switches.
 - **Players' Grapevine Files** - a read-only link players can use to send this chronicle a
   character's Grapevine file, with this chronicle already picked when they follow it. A
   **Copy link** button copies it. See [Send a Grapevine File](send-grapevine-file.md).
