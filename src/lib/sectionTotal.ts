@@ -1,10 +1,5 @@
 /**
- * Sums a trait_list section's held entries into one total, shown after the section
- * title (1.1.0 D1) - but only when every entry genuinely carries a numeric count; a
- * block mixing counted and note-only entries (Rituals, Merits, and similar atomic
- * lists a caller should exclude before calling this at all) has no honest total to
- * show, so a single non-numeric or missing total anywhere in the list makes the
- * whole section total null rather than a partial or fabricated sum.
+ * Sums a trait_list section's held entries into one total, shown after the section title.
  */
 import { parseTotal, type Trait } from './displayTrait';
 
@@ -19,8 +14,8 @@ function isNumericTotal( total: Trait[ 'total' ] ): boolean {
 }
 
 /**
- * Returns the sum of every entry's total, or null when the list is empty or any
- * entry's total is missing or not a plain integer.
+ * Returns the sum of every entry's total, or null when the list is empty or any entry's total is missing or not a
+ * plain integer.
  */
 export function sectionTotal( traits: Trait[] ): number | null {
 	if ( traits.length === 0 ) {

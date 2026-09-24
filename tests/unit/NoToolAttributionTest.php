@@ -7,24 +7,19 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
 /**
- * `code/` is exactly what goes to the public repository, so nothing in it may credit a
- * coding tool or its vendor with having written any of this. Hard Rule 5.
- *
- * This guards attribution, not subject matter. The writing-assist feature legitimately
- * names OpenAI and Anthropic - it calls their APIs, and an administrator has to know where
- * to get a key - so bare vendor names are not what this looks for (owner ruling,
- * 2026-09-16). What it refuses is any claim that a tool authored the work.
+ * `code/` is exactly what goes to the public repository.
  */
 class NoToolAttributionTest extends TestCase {
 
-	/** Generated, vendored, or binary - not ours to police, and huge. */
+	/**
+	 * Generated, vendored, or binary.
+	 */
 	private const SKIP_DIRS = [ 'vendor', 'build', 'node_modules', 'dist', '.git', 'languages' ];
 
 	private const SKIP_EXTENSIONS = [ 'zip', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'woff', 'woff2', 'ttf', 'eot', 'ico', 'pdf', 'mo', 'po', 'gvm', 'gex', 'gv3' ];
 
 	/**
-	 * Phrases that assert authorship by a tool. Deliberately phrase-based: `api.anthropic.com`
-	 * is a real endpoint this plugin calls, while "written by Claude" is a credit.
+	 * Phrases that assert authorship by a tool.
 	 */
 	private const FORBIDDEN = [
 		'/co-authored-by:\s*claude/i',
@@ -70,7 +65,6 @@ class NoToolAttributionTest extends TestCase {
 		foreach ( $iterator as $file ) {
 			$path = $file->getPathname();
 
-			// This file spells the forbidden phrases out in order to look for them.
 			if ( $path === __FILE__ ) {
 				continue;
 			}

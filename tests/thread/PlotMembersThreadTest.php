@@ -10,15 +10,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 U3a: a player plot's membership. The owner (always connected via `apr_actor` or
- * `Plots_Controller::OWNER_LABEL`) and Storytellers may invite active, non-NPC characters;
- * a Storyteller may remove anyone, the owner only whoever they themselves added; the owner's
- * own connection is never reachable through this route at all, by construction (§2.3a).
- *
- * These tests fail against pre-U3a code: no `/plots/{id}/members` or
- * `/plots/{id}/member-candidates` route exists at all.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §2.3a, U3a
+ * A player plot's membership.
  */
 class PlotMembersThreadTest extends WP_UnitTestCase {
 
@@ -67,7 +59,6 @@ class PlotMembersThreadTest extends WP_UnitTestCase {
 		return rest_get_server()->dispatch( $request );
 	}
 
-	/** Owner + their own action plot (Character::ensure_plot(), linked apr_actor), plus a name. */
 	private function make_owner_with_plot( string $name = 'Owner Character' ): array {
 		$owner        = $this->make_player();
 		$character_id = $this->make_character( $owner, [ 'name' => $name ] );
@@ -308,9 +299,6 @@ class PlotMembersThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Entries_Controller has its own, separately-maintained is_unowned_allocation()
-	// copy - proving membership works there too, not just on the plot header.
-	// -------------------------------------------------------------------------
 
 	public function test_an_invited_member_can_read_and_post_entries_on_someone_elses_action_plot(): void {
 		[ $owner, , $plot_id ] = $this->make_owner_with_plot();
@@ -361,11 +349,6 @@ class PlotMembersThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 404, $remove->get_status() );
 	}
 
-	// -------------------------------------------------------------------------
-	// is_owner - the client's own signal for whether to show upload/delete
-	// controls (Attachments_Controller::may_manage_attachments() mirrors this
-	// exact check, so a client gating on it never shows a control the server
-	// would then 403).
 	// -------------------------------------------------------------------------
 
 	public function test_is_owner_is_true_for_the_plots_own_owner(): void {

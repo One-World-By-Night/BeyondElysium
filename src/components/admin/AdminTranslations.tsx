@@ -1,11 +1,5 @@
 /**
- * Admin screen for catalog term translation (1.2.0 §7, B10). One table,
- * keyed by source string, covering every trait/power/field/pool name in the
- * whole catalog - not chronicle-scoped (Decision 106: one install, one
- * language). A language picker plus progress bar up top, filters and the
- * CSV round trip in the middle, and the review table itself: inline edit,
- * save on blur, bulk approve, and a rescan button that refreshes the string
- * index against the real, current catalog.
+ * Admin screen for catalog term translation.
  */
 import {
 	useCallback,
@@ -38,7 +32,9 @@ const STATUS_LABELS: Record< TranslationStatus, string > = {
 	conflict: __( 'conflict', 'beyond-elysium' ),
 };
 
-/** A short, human name for a locale code this screen has no fixed lookup table for. */
+/**
+ * A short, human name for a locale code this screen has no fixed lookup table for.
+ */
 function localeName( locale: string ): string {
 	try {
 		return (
@@ -85,8 +81,6 @@ export function AdminTranslations() {
 
 	const inputRefs = useRef< Map< string, HTMLInputElement > >( new Map() );
 
-	// Locale list, and a first real pick: pt_BR if it's there, else the first non-en_US
-	// installed locale, else en_US itself.
 	useEffect( () => {
 		api.translations
 			.locales()
@@ -164,8 +158,7 @@ export function AdminTranslations() {
 
 	useEffect( loadRows, [ loadRows ] );
 
-	// A locale or filter change starts back at page 1 - a stale page number
-	// against a newly-narrowed result set would just show an empty page.
+	// A locale or filter change starts back at page 1.
 	useEffect( () => {
 		setPage( 1 );
 	}, [ locale, filters ] );
@@ -212,7 +205,9 @@ export function AdminTranslations() {
 		}
 	}
 
-	/** Focuses the next visible row's translation field whose value is still empty. */
+	/**
+	 * Focuses the next visible row's translation field whose value is still empty.
+	 */
 	function focusNextUntranslated( fromRowId: string ) {
 		const ids = rows.map( ( r ) => r.id );
 		const fromIndex = ids.indexOf( fromRowId );

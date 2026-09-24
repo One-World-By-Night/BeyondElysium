@@ -1,21 +1,12 @@
 #!/usr/bin/env bash
-# Bump the plugin version in all six places that carry it, the public README's status line and zip name included. Schema::DB_VERSION tracks the
-# release version exactly, not a separate counter, as of 2026-09-09 (user directive) - every
-# release bumps it, whether or not that release touches seeded data, so `be_db_version` and
-# the active plugin version never diverge again. maybe_upgrade()'s reseed/repair calls are
-# all idempotent, so an extra pass on a release that didn't need one is harmless.
+# Bumps the plugin version in the six places that carry it, including the public README's status line and zip name.
+# Schema::DB_VERSION equals the release version.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 V="${1:?usage: bin/bump-version 0.3.1}"
 
-# package.json's "version" must be valid npm semver - exactly three numeric segments, optionally
-# with a -prerelease or +build suffix - or every @wordpress/scripts command (lint, test, build)
-# throws at startup reading it, before running anything (found live, 1.3.2.1: a bare four-segment
-# X.Y.Z.W crashed the whole JS toolchain, not just this script). WordPress's own version_compare(),
-# which is what the other four places actually gate maybe_upgrade() on, has no such restriction and
-# is untouched by this - X.Y.Z.W there orders correctly against X.Y.Z with no adjustment needed.
-# A fourth segment becomes a -N prerelease suffix for package.json only, so `1.3.2.1` (this
-# project's patch-release convention) becomes `1.3.2-1` there and stays `1.3.2.1` everywhere else.
+# package.json takes a valid npm semver: a fourth version segment becomes a -N prerelease suffix there (X.Y.Z.W becomes
+# X.Y.Z-W) and stays as written everywhere else.
 PKG_V="$V"
 if [[ "$V" =~ ^([0-9]+\.[0-9]+\.[0-9]+)\.([0-9]+)$ ]]; then
     PKG_V="${BASH_REMATCH[1]}-${BASH_REMATCH[2]}"
@@ -26,8 +17,7 @@ sed -i '' -E "s/^(Stable tag: ).*/\1${V}/" beyond-elysium/readme.txt
 sed -i '' -E "s/(define\( 'BE_VERSION', ')[^']*(' \);)/\1${V}\2/" beyond-elysium/beyond-elysium.php
 sed -i '' -E "s/(\"version\": \")[^\"]*(\")/\1${PKG_V}\2/" package.json
 sed -i '' -E "s/(const DB_VERSION = ')[^']*(';)/\1${V}\2/" beyond-elysium/includes/Database/Schema.php
-# The README is the public repository's front page and names the release and the zip to download;
-# tests/unit/ReadmeVersionTest.php fails if either ever disagrees with the plugin.
+# The README names the release and the zip to download; tests/unit/ReadmeVersionTest.php checks both against the plugin.
 sed -i '' -E 's/^(\*\*`v)[0-9][0-9.]*(`)/\1'"${V}"'\2/' README.md
 sed -i '' -E 's/(beyond-elysium-)[0-9][0-9.]*(\.zip)/\1'"${V}"'\2/g' README.md
 

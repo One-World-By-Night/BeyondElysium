@@ -6,13 +6,8 @@ use BeyondElysium\Services\Catalog_Validator;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `reference/CATALOG-JSON-FORMAT.md` §7 - a declared catalog file is rejected, not silently
- * degraded.
- *
- * Every test here feeds a **deliberately broken** file and asserts the specific complaint,
- * because a validator that passes everything is indistinguishable from no validator at all.
- * The valid-file cases at the end are what stop it drifting the other way and rejecting
- * good data.
+ * A declared catalog file is rejected, not silently degraded: each case feeds a deliberately broken file and asserts
+ * the specific complaint.
  */
 class CatalogValidatorTest extends TestCase {
 
@@ -21,7 +16,9 @@ class CatalogValidatorTest extends TestCase {
 		return [ 'slug' => $slug, 'section_type' => $section_type, 'definition' => $definition ];
 	}
 
-	/** A family filling a 2/2/1 ladder correctly. */
+	/**
+	 * A family filling a 2/2/1 ladder correctly.
+	 */
 	private function ladder_family( string $name = 'Animalism' ): array {
 		return [
 			'name'   => $name,
@@ -87,7 +84,6 @@ class CatalogValidatorTest extends TestCase {
 	}
 
 	public function test_a_numeric_cost_is_rejected_because_a_cost_is_free_text(): void {
-		// Narrowing "1 or 3" to an integer is how a range silently becomes its own floor.
 		$this->assertRejects(
 			$this->block( 'trait_list', [ 'items' => [ [ 'name' => 'Iron Will', 'tier' => null, 'group' => null, 'subgroup' => null, 'cost' => 3 ] ] ] ),
 			'not a number'
@@ -101,7 +97,7 @@ class CatalogValidatorTest extends TestCase {
 	}
 
 	public function test_unknown_is_not_a_rank(): void {
-		// 596 levels carry it today. It records an unclassified note, not a rank.
+		// It records an unclassified note, not a rank.
 		$this->assertRejects(
 			$this->tiered( [ $this->ladder_family() ], [ 'ranks' => [ 'basic', 'intermediate', 'advanced', 'unknown' ] ] ),
 			'that is not a rank'
@@ -134,7 +130,7 @@ class CatalogValidatorTest extends TestCase {
 	}
 
 	public function test_picks_filed_under_a_ladder_rank_are_rejected(): void {
-		// A rank is rungs or picks, never both - flattening the two is what caused D68.
+		// A rank is rungs or picks.
 		$bad            = $this->ladder_family();
 		$bad['elder']   = [ 'basic' => [ [ 'tier' => 'basic', 'power_name' => 'Wrong Home' ] ] ];
 		$this->assertRejects( $this->tiered( [ $bad ] ), 'never both' );
@@ -146,10 +142,9 @@ class CatalogValidatorTest extends TestCase {
 		$this->assertRejects( $this->tiered( [ $bad ] ), 'has no `power_name`' );
 	}
 
-	// --- The runtime list shape, the only accepted one (owner ruling, 2026-09-22) ---
+	// --- The runtime list shape, the only accepted one ------------------------------
 
 	public function test_powers_keyed_by_family_name_are_rejected(): void {
-		// The map shape both releases once wrote and the validator used to wave through.
 		$data                          = $this->tiered( [] );
 		$data['definition']['powers'] = [ 'Animalism' => $this->ladder_family() ];
 		$this->assertRejects( $data, '`definition.powers` must be a list' );
@@ -187,8 +182,7 @@ class CatalogValidatorTest extends TestCase {
 	// --- Rule 5: no orphans ---------------------------------------------------
 
 	public function test_a_non_empty_overflow_is_rejected_as_an_uncommitted_D67_family(): void {
-		// The rule that earns the format: under the flat shape these were invisible and
-		// simply mis-priced. Here the family cannot be committed until it has its ruling.
+		// The rule that earns the format: under the flat shape these were invisible and simply mis-priced.
 		$bad             = $this->ladder_family();
 		$bad['overflow'] = [ [ 'tier' => 'basic', 'power_name' => 'Second Ladder One' ] ];
 		$this->assertRejects( $this->tiered( [ $bad ] ), 'This is D67' );
@@ -214,8 +208,6 @@ class CatalogValidatorTest extends TestCase {
 		] );
 		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );
 	}
-
-	// --- R1 (1.3.3): name_canonicalization, §3.5a -----------------------------
 
 	/** @param array<string,mixed> $overrides */
 	private function canonicalization( array $overrides = [] ): array {
@@ -293,7 +285,7 @@ class CatalogValidatorTest extends TestCase {
 		$this->assertSame( [], Catalog_Validator::validate_block( $this->tiered( [ $this->ladder_family() ] ), 'test-block' ) );
 	}
 
-	// --- S7: an untiered track has no ranks, by design ------------------------
+	// --- An untiered track has no ranks, by design ----------------------------
 
 	/** @param array<string,mixed> $untiered */
 	private function untiered( array $untiered, array $levels = null ): array {
@@ -308,8 +300,7 @@ class CatalogValidatorTest extends TestCase {
 	}
 
 	public function test_a_flat_untiered_track_passes_with_no_ranks_at_all(): void {
-		// Changeling Realms: 2 flat per level, no tier vocabulary anywhere. Before S7 this
-		// reached the right answer through a no-tier fallback nobody could explain.
+		// Changeling Realms: 2 flat per level, no tier vocabulary anywhere.
 		$this->assertSame( [], Catalog_Validator::validate_block( $this->untiered( [ 'cost_per_level' => 2 ] ), 'test-block' ) );
 	}
 
@@ -368,7 +359,7 @@ class CatalogValidatorTest extends TestCase {
 	}
 
 	private function gift_family(): array {
-		// Two Intermediate Gifts and no Basic one: legal, and must not be flagged (1.2.10 §B).
+		// Two Intermediate Gifts and no Basic one: legal, and must not be flagged.
 		return [
 			'name'            => 'Bone Gnawer',
 			'category_values' => [ 'tribe' => 'Bone Gnawer' ],
@@ -459,7 +450,6 @@ class CatalogValidatorTest extends TestCase {
 		$this->assertStringContainsString( '"block_slug.Field" join', implode( ' | ', Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def ), 'werewolf' ) ) );
 	}
 
-	/** 1.3.3 C1: `replaces` states which retired slug a section's block took over. */
 	public function test_a_section_may_declare_replaces(): void {
 		$def = $this->stack_definition();
 		$def['sections'][0]['replaces'] = [ 'met-identity' ];
@@ -495,12 +485,6 @@ class CatalogValidatorTest extends TestCase {
 		$this->assertStringContainsString( 'already claimed by section', implode( ' | ', Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def ), 'werewolf' ) ) );
 	}
 
-	/**
-	 * A `replaces` slug is allowed to be a real, live block file elsewhere - retirement is a
-	 * per-stack fact, not a global one. Real data: `werewolf-rites` is Werewolf's own live
-	 * Rites block, while Fera/Bete `replaces` it with `fera-rites` instead - a validator that
-	 * rejected this would reject the actual declared catalog (found running C1 for real).
-	 */
 	public function test_replaces_may_name_a_slug_that_is_a_live_block_for_another_stack(): void {
 		$def = $this->stack_definition();
 		unset( $def['creation_rules'] );
@@ -526,9 +510,6 @@ class CatalogValidatorTest extends TestCase {
 	}
 
 	public function test_every_block_a_stack_names_must_have_a_file(): void {
-		// Rule 6, and each place a stack can name a block: section, negative block, in-type
-		// join (pointed at a block no section lists, so only the join can name it) and a creation
-		// step. Drop each in turn and the complaint names it.
 		$data  = $this->file( 'stack', 'werewolf', $this->stack_definition() );
 		$every = [ 'werewolf-identity', 'werewolf-gifts', 'werewolf-tribes', 'met-physical-traits', 'met-physical-traits-neg', 'met-abilities' ];
 		$this->assertSame( [], Catalog_Validator::validate_references( $data, 'werewolf', $every, [ 'werewolf' ] ) );

@@ -11,14 +11,8 @@ use BeyondElysium\Services\Query_Engine;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 F1/F2: the real Grapevine "Group" and "Position" query keys (field-map.php's
- * `group`/`position` entries) now resolve to a character's active `be_faction_members`
- * and `be_positions` rows, comma-joined, instead of sitting `unmapped`. The Query Tool
- * matches against both regardless of a faction's own `audience` or a position's own
- * `holder_public` - those govern who may SEE the value elsewhere, not whether a
- * Storyteller-only query can match against it (`Query_Engine::resolve_value()`).
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.10
+ * The real Grapevine "Group" and "Position" query keys (field-map.php's `group`/`position` entries) now resolve to a
+ * character's active `be_faction_members` and `be_positions` rows, comma-joined.
  */
 class FactionQueryKeysThreadTest extends WP_UnitTestCase {
 
@@ -66,7 +60,7 @@ class FactionQueryKeysThreadTest extends WP_UnitTestCase {
 			'created_by' => $this->storyteller_id,
 		] );
 		Faction_Member::add( $faction_id, $member, $this->storyteller_id );
-		// A faction is always created active - disbanding it is a separate, later update.
+		// A faction is always created active.
 		Faction::update( $faction_id, [ 'status' => 'disbanded' ] );
 
 		$this->assertSame( [], $this->names( 'group', 'contains', 'Thorns' ) );

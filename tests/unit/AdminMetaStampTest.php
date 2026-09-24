@@ -6,18 +6,7 @@ use BeyondElysium\Database\Seeder;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.2.10 E5 - an administrator's own `_meta` edits survive a reseed, and **nothing else does**.
- *
- * Owner ruling, 2026-09-22: *"per-key stamp - record which keys the admin set."* The two
- * alternatives both fail silently, which is why this exists rather than something simpler:
- * adding `_meta` to `ADMIN_OWNED_BLOCK_KEYS` is **inert**, because that rule only fires when
- * the fresh seed lacks the key and `meta_for()` emits `_meta` on every run; and keeping a
- * stored `_meta` wholesale is **harmful**, because every install has one after its first seed,
- * so 1.3.0's Wraith (D69) and Mage (D70) cost corrections could never reach an installed site.
- *
- * The test that matters most here is therefore not "the edit survives" but
- * `test_an_untouched_key_still_takes_the_new_seeded_value()` - the one that proves corrections
- * still arrive.
+ * An administrator's own `_meta` edits survive a reseed, and **nothing else does**.
  */
 class AdminMetaStampTest extends TestCase {
 
@@ -30,7 +19,9 @@ class AdminMetaStampTest extends TestCase {
 		], $overrides );
 	}
 
-	/** Runs a save the way Schema_Blocks_Controller::update_item() does. */
+	/**
+	 * Runs a save the way Schema_Blocks_Controller::update_item() does.
+	 */
 	private function save( array $stored_meta, array $incoming_meta ): array {
 		$stored   = (object) [ '_meta' => $stored_meta, 'powers' => [] ];
 		$incoming = [ '_meta' => $incoming_meta, 'powers' => [] ];
@@ -87,13 +78,11 @@ class AdminMetaStampTest extends TestCase {
 	}
 
 	/**
-	 * **The one that matters.** A key the administrator never touched must take whatever the
-	 * seeder now says - otherwise a catalog correction can never reach an installed site,
-	 * which is the exact failure the wholesale alternative would have shipped.
+	 * **The one that matters.** A key the administrator never touched must take whatever the seeder now says.
 	 */
 	public function test_an_untouched_key_still_takes_the_new_seeded_value(): void {
 		$stored = $this->meta( [ '_admin_set' => [ 'costs.basic' ], 'costs' => [ 'basic' => 5, 'intermediate' => 6, 'advanced' => 9 ] ] );
-		// 1.3.0 corrects advanced from 9 to 12 while the admin's basic house rule stands.
+		// Corrects advanced from 9 to 12 while the admin's basic house rule stands.
 		$fresh = $this->meta( [ 'costs' => [ 'basic' => 3, 'intermediate' => 6, 'advanced' => 12 ] ] );
 
 		$merged = Seeder::apply_admin_meta( $fresh, $stored );
@@ -125,7 +114,9 @@ class AdminMetaStampTest extends TestCase {
 		$this->assertSame( [ 'basic', 'intermediate', 'advanced', 'elder' ], $merged['ranks'] );
 	}
 
-	/** An administrator clearing a value is an edit too - it must not be re-seeded back in. */
+	/**
+	 * An administrator clearing a value is an edit too.
+	 */
 	public function test_a_cleared_value_stays_cleared(): void {
 		$stored = [ '_admin_set' => [ 'out_of_type.basic' ], 'ranks' => [ 'basic' ], 'ladder' => [ 'basic' => 1 ], 'costs' => [ 'basic' => 3 ] ];
 		$fresh  = [ 'ranks' => [ 'basic' ], 'ladder' => [ 'basic' => 1 ], 'costs' => [ 'basic' => 3 ], 'out_of_type' => [ 'basic' => '+1' ] ];

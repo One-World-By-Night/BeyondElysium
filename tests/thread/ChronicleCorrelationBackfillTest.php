@@ -7,10 +7,8 @@ use BeyondElysium\Models\Game;
 use WP_UnitTestCase;
 
 /**
- * BE_PROCESS/design/chronicle-rename-design.md CR-8/§8.2. Every case here proves the same one
- * property: a failure mode of the matching logic must leave a row NULL, never point it at
- * the wrong post. NULL is harmless and already the state of the world; a wrong post ID
- * would be silent corruption a later cascade could act on.
+ * The chronicle post correlation backfill: a failure of the matching logic leaves a row NULL, never pointing at the
+ * wrong post.
  */
 class ChronicleCorrelationBackfillTest extends WP_UnitTestCase {
 
@@ -49,12 +47,7 @@ class ChronicleCorrelationBackfillTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Constructs the belt-and-braces case directly rather than hoping for it: one real
-	 * post carrying TWO `chronicle_slug` postmeta rows (a real, if unusual, WordPress
-	 * state - `add_post_meta()` allows a repeated key). Row A backfills correctly against
-	 * the post's first slug value. Row B's own slug exact-matches the SAME post's second
-	 * meta value, so the read alone would find exactly one candidate - the already-claimed
-	 * check is what has to catch it from there.
+	 * Constructs the belt-and-braces case directly.
 	 */
 	public function test_a_post_already_claimed_by_another_row_leaves_the_new_row_null(): void {
 		$post_id = $this->chronicle( 'thread-backfill-claimed-a' );

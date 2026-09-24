@@ -9,12 +9,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-028: every query-tool user in a chronicle saw every other user's saved
- * queries and "Most Recent Search", and could overwrite or delete any of them - a narrator
- * could read what the HST last searched for and delete the HST's saved queries. A recent
- * search is now its owner's alone; a saved query is edited or deleted by its creator or a
- * Storyteller of the chronicle. Since F-041 only Storytellers use the Query Tool at all, so
- * the second rule is between an AST and an HST.
+ * Every query-tool user in a chronicle saw every other user's saved queries and "Most Recent Search", and could
+ * overwrite or delete any of them.
  */
 class SavedQueryOwnershipThreadTest extends WP_UnitTestCase {
 

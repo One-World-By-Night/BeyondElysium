@@ -1,11 +1,5 @@
 /**
- * Picks a catalog item's display name for the current viewer's locale. This
- * is a pure presentation helper - it must never be used to choose the value
- * stored, matched, or sent to the server (i18n-pt-br-design.md, Decision
- * 106): `Cost_Engine`, the Grapevine import matcher, and `sheet_data` all
- * key on a catalog item's canonical (English) `name`, so swapping it per
- * locale anywhere but the final render would corrupt that matching the
- * first time two chronicles on different locales exchanged a character.
+ * Picks a catalog item's display name for the current viewer's locale.
  */
 import type {
 	IdentityField,
@@ -16,16 +10,16 @@ import type {
 
 const PT_BR = 'pt_BR';
 
-/** True when the current install's site locale (window.beyondElysium.locale) is Portuguese (Brazil). */
+/**
+ * True when the current install's site locale (window.beyondElysium.locale) is Portuguese (Brazil).
+ */
 export function isPortugueseLocale(): boolean {
 	return window.beyondElysium?.locale === PT_BR;
 }
 
 /**
- * Display name for a trait_list catalog item: `name_pt` when the site is
- * `pt_BR` and a translation exists, the canonical `name` otherwise - an
- * untranslated item (no `name_pt` yet) falls back to English rather than
- * showing blank.
+ * Display name for a trait_list catalog item: `name_pt` when the site is `pt_BR` and a translation exists, the
+ * canonical `name`.
  */
 export function localizedItemName(
 	item: Pick< TraitListItem, 'name' | 'name_pt' >
@@ -36,7 +30,9 @@ export function localizedItemName(
 	return item.name;
 }
 
-/** Same fallback rule as localizedItemName(), for a tiered_power level's power_name/power_name_pt pair. */
+/**
+ * Same fallback rule as localizedItemName(), for a tiered_power level's power_name/power_name_pt pair.
+ */
 export function localizedPowerName(
 	level: Pick< PowerLevel, 'power_name' | 'power_name_pt' >
 ): string {
@@ -46,7 +42,9 @@ export function localizedPowerName(
 	return level.power_name;
 }
 
-/** Same fallback rule as localizedItemName(), for an identity_field's own name/label_pt pair. */
+/**
+ * Same fallback rule as localizedItemName(), for an identity_field's own name/label_pt pair.
+ */
 export function localizedFieldLabel(
 	field: Pick< IdentityField, 'name' | 'label_pt' >
 ): string {
@@ -56,7 +54,9 @@ export function localizedFieldLabel(
 	return field.name;
 }
 
-/** Same fallback rule as localizedItemName(), for a resource_pool's own name/label_pt pair. */
+/**
+ * Same fallback rule as localizedItemName(), for a resource_pool's own name/label_pt pair.
+ */
 export function localizedPoolLabel(
 	pool: Pick< ResourcePool, 'name' | 'label_pt' >
 ): string {
@@ -67,12 +67,7 @@ export function localizedPoolLabel(
 }
 
 /**
- * An identity_field's held value, translated through its own `options_pt` map
- * (1.2.0 §5.6) - a multiselect's every choice translated independently, a
- * plain value looked up directly. A value not in `options_pt` (untranslated,
- * or a legacy/hand-edited value not in `options` at all) falls back to
- * itself, same rule as every other localized* helper here. Non-string values
- * (a number field) have no option to translate and pass through unchanged.
+ * An identity_field's held value, translated through its own `options_pt` map.
  */
 export function localizedIdentityValue(
 	field: Pick< IdentityField, 'options_pt' >,

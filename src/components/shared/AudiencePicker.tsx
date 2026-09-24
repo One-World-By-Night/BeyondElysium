@@ -1,10 +1,6 @@
 /**
- * Who may see a plot, item, or location (1.1.0 §2.1/§2.5): everyone in the
- * chronicle, Storytellers/Narrators only, or a rule set matching specific
- * characters. Reuses QueryBuilder pinned to the `char` inventory for the
- * `restricted` case, rather than a second, parallel condition editor -
- * `audience_rules` is stored in exactly the {conditions, logic} shape a
- * saved query already uses.
+ * Who may see a plot, item, or location: everyone in the chronicle, Storytellers/Narrators only, or a rule set
+ * matching specific characters.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -34,12 +30,8 @@ export interface AudiencePickerProps {
 const EMPTY_RULES: AudienceRules = { conditions: [], logic: 'AND' };
 
 /**
- * Whether one condition has everything Query_Engine::validate_conditions() itself
- * requires before it will run: a field, an operator that applies to it, and
- * whichever of find/value that operator needs - a date field's operator always
- * wants "find" (a date string), matching QueryBuilder.tsx's own date-input special
- * case, since FIND_OPERATORS/VALUE_OPERATORS alone conflate "needs a value" with
- * "needs a number," which isn't true for a date field.
+ * Whether one condition has everything Query_Engine::validate_conditions() itself requires before it will run: a
+ * field, an operator that applies to it, and whichever of find/value that operator needs.
  */
 function isConditionComplete(
 	condition: QueryCondition,
@@ -68,7 +60,9 @@ function isConditionComplete(
 	return true;
 }
 
-/** Whether a rule set has at least one condition a query could actually run. */
+/**
+ * Whether a rule set has at least one condition a query could actually run.
+ */
 function isRunnable(
 	conditions: QueryCondition[],
 	fields: QueryField[]
@@ -85,10 +79,7 @@ export function AudiencePicker( {
 }: AudiencePickerProps ) {
 	const [ fields, setFields ] = useState< QueryField[] >( [] );
 	const [ fieldsLoading, setFieldsLoading ] = useState( true );
-	// Remembers rules typed while `restricted` was selected, so switching to
-	// Everyone/Storytellers and back doesn't discard them - onChange still
-	// clears audienceRules to null immediately for whichever choice is
-	// actually selected, this is purely local recovery.
+	// Remembers rules typed while `restricted` was selected.
 	const [ draftRules, setDraftRules ] = useState< AudienceRules >(
 		audienceRules ?? EMPTY_RULES
 	);
@@ -152,11 +143,7 @@ export function AudiencePicker( {
 	}, [ audience, rules.conditions, rules.logic, gameSlug, fields ] );
 
 	/**
-	 * Reports a rule set upward only once it has at least one complete condition;
-	 * an incomplete one is reported as null rather than an empty {conditions: []}
-	 * object, since the server rejects that shape outright (`audience_rules must
-	 * include a conditions array`) - a not-yet-finished rule set means "not
-	 * restricted by rule yet, connected characters only," never a save error.
+	 * Reports a rule set upward only once it has at least one complete condition.
 	 */
 	function reportRules( conditions: QueryCondition[], logic: QueryLogic ) {
 		onChange(

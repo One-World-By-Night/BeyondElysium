@@ -7,13 +7,7 @@ use BeyondElysium\Services\Backgrounds_Catalog;
 use WP_UnitTestCase;
 
 /**
- * The single fork-aware backgrounds lookup that replaced three copies of
- * Schema_Block::find_by_slug(), which were blind to a chronicle's own fork
- * of a `{stack}-backgrounds` block (BE_PROCESS/design/background-ledger-apr-design.md
- * §3.1). Placed in the thread layer rather than unit, unlike the design
- * doc's own file listing suggests - every method here resolves through
- * Schema_Block::find_for_game()/all_for_game_by_types(), which are real
- * database reads with no pure-function path to exercise instead.
+ * The fork-aware backgrounds lookup: a chronicle's own fork of a `{stack}-backgrounds` block is what it reads.
  */
 class BackgroundsCatalogThreadTest extends WP_UnitTestCase {
 
@@ -41,8 +35,7 @@ class BackgroundsCatalogThreadTest extends WP_UnitTestCase {
 			[ 'name' => 'Contacts', 'source' => 'Backgrounds' ],
 		] );
 
-		// This chronicle re-labels Contacts as an Influence and adds a house item -
-		// the fork the global row's own reader must never see (find_by_slug() would).
+		// This chronicle re-labels Contacts as an Influence and adds a house item.
 		$fork = Schema_Block::find_or_create_fork_for_game( 'thread-catalog-fork-backgrounds', 'thread-catalog-forked-game' );
 		$fork->definition->items   = [
 			[ 'name' => 'Contacts', 'source' => 'Influences' ],

@@ -6,18 +6,7 @@ use BeyondElysium\Services\St_Visibility;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `St_Visibility` in isolation, with no WordPress and no database - both
- * methods accept a caller-supplied `$hidden` list specifically so this can
- * run as a pure unit test rather than needing `Schema_Block::storyteller_only_slugs()`'s
- * real `$wpdb` lookup (signed-pdf-design.md SP-4).
- *
- * The `v0.21.28` case gets its own test: hiding a block from the resolved
- * *layout* alone does not protect it - the block's real values still ship
- * inside `sheet_data` unless `filter_character()` is called too. Each half of
- * that lesson is proven independently, then the "either one alone leaks" claim
- * itself.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md §3d, SP-4
+ * `St_Visibility` in isolation, with no WordPress and no database.
  */
 class StVisibilityTest extends TestCase {
 
@@ -100,12 +89,6 @@ class StVisibilityTest extends TestCase {
 		$this->assertSame( $layout, $result );
 	}
 
-	/**
-	 * The `v0.21.28` case: hiding `npc-roleplaying-notes` from the layout does
-	 * not, by itself, touch `sheet_data` at all - proving the layout-side
-	 * filter and the data-side filter are two independent operations, and a
-	 * caller that only applies one of them still leaks the other.
-	 */
 	public function test_filtering_only_the_layout_does_not_protect_sheet_data(): void {
 		$character = $this->character();
 		$hidden    = [ 'npc-roleplaying-notes' ];
@@ -116,10 +99,7 @@ class StVisibilityTest extends TestCase {
 	}
 
 	/**
-	 * The fix: applying both operations with the same hidden-slug list closes
-	 * the leak from both directions at once - the section is gone from where
-	 * a form would render it, and the value is gone from the payload a client
-	 * ever receives.
+	 * Applying both operations with the same hidden-slug list closes the leak from both directions at once.
 	 */
 	public function test_applying_both_operations_together_closes_the_leak_from_both_directions(): void {
 		$character = $this->character();

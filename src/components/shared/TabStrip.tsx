@@ -1,10 +1,5 @@
 /**
  * A compact section picker: a <select> of every tab plus an explicit Go button.
- * Replaces the row of tab buttons this component used to render - on a screen with
- * more than a handful of tabs (My Chronicle's 11, on a phone), the button row wrapped
- * into a dense, hard-to-scan grid, with the last row sometimes clipped behind other
- * floating chrome (owner report, 2026-09-18, live on owbn-boston.net). Matches the
- * select+Go shape CharacterSheet.tsx's own action picker already established.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -24,8 +19,6 @@ export interface TabStripProps {
 export function TabStrip( { tabs, active, onChange }: TabStripProps ) {
 	const [ pending, setPending ] = useState( active );
 
-	// Follows the active tab when it changes from outside this component (a parent
-	// switching it directly, not through this control's own Go click).
 	useEffect( () => {
 		setPending( active );
 	}, [ active ] );

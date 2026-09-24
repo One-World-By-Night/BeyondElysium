@@ -10,13 +10,8 @@ use BeyondElysium\Services\Background_Ledger;
 use WP_UnitTestCase;
 
 /**
- * The database-touching half of the background-use ledger: recording,
- * editing, and clearing a real use against a real character and allocation
- * plot, and the "no allocation has ever been run yet" path a use must
- * still be recordable through (§4.1). apply_spends() itself is covered
- * without a database in tests/unit/BackgroundLedgerTest.php.
- *
- * @see BE_PROCESS/design/background-ledger-apr-design.md §5, §11 Trace 1
+ * The database-touching half of the background-use ledger: recording, editing and clearing a use against a real
+ * character and allocation plot, including before any allocation has been run.
  */
 class BackgroundLedgerThreadTest extends WP_UnitTestCase {
 
@@ -78,9 +73,7 @@ class BackgroundLedgerThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * 1.0.0-review F-105 (docs-pass intake, question 7): every character's allocation grants Personal
-	 * actions, and a use of one can be recorded - but the sheet's Background uses panel lists only
-	 * the backgrounds a character holds, so a player could never record a Personal action from it.
+	 * Every character's allocation grants Personal actions, and a use of one can be recorded.
 	 */
 	public function test_spendable_for_offers_personal_once_an_allocation_grants_it(): void {
 		$this->assertArrayNotHasKey( 'Personal', array_column( Background_Ledger::spendable_for( $this->character_id ), null, 'name' ), 'no allocation yet, no Personal budget' );

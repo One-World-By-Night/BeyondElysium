@@ -5,41 +5,14 @@ namespace BeyondElysium\Services\Display;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Pure grouping/bucketing helpers for a trait_list schema block's held rows (Merits,
- * Backgrounds, a flat Disciplines list, ...) - an exact PHP twin of
- * `src/lib/groupTraitsByField.ts` and the pure helpers inside
- * `src/components/renderers/TraitListRenderer.tsx`, so the signed-PDF exporter groups,
- * orders, and resolves display mode identically to the on-screen character sheet
- * instead of re-deriving these rules independently. Also carries `to_traits()`, ported
- * from `src/components/renderers/BlockRenderer.tsx` - the raw-`sheet_data`-to-canonical
- * shape bridge at the center of Defect D25 (see that method's own doc comment).
- * Verified against the TypeScript originals by having both read the same JSON fixture
- * and assert the same output; see tests/unit/Display/TraitGroupingParityTest.php and
- * `groupTraitsByField.test.ts` / `TraitListRenderer.test.ts` / `BlockRenderer.test.ts`.
- *
- * Operates only on plain data passed in as arguments - no WordPress calls, no database
- * access. A held trait row - both `to_traits()`'s raw input and every other method's
- * `Trait` shape - is a plain array: `name` (string) and, once bridged, `total`
- * (int|float|string|null) and `note` (?string), matching the array convention
- * `Power_Display`'s `$held` and `Cross_Block_Ref`'s `$sheet_data` already use for
- * sheet_data-derived shapes. A trait_list block's `definition` is a decoded object,
- * the same shape `Trait_Mapper` and `Power_Display` read: `items`, a list of objects
- * each optionally carrying `group`, `subgroup`, and `category`.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md Section 2d, Section 3, SP-3
+ * Pure grouping/bucketing helpers for a trait_list schema block's held rows (Merits, Backgrounds, a flat Disciplines
+ * list,...).
  */
 class Trait_Grouping {
 
 	/**
-	 * Converts a trait_list block's raw stored `sheet_data` entries into the canonical
-	 * `{name, total, note}` shape every other method in this class expects. This bridge
-	 * exists because of Defect D25: the character editor writes a trait's numeric value
-	 * under the key `count`, while the display layer reads `total`, so every raw entry
-	 * must cross through here rather than being read directly. Reads `total` first -
-	 * an already-correct value should win - falling back to `count` only when `total`
-	 * itself is absent. Also folds a separate `specialization` field into `note`
-	 * (comma-joined when both are present) rather than dropping it, the same shape of
-	 * silent data loss D25 was.
+	 * Converts a trait_list block's raw stored `sheet_data` entries into the canonical `{name, total, note}` shape every
+	 * other method in this class expects.
 	 *
 	 * @param mixed $data Raw `sheet_data[block_slug]` value, already array-decoded JSON.
 	 * @return array<int,array{name:string,total:mixed,note:?string}>
@@ -77,13 +50,8 @@ class Trait_Grouping {
 	}
 
 	/**
-	 * Groups a block's held trait rows into nested group/subgroup buckets, driven by
-	 * each row's matching catalog item's `group`/`subgroup` fields rather than a fixed
-	 * category list. A row whose catalog item declares no group (or has no catalog
-	 * item at all) falls back to an "Other" group. Returns null when no catalog item
-	 * declares a `group` at all, signaling the caller to fall back to its own default
-	 * grouping (see group_by_category()). Groups and subgroups are each sorted
-	 * alphabetically in the result.
+	 * Groups a block's held trait rows into nested group/subgroup buckets, driven by each row's matching catalog item's
+	 * `group`/`subgroup` fields.
 	 *
 	 * @param array<int,array{name:string}> $data       Held trait rows, each with at least a `name`.
 	 * @param object                        $definition Decoded trait_list block definition (`items` catalog).
@@ -103,8 +71,6 @@ class Trait_Grouping {
 			return null;
 		}
 
-		// group name => subgroup name => rows. Insertion order does not matter - both
-		// levels are explicitly re-sorted alphabetically below.
 		$groups = [];
 
 		foreach ( $data as $row ) {
@@ -141,26 +107,14 @@ class Trait_Grouping {
 	}
 
 	/**
-	 * Resolves the effective display mode for a trait_list section: a template
-	 * section's own override, then the block's own default, then 'simple' when
-	 * neither is set.
+	 * Resolves the effective display mode for a trait_list section: a template section's own override.
 	 */
 	public static function resolve_display( ?string $section_display, ?string $block_display ): string {
 		return $section_display ?? $block_display ?? 'simple';
 	}
 
 	/**
-	 * Resolves the display mode a whole trait_list section renders at, which is
-	 * `resolve_display()` for every ordinary block and never `resolve_display()` for a
-	 * `count_is_cost` one.
-	 *
-	 * 1.2.11 D94: a `count_is_cost` block (Combo Disciplines) stores a flat XP price in
-	 * the field every other block stores a rating in, so handing it to a rating display
-	 * prints a price as dots or as a bare number with no unit. The price is therefore
-	 * always labelled - `Draw Fire (12 XP)` - whatever `display` the block or the
-	 * template section carries. The viewer preference chooses only whether the price is
-	 * shown at all; hidden, the number is dropped entirely (`note_only`) rather than
-	 * falling back to a rating, which is the defect this exists to make unreachable.
+	 * Resolves the display mode a whole trait_list section renders at.
 	 *
 	 * @param object      $definition      The block's decoded definition.
 	 * @param string|null $section_display The template section's own override.
@@ -174,11 +128,8 @@ class Trait_Grouping {
 	}
 
 	/**
-	 * Groups held traits by `definition->categories`, in that array's declared order,
-	 * by looking each trait's catalog entry up in `definition->items` for its
-	 * `category`. Uncategorized or unrecognized-category traits land in a trailing
-	 * "Other" bucket rather than vanishing. A block with no `categories` renders flat,
-	 * as a single unlabeled group.
+	 * Groups held traits by `definition->categories`, in that array's declared order, by looking each trait's catalog
+	 * entry up in `definition->items` for its `category`.
 	 *
 	 * @param array<int,array{name:string}> $data
 	 * @param object                        $definition
@@ -214,8 +165,7 @@ class Trait_Grouping {
 		}
 
 		if ( ! empty( $other ) ) {
-			// Hardcoded to match the untranslated default of __( 'Other', 'beyond-elysium' ) -
-			// this class makes zero WordPress calls by design.
+			// Hardcoded to match the untranslated default of __('Other', 'beyond-elysium').
 			$groups[] = [ 'label' => 'Other', 'traits' => $other ];
 		}
 
@@ -223,8 +173,7 @@ class Trait_Grouping {
 	}
 
 	/**
-	 * Sorts held traits alphabetically by name when `$alphabetize` is true; otherwise
-	 * returns them in their original order, unchanged.
+	 * Sorts held traits alphabetically by name when `$alphabetize` is true.
 	 *
 	 * @param array<int,array{name:string}> $traits
 	 * @return array<int,array{name:string}>
@@ -242,13 +191,7 @@ class Trait_Grouping {
 	}
 
 	/**
-	 * Sums a trait_list section's held entries into one total, shown after the
-	 * section title (1.1.0 D1) - but only when every entry genuinely carries a
-	 * numeric count; a block mixing counted and note-only entries (Rituals, Merits,
-	 * and similar atomic lists a caller should exclude before calling this at all)
-	 * has no honest total to show, so a single non-numeric or missing total
-	 * anywhere in the list makes the whole section total null rather than a
-	 * partial or fabricated sum. An exact PHP twin of `src/lib/sectionTotal.ts`.
+	 * Sums a trait_list section's held entries into one total, shown after the section title.
 	 *
 	 * @param array<int,array{name:string,total:mixed,note:?string}> $traits Already bridged via to_traits().
 	 * @return int|null
@@ -284,9 +227,7 @@ class Trait_Grouping {
 	}
 
 	/**
-	 * Finds a catalog item by exact name match. Linear search rather than a
-	 * name-keyed array, matching Trait_Mapper::find_by_name() - avoids PHP silently
-	 * coercing a purely-numeric trait name into an integer array key.
+	 * Finds a catalog item by exact name match.
 	 *
 	 * @param object[] $items
 	 */

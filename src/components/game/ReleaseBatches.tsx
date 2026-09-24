@@ -1,8 +1,5 @@
 /**
- * Storyteller Toolkit: release batches (1.1.0 §3.2) - scheduling rumors and downtime
- * answers to go out together, several between games, rather than the instant a
- * Storyteller writes them. Mounted from both the front-end toolkit page and the wp-admin
- * Plots hub's Releases tab.
+ * Storyteller Toolkit: release batches.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -30,7 +27,9 @@ export interface ReleaseBatchesProps {
 	capabilities?: MyCapabilities;
 }
 
-/** "Scheduled Fri 7:00pm" - the badge/list label for a batch's release time. */
+/**
+ * "Scheduled Fri 7:00pm".
+ */
 function formatReleaseAt( releaseAt: string | null ): string {
 	if ( ! releaseAt ) {
 		return '';
@@ -46,7 +45,9 @@ function formatReleaseAt( releaseAt: string | null ): string {
 	} );
 }
 
-/** Converts a <input type="datetime-local"> value ("2026-09-20T17:00") to a MySQL datetime. */
+/**
+ * Converts a <input type="datetime-local"> value ("2026-09-20T17:00") to a MySQL datetime.
+ */
 function toMysqlDatetime( localValue: string ): string {
 	return localValue.length === 16
 		? `${ localValue.replace( 'T', ' ' ) }:00`

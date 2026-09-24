@@ -1,8 +1,6 @@
 /**
- * World object catalog browser: a type tab strip (items, locations,
- * rotes), a name search field, and a paginated table with columns
- * specific to the active type. Reports the selected row and the active
- * type to its parent for use in a detail pane.
+ * World object catalog browser: a type tab strip (items, locations, rotes), a name search field, and a paginated
+ * table with columns specific to the active type.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -18,7 +16,9 @@ export interface WorldObjectListProps {
 	onTypeChange?: ( type: ObjectType ) => void;
 }
 
-/** Boons have their own ledger UI (BoonLedger.tsx) - this catalog is items/locations/rotes. */
+/**
+ * Boons have their own ledger UI (BoonLedger.tsx).
+ */
 const CATALOG_TYPES: ObjectType[] = [ 'item', 'location', 'rote' ];
 
 const TYPE_LABELS: Record< ObjectType, string > = {
@@ -28,7 +28,9 @@ const TYPE_LABELS: Record< ObjectType, string > = {
 	boon: __( 'Boons', 'beyond-elysium' ),
 };
 
-/** 1.1.0 §3.12 item 1 - which item copies the catalog shows, items only. */
+/**
+ * Which item copies the list shows, for items only.
+ */
 const COPIES_OPTIONS: { value: CopiesFilter; label: string }[] = [
 	{ value: 'exclude', label: __( 'Catalog', 'beyond-elysium' ) },
 	{ value: 'only', label: __( 'Personal copies', 'beyond-elysium' ) },
@@ -36,10 +38,8 @@ const COPIES_OPTIONS: { value: CopiesFilter; label: string }[] = [
 ];
 
 /**
- * Renders the world object catalog for one type at a time: a tab strip
- * to switch type, a search field, and a paginated table whose columns
- * change with the active type - items show type/damage/level, locations
- * show type/owner/security, rotes show level/spheres.
+ * Renders the world object catalog for one type at a time: a tab strip to switch type, a search field, and a
+ * paginated table whose columns change with the active type.
  */
 export function WorldObjectList( {
 	gameSlug,
@@ -361,7 +361,9 @@ export function WorldObjectList( {
 	);
 }
 
-/** Formats a rote's sphere entries as a comma-separated "name count" string. */
+/**
+ * Formats a rote's sphere entries as a comma-separated "name count" string.
+ */
 function summarizeSpheres( spheres: unknown ): string {
 	if ( ! Array.isArray( spheres ) || spheres.length === 0 ) {
 		return '—';

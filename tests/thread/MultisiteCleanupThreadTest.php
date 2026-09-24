@@ -7,26 +7,8 @@ use BeyondElysium\Database\Schema;
 use WP_UnitTestCase;
 
 /**
- * The three multisite defects 1.0.2 closes, each measured on a real network first.
- *
- * Everything else about running on multisite already worked, and for a real reason: table
- * names come from `$wpdb->prefix`, settings are per-site options, roles are per-site. Two
- * subsites activated side by side each built their own 17 tables and 69 catalog blocks, saw
- * only their own characters, and switching one off left the other alone.
- *
- * Cleanup was where it broke, because cleanup is where a plugin has to declare what is its:
- *
- *   1. Deleting a subsite left every table behind - 40 orphaned `be_*` tables survived
- *      deleting two test subsites on the real network.
- *   2. Uninstall swept `be_notifications_opt_out` from `$wpdb->usermeta`, a single **global**
- *      table on a network, so one chronicle deleting its data cleared that preference for
- *      every user on every other chronicle.
- *
- * These run on a single-site test harness, so they test the seams rather than a live network:
- * that the filter names the right tables for an arbitrary blog id, and that the user scope is
- * a real list rather than "everyone".
- *
- * @see BE_PROCESS/releases/1.0.2-design-workflow.md
+ * Multisite cleanup: a deleted subsite takes its tables, a deleted user's memberships are removed, and an uninstall
+ * clears only its own site's settings.
  */
 class MultisiteCleanupThreadTest extends WP_UnitTestCase {
 
@@ -51,7 +33,9 @@ class MultisiteCleanupThreadTest extends WP_UnitTestCase {
 		);
 	}
 
-	/** A new table added to the schema must be dropped with a site without anyone remembering. */
+	/**
+	 * A new table added to the schema must be dropped with a site without anyone remembering.
+	 */
 	public function test_the_table_list_is_derived_not_hand_maintained(): void {
 		global $wpdb;
 
@@ -78,10 +62,7 @@ class MultisiteCleanupThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The filter can run while the *current* site is a different one - a super admin deleting a
-	 * chronicle from Network Admin - so it must name the tables of the site being deleted, not
-	 * of whichever site happens to be loaded. Naming the wrong site's tables is worse than
-	 * leaving orphans behind.
+	 * The filter can run while the *current* site is a different one.
 	 */
 	public function test_it_names_the_tables_of_the_site_being_deleted_not_the_current_one(): void {
 		global $wpdb;
@@ -95,9 +76,7 @@ class MultisiteCleanupThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Uninstall must clear the per-user preference for this site's users only. Asserted as a
-	 * real id list: a bare "delete every row with this meta_key" is the bug being fixed, and it
-	 * would still pass a test that only checked the current user was included.
+	 * Uninstall must clear the per-user preference for this site's users only.
 	 */
 	public function test_the_user_scope_for_uninstall_is_a_real_list(): void {
 		$mine = self::factory()->user->create( [ 'role' => 'subscriber' ] );

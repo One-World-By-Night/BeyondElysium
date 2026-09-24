@@ -8,22 +8,7 @@ use BeyondElysium\Models\Game;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Deliberately NOT a `WP_UnitTestCase`, for the exact reason
- * `TransactionRealAutocommitTest.php` gives: that harness forces
- * `autocommit = 0` for the life of every test it wraps, which is precisely the
- * condition that makes a broken nested-transaction pattern indistinguishable
- * from a correct one - both would take the SAVEPOINT branch regardless.
- * `Game::rename()`'s own atomicity claim (BE_PROCESS/design/chronicle-rename-design.md
- * §7.2: one `Transaction::begin()`, real rollback on failure) is only
- * provable under real `autocommit = 1`.
- *
- * Rather than construct an artificial SQL failure at a specific step (both
- * of `rename()`'s own pre-flight checks already prevent the two realistic
- * failure modes, so forcing a genuine write failure past them would be
- * testing an unrealistic scenario), this proves the more general and more
- * important guarantee: `rename()` nests correctly under a caller that
- * already has its own transaction open, the same shape
- * `Game::delete_with_content()` or a future batch operation would need.
+ * A chronicle rename rolls back completely when a step fails, on a real autocommit connection.
  */
 class GameRenameAtomicityTest extends TestCase {
 
@@ -65,21 +50,8 @@ class GameRenameAtomicityTest extends TestCase {
 		);
 	}
 
-	/**
-	 * The realistic risk this file exists to rule out: Game::rename() opens its own
-	 * Transaction::begin(), and if that were built the naive way (checking bare
-	 * @@autocommit instead of the Transaction class's own depth counter), a caller who
-	 * already had a transaction open would have it silently committed out from under them
-	 * the moment rename()'s own nested START TRANSACTION ran (Decision 073's exact bug
-	 * class). Proven by wrapping a real rename() call inside an outer unit of work and
-	 * rolling the outer one back - both the slug change AND the character's owner_slug
-	 * change must revert together, because they were never really independent.
-	 */
 	public function test_rename_nests_correctly_inside_an_outer_transaction_and_rolls_back_completely(): void {
 		global $wpdb;
-		// sanitize_title() lowercases - Game::create()/rename() both apply it, so the test's
-		// own tracking variable must match what actually gets stored, or cleanup silently
-		// matches nothing and leaks a row into every test that runs after this one.
 		$slug = sanitize_title( 'txn-rename-' . wp_generate_password( 8, false ) );
 		self::$cleanup_slugs[] = $slug;
 		$new_slug = $slug . '-renamed';
@@ -93,19 +65,12 @@ class GameRenameAtomicityTest extends TestCase {
 			'owner_slug' => $slug,
 		] );
 
-		// The outer transaction MUST be resolved before this test ends no matter what -
-		// Transaction's own depth counter is static/shared across the whole PHPUnit
-		// process, and an unresolved begin() here would desync every later test's
-		// savepoint nesting, not just this one (this is exactly what happened while
-		// writing this test: an assertion failure before the rollback call left the
-		// counter one level deep for the rest of the run).
+		// The outer transaction MUST be resolved before this test ends no matter what.
 		$outer = Transaction::begin( 'atomicity_test_outer' );
 		try {
 			$result = Game::rename( (int) $game_id, $new_slug );
 			$this->assertTrue( $result['changed'], 'the rename itself must succeed before what happens to it under rollback means anything' );
 
-			// Sanity check mid-flight: the rename is visible on this same connection before
-			// the outer rollback happens, same as any real caller mid-request would see it.
 			$this->assertSame( $new_slug, Game::find( (int) $game_id )->slug );
 			$this->assertSame( $new_slug, Character::find( (int) $character_id )->owner_slug );
 		} finally {

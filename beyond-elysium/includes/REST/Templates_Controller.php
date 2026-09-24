@@ -10,29 +10,21 @@ use BeyondElysium\Services\St_Visibility;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for character sheet templates. Serves both global
- * templates and game-scoped templates that override them, plus a resolve
- * endpoint that finds the effective template for a creature stack and
- * template type, generating a fallback layout when neither exists.
- *
- * @see BE_PROCESS/releases/workflow-0.3.md Step 2
+ * REST controller for character sheet templates.
  */
 class Templates_Controller extends Base_Controller {
 
 	protected $rest_base = 'templates';
 
 	/**
-	 * Registers the REST routes for global templates, game-scoped
-	 * templates, and the resolve endpoint. The resolve route is
-	 * registered before the numeric id route so its non-numeric path
-	 * segment is never shadowed.
+	 * Registers the REST routes for global templates, game-scoped templates, and the resolve endpoint.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/' . $this->rest_base, [
 			[
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'get_globals' ],
-				// The template editor's; a sheet reaches its template through resolve (1.0.0-review F-069).
+				// The template editor's; a sheet reaches its template through resolve.
 				'permission_callback' => $this->permission( 'be_manage_templates' ),
 				'args'                => $this->get_collection_params(),
 			],
@@ -61,7 +53,7 @@ class Templates_Controller extends Base_Controller {
 			],
 		] );
 
-		// Must be registered before the game-scoped id route so "resolve" is matched first.
+		// Registered before the game-scoped id route.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base . '/resolve', [
 			[
 				'methods'             => 'GET',
@@ -105,9 +97,7 @@ class Templates_Controller extends Base_Controller {
 	// Global scope
 
 	/**
-	 * Returns a paginated list of global templates, optionally filtered
-	 * by stack_slug and template_type. Global templates are the default
-	 * templates available to every game.
+	 * Returns a paginated list of global templates, optionally filtered by stack_slug and template_type.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response
@@ -118,9 +108,7 @@ class Templates_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates a new global template, available to every game, by
-	 * delegating to create_template() with no game id. Requires the
-	 * be_manage_templates capability, enforced by the route registration.
+	 * Creates a new global template, available to every game, by delegating to create_template() with no game id.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -130,10 +118,7 @@ class Templates_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns a single global template by id. A chronicle's own template is
-	 * not found here, as on the global update and delete routes: this route
-	 * names no chronicle to check membership against, so a chronicle's
-	 * templates are read through its own list (1.0.0-review F-069).
+	 * Returns a single global template by id.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -147,9 +132,7 @@ class Templates_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Updates a global template by id, confirming it is global (not
-	 * game-scoped) before applying the change. Returns a 404 error when
-	 * no matching global template exists.
+	 * Updates a global template by id, confirming it is global (not game-scoped) before applying the change.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -163,10 +146,7 @@ class Templates_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Deletes a global template by id, confirming it is global (not
-	 * game-scoped) before deleting. Returns a 404 error when no matching
-	 * global template exists, or a 403 error when it is a system
-	 * template.
+	 * Deletes a global template by id, confirming it is global (not game-scoped) before deleting.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -182,10 +162,7 @@ class Templates_Controller extends Base_Controller {
 	// Game scope
 
 	/**
-	 * Resolves the effective template for a creature stack and template
-	 * type: a game-specific override when one exists, otherwise the
-	 * global template, otherwise a freshly generated fallback layout.
-	 * Reports which of the three sources the returned template came from.
+	 * Resolves the effective template for a creature stack and template type: a game-specific override when one exists.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -234,9 +211,7 @@ class Templates_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns a paginated list of templates scoped to one game,
-	 * optionally filtered by stack_slug and template_type. Confirms the
-	 * game exists before querying.
+	 * Returns a paginated list of templates scoped to one game, optionally filtered by stack_slug and template_type.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -252,9 +227,7 @@ class Templates_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates a new template scoped to one game by delegating to
-	 * create_template() with that game's id. Confirms the game exists
-	 * before creating.
+	 * Creates a new template scoped to one game by delegating to create_template() with that game's id.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -269,10 +242,8 @@ class Templates_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Updates a template scoped to one game by id, confirming the
-	 * template belongs to that game before applying the change. Returns
-	 * a 404 error, not a 403, when the template belongs to a different
-	 * game or does not exist.
+	 * Updates a template scoped to one game by id, confirming the template belongs to that game before applying the
+	 * change.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -292,10 +263,7 @@ class Templates_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Deletes a template scoped to one game by id, confirming the
-	 * template belongs to that game before deleting. Returns a 404 error
-	 * when it belongs to a different game or does not exist, or a 403
-	 * error when it is a system template.
+	 * Deletes a template scoped to one game by id, confirming the template belongs to that game before deleting.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -318,9 +286,6 @@ class Templates_Controller extends Base_Controller {
 
 	/**
 	 * Shared creation logic for both global and game-scoped templates.
-	 * Requires name and template_type, decodes and validates the layout
-	 * structure, and creates the template row with the given game_id
-	 * (null for a global template).
 	 *
 	 * @param \WP_REST_Request $request
 	 * @param int|null         $game_id
@@ -366,9 +331,6 @@ class Templates_Controller extends Base_Controller {
 
 	/**
 	 * Shared update logic for both global and game-scoped templates.
-	 * Applies any recognized fields present in the request, decoding and
-	 * validating a new layout when one is included, and returns the
-	 * updated template.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @param object           $template Existing template row.
@@ -408,8 +370,6 @@ class Templates_Controller extends Base_Controller {
 
 	/**
 	 * Shared deletion logic for both global and game-scoped templates.
-	 * Refuses to delete a system template with a 403 error, otherwise
-	 * deletes the row and responds with an empty 204.
 	 *
 	 * @param object $template
 	 * @return \WP_REST_Response|\WP_Error
@@ -427,9 +387,8 @@ class Templates_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Builds the shared filter and pagination arguments used by both the
-	 * global and game-scoped template listing endpoints, from the
-	 * request's stack_slug, template_type, and pagination parameters.
+	 * Builds the shared filter and pagination arguments used by both the global and game-scoped template listing
+	 * endpoints, from the request's stack_slug, template_type, and pagination parameters.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return array
@@ -445,9 +404,8 @@ class Templates_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Defines the query parameters accepted by the template listing
-	 * endpoints: stack_slug and template_type filters plus page/per_page
-	 * pagination, each with its allowed values and defaults.
+	 * Defines the query parameters accepted by the template listing endpoints: stack_slug and template_type filters plus
+	 * page/per_page pagination, each with its allowed values and defaults.
 	 *
 	 * @return array
 	 */
@@ -474,9 +432,7 @@ class Templates_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a WP_Error
-	 * with a 404 status when no game matches. Used by route callbacks to
-	 * resolve the game_slug URL parameter before performing further work.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

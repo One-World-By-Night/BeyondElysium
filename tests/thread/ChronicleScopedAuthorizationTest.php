@@ -8,23 +8,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Step 1.5, workflow-0.9.md - the security gap this whole sub-phase exists to close:
- * `Base_Controller::permission()`'s closure took no arguments and could not see which
- * chronicle a request was for, so a site-wide `be_manage_characters` (or even the
- * broadly-granted `be_view_characters`/`be_edit_own_characters`) reached EVERY chronicle
- * on the site, not just the one the requester actually belongs to.
- *
- * `PermissionMatrixTest` proves every route has SOME gate. This proves the gate is now
- * scoped to the right chronicle - the thing that test's own doc comment explicitly says
- * was out of scope ("no controller anywhere passes a role_path... the accessSchema
- * branch is never entered today").
- *
- * Runs entirely through the capability + `be_game_members` path (accessSchema disabled,
- * the default and the only path any real environment this project has ever run in has
- * exercised) - the four-state accessSchema matrix itself is Step 1.5f, which needs a
- * real accessSchema instance actually installed and active, not simulated here.
- *
- * @see BE_PROCESS/releases/workflow-0.9.md Step 1.5
+ * Chronicle-scoped authorization: a site-wide capability such as `be_manage_characters` does not grant access to a
+ * chronicle the caller has no role in.
  */
 class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 
@@ -70,7 +55,7 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 		$this->admin_id  = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		$this->player_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 
-		// Editor is HST of game A only - deliberately given no membership in game B at all.
+		// Editor is HST of game A only.
 		Game_Member::set_role( $this->game_a_id, $this->editor_id, 'hst' );
 		// Player is a member of game A only, same shape.
 		Game_Member::set_role( $this->game_a_id, $this->player_id, 'player' );
@@ -93,22 +78,6 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 		$this->assertNotSame( 403, $response->get_status() );
 	}
 
-	/**
-	 * The user's own explicit role model (2026-09-11): "AST can do everything but delete
-	 * and edit game." Two real, previously-untested gaps this closed: `game-roles.php`
-	 * excluded `be_import` from `ast` specifically (not part of the stated model - an AST
-	 * could not import a Grapevine file into their own chronicle), and `Capabilities::CAPS`
-	 * capped `be_import` at the WordPress `administrator` role only, so even an AST whose
-	 * `game-roles.php` entry DID grant it would still fail `current_user_can()`'s own
-	 * baseline gate (`Authorization::check_request()` requires both). Both fixed together;
-	 * this proves the combination actually works end to end, not just one half of it.
-	 *
-	 * Narrowed further 2026-09-15 (1.0.0-checklist.md item 27) - see
-	 * `test_ast_cannot_manage_approval_rules_for_their_own_chronicle()` and its neighbors
-	 * below for the newer restrictions. "Everything but delete and edit game" is no longer
-	 * the whole model; import and the game-level edit/delete boundary this test checks are
-	 * both still exactly as they were.
-	 */
 	public function test_ast_can_import_but_cannot_delete_or_edit_the_game(): void {
 		$ast_id = self::factory()->user->create( [ 'role' => 'editor' ] );
 		Game_Member::set_role( $this->game_a_id, $ast_id, 'ast' );
@@ -124,13 +93,6 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 		$this->assertSame( 403, $delete->get_status(), 'an AST must not be able to delete the game itself' );
 	}
 
-	/**
-	 * Owner ruling, 1.0.0-checklist.md item 27 (2026-09-15): an AST loses Chronicle Setup's
-	 * own Approval Rules section for their chronicle. `be_manage_approval_rules` used to be
-	 * part of the blanket `array_diff(Capabilities::all(), ['be_manage_games'])` grant every
-	 * AST shared with every HST - this proves game-roles.php's own exclusion, not just that
-	 * the capability exists.
-	 */
 	public function test_ast_cannot_manage_approval_rules_for_their_own_chronicle(): void {
 		$ast_id = self::factory()->user->create( [ 'role' => 'editor' ] );
 		Game_Member::set_role( $this->game_a_id, $ast_id, 'ast' );
@@ -141,18 +103,15 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Same ruling: an AST loses the chronicle's own catalog customization (forking a
-	 * schema block for their chronicle specifically) - `be_manage_schemas`, chronicle-scoped
-	 * via the exact `?game_slug=` write path GS-1 built for an HST.
+	 * Same ruling: an AST loses the chronicle's own catalog customization (forking a schema block for their chronicle
+	 * specifically).
 	 */
 	public function test_ast_cannot_customize_the_chronicles_own_catalog(): void {
 		$ast_id = self::factory()->user->create( [ 'role' => 'editor' ] );
 		Game_Member::set_role( $this->game_a_id, $ast_id, 'ast' );
 		wp_set_current_user( $ast_id );
 
-		// The route's own required-args validation runs before permission_callback in WP
-		// core's own dispatch order, so a bare request 400s before the capability is ever
-		// checked - a real create body is needed to actually exercise the permission gate.
+		// The route's own required-args validation runs before permission_callback in WP core's own dispatch order.
 		$response = $this->dispatch( 'POST', '/be/v1/' . $this->game_a . '/schema-blocks', [
 			'slug'         => 'thread-test-ast-catalog-block',
 			'name'         => 'Thread Test AST Catalog Block',
@@ -162,10 +121,7 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Same ruling: an AST loses the chronicle's own template customization too - GS-1's
-	 * "fork their own chronicle's catalog and templates" was always both halves together for
-	 * an HST, and item 27's "the chronicle's own schema blocks and templates" (1.0.0-checklist.md's
-	 * own wording) keeps them together for this exclusion as well.
+	 * Same ruling: an AST loses the chronicle's own template customization too.
 	 */
 	public function test_ast_cannot_customize_the_chronicles_own_templates(): void {
 		$ast_id = self::factory()->user->create( [ 'role' => 'editor' ] );
@@ -181,11 +137,7 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Same ruling: an AST loses the ability to permanently delete a character, but keeps
-	 * every other character power the model already granted (edit, bulk XP/status/reset -
-	 * 1.0.0-checklist.md item 27's own "keeps ... the bulk changes"). `be_delete_characters`
-	 * is the new, narrower capability `Characters_Controller`'s DELETE route now checks
-	 * instead of the broader `be_manage_characters` an AST still holds for everything else.
+	 * Same ruling: an AST loses the ability to permanently delete a character.
 	 */
 	public function test_ast_cannot_delete_a_character_but_keeps_bulk_status_changes(): void {
 		global $wpdb;
@@ -220,9 +172,8 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Positive control for all three narrowings above: an HST (never touched by item 27)
-	 * must still be able to do every one of them, in the same chronicle, the same way as
-	 * before - proving the AST exclusions in game-roles.php did not accidentally reach hst.
+	 * Positive control for all three narrowings above: an HST must still be able to do every one of them, in the same
+	 * chronicle, the same way as before.
 	 */
 	public function test_hst_still_manages_approval_rules_catalog_and_character_deletion(): void {
 		global $wpdb;
@@ -256,11 +207,7 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The core regression test for this whole sub-phase. Before Step 1.5, this editor's
-	 * site-wide `be_manage_characters` alone would have passed `permission_callback` for
-	 * ANY game_slug, including one they have never been added to - exactly the
-	 * cross-chronicle leak `Base_Controller::permission()`'s zero-argument closure made
-	 * possible. Must be 403 now.
+	 * A site editor is denied on a chronicle they are not a member of.
 	 */
 	public function test_editor_is_denied_on_a_chronicle_they_are_not_a_member_of(): void {
 		wp_set_current_user( $this->editor_id );
@@ -269,11 +216,8 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The same leak, one layer down: `be_view_characters` is granted to every WP role
-	 * from subscriber up (`Capabilities::CAPS`), so an ordinary player's ability to reach
-	 * ANY chronicle's roster was never actually gated on which chronicle they play in -
-	 * only object-level ownership (D33) inside the handler ever stopped them from reading
-	 * another PLAYER's sheet, never from reaching another CHRONICLE's roster at all.
+	 * The same leak, one layer down: `be_view_characters` is granted to every WP role from subscriber up
+	 * (`Capabilities::CAPS`).
 	 */
 	public function test_player_reaches_their_own_chronicle(): void {
 		wp_set_current_user( $this->player_id );
@@ -288,10 +232,8 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * `be_manage_games` (site administrator) is step 2 of check_request()'s resolution
-	 * order, before game membership is ever consulted - reaches every chronicle
-	 * regardless of membership, by design (the site owner does not enroll themself in
-	 * every chronicle just to administer the plugin).
+	 * `be_manage_games` (site administrator) is step 2 of check_request()'s resolution order, before game membership is
+	 * ever consulted.
 	 */
 	public function test_site_administrator_bypasses_membership_entirely(): void {
 		wp_set_current_user( $this->admin_id );
@@ -299,12 +241,6 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 		$this->assertNotSame( 403, $response->get_status() );
 	}
 
-	/**
-	 * A route with no `game_slug` in its URL (the games list itself) is a deliberately
-	 * unchanged path - check_request()'s step 3/4, plain current_user_can(), exactly
-	 * pre-1.5 behavior. Confirms the new gate did not accidentally tighten something it
-	 * was never meant to touch.
-	 */
 	public function test_non_game_scoped_route_is_unaffected_by_chronicle_membership(): void {
 		wp_set_current_user( $this->player_id );
 		$response = $this->dispatch( 'GET', '/be/v1/games' );
@@ -318,10 +254,7 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Direct test of Schema::backfill_game_members() itself - the exact bug caught before
-	 * shipping (workflow-0.9.md's own account): a manager-only backfill would have 403'd
-	 * every existing player on their own character, not just changed who manages what.
-	 * Exercises both passes and the INSERT IGNORE non-downgrade guarantee in one go.
+	 * Direct test of Schema::backfill_game_members() itself.
 	 */
 	public function test_backfill_reproduces_both_manager_and_player_access(): void {
 		delete_option( 'be_game_members_backfilled' );
@@ -329,8 +262,6 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 		global $wpdb;
 		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $wpdb->prefix . 'be_game_members WHERE game_id IN (%d,%d)', $this->game_a_id, $this->game_b_id ) );
 
-		// A manager who is ALSO a character owner in the same game - INSERT IGNORE must
-		// not let the player-owner pass downgrade their hst role from the manager pass.
 		$dual_role_id = self::factory()->user->create( [ 'role' => 'editor' ] );
 
 		$wpdb->insert(
@@ -357,9 +288,6 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 
 		$this->assertTrue( (bool) get_option( 'be_game_members_backfilled' ) );
 
-		// Idempotency: running it again must not error or duplicate rows (UNIQUE key +
-		// the option guard both cover this, but the guard is what should actually stop it
-		// from even trying a second time).
 		Schema::backfill_game_members();
 		$rows = $wpdb->get_var(
 			$wpdb->prepare(
@@ -372,16 +300,9 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The bootstrap gap found reconciling `feat/0.9a-authz` with `main` (2026-09-11): once
-	 * membership is required for every game-scoped capability, a player with no prior
-	 * relationship to a chronicle could never obtain their first membership row, because
-	 * every route that could grant one already required one. Character creation is the one
-	 * route this must not apply to (`Base_Controller::permission( ..., true )` on the POST
-	 * route only) - proven here against a user who is a member of NEITHER game, not just
-	 * "no member of game B" like the rest of this file's fixtures.
-	 *
-	 * Since 1.0.0-review F-033 (owner ruling) that first character is a join request: it waits,
-	 * pending, and membership follows when a Storyteller sets it active.
+	 * The bootstrap gap found reconciling `feat/0.9a-authz` with `main`: once membership is required for every
+	 * game-scoped capability, a player with no prior relationship to a chronicle could never obtain their first
+	 * membership row.
 	 */
 	public function test_a_brand_new_player_can_ask_to_join_and_a_storyteller_makes_them_a_member(): void {
 		\BeyondElysium\Models\Creature_Stack::create( [
@@ -415,10 +336,7 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The other half of the same gap: membership has to follow ownership on every
-	 * assignment, not just at character-creation time, or an ST assigning an EXISTING
-	 * character to a player leaves that player unable to see the character they were just
-	 * given. Exercises `Character::update_header()`'s own call, not `create()`'s.
+	 * The other half of the same gap: membership has to follow ownership on every assignment.
 	 */
 	public function test_assigning_an_existing_character_grants_membership_to_the_new_owner(): void {
 		global $wpdb;
@@ -457,20 +375,6 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 		$this->assertSame( 200, $read->get_status(), 'the newly-assigned player must be able to read their own character immediately' );
 	}
 
-	/**
-	 * A real bug found running Step 1.5f live against an actually-installed accessSchema
-	 * instance (2026-09-11, see Authorization::normalize_role_path()'s own doc comment for
-	 * the full account): `accessSchema_register_path()` slugifies every path segment
-	 * through `sanitize_title()` when a role is created, but the real grant-matching
-	 * compares with a strict PHP `in_array(..., true)` - not the case-insensitive MySQL
-	 * lookup a DIFFERENT accessSchema function happens to use. `$game->asc_role_path` is
-	 * stored human-readable ("Chronicle/KONY") and the role suffix gets uppercased for the
-	 * same reason - neither matches accessSchema's own lowercase-slugified convention, so
-	 * every accessSchema grant would have silently never matched on a real install. No
-	 * accessSchema instance exists in this test environment (confirmed, `PLATFORM.md`), so
-	 * this stubs `owc_asc_check_access()` to capture the exact role_path it was called
-	 * with, rather than asserting a real grant/deny outcome.
-	 */
 	public function test_the_accessSchema_role_path_is_normalized_to_match_its_own_slug_convention(): void {
 		require_once __DIR__ . '/fixtures/fake-owc-asc-check-access.php';
 		global $be_test_captured_role_paths;
@@ -483,15 +387,10 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->editor_id ); // already hst of game_a (setUp())
 		$this->dispatch( 'GET', "/be/v1/{$this->game_a}/characters" );
 
-		// be_view_characters (this route's capability) is granted by more than one role, so
-		// check_request()'s own loop tries each in turn when the stub always denies -
-		// asserting every attempted path is normalized proves the fix for all of them, not
-		// just whichever happened to be tried first.
+		// be_view_characters (this route's capability) is granted by more than one role.
 		$this->assertNotEmpty( $be_test_captured_role_paths, 'owc_asc_check_access() must actually have been called' );
 		foreach ( $be_test_captured_role_paths as $attempted ) {
-			// "Chronicle/ASC Normalize Test!/{role}" run through sanitize_title() per
-			// segment - exactly matching how accessSchema_register_path() itself slugifies
-			// a role name - so every attempt must be all-lowercase with no punctuation.
+			// "Chronicle/ASC Normalize Test!/{role}" run through sanitize_title() per segment.
 			$this->assertMatchesRegularExpression( '#^chronicle/asc-normalize-test/[a-z]+$#', $attempted );
 		}
 		$this->assertContains( 'chronicle/asc-normalize-test/hst', $be_test_captured_role_paths );
@@ -499,15 +398,6 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 		update_option( 'be_asc_enabled', false );
 	}
 
-	/**
-	 * Step 1.5g, workflow-0.9.md - "a request that checks the same capability twice makes
-	 * ONE accessSchema call." The doc names `PerformanceTest` as the home for this, but
-	 * that class's own `setUp()` unconditionally skips every test in it until a 220-
-	 * character fixture has been seeded (`tests/fixtures/seed-0.9-performance-dataset.php`)
-	 * - real for its own wall-clock/N+1 assertions, irrelevant and needlessly coupling for
-	 * this one, which needs no seeded data at all. Placed here instead, next to the other
-	 * accessSchema-stub test this file already has.
-	 */
 	public function test_the_same_capability_checked_twice_makes_one_accessSchema_call(): void {
 		require_once __DIR__ . '/fixtures/fake-owc-asc-check-access.php';
 		global $be_test_asc_call_count;
@@ -522,9 +412,6 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 		$after_first = $be_test_asc_call_count;
 		$this->assertGreaterThan( 0, $after_first, 'the accessSchema stub must actually have been called at least once' );
 
-		// A second request checking the identical capability, same process (PHP statics
-		// live for the process's lifetime, matching a single real request's own lifetime -
-		// Step 1.5g's own scope, "for the life of the request").
 		$this->dispatch( 'GET', "/be/v1/{$this->game_a}/characters" );
 		$this->assertSame(
 			$after_first,
@@ -535,14 +422,6 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 		update_option( 'be_asc_enabled', false );
 	}
 
-	/**
-	 * Step 5d, workflow-0.9.md - the multisite audit's real, narrow finding: `be_game_members`
-	 * stores a bare `wp_user_id`, so a deleted account now leaves an orphan row where none
-	 * was possible before this table existed. `Game_Member::remove_user_everywhere()` and its
-	 * `deleted_user` hook (`Plugin::init()`) were already wired when Step 1.5a-d first landed
-	 * - this is the first real test proving the wiring actually works, not just that the
-	 * method exists in isolation.
-	 */
 	public function test_deleting_a_user_removes_every_membership_row_they_held(): void {
 		$doomed_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		\BeyondElysium\Models\Game_Member::set_role( $this->game_a_id, $doomed_id, 'player' );

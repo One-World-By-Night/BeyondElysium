@@ -1,15 +1,12 @@
 """Backfills `group` on the 134 previously-ungrouped mage-rotes items and
-emits data/catalog/blocks/mage-rotes.json, conforming to
-BE_PROCESS/reference/CATALOG-JSON-FORMAT.md §4.1 (trait_list).
+emits data/catalog/blocks/mage-rotes.json, a trait_list block.
 
-Offline, one-time tooling. Not part of the plugin, not run at runtime, not
-run by bin/verify. Kept here so the method is reproducible and reviewable,
-matching tools/grimoire/'s precedent.
+Offline tooling: not part of the plugin, not run at runtime, not run by
+bin/verify.
 
-Input: a JSON export of the live `mage-rotes` schema_blocks row's
-`definition` column - not committed, since it is a straight dump of already-
-public catalog content but this tool takes it as an external input rather
-than embedding database access. Produce it with, e.g.:
+Input: a JSON export of the live `mage-rotes` schema_blocks row's `definition`
+column, taken as an external input rather than embedding database access.
+Produce it with, e.g.:
 
     mysql --raw -N -B -ube_dev -pbe_dev_pw -h127.0.0.1 -P3307 be_dev \\
       -e "SELECT definition FROM wp_be_schema_blocks WHERE slug='mage-rotes';" \\
@@ -17,23 +14,16 @@ than embedding database access. Produce it with, e.g.:
 
 --raw is required: without it the MySQL client double-escapes an already-
 escaped internal quote in one real item name ("Ap-Sobk, \\"Last Judgment of
-Sobk\\"" - see CLAUDE.md's own note on this exact entry from v0.99.17) and
-produces invalid JSON.
+Sobk\\"") and produces invalid JSON.
 
-Of the 134 ungrouped items, 45 are classified here from real captured effect
-text in samples/research/mage/mage-rotes.csv (the Laws of Ascension / Laws of
-Ascension Companion MET corebooks, via Rotes.gex) against the same 17-
-category scheme code/beyond-elysium/data/grimoire-rotes.csv already uses for
-the other 670. This is an editorial judgment call, not a restatement of a
-captured source category - the Enlightened Grimoire (the source of the
-existing 670 groups) does not cover MET-corebook-only content, so no
-compiled category exists for these to read. 89 items remain ungrouped:
-samples/research/mage/mage-rotes.csv carries only a bare page citation for
-them ("Laws of Ascension Companion p. NNN"), not real effect prose - the
-prior research pass's own deliberate choice not to invent flavor text.
-Classifying them needs the Companion PDF read directly, not attempted here.
-See the 1.3.0 release report for the per-item classification and the full
-list of items still open.
+Of the 134 ungrouped items, 45 are classified here from captured effect text in
+samples/research/mage/mage-rotes.csv (the Laws of Ascension / Laws of Ascension
+Companion MET corebooks, via Rotes.gex) against the same 17-category scheme
+code/tools/catalog/source/grimoire-rotes.csv already uses for the other 670.
+This is an editorial classification, not a restatement of a captured source
+category. 89 items remain ungrouped: samples/research/mage/mage-rotes.csv
+carries only a bare page citation for them ("Laws of Ascension Companion p.
+NNN"), not effect prose.
 """
 
 import csv
@@ -55,9 +45,8 @@ CANON_GROUPS = {
     'Necromancy', 'Miscellaneous',
 }
 
-# Classified from real effect prose in samples/research/mage/mage-rotes.csv's
-# Description column (Laws of Ascension core-book entries only - see the
-# module docstring for why the Companion-only entries are excluded).
+# Classified from effect prose in samples/research/mage/mage-rotes.csv's
+# Description column (Laws of Ascension core-book entries only).
 BACKFILL = {
     "Affix Gauntlet": "Summoning, Binding and Warding",
     "Alloy": "Inanimate Objects",
@@ -153,7 +142,7 @@ def main():
     doc['provenance']['sources'] = [
         'Live seeded catalog (be_dev wp_be_schema_blocks, slug mage-rotes) - 670 of 804 '
         'items already carry a group backfilled at v0.99.17 from '
-        'code/beyond-elysium/data/grimoire-rotes.csv (Enlightened Grimoire: A Guide for '
+        'code/tools/catalog/source/grimoire-rotes.csv (Enlightened Grimoire: A Guide for '
         'Mage 20th Anniversary Edition, Charles Siegel, 2018)',
         '45 of the 134 previously ungrouped items classified this pass from real captured '
         'effect text in samples/research/mage/mage-rotes.csv (Laws of Ascension / Laws of '

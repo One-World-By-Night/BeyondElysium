@@ -1,4 +1,4 @@
-"""Emits the Kuei-Jin Discipline files (1.3.1).
+"""Emits the Kuei-Jin Discipline files.
 
     python3 build_kueijin_disciplines.py <snapshot-dir>
 
@@ -6,10 +6,8 @@ Writes four files under data/catalog/blocks/:
 
 - `kueijin-disciplines.json` - the base, Laws of the East (WW05016).
 - `owbn-kueijin_disciplines.json` - the OWBN Kuei-Jin Genre Packet's converted
-  and custom Disciplines, a `mode: add` variant (format §4b: books are the
-  base, packets are selectable).
-- `kueijin-techniques.json` - Grapevine's two Technique menus, moved out of
-  the Discipline block because they are not ladders (see below), plus
+  and custom Disciplines, a `mode: add` variant.
+- `kueijin-techniques.json` - Grapevine's two Technique menus, plus
   `owbn-kueijin_techniques.json` for the packet's own fourteen Techniques.
 
 Reads the private research at samples/research/kuei-jin/disciplines.json and
@@ -49,8 +47,7 @@ def rated_placeholder_ladder():
 
 
 def kueijin_meta():
-    # No out-of-type modifier appears in Laws of the East's chart at all, so
-    # `out_of_type` is genuinely absent (null), not an empty table.
+    # No out-of-type modifier: `out_of_type` is null, not an empty table.
     return meta(['basic', 'intermediate', 'advanced'], COSTS)
 
 

@@ -9,11 +9,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-033: a player's own-character update route accepted `status`, `narrator`,
- * and `rp_notes`. A pending new character made itself active - undoing the chronicle's
- * "Require new character approval" - a dead one came back, and a player could overwrite the
- * Storyteller's private roleplaying notes they are never shown. Header text was also stored
- * unsanitized on update although create sanitized it.
+ * A player's own-character update route accepted `status`, `narrator`, and `rp_notes`.
  */
 class CharacterSelfServiceLimitsThreadTest extends WP_UnitTestCase {
 

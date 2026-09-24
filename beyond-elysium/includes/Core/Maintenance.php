@@ -12,27 +12,26 @@ use BeyondElysium\Services\Release_Scheduler;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The plugin's scheduled jobs: a daily sweep that closes what has outlived its time -
- * verification codes past their expiry, transfer offers and pending transfers nobody acted
- * on (1.0.0-review F-014, F-006), player-sent Grapevine files nobody reviewed (F-122), and
- * one digest email per user with any plot posts queued for daily delivery (1.1.0 §3.5) -
- * plus a quarter-hour release-batch sweep (1.1.0 §3.2). Both scheduled on `init` when
- * missing, cleared on deactivation.
+ * The plugin's scheduled jobs: a daily sweep that closes what has outlived its time, and a quarter-hour
+ * release-batch sweep.
  */
 class Maintenance {
 
 	const HOOK = 'be_daily_maintenance';
 
-	/** Fires when a single scheduled batch comes due (§3.2) - scheduled directly against
-	 *  Release_Engine::release(), with no wrapper method needed. */
+	/**
+	 * Fires when a single scheduled batch comes due.
+	 */
 	const RELEASE_SINGLE_HOOK = 'be_release_batch';
 
-	/** The quarter-hour catch-all for a batch whose single event was missed, or that
-	 *  predates this feature ever having scheduled one for it (§3.2). */
+	/**
+	 * The quarter-hour sweep for any batch whose own event did not run.
+	 */
 	const RELEASE_SWEEP_HOOK = 'be_release_sweep';
 
-	/** WordPress ships hourly/twicedaily/daily/weekly only - none fine enough for
-	 *  "visible within 15 minutes of its due time" (§3.2). */
+	/**
+	 * The fifteen-minute cron interval the release sweep runs on.
+	 */
 	const RELEASE_SWEEP_SCHEDULE = 'be_quarter_hour';
 
 	/**
@@ -64,8 +63,7 @@ class Maintenance {
 	}
 
 	/**
-	 * Schedules both sweeps unless they already are - an install that upgrades into this
-	 * version gets the release sweep on its next page load, same as the daily one always has.
+	 * Schedules both sweeps unless they already are.
 	 */
 	public static function schedule(): void {
 		if ( ! wp_next_scheduled( self::HOOK ) ) {
@@ -85,8 +83,7 @@ class Maintenance {
 	}
 
 	/**
-	 * Runs the daily sweep: expired transfers first, so a stale pending transfer's
-	 * code is revoked with it, then every code past its expiry.
+	 * Runs the daily sweep of expired and unreviewed items.
 	 */
 	public static function run(): void {
 		Transfer::expire_stale();
@@ -96,13 +93,8 @@ class Maintenance {
 	}
 
 	/**
-	 * Runs the quarter-hour release-batch sweep (§3.2, and §3's own schedule-generation
-	 * step): first generates any batch a chronicle's own recurring release-schedule rules
-	 * call for right now (Release_Scheduler::run()), then releases every scheduled batch
-	 * whose release_at has passed - including one this same pass just generated, so a
-	 * scheduled batch is never left waiting a full quarter-hour for its own release.
-	 * Release_Engine::release() is idempotent, so a batch a single event already released
-	 * here is a harmless no-op, not a second round of emails.
+	 * Runs the quarter-hour release-batch sweep: generates the batches recurring schedules call for, then releases every
+	 * scheduled batch that has come due.
 	 */
 	public static function run_release_sweep(): void {
 		Release_Scheduler::run();

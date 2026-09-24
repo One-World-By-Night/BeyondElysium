@@ -1,7 +1,6 @@
 /**
- * admin-menu-consolidation-design.md: replaces the separate "Chronicle
- * Setup," "Chronicle Access," and "Action & Rumor Settings" wp-admin pages
- * with one tabbed hub - all three are "configure this one chronicle."
+ * One tabbed hub for Chronicle Setup, Chronicle Access, and Action & Rumor Settings: all three configure one
+ * chronicle.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -21,7 +20,9 @@ const TABS = {
 	aiAssist: 'ai-assist',
 };
 
-/** What each tab is called; which of them a viewer gets is `chronicleSetupTabKeys()`'s call. */
+/**
+ * What each tab is called.
+ */
 function tabLabels(): Record< string, string > {
 	return {
 		[ TABS.setup ]: __( 'Chronicle Setup', 'beyond-elysium' ),

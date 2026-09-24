@@ -8,9 +8,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.3.4: the Chronicle Setup route saves the three purchase-list switches. An HST sets them for their own
- * chronicle, a write may carry one and leave the others as they are, and anything that is not a known
- * switch with a plain on or off is refused rather than stored.
+ * The Chronicle Setup route saves the three purchase-list switches.
  */
 class ChroniclePurchaseScopeRouteThreadTest extends WP_UnitTestCase {
 

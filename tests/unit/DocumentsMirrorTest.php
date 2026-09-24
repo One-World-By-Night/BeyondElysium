@@ -6,9 +6,6 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * `Documents/` is the public repository's copy of the plugin's own guides and help pages, "unedited".
- * It is wrapped to a fixed column where the plugin's copy is one line per paragraph, so the comparison
- * ignores whitespace and nothing else. A page that changes in the plugin and not here fails this, which
- * is how a stale mirror gets caught before it is published rather than after.
  */
 class DocumentsMirrorTest extends TestCase {
 

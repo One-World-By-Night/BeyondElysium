@@ -7,19 +7,13 @@ use BeyondElysium\Database\Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The token and human-typeable short code both attestation tables use (1.1.0 §3.13) - shared
- * so a character attestation and an item attestation can never collide on the same short
- * code, since a single `GET /be/v1/verify/{code}` route looks both tables up by it.
- *
- * Extracted from `Models\Attestation`'s own original generation methods (GX-7) - `Attestation`
- * itself now calls this rather than generating inline, with no change to its own token/short
- * code shape or alphabet.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.13
+ * The token and human-typeable short code both attestation tables use.
  */
 class Short_Code {
 
-	/** Human-typeable alphabet for a short code: no 0/O, 1/I/L - nothing a person could misread aloud or by hand. */
+	/**
+	 * Human-typeable alphabet for a short code: no 0/O, 1/I/L.
+	 */
 	private const ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
 	/**
@@ -45,10 +39,8 @@ class Short_Code {
 	}
 
 	/**
-	 * Regenerates on the vanishingly unlikely event of a collision against any of the given
-	 * tables' own UNIQUE KEY on `short_code`, rather than trusting randomness alone. Checking
-	 * every table named, not just the caller's own, is what keeps a character code and an
-	 * item code from ever colliding with each other.
+	 * Regenerates on the vanishingly unlikely event of a collision against any of the given tables' own UNIQUE KEY on
+	 * `short_code`.
 	 *
 	 * @param string[] $tables Unprefixed table names (as `Manager::table()` expects), e.g.
 	 *                         `['character_attestations', 'item_attestations']`.

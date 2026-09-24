@@ -1,6 +1,4 @@
-/* No CSS existed for this component at all - the browser's own default <dl>/<dt>/<dd>
-   rendering (dd as a block, indented onto its own line below dt) was the entire visual,
-   which is why every identity field read as two lines per row (user report, 2026-09-09). */
+/* Identity field rows as a definition list. */
 .be-identity-fields {
 	margin: 0;
 }

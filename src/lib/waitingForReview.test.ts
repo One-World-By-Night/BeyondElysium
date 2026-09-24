@@ -62,10 +62,10 @@ describe( 'mergeWaitingRows', () => {
 		);
 
 		expect( rows.map( ( r ) => `${ r.kind }-${ r.row.id }` ) ).toEqual( [
-			'submission-11', // 2026-09-16
-			'transfer-2', // 2026-09-15
-			'submission-10', // 2026-09-12
-			'transfer-1', // 2026-09-10
+			'submission-11',
+			'transfer-2',
+			'submission-10',
+			'transfer-1',
 		] );
 	} );
 

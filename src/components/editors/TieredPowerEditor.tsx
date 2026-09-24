@@ -1,35 +1,5 @@
 /**
- * TieredPowerEditor renders the held-power list for a tiered_power block - leveled
- * catalogs such as Disciplines, Arcanoi, or Gifts. 1.2.10 replaces this component
- * outright (owner ruling, 2026-09-21 - "That is NOT a fix. That is the PROBLEM"):
- * `TieredPower` no longer carries one flat `levels[]` array that means both "ladder
- * rung" and "above-ladder pick" at once (D68 - a stepper set to 5, viewed as a
- * checklist, read as five levels removed and offered a refund for XP never spent).
- *
- * The catalog now declares three separate containers (`src/types/index.ts`):
- *   - `levels`  - the numbered ladder ONLY, one entry per rung, `sum(_meta.ladder)`
- *                 rungs (fallback 5 when a block predates `_meta`).
- *   - `elder`   - above-ladder (and, for Wraith, below-ladder Innate) picks, keyed
- *                 by rank. Never flattened into `levels` - that is the bug this
- *                 release exists to remove.
- *   - `overflow`- ladder-rank levels beyond the declared ladder (D67's concatenated
- *                 families, still awaiting a human ruling in 1.3.1). Never a rung,
- *                 never offered here, never counted in the rating.
- *
- * Two controls, not one (1.2.10-design-workflow.md §B): the stepper/checklist below
- * drives the ladder rating and can never reach a pick; the "Elder-and-above" list
- * below it reads `elder` only, grouped by rank, with no counts, no progress
- * affordance, and no rank rendered as unavailable because a neighbour is empty -
- * holding two Master powers and zero Elder ones is legal.
- *
- * The tradition field is a free-text input with datalist suggestions for every
- * tiered_power block, not just Blood Magic (0.99.2-workflow.md). For a
- * `blood_magic`-flagged block, adding a power requires a paradigm up front - the
- * picker shows every tradition the whole block offers, the power's own teaching
- * traditions first, never narrowed to just them (1.1.0 D5: that narrowing is exactly
- * what made Hunter's Wind untakeable as Dur An Ki). A held power with no paradigm
- * (older data) still shows "Choose paradigm", never forced - a Storyteller reviewing
- * the change is the actual check (Decision 057's UI-affordance pattern).
+ * TieredPowerEditor renders the held-power list for a tiered_power block.
  */
 import { __, sprintf } from '@wordpress/i18n';
 import { useMemo, useState } from '@wordpress/element';
@@ -54,19 +24,27 @@ import api from '../../api/client';
 import type { TieredPowerDefinition } from '../../types';
 import './TieredPowerEditor.css';
 
-/** Marked for removal rather than deleted outright; removal is applied when changes are submitted. */
+/**
+ * Marked for removal rather than deleted outright.
+ */
 export interface EditableHeldPower extends HeldPower {
 	_removed?: boolean;
-	/** Set when this row was entered as free text rather than chosen from the catalog. */
+	/**
+	 * Set when this row was entered as free text.
+	 */
 	custom?: boolean;
 }
 
-/** A blood_magic block's picked-but-not-yet-confirmed add, awaiting a paradigm (1.1.0 D5). */
+/**
+ * A blood_magic block's picked-but-not-yet-confirmed add, awaiting a paradigm.
+ */
 interface PendingAdd {
 	name: string;
 	isCustom?: boolean;
 	powerName?: string;
-	/** Set only for an elder-and-above pick - the rank it was found under, stored on the row for display (see pickRankOf()'s own doc comment). */
+	/**
+	 * Set only for an elder-and-above pick.
+	 */
 	rank?: string;
 }
 
@@ -75,40 +53,25 @@ export interface TieredPowerEditorProps {
 	data: EditableHeldPower[];
 	definition: TieredPowerDefinition;
 	onChange: ( blockSlug: string, nextData: EditableHeldPower[] ) => void;
-	/** Returns the XP cost for a held power at its current level; omitted callers show no cost. */
+	/**
+	 * Returns the XP cost for a held power at its current level.
+	 */
 	costFor?: ( power: EditableHeldPower ) => number | null;
 	readOnly?: boolean;
-	/** Needed only for a player_order block's "Save order" call (1.1.0 D4). */
+	/**
+	 * Needed only for a player_order block's "Save order" call.
+	 */
 	gameSlug?: string;
 	characterId?: number;
 }
 
 /**
- * The stepper/checklist ceiling when a block predates `_meta` entirely. Every real
- * ladder measured so far (1.2.10-design-workflow.md §A) is `2/2/1 = 5`, so this is a
- * genuine fallback, not a guess dressed up as one.
+ * The stepper/checklist ceiling when a block predates `_meta` entirely.
  */
 const DEFAULT_LADDER_CEILING = 5;
 
 /**
- * The number of rungs the declared ladder actually has: `sum(_meta.ladder)`, or
- * `DEFAULT_LADDER_CEILING` only when the block carries no `_meta.ladder` **at all** (S3 -
- * the seeder has not yet re-emitted this block against the declared-JSON shape).
- *
- * **1.3.2 fix.** A block that declares `ladder: {}` explicitly - a genuinely pick-only
- * track such as Werewolf/Fera Gifts (`reference/CATALOG-JSON-FORMAT.md` §4.2, "a pick-only
- * track... says so by declaring `ladder` as an explicit empty object") - must ceiling at
- * **0**, not 5: every power on that block is bought by name from `elder`, never rated on a
- * stepper at all, so a phantom 5-rung stepper would let a Gift be "raised" to a rating
- * nothing in the catalog prices. The previous rule treated an empty object the same as a
- * present-but-zero-sum ladder and fell back to 5 for both, which is right only for the
- * latter (a real authoring gap) and wrong for the former (a deliberate declaration). The
- * distinction is `ladder === undefined` (no `_meta` yet, or `_meta` with no `ladder` key at
- * all) versus `ladder` being present as `{}` - only the first falls back.
- *
- * This is still the whole of the D68 fix on the stepper side: the ceiling is read, never
- * inferred from tie counts or a family's own level count, so it cannot drift per-family the
- * way `maxLevel()` (1.2.9 and earlier) did.
+ * The number of rungs the declared ladder actually has.
  */
 export function ladderCeiling( definition: TieredPowerDefinition ): number {
 	const ladder = definition._meta?.ladder;
@@ -119,72 +82,42 @@ export function ladderCeiling( definition: TieredPowerDefinition ): number {
 }
 
 /**
- * One step up, or the same level unchanged once the ladder ceiling is reached. This is
- * the load-bearing guarantee E1 exists for: however many times this is called, the
- * result can never exceed `ceiling`, so the stepper structurally cannot wander into
- * pick territory the way an uncapped "+"/a stale per-family max once could.
+ * One step up, or the same level unchanged once the ladder ceiling is reached.
  */
 export function incrementLevel( level: number, ceiling: number ): number {
 	return level >= ceiling ? level : level + 1;
 }
 
 /**
- * One step down, floored at 1. Deliberately does **not** clamp against `ceiling` - a
- * legacy holding above the ceiling (1.2.10-design-workflow.md §A′: a stored level is a
- * TOTAL, e.g. Celerity 9 on a 5-rung ladder) must step down one rung at a time, never
- * jump straight to the ceiling the instant it is touched. That jump would silently
- * discard the picks the total represents - the exact shape of bug this release exists
- * to remove, just triggered by a click instead of a view switch.
+ * One step down, floored at 1.
  */
 export function decrementLevel( level: number ): number {
 	return Math.max( 1, level - 1 );
 }
 
 /**
- * Clamps an explicit target level into `[1, ceiling]` - used only by the checklist,
- * whose rungs are never anything but `1..ceiling` to begin with, so this can never
- * trigger the same silent-drop hazard `decrementLevel()`'s own doc comment describes.
+ * Clamps an explicit target level into `[1, ceiling]`.
  */
 export function clampToCeiling( level: number, ceiling: number ): number {
 	return Math.max( 1, Math.min( level, ceiling ) );
 }
 
-/** One rung of the declared ladder, as the checklist shows it. */
+/**
+ * One rung of the declared ladder, as the checklist shows it.
+ */
 export interface LadderRung {
-	/** The single name on the checkbox line - the printing in play. */
+	/**
+	 * The single name on the checkbox line.
+	 */
 	label: string;
-	/** Every other name filed at that rank, kept as a note rather than dropped. */
+	/**
+	 * Every other name filed at that rank, kept as a note.
+	 */
 	alternates: string[];
 }
 
 /**
- * One rung of the declared ladder, named once (1.2.11 D93).
- *
- * **A rung is one thing you buy, so it gets one name.** This used to join every name at
- * the rank with ", ", which the owner reported from a real sheet: on pre-1.2.10
- * (production-shaped) data, Animalism's rung 1 read
- * `Feral Whispers, Beckoning, Beast Within (2nd ed), Feral Speech (dark ages), Noah's Call (dark ages)`
- * inside a single checkbox label.
- *
- * **Which name.** The line in play is the base printing - the one whose note carries
- * nothing beyond its tier word. `seamQualifier()` is the right input for that and is used
- * rather than any list of edition words: it returns a qualifier only where a family
- * genuinely disagrees with itself, so `2nd ed`, `dark ages` and `Sabbat` surface exactly
- * where they distinguish something. Where every name at the rank is qualified - a
- * concatenated family like `Path of Blood's Curse`, whose rung 1 is Tremere *and* Sabbat -
- * the first in source order wins, carrying its own qualifier so the line still says which
- * ladder it belongs to.
- *
- * **Nothing is dropped.** The rest come back as `alternates` for the caller to show as a
- * note, which keeps D66's "never roll up to a placeholder" intact - the names are all
- * still reachable, just not run together on one line.
- *
- * Falls back to a plain "{name} {rung}" when the catalog has no entry at that rank - a
- * custom power, or a genuine gap in the seeded data - so a box is never unlabeled.
- *
- * The read-only sheet is deliberately untouched: `TieredPowerRenderer.namedModeRows()`
- * lists every name at a rank as its own row, because there it is listing what a character
- * holds rather than labelling one purchase.
+ * One rung of the declared ladder, named once.
  */
 export function ladderRung(
 	definition: TieredPowerDefinition,
@@ -206,7 +139,7 @@ export function ladderRung(
 		};
 	} );
 
-	// The base printing where there is one, otherwise source order.
+	// The base printing where there is one.
 	const chosen = named.findIndex( ( entry ) => ! entry.qualified );
 	const at = chosen === -1 ? 0 : chosen;
 
@@ -219,8 +152,7 @@ export function ladderRung(
 }
 
 /**
- * One rung's own checkbox label. Thin wrapper over `ladderRung()`; see it for why a rung
- * names one power rather than all of them.
+ * One rung's own checkbox label.
  */
 export function ladderRungLabel(
 	definition: TieredPowerDefinition,
@@ -231,16 +163,7 @@ export function ladderRungLabel(
 }
 
 /**
- * The Tradition datalist options for one named power: that power's own real offering
- * traditions (`TieredPower.traditions`' keys) when the catalog has it and it carries that
- * map, narrower and more useful than the whole block's list since not every tradition
- * offers every path. Falls back to `definition.traditions` (Blood Magic's real, curated
- * list) when the power itself has no per-power map, and further back to the
- * pre-Blood-Magic convention of harvesting distinct `"X: "` prefixes straight out of the
- * power catalog for any other tiered_power block that still names powers that way.
- *
- * Unaffected by the levels/elder/overflow split - `traditions` lives beside those
- * containers on `TieredPower`, not inside any of them.
+ * The Tradition datalist options for one named power.
  */
 export function traditionOptionsFor(
 	definition: TieredPowerDefinition,
@@ -257,11 +180,6 @@ export function traditionOptionsFor(
 			)
 		).sort();
 
-	// 1.1.0 D5: the owner's own ruling - any power in a flagged set prompts for a
-	// Tradition when taken - means the WHOLE block list is always on offer, never
-	// narrowed to a path's own catalog-listed teachers (that narrowing is exactly
-	// what made Hunter's Wind untakeable as Dur An Ki). The path's own teaching
-	// traditions, when the catalog names any, come first for convenience only.
 	const power = definition.powers.find( ( p ) => p.name === name );
 	const ownTraditions = power?.traditions
 		? Object.keys( power.traditions )
@@ -272,26 +190,25 @@ export function traditionOptionsFor(
 	return [ ...ownTraditions, ...rest ];
 }
 
-/** One not-yet-held elder-and-above pick offered by the "Add" picker below. */
+/**
+ * One not-yet-held elder-and-above pick offered by the "Add" picker below.
+ */
 export interface PickOption {
-	/** The string SearchableSelect matches on - never stored, only used to find this option again in addPick(). */
+	/**
+	 * The string SearchableSelect matches.
+	 */
 	value: string;
 	family: string;
-	/** The rank this pick sits under in the family's own `elder` container. */
+	/**
+	 * The rank this pick sits under in the family's own `elder` container.
+	 */
 	rank: string;
 	powerName: string;
 }
 
 /**
- * Every not-yet-held elder-and-above pick across families the character already holds
- * some form of (a ladder rung or another pick), reading each family's `elder`
- * container ONLY - never `overflow` (never a pick, §A1b) and never `levels` (the
- * ladder, a different control entirely). Scoped to already-held families, matching
- * 0.99.2-workflow.md's own reasoning: reaching Elder-and-above within a discipline
- * presumes some standing in it already.
- *
- * A family can hold several distinct picks at once - this never excludes a family for
- * already holding one, only the specific picks it already has.
+ * Every not-yet-held elder-and-above pick across families the character already holds some form of (a ladder rung or
+ * another pick), reading each family's `elder` container ONLY.
  */
 export function pickOptionsFor(
 	definition: TieredPowerDefinition,
@@ -335,12 +252,7 @@ export function pickOptionsFor(
 }
 
 /**
- * Orders whatever ranks are actually present against the block's own declared
- * `_meta.ranks` vocabulary - a rank absent from the declaration (a block predating
- * `_meta`) sorts after every declared one but is never dropped. Never invents a rank
- * that has no options: a caller passes only ranks it already found real entries under,
- * so an empty rank simply never reaches this function, and there is nothing here that
- * could render it as a disabled or greyed-out section.
+ * Orders whatever ranks are actually present against the block's own declared `_meta.ranks` vocabulary.
  */
 export function orderRanks( present: string[], declared?: string[] ): string[] {
 	if ( ! declared || declared.length === 0 ) {
@@ -356,18 +268,16 @@ export function orderRanks( present: string[], declared?: string[] ): string[] {
 	} );
 }
 
-/** One rank's worth of grouped pick options, for the "Add an Elder-and-above power" picker. */
+/**
+ * One rank's worth of grouped pick options, for the "Add an Elder-and-above power" picker.
+ */
 export interface PickRankGroup {
 	rank: string;
 	options: PickOption[];
 }
 
 /**
- * `pickOptionsFor()`'s results, sectioned by rank in `_meta.ranks` order - the E2
- * "rank-grouped, elder container only" picker. A rank with real options renders; a
- * rank with none simply is not a key here, never a present-but-empty section, so a
- * character holding two Master powers and no Elder ones sees an Elder section only if
- * an Elder pick actually exists to offer, never a gated/greyed placeholder.
+ * `pickOptionsFor()`'s results, sectioned by rank in `_meta.ranks` order.
  */
 export function groupPickOptions(
 	definition: TieredPowerDefinition,
@@ -392,13 +302,7 @@ export function groupPickOptions(
 }
 
 /**
- * The rank a held pick sits under, for grouping the "held" list the same way the "add"
- * picker is grouped. Prefers a live catalog match in `elder` (the common case); falls
- * back to `overflow` (a legacy/imported holding that happens to name an overflow-tier
- * power - still rendered, per §A1b, "as held content", never as a pick to add); falls
- * back to whatever tier the row itself already carries (an unresolved import, D67/the
- * `tier: "***"` placeholder handled by `displayableTier()`); and only then to the
- * generic `'elder'` bucket every prior release has used for "no better answer".
+ * The rank a held pick sits under, for grouping the "held" list the same way the "add" picker is grouped.
  */
 export function pickRankOf(
 	definition: TieredPowerDefinition,
@@ -424,19 +328,15 @@ export function pickRankOf(
 	return displayableTier( row.tier ) ?? 'elder';
 }
 
-/** Capitalizes a rank word ("elder" -> "Elder") for a section heading; a rank the catalog never lowercases still renders unchanged. */
+/**
+ * Capitalizes a rank word ("elder" -> "Elder") for a section heading.
+ */
 function rankHeading( rank: string ): string {
 	return rank.length === 0 ? rank : rank[ 0 ].toUpperCase() + rank.slice( 1 );
 }
 
 /**
- * A safe display label for the reorder-mode drag list, which lists every held row
- * regardless of kind - a ladder holding (no `power_name`) or a pick (`power_name`
- * set). `elderLabel()` is built to describe a pick; calling it on a plain ladder
- * holding looks up a `power_name` that was never set and prints "undefined" (a
- * latent bug in the pre-1.2.10 component, never reached live because `player_order`
- * is not known to combine with a plain ladder holding in production data, but not
- * worth reproducing here either).
+ * A safe display label for the reorder-mode drag list.
  */
 function reorderRowLabel(
 	definition: TieredPowerDefinition,
@@ -449,9 +349,7 @@ function reorderRowLabel(
 }
 
 /**
- * Renders the held-power list for a tiered_power block: add a power, raise or lower
- * its ladder rating with a stepper (or the equivalent per-rung checklist), add or
- * remove an elder-and-above pick, set its tradition, or mark a row removed.
+ * Renders the held-power list for a tiered_power block.
  */
 export function TieredPowerEditor( {
 	blockSlug,
@@ -470,15 +368,9 @@ export function TieredPowerEditor( {
 		[ definition ]
 	);
 
-	// A single per-sheet, player-persisted preference, not a per-power one (Decision
-	// 100): every held power on every tiered_power block on this sheet shows the same
-	// way, and the choice survives a reload. This toggles the LADDER view only - it
-	// never touches `data`, which is what keeps a view switch from being read as an
-	// edit (the exact D68 symptom: "switch view, lose levels").
+	// A single per-sheet, player-persisted preference.
 	const [ showChecklist, setShowChecklist ] = usePowerDisplayMode();
 
-	// Phone width only (mobile-sheet-design.md §4.5(4)) - the tradition field and the
-	// remove action move behind this modal, matching TraitListEditor's own pattern.
 	const [ detailsIndex, setDetailsIndex ] = useState< number | null >( null );
 
 	const heldNames = useMemo(
@@ -498,7 +390,7 @@ export function TieredPowerEditor( {
 		[ definition.powers, heldNames ]
 	);
 
-	// --- Reorder mode (player_order blocks only, 1.1.0 D4) ---
+	// --- Reorder mode (player_order blocks only) -------------
 	const visibleRows = useMemo(
 		() =>
 			data
@@ -552,10 +444,6 @@ export function TieredPowerEditor( {
 		}
 	};
 
-	// 1.1.0 D5: the owner's Blood Magic ruling - any power in a flagged set prompts for a
-	// Tradition when taken. A blood_magic block's own add pickers below never add
-	// immediately; they stash the pick here and wait for a paradigm before confirmPendingAdd()
-	// actually adds it, so the row can never be created without one.
 	const [ pendingAdd, setPendingAdd ] = useState< PendingAdd | null >( null );
 	const [ pendingParadigm, setPendingParadigm ] = useState( '' );
 
@@ -577,9 +465,7 @@ export function TieredPowerEditor( {
 		] );
 	};
 
-	// E2: rank-grouped, `elder` container only - never a count, never a rank rendered
-	// unavailable because a neighbour is empty (groupPickOptions() only ever returns
-	// ranks that genuinely have an option).
+	// Rank-grouped, `elder` container only.
 	const pickGroups = useMemo(
 		() => groupPickOptions( definition, data ),
 		[ definition, data ]
@@ -598,14 +484,7 @@ export function TieredPowerEditor( {
 	);
 
 	/**
-	 * The one Elder-and-above picker's own input (1.2.11 D93).
-	 *
-	 * `[Add Elder]` sits under each family's ladder, where the owner expects it, but it
-	 * drives this single picker rather than duplicating it. The picker is **block-scoped** -
-	 * `pickOptionsFor( definition, data )` spans every held family and each option carries
-	 * its own `family` - so there is no one ladder to move it under once a block holds more
-	 * than one family, which is the normal case for Disciplines and Blood Magic. One picker,
-	 * reachable from each ladder, keeps its existing behaviour exactly.
+	 * The one Elder-and-above picker's own input.
 	 */
 	const pickPickerId = `${ blockSlug }-add-elder`;
 	const focusPickPicker = () => {
@@ -670,7 +549,9 @@ export function TieredPowerEditor( {
 		setPendingParadigm( '' );
 	};
 
-	/** Writes a new, already-safe level onto one row - never re-clamps a caller's value, so the two hazards documented on incrementLevel()/decrementLevel() stay real guarantees rather than being undone here. */
+	/**
+	 * Writes a new, already-safe level onto one row.
+	 */
 	const applyLevel = ( index: number, level: number ) => {
 		const next = [ ...data ];
 		next[ index ] = { ...next[ index ], level: Math.max( 1, level ) };
@@ -701,9 +582,7 @@ export function TieredPowerEditor( {
 	const traditionListId = ( index: number ) =>
 		`be-tradition-${ blockSlug }-${ index }`;
 
-	// The two controls, split at the data level so a view switch cannot read as an
-	// edit: `ladderRows` drives the stepper/checklist, `pickRows` is grouped by rank
-	// below it. Both keep their original index into `data` for every mutation.
+	// The two controls, split at the data level.
 	const indexed = useMemo(
 		() => data.map( ( row, index ) => ( { row, index } ) ),
 		[ data ]
@@ -856,8 +735,6 @@ export function TieredPowerEditor( {
 				</>
 			) : (
 				<>
-					{ /* E1: the ladder. Bounded by `ceiling` alone - never able to reach or
-					 * represent a pick. */ }
 					<ul className="be-tiered-power-editor__rows">
 						{ ladderRows.map( ( { row, index } ) => {
 							const cost = costFor?.( row ) ?? null;
@@ -1244,9 +1121,6 @@ export function TieredPowerEditor( {
 						</div>
 					) }
 
-					{ /* E2: rank-grouped, `elder` container only. No count anywhere on
-					 * this list - what a family holds at each rank is simply present or
-					 * not, never "N of M". */ }
 					{ pickRowGroups.length > 0 && (
 						<div className="be-tiered-power-editor__picks">
 							{ pickRowGroups.map( ( group ) => (

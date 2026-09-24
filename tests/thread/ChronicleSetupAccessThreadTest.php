@@ -6,14 +6,7 @@ use BeyondElysium\Core\Admin_Menu;
 use WP_UnitTestCase;
 
 /**
- * 1.3.2.2: Chronicle Setup is for staff. A plain player could open Beyond Elysium -> Chronicle
- * Setup in wp-admin and see the whole tab, because the page was registered with
- * `be_view_characters` - a capability every WordPress role holds, subscriber included - and its
- * first tab checked nothing at all. Saving was always refused; the page, the tab and the setup
- * checklist were not.
- *
- * These read the page's registered capability and the capability map the admin bundle is handed,
- * the two places that decide who sees the page and its tab.
+ * Chronicle Setup is for staff.
  */
 class ChronicleSetupAccessThreadTest extends WP_UnitTestCase {
 
@@ -25,9 +18,7 @@ class ChronicleSetupAccessThreadTest extends WP_UnitTestCase {
 
 	public function setUp(): void {
 		parent::setUp();
-		// A fresh WP_Scripts per test, given back in tearDown() - the same borrow
-		// LocalizedHomeUrlThreadTest documents (D96): nulling it and leaving it null breaks
-		// every unrelated test that runs after this one in the same process.
+		// A fresh WP_Scripts per test, given back in tearDown().
 		$this->real_wp_scripts = $GLOBALS['wp_scripts'] ?? null;
 		$GLOBALS['wp_scripts']  = null;
 
@@ -58,7 +49,9 @@ class ChronicleSetupAccessThreadTest extends WP_UnitTestCase {
 		return $found;
 	}
 
-	/** The `var beyondElysium = {...}` this handle would print, decoded. */
+	/**
+	 * The `var beyondElysium = {...}` this handle would print, decoded.
+	 */
 	private function localized_payload( string $handle ): array {
 		$data = wp_scripts()->get_data( $handle, 'data' );
 		$this->assertIsString( $data, "No localized data attached to {$handle}." );
@@ -85,7 +78,6 @@ class ChronicleSetupAccessThreadTest extends WP_UnitTestCase {
 		}
 		sort( $open );
 
-		// A page added later on `be_view_characters` fails here until someone decides it is meant for players.
 		$this->assertSame( [ 'beyond-elysium', 'beyond-elysium-docs' ], $open );
 	}
 

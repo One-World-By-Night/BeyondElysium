@@ -1,32 +1,41 @@
 /**
- * Type definitions for a player-sent Grapevine file waiting for a
- * Storyteller's review (F-122): the request itself, previewing an
- * upload before sending, reviewing a waiting one, checking its
- * verification code, and the result of accepting it.
+ * Type definitions for a player-sent Grapevine file waiting for a Storyteller's review.
  */
 import type { ImportedEntity, ImportPreview } from './import';
 
-/** One character a preview found in an uploaded file, and whether it may be sent here. */
+/**
+ * One character a preview found in an uploaded file, and whether it may be sent here.
+ */
 export interface SubmissionPreviewCharacter {
 	index: number;
 	name: string;
 	stack_slug: string;
-	/** Null when this install has no creature stack for the raw slug at all. */
+	/**
+	 * Null when this install has no creature stack for the raw slug at all.
+	 */
 	stack_name: string | null;
 	allowed: boolean;
-	/** Why this character can't be sent here - null when allowed is true. */
+	/**
+	 * Why this character can't be sent here.
+	 */
 	reason: string | null;
-	/** True only for a single-character XML file whose id carries a real Beyond Elysium verification code. */
+	/**
+	 * True only for a single-character XML file whose id carries a real Beyond Elysium verification code.
+	 */
 	verifiable: boolean;
 }
 
-/** Response from reading an uploaded file before sending it - nothing is stored yet. */
+/**
+ * Response from reading an uploaded file before sending it.
+ */
 export interface SubmissionPreviewResponse {
 	format: 'GVBE' | 'XML';
 	characters: SubmissionPreviewCharacter[];
 }
 
-/** A waiting (or already-answered) submission row. Mirrors `be_character_submissions`, without its stored file columns. */
+/**
+ * A waiting (or already-answered) submission row.
+ */
 export interface Submission {
 	id: number;
 	game_id: number;
@@ -44,28 +53,40 @@ export interface Submission {
 	answer_note: string | null;
 	created_at: string;
 	answered_at: string | null;
-	/** Only on a response naming a specific chronicle (create, and /my/submissions). */
+	/**
+	 * Only on a response naming a specific chronicle (create, and /my/submissions).
+	 */
 	game_name?: string;
-	/** Only on /my/submissions. */
+	/**
+	 * Only on /my/submissions.
+	 */
 	game_slug?: string;
-	/** Only on a Storyteller's own review(). */
+	/**
+	 * Only on a Storyteller's own review().
+	 */
 	sender_name?: string | null;
 	sender_email?: string | null;
 }
 
-/** A waiting submission, shown the way the Import page shows a parsed file. */
+/**
+ * A waiting submission, shown the way the Import page shows a parsed file.
+ */
 export interface SubmissionReview {
 	submission: Submission;
 	preview: ImportPreview;
 }
 
-/** Response from accepting a submission: the row, now closed, and the character it created or updated. */
+/**
+ * Response from accepting a submission: the row, now closed, and the character it created or updated.
+ */
 export interface SubmissionAcceptResult {
 	submission: Submission;
 	character: ImportedEntity;
 }
 
-/** A waiting submission's verification check - see Services/Sheet_Verification.php for the full contract. */
+/**
+ * A waiting submission's verification check.
+ */
 export interface SubmissionVerification {
 	status:
 		| 'none'

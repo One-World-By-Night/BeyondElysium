@@ -6,13 +6,7 @@ use BeyondElysium\Services\Action_Allocator;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Port of `ActionClass.AddCommonActions` (GV301Source/Code/ActionClass.cls). Exercises
- * the pure computation directly - `resolve_common_subactions()`, `build_common_subaction()`
- * and `build_personal_subaction()` take plain arrays and touch no database, the same
- * pattern as `Cost_Engine::is_in_type_pure()` (CostEngineTest).
- *
- * @see BE_PROCESS/releases/workflow-0.5.md Step 4g
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "Action allocation"
+ * Port of `ActionClass.AddCommonActions` (Code/ActionClass.cls).
  */
 class ActionAllocatorTest extends TestCase {
 
@@ -36,10 +30,7 @@ class ActionAllocatorTest extends TestCase {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Four of these five values are Beyond Elysium's own choice, not Grapevine's -
-	 * this test's own name used to claim otherwise (BE_PROCESS/background-ledger-
-	 * apr-design.md §1.8). See test_gv_defaults_differ_from_bes_own_below for the
-	 * real APREngineClass.cls:69-84 values this used to be mislabeled against.
+	 * Four of these five values are Beyond Elysium's own choice.
 	 */
 	public function test_apr_config_falls_back_to_bes_own_defaults_when_unset(): void {
 		$game   = (object) [ 'settings' => (object) [] ];
@@ -53,17 +44,14 @@ class ActionAllocatorTest extends TestCase {
 	}
 
 	/**
-	 * Grapevine's real defaults (APREngineClass::Initialize(), APREngineClass.cls:60-90),
-	 * transcribed directly rather than assumed. Four of five diverge from Beyond
-	 * Elysium's own chosen defaults above - PersonalActions is declared but never
-	 * assigned in Initialize(), which VB6 leaves at the type's zero value.
+	 * Grapevine's real defaults (APREngineClass::Initialize(), APREngineClass.cls:60-90), transcribed directly.
 	 */
 	public function test_gv_defaults_differ_from_bes_own(): void {
 		$gv_defaults = [
-			'personal_actions'   => 0,                            // APREngineClass.cls:23, never assigned
-			'carry_unused'       => false,                        // APREngineClass.cls:84
-			'add_common'         => false,                        // APREngineClass.cls:83
-			'background_actions' => [ 'Contacts', 'Resources' ],  // APREngineClass.cls:69-70
+			'personal_actions'   => 0,
+			'carry_unused'       => false,
+			'add_common'         => false,
+			'background_actions' => [ 'Contacts', 'Resources' ],
 		];
 
 		$config = $this->apr( $gv_defaults );
@@ -131,9 +119,7 @@ class ActionAllocatorTest extends TestCase {
 	}
 
 	public function test_actions_per_level_lookup_is_string_keyed_by_level(): void {
-		// array_key_exists('3', [...]) must find an int-keyed 3 too - PHP normalizes
-		// numeric string array keys to int, so this also guards against a regression
-		// that switches to a strict identical-type lookup.
+		// array_key_exists('3', [...]) must find an int-keyed 3 too.
 		$apr       = $this->apr( [ 'actions_per_level' => [ 3 => 10 ] ] );
 		$subaction = Action_Allocator::build_common_subaction( 'Herd', 3, $apr, [] );
 
@@ -168,10 +154,7 @@ class ActionAllocatorTest extends TestCase {
 	}
 
 	public function test_edge_case_influence_dropped_since_prior_allocation(): void {
-		// Prior allocation was at Influence 3 (total 6, 4 unused); the character is now
-		// Influence 1. carry_unused replaces the pool with the stale 4, even though a
-		// fresh total at level 1 would only be 2 - this is Grapevine's actual behavior
-		// (Step 4c / pre-deploy trace edge case), not a bug to guard against.
+		// Prior allocation was at Influence 3 (total 6, 4 unused).
 		$prior     = [ 'Herd' => [ 'total' => 6, 'unused' => 4, 'growth' => 0 ] ];
 		$subaction = Action_Allocator::build_common_subaction( 'Herd', 1, $this->apr(), $prior );
 

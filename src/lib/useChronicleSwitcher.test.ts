@@ -5,9 +5,7 @@ import {
 } from './useChronicleSwitcher';
 
 /**
- * 1.0.0-review F-081 (Pass H intake `t1-client-state`). When the membership request failed, My
- * Chronicle and the Storyteller Toolkit said "You don't belong to any chronicle yet." - the same
- * words a real non-member sees - with no way to try again.
+ * A failed membership request is told apart from belonging to no chronicle.
  */
 describe( 'fetchMemberships', () => {
 	it( 'tells a failed request apart from belonging to no chronicle', async () => {

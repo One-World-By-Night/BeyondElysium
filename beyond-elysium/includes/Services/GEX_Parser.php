@@ -6,47 +6,16 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Parser for Grapevine's GVBE binary exchange files.
- *
- * A GEX file is a top-level sequence of counted sections: players,
- * characters, items, rotes, locations, actions, plots, rumors, plus a
- * conditional calendar/APR-settings/XP-award/template block on newer
- * versions. This class only turns bytes into a structured array - it does
- * not touch `Trait_Mapper`, any database table, or the REST layer. Every
- * trait list is returned keyed by its own name as read from the file, the
- * same key `Trait_Mapper::classify_list()` expects.
- *
- * Version gating is pervasive and often nested two or three deep, across
- * four thresholds: 2.395, 2.396, 2.397, and 2.399.
- *
- * The 13 per-entity readers (`parse_calendar`, `parse_apr_engine`,
- * `parse_experience_award`, `parse_template`, `parse_player`,
- * `parse_character`, `parse_query`, `parse_item`, `parse_rote`,
- * `parse_location`, `parse_action`, `parse_plot`, `parse_rumor`) are
- * `public` so `Game_File_Parser` can reuse them directly: GVBG's
- * per-entity bodies are identical to GVBE's, only the surrounding
- * container differs. Everything else, including all 12 race-specific
- * character readers, stays `private`.
- *
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "GVBE binary exchange shape"
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "GVBG binary game-file shape"
- * @see BE_PROCESS/releases/workflow-0.8.md Step 2, Step 9f
  */
 class GEX_Parser {
 
-	/** Binary exchange-file header (PublicConstants.bas BinHeaderExchange). */
+	/**
+	 * Binary exchange-file header (PublicConstants.bas BinHeaderExchange).
+	 */
 	const BINARY_HEADER = 'GVBE';
 
 	/**
-	 * `RaceType` -> character-class dispatch, from `GameClass.LoadExchangeBinary`'s
-	 * `Select Case RCode` (GameClass.cls lines 649-675). Values from
-	 * `PublicTypes.bas` `Enum RaceType` (lines 29-45). `RCode` itself is declared
-	 * `As Integer` in `LoadExchangeBinary` (not `As RaceType`), so the selector read
-	 * ahead of each character is 2 bytes, not the 4-byte width a genuine enum field
-	 * would get elsewhere in this format.
-	 *
-	 * gvRaceAll (1) has no character class of its own and is not dispatched here - the
-	 * VB6 `Select Case` has no `Case` for it either, so an exchange file that somehow
-	 * contained it would abort in the original tool too.
+	 * `RaceType` -> character-class dispatch.
 	 */
 	const RACE_TYPE_MAP = [
 		2  => 'vampire',
@@ -64,9 +33,7 @@ class GEX_Parser {
 	];
 
 	/**
-	 * Parses a `.gex` file from disk into its structured contents. Loads
-	 * the file into a binary reader and delegates to `parse_binary()` for
-	 * the actual decode.
+	 * Parses a `.gex` file from disk into its structured contents.
 	 *
 	 * @param string $path Absolute path.
 	 * @return array<string,mixed>
@@ -78,29 +45,6 @@ class GEX_Parser {
 
 	/**
 	 * Parses a GVBE binary exchange stream into its structured contents.
-	 * Reads the header and version, then each top-level counted section
-	 * in turn, delegating per-entity decoding to the matching `parse_*`
-	 * method.
-	 *
-	 * Top-level section order, from `GameClass.LoadExchangeBinary`
-	 * (GameClass.cls lines 536-790):
-	 *
-	 *   string header "GVBE"
-	 *   double version
-	 *   if version >= 2.395: int16 count -> 1 CalendarClass if count > 0
-	 *   if version >= 2.397:
-	 *       int16 count -> 1 APREngineClass if count > 0
-	 *       int16 count -> that many ExperienceAwardClass
-	 *       int16 count -> that many TemplateClass
-	 *   int16 count -> PlayerClass
-	 *   int16 count -> characters, each preceded by an int16 RaceType selecting the class
-	 *   int16 count -> QueryClass
-	 *   int16 count -> ItemClass
-	 *   int16 count -> RoteClass
-	 *   int16 count -> LocationClass
-	 *   int16 count -> ActionClass
-	 *   int16 count -> PlotClass
-	 *   int16 count -> RumorClass
 	 *
 	 * @param GV_Binary_Reader $reader Positioned at the start of the file.
 	 * @return array<string,mixed>
@@ -233,12 +177,7 @@ class GEX_Parser {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Reads a `LinkedTraitList`: the name, four flag/type fields, then a
-	 * count-prefixed list of `{name, total, note}` trait rows. Returned
-	 * keyed by its own `name`, the same value
-	 * `Trait_Mapper::classify_list()` expects as `$gv_list_name`.
-	 * Section-divider rows are dropped and their label is stamped onto
-	 * every trait that follows, until the next divider.
+	 * Reads a `LinkedTraitList`: the name, four flag/type fields.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -284,12 +223,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Beyond Elysium creature stacks with no Grapevine race of their own, and the race each
-	 * travels as. Grapevine 3.01's source carries a `BeteClass`, but its race list and its file
-	 * reader never learned about it (`PublicTypes.bas:29-45`, `GameClass.cls:1002`), so a real
-	 * Grapevine reads a `<bete>` element as nothing. A Bête character travels as the Fera it
-	 * shares every schema block with, and names its own stack for a Beyond Elysium import
-	 * (`Character_Exporter`, `GEX_Xml_Parser`). 1.0.0-review F-048.
+	 * Beyond Elysium creature stacks with no Grapevine race of their own, and the race each travels as.
 	 */
 	const STACK_EXCHANGE_RACE = [ 'bete' => 'fera' ];
 
@@ -297,16 +231,14 @@ class GEX_Parser {
 	private static ?array $shape = null;
 
 	/**
-	 * The Grapevine race a creature stack travels as: its own slug, unless
-	 * `STACK_EXCHANGE_RACE` names another.
+	 * The Grapevine race a creature stack travels as: its own slug, unless `STACK_EXCHANGE_RACE` names another.
 	 */
 	public static function exchange_race( string $stack_slug ): string {
 		return self::STACK_EXCHANGE_RACE[ $stack_slug ] ?? $stack_slug;
 	}
 
 	/**
-	 * Whether `shape()` knows a race - false for a creature stack an
-	 * administrator added, which has no Grapevine equivalent at all.
+	 * Whether `shape()` knows a race.
 	 */
 	public static function has_shape( string $race ): bool {
 		if ( self::$shape === null ) {
@@ -316,13 +248,11 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Returns GX-1's shared field-order authority (`gv-exchange-shape.php`)
-	 * for one race - the ordered `scalars`/`trait_lists`/`tail` shape a
-	 * writer will also trust. Loaded once and cached for the process.
+	 * Returns the shared field-order shape (`gv-exchange-shape.php`) for one race: the ordered `scalars`, `trait_lists`
+	 * and `tail` a writer also trusts.
 	 *
 	 * @param string $race One of `RACE_TYPE_MAP`'s values.
 	 * @return array<string,mixed>
-	 * @see BE_PROCESS/design/gex-export-transfer-design.md GX-1, GX-2
 	 */
 	public static function shape( string $race ): array {
 		if ( self::$shape === null ) {
@@ -332,19 +262,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads one race's full ordered run of trait lists, driven by the
-	 * shared shape table instead of a bare sequence of per-class `$add()`
-	 * calls (GX-2). A `min_version` row is skipped for an older file,
-	 * matching that class's own original read gate exactly. A parsed
-	 * list's name not matching the table's expected name is never fatal -
-	 * the reader already tolerates a differently-named list by keying on
-	 * the file's own name (Dialect C tolerance, gex-export-transfer-design.md
-	 * §2e); this loop preserves that, it does not tighten it.
-	 *
-	 * `$offset`/`$length` read only a slice of the race's ordered trait-list
-	 * run - needed for wraith, the one class whose real byte order genuinely
-	 * interleaves trait lists with free-text tail fields rather than reading
-	 * them as one contiguous run.
+	 * Reads one race's full ordered run of trait lists, driven by the shared shape table.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -371,10 +289,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * A character's Physical, Social, and Mental lists, which every reader
-	 * needs by name for its attribute maximums. A file that names one
-	 * differently still keeps that list under its own name; here it counts
-	 * as empty, never a crash (1.0.0-review F-089).
+	 * A character's Physical, Social, and Mental lists.
 	 *
 	 * @param array<string,array<string,mixed>> $trait_lists Keyed by each list's own parsed name.
 	 * @return array{0:array<string,mixed>,1:array<string,mixed>,2:array<string,mixed>}
@@ -388,16 +303,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Determines whether a trait row is really a section-header row
-	 * rather than a held trait. Some third-party export tools insert a
-	 * zero-value, em-dash-wrapped pseudo-trait into a trait list purely
-	 * to visually group later entries for a human reader, for example
-	 * `"——Blood Magic——"`, with no game-mechanical meaning of its own.
-	 *
-	 * Requires both the em-dash wrapping and a zero or blank value: a
-	 * real power name could start or end with a plain hyphen, but nothing
-	 * legitimate is wrapped in a real em-dash on both sides while also
-	 * carrying no held value.
+	 * Determines whether a trait row is really a section-header row.
 	 *
 	 * @param array{name:string,total:string,note:string} $trait
 	 */
@@ -409,20 +315,16 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Extracts a divider row's plain label with its em-dash wrapping
-	 * stripped, for example `"——Blood Magic——"` becomes `"Blood Magic"`.
-	 * Used to stamp a `section` value onto every trait that follows the
-	 * divider, until the next one. Callers are expected to have already
-	 * confirmed `is_section_divider()` themselves.
+	 * Extracts a divider row's plain label with its em-dash wrapping stripped, for example `"——Blood Magic——"` becomes
+	 * `"Blood Magic"`.
 	 */
 	public static function divider_label( array $trait ): string {
 		return trim( (string) preg_replace( '/^\x{2014}+|\x{2014}+$/u', '', trim( $trait['name'] ) ) );
 	}
 
 	/**
-	 * Reads a `BoonClass` entry: the boon type, the name of the character
-	 * it involves, whether it is owed or held, the date it was incurred,
-	 * and a free-text description.
+	 * Reads a `BoonClass` entry: the boon type, the name of the character it involves, whether it is owed or held, the
+	 * date it was incurred, and a free-text description.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -439,9 +341,8 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads one experience-history entry: the date, the change amount, a
-	 * change-type code, a free-text reason, and the running earned/unspent
-	 * totals at that point in history.
+	 * Reads one experience-history entry: the date, the change amount, a change-type code, a free-text reason, and the
+	 * running earned/unspent totals at that point in history.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -459,10 +360,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads an `ExperienceClass` block: the current unspent and earned
-	 * totals, each a `Single` rather than a `Double`, followed by a
-	 * count-prefixed list of history entries read through
-	 * `parse_experience_history_node()`.
+	 * Reads an `ExperienceClass` block: the current unspent and earned totals, each a `Single`.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -487,11 +385,8 @@ class GEX_Parser {
 	}
 
 	/**
-	 * `CauseEffectList.InputFromBinary` (GV301Source/Code/CauseEffectList.cls,
-	 * lines 492-518), reading a list of `CauseEffectNode` entries. Shared by
-	 * `ActionNode` and `PlotNode` as their `Effects` field - neither ever populates
-	 * its own `Causes` field from binary (`InputFromBinary` never calls it), so this
-	 * parser is only ever invoked for "Effects" in practice.
+	 * `CauseEffectList.InputFromBinary` (Code/CauseEffectList.cls, lines 492-518), reading a list of `CauseEffectNode`
+	 * entries.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -514,8 +409,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads one subaction entry: its name, level, unused and total point
-	 * counts, growth, an effects list read through
+	 * Reads one subaction entry: its name, level, unused and total point counts, growth, an effects list read through
 	 * `parse_cause_effect_list()`, and the free-text action and result.
 	 *
 	 * @param GV_Binary_Reader $r
@@ -545,9 +439,8 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads one plot development entry: the date of the development, an
-	 * effects list read through `parse_cause_effect_list()`, and the
-	 * free-text development description.
+	 * Reads one plot development entry: the date of the development, an effects list read through
+	 * `parse_cause_effect_list()`, and the free-text development description.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -566,9 +459,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads one rumor variant: the level it applies at and its free-text
-	 * rumor content. A rumor's `variants` list holds one of these per
-	 * level the rumor is written for.
+	 * Reads one rumor variant: the level it applies at and its free-text rumor content.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -582,9 +473,8 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads one query clause: the field key it tests, a comparison
-	 * operator code, a negation flag, a text value to compare against,
-	 * and a numeric value read as a `Double`.
+	 * Reads one query clause: the field key it tests, a comparison operator code, a negation flag, a text value to
+	 * compare against, and a numeric value read as a `Double`.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -601,10 +491,9 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `QueryClass` block: its name, target inventory, match-all
-	 * and sort settings, a `last_modified` date read only when the format
-	 * version is 2.395 or later, and a count-prefixed list of clauses
-	 * read through `parse_query_clause()`.
+	 * Reads a `QueryClass` block: its name, target inventory, match-all and sort settings, a `last_modified` date read
+	 * only when the format version is 2.395 or later, and a count-prefixed list of clauses read through
+	 * `parse_query_clause()`.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -637,12 +526,8 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `PlayerClass` block: identity fields, a status value, a
-	 * last-modified date, an experience block read through
-	 * `parse_experience()`, and address/notes text. `status` is a real
-	 * string from format version 2.397 on; before that, the file carries
-	 * a Boolean `Active` flag that is mapped onto an `Active`/`Inactive`
-	 * status string.
+	 * Reads a `PlayerClass` block: identity fields, a status value, a last-modified date, an experience block read
+	 * through `parse_experience()`, and address/notes text.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -682,9 +567,8 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `TemplateClass` entry: its name, whether it is a character
-	 * sheet template, and the file names of its text, RTF, and HTML
-	 * variants.
+	 * Reads a `TemplateClass` entry: its name, whether it is a character sheet template, and the file names of its text,
+	 * RTF, and HTML variants.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -701,9 +585,8 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads an `ExperienceAwardClass` entry: a boolean flag for whether
-	 * the award is XP or PP, the award's name, a change-type code, the
-	 * change amount, and a free-text reason.
+	 * Reads an `ExperienceAwardClass` entry: a boolean flag for whether the award is XP or PP, the award's name, a
+	 * change-type code, the change amount, and a free-text reason.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -720,9 +603,8 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `CalendarClass` block: a `last_modified` date gated on
-	 * format version 2.395 or later, followed by a count-prefixed list of
-	 * calendar entries, each a date, time, place, and notes.
+	 * Reads a `CalendarClass` block: a `last_modified` date when the format version is 2.395 or later, then a
+	 * count-prefixed list of calendar entries, each a date, time, place and notes.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -750,10 +632,9 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads an `APREngineClass` block: the personal-action total, several
-	 * boolean settings controlling common-action and rumor-visibility
-	 * behavior, and two trait lists (`background_actions`,
-	 * `actions_per_level`) read through `parse_trait_list()`.
+	 * Reads an `APREngineClass` block: the personal-action total, several boolean settings controlling common-action and
+	 * rumor-visibility behavior, and two trait lists (`background_actions`, `actions_per_level`) read through
+	 * `parse_trait_list()`.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -797,10 +678,7 @@ class GEX_Parser {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Reads an `ItemClass` entry: identity and damage fields, then four
-	 * trait lists in read order (Temper, Ability, Negative, Availability),
-	 * followed by powers, appearance, and notes text and a last-modified
-	 * date.
+	 * Reads an `ItemClass` entry: identity and damage fields.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -847,9 +725,8 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `RoteClass` entry: its name, level, duration, a sphere
-	 * trait list, a description, grades text, and a last-modified date.
-	 * Has no version conditionals of its own.
+	 * Reads a `RoteClass` entry: its name, level, duration, a sphere trait list, a description, grades text, and a
+	 * last-modified date.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -876,11 +753,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `LocationClass` entry: identity and ownership fields, then
-	 * a group of security-related fields (`sec_traits`, `sec_retests`,
-	 * `gauntlet`, `link_list`, `umbra`) gated on format version 2.396,
-	 * with `link_list` additionally requiring 2.399 and `access` gating
-	 * on 2.399 alone.
+	 * Reads a `LocationClass` entry: identity and ownership fields.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -939,10 +812,8 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads an `ActionClass` entry: the action date, character name, done
-	 * flag, last-modified date, and a count-prefixed list of subactions
-	 * read through `parse_action_node()`. Has no version conditionals of
-	 * its own.
+	 * Reads an `ActionClass` entry: the action date, character name, done flag, last-modified date, and a count-prefixed
+	 * list of subactions read through `parse_action_node()`.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -971,10 +842,8 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `PlotClass` entry: name, start and end dates, an outline,
-	 * and a count-prefixed list of developments read through
-	 * `parse_plot_node()`. `narrator` and `cast_list` are both read only
-	 * when the format version is 2.399 or later.
+	 * Reads a `PlotClass` entry: name, start and end dates, an outline, and a count-prefixed list of developments read
+	 * through `parse_plot_node()`.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -1010,11 +879,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * `RumorClass.InputFromBinary` (GV301Source/Code/RumorClass.cls,
-	 * lines 611-646). `Query` is read only when `MultiKey` is empty - a
-	 * DATA-dependent branch, not a version gate: a rumor with a non-empty
-	 * `MultiKey` never had a `QueryClass` written for it in the first place, so
-	 * there is nothing to desynchronize on if it is skipped.
+	 * `RumorClass.InputFromBinary` (Code/RumorClass.cls, lines 611-646).
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -1056,10 +921,7 @@ class GEX_Parser {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Reads the leading `RaceType` selector and dispatches to the
-	 * matching character parser. There is no record-length field anywhere
-	 * in this format, so an unrecognized code cannot be skipped past; it
-	 * throws instead.
+	 * Reads the leading `RaceType` selector and dispatches to the matching character parser.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -1093,15 +955,8 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Backfills `physical_max`/`social_max`/`mental_max` from the actual
-	 * trait counts of the three resource pools, for a source with no
-	 * stored pool-max fields of its own. Not a binary read: pure
-	 * post-processing on already-parsed trait lists, taking the highest
-	 * of the given starting max and each pool's trait count.
-	 *
-	 * Public so `GEX_Xml_Parser`'s character parsers can reuse it
-	 * directly, since the XML format never carries these three fields
-	 * either.
+	 * Backfills `physical_max`/`social_max`/`mental_max` from the actual trait counts of the three resource pools, for a
+	 * source with no stored pool-max fields of its own.
 	 *
 	 * @param int                 $physical_max
 	 * @param array<string,mixed> $physical
@@ -1119,11 +974,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `VampireClass` entry. Version-gates several fields:
-	 * `coterie` at format version 2.395+, `sire`/`aura`/`aura_bonus` at
-	 * 2.399+, a full resource-pool split at 2.397+ that back-fills the
-	 * `temp_*` fields for older files, and a trailing count-prefixed boon
-	 * list at 2.399+ read through `parse_boon()`.
+	 * Reads a `VampireClass` entry.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -1260,11 +1111,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `WerewolfClass` entry. `temp_honor`/`temp_glory`/
-	 * `temp_wisdom` are `Single` fields. Before format version 2.395,
-	 * `honor`/`glory`/`wisdom` were not stored as separate integers: each
-	 * stat was a single packed `Single` value, split here into an integer
-	 * part and a fractional part scaled by 10.
+	 * Reads a `WerewolfClass` entry.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -1300,13 +1147,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * The shared field-read sequence behind `parse_character_werewolf()` and
-	 * `parse_character_fera()` (1.1.1 audit) - byte-identical from `notoriety`
-	 * through `notes`/the pool-max backfill; only each class's own leading
-	 * identity fields (read by the caller before this) and the `$race` string
-	 * threaded into `read_trait_lists()` differ. Confirmed byte-for-byte by
-	 * `GexParserTest::test_every_race_type_code_dispatches_and_round_trips()`,
-	 * which already builds and round-trips a real synthetic buffer for both.
+	 * The shared field-read sequence behind `parse_character_werewolf()` and `parse_character_fera()`.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -1418,10 +1259,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `MageClass` entry. `foci` is read after the trait-list
-	 * block rather than with the other identity fields near the top,
-	 * matching the file's actual read order rather than the class's
-	 * property declaration order.
+	 * Reads a `MageClass` entry.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -1527,10 +1365,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `ChangelingClass` entry. The opening identity strings are
-	 * read in the order `seelie_legacy, unseelie_legacy, court, kith,
-	 * seeming, house, threshold, title`, which does not match the class's
-	 * property declaration order.
+	 * Reads a `ChangelingClass` entry.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -1632,11 +1467,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `WraithClass` entry. `ethnos` is a genuine 4-byte enum
-	 * field, unlike the top-level `RaceType` selector which is overridden
-	 * to 2 bytes. `temp_angst` is read only when the format version is
-	 * 2.397 or later, with no fallback for older files, so it is left at
-	 * its zero default. This class has no `biography` field at all.
+	 * Reads a `WraithClass` entry.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -1700,9 +1531,7 @@ class GEX_Parser {
 
 		$experience = self::parse_experience( $r, $version );
 
-		// Wraith's own byte order genuinely interleaves trait lists with free-text
-		// fields - read in the shape table's own order, sliced at each interleave
-		// point (Physical..Influences, then Arcanoi..Locations, then Thorns alone).
+		// Wraith's own byte order genuinely interleaves trait lists with free-text fields.
 		$trait_lists = self::read_trait_lists( $r, $version, 'wraith', 0, 10 );
 		[ $physical, $social, $mental ] = self::attribute_lists( $trait_lists );
 
@@ -1768,9 +1597,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `MortalClass` entry. `regnant` is read only when the format
-	 * version is 2.399 or later, gated independently of the surrounding
-	 * 2.397+ resource-pool block.
+	 * Reads a `MortalClass` entry.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -1892,10 +1719,8 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `MummyClass` entry: identity fields, an eight-stat resource
-	 * pool (`willpower`, `sekhem`, `balance`, `memory`, `integrity`,
-	 * `joy`, `ba`, `ka`) each with a `temp_*` counterpart, and the
-	 * standard trait-list block.
+	 * Reads a `MummyClass` entry: identity fields, an eight-stat resource pool (`willpower`, `sekhem`, `balance`,
+	 * `memory`, `integrity`, `joy`, `ba`, `ka`) each with a `temp_*` counterpart, and the standard trait-list block.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -2017,9 +1842,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `KueiJinClass` entry. The opening identity strings are read
-	 * in the order `dharma, balance, direction`, which does not match the
-	 * class's declared property order.
+	 * Reads a `KueiJinClass` entry.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -2141,11 +1964,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `FeraClass` entry. Structurally identical to
-	 * `WerewolfClass`, including the same pre-2.395 packed-Single encoding
-	 * for `honor`/`glory`/`wisdom` described in
-	 * `parse_character_werewolf()`, but without a `camp` field and with
-	 * `tribe` renamed to `fera`.
+	 * Reads a `FeraClass` entry.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -2179,11 +1998,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `VariousClass` entry, Grapevine's generic template
-	 * character. Has no resource-pool fields; its `Tempers` trait list is
-	 * read first, before the Physical/Social/Mental block. `brood` and
-	 * the pool-max fields are read only when the format version is 2.397
-	 * or later, with no fallback for older files.
+	 * Reads a `VariousClass` entry, Grapevine's generic template character.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -2265,11 +2080,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `HunterClass` entry. Unlike every other character class,
-	 * the resource-pool block, the start date, and the hangouts trait
-	 * list are all read unconditionally, with no pre-2.397/pre-2.395
-	 * fallback branches; only `biography` gates on format version 2.397
-	 * or later.
+	 * Reads a `HunterClass` entry.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version
@@ -2347,12 +2158,7 @@ class GEX_Parser {
 	}
 
 	/**
-	 * Reads a `DemonClass` entry. Like `HunterClass`, the resource-pool
-	 * block, start date, and hangouts trait list are all read
-	 * unconditionally, with only `biography` gating on format version
-	 * 2.397 or later. The opening identity strings are read in the order
-	 * `name, house, faction, nature, demeanor`, which does not match the
-	 * class's declared property order.
+	 * Reads a `DemonClass` entry.
 	 *
 	 * @param GV_Binary_Reader $r
 	 * @param float            $version

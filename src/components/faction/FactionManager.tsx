@@ -1,9 +1,5 @@
 /**
- * The Storyteller Toolkit's Factions tab (1.1.0 §3.10, F1): a list-pane/detail-pane manager
- * for chronicle factions - sects, coteries, packs, chantries, courts - matching
- * `WorldObjectManager`'s own two-pane layout. A faction reached here is always seen with a
- * manager's full projection (goals, audience_rules, the member roster with ranks and leader
- * flags) since only `be_manage_factions` reaches this page at all.
+ * The Storyteller Toolkit's Factions tab: a list-pane/detail-pane manager for chronicle factions.
  */
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

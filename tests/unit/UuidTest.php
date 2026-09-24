@@ -6,9 +6,7 @@ use BeyondElysium\Utils\Uuid;
 use PHPUnit\Framework\TestCase;
 
 /**
- * UUIDv7 generation and validation (Decision 024, RFC 9562).
- *
- * @see BE_PROCESS/releases/workflow-0.2.1.md Step 3
+ * UUIDv7 generation and validation (RFC 9562).
  */
 class UuidTest extends TestCase {
 
@@ -41,8 +39,7 @@ class UuidTest extends TestCase {
 			);
 		}
 
-		// Over 2000 draws every variant should appear; a generator stuck on one value
-		// would pass the assertion above while throwing away two bits of entropy.
+		// Over 2000 draws every variant should appear.
 		$this->assertCount( 4, $seen, 'Variant nibble is not uniformly distributed.' );
 	}
 

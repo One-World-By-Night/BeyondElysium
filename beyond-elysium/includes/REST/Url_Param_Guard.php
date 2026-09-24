@@ -6,36 +6,24 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Keeps a route's chronicle pinned to its URL.
- *
- * Authorization::check_request() reads `game_slug` from the URL alone, but
- * `$request['game_slug']` resolves the JSON body first, then the form body,
- * then the query string, and only then the URL. A different `game_slug` in
- * the query string or body used to reach the handler after the permission
- * check had passed against the URL - one chronicle's Storyteller reading and
- * writing another chronicle's data (1.0.0-review F-001). This refuses such a
- * request before its permission callback or handler runs.
- *
- * Only `game_slug` is pinned. Other URL parameters are either checked against
- * the pinned chronicle by the handler that loads them, or legitimately differ
- * in the body - renaming a game sends its new `slug`.
  */
 class Url_Param_Guard {
 
-	/** URL parameters that must never be overridden by the query string or body. */
+	/**
+	 * URL parameters that must never be overridden by the query string or body.
+	 */
 	const PINNED = [ 'game_slug' ];
 
 	/**
-	 * Hooks the check onto every REST dispatch. Runs before WordPress calls a
-	 * route's permission callback.
+	 * Hooks the check onto every REST dispatch.
 	 */
 	public static function register(): void {
 		add_filter( 'rest_request_before_callbacks', [ self::class, 'check' ], 5, 3 );
 	}
 
 	/**
-	 * Returns a 400 error when this plugin's route carries a pinned URL
-	 * parameter that the query string, form body, or JSON body contradicts;
-	 * otherwise passes the dispatch through untouched.
+	 * Returns a 400 error when this plugin's route carries a pinned URL parameter that the query string, form body, or
+	 * JSON body contradicts.
 	 *
 	 * @param mixed            $response Null, or an earlier filter's result.
 	 * @param array            $handler  The matched route handler.

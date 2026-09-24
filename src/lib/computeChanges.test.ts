@@ -81,8 +81,7 @@ describe( 'computeChanges — trait_list', () => {
 		const original: SheetData = {
 			disciplines: [ { name: 'Celerity', count: 2 } ],
 		};
-		// Remove (mark) then undo, exactly what the editor's "Undo" affordance does -
-		// nets back to the original row untouched.
+		// Remove (mark) then undo, exactly what the editor's "Undo" affordance does.
 		const current: SheetData = {
 			disciplines: [ { name: 'Celerity', count: 2, _removed: false } ],
 		};
@@ -202,9 +201,6 @@ describe( 'computeChanges — tiered_power', () => {
 		] );
 	} );
 
-	// The same path name exists under several sorcery traditions at once, and one
-	// character can hold paths from more than one - so `tradition` lives on the held
-	// entry, and setting it with the level untouched is a real change on its own.
 	it( 'treats a tradition change with an unchanged level as a real modify_trait', () => {
 		const original: SheetData = {
 			disciplines: [ { name: 'Ash Path', level: 5 } ],
@@ -258,10 +254,7 @@ describe( 'computeChanges — tiered_power', () => {
 		expect( change.change_data.trait ).not.toHaveProperty( 'tradition' );
 	} );
 
-	// Elder-and-above picks (Decision 037) are matched by power_name within the tier,
-	// not by numbered level - Cost_Engine::price_tiered_power_change() prices these
-	// via power_name instead of level (0.99.2-workflow.md "Cost_Engine cannot price
-	// an Elder-tier purchase").
+	// Elder-and-above picks are matched by power_name within the tier.
 	it( 'produces an add_trait carrying power_name for a new Elder-and-above pick', () => {
 		const current: SheetData = {
 			disciplines: [ { name: 'Celerity', power_name: 'Precision' } ],
@@ -279,10 +272,6 @@ describe( 'computeChanges — tiered_power', () => {
 		] );
 	} );
 
-	// A family can hold several distinct Elder-and-above picks at once
-	// (0.99.2-workflow.md: "you can have multiple powers at those levels"), identified by
-	// (name, power_name) together - swapping Precision for Projectile is therefore two
-	// independent facts changing, not one row's power_name changing in place.
 	it( 'treats swapping one Elder pick for another as a remove plus an add, not a modify', () => {
 		const original: SheetData = {
 			disciplines: [ { name: 'Celerity', power_name: 'Precision' } ],
@@ -424,11 +413,7 @@ describe( 'computeChanges — identity_field', () => {
 } );
 
 /**
- * 1.2.11 D88 consumer 4 - the diff pairs held rows by identity, not by name in arrival order.
- * Where an item allows multiples, `Retainers (John Doe)` and `Retainers (Sue Smith)` are two
- * holdings: removing the first must not read as "relabel John to Sue, then remove a Retainer",
- * which is what name-order pairing produced - and that removal names no label, so the engine
- * would have deleted both.
+ * Consumer 4 - the diff pairs held rows by identity.
  */
 describe( 'computeChanges — trait_list rows that may be held more than once', () => {
 	const blocks = {

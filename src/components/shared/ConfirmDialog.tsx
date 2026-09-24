@@ -1,8 +1,5 @@
 /**
- * Blocking confirmation dialog with a title, message, and confirm/cancel
- * buttons. Renders as a backdrop-covered alert dialog when open, and
- * renders nothing at all when closed. Used to confirm destructive or
- * hard-to-reverse actions before they happen.
+ * Blocking confirmation dialog with a title, message, and confirm/cancel buttons.
  */
 import { __ } from '@wordpress/i18n';
 import './ConfirmDialog.css';
@@ -18,10 +15,7 @@ export interface ConfirmDialogProps {
 }
 
 /**
- * Renders a modal confirm/cancel dialog with a title and message when
- * `open` is true. Clicking the backdrop or the cancel button calls
- * `onCancel`; clicking confirm calls `onConfirm`. Renders nothing at
- * all when `open` is false, rather than a hidden dialog.
+ * Renders a modal confirm/cancel dialog with a title and message when `open` is true.
  */
 export function ConfirmDialog( {
 	open,
@@ -42,8 +36,6 @@ export function ConfirmDialog( {
 			role="presentation"
 			onClick={ onCancel }
 		>
-			{ /* Keeps a click inside the dialog from reaching the backdrop, which cancels it. Nothing
-			here to operate: its buttons are the keyboard's way out. */ }
 			{ /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */ }
 			<div
 				className="be-confirm-dialog"

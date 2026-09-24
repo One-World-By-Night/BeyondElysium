@@ -6,23 +6,11 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * UUIDv7 generation and validation (RFC 9562).
- *
- * Layout, 128 bits total:
- *   48 bits  unix_ts_ms   millisecond timestamp, big-endian
- *    4 bits  version      always 0111 (7)
- *   12 bits  rand_a       random
- *    2 bits  variant      always 10
- *   62 bits  rand_b       random
- *
- * Time-ordered, so a UUIDv7 sorts by creation time as a string. Used as the
- * permanent cross-installation identity for characters.
  */
 class Uuid {
 
 	/**
 	 * Generates a UUIDv7 string.
-	 * Combines a millisecond timestamp with random bits per RFC 9562 and
-	 * formats the result as a canonical 36-character UUID.
 	 *
 	 * @return string 36-character canonical UUID.
 	 */
@@ -51,8 +39,6 @@ class Uuid {
 
 	/**
 	 * Computes the current Unix time in milliseconds.
-	 * Splits microtime() into seconds and microseconds and combines them
-	 * with integer/string arithmetic rather than floating-point math.
 	 *
 	 * @return int
 	 */
@@ -63,8 +49,6 @@ class Uuid {
 
 	/**
 	 * Checks whether a string is a canonical UUID of any version.
-	 * Matches the standard 8-4-4-4-12 hex layout with a valid version
-	 * nibble (1-8) and a valid variant nibble (8, 9, a, or b).
 	 *
 	 * @param string $uuid Candidate string.
 	 * @return bool
@@ -78,8 +62,6 @@ class Uuid {
 
 	/**
 	 * Checks whether a string is specifically a UUIDv7.
-	 * Matches the same layout as is_valid() but requires the version
-	 * nibble to be exactly 7.
 	 *
 	 * @param string $uuid Candidate string.
 	 * @return bool
@@ -93,8 +75,6 @@ class Uuid {
 
 	/**
 	 * Extracts the creation timestamp encoded in a UUIDv7.
-	 * Reads the first 48 bits of the UUID (the timestamp field) and
-	 * returns them as milliseconds since the Unix epoch.
 	 *
 	 * @param string $uuid A UUIDv7 string.
 	 * @return int|null Milliseconds since the Unix epoch, or null if not a valid v7.

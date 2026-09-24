@@ -9,14 +9,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Covers the AI writing-assist tool (ai-writing-assist-design.md): key
- * encryption/resolution precedence (chronicle override, else site-wide,
- * else not configured), that a stored key is never echoed back by any
- * route, the field_context -> capability map's real enforcement (an
- * unrelated capability, or a site-wide/chronicle-scoped route mismatch,
- * must not reach generation), and generate()'s own provider dispatch and
- * failure handling via pre_http_request mocking - no real API key or
- * network call needed.
+ * The AI writing-assist tool: key encryption and resolution precedence (chronicle override, else site-wide, else not
+ * configured), a stored key never echoed back by any route, and the field_context capability map.
  */
 class AiAssistThreadTest extends WP_UnitTestCase {
 
@@ -550,8 +544,7 @@ class AiAssistThreadTest extends WP_UnitTestCase {
 
 		$this->assertSame( 200, $response->get_status() );
 		$body = wp_json_encode( $response->get_data() );
-		// The stored value is already encrypted, so it never contains the plaintext regardless
-		// of redaction - the real proof is that the field NAME itself is gone from the response.
+		// The stored value is already encrypted.
 		$this->assertStringNotContainsString( 'ai_openai_key', $body, 'the raw settings field must be stripped, not merely encrypted-but-still-present' );
 	}
 }

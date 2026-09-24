@@ -1,8 +1,5 @@
 /**
- * A player proposes a coterie, pack, cabal, or motley for their own character (1.1.0 §3.10,
- * F1). It submits an ordinary `propose_faction` change, so it lands in the same Approval
- * Queue a Storyteller already works daily. Approving it creates the faction and makes the
- * proposing character its first leader in one transaction; rejecting writes nothing.
+ * A player proposes a coterie, pack, cabal, or motley for their own character.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -15,7 +12,9 @@ import './ProposeFaction.css';
 
 export interface ProposeFactionProps {
 	gameSlug: string;
-	/** The character the proposal is attached to - they become its first leader once approved. */
+	/**
+	 * The character the proposal is attached.
+	 */
 	characterId: number;
 }
 

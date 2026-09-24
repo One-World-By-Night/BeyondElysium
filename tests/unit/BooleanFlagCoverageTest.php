@@ -6,23 +6,11 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Every `tinyint(1)` column in the schema must be accounted for.
- *
- * `$wpdb` returns column values as strings regardless of SQL type, and `"0"` is truthy in
- * JavaScript. That is D51, and D53 is what happened when the same class was left on three
- * more columns: the Schema Blocks editor silently marked every block it saved
- * Storyteller-only, which hid Abilities from every player on a live chronicle.
- *
- * Each column's model casts it in its own decode (owner ruling 2026-09-16: to `bool`, so the
- * truthy-`"0"` shape stops being expressible at all - see `releases/1.0.1-workflow.md` B1).
- * `BooleanFlagTypesThreadTest` proves the real REST responses. This test is the backstop that
- * keeps that list honest: add a `tinyint(1)` column and the build fails here until you have
- * decided how it is cast and covered it there.
  */
 class BooleanFlagCoverageTest extends TestCase {
 
 	/**
 	 * Every `tinyint(1)` column known to the schema, and the model that decodes it.
-	 * Adding a row here is a deliberate act - see the class docblock.
 	 */
 	private const KNOWN = [
 		'games.notifications_enabled'      => 'Game',

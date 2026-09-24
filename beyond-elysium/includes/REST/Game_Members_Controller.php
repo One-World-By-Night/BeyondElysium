@@ -9,11 +9,6 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * REST controller for chronicle membership.
- *
- * Manages which WordPress users hold which chronicle-level role in a game:
- * listing current members with their display name and email, adding a
- * member or changing an existing member's role, and removing a member.
- * Every route is gated by `be_manage_games`.
  */
 class Game_Members_Controller extends Base_Controller {
 
@@ -21,9 +16,6 @@ class Game_Members_Controller extends Base_Controller {
 
 	/**
 	 * Registers the game membership routes.
-	 *
-	 * Adds the collection route for listing members and adding/changing one,
-	 * plus a single-member route for removing one by WordPress user ID.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base, [
@@ -50,10 +42,6 @@ class Game_Members_Controller extends Base_Controller {
 
 	/**
 	 * Lists the members of a game.
-	 *
-	 * Loads every membership row for the game and enriches each with the
-	 * corresponding WordPress user's display name and email, so a caller
-	 * does not need a separate lookup to show a human-readable list.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -84,11 +72,6 @@ class Game_Members_Controller extends Base_Controller {
 	/**
 	 * Adds a member or changes an existing member's role.
 	 *
-	 * Validates that `wp_user_id` references a real WordPress user and that
-	 * `role` is one of the valid roles, then upserts the membership row
-	 * through `Game_Member::set_role()`, which covers both adding a new
-	 * member and changing an existing one's role.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -118,9 +101,6 @@ class Game_Members_Controller extends Base_Controller {
 	/**
 	 * Removes a member from a game.
 	 *
-	 * Resolves the game by slug, then removes the membership row for the
-	 * WordPress user ID named in the URL.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -136,9 +116,6 @@ class Game_Members_Controller extends Base_Controller {
 
 	/**
 	 * Resolves a game by its slug.
-	 *
-	 * Looks up the game record for the given slug and returns a 404 error
-	 * when no game matches it.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

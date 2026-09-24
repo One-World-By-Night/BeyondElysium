@@ -13,46 +13,24 @@ use BeyondElysium\Models\Plot_Entry;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Allocates action-point subactions for a character on a game date, port
- * of `ActionClass.AddCommonActions` (GV301Source/Code/ActionClass.cls).
- *
- * A subaction is a named allocation of action points with a total, an
- * unused remainder, and growth carried forward from a prior week. Every
- * character is seeded with a "Personal" subaction; one more is added per
- * Influence (unconditionally) and per Background named in the game's
- * `background_actions` config, using the source tag attached to each item
- * in the `{stack}-backgrounds` block's definition to tell an
- * Influence-sourced entry apart from a Backgrounds-sourced one.
- *
- * @see BE_PROCESS/releases/workflow-0.5.md Step 4
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "Action allocation"
+ * Allocates action-point subactions for a character on a game date, port of `ActionClass.AddCommonActions`
+ * (Code/ActionClass.cls).
  */
 class Action_Allocator {
 
 	/**
-	 * `ActionClass.BasicSubactionName` - every character gets this subaction, seeded
-	 * fresh at `personal_actions` rather than derived from a trait.
+	 * `ActionClass.BasicSubactionName`.
 	 */
 	const PERSONAL_NAME = 'Personal';
 
 	/**
-	 * Connections linking an action-allocation plot to its character carry this label,
-	 * distinguishing it from any other plot<->character connection (a cast credit, a
-	 * plot hook, etc.) that is not an allocation record.
+	 * Connections linking an action-allocation plot to its character carry this label, distinguishing it from any other
+	 * plot<->character connection (a cast credit, a plot hook, etc.) that is not an allocation record.
 	 */
 	const ACTOR_LABEL = 'apr_actor';
 
 	/**
-	 * Computes the subaction set for a character on a game date, without
-	 * persisting it. Builds the Personal subaction and, when the game's
-	 * APR config enables it, resolves one subaction per qualifying
-	 * Influence or Background trait on the character's sheet, then debits
-	 * against each subaction any Background_Ledger entries already recorded
-	 * for this exact (character, date) pair - so a preview, a commit, and a
-	 * later re-fetch of the same allocation all show the same spent/unused
-	 * numbers (BE_PROCESS/design/background-ledger-apr-design.md §5.4). A date with
-	 * no ledger entries yet is unaffected: every subaction's `spent` is 0
-	 * and `unused` is unchanged.
+	 * Computes the subaction set for a character on a game date, without persisting it.
 	 *
 	 * @param int    $character_id
 	 * @param string $game_date `Y-m-d`.
@@ -87,13 +65,8 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Builds the "Personal" subaction, seeded for every character at the
-	 * game's `personal_actions` total regardless of any trait. Its
-	 * `growth` always carries forward from the prior allocation; its
-	 * `unused` carries forward only when the game's `carry_unused`
-	 * setting is on, otherwise it resets to the fresh total.
-	 *
-	 * Pure function with no database access.
+	 * Builds the "Personal" subaction, seeded for every character at the game's `personal_actions` total regardless of
+	 * any trait.
 	 *
 	 * @param array $apr
 	 * @param array $prior Prior allocation, keyed by subaction name.
@@ -121,14 +94,7 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Resolves the set of Influence and Background subactions for a
-	 * character. Both trait kinds live in the same merged
-	 * `{stack}-backgrounds` sheet; an entry is included unconditionally
-	 * when its catalog source is `Influences`, or only when its name is
-	 * listed in `background_actions` otherwise. Skips any name already
-	 * seen in this pass.
-	 *
-	 * Pure function with no database access.
+	 * Resolves the set of Influence and Background subactions for a character.
 	 *
 	 * @param array $chosen         The character's `{stack}-backgrounds` sheet_data: `[{name, count}, ...]`.
 	 * @param array $source_by_name Catalog name -> source ('Influences', 'Backgrounds', ...).
@@ -162,14 +128,7 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Builds one Influence or Background subaction. The total defaults to
-	 * twice the trait's count, overridden by an `actions_per_level` entry
-	 * keyed on that same count when one exists. `growth` always carries
-	 * forward from the prior allocation; `unused` carries forward,
-	 * replacing rather than adding to the fresh total, only when
-	 * `carry_unused` is on.
-	 *
-	 * Pure function with no database access.
+	 * Builds one Influence or Background subaction.
 	 *
 	 * @param string $name
 	 * @param int    $count
@@ -205,9 +164,8 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Builds a map of catalog item name to source label for the merged
-	 * backgrounds block, resolved through this chronicle's own fork when
-	 * one exists (BE_PROCESS/design/background-ledger-apr-design.md §3.1).
+	 * Builds a map of catalog item name to source label for the merged backgrounds block, resolved through this
+	 * chronicle's own fork when one exists.
 	 *
 	 * @param string $backgrounds_slug
 	 * @param string $game_slug
@@ -218,11 +176,8 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Reads a game's action-point-allocation configuration from
-	 * `be_games.settings.apr`, filling in default values for any setting
-	 * a chronicle has not configured.
-	 *
-	 * Pure function with no database access.
+	 * Reads a game's action-point-allocation configuration from `be_games.settings.apr`, filling in default values for
+	 * any setting a chronicle has not configured.
 	 *
 	 * @param object|null $game
 	 * @return array{personal_actions:int, carry_unused:bool, add_common:bool, background_actions:string[], actions_per_level:array<string,int>}
@@ -240,23 +195,16 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Finds the most recent persisted allocation for a character strictly
-	 * before the given game date, decoded into a map of subaction name to
-	 * `{total, unused, growth}`. Returns an empty array when no prior
-	 * allocation exists.
+	 * Finds the most recent persisted allocation for a character strictly before the given game date, decoded into a map
+	 * of subaction name to `{total, unused, growth}`.
 	 *
 	 * @param int    $character_id
 	 * @param string $game_date `Y-m-d`.
 	 * @return array<string,array{total:int,unused:int,growth:int}>
 	 */
 	/**
-	 * Returns the character id an allocation plot's `apr_actor` connection
-	 * targets, or null when the plot has no such connection - either it is
-	 * not an allocator plot at all, or its connection is missing. Used by
-	 * the REST layer to decide whether a non-manager viewer may see this
-	 * plot's action entries at all (BE_PROCESS/design/background-ledger-apr-design.md
-	 * §3.4/§5.8: an allocation plot's contents disclose a character's exact
-	 * background dot ratings and are not public).
+	 * Returns the character id an allocation plot's `apr_actor` connection targets, or null when the plot has no such
+	 * connection.
 	 *
 	 * @param int $plot_id
 	 * @return int|null
@@ -271,10 +219,7 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Reports whether the given user owns the character an allocation plot's
-	 * `apr_actor` connection targets. A plot with no such connection (not an
-	 * allocator plot) is not viewable through this check - callers only use
-	 * it to decide visibility for allocator plots specifically.
+	 * Reports whether the given user owns the character an allocation plot's `apr_actor` connection targets.
 	 *
 	 * @param int $plot_id
 	 * @param int $wp_user_id
@@ -306,10 +251,7 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Finds the ID of the most recent action-allocation plot for a
-	 * character dated strictly before the given game date. Queries the
-	 * plots and connections tables for a plot linked to the character
-	 * with the allocator's actor label, ordered by game date descending.
+	 * Finds the ID of the most recent action-allocation plot for a character dated strictly before the given game date.
 	 *
 	 * @param int    $character_id
 	 * @param string $game_date
@@ -336,10 +278,7 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Persists an allocation: one plot per character/date pair, with one
-	 * `action` entry per subaction. Idempotent - re-running for the same
-	 * character and date updates the existing plot's entries rather than
-	 * creating a second plot.
+	 * Persists an allocation: one plot per character/date pair, with one `action` entry per subaction.
 	 *
 	 * @param int      $character_id
 	 * @param string   $game_date
@@ -348,7 +287,7 @@ class Action_Allocator {
 	 *                 already-allocated character/date never silently reparents it.
 	 * All of it is written or none of it, and one allocation for a character
 	 * runs at a time, so two at once can't each make the date's plot
-	 * (1.0.0-review F-091).
+	 * .
 	 *
 	 * @return int Plot ID, or 0 when a write failed and nothing was kept.
 	 */
@@ -367,9 +306,7 @@ class Action_Allocator {
 		$written          = $plot_id !== null;
 
 		if ( $written && $existing_plot_id ) {
-			// Replace only the allocator's own budget entries with the freshly computed set -
-			// never a player's free-text action post, and never a ledger spend (§3.3/§5.1:
-			// a re-allocation must not erase either one).
+			// Replace only the allocator's own budget entries with the freshly computed set.
 			foreach ( Plot_Entry::for_plot( $plot_id, [ 'entry_type' => 'action' ] ) as $entry ) {
 				if ( self::decode_allocator_entry( $entry->content ) !== null ) {
 					$written = $written && Plot_Entry::delete( (int) $entry->id );
@@ -396,11 +333,7 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Creates a character's bare allocation plot for a date, with the link
-	 * that marks it as theirs - the one thing that keeps it out of every
-	 * other member's plot list. Run inside a transaction holding the
-	 * character's row, after `find_own_plot_id()` found none, so the plot
-	 * and its link land together or not at all.
+	 * Creates a character's bare allocation plot for a date, with the link that marks it as theirs.
 	 *
 	 * @param object   $character
 	 * @param string   $game_date
@@ -413,15 +346,12 @@ class Action_Allocator {
 			return null;
 		}
 
-		// A round sits under the character's own plot, unless a Storyteller chose another (owner, 2026-09-15).
 		$parent_plot_id = $parent_plot_id ?? Character::ensure_plot( (int) $character->id );
 		if ( $parent_plot_id === null ) {
 			return null;
 		}
 
-		// Title format: game date followed by the character's name. 'restricted', not the schema
-		// default 'everyone': the ACTOR_LABEL connection written right below makes this one
-		// character its audience, same as the parent plot ensure_plot() creates.
+		// Title format: game date followed by the character's name.
 		$plot_id = Plot::create( [
 			'game_id'        => (int) $game->id,
 			'parent_plot_id' => $parent_plot_id,
@@ -448,23 +378,18 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Finds the ID of this character's own allocation plot for an exact
-	 * game date, if one already exists. Used by `persist()` to decide
-	 * whether to update an existing plot or create a new one, and by
-	 * `Background_Ledger` to find the plot a use should debit against.
+	 * Finds the ID of this character's own allocation plot for an exact game date, if one already exists.
 	 *
 	 * @param int    $character_id
 	 * @param string $game_date
 	 * @return int|null
 	 */
 	/**
-	 * Every action-allocation plot for a game date, across every character - the Downtime
-	 * queue's own source list (1.1.0 §3.3), unfiltered by character the way find_own_plot_id()
-	 * is.
+	 * Every action-allocation plot for a game date, across every character.
 	 *
 	 * @param int    $game_id
 	 * @param string $game_date `Y-m-d`.
-	 * @return object[] Each: plot_id, character_id, assigned_to (§3.6, null when unassigned).
+	 * @return object[] Each: plot_id, character_id, assigned_to (null when unassigned).
 	 */
 	public static function plots_for_date( int $game_id, string $game_date ): array {
 		global $wpdb;
@@ -486,11 +411,7 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Every action-allocation plot assigned to one staff member, across every game date - the
-	 * My Queue downtime section's own source list (1.1.0 §3.6), unfiltered by date the way
-	 * plots_for_date() is. `game_date IS NOT NULL` excludes a character's own permanent home
-	 * plot (Character::ensure_plot()) - it carries the identical apr_actor connection every
-	 * dated round plot does, but it is never itself a round with actions to answer.
+	 * Every action-allocation plot assigned to one staff member, across every game date.
 	 *
 	 * @param int $wp_user_id
 	 * @param int $game_id
@@ -535,10 +456,7 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Finds the ID of a character's single most recent allocation plot, with
-	 * no date constraint - what `Background_Ledger::spendable_for()` reads to
-	 * annotate which held backgrounds currently have a live budget, independent
-	 * of which date the ledger panel happens to be viewing.
+	 * Finds the ID of a character's single most recent allocation plot, with no date constraint.
 	 *
 	 * @param int $character_id
 	 * @return int|null
@@ -563,9 +481,8 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Decodes a plot's allocator-managed subactions into a name -> subaction
-	 * map, the same decoding `most_recent_allocation()` applies, exposed for
-	 * `Background_Ledger` to read a specific plot's live budget.
+	 * Decodes a plot's allocator-managed subactions into a name -> subaction map, the same decoding
+	 * `most_recent_allocation()` applies, exposed for `Background_Ledger` to read a specific plot's live budget.
 	 *
 	 * @param int $plot_id
 	 * @return array<string,array{name:string,level:int,total:int,unused:int,growth:int,action:string,result:string}>
@@ -582,17 +499,8 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Determines whether an allocation plot is complete: every budgeted
-	 * subaction has at least one Background_Ledger entry recorded against
-	 * it, and every one of those entries has a non-empty `result` - the
-	 * meaning `frmAction.frm`'s own Action/Result fields carried before the
-	 * ledger's write path existed to fill them
-	 * (BE_PROCESS/design/background-ledger-apr-design.md §5.5). False when the plot
-	 * has no subactions at all.
-	 *
-	 * This replaces the original "action and result on the allocator entry
-	 * itself" rule, which nothing had ever written to and which could
-	 * therefore never return true for a real allocation (§2.3).
+	 * Determines whether an allocation plot is complete: every budgeted subaction has at least one Background_Ledger
+	 * entry recorded against it, and every one of those entries has a non-empty `result`.
 	 *
 	 * @param int $plot_id
 	 * @return bool
@@ -624,9 +532,6 @@ class Action_Allocator {
 
 	/**
 	 * Encodes a subaction as JSON for storage in `plot_entries.content`.
-	 * Adds a `source: 'allocator'` marker so an allocator-managed entry
-	 * can be told apart from a player's own free-text action post sharing
-	 * the same `entry_type`.
 	 *
 	 * @param array $subaction
 	 * @return string
@@ -640,10 +545,7 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Decodes an entry's `content` as allocator data. Returns null when
-	 * the content is not valid JSON, or when it is valid JSON that is not
-	 * an allocator-managed entry, such as a player's own free-text action
-	 * post sharing the same `entry_type`.
+	 * Decodes an entry's `content` as allocator data.
 	 *
 	 * @param string $content
 	 * @return array{name:string,level:int,total:int,unused:int,growth:int,action:string,result:string}|null

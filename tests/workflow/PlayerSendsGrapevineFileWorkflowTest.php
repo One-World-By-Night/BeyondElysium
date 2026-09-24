@@ -11,14 +11,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * A player sends their own Grapevine file straight to a chronicle, with no Storyteller on the
- * sending end at all (F-122, 1.0.0-review). A signed-in non-member sends their verified sheet
- * as a visitor; the chronicle's HST sees it waiting, reviews it - checking the embedded
- * verification code and keeping one trait the catalog doesn't recognize exactly as written -
- * and accepts. The sender is now a player there, sees the character on their own list, and the
- * character itself is a real visit; the HST sends it home.
- *
- * @see BE_PROCESS/design/player-grapevine-file-design.md §14
+ * A player sends their own Grapevine file straight to a chronicle, with no Storyteller on the sending end at all
+ * (review).
  */
 class PlayerSendsGrapevineFileWorkflowTest extends WP_UnitTestCase {
 
@@ -30,7 +24,9 @@ class PlayerSendsGrapevineFileWorkflowTest extends WP_UnitTestCase {
 		return true;
 	}
 
-	/** The verification check calls out to the issuing site's own /verify/{code} route - here, this same site, over a real internal REST dispatch rather than a genuine second install. */
+	/**
+	 * The verification check calls out to the issuing site's own /verify/{code} route.
+	 */
 	public function loopback( $preempt, $args, $url ) {
 		if ( strpos( $url, '/verify/' ) === false ) {
 			return $preempt;
@@ -67,12 +63,6 @@ class PlayerSendsGrapevineFileWorkflowTest extends WP_UnitTestCase {
 
 		$sender = self::factory()->user->create( [ 'role' => 'subscriber', 'user_email' => 'grapevine-file-sender@example.test' ] );
 
-		// The player's own character, wherever it actually lives - a "Not A Real Discipline At
-		// All" held power stands in for a homebrew Discipline this chronicle's catalog has never
-		// seeded (matching this codebase's own "keep_custom" fixture convention: a tiered_power
-		// name with no catalog match has no auto-custom fallback the way a trait_list block can,
-		// so it lands genuinely unresolved, not silently accepted), so review has a real unmatched
-		// trait to resolve rather than a clean, uninteresting duplicate-free file.
 		$source_id = Character::create( [
 			'name' => 'Traveling Player', 'stack_slug' => 'vampire', 'owner_type' => 'chronicle',
 			'owner_slug' => 'grapevine-file-workflow-source', 'status' => 'active',
@@ -102,8 +92,6 @@ class PlayerSendsGrapevineFileWorkflowTest extends WP_UnitTestCase {
 		$this->assertSame( 200, $waiting->get_status() );
 		$this->assertCount( 1, $waiting->get_data() );
 
-		// Reviewing it shows the one trait the catalog can't place, and the automatic
-		// verification check against the sheet's own issuing site.
 		$review = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->host}/submissions/{$submission_id}/review" ) );
 		$this->assertSame( 200, $review->get_status(), wp_json_encode( $review->get_data() ) );
 		$unresolved = $review->get_data()['preview']['unresolved'];
@@ -114,8 +102,7 @@ class PlayerSendsGrapevineFileWorkflowTest extends WP_UnitTestCase {
 		$this->assertSame( 200, $verification->get_status(), wp_json_encode( $verification->get_data() ) );
 		$this->assertSame( 'unchanged', $verification->get_data()['status'], 'a fresh, untouched export should read back as unchanged' );
 
-		// The HST keeps the homebrew merit as written and accepts, as a visitor - the sender's
-		// own choice, not overridden here.
+		// The HST keeps the homebrew merit as written and accepts, as a visitor.
 		$accepted = $this->post( "/be/v1/{$this->host}/submissions/{$submission_id}/accept", [
 			'resolutions' => [
 				'traits' => [
@@ -134,8 +121,7 @@ class PlayerSendsGrapevineFileWorkflowTest extends WP_UnitTestCase {
 		$this->assertSame( 'Not A Real Discipline At All', $held[0]['name'] );
 		$this->assertTrue( $held[0]['custom'] );
 
-		// The sender is now a player at the host chronicle - visiting, not a hand-built
-		// member - and sees the character on their own list there.
+		// The sender is now a player at the host chronicle.
 		$this->assertSame( 'player', Game_Member::find( $host_id, $sender )->role );
 		wp_set_current_user( $sender );
 		$my_characters = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->host}/my/characters" ) );

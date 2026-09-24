@@ -9,12 +9,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The acceptance gate for the sub-faction restriction feature: beneath
- * `enabled_stacks`' own whole-creature-type toggle (Decision 092), a
- * chronicle can further narrow a real catalog-backed identity_field -
- * "Vampire yes, but no Sabbat." Mirrors EnabledStacksFilterTest's own
- * shape: creation/picker only, never a data filter, and an already-held
- * value on an existing character must survive a later restriction.
+ * The sub-faction restriction feature: beneath `enabled_stacks`' own whole-creature-type toggle, a chronicle can
+ * further narrow a real catalog-backed identity_field.
  */
 class FactionRestrictionsFilterTest extends WP_UnitTestCase {
 
@@ -34,8 +30,7 @@ class FactionRestrictionsFilterTest extends WP_UnitTestCase {
 			'created_by' => $this->manager_id,
 		] );
 
-		// Pre-existing Sabbat character, created before this chronicle ever
-		// restricts its Sect - the exact scenario the binding rule protects.
+		// Pre-existing Sabbat character, created before this chronicle ever restricts its Sect.
 		$this->sabbat_character_id = Character::create( [
 			'name'       => 'Pre-existing Sabbat',
 			'owner_slug' => $this->game_slug,

@@ -8,7 +8,6 @@ use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Schema_Block;
-use BeyondElysium\Services\Catalog_Cutover;
 use BeyondElysium\Services\Change_Engine;
 use BeyondElysium\Services\Change_Validator;
 use BeyondElysium\Services\Cost_Engine;
@@ -18,13 +17,6 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * REST controller for character sheet changes.
- *
- * Handles the full change lifecycle: a player submits a proposed change to
- * a character's sheet, the cost engine prices it, and either it auto-applies
- * or an ST reviews it through the approval queue. Also exposes change
- * history per character, a per-user pending-changes view, batch approval,
- * and a cost/approval preview endpoint used before a change is actually
- * submitted.
  */
 class Changes_Controller extends Base_Controller {
 
@@ -32,11 +24,6 @@ class Changes_Controller extends Base_Controller {
 
 	/**
 	 * Registers the game-scoped change routes.
-	 *
-	 * Adds routes for listing and submitting changes on one character, the
-	 * cross-character approval queue and batch approval, the current user's
-	 * own pending changes, a cost/approval preview, and single-change
-	 * approval or rejection.
 	 */
 	public function register_routes(): void {
 		// Lists and creates changes for one character.
@@ -103,13 +90,6 @@ class Changes_Controller extends Base_Controller {
 	/**
 	 * Lists changes for one character.
 	 *
-	 * Resolves the game and character from the URL, then returns a
-	 * paginated, filterable list of that character's change records ordered
-	 * by the requested sort direction. be_view_characters is a broad,
-	 * site-wide/game-role capability, not per-row (same D33 class of gap
-	 * Characters_Controller::get_item() already closes) - a non-manager may
-	 * only list one character's own change history, never another player's.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -147,12 +127,6 @@ class Changes_Controller extends Base_Controller {
 	/**
 	 * Submits a new change for a character.
 	 *
-	 * Validates the required fields, checks that a custom trait is only used
-	 * on a block that allows it, enforces that a non-manager may only submit
-	 * for their own character, prices the change through the cost engine,
-	 * and hands it to `Change_Engine::submit()` to record and, where
-	 * eligible, auto-apply.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -182,13 +156,6 @@ class Changes_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'Missing required field: change_data.', 'beyond-elysium' ), 400 );
 		}
 
-		// 1.3.3 C7: a browser tab opened before the cutover still submits the slug it loaded
-		// the sheet with. Mapped before validation, which otherwise checks a retired slug
-		// against a declared stack's own sections and refuses it as unknown.
-		if ( isset( $change_data['block_slug'] ) ) {
-			$change_data['block_slug'] = Catalog_Cutover::live_slug( (string) $character->stack_slug, $change_data['block_slug'] );
-		}
-
 		$is_manager = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
 
 		// Ownership check: player can only submit for their own character.
@@ -196,9 +163,7 @@ class Changes_Controller extends Base_Controller {
 			return $this->error( 'ownership_denied', __( 'You do not have permission to submit changes for this character.', 'beyond-elysium' ), 403 );
 		}
 
-		// Nothing below trusts the change's shape until it has been checked against this
-		// character's own sections - a chronicle's forks included - and normalized
-		// (1.0.0-review F-030).
+		// Validates and normalizes the change against this character's own sections.
 		$stack      = Creature_Stack::resolve( (string) $character->stack_slug, (string) $character->owner_slug );
 		$validation = Change_Validator::validate(
 			[ 'change_type' => $change_type, 'change_data' => $change_data ],
@@ -212,10 +177,7 @@ class Changes_Controller extends Base_Controller {
 		}
 		$change_data = $validation['change_data'];
 
-		// Server-computed XP cost; a non-manager is refused if it would leave xp_unspent negative.
-		// `cost_pending` is set here, from the quote alone, when a purchase has no price yet, and a
-		// Storyteller sets one at approval (1.3.3 E2). The validator has already rebuilt `change_data`
-		// from the section and the trait, so nothing a client sends under that name survives to here.
+		// Server-computed XP cost.
 		$quote   = Cost_Engine::quote_for_change(
 			$character,
 			[ 'change_type' => $change_type, 'change_data' => $change_data ],
@@ -259,11 +221,6 @@ class Changes_Controller extends Base_Controller {
 	/**
 	 * Approves or rejects a single change.
 	 *
-	 * Validates the requested status, confirms the change is still pending,
-	 * then delegates to `Change_Engine::approve()` or `::reject()`. On
-	 * success, enqueues and flushes a notification and invalidates the
-	 * game's cached stats.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -283,14 +240,12 @@ class Changes_Controller extends Base_Controller {
 			return $change;
 		}
 
-		// Only a pending change may be reviewed; this guards against re-approving the same change twice.
+		// Only a pending change may be reviewed.
 		if ( $change->status !== 'pending' ) {
 			return $this->error( 'change_not_pending', __( 'This change has already been reviewed.', 'beyond-elysium' ), 400 );
 		}
 
-		// The token the queue issued for exactly what the reviewer saw. A player's resubmission
-		// rewrites a pending change in place, so a stale token means the reviewer is deciding on
-		// content that is no longer there (1.0.0-review F-031).
+		// The token the queue issued for exactly what the reviewer saw.
 		$token = $request->get_param( 'review_token' );
 		$token = $token !== null ? (string) $token : null;
 		if ( $token !== null && ! hash_equals( Change::review_token( $change ), $token ) ) {
@@ -309,8 +264,7 @@ class Changes_Controller extends Base_Controller {
 			if ( $faction_denied ) {
 				return $faction_denied;
 			}
-			// A purchase waiting for a price is approved at the one the reviewer names, and only
-			// then; a number offered for a change that already has a price is not read (1.3.3 E4).
+			// A purchase waiting for a price is approved at the one the reviewer names, and only then.
 			$set_cost = null;
 			if ( ! empty( $change->change_data['cost_pending'] ) ) {
 				$set_cost = $this->reviewer_price( $request->get_param( 'xp_cost' ) );
@@ -324,8 +278,7 @@ class Changes_Controller extends Base_Controller {
 		}
 
 		if ( ! $result ) {
-			// The engine re-checks under a row lock, so a review or resubmission that landed after
-			// the checks above is reported as what it was rather than as a server error.
+			// The engine re-checks under a row lock.
 			$current = Change::find( (int) $request['id'] );
 			if ( $current && $current->status !== 'pending' ) {
 				return $this->error( 'change_not_pending', __( 'This change has already been reviewed.', 'beyond-elysium' ), 400 );
@@ -338,29 +291,21 @@ class Changes_Controller extends Base_Controller {
 
 		$updated = Change::find( (int) $request['id'] );
 
-		// Sends the review notification immediately since this route only ever touches one change.
 		$reviewed_character = Character::find( (int) $change->character_id );
 		if ( $updated && $reviewed_character ) {
 			Notifications::enqueue( $updated, $reviewed_character, get_current_user_id() );
 		}
 		Notifications::flush();
 
-		// Invalidates the cached game stats so this review is reflected immediately.
+		// Invalidates the cached game stats.
 		Game_Stats_Controller::invalidate( $request['game_slug'] );
 
 		return $this->success( $updated );
 	}
 
 	/**
-	 * Lists the approval queue: pending (or otherwise filtered) changes
-	 * across every character in the game.
-	 *
-	 * Loads matching change records, then enriches each row with its
-	 * character's name and a live-computed `approval_level`, which is never
-	 * stored and is instead recalculated on every request. Filtering by
-	 * `approval_level` therefore works the level out for every matching
-	 * change before cutting the page, so the page and its total count only
-	 * that level (1.0.0-review F-099).
+	 * Lists the approval queue: pending, or otherwise filtered, changes across every character in the game, each with its
+	 * character's name and a live-computed `approval_level`.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -401,9 +346,8 @@ class Changes_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Adds what a reviewer sees to each change: its review token, its
-	 * character's name, its submitter's display name, and its
-	 * live-computed approval level.
+	 * Adds what a reviewer sees to each change: its review token, its character's name, its submitter's display name, and
+	 * its live-computed approval level.
 	 *
 	 * @param object[] $items
 	 * @return object[]
@@ -428,8 +372,6 @@ class Changes_Controller extends Base_Controller {
 			$item->approval_level = $resolved['level'];
 			$item->cost_units     = $this->cost_units( $character, $item );
 
-			// 1.0.0-review F-116: the queue showed the raw wp_user_id ("1") here. A user
-			// deleted since submitting (or never valid) falls back to null, not a fatal.
 			$submitter_id = (int) $item->submitted_by;
 			if ( ! array_key_exists( $submitter_id, $submitters ) ) {
 				$user                        = get_userdata( $submitter_id );
@@ -441,10 +383,7 @@ class Changes_Controller extends Base_Controller {
 	}
 
 	/**
-	 * What a Storyteller's price would cover for a purchase waiting for one - per dot or per pick, and
-	 * over how many - so the queue can show the total as it is typed. Null for any change that is not
-	 * waiting for a price. Worked out here, from the character's sheet as it is now, because the client
-	 * has neither the sheet nor the block (1.3.3 E5).
+	 * What a Storyteller's price would cover for a purchase waiting for one.
 	 *
 	 * @param object|null $character
 	 * @param object      $item      A change row.
@@ -455,7 +394,7 @@ class Changes_Controller extends Base_Controller {
 		if ( ! $character || empty( $data['cost_pending'] ) ) {
 			return null;
 		}
-		$block_slug = Catalog_Cutover::live_slug( (string) $character->stack_slug, (string) ( $data['block_slug'] ?? '' ) );
+		$block_slug = (string) ( $data['block_slug'] ?? '' );
 		$block      = Schema_Block::find_for_game( $block_slug, (string) $character->owner_slug );
 		if ( ! $block || ! is_object( $block->definition ) ) {
 			return null;
@@ -466,12 +405,7 @@ class Changes_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Lists the current user's own pending changes across all of their
-	 * characters in this game.
-	 *
-	 * Unpaginated, since this is bounded to one user's own characters rather
-	 * than the whole game. Enriches each row with `character_name` and a
-	 * live-computed `approval_level`, the same shape `get_queue()` returns.
+	 * Lists the current user's own pending changes across all of their characters in this game.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -511,13 +445,7 @@ class Changes_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The sharp edge of 1.0.1 D3. The Approval Queue is gated on `be_manage_characters`, but
-	 * approving a `propose_world_object` change *writes the chronicle's catalog*. Without this,
-	 * a role holding character-approval rights but no catalog rights could create catalog
-	 * entries simply by approving them.
-	 *
-	 * An HST and an AST hold both capabilities and are unaffected. A reviewer without the
-	 * catalog capability still sees the row and can reject it - they just cannot approve it.
+	 * Denies approving a change that writes the chronicle's catalog when the reviewer lacks the catalog capability.
 	 *
 	 * @param object $change
 	 * @return \WP_Error|null Null when approval may proceed.
@@ -538,10 +466,8 @@ class Changes_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The same shape as `catalog_capability_denied()`, for a `propose_faction` change
-	 * (1.1.0 §3.10): approving it writes a new `be_factions` row, which needs
-	 * `be_manage_factions` even from a reviewer who otherwise holds `be_manage_characters`.
-	 * A reviewer without it still sees the row and can reject it - they just cannot approve it.
+	 * The same shape as `catalog_capability_denied()`, for a `propose_faction` change: approving it writes a new
+	 * `be_factions` row.
 	 *
 	 * @param object $change
 	 * @return \WP_Error|null Null when approval may proceed.
@@ -564,10 +490,6 @@ class Changes_Controller extends Base_Controller {
 	/**
 	 * Strips `[ST]`-marked text from every change in a list for a non-manager.
 	 *
-	 * A player reads their own change history, and two of its three free-text
-	 * fields are written by a Storyteller - so this runs on every route a
-	 * non-manager can reach, never on the manager-only review queue.
-	 *
 	 * @param array<object> $changes
 	 * @param object        $game
 	 */
@@ -580,11 +502,6 @@ class Changes_Controller extends Base_Controller {
 
 	/**
 	 * Approves several pending changes in one request.
-	 *
-	 * Iterates the given change IDs, skipping any that are missing or not
-	 * pending, and approves the rest individually through the normal
-	 * `Change_Engine::approve()` path. Returns which IDs were approved and
-	 * which were skipped.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -603,7 +520,7 @@ class Changes_Controller extends Base_Controller {
 		$approved   = [];
 		$skipped    = [];
 		$needs_cost = [];
-		// Optional { change id: review token } for exactly what the reviewer saw (F-031).
+		// Optional { change id: review token } for exactly what the reviewer saw.
 		$tokens = (array) ( $request->get_param( 'review_tokens' ) ?? [] );
 
 		foreach ( $change_ids as $change_id ) {
@@ -615,17 +532,12 @@ class Changes_Controller extends Base_Controller {
 				continue;
 			}
 
-			// A purchase waiting for a price cannot be approved in bulk: nobody has said what it costs.
-			// Named separately from `skipped` (missing, already reviewed, not allowed) so the reviewer
-			// knows to open it and set one (1.3.3 E3).
 			if ( ! empty( $change->change_data['cost_pending'] ) ) {
 				$needs_cost[] = $change_id;
 				continue;
 			}
 
-			// A catalog-writing or faction-creating proposal in a batch is skipped, not
-			// silently approved, when the reviewer lacks the matching rights - the same
-			// gate the single-change route applies.
+			// A catalog-writing or faction-creating proposal in a batch is skipped.
 			if ( $this->catalog_capability_denied( $change ) || $this->faction_capability_denied( $change ) ) {
 				$skipped[] = $change_id;
 				continue;
@@ -665,11 +577,6 @@ class Changes_Controller extends Base_Controller {
 	/**
 	 * Prices a set of proposed changes without submitting them.
 	 *
-	 * Runs each proposed change through `Cost_Engine` and
-	 * `Change_Engine::resolve_approval_level()`, the same logic used when a
-	 * change is actually submitted, and returns the XP cost and approval
-	 * level for each along with a running unspent-XP total.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -706,13 +613,7 @@ class Changes_Controller extends Base_Controller {
 		foreach ( $changes as $change ) {
 			$change = is_array( $change ) ? $change : [];
 
-			// 1.3.3 C7: same mapping as create_item(), before validation.
-			if ( isset( $change['change_data']['block_slug'] ) ) {
-				$change['change_data']['block_slug'] = Catalog_Cutover::live_slug( (string) $character->stack_slug, $change['change_data']['block_slug'] );
-			}
-
-			// Previewed through the same check as a submission, so a preview never shows a
-			// price for something the submit route would refuse.
+			// Previewed through the same check as a submission.
 			$validation = Change_Validator::validate( $change, $stack['blocks'] ?? [], $sheet_data, $is_manager, $protected_fields );
 			if ( ! $validation['ok'] ) {
 				$error     = $this->validation_error( $validation );
@@ -728,8 +629,7 @@ class Changes_Controller extends Base_Controller {
 			}
 			$change['change_data'] = $validation['change_data'];
 
-			// `priced` false is a purchase no price exists for yet: the player is told a Storyteller
-			// sets it at approval, not that it costs 0 (1.3.3 E2).
+			// `priced` false is a purchase no price exists for yet: the player is told a Storyteller sets it at approval.
 			$quote = Cost_Engine::quote_for_change( $character, $change, $is_manager );
 			$cost  = $quote['xp'];
 			$resolved = Change_Engine::resolve_approval_level(
@@ -762,10 +662,6 @@ class Changes_Controller extends Base_Controller {
 	/**
 	 * Resolves a game by slug.
 	 *
-	 * Looks up the game record for the given slug and returns a 404 error
-	 * when no game matches it. Every route handler in this controller calls
-	 * this first to scope its work to a real, existing game.
-	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error
 	 */
@@ -778,8 +674,7 @@ class Changes_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Turns a Change_Validator failure into a 400, translating the messages a
-	 * player can meet; malformed-request messages stay in English.
+	 * Turns a Change_Validator failure into a 400, translating the messages a player can meet.
 	 *
 	 * @param array $result A failed Change_Validator::validate() result.
 	 * @return \WP_Error
@@ -816,9 +711,8 @@ class Changes_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The price a reviewer typed for a purchase that was waiting for one: a whole number of XP from
-	 * 0 to `Cost_Engine::MAX_CUSTOM_PRICE`, where 0 is a real answer ("free, on purpose"). Nothing at
-	 * all is `cost_required`; anything else that is not such a number is `invalid_param`.
+	 * The price a reviewer typed for a purchase that was waiting for one: a whole number of XP from 0 to
+	 * `Cost_Engine::MAX_CUSTOM_PRICE`, where 0 is a real answer.
 	 *
 	 * @param mixed $raw
 	 * @return int|\WP_Error
@@ -846,11 +740,6 @@ class Changes_Controller extends Base_Controller {
 	/**
 	 * Resolves a change by ID, verifying its character belongs to the game.
 	 *
-	 * A change id is a sequential integer that says nothing about which
-	 * chronicle it came from, so the character behind it is checked against
-	 * the URL's chronicle before anyone can review it (1.0.0-review F-008).
-	 * Returns the same 404 whether the change is missing or belongs elsewhere.
-	 *
 	 * @param int    $change_id
 	 * @param string $game_slug
 	 * @return object|\WP_Error
@@ -866,10 +755,6 @@ class Changes_Controller extends Base_Controller {
 
 	/**
 	 * Resolves a character by ID, verifying it belongs to the game.
-	 *
-	 * Looks up the character and confirms its `owner_slug` matches the
-	 * game, returning a 404 error if either check fails. Used by every
-	 * route handler in this controller that operates on a single character.
 	 *
 	 * @param int    $character_id
 	 * @param string $game_slug
@@ -888,9 +773,6 @@ class Changes_Controller extends Base_Controller {
 
 	/**
 	 * Defines the query parameters accepted by the collection endpoints.
-	 *
-	 * Covers status and change-type filtering, sort order, and pagination,
-	 * shared by both the per-character listing and the approval queue.
 	 *
 	 * @return array
 	 */

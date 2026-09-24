@@ -1,7 +1,4 @@
-/*
- * The help `?` and its side panel (1.0.0-help.md H-1). The panel sits under the admin bar, over
- * the screen's right edge and any open dialog, and leaves the rest of the screen usable.
- */
+/* The help `?` and its side panel. */
 .be-help-heading {
 	display: flex;
 	flex-wrap: wrap;
@@ -9,19 +6,6 @@
 	gap: 0.5rem;
 }
 
-/*
- * D34: hello-elementor's own reset.css ships
- * `[type="button"], [type="submit"], button { background-color: transparent;
- * border: 1px solid #c36; color: #c36; ... }` at specificity 0,3,0 (three
- * attribute/type selectors) - a single bare `.be-help-button` class (0,1,0)
- * loses that fight regardless of source order, painting the button pink
- * instead of this plugin's own gray/blue styling. Confirmed live on
- * kony-sabbat.net: the "?" help button rendered with hello-elementor's own
- * pink border on every page, in both light and dark mode - not a dark-mode
- * regression, a pre-existing loss this same check happened to expose clearly.
- * Compound-class selectors (0,2,0) beat it without `!important`, the same fix
- * already applied to SearchableSelect/TabStrip/TieredPowerEditor.
- */
 .be-help-button.be-help-button {
 	display: inline-flex;
 	align-items: center;
@@ -145,9 +129,6 @@
 	white-space: pre-wrap;
 }
 
-/* A table reads as cards, one per row with each cell under its column's name: the panel is too
- * narrow for columns, and nothing in it scrolls sideways. Two classes, to outrank a theme's
- * striped `table tbody > tr:nth-child(odd) > td` (1.0.0-review F-019). */
 .be-help-panel .be-help-panel__body table,
 .be-help-panel .be-help-panel__body tbody,
 .be-help-panel .be-help-panel__body tr,

@@ -10,31 +10,20 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * REST controller for a chronicle's approval rules.
- *
- * An approval rule is not a row of its own: it is the existing approval/
- * reason fields already carried on a trait_list item or a tiered_power
- * power/level (see Change_Engine::resolve_approval_level(), which reads
- * exactly these fields at submission time). This controller is the
- * dedicated management surface for them - listing every rule currently set
- * across a chronicle's blocks in one place, and creating, editing, or
- * clearing one without hand-editing the owning block's full definition.
- *
- * Writing a rule forks the block for this chronicle on first edit, via the
- * same Schema_Block::find_or_create_fork_for_game() the Schema Blocks admin
- * page already uses - the global catalog is never mutated by this route.
  */
 class Approval_Rules_Controller extends Base_Controller {
 
 	protected $rest_base = 'approval-rules';
 
-	/** Section types that can carry an approval rule at all. */
+	/**
+	 * Section types that can carry an approval rule at all.
+	 */
 	const APPLICABLE_SECTION_TYPES = [ 'trait_list', 'tiered_power', 'resource_pool', 'identity_field' ];
 
 	/**
-	 * Registers the approval rules routes: the game-scoped collection
-	 * (list, create), a single rule by its opaque id (update, delete), and
-	 * a small metadata route exposing the approval-level and reason-preset
-	 * vocabulary the create/edit form offers.
+	 * Registers the approval rules routes: the game-scoped collection (list, create), a single rule by its opaque id
+	 * (update, delete), and a small metadata route exposing the approval-level and reason-preset vocabulary the
+	 * create/edit form offers.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base, [
@@ -58,7 +47,7 @@ class Approval_Rules_Controller extends Base_Controller {
 			],
 		] );
 
-		// Before the rule-id route, which would otherwise take "default" for a rule's id.
+		// Registered before the rule-id route.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base . '/default', [
 			[
 				'methods'             => 'GET',
@@ -87,11 +76,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Lists every approval rule currently set across this chronicle's
-	 * trait_list and tiered_power blocks - this chronicle's own fork where
-	 * one exists, the shared global block otherwise. Only entries that
-	 * actually carry an approval override or a reason are returned; an
-	 * ordinary catalog item with neither is not a "rule".
+	 * Lists every approval rule currently set across this chronicle's trait_list and tiered_power blocks.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -107,17 +92,14 @@ class Approval_Rules_Controller extends Base_Controller {
 			array_push( $rules, ...self::extract_rules( $block ) );
 		}
 
-		// Sorted here, in PHP, over the small flattened list - not at the database layer,
-		// which is exactly what overflows the sort buffer against the raw block rows.
+		// Sorted here, in PHP, over the small flattened list.
 		usort( $rules, fn( $a, $b ) => [ $a['block_name'], $a['target_name'] ] <=> [ $b['block_name'], $b['target_name'] ] );
 
 		return $this->success( $rules );
 	}
 
 	/**
-	 * How many rules this chronicle has set itself: the rules its own forks carry. A rule is only
-	 * ever written into a fork, so there is nothing inherited to subtract, and only the chronicle's
-	 * forks are read.
+	 * How many rules this chronicle has set itself: the rules its own forks carry.
 	 *
 	 * @param string $game_slug
 	 * @return int
@@ -131,8 +113,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns the chronicle's default approval policy - whether a change no
-	 * rule has an opinion on is approved automatically.
+	 * Returns the chronicle's default approval policy.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -147,11 +128,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Sets the chronicle's default approval policy. It sits beside the rules
-	 * it backs, so the Storytellers who manage those rules set it here - the
-	 * chronicle's own settings route is a site administrator's
-	 * (1.0.0-review F-102). Only `auto_approve` changes; every other setting
-	 * is kept.
+	 * Sets the chronicle's default approval policy.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -177,9 +154,8 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns the fixed vocabulary the create/edit form offers: the
-	 * approval levels Change_Engine actually enforces, and the reason-tier
-	 * presets defined in approval-reason-presets.php.
+	 * Returns the fixed vocabulary the create/edit form offers: the approval levels Change_Engine enforces and the
+	 * reason-tier presets.
 	 *
 	 * @return \WP_REST_Response
 	 */
@@ -191,10 +167,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates (sets) an approval rule on an existing catalog item, power,
-	 * or power level. Forks the block for this chronicle if it has not
-	 * already been forked, then writes the rule's fields onto the matched
-	 * target and saves.
+	 * Creates (sets) an approval rule on an existing catalog item, power, or power level.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -218,10 +191,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Updates an existing approval rule, identified by the opaque id
-	 * get_items() returned for it. Re-decodes the id back into its block
-	 * and target, forks the block for this chronicle if needed, and
-	 * overwrites the rule's approval/reason fields.
+	 * Updates an existing approval rule, identified by the opaque id get_items() returned for it.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -245,10 +215,8 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Clears an approval rule back to unset: removes the item's approval
-	 * and reason, the power's approval_override, or the level's reason,
-	 * depending on the rule's target type. The catalog entry itself is
-	 * never removed, only the override fields on it.
+	 * Clears an approval rule back to unset: removes the item's approval and reason, the power's approval_override, or
+	 * the level's reason, depending on the rule's target type.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -264,7 +232,6 @@ class Approval_Rules_Controller extends Base_Controller {
 			return $target;
 		}
 
-		// Cleared on a copy first: a rule that isn't there must not fork the block to find out.
 		$current = Schema_Block::find_for_game( (string) $target['block_slug'], $request['game_slug'] );
 		if ( ! $current ) {
 			return $this->error( 'block_not_found', __( 'Schema block not found.', 'beyond-elysium' ), 404 );
@@ -289,9 +256,8 @@ class Approval_Rules_Controller extends Base_Controller {
 	// --- internals ---
 
 	/**
-	 * Writes a rule onto the chronicle's copy of its block, making the copy
-	 * when the rule is valid, and returns the block as saved. A write that
-	 * fails leaves neither the rule nor a new copy behind (1.0.0-review F-109).
+	 * Writes a rule onto the chronicle's copy of its block, making the copy when the rule is valid, and returns the block
+	 * as saved.
 	 *
 	 * @param array            $target
 	 * @param \WP_REST_Request $request
@@ -321,10 +287,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Applies a rule to a copy of the chronicle's current block - its fork, or
-	 * the global block - and forks only when that succeeds, then applies it to
-	 * the fork. A rule that fails validation must not leave a copy behind
-	 * (1.0.0-review F-034).
+	 * Applies a rule to a copy of the chronicle's current block.
 	 *
 	 * @param array            $target
 	 * @param \WP_REST_Request $request
@@ -341,7 +304,6 @@ class Approval_Rules_Controller extends Base_Controller {
 			return $probe;
 		}
 
-		// The block was just found, so no copy now means the copy couldn't be written.
 		$block = Schema_Block::find_or_create_fork_for_game( $target['block_slug'], $request['game_slug'] );
 		if ( ! $block ) {
 			return self::save_failed();
@@ -351,8 +313,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * A deep copy of a decoded block row, so a rule can be tried without
-	 * touching the real definition object.
+	 * A deep copy of a decoded block row.
 	 *
 	 * @param object $block
 	 * @return object
@@ -362,9 +323,8 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Walks one block's definition and returns every item, power, or power
-	 * level that currently carries an approval override or a reason, each
-	 * shaped as a rule the client can display and address by its id.
+	 * Walks one block's definition and returns every item, power, or power level that currently carries an approval
+	 * override or a reason, each shaped as a rule the client can display and address by its id.
 	 *
 	 * @param object $block Decoded schema block row.
 	 * @return array[]
@@ -395,8 +355,6 @@ class Approval_Rules_Controller extends Base_Controller {
 					$rules[] = self::rule_shape( $block, [ 'target_type' => 'power', 'target_name' => $power->name ?? '' ], $power->approval_override ?? null, null );
 				}
 				foreach ( $power->levels ?? [] as $rung ) {
-					// A level's own approval is a rule the engine enforces, with or without a
-					// reason - listed either way, so this page shows every rule (1.0.0-review F-035).
 					if ( ! empty( $rung->reason ) || ! empty( $rung->approval ) ) {
 						$rules[] = self::rule_shape(
 							$block,
@@ -439,8 +397,8 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Builds one rule's client-facing shape: its addressable id plus enough
-	 * context (block, target, current values) to display and edit it.
+	 * Builds one rule's client-facing shape: its addressable id plus enough context (block, target, current values) to
+	 * display and edit it.
 	 *
 	 * @param object     $block
 	 * @param array      $target {target_type, target_name, level?, extra?}
@@ -456,7 +414,7 @@ class Approval_Rules_Controller extends Base_Controller {
 			'target_type' => $target['target_type'],
 			'target_name' => $target['target_name'],
 			'level'       => $target['level'] ?? null,
-			// item_range/pool_range: [from, to]. field_option: the option string. Otherwise null.
+			// item_range/pool_range: [from, to]. field_option: the option string.
 			'extra'       => $target['extra'] ?? null,
 			'approval'    => $approval,
 			'reason'      => $reason,
@@ -464,9 +422,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Re-derives one rule's current shape from a freshly saved block, for
-	 * the response of a create or update - avoids trusting the request
-	 * body back to the client as if it were confirmed stored state.
+	 * Re-derives one rule's current shape from a freshly saved block, for the response of a create or update.
 	 *
 	 * @param object $block
 	 * @param array  $target
@@ -482,10 +438,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Encodes a block slug and target into the opaque id used to address
-	 * one rule in the update/delete routes. Plain base64 of a small JSON
-	 * array - not a security boundary, just a stable, collision-free key
-	 * for a target that has no row id of its own.
+	 * Encodes a block slug and target into the opaque id used to address one rule in the update and delete routes.
 	 *
 	 * @param string $block_slug
 	 * @param array  $target {target_type, target_name, level?, extra?}
@@ -503,12 +456,6 @@ class Approval_Rules_Controller extends Base_Controller {
 
 	/**
 	 * Decodes an opaque rule id back into its block slug and target.
-	 * Returns a 400 error for a malformed id rather than letting a decode
-	 * failure surface as a confusing 404 further down. Accepts both the
-	 * current 5-element shape and the 4-element shape ids issued before
-	 * item_range/pool_range/field_option targets existed carried no fifth
-	 * (extra) element - so an id a client bookmarked or cached across an
-	 * upgrade still decodes rather than 400ing.
 	 *
 	 * @param string $id
 	 * @return array|\WP_Error {block_slug, target_type, target_name, level, extra}
@@ -532,14 +479,14 @@ class Approval_Rules_Controller extends Base_Controller {
 		];
 	}
 
-	/** Target types addressing a range (a [from, to] pair as their `extra`). */
+	/**
+	 * Target types addressing a range (a [from, to] pair as their `extra`).
+	 */
 	const RANGE_TARGET_TYPES = [ 'item_range', 'pool_range' ];
 
 	/**
-	 * Reads and validates a create request's target fields: which block,
-	 * and which item, power, power level, value range, or field option
-	 * within it. Existence of the named target on the block is checked
-	 * later, once the block (and its chronicle fork) has been resolved.
+	 * Reads and validates a create request's target fields: which block, and which item, power, power level, value range,
+	 * or field option within it.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return array|\WP_Error {block_slug, target_type, target_name, level, extra}
@@ -588,11 +535,8 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Writes a rule's approval and/or reason fields onto the matched item,
-	 * power, power level, value range, or field option within a block's
-	 * (already-decoded) definition, mutating it in place. Validates the
-	 * target type against the block's actual section_type and that the
-	 * named target really exists on it.
+	 * Writes a rule's approval and/or reason fields onto the matched item, power, power level, value range, or field
+	 * option within a block's (already-decoded) definition, mutating it in place.
 	 *
 	 * @param object            $block  Decoded block; its definition is mutated in place.
 	 * @param array             $target {block_slug, target_type, target_name, level, extra}
@@ -716,12 +660,8 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Writes (creating if absent) one [from, to] range entry's approval and
-	 * reason within a trait_list item's or resource_pool pool's own
-	 * approval_by_value array, mutating it in place. Matches an existing
-	 * entry by its exact from/to pair, matching how a level target matches
-	 * by its exact level number - two ranges with the same bounds are the
-	 * same rule, never two.
+	 * Writes (creating if absent) one [from, to] range entry's approval and reason within a trait_list item's or
+	 * resource_pool pool's own approval_by_value array, mutating it in place.
 	 *
 	 * @param array        $ranges Array of {from, to, approval, reason?} objects, mutated in place.
 	 * @param array        $bounds [from, to]
@@ -746,8 +686,7 @@ class Approval_Rules_Controller extends Base_Controller {
 		$new_range           = new \stdClass();
 		$new_range->from     = $from;
 		$new_range->to       = $to;
-		// No level chosen means a Storyteller decides - never auto-approval, which a reason-only
-		// rule on a flat item never means either (1.0.0-review F-035).
+		// No level chosen means a Storyteller decides.
 		$new_range->approval = $approval ?: 'st';
 		if ( $reason ) {
 			$new_range->reason = $reason;
@@ -757,10 +696,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Clears a rule's override fields back to unset, the inverse of
-	 * apply_target(). Returns false when the target no longer exists on
-	 * the block rather than throwing, since a delete against an
-	 * already-gone target is not itself an error worth surfacing loudly.
+	 * Clears a rule's override fields back to unset, the inverse of apply_target().
 	 *
 	 * @param object $block  Decoded block; its definition is mutated in place.
 	 * @param array  $target {block_slug, target_type, target_name, level, extra}
@@ -836,12 +772,8 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Removes one [from, to] range entry from a trait_list item's or
-	 * resource_pool pool's approval_by_value array, matched by its exact
-	 * bounds - the inverse of apply_range(). Takes the array by reference,
-	 * same as apply_range(), since PHP arrays are value types - a caller
-	 * passing $item->approval_by_value here needs the removal to reach that
-	 * actual object property, not a disposable local copy.
+	 * Removes one [from, to] range entry from a trait_list item's or resource_pool pool's approval_by_value array,
+	 * matched by its exact bounds.
 	 *
 	 * @param array $ranges Mutated in place.
 	 * @param array $bounds [from, to]
@@ -860,8 +792,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a
-	 * WP_Error with a 404 status when no game matches.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

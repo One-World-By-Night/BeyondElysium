@@ -1,10 +1,5 @@
 /**
- * Admin screen for the 19 GV301 reports (reports-cards-batch-design.md).
- *
- * Loads the list of games for a chronicle picker, then the report registry
- * for the selected game, and offers a signed-PDF download link per report -
- * the same direct-link download pattern CharacterSheet.tsx already
- * established for the signed character sheet.
+ * Admin screen for the 19 GV301 reports.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -22,10 +17,7 @@ interface ReportRow {
 }
 
 /**
- * Renders the Reports admin page. Fetches games and, once one is picked,
- * the report registry for it, offering a "Generate PDF" link per report.
- * The Statistics Report additionally takes a field name, since (unlike
- * Merits and Flaws/Influence) its statfield is chosen at generation time.
+ * Renders the Reports admin page.
  */
 export function AdminReports() {
 	const { games, gameSlug, setGameSlug, loading } = useAdminGameSelector();

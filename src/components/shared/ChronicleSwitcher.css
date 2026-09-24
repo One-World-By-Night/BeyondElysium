@@ -7,11 +7,7 @@
 	font-weight: 600;
 }
 
-/*
- * A long chronicle name shrinks the picker instead of pushing it past a phone screen's edge
- * (1.0.0-review F-019). `width: auto` beats hello-elementor's `select { width: 100% }` reset,
- * which otherwise stretched the switcher across the whole page (F-117).
- */
+/* A long chronicle name shrinks the picker. */
 .be-chronicle-switcher__select {
 	width: auto;
 	min-width: 0;

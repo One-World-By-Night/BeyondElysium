@@ -10,17 +10,7 @@ use BeyondElysium\Tests\Support\PdfSigningTestFixture;
 use WP_UnitTestCase;
 
 /**
- * `Health_Notice::render()`'s signing-not-configured notice (signed-pdf-
- * design.md SP-10), plus the real pre-existing bug fixing its call site
- * exposed: `render()` used to `return` early whenever no database tables
- * were missing - the *ordinary, healthy* case for every real install - which
- * meant `render_slug_drift()` (and this new signing check) could only ever
- * run on an install that also happened to be missing tables. Both are
- * independent checks now, asserted here on a schema-complete install (this
- * project's normal test database), which is exactly the case that used to
- * suppress them.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md Section 3c, SP-10
+ * `Health_Notice::render()`'s signing-not-configured notice, shown even when no database tables are missing.
  */
 class HealthNoticeThreadTest extends WP_UnitTestCase {
 
@@ -41,16 +31,7 @@ class HealthNoticeThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Whether signing is configured depends on which other thread test class
-	 * happened to run first in this process - `BE_PDF_SIGNING_*` are real PHP
-	 * constants, defined at most once, and several other classes need them
-	 * defined too (see `PdfWriterThreadTest`'s own docblock). So rather than
-	 * assume a specific starting state, this asserts the notice's presence
-	 * *matches whatever `Pdf_Signer::availability()` genuinely reports right
-	 * now* - true regardless of execution order. `PdfSignerTest.php` (unit)
-	 * is what already proves `availability()` itself reports correctly for
-	 * every defined-or-not, readable-or-not state; this only needs to prove
-	 * `Health_Notice` reacts to it correctly.
+	 * Whether signing is configured depends on which other thread test class happened to run first in this process.
 	 */
 	public function test_signing_notice_reflects_current_availability(): void {
 		$html = $this->rendered_html();
@@ -74,11 +55,7 @@ class HealthNoticeThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_notices_are_independent_of_the_missing_tables_check(): void {
-		// A schema-complete install (this project's own test database) means $missing
-		// is empty - the exact condition the old early-return used to suppress every
-		// check below it on. This assertion is really about render() reaching that far
-		// at all; the signing notice's own presence/absence is covered by the two tests
-		// above, run against this same normal, schema-complete database.
+		// A schema-complete install (the test database) means $missing is empty.
 		$html = $this->rendered_html();
 
 		$this->assertStringNotContainsString( 'database tables are missing', $html );

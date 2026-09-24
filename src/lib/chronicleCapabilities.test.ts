@@ -2,10 +2,7 @@ import { canIn, canAny } from './chronicleCapabilities';
 import type { MyCapabilities } from '../types';
 
 /**
- * 1.0.0-review F-103: My Chronicle's screens decided what to show from the site-wide snapshot of
- * what the person can do anywhere, so a Storyteller of one chronicle switching to one where they
- * only play saw the Storyteller dashboard - which then failed to load - and manager controls on
- * characters that weren't theirs to manage.
+ * My Chronicle's screens decided what to show from the site-wide snapshot of what the person can do anywhere.
  */
 describe( 'canIn', () => {
 	const siteWide = {

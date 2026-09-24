@@ -9,14 +9,6 @@ use WP_UnitTestCase;
 
 /**
  * Template::resolve() against a real be_templates table.
- *
- * tests/unit/TemplateResolveTest.php covers the decision logic (resolve_from_rows()) with
- * no database at all. This covers the two SQL fetches resolve() builds on top of that -
- * in particular that a null $game_id can never accidentally match a row whose game_id
- * happens to be 0, which is exactly the kind of thing that passes locally and breaks on a
- * chronicle whose game row id is 0-adjacent in some other query.
- *
- * @see BE_PROCESS/releases/workflow-0.3.md Step 1b, 1j
  */
 class TemplateResolveThreadTest extends WP_UnitTestCase {
 
@@ -70,9 +62,7 @@ class TemplateResolveThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_game_id_zero_row_never_satisfies_a_null_game_id_lookup(): void {
-		// Manually insert a row with a literal game_id of 0 - not achievable through
-		// Template::create() (which treats an unset game_id as NULL), but a defensive
-		// regression guard against a future caller passing 0 instead of null.
+		// Manually insert a row with a literal game_id of 0.
 		Manager::insert( 'templates', [
 			'game_id'       => 0,
 			'stack_slug'    => $this->stack,

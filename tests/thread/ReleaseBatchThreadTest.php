@@ -12,13 +12,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 S2: release batches - the held/release_batch_id gate on plots and entries,
- * scheduling, releasing, and the one-email-per-player-per-batch notification.
- *
- * Reveals (§3.11, K1) are not tested here - that item doesn't exist yet; the gate itself is
- * scoped to plots and plot_entries only, matching Schema.php's own current columns.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.2
+ * Release batches - the held/release_batch_id gate on plots and entries, scheduling, releasing, and the
+ * one-email-per-player-per-batch notification.
  */
 class ReleaseBatchThreadTest extends WP_UnitTestCase {
 
@@ -83,7 +78,9 @@ class ReleaseBatchThreadTest extends WP_UnitTestCase {
 		return rest_get_server()->dispatch( $request );
 	}
 
-	/** A manager-created, audience=everyone plot - reachable by every active character once out. */
+	/**
+	 * A manager-created, audience=everyone plot.
+	 */
 	private function make_plot(): int {
 		wp_set_current_user( $this->make_manager() );
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots" );
@@ -154,8 +151,7 @@ class ReleaseBatchThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_past_due_scheduled_plot_is_visible_with_no_cron_run(): void {
-		// Visibility never waits for cron (§3.2) - status is still literally 'scheduled' in
-		// the database; nothing here ever calls Release_Engine::release().
+		// Visibility never waits for cron.
 		$plot_id  = $this->make_plot();
 		$batch_id = $this->make_batch( gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) );
 		$this->add_item_to_batch( $batch_id, 'plot', $plot_id );
@@ -258,8 +254,7 @@ class ReleaseBatchThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_held_entry_reaches_only_its_connected_characters_not_the_whole_chronicle(): void {
-		// The plot itself is audience=everyone, but the entry must reach only the character
-		// actually connected to it - "never the whole chronicle of an everyone plot" (§3.2).
+		// The plot itself is audience=everyone.
 		$plot_id  = $this->make_plot();
 		$entry_id = $this->make_entry( $plot_id );
 		Connection::create( [

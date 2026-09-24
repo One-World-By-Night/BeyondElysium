@@ -13,13 +13,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §3.11: a Storyteller-authored secret attached to a plot, item, location, or NPC - a
- * real `Audience`-shaped `audience`/`audience_rules` pair, where `restricted` means the
- * characters it has been revealed to (`Secret_Reveal`) plus anyone matching its rules.
- * `storytellers` (the schema default) always means staff only, with no connected-character
- * exception - a reveal only has any effect once the secret's own audience is `restricted`.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.11
+ * A Storyteller-authored secret attached to a plot, item, location, or NPC.
  */
 class SecretsThreadTest extends WP_UnitTestCase {
 
@@ -51,8 +45,9 @@ class SecretsThreadTest extends WP_UnitTestCase {
 		return rest_get_server()->dispatch( $request );
 	}
 
-	/** GET with query params set via WP_REST_Request::set_param() - a "?" embedded straight
-	 * into the route string above never matches any registered route pattern. */
+	/**
+	 * GET with query params set via WP_REST_Request::set_param().
+	 */
 	private function get_secrets_for( string $entity_type, int $entity_id ) {
 		$request = new WP_REST_Request( 'GET', "/be/v1/{$this->slug}/secrets" );
 		$request->set_param( 'entity_type', $entity_type );
@@ -90,8 +85,6 @@ class SecretsThreadTest extends WP_UnitTestCase {
 		wp_set_current_user( $player_id );
 		$response = $this->get_secrets_for( 'plot', $this->plot_id );
 
-		// storytellers audience never has a connected-character exception (§3.11) - a reveal
-		// alone does nothing until the secret's own audience is restricted.
 		$this->assertSame( [], $response->get_data() );
 	}
 

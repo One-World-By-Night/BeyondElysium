@@ -6,22 +6,7 @@ use BeyondElysium\Services\GEX_Xml_Parser;
 use PHPUnit\Framework\TestCase;
 
 /**
- * GX-2: `GEX_Xml_Parser` grows from two character races (`vampire`,
- * `werewolf`) to all twelve, off `gv-exchange-shape.php` (GX-1). The ten new
- * races (`mortal`, `changeling`, `wraith`, `mage`, `fera`, `various`,
- * `mummy`, `kueijin`, `hunter`, `demon`) go through the new, generic,
- * table-driven `parse_character_generic()` rather than eleven more
- * hand-written near-duplicates - `vampire`/`werewolf` keep their own
- * existing, GX-0-fixed methods unchanged (`GexXmlParserTest` covers those).
- *
- * No real XML sample exists for any of these ten races (every real
- * character-bearing `.gex` in this repo is vampire or werewolf,
- * gex-export-transfer-design.md §2a) - this suite builds a synthetic
- * document per race directly from the shape table and proves the generic
- * parser reads every scalar, trait list, and tail field back correctly,
- * including the omit-default fallbacks and wraith's `ethnos` enum mapping.
- *
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-2
+ * `GEX_Xml_Parser` grows from two character races (`vampire`, `werewolf`) to all twelve, off `gv-exchange-shape.php`.
  */
 class GexXmlParserGenericRaceTest extends TestCase {
 
@@ -38,10 +23,7 @@ class GexXmlParserGenericRaceTest extends TestCase {
 	}
 
 	/**
-	 * Builds a minimal `<grapevine><race ...>` document for one race,
-	 * giving every scalar a real, non-default value so the test can
-	 * confirm it round-trips rather than merely not-crashing, and one
-	 * named trait per trait list.
+	 * Builds a minimal `<grapevine><race...>` document for one race, giving every scalar a real, non-default value.
 	 */
 	private function build_xml( string $race ): string {
 		$def   = self::$shape[ $race ];
@@ -128,15 +110,11 @@ class GexXmlParserGenericRaceTest extends TestCase {
 		$data      = GEX_Xml_Parser::parse_string( $this->build_xml( 'wraith' ) );
 		$character = $data['characters'][0];
 
-		// build_xml() used xml_enum[0] ('Wraith') as the test value for every non-bool
-		// scalar it couldn't otherwise infer a realistic value for.
+		// build_xml() used xml_enum[0] ('Wraith') as the test value for every non-bool scalar it couldn't.
 		$this->assertSame( 0, $character['ethnos'] );
 	}
 
 	public function test_a_temp_field_omitted_from_the_document_falls_back_to_its_permanent_value(): void {
-		// demon's temp_torment has an xml_omit_if of 'torment' - build a document that
-		// carries torment but leaves temptorment out entirely, and confirm the fallback
-		// resolves to torment's own value rather than 0.
 		$xml = '<?xml version="1.0"?><grapevine version="2.399">' .
 			'<demon name="Fixture" house="Test" faction="Test" nature="Test" demeanor="Test" ' .
 			'torment="4" faith="0" willpower="0" conscience="0" conviction="0" courage="0">' .
@@ -151,7 +129,9 @@ class GexXmlParserGenericRaceTest extends TestCase {
 		return GEX_Xml_Parser::parse_string( '<?xml version="1.0"?><grapevine version="3.0">' . $element . '</grapevine>' )['characters'][0];
 	}
 
-	/** 1.0.0-review F-048: a Bete travels as a Fera and names its own stack. */
+	/**
+	 * A Bete travels as a Fera and names its own stack.
+	 */
 	public function test_a_bestack_attribute_restores_the_stack_that_travels_as_this_race(): void {
 		$this->assertSame( 'bete', self::character( '<fera name="Skitter" bestack="bete"><experience unspent="0" earned="0"/></fera>' )['race'] );
 		$this->assertSame( 'fera', self::character( '<fera name="Kesuk"><experience unspent="0" earned="0"/></fera>' )['race'] );
@@ -162,7 +142,9 @@ class GexXmlParserGenericRaceTest extends TestCase {
 		$this->assertSame( 'fera', self::character( '<fera name="Kesuk" bestack="vampire"><experience unspent="0" earned="0"/></fera>' )['race'] );
 	}
 
-	/** 1.0.0-review F-049: a changeling has no Nature or Demeanor of its own in Grapevine. */
+	/**
+	 * A changeling has no Nature or Demeanor of its own in Grapevine.
+	 */
 	public function test_benature_carries_nature_and_demeanor_only_for_a_race_without_them(): void {
 		$changeling = self::character( '<changeling name="Fennick" benature="Trickster" bedemeanor="Jester"><experience unspent="0" earned="0"/></changeling>' );
 		$this->assertSame( 'Trickster', $changeling['nature'] );

@@ -8,13 +8,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * B7 (1.2.0 releases/1.2.0-design-workflow.md §6): Translations_Controller's ten routes,
- * dispatched through the real REST server - not called as plain PHP methods, since a
- * permission_callback wiring bug or a route-registration typo is invisible to a direct method
- * call. T10 and T12 are named exactly as §9 states them; every other route gets its own
- * coverage since none of them existed before this box.
- *
- * @see BE_PROCESS/releases/1.2.0-design-workflow.md §6, §9
+ * Translations_Controller's ten routes, dispatched through the real REST server.
  */
 class TranslationsControllerThreadTest extends WP_UnitTestCase {
 
@@ -37,12 +31,7 @@ class TranslationsControllerThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A translation id guaranteed not to exist - MySQL's AUTO_INCREMENT is not transactional
-	 * (it survives a rolled-back INSERT), so a hardcoded "surely too large" sentinel eventually
-	 * stops being one: found live, this exact test, after enough of this release's own real
-	 * migration tests (each inserting thousands of rows per test method) pushed the real test
-	 * database's counter past a hardcoded 999999. Create then delete a real row instead, the
-	 * same technique test_delete_removes_the_row() already uses to prove a row is gone.
+	 * A translation id guaranteed not to exist.
 	 */
 	private function missing_translation_id(): int {
 		$string_id = (int) Translation_String::create( [ 'source_text' => 'Missing Id Fixture Term' ] );
@@ -73,11 +62,10 @@ class TranslationsControllerThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 403, $response->get_status() );
 	}
 
-	/** be_manage_schemas alone is not enough (§5.7's whole point - see Capabilities.php). */
+	/**
+	 * be_manage_schemas alone is not enough (see Capabilities.php).
+	 */
 	public function test_be_manage_schemas_alone_does_not_grant_access(): void {
-		// editor holds both by default; simulate "schemas only" by checking the denial path
-		// directly rather than trying to strip an inherited role capability (see
-		// TranslationsCapabilityThreadTest's own docblock for why remove_cap() cannot do this).
 		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		wp_set_current_user( $player );
 		$this->assertFalse( user_can( $player, 'be_manage_translations' ) );
@@ -95,8 +83,7 @@ class TranslationsControllerThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * T10 exactly: per_page=100 returns 100 rows and a correct total, not the shared
-	 * get_pagination() default of 20 - the whole reason B7's own MAX_PER_PAGE exists.
+	 * Exactly: per_page=100 returns 100 rows and a correct total.
 	 */
 	public function test_t10_per_page_100_returns_100_rows_and_a_correct_total(): void {
 		$this->make_admin();
@@ -162,7 +149,7 @@ class TranslationsControllerThreadTest extends WP_UnitTestCase {
 			'source_text' => 'Stats By Block Fixture',
 			'used_in'     => [
 				[ 'block' => 'stats-fixture-block', 'section_type' => 'trait_list', 'role' => 'item' ],
-				[ 'block' => 'stats-fixture-block', 'section_type' => 'trait_list', 'role' => 'item' ], // duplicate on purpose
+				[ 'block' => 'stats-fixture-block', 'section_type' => 'trait_list', 'role' => 'item' ],
 			],
 		] );
 		$response = $this->dispatch( 'GET', '/be/v1/translations/progress', [ 'locale' => self::LOCALE ] );
@@ -212,7 +199,9 @@ class TranslationsControllerThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 400, $response->get_status() );
 	}
 
-	/** create_item() is really upsert() underneath - a second POST for the same term updates, not duplicates. */
+	/**
+	 * create_item() is really upsert() underneath.
+	 */
 	public function test_create_twice_for_the_same_term_updates_not_duplicates(): void {
 		$this->make_admin();
 		$this->dispatch( 'POST', '/be/v1/translations', [ 'locale' => self::LOCALE, 'source_text' => 'Create Upsert Term', 'translation' => 'Primeiro' ] );
@@ -304,8 +293,7 @@ class TranslationsControllerThreadTest extends WP_UnitTestCase {
 	// ------------------------------------------------------------------------------ import ----
 
 	/**
-	 * T12 exactly: a dry-run reports counts and writes nothing; the same import without
-	 * dry_run writes exactly those counts.
+	 * Exactly: a dry-run reports counts and writes nothing.
 	 */
 	public function test_t12_dry_run_reports_counts_and_writes_nothing_then_the_real_run_matches(): void {
 		$this->make_admin();
@@ -361,12 +349,6 @@ class TranslationsControllerThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 400, $response->get_status() );
 	}
 
-	/**
-	 * The real bug T12 caught before this pinned it: a CSV row disagreeing with the DATABASE'S
-	 * current value is an ordinary update, not a conflict - importing corrections is the whole
-	 * point. A conflict is the FILE disagreeing with ITSELF, first value wins, matching §8's
-	 * migration use of the word for an internally-inconsistent source.
-	 */
 	public function test_import_conflict_is_the_file_disagreeing_with_itself_not_with_the_database(): void {
 		$this->make_admin();
 

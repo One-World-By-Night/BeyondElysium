@@ -1,8 +1,6 @@
 /**
- * ST tool for adding rumors to a chronicle: either generated automatically from existing
- * game data for a chosen date, or written by hand with an optional parent plot. Renders
- * both entry points as two sections with their own preview/commit and create flows. Both
- * paths apply the same rumor tag server-side, so nothing downstream can tell them apart.
+ * ST tool for adding rumors to a chronicle: either generated automatically from existing game data for a chosen date,
+ * or written by hand with an optional parent plot.
  */
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
@@ -15,14 +13,14 @@ import './RumorPanel.css';
 
 export interface RumorPanelProps {
 	gameSlug: string;
-	/** Pre-fills the parent when opened from inside a plot's own scroll. */
+	/**
+	 * Pre-fills the parent when opened from inside a plot's own scroll.
+	 */
 	defaultParentPlotId?: number;
 }
 
 /**
- * Renders two ways to add a rumor: a hand-written form with title, description, and
- * optional parent plot, and a generator that previews and commits rumors computed from
- * chronicle data for a chosen game date. Both paths produce the same kind of rumor record.
+ * Renders two ways to add a rumor.
  */
 export function RumorPanel( {
 	gameSlug,
@@ -47,8 +45,7 @@ export function RumorPanel( {
 	const [ createdRumor, setCreatedRumor ] = useState< Plot | null >( null );
 
 	useEffect( () => {
-		// Any existing plot is a valid parent for a rumor, unlike the action allocator's picker.
-		// Every page, not the first 100 (1.0.0-review F-080).
+		// Any existing plot is a valid parent for a rumor.
 		everyPage( ( page ) =>
 			api.plots( gameSlug ).listPaginated( { page, per_page: 100 } )
 		)
@@ -57,9 +54,7 @@ export function RumorPanel( {
 	}, [ gameSlug ] );
 
 	/**
-	 * Requests a preview of the rumors the generator would create for the selected game
-	 * date, without committing them. Validates that a date is selected first, then
-	 * stores the result for display.
+	 * Requests a preview of the rumors the generator would create for the selected game date, without committing them.
 	 */
 	async function preview( e: React.FormEvent ) {
 		e.preventDefault();
@@ -83,9 +78,7 @@ export function RumorPanel( {
 	}
 
 	/**
-	 * Requests the same generated rumors as the preview, this time committing them to
-	 * the chronicle. Stores the result so the panel can show the committed state and
-	 * disable further commits.
+	 * Requests the same generated rumors as the preview, this time committing them to the chronicle.
 	 */
 	async function commit() {
 		if ( ! gameDate ) {
@@ -107,9 +100,7 @@ export function RumorPanel( {
 	}
 
 	/**
-	 * Submits the hand-written rumor form. Creates a new rumor-flagged plot via the API
-	 * with the given title, description, and optional parent, then clears the title and
-	 * description fields and stores the created rumor for confirmation display.
+	 * Submits the hand-written rumor form.
 	 */
 	async function createRumor( e: React.FormEvent ) {
 		e.preventDefault();
@@ -128,9 +119,7 @@ export function RumorPanel( {
 			setCreatedRumor( rumor );
 			setNewTitle( '' );
 			newDescriptionDraft.current = '';
-			// The form stays mounted for writing another rumor, so the editor's own live
-			// content - not just the ref - needs clearing (same tinymce API HtmlEditor's
-			// own AI Assist acceptance uses internally).
+			// The form stays mounted for writing another rumor.
 			tinymce?.get( newDescriptionId )?.setContent( '' );
 		} catch {
 			setCreateError(

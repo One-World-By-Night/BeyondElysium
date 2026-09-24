@@ -6,10 +6,8 @@ use BeyondElysium\Database\Fork_Merge;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.0.0-review F-034. A chronicle's copy of a catalog block was a full copy frozen on the day it
- * was made: no later catalog fix reached it. A copy now records what the chronicle changed as it
- * changes it (`stamp()`), and a catalog update rebuilds the copy from the new catalog with those
- * changes laid back over it (`merge()`).
+ * A chronicle's copy of a catalog block records what the chronicle changed as it changes it (`stamp()`), and a
+ * catalog update merges over those changes.
  */
 class ForkMergeTest extends TestCase {
 

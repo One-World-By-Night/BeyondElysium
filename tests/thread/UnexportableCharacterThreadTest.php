@@ -12,10 +12,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-048. A creature type an administrator adds has no Grapevine equivalent, so no
- * exchange document can hold its characters. Exporting one, transferring one, comparing against
- * one, or verifying one used to stop on a PHP warning and a 500; each now says why, or carries on
- * without the part that cannot exist.
+ * A creature type an administrator adds has no Grapevine equivalent: exporting, transferring, comparing or verifying
+ * one of its characters is refused cleanly.
  */
 class UnexportableCharacterThreadTest extends WP_UnitTestCase {
 
@@ -100,7 +98,9 @@ class UnexportableCharacterThreadTest extends WP_UnitTestCase {
 		$this->assertNotNull( Attestation::resolve( $code ) );
 	}
 
-	/** Answers the host's verify callback through real REST dispatch. */
+	/**
+	 * Answers the host's verify callback through real REST dispatch.
+	 */
 	public function loopback( $preempt, $args, $url ) {
 		if ( strpos( $url, '/verify/' ) === false ) {
 			return $preempt;

@@ -11,13 +11,7 @@ use BeyondElysium\Services\Character_Exporter;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-014, F-006. Nothing ever expired: no code was issued with an expiry, the sweep
- * that revokes expired codes had no caller, and no transfer ever reached its `expired` state. An
- * offer nobody reviewed sat in the host's queue - holding its whole character document - forever,
- * and fifty of them closed the queue to every new offer.
- *
- * A transfer's code and an unreviewed offer now last 60 days, two monthly game cycles, and a daily
- * sweep closes whatever outlived that. A printed or exported sheet's code still never expires.
+ * Transfer offers and their codes expire: an unreviewed offer reaches its `expired` state and its code is revoked.
  */
 class TransferExpiryThreadTest extends WP_UnitTestCase {
 

@@ -8,45 +8,15 @@ use BeyondElysium\Models\World_Object;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The one place Storyteller-only visibility is decided, extracted from three
- * duplicated call sites in `Characters_Controller` and one in
- * `Templates_Controller` (signed-pdf-design.md §3d). ST-only data is filtered
- * in four real operations, not one, and the lesson of `v0.21.28` was that
- * skipping any single one leaks: hiding a block from the resolved *layout*
- * still ships that block's real values inside `sheet_data`, and stripping
- * `sheet_data` still leaves `rp_notes`/`[ST]`-marked `biography`/`notes` text
- * exposed. A server-side PDF generator is a second, direct reader of
- * `Character::find()` - if it skipped this extraction and re-implemented the
- * four operations a fourth time, that fourth copy is exactly how a future
- * change to one copy leaves the other three (or five) stale.
- *
- * `$can_manage` is a caller-supplied boolean rather than this class calling
- * `current_user_can()` itself - keeps every method here pure and testable
- * without mocking WordPress global state, and the caller already knows the
- * answer in every real call site.
- *
- * Deliberately holds no cache of its own. An earlier draft memoized
- * `Schema_Block::storyteller_only_slugs()` in a static property to preserve
- * the "look it up once per page, not once per character" optimization the
- * three original call sites each had - but that optimization was always
- * safely scoped to a local variable inside one method call, never to a
- * class-level static, and a class-level static here reintroduces exactly
- * the bug class this project has already been burned by once (a static memo
- * latching a stale result across PHPUnit test methods that share one PHP
- * process, the same shape as the `v0.21.28` NPC-forms incident). The
- * `$hidden` parameters below let a caller that's about to loop over many
- * characters compute the list once and pass it through instead - the
- * original optimization, kept where it always actually belonged.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md §3d
+ * The one place Storyteller-only visibility is decided, extracted from three duplicated call sites in
+ * `Characters_Controller` and one in `Templates_Controller`.
  */
 class St_Visibility {
 
 	/**
-	 * Applies all four ST-only redactions to one character row in place:
-	 * unsets `rp_notes` entirely, strips `[ST]...[/ST]`-marked text from
-	 * `biography`/`notes`, and removes every Storyteller-only block's stored
-	 * values from `sheet_data`. A manager is returned untouched.
+	 * Applies all four ST-only redactions to one character row in place: unsets `rp_notes` entirely, strips
+	 * `[ST]...[/ST]`-marked text from `biography`/`notes`, and removes every Storyteller-only block's stored values from
+	 * `sheet_data`.
 	 *
 	 * @param object        $character
 	 * @param object|null   $game      Provides `settings` for `St_Filter`'s per-game markers.
@@ -67,10 +37,7 @@ class St_Visibility {
 	}
 
 	/**
-	 * Strips `[ST]...[/ST]`-marked text from an NPC public-profile projection's own
-	 * `public_description` (1.1.0 §3.7) - a narrower sibling of filter_character() for a
-	 * projection object that never carries `rp_notes`/`sheet_data` in the first place, so
-	 * those two redactions would be pointless here.
+	 * Strips `[ST]...[/ST]`-marked text from an NPC public-profile projection's own `public_description`.
 	 *
 	 * @param object      $profile
 	 * @param object|null $game
@@ -86,16 +53,7 @@ class St_Visibility {
 	}
 
 	/**
-	 * Strips `[ST]...[/ST]`-marked text from a plot in place - its
-	 * `description`, `cliffhanger`, `resolution_details` and
-	 * `resolution_impact`, all four rich text - for anyone who isn't a
-	 * Storyteller of the chronicle. `st_notes` is not handled here:
-	 * `Plots_Controller` removes that field wholesale for a non-manager,
-	 * which is stronger than marker-stripping.
-	 *
-	 * The two resolution fields were missed by 1.0.1 A1 and found by A2's own
-	 * coverage guard - they are ordinary rich text on the same form, written
-	 * once a plot closes, and were reaching every player unfiltered.
+	 * Strips `[ST]...[/ST]`-marked text from a plot in place.
 	 *
 	 * @param object      $plot       A decoded plot row.
 	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
@@ -115,10 +73,7 @@ class St_Visibility {
 	}
 
 	/**
-	 * Strips `[ST]...[/ST]`-marked text from a faction's `description` and `goals` in place
-	 * (1.1.0 §3.10, F1) - both are ordinary rich text a Storyteller may still mark with
-	 * `[ST]`, unlike `positions.notes`, which is manager-only in full and never reaches a
-	 * non-manager at all.
+	 * Strips `[ST]...[/ST]`-marked text from a faction's `description` and `goals` in place.
 	 *
 	 * @param object      $faction
 	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
@@ -138,9 +93,7 @@ class St_Visibility {
 	}
 
 	/**
-	 * Strips `[ST]...[/ST]`-marked text from a plot entry's `content` in
-	 * place - every timeline entry, action, response, note and resolution -
-	 * for anyone who isn't a Storyteller of the chronicle.
+	 * Strips `[ST]...[/ST]`-marked text from a plot entry's `content` in place.
 	 *
 	 * @param object      $entry      A decoded plot-entry row.
 	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
@@ -157,8 +110,8 @@ class St_Visibility {
 	}
 
 	/**
-	 * Strips `[ST]...[/ST]`-marked text from a game session's own `notes` in
-	 * place, for anyone who isn't a Storyteller of the chronicle (1.1.0 §3.1).
+	 * Strips `[ST]...[/ST]`-marked text from a game session's own `notes` in place, for anyone who isn't a Storyteller of
+	 * the chronicle.
 	 *
 	 * @param object      $session
 	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
@@ -175,10 +128,7 @@ class St_Visibility {
 	}
 
 	/**
-	 * Strips `[ST]...[/ST]`-marked text from an NPC casting's own `brief` in place (1.1.0
-	 * §3.8) - free text a Storyteller writes when casting a member to play an NPC, read by
-	 * that member even though they are very often not a Storyteller themselves, so a marker
-	 * pasted in from elsewhere must still come out.
+	 * Strips `[ST]...[/ST]`-marked text from an NPC casting's own `brief` in place.
 	 *
 	 * @param object      $casting
 	 * @param object|null $game
@@ -194,10 +144,7 @@ class St_Visibility {
 	}
 
 	/**
-	 * Strips `[ST]...[/ST]`-marked text from a secret's own `content` in place (1.1.0 §3.11) -
-	 * a Storyteller's own meta-note pasted into a secret's write-up must still come out even
-	 * for a character the secret has genuinely been revealed to, the same reasoning
-	 * `filter_casting()`'s own docblock gives for a casting brief.
+	 * Strips `[ST]...[/ST]`-marked text from a secret's own `content` in place.
 	 *
 	 * @param object      $secret
 	 * @param object|null $game
@@ -213,10 +160,7 @@ class St_Visibility {
 	}
 
 	/**
-	 * Strips `[ST]...[/ST]`-marked text from an after-game report's three own fields in place
-	 * (1.1.0 §3.14) - a player's own report never reaches anyone but its own author and staff
-	 * (the route itself never returns another player's report to a non-manager), so this is
-	 * defense in depth rather than a gap this route relies on closing.
+	 * Strips `[ST]...[/ST]`-marked text from an after-game report's three own fields in place.
 	 *
 	 * @param object    $report
 	 * @param object|null $game
@@ -235,14 +179,8 @@ class St_Visibility {
 	}
 
 	/**
-	 * Strips `[ST]...[/ST]`-marked text from a chronicle's own
-	 * `description` in place, for anyone who isn't a Storyteller of it.
-	 *
-	 * Rich text since 1.0.1 D1 (`wp_kses_post`), so this uses the
-	 * dangling-tag-safe HTML strip. The byte-offset one it used while the
-	 * field was still `sanitize_textarea_field` would happily cut a marker
-	 * that opened inside `<em>` and closed outside it, leaving the tag
-	 * unbalanced.
+	 * Strips `[ST]...[/ST]`-marked text from a chronicle's own `description` in place, for anyone who isn't a Storyteller
+	 * of it.
 	 *
 	 * @param object $game       A decoded game row, also its own settings source.
 	 * @param bool   $can_manage
@@ -258,11 +196,7 @@ class St_Visibility {
 	}
 
 	/**
-	 * Strips `[ST]...[/ST]`-marked text from a connection's `notes` in
-	 * place - the free text a Storyteller writes when tying an item or a
-	 * location to a character - for anyone who isn't a Storyteller.
-	 *
-	 * Plain text, never rich, so the byte-offset strip is exact.
+	 * Strips `[ST]...[/ST]`-marked text from a connection's `notes` in place.
 	 *
 	 * @param object      $connection A decoded connection row.
 	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
@@ -279,16 +213,7 @@ class St_Visibility {
 	}
 
 	/**
-	 * Strips `[ST]...[/ST]`-marked text from one change record in place - the
-	 * submitter's own `notes`, the reviewing Storyteller's `review_notes`, and
-	 * the `reason` an approval rule attached - for anyone who isn't a
-	 * Storyteller of the chronicle.
-	 *
-	 * A player reads their own change history, so all three are player-visible
-	 * by design. Two of them are written by a Storyteller, and `notes` is too
-	 * whenever a Storyteller submits a correction on a player's behalf - so all
-	 * three can carry a marker pasted in from Storyteller-only text. Plain
-	 * text, never rich, so the byte-offset strip is exact.
+	 * Strips `[ST]...[/ST]`-marked text from one change record in place.
 	 *
 	 * @param object      $change     A change row.
 	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
@@ -308,12 +233,7 @@ class St_Visibility {
 	}
 
 	/**
-	 * Strips `[ST]...[/ST]`-marked text from a submission's `answer_note` in
-	 * place - the Storyteller's written answer to a player's question about an
-	 * uploaded sheet - for anyone who isn't a Storyteller.
-	 *
-	 * The note is both returned over REST and mailed to the player
-	 * (`Notifications`), so a marker left in it leaks twice over.
+	 * Strips `[ST]...[/ST]`-marked text from a submission's `answer_note` in place.
 	 *
 	 * @param object      $submission A submission row.
 	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
@@ -330,12 +250,7 @@ class St_Visibility {
 	}
 
 	/**
-	 * Strips `[ST]...[/ST]`-marked text from a world object in place - its
-	 * `description`, `limitations`, and every text or string property its
-	 * type declares (an item's powers, a location's security, a boon's
-	 * terms) - for anyone who isn't a Storyteller of the chronicle
-	 * (1.0.0-review F-046, owner ruling on D44). A manager is returned
-	 * untouched.
+	 * Strips `[ST]...[/ST]`-marked text from a world object in place.
 	 *
 	 * @param object      $object     A decoded world-object row (`properties` an array).
 	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
@@ -361,8 +276,7 @@ class St_Visibility {
 			if ( ! is_string( $value ) ) {
 				continue;
 			}
-			// A 'text' property is rich HTML like description/limitations; a plain 'string'
-			// one never carries markup, so the cheaper byte-offset strip is exact for it.
+			// A 'text' property is rich HTML like description/limitations.
 			if ( ( $schema[ $key ] ?? null ) === 'text' ) {
 				$object->properties[ $key ] = St_Filter::strip_html_for_game( $value, $settings );
 			} elseif ( ( $schema[ $key ] ?? null ) === 'string' ) {
@@ -372,10 +286,7 @@ class St_Visibility {
 	}
 
 	/**
-	 * Removes every Storyteller-only block's stored values from a
-	 * character's `sheet_data`. Dropping the section from a resolved
-	 * template layout (`filter_layout()`) does not cover this on its own -
-	 * the block's own data would still ship inside the character payload.
+	 * Removes every Storyteller-only block's stored values from a character's `sheet_data`.
 	 *
 	 * @param object        $character
 	 * @param array<string> $hidden
@@ -389,11 +300,7 @@ class St_Visibility {
 	}
 
 	/**
-	 * Removes every listed block's stored values from a `sheet_data` array, minus any named
-	 * in `$allow_blocks` - the NPC casting brief's own carve-out (1.1.0 §3.8): a cast player
-	 * reads `npc-roleplaying-notes` (normally Storyteller-only) alongside everything else in
-	 * that one projection, so it must survive the same pass that hides every other
-	 * Storyteller-only block. `strip_blocks()` above is this with an empty `$allow_blocks`.
+	 * Removes every listed block's stored values from a `sheet_data` array, minus any named in `$allow_blocks`.
 	 *
 	 * @param array<string,mixed> $sheet_data
 	 * @param array<string>       $hidden
@@ -408,22 +315,19 @@ class St_Visibility {
 	}
 
 	/**
-	 * Removes every Storyteller-only section from a resolved template
-	 * layout - the layout-side half of the same visibility rule
-	 * `filter_character()` applies to the data side. A manager, or a
-	 * layout with no `sections` array, is returned untouched.
+	 * Removes every Storyteller-only section from a resolved template layout.
 	 *
 	 * @param array<string,mixed> $layout
 	 * @param bool                $can_manage
 	 * @param string              $game_slug The chronicle the layout is shown in - a block is
-	 *                                        Storyteller-only per chronicle (F-062).
+	 *                                        Storyteller-only per chronicle.
 	 * @param array<string>|null  $hidden A caller-computed `storyteller_only_slugs()` result,
 	 *                                     for a caller resolving many layouts to avoid an N+1;
 	 *                                     omit for a fresh lookup. Also lets this be exercised
 	 *                                     as a pure unit test, since `storyteller_only_slugs()`
 	 *                                     itself reads `$wpdb`.
 	 * @param array<string>       $allow_blocks A Storyteller-only block to keep visible anyway -
-	 *                                     the NPC casting brief's own carve-out (1.1.0 §3.8),
+	 *                                     the NPC casting brief's own carve-out,
 	 *                                     used only there; every other caller leaves this empty.
 	 * @return array<string,mixed>
 	 */
@@ -437,7 +341,7 @@ class St_Visibility {
 			return $layout;
 		}
 
-		// array_values keeps sections a JSON array rather than a keyed object.
+		// array_values keeps sections a JSON array.
 		$layout['sections'] = array_values( array_filter(
 			$layout['sections'],
 			static fn( $section ) => ! in_array( $section['block_slug'] ?? '', $hidden, true )

@@ -9,9 +9,8 @@ use BeyondElysium\Services\Rumor_Generator;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-037. "Group rumors" and "Subgroup rumors" on Action & Rumor Settings saved and
- * reloaded but generated nothing. Grapevine makes one rumor per group and subgroup among active
- * characters - a vampire's Clan and Sect, a werewolf's Tribe and Auspice - reaching everyone in it.
+ * Group and subgroup rumors: one rumor per group and subgroup among active characters, such as a vampire's Clan and
+ * Sect.
  */
 class GroupRumorsThreadTest extends WP_UnitTestCase {
 

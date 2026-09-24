@@ -10,13 +10,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-002: every HST is a WordPress editor, and v0.99.16 granted editors
- * be_manage_schemas and be_manage_templates so an HST could customize their own chronicle.
- * The global write routes were never narrowed, so any HST could rewrite the catalog, the
- * creature stacks, and the templates every chronicle shares - and could fork a chronicle
- * they have no membership in by adding ?game_slug= to a global route. Global catalog writes
- * are now a site administrator's; a chronicle's own customizations go through its own
- * URL-scoped routes, where membership is checked.
+ * The global schema-block and template write routes refuse an HST, who is a WordPress editor.
  */
 class GlobalCatalogWritesThreadTest extends WP_UnitTestCase {
 
@@ -73,8 +67,7 @@ class GlobalCatalogWritesThreadTest extends WP_UnitTestCase {
 
 	public function test_a_storyteller_cannot_fork_another_chronicle_through_the_global_route(): void {
 		wp_set_current_user( $this->hst );
-		// The query string must go through set_query_params() - WP_REST_Request does not parse
-		// one out of the route string, which would make this request match no route at all.
+		// The query string must go through set_query_params().
 		$request = new WP_REST_Request( 'PUT', "/be/v1/schema-blocks/{$this->block}" );
 		$request->set_query_params( [ 'game_slug' => $this->other ] );
 		$request->set_header( 'Content-Type', 'application/json' );
@@ -145,8 +138,7 @@ class GlobalCatalogWritesThreadTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->hst );
 		$before = \BeyondElysium\Models\Creature_Stack::find_by_slug( 'vampire' )->name;
 
-		// A PUT, not a POST: WordPress validates a POST route's required args before its
-		// permission callback, so an incomplete create would 400 without testing the gate.
+		// A PUT, not a POST: WordPress validates a POST route's required args before its permission callback.
 		$response = $this->dispatch( 'PUT', '/be/v1/creature-stacks/vampire', [ 'name' => 'Renamed For Everyone' ] );
 
 		$this->assertSame( 403, $response->get_status() );

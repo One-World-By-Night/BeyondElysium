@@ -6,14 +6,7 @@ use BeyondElysium\Database\Seeder;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Every identity `select` field carried an `options_ref` that nothing ever resolved -
- * `IdentityFieldEditor.tsx`'s `resolveOptions()` only special-cased one hardcoded, unused
- * ref name, so Clan, Tribe, House, Kith, and every other identity dropdown on every
- * creature type rendered empty for the entire life of the project. Found live 2026-09-09
- * editing a demon character whose House/Faction showed as "-". Ground truth for every list
- * below came from GV301Source/Code/Grapevine Menus XML.gvm, not invented.
- *
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md
+ * Every identity `select` field carried an `options_ref` that nothing ever resolved.
  */
 class IdentityFieldOptionsTest extends TestCase {
 
@@ -37,12 +30,7 @@ class IdentityFieldOptionsTest extends TestCase {
 	}
 
 	/**
-	 * Superseded by the MET-Mechanics CSV overlay (workflow-0.10): Clan is now a merged
-	 * GVM+CSV list (87 names, up from GVM's own 48) and GVM's deliberate abc="no" file order
-	 * isn't preservable at that size, so this alphabetizes like every other large identity
-	 * select in this codebase - see Seeder::apply_met_csv_to_vampire_identity(). Options
-	 * still resolve (this test's original point) and both real GVM-only and CSV-only names
-	 * survive the merge (see MetCsvSeederTest::test_gvm_only_clans_and_paths_survive_the_merge()).
+	 * Superseded by the MET-Mechanics CSV overlay.
 	 */
 	public function test_vampire_clan_resolves_real_options_alphabetized(): void {
 		$options = $this->field( 'vampire-identity', 'Clan' )['options'];
@@ -66,9 +54,7 @@ class IdentityFieldOptionsTest extends TestCase {
 	}
 
 	public function test_demon_house_and_faction_resolve_the_race_suffixed_menu(): void {
-		// The field name alone ("House") is not a real menu - only "House, Demon" is
-		// (Grapevine's own race-suffix resolution rule). A wrong ref here silently produces
-		// an empty list, not an error, so this specifically checks real content.
+		// The field name alone ("House") is not a real menu.
 		$house   = $this->field( 'demon-identity', 'House' )['options'];
 		$faction = $this->field( 'demon-identity', 'Faction' )['options'];
 
@@ -78,14 +64,12 @@ class IdentityFieldOptionsTest extends TestCase {
 	}
 
 	public function test_wraith_ethnos_is_the_hardcoded_enum_not_a_menu(): void {
-		// No "Ethnos" menu exists anywhere in the source - WraithClass.cls's EthnosType
-		// enum (Wraith/Risen/Spectre) is the only real list.
+		// No "Ethnos" menu exists anywhere in the source.
 		$this->assertSame( [ 'Wraith', 'Risen', 'Spectre' ], $this->field( 'wraith-identity', 'Ethnos' )['options'] );
 	}
 
 	public function test_changeling_kith_includes_its_submenu_entries(): void {
-		// Kith is a container: 14 direct items plus 3 submenus (Inanimae, Nunnehi, Thallain)
-		// that must be flattened in, not left as unresolved container labels.
+		// Kith is a container: 14 direct items plus 3 submenus (Inanimae, Nunnehi, Thallain) that must be flattened.
 		$options = $this->field( 'changeling-identity', 'Kith' )['options'];
 
 		$this->assertContains( 'Pooka', $options, 'a direct Kith item' );
@@ -124,20 +108,13 @@ class IdentityFieldOptionsTest extends TestCase {
 		$this->fail( "Pool {$name} not found on {$slug}." );
 	}
 
-	/**
-	 * workflow-0.9.md Step 0f: the player picks their virtue directly (two new optional
-	 * `vampire-identity` fields) rather than the plugin maintaining a Morality-Path-keyed
-	 * naming table that can never cover every real or homebrew Path - Decision 044's
-	 * original mechanism, replaced per the user's own domain call.
-	 */
 	public function test_the_two_virtue_axis_fields_exist_with_the_real_binary_choice(): void {
 		$conscience_axis    = $this->field( 'vampire-identity', 'Conscience or Conviction' );
 		$self_control_axis  = $this->field( 'vampire-identity', 'Self-Control or Instinct' );
 
 		$this->assertSame( [ 'Conscience', 'Conviction' ], $conscience_axis['options'] );
 		$this->assertSame( [ 'Self-Control', 'Instinct' ], $self_control_axis['options'] );
-		// Optional, not required - unset is the correct state for Humanity, the default
-		// for the large majority of characters.
+		// Optional, not required.
 		$this->assertFalse( $conscience_axis['required'] );
 		$this->assertFalse( $self_control_axis['required'] );
 	}
@@ -146,10 +123,6 @@ class IdentityFieldOptionsTest extends TestCase {
 		$conscience   = $this->pool( 'vampire-virtues', 'Conscience' );
 		$self_control = $this->pool( 'vampire-virtues', 'Self-Control' );
 
-		// assertEquals, not assertSame: a declared JSON file's own key order
-		// (`reference/CATALOG-JSON-FORMAT.md` principle 4, "human-first ordering") need not
-		// match a PHP array literal's, and the two keys here are read by name, never by
-		// position.
 		$this->assertEquals(
 			[ 'block_slug' => 'vampire-identity', 'field' => 'Conscience or Conviction' ],
 			$conscience['name_lookup']['keyed_by']

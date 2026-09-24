@@ -8,38 +8,33 @@ use BeyondElysium\Database\Transaction;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * A player-sent Grapevine file, waiting for a chronicle's Storyteller to
- * review it (F-122). Not `Transfer` - the sender's file may carry no uuid at
- * all, and any it does carry is dropped (1.0.0-review F-003/F-059), and there
- * is no home site to call back to until a Storyteller accepts and a real
- * character exists (a `Transfer` row is created then, for a visiting arrival
- * - see `Submissions_Controller::accept()`).
- *
- * At most one row in state `waiting` may exist per `(game_id, submitted_by)`
- * pair - enforced here in `create()`, matching `Transfer::create()`'s own
- * precedent (a composite unique index would fight `transition()`'s in-place
- * state changes).
- *
- * @see BE_PROCESS/design/player-grapevine-file-design.md §5
+ * A player-sent Grapevine file, waiting for a chronicle's Storyteller to review it.
  */
 class Submission {
 
-	/** States that end a row's own open/closed lifecycle - only 'waiting' is open. */
+	/**
+	 * States that end a row's own open/closed lifecycle.
+	 */
 	private const TERMINAL_STATES = [ 'accepted', 'refused', 'withdrawn', 'expired' ];
 
-	/** Columns holding the sender's file - cleared the moment a row leaves 'waiting'. */
+	/**
+	 * Columns holding the sender's file.
+	 */
 	private const FILE_COLUMNS = [ 'parsed', 'verification_source' ];
 
-	/** How long a waiting file lasts before the daily sweep expires it - matches Transfer::OFFER_TTL_DAYS. */
+	/**
+	 * How long a waiting file lasts before the daily sweep expires it.
+	 */
 	const WAITING_TTL_DAYS = Transfer::OFFER_TTL_DAYS;
 
-	/** Columns returned by every list/read method that omits the stored file. */
+	/**
+	 * Columns returned by every list/read method that omits the stored file.
+	 */
 	private const SUMMARY_COLUMNS = 'id, game_id, submitted_by, arrival, home_chronicle, character_name, stack_slug,
 		source_file, format, file_hash, state, character_id, answered_by, answer_note, created_at, answered_at';
 
 	/**
-	 * Creates a new waiting submission. Refuses when this sender already has
-	 * an open (`waiting`) row for this chronicle.
+	 * Creates a new waiting submission.
 	 *
 	 * @param array<string,mixed> $data
 	 * @return int New row id.
@@ -96,8 +91,7 @@ class Submission {
 	}
 
 	/**
-	 * A submission by id, including its stored file columns - only for a
-	 * caller that is about to review or accept it.
+	 * A submission by id, including its stored file columns.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -108,9 +102,7 @@ class Submission {
 	}
 
 	/**
-	 * Looks up a submission and locks its row until the surrounding
-	 * transaction ends, so an accept/refuse decided on this read cannot race
-	 * another action on the same row. Must run inside a Transaction.
+	 * Looks up a submission and locks its row until the surrounding transaction ends.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -121,12 +113,7 @@ class Submission {
 	}
 
 	/**
-	 * Moves a submission to a new state. Leaving 'waiting' always clears both
-	 * file columns and stamps `answered_at` (unless the caller supplies one),
-	 * matching the "nothing is kept once a request closes" rule (§2.6 of the
-	 * design). Does not itself validate that the transition is legal from the
-	 * row's current state - the REST controller enforces that, matching
-	 * `Transfer::transition()`'s own thin-model convention.
+	 * Moves a submission to a new state.
 	 *
 	 * @param int                  $id
 	 * @param string               $new_state
@@ -149,10 +136,7 @@ class Submission {
 	}
 
 	/**
-	 * Whether this sender already has a waiting submission for this
-	 * chronicle - the other half of the "one waiting request per person per
-	 * chronicle" rule `Characters_Controller::create_item()`'s own join-request
-	 * check enforces for a hand-built character (§2.2 of the design).
+	 * Whether this sender already has a waiting submission for this chronicle.
 	 *
 	 * @param int $game_id
 	 * @param int $wp_user_id
@@ -184,8 +168,7 @@ class Submission {
 	}
 
 	/**
-	 * How many files have ever been sent to a chronicle, whatever became of them - the Chronicle
-	 * Setup checklist's evidence that its Grapevine link has been used.
+	 * How many files have ever been sent to a chronicle, whatever became of them.
 	 *
 	 * @param int $game_id
 	 * @return int
@@ -196,8 +179,7 @@ class Submission {
 	}
 
 	/**
-	 * How many submissions are currently waiting for a chronicle - the real
-	 * check behind the 50-waiting-files cap (§12 of the design).
+	 * How many submissions are currently waiting for a chronicle.
 	 *
 	 * @param int $game_id
 	 * @return int
@@ -208,8 +190,8 @@ class Submission {
 	}
 
 	/**
-	 * A user's own last submissions across every chronicle, newest first,
-	 * without file columns, joined with the chronicle's own name and slug.
+	 * A user's own last submissions across every chronicle, newest first, without file columns, joined with the
+	 * chronicle's own name and slug.
 	 *
 	 * @param int $wp_user_id
 	 * @param int $limit
@@ -233,9 +215,7 @@ class Submission {
 	}
 
 	/**
-	 * Expires every submission still `waiting` past `WAITING_TTL_DAYS`,
-	 * clearing its file columns with it - matching `Transfer::expire_stale()`'s
-	 * own rule. Called by the daily `Core\Maintenance` sweep.
+	 * Expires every submission still `waiting` past `WAITING_TTL_DAYS`, clearing its file columns with it.
 	 *
 	 * @return int Rows expired.
 	 */

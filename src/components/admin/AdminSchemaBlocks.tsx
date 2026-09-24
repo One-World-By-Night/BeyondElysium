@@ -1,11 +1,5 @@
 /**
  * Admin page for managing Schema Blocks.
- *
- * Lists a chronicle's custom schema blocks alongside the shared system
- * blocks, with filtering by section type and an add/edit/delete form built
- * on SchemaBlockDefinitionEditor. Supports scoping to one chronicle via a
- * game_slug query parameter, or managing the global block catalog when none
- * is present.
  */
 import {
 	createInterpolateElement,
@@ -17,6 +11,7 @@ import api from '../../api/client';
 import SchemaBlockDefinitionEditor from './SchemaBlockDefinitionEditor';
 import type { SchemaBlock, SectionType } from '../../types';
 import { errorMessage } from '../../lib/errorMessage';
+import { everyPage } from '../../lib/everyPage';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
@@ -43,11 +38,7 @@ const EMPTY_FORM = {
 };
 
 /**
- * Renders the Schema Blocks admin page: a filterable table of existing
- * blocks plus a create/edit form. Loads blocks for the current scope
- * (global or a specific chronicle), lets staff toggle visibility of system
- * blocks and filter by section type, and delegates definition editing to
- * SchemaBlockDefinitionEditor.
+ * Renders the Schema Blocks admin page: a filterable table of existing blocks plus a create/edit form.
  */
 export function AdminSchemaBlocks() {
 	const [ blocks, setBlocks ] = useState< SchemaBlock[] >( [] );
@@ -65,29 +56,24 @@ export function AdminSchemaBlocks() {
 	// Optional game_slug query param scopes editing to one chronicle's custom blocks.
 	const gameSlug =
 		new URLSearchParams( window.location.search ).get( 'game_slug' ) ?? '';
-	// The shared catalog is a site administrator's to change; a Storyteller customizes it
-	// through one chronicle's scope, where the server checks their membership.
+	// The shared catalog is a site administrator's to change.
 	const canEdit =
 		gameSlug !== '' ||
 		!! window.beyondElysium?.capabilities?.be_manage_games;
 
 	/**
-	 * Fetches the schema block list for the current scope (global catalog, or
-	 * one chronicle when a game_slug is present) and stores the result in
-	 * state. Sets the error message on failure and clears the loading flag
-	 * either way.
+	 * Fetches the schema block list for the current scope (global catalog, or one chronicle when a game_slug is present)
+	 * and stores the result in state.
 	 */
 	function load() {
 		setLoading( true );
-		// per_page: 100 is the REST route's own hard cap (Schema_Blocks_Controller's
-		// get_collection_params()) - without it this call silently truncated to the
-		// route's default of 20, hiding every block whose display name sorted past
-		// that point (D38's own defect class, in a third call site D38 never touched).
-		api.schemaBlocks
-			.list( {
+		everyPage( ( page ) =>
+			api.schemaBlocks.listPaginated( {
 				...( gameSlug ? { game_slug: gameSlug } : {} ),
+				page,
 				per_page: 100,
 			} )
+		)
 			.then( ( result ) => {
 				setBlocks( result );
 				setLoading( false );
@@ -140,9 +126,7 @@ export function AdminSchemaBlocks() {
 	}
 
 	/**
-	 * Switches the form's section type and replaces the definition with that
-	 * type's default empty shape, since each section type stores its entries
-	 * under a different key (items, powers, pools, or fields).
+	 * Switches the form's section type and replaces the definition with that type's default empty shape.
 	 */
 	function changeSectionType( sectionType: SectionType ) {
 		// Reset to the new type's default definition shape.
@@ -154,10 +138,7 @@ export function AdminSchemaBlocks() {
 	}
 
 	/**
-	 * Submits the create or edit form. Creates a new schema block or updates
-	 * the one being edited depending on which mode is active, then reloads
-	 * the list and closes the form. Surfaces any API error and tracks the
-	 * saving state for the submit button.
+	 * Submits the create or edit form.
 	 */
 	async function save( e: React.FormEvent ) {
 		e.preventDefault();
@@ -206,9 +187,7 @@ export function AdminSchemaBlocks() {
 	}
 
 	/**
-	 * Deletes a schema block after the user confirms via a browser dialog,
-	 * then reloads the list. Surfaces any API error without dismissing the
-	 * table.
+	 * Deletes a schema block after the user confirms via a browser dialog.
 	 */
 	async function remove( block: SchemaBlock ) {
 		// eslint-disable-next-line no-alert

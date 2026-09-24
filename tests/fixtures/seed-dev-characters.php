@@ -1,5 +1,7 @@
 <?php
-/** Test fixtures for phase 0.3 rendering work: one game, one Vampire, one Werewolf. */
+/**
+ * Test fixtures for rendering work: one game, one Vampire, one Werewolf.
+ */
 
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Character;

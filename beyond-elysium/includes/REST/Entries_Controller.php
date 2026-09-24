@@ -19,11 +19,6 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * REST controller for plot entries.
- *
- * An entry is one item in a plot's timeline: a player action, an ST
- * response, a resolution, or an ST-only note. Covers listing entries for a
- * plot, creating one with type-specific permission checks, updating an
- * entry's content, and deleting one.
  */
 class Entries_Controller extends Base_Controller {
 
@@ -31,10 +26,6 @@ class Entries_Controller extends Base_Controller {
 
 	/**
 	 * Registers the entry routes.
-	 *
-	 * Entries are listed and created under their parent plot, but addressed
-	 * by their own ID for update and delete, since an entry never moves
-	 * between plots.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/plots/(?P<plot_id>\d+)/entries', [
@@ -67,12 +58,6 @@ class Entries_Controller extends Base_Controller {
 	/**
 	 * Lists entries for a plot, chronological ascending.
 	 *
-	 * Supports filtering by entry type, hides `note` entries from anyone
-	 * without `be_manage_plots` (notes are ST-only), and applies each
-	 * remaining entry's own audience (1.1.0 §2.4) - public, storytellers-only,
-	 * or directed to specific characters, with the entry's own author always
-	 * seeing it regardless.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -82,13 +67,9 @@ class Entries_Controller extends Base_Controller {
 			return $plot;
 		}
 
-		// Chronicle-scoped, not a bare current_user_can(): a site editor who is only a
-		// plain player in this specific chronicle must not see its ST notes or another
-		// character's allocation, even though the capability alone would pass (§3.4/§5.8).
 		$can_manage = Authorization::check_request( 'be_manage_plots', $request );
 
-		// Someone else's action allocation is not found, as it is for the plot itself - its entries
-		// disclose exact background dot ratings (§3.4/§5.8, 1.0.0-review F-063).
+		// Someone else's action allocation is not found, as it is for the plot itself.
 		if ( ! $can_manage && self::is_unowned_allocation( $plot ) ) {
 			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
 		}
@@ -106,9 +87,6 @@ class Entries_Controller extends Base_Controller {
 				return Audience::can_see_entry( $entry, $wp_user_id, $game_slug, false, $out_batch_ids, $plot );
 			} ) );
 
-			// A note-type entry, and anything the viewer's own audience excludes, are dropped
-			// wholesale above; every entry that remains is ordinary rich text a Storyteller may
-			// have marked with [ST] mid-sentence.
 			$game = Game::find_by_slug( (string) $request["game_slug"] );
 			foreach ( $entries as $entry ) {
 				St_Visibility::filter_entry( $entry, $game, false );
@@ -120,11 +98,6 @@ class Entries_Controller extends Base_Controller {
 
 	/**
 	 * Creates an entry on a plot.
-	 *
-	 * Validates the entry type, then checks permission by that submitted
-	 * type rather than by whichever capability let the request through the
-	 * route's permission callback: a player holding only `be_submit_actions`
-	 * may create an `action` entry, nothing else.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -139,9 +112,7 @@ class Entries_Controller extends Base_Controller {
 		if ( ! in_array( $entry_type, Plot_Entry::ENTRY_TYPES, true ) ) {
 			return $this->error( 'invalid_param', sprintf( __( 'entry_type must be one of: %s.', 'beyond-elysium' ), implode( ', ', Plot_Entry::ENTRY_TYPES ) ), 400 );
 		}
-		// A rumor level text (1.1.0 §3.4) is only ever written through PUT .../rumor-levels,
-		// which owns the 1-10 numbering and the delete-when-empty rule - never through this
-		// generic route, which has no way to supply a level number at all.
+		// A rumor level text is only ever written through PUT.../rumor-levels.
 		if ( $entry_type === 'rumor_level' ) {
 			return $this->error( 'invalid_param', __( 'Rumor levels are set through the rumor-levels route, not created directly.', 'beyond-elysium' ), 400 );
 		}
@@ -156,15 +127,11 @@ class Entries_Controller extends Base_Controller {
 			return $this->error( 'forbidden', sprintf( __( 'You do not have permission to create a %s entry.', 'beyond-elysium' ), $entry_type ), 403 );
 		}
 
-		// Another character's action-allocation plot is hidden from a non-manager everywhere
-		// else in the API (Plots_Controller) - it cannot be written to either (1.0.0-review F-038).
 		if ( ! $can_manage && self::is_unowned_allocation( $plot ) ) {
 			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
-		// Downtime windows (1.1.0 §3.3) are enforced for a non-manager's own action only -
-		// a Storyteller can always post, and a player plot or any other non-allocation plot
-		// is never windowed at all (downtime_window_error() returns null for both).
+		// Downtime windows are enforced for a non-manager's own action only.
 		if ( ! $can_manage && $entry_type === 'action' ) {
 			$window_error = $this->downtime_window_error( $plot );
 			if ( $window_error !== null ) {
@@ -191,15 +158,12 @@ class Entries_Controller extends Base_Controller {
 			'author_id'              => get_current_user_id(),
 			'entry_type'             => $entry_type,
 			'content'                => wp_kses_post( $content ),
-			// The entry's in-fiction date, independent of when it was actually written.
 			'event_date'             => $request->get_param( 'event_date' ) ?: null,
 			'audience'               => $audience['audience'],
 			'audience_character_ids' => $audience['audience_character_ids'],
 		];
 
-		// A Storyteller's response on an action plot is held by default (1.1.0 §3.3) - explicit
-		// held:false posts it immediately. Never applies to a plain plot's own response, only
-		// to an action-allocation plot's downtime answer.
+		// A Storyteller's response on an action plot is held by default.
 		if ( $entry_type === 'response' && Action_Allocator::actor_character_id( (int) $plot->id ) !== null ) {
 			$held = $request->get_param( 'held' );
 			if ( $held === null || $held ) {
@@ -224,15 +188,7 @@ class Entries_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Notifies whoever a new plot post is for (1.1.0 §3.5). A held entry notifies through its
-	 * own release batch instead (§3.2) - never here; a note is Storyteller-only content, and a
-	 * rumor_level can never reach this method at all (rejected earlier in create_item()).
-	 *
-	 * A player's `action` post notifies the plot's own assigned_to (§3.6) if set, otherwise
-	 * every hst/ast/narrator member of the chronicle - never the author. Any other entry type
-	 * is a Storyteller's post: it notifies the players of every character connected to the
-	 * plot by any label who can also see this specific entry - never the whole chronicle of an
-	 * `everyone` plot, never the author.
+	 * Notifies whoever a new plot post is for.
 	 *
 	 * @param object $plot
 	 * @param object $entry
@@ -290,10 +246,8 @@ class Entries_Controller extends Base_Controller {
 	}
 
 	/**
-	 * "Who posted" for a player's own action entry: the action-allocation plot's own bound
-	 * character's name, or a generic fallback for an action posted on a plot with no bound
-	 * character at all (a player plot's own action, which has no single "the round is theirs"
-	 * character the way an allocation plot does).
+	 * "Who posted" for a player's own action entry: the action-allocation plot's bound character's name, or a generic
+	 * fallback when the plot has no bound character.
 	 *
 	 * @param object $plot
 	 * @return string
@@ -305,11 +259,8 @@ class Entries_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Validates a requested entry audience against 1.1.0 §2.4's rules and, for `characters`,
-	 * against the parent plot's own visible characters - the character picker for a directed
-	 * post offers only characters who can already see the plot, so a directed post can never
-	 * reference a plot its reader cannot open. Absent from the request entirely, this returns
-	 * `Plot_Entry::DEFAULT_AUDIENCE` (`plot`) with no ids - today's behavior, preserved.
+	 * Validates a requested entry audience and, for `characters`, checks it against the parent plot's own visible
+	 * characters; absent from the request, it returns `Plot_Entry::DEFAULT_AUDIENCE`.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @param object           $plot
@@ -324,9 +275,7 @@ class Entries_Controller extends Base_Controller {
 		if ( ! in_array( $audience, Plot_Entry::AUDIENCE_VALUES, true ) ) {
 			return $this->error( 'invalid_param', sprintf( __( 'audience must be one of: %s.', 'beyond-elysium' ), implode( ', ', Plot_Entry::AUDIENCE_VALUES ) ), 400 );
 		}
-		// A player may direct a post no further than public or private - never to specific
-		// characters, which would let one player message another through the Storyteller's
-		// own thread (owner ruling, §2.4).
+		// A player may direct a post no further than public or private.
 		if ( ! $can_manage && $audience === Plot_Entry::AUDIENCE_CHARACTERS ) {
 			return $this->error( 'forbidden', __( 'You may only choose plot or storytellers for your own entry.', 'beyond-elysium' ), 403 );
 		}
@@ -349,11 +298,6 @@ class Entries_Controller extends Base_Controller {
 	/**
 	 * Updates an entry's content.
 	 *
-	 * A manager may edit any entry. A non-manager may edit only their own
-	 * `action` entry, and only while the plot has no `response` entry after
-	 * it; once an ST has responded, the action becomes part of the record
-	 * and can no longer be changed.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -368,10 +312,7 @@ class Entries_Controller extends Base_Controller {
 			return $plot;
 		}
 
-		// An allocator budget row or a ledger spend is only ever edited through Apr_Controller's
-		// own routes, which know how to preserve its JSON marker - the generic PUT here would
-		// otherwise pass a plain string through wp_kses_post() and silently strip it, orphaning
-		// the entry (§5.1/§BL-12).
+		// An allocator budget row or a ledger spend is only ever edited through Apr_Controller's own routes.
 		if ( self::is_apr_managed( $entry ) ) {
 			return $this->error( 'apr_managed', __( 'This entry is managed by the Action & Rumor system and cannot be edited here.', 'beyond-elysium' ), 409 );
 		}
@@ -381,13 +322,9 @@ class Entries_Controller extends Base_Controller {
 			if ( $entry->entry_type !== 'action' || (int) $entry->author_id !== get_current_user_id() ) {
 				return $this->error( 'ownership_denied', __( 'You may only edit your own action entries.', 'beyond-elysium' ), 403 );
 			}
-			// A 409, not a 403: the request is valid, but the current state forbids it.
 			if ( $this->has_response_after( $plot, $entry ) ) {
 				return $this->error( 'entry_locked', __( 'This action has already been responded to and can no longer be edited.', 'beyond-elysium' ), 409 );
 			}
-			// Downtime windows (1.1.0 §3.3): closed even with no response yet reads to the
-			// player as "a Storyteller is already handling this," not a raw window error -
-			// the answer itself may still be sitting held in a draft batch.
 			$window_error = $this->downtime_window_error( $plot, true );
 			if ( $window_error !== null ) {
 				return $window_error;
@@ -408,8 +345,7 @@ class Entries_Controller extends Base_Controller {
 		if ( $request->get_param( 'event_date' ) !== null ) {
 			$update['event_date'] = $request->get_param( 'event_date' ) ?: null;
 		}
-		// Left untouched entirely when not sent - a plain content edit never resets a
-		// deliberately-chosen audience back to plot.
+		// Left untouched entirely when not sent.
 		if ( $request->get_param( 'audience' ) !== null ) {
 			$audience = $this->resolve_entry_audience( $request, $plot, $can_manage );
 			if ( is_wp_error( $audience ) ) {
@@ -426,10 +362,6 @@ class Entries_Controller extends Base_Controller {
 	/**
 	 * Deletes an entry.
 	 *
-	 * Resolves the entry and its parent plot, verifying the plot belongs to
-	 * the game named in the URL, then removes the entry permanently.
-	 * Requires `be_manage_plots`.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -444,9 +376,6 @@ class Entries_Controller extends Base_Controller {
 			return $plot;
 		}
 
-		// An allocator budget row or a ledger spend has its own deletion rules (a ledger
-		// use is always deletable via its own route; a budget row is only ever regenerated
-		// by persist(), never removed directly) - the generic route enforces neither (§BL-12).
 		if ( self::is_apr_managed( $entry ) ) {
 			return $this->error( 'apr_managed', __( 'This entry is managed by the Action & Rumor system and cannot be deleted here.', 'beyond-elysium' ), 409 );
 		}
@@ -456,9 +385,8 @@ class Entries_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The release batch a held downtime answer joins: the request's own release_batch_id,
-	 * else the plot's game date's own session default_batch_id, else null (a plain draft
-	 * with no batch at all) - the exact fallback order §3.3 specifies.
+	 * The release batch a held downtime answer joins: the request's own release_batch_id, else the plot's game date's own
+	 * session default_batch_id, else null (a plain draft with no batch at all).
 	 *
 	 * @param \WP_REST_Request $request
 	 * @param object            $plot
@@ -478,13 +406,7 @@ class Entries_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Refuses an action-entry write the character's downtime window doesn't allow (1.1.0
-	 * §3.3) - null for a manager's own call site (never invoked for one, but defensively
-	 * inert too), for a plot with no bound actor character (not an allocation plot at all -
-	 * "player plots and every other plot are never windowed"), or for one with no game_date
-	 * (the character's own undated home plot). $for_edit narrows the check to CLOSED only,
-	 * matching update_item()'s single "already closed" rule against create_item()'s own
-	 * NOT_OPEN/CLOSED pair.
+	 * Refuses an action-entry write the character's downtime window doesn't allow.
 	 *
 	 * @param object $plot
 	 * @param bool   $for_edit
@@ -524,10 +446,7 @@ class Entries_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Reports whether a plot entry is managed by the action-allocation/
-	 * background-ledger system - marked `source: 'allocator'` or
-	 * `source: 'ledger'` in its JSON content - and therefore off-limits to
-	 * this controller's generic update/delete routes (§BL-12).
+	 * Reports whether a plot entry is managed by the action-allocation/background-ledger system.
 	 *
 	 * @param object $entry
 	 * @return bool
@@ -537,10 +456,7 @@ class Entries_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Whether an entry body carries the Action & Rumor system's own JSON
-	 * marker. The budget and ledger code trusts any such entry, so only that
-	 * system's own routes may write one - a body from this generic route that
-	 * carries the marker is a forgery (1.0.0-review F-038).
+	 * Whether an entry body carries the Action & Rumor system's own JSON marker.
 	 *
 	 * @param string $content
 	 * @return bool
@@ -551,8 +467,8 @@ class Entries_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Whether a plot is an action-allocation plot belonging to a character the
-	 * current user does not own AND is not an invited member of (1.1.0 §2.3a).
+	 * Whether a plot is an action-allocation plot belonging to a character the current user does not own AND is not an
+	 * invited member of.
 	 *
 	 * @param object $plot
 	 * @return bool
@@ -573,12 +489,7 @@ class Entries_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Checks whether any `response` entry exists after the given entry on
-	 * its plot.
-	 *
-	 * Compares creation timestamps against every `response` entry on the
-	 * plot, returning true as soon as one is found at or after the given
-	 * entry's own timestamp.
+	 * Checks whether any `response` entry exists after the given entry on its plot.
 	 *
 	 * @param object $plot
 	 * @param object $entry
@@ -594,12 +505,7 @@ class Entries_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Resolves a plot by ID, verifying it belongs to the game named in the
-	 * URL.
-	 *
-	 * Returns a 404 error when the game does not exist, or when the plot is
-	 * missing or belongs to a different game, rather than revealing that a
-	 * plot with that ID exists elsewhere.
+	 * Resolves a plot by ID, verifying it belongs to the game named in the URL.
 	 *
 	 * @param int    $plot_id
 	 * @param string $game_slug

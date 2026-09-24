@@ -1,9 +1,5 @@
 /**
- * Small attribution line shown beneath every front-end Beyond Elysium
- * widget: "Powered by BeyondElysium". Clicking the BeyondElysium name
- * opens a modal with a link to beyondelysium.com, the plugin's credits
- * text, and its in-memoriam list - the latter two editable by a site
- * administrator through this same modal.
+ * Small attribution line shown beneath every front-end Beyond Elysium widget: "Powered by BeyondElysium".
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -15,9 +11,7 @@ import HelpButton from './HelpButton';
 import './PoweredByFooter.css';
 
 /**
- * Renders the "Powered by BeyondElysium" line and owns the open/closed
- * state of its Credits modal. Fetches credits content only once the
- * modal is actually opened, not on every page load.
+ * Renders the "Powered by BeyondElysium" line and owns the open/closed state of its Credits modal.
  */
 export function PoweredByFooter() {
 	const [ open, setOpen ] = useState( false );
@@ -25,7 +19,6 @@ export function PoweredByFooter() {
 	return (
 		<div className="be-powered-by">
 			{ __( 'Powered by', 'beyond-elysium' ) }{ ' ' }
-			{ /* A link, not a button: one word inside the sentence, kept out of the button touch-target floor (breakpoints.css). */ }
 			{ /* eslint-disable-next-line jsx-a11y/anchor-is-valid */ }
 			<a
 				href="#"
@@ -43,10 +36,8 @@ export function PoweredByFooter() {
 }
 
 /**
- * The Credits modal itself: loads the current credits text and
- * in-memoriam list, shows them as plain read-only content for every
- * viewer, and additionally shows edit controls for a viewer who holds
- * be_manage_games.
+ * The Credits modal itself: loads the current credits text and in-memoriam list, shows them as plain read-only
+ * content for every viewer, and additionally shows edit controls for a viewer who holds be_manage_games.
  */
 function CreditsModal( { onClose }: { onClose: () => void } ) {
 	const [ data, setData ] = useState< CreditsResponse | null >( null );

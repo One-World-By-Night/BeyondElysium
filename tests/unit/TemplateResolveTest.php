@@ -6,17 +6,7 @@ use BeyondElysium\Models\Template;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The template resolution chain (Decision 020): game-scoped -> global -> null.
- *
- * `Template::resolve()` itself needs $wpdb for its two SQL fetches, which has no place in
- * a unit test (TESTING.md: "what does not belong here: anything that needs $wpdb"). The
- * decision logic that actually breaks silently - which of two already-fetched rows wins,
- * and what a corrupt one does to the chain - lives in `resolve_from_rows()` precisely so
- * it can be tested here without a database. The SQL fetch itself, including the
- * game_id-null-vs-zero distinction, is covered by tests/thread/TemplateResolveThreadTest.php
- * against a real table.
- *
- * @see BE_PROCESS/releases/workflow-0.3.md Step 1b, 1j
+ * The template resolution chain: game-scoped -> global -> null.
  */
 class TemplateResolveTest extends TestCase {
 
@@ -81,18 +71,13 @@ class TemplateResolveTest extends TestCase {
 	}
 
 	public function test_a_json_literal_null_layout_is_also_treated_as_corrupt(): void {
-		// json_decode('null') succeeds and returns PHP null - not a decode error, but not
-		// a usable layout array either. The chain must still treat it as a miss.
+		// json_decode('null') succeeds and returns PHP null.
 		$row = $this->row( 1, 5, 'null' );
 		$this->assertNull( Template::resolve_from_rows( $row, null ) );
 	}
 
 	// -------------------------------------------------------------------------
-	// validate_layout() itself is NOT covered here. It checks block_slug against the
-	// real be_schema_blocks table (Step 2d), which means it needs $wpdb - the one thing
-	// that does not belong in a unit test (TESTING.md). Its structural rules (version,
-	// column bounds, duplicate slugs, the 11 display types) are covered against a real
-	// database in tests/thread/TemplateValidateLayoutTest.php instead.
+	// validate_layout() itself is NOT covered here
 	// -------------------------------------------------------------------------
 
 	public function test_display_types_has_exactly_11_modes(): void {

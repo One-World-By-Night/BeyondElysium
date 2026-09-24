@@ -6,12 +6,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * No test file for this controller existed before this one (2026-09-09) - same real,
- * significant gap as SchemaBlocksControllerTest: `POST /creature-stacks` (creating any
- * brand-new custom creature stack) has never worked, for the entire life of this project.
- * `validate_stack_definition()` checked `is_object( $definition )`, but a real JSON REST
- * request body always decodes to a plain PHP array - the check could never pass for any
- * genuine request. Found the same session, same root cause, building the admin UI.
+ * The creature stacks routes: create and update with real JSON bodies, and a section without a block slug or a
+ * definition without sections is rejected.
  */
 class CreatureStacksControllerTest extends WP_UnitTestCase {
 

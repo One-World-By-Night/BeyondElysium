@@ -1,17 +1,13 @@
-"""Emits data/catalog/blocks/vampire-rituals.json (1.3.1 B-8).
+"""Emits data/catalog/blocks/vampire-rituals.json.
 
     python3 build_vampire_rituals.py <snapshot-dir>
 
-B-8 asked for a survey before assuming the block is clean. The survey is the
-docstring of `survey()` and the release document's §11; the emission is
-deliberately conservative:
+The emission is conservative:
 
 - **Names are not touched.** Every seeded item is `"<Tradition>: <Ritual>
-  (<tier>)"`, and held character data matches on that string. Renaming 1,291
-  items would be exactly the churn 1.2.0 §0 depends on being rare.
-- **`group` and `tier` are filled from the name**, which already carries both.
-  They were empty on all 1,291 - the same defect as `werewolf-rites` (1.3.0's
-  D4), recoverable the same way, by parsing rather than research.
+  (<tier>)"`, and held character data matches on that string.
+- **`group` and `tier` are filled from the name**, which already carries both,
+  by parsing rather than research.
 - **`cost` stays the seeded string** except where rulings/vampire-rituals.json
   corrects one with evidence. Anomalies without evidence are reported, not
   guessed.

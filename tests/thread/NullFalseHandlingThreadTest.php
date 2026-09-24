@@ -7,10 +7,7 @@ use BeyondElysium\Services\Query_Engine;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-020. PHPStan at level 8 found 75 places that used a lookup or an encode result
- * without allowing for its null or false. Most are guarded now and held there by the
- * `phpstan-null-safety.neon` gate in `bin/verify`. These are the ones a caller can reach, each of
- * which threw or warned where the method promised an answer.
+ * Lookups and encode results that can be null or false are handled at the places PHPStan level 8 flagged.
  */
 class NullFalseHandlingThreadTest extends WP_UnitTestCase {
 

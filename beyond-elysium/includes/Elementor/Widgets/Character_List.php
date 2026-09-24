@@ -8,50 +8,34 @@ use Elementor\Controls_Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Elementor widget wrapper for the Character List. Registers the widget's
- * name, title, and icon with Elementor, exposes Content section
- * controls for the target game slug, creature type and status filters, an
- * optional sheet page URL, and a results-per-page setting, and renders a
- * single mount-point <div> that the front-end script hydrates with the
- * CharacterList React component.
- *
- * @see BE_PROCESS/releases/workflow-0.3.md Step 7d
+ * Elementor widget wrapper for the Character List.
  */
 class Character_List extends Base_Widget {
 
 	/**
-	 * Returns the internal widget name Elementor uses to identify this
-	 * widget type. Elementor stores this string in page and template
-	 * markup wherever the widget is placed.
+	 * Returns the internal widget name Elementor uses to identify this widget type.
 	 */
 	public function get_name(): string {
 		return 'be-character-list';
 	}
 
 	/**
-	 * Returns the human-readable label Elementor shows for this widget in
-	 * the editor's widget panel, search results, and layers panel. This is
-	 * the text an editor sees when placing the widget on a page.
+	 * Returns the human-readable label Elementor shows for this widget in the editor's widget panel, search results, and
+	 * layers panel.
 	 */
 	public function get_title(): string {
 		return __( 'Character List', 'beyond-elysium' );
 	}
 
 	/**
-	 * Returns the Elementor icon class shown next to this widget's title in
-	 * the widget panel. The value is an eicon-* class name supplied by
-	 * Elementor's built-in icon font.
+	 * Returns the Elementor icon class shown next to this widget's title in the widget panel.
 	 */
 	public function get_icon(): string {
 		return 'eicon-table-of-contents';
 	}
 
 	/**
-	 * Builds the Elementor "Content" section shown in the editor panel for
-	 * this widget. Adds a read-only description note, a Game Slug text
-	 * control, a Creature Type select populated from the registered
-	 * creature stacks, a Default Status Filter select, a Sheet Page URL
-	 * control used to link character names, and a Per Page number control.
+	 * Builds the Elementor "Content" section shown in the editor panel for this widget.
 	 */
 	protected function register_controls(): void {
 		$this->start_controls_section( 'content_section', [

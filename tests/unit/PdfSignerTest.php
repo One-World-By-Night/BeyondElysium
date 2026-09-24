@@ -6,39 +6,8 @@ use BeyondElysium\Services\Pdf_Signer;
 use PHPUnit\Framework\TestCase;
 
 /**
- * GX-SP-6: every failure mode of `Pdf_Signer::availability()`/`configure()`,
- * proving no generation is ever attempted and the passphrase never surfaces
- * anywhere. No live signing here (P1's "hard failure, never a silent
- * unsigned PDF" is what's under test, not TCPDF's own signing mechanics,
- * which SheetsControllerPdfTest covers at the thread layer against a real
- * certificate).
- *
- * Each test runs in its own PHP process (`@runInSeparateProcess`) because
- * `define()` is irreversible within one process and PHPUnit otherwise runs
- * every test method in this file in the same one - without isolation, the
- * first test to define `BE_PDF_SIGNING_CERT` would leak into every test
- * after it.
- *
- * Every method also carries `@preserveGlobalState disabled`: process
- * isolation's default behavior serializes the parent process's `$GLOBALS` to
- * hand to the child, and by the time this class runs in a full-suite pass,
- * some earlier test in this large a suite has left a Closure somewhere in
- * global state (a WordPress hook callback is the likely shape) - PHP's
- * serialize() cannot represent a Closure at all, so that handoff throws
- * "Serialization of 'Closure' is not allowed" before this class's own test
- * body ever runs, intermittently, depending on what ran before it. Disabling
- * the handoff is correct regardless of the cause: the child process re-runs
- * this file's own bootstrap fresh and needs none of the parent's state -
- * every test here only ever reads a `define()` it makes itself, inside the
- * child. This is a per-method annotation, not a class-level one: PHPUnit's
- * class-level `@runInSeparateProcess` isolates the whole class from other
- * classes, but runs every method in *that one* shared child process rather
- * than giving each its own - the opposite of what this file needs, since
- * `define()`'s irreversibility is exactly the problem being isolated against
- * (confirmed the hard way: annotating the class instead of each method here
- * let `BE_PDF_SIGNING_CERT` leak between methods again).
- *
- * @see BE_PROCESS/design/signed-pdf-design.md §3c, SP-6
+ * Every failure mode of `Pdf_Signer::availability()` and `configure()`, proving no generation is attempted and the
+ * passphrase never surfaces anywhere. Each test runs in its own PHP process, since `define()` is irreversible within one.
  */
 class PdfSignerTest extends TestCase {
 
@@ -130,9 +99,7 @@ class PdfSignerTest extends TestCase {
 		$this->expectException( \RuntimeException::class );
 		$this->expectExceptionMessage( 'cert_not_configured' );
 
-		// A stdClass, not a real TCPDF instance - if configure() ever reached setSignature(),
-		// this would fail with a totally different error (wrong type), proving the throw
-		// happens before any TCPDF interaction is attempted, not after a failed one.
+		// A stdClass, not a real TCPDF instance.
 		Pdf_Signer::configure( new \TCPDF(), (object) [ 'name' => 'Unavailable Test Chronicle' ] );
 	}
 

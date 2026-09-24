@@ -6,21 +6,10 @@ use BeyondElysium\Services\Query_Engine;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Port of `QueryEngineClass.GetStatistics`. One fixture set, all five statistics,
- * hand-calculated expected values.
- *
- * @see BE_PROCESS/releases/workflow-0.6.md Step 5j
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "Statistics"
+ * Port of `QueryEngineClass.GetStatistics`.
  */
 class StatisticsTest extends TestCase {
 
-	/**
-	 * Four vampires' Disciplines, hand-counted:
-	 *   Marcus:    Celerity x3, Fortitude x2       (2 distinct disciplines, 5 total dots)
-	 *   Lucretia:  Celerity x2, Obtenebration x4   (2 distinct, 6 total dots)
-	 *   Sara:      Fortitude x1                    (1 distinct, 1 total dot)
-	 *   Tomas:     (none)                          (0 distinct, 0 total dots)
-	 */
 	private function disciplines_fixture(): array {
 		return [
 			[ 'name' => 'Marcus', 'value' => [
@@ -58,7 +47,6 @@ class StatisticsTest extends TestCase {
 		$result = Query_Engine::aggregate( $this->disciplines_fixture(), 'list', 'Disciplines', 'distribution', false, null, 4 );
 
 		$this->assertArrayNotHasKey( '0 Disciplines', $result['buckets'] );
-		// Total only counts characters actually bucketed - Tomas (0) is excluded.
 		$this->assertSame( 3.0, $result['total'] );
 	}
 
@@ -85,7 +73,6 @@ class StatisticsTest extends TestCase {
 		$this->assertSame( 2.0, $result['buckets']['Celerity'], 'Marcus and Lucretia both hold Celerity' );
 		$this->assertSame( 2.0, $result['buckets']['Fortitude'], 'Marcus and Sara both hold Fortitude' );
 		$this->assertSame( 1.0, $result['buckets']['Obtenebration'] );
-		// Total = characters examined, NOT the sum of buckets (which would be 5).
 		$this->assertSame( 4.0, $result['total'] );
 		$this->assertEqualsCanonicalizing( [ 'Marcus', 'Sara' ], $result['match_sets']['Fortitude'] );
 	}
@@ -123,8 +110,7 @@ class StatisticsTest extends TestCase {
 		$result = Query_Engine::aggregate( $resolved, 'list', 'Disciplines', 'maxima', true, null, 3 );
 
 		$this->assertSame( 5.0, $result['buckets']['Celerity'] );
-		// Total is the SUM of the (one) maxima bucket, recomputed after the loop -
-		// not 3+5+1=9 accumulated during it.
+		// Total is the SUM of the (one) maxima bucket, recomputed after the loop.
 		$this->assertSame( 5.0, $result['total'] );
 		$this->assertSame( 5.0, $result['maximum'] );
 	}
@@ -136,8 +122,6 @@ class StatisticsTest extends TestCase {
 		];
 		$result = Query_Engine::aggregate( $resolved, 'list', 'Disciplines', 'maxima', true, null, 2 );
 
-		// Celerity max = 5, Fortitude max = 2 -> total = 7, recomputed after the loop
-		// (never 3+2+5+1=11, the inline accumulation).
 		$this->assertSame( 5.0, $result['buckets']['Celerity'] );
 		$this->assertSame( 2.0, $result['buckets']['Fortitude'] );
 		$this->assertSame( 7.0, $result['total'] );

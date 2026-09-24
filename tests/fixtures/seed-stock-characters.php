@@ -1,20 +1,6 @@
 <?php
 /**
- * Stock sheets for `kony`: 2 fully-complete example characters per creature stack (22
- * total), so every one of the 11 supported creature types has a real, playable example
- * sheet in the actual chronicle - not sparse/randomized filler like seed-500-characters.php.
- *
- * Every trait_list/tiered_power entry below is a real name pulled from that block's own
- * seeded catalog (verified against Creature_Stack::resolve() before writing this file, and
- * re-verified at run time by validate_sheet_data() below) - nothing here is invented.
- * Identity fields (Clan, Tribe, Tradition, ...) are not catalog-backed in this schema
- * (free text/unenforced select), so they use classic World of Darkness terminology instead.
- *
- * Idempotent: checks by character name before creating, so re-running never duplicates.
- * Does not touch any of kony's existing characters (Marcus Vitel, Sara Redhawk, or the
- * leftover test-debris rows).
- *
- * Usage: wp eval-file tests/fixtures/seed-stock-characters.php --path=/path/to/wordpress
+ * Stock sheets for `kony`: 2 fully-complete example characters per creature stack (22 total).
  */
 
 use BeyondElysium\Models\Game;
@@ -24,9 +10,8 @@ use BeyondElysium\Models\Creature_Stack;
 const STOCK_GAME_SLUG = 'kony';
 
 /**
- * Fails loudly (per project convention) if any trait_list/tiered_power name, resource_pool
- * key, or identity_field key in $sheet_data isn't real for $stack_slug - catches typos and
- * fabricated names before they ever reach the database.
+ * Fails loudly (per project convention) if any trait_list/tiered_power name, resource_pool key, or identity_field key
+ * in $sheet_data isn't real for $stack_slug.
  */
 function validate_sheet_data( string $stack_slug, string $char_name, array $sheet_data ): void {
 	$resolved = Creature_Stack::resolve( $stack_slug );
@@ -583,11 +568,7 @@ foreach ( $fixtures as $f ) {
 
 	validate_sheet_data( $f['stack_slug'], $f['name'], $f['sheet_data'] );
 
-	// D27: Character::create()'s field allowlist does not include xp_earned/xp_unspent -
-	// passing them in the create() data array silently drops them, no error, character
-	// created with XP 0/0 regardless of what was requested. XP is set via update_xp()'s
-	// deltas after creation instead (a fresh row is 0/0 per the schema default, so the
-	// delta from zero is just the intended value).
+	// Character::create()'s field allowlist does not include xp_earned/xp_unspent.
 	$id = Character::create( [
 		'name'        => $f['name'],
 		'stack_slug'  => $f['stack_slug'],

@@ -1,8 +1,6 @@
 /**
- * Defines the twelve trait display modes and renders a single trait as a formatted
- * string according to the selected mode. Exports the `DisplayType` union, the `Trait`
- * shape it reads, and `displayTrait()`, the pure rendering function - the same input
- * always produces the same output, with no DOM or network access.
+ * Defines the twelve trait display modes and renders a single trait as a formatted string according to the selected
+ * mode.
  */
 
 import { DOT } from './displayTemper';
@@ -29,9 +27,7 @@ export interface Trait {
 }
 
 /**
- * Parses a leading integer from the start of a trait's total value, stopping at the
- * first non-digit character. A numeric value passes through directly; a string that
- * doesn't begin with a number (e.g. "borrowed" rather than "3 (borrowed)") parses to 0.
+ * Parses a leading integer from the start of a trait's total value, stopping at the first non-digit character.
  */
 export function parseTotal( total: Trait[ 'total' ] ): number {
 	if ( typeof total === 'number' ) {
@@ -45,11 +41,7 @@ export function parseTotal( total: Trait[ 'total' ] ): number {
 }
 
 /**
- * Renders a trait's name, total, and note as a display string, with the exact format
- * determined by `mode`: some modes show a multiplier count, some render dots, some fold
- * the note into parentheses, and some drop the name entirely. `dot` is the character
- * used for dot-rendering modes, defaulting to the one dot a resource pool's points use too
- * (1.0.0-review F-016).
+ * Renders a trait's name, total, and note as a display string, with the exact format determined by `mode`.
  */
 export function displayTrait(
 	trait: Trait,
@@ -89,7 +81,7 @@ export function displayTrait(
 		case 'dot': {
 			let out = trait.name;
 			const d = dots( total );
-			// 1.1.0 D1: the count always follows the dots, even at 0 (no dots to follow).
+			// The count always follows the dots.
 			out += d ? ` ${ d } ${ total }` : ` ${ total }`;
 			return note ? `${ out } (${ note })` : out;
 		}
@@ -108,17 +100,16 @@ export function displayTrait(
 			return `${ trait.name } (${ total })`;
 
 		case 'dot_separate': {
-			// The note is folded into the repeated label rather than appended once; count is at least 1.
+			// The note is folded into the repeated label.
 			const label = note ? `${ trait.name } (${ note })` : trait.name;
 			const count = total < 2 ? 1 : total;
 			const repeated = new Array( count ).fill( label ).join( dot );
-			// 1.1.0 D1: the real total follows, even though the repeat count above is
-			// clamped to a minimum of 1 and so can't itself be read as the count.
+			// The real total follows.
 			return `${ repeated } ${ total }`;
 		}
 
 		case 'simple_dots': {
-			// The name is dropped entirely; only dots (and, per D1, the count) are shown.
+			// The name is dropped entirely.
 			const d = dots( total );
 			return d ? `${ d } ${ total }` : `${ total }`;
 		}
@@ -130,19 +121,13 @@ export function displayTrait(
 			return note;
 
 		case 'cost_number': {
-			// 1.1.0 D3: for a count_is_cost block, the stored total is a flat XP
-			// cost, not a rating - drawn as a number instead of dots when the
-			// viewer's cost-numbers preference is on.
+			// For a count_is_cost block, the stored total is a flat XP cost.
 			const out = `${ trait.name } ${ total } XP`;
 			return note ? `${ out } (${ note })` : out;
 		}
 
 		case 'cost_xp': {
-			// 1.2.11 D94: the default for a count_is_cost block - "Draw Fire (12 XP)".
-			// The unit is part of the rendering, not a preference, because the number
-			// is a price and reads as a rating without it. The note joins the price
-			// inside the same parentheses rather than opening a second pair, matching
-			// 'cost' above.
+			// The default for a count_is_cost block.
 			const priced = `${ total } XP`;
 			return `${ trait.name } (${
 				note ? `${ priced }, ${ note }` : priced

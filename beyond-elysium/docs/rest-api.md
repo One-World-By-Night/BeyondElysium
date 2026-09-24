@@ -4,7 +4,7 @@ All routes are under the `be/v1` namespace — e.g. `/wp-json/be/v1/games`. Ever
 
 `{game_slug}` scopes a route to one chronicle. A request naming a game slug the caller has no relationship to returns `404` (not `403`), so a chronicle's existence is never leaked to someone outside it.
 
-While a catalog cutover runs (`wp be cutover apply` or `rollback`, a few seconds), every write to a route here is answered `503 catalog_switch_in_progress` and reads are not affected. A run that died holding its lock stops refusing after two minutes. See [Switching a Site to the Declared Catalog](help/catalog-cutover.md).
+While an upgrade moves a site onto each creature type's own lists (a few seconds), every write to a route here is answered `503 catalog_switch_in_progress` and reads are not affected. A run that died holding its lock stops refusing after two minutes. See [Moving an Older Site to the Per-Creature Lists](admin-guide.md#moving-an-older-site-to-the-per-creature-lists).
 
 **Manually maintained against the controllers, not auto-generated** — the "generated so it cannot drift" tooling this ideally deserves (Step 9b, workflow-0.9.md) was not built this pass. A full re-audit against every `register_routes()` method in `includes/REST/` (2026-09-13) found this reference had drifted well past a single missed route — eleven whole controllers undocumented and two capabilities stated backwards - proof this really does need re-checking by hand after every release that touches a controller, not just when a route "feels" new. Worth building the real generator as a follow-up; until then, treat a controller you don't see a section for here as a sign this doc is behind, not a sign the controller doesn't exist.
 

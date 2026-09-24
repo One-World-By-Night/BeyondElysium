@@ -9,11 +9,7 @@ use BeyondElysium\Services\Cost_Engine;
 use WP_UnitTestCase;
 
 /**
- * workflow-0.9.md Step 0.5e - a chronicle's own customized schema block is a real
- * `schema_blocks` row scoped by `game_slug`, not a separate overlay table. Covers the new
- * model methods directly; the REST/service call sites that consume them
- * (Cost_Engine/Change_Engine/Import_Controller/Creature_Stack) are covered by their own
- * existing test files, extended in this same pass.
+ * A chronicle's own customized schema block is a `schema_blocks` row scoped by `game_slug`.
  */
 class SchemaBlockGameScopingTest extends WP_UnitTestCase {
 
@@ -47,7 +43,6 @@ class SchemaBlockGameScopingTest extends WP_UnitTestCase {
 		$for_a = Schema_Block::find_for_game( $this->slug, 'game-a' );
 		$this->assertSame( 'Game A Item', $for_a->definition->items[0]->name );
 
-		// A different, never-forked game falls back to the global row untouched.
 		$for_b = Schema_Block::find_for_game( $this->slug, 'game-b' );
 		$this->assertSame( 'Global Item', $for_b->definition->items[0]->name );
 	}
@@ -120,16 +115,11 @@ class SchemaBlockGameScopingTest extends WP_UnitTestCase {
 		$this->assertTrue( Schema_Block::delete( $this->slug, 'game-a' ) );
 		$this->assertNotNull( Schema_Block::find_by_slug( $this->slug ), 'the global row must survive deleting only a fork' );
 
-		// Falls back to global again now that the fork is gone.
 		$this->assertSame( 'Global Item', Schema_Block::find_for_game( $this->slug, 'game-a' )->definition->items[0]->name );
 	}
 
 	/**
-	 * The two real consumers this whole mechanism exists for - Cost_Engine and
-	 * Change_Engine both resolve a block via `$character->owner_slug`, never a param
-	 * threaded in separately, so a trait that only exists in a chronicle's own fork must
-	 * price and approve correctly through a real character in that chronicle, not just
-	 * through the model methods directly (already covered above).
+	 * The two real consumers this whole mechanism exists.
 	 */
 	public function test_cost_engine_prices_a_chronicle_only_trait_via_the_forked_block(): void {
 		Schema_Block::find_or_create_fork_for_game( $this->slug, 'game-a' );
@@ -153,8 +143,7 @@ class SchemaBlockGameScopingTest extends WP_UnitTestCase {
 
 		$this->assertSame( 4, $cost, 'a trait that exists only in the chronicle fork must price from the fork, not fall back to 0 as an unknown block' );
 
-		// A character in a DIFFERENT, never-forked game sees the global catalog instead -
-		// this item genuinely does not exist there, so it must price as 0, not inherit game-a's fork.
+		// A character in a DIFFERENT.
 		$other_character_id = Character::create( [
 			'name' => 'No Fork Test Character', 'stack_slug' => 'vampire',
 			'owner_type' => 'chronicle', 'owner_slug' => 'game-b',

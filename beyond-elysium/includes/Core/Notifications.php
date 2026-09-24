@@ -9,35 +9,30 @@ use BeyondElysium\Models\Notification_Queue;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Queues and sends email notifications to players: their character's
- * submitted change was approved or rejected, a new rumor now reaches one
- * of their characters, or a plot they can see got a new post (1.1.0 §3.5).
- * Also tells a chronicle's Storytellers that a character transfer is
- * waiting for them to accept or refuse. Each kind has its own queue/flush
- * pair (the shapes don't share a sensible email format), but every one
- * honors the same per-user opt-out and per-game toggle via should_notify().
- * Callers enqueue() one outcome at a time during a request, then flush()
- * sends one summary email per recipient, grouping multiple items into a
- * single message. A plot post additionally honors the recipient's own
- * plot_notify_preference() - immediate (the same queue-and-flush pattern),
- * daily (queued into Notification_Queue for Maintenance::run()'s once-a-day
- * digest), or off.
+ * Queues and sends email notifications to players: their character's submitted change was approved or rejected, a new
+ * rumor now reaches one of their characters, or a plot they can see got a new post.
  */
 class Notifications {
 
-	/** wp_user_id => list of { character_name, game_name, label, status } */
+	/**
+	 * wp_user_id => list of { character_name, game_name, label, status }
+	 */
 	private static array $pending = [];
 
-	/** wp_user_id => [ batch_id => { game_name, character_names: string[], rumor_count, entry_count } ] */
+	/**
+	 * wp_user_id => [ batch_id => { game_name, character_names: string[], rumor_count, entry_count } ]
+	 */
 	private static array $pending_release = [];
 
-	/** wp_user_id => [ plot_id => { game_name, plot_title, posted_by: string[], link } ] */
+	/**
+	 * wp_user_id => [ plot_id => { game_name, plot_title, posted_by: string[], link } ]
+	 */
 	private static array $pending_posts = [];
 
 	/**
-	 * Whether a player should receive a notification email at all: not
-	 * opted out (User_Settings::NOTIFICATIONS_OPT_OUT_META), and not on a
-	 * game that has notifications turned off (be_games.notifications_enabled).
+	 * Whether a player should receive a notification email at all: not opted out
+	 * (User_Settings::NOTIFICATIONS_OPT_OUT_META), and not on a game that has notifications turned off
+	 * (be_games.notifications_enabled).
 	 *
 	 * @param int         $wp_user_id
 	 * @param object|null $game
@@ -54,9 +49,7 @@ class Notifications {
 	}
 
 	/**
-	 * Queues one change's outcome for its submitting player. No-op when
-	 * the character has no linked player, when that player is the one who
-	 * just reviewed it, or when should_notify() says not to.
+	 * Queues one change's outcome for its submitting player.
 	 *
 	 * @param object $change      Decoded Change row - change_type, category, status.
 	 * @param object $character   Decoded Character row - wp_user_id, name, owner_slug.
@@ -83,10 +76,7 @@ class Notifications {
 	}
 
 	/**
-	 * Builds a short human-readable label for one change, for use in the
-	 * notification digest. Uses the trait name for add_trait/remove_trait/
-	 * modify_trait changes; falls back to the change's category or
-	 * change_type for anything else.
+	 * Builds a short human-readable label for one change, for use in the notification digest.
 	 *
 	 * @param object $change
 	 * @return string
@@ -101,12 +91,9 @@ class Notifications {
 	}
 
 	/**
-	 * Queues one held item's arrival for one recipient player, as part of one release batch
-	 * (1.1.0 §3.2) - Release_Engine::release() calls this once per (player, held plot or
-	 * entry) the batch reaches, naming which of that player's own characters the item
-	 * reached. No-op when should_notify() says not to; the digest preference (§3.5) does
-	 * not apply here - a release email is always sent immediately, never deferred to a
-	 * daily digest.
+	 * Queues one held item's arrival for one recipient player, as part of one release batch - Release_Engine::release()
+	 * calls this once per (player, held plot or entry) the batch reaches, naming which of that player's own characters
+	 * the item reached.
 	 *
 	 * @param int         $wp_user_id
 	 * @param object|null $game             Decoded Game row - name, notifications_enabled.
@@ -114,7 +101,7 @@ class Notifications {
 	 * @param string[]    $character_names  This player's own characters the item reached -
 	 *                                       merged into the batch's running set, not replaced.
 	 * @param string      $kind             'rumor' (a held plot), 'entry' (a held plot_entry),
-	 *                                       or 'reveal' (a held secret_reveal, 1.1.0 §3.11).
+	 *                                       or 'reveal' (a held secret_reveal).
 	 * @return void
 	 */
 	public static function enqueue_release( int $wp_user_id, $game, int $batch_id, array $character_names, string $kind ): void {
@@ -147,9 +134,7 @@ class Notifications {
 	}
 
 	/**
-	 * Sends one summary email per queued (player, batch) pair, then empties the queue. Safe
-	 * to call when nothing is queued; iterates zero times and sends nothing. No content in
-	 * the email (§3.2) - only who it's for, where, and how much, with a link to go look.
+	 * Sends one summary email per queued (player, batch) pair, then empties the queue.
 	 *
 	 * @return void
 	 */
@@ -168,9 +153,7 @@ class Notifications {
 	}
 
 	/**
-	 * A recipient's own plot-post preference (1.1.0 §3.5): 'immediate' (default), 'daily', or
-	 * 'off'. Distinct from should_notify()'s opt-out/game-toggle check, which still wins
-	 * regardless of this value - a caller checks should_notify() first, this second.
+	 * A recipient's own plot-post preference: 'immediate' (default), 'daily', or 'off'.
 	 *
 	 * @param int $wp_user_id
 	 * @return string
@@ -181,11 +164,8 @@ class Notifications {
 	}
 
 	/**
-	 * Notifies one recipient that a plot got a new post (1.1.0 §3.5) - immediately (queued for
-	 * this request's own flush_posts()), queued for tomorrow's digest (Notification_Queue,
-	 * Maintenance::run()), or not at all, per should_notify() and this recipient's own
-	 * plot_notify_preference(). Never carries the post's own text - only who posted, on which
-	 * plot, in which chronicle, and a link.
+	 * Notifies one recipient that a plot got a new post: immediately, in tomorrow's digest, or not at all, per their
+	 * preference.
 	 *
 	 * @param int         $wp_user_id
 	 * @param object|null $game            Decoded Game row - id, name, notifications_enabled.
@@ -230,9 +210,7 @@ class Notifications {
 	}
 
 	/**
-	 * Sends one email per queued plot for each recipient - a recipient with new posts on
-	 * several plots this request still gets one message per plot, since each names a
-	 * different title and link, then empties the queue. Safe to call when nothing is queued.
+	 * Sends one email per queued plot for each recipient, then empties the queue.
 	 *
 	 * @return void
 	 */
@@ -289,9 +267,8 @@ class Notifications {
 	}
 
 	/**
-	 * Sends one digest email per user with anything queued in Notification_Queue, listing
-	 * every plot that got a new post since their last digest, then deletes exactly the rows
-	 * it sent (1.1.0 §3.5). Called from Maintenance::run(), once a day.
+	 * Sends one digest email per user with anything queued, listing every plot that got a new post since their last
+	 * digest.
 	 *
 	 * @return void
 	 */
@@ -358,14 +335,18 @@ class Notifications {
 		return implode( "\n", $lines );
 	}
 
-	/** The front-end Storyteller Toolkit's own Plots & Rumors tab URL, one plot's own thread. */
+	/**
+	 * The front-end Storyteller Toolkit's own Plots & Rumors tab URL, one plot's own thread.
+	 */
 	public static function storyteller_plot_url( int $plot_id ): string {
 		$page = get_page_by_path( \BeyondElysium\Core\Page_Provisioner::STORYTELLER_SLUG, OBJECT, 'page' );
 		$base = $page ? get_permalink( $page ) : home_url( '/' . \BeyondElysium\Core\Page_Provisioner::STORYTELLER_SLUG . '/' );
 		return $base . ( strpos( (string) $base, '?' ) === false ? '?' : '&' ) . 'tab=plots&open_plot=' . $plot_id;
 	}
 
-	/** The front-end "My Plots & Rumors" tab URL, one plot's own thread. */
+	/**
+	 * The front-end "My Plots & Rumors" tab URL, one plot's own thread.
+	 */
 	public static function player_plot_url( int $plot_id ): string {
 		return self::player_plots_url() . '&plot_id=' . $plot_id;
 	}
@@ -417,8 +398,8 @@ class Notifications {
 	}
 
 	/**
-	 * Joins character names for the subject line: "Marcus Vitel" alone, "Marcus Vitel and
-	 * Isabel Cruz" for two, "Marcus Vitel, Isabel Cruz and Anne Rowan" for three or more.
+	 * Joins character names for the subject line: "Marcus Vitel" alone, "Marcus Vitel and Isabel Cruz" for two, "Marcus
+	 * Vitel, Isabel Cruz and Anne Rowan" for three or more.
 	 *
 	 * @param string[] $names
 	 * @return string
@@ -460,7 +441,9 @@ class Notifications {
 		return implode( "\n", $lines );
 	}
 
-	/** The front-end "My Plots & Rumors" tab URL - the release email's one link, no content. */
+	/**
+	 * The front-end "My Plots & Rumors" tab URL - the release email's one link, no content.
+	 */
 	private static function player_plots_url(): string {
 		$page = get_page_by_path( \BeyondElysium\Core\Page_Provisioner::PLAYER_SLUG, OBJECT, 'page' );
 		$base = $page ? get_permalink( $page ) : home_url( '/' . \BeyondElysium\Core\Page_Provisioner::PLAYER_SLUG . '/' );
@@ -468,9 +451,7 @@ class Notifications {
 	}
 
 	/**
-	 * Sends one summary email per queued recipient, then empties the
-	 * queue. Safe to call when nothing is queued; iterates zero times and
-	 * sends nothing.
+	 * Sends one summary email per queued recipient, then empties the queue.
 	 *
 	 * @return void
 	 */
@@ -488,9 +469,8 @@ class Notifications {
 	}
 
 	/**
-	 * Builds the email subject line: names the single change's approve/
-	 * reject status when there is exactly one queued item, or states a
-	 * count of changes reviewed when there is more than one.
+	 * Builds the email subject line: names the single change's approve/ reject status when there is exactly one queued
+	 * item, or states a count of changes reviewed when there is more than one.
 	 *
 	 * @param array $items
 	 * @return string
@@ -511,9 +491,8 @@ class Notifications {
 	}
 
 	/**
-	 * Builds the plain-text email body: a greeting line followed by one
-	 * line per queued change, naming the character, game, what changed,
-	 * and its approved/rejected status.
+	 * Builds the plain-text email body: a greeting line followed by one line per queued change, naming the character,
+	 * game, what changed, and its approved/rejected status.
 	 *
 	 * @param \WP_User $user
 	 * @param array    $items
@@ -542,11 +521,8 @@ class Notifications {
 	}
 
 	/**
-	 * Emails the receiving chronicle's HSTs and ASTs that a character transfer
-	 * is waiting for one of them to accept or refuse - nothing is added to the
-	 * chronicle until someone does (1.0.0-review F-003). Sent at once, one
-	 * message per Storyteller, honoring the same opt-out and per-chronicle
-	 * toggle as every other notification.
+	 * Emails the receiving chronicle's HSTs and ASTs that a character transfer is waiting for one of them to accept or
+	 * refuse - nothing is added to the chronicle until someone does.
 	 *
 	 * @param object $game     The receiving chronicle's row.
 	 * @param object $transfer The inbound transfer row.
@@ -587,11 +563,6 @@ class Notifications {
 	}
 
 	/**
-	 * Emails the chronicle's HSTs and ASTs that someone asked to join by
-	 * starting a character (owner ruling, 1.0.0-review F-033): the character
-	 * waits, pending, until one of them sets it active, which makes its player
-	 * a member.
-	 *
 	 * @param object   $game      The chronicle's row.
 	 * @param object   $character The pending character.
 	 * @param \WP_User $applicant
@@ -630,9 +601,7 @@ class Notifications {
 	}
 
 	/**
-	 * Emails the chronicle's HSTs and ASTs that a player sent a Grapevine
-	 * file waiting for review (F-122). Nothing is added to the chronicle
-	 * until a Storyteller reviews it, under Beyond Elysium > Import.
+	 * Emails the chronicle's HSTs and ASTs that a player sent a Grapevine file waiting for review.
 	 *
 	 * @param object $game
 	 * @param object $submission
@@ -676,10 +645,7 @@ class Notifications {
 	}
 
 	/**
-	 * Emails the sender of a player-submitted Grapevine file once a
-	 * Storyteller has accepted or refused it (F-122). Skipped when the
-	 * sender opted out or the chronicle has notifications off - the same
-	 * checks every other player-facing notification honors.
+	 * Emails the sender of a player-submitted Grapevine file once a Storyteller has accepted or refused it.
 	 *
 	 * @param object $game
 	 * @param object $submission
@@ -753,9 +719,8 @@ class Notifications {
 	}
 
 	/**
-	 * The chronicle's HSTs and ASTs who should get a staff notification: each
-	 * once, with an email address, not opted out, on a chronicle with
-	 * notifications on.
+	 * The chronicle's HSTs and ASTs who should get a staff notification: each once, with an email address, not opted out,
+	 * on a chronicle with notifications on.
 	 *
 	 * @param object $game
 	 * @return array<int,\WP_User>
@@ -776,11 +741,8 @@ class Notifications {
 	}
 
 	/**
-	 * An unassigned player post's own fallback recipients (1.1.0 §3.5): every hst/ast/narrator
-	 * member, each once, with an email address, not opted out, on a chronicle with
-	 * notifications on. Deliberately its own method rather than widening storytellers() above -
-	 * that method's other three callers (transfer_offered, join_requested, submission_received)
-	 * are HST/AST-only by design; a Narrator gets plot-post mail but not those.
+	 * The fallback recipients for an unassigned player post: every hst, ast and narrator member, each once, with an email
+	 * address, not opted out, on a chronicle with notifications on.
 	 *
 	 * @param object $game
 	 * @return array<int,\WP_User>

@@ -1,10 +1,5 @@
 /**
- * REST API client for the Beyond Elysium plugin. Wraps
- * WordPress's api-fetch package with one grouped object per
- * resource - games, schema blocks, creature stacks, templates,
- * characters, changes, plots, world objects, queries, and
- * imports - so components call methods instead of building fetch
- * requests.
+ * REST API client for the Beyond Elysium plugin.
  */
 import apiFetch from '@wordpress/api-fetch';
 import type {
@@ -196,9 +191,7 @@ import type {
 const BASE = '/be/v1';
 
 /**
- * Converts a plain params object into a URL query string. Skips
- * any key whose value is null, undefined, or an empty string, and
- * URL-encodes every remaining key and value.
+ * Converts a plain params object into a URL query string.
  */
 function toQuery( params: Record< string, unknown > ): string {
 	const parts: string[] = [];
@@ -215,13 +208,7 @@ function toQuery( params: Record< string, unknown > ): string {
 }
 
 /**
- * Fetches one page of a list route along with its totals, which the
- * route sends as X-WP-Total/X-WP-TotalPages headers. Reading headers
- * means asking api-fetch not to parse the response, and a failed
- * request then rejects with the raw response rather than the server's
- * error - so its body is read here, and a failure carries the server's
- * own code and message like every other call (1.0.0-review F-096). A
- * body that isn't JSON rejects as it came, for the caller's own message.
+ * Fetches one page of a list route along with its totals.
  */
 async function fetchPage< T >( options: {
 	path: string;
@@ -260,16 +247,11 @@ async function fetchPage< T >( options: {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client for the games (chronicles) collection: listing,
- * fetching, creating, updating, and deleting a chronicle. Not
- * scoped to any one game, since these operate on the collection
- * itself.
+ * REST client for the games (chronicles) collection: listing, fetching, creating, updating, and deleting a chronicle.
  */
 export const games = {
 	/**
 	 * Fetches the list of games matching the given filters.
-	 * Supports the standard pagination, ordering, and game_type
-	 * filter from GameCollectionParams.
 	 */
 	list: ( params: GameCollectionParams = {} ): Promise< Game[] > =>
 		apiFetch( {
@@ -279,34 +261,26 @@ export const games = {
 		} ),
 
 	/**
-	 * Fetches a single game by its slug. Returns the full Game
-	 * record, including its settings and authorization fields.
+	 * Fetches a single game by its slug.
 	 */
 	get: ( slug: string ): Promise< Game > =>
 		apiFetch( { path: `${ BASE }/games/${ slug }` } ),
 
 	/**
 	 * Creates a new game/chronicle from the given request body.
-	 * Returns the newly created Game record, including its
-	 * server-assigned id and slug.
 	 */
 	create: ( data: CreateGameRequest ): Promise< Game > =>
 		apiFetch( { path: `${ BASE }/games`, method: 'POST', data } ),
 
 	/**
-	 * Updates an existing game identified by slug with the given
-	 * partial request body. Returns the updated Game record as
-	 * stored after the change.
+	 * Updates an existing game identified by slug with the given partial request body.
 	 */
 	update: ( slug: string, data: UpdateGameRequest ): Promise< Game > =>
 		apiFetch( { path: `${ BASE }/games/${ slug }`, method: 'PUT', data } ),
 
 	/**
-	 * Saves the three Chronicle Setup settings an HST may set for their own chronicle
-	 * (1.0.0-checklist.md item 18): creature types, sub-faction restrictions, and
-	 * new-character approval. Gated on be_manage_chronicle_setup, narrower than update()'s
-	 * be_manage_games - an AST cannot call this even though they hold be_manage_characters
-	 * and most everything else (item 27).
+	 * Saves the three Chronicle Setup settings an HST may set for their own chronicle: creature types, sub-faction
+	 * restrictions, and new-character approval.
 	 */
 	updateChronicleSetup: (
 		gameSlug: string,
@@ -325,11 +299,7 @@ export const games = {
 		apiFetch( { path: `${ BASE }/games/${ slug }/content` } ),
 
 	/**
-	 * Deletes a game/chronicle by slug. Resolves with no content
-	 * on success. `withContent` deletes everything stored under the
-	 * chronicle with it; omitted, a chronicle that still holds content
-	 * is refused with 409 `chronicle_has_content` and the counts, so
-	 * nothing is ever left behind for a same-named chronicle to inherit.
+	 * Deletes a game/chronicle by slug.
 	 */
 	delete: ( slug: string, withContent = false ): Promise< void > =>
 		apiFetch( {
@@ -340,20 +310,13 @@ export const games = {
 		} ),
 
 	/**
-	 * Fetches every chronicle the current user actually holds a real
-	 * membership row in, each with the role they hold there - the
-	 * real data source for a chronicle switcher. Never falls back to
-	 * the full collection, so a player can never see a chronicle they
-	 * hold no membership in.
+	 * Fetches every chronicle the current user actually holds a real membership row in, each with the role they hold
+	 * there.
 	 */
 	mine: (): Promise< MyGame[] > => apiFetch( { path: `${ BASE }/my/games` } ),
 
 	/**
-	 * Fetches what the current user can actually do in one specific
-	 * chronicle, resolved per chronicle rather than read from the
-	 * site-wide `window.beyondElysium.capabilities` snapshot. A game
-	 * slug the user has no real relationship to still resolves - every
-	 * flag comes back false rather than an error.
+	 * Fetches what the current user can actually do in one specific chronicle, resolved per chronicle.
 	 */
 	myCapabilities: (
 		slug: string
@@ -361,15 +324,13 @@ export const games = {
 		apiFetch( { path: `${ BASE }/${ slug }/my/capabilities` } ),
 
 	/**
-	 * Fetches the site-wide brand accent default (1.2.7-design-workflow.md §E1) -
-	 * every chronicle's own fallback when it sets no override of its own.
+	 * Fetches the site-wide brand accent default.
 	 */
 	getBranding: (): Promise< { accent_color: string } > =>
 		apiFetch( { path: `${ BASE }/branding` } ),
 
 	/**
-	 * Sets the site-wide brand accent default. An empty string clears it
-	 * (every chronicle falls through to theme.css's own --be-red-1).
+	 * Sets the site-wide brand accent default.
 	 */
 	updateBranding: (
 		accentColor: string
@@ -386,15 +347,12 @@ export const games = {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client for the schema blocks collection: the reusable
- * sheet-section definitions (trait lists, tiered powers, resource
- * pools, identity fields) that creature stacks are built from.
+ * REST client for the schema blocks collection: the reusable sheet-section definitions (trait lists, tiered powers,
+ * resource pools, identity fields) that creature stacks are built from.
  */
 export const schemaBlocks = {
 	/**
-	 * Fetches the list of schema blocks matching the given
-	 * filters. Supports the standard collection params plus
-	 * filtering by section type and the system-block flag.
+	 * Fetches the list of schema blocks matching the given filters.
 	 */
 	list: (
 		params: SchemaBlockCollectionParams = {}
@@ -406,9 +364,19 @@ export const schemaBlocks = {
 		} ),
 
 	/**
-	 * Fetches a single schema block by slug. When gameSlug is
-	 * given, resolves that chronicle's own customized fork of the
-	 * block in place of the global one, if it has forked it.
+	 * Same collection as list(), with its totals.
+	 */
+	listPaginated: (
+		params: SchemaBlockCollectionParams = {}
+	): Promise< { items: SchemaBlock[]; total: number; totalPages: number } > =>
+		fetchPage< SchemaBlock >( {
+			path: `${ BASE }/schema-blocks${ toQuery(
+				params as Record< string, unknown >
+			) }`,
+		} ),
+
+	/**
+	 * Fetches a single schema block by slug.
 	 */
 	get: ( slug: string, gameSlug?: string ): Promise< SchemaBlock > =>
 		apiFetch( {
@@ -418,11 +386,7 @@ export const schemaBlocks = {
 		} ),
 
 	/**
-	 * Creates a new schema block from the given request body.
-	 * slug, name, and section_type identify and classify it. With
-	 * gameSlug it is created for that chronicle only, through the
-	 * chronicle's own route; without it, in the global catalog, which
-	 * only a site administrator may change.
+	 * Creates a new schema block from the given request body. slug, name, and section_type identify and classify it.
 	 */
 	create: (
 		data: CreateSchemaBlockRequest,
@@ -437,10 +401,7 @@ export const schemaBlocks = {
 		} ),
 
 	/**
-	 * Updates an existing schema block by slug. When gameSlug is
-	 * given, writes that chronicle's own copy through the chronicle's
-	 * route - forking it on first save - where the server checks the
-	 * user's membership; the global route refuses a game_slug.
+	 * Updates an existing schema block by slug.
 	 */
 	update: (
 		slug: string,
@@ -456,10 +417,7 @@ export const schemaBlocks = {
 		} ),
 
 	/**
-	 * Deletes a schema block by slug - with gameSlug, only that
-	 * chronicle's own block or fork. Resolves with no content on
-	 * success; the server governs whether blocks still referenced
-	 * by a creature stack may be deleted.
+	 * Deletes a schema block by slug.
 	 */
 	delete: ( slug: string, gameSlug?: string ): Promise< void > =>
 		apiFetch( {
@@ -475,15 +433,12 @@ export const schemaBlocks = {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client for the creature stacks collection: the creature
- * types (Vampire, Werewolf, and so on) that define which schema
- * blocks make up a character sheet.
+ * REST client for the creature stacks collection: the creature types (Vampire, Werewolf, and so on) that define which
+ * schema blocks make up a character sheet.
  */
 export const creatureStacks = {
 	/**
-	 * Fetches the list of creature stacks matching the given
-	 * filters. Supports the standard collection params plus
-	 * filtering by game line and the system-stack flag.
+	 * Fetches the list of creature stacks matching the given filters.
 	 */
 	list: (
 		params: CreatureStackCollectionParams = {}
@@ -495,25 +450,13 @@ export const creatureStacks = {
 		} ),
 
 	/**
-	 * Fetches a single creature stack by slug, without resolving
-	 * its referenced schema blocks. Use resolve() instead when the
-	 * actual block definitions are needed.
+	 * Fetches a single creature stack by slug, without resolving its referenced schema blocks.
 	 */
 	get: ( slug: string ): Promise< CreatureStack > =>
 		apiFetch( { path: `${ BASE }/creature-stacks/${ slug }` } ),
 
 	/**
-	 * Fetches a creature stack together with the real SchemaBlock
-	 * record for every block its sections reference. When gameSlug
-	 * is given, prefers that chronicle's own customized fork of a
-	 * block over the global one wherever it has forked it.
-	 *
-	 * `forCreation` additionally narrows every identity_field's `options`
-	 * to this chronicle's `enabled_factions` restriction (a Vampire Clan
-	 * or Sect subset, say) - pass it only for a brand-new character's own
-	 * picker, never when viewing/editing an existing one, whose already-held
-	 * value must always resolve in full regardless of a restriction added
-	 * since.
+	 * Fetches a creature stack together with the real SchemaBlock record for every block its sections reference.
 	 */
 	resolve: (
 		slug: string,
@@ -528,16 +471,12 @@ export const creatureStacks = {
 
 	/**
 	 * Creates a new creature stack from the given request body.
-	 * Requires a full stack_definition describing its sheet
-	 * layout. Returns the newly created CreatureStack record.
 	 */
 	create: ( data: CreateCreatureStackRequest ): Promise< CreatureStack > =>
 		apiFetch( { path: `${ BASE }/creature-stacks`, method: 'POST', data } ),
 
 	/**
-	 * Updates an existing creature stack by slug with the given
-	 * partial request body. Returns the updated CreatureStack
-	 * record as stored after the change.
+	 * Updates an existing creature stack by slug with the given partial request body.
 	 */
 	update: (
 		slug: string,
@@ -550,9 +489,7 @@ export const creatureStacks = {
 		} ),
 
 	/**
-	 * Deletes a creature stack by slug. Resolves with no content
-	 * on success; the server governs whether stacks still in use
-	 * by characters may be deleted.
+	 * Deletes a creature stack by slug.
 	 */
 	delete: ( slug: string ): Promise< void > =>
 		apiFetch( {
@@ -566,15 +503,11 @@ export const creatureStacks = {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client for the global templates collection: the reusable,
- * non-chronicle-specific sheet layouts a template_type/stack
- * combination can fall back to.
+ * REST client for the global templates collection: the reusable, non-chronicle-specific sheet layouts.
  */
 export const templatesGlobal = {
 	/**
-	 * Fetches every global template. Returns the raw Template
-	 * records, not resolved against any particular stack or
-	 * chronicle.
+	 * Fetches every global template.
 	 */
 	list: ( params: { per_page?: number } = {} ): Promise< Template[] > =>
 		apiFetch( {
@@ -585,24 +518,18 @@ export const templatesGlobal = {
 
 	/**
 	 * Fetches a single global template by its numeric id.
-	 * Returns the raw Template record as stored, including its
-	 * full layout.
 	 */
 	get: ( id: number ): Promise< Template > =>
 		apiFetch( { path: `${ BASE }/templates/${ id }` } ),
 
 	/**
-	 * Creates a new global template from the given request body.
-	 * name, template_type, and layout are required. Returns the
-	 * newly created Template record.
+	 * Creates a new global template from the given request body. name, template_type, and layout are required.
 	 */
 	create: ( data: CreateTemplateRequest ): Promise< Template > =>
 		apiFetch( { path: `${ BASE }/templates`, method: 'POST', data } ),
 
 	/**
-	 * Updates an existing global template by id with the given
-	 * partial request body. Returns the updated Template record
-	 * as stored after the change.
+	 * Updates an existing global template by id with the given partial request body.
 	 */
 	update: ( id: number, data: UpdateTemplateRequest ): Promise< Template > =>
 		apiFetch( {
@@ -612,23 +539,17 @@ export const templatesGlobal = {
 		} ),
 
 	/**
-	 * Deletes a global template by id. Resolves with no content
-	 * on success; chronicles that had resolved to this template
-	 * fall back to the generated default afterward.
+	 * Deletes a global template by id.
 	 */
 	delete: ( id: number ): Promise< void > =>
 		apiFetch( { path: `${ BASE }/templates/${ id }`, method: 'DELETE' } ),
 };
 /**
- * REST client factory for a single chronicle's template
- * resolution. Returns an object bound to gameSlug whose resolve()
- * method finds the right layout for a given stack and template
- * type.
+ * REST client factory for a single chronicle's template resolution.
  */
 export const templates = ( gameSlug: string ) => ( {
 	/**
-	 * Fetches this chronicle's own templates - its overrides of the
-	 * global layouts - never the global ones themselves.
+	 * Fetches this chronicle's own templates.
 	 */
 	list: ( params: { per_page?: number } = {} ): Promise< Template[] > =>
 		apiFetch( {
@@ -638,8 +559,7 @@ export const templates = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Creates a template for this chronicle only. name, template_type,
-	 * and layout are required.
+	 * Creates a template for this chronicle only. name, template_type, and layout are required.
 	 */
 	create: ( data: CreateTemplateRequest ): Promise< Template > =>
 		apiFetch( {
@@ -648,7 +568,9 @@ export const templates = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Updates one of this chronicle's own templates by id. */
+	/**
+	 * Updates one of this chronicle's own templates by id.
+	 */
 	update: ( id: number, data: UpdateTemplateRequest ): Promise< Template > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/templates/${ id }`,
@@ -656,7 +578,9 @@ export const templates = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Deletes one of this chronicle's own templates; its sheets fall back to the global layout. */
+	/**
+	 * Deletes one of this chronicle's own templates.
+	 */
 	delete: ( id: number ): Promise< void > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/templates/${ id }`,
@@ -664,10 +588,7 @@ export const templates = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Resolves the sheet layout to use for a given stack and
-	 * template type within this chronicle. Falls back from a
-	 * chronicle-specific override, to a global template, to a
-	 * generated default, in that order.
+	 * Resolves the sheet layout to use for a given stack and template type within this chronicle.
 	 */
 	resolve: (
 		stackSlug: string,
@@ -700,7 +621,9 @@ export interface ApprovalRule {
 	target_type: ApprovalRuleTargetType;
 	target_name: string;
 	level: number | null;
-	/** item_range/pool_range: [from, to]. field_option: the option string. Otherwise null. */
+	/**
+	 * item_range/pool_range: [from, to]. field_option: the option string.
+	 */
 	extra: [ number, number ] | string | null;
 	approval: string | null;
 	reason: string | null;
@@ -716,11 +639,17 @@ export interface ApprovalRuleRequest {
 	target_type: ApprovalRuleTargetType;
 	target_name: string;
 	level?: number;
-	/** Required for item_range/pool_range targets. */
+	/**
+	 * Required for item_range/pool_range targets.
+	 */
 	from?: number;
-	/** Required for item_range/pool_range targets. */
+	/**
+	 * Required for item_range/pool_range targets.
+	 */
 	to?: number;
-	/** Required for field_option targets. */
+	/**
+	 * Required for field_option targets.
+	 */
 	option?: string;
 	approval?: string;
 	reason?: string;
@@ -728,24 +657,29 @@ export interface ApprovalRuleRequest {
 
 /**
  * REST client factory for a single chronicle's approval rules.
- * Returns an object bound to gameSlug covering listing every rule
- * currently set, the vocabulary the create/edit form offers, and
- * creating, updating, and deleting one rule.
  */
 export const approvalRules = ( gameSlug: string ) => ( {
-	/** Fetches every approval rule currently set across this chronicle's blocks. */
+	/**
+	 * Fetches every approval rule currently set across this chronicle's blocks.
+	 */
 	list: (): Promise< ApprovalRule[] > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/approval-rules` } ),
 
-	/** Fetches the fixed approval-level and reason-preset vocabulary the form offers. */
+	/**
+	 * Fetches the fixed approval-level and reason-preset vocabulary the form offers.
+	 */
 	options: (): Promise< ApprovalRuleOptions > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/approval-rules/options` } ),
 
-	/** Fetches whether a change no rule has an opinion on is approved automatically. */
+	/**
+	 * Fetches whether a change no rule has an opinion on is approved automatically.
+	 */
 	defaultPolicy: (): Promise< { auto_approve: boolean } > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/approval-rules/default` } ),
 
-	/** Sets the chronicle's default approval policy; every other setting is kept. */
+	/**
+	 * Sets the chronicle's default approval policy.
+	 */
 	setDefaultPolicy: (
 		autoApprove: boolean
 	): Promise< { auto_approve: boolean } > =>
@@ -755,7 +689,9 @@ export const approvalRules = ( gameSlug: string ) => ( {
 			data: { auto_approve: autoApprove },
 		} ),
 
-	/** Creates (sets) a rule on the named item, power, or power level. */
+	/**
+	 * Creates (sets) a rule on the named item, power, or power level.
+	 */
 	create: ( data: ApprovalRuleRequest ): Promise< ApprovalRule > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/approval-rules`,
@@ -763,7 +699,9 @@ export const approvalRules = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Updates an existing rule, identified by the opaque id list() returned for it. */
+	/**
+	 * Updates an existing rule, identified by the opaque id list() returned for it.
+	 */
 	update: (
 		id: string,
 		data: Partial< ApprovalRuleRequest >
@@ -774,7 +712,9 @@ export const approvalRules = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Clears a rule back to unset; the catalog item, power, or level itself is not removed. */
+	/**
+	 * Clears a rule back to unset.
+	 */
 	remove: ( id: string ): Promise< void > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/approval-rules/${ id }`,
@@ -783,8 +723,7 @@ export const approvalRules = ( gameSlug: string ) => ( {
 } );
 
 // ---------------------------------------------------------------------------
-// AI Assist (ai-writing-assist-design.md) - a site-wide pair for fields that
-// belong to no chronicle, and a chronicle-scoped pair for everything else.
+// AI Assist
 // ---------------------------------------------------------------------------
 
 export interface AiAssistGenerateRequest {
@@ -801,7 +740,9 @@ export interface AiAssistSiteSettings {
 	provider: 'openai' | 'claude';
 	has_openai_key: boolean;
 	has_claude_key: boolean;
-	/** Not secrets - a self-hosted/otherwise-compatible endpoint override. Empty string means "use the built-in default". */
+	/**
+	 * A self-hosted or otherwise compatible endpoint override.
+	 */
 	openai_base_url: string;
 	openai_model: string;
 	claude_base_url: string;
@@ -821,7 +762,9 @@ export interface AiAssistChronicleSettings {
 
 export interface AiAssistTestRequest {
 	provider: 'openai' | 'claude';
-	/** The value to test, which may not be saved yet. */
+	/**
+	 * The value to test, which may not be saved yet.
+	 */
 	key: string;
 	base_url?: string;
 	model?: string;
@@ -831,7 +774,9 @@ export interface AiAssistTestResponse {
 	message: string;
 }
 
-/** Site-wide AI assist: settings that belong to no chronicle (Schema Block descriptions, Credits). */
+/**
+ * Site-wide AI assist: settings that belong to no chronicle (Schema Block descriptions, Credits).
+ */
 export const aiAssistSite = {
 	generate: (
 		data: AiAssistGenerateRequest
@@ -841,7 +786,9 @@ export const aiAssistSite = {
 	getSettings: (): Promise< AiAssistSiteSettings > =>
 		apiFetch( { path: `${ BASE }/ai-assist/settings` } ),
 
-	/** A key field left out of data entirely is untouched; an explicit empty string clears it. */
+	/**
+	 * A key field left out of data entirely is untouched.
+	 */
 	updateSettings: (
 		data: Partial< {
 			provider: string;
@@ -859,7 +806,9 @@ export const aiAssistSite = {
 			data,
 		} ),
 
-	/** Tests a provider/key/endpoint combination directly, independent of what (if anything) is currently saved. */
+	/**
+	 * Tests a provider/key/endpoint combination directly, independent of what (if anything) is currently saved.
+	 */
 	testConnection: (
 		data: AiAssistTestRequest
 	): Promise< AiAssistTestResponse > =>
@@ -872,12 +821,18 @@ export interface SigningConstant {
 }
 
 export interface SigningStatus {
-	/** The site-wide opt-in. */
+	/**
+	 * The site-wide opt-in.
+	 */
 	enabled: boolean;
-	/** Whether a usable certificate is configured, independent of the opt-in. */
+	/**
+	 * Whether a usable certificate is configured, independent of the opt-in.
+	 */
 	available: boolean;
 	code: string;
-	/** Both of the above: whether a print made right now would actually be signed. */
+	/**
+	 * Both of the above: whether a print made right now would actually be signed.
+	 */
 	signing_now: boolean;
 	constants: Record< string, SigningConstant >;
 	can_generate: boolean;
@@ -892,9 +847,7 @@ export interface GeneratedCertificate {
 }
 
 /**
- * Secure printing. Reports how signing is configured and will mint a certificate, but never
- * installs one - the key exists only in the response to `generateCertificate`, and asking
- * again mints a different one.
+ * Secure printing.
  */
 export const signing = {
 	status: (): Promise< SigningStatus > =>
@@ -919,7 +872,9 @@ export const signing = {
 		} ),
 };
 
-/** Chronicle-scoped AI assist: everything else (character/plot/rumor/world-object text). */
+/**
+ * Chronicle-scoped AI assist: everything else (character/plot/rumor/world-object text).
+ */
 export const aiAssist = ( gameSlug: string ) => ( {
 	generate: (
 		data: AiAssistGenerateRequest
@@ -967,15 +922,10 @@ export const aiAssist = ( gameSlug: string ) => ( {
 
 /**
  * REST client factory for a single chronicle's characters.
- * Returns an object bound to gameSlug covering listing, fetching,
- * creating, updating, deleting, previewing changes, and the
- * player's own character list.
  */
 export const characters = ( gameSlug: string ) => ( {
 	/**
-	 * Fetches the list of characters in this chronicle matching
-	 * the given filters. Supports the standard pagination,
-	 * ordering, and status/stack/NPC/search filters.
+	 * Fetches the list of characters in this chronicle matching the given filters.
 	 */
 	list: ( params: CharacterCollectionParams = {} ): Promise< Character[] > =>
 		apiFetch( {
@@ -985,10 +935,7 @@ export const characters = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Same collection as list(), but reads total and totalPages
-	 * from the X-WP-Total / X-WP-TotalPages response headers
-	 * instead of assuming the response body carries them, since
-	 * apiFetch's default parsed-JSON mode discards headers.
+	 * Same collection as list().
 	 */
 	listPaginated: (
 		params: CharacterCollectionParams = {}
@@ -1001,18 +948,12 @@ export const characters = ( gameSlug: string ) => ( {
 
 	/**
 	 * Fetches a single character by id within this chronicle.
-	 * Returns the full Character record, including permission
-	 * flags computed for the current user.
 	 */
 	get: ( id: number ): Promise< Character > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/characters/${ id }` } ),
 
 	/**
-	 * Saves a new held-entry order for a `player_order`-flagged block (Blood
-	 * Magic, Rituals - 1.1.0 D4). `order` lists the block's current array
-	 * indexes in their new sequence; `names` is the name at each of those
-	 * indexes as the caller last saw it, so the server can refuse a write with
-	 * a 409 `sheet_changed` error if the list changed since it was loaded.
+	 * Saves a new held-entry order for a `player_order`-flagged block (Blood Magic, Rituals).
 	 */
 	saveOrder: (
 		id: number,
@@ -1027,9 +968,7 @@ export const characters = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Creates a new character in this chronicle from the given
-	 * request body. name and stack_slug are required. Returns the
-	 * newly created Character record.
+	 * Creates a new character in this chronicle from the given request body. name and stack_slug are required.
 	 */
 	create: ( data: CreateCharacterRequest ): Promise< Character > =>
 		apiFetch( {
@@ -1039,9 +978,7 @@ export const characters = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Updates an existing character by id with the given partial
-	 * request body. Returns the updated Character record as
-	 * stored after the change.
+	 * Updates an existing character by id with the given partial request body.
 	 */
 	update: (
 		id: number,
@@ -1054,9 +991,7 @@ export const characters = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Deletes a character by id. Resolves with no content on
-	 * success; the server is responsible for cascading removal of
-	 * the character's own changes and snapshots.
+	 * Deletes a character by id.
 	 */
 	delete: ( id: number ): Promise< void > =>
 		apiFetch( {
@@ -1065,9 +1000,7 @@ export const characters = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Prices a batch of proposed changes for a character without
-	 * submitting them. Returns each change's computed XP cost and
-	 * approval level, plus the resulting running unspent XP total.
+	 * Prices a batch of proposed changes for a character without submitting them.
 	 */
 	previewChanges: (
 		id: number,
@@ -1080,25 +1013,19 @@ export const characters = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Fetches the characters in this chronicle belonging to the
-	 * current player. Backs the player dashboard's own "my
-	 * characters" card.
+	 * Fetches the characters in this chronicle belonging to the current player.
 	 */
 	myCharacters: (): Promise< Character[] > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/my/characters` } ),
 
 	/**
-	 * Fetches the fixed status vocabulary, for a bulk-status picker
-	 * to source from rather than hardcoding the list a second time.
+	 * Fetches the fixed status vocabulary for a bulk-status picker.
 	 */
 	statuses: (): Promise< { statuses: string[] } > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/characters/statuses` } ),
 
 	/**
 	 * Sets the same status on a group of characters at once.
-	 * Returns a per-character result alongside the total actually
-	 * updated, since a bad id in the batch fails only that one
-	 * character rather than the whole request.
 	 */
 	bulkStatus: ( data: BulkStatusRequest ): Promise< BulkStatusResponse > =>
 		apiFetch( {
@@ -1109,9 +1036,6 @@ export const characters = ( gameSlug: string ) => ( {
 
 	/**
 	 * Exports a character to a Grapevine `.gex` XML document.
-	 * Returns the document text plus any degradation warnings and
-	 * ASCII-transliteration substitutions the Storyteller should
-	 * see before relying on the file.
 	 */
 	export: (
 		id: number,
@@ -1124,9 +1048,7 @@ export const characters = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Fetches the itemised point audit for one character
-	 * (point-calculator-design.md). `be_manage_characters`-gated
-	 * server-side; a non-manager gets a 403, never a reduced report.
+	 * Fetches the itemised point audit for one character.
 	 */
 	pointAudit: ( id: number ): Promise< PointAudit > =>
 		apiFetch( {
@@ -1135,15 +1057,11 @@ export const characters = ( gameSlug: string ) => ( {
 } );
 
 /**
- * REST client for looking up WordPress user accounts. Not scoped
- * to any one chronicle, since an account is not owned by a
- * chronicle. Backs the "assign a player" account picker.
+ * REST client for looking up WordPress user accounts.
  */
 export const wpUsers = {
 	/**
 	 * Searches WordPress user accounts by display name or email.
-	 * An empty search returns a default/unfiltered result set.
-	 * Returns a minimal summary for each matching account.
 	 */
 	search: ( search = '' ): Promise< WpUserSummary[] > =>
 		apiFetch( {
@@ -1153,10 +1071,8 @@ export const wpUsers = {
 		} ),
 
 	/**
-	 * A chronicle Storyteller's search for an account to assign as a
-	 * player: at least three letters of a name, no email addresses back
-	 * unless the search is that exact address. The site-wide search()
-	 * above is a site administrator's.
+	 * A chronicle Storyteller's search for an account to assign as a player: at least three letters of a name, no email
+	 * addresses back unless the search is that exact address.
 	 */
 	searchForChronicle: (
 		gameSlug: string,
@@ -1174,23 +1090,19 @@ export const wpUsers = {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's membership list:
- * which WordPress accounts hold which role (head storyteller,
- * assistant storyteller, narrator, player) within it.
+ * REST client factory for a single chronicle's membership list: which WordPress accounts hold which role (head
+ * storyteller, assistant storyteller, narrator, player) within it.
  */
 export const gameMembers = ( gameSlug: string ) => ( {
 	/**
-	 * Fetches every member of this chronicle along with their
-	 * role. name and user_email are enriched server-side for
+	 * Fetches every member of this chronicle along with their role. name and user_email are enriched server-side for
 	 * display.
 	 */
 	list: (): Promise< GameMember[] > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/members` } ),
 
 	/**
-	 * Adds a WordPress user to this chronicle with the given role,
-	 * or changes their role if they are already a member. Returns
-	 * the resulting GameMember record.
+	 * Adds a WordPress user to this chronicle with the given role, or changes their role if they are already a member.
 	 */
 	set: ( wpUserId: number, role: GameMemberRole ): Promise< GameMember > =>
 		apiFetch( {
@@ -1200,8 +1112,7 @@ export const gameMembers = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Removes a WordPress user's membership from this chronicle
-	 * entirely. Resolves with no content on success.
+	 * Removes a WordPress user's membership from this chronicle entirely.
 	 */
 	remove: ( wpUserId: number ): Promise< void > =>
 		apiFetch( {
@@ -1211,22 +1122,18 @@ export const gameMembers = ( gameSlug: string ) => ( {
 } );
 
 /**
- * REST client for the plugin's site-wide authorization
- * configuration: whether external access-control integration is
+ * REST client for the plugin's site-wide authorization configuration: whether external access-control integration is
  * enabled.
  */
 export const authorizationSettings = {
 	/**
-	 * Fetches the current authorization configuration. Reports
-	 * whether external access-control is enabled and whether a
-	 * supporting client plugin was detected.
+	 * Fetches the current authorization configuration.
 	 */
 	get: (): Promise< AuthorizationSettings > =>
 		apiFetch( { path: `${ BASE }/authorization-settings` } ),
 
 	/**
-	 * Enables or disables external access-control integration
-	 * site-wide. Returns the updated AuthorizationSettings record.
+	 * Enables or disables external access-control integration site-wide.
 	 */
 	update: ( ascEnabled: boolean ): Promise< AuthorizationSettings > =>
 		apiFetch( {
@@ -1251,11 +1158,15 @@ export interface DataExport {
 }
 
 export const dataManagement = {
-	/** Fetches whether uninstalling this plugin is currently set to delete its data. */
+	/**
+	 * Fetches whether uninstalling this plugin is currently set to delete its data.
+	 */
 	get: (): Promise< DataManagementSettings > =>
 		apiFetch( { path: `${ BASE }/data-management` } ),
 
-	/** Turns the uninstall delete-data behavior on or off, site-wide. */
+	/**
+	 * Turns the uninstall delete-data behavior on or off, site-wide.
+	 */
 	update: ( deleteOnUninstall: boolean ): Promise< DataManagementSettings > =>
 		apiFetch( {
 			path: `${ BASE }/data-management`,
@@ -1263,7 +1174,9 @@ export const dataManagement = {
 			data: { delete_on_uninstall: deleteOnUninstall },
 		} ),
 
-	/** Fetches a full export of every plugin table, for a manual backup. */
+	/**
+	 * Fetches a full export of every plugin table, for a manual backup.
+	 */
 	export: (): Promise< DataExport > =>
 		apiFetch( { path: `${ BASE }/data-management/export` } ),
 };
@@ -1273,13 +1186,11 @@ export const dataManagement = {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client for the plugin's built-in documentation pages shown
- * in wp-admin.
+ * REST client for the plugin's built-in documentation pages shown in wp-admin.
  */
 export const docs = {
 	/**
-	 * Fetches the content of one built-in documentation page by
-	 * its slug. Returns the page's slug and its rendered content.
+	 * Fetches the content of one built-in documentation page by its slug.
 	 */
 	get: (
 		slug: 'st-guide' | 'admin-guide' | 'player-guide' | 'rest-api'
@@ -1287,8 +1198,7 @@ export const docs = {
 		apiFetch( { path: `${ BASE }/docs/${ slug }` } ),
 
 	/**
-	 * Fetches one screen's help page (`docs/help/{key}.md`), the Markdown a
-	 * screen's `?` opens in the help panel.
+	 * Fetches one screen's help page (`docs/help/{key}.md`), the Markdown a screen's `?` opens in the help panel.
 	 */
 	help: ( key: string ): Promise< { key: string; content: string } > =>
 		apiFetch( {
@@ -1311,17 +1221,17 @@ export interface CreditsResponse {
 }
 
 /**
- * REST client for the plugin's credits text and in-memoriam list,
- * shared site-wide rather than scoped to one chronicle.
+ * REST client for the plugin's credits text and in-memoriam list, shared site-wide.
  */
 export const credits = {
-	/** Fetches the current credits text and in-memoriam list. */
+	/**
+	 * Fetches the current credits text and in-memoriam list.
+	 */
 	get: (): Promise< CreditsResponse > =>
 		apiFetch( { path: `${ BASE }/credits` } ),
 
 	/**
-	 * Updates the credits text and/or in-memoriam list. Either field
-	 * may be omitted to leave it unchanged.
+	 * Updates the credits text and/or in-memoriam list.
 	 */
 	update: ( data: Partial< CreditsResponse > ): Promise< CreditsResponse > =>
 		apiFetch( { path: `${ BASE }/credits`, method: 'PUT', data } ),
@@ -1332,23 +1242,18 @@ export const credits = {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's Storyteller
- * dashboard statistics.
+ * REST client factory for a single chronicle's Storyteller dashboard statistics.
  */
 export const gameStats = ( gameSlug: string ) => ( {
 	/**
-	 * Fetches the aggregate dashboard numbers for this chronicle:
-	 * character counts, pending change count, active plot count,
-	 * recent activity, and the roster-health count.
+	 * Fetches the aggregate dashboard numbers for this chronicle: character counts, pending change count, active plot
+	 * count, recent activity, and the roster-health count.
 	 */
 	get: (): Promise< GameStats > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/stats` } ),
 
 	/**
-	 * Fetches the actual player list behind
-	 * `players_without_active_character`'s count. Not part of the
-	 * main stats call - fetched only when a Storyteller opens the
-	 * roster-health card.
+	 * Fetches the actual player list behind `players_without_active_character`'s count.
 	 */
 	playersWithoutActiveCharacter: (): Promise<
 		PlayerWithoutActiveCharacter[]
@@ -1359,8 +1264,7 @@ export const gameStats = ( gameSlug: string ) => ( {
 } );
 
 /**
- * REST client factory for the Chronicle Setup checklist (GS-4). Always
- * computed live server-side - never cached here either.
+ * REST client factory for the Chronicle Setup checklist.
  */
 export const setupStatus = ( gameSlug: string ) => ( {
 	get: (): Promise< SetupStatus > =>
@@ -1372,15 +1276,12 @@ export const setupStatus = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's character changes:
- * submitting, reviewing, and listing edits, plus the game-wide
- * approval queue and the player's own pending changes.
+ * REST client factory for a single chronicle's character changes: submitting, reviewing, and listing edits, plus the
+ * game-wide approval queue and the player's own pending changes.
  */
 export const changes = ( gameSlug: string ) => ( {
 	/**
 	 * Fetches the changes recorded against a single character.
-	 * Supports the standard pagination and ordering plus filtering
-	 * by review status or change type.
 	 */
 	list: (
 		characterId: number,
@@ -1393,9 +1294,7 @@ export const changes = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Submits a new change against a character from the given
-	 * request body. Returns the created CharacterChange record,
-	 * including its computed status and XP cost.
+	 * Submits a new change against a character from the given request body.
 	 */
 	create: (
 		characterId: number,
@@ -1408,9 +1307,7 @@ export const changes = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Approves or rejects a pending change by id. Returns the
-	 * updated CharacterChange record reflecting the reviewer's
-	 * decision.
+	 * Approves or rejects a pending change by id.
 	 */
 	review: (
 		changeId: number,
@@ -1423,10 +1320,7 @@ export const changes = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Fetches the game-wide change approval queue, spanning every
-	 * character in the chronicle rather than one. Reads total and
-	 * totalPages from the X-WP-Total / X-WP-TotalPages response
-	 * headers, the same approach as characters().listPaginated().
+	 * Fetches the game-wide change approval queue, spanning every character in the chronicle.
 	 */
 	queue: (
 		params: QueueCollectionParams = {}
@@ -1438,11 +1332,8 @@ export const changes = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Approves a batch of pending changes by id in one request.
-	 * reviewTokens maps each id to the review_token the queue
-	 * issued, so a change edited since it was shown is skipped.
-	 * Returns which change ids were actually approved and which
-	 * were skipped.
+	 * Approves a batch of pending changes by id in one request. reviewTokens maps each id to the review_token the queue
+	 * issued.
 	 */
 	batchApprove: (
 		changeIds: number[],
@@ -1455,9 +1346,7 @@ export const changes = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Fetches the current player's own pending changes across
-	 * every one of their characters. Unlike queue(), this is
-	 * unpaginated and open to any player, not just a manager.
+	 * Fetches the current player's own pending changes across every one of their characters.
 	 */
 	myChanges: (): Promise< QueueChange[] > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/my/changes` } ),
@@ -1468,14 +1357,12 @@ export const changes = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's character
- * snapshots: saved point-in-time copies of a character's sheet
+ * REST client factory for a single chronicle's character snapshots: saved point-in-time copies of a character's sheet
  * data.
  */
 export const snapshots = ( gameSlug: string ) => ( {
 	/**
 	 * Fetches the list of snapshots saved for a character.
-	 * Supports the standard pagination and ordering.
 	 */
 	list: (
 		characterId: number,
@@ -1489,8 +1376,6 @@ export const snapshots = ( gameSlug: string ) => ( {
 
 	/**
 	 * Fetches a single saved snapshot by id for a character.
-	 * Returns the full CharacterSnapshot record, including its
-	 * saved sheet data.
 	 */
 	get: (
 		characterId: number,
@@ -1502,7 +1387,6 @@ export const snapshots = ( gameSlug: string ) => ( {
 
 	/**
 	 * Saves a new snapshot of a character's current sheet data.
-	 * Returns the newly created CharacterSnapshot record.
 	 */
 	create: ( characterId: number ): Promise< CharacterSnapshot > =>
 		apiFetch( {
@@ -1517,15 +1401,12 @@ export const snapshots = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's character sheet
- * style overrides: per-character cosmetic customization such as
- * fonts, colors, and section graphics.
+ * REST client factory for a single chronicle's character sheet style overrides: per-character cosmetic customization
+ * such as fonts, colors, and section graphics.
  */
 export const sheetStyle = ( gameSlug: string ) => ( {
 	/**
-	 * Fetches a character's saved sheet style override. Returns an
-	 * empty object when nothing has been customized yet, rather
-	 * than a 404.
+	 * Fetches a character's saved sheet style override.
 	 */
 	get: ( characterId: number ): Promise< SheetStyle > =>
 		apiFetch( {
@@ -1533,8 +1414,7 @@ export const sheetStyle = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Saves a character's sheet style override from the given
-	 * request body. Returns the saved SheetStyle record.
+	 * Saves a character's sheet style override from the given request body.
 	 */
 	save: (
 		characterId: number,
@@ -1547,9 +1427,7 @@ export const sheetStyle = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Clears a character's sheet style override entirely,
-	 * returning it to the default appearance. Resolves with no
-	 * content on success.
+	 * Clears a character's sheet style override entirely, returning it to the default appearance.
 	 */
 	reset: ( characterId: number ): Promise< void > =>
 		apiFetch( {
@@ -1559,19 +1437,12 @@ export const sheetStyle = ( gameSlug: string ) => ( {
 } );
 
 /**
- * REST client factory for a chronicle's signed-PDF character sheets. `pdfUrl()`
- * builds a direct download link rather than fetching - the route returns raw
- * PDF bytes, not JSON, and `window.open()` on a nonce-bearing query URL is how
- * a plain link authenticates without needing an XHR (signed-pdf-design.md
- * Section 4c). `availability()` is the one call here that goes through the
- * normal apiFetch/JSON path, since it's a preflight check, not a download.
+ * REST client factory for a chronicle's signed-PDF character sheets.
  */
 export const sheets = ( gameSlug: string ) => ( {
 	/**
-	 * Builds the signed-PDF download URL for one or more characters. Reads
-	 * the REST root and nonce from `window.beyondElysium` - the same global
-	 * `@wordpress/api-fetch` itself rides on for every other request, exposed
-	 * here because a direct link can't carry apiFetch's own header-based nonce.
+	 * Builds the signed-PDF download URL for one or more characters, reading the REST root and nonce from
+	 * `window.beyondElysium`.
 	 */
 	pdfUrl: (
 		characterIds: number[],
@@ -1580,7 +1451,9 @@ export const sheets = ( gameSlug: string ) => ( {
 			notes?: boolean;
 			xpHistory?: boolean;
 			fullPowerNames?: boolean;
-			/** 1.2.11 D94: default true server-side, so only an explicit false is sent. */
+			/**
+			 * Default true server-side.
+			 */
 			showCost?: boolean;
 		} = {}
 	): string => {
@@ -1604,38 +1477,26 @@ export const sheets = ( gameSlug: string ) => ( {
 		}
 		params.set( '_wpnonce', window.beyondElysium?.nonce ?? '' );
 
-		/*
-		 * The fallback is unreachable in practice and deliberately left alone (1.2.11 D95).
-		 * `restUrl` is set by both localize payloads, and there are exactly two
-		 * `wp_enqueue_script()` call sites for this bundle - `Plugin::enqueue_frontend()`
-		 * and `Admin_Menu::enqueue_assets()` - each immediately followed by
-		 * `wp_localize_script()` on the same handle, which prints before the script runs.
-		 * Production corroborates it: on the multisite install where D95's page links were
-		 * landing on the network root, REST itself kept working, which it could not have
-		 * done had this fallback been firing. If it ever does fire on a subsite it would
-		 * build a network-root REST URL, so it is a real (if currently unreachable) hazard
-		 * rather than a harmless default.
-		 */
-		// Same unreachable-but-real fallback as the first of these five - see the note on
-		// `sheets.pdfUrl()`'s own `root` for why it is left as it is (1.2.11 D95).
 		const root =
 			window.beyondElysium?.restUrl ??
 			`${ window.location.origin }/wp-json/be/v1/`;
 		return `${ root }${ gameSlug }/sheets/pdf?${ params.toString() }`;
 	},
 
-	/** Preflight: is this chronicle's sheet signing actually configured? */
+	/**
+	 * Preflight: is this chronicle's sheet signing actually configured?
+	 */
 	availability: (): Promise< { ok: boolean; code: string } > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/sheets/availability` } ),
 } );
 
 /**
- * REST client factory for the 19 GV301 reports (reports-cards-batch-design.md).
- * `pdfUrl()` mirrors `sheets().pdfUrl()` exactly - a direct nonce-bearing
- * download link, since the route returns raw PDF bytes, not JSON.
+ * REST client factory for the 19 GV301 reports.
  */
 export const reports = ( gameSlug: string ) => ( {
-	/** The report registry: key, title, shape, entity - for the Reports admin page's list. */
+	/**
+	 * The report registry: key, title, shape, entity.
+	 */
 	list: (): Promise<
 		Array< {
 			key: string;
@@ -1645,7 +1506,9 @@ export const reports = ( gameSlug: string ) => ( {
 		} >
 	> => apiFetch( { path: `${ BASE }/${ gameSlug }/reports` } ),
 
-	/** The plain JSON form of one resolved report - for a live front-end widget/shortcode, never signed. */
+	/**
+	 * The plain JSON form of one resolved report.
+	 */
 	document: (
 		reportKey: string,
 		options: { characterId?: number } = {}
@@ -1657,8 +1520,7 @@ export const reports = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Whether each card report (item-cards, location-cards, rote-cards) is available for a
-	 * character (1.1.0 §3.15, C1) - only rote-cards can ever be false, for a non-mage.
+	 * Whether each card report (item-cards, location-cards, rote-cards) is available for a character.
 	 */
 	availability: (
 		characterId?: number
@@ -1669,7 +1531,9 @@ export const reports = ( gameSlug: string ) => ( {
 			) }`,
 		} ),
 
-	/** Builds the signed-PDF download URL for one report. */
+	/**
+	 * Builds the signed-PDF download URL for one report.
+	 */
 	pdfUrl: (
 		reportKey: string,
 		options: {
@@ -1690,8 +1554,6 @@ export const reports = ( gameSlug: string ) => ( {
 		}
 		params.set( '_wpnonce', window.beyondElysium?.nonce ?? '' );
 
-		// Same unreachable-but-real fallback as the first of these five - see the note on
-		// `sheets.pdfUrl()`'s own `root` for why it is left as it is (1.2.11 D95).
 		const root =
 			window.beyondElysium?.restUrl ??
 			`${ window.location.origin }/wp-json/be/v1/`;
@@ -1704,14 +1566,11 @@ export const reports = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's experience-point
- * operations.
+ * REST client factory for a single chronicle's experience-point operations.
  */
 export const experience = ( gameSlug: string ) => ( {
 	/**
-	 * Awards the same amount of XP to a group of characters at
-	 * once, with a shared reason recorded against each award.
-	 * Returns a summary of the award actually applied.
+	 * Awards the same amount of XP to a group of characters at once, with a shared reason recorded against each award.
 	 */
 	bulkAward: ( data: BulkXPRequest ): Promise< BulkXPResponse > =>
 		apiFetch( {
@@ -1726,17 +1585,11 @@ export const experience = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's resource-pool bulk
- * maintenance.
+ * REST client factory for a single chronicle's resource-pool bulk maintenance.
  */
 export const resourcePools = ( gameSlug: string ) => ( {
 	/**
-	 * Resets one named resource pool's temporary rating back to its
-	 * permanent one, across a group of characters at once - the
-	 * ordinary end-of-session "everyone's Willpower/Blood refills"
-	 * action. A character who doesn't hold the named pool, or who
-	 * belongs to a different chronicle, is silently skipped rather
-	 * than treated as an error.
+	 * Resets one named resource pool's temporary rating back to its permanent one, across a group of characters at once.
 	 */
 	bulkReset: (
 		data: BulkPoolResetRequest
@@ -1753,15 +1606,12 @@ export const resourcePools = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's plots: listing,
- * fetching, creating, updating, and deleting plots, actions, and
- * rumors, plus action allocation and rumor generation.
+ * REST client factory for a single chronicle's plots: listing, fetching, creating, updating, and deleting plots,
+ * actions, and rumors, plus action allocation and rumor generation.
  */
 export const plots = ( gameSlug: string ) => ( {
 	/**
-	 * Fetches the list of plots in this chronicle matching the
-	 * given filters. Supports the standard pagination, ordering,
-	 * status/initiator filters, a search term, and a date range.
+	 * Fetches the list of plots in this chronicle matching the given filters.
 	 */
 	list: ( params: PlotCollectionParams = {} ): Promise< Plot[] > =>
 		apiFetch( {
@@ -1771,9 +1621,7 @@ export const plots = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Same collection as list(), but reads total and totalPages
-	 * from the X-WP-Total / X-WP-TotalPages response headers
-	 * instead of assuming the response body carries them.
+	 * Same collection as list().
 	 */
 	listPaginated: (
 		params: PlotCollectionParams = {}
@@ -1785,25 +1633,20 @@ export const plots = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Fetches a single plot, action, or rumor by id. Returns the
-	 * full Plot record, including its entries, connections, and
-	 * immediate children.
+	 * Fetches a single plot, action, or rumor by id.
 	 */
 	get: ( id: number ): Promise< Plot > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/plots/${ id }` } ),
 
 	/**
-	 * Fetches the plots resolved as relevant to the current
-	 * player, through both direct connections and target-query
-	 * matching. Backs the player dashboard's own plot feed.
+	 * Fetches the plots resolved as relevant to the current player, through both direct connections and target-query
+	 * matching.
 	 */
 	myPlots: (): Promise< MyPlotsResponse > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/my/plots` } ),
 
 	/**
-	 * Creates a new plot, action, or rumor from the given request
-	 * body. Only title is required. Returns the newly created
-	 * Plot record.
+	 * Creates a new plot, action, or rumor from the given request body.
 	 */
 	create: ( data: CreatePlotRequest ): Promise< Plot > =>
 		apiFetch( {
@@ -1813,9 +1656,7 @@ export const plots = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Updates an existing plot, action, or rumor by id with the
-	 * given partial request body. Returns the updated Plot record
-	 * as stored after the change.
+	 * Updates an existing plot, action, or rumor by id with the given partial request body.
 	 */
 	update: ( id: number, data: UpdatePlotRequest ): Promise< Plot > =>
 		apiFetch( {
@@ -1825,9 +1666,7 @@ export const plots = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Deletes a plot, action, or rumor by id. Resolves with no
-	 * content on success; the server governs how any child plots
-	 * are handled.
+	 * Deletes a plot, action, or rumor by id.
 	 */
 	delete: ( id: number ): Promise< void > =>
 		apiFetch( {
@@ -1836,10 +1675,8 @@ export const plots = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Allocates a character's available actions across their held
-	 * powers for a given game date. commit false previews the
-	 * allocation only; commit true actually saves the resulting
-	 * subactions, optionally under a parent plot.
+	 * Allocates a character's available actions across their held powers for a given game date. commit false previews the
+	 * allocation only.
 	 */
 	allocateActions: (
 		characterId: number,
@@ -1859,9 +1696,7 @@ export const plots = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Generates candidate rumors for a given game date. commit
-	 * false previews the candidates only; commit true actually
-	 * saves them as new Plot records.
+	 * Generates candidate rumors for a given game date. commit false previews the candidates only.
 	 */
 	generateRumors: (
 		gameDate: string,
@@ -1874,9 +1709,7 @@ export const plots = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Lists who may be invited into a player plot: active, non-NPC
-	 * characters not already connected to it (1.1.0 §2.3a). Only
-	 * the plot's own owner or a Storyteller may call this.
+	 * Lists who may be invited into a player plot: active, non-NPC characters not already connected to it.
 	 */
 	memberCandidates: ( id: number ): Promise< CharacterOption[] > =>
 		apiFetch( {
@@ -1885,7 +1718,6 @@ export const plots = ( gameSlug: string ) => ( {
 
 	/**
 	 * Adds a character to a player plot as an invited co-narrator.
-	 * Returns the newly created Connection record.
 	 */
 	addMember: ( id: number, characterId: number ): Promise< Connection > =>
 		apiFetch( {
@@ -1895,8 +1727,7 @@ export const plots = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Removes a character from a player plot's membership by its
-	 * connection id (not the character id).
+	 * Removes a character from a player plot's membership by its connection id (not the character id).
 	 */
 	removeMember: ( id: number, connectionId: number ): Promise< void > =>
 		apiFetch( {
@@ -1905,9 +1736,7 @@ export const plots = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Every character who can currently see this plot - the entry
-	 * form's "direct this post to specific characters" picker
-	 * (1.1.0 §2.4). Manager-only.
+	 * Every character who can currently see this plot.
 	 */
 	visibleCharacters: ( id: number ): Promise< CharacterOption[] > =>
 		apiFetch( {
@@ -1920,17 +1749,18 @@ export const plots = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's Action & Rumor
- * configuration and its background-use ledger - one factory
- * because they are one feature (the ledger tracks what a
- * background spends, the settings decide what it grants).
+ * REST client factory for a single chronicle's Action & Rumor configuration and its background-use ledger.
  */
 export const apr = ( gameSlug: string ) => ( {
-	/** Fetches the chronicle's full thirteen-knob configuration. */
+	/**
+	 * Fetches the chronicle's full thirteen-knob configuration.
+	 */
 	getSettings: (): Promise< AprSettings > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/apr-settings` } ),
 
-	/** Updates any subset of the chronicle's knobs; untouched keys are preserved server-side. */
+	/**
+	 * Updates any subset of the chronicle's knobs.
+	 */
 	updateSettings: ( data: AprSettingsRequest ): Promise< AprSettings > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/apr-settings`,
@@ -1938,19 +1768,25 @@ export const apr = ( gameSlug: string ) => ( {
 			data: { apr: data },
 		} ),
 
-	/** Fetches the fork-aware union of every background/influence name, for the background_actions picker. */
+	/**
+	 * Fetches the fork-aware union of every background/influence name, for the background_actions picker.
+	 */
 	backgroundOptions: (): Promise< AprBackgroundOption[] > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/apr-settings/backgrounds`,
 		} ),
 
-	/** Fetches the backgrounds a character holds, each annotated with its live budget when one exists. */
+	/**
+	 * Fetches the backgrounds a character holds, each annotated with its live budget when one exists.
+	 */
 	spendable: ( characterId: number ): Promise< SpendableBackground[] > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/characters/${ characterId }/spendable`,
 		} ),
 
-	/** Fetches a character's recorded background uses for one game date. */
+	/**
+	 * Fetches a character's recorded background uses for one game date.
+	 */
 	backgroundUses: (
 		characterId: number,
 		gameDate: string
@@ -1961,7 +1797,9 @@ export const apr = ( gameSlug: string ) => ( {
 			) }`,
 		} ),
 
-	/** Records one background use. */
+	/**
+	 * Records one background use.
+	 */
 	recordUse: (
 		characterId: number,
 		data: RecordBackgroundUseRequest
@@ -1972,7 +1810,9 @@ export const apr = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Edits a use's text, result, or cost. */
+	/**
+	 * Edits a use's text, result, or cost.
+	 */
 	updateUse: (
 		id: number,
 		data: UpdateBackgroundUseRequest
@@ -1983,14 +1823,18 @@ export const apr = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Deletes one use - Grapevine's "Clear this use". */
+	/**
+	 * Deletes one use - Grapevine's "Clear this use".
+	 */
 	deleteUse: ( id: number ): Promise< void > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/background-uses/${ id }`,
 			method: 'DELETE',
 		} ),
 
-	/** Clears every use for one character, optionally bounded to a game-date range. */
+	/**
+	 * Clears every use for one character, optionally bounded to a game-date range.
+	 */
 	clearForCharacter: (
 		characterId: number,
 		from?: string,
@@ -2002,7 +1846,9 @@ export const apr = ( gameSlug: string ) => ( {
 			data: { from, to },
 		} ),
 
-	/** Clears every use for one game date across the whole chronicle. */
+	/**
+	 * Clears every use for one game date across the whole chronicle.
+	 */
 	clearForDate: ( gameDate: string ): Promise< { cleared: number } > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/background-uses/clear-date`,
@@ -2016,14 +1862,12 @@ export const apr = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's plot entries: the
- * individual timeline entries (actions, responses, notes,
- * resolutions) recorded against a plot.
+ * REST client factory for a single chronicle's plot entries: the individual timeline entries (actions, responses,
+ * notes, resolutions) recorded against a plot.
  */
 export const plotEntries = ( gameSlug: string ) => ( {
 	/**
-	 * Fetches the entries recorded against a single plot, action,
-	 * or rumor, optionally filtered to one entry type.
+	 * Fetches the entries recorded against a single plot, action, or rumor, optionally filtered to one entry type.
 	 */
 	list: ( plotId: number, entryType?: string ): Promise< PlotEntry[] > =>
 		apiFetch( {
@@ -2033,9 +1877,7 @@ export const plotEntries = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Creates a new entry against a plot, action, or rumor from
-	 * the given request body. Returns the newly created PlotEntry
-	 * record.
+	 * Creates a new entry against a plot, action, or rumor from the given request body.
 	 */
 	create: (
 		plotId: number,
@@ -2048,10 +1890,7 @@ export const plotEntries = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Updates an existing entry's content, and optionally its
-	 * audience, by id. Leaving audience out entirely never resets a
-	 * deliberately-chosen private/directed entry back to public.
-	 * Returns the updated PlotEntry record.
+	 * Updates an existing entry's content, and optionally its audience, by id.
 	 */
 	update: (
 		id: number,
@@ -2068,8 +1907,7 @@ export const plotEntries = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Deletes a plot entry by id. Resolves with no content on
-	 * success.
+	 * Deletes a plot entry by id.
 	 */
 	delete: ( id: number ): Promise< void > =>
 		apiFetch( {
@@ -2083,14 +1921,11 @@ export const plotEntries = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's connections: links
- * between characters, plots, world objects, and tags.
+ * REST client factory for a single chronicle's connections: links between characters, plots, world objects, and tags.
  */
 export const connections = ( gameSlug: string ) => ( {
 	/**
 	 * Fetches connections matching the given source/target filters.
-	 * Any combination of source and target type/id may be given to
-	 * narrow the result.
 	 */
 	list: (
 		params: {
@@ -2107,9 +1942,7 @@ export const connections = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Fetches every connection involving a single entity, in
-	 * either direction. A convenience wrapper over list() for the
-	 * common "show me everything linked to this" case.
+	 * Fetches every connection involving a single entity, in either direction.
 	 */
 	forEntity: (
 		entityType: EntityType,
@@ -2123,8 +1956,7 @@ export const connections = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Creates a new connection between two entities from the given
-	 * request body. Returns the newly created Connection record.
+	 * Creates a new connection between two entities from the given request body.
 	 */
 	create: ( data: CreateConnectionRequest ): Promise< Connection > =>
 		apiFetch( {
@@ -2135,7 +1967,6 @@ export const connections = ( gameSlug: string ) => ( {
 
 	/**
 	 * Updates an existing connection's label and/or notes by id.
-	 * Returns the updated Connection record.
 	 */
 	update: (
 		id: number,
@@ -2148,8 +1979,7 @@ export const connections = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Deletes a connection by id. Resolves with no content on
-	 * success.
+	 * Deletes a connection by id.
 	 */
 	delete: ( id: number ): Promise< void > =>
 		apiFetch( {
@@ -2163,15 +1993,11 @@ export const connections = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client for the global list of fields the query builder can
- * search on. Not scoped to a chronicle, since the field catalog is
- * shared across every chronicle.
+ * REST client for the global list of fields the query builder can search on.
  */
 export const queryFields = {
 	/**
-	 * Fetches the queryable fields for a given inventory (such as
-	 * characters). Returns each field's key, display title, value
-	 * type, and whether it is currently mapped to real sheet data.
+	 * Fetches the queryable fields for a given inventory (such as characters).
 	 */
 	list: ( inventory = 'char' ): Promise< QueryField[] > =>
 		apiFetch( {
@@ -2184,14 +2010,12 @@ export const queryFields = {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's query tool: running
- * ad hoc character queries and statistics, and managing saved
- * queries.
+ * REST client factory for a single chronicle's query tool: running ad hoc character queries and statistics, and
+ * managing saved queries.
  */
 export const query = ( gameSlug: string ) => ( {
 	/**
-	 * Runs a query against this chronicle's characters and returns
-	 * the matching characters directly.
+	 * Runs a query against this chronicle's characters and returns the matching characters directly.
 	 */
 	run: ( data: RunQueryRequest ): Promise< QueryResultCharacter[] > =>
 		apiFetch( {
@@ -2201,9 +2025,7 @@ export const query = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Same query as run(), but reads total and totalPages from the
-	 * X-WP-Total / X-WP-TotalPages response headers instead of
-	 * assuming the response body carries them.
+	 * Same query as run(), but reads total and totalPages from the X-WP-Total / X-WP-TotalPages response headers.
 	 */
 	runPaginated: (
 		data: RunQueryRequest
@@ -2219,9 +2041,7 @@ export const query = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Runs a statistics aggregate over the characters matching a
-	 * set of query conditions. Returns value buckets, the
-	 * characters in each bucket, and the overall total and maximum.
+	 * Runs a statistics aggregate over the characters matching a set of query conditions.
 	 */
 	statistics: ( data: RunStatisticsRequest ): Promise< StatisticsResult > =>
 		apiFetch( {
@@ -2232,15 +2052,13 @@ export const query = ( gameSlug: string ) => ( {
 
 	savedQueries: {
 		/**
-		 * Fetches every query this chronicle has saved, including
-		 * automatically retained recent searches.
+		 * Fetches every query this chronicle has saved, including automatically retained recent searches.
 		 */
 		list: (): Promise< SavedQuery[] > =>
 			apiFetch( { path: `${ BASE }/${ gameSlug }/queries` } ),
 
 		/**
-		 * Saves a new query from the given request body. Returns
-		 * the newly created SavedQuery record.
+		 * Saves a new query from the given request body.
 		 */
 		create: ( data: SaveQueryRequest ): Promise< SavedQuery > =>
 			apiFetch( {
@@ -2250,9 +2068,7 @@ export const query = ( gameSlug: string ) => ( {
 			} ),
 
 		/**
-		 * Updates an existing saved query by id with the given
-		 * partial request body. Returns the updated SavedQuery
-		 * record.
+		 * Updates an existing saved query by id with the given partial request body.
 		 */
 		update: (
 			id: number,
@@ -2265,8 +2081,7 @@ export const query = ( gameSlug: string ) => ( {
 			} ),
 
 		/**
-		 * Deletes a saved query by id. Resolves with no content on
-		 * success.
+		 * Deletes a saved query by id.
 		 */
 		delete: ( id: number ): Promise< void > =>
 			apiFetch( {
@@ -2281,14 +2096,12 @@ export const query = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's world objects:
- * items, locations, and rotes shared across the chronicle.
+ * REST client factory for a single chronicle's world objects: items, locations, and rotes shared across the
+ * chronicle.
  */
 export const worldObjects = ( gameSlug: string ) => ( {
 	/**
-	 * Fetches the list of world objects matching the given
-	 * filters. Supports the standard pagination plus filtering by
-	 * object type, rarity, and a free-text search.
+	 * Fetches the list of world objects matching the given filters.
 	 */
 	list: (
 		params: WorldObjectCollectionParams = {}
@@ -2300,9 +2113,7 @@ export const worldObjects = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Same collection as list(), but reads total and totalPages
-	 * from the X-WP-Total / X-WP-TotalPages response headers
-	 * instead of assuming the response body carries them.
+	 * Same collection as list().
 	 */
 	listPaginated: (
 		params: WorldObjectCollectionParams = {}
@@ -2314,15 +2125,13 @@ export const worldObjects = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Fetches a single world object by id. Returns the full
-	 * WorldObject record, including its connected characters.
+	 * Fetches a single world object by id.
 	 */
 	get: ( id: number ): Promise< WorldObject > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/world-objects/${ id }` } ),
 
 	/**
 	 * Creates a new world object from the given request body.
-	 * Returns the newly created WorldObject record.
 	 */
 	create: ( data: CreateWorldObjectRequest ): Promise< WorldObject > =>
 		apiFetch( {
@@ -2332,9 +2141,7 @@ export const worldObjects = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Updates an existing world object by id with the given
-	 * partial request body. Returns the updated WorldObject record
-	 * as stored after the change.
+	 * Updates an existing world object by id with the given partial request body.
 	 */
 	update: (
 		id: number,
@@ -2347,8 +2154,7 @@ export const worldObjects = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Deletes a world object by id. Resolves with no content on
-	 * success.
+	 * Deletes a world object by id.
 	 */
 	delete: ( id: number ): Promise< void > =>
 		apiFetch( {
@@ -2357,8 +2163,7 @@ export const worldObjects = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Copies an item for a specific character (1.1.0 §3.12 item 1).
-	 * Returns the new copy, restricted to that character.
+	 * Copies an item for a specific character.
 	 */
 	copyForCharacter: (
 		id: number,
@@ -2371,8 +2176,7 @@ export const worldObjects = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Spends one use of an item (1.1.0 §3.12 item 2). Returns the
-	 * updated WorldObject record.
+	 * Spends one use of an item.
 	 */
 	use: ( id: number, data: UseItemRequest ): Promise< WorldObject > =>
 		apiFetch( {
@@ -2382,9 +2186,7 @@ export const worldObjects = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Transfers an item to a new character, or clears its holder for
-	 * `how: 'lost'` (1.1.0 §3.12 item 4). Returns the updated
-	 * WorldObject record.
+	 * Transfers an item to a new character, or clears its holder for `how: 'lost'`.
 	 */
 	transfer: (
 		id: number,
@@ -2397,8 +2199,7 @@ export const worldObjects = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Fetches an item's own history, oldest first (1.1.0 §3.12 item 3).
-	 * Staff only.
+	 * Fetches an item's own history, oldest first.
 	 */
 	events: ( id: number ): Promise< ItemEvent[] > =>
 		apiFetch( {
@@ -2406,8 +2207,7 @@ export const worldObjects = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Revokes every verification code ever printed for one item
-	 * (1.1.0 §3.13).
+	 * Revokes every verification code ever printed for one item.
 	 */
 	revokeCards: ( id: number ): Promise< { revoked: number } > =>
 		apiFetch( {
@@ -2417,21 +2217,24 @@ export const worldObjects = ( gameSlug: string ) => ( {
 } );
 
 // ---------------------------------------------------------------------------
-// Location links (game-scoped, 1.1.0 §3.9)
+// Location links (game-scoped)
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a location's four named links (owner/domain/haven/based_at) and
- * the "who's here" roster read through the same route.
+ * REST client factory for a location's four named links and the "who's here" roster read through the same route.
  */
 export const locations = ( gameSlug: string ) => ( {
-	/** Every link a manager can see, or just the "who's here" NPC roster for anyone else. */
+	/**
+	 * Every link a manager can see, or just the "who's here" NPC roster for anyone else.
+	 */
 	links: ( locationId: number ): Promise< LocationLink[] > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/locations/${ locationId }/links`,
 		} ),
 
-	/** Creates a link. be_manage_world_objects only. */
+	/**
+	 * Creates a link. be_manage_world_objects only.
+	 */
 	createLink: (
 		locationId: number,
 		data: {
@@ -2446,7 +2249,9 @@ export const locations = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Removes a link. be_manage_world_objects only. */
+	/**
+	 * Removes a link. be_manage_world_objects only.
+	 */
 	deleteLink: ( locationId: number, linkId: number ): Promise< void > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/locations/${ locationId }/links/${ linkId }`,
@@ -2455,12 +2260,16 @@ export const locations = ( gameSlug: string ) => ( {
 } );
 
 // ---------------------------------------------------------------------------
-// Secrets and reveals (game-scoped, 1.1.0 §3.11)
+// Secrets and reveals (game-scoped)
 // ---------------------------------------------------------------------------
 
-/** REST client factory for Storyteller-authored secrets and their reveals. */
+/**
+ * REST client factory for Storyteller-authored secrets and their reveals.
+ */
 export const secrets = ( gameSlug: string ) => ( {
-	/** Every secret on one entity the viewer can see - only once the entity itself is visible. */
+	/**
+	 * Every secret on one entity the viewer can see.
+	 */
 	list: (
 		entityType: SecretEntityType,
 		entityId: number
@@ -2472,11 +2281,15 @@ export const secrets = ( gameSlug: string ) => ( {
 			} ) }`,
 		} ),
 
-	/** "What I Know" - every secret revealed to one of the caller's own characters. */
+	/**
+	 * "What I Know" - every secret revealed to one of the caller's own characters.
+	 */
 	mine: (): Promise< MySecretRow[] > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/my/secrets` } ),
 
-	/** Creates a secret. be_manage_plots only. */
+	/**
+	 * Creates a secret. be_manage_plots only.
+	 */
 	create: ( data: CreateSecretRequest ): Promise< Secret > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/secrets`,
@@ -2484,7 +2297,9 @@ export const secrets = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Updates a secret. be_manage_plots only. */
+	/**
+	 * Updates a secret. be_manage_plots only.
+	 */
 	update: ( id: number, data: UpdateSecretRequest ): Promise< Secret > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/secrets/${ id }`,
@@ -2492,20 +2307,26 @@ export const secrets = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Deletes a secret and every one of its reveals. be_manage_plots only. */
+	/**
+	 * Deletes a secret and every one of its reveals. be_manage_plots only.
+	 */
 	remove: ( id: number ): Promise< void > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/secrets/${ id }`,
 			method: 'DELETE',
 		} ),
 
-	/** Every reveal of one secret. be_manage_plots only. */
+	/**
+	 * Every reveal of one secret. be_manage_plots only.
+	 */
 	reveals: ( secretId: number ): Promise< SecretReveal[] > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/secrets/${ secretId }/reveals`,
 		} ),
 
-	/** Reveals a secret to a character. be_manage_plots only. */
+	/**
+	 * Reveals a secret to a character. be_manage_plots only.
+	 */
 	createReveal: (
 		secretId: number,
 		data: CreateSecretRevealRequest
@@ -2516,7 +2337,9 @@ export const secrets = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Removes a reveal. be_manage_plots only. */
+	/**
+	 * Removes a reveal. be_manage_plots only.
+	 */
 	deleteReveal: ( secretId: number, revealId: number ): Promise< void > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/secrets/${ secretId }/reveals/${ revealId }`,
@@ -2525,14 +2348,15 @@ export const secrets = ( gameSlug: string ) => ( {
 } );
 
 // ---------------------------------------------------------------------------
-// Factions and their members (game-scoped, 1.1.0 §3.10, F1)
+// Factions and their members (game-scoped)
 // ---------------------------------------------------------------------------
 
-/** REST client factory for chronicle factions and their membership. */
+/**
+ * REST client factory for chronicle factions and their membership.
+ */
 export const factions = ( gameSlug: string ) => ( {
 	/**
-	 * Every faction the viewer can see - name/type/description for anyone it reaches,
-	 * goals as well for a member or manager.
+	 * Every faction the viewer can see.
 	 */
 	list: (): Promise< Faction[] > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/factions` } ),
@@ -2540,7 +2364,9 @@ export const factions = ( gameSlug: string ) => ( {
 	get: ( id: number ): Promise< Faction > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/factions/${ id }` } ),
 
-	/** Creates a faction directly. be_manage_factions only. */
+	/**
+	 * Creates a faction directly. be_manage_factions only.
+	 */
 	create: ( data: FactionRequest ): Promise< Faction > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/factions`,
@@ -2548,7 +2374,9 @@ export const factions = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Updates a faction. be_manage_factions only. */
+	/**
+	 * Updates a faction. be_manage_factions only.
+	 */
 	update: ( id: number, data: FactionRequest ): Promise< Faction > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/factions/${ id }`,
@@ -2556,26 +2384,34 @@ export const factions = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Deletes a faction and unlinks its positions. be_manage_factions only. */
+	/**
+	 * Deletes a faction and unlinks its positions. be_manage_factions only.
+	 */
 	remove: ( id: number ): Promise< void > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/factions/${ id }`,
 			method: 'DELETE',
 		} ),
 
-	/** The member roster with rank and leader flags. A member or manager only. */
+	/**
+	 * The member roster with rank and leader flags.
+	 */
 	members: ( id: number ): Promise< FactionMember[] > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/factions/${ id }/members`,
 		} ),
 
-	/** The name-only invite picker. A leader or manager only. */
+	/**
+	 * The name-only invite picker.
+	 */
 	memberCandidates: ( id: number ): Promise< FactionMemberCandidate[] > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/factions/${ id }/members/candidates`,
 		} ),
 
-	/** Adds a character to a faction. A leader or manager only. */
+	/**
+	 * Adds a character to a faction.
+	 */
 	addMember: ( id: number, characterId: number ): Promise< FactionMember > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/factions/${ id }/members`,
@@ -2583,7 +2419,9 @@ export const factions = ( gameSlug: string ) => ( {
 			data: { character_id: characterId },
 		} ),
 
-	/** Removes a member. A leader can't remove themself or another leader. */
+	/**
+	 * Removes a member.
+	 */
 	removeMember: ( id: number, characterId: number ): Promise< void > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/factions/${ id }/members/${ characterId }`,
@@ -2591,8 +2429,7 @@ export const factions = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Sets a member's rank and/or leader flag. `rank` is a leader-or-manager change; only a
-	 * manager may change `is_leader`.
+	 * Sets a member's rank and/or leader flag.
 	 */
 	updateMember: (
 		id: number,
@@ -2607,12 +2444,16 @@ export const factions = ( gameSlug: string ) => ( {
 } );
 
 // ---------------------------------------------------------------------------
-// Court/office positions (game-scoped, 1.1.0 §3.10, F2)
+// Court/office positions (game-scoped)
 // ---------------------------------------------------------------------------
 
-/** REST client factory for chronicle-wide offices, optionally scoped to a faction. */
+/**
+ * REST client factory for chronicle-wide offices, optionally scoped to a faction.
+ */
 export const positions = ( gameSlug: string ) => ( {
-	/** Every position the viewer can see, optionally narrowed to one faction. */
+	/**
+	 * Every position the viewer can see, optionally narrowed to one faction.
+	 */
 	list: ( factionId?: number ): Promise< Position[] > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/positions${ toQuery( {
@@ -2620,7 +2461,9 @@ export const positions = ( gameSlug: string ) => ( {
 			} ) }`,
 		} ),
 
-	/** Creates a position. be_manage_factions only. */
+	/**
+	 * Creates a position. be_manage_factions only.
+	 */
 	create: ( data: PositionRequest ): Promise< Position > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/positions`,
@@ -2628,7 +2471,9 @@ export const positions = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Updates a position, including its holder (recorded to history). be_manage_factions only. */
+	/**
+	 * Updates a position, including its holder (recorded to history). be_manage_factions only.
+	 */
 	update: ( id: number, data: PositionRequest ): Promise< Position > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/positions/${ id }`,
@@ -2636,20 +2481,26 @@ export const positions = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Deletes a position and its holder history. be_manage_factions only. */
+	/**
+	 * Deletes a position and its holder history. be_manage_factions only.
+	 */
 	remove: ( id: number ): Promise< void > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/positions/${ id }`,
 			method: 'DELETE',
 		} ),
 
-	/** A position's own full holder history. be_manage_factions only. */
+	/**
+	 * A position's own full holder history. be_manage_factions only.
+	 */
 	history: ( id: number ): Promise< PositionHistoryRow[] > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/positions/${ id }/history`,
 		} ),
 
-	/** The title preset groups for the picker. be_manage_factions only. */
+	/**
+	 * The title preset groups for the picker. be_manage_factions only.
+	 */
 	presets: (): Promise< PositionPresets > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/position-presets` } ),
 } );
@@ -2659,17 +2510,11 @@ export const positions = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for file uploads on a plot, item, or location
- * (1.1.0 §2.6). `downloadUrl()` mirrors `sheets().pdfUrl()`'s own
- * direct nonce-bearing link pattern - the route serves raw bytes,
- * not JSON, so a Promise-based apiFetch call can't be the download
- * mechanism.
+ * REST client factory for file uploads on a plot, item, or location.
  */
 export const attachments = ( gameSlug: string ) => ( {
 	/**
-	 * Uploads a file onto a plot, item, or location. Sends a real
-	 * multipart FormData body rather than JSON. Returns the newly
-	 * created Attachment's public metadata.
+	 * Uploads a file onto a plot, item, or location.
 	 */
 	upload: (
 		entityType: AttachmentEntityType,
@@ -2688,16 +2533,12 @@ export const attachments = ( gameSlug: string ) => ( {
 	},
 
 	/**
-	 * Builds the direct download URL for one attachment. Reads the
-	 * REST root and nonce from window.beyondElysium, the same as
-	 * every other direct-link download route in this client.
+	 * Builds the direct download URL for one attachment.
 	 */
 	downloadUrl: ( id: number ): string => {
 		const params = new URLSearchParams( {
 			_wpnonce: window.beyondElysium?.nonce ?? '',
 		} );
-		// Same unreachable-but-real fallback as the first of these five - see the note on
-		// `sheets.pdfUrl()`'s own `root` for why it is left as it is (1.2.11 D95).
 		const root =
 			window.beyondElysium?.restUrl ??
 			`${ window.location.origin }/wp-json/be/v1/`;
@@ -2705,8 +2546,7 @@ export const attachments = ( gameSlug: string ) => ( {
 	},
 
 	/**
-	 * Deletes an attachment by id: the database row and its file on
-	 * disk together. Resolves with no content on success.
+	 * Deletes an attachment by id: the database row and its file on disk together.
 	 */
 	delete: ( id: number ): Promise< void > =>
 		apiFetch( {
@@ -2720,11 +2560,13 @@ export const attachments = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's game sessions (1.1.0 §3.1): the calendar,
- * sign-in attendance, and awarding attendance XP.
+ * REST client factory for a single chronicle's game sessions: the calendar, sign-in attendance, and awarding
+ * attendance XP.
  */
 export const sessions = ( gameSlug: string ) => ( {
-	/** The chronicle's sessions, soonest first, optionally narrowed to a date range. */
+	/**
+	 * The chronicle's sessions, soonest first, optionally narrowed to a date range.
+	 */
 	list: (
 		params: { from?: string; to?: string } = {}
 	): Promise< GameSession[] > =>
@@ -2734,7 +2576,9 @@ export const sessions = ( gameSlug: string ) => ( {
 			) }`,
 		} ),
 
-	/** Creates a new session. game_date is required and must be unique in this chronicle. */
+	/**
+	 * Creates a new session. game_date is required and must be unique in this chronicle.
+	 */
 	create: ( data: CreateSessionRequest ): Promise< GameSession > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/sessions`,
@@ -2742,7 +2586,9 @@ export const sessions = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Updates an existing session. The four downtime fields also require be_manage_apr. */
+	/**
+	 * Updates an existing session.
+	 */
 	update: (
 		id: number,
 		data: UpdateSessionRequest
@@ -2753,20 +2599,26 @@ export const sessions = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Deletes a session; refused with a 409 if it already has attendance recorded. */
+	/**
+	 * Deletes a session; refused with a 409 if it already has attendance recorded.
+	 */
 	delete: ( id: number ): Promise< void > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/sessions/${ id }`,
 			method: 'DELETE',
 		} ),
 
-	/** Lists everyone recorded present at a session. */
+	/**
+	 * Lists everyone recorded present at a session.
+	 */
 	getAttendance: ( sessionId: number ): Promise< SessionAttendance[] > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/sessions/${ sessionId }/attendance`,
 		} ),
 
-	/** Records a sign-in: a real character, or a visitor by name. */
+	/**
+	 * Records a sign-in: a real character, or a visitor by name.
+	 */
 	addAttendance: (
 		sessionId: number,
 		data: RecordAttendanceRequest
@@ -2777,7 +2629,9 @@ export const sessions = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Removes one attendance row from a session. */
+	/**
+	 * Removes one attendance row from a session.
+	 */
 	removeAttendance: (
 		sessionId: number,
 		attendanceId: number
@@ -2788,8 +2642,7 @@ export const sessions = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Awards attendance XP once to everyone signed in at a session. Refused with a 409 if
-	 * already awarded for this session, unless force is set.
+	 * Awards attendance XP once to everyone signed in at a session.
 	 */
 	awardAttendanceXp: (
 		sessionId: number,
@@ -2802,8 +2655,7 @@ export const sessions = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Updates this chronicle's session-related settings and/or its recurring
-	 * release-schedule rules - each merged independently into its own settings key.
+	 * Updates this chronicle's session-related settings and/or its recurring release-schedule rules.
 	 */
 	updateSettings: (
 		data: SessionSettings
@@ -2814,7 +2666,9 @@ export const sessions = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Sets one character's own downtime deadline for this session (1.1.0 §3.3). */
+	/**
+	 * Sets one character's own downtime deadline for this session.
+	 */
 	addDowntimeExtension: (
 		sessionId: number,
 		characterId: number,
@@ -2826,7 +2680,9 @@ export const sessions = ( gameSlug: string ) => ( {
 			data: { character_id: characterId, until },
 		} ),
 
-	/** Removes one character's downtime extension, returning them to the session's own deadline. */
+	/**
+	 * Removes one character's downtime extension, returning them to the session's own deadline.
+	 */
 	removeDowntimeExtension: (
 		sessionId: number,
 		characterId: number
@@ -2837,15 +2693,16 @@ export const sessions = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * After-game reports for a session (1.1.0 §3.14, A1) - staff see every report; a player
-	 * sees only their own.
+	 * After-game reports for a session.
 	 */
 	getReports: ( sessionId: number ): Promise< AfterGameReport[] > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/sessions/${ sessionId }/reports`,
 		} ),
 
-	/** Files a report for the caller's own character. Refused with 409 if one already exists. */
+	/**
+	 * Files a report for the caller's own character.
+	 */
 	createReport: (
 		sessionId: number,
 		data: AfterGameReportRequest
@@ -2856,7 +2713,9 @@ export const sessions = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Edits the caller's own report, until the session's own reports_due_at. */
+	/**
+	 * Edits the caller's own report, until the session's own reports_due_at.
+	 */
 	updateReport: (
 		sessionId: number,
 		data: AfterGameReportRequest
@@ -2867,7 +2726,9 @@ export const sessions = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Marks a report read by a Storyteller. Staff read and mark; they never edit. */
+	/**
+	 * Marks a report read by a Storyteller.
+	 */
 	markReportRead: ( reportId: number ): Promise< AfterGameReport > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/after-game-reports/${ reportId }/read`,
@@ -2875,8 +2736,7 @@ export const sessions = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Awards report XP once to every character with a report at a session. Refused with a 409
-	 * if already awarded, unless force is set.
+	 * Awards report XP once to every character with a report at a session.
 	 */
 	awardReportXp: (
 		sessionId: number,
@@ -2889,8 +2749,8 @@ export const sessions = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * The spotlight check (1.1.0 §3.14, A2) - every active, non-NPC character's own attention
-	 * profile, flagged first then least recent attention.
+	 * The spotlight check - every active, non-NPC character's own attention profile, flagged first then least recent
+	 * attention.
 	 */
 	getSpotlight: (): Promise< SpotlightRow[] > =>
 		apiFetch( {
@@ -2899,12 +2759,16 @@ export const sessions = ( gameSlug: string ) => ( {
 } );
 
 // ---------------------------------------------------------------------------
-// NPC Castings (game-scoped, 1.1.0 §3.8)
+// NPC Castings (game-scoped)
 // ---------------------------------------------------------------------------
 
-/** REST client factory for NPC casting: who plays which NPC at which session, and their brief. */
+/**
+ * REST client factory for NPC casting: who plays which NPC at which session, and their brief.
+ */
 export const castings = ( gameSlug: string ) => ( {
-	/** Every casting for one session - a manager sees them all, anyone else sees only their own. */
+	/**
+	 * Every casting for one session.
+	 */
 	list: ( sessionId: number ): Promise< NpcCasting[] > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/castings${ toQuery( {
@@ -2912,7 +2776,9 @@ export const castings = ( gameSlug: string ) => ( {
 			} ) }`,
 		} ),
 
-	/** Casts a chronicle member to play an NPC for a session. be_manage_characters only. */
+	/**
+	 * Casts a chronicle member to play an NPC for a session. be_manage_characters only.
+	 */
 	create: ( data: CreateNpcCastingRequest ): Promise< NpcCasting > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/castings`,
@@ -2920,7 +2786,9 @@ export const castings = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Updates a casting's cast member and/or brief. */
+	/**
+	 * Updates a casting's cast member and/or brief.
+	 */
 	update: (
 		id: number,
 		data: UpdateNpcCastingRequest
@@ -2931,35 +2799,40 @@ export const castings = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Removes a casting. */
+	/**
+	 * Removes a casting.
+	 */
 	remove: ( id: number ): Promise< void > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/castings/${ id }`,
 			method: 'DELETE',
 		} ),
 
-	/** Every chronicle member, any role - the casting screen's own member picker. */
+	/**
+	 * Every chronicle member, any role.
+	 */
 	eligibleMembers: (): Promise< EligibleMember[] > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/castings/members` } ),
 
-	/** The current viewer's own upcoming castings (today or later), joined with the NPC's name and the session's date. */
+	/**
+	 * The current viewer's own upcoming castings (today or later), joined with the NPC's name and the session's date.
+	 */
 	myUpcoming: (): Promise< StaffQueueCastingRow[] > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/castings/my-upcoming` } ),
 
-	/** The read-only brief: the NPC's resolved sections plus the casting's own brief text. */
+	/**
+	 * The read-only brief: the NPC's resolved sections plus the casting's own brief text.
+	 */
 	brief: ( id: number ): Promise< CastingBriefDocument > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/castings/${ id }/brief` } ),
 
 	/**
-	 * Builds the signed-PDF download URL for one casting's brief - a direct, nonce-bearing
-	 * link, matching `sheets().pdfUrl()`'s own shape, since the route returns raw PDF bytes.
+	 * Builds the signed-PDF download URL for one casting's brief.
 	 */
 	briefPdfUrl: ( id: number ): string => {
 		const params = new URLSearchParams( {
 			_wpnonce: window.beyondElysium?.nonce ?? '',
 		} );
-		// Same unreachable-but-real fallback as the first of these five - see the note on
-		// `sheets.pdfUrl()`'s own `root` for why it is left as it is (1.2.11 D95).
 		const root =
 			window.beyondElysium?.restUrl ??
 			`${ window.location.origin }/wp-json/be/v1/`;
@@ -2971,9 +2844,13 @@ export const castings = ( gameSlug: string ) => ( {
 // Downtime queue (game-scoped)
 // ---------------------------------------------------------------------------
 
-/** REST client factory for the Storyteller downtime queue (1.1.0 §3.3). */
+/**
+ * REST client factory for the Storyteller downtime queue.
+ */
 export const downtime = ( gameSlug: string ) => ( {
-	/** One row per action plot for a game date, unanswered first. */
+	/**
+	 * One row per action plot for a game date, unanswered first.
+	 */
 	queue: ( gameDate: string ): Promise< DowntimeQueueRow[] > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/downtime/queue${ toQuery( {
@@ -2983,34 +2860,48 @@ export const downtime = ( gameSlug: string ) => ( {
 } );
 
 // ---------------------------------------------------------------------------
-// My Queue and staff assignment (game-scoped, 1.1.0 §3.6)
+// My Queue and staff assignment (game-scoped)
 // ---------------------------------------------------------------------------
 
-/** REST client factory for My Queue and the staff picker it and every assignee field share. */
+/**
+ * REST client factory for My Queue and the staff picker it and every assignee field share.
+ */
 export const myQueue = ( gameSlug: string ) => ( {
-	/** The four My Queue sections for the current viewer in this chronicle. */
+	/**
+	 * The four My Queue sections for the current viewer in this chronicle.
+	 */
 	get: (): Promise< StaffQueue > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/my/queue` } ),
-	/** Every hst/ast/narrator member of this chronicle - who a plot, downtime row, or NPC may be assigned to. */
+	/**
+	 * Every hst/ast/narrator member of this chronicle.
+	 */
 	staff: (): Promise< StaffMember[] > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/staff` } ),
 } );
 
 // ---------------------------------------------------------------------------
-// NPC public profiles ("Who's Who", game-scoped, 1.1.0 §3.7)
+// NPC public profiles ("Who's Who", game-scoped)
 // ---------------------------------------------------------------------------
 
-/** REST client factory for the Who's Who NPC directory and its public profiles. */
+/**
+ * REST client factory for the Who's Who NPC directory and its public profiles.
+ */
 export const npcs = ( gameSlug: string ) => ( {
-	/** Every NPC whose Who's Who profile the current viewer can see. */
+	/**
+	 * Every NPC whose Who's Who profile the current viewer can see.
+	 */
 	list: (): Promise< NpcProfile[] > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/npcs` } ),
 
-	/** One NPC's Who's Who profile. */
+	/**
+	 * One NPC's Who's Who profile.
+	 */
 	get: ( id: number ): Promise< NpcProfile > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/npcs/${ id }` } ),
 
-	/** Updates an NPC's public-profile fields; be_manage_characters only. */
+	/**
+	 * Updates an NPC's public-profile fields.
+	 */
 	updateProfile: (
 		characterId: number,
 		data: UpdateNpcProfileRequest
@@ -3027,11 +2918,13 @@ export const npcs = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's release batches (1.1.0 §3.2): scheduling
- * rumors and downtime answers to go out together, several between games.
+ * REST client factory for a single chronicle's release batches: scheduling rumors and downtime answers to go out
+ * together, several between games.
  */
 export const releaseBatches = ( gameSlug: string ) => ( {
-	/** This chronicle's release batches, newest created first, optionally narrowed by status. */
+	/**
+	 * This chronicle's release batches, newest created first, optionally narrowed by status.
+	 */
 	list: ( status?: ReleaseBatch[ 'status' ] ): Promise< ReleaseBatch[] > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/release-batches${ toQuery(
@@ -3039,7 +2932,9 @@ export const releaseBatches = ( gameSlug: string ) => ( {
 			) }`,
 		} ),
 
-	/** Creates a batch: scheduled when release_at is given, draft otherwise. */
+	/**
+	 * Creates a batch: scheduled when release_at is given, draft.
+	 */
 	create: ( data: CreateReleaseBatchRequest ): Promise< ReleaseBatch > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/release-batches`,
@@ -3047,7 +2942,9 @@ export const releaseBatches = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Updates a draft or scheduled batch's name, release_at, and/or status. */
+	/**
+	 * Updates a draft or scheduled batch's name, release_at, and/or status.
+	 */
 	update: (
 		id: number,
 		data: UpdateReleaseBatchRequest
@@ -3058,20 +2955,26 @@ export const releaseBatches = ( gameSlug: string ) => ( {
 			data,
 		} ),
 
-	/** Deletes a draft or scheduled batch, returning its items to draft. */
+	/**
+	 * Deletes a draft or scheduled batch, returning its items to draft.
+	 */
 	delete: ( id: number ): Promise< void > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/release-batches/${ id }`,
 			method: 'DELETE',
 		} ),
 
-	/** Lists a batch's held items: rumors, downtime answers, and (once K1 ships) reveals. */
+	/**
+	 * Lists a batch's held items: rumors, downtime answers, and (once ships) reveals.
+	 */
 	getItems: ( id: number ): Promise< ReleaseBatchItems > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/release-batches/${ id }/items`,
 		} ),
 
-	/** Adds a plot or entry to a batch: sets held and this batch's id on it. */
+	/**
+	 * Adds a plot or entry to a batch: sets held and this batch's id on it.
+	 */
 	addItem: (
 		id: number,
 		type: 'plot' | 'entry',
@@ -3083,7 +2986,9 @@ export const releaseBatches = ( gameSlug: string ) => ( {
 			data: { type, id: itemId },
 		} ),
 
-	/** Removes one item from a batch, returning it to draft. */
+	/**
+	 * Removes one item from a batch, returning it to draft.
+	 */
 	removeItem: (
 		id: number,
 		type: 'plot' | 'entry',
@@ -3094,14 +2999,18 @@ export const releaseBatches = ( gameSlug: string ) => ( {
 			method: 'DELETE',
 		} ),
 
-	/** Releases one existing batch immediately. */
+	/**
+	 * Releases one existing batch immediately.
+	 */
 	releaseNow: ( id: number ): Promise< ReleaseBatch > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/release-batches/${ id }/release-now`,
 			method: 'POST',
 		} ),
 
-	/** Creates a batch, fills it with the given items, and releases it in one call. */
+	/**
+	 * Creates a batch, fills it with the given items, and releases it in one call.
+	 */
 	releaseNowSingle: (
 		data: ReleaseNowSingleRequest
 	): Promise< ReleaseBatch > =>
@@ -3117,14 +3026,11 @@ export const releaseBatches = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's boons: the harpy
- * ledger of favors owed between characters.
+ * REST client factory for a single chronicle's boons: the harpy ledger of favors owed between characters.
  */
 export const boons = ( gameSlug: string ) => ( {
 	/**
-	 * Fetches the boon ledger matching the given filters. Supports
-	 * filtering by the character involved, boon level, and
-	 * repayment status.
+	 * Fetches the boon ledger matching the given filters.
 	 */
 	ledger: ( params: BoonLedgerParams = {} ): Promise< Boon[] > =>
 		apiFetch( {
@@ -3134,8 +3040,7 @@ export const boons = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Records a new boon between two characters from the given
-	 * request body. Returns the newly created Boon record.
+	 * Records a new boon between two characters from the given request body.
 	 */
 	create: ( data: CreateBoonRequest ): Promise< Boon > =>
 		apiFetch( {
@@ -3145,11 +3050,7 @@ export const boons = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Marks a boon as repaid by id, with an optional note recording how it was
-	 * actually settled - a boon leaves the ledger only by being repaid
-	 * (BE_PROCESS/releases/0.99.2-workflow.md), never deleted, so this note is the record of why/how
-	 * for an entry that was, say, "entered in error". Returns the updated world object
-	 * record reflecting the new repayment status.
+	 * Marks a boon as repaid by id, with an optional note recording how it was actually settled.
 	 */
 	repay: ( id: number, note?: string ): Promise< WorldObject > =>
 		apiFetch( {
@@ -3164,16 +3065,12 @@ export const boons = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for a single chronicle's Grapevine exchange
- * file imports: uploading a file, polling job status, and
- * committing the resolved result.
+ * REST client factory for a single chronicle's Grapevine exchange file imports: uploading a file, polling job status,
+ * and committing the resolved result.
  */
 export const gexImport = ( gameSlug: string ) => ( {
 	/**
-	 * Uploads a Grapevine exchange file for parsing. Sends a real
-	 * multipart FormData body rather than JSON, since apiFetch's
-	 * data option always JSON-encodes. Returns the initial parsed
-	 * preview.
+	 * Uploads a Grapevine exchange file for parsing.
 	 */
 	parse: ( file: File ): Promise< ImportPreview > => {
 		const body = new FormData();
@@ -3186,17 +3083,13 @@ export const gexImport = ( gameSlug: string ) => ( {
 	},
 
 	/**
-	 * Fetches the current preview for a previously started import
-	 * job by id. Returns the same shape as parse(), reflecting the
-	 * job's latest state.
+	 * Fetches the current preview for a previously started import job by id, in the same shape as parse().
 	 */
 	getJob: ( jobId: string ): Promise< ImportPreview > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/import/${ jobId }` } ),
 
 	/**
-	 * Commits a previewed import job, applying the given
-	 * resolutions for any duplicates and flagged or unresolved
-	 * traits. Returns a summary of what was actually written.
+	 * Commits a previewed import job, applying the given resolutions for any duplicates and flagged or unresolved traits.
 	 */
 	commit: (
 		jobId: string,
@@ -3214,16 +3107,12 @@ export const gexImport = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client factory for full game file (.gv3, GVBG) imports:
- * uploading a file, polling job status, and committing it as a
- * new or merged chronicle. Not scoped to any existing chronicle,
- * since a new one may be created by the import itself.
+ * REST client factory for full game file (.gv3, GVBG) imports: uploading a file, polling job status, and committing
+ * it as a new or merged chronicle.
  */
 export const gameImport = () => ( {
 	/**
-	 * Uploads a game file for parsing. Sends a real multipart
-	 * FormData body rather than JSON. Returns the initial parsed
-	 * preview, including the source chronicle's title.
+	 * Uploads a game file for parsing.
 	 */
 	parse: ( file: File ): Promise< GameImportPreview > => {
 		const body = new FormData();
@@ -3236,10 +3125,7 @@ export const gameImport = () => ( {
 	},
 
 	/**
-	 * Fetches the current preview for a previously started game
-	 * import job by id. When target names a candidate chronicle,
-	 * refines the preview's duplicate lists against it; omitted
-	 * shows no duplicates yet, since no merge target is chosen.
+	 * Fetches the current preview for a previously started game import job by id.
 	 */
 	getJob: ( jobId: string, target?: string ): Promise< GameImportPreview > =>
 		apiFetch( {
@@ -3249,10 +3135,8 @@ export const gameImport = () => ( {
 		} ),
 
 	/**
-	 * Commits a previewed game import job to the given target,
-	 * either as a new chronicle or merged into an existing one,
-	 * applying the given duplicate/trait resolutions. Returns a
-	 * summary of what was written and the resulting chronicle.
+	 * Commits a previewed game import job to the given target, either as a new chronicle or merged into an existing one,
+	 * applying the given duplicate/trait resolutions.
 	 */
 	commit: (
 		jobId: string,
@@ -3267,28 +3151,22 @@ export const gameImport = () => ( {
 } );
 
 // ---------------------------------------------------------------------------
-// Transfers — GX-8/9's chronicle-to-chronicle character travel
+// Transfers
 // ---------------------------------------------------------------------------
 
 /**
- * REST client for one chronicle's transfers: its own outbound actions
- * as the home chronicle, reviewing and deciding offers as the host,
- * and its combined transfer list. The inbound receiving route itself
- * has no client method, since only another chronicle's site calls it.
+ * REST client for one chronicle's transfers: its own outbound actions as the home chronicle, reviewing and deciding
+ * offers as the host, and its combined transfer list.
  */
 export const transfers = ( gameSlug: string ) => ( {
 	/**
-	 * Lists every transfer this chronicle is party to on this site -
-	 * outbound rows it is home to, inbound rows it hosts - newest first.
+	 * Lists every transfer this chronicle is party to on this site.
 	 */
 	list: (): Promise< Transfer[] > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/transfers` } ),
 
 	/**
-	 * Initiates an outbound transfer for one character. Omit
-	 * hostSite/hostSlug for the offline carrier (download and email
-	 * the returned document); given both, also POSTs directly to
-	 * the host chronicle and reflects what it reported.
+	 * Initiates an outbound transfer for one character.
 	 */
 	initiate: (
 		characterId: number,
@@ -3305,34 +3183,44 @@ export const transfers = ( gameSlug: string ) => ( {
 			},
 		} ),
 
-	/** Home ST manually marks a still-pending transfer as received abroad. */
+	/**
+	 * Home ST manually marks a still-pending transfer as received abroad.
+	 */
 	acknowledge: ( transferId: number ): Promise< Transfer > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/transfers/${ transferId }/acknowledge`,
 			method: 'POST',
 		} ),
 
-	/** Home ST permanently gives the character up - a real move, not travel. */
+	/**
+	 * Home ST permanently gives the character up.
+	 */
 	release: ( transferId: number ): Promise< Transfer > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/transfers/${ transferId }/release`,
 			method: 'POST',
 		} ),
 
-	/** Home ST cancels a still-pending transfer, revoking an offer still waiting at the host. */
+	/**
+	 * Home ST cancels a still-pending transfer, revoking an offer still waiting at the host.
+	 */
 	decline: ( transferId: number ): Promise< Transfer > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/transfers/${ transferId }/decline`,
 			method: 'POST',
 		} ),
 
-	/** Host ST reviews a waiting offer, shown like a parsed import file. */
+	/**
+	 * Host ST reviews a waiting offer, shown like a parsed import file.
+	 */
 	review: ( transferId: number ): Promise< TransferReview > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/transfers/${ transferId }/review`,
 		} ),
 
-	/** Host ST accepts a waiting offer with the same decisions an import commit takes. */
+	/**
+	 * Host ST accepts a waiting offer with the same decisions an import commit takes.
+	 */
 	accept: (
 		transferId: number,
 		resolutions: ImportResolutions
@@ -3343,21 +3231,27 @@ export const transfers = ( gameSlug: string ) => ( {
 			data: { resolutions },
 		} ),
 
-	/** Host ST refuses a waiting offer; nothing was written for it. */
+	/**
+	 * Host ST refuses a waiting offer.
+	 */
 	refuse: ( transferId: number ): Promise< Transfer > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/transfers/${ transferId }/refuse`,
 			method: 'POST',
 		} ),
 
-	/** Host ST ends a visit. */
+	/**
+	 * Host ST ends a visit.
+	 */
 	sendHome: ( transferId: number ): Promise< Transfer > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/transfers/${ transferId }/send-home`,
 			method: 'POST',
 		} ),
 
-	/** Host ST keeps a visiting character for good. */
+	/**
+	 * Host ST keeps a visiting character for good.
+	 */
 	retain: ( transferId: number ): Promise< Transfer > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/transfers/${ transferId }/retain`,
@@ -3366,21 +3260,23 @@ export const transfers = ( gameSlug: string ) => ( {
 } );
 
 // ---------------------------------------------------------------------------
-// Submissions — F-122's player-sent Grapevine file, waiting for review
+// Submissions
 // ---------------------------------------------------------------------------
 
 /**
- * REST client for one chronicle's player-sent Grapevine files: sending one
- * (anyone signed in), withdrawing your own, and a Storyteller's review,
- * verification check, accept, and refuse. The caller's own cross-chronicle
- * history (`/my/submissions`) is a separate, non-game-scoped export below.
+ * REST client for one chronicle's player-sent Grapevine files: sending one (anyone signed in), withdrawing your own,
+ * and a Storyteller's review, verification check, accept, and refuse.
  */
 export const submissions = ( gameSlug: string ) => ( {
-	/** This chronicle's own waiting submissions, newest first. */
+	/**
+	 * This chronicle's own waiting submissions, newest first.
+	 */
 	list: (): Promise< Submission[] > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/submissions` } ),
 
-	/** Reads an uploaded file and reports what it holds, storing nothing yet. */
+	/**
+	 * Reads an uploaded file and reports what it holds, storing nothing yet.
+	 */
 	preview: ( file: File ): Promise< SubmissionPreviewResponse > => {
 		const body = new FormData();
 		body.append( 'file', file );
@@ -3391,7 +3287,9 @@ export const submissions = ( gameSlug: string ) => ( {
 		} );
 	},
 
-	/** Sends a file: picks the character (when the file holds more than one) and joining/visiting. */
+	/**
+	 * Sends a file: picks the character (when the file holds more than one) and joining/visiting.
+	 */
 	create: (
 		file: File,
 		arrival: 'joining' | 'visiting',
@@ -3413,26 +3311,34 @@ export const submissions = ( gameSlug: string ) => ( {
 		} );
 	},
 
-	/** The sender withdraws their own still-waiting submission. */
+	/**
+	 * The sender withdraws their own still-waiting submission.
+	 */
 	withdraw: ( submissionId: number ): Promise< Submission > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/submissions/${ submissionId }/withdraw`,
 			method: 'POST',
 		} ),
 
-	/** Storyteller reviews a waiting submission, shown like a parsed import file. */
+	/**
+	 * Storyteller reviews a waiting submission, shown like a parsed import file.
+	 */
 	review: ( submissionId: number ): Promise< SubmissionReview > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/submissions/${ submissionId }/review`,
 		} ),
 
-	/** Checks a waiting submission's own verification code, if it carries one. */
+	/**
+	 * Checks a waiting submission's own verification code, if it carries one.
+	 */
 	verification: ( submissionId: number ): Promise< SubmissionVerification > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/submissions/${ submissionId }/verification`,
 		} ),
 
-	/** Storyteller accepts a waiting submission with the same decisions an import commit takes. */
+	/**
+	 * Storyteller accepts a waiting submission with the same decisions an import commit takes.
+	 */
 	accept: (
 		submissionId: number,
 		resolutions: ImportResolutions,
@@ -3444,7 +3350,9 @@ export const submissions = ( gameSlug: string ) => ( {
 			data: { resolutions, ...( arrival ? { arrival } : {} ) },
 		} ),
 
-	/** Storyteller refuses a waiting submission; nothing was ever written for it. */
+	/**
+	 * Storyteller refuses a waiting submission.
+	 */
 	refuse: ( submissionId: number, note?: string ): Promise< Submission > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/submissions/${ submissionId }/refuse`,
@@ -3453,22 +3361,21 @@ export const submissions = ( gameSlug: string ) => ( {
 		} ),
 } );
 
-/** The caller's own last submissions across every chronicle they've sent one to, newest first. */
+/**
+ * The caller's own last submissions across every chronicle they've sent one to, newest first.
+ */
 export const mySubmissions = () => ( {
 	list: (): Promise< Submission[] > =>
 		apiFetch( { path: `${ BASE }/my/submissions` } ),
 } );
 
 // ---------------------------------------------------------------------------
-// Verification — GX-7's public, unauthenticated code lookup
+// Verification
 // ---------------------------------------------------------------------------
 
 /**
- * Resolves a short verification code (minted by exporting a
- * character with the `verify` option) to what was attested at
- * issue time, plus whether it still matches the character today.
- * Not scoped to any game - the route carries no chronicle in its
- * path, since a bare code must be enough to resolve it on its own.
+ * Resolves a short verification code (minted by exporting a character with the `verify` option) to what was attested
+ * at issue time, plus whether it still matches the character today.
  */
 export const verification = () => ( {
 	resolve: ( code: string ): Promise< VerifyResponse > =>
@@ -3478,8 +3385,7 @@ export const verification = () => ( {
 } );
 
 // ---------------------------------------------------------------------------
-// Translations (1.2.0 §6) — site-wide, not chronicle-scoped (Decision 106:
-// one install, one language). Backs the Translations admin screen (B10).
+// Translations — site-wide
 // ---------------------------------------------------------------------------
 
 export interface TranslationUsage {
@@ -3494,7 +3400,9 @@ export type TranslationStatus =
 	| 'approved'
 	| 'conflict';
 
-/** One row of `list()`: a catalog term left-joined with its translation for the requested locale. */
+/**
+ * One row of `list()`: a catalog term left-joined with its translation for the requested locale.
+ */
 export interface TranslationRow {
 	id: string;
 	source_key: string;
@@ -3525,9 +3433,13 @@ export interface TranslationStats {
 }
 
 export interface TranslationLocales {
-	/** Locales with at least one real translation row already. */
+	/**
+	 * Locales with at least one real translation row already.
+	 */
 	with_rows: string[];
-	/** Every locale WordPress itself has installed, en_US always first. */
+	/**
+	 * Every locale WordPress itself has installed, en_US always first.
+	 */
 	installed: string[];
 }
 
@@ -3560,13 +3472,12 @@ export interface TranslationImportResult {
 }
 
 /**
- * REST client for catalog term translation. `exportUrl()` mirrors
- * `sheets().pdfUrl()`'s own direct nonce-bearing link pattern - the export
- * route serves raw CSV bytes, not JSON. `import()` sends a real multipart
- * FormData body, matching `attachments().upload()`'s established shape.
+ * REST client for catalog term translation.
  */
 export const translations = {
-	/** One page of catalog terms for `locale`, left-joined with their translation. */
+	/**
+	 * One page of catalog terms for `locale`, left-joined with their translation.
+	 */
 	list: (
 		locale: string,
 		filters: TranslationFilters = {},
@@ -3586,20 +3497,22 @@ export const translations = {
 			} as Record< string, unknown > ) }`,
 		} ),
 
-	/** Per-locale totals, per-status counts, and a per-block breakdown, for the progress display. */
+	/**
+	 * Per-locale totals, per-status counts, and a per-block breakdown, for the progress display.
+	 */
 	stats: ( locale: string ): Promise< TranslationStats > =>
 		apiFetch( {
 			path: `${ BASE }/translations/progress${ toQuery( { locale } ) }`,
 		} ),
 
-	/** Locales with real rows already, plus every locale WordPress itself has installed. */
+	/**
+	 * Locales with real rows already, plus every locale WordPress itself has installed.
+	 */
 	locales: (): Promise< TranslationLocales > =>
 		apiFetch( { path: `${ BASE }/translations/locales` } ),
 
 	/**
-	 * Creates or replaces one term's translation for a locale. Accepts either
-	 * an existing string_id or a bare source_text - naming a term rescan()
-	 * has not indexed yet creates its string row rather than 404ing.
+	 * Creates or replaces one term's translation for a locale, by an existing string_id or a bare source_text.
 	 */
 	save: (
 		locale: string,
@@ -3625,7 +3538,9 @@ export const translations = {
 			},
 		} ),
 
-	/** Updates an existing translation row's own translation text and/or status. */
+	/**
+	 * Updates an existing translation row's own translation text and/or status.
+	 */
 	update: (
 		id: string,
 		data: Partial< { translation: string; status: TranslationStatus } >
@@ -3642,7 +3557,9 @@ export const translations = {
 			method: 'DELETE',
 		} ),
 
-	/** Bulk-sets many rows at once by source_text - backs "mark selected approved." */
+	/**
+	 * Bulk-sets many rows at once by source_text.
+	 */
 	bulk: (
 		locale: string,
 		rows: TranslationBulkRow[]
@@ -3654,10 +3571,8 @@ export const translations = {
 		} ),
 
 	/**
-	 * Builds the CSV export download URL for the current filters, matching
-	 * `list()`'s own filter vocabulary exactly (§6: "honouring the same
-	 * filters as the list"). A direct link, not an apiFetch call, since the
-	 * route serves raw CSV bytes.
+	 * Builds the CSV export download URL for the current filters, matching `list()`'s own filter vocabulary exactly
+	 * ("honouring the same filters as the list").
 	 */
 	exportUrl: ( locale: string, filters: TranslationFilters = {} ): string => {
 		const params = new URLSearchParams( { locale } );
@@ -3678,15 +3593,15 @@ export const translations = {
 		}
 		params.set( '_wpnonce', window.beyondElysium?.nonce ?? '' );
 
-		// Same unreachable-but-real fallback as the first of these five - see the note on
-		// `sheets.pdfUrl()`'s own `root` for why it is left as it is (1.2.11 D95).
 		const root =
 			window.beyondElysium?.restUrl ??
 			`${ window.location.origin }/wp-json/be/v1/`;
 		return `${ root }translations/export?${ params.toString() }`;
 	},
 
-	/** Uploads a CSV for import; dryRun reports counts and a sample with nothing written (T12). */
+	/**
+	 * Uploads a CSV for import.
+	 */
 	import: (
 		locale: string,
 		file: File,
@@ -3703,7 +3618,9 @@ export const translations = {
 		} );
 	},
 
-	/** Re-walks the real catalog and refreshes the string index against it. */
+	/**
+	 * Re-walks the real catalog and refreshes the string index against it.
+	 */
 	rescan: (): Promise< {
 		added: number;
 		updated: number;
@@ -3717,9 +3634,8 @@ export const translations = {
 // ---------------------------------------------------------------------------
 
 /**
- * The full REST API client, grouping every resource's client
- * object under one default export for convenient single-import
- * usage throughout the plugin.
+ * The full REST API client, grouping every resource's client object under one default export for convenient
+ * single-import usage throughout the plugin.
  */
 const api = {
 	games,

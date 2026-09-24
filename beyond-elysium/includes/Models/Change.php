@@ -8,26 +8,11 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Static data-access model for character change records.
- *
- * Change is a Database\Manager CRUD model backed by the character_changes table.
- * Each row is one proposed edit to a character - a trait added or removed, a
- * resource or identity field modified, or XP earned, spent, or adjusted - along
- * with its review status. Rows are read per character or across a whole game's
- * approval queue, filtered by status, change_type, and related fields.
- *
- * change_type values: add_trait, remove_trait, modify_trait, modify_resource,
- *                     modify_identity, xp_earn, xp_adjust, import_note,
- *                     catalog_rekey, catalog_rekey_revert
- *
- * `import_note`, `catalog_rekey` and `catalog_rekey_revert` are records the system writes
- * about itself, already approved and never priced: nothing submits them and no queue lists them.
  */
 class Change {
 
 	/**
-	 * Delete every change record belonging to a character. Removes all rows from
-	 * character_changes matching the given character ID, leaving no change history
-	 * behind once the character itself is deleted.
+	 * Delete every change record belonging to a character.
 	 *
 	 * @param int $character_id
 	 * @return void
@@ -39,9 +24,7 @@ class Change {
 	}
 
 	/**
-	 * Look up a single change record by its primary key. Returns the row with its
-	 * change_data JSON field decoded into an array, or null when no change with
-	 * that ID exists.
+	 * Look up a single change record by its primary key.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -55,9 +38,7 @@ class Change {
 	}
 
 	/**
-	 * Look up a change and lock its row until the surrounding transaction
-	 * ends, so a review decided on this read cannot race another review or
-	 * a resubmission of the same change. Must run inside a Transaction.
+	 * Look up a change and lock its row until the surrounding transaction ends.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -71,10 +52,8 @@ class Change {
 	}
 
 	/**
-	 * A token for exactly the content a reviewer was shown: what the change
-	 * does, what it costs, and when it was last submitted. A player's
-	 * resubmission rewrites all three in place, so a token taken before it no
-	 * longer matches (1.0.0-review F-031).
+	 * A token for exactly the content a reviewer was shown: what the change does, what it costs, and when it was last
+	 * submitted.
 	 *
 	 * @param object $change A decoded change row.
 	 * @return string
@@ -89,9 +68,7 @@ class Change {
 	}
 
 	/**
-	 * Return the change records belonging to one character. Supports filtering by
-	 * status and change_type, plus pagination and sort order, and returns decoded
-	 * rows ordered by submission time.
+	 * Return the change records belonging to one character.
 	 *
 	 * @param int   $character_id
 	 * @param array $args Filters: status, change_type, per_page, offset, order.
@@ -126,9 +103,7 @@ class Change {
 	}
 
 	/**
-	 * Count the change records belonging to one character that match the given
-	 * filters. Accepts the same status and change_type filters as for_character(),
-	 * without pagination, and returns a plain integer total.
+	 * Count the change records belonging to one character that match the given filters.
 	 *
 	 * @param int   $character_id
 	 * @param array $args Same filters as for_character() (no pagination).
@@ -156,9 +131,7 @@ class Change {
 	}
 
 	/**
-	 * Return change records across every character belonging to a game. Joins to
-	 * the characters table to scope by owner_slug, and supports filtering by
-	 * status, change_type, character_id, and wp_user_id, plus pagination and order.
+	 * Return change records across every character belonging to a game.
 	 *
 	 * @param string $game_slug
 	 * @param array  $args Filters: status, change_type, character_id, wp_user_id, per_page, offset, order.
@@ -184,9 +157,7 @@ class Change {
 	}
 
 	/**
-	 * Count change records across every character belonging to a game. Accepts the
-	 * same status, change_type, character_id, and wp_user_id filters as for_game(),
-	 * without pagination, and returns a plain integer total.
+	 * Count change records across every character belonging to a game.
 	 *
 	 * @param string $game_slug
 	 * @param array  $args
@@ -205,10 +176,7 @@ class Change {
 	}
 
 	/**
-	 * The shared WHERE-clause builder behind `for_game()` and `count_for_game()` - both
-	 * accept the identical filter vocabulary (status, change_type, character_id,
-	 * wp_user_id) and had built it twice, byte-for-byte, until this was extracted
-	 * (1.1.1 audit).
+	 * The shared WHERE-clause builder behind `for_game()` and `count_for_game()`.
 	 *
 	 * @param string $game_slug
 	 * @param array  $args
@@ -241,9 +209,7 @@ class Change {
 	}
 
 	/**
-	 * Insert a new change record. Encodes an array change_data payload to JSON,
-	 * defaults status to pending and submitted_by to the current user, and stamps
-	 * submitted_at with the current time.
+	 * Insert a new change record.
 	 *
 	 * @param array $data Change data.
 	 * @return int Insert ID, or 0 on failure.
@@ -269,17 +235,8 @@ class Change {
 	}
 
 	/**
-	 * Overwrites a still-pending change's own submitted content in place, re-stamping
-	 * `submitted_at` as though it were a fresh submission. Used when a player resubmits an
-	 * edit to the same trait/field before a Storyteller has reviewed the first one
-	 * (BE_PROCESS/releases/0.99.2-workflow.md, "Resubmitting creates duplicate pending changes") -
-	 * updates the one existing row rather than leaving a second, indistinguishable pending
-	 * row in the queue. Never touches `status`, `submitted_by`, `character_id`, or anything
-	 * review-related - only what a fresh submit() call would have set.
-	 *
-	 * Returns false when no still-pending row matched - a review that landed
-	 * first leaves nothing to overwrite, and the caller must not report the
-	 * resubmission as accepted (1.0.0-review F-031).
+	 * Overwrites a still-pending change's own submitted content in place, re-stamping `submitted_at` as though it were a
+	 * fresh submission.
 	 *
 	 * @param int   $id
 	 * @param array $data change_type, category, change_data, xp_cost, notes, reason - same
@@ -306,21 +263,13 @@ class Change {
 		if ( $updated > 0 ) {
 			return true;
 		}
-		// MySQL counts an UPDATE that writes identical values as zero rows, so zero means either
-		// "already reviewed" or "resubmitted unchanged within the same second" - tell them apart.
+		// MySQL counts an UPDATE that writes identical values as zero rows.
 		$status = Manager::get_var( 'SELECT status FROM ' . Manager::table( 'character_changes' ) . ' WHERE id = %d', $id );
 		return $status === 'pending';
 	}
 
 	/**
-	 * Writes the price a Storyteller set on a change that was waiting for one - its `xp_cost`, and
-	 * the change data with the price stamped onto its trait - while it is still pending. Called by
-	 * `Change_Engine::approve()` inside the same transaction that then applies the change, so the
-	 * record and the sheet agree on what was charged.
-	 *
-	 * Returns false when no still-pending row matched: a review that landed first leaves nothing to
-	 * price. A write of identical values reads as zero rows changed, so that case is told apart from
-	 * "already reviewed" by the status.
+	 * Writes the price a Storyteller set on a change that was waiting for one.
 	 *
 	 * @param int                      $id
 	 * @param float                    $xp_cost     Signed total.
@@ -345,10 +294,7 @@ class Change {
 	}
 
 	/**
-	 * Update a change record's review outcome. Sets status, reviewed_by, and the
-	 * reviewer's own note, and stamps reviewed_at with the current time; used
-	 * when a storyteller approves or rejects a pending change. The submitter's
-	 * `notes` are never touched (1.0.0-review F-032).
+	 * Update a change record's review outcome.
 	 *
 	 * @param int      $id
 	 * @param string   $status      'approved' or 'rejected'.
@@ -368,9 +314,7 @@ class Change {
 	}
 
 	/**
-	 * Decode a row's change_data JSON field into an array in place. Passes null
-	 * rows through unchanged, and normalizes an unparseable or absent value to an
-	 * empty array so callers never see a raw JSON string.
+	 * Decode a row's change_data JSON field into an array in place.
 	 *
 	 * @param object|null $row Row from the database, or null when the query found nothing.
 	 * @return object|null The same row, or null when null was passed in.

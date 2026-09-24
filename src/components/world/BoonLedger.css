@@ -40,9 +40,6 @@
 	align-items: center;
 }
 
-/* Two-class compound selector, not a bare input[type=text] - D34/Decision 045: the live
-   hello-elementor theme's own reset ships at the same (0,1,1) specificity and would win on
-   source order alone. */
 .be-boon-ledger .be-boon-ledger__repay-control input {
 	width: 12rem;
 	box-sizing: border-box;
@@ -57,12 +54,7 @@
 	margin-bottom: 1rem;
 }
 
-/*
- * Step 8e (workflow-0.9.md) - same treatment as CharacterList.css's own print block, same
- * reasoning: a plain `<table>` needs none of CharacterSheet.css's multi-column tuning.
- * `:last-child` is safe for the actions column here (unlike the roster's) - `BoonTable`'s
- * trailing `<th />`/`<td>` is unconditional, never omitted for a non-manager viewer.
- */
+/* Print treatment for the ledger table. */
 @media print {
 
 	#wpadminbar,

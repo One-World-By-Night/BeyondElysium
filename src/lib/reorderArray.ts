@@ -1,12 +1,11 @@
 /**
- * Pure array-reordering helpers for a player_order block's Reorder UI (1.1.0 D4):
- * move one position up or down, or drop it at an arbitrary new position (drag and
- * drop). All three return a new array; none mutate the input. Shared by
- * `TraitListEditor.tsx` (Rituals) and `TieredPowerEditor.tsx` (Blood Magic), the
- * two seeded `player_order` blocks - one of each section_type.
+ * Pure array-reordering helpers for a player_order block's Reorder UI: move one position up or down, or drop it at an
+ * arbitrary new position (drag and drop).
  */
 
-/** Swaps `index` with its predecessor. A no-op at the front of the list. */
+/**
+ * Swaps `index` with its predecessor.
+ */
 export function moveUp< T >( items: T[], index: number ): T[] {
 	if ( index <= 0 || index >= items.length ) {
 		return items;
@@ -14,7 +13,9 @@ export function moveUp< T >( items: T[], index: number ): T[] {
 	return swap( items, index, index - 1 );
 }
 
-/** Swaps `index` with its successor. A no-op at the end of the list. */
+/**
+ * Swaps `index` with its successor.
+ */
 export function moveDown< T >( items: T[], index: number ): T[] {
 	if ( index < 0 || index >= items.length - 1 ) {
 		return items;
@@ -22,7 +23,9 @@ export function moveDown< T >( items: T[], index: number ): T[] {
 	return swap( items, index, index + 1 );
 }
 
-/** Removes the item at `from` and reinserts it at `to` (drag and drop). */
+/**
+ * Removes the item at `from` and reinserts it at `to` (drag and drop).
+ */
 export function moveTo< T >( items: T[], from: number, to: number ): T[] {
 	if (
 		from === to ||
@@ -46,9 +49,7 @@ function swap< T >( items: T[], a: number, b: number ): T[] {
 }
 
 /**
- * Reads a REST error's own `message`, falling back to a generic one - the same
- * "show the server's reason when it gave one" convention `SheetStyleEditor.tsx`
- * already uses for its own apiFetch calls.
+ * Reads a REST error's own `message`, falling back to a generic one.
  */
 export function reorderErrorMessage( err: unknown, fallback: string ): string {
 	if (

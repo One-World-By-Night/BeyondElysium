@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 #
-# The validation gate. Every workflow document's Validation Gate runs this.
-# See BE_PROCESS/TESTING.md for the three test layers.
+# The validation gate.
 #
 # Usage:
 #   bin/verify            lint, static analysis (level 5, plus level 8's null/false checks), unit tests, build
@@ -10,7 +9,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-# Prefer the PHP that matches production (8.2). Falls back to whatever is on PATH.
+# Uses PHP 8.2 when present, otherwise the PHP on PATH.
 PHP="${BE_PHP:-}"
 if [ -z "$PHP" ] && [ -x /opt/homebrew/opt/php@8.2/bin/php ]; then
     PHP=/opt/homebrew/opt/php@8.2/bin/php
@@ -35,9 +34,7 @@ find beyond-elysium/includes -name '*.php' -not -path '*/accessschema-client/*' 
 "$PHP" -l beyond-elysium/beyond-elysium.php > /dev/null
 echo "    ok"
 
-# PHPStan prints an upgrade banner on every run, so its output is held and shown only when it fails.
-# `--quiet` on its own printed nothing at all on a failure: the gate stopped after the step's name and
-# gave no reason (found at the 1.3.4 gate).
+# Runs PHPStan and shows its output only when it fails.
 run_phpstan() {
     local out
     if ! out="$("$PHP" beyond-elysium/vendor/bin/phpstan analyse --no-progress --memory-limit=1G "$@" 2>&1)"; then
@@ -86,8 +83,7 @@ npm test --silent
 echo "==> doc links"
 node bin/check-doc-links.js
 
-# A malformed declared catalog file must fail the build rather than seed a broken catalog
-# (CATALOG-JSON-FORMAT.md §7). Skips cleanly until the files land with 1.3.0.
+# Validates every declared catalog file.
 "$PHP" bin/validate-catalog
 
 echo "==> npm run build"

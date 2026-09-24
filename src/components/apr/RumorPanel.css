@@ -1,4 +1,3 @@
-/* Decision 057. Tokens inherited from .be-plot-manager (PlotManager.css). */
 
 .be-rumor-panel section + section {
 	margin-top: 1.25rem;
@@ -15,7 +14,6 @@
 	color: var(--be-st-muted, var(--be-gray-6));
 }
 
-/* D34: compound specificity, so hello-elementor's reset.css can't win. */
 .be-rumor-panel__form.be-rumor-panel__form {
 	display: flex;
 	flex-direction: column;

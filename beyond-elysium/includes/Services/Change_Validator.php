@@ -8,42 +8,36 @@ use BeyondElysium\Models\World_Object;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Validates and normalizes a submitted character change before anything prices,
- * routes, or applies it.
- *
- * The engines trust the shape of `change_data`: a trait name that misses the
- * catalog by one letter priced at 0 XP and was stored anyway, `allow_custom`
- * was enforced only when the client volunteered `custom: true`, approval rules
- * read only the first pool or field of a multi-key change while every key was
- * applied, and a level sent as a string slipped past per-level rules
- * (1.0.0-review F-030). Every check here closes one of those.
- *
- * Pure: no database or WordPress calls, so it is unit-tested directly. The REST
- * layer supplies the character's resolved stack blocks (a chronicle's own
- * forks in place of the global catalog), the character's current sheet, and
- * whether the submitter is a Storyteller of this chronicle.
+ * Validates and normalizes a submitted character change before anything prices, routes, or applies it.
  */
 class Change_Validator {
 
-	/** Change types the REST route accepts. `import_note` (the importer) and `catalog_rekey`/`catalog_rekey_revert` (the catalog cutover) are written by the system itself, never submitted. */
+	/**
+	 * Change types the REST route accepts.
+	 */
 	const REST_CHANGE_TYPES = [ 'add_trait', 'remove_trait', 'modify_trait', 'modify_resource', 'modify_identity', 'xp_earn', 'xp_adjust', 'propose_world_object', 'propose_faction' ];
 
-	/** Keys a trait_list entry may carry. */
+	/**
+	 * Keys a trait_list entry may carry.
+	 */
 	const TRAIT_LIST_KEYS = [ 'name', 'count', 'specialization', 'note', 'custom', 'chosen_cost' ];
 
-	/** Keys a tiered_power entry may carry. */
+	/**
+	 * Keys a tiered_power entry may carry.
+	 */
 	const TIERED_POWER_KEYS = [ 'name', 'level', 'power_name', 'tradition', 'custom' ];
 
-	/** Upper bounds that keep a stored value sane; far above any real sheet. */
+	/**
+	 * Upper bounds that keep a stored value sane.
+	 */
 	const MAX_COUNT = 999;
 	const MAX_LEVEL = 99;
 	const MAX_POOL  = 999;
 	const MAX_TEXT  = 5000;
 
 	/**
-	 * Validates one change and returns it normalized: unknown keys dropped,
-	 * names set to the catalog's exact spelling, numbers cast to integers, and
-	 * `custom` set only where the block genuinely allows a custom entry.
+	 * Validates one change and returns it normalized: unknown keys dropped, names set to the catalog's exact spelling,
+	 * numbers cast to integers, and `custom` set only where the block genuinely allows a custom entry.
 	 *
 	 * @param array                $change             `change_type` and `change_data`.
 	 * @param array<string,object> $blocks             The character's stack blocks keyed by slug, each with `section_type` and a decoded `definition`.
@@ -67,12 +61,12 @@ class Change_Validator {
 			return self::validate_xp( $data );
 		}
 
-		// A proposed catalog item is not sheet data, so it names no block (1.0.1 D3).
+		// A proposed catalog item is not sheet data.
 		if ( $type === 'propose_world_object' ) {
 			return self::validate_proposed_object( $data );
 		}
 
-		// A proposed faction is not sheet data either (1.1.0 F1).
+		// A proposed faction is not sheet data either.
 		if ( $type === 'propose_faction' ) {
 			return self::validate_proposed_faction( $data );
 		}
@@ -112,8 +106,7 @@ class Change_Validator {
 	}
 
 	/**
-	 * The identity fields a stack's Discipline pricing reads, as "block_slug.Field" -
-	 * each section's `in_type_source` (for example "vampire-identity.Clan").
+	 * The identity fields a stack's Discipline pricing reads, as "block_slug.Field".
 	 *
 	 * @param object|null $stack A decoded creature stack row.
 	 * @return string[]
@@ -133,12 +126,7 @@ class Change_Validator {
 	 * @return array
 	 */
 	/**
-	 * A player's proposed catalog item, location or rote (1.0.1 D3).
-	 *
-	 * Validated here, on the way in, rather than trusted at approval time - a Storyteller
-	 * approving from the queue should be approving something already known to be well-formed,
-	 * not discovering at write time that the object type was invented. The per-type property
-	 * rules are `World_Object`'s own, never a second copy of them.
+	 * A player's proposed catalog item, location or rote.
 	 *
 	 * @param array $data
 	 * @return array
@@ -164,8 +152,7 @@ class Change_Validator {
 			return self::fail( 'invalid_param', $problem );
 		}
 
-		// Validated here, sanitized at write time by `World_Object::create()` - which every
-		// catalog write already goes through, so there is no second copy of those rules here.
+		// Validated here, sanitized at write time by `World_Object::create()`.
 		$normalized = [
 			'object_type' => $object_type,
 			'name'        => $name,
@@ -188,10 +175,7 @@ class Change_Validator {
 	}
 
 	/**
-	 * A player's proposed faction - a coterie, pack, cabal, motley, or catch-all "other"
-	 * (1.1.0 §3.10). Restricted to `Faction::PLAYER_PROPOSABLE_TYPES` - a player may never
-	 * propose a whole sect, clan, chantry, court, sept, or house; only a Storyteller creates
-	 * those directly through `Factions_Controller`.
+	 * A player's proposed faction.
 	 *
 	 * @param array $data
 	 * @return array
@@ -259,12 +243,6 @@ class Change_Validator {
 
 		$resolved = self::resolve_name( $trait['name'], $catalog_names );
 		if ( $resolved === null && ! in_array( $trait['name'], $held_names, true ) ) {
-			// 1.3.2 alias routing: nothing carries this literal name today, but the catalog
-			// may recognize it as a recorded `aliases` rename (1.3.1-design-workflow.md
-			// §11.7 item 1). Checked only once "already held under this exact spelling" is
-			// ruled out, so a rename can never repoint the identity of a row `sheet_data`
-			// still stores under the old spelling - `Trait_Identity`/`trait_row_conflict()`
-			// below match on the submitted name, unchanged.
 			$aliased = Trait_Alias_Resolver::find_item_by_name( (array) ( $definition->items ?? [] ), $trait['name'] );
 			if ( $aliased !== null && isset( $aliased->name ) && is_string( $aliased->name ) ) {
 				$resolved = $aliased->name;
@@ -275,8 +253,7 @@ class Change_Validator {
 			$trait['name'] = $resolved;
 			unset( $trait['custom'] );
 		} elseif ( $type !== 'add_trait' && in_array( $trait['name'], $held_names, true ) ) {
-			// Changing or removing something the character already holds, even if the catalog
-			// has since dropped it.
+			// Changing or removing something the character already holds.
 			$trait['custom'] = ! empty( $trait['custom'] );
 		} elseif ( $type === 'add_trait' && ( $is_manager || ! empty( $definition->allow_custom ) ) ) {
 			$trait['name']   = self::text( $trait['name'], 200 );
@@ -299,10 +276,7 @@ class Change_Validator {
 			}
 			$trait['chosen_cost'] = $cost;
 		}
-		// A player never prices their own homebrew (1.3.3 E2). On a name the catalog does not carry
-		// a price is a Storyteller's to set, at approval - and a client-sent one would reach the sheet
-		// through the merge a modify does, not only the quote. A catalog item keeps its own: a range
-		// cost is the one thing a player legitimately chooses.
+		// A player never prices their own homebrew.
 		if ( $resolved === null && ! $is_manager ) {
 			unset( $trait['chosen_cost'] );
 		}
@@ -317,16 +291,13 @@ class Change_Validator {
 
 		$previous = self::previous_snapshot( $data );
 
-		// Last, so the comparison reads the resolved name and the normalized label rather
-		// than whatever spelling and whitespace arrived (1.2.11 D86).
 		$conflict = self::trait_row_conflict( $type, $definition, $held, $trait, $previous );
 		if ( $conflict !== null ) {
 			return $conflict;
 		}
 
 		$normalized = self::with_display_keys( $data, [ 'block_slug' => $block_slug, 'trait' => $trait ] );
-		// The engine addresses a relabelled row by this one key, so what it reads is what was
-		// checked above - never the raw string as submitted.
+		// The engine addresses a relabelled row by this one key.
 		if ( isset( $previous['specialization'], $normalized['previous'] ) && is_array( $normalized['previous'] ) ) {
 			$normalized['previous']['specialization'] = $previous['specialization'];
 		}
@@ -335,14 +306,7 @@ class Change_Validator {
 	}
 
 	/**
-	 * The `previous` snapshot narrowed to the one field that identifies rather than decorates.
-	 *
-	 * `previous` is display-only everywhere else (`with_display_keys()`), but a relabel cannot
-	 * be expressed without it: the trait's own label is the NEW value, so the only thing that
-	 * can say which holding is being renamed is what it was called before
-	 * (`Trait_Identity::target_of()`). It is normalized the same way the trait's own label is,
-	 * and its `name` is deliberately dropped - the trait's name has already been resolved to
-	 * the catalog's spelling, and a raw echo of it here would only mismatch that.
+	 * The `previous` snapshot narrowed to the one field that identifies.
 	 *
 	 * @param array $data
 	 * @return array|null
@@ -356,20 +320,7 @@ class Change_Validator {
 	}
 
 	/**
-	 * Refuses a change that would leave two held rows the sheet cannot tell apart - the same
-	 * rule the editor enforces by merging, enforced here so a crafted request cannot create
-	 * the row the editor refuses to (1.2.11 D86).
-	 *
-	 * The check is a **simulation of what `Change_Engine::apply_to_sheet()` will actually do**,
-	 * not a second opinion: an `add_trait` is appended, and a `modify_trait` lands on the row
-	 * whose identity the change names (`Trait_Identity::target_of()` - the label it had before
-	 * the edit, where the client states one). So build the identities this block's rows of
-	 * that name carry now, apply the change the same way, and refuse only when the change
-	 * ITSELF creates a collision. A sheet that already holds a duplicate - an importer appends
-	 * rows, it does not merge them - is left editable rather than frozen.
-	 *
-	 * An `atomic` block is exempt by declaration: it appends a fresh row every time (Merits,
-	 * Flaws, Rituals), which is what `atomic` means.
+	 * Refuses a change that would leave two held rows the sheet cannot tell apart.
 	 *
 	 * @param string     $type
 	 * @param object     $definition
@@ -386,7 +337,7 @@ class Change_Validator {
 		$name  = (string) $trait['name'];
 		$label = array_key_exists( 'specialization', $trait ) && is_string( $trait['specialization'] ) ? $trait['specialization'] : null;
 
-		// Only rows sharing this name can ever collide, since every identity starts with it.
+		// Only rows sharing this name can ever collide.
 		$before = [];
 		foreach ( $held as $row ) {
 			if ( ! is_array( $row ) || ( $row['name'] ?? null ) !== $name ) {
@@ -403,18 +354,6 @@ class Change_Validator {
 			$target = Trait_Identity::target_of( $definition, $trait, $previous );
 			$at     = $target === null ? false : array_search( $target, $before, true );
 			if ( $at === false ) {
-				/*
-				 * Nothing of that identity is held, so the engine would modify no row at all:
-				 * the change would queue, get approved, and do nothing.
-				 *
-				 * Refused only where the label is part of the identity, which is exactly where
-				 * this release introduced the silent no-op - before it, a modify naming a held
-				 * name but an unheld label landed on the first row of that name, wrongly.
-				 * Where the identity is the name alone a modify for an unheld trait was
-				 * already a no-op long before 1.2.11, and changing that is not this release's
-				 * to do. The real editor always states `previous`, so neither is reachable
-				 * from the UI.
-				 */
 				if ( Trait_Identity::allows_multiples( $definition, $name ) ) {
 					return self::fail( 'trait_not_held', '"%s" is not on this sheet - add it instead of changing it.', [ self::display_name( $definition, $name, $label ) ] );
 				}
@@ -431,9 +370,7 @@ class Change_Validator {
 	}
 
 	/**
-	 * How a holding is named back to the player: its label included only where the label is
-	 * part of what identifies it, so a message never implies a distinction the block does not
-	 * actually make.
+	 * How a holding is named back to the player: its label included only where the label is part of what identifies it.
 	 *
 	 * @param object      $definition
 	 * @param string      $name
@@ -484,11 +421,6 @@ class Change_Validator {
 
 		$family = self::resolve_name( $trait['name'], array_keys( $families ) );
 		if ( $family === null && ! $held_pick( $trait['name'], $power_name ) ) {
-			// 1.3.2 alias routing: nothing carries this literal family name today, but the
-			// catalog may recognize it as a recorded `aliases` rename or a `split_from`
-			// (1.3.1-design-workflow.md §11.7 item 1). Checked only once "already held under
-			// this exact spelling" is ruled out, for the same non-destructive reason as
-			// `validate_trait_list()`'s own alias check above.
 			$aliased = Trait_Alias_Resolver::find_power_by_name( (array) ( $definition->powers ?? [] ), $trait['name'] );
 			if ( $aliased !== null && isset( $aliased->name ) && is_string( $aliased->name ) ) {
 				$family = $aliased->name;
@@ -499,13 +431,7 @@ class Change_Validator {
 			unset( $trait['custom'] );
 
 			if ( $power_name !== null ) {
-				// Every container, not the ladder alone (1.2.10 pre-deploy trace, 2026-09-22). A pick
-				// lives in `elder` once a block is split, so reading `->levels` rejected every
-				// Elder-and-above purchase with "not a power of <family>" - and the preview route
-				// turned that rejection into a silent "+0 XP", so the screen showed the power as
-				// free while the submit route would refuse it. The fourth consumer found reading
-				// `levels` directly, after Cost_Engine (D77), the renderers (D79) and the reorder
-				// list (D78). Services\Power_Levels exists precisely so nothing does this.
+				// Every container, not the ladder alone.
 				$picks = [];
 				foreach ( \BeyondElysium\Services\Power_Levels::all( $families[ $family ] ) as $rung ) {
 					if ( isset( $rung->power_name ) && is_string( $rung->power_name ) && $rung->power_name !== '' ) {
@@ -514,9 +440,6 @@ class Change_Validator {
 				}
 				$pick = self::resolve_name( $power_name, $picks );
 				if ( $pick === null && ! $held_pick( $family, $power_name ) ) {
-					// 1.3.2 alias routing: a rung/pick's own recorded `aliases`
-					// (`vampire-blood-magic`'s `Grave's Decay` rung answers to `Dissolve the
-					// Flesh` and `Disolve` alike).
 					$aliased_level = Trait_Alias_Resolver::find_level_by_name(
 						\BeyondElysium\Services\Power_Levels::all( $families[ $family ] ),
 						$power_name
@@ -554,11 +477,6 @@ class Change_Validator {
 		}
 		if ( array_key_exists( 'tradition', $trait ) ) {
 			$trait['tradition'] = is_string( $trait['tradition'] ) ? self::text( $trait['tradition'], 200 ) : '';
-			// 1.1.0 D5: the owner's Blood Magic ruling - any power in a flagged set prompts
-			// for a Tradition when taken, from the block's WHOLE traditions list, never
-			// narrowed to a power's own catalog-listed teachers. Never required here - an
-			// older or incomplete pick with no tradition at all is a Storyteller's own
-			// review to catch (Decision 057's UI-affordance pattern), not a server 400.
 			if ( ! empty( $definition->blood_magic ) && $trait['tradition'] !== '' ) {
 				$allowed = self::blood_magic_traditions( $definition );
 				if ( ! in_array( $trait['tradition'], $allowed, true ) ) {
@@ -574,11 +492,7 @@ class Change_Validator {
 	}
 
 	/**
-	 * The whole set of traditions a blood_magic block offers: its own declared list when
-	 * set, otherwise the pre-Blood-Magic "X: Power Name" prefix convention - the exact PHP
-	 * twin of `traditionOptionsFor()`'s own block-wide fallback in TieredPowerEditor.tsx
-	 * (1.1.0 D5), minus that function's own per-power reordering, which this membership
-	 * check has no need of.
+	 * The whole set of traditions a blood_magic block offers: its own declared list when set.
 	 *
 	 * @param object $definition
 	 * @return string[]
@@ -613,8 +527,7 @@ class Change_Validator {
 	 */
 	private static function validate_resource( string $block_slug, $definition, array $held, array $data, bool $is_manager ): array {
 		$values = $data['values'] ?? null;
-		// One pool per change - what the editor sends - so approval can never judge one pool
-		// while applying another.
+		// One pool per change - what the editor sends.
 		if ( ! is_array( $values ) || count( $values ) !== 1 ) {
 			return self::fail( 'invalid_param', 'A resource change must name exactly one pool.' );
 		}
@@ -654,9 +567,7 @@ class Change_Validator {
 			}
 		}
 
-		// A pool with no XP price is awarded, not bought (Renown), or follows from something
-		// else (Blood) - a player may spend and regain its temporary points, never set its
-		// permanent rating themselves.
+		// A pool with no XP price is awarded.
 		if ( ! $is_manager && ! isset( $pools[ $name ]->cost_per_dot ) ) {
 			$new_permanent = is_array( $value ) ? ( $value['permanent'] ?? null ) : $value;
 			$old           = $held[ $name ] ?? null;
@@ -679,7 +590,6 @@ class Change_Validator {
 	 */
 	private static function validate_identity( string $block_slug, $definition, array $data, bool $is_manager, array $protected_fields ): array {
 		$fields = $data['fields'] ?? null;
-		// One field per change, for the same reason as one pool per change.
 		if ( ! is_array( $fields ) || count( $fields ) !== 1 ) {
 			return self::fail( 'invalid_param', 'An identity change must name exactly one field.' );
 		}
@@ -734,11 +644,7 @@ class Change_Validator {
 					return self::fail( 'unknown_option', '"%1$s" is not a choice for %2$s.', [ self::text( $raw, 200 ), $name ] );
 				}
 			} elseif ( $type === 'textarea' ) {
-				// The one identity field type that is long-form prose rather than a value, so
-				// the one that gets rich text (1.0.1 D1). `self::text()` runs strip_tags(), which
-				// is why an NPC's roleplaying notes could never hold so much as a line break's
-				// worth of markup before this. Same allowlist as biography/notes and every plot
-				// free-text field; the length cap is unchanged.
+				// The one identity field type that is long-form prose.
 				$value = mb_substr( trim( wp_kses_post( $raw ) ), 0, self::MAX_TEXT );
 			} else {
 				$value = self::text( $raw );
@@ -753,8 +659,8 @@ class Change_Validator {
 	}
 
 	/**
-	 * Returns the candidate matching `$name` exactly, or else the single
-	 * candidate matching it case- and surrounding-space-insensitively, or null.
+	 * Returns the candidate matching `$name` exactly, or else the single candidate matching it case- and
+	 * surrounding-space-insensitively, or null.
 	 *
 	 * @param string   $name
 	 * @param string[] $candidates
@@ -770,8 +676,7 @@ class Change_Validator {
 	}
 
 	/**
-	 * Keeps the editor's display-only `previous` snapshot alongside the
-	 * validated keys; it is never applied or priced.
+	 * Keeps the editor's display-only `previous` snapshot alongside the validated keys.
 	 *
 	 * @param array $data
 	 * @param array $normalized
@@ -816,8 +721,6 @@ class Change_Validator {
 
 	/**
 	 * A failure: a machine code, an English sprintf format, and its arguments.
-	 * The REST layer translates the codes a player can meet; `message` is the
-	 * English fallback with the arguments filled in.
 	 *
 	 * @param string   $code
 	 * @param string   $format

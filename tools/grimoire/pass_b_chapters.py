@@ -2,28 +2,23 @@
 """
 Pass B - the chapter parser.
 
-Anchors on the sphere-requirement line (a tight, closed-vocabulary grammar -
-nine sphere names, digits, "or"/"and"/"optional"/commas only) since it is far
-more mechanically distinctive than a rote's name or citation line. Walking
-backward from each anchor recovers the citation line(s) (anything containing
-"page"/"pages"/the source's own recurring "pas" typo followed by digits) and
-then the name line(s) (anything before the citation that does not itself
-look like the end of a prose sentence).
+Anchors on the sphere-requirement line (a closed-vocabulary grammar - nine
+sphere names, digits, "or"/"and"/"optional"/commas only). Walking backward from
+each anchor recovers the citation line(s) (anything containing "page"/"pages"/
+the source's own recurring "pas" typo followed by digits) and then the name
+line(s) (anything before the citation that does not itself look like the end of
+a prose sentence).
 
-Never emits a description column (R3 - the Grimoire's prose is the
-commercial product; only structural facts - name, sphere note, citation,
-chapter/section - are extracted).
+Never emits a description column: only structural facts - name, sphere note,
+citation, chapter/section - are extracted.
 
-Three real source-text irregularities are handled explicitly, each found by
-running this over the real book rather than assumed up front:
+Source-text irregularities handled explicitly:
   - A sphere line wrapping onto two physical lines (e.g. "Blight/Farmer's
-    Favor", printed 8) is rejoined before anchor-matching runs at all.
-  - A chapter-title running head can land in the middle of a legitimate
-    multi-citation run at a page break; it is made transparent to both
-    backward scans rather than treated as a hard boundary.
-  - Two sphere lines with no citation between them (an alternate build for
-    the SAME rote, sharing one citation - the design doc's own "Feedback"
-    example) are merged into one entry's `note`, not split into two.
+    Favor", printed 8) is rejoined before anchor-matching runs.
+  - A chapter-title running head that lands in the middle of a multi-citation
+    run at a page break is made transparent to both backward scans.
+  - Two sphere lines with no citation between them (an alternate build for the
+    SAME rote, sharing one citation) are merged into one entry's `note`.
 """
 import re
 import sys
@@ -49,10 +44,8 @@ CHAPTER_SET = set(CHAPTERS)
 NOISE_EXACT = {"Enlightened Grimoire"}
 BARE_NUMBER = re.compile(r"^\d+$")
 
-# From the book's own Table of Contents (printed 3) - the printed page each
-# rote chapter opens on. Used as the page-number oracle's starting point for
-# a chapter before its first footer digit has appeared in the stream, and as
-# a sanity floor afterward (a footer-derived page can never precede it).
+# From the book's own Table of Contents (printed 3): the printed page each
+# rote chapter opens on, the floor for a chapter's page numbers.
 CHAPTER_START_PAGE = {
     "Blessings and Curses": 8, "Computers": 16, "Divination and Fate": 24,
     "Elemental Magick": 36, "Energy-Work": 46, "Enhanced Combat": 56,
@@ -81,11 +74,8 @@ def build_footer_index(path):
     of printed page `page`, so content after it (past the following running
     head) belongs to page `page + 1`.
 
-    Not every bare-digit line is a real page footer - a rote's own body text
-    occasionally has a lone number on its own line (a dice-pool count, a
-    list item). A real footer sequence is monotonically increasing with
-    small steps; anything that doesn't fit that pattern is rejected as body
-    noise rather than accepted as a page jump."""
+    A real footer sequence is monotonically increasing with small steps;
+    anything that doesn't fit that pattern is rejected."""
     with open(path, encoding="utf-8") as f:
         raw = [l.rstrip("\n") for l in f]
     events = []
@@ -104,12 +94,8 @@ CHAPTER_BY_START_PAGE = sorted(((pg, name) for name, pg in CHAPTER_START_PAGE.it
 
 
 def page_for(footer_events, line_no):
-    """Page derived purely from footer digits, independent of any running-
-    head detection - a chapter's own opening page(s) carry no running head
-    at all (only the decorative title banner, once, at the very top of the
-    chapter's first page), so tying page number to `group` is circular and
-    unreliable right where it matters most, the first page or two of a new
-    chapter."""
+    """Page derived purely from footer digits, independent of any running-head
+    detection."""
     candidate = CHAPTER_START_PAGE["Blessings and Curses"]
     for ln, pg in footer_events:
         if ln < line_no:
@@ -120,9 +106,7 @@ def page_for(footer_events, line_no):
 
 
 def group_for_page(page):
-    """The chapter whose TOC start page is the largest one not exceeding
-    `page` - authoritative over running-head occurrence order, since a
-    chapter's first page(s) never carry their own running head."""
+    """The chapter whose TOC start page is the largest one not exceeding `page`."""
     if page is None:
         return None
     best = None
@@ -135,11 +119,9 @@ def group_for_page(page):
 
 
 def merge_wrapped_sphere_lines(dense):
-    """A sphere line that wraps mid-clause leaves its tail as its own,
-    independently-matching short sphere line on the next line. Detected by:
-    this line matches SPHERE_LINE_RE alone, AND the previous line ends in a
-    dangling connector (",", "or", "and") that only makes sense as an
-    unfinished clause, never as a real standalone entry's full requirement."""
+    """A sphere line that wraps mid-clause leaves its tail as its own short sphere
+    line on the next line. Detected by: this line matches SPHERE_LINE_RE alone,
+    AND the previous line ends in a dangling connector (",", "or", "and")."""
     out = list(dense)
     changed = True
     while changed:
@@ -160,10 +142,8 @@ def parse(dense_raw, footer_events=None):
     dense = merge_wrapped_sphere_lines(dense_raw)
     footer_events = footer_events or []
 
-    # scan lines exclude chapter-title running heads entirely - they repeat
-    # on every page of their own chapter and can land mid-citation-run at a
-    # page break; `events` (built above, from the un-filtered dense list)
-    # is the only thing that needs them.
+    # scan lines exclude chapter-title running heads; `events` (built above,
+    # from the un-filtered dense list) keeps them.
     scan = [(ln, t) for ln, t in dense if t not in CHAPTER_SET]
     texts = [t for _, t in scan]
     line_nos = [ln for ln, _ in scan]
@@ -189,12 +169,10 @@ def parse(dense_raw, footer_events=None):
             # no citation directly before this sphere line - check whether
             # the immediately preceding line is itself another sphere-line
             # anchor (an alternate build for the same rote, sharing one
-            # citation - the "Feedback" pattern).
+            # citation).
             if j == i - 1 and j >= 0 and SPHERE_LINE_RE.match(texts[j]) and j in [a for a in anchors]:
                 # merge forward: this sphere line becomes an extra `note`
-                # segment on whichever entry owns anchor j, once that
-                # anchor is processed (anchors are visited in order, so j
-                # was already processed if j < i, which it always is here).
+                # segment on whichever entry owns anchor j.
                 for e in entries:
                     if e.get("_anchor_line") == line_nos[j]:
                         e["note"] = e["note"] + "; " + texts[i]
@@ -212,9 +190,7 @@ def parse(dense_raw, footer_events=None):
                 break
             if SENTENCE_END_RE.search(line):
                 # tail of the PREVIOUS entry's description, never a name
-                # fragment - stop here whether or not name_lines is empty
-                # yet (an empty result becomes an honest skip below, rather
-                # than a name silently built from leftover prose).
+                # fragment - stop here whether or not name_lines is empty yet.
                 break
             name_lines.insert(0, line)
             m -= 1
@@ -224,23 +200,13 @@ def parse(dense_raw, footer_events=None):
             continue
 
         name = " ".join(name_lines).strip()
-        # The longest genuine headword in the book's own index is 55
-        # characters ("Long-Distance Universal Travel/Puncture Reality
-        # Barrier"). A "name" run past ~60 only happens when several lines
-        # of body prose with no terminal punctuation got swept in (a
-        # multi-paragraph description broken by a page/column boundary
-        # mid-sentence, or a second sphere-line variant this book uses a
-        # non-canonical sphere synonym for - "Dimensional Science" - that
-        # never anchored in the first place). Treat it as a failed
-        # resolution rather than shipping a garbled name.
+        # A resolved name longer than 60 characters is a failed resolution (the longest genuine
+        # headword in the book's own index is 55).
         if len(name) > 60:
             skipped_anchors.append((line_nos[i], texts[i], f"resolved name implausibly long ({len(name)} chars): {name[:70]!r}"))
             continue
-        # A real headword can lead with a digit ("108 Plum Blossoms," a real
-        # index entry), but a digit appearing anywhere else in a resolved
-        # name is always noise - a glued-on page footer or an unanchored
-        # sphere-line fragment absorbed as text (both real, observed
-        # failure shapes here), never part of an actual rote name.
+        # A real headword can lead with a digit ("108 Plum Blossoms"); a digit anywhere else in a
+        # resolved name is noise.
         if re.search(r"\d", re.sub(r"^\d+\s+", "", name)):
             skipped_anchors.append((line_nos[i], texts[i], f"resolved name contains a stray digit: {name!r}"))
             continue

@@ -10,15 +10,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 U4: a plot entry's own audience - `plot` (public, the default), `storytellers`
- * (private - Storytellers, Narrators, and the entry's own author), or `characters` (a
- * Storyteller post directed to specific characters' players, never reachable by a player).
- *
- * These tests fail against pre-U4 code: `Plot_Entry::create()`/`update()` never read
- * `audience`/`audience_character_ids` at all, and `Entries_Controller::get_items()` applied
- * no audience filtering beyond the pre-existing note-type strip.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §2.4, U4
+ * A plot entry's own audience.
  */
 class EntryAudienceThreadTest extends WP_UnitTestCase {
 
@@ -67,7 +59,9 @@ class EntryAudienceThreadTest extends WP_UnitTestCase {
 		return rest_get_server()->dispatch( $request );
 	}
 
-	/** A manager-created global plot, visible to everyone (§2.1's simplest case to build on). */
+	/**
+	 * A manager-created global plot, visible to everyone.
+	 */
 	private function make_open_plot(): int {
 		$plot_id = (int) Plot::create( [
 			'game_id'    => $this->game_id,

@@ -1,7 +1,5 @@
 /**
- * 1.0.0-review F-078. A multiselect identity field holds a list. The signed sheet printed it as
- * the word "Array"; the on-screen sheet joined it with a bare comma, and showed an empty choice
- * as nothing at all. Both now print the choices the same way.
+ * A multiselect identity field prints its choices the same way on the signed sheet and the on-screen sheet.
  */
 import { identityValueText } from './identityValue';
 

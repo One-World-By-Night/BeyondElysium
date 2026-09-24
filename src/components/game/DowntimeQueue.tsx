@@ -1,7 +1,5 @@
 /**
- * Storyteller Toolkit: the downtime queue (1.1.0 §3.3) - a game date's window, and one row
- * per action plot for that date, unanswered first, each with its own staff-assignment picker
- * (§3.6).
+ * Storyteller Toolkit: the downtime queue.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -38,7 +36,9 @@ const WINDOW_STATE_LABELS: Record< string, string > = {
 	closed: __( 'Closed', 'beyond-elysium' ),
 };
 
-/** "closes in 3 days" / "closed 2 days ago" from a deadline string, or null with nothing to say. */
+/**
+ * "closes in 3 days" / "closed 2 days ago" from a deadline string, or null with nothing to say.
+ */
 function relativeDeadline( deadline: string | null ): string | null {
 	if ( ! deadline ) {
 		return null;

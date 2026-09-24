@@ -10,12 +10,10 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-062 (Pass H intake `t3-models`, High and Low). "Storyteller-only" was answered
- * for the whole install: one chronicle marking its own copy of Abilities Storyteller-only hid
- * Abilities from every player of every chronicle on the site - F-012's outage, by another road.
- * A chronicle's own copy of a block now decides for that chronicle alone, and the shared block
- * for everyone without one. A chronicle's first copy of a Storyteller-only block was also made
- * as not Storyteller-only.
+ * The Storyteller-only scope of a chronicle's copy of a block: one chronicle hiding its own copy hides nothing
+ * elsewhere, a chronicle that opens its own copy of a hidden block opens it there only, a chronicle's first copy of a
+ * hidden block stays hidden, the upgrade keeps an old copy of a hidden block hidden once, and the sheet layout follows
+ * the same chronicle scope.
  */
 class StorytellerOnlyForkScopeThreadTest extends WP_UnitTestCase {
 
@@ -79,10 +77,7 @@ class StorytellerOnlyForkScopeThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Every copy made before this release started as not Storyteller-only, which never mattered
-	 * while the shared block's flag won everywhere. Now that a copy decides for its chronicle, an
-	 * old copy of a hidden block would show it to that chronicle's players; the upgrade carries the
-	 * flag over once, so nothing hidden today appears.
+	 * An existing copy starts as not Storyteller-only; the upgrade carries the hidden flag onto it once.
 	 */
 	public function test_the_upgrade_keeps_an_old_copy_of_a_hidden_block_hidden_once(): void {
 		global $wpdb;

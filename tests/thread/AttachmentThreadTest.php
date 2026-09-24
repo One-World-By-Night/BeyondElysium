@@ -14,12 +14,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 U6: file uploads on a plot, item, or location - private storage, per-entity limits,
- * MIME validation from real file content, and a download route that checks the owning
- * entity's audience on every request. `stored_name` (the file's real path on disk) must never
- * reach a client through any response this file's own tests touch.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §2.6, U6
+ * File uploads on a plot, item, or location.
  */
 class AttachmentThreadTest extends WP_UnitTestCase {
 
@@ -89,7 +84,9 @@ class AttachmentThreadTest extends WP_UnitTestCase {
 		] );
 	}
 
-	/** A player-owned plot (linked plot_owner, §2.3a) via the real create route. */
+	/**
+	 * A player-owned plot (linked plot_owner) via the real create route.
+	 */
 	private function make_owned_plot( int $owner_player ): int {
 		$character_id = $this->make_character( $owner_player );
 		wp_set_current_user( $owner_player );
@@ -121,12 +118,14 @@ class AttachmentThreadTest extends WP_UnitTestCase {
 		return rest_get_server()->dispatch( $request );
 	}
 
-	/** A real, valid PNG - generated with GD rather than hand-written bytes, so it genuinely passes wp_check_filetype_and_ext(). */
+	/**
+	 * A real, valid PNG - generated with GD.
+	 */
 	private function real_png_path(): string {
 		$path  = tempnam( sys_get_temp_dir(), 'be-test-png-' );
 		$image = imagecreate( 2, 2 );
 		imagecolorallocate( $image, 255, 0, 0 );
-		imagepng( $image, $path ); // GdImage frees itself; no imagedestroy() needed since PHP 8.
+		imagepng( $image, $path );
 		$this->written_paths[] = $path;
 		return $path;
 	}
@@ -149,9 +148,6 @@ class AttachmentThreadTest extends WP_UnitTestCase {
 		$request->set_file_params( $this->fake_file_params( $path ?? $this->real_png_path() ) );
 		$response = $this->dispatch( $request );
 
-		// A successful upload writes a real file that a test-DB rollback never touches (files
-		// live outside any transaction) - tracked here, by the real stored path, so tearDown()
-		// removes it regardless of whether the test itself ever calls the delete route.
 		if ( $response->get_status() === 201 ) {
 			$row = Attachment::find( (int) $response->get_data()['id'] );
 			if ( $row ) {
@@ -261,7 +257,7 @@ class AttachmentThreadTest extends WP_UnitTestCase {
 			'tmp_name' => $path,
 			'name'     => 'huge.png',
 			'error'    => 0,
-			'size'     => 11 * 1024 * 1024, // the claimed size, exactly what PHP's own SAPI would report for a real 11MB upload
+			'size'     => 11 * 1024 * 1024,
 			'type'     => 'image/png',
 		] ] );
 
@@ -281,8 +277,6 @@ class AttachmentThreadTest extends WP_UnitTestCase {
 
 	public function test_a_plot_may_hold_up_to_twenty_attachments(): void {
 		$plot_id = $this->make_open_plot();
-		// 20 rows seeded directly - proving the limit-check logic itself, not re-uploading 20
-		// real files for a check that reads only Attachment::count_for_entity().
 		for ( $i = 0; $i < 20; $i++ ) {
 			Attachment::create( [
 				'game_id'       => $this->game_id,

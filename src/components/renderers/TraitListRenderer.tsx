@@ -1,8 +1,5 @@
 /**
- * Renders a trait_list schema block (Merits, Abilities, Backgrounds,
- * ...): each held trait formatted through `displayTrait()`, optionally
- * grouped by category or by a nested field, and optionally alphabetized.
- * Renders a "None" placeholder when the list is empty.
+ * Renders a trait_list schema block (Merits, Abilities, Backgrounds,...).
  */
 import { __ } from '@wordpress/i18n';
 import {
@@ -20,9 +17,13 @@ export interface TraitListRendererProps {
 	blockSlug: string;
 	data: Trait[];
 	definition: TraitListDefinition;
-	/** Template section override. Null falls through to the block's own default. */
+	/**
+	 * Template section override.
+	 */
 	display: DisplayType | null;
-	/** Whether a count_is_cost block's flat XP price is shown at all (1.2.11 D94). Unset shows it. */
+	/**
+	 * Whether a count_is_cost block's flat XP price is shown at all.
+	 */
 	showCost?: boolean;
 }
 
@@ -31,7 +32,9 @@ interface TraitGroup {
 	traits: Trait[];
 }
 
-/** Resolves the display mode: the template section's override, then the block's own default, then 'simple'. */
+/**
+ * Resolves the display mode: the template section's override.
+ */
 export function resolveDisplay(
 	sectionDisplay: DisplayType | null,
 	blockDisplay: DisplayType | undefined
@@ -40,17 +43,7 @@ export function resolveDisplay(
 }
 
 /**
- * Resolves the display mode a whole trait_list section renders at: `resolveDisplay()` for
- * every ordinary block, and never `resolveDisplay()` for a `count_is_cost` one.
- *
- * 1.2.11 D94: a `count_is_cost` block (Combo Disciplines) stores a flat XP price in the
- * field every other block stores a rating in, so handing it to a rating display prints a
- * price as dots or as a bare number with no unit. The price is therefore always labelled
- * - `Draw Fire (12 XP)` - whatever `display` the block or template section carries. The
- * viewer preference chooses only whether the price is shown; hidden, the number is
- * dropped entirely rather than falling back to a rating.
- *
- * The PHP twin is `Trait_Grouping::resolve_mode()`, proven against the same fixture.
+ * Resolves the display mode a whole trait_list section renders at: `resolveDisplay()` for every ordinary block.
  */
 export function resolveTraitListMode(
 	definition: TraitListDefinition,
@@ -65,19 +58,14 @@ export function resolveTraitListMode(
 
 /**
  * Whether a trait_list section groups and alphabetizes its held entries at all.
- * False only for a player_order block (1.1.0 D4): its held entries render in
- * their stored array order - no alphabetizing, no field/category grouping. The
- * player's own order is their grouping.
  */
 export function groupsAndSorts( definition: TraitListDefinition ): boolean {
 	return ! definition.player_order;
 }
 
 /**
- * Group held traits by `definition.categories`, in that array's order, by looking each
- * trait's catalog entry up in `definition.items` for its `category`. Uncategorized or
- * unrecognized-category traits land in a trailing "Other" bucket rather than vanishing.
- * A block with no `categories` renders flat.
+ * Group held traits by `definition.categories`, in that array's order, by looking each trait's catalog entry up in
+ * `definition.items` for its `category`.
  */
 export function groupByCategory(
 	data: Trait[],
@@ -132,9 +120,7 @@ export function sortIfAlphabetized(
 }
 
 /**
- * Swaps a held trait's display name for its catalog translation, when the site is
- * Portuguese and one exists (i18n-pt-br-design.md) - a display-only copy, never mutating
- * the trait's own `name` (still the canonical value every sort/key/lookup above uses).
+ * Swaps a held trait's display name for its catalog translation, when the site is Portuguese and one exists.
  */
 function localizeTraitForDisplay(
 	trait: Trait,
@@ -148,11 +134,7 @@ function localizeTraitForDisplay(
 }
 
 /**
- * Renders a trait_list section. Every trait goes through `displayTrait()` at the
- * resolved display mode. An empty list still renders its "None" placeholder rather than
- * disappearing - a blank Merits section is information, not nothing.
- *
- * Creature-agnostic: nothing here branches on stack_slug or block_slug identity.
+ * Renders a trait_list section.
  */
 export function TraitListRenderer( {
 	blockSlug,

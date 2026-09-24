@@ -1,11 +1,5 @@
 /**
  * Structured definition editor for a schema block's section_type payload.
- *
- * Dispatches to one of four type-specific sub-editors (trait list, tiered
- * power, resource pool, identity field) based on the block's section type,
- * with a collapsible raw-JSON fallback for shapes the structured editors
- * don't fully cover. Exports SchemaBlockDefinitionEditor as the entry
- * point used by the Schema Blocks admin page.
  */
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -32,21 +26,15 @@ import HelpButton from '../shared/HelpButton';
 const APPROVAL_LEVELS: ApprovalLevel[] = [ 'auto', 'st' ];
 import './Admin.css';
 
-/** Empty check across all three CatalogDescription sections, for the trigger button's "(set)" indicator. */
+/**
+ * Empty check across all three CatalogDescription sections, for the trigger button's "(set)" indicator.
+ */
 function hasAnyDescriptionSection( value?: CatalogDescription ): boolean {
 	return !! ( value?.reference || value?.description || value?.source );
 }
 
 /**
- * A per-row trigger that opens a modal rich-text editor for one catalog
- * item's/power's/level's `description` - a site-wide (global-admin-editable,
- * never per-chronicle by default), sanitized-server-side note divided into
- * three independent sections (reference, description, source) rather than
- * one blob. A modal rather than an inline editor deliberately: a block like
- * `vampire-rituals` or `mage-rotes` renders hundreds of rows at once, and
- * mounting live TinyMCE instances per row would be a real performance
- * problem - only one modal, and therefore only three TinyMCE instances at
- * most, is ever mounted at a time.
+ * A per-row trigger that opens a modal rich-text editor for one catalog item's/power's/level's `description`.
  */
 function DescriptionEditorButton( {
 	label,
@@ -176,11 +164,8 @@ function DescriptionEditorButton( {
 }
 
 /**
- * A per-row trigger that opens a modal editor for a numeric per-value
- * approval schedule ("reaching 4 or 5 needs Storyteller approval") - used by
- * both trait_list items (keyed on count) and resource_pool pools (keyed on
- * the permanent value). A modal for the same row-count reason
- * DescriptionEditorButton uses one.
+ * A per-row trigger that opens a modal editor for a numeric per-value approval schedule ("reaching 4 or 5 needs
+ * Storyteller approval").
  */
 function ApprovalByValueEditorButton( {
 	label,
@@ -392,11 +377,8 @@ function ApprovalByValueEditorButton( {
 }
 
 /**
- * A per-row trigger that opens a modal editor for a per-option approval
- * schedule on an identity_field (e.g. picking "Antediluvian" needs
- * Coordinator approval) - one row per option the field currently declares,
- * so the schedule can never carry an orphaned key for an option that no
- * longer exists.
+ * A per-row trigger that opens a modal editor for a per-option approval schedule on an identity_field (e.g. picking
+ * "Antediluvian" needs Coordinator approval).
  */
 function ApprovalByOptionEditorButton( {
 	label,
@@ -587,11 +569,8 @@ export interface SchemaBlockDefinitionEditorProps {
 }
 
 /**
- * Renders the definition editor for one schema block, choosing the
- * matching structured sub-editor for the block's section type and keeping
- * a raw JSON textarea in sync with whatever the structured editor
- * produces. The raw JSON view stays available behind a collapsible toggle
- * for manual edits.
+ * Renders the definition editor for one schema block, choosing the matching structured sub-editor for the block's
+ * section type and keeping a raw JSON textarea in sync with whatever the structured editor produces.
  */
 export function SchemaBlockDefinitionEditor( {
 	sectionType,
@@ -605,9 +584,7 @@ export function SchemaBlockDefinitionEditor( {
 	const [ rawError, setRawError ] = useState< string | null >( null );
 
 	/**
-	 * Parses the raw JSON textarea and, if valid, applies it as the new
-	 * section definition. Leaves the current definition untouched and shows
-	 * an error message when the input isn't valid JSON.
+	 * Parses the raw JSON textarea and, if valid, applies it as the new section definition.
 	 */
 	function applyRaw() {
 		try {
@@ -622,9 +599,8 @@ export function SchemaBlockDefinitionEditor( {
 	}
 
 	/**
-	 * Applies a definition produced by one of the structured sub-editors and
-	 * re-serializes it into the raw JSON textarea, keeping the two views in
-	 * sync with each other.
+	 * Applies a definition produced by one of the structured sub-editors and re-serializes it into the raw JSON textarea,
+	 * keeping the two views in sync with each other.
 	 */
 	function syncRawFromStructured( next: Record< string, unknown > ) {
 		onChange( next );
@@ -701,16 +677,7 @@ export function SchemaBlockDefinitionEditor( {
 // ---------------------------------------------------------------------------
 
 /**
- * One of the three faceting fields on a catalog item - `group`, `subgroup`, `tier` -
- * as a free-text box backed by a datalist of every value already used in this block
- * (1.2.9 U6a, D73).
- *
- * Free text rather than a fixed `<select>`, deliberately: these fields hold real,
- * open-ended catalog vocabulary (29 Werewolf gift groups, 66 Fera subgroups) that a
- * chronicle may legitimately extend, and a closed list would make a new species or a
- * house rule unenterable. The datalist gives the safety of a picker without the
- * ceiling - which is what D71 actually needs, since its four broken tribe names are
- * near-misses (`Bone Gnawers` for `Bone Gnawer`), not missing vocabulary.
+ * One of the three faceting fields on a catalog item.
  */
 function CatalogFacetInput( {
 	field,
@@ -737,8 +704,6 @@ function CatalogFacetInput( {
 
 	return (
 		<>
-			{ /* One datalist per field for the whole table, not one per row - a block with
-			 * 865 items would otherwise mount 865 copies of the same option list. */ }
 			{ index === 0 && (
 				<datalist id={ listId }>
 					{ options.map( ( option ) => (
@@ -753,8 +718,7 @@ function CatalogFacetInput( {
 				value={ item[ field ] ?? '' }
 				onChange={ ( e ) =>
 					onChange( index, {
-						// Empty means "not set", never a stored empty string - a blank
-						// group must not become a group of its own in a picker.
+						// Empty means "not set", never a stored empty string.
 						[ field ]: e.target.value.trim() || undefined,
 					} )
 				}
@@ -764,10 +728,7 @@ function CatalogFacetInput( {
 }
 
 /**
- * Structured editor for a trait_list section definition. Renders the
- * global flags (multiples, custom entries, alphabetize, negative list,
- * atomic, max per item) and an add/edit/remove table of individual trait
- * items, each with a cost, category, and description.
+ * Structured editor for a trait_list section definition.
  */
 function TraitListEditor( {
 	definition,
@@ -812,13 +773,6 @@ function TraitListEditor( {
 		} as unknown as Record< string, unknown > );
 	}
 
-	/*
-	 * 1.2.9 U6a (D73): every distinct value already in this block, offered back as a
-	 * datalist. Grouping is only as good as the strings agreeing with each other -
-	 * `Bone Gnawers` against a gift group of `Bone Gnawer` is D71, the single largest
-	 * gift group matching nothing at all. Picking from what is already there is how a
-	 * Storyteller avoids minting a forty-fifth spelling by hand.
-	 */
 	const existing = ( field: 'group' | 'subgroup' | 'tier' ): string[] =>
 		Array.from(
 			new Set(
@@ -912,10 +866,6 @@ function TraitListEditor( {
 					items.length
 				) }
 			</h3>
-			{ /* U6a: three more columns on an already-wide table. `be-table-box` +
-			 * `be-responsive-table` is this codebase's established answer (1.0.0-review
-			 * F-019) - each row stacks into a card below 960px rather than scrolling
-			 * sideways, which it would now certainly do on a phone. */ }
 			<div className="be-table-box">
 				<table className="be-def-editor__table be-responsive-table">
 					<thead>
@@ -1016,11 +966,6 @@ function TraitListEditor( {
 										}
 									/>
 								</td>
-								{ /* U6a (D73): group / subgroup / tier. All three are typed on
-								 * TraitListItem and carry real values on all 865 Fera gifts and
-								 * all 510 Werewolf ones, and until now no screen could edit any
-								 * of them - so every wrong value was a seeder change and a
-								 * release. U4's grouping is only as good as these strings. */ }
 								<td
 									data-label={ __(
 										'Group',
@@ -1192,10 +1137,7 @@ function TraitListEditor( {
 // ---------------------------------------------------------------------------
 
 /**
- * Structured editor for a tiered_power section definition. Renders global
- * flags (sequential levels, out-of-type cost modifier) and an add/edit/
- * remove list of power families, each with its own nested table of levels
- * (level number, tier, power name, cost).
+ * Structured editor for a tiered_power section definition.
  */
 function TieredPowerEditor( {
 	definition,
@@ -1268,9 +1210,7 @@ function TieredPowerEditor( {
 		} );
 	}
 
-	// Blood magic (BE_PROCESS/releases/0.99.2-workflow.md): the block-level list a player's
-	// Tradition picker offers - see TieredPowerEditor.tsx's traditionOptionsFor(), which
-	// narrows further to a specific power's own offering traditions when it has one.
+	// Blood magic: the block-level list a player's Tradition picker offers.
 	const traditions = definition.traditions ?? [];
 
 	function updateTradition( index: number, value: string ) {
@@ -1291,10 +1231,6 @@ function TieredPowerEditor( {
 		);
 	}
 
-	// A power's own traditions map (Record<tradition, alternate-name|null>) is edited as
-	// an ordered array of [tradition, alternate] pairs, then reduced back to the object
-	// shape on every change - simpler to render as a list than an object whose own keys
-	// are being renamed live.
 	function powerTraditionPairs(
 		power: TieredPower
 	): Array< [ string, string | null ] > {
@@ -1857,10 +1793,7 @@ function TieredPowerEditor( {
 // ---------------------------------------------------------------------------
 
 /**
- * Structured editor for a resource_pool section definition. Renders an
- * add/edit/remove table of pools, each with a value type, default/min/max/
- * step values, and an optional name-lookup table that overrides the pool's
- * displayed name based on another block's field value.
+ * Structured editor for a resource_pool section definition.
  */
 function ResourcePoolEditor( {
 	definition,
@@ -1892,12 +1825,7 @@ function ResourcePoolEditor( {
 	}
 
 	/**
-	 * The next four helpers manage a pool's optional name-lookup table, which
-	 * overrides the pool's display name by reading a value from another
-	 * schema block (for example, showing "Conviction" instead of "Morality"
-	 * when a character's identity field selects that option). They keep the
-	 * keyed-by block/field reference and the value-to-label table in sync as
-	 * rows are added, edited, or removed.
+	 * The next four helpers manage a pool's optional name-lookup table.
 	 */
 	function setLookupKeyedBy(
 		index: number,
@@ -2290,10 +2218,7 @@ function ResourcePoolEditor( {
 // ---------------------------------------------------------------------------
 
 /**
- * Structured editor for an identity_field section definition. Renders an
- * add/edit/remove table of fields, each with a name, field type, required
- * flag, and a comma-separated options list used by the select and
- * multiselect field types.
+ * Structured editor for an identity_field section definition.
  */
 function IdentityFieldEditorAdmin( {
 	definition,

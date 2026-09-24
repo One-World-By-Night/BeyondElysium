@@ -1,22 +1,20 @@
 #!/usr/bin/env python3
-"""Emits 1.3.0's declared catalog files from the local seeded catalog plus the rulings in
+"""Emits the declared catalog files from the local seeded catalog plus the rulings in
 `rulings.py`.
 
     tools/catalog/dump_live.sh            # local be_dev -> tools/catalog/out/live
     tools/catalog/emit_catalog.py         # -> beyond-elysium/data/catalog/**
 
 Offline tooling (not shipped, not run by bin/verify), same standing as tools/grimoire/.
-`bin/validate-catalog` is the acceptance gate for everything it writes.
+`bin/validate-catalog` validates everything it writes.
 
-What it does NOT write, deliberately:
+What it does not write:
 
-* the five blocks 1.3.1 authors in parallel (`catalog_io.NOT_OURS`);
-* `mortal-numina` - a container that re-surfaces other blocks' menus, 1,729 levels of which
-  are overflow no ruling here can empty. It is built into `out/` with its D6/D7 cleanup
-  applied and measured, and stays out of `data/catalog/` until it can validate;
-* any stack or template that references a block file which does not exist yet (the
-  Vampire, Mage and Kuei-Jin lines, whose power blocks are 1.3.1's). They are written to
-  `out/pending/` and emitted by re-running this script after 1.3.1 merges.
+* the blocks `catalog_io.NOT_OURS` names, which have their own builders;
+* `mortal-numina` - a container that re-surfaces other blocks' menus. It is built into
+  `out/mortal-numina.pending.json` with its cleanup applied and measured;
+* any stack or template that references a block file which does not exist. They are written to
+  `out/pending/`.
 """
 
 import copy
@@ -142,7 +140,7 @@ def measure(powers):
     return {'families': len(powers), 'rungs': rungs, 'picks': picks, 'overflow': over, 'unknown': unknown}
 
 
-# --- Werewolf rites (D4) --------------------------------------------------------------------
+# --- Werewolf rites -------------------------------------------------------------------------
 
 def emit_werewolf_rites():
     rpath = io.SAMPLES / 'research' / 'fera' / 'resolved.json'
@@ -172,8 +170,8 @@ def emit_werewolf_rites():
         if note == 'minor':
             it['cost'] = None  # bought with the Rites Background, two per dot (LotW Revised)
         items.append(it)
-    # The ten category submenus of "Rites, Werewolf" - never seeded, priced in the GVM except
-    # Minor, which is correctly unpriced (bought with the Rites Background).
+    # The ten category submenus of "Rites, Werewolf", priced in the GVM except Minor, which is
+    # unpriced (bought with the Rites Background).
     menus = gvm_menus()
     tier_of = {'basic': 'basic', 'int.': 'intermediate', 'adv.': 'advanced'}
     by_key = {(io.norm(i['name']), i['group']): i for i in items}
@@ -188,8 +186,8 @@ def emit_werewolf_rites():
             row = by_key[key]
             row['category'] = row.get('category') or category
             return
-        # Section 5.1 rule 1: the same rite under a tribal menu and a category menu, at the same
-        # cost and tier, is one entry - the category joins it and the tribe stays its group.
+        # The same rite under a tribal menu and a category menu, at the same cost and tier, is one
+        # entry: the category joins it and the tribe stays its group.
         same = [r for (n, _), r in by_key.items() if n == io.norm(it.get('name'))
                 and r['cost'] == it.get('cost') and r['tier'] == tier_of.get((it.get('note') or '').split(',')[0].split(' ')[0])]
         if same:
@@ -321,7 +319,7 @@ def emit_changeling():
              section_type='trait_list')
     REPORT['changeling-stigmas'] = {'items': len(st_items), 'moved_from_arts': len(stig_src['levels']) + len(stig_src.get('overflow') or [])}
 
-    # Realms (D8): an untiered track, flat 2 per level - declared, not reached by fallback.
+    # Realms: an untiered track, flat 2 per level.
     blk = live('changeling-realms')
     d = blk['definition']
     before = measure(d['powers'])
@@ -338,7 +336,7 @@ def emit_changeling():
     REPORT['changeling-realms'] = {'before': before, 'after': measure(powers)}
 
 
-# --- Wraith (D1) ---------------------------------------------------------------------------
+# --- Wraith --------------------------------------------------------------------------------
 
 def wraith_family(p, packet, spelling, costs):
     """One Arcanos laid out on the packet's 2/2/1 with every book power kept."""
@@ -410,7 +408,7 @@ def emit_wraith():
                 continue
             by_name_all = {io.norm(x['power_name']): x for x in p['levels'] + (p.get('overflow') or [])}
             if name in R.WRAITH_SPLIT_FAMILIES:
-                # Owner ruling: two families sharing their opening rungs, not one ladder.
+                # Two families sharing their opening rungs, not one ladder.
                 for fam_name, rungs, evidence in R.WRAITH_SPLIT_FAMILIES[name]:
                     missing = [r for r in rungs if io.norm(r) not in by_name_all]
                     if missing:
@@ -451,8 +449,8 @@ def emit_wraith():
              notes='Owner ruling 2026-09-21 (1.3.0 D1): the book is the base, the packet ships as the owbn-wraith_arcanoi variant. Evidence per family: tools/catalog/rulings.py (WRAITH_*).')
     REPORT['wraith-arcanoi'] = {'before': before, 'after': measure(base)}
 
-    # The OWBN variant: the packet literally, at the packet's prices. Innate Abilities come
-    # "at no additional cost" with the first Basic (OWBN0124 PDF p. 3) - a real 0, not a stand-in.
+    # The OWBN variant: the packet literally, at the packet's prices. Innate Abilities come "at no
+    # additional cost" with the first Basic - a real 0, not a stand-in.
     pk_costs = {'innate': 0, 'basic': 4, 'intermediate': 7, 'advanced': 10}
     variant = build(pk_costs, True)
     meta = io.meta(ranks, ladder, pk_costs, out_of_type=guild)
@@ -465,7 +463,7 @@ def emit_wraith():
     REPORT['owbn-wraith_arcanoi'] = measure(variant)
 
 
-# --- Mummy (D5, D6) --------------------------------------------------------------------------
+# --- Mummy -----------------------------------------------------------------------------------
 
 def emit_mummy():
     blk = live('mummy-hekau')
@@ -485,15 +483,11 @@ def emit_mummy():
             if re.fullmatch(r'(first|second) (basic|intermediate)|advanced', pname.lower()):
                 continue  # a generic rung name inside the second-edition menu
             if pname == 'Intermediate Weather Magic I' and note == 'int.':
-                # Mis-noted in the GVM: its siblings are "Basic Weather Magic I/II" (first/second
-                # basic ritual), "Intermediate Weather Magic II" (second int. ritual) and
-                # "Advanced Weather Magic" (adv. ritual) - Laws of the Resurrection p. 141-149
-                # prints Weather Magic as Celestial rituals at each tier. It is the first int. ritual.
+                # The first intermediate ritual, though the GVM notes it only 'int.'.
                 note = 'first int. ritual'
             if note in ('basic', 'int.', 'adv.'):
                 # A second-edition dot name (Ren-Hekau's "Simple Names", Celestial's "Touch the
-                # Air"): priced 3/6/9 and noted by tier alone - rung-shaped, exactly the 40
-                # 1.2.10 A4 calls "the real Hekau ladder". It names that path's rung.
+                # Air"): priced 3/6/9 and noted by tier alone, so it names that path's rung.
                 dot_names.setdefault(path, []).append(({'basic': 'basic', 'int.': 'intermediate', 'adv.': 'advanced'}[note], pname))
                 continue
             if note == 'master':
@@ -676,8 +670,8 @@ def emit_gifts():
         return c
 
     def fe_resolved(i):
-        # The species' own resolved bucket wins (Sense Silver is Basic for Garou, Intermediate
-        # for Bastet - Changing Breeds 1 p. 176); otherwise only an unambiguous tier is taken.
+        # The species' own resolved bucket wins (Sense Silver is Basic for Garou, Intermediate for
+        # Bastet); otherwise only an unambiguous tier is taken.
         by_sp = resolved.get(io.norm(i['name']), {})
         own = by_sp.get((i.get('group') or '').lower())
         if own and len(own) == 1:
@@ -707,9 +701,9 @@ def emit_gifts():
         REPORT[slug] = {'families': len(fams_v), 'gifts': sum(len(v) for f in fams_v for v in f['elder'].values())}
 
 
-# --- Abilities per stack (D81) ------------------------------------------------------------------
+# --- Abilities per stack ------------------------------------------------------------------------
 
-GVM = io.CODE_ROOT / 'beyond-elysium' / 'data' / 'Grapevine Menus XML.gvm'
+GVM = io.CODE_ROOT / 'tools' / 'catalog' / 'source' / 'Grapevine Menus XML.gvm'
 
 
 def gvm_menus():
@@ -762,7 +756,7 @@ def lore_specializations(menus, lores_menu):
 def emit_abilities():
     import csv
     menus = gvm_menus()
-    rows = [r for r in csv.reader(open(io.CODE_ROOT / 'beyond-elysium' / 'data' / 'met-mechanics.csv'))
+    rows = [r for r in csv.reader(open(io.CODE_ROOT / 'tools' / 'catalog' / 'source' / 'met-mechanics.csv'))
             if len(r) > 15 and r[2] == 'Ability']
     base_def = live('met-abilities')['definition']
     report = {}
@@ -811,7 +805,7 @@ def emit_abilities():
         multiples = 0
         for it in items:
             if it['name'] in R.ABILITY_MULTIPLES:
-                it['allow_multiples'] = True   # the label is part of the holding's identity (1.2.11)
+                it['allow_multiples'] = True   # the label is part of the holding's identity
                 multiples += 1
         meditation = index.get(io.norm('Meditation'))
         if meditation is not None:
@@ -837,7 +831,7 @@ def emit_abilities():
         old.unlink()
 
 
-# --- Merits and Flaws per stack (D82) ------------------------------------------------------------
+# --- Merits and Flaws per stack ------------------------------------------------------------------
 
 def clean_cost(cost, entry=None):
     """A research file's cost as the catalog's free-text cost ("2", "1-3", "2 or 4"), or None.
@@ -912,7 +906,7 @@ def merit_menu_items(menus, name, own=True):
 def emit_merits():
     import csv
     menus = gvm_menus()
-    rows = [r for r in csv.reader(open(io.CODE_ROOT / 'beyond-elysium' / 'data' / 'met-mechanics.csv'))
+    rows = [r for r in csv.reader(open(io.CODE_ROOT / 'tools' / 'catalog' / 'source' / 'met-mechanics.csv'))
             if len(r) > 15 and r[2] in ('Merit', 'Flaw')]
     report, unruled = {}, []
     for stack, (merit_menu, flaw_menu) in R.MERIT_MENUS.items():
@@ -947,7 +941,7 @@ def emit_merits():
                 return it
 
             # Most specific first: the creature menu's own items and submenus, then what its
-            # includes bring in (generic last), so a creature price beats the generic one.
+            # includes bring in (generic last).
             flat = merit_menu_items(menus, menu)
             own = [x for x in flat if x[2] != generic]
             gen = [x for x in flat if x[2] == generic]
@@ -1017,9 +1011,9 @@ def emit_merits():
 # --- Existing hand-built files ------------------------------------------------------------------
 
 def normalise_demon_evocations():
-    """demon-evocations.json was written before the runtime shape was settled: powers keyed by
-    name, `name` on each level and bare-string picks. Re-emit it as the TieredPowerDefinition
-    the engine reads (a list of families, `power_name`, pick objects) - content untouched."""
+    """Re-emits demon-evocations.json as the TieredPowerDefinition the engine reads (a list of
+    families, `power_name`, pick objects), content untouched. The file's own shape keys powers by
+    name, with `name` on each level and bare-string picks."""
     path = io.CATALOG / 'blocks' / 'demon-evocations.json'
     env = json.load(open(path), object_pairs_hook=OrderedDict)
     d = env['definition']
@@ -1045,8 +1039,7 @@ def normalise_demon_evocations():
 
 
 def emit_mage_rotes_meta():
-    """1.3.0 D8: Rotes declare their cost rule instead of relying on a no-tier fallback - one
-    XP per Sphere level invoked (1.2.10 S7)."""
+    """Rotes declare their cost rule: one XP per Sphere level invoked."""
     path = io.CATALOG / 'blocks' / 'mage-rotes.json'
     env = json.load(open(path), object_pairs_hook=OrderedDict)
     d = env['definition']
@@ -1055,7 +1048,7 @@ def emit_mage_rotes_meta():
     path.write_text(json.dumps(env, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
 
-# --- mortal-numina splits into real blocks (decision 8) -------------------------------------
+# --- mortal-numina splits into real blocks --------------------------------------------------
 
 NUMINA_TIERS = {'basic': 'basic', 'int.': 'intermediate', 'adv.': 'advanced'}
 NUMINA_COSTS = {'basic': 3, 'intermediate': 6, 'advanced': 9}
@@ -1078,10 +1071,10 @@ def numina_family_items(menus, menu_name):
 
 def emit_numina_split(menus):
     """Every Numina submenu that is real Mortal content becomes its own block; the five that
-    copy another stack's catalogue are referenced by the stack instead (decision 8)."""
+    copy another stack's catalogue are referenced by the stack instead."""
     formulae, residual, built = [], [], {}
-    # "Sorcery, Levels" carries no tier notes at all: five path levels then ten spell and ritual
-    # slots, in that order, which is the whole reason its 270 levels read as `unknown` before.
+    # "Sorcery, Levels" carries no tier notes: five path levels then ten spell and ritual slots, in
+    # that order.
     shared = [(it.get('name'), it.get('cost')) for it in menus['Sorcery, Levels'].findall('item')]
     generic_by_name = {io.norm(n): n for n, _ in shared}
     generic_cost = {io.norm(n): c for n, c in shared}
@@ -1109,9 +1102,8 @@ def emit_numina_split(menus):
                             for i, r in enumerate(R.NUMINA_GENERIC_RUNGS)]
                     extras = extras + [(n, c, note) for n, c, note in generic_extras]
                 elif slug in ('mortal-hedge-magic', 'mortal-theurgy'):
-                    # A short path: its named workings are still bought one at a time, so they
-                    # join the formulae list under their own group rather than being dropped or
-                    # padded out to a ladder the menu cannot fill.
+                    # A short path: its named workings are bought one at a time, so they join the
+                    # formulae list under their own group.
                     for tier, n, c, note in rungs:
                         formulae.append((slug, label, n, c, note or tier, link))
                     for n, c, note in extras:
@@ -1180,7 +1172,7 @@ def emit_numina_split(menus):
     return built, residual
 
 
-# --- mortal-numina: built, measured, not committed ----------------------------------------------
+# --- mortal-numina ------------------------------------------------------------------------------
 
 COMBO_TIER = re.compile(r'^[a-z\' ]+( \+ [a-z0-9\' ]+)+$')
 
@@ -1196,8 +1188,8 @@ def build_mortal_numina():
         for x in p['levels'] + (p.get('overflow') or []) + [y for v in (p.get('elder') or {}).values() for y in v]:
             t = x.get('tier') or ''
             if COMBO_TIER.match(t):
-                # D7: a combo Discipline's prerequisite list parked in the tier slot. It is a
-                # prerequisite, not a rank - moved to the note; the rank comes from its cost.
+                # A combo Discipline's prerequisite list parked in the tier slot is a prerequisite, not
+                # a rank: moved to the note; the rank comes from its cost.
                 x['note'] = ((x.get('note') or '') + f' (requires {t})').strip()
                 x['tier'] = {'3': 'basic', '6': 'intermediate', '9': 'advanced'}.get(str(x.get('cost')), 'unknown')
                 combo_fixed += 1
@@ -1229,27 +1221,22 @@ def build_mortal_numina():
 
 SECTION_ORDER = ['block_slug', 'label', 'display_order', 'required', 'replaces', 'in_type_source', 'negative_block_slug']
 STACK_ADDITIONS = {
-    # D5 moved every Mummy spell and ritual into mummy-formulae; without a section they would
-    # vanish from the sheet.
+    # Every Mummy spell and ritual lives in mummy-formulae, which needs a section of its own.
     'mummy': [{'block_slug': 'mummy-formulae', 'label': 'Spells and Rituals', 'display_order': 61, 'required': False}],
-    # Stigmas left changeling-arts (not an Art); they stay reachable as their own section.
+    # Stigmas are not an Art: they sit outside changeling-arts as a section of their own.
     'changeling': [{'block_slug': 'changeling-stigmas', 'label': 'Stigmas', 'display_order': 62, 'required': False}],
 }
-# new block -> (the section it follows, the stack that owns it). The stack matters: the Mortal
-# sheet now references changeling-realms for kinain, and must not inherit Changeling's Stigmas.
-# A full sheet shows everything its stack declares. `npc_quick` is the deliberate exception:
-# it is identity plus the quick-stat and roleplaying-note blocks by design, not a short sheet.
+# A full sheet shows everything its stack declares. `npc_quick` is the exception: it is identity
+# plus the quick-stat and roleplaying-note blocks.
 TEMPLATE_COMPLETE_TYPES = ('sheet_full', 'npc_full')
 
 
 def complete_template(layout, stack_sections, label_for):
     """Adds a row for every block the stack declares that the template does not show yet.
 
-    Hand-listing these (`mummy-formulae` after `mummy-hekau`, and so on) is what let
-    `kueijin-shintai` reach a stack but never a sheet: the block existed, the stack declared it,
-    and it rendered nowhere. Each missing block is placed after the row of the nearest stack
-    section that already appears before it, so it lands beside its own kind; with no such
-    anchor it goes to the shorter column.
+    Each missing block is placed after the row of the nearest stack section that already
+    appears before it, so it lands beside its own kind; with no such anchor it goes to the
+    shorter column.
     """
     rows = layout.get('sections', [])
     present = {r['block_slug'] for r in rows}
@@ -1288,7 +1275,7 @@ def stack_repoint(stack):
     out = {'met-abilities': R.ABILITY_BLOCK_FOR_STACK[stack],
            'met-merits': f'{m}-merits', 'met-flaws': f'{m}-flaws'}
     if stack in ('fera', 'bete'):
-        out['werewolf-rites'] = 'fera-rites'      # Fera rites are their own catalog (Decision 046)
+        out['werewolf-rites'] = 'fera-rites'      # Fera rites are their own catalog
     return out
 
 
@@ -1304,9 +1291,7 @@ def emit_stacks_and_templates(block_slugs):
         for s in sd['sections']:
             new_slug = repoint.get(s['block_slug'], s['block_slug'])
             sec = dict(s, block_slug=new_slug)
-            # 1.3.3 C1: the retired->declared mapping stack_repoint() already applies becomes
-            # real data on the section it repoints, not just an emitter-internal table - the
-            # cutover (Catalog_Cutover) and the re-key planner both read this, not the table.
+            # A repointed section records the retired block it replaces.
             if new_slug != s['block_slug']:
                 sec['replaces'] = [s['block_slug']]
             sections.append(io.ordered(sec, SECTION_ORDER))
@@ -1405,12 +1390,11 @@ def emit_presets():
 
 # --- Main -----------------------------------------------------------------------------------------
 
-# Pools the books price and the seed left unpriced (format section 4.4). Wraith Pathos ("two
-# Traits per experience point", Oblivion p. 165) is a sub-1-XP rate cost_per_dot cannot
-# express, and stays unpriced rather than rounded.
+# Pools the books price and the seed left unpriced. Wraith Pathos ("two Traits per experience
+# point") is a sub-1-XP rate cost_per_dot cannot express, and stays unpriced.
 POOL_PRICES = {
     'mummy-resources': (
-        # 1.3.0 D9 plus the two flat prices beside it.
+        # Sekhem and Willpower at a flat price per dot; Balance costs as many Experience Traits as the level.
         {'Sekhem': {'cost_per_dot': 3}, 'Willpower': {'cost_per_dot': 3},
          'Balance': {'sliding_cost': OrderedDict([('equals_level', True)])}},
         [LIVE_SOURCE, 'Laws of the Resurrection (WW05035) p. 116 - Sekhem 3, Willpower 3, '
@@ -1444,7 +1428,7 @@ def main():
             marked = 0
             for it in items:
                 if it['name'] in R.BACKGROUND_MULTIPLES:
-                    it['allow_multiples'] = True   # 1.3.2 asks "Who or what?" and keeps each as its own row
+                    it['allow_multiples'] = True   # the editor asks "Who or what?" and keeps each as its own row
                     marked += 1
             emit_trait_list(slug, items=items, sources=[LIVE_SOURCE] + ([
                 'OWBN Hunter: Inquisition Packet (2021) p. 7-8 - Mob, Reliquary, Status, Flock, via samples/research/hunter/mortal/resolved.json'] if slug == 'mortal-backgrounds' else []),
@@ -1476,7 +1460,7 @@ def main():
     emit_mummy()
     emit_gifts()
     emit_numina_split(gvm_menus())
-    for gone in ('demon-lores',):                    # decision 9: retired by demon-evocations
+    for gone in ('demon-lores',):                    # retired by demon-evocations
         f = io.CATALOG / 'blocks' / f'{gone}.json'
         if f.exists():
             f.unlink()

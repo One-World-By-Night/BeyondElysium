@@ -1,9 +1,7 @@
 import { batchApproval, toggleSelection } from './queueSelection';
 
 /**
- * 1.0.0-review F-101: Approve Selected looked each ticked change's review token up on the page
- * on screen, so a change ticked on another page went without one - and was approved however it
- * had been edited since.
+ * Approve Selected looked each ticked change's review token up on the page on screen.
  */
 describe( 'queueSelection', () => {
 	it( 'keeps the review token of the version each change was ticked on', () => {

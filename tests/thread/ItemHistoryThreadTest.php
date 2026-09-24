@@ -12,14 +12,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §3.12 items 3-4: an item's own history (`be_item_events`) and transferring it to a
- * new character. Written by a connection add/remove (`given`/`taken`), the transfer route
- * (`given`/`traded`/`stolen`/`lost`, as given), the use route (`used`, see
- * `ItemUsesThreadTest`), the copy route (`copied`, see `ItemCopyThreadTest`), a
- * `propose_world_object` approval (`proposed`), and a Storyteller editing uses or expiry
- * (`adjusted`). `GET .../events` is staff-only.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.12 items 3-4
+ * An item's own history (`be_item_events`) and transferring it to a new character.
  */
 class ItemHistoryThreadTest extends WP_UnitTestCase {
 
@@ -168,9 +161,6 @@ class ItemHistoryThreadTest extends WP_UnitTestCase {
 		$item_id  = $this->make_item();
 		$response = $this->transfer( $item_id, [ 'how' => 'lost', 'to_character_id' => $this->other_character_id ] );
 
-		// how=lost forces no recipient regardless - a request naming one anyway still transfers
-		// as lost with nobody holding it, per the design's own {to_character_id|null, how, note}
-		// shape (lost overrides any accidentally-included recipient rather than erroring).
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertSame( [], Connection::for_entity( 'world_object', $item_id ) );
 	}

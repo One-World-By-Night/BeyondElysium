@@ -13,12 +13,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-110 (found triaging F-020). Recording a transfer - a Storyteller sending a
- * character, or another chronicle's offer arriving - threw when its row failed to save, and
- * when a second transfer for the same character landed between the route's check and its write.
- * Neither route caught it, so the sender got a critical-error page and the site's administrator
- * a "technical issue" email. Nothing held two at once apart either: both could pass the check
- * and both write, leaving one character with two open transfers.
+ * (found triaging).
  */
 class TransferRowWriteThreadTest extends WP_UnitTestCase {
 
@@ -54,7 +49,9 @@ class TransferRowWriteThreadTest extends WP_UnitTestCase {
 		parent::tear_down();
 	}
 
-	/** Answers the host's verify callback through real REST dispatch; a send names no host. */
+	/**
+	 * Answers the host's verify callback through real REST dispatch.
+	 */
 	public function loopback( $preempt, $args, $url ) {
 		if ( strpos( $url, '/verify/' ) === false ) {
 			return $preempt;
@@ -67,7 +64,9 @@ class TransferRowWriteThreadTest extends WP_UnitTestCase {
 		];
 	}
 
-	/** Fails every insert into the transfers table, as a lost connection or lock timeout would. */
+	/**
+	 * Fails every insert into the transfers table, as a lost connection or lock timeout would.
+	 */
 	public function break_transfer_inserts( string $query ): string {
 		global $wpdb;
 		return preg_match( "/^\s*INSERT INTO `?{$wpdb->prefix}be_character_transfers`?/i", $query )
@@ -75,7 +74,9 @@ class TransferRowWriteThreadTest extends WP_UnitTestCase {
 			: $query;
 	}
 
-	/** The route's own check misses an offer, as it would one another request wrote a moment later. */
+	/**
+	 * The route's own check misses an offer, as it would one another request wrote a moment later.
+	 */
 	public function hide_the_open_offer_once( string $query ): string {
 		if ( $this->hidden_checks === 0 && preg_match( "/be_character_transfers WHERE character_uuid = .* AND direction = 'inbound'/", $query ) ) {
 			++$this->hidden_checks;
@@ -150,7 +151,6 @@ class TransferRowWriteThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_another_transfer_waits_while_one_is_checked_and_written(): void {
-		// A committed chronicle, so a second connection's lock attempt measures this write's hold.
 		$demo = Game::find_by_slug( 'be-demo' );
 		$this->assertNotNull( $demo, 'The demo chronicle is seeded.' );
 

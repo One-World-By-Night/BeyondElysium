@@ -1,8 +1,6 @@
 /**
- * SheetStyleEditor is the appearance-customization panel for one character's
- * sheet: font, accent/background/text colors, a background image, and a
- * per-section graphic picker. Saves each change immediately and reports the
- * resulting style back to the caller through onChange.
+ * SheetStyleEditor is the appearance-customization panel for one character's sheet: font, accent/background/text
+ * colors, a background image, and a per-section graphic picker.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -15,12 +13,16 @@ import './SheetStyleEditor.css';
 export interface SheetStyleEditorProps {
 	characterId: number;
 	gameSlug: string;
-	/** Block slugs actually on this sheet, for the per-section graphic pickers. */
+	/**
+	 * Block slugs actually on this sheet, for the per-section graphic pickers.
+	 */
 	blockSlugs: string[];
 	onChange: ( style: SheetStyle ) => void;
 }
 
-/** The curated font choices offered for a sheet; these values are written directly into CSS. */
+/**
+ * The curated font choices offered for a sheet.
+ */
 const FONT_CHOICES: { value: string; label: string }[] = [
 	{ value: '', label: __( 'Default', 'beyond-elysium' ) },
 	{ value: 'Georgia, serif', label: __( 'Georgia', 'beyond-elysium' ) },
@@ -49,10 +51,7 @@ const FONT_CHOICES: { value: string; label: string }[] = [
 ];
 
 /**
- * Renders the appearance-customization controls for one character's sheet: font,
- * accent/background/text color pickers, a background image picker, and a
- * per-section graphic picker for each block slug given. Each change saves
- * immediately through the sheet-style API.
+ * Renders the appearance-customization controls for one character's sheet.
  */
 export function SheetStyleEditor( {
 	characterId,

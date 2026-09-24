@@ -7,21 +7,21 @@ use BeyondElysium\Services\Trait_Identity;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.2.11 D86/D88 - the one rule every consumer reads: a held `trait_list` row's identity is
- * its `name` alone, unless the item (or, as a default, the block) carries `allow_multiples`,
- * in which case the specialization label is part of it.
- *
- * Also covers `Cost_Engine`'s own consumption of it (D88 consumer 2): pricing a change reads
- * the holding the change actually names, not the first row that happens to share its name.
+ * The one rule every consumer reads: a held `trait_list` row's identity is its `name` alone, unless the item (or, as
+ * a default, the block) carries `allow_multiples`, in which case the specialization label is part of it.
  */
 class TraitIdentityTest extends TestCase {
 
-	/** Real nested-stdClass shape, matching how Schema_Block::decode_definition() decodes. */
+	/**
+	 * Real nested-stdClass shape, matching how Schema_Block::decode_definition() decodes.
+	 */
 	private static function definition( array $data ) {
 		return json_decode( json_encode( $data ) );
 	}
 
-	/** Backgrounds-shaped: Retainers is repeatable, Generation is not. */
+	/**
+	 * Backgrounds-shaped: Retainers is repeatable, Generation is not.
+	 */
 	private static function backgrounds() {
 		return self::definition( [
 			'has_specializations' => true,
@@ -32,7 +32,9 @@ class TraitIdentityTest extends TestCase {
 		] );
 	}
 
-	/** Abilities-shaped: specializations, no multiples anywhere. */
+	/**
+	 * Abilities-shaped: specializations, no multiples anywhere.
+	 */
 	private static function abilities() {
 		return self::definition( [
 			'has_specializations' => true,
@@ -102,10 +104,12 @@ class TraitIdentityTest extends TestCase {
 	}
 
 	// -----------------------------------------------------------------------
-	// D88 consumer 2 - Cost_Engine prices the holding the change names
+	// Consumer 2 - Cost_Engine prices the holding the change names
 	// -----------------------------------------------------------------------
 
-	/** Two Retainers, Sue second: raising Sue must price Sue's own dots, not John's. */
+	/**
+	 * Two Retainers, Sue second: raising Sue must price Sue's own dots.
+	 */
 	public function test_raising_the_second_retainer_prices_that_retainer(): void {
 		$sheet = [ 'backgrounds' => [
 			[ 'name' => 'Retainers', 'count' => 3, 'specialization' => 'John Doe' ],
@@ -120,11 +124,13 @@ class TraitIdentityTest extends TestCase {
 			[ 'block_slug' => 'backgrounds', 'trait' => [ 'name' => 'Retainers', 'count' => 3, 'specialization' => 'Sue Smith' ] ]
 		);
 
-		// Sue goes 2 -> 3: one dot at 1 XP. Reading John's row instead would price 3 -> 3 = 0.
+		// Sue goes 2 -> 3: one dot at 1 XP.
 		$this->assertSame( 1, $cost );
 	}
 
-	/** Removing the second Retainer refunds that Retainer's dots, not the first one's. */
+	/**
+	 * Removing the second Retainer refunds that Retainer's dots.
+	 */
 	public function test_removing_the_second_retainer_prices_that_retainer(): void {
 		$sheet = [ 'backgrounds' => [
 			[ 'name' => 'Retainers', 'count' => 3, 'specialization' => 'John Doe' ],
@@ -139,16 +145,10 @@ class TraitIdentityTest extends TestCase {
 			[ 'block_slug' => 'backgrounds', 'trait' => [ 'name' => 'Retainers', 'specialization' => 'Sue Smith' ] ]
 		);
 
-		// Sue's 2 dots leave: -2. Reading John's row instead would report -3.
+		// Sue's 2 dots leave: -2.
 		$this->assertSame( -2, $cost );
 	}
 
-	/**
-	 * Deliberately narrow: where the identity is the name alone, a modify naming a trait the
-	 * character does not hold was already a no-op long before 1.2.11, and this release does
-	 * not change it. Only the multiples case - the silent no-op this release itself created -
-	 * is refused, by `Change_Validator`. Pinned here so the narrowing stays deliberate.
-	 */
 	public function test_an_ordinary_traits_identity_never_depends_on_its_label(): void {
 		$definition = self::abilities();
 		$this->assertSame(
@@ -157,7 +157,9 @@ class TraitIdentityTest extends TestCase {
 		);
 	}
 
-	/** A block with no multiples is unchanged: the label is not part of the identity. */
+	/**
+	 * A block with no multiples is unchanged: the label is not part of the identity.
+	 */
 	public function test_a_label_never_splits_a_holding_that_cannot_be_held_twice(): void {
 		$sheet = [ 'abilities' => [ [ 'name' => 'Brawl', 'count' => 5, 'specialization' => 'Wrestling' ] ] ];
 

@@ -1,11 +1,10 @@
 /**
- * Type definitions for a chronicle's game sessions (1.1.0 §3.1): the calendar of game
- * nights, sign-in attendance, and awarding attendance XP.
+ * Type definitions for a chronicle's game sessions: the calendar of game nights, sign-in attendance, and awarding
+ * attendance XP.
  */
 
 /**
- * One game night. The four attendance/report XP-awarded fields are only present for a
- * viewer with be_manage_sessions - absent, not null, for anyone else.
+ * One game night.
  */
 export interface GameSession {
 	id: number;
@@ -29,7 +28,7 @@ export interface GameSession {
 }
 
 /**
- * One sign-in at a session: a real character, or a visitor recorded by name - never both.
+ * One sign-in at a session: a real character, or a visitor recorded by name.
  */
 export interface SessionAttendance {
 	id: number;
@@ -43,8 +42,7 @@ export interface SessionAttendance {
 }
 
 /**
- * Request body for creating a new session. game_date is required; every other field,
- * including the four downtime fields (which also require be_manage_apr), is optional.
+ * Request body for creating a new session. game_date is required.
  */
 export interface CreateSessionRequest {
 	game_date: string;
@@ -59,13 +57,12 @@ export interface CreateSessionRequest {
 }
 
 /**
- * Request body for updating an existing session. Every field is optional; only the fields
- * included in the request are changed.
+ * Request body for updating an existing session.
  */
 export type UpdateSessionRequest = Partial< CreateSessionRequest >;
 
 /**
- * Request body for recording a sign-in: a real character, or a visitor by name - never both.
+ * Request body for recording a sign-in: a real character, or a visitor by name.
  */
 export interface RecordAttendanceRequest {
 	character_id?: number;
@@ -73,13 +70,17 @@ export interface RecordAttendanceRequest {
 	visitor_chronicle?: string;
 }
 
-/** Response from awarding attendance XP for a session. */
+/**
+ * Response from awarding attendance XP for a session.
+ */
 export interface AwardAttendanceXpResponse {
 	awarded_count: number;
 	amount: number;
 }
 
-/** This chronicle's session-related settings, merged into settings.sessions. */
+/**
+ * This chronicle's session-related settings, merged into settings.sessions.
+ */
 export interface SessionSettings {
 	attendance_xp?: number;
 	report_xp?: number;
@@ -88,9 +89,8 @@ export interface SessionSettings {
 }
 
 /**
- * One recurring release-schedule rule (1.1.1 §3): a weekly rule names a weekday, a monthly
- * rule a day of month (1-28, no 29/30/31 ambiguity across short months). `last_run_date`
- * is the scheduler's own idempotency cursor - server-set, never sent by the client.
+ * One recurring release-schedule rule: a weekly rule names a weekday, a monthly rule a day of month (1-28, no
+ * 29/30/31 ambiguity across short months).
  */
 export interface ReleaseScheduleRule {
 	type: 'weekly' | 'monthly';
@@ -100,21 +100,23 @@ export interface ReleaseScheduleRule {
 	last_run_date?: string;
 }
 
-/** A chronicle's own recurring release-schedule rules, settings.release_schedule. */
+/**
+ * A chronicle's own recurring release-schedule rules, settings.release_schedule.
+ */
 export interface ReleaseSchedule {
 	rules: ReleaseScheduleRule[];
 }
 
-/** Response from updating a chronicle's session-related and release-schedule settings. */
+/**
+ * Response from updating a chronicle's session-related and release-schedule settings.
+ */
 export interface SessionSettingsResponse {
 	sessions: SessionSettings;
 	release_schedule: ReleaseSchedule;
 }
 
 /**
- * A player's own after-game report for one character at one session (1.1.0 §3.14, A1) - what
- * did your character do, what do you want next, anything for staff. A Storyteller reads and
- * marks one read; they never edit a player's own words.
+ * A player's own after-game report for one character at one session.
  */
 export interface AfterGameReport {
 	id: number;
@@ -131,7 +133,9 @@ export interface AfterGameReport {
 	updated_at: string;
 }
 
-/** Request body for filing or editing an after-game report for the caller's own character. */
+/**
+ * Request body for filing or editing an after-game report for the caller's own character.
+ */
 export interface AfterGameReportRequest {
 	character_id: number;
 	did?: string;
@@ -139,13 +143,17 @@ export interface AfterGameReportRequest {
 	to_staff?: string;
 }
 
-/** Response from awarding report XP for a session. */
+/**
+ * Response from awarding report XP for a session.
+ */
 export interface AwardReportXpResponse {
 	awarded_count: number;
 	amount: number;
 }
 
-/** One character's own attention profile on the spotlight check (1.1.0 §3.14, A2). */
+/**
+ * One character's own attention profile on the spotlight check.
+ */
 export interface SpotlightRow {
 	character_id: number;
 	name: string;

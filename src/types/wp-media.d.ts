@@ -1,14 +1,10 @@
 /**
- * Ambient global type declarations for the WordPress admin
- * environment this plugin runs in: the wp.media() picker frame,
- * the classic editor helper, and the wp_localize_script() payload
- * the server hands to the client as window.beyondElysium.
+ * Ambient global type declarations for the WordPress admin environment this plugin runs in.
  */
 
 /**
- * A single attachment as returned by the WordPress media picker's
- * selection model, reduced to the two fields this plugin actually
- * reads: the attachment id and its resolved URL.
+ * A single attachment as returned by the WordPress media picker's selection model, reduced to the two fields this
+ * plugin actually reads: the attachment id and its resolved URL.
  */
 interface WPMediaAttachment {
 	id: number;
@@ -16,10 +12,7 @@ interface WPMediaAttachment {
 }
 
 /**
- * The media picker frame returned by wp.media(). Covers only the
- * subset of the real Backbone-based frame API this plugin calls:
- * opening it, listening for a selection or for it closing, and
- * reading back the selected attachment.
+ * The media picker frame returned by wp.media().
  */
 interface WPMediaFrame {
 	open(): void;
@@ -32,10 +25,8 @@ interface WPMediaFrame {
 }
 
 /**
- * Options accepted when opening the media picker: the frame
- * title, the selection button's label, whether multiple
- * attachments may be selected, and a library filter such as
- * restricting to images.
+ * Options accepted when opening the media picker: the frame title, the selection button's label, whether multiple
+ * attachments may be selected, and a library filter such as restricting to images.
  */
 interface WPMediaOptions {
 	title?: string;
@@ -45,14 +36,15 @@ interface WPMediaOptions {
 }
 
 /**
- * Augments the global Window with the WordPress globals this
- * plugin relies on: the wp.media picker, the classic TinyMCE
- * editor helper, and this plugin's own localized config object.
+ * Augments the global Window with the WordPress globals this plugin relies on: the wp.media picker, the classic
+ * TinyMCE editor helper, and this plugin's own localized config object.
  */
 interface Window {
 	wp: {
 		media: ( options?: WPMediaOptions ) => WPMediaFrame;
-		/** Classic TinyMCE editor helper, used by HtmlEditor.tsx. */
+		/**
+		 * Classic TinyMCE editor helper, used by HtmlEditor.tsx.
+		 */
 		editor?: {
 			initialize: (
 				id: string,
@@ -62,7 +54,9 @@ interface Window {
 		};
 	};
 	beyondElysium?: BeyondElysiumGlobal;
-	/** The raw TinyMCE library global (distinct from wp.editor, its WordPress wrapper) - used by AiAssistButton to write an accepted suggestion into an otherwise-uncontrolled HtmlEditor instance. */
+	/**
+	 * The raw TinyMCE library global (distinct from wp.editor, its WordPress wrapper).
+	 */
 	tinymce?: {
 		get: ( id: string ) => {
 			setContent: ( html: string ) => void;
@@ -72,36 +66,36 @@ interface Window {
 }
 
 /**
- * This plugin's own localized config, handed to the client by the
- * server. Carries the REST API base URL, the request nonce, the
- * plugin version, and a UI-only map of which capabilities the
- * current user appears to hold.
+ * This plugin's own localized config, handed to the client by the server.
  */
 interface BeyondElysiumGlobal {
 	restUrl: string;
 	/**
-	 * This site's own `home_url()`, trailing-slashed. Links to the provisioned pages are
-	 * built from this rather than `window.location.origin`, which drops the subsite path
-	 * on multisite (1.2.11 D95). Optional: a build from before this field existed, or a
-	 * page rendered before the payload lands, falls back to the origin.
+	 * This site's own `home_url()`, trailing-slashed.
 	 */
 	homeUrl?: string;
 	nonce: string;
 	version: string;
-	/** UI affordance only; every REST route re-checks the real capability server-side. */
+	/**
+	 * UI affordance only; every REST route re-checks the real capability server-side.
+	 */
 	capabilities?: Record< string, boolean >;
-	/** The site's own WordPress locale (e.g. "pt_BR"), never per-user - see src/lib/localizeName.ts. */
+	/**
+	 * The site's own WordPress locale (e.g. "pt_BR").
+	 */
 	locale?: string;
-	/** The wp-admin Import page's own URL - the Approval Queue's waiting-sheets pointer links here (F-122). */
+	/**
+	 * The wp-admin Import page's own URL.
+	 */
 	importPageUrl?: string;
 }
 
 /**
- * The global wp object, typed to the wp.media surface declared
- * above. Lets components call wp.media() without importing
- * anything, matching how WordPress itself exposes it as a global.
+ * The global wp object, typed to the wp.media surface declared above.
  */
 declare const wp: Window[ 'wp' ];
 
-/** The raw TinyMCE global, as declared on Window above. */
+/**
+ * The raw TinyMCE global, as declared on Window above.
+ */
 declare const tinymce: Window[ 'tinymce' ];

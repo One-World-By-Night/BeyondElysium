@@ -1,9 +1,5 @@
 /**
- * Zustand store powering the character sheet editor. Holds the
- * loaded character, its stack definition, and the in-progress
- * sheet edits, and exposes actions to load a character, stage
- * edits, compute and submit changes, and manage the local
- * autosave draft.
+ * Zustand store powering the character sheet editor.
  */
 import { create, type StoreApi } from 'zustand';
 import api from '../api/client';
@@ -25,80 +21,95 @@ import type {
 } from '../types/character';
 
 /**
- * Deep-clones a JSON-serializable value via a serialize/parse
- * round trip, so the copy shares no object references with the
- * original.
+ * Deep-clones a JSON-serializable value via a serialize/parse round trip.
  */
 function deepClone< T >( value: T ): T {
 	return JSON.parse( JSON.stringify( value ) );
 }
 
 /**
- * The outcome of submitting a batch of pending changes: which
- * requests were actually submitted, which failed outright, and
- * which succeeded but still need Storyteller review before they
- * take effect.
+ * The outcome of submitting a batch of pending changes: which requests were actually submitted.
  */
 export interface SubmitResult {
 	submitted: ChangeRequest[];
-	/** Every change that failed to submit, not just the first one encountered. */
+	/**
+	 * Every change that failed to submit.
+	 */
 	failed: ChangeRequest[];
-	/** Submitted successfully but landed pending review rather than being applied immediately. */
+	/**
+	 * Submitted successfully but landed pending review.
+	 */
 	pending: ChangeRequest[];
 }
 
 /**
- * The full state and actions exposed by the character editor
- * store: the currently loaded character and its sheet data, the
- * diff between the original and edited sheet, submission and
- * draft-recovery status, and the actions that drive all of it.
+ * The full state and actions exposed by the character editor store.
  */
 interface CharacterEditorState {
 	characterId: number | null;
 	gameSlug: string | null;
 	stackSlug: string | null;
 	stack: ResolvedStack | null;
-	/** The loaded character record, used for display fields such as name and xp_unspent. */
+	/**
+	 * The loaded character record, used for display fields such as name and xp_unspent.
+	 */
 	character: Character | null;
 	sheetData: SheetData;
 	originalSheetData: SheetData;
 	pendingChanges: ChangeRequest[];
 	previewCosts: PreviewChangesResponse | null;
-	/** Changes submitted this session that are still awaiting Storyteller approval. */
+	/**
+	 * Changes submitted this session that are still awaiting Storyteller approval.
+	 */
 	submittedChanges: ChangeRequest[];
 	dirty: boolean;
 	loading: boolean;
 	saving: boolean;
 	error: string | null;
-	/** A locally saved draft that differs from the server's data, offered to the player to restore or dismiss. */
+	/**
+	 * A locally saved draft that differs from the server's data, offered to the player to restore or dismiss.
+	 */
 	restorableDraft: StoredDraft | null;
 
-	/** Loads a character and its resolved stack, and checks for a restorable local draft. */
+	/**
+	 * Loads a character and its resolved stack, and checks for a restorable local draft.
+	 */
 	loadCharacter: ( id: number, gameSlug: string ) => Promise< void >;
-	/** Stages an edit to one sheet block and saves it to the local autosave draft. */
+	/**
+	 * Stages an edit to one sheet block and saves it to the local autosave draft.
+	 */
 	setBlockData: ( blockSlug: string, data: unknown ) => void;
-	/** Recomputes the pending change list from the diff between the original and edited sheet data. */
+	/**
+	 * Recomputes the pending change list from the diff between the original and edited sheet data.
+	 */
 	computeChanges: () => ChangeRequest[];
-	/** Submits every pending change to the server and updates local state with the outcome. */
+	/**
+	 * Submits every pending change to the server and updates local state with the outcome.
+	 */
 	submitChanges: () => Promise< SubmitResult >;
-	/** Discards unsaved edits, reverting sheetData back to originalSheetData. */
+	/**
+	 * Discards unsaved edits, reverting sheetData back to originalSheetData.
+	 */
 	reset: () => void;
-	/** Applies the restorable draft to sheetData and clears it. */
+	/**
+	 * Applies the restorable draft to sheetData and clears it.
+	 */
 	restoreDraft: () => void;
-	/** Discards the restorable draft without applying it. */
+	/**
+	 * Discards the restorable draft without applying it.
+	 */
 	dismissDraft: () => void;
 }
 
 let debounceTimer: ReturnType< typeof setTimeout > | null = null;
 
-/** Counts cost-preview requests, so only the latest one's answer is ever shown. */
+/**
+ * Counts cost-preview requests.
+ */
 let previewRequest = 0;
 
 /**
- * Asks the server what the pending changes cost, or clears the preview
- * when nothing is pending. An answer to an older request describes a diff
- * that is gone - a submission or another character came in between - and
- * never overwrites a newer one.
+ * Asks the server what the pending changes cost, or clears the preview when nothing is pending.
  */
 function refreshPreview(
 	get: StoreApi< CharacterEditorState >[ 'getState' ],
@@ -128,9 +139,7 @@ function refreshPreview(
 }
 
 /**
- * The character editor's Zustand store hook. Initializes all
- * state to empty/idle values and wires up each action's
- * implementation against that state.
+ * The character editor's Zustand store hook.
  */
 export const useCharacterEditorStore = create< CharacterEditorState >(
 	( set, get ) => ( {
@@ -151,9 +160,8 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 		restorableDraft: null,
 
 		/**
-		 * Loads a character and its resolved creature stack, resets
-		 * every editing field back to a clean baseline, and checks for
-		 * a local draft worth offering the player to restore.
+		 * Loads a character and its resolved creature stack, resets every editing field back to a clean baseline, and checks
+		 * for a local draft worth offering the player to restore.
 		 */
 		loadCharacter: async ( id, gameSlug ) => {
 			// A cost preview still on its way belongs to the sheet being replaced.
@@ -168,7 +176,6 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 				// Cloned separately so sheetData and originalSheetData never share references.
 				const sheet = deepClone( character.sheet_data );
 
-				// Only offered when it actually differs from what the server just returned.
 				const draft = loadDraft( id );
 				const restorableDraft =
 					draft && draftDiffersFrom( draft.sheetData, sheet )
@@ -199,10 +206,8 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 		},
 
 		/**
-		 * Stages an edit to a single sheet block, marks the sheet
-		 * dirty, saves the change to the local autosave draft
-		 * immediately, and debounces a server round trip to recompute
-		 * the pending changes' previewed cost.
+		 * Stages an edit to a single sheet block, marks the sheet dirty, saves the change to the local autosave draft
+		 * immediately, and debounces a server round trip to recompute the pending changes' previewed cost.
 		 */
 		setBlockData: ( blockSlug, data ) => {
 			set( ( state ) => ( {
@@ -210,7 +215,7 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 				dirty: true,
 			} ) );
 
-			// Saved on every edit, not debounced, so a crash or closed tab loses nothing.
+			// Saved on every edit, not debounced.
 			const { characterId, sheetData } = get();
 			if ( characterId ) {
 				saveDraft( characterId, sheetData );
@@ -223,8 +228,7 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 		},
 
 		/**
-		 * Recomputes the pending change list by diffing sheetData
-		 * against originalSheetData for every block in the loaded
+		 * Recomputes the pending change list by diffing sheetData against originalSheetData for every block in the loaded
 		 * stack, stores the result, and returns it.
 		 */
 		computeChanges: () => {
@@ -239,20 +243,14 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 		},
 
 		/**
-		 * Submits every currently pending change to the server, one
-		 * request per change, continuing through the whole batch even
-		 * if some requests fail. Updates originalSheetData to what was
-		 * sent for any category that fully succeeded, and manages the
-		 * local draft and dirty state based on what is left unresolved.
-		 * A call made while a submission is still sending does nothing.
+		 * Submits every currently pending change to the server, one request per change, continuing through the whole batch
+		 * even if some requests fail.
 		 */
 		submitChanges: async () => {
-			// A second Submit while the first is still sending would send the same diff again.
 			if ( get().saving ) {
 				return { submitted: [], failed: [], pending: [] };
 			}
 
-			// Recomputed synchronously so a submit racing the debounce sends the on-screen diff.
 			const changes = get().computeChanges();
 			const { characterId, gameSlug, sheetData } = get();
 
@@ -260,8 +258,7 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 				return { submitted: [], failed: changes, pending: [] };
 			}
 
-			// The sheet stays editable while the requests are out, so what was sent is frozen here:
-			// a later edit must stay unsaved, not be baselined as if it went too (1.0.0-review F-055).
+			// The sheet stays editable while the requests are out.
 			const sent: SheetData = {};
 			for ( const change of changes ) {
 				sent[ change.category ] = deepClone(
@@ -284,7 +281,7 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 						.changes( gameSlug )
 						.create( characterId, change );
 					submitted.push( change );
-					// A created change only reaches sheet_data once approved; otherwise it stays pending.
+					// A created change only reaches sheet_data once approved.
 					if ( created.status !== 'approved' ) {
 						pending.push( change );
 					}
@@ -354,8 +351,7 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 		},
 
 		/**
-		 * Discards all unsaved edits, reverting sheetData back to
-		 * originalSheetData, clearing the pending diff and preview
+		 * Discards all unsaved edits, reverting sheetData back to originalSheetData, clearing the pending diff and preview
 		 * cost, and clearing the local autosave draft.
 		 */
 		reset: () => {
@@ -373,9 +369,8 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 		},
 
 		/**
-		 * Applies the offered local draft to sheetData, marks the
-		 * sheet dirty, clears the restorable draft, and recomputes the
-		 * pending change list against the restored data.
+		 * Applies the offered local draft to sheetData, marks the sheet dirty, clears the restorable draft, and recomputes
+		 * the pending change list against the restored data.
 		 */
 		restoreDraft: () => {
 			const { restorableDraft } = get();
@@ -391,8 +386,7 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 		},
 
 		/**
-		 * Discards the offered local draft without applying it,
-		 * deleting it from local storage and clearing it from state.
+		 * Discards the offered local draft without applying it, deleting it from local storage and clearing it from state.
 		 */
 		dismissDraft: () => {
 			const { characterId } = get();

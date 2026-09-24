@@ -22,49 +22,14 @@ use BeyondElysium\Services\Display\Trait_Grouping;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Resolves a character down to a plain, presentation-neutral array: the same
- * walk the on-screen sheet (`CharacterSheet.tsx` + `BlockRenderer.tsx`) does,
- * done once server-side so a signed PDF renders identically instead of a
- * second, independently-derived interpretation of `sheet_data`
- * (signed-pdf-design.md Section 3a).
- *
- * No TCPDF reference anywhere in this file, and no PHP objects in its return
- * value beyond stdClass - `Pdf_Writer` (SP-7) turns this array into pages
- * without needing to know how any of it was produced. Every string under a
- * section's `rows`/`groups` is already final: the formatting happened in
- * `Services\Display\*`, exactly as the on-screen renderer would have called
- * them.
- *
- * `St_Visibility` is applied before any section is read, exactly like
- * `Characters_Controller`/`Templates_Controller` already apply it - this is a
- * second, direct reader of `Character::find()`, and skipping the extraction
- * here would be the fourth copy of the same rule (Section 3d).
- *
- * `$options` (all optional):
- *  - can_manage       bool  Caller-resolved capability check (never trust a
- *                           client-sent value here - same rule as D13/D22/D33).
- *                           An absent/false value hides Storyteller-only data,
- *                           same as St_Visibility's own default.
- *  - full_power_names bool  tiered_power sections render every named rung
- *                           instead of a single numeric total (Section 5
- *                           ruling 1 - the `full_power_names` route param).
- *  - background       bool  Include the character's biography as a prose entry.
- *  - notes            bool  Include the character's notes as a prose entry.
- *  - xp_history       bool  Include the approved-change XP history table.
- *  - show_cost        bool  Whether a count_is_cost trait_list block's flat XP price
- *                           is shown at all. Default true. When it is shown it is
- *                           always labelled "(12 XP)" and never drawn as a rating
- *                           (1.1.0 D3, corrected by 1.2.11 D94).
- *
- * @see BE_PROCESS/design/signed-pdf-design.md Section 3a, SP-5
+ * Resolves a character down to a plain, presentation-neutral array: the same walk the on-screen sheet
+ * (`CharacterSheet.tsx` + `BlockRenderer.tsx`) does, done once server-side.
  */
 class Sheet_Document {
 
 	/**
-	 * Resolves one document per character id, silently skipping an id that
-	 * doesn't resolve to a real character or a real creature stack rather
-	 * than failing the whole batch - the caller (Sheets_Controller, SP-9)
-	 * already validated the ids it's passing in.
+	 * Resolves one document per character id, silently skipping an id that doesn't resolve to a real character or a real
+	 * creature stack.
 	 *
 	 * @param int[]                $character_ids
 	 * @param string               $game_slug
@@ -88,9 +53,7 @@ class Sheet_Document {
 	}
 
 	/**
-	 * Resolves an NPC's own template type, respecting `npc_detail` (1.1.0 §3.7 item 1) -
-	 * `npc_quick`'s shorter layout unless it's been upgraded to `npc_full`. Null for a plain
-	 * PC, so a caller building a PC's ordinary sheet keeps its own `sheet_full` default.
+	 * Resolves an NPC's own template type, respecting `npc_detail`.
 	 *
 	 * @param object $character
 	 * @return string|null
@@ -103,16 +66,8 @@ class Sheet_Document {
 	}
 
 	/**
-	 * Resolves one NPC casting into the same presentation-neutral shape `for_characters()`
-	 * produces, for the casting brief screen and its PDF (1.1.0 §3.8). Always the cast
-	 * player's own restricted view, never a fuller one for a manager previewing it - a
-	 * Storyteller checking a brief sees exactly what the cast player will.
-	 *
-	 * Deliberately not `for_characters()` plus `$options`: the brief excludes fields that
-	 * method always includes (XP, status, the real player, change history) and includes one a
-	 * plain sheet never does (`npc-roleplaying-notes`, via `St_Visibility`'s new
-	 * `$allow_blocks` carve-out) - different enough that reusing `build()` unmodified would
-	 * mean threading brief-specific branches through a method four other things also share.
+	 * Resolves one NPC casting into the same presentation-neutral shape `for_characters()` produces, for the casting
+	 * brief screen and its PDF.
 	 *
 	 * @param int    $casting_id
 	 * @param string $game_slug
@@ -140,15 +95,10 @@ class Sheet_Document {
 			return null;
 		}
 
-		// Always the cast player's own view of the brief text too - never a manager's
-		// escalation, matching every other visibility decision in this method.
+		// Always the cast player's own view of the brief text too.
 		St_Visibility::filter_casting( $casting, $game, false );
 
-		// Not St_Visibility::filter_character(): its blanket sheet_data strip has no
-		// allow_blocks carve-out, and would remove npc-roleplaying-notes before this method
-		// ever got a chance to keep it. sheet_data is filtered directly below instead, and
-		// nothing else filter_character() touches (rp_notes, biography, notes) is ever part
-		// of this document in the first place.
+		// sheet_data is filtered directly, so npc-roleplaying-notes can be kept.
 		$resolved = Creature_Stack::resolve( $character->stack_slug, $game->slug );
 		if ( $resolved === null ) {
 			return null;
@@ -237,14 +187,8 @@ class Sheet_Document {
 	}
 
 	/**
-	 * Walks a layout's sections in flow order, formatting each one through
-	 * the `Display\*` twin matching its block's `section_type` - the same
-	 * dispatch `BlockRenderer.tsx` does on screen. A section naming a block
-	 * that no longer exists is skipped (nothing to surface); a section whose
-	 * block has a real but unrecognized `section_type` is still included,
-	 * with no `rows`/`groups` key - `Pdf_Writer`'s own default branch
-	 * (Section 3b) draws the visible marker from `section_type`/`block_slug`
-	 * alone, matching `BlockRenderer.tsx`'s own default branch.
+	 * Walks a layout's sections in flow order, formatting each one through the `Display\*` twin matching its block's
+	 * `section_type`.
 	 *
 	 * @param array<int,array<string,mixed>> $sections
 	 * @param array<string,object>           $blocks
@@ -277,8 +221,7 @@ class Sheet_Document {
 			switch ( $block->section_type ) {
 				case 'trait_list':
 					$entry['groups'] = self::trait_list_groups( $section_data, $definition, $section, $options );
-					// 1.1.0 D1: a non-atomic section whose held entries all carry a
-					// numeric count shows its total after the title.
+					// A non-atomic section whose held entries all carry a numeric count shows its total after the title.
 					if ( empty( $definition->atomic ) ) {
 						$total = Trait_Grouping::section_total( Trait_Grouping::to_traits( $section_data ) );
 						if ( $total !== null ) {
@@ -322,25 +265,23 @@ class Sheet_Document {
 	}
 
 	/**
+	 * Groups a trait_list section's held entries for the document.
+	 *
 	 * @param mixed                $section_data Raw `sheet_data[block_slug]` value.
 	 * @param array<string,mixed>  $section      Raw layout section (for its own `display` override).
-	 * @param array<string,mixed>  $options      Document-level options (`show_cost`, 1.2.11 D94).
+	 * @param array<string,mixed> $options Document-level options (`show_cost`).
 	 * @return array<int,array{label:?string,rows:array<int,string>}>
 	 */
 	private static function trait_list_groups( mixed $section_data, object $definition, array $section, array $options = [] ): array {
 		$traits = Trait_Grouping::to_traits( $section_data );
-		// 1.1.0 D3 / 1.2.11 D94: a count_is_cost block's stored total is a flat XP cost,
-		// not a rating, so it is always labelled as a price and never handed to a rating
-		// display. `show_cost` only chooses whether the price appears at all.
+		// A count_is_cost block's stored total is a flat XP cost, labelled as a price; `show_cost` only chooses whether it appears.
 		$mode = Trait_Grouping::resolve_mode(
 			$definition,
 			$section['display'] ?? null,
 			array_key_exists( 'show_cost', $options ) ? (bool) $options['show_cost'] : null
 		);
 
-		// 1.1.0 D4: a player_order block renders in stored array order - no
-		// alphabetizing, no field/category grouping. The player's own order is
-		// their grouping.
+		// A player_order block renders in stored array order, with no alphabetizing or grouping.
 		$catalog_items = $definition->items ?? [];
 
 		if ( ! empty( $definition->player_order ) ) {
@@ -373,17 +314,7 @@ class Sheet_Document {
 	}
 
 	/**
-	 * `$traits` is `to_traits()`'s `{name,total,note}` output, having passed through
-	 * `sort_if_alphabetized()` - typed loosely here (rather than repeating the fuller
-	 * shape) because that method's own signature only guarantees the `name` key it
-	 * actually reads; the other two survive the reorder untouched at runtime, and
-	 * `display_trait()` reads both defensively via `??` regardless.
-	 *
-	 * Each held trait's own `name` is swapped for its catalog match's `name_pt` on a
-	 * `pt_BR` site (1.2.0 §5.4) - the exact swap `TraitListRenderer.tsx`'s own
-	 * `localizeTraitForDisplay()` makes before calling `displayTrait()`, so the signed PDF
-	 * matches the screen (T15). `$catalog_items` is `$definition->items` - already carrying
-	 * `name_pt` via `Catalog_Translator::decorate()`, wired into every schema-block read.
+	 * `$traits` is `to_traits()`'s `{name,total,note}` output, having passed through `sort_if_alphabetized()`.
 	 *
 	 * @param array<int,array<string,mixed>> $traits
 	 * @param array<int,object>              $catalog_items
@@ -416,9 +347,8 @@ class Sheet_Document {
 	}
 
 	/**
-	 * Whether the site's own locale (Decision 106: one install, one language - never a
-	 * per-user preference) is Portuguese (Brazil), the server-side twin of
-	 * `src/lib/localizeName.ts`'s `isPortugueseLocale()`.
+	 * Whether the site's own locale (one install, one language - never a per-user preference) is Portuguese (Brazil), the
+	 * server-side twin of `src/lib/localizeName.ts`'s `isPortugueseLocale()`.
 	 */
 	private static function use_portuguese(): bool {
 		return get_locale() === 'pt_BR';
@@ -481,17 +411,11 @@ class Sheet_Document {
 		$rows = [];
 		foreach ( ( $definition->fields ?? [] ) as $field ) {
 			$value = $values[ $field->name ] ?? null;
-			// A multiselect holds a list: its choices, joined as the on-screen sheet joins them -
-			// never cast to the word "Array" (1.0.0-review F-078).
+			// A multiselect holds a list: its choices, joined as the on-screen sheet joins them.
 			if ( is_array( $value ) ) {
 				$value = implode( ', ', array_map( 'strval', $value ) );
 			}
-			// A textarea field is rich text since 1.0.1 D1, and these rows are drawn as plain
-			// text by `Pdf_Writer` - so flatten the markup rather than printing tags onto a
-			// signed sheet. Block ends become line breaks so two paragraphs don't run together.
-			// Scoped to the one field type that can hold markup: every other type is stored
-			// through `Change_Validator::text()`, which strips tags, so a literal "<" there is
-			// a real character someone typed and must survive.
+			// A textarea field is rich text; its markup is flattened to plain text, with block ends as line breaks.
 			if ( ( $field->field_type ?? '' ) === 'textarea' && is_string( $value ) && $value !== '' ) {
 				$broken = preg_replace( '#<br\s*/?>|</(?:p|div|li|h[1-6]|tr)>#i', "\n", $value );
 				$value  = trim( html_entity_decode(
@@ -522,9 +446,7 @@ class Sheet_Document {
 	}
 
 	/**
-	 * Only `status = 'approved'` changes count as real history on a signed
-	 * document - a still-pending change may yet be denied, and a formal
-	 * record should not represent it as having already happened.
+	 * Only `status = 'approved'` changes count as real history on a signed document.
 	 *
 	 * @return array<int,array{0:string,1:string,2:string}>
 	 */
@@ -591,12 +513,7 @@ class Sheet_Document {
 	}
 
 	/**
-	 * Resolves a WordPress attachment id to its real local filesystem path -
-	 * `get_attached_file()`, not `wp_get_attachment_image_url()`: this document
-	 * is drawn by TCPDF locally, never fetched by a browser, and every image
-	 * reference in this catalog is a local attachment (Section 4b - TCPDF's
-	 * curl dependency is a build-time-only platform check, never exercised at
-	 * runtime here).
+	 * Resolves a WordPress attachment id to its real local filesystem path.
 	 */
 	private static function attachment_path( mixed $attachment_id ): ?string {
 		$attachment_id = (int) ( $attachment_id ?? 0 );

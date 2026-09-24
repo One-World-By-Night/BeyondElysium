@@ -10,17 +10,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * B5, T4 (1.2.0 releases/1.2.0-design-workflow.md §5.5, §9): the round-trip hazard. An admin
- * editor does GET (decorated) -> user edits -> PUT the whole definition back. Without a strip()
- * on the write side, the editor faithfully PUTs the `_pt` keys it was decorated with straight
- * back into the stored definition - not a crash, a silent, permanent, per-fork duplication of
- * exactly the data this release exists to stop duplicating.
- *
- * test_a_decorated_definition_put_through_the_real_controller_is_not_persisted_with_pt_keys is
- * T4 exactly as named in §9 - written first and run against the pre-fix code, where it fails,
- * before Schema_Block::create()/::update() gained their strip() calls.
- *
- * @see BE_PROCESS/releases/1.2.0-design-workflow.md §5.5
+ * An admin editor's GET (decorated), edit and PUT round trip never persists translation keys into the stored
+ * definition.
  */
 class SchemaBlockRoundTripStripThreadTest extends WP_UnitTestCase {
 
@@ -35,12 +26,6 @@ class SchemaBlockRoundTripStripThreadTest extends WP_UnitTestCase {
 		return $id;
 	}
 
-	/**
-	 * T4. Real GET through decode_row() (decorated), the client's own edit simulated by taking
-	 * that exact decorated JSON and PUTting it back unchanged (what an editor that round-trips
-	 * the whole definition actually does), through the real REST controller - not a hand-built
-	 * fixture standing in for one.
-	 */
 	public function test_a_decorated_definition_put_through_the_real_controller_is_not_persisted_with_pt_keys(): void {
 		$this->make_admin();
 
@@ -56,15 +41,13 @@ class SchemaBlockRoundTripStripThreadTest extends WP_UnitTestCase {
 		$fetched = Schema_Block::find_by_slug( 'roundtrip-fixture' );
 		$this->assertSame( 'Termo De Ida E Volta', $fetched->definition->items[0]->name_pt, 'sanity check: GET really is decorated' );
 
-		// The client's own PUT, echoing that decorated definition straight back - exactly what
-		// an editor that reads the whole definition and writes the whole definition back does.
+		// The client's own PUT, echoing that decorated definition straight back.
 		$request = new WP_REST_Request( 'PUT', '/be/v1/schema-blocks/roundtrip-fixture' );
 		$request->set_body_params( [ 'definition' => $fetched->definition ] );
 		$response = rest_do_request( $request );
 		$this->assertSame( 200, $response->get_status(), 'the PUT itself must succeed, not merely be rejected' );
 
-		// The real, raw, undecorated database row - not another decorated read, which would
-		// mask the bug by decorating right back over whatever was actually persisted.
+		// The real, raw, undecorated database row.
 		global $wpdb;
 		$raw = $wpdb->get_var( $wpdb->prepare(
 			"SELECT definition FROM {$wpdb->prefix}be_schema_blocks WHERE slug = %s AND game_slug = ''",
@@ -106,10 +89,8 @@ class SchemaBlockRoundTripStripThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The third real write path (found executing this box, not named in its own text): a
-	 * chronicle's first edit forks the global block via find_or_create_fork_for_game(), which
-	 * copies find_by_slug()'s own DECORATED definition into the new fork row. Without its own
-	 * strip(), the fork would be born with baked-in _pt keys on its very first row.
+	 * The third real write path (found executing this box, not named in its own text): a chronicle's first edit forks the
+	 * global block via find_or_create_fork_for_game().
 	 */
 	public function test_a_new_fork_is_not_born_with_pt_keys_from_the_decorated_global_block(): void {
 		Schema_Block::create( [
@@ -132,13 +113,6 @@ class SchemaBlockRoundTripStripThreadTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( '"name_pt"', $raw );
 	}
 
-	/**
-	 * B9 retired the one legitimate writer §5.5's strip() guard used to carve an exception out
-	 * for (Seeder's own CSV-sourced name_pt, via the now-removed skip_pt_strip parameter) - this
-	 * pins that the exception is genuinely gone, not merely unused: data shaped exactly like what
-	 * Seeder used to write is stripped like any other caller's, with no escape hatch left to
-	 * reach for by mistake.
-	 */
 	public function test_no_caller_can_persist_a_pt_key_the_skip_pt_strip_escape_hatch_is_gone(): void {
 		Schema_Block::create( [
 			'slug' => 'no-escape-hatch-fixture', 'name' => 'No Escape Hatch Fixture', 'section_type' => 'trait_list',

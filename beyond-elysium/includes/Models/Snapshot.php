@@ -8,19 +8,11 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Static data-access model for character sheet history snapshots.
- *
- * Snapshot is a Database\Manager CRUD model backed by the
- * character_snapshots table. Each row is a point-in-time copy of a
- * character's sheet_data JSON, optionally tied to the change record that
- * triggered it, giving a full history of how a character's sheet has looked
- * over time.
  */
 class Snapshot {
 
 	/**
-	 * Return the snapshots belonging to one character. Supports pagination
-	 * and sort order, defaulting to newest first, with decoded snapshot_data
-	 * on every row.
+	 * Return the snapshots belonging to one character.
 	 *
 	 * @param int   $character_id
 	 * @param array $args Filters: per_page, offset, order.
@@ -44,9 +36,8 @@ class Snapshot {
 	}
 
 	/**
-	 * Count the total number of snapshots recorded for one character, across
-	 * its entire history, with no filtering and no pagination applied to the
-	 * count itself.
+	 * Count the total number of snapshots recorded for one character, across its entire history, with no filtering and no
+	 * pagination applied to the count itself.
 	 *
 	 * @param int $character_id
 	 * @return int
@@ -60,9 +51,7 @@ class Snapshot {
 	}
 
 	/**
-	 * Insert a new snapshot capturing a character's current sheet_data as of
-	 * right now. Reads only the sheet_data column rather than the full
-	 * character row, and stores '{}' when the character has no sheet_data yet.
+	 * Insert a new snapshot capturing a character's current sheet_data as of right now.
 	 *
 	 * @param int      $character_id
 	 * @param int|null $change_id Optional triggering change ID.
@@ -71,7 +60,6 @@ class Snapshot {
 	public static function create( int $character_id, $change_id ): int {
 		global $wpdb;
 
-		// Fetch only the sheet_data column to avoid a full decode cycle.
 		$table       = Manager::table( 'characters' );
 		$sheet_data  = $wpdb->get_var(
 			$wpdb->prepare( "SELECT sheet_data FROM {$table} WHERE id = %d", $character_id )
@@ -94,9 +82,7 @@ class Snapshot {
 	}
 
 	/**
-	 * Delete every snapshot belonging to a character. Removes all rows from
-	 * character_snapshots matching the given character ID, leaving no
-	 * snapshot history behind once the character itself is deleted.
+	 * Delete every snapshot belonging to a character.
 	 *
 	 * @param int $character_id
 	 * @return void
@@ -108,9 +94,7 @@ class Snapshot {
 	}
 
 	/**
-	 * Look up a single snapshot by its primary key. Returns the row with its
-	 * snapshot_data field decoded into an array, or null when no snapshot
-	 * with that ID exists.
+	 * Look up a single snapshot by its primary key.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -124,9 +108,7 @@ class Snapshot {
 	}
 
 	/**
-	 * Decode a row's snapshot_data JSON field into an array in place. Passes
-	 * null rows through unchanged, and normalizes an unparseable or absent
-	 * value to an empty array.
+	 * Decode a row's snapshot_data JSON field into an array in place.
 	 *
 	 * @param object|null $row Row from the database, or null when the query found nothing.
 	 * @return object|null The same row, or null when null was passed in.

@@ -1,7 +1,5 @@
 /**
- * 1.1.0 §3.2: the wp-admin Plots page gains a Releases tab alongside its existing Plots &
- * Rumors content - both are be_manage_plots surfaces. Each wrapped component keeps its own
- * <h1>, which doubles as the hub's live page title (QueryHub.tsx's own precedent).
+ * The wp-admin Plots page gains a Releases tab alongside its existing Plots & Rumors content.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

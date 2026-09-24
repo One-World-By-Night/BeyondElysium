@@ -1,13 +1,10 @@
 /**
  * Editor for a template's section layout.
- *
- * Renders an add/edit/remove table for layout.sections[], each row
- * covering block, title, width, column, order, display-type override, and
- * collapsed state, plus a column-count control for the overall layout.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
+import { everyPage } from '../../lib/everyPage';
 import type { DisplayType } from '../../lib/displayTrait';
 import type {
 	CrossBlockRef,
@@ -43,11 +40,7 @@ const WIDTHS: Array< TemplateLayoutSection[ 'width' ] > = [
 ];
 
 /**
- * Renders the layout editor for one template. Each section row picks a
- * schema block (sourced from the live block list), a title with optional
- * cross-block title references, a column/order/width placement, a display
- * override, and a collapsed flag, with add/remove controls for both
- * sections and title references.
+ * Renders the layout editor for one template.
  */
 export function TemplateLayoutEditor( {
 	layout,
@@ -56,9 +49,10 @@ export function TemplateLayoutEditor( {
 	const [ blocks, setBlocks ] = useState< SchemaBlock[] >( [] );
 
 	useEffect( () => {
-		// Fetches up to 100 schema blocks (the REST route's max page size) for the picker.
-		api.schemaBlocks
-			.list( { per_page: 100 } )
+		// Fetches every schema block for the picker.
+		everyPage( ( page ) =>
+			api.schemaBlocks.listPaginated( { page, per_page: 100 } )
+		)
 			.then( setBlocks )
 			.catch( () => setBlocks( [] ) );
 	}, [] );

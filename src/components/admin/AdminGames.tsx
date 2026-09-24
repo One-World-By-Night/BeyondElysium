@@ -1,8 +1,5 @@
 /**
  * Admin page for managing chronicles (games) site-wide.
- * The only screen for creating a chronicle from scratch; lists every
- * chronicle regardless of scope and provides create, edit, and delete
- * actions for each.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -18,8 +15,6 @@ const EMPTY_FORM = { name: '', slug: '', game_type: 'met', description: '' };
 
 /**
  * Renders the Games admin screen.
- * Lists all chronicles (games) site-wide and provides a form to create,
- * edit, and delete them, independent of any single chronicle's scope.
  */
 export function AdminGames() {
 	const [ games, setGames ] = useState< Game[] >( [] );
@@ -33,8 +28,6 @@ export function AdminGames() {
 
 	/**
 	 * Fetches the list of chronicles from the API.
-	 * Populates the game list on success and records the error message
-	 * on failure, tracking a loading flag throughout.
 	 */
 	function load() {
 		setLoading( true );
@@ -84,8 +77,6 @@ export function AdminGames() {
 
 	/**
 	 * Creates or updates a chronicle from the current form state.
-	 * Validates that a name is present, calls the appropriate create or
-	 * update API endpoint, then closes the form and reloads the list.
 	 */
 	async function save( e: React.FormEvent ) {
 		e.preventDefault();
@@ -143,9 +134,7 @@ export function AdminGames() {
 	}
 
 	/**
-	 * Deletes a chronicle after one confirmation that names everything
-	 * stored in it, and deletes all of that with it - nothing is left
-	 * behind for a later chronicle to inherit (1.0.0-review F-036).
+	 * Deletes a chronicle after one confirmation that names everything stored in it, and deletes all of that with it.
 	 */
 	async function remove( game: Game ) {
 		let holds: string;
@@ -331,9 +320,6 @@ export function AdminGames() {
 							}
 						/>
 					</label>
-					{ /* Rich text since 1.0.1 D1. HtmlEditor is uncontrolled - TinyMCE owns the
-					     field after mount - so the id carries the chronicle being edited: switching
-					     rows remounts it rather than leaving the previous chronicle's prose behind. */ }
 					<div className="be-admin__form-field">
 						<span>{ __( 'Description', 'beyond-elysium' ) }</span>
 						<HtmlEditor
@@ -348,8 +334,7 @@ export function AdminGames() {
 								} ) )
 							}
 							rows={ 6 }
-							// No chronicle exists yet during creation for a chronicle-scoped
-							// AI request to target.
+							// No chronicle exists yet during creation for a chronicle-scoped AI request to target.
 							aiAssist={
 								editingSlug !== null
 									? {

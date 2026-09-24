@@ -10,12 +10,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * `Point_Audit_Controller`'s one route: `be_manage_characters` gate, real
- * signed-out-403, and the leak test point-calculator-design.md §5.5/§7 PC-7
- * requires - a Storyteller-only block must 403 a non-manager, never produce
- * a reduced total.
- *
- * @see BE_PROCESS/design/point-calculator-design.md §5.5, §7 PC-7
+ * `Point_Audit_Controller`'s route: the `be_manage_characters` gate, a real signed-out 403, and a Storyteller-only
+ * block returning 403 to a non-manager rather than a reduced audit.
  */
 class PointAuditControllerTest extends WP_UnitTestCase {
 
@@ -87,8 +83,6 @@ class PointAuditControllerTest extends WP_UnitTestCase {
 	public function test_a_non_manager_is_denied_outright_not_given_a_reduced_total(): void {
 		$response = $this->dispatch( $this->player_id );
 
-		// A reduced total (200, minus the secret line) would still leak the block's
-		// existence and price by arithmetic difference - the route must refuse outright.
 		$this->assertSame( 403, $response->get_status() );
 		$this->assertTrue( is_wp_error( $response->as_error() ) || $response->is_error() );
 	}

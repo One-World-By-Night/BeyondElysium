@@ -9,14 +9,6 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Static data-access model for polymorphic entity-to-entity connections.
- *
- * Connection is a Database\Manager CRUD model backed by the connections table.
- * Any character, plot, world object, or tag can link to any other through one
- * shared table rather than a separate join table per entity pair. Each row
- * records a source entity, a target entity (or a tag label with no target row),
- * an optional descriptive label, and notes.
- *
- * @see BE_PROCESS/releases/workflow-0.5.md Step 1.3
  */
 class Connection {
 
@@ -24,9 +16,7 @@ class Connection {
 	private static $valid_entity_types = [ 'character', 'plot', 'world_object', 'tag', 'faction' ];
 
 	/**
-	 * Look up a single connection by its primary key. Returns the raw row
-	 * exactly as stored, with no field decoding applied, or null when no
-	 * connection with that ID exists.
+	 * Look up a single connection by its primary key.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -39,9 +29,7 @@ class Connection {
 	}
 
 	/**
-	 * Return every connection where the given entity is the source side. Ordered
-	 * newest first; does not include connections where this entity appears only
-	 * as the target.
+	 * Return every connection where the given entity is the source side.
 	 *
 	 * @param string $type
 	 * @param int    $id
@@ -56,9 +44,7 @@ class Connection {
 	}
 
 	/**
-	 * Return every connection where the given entity is the target side. Ordered
-	 * newest first; does not include connections where this entity appears only
-	 * as the source.
+	 * Return every connection where the given entity is the target side.
 	 *
 	 * @param string $type
 	 * @param int    $id
@@ -73,9 +59,7 @@ class Connection {
 	}
 
 	/**
-	 * Return every connection touching an entity, whether it appears as the
-	 * source or the target. Combines both directions into one result set ordered
-	 * newest first.
+	 * Return every connection touching an entity, whether it appears as the source or the target.
 	 *
 	 * @param string $type
 	 * @param int    $id
@@ -95,9 +79,7 @@ class Connection {
 	}
 
 	/**
-	 * Return every connection belonging to a game. Supports filtering by
-	 * source_type and target_type, and orders results newest first with no
-	 * pagination.
+	 * Return every connection belonging to a game.
 	 *
 	 * @param int   $game_id
 	 * @param array $args Filters: source_type, target_type.
@@ -124,10 +106,7 @@ class Connection {
 	}
 
 	/**
-	 * Create a connection between two entities. Validates that source_type and
-	 * target_type are recognized entity types, and refuses an exact duplicate -
-	 * the same source, target, and label tuple returns the existing row's ID
-	 * rather than inserting a second row.
+	 * Create a connection between two entities.
 	 *
 	 * @param array $data
 	 * @return int|false Insert ID (new or existing) on success, false on validation failure.
@@ -153,8 +132,6 @@ class Connection {
 		$target_id = $target_type === 'tag' ? null : (int) $data['target_id'];
 		$label     = $data['label'] ?? null;
 
-		// The check and the insert hold the source's row between them, so requests that arrive
-		// together take turns and the second finds the first (1.0.0-review F-090).
 		$unit = Transaction::begin( 'be_connection_create' );
 		if ( ! self::lock_source( $source_type, (int) $data['source_id'] ) ) {
 			Transaction::rollback( $unit );
@@ -198,8 +175,6 @@ class Connection {
 
 	/**
 	 * Holds a connection's source row until the surrounding transaction ends.
-	 * A tag has no row to hold. False when the lock itself failed - a lock wait
-	 * that timed out - so nothing is written unguarded.
 	 *
 	 * @param string $type
 	 * @param int    $id
@@ -218,10 +193,7 @@ class Connection {
 	}
 
 	/**
-	 * Find an existing connection matching the exact same game, source, target,
-	 * and label tuple. Treats a null target_id or label as an IS NULL match
-	 * rather than a bound placeholder, since MySQL's equality operator never
-	 * matches NULL.
+	 * Find an existing connection matching the exact same game, source, target, and label tuple.
 	 *
 	 * @param int         $game_id
 	 * @param string      $source_type
@@ -260,9 +232,7 @@ class Connection {
 	}
 
 	/**
-	 * Update a connection's label and notes. The source, target, and game fields
-	 * are not editable through this method - changing what a connection points
-	 * at means deleting it and creating a new one.
+	 * Update a connection's label and notes.
 	 *
 	 * @param int   $id
 	 * @param array $data
@@ -286,9 +256,7 @@ class Connection {
 	}
 
 	/**
-	 * Delete a single connection row by its primary key. Does not touch the
-	 * entities it referenced, only the connection record itself, and does not
-	 * cascade to anything else.
+	 * Delete a single connection row by its primary key.
 	 *
 	 * @param int $id
 	 * @return bool
@@ -299,9 +267,7 @@ class Connection {
 	}
 
 	/**
-	 * Delete every connection referencing a given entity, whether it appears as
-	 * the source or the target. Used to cascade deletes for entities that own
-	 * connections, since this schema has no foreign keys to do it automatically.
+	 * Delete every connection referencing a given entity, whether it appears as the source or the target.
 	 *
 	 * @param string $type
 	 * @param int    $id
@@ -320,9 +286,7 @@ class Connection {
 	}
 
 	/**
-	 * Return the list of entity type strings a connection's source_type or
-	 * target_type may hold. Used by callers that need to validate or render
-	 * these values without duplicating the list.
+	 * Return the list of entity type strings a connection's source_type or target_type may hold.
 	 *
 	 * @return string[]
 	 */

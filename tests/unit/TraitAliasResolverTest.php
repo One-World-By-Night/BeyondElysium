@@ -6,12 +6,7 @@ use BeyondElysium\Services\Trait_Alias_Resolver;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `Services\Trait_Alias_Resolver` in isolation - the four catalog-declared shapes it reads
- * (`aliases`, `moved_from`, `split_from`, a rung's own `aliases`) against small synthetic
- * fixtures, plus the ambiguity-refusal rule the class docblock states as its own hard rule.
- * See `BE_PROCESS/releases/1.3.2-design-workflow.md`.
- *
- * Pure: no database, no WordPress.
+ * `Services\Trait_Alias_Resolver` in isolation.
  */
 class TraitAliasResolverTest extends TestCase {
 
@@ -55,9 +50,8 @@ class TraitAliasResolverTest extends TestCase {
 	}
 
 	/**
-	 * The class's own hard rule: three real Kuei-Jin families share `split_from: "Black
-	 * Wind"` with nothing else to distinguish them (`1.3.1-design-workflow.md` §11.3) - a
-	 * Storyteller decides which aspect, never this resolver by picking the first candidate.
+	 * The class's own hard rule: three real Kuei-Jin families share `split_from: "Black Wind"` with nothing else to
+	 * distinguish them.
 	 */
 	public function test_an_ambiguous_split_from_resolves_to_nothing_not_a_guess(): void {
 		$powers = [
@@ -126,9 +120,7 @@ class TraitAliasResolverTest extends TestCase {
 	// -------------------------------------------------------------------------------
 
 	/**
-	 * The real tiered_power shape: `moved_from` is a LIST of `{block, name}` pairs -
-	 * `vampire-blood-magic`'s `Movement of the Mind` merges two Disciplines
-	 * (`Creo Motus` and `Rego Motus`) this way.
+	 * The real tiered_power shape: `moved_from` is a LIST of `{block, name}` pairs.
 	 */
 	public function test_a_family_is_found_across_blocks_by_a_list_shaped_moved_from(): void {
 		$blocks = [
@@ -154,8 +146,7 @@ class TraitAliasResolverTest extends TestCase {
 	}
 
 	/**
-	 * The real trait_list shape: `moved_from` is a bare `{block, name}` OBJECT, not a list -
-	 * `vampire-gargoyle-powers`' own items each carry it this way.
+	 * The real trait_list shape: `moved_from` is a bare `{block, name}` OBJECT.
 	 */
 	public function test_an_item_is_found_across_blocks_by_an_object_shaped_moved_from(): void {
 		$blocks = [
@@ -188,8 +179,7 @@ class TraitAliasResolverTest extends TestCase {
 	}
 
 	/**
-	 * Two families cannot both claim to have absorbed the identical prior name - refused,
-	 * matching every other ambiguity rule in this class.
+	 * Two families cannot both claim to have absorbed the identical prior name.
 	 */
 	public function test_two_families_claiming_the_same_moved_from_pair_resolve_to_nothing(): void {
 		$blocks = [

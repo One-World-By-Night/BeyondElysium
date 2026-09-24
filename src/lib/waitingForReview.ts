@@ -1,8 +1,6 @@
 /**
- * Merges a chronicle's waiting transfers and player-sent Grapevine files
- * (F-122) into one newest-first list for the Import page's Waiting for
- * Review section - a plain function so the ordering can be tested without
- * mounting the component or mocking the API.
+ * Merges a chronicle's waiting transfers and player-sent Grapevine files into one newest-first list for the Import
+ * page's Waiting for Review section.
  */
 import type { Transfer } from '../types/transfer';
 import type { Submission } from '../types/submission';

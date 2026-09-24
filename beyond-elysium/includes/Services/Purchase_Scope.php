@@ -9,22 +9,13 @@ use BeyondElysium\Models\Schema_Block;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Which purchase lists a chronicle has opened up (1.3.4).
- *
- * Every creature type has its own Abilities, Backgrounds, Merits and Flaws, and by default a character
- * buys only from its own. An HST can switch an area to "every creature type's list", and then that
- * chronicle's purchase list for the area is the union of all of them. The catalogs stay separate: this
- * widens what a purchase may draw on at read time and writes nothing to any block, so a switch turned
- * off again leaves no trace, and an admin editor that loads a block never sees the wider list.
- *
- * The switches are independent and all or nothing per area, stored as `settings.purchase_scope`
- * (`abilities`, `backgrounds`, `merits_flaws`; absent means off). Widening is opt-in at the places a
- * purchase reads its list - the resolved stack the editor, the sheet and the validator use, the cost
- * engine, the approval rules and the point audit - and never inside `Schema_Block` itself.
+ * Which purchase lists a chronicle has opened up.
  */
 class Purchase_Scope {
 
-	/** The switches an HST has, and the block families (slug suffixes) each one opens. */
+	/**
+	 * The switches an HST has, and the block families (slug suffixes) each one opens.
+	 */
 	public const AREAS = [
 		'abilities'    => [ 'abilities' ],
 		'backgrounds'  => [ 'backgrounds' ],
@@ -57,8 +48,7 @@ class Purchase_Scope {
 	}
 
 	/**
-	 * A write's value as switches, or null when it is not a set of known ones. Strict on purpose: an
-	 * unknown area or a value that is not plainly on or off is refused rather than stored.
+	 * A write's value as switches, or null when it is not a set of known ones.
 	 *
 	 * @param mixed $value
 	 * @return array<string,bool>|null
@@ -105,7 +95,9 @@ class Purchase_Scope {
 		return $switches;
 	}
 
-	/** The family a block slug belongs to (`vampire-abilities` is `abilities`), or null. */
+	/**
+	 * The family a block slug belongs to (`vampire-abilities` is `abilities`), or null.
+	 */
 	public static function suffix_of( string $block_slug ): ?string {
 		foreach ( self::AREAS as $suffixes ) {
 			foreach ( $suffixes as $suffix ) {
@@ -117,7 +109,9 @@ class Purchase_Scope {
 		return null;
 	}
 
-	/** The switch that opens a family. */
+	/**
+	 * The switch that opens a family.
+	 */
 	public static function area_of( string $suffix ): ?string {
 		foreach ( self::AREAS as $area => $suffixes ) {
 			if ( in_array( $suffix, $suffixes, true ) ) {
@@ -128,8 +122,7 @@ class Purchase_Scope {
 	}
 
 	/**
-	 * Every live block of a family: the ones creature stacks actually list, so a block the catalog
-	 * retired (`met-abilities`) and one nothing uses never joins somebody's purchase list.
+	 * Every live block of a family: the ones creature stacks actually list.
 	 *
 	 * @return string[]
 	 */
@@ -152,9 +145,7 @@ class Purchase_Scope {
 	}
 
 	/**
-	 * A block as this chronicle buys from it: its own items first, then every other creature type's
-	 * for the area when the chronicle has opened it, a name already listed being skipped. The block
-	 * itself is never changed; a widened copy comes back, or the block as it was.
+	 * A block as this chronicle buys from it: its own items first.
 	 *
 	 * @param object|null   $block     A `Schema_Block` row.
 	 * @param string[]|null $open      The chronicle's open areas, when the caller already has them.

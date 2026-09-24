@@ -8,12 +8,7 @@ use BeyondElysium\Database\Transaction;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Static data-access model for a chronicle office (Prince, Sheriff, Grand Elder, ...) -
- * 1.1.0 §3.10, F2. A position may belong to a faction (a court seat) or stand alone (an
- * independent title, `faction_id` null); `holder_public = 0` hides who holds it from a
- * non-Storyteller without hiding that it exists.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.10
+ * Static data-access model for a chronicle office (Prince, Sheriff, Grand Elder,...).
  */
 class Position {
 
@@ -32,9 +27,7 @@ class Position {
 	}
 
 	/**
-	 * Every position in a chronicle, oldest first. `$faction_id` narrows to one faction's
-	 * own seats; omitted returns every position in the game, faction seats and independent
-	 * titles alike.
+	 * Every position in a chronicle, oldest first.
 	 *
 	 * @param int      $game_id
 	 * @param int|null $faction_id
@@ -57,10 +50,7 @@ class Position {
 	}
 
 	/**
-	 * Every position a character currently holds, across every faction and independent
-	 * title - `Query_Engine`'s new `position_title` source reads this, and it backs a
-	 * character's own Who's Who titles list (filtered by audience/holder_public there,
-	 * not here - this returns the raw held rows regardless of who's asking).
+	 * Every position a character currently holds, across every faction and independent title.
 	 *
 	 * @param int $character_id
 	 * @return object[]
@@ -74,10 +64,7 @@ class Position {
 	}
 
 	/**
-	 * Creates a position. `character_id`/`since` may be set immediately (a position created
-	 * with a holder already known) or left null (a vacant title) - either way, a real holder
-	 * is only ever recorded in `be_position_history` via `set_holder()`, never here, so a
-	 * position's very first holder gets the same history row a later change does.
+	 * Creates a position.
 	 *
 	 * @param array $data
 	 * @return int|false
@@ -119,8 +106,7 @@ class Position {
 	}
 
 	/**
-	 * Updates a position's editable fields, other than its holder - `set_holder()` is the
-	 * only path that changes `character_id`, since that write must also record history.
+	 * Updates a position's editable fields, other than its holder.
 	 *
 	 * @param int   $id
 	 * @param array $data
@@ -166,10 +152,8 @@ class Position {
 	}
 
 	/**
-	 * Changes a position's holder, writing a `be_position_history` row for the change: the
-	 * outgoing holder's own open history row (if any) gets `ended` stamped today, and a new
-	 * open row (`ended` null) starts for the incoming holder - `null` vacates the position
-	 * entirely, ending the current holder's row with no new one to replace it.
+	 * Changes a position's holder, writing a `be_position_history` row for the change: the outgoing holder's own open
+	 * history row (if any) gets `ended` stamped today, and a new open row (`ended` null) starts for the incoming holder.
 	 *
 	 * @param int      $id
 	 * @param int|null $character_id
@@ -209,9 +193,7 @@ class Position {
 	}
 
 	/**
-	 * Deletes a position outright, along with its full history - unlike a faction (which
-	 * un-links rather than deletes a position it's removed from), a position has no
-	 * meaningful existence once deleted.
+	 * Deletes a position outright, along with its full history.
 	 *
 	 * @param int $id
 	 * @return bool
@@ -258,7 +240,6 @@ class Position {
 			}
 			$row->audience_rules = $decoded;
 		}
-		// D51/D53: a tinyint(1) reaches $wpdb as the string "0", which is truthy in JS.
 		if ( $row && property_exists( $row, 'holder_public' ) ) {
 			$row->holder_public = (bool) $row->holder_public;
 		}

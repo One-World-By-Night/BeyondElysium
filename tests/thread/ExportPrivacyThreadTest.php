@@ -10,16 +10,10 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-058, F-059, F-060 (Pass H intake `t2-writers-xml-menus`,
- * `t3-config-controllers-bootstrap`). Export to Grapevine is the one read path where a player's
- * request decided what Storyteller-only data they got back:
- * - F-058: `hide_st` came from the request. The sheet's own button sends true for a player, but
- *   the same player calling the route without it got `[ST]` text back.
- * - F-059: `as_transfer` came from the request too, so a player could mint a real transfer
- *   attestation for their own character and offer it to another chronicle - no transfer on the
- *   home side, no Storyteller asked.
- * - F-060: a Storyteller-only block's values were written out whatever `hide_st` said, and a
- *   boon's `[ST]`-marked terms were never stripped.
+ * A player's export never carries Storyteller text: Storyteller-only blocks and a boon's Storyteller text stay out
+ * whatever the request asks, a player cannot mint a transfer from the export route, a Storyteller starts a transfer
+ * from the transfer route and still exports everything unless they ask for a player's copy, and a player's verified
+ * export still verifies against the live character.
  */
 class ExportPrivacyThreadTest extends WP_UnitTestCase {
 
@@ -52,7 +46,7 @@ class ExportPrivacyThreadTest extends WP_UnitTestCase {
 			'biography' => 'Came to the city in 1990. [ST]Secretly a Sabbat mole.[/ST]',
 			'sheet_data' => [
 				'vampire-identity' => [ 'Clan' => 'Toreador', 'Sect' => 'Camarilla' ],
-				'met-merits'       => [ [ 'name' => 'Common Sense', 'count' => 1 ] ],
+				'vampire-merits'       => [ [ 'name' => 'Common Sense', 'count' => 1 ] ],
 			],
 		] );
 
@@ -76,7 +70,7 @@ class ExportPrivacyThreadTest extends WP_UnitTestCase {
 
 	private function flag_merits_storyteller_only(): void {
 		global $wpdb;
-		$wpdb->update( $wpdb->prefix . 'be_schema_blocks', [ 'storyteller_only' => 1 ], [ 'slug' => 'met-merits' ] );
+		$wpdb->update( $wpdb->prefix . 'be_schema_blocks', [ 'storyteller_only' => 1 ], [ 'slug' => 'vampire-merits' ] );
 	}
 
 	public function test_a_player_never_gets_storyteller_text_back_whatever_the_request_asks(): void {

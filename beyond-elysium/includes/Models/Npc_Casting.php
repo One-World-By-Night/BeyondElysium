@@ -7,11 +7,7 @@ use BeyondElysium\Database\Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Static data-access model for NPC casting (1.1.0 §3.8) - a chronicle member loaned "how to
- * play this character tonight" for one specific session, separate from `characters.assigned_to`
- * (S6's permanent staff owner). One row per (session, NPC) pair.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.8
+ * Static data-access model for NPC casting.
  */
 class Npc_Casting {
 
@@ -42,9 +38,7 @@ class Npc_Casting {
 	}
 
 	/**
-	 * Whether this NPC is already cast at this session - checked by the controller before
-	 * insert for a clean 409, matching Attendance::record()'s own "check first" convention
-	 * rather than relying on the UNIQUE key alone.
+	 * Whether this NPC is already cast at this session.
 	 *
 	 * @param int $session_id
 	 * @param int $character_id
@@ -59,9 +53,8 @@ class Npc_Casting {
 	}
 
 	/**
-	 * A chronicle member's own castings for sessions today or later, joined with the session's
-	 * game_date and the NPC's name - `Staff_Queue::castings()`'s and the player Dashboard
-	 * card's shared read.
+	 * A chronicle member's own castings for sessions today or later, joined with the session's game_date and the NPC's
+	 * name.
 	 *
 	 * @param int    $wp_user_id
 	 * @param int    $game_id
@@ -84,9 +77,7 @@ class Npc_Casting {
 	}
 
 	/**
-	 * Creates a casting. Returns the new row's id, or false when required fields are missing
-	 * or the insert fails (including the (session_id, character_id) unique constraint - the
-	 * controller checks already_cast() first for a clean 409, this is the structural backstop).
+	 * Creates a casting.
 	 *
 	 * @param array $data
 	 * @return int|false
@@ -109,8 +100,7 @@ class Npc_Casting {
 	}
 
 	/**
-	 * Updates a casting's wp_user_id and/or brief - never session_id/character_id, which
-	 * together are this row's own identity; re-casting a different pairing is a new row.
+	 * Updates a casting's wp_user_id and/or brief.
 	 *
 	 * @param int   $id
 	 * @param array $data
@@ -144,8 +134,7 @@ class Npc_Casting {
 	}
 
 	/**
-	 * Whether any casting exists for a session at all - `Game_Session::is_in_use()`'s own
-	 * casting check.
+	 * Whether any casting exists for a session at all.
 	 *
 	 * @param int $session_id
 	 * @return bool
@@ -155,11 +144,8 @@ class Npc_Casting {
 	}
 
 	/**
-	 * The one casting a chronicle member may read the brief for right now, or null when
-	 * `$casting_id` doesn't belong to `$wp_user_id` or the access window has closed. The
-	 * window opens at casting and stays open through the end of the day *after* the session's
-	 * `game_date`, site time (owner ruling: casting is often prep done days ahead, not
-	 * something that should vanish mid-session).
+	 * The one casting a chronicle member may read the brief for right now, or null when `$casting_id` doesn't belong to
+	 * `$wp_user_id` or the access window has closed.
 	 *
 	 * @param int $wp_user_id
 	 * @param int $casting_id

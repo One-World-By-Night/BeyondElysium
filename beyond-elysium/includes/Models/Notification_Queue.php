@@ -7,13 +7,7 @@ use BeyondElysium\Database\Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Static data-access model for queued daily-digest notifications (1.1.0 §3.5).
- *
- * A row here is one plot-post notification a user has opted to receive as part of a once-daily
- * digest rather than immediately - `Notifications::enqueue_or_queue_post()` writes one per
- * recipient per post, and `Maintenance::run()` reads every row for a user, sends one email
- * naming all of them, and deletes exactly the rows it sent (by id, never by user, so a row
- * inserted mid-send is never lost to a race).
+ * Static data-access model for queued daily-digest notifications.
  */
 class Notification_Queue {
 
@@ -37,8 +31,7 @@ class Notification_Queue {
 	}
 
 	/**
-	 * Every distinct wp_user_id with at least one queued notification - who Maintenance::run()'s
-	 * digest sweep has anything to send.
+	 * Every distinct wp_user_id with at least one queued notification.
 	 *
 	 * @return int[]
 	 */
@@ -67,8 +60,7 @@ class Notification_Queue {
 	}
 
 	/**
-	 * Deletes exactly the given rows - the digest's own "delete what it sent" step, scoped to
-	 * ids rather than a user so a row queued after the digest read its own set is never lost.
+	 * Deletes exactly the given rows.
 	 *
 	 * @param int[] $ids
 	 * @return void

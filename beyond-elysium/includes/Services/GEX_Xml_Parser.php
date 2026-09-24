@@ -8,38 +8,11 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Parser for Grapevine's GEX XML exchange files (`.gex`).
- *
- * Uses a separate, disjoint element vocabulary from GVM menu XML
- * (`GVM_Parser::parse_xml()`). The two formats share only three attribute
- * conventions (`abc`/`negative`/`atomic` are the string `"yes"`, `display`
- * is an int); GVM's container is `<menu>`/`<item name cost note>`, GEX's
- * is `<traitlist>`/`<trait name val note>`.
- *
- * Returns the identical array shape `GEX_Parser::parse_binary()` returns,
- * so every downstream consumer needs no branch past `sniff_format()`.
- *
- * Supports `<item>`, `<rote>`, and all 12 character races (GX-2,
- * gex-export-transfer-design.md); any other root element throws, naming it.
- * A small number of fields that do not appear in the XML format at all
- * (`appearance`/`notes` on an item, `grades` on a rote) are emitted as `''`
- * rather than omitted, so downstream code can index every key regardless of
- * which parser produced the record.
- *
- * `vampire`/`werewolf` go through their own hand-written methods, carrying
- * GX-0's seven reader-defect fixes. The other ten races go through
- * `parse_character_generic()`, driven entirely by `gv-exchange-shape.php`
- * (GX-1) rather than eleven more hand-written near-duplicates - there was no
- * existing XML support for any of them before GX-2.
- *
- * @see BE_PROCESS/releases/workflow-0.8.md Step 9
- * @see BE_PROCESS/reference/DECISIONLOG.md Decision 068
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-2
  */
 class GEX_Xml_Parser {
 
 	/**
-	 * Parses a `.gex` XML exchange file from disk. Reads the file's
-	 * contents and delegates to `parse_string()` for the actual parse.
+	 * Parses a `.gex` XML exchange file from disk.
 	 *
 	 * @param string $path Absolute path.
 	 * @return array<string,mixed>
@@ -55,10 +28,7 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Parses a GEX XML exchange document already in memory. Dispatches
-	 * each top-level child element to the matching parser by tag name and
-	 * collects the results into the same shape `GEX_Parser::parse_binary()`
-	 * returns.
+	 * Parses a GEX XML exchange document already in memory.
 	 *
 	 * @param string $xml
 	 * @return array<string,mixed>
@@ -133,22 +103,7 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Maps a `<vampire>` element to the identical shape
-	 * `GEX_Parser::parse_character_vampire()`'s binary reader produces.
-	 * `coterie`, `narrator`, and `player` are real attributes Grapevine
-	 * writes (`VampireClass.cls:358,380,384`), read when present; the web
-	 * tool's own exports leave them out, which reads as empty. They were
-	 * always emitted empty until 1.0.0-review F-049, so a vampire's player
-	 * name never survived an export and import.
-	 *
-	 * `id`, `npc`, `biography`, `aura`/`aurabonus`, `<boon>` children, and
-	 * every `temp_*` field are real GV XML attributes/elements this parser
-	 * previously dropped (GX-0 defects 2-7) - each is now read from the
-	 * source element, falling back to the same default the binary reader
-	 * would use only when the attribute is genuinely absent.
-	 * `physical_max`/`social_max`/`mental_max` are backfilled through
-	 * `GEX_Parser::backfill_pool_max()` since the XML format never
-	 * carries them either.
+	 * Maps a `<vampire>` element to the identical shape `GEX_Parser::parse_character_vampire()`'s binary reader produces.
 	 *
 	 * @param \SimpleXMLElement $el
 	 * @return array<string,mixed>
@@ -187,10 +142,6 @@ class GEX_Xml_Parser {
 			'path'              => (string) $el['path'],
 			'path_traits'       => (int) $el['pathtraits'],
 			'temp_path_traits'  => (int) self::xml_attr_or( $el, 'temppathtraits', $el['pathtraits'] ),
-			// Real Grapevine writes 'aura' twice (once for Aura, once for AuraBonus with the
-			// 'aurabonus' attribute name never actually reaching the file - VampireClass.cls:375-376),
-			// which is malformed XML no parser here can read. Support the corrected shape: 'aura'
-			// for Aura, a genuine 'aurabonus' attribute for AuraBonus, defaulting to '+0' when absent.
 			'aura'              => (string) $el['aura'],
 			'aura_bonus'        => self::xml_attr_or( $el, 'aurabonus', '+0' ),
 			'physical_max'      => $physical_max,
@@ -212,13 +163,8 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Maps a `<werewolf>` element to the identical shape
-	 * `GEX_Parser::parse_character_werewolf()`'s binary reader produces,
-	 * following the same field-mapping discipline as the vampire parser
-	 * above (GX-0 defects 2, 3, 5, 7 - no boon list or aura fields exist
-	 * on this race). A missing `wisdom` attribute and an empty one both
-	 * resolve to `0` through `(int) $el['wisdom']`, so no special-casing
-	 * is needed for either case.
+	 * Maps a `<werewolf>` element to the identical shape `GEX_Parser::parse_character_werewolf()`'s binary reader
+	 * produces.
 	 *
 	 * @param \SimpleXMLElement $el
 	 * @return array<string,mixed>
@@ -262,7 +208,6 @@ class GEX_Xml_Parser {
 			'physical_max'   => $physical_max,
 			'social_max'     => $social_max,
 			'mental_max'     => $mental_max,
-			// Real attributes (WerewolfClass.cls:369,373), emitted empty until 1.0.0-review F-049.
 			'player'         => (string) $el['player'],
 			'status'         => (string) $el['status'],
 			'id'             => (string) $el['id'],
@@ -278,25 +223,9 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Maps any of the ten character races GX-1's shape table describes but
-	 * this parser previously had no XML support for at all (`mortal`,
-	 * `changeling`, `wraith`, `mage`, `fera`, `various`, `mummy`, `kueijin`,
-	 * `hunter`, `demon`) to the identical shape their binary counterpart in
-	 * `GEX_Parser` produces - driven entirely by `gv-exchange-shape.php`
-	 * (GX-2), rather than eleven more hand-written near-duplicates of
-	 * `parse_character_vampire()`/`parse_character_werewolf()`.
-	 *
-	 * `vampire`/`werewolf` deliberately keep their own existing hand-written
-	 * methods above rather than being folded into this one: both already
-	 * carry GX-0's fixes and real test coverage, and there is no working
-	 * behaviour here to preserve for the other ten - a fresh, table-driven
-	 * implementation is the lower-risk choice for races that have never had
-	 * XML support before.
-	 *
-	 * `physical_max`/`social_max`/`mental_max` are always backfilled from
-	 * trait-list counts, the same as every hand-written method above -
-	 * these three are never actually present in the XML format for any
-	 * race, whatever the shape table's own `scalars` entry says.
+	 * Maps any of the ten character races the shape table describes without a dedicated XML reader (`mortal`,
+	 * `changeling`, `wraith`, `mage`, `fera`, `various`, `mummy`, `kueijin`, `hunter`, `demon`) to the shape their
+	 * binary counterpart in `GEX_Parser` produces.
 	 *
 	 * @param \SimpleXMLElement $el
 	 * @param string            $race
@@ -354,11 +283,8 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Maps an `<experience>` element and its `<entry>` children to the
-	 * identical shape `GEX_Parser`'s private experience parsers produce.
-	 * Per-entry `earned`/`unspent` running totals do not exist in the XML
-	 * format, only the outer current totals do, so each history entry
-	 * emits `0.0` for both rather than omitting the keys.
+	 * Maps an `<experience>` element and its `<entry>` children to the identical shape `GEX_Parser`'s private experience
+	 * parsers produce.
 	 *
 	 * @param \SimpleXMLElement $experience_el
 	 * @return array{unspent:float,earned:float,history:array<int,array<string,mixed>>}
@@ -384,17 +310,8 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Maps every `<boon>` child of a `<vampire>` element to the identical
-	 * shape `GEX_Parser::parse_boon()`'s binary reader produces. Only
-	 * vampire writes a boon list (`BoonClass.OutputToFile`, called from
-	 * `VampireClass.cls:418-424`); no other race's `OutputToFile` calls it.
-	 *
-	 * `BoonDate` is a plain VB6 Date field (`BoonClass.cls`), written the
-	 * same generic way as `StartDate`/`LastModified` rather than the
-	 * date-only `<entry date>` convention `parse_date_only()` handles - so
-	 * it is parsed with `parse_date()`. Inferred, not tested against a real
-	 * sample: no boon-carrying `.gex` exists in this repo (see the
-	 * export/transfer design doc's risk ledger).
+	 * Maps every `<boon>` child of a `<vampire>` element to the identical shape `GEX_Parser::parse_boon()`'s binary
+	 * reader produces.
 	 *
 	 * @param \SimpleXMLElement $el
 	 * @return array<int,array<string,mixed>>
@@ -414,12 +331,7 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Maps an `<item>` element to the identical shape
-	 * `GEX_Parser::parse_item()`'s binary reader produces. Trait lists
-	 * are matched by their own `name` attribute, since XML gives named
-	 * elements rather than the binary format's fixed read order, against
-	 * the four the binary reader always reads: `Tempers`, `Abilities`,
-	 * `Negatives`, and `Availability`.
+	 * Maps an `<item>` element to the identical shape `GEX_Parser::parse_item()`'s binary reader produces.
 	 *
 	 * @param \SimpleXMLElement $el
 	 * @return array<string,mixed>
@@ -441,7 +353,7 @@ class GEX_Xml_Parser {
 			'negative_list'  => $lists['Negatives'] ?? self::empty_trait_list( 'Negatives' ),
 			'availability'   => $lists['Availability'] ?? self::empty_trait_list( 'Availability' ),
 			'powers'         => trim( (string) $el->powers ),
-			// Not present in the XML format; emitted as '' rather than omitted.
+			// Not present in the XML format.
 			'appearance'     => '',
 			'notes'          => '',
 			'last_modified'  => self::parse_date( (string) $el['lastmodified'] ),
@@ -449,10 +361,7 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Maps a `<rote>` element to the identical shape
-	 * `GEX_Parser::parse_rote()`'s binary reader produces. `grades` does
-	 * not exist in the XML format at all and is emitted as `''` rather
-	 * than omitted.
+	 * Maps a `<rote>` element to the identical shape `GEX_Parser::parse_rote()`'s binary reader produces.
 	 *
 	 * @param \SimpleXMLElement $el
 	 * @return array<string,mixed>
@@ -472,9 +381,8 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Collects every `<traitlist>` child of an `<item>`, `<rote>`, or
-	 * character element, keyed by its own `name` attribute. Parses each
-	 * child through `parse_trait_list()`.
+	 * Collects every `<traitlist>` child of an `<item>`, `<rote>`, or character element, keyed by its own `name`
+	 * attribute.
 	 *
 	 * @param \SimpleXMLElement $el
 	 * @return array<string,array<string,mixed>>
@@ -489,12 +397,9 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Maps a `<traitlist>` element to the identical shape
-	 * `GEX_Parser::parse_trait_list()`'s binary reader produces, including
-	 * the one attribute convention it shares with GVM menu XML:
-	 * `abc`/`negative`/`atomic` are the string `"yes"`, and `display` is
-	 * an int. Detects section-divider entries and tags subsequent traits
-	 * with the divider's label.
+	 * Maps a `<traitlist>` element to the identical shape `GEX_Parser::parse_trait_list()`'s binary reader produces,
+	 * including the one attribute convention it shares with GVM menu XML: `abc`/`negative`/`atomic` are the string
+	 * `"yes"`, and `display` is an int.
 	 *
 	 * @param \SimpleXMLElement $traitlist
 	 * @return array{name:string,alphabetized:bool,atomic:bool,negative:bool,display:int,traits:array<int,array{name:string,total:string,note:string}>}
@@ -504,14 +409,6 @@ class GEX_Xml_Parser {
 		$section = null;
 		foreach ( $traitlist->trait as $trait ) {
 			// A string even though it holds a number, matching the binary reader's Total field.
-			// An absent val defaults to '1' (LinkedTraitList.cls:833's WriteAttribute omits it
-			// when Total is 1 - GX-0 defect 1). A real production file (a Dialect B web-tool
-			// export, gex-export-transfer-design.md §2e) showed this reaches the file as a
-			// present-but-empty val="" instead of a fully omitted attribute for the same
-			// no-real-count case - confirmed on kony-sabbat.net/Boston, where every affected
-			// trait sat in a note-only, atomic list (Rituals, Merits, Derangements) that has
-			// no real "0" state: a ritual or merit is either held or it isn't. Both shapes are
-			// treated identically here, since neither carries a real recorded value.
 			$total = (string) ( $trait['val'] ?? '1' );
 			if ( $total === '' ) {
 				$total = '1';
@@ -521,7 +418,6 @@ class GEX_Xml_Parser {
 				'total' => $total,
 				'note'  => (string) $trait['note'],
 			];
-			// Reuses GEX_Parser::is_section_divider()/divider_label() rather than duplicating the logic.
 			if ( GEX_Parser::is_section_divider( $parsed ) ) {
 				$section = GEX_Parser::divider_label( $parsed );
 				continue;
@@ -543,9 +439,7 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Builds an empty trait list placeholder for a name with no matching
-	 * `<traitlist>` element in the source XML. Returns the same shape a
-	 * parsed trait list would have, with all values at their defaults.
+	 * Builds an empty trait list placeholder for a name with no matching `<traitlist>` element in the source XML.
 	 *
 	 * @param string $name
 	 * @return array{name:string,alphabetized:bool,atomic:bool,negative:bool,display:int,traits:array<int,mixed>}
@@ -562,12 +456,7 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Reads an attribute if the source element actually carries it,
-	 * falling back to a caller-supplied default otherwise. Used for every
-	 * `temp*` field and `aurabonus`: real Grapevine omits these when they
-	 * equal their non-temp/default counterpart (`XMLWriterClass.cls`'s
-	 * `WriteAttribute` omit rule), so an absent attribute means "same as
-	 * the fallback", not "zero" (GX-0 defect 7).
+	 * Reads an attribute if the source element actually carries it, falling back to a caller-supplied default.
 	 *
 	 * @param \SimpleXMLElement $el
 	 * @param string            $attr
@@ -579,13 +468,7 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Reads the attributes `Character_Exporter` adds for a Beyond Elysium
-	 * import, which Grapevine's reader collects and never reads. `bestack`
-	 * restores a creature stack that travels as another race's element
-	 * (`GEX_Parser::STACK_EXCHANGE_RACE`) - honored only for a stack that really
-	 * travels as this element's race, so a document cannot turn a vampire into
-	 * anything else (1.0.0-review F-048). `benature`/`bedemeanor` carry Nature
-	 * and Demeanor for a race with no fields of its own for them (F-049).
+	 * Reads the attributes `Character_Exporter` adds for a Beyond Elysium import.
 	 *
 	 * @param array<string,mixed> $character
 	 * @param \SimpleXMLElement   $el
@@ -604,15 +487,7 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Merges the character's own permanent uuid into its parsed record when
-	 * the document carries one. Only a transfer-marked export ever does
-	 * (`Character_Exporter`'s `as_transfer` option, GX-8) - `<verification
-	 * character_uuid="...">` is a Beyond Elysium extension no real Grapevine
-	 * document has ever written, silently ignored everywhere else in this
-	 * method the same way the reference reader ignores it (`VampireClass.cls
-	 * :488-530`'s missing `Case Else`). A missing or malformed uuid leaves
-	 * the record exactly as parsed - the ordinary case for every real
-	 * Grapevine-authored file and every non-transfer export of our own.
+	 * Merges the character's own permanent uuid into its parsed record when the document carries one.
 	 *
 	 * @param array<string,mixed> $character
 	 * @param \SimpleXMLElement   $el
@@ -627,10 +502,8 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Parses a `lastmodified`-style timestamp attribute, for example
-	 * `"11/20/2002 12:13:04 AM"`, into the same `'Y-m-d H:i:s'`-or-null
-	 * shape `GV_Binary_Reader::date()` produces. Returns null for an
-	 * empty or unparseable value.
+	 * Parses a `lastmodified`-style timestamp attribute, for example `"11/20/2002 12:13:04 AM"`, into the same `'Y-m-d
+	 * H:i:s'`-or-null shape `GV_Binary_Reader::date()` produces.
 	 *
 	 * @param string $raw
 	 * @return string|null
@@ -644,14 +517,7 @@ class GEX_Xml_Parser {
 	}
 
 	/**
-	 * Parses a date-only attribute, for example `<entry date="08/20/2021">`,
-	 * which carries no time component, unlike `lastmodified`/`startdate`
-	 * handled by `parse_date()` above.
-	 *
-	 * The leading `!` in the format string resets every unspecified field
-	 * to the Unix epoch (00:00:00) rather than the current system time,
-	 * so the parsed value is always midnight rather than whatever time
-	 * the code happens to run.
+	 * Parses a date-only attribute, for example `<entry date="08/20/2021">`.
 	 *
 	 * @param string $raw
 	 * @return string|null

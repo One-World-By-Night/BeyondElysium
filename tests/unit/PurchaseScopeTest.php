@@ -6,8 +6,8 @@ use BeyondElysium\Services\Purchase_Scope;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The pure half of `Purchase_Scope` (1.3.4): which block slugs belong to which switch, and what a write or
- * a stored value counts as. The widening itself needs the database and is in `PurchaseScopeThreadTest`.
+ * The pure half of `Purchase_Scope`: which block slugs belong to which switch, and what a write or a stored value
+ * counts as.
  */
 class PurchaseScopeTest extends TestCase {
 

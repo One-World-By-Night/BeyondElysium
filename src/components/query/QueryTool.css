@@ -1,5 +1,4 @@
-/* Which inventory the query runs over: a row of choices under the tabs, the chosen one filled
- * (1.0.0-review F-112). */
+/* Which inventory the query runs over: a row of choices under the tabs, the chosen one filled. */
 .be-query-tool__inventories {
 	display: flex;
 	flex-wrap: wrap;
@@ -35,8 +34,7 @@
 	margin: 1rem 0;
 }
 
-/* The name field takes the room that's left. A theme's `input[type=text] { width: 100% }` (0,1,1)
- * otherwise squeezed Run Query narrower than its own label on a phone (1.0.0-review F-019). */
+/* The name field takes the room that's left. */
 .be-query-tool__run-row input {
 	flex: 1 1 10rem;
 	width: auto;

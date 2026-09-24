@@ -1,8 +1,6 @@
 /**
- * "After-Game Report" (1.1.0 §3.14, A1) - My Chronicle's own tab for a player to write one
- * report per character per session: what did your character do, what do you want next,
- * anything for staff. Editable until the session's own reports_due_at; a Storyteller reads
- * and marks it read, never edits it.
+ * "After-Game Report" - My Chronicle's own tab for a player to write one report per character per session: what did
+ * your character do, what do you want next, anything for staff.
  */
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -78,9 +76,7 @@ export function AfterGameReport( { gameSlug }: AfterGameReportProps ) {
 					didDraft.current = mine.did ?? '';
 					wantsDraft.current = mine.wants ?? '';
 					toStaffDraft.current = mine.to_staff ?? '';
-					// HtmlEditor is uncontrolled - setting the drafts alone would never
-					// reach an already-mounted TinyMCE instance, so this re-key (below)
-					// depends on `existing` to force a fresh mount with the real content.
+					// HtmlEditor is uncontrolled.
 					setExisting( mine );
 				}
 			} )
@@ -118,10 +114,7 @@ export function AfterGameReport( { gameSlug }: AfterGameReportProps ) {
 		}
 	}
 
-	// HtmlEditor is uncontrolled (TinyMCE owns the DOM after mount) - a fresh key forces
-	// a real remount, the only way to load newly-fetched content into it. Changes on every
-	// session/character switch, and once more when an existing report's real content
-	// arrives asynchronously (the 'new'-to-real-id transition inside the effect above).
+	// HtmlEditor is uncontrolled (TinyMCE owns the DOM after mount).
 	const editorKey = `${ sessionId || 'none' }-${ characterId || 'none' }-${
 		existing?.id ?? 'new'
 	}`;

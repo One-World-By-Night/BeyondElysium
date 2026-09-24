@@ -7,13 +7,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Step 7d, workflow-0.9.md - the two new routes the player dashboard needed:
- * `GET /{game_slug}/my/characters` (wraps the pre-existing `Character::find_for_user()`)
- * and `GET /{game_slug}/my/changes` (a new `wp_user_id` filter on `Change::for_game()`).
- * Both must be reachable by a plain player, scoped to that player's own data only, and
- * must apply the same ST-only-text stripping `get_item()`/`get_items()` already apply -
- * a player's own character can carry `[ST]...[/ST]`-marked text even its own owner must
- * never see.
+ * The player dashboard's two routes: `GET /{game_slug}/my/characters` and `GET /{game_slug}/my/changes`.
  */
 class PlayerDashboardRoutesTest extends WP_UnitTestCase {
 
@@ -73,8 +67,7 @@ class PlayerDashboardRoutesTest extends WP_UnitTestCase {
 
 	public function test_my_characters_does_not_strip_text_for_a_manager(): void {
 		$st = self::factory()->user->create( [ 'role' => 'administrator' ] );
-		// The manager plays their own character in this same chronicle - can_manage is a
-		// capability check, not an ownership one, so this must still show full text.
+		// The manager plays their own character in this same chronicle.
 		Character::create( [
 			'name' => 'Manager Character', 'stack_slug' => 'vampire',
 			'owner_type' => 'chronicle', 'owner_slug' => $this->game_slug, 'wp_user_id' => $st,
@@ -92,8 +85,8 @@ class PlayerDashboardRoutesTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->player_a );
 		$submit = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters/{$this->character_a}/changes" );
 		$submit->set_param( 'change_type', 'add_trait' );
-		$submit->set_param( 'category', 'met-merits' );
-		$submit->set_param( 'change_data', [ 'block_slug' => 'met-merits', 'trait' => [ 'name' => 'Iron Will' ] ] );
+		$submit->set_param( 'category', 'vampire-merits' );
+		$submit->set_param( 'change_data', [ 'block_slug' => 'vampire-merits', 'trait' => [ 'name' => 'Iron Will' ] ] );
 		$this->dispatch( $submit );
 
 		wp_set_current_user( $this->player_b );

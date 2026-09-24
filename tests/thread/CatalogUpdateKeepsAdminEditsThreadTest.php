@@ -9,14 +9,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-011. Owner ruling 2026-09-14: an update refreshes only what the seed data owns
- * (names, costs, notes, translations); admin-set approvals, reasons, schedules, descriptions, and
- * admin-added entries survive every update.
- *
- * Every version bump reseeds the shared catalog, and the reseed replaced each system block's
- * whole definition and each system creature stack wholesale - only item and power descriptions
- * were carried forward. An administrator's approval rules, value schedules, and added entries
- * disappeared at the next plugin update.
+ * A catalog update refreshes only what the seed data owns: admin-set approvals, reasons, schedules, descriptions and
+ * admin-added entries survive it.
  */
 class CatalogUpdateKeepsAdminEditsThreadTest extends WP_UnitTestCase {
 
@@ -47,9 +41,7 @@ class CatalogUpdateKeepsAdminEditsThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_an_update_keeps_every_admin_edit_to_system_blocks_and_still_refreshes_source_data(): void {
-		// trait_list: an approval rule, a reason, a value schedule, and a cost edit on one merit; a merit
-		// the admin added; a block-wide rule.
-		$merits      = $this->definition( 'met-merits' );
+		$merits      = $this->definition( 'vampire-merits' );
 		$merit       = $merits['items'][0]['name'];
 		$source_cost = $merits['items'][0]['cost'] ?? null;
 		$merits['items'][0]['approval']          = 'st';
@@ -58,9 +50,8 @@ class CatalogUpdateKeepsAdminEditsThreadTest extends WP_UnitTestCase {
 		$merits['items'][0]['cost']              = '99';
 		$merits['items'][]                       = [ 'name' => 'Thread House Merit', 'cost' => '2' ];
 		$merits['approval_rules']                = [ 'default' => 'st' ];
-		$this->assertSame( 200, $this->put( '/be/v1/schema-blocks/met-merits', [ 'definition' => $merits ] )->get_status() );
+		$this->assertSame( 200, $this->put( '/be/v1/schema-blocks/vampire-merits', [ 'definition' => $merits ] )->get_status() );
 
-		// tiered_power: a family override, a level's approval and reason, and a level the admin added.
 		$disciplines = $this->definition( 'vampire-disciplines' );
 		foreach ( $disciplines['powers'] as &$power ) {
 			if ( $power['name'] === 'Celerity' ) {
@@ -100,7 +91,7 @@ class CatalogUpdateKeepsAdminEditsThreadTest extends WP_UnitTestCase {
 		// What a plugin version bump runs.
 		Seeder::seed_schema_blocks();
 
-		$merits = $this->definition( 'met-merits' );
+		$merits = $this->definition( 'vampire-merits' );
 		$kept   = self::named( $merits['items'], $merit );
 		$this->assertSame( 'st', $kept['approval'] ?? null );
 		$this->assertSame( 'Chronicle house rule', $kept['reason'] ?? null );

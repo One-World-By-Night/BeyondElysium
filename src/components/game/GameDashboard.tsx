@@ -1,8 +1,5 @@
 /**
- * Game landing page. Renders one of two dashboards depending on the viewer's
- * capabilities: an aggregate statistics view for managers, or the player-facing
- * PlayerDashboard for everyone else. The capability check is a display choice
- * only - every underlying route re-checks access on its own.
+ * Game landing page.
  */
 import { __ } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
@@ -25,7 +22,9 @@ export interface GameDashboardProps {
 	approvalQueueUrl?: string;
 	rosterUrl?: string;
 	plotsUrl?: string;
-	/** What the person can do in this chronicle, when the page resolved it; the site-wide snapshot otherwise (F-103). */
+	/**
+	 * What the person can do in this chronicle, when the page resolved it.
+	 */
 	capabilities?: MyCapabilities;
 }
 
@@ -34,10 +33,7 @@ function sumCounts( counts: Record< string, number > ): number {
 }
 
 /**
- * Renders the game landing page. Managers see an aggregate dashboard of character, change,
- * and plot statistics with links to the approval queue, roster, and plots pages; everyone
- * else sees PlayerDashboard instead. The choice of view is a UI affordance only - each
- * underlying REST route enforces its own permission check independently.
+ * Renders the game landing page.
  */
 export function GameDashboard( {
 	gameSlug,
@@ -52,8 +48,7 @@ export function GameDashboard( {
 	const [ stats, setStats ] = useState< GameStats | null >( null );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
-	// My Queue's own two assigned-to-me sections (1.1.0 §3.6) - null while unknown, so the
-	// card renders nothing rather than a misleading 0 before the request resolves.
+	// My Queue's own two assigned-to-me sections.
 	const [ waitingOnMe, setWaitingOnMe ] = useState< number | null >( null );
 
 	const [ rosterHealthOpen, setRosterHealthOpen ] = useState( false );

@@ -5,31 +5,31 @@ namespace BeyondElysium\Core;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Adds Beyond Elysium's per-user settings fields to WordPress's own
- * user-profile screen (`profile.php`/`user-edit.php`). Reads and writes
- * both a sheet-customization grant checkbox and a change-notification
- * opt-out checkbox as user meta, and additively grants the
- * be_customize_sheet capability to any user whose checkbox is set.
+ * Adds Beyond Elysium's per-user settings fields to WordPress's own user-profile screen
+ * (`profile.php`/`user-edit.php`).
  */
 class User_Settings {
 
-	/** User meta key. '1' when granted, absent/empty otherwise. */
+	/**
+	 * User meta key.
+	 */
 	const CUSTOMIZE_SHEET_META = 'be_customize_sheet';
 
-	/** User meta key. '1' when this user has opted out of change approved/rejected mail; absent/empty means notifications are on. */
+	/**
+	 * User meta key.
+	 */
 	const NOTIFICATIONS_OPT_OUT_META = 'be_notifications_opt_out';
 
-	/** User meta key (1.1.0 §3.5). One of PLOT_NOTIFY_VALUES; absent/empty means 'immediate'. The opt-out above still wins over this regardless of its value. */
+	/**
+	 * User meta key.
+	 */
 	const PLOT_NOTIFY_META = 'be_plot_notify';
 
 	/** @var string[] Valid PLOT_NOTIFY_META values. */
 	const PLOT_NOTIFY_VALUES = [ 'immediate', 'daily', 'off' ];
 
 	/**
-	 * Hooks this class's field rendering and saving onto WordPress's
-	 * profile screens (show/edit_user_profile,
-	 * personal_options_update/edit_user_profile_update), and
-	 * grant_from_meta() onto user_has_cap.
+	 * Hooks the profile-screen field rendering and saving onto WordPress, and grant_from_meta() onto user_has_cap.
 	 */
 	public static function register(): void {
 		add_action( 'show_user_profile', [ self::class, 'render_fields' ] );
@@ -40,10 +40,8 @@ class User_Settings {
 	}
 
 	/**
-	 * Renders this plugin's fields on the user-profile screen: a sheet-
-	 * customization checkbox visible to users who can manage_options, and
-	 * a notification opt-out checkbox visible to anyone who can edit this
-	 * profile. Renders nothing if neither applies to the current viewer.
+	 * Renders this plugin's fields on the user-profile screen: a sheet-customization checkbox visible to users who can
+	 * manage_options, and a notification opt-out checkbox visible to anyone who can edit this profile.
 	 *
 	 * @param \WP_User $user The profile being viewed - not necessarily the current user.
 	 */
@@ -156,10 +154,7 @@ class User_Settings {
 	}
 
 	/**
-	 * Saves this plugin's profile fields from $_POST. Requires edit_user
-	 * capability on the target profile. Only saves the sheet-customization
-	 * grant when the current user can manage_options; always saves the
-	 * notification opt-out.
+	 * Saves this plugin's profile fields from $_POST.
 	 *
 	 * @param int $user_id The profile being saved.
 	 */
@@ -186,9 +181,8 @@ class User_Settings {
 	}
 
 	/**
-	 * Adds be_customize_sheet to a user's capabilities when their user
-	 * meta flag is set, regardless of their role's own grants. Only ever
-	 * adds the capability; never removes one a role already granted.
+	 * Adds be_customize_sheet to a user's capabilities when their user meta flag is set, regardless of their role's own
+	 * grants.
 	 *
 	 * @param array<string,bool> $allcaps
 	 * @param string[]           $caps

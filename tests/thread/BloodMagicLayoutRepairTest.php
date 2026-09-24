@@ -7,26 +7,7 @@ use BeyondElysium\Models\Template;
 use WP_UnitTestCase;
 
 /**
- * BM-9 (BE_PROCESS/releases/0.99.2-workflow.md): getting `vampire-blood-magic` into an
- * already-seeded install's templates. Two separate, narrowly-scoped functions, following
- * the project's own established "one-off migration per specific gap" pattern rather than
- * generalizing repair_stale_default_layouts()'s width-based staleness check - a real
- * regression found running the full suite: generalizing that check to also flag a missing
- * *section* (not just a missing `width` field) broke
- * VampireTemplateRepairTest::test_a_template_already_on_the_new_shape_is_left_untouched,
- * which establishes that an is_system template genuinely missing sections the current code
- * defines - an admin's own deliberate trim via the structured editor looks identical - must
- * not be treated as stale on that basis alone.
- *
- *   - Schema::add_missing_blood_magic_template_section() - vampire's own sheet_full.
- *   - Schema::repair_stale_npc_layouts() - propagates that same addition into npc_full,
- *     which Seeder::seed_npc_templates() only ever builds once and never revisits.
- *
- * Tested here directly against the real, existing global vampire template rows, matching
- * AwakeningOfTheSteelDedupeTest's own established pattern for this class of test.
- *
- * No manual tearDown() - WP_UnitTestCase's own ambient transaction rolls back every write
- * this file makes, including to the real, shared vampire template rows.
+ * Getting `vampire-blood-magic` into an already-seeded install's templates.
  */
 class BloodMagicLayoutRepairTest extends WP_UnitTestCase {
 
@@ -36,7 +17,9 @@ class BloodMagicLayoutRepairTest extends WP_UnitTestCase {
 		return $rows[0];
 	}
 
-	/** Removes one section from a layout in place, leaving everything else untouched. */
+	/**
+	 * Removes one section from a layout in place, leaving everything else untouched.
+	 */
 	private function without_section( array $layout, string $block_slug ): array {
 		$layout['sections'] = array_values( array_filter(
 			$layout['sections'],
@@ -85,7 +68,7 @@ class BloodMagicLayoutRepairTest extends WP_UnitTestCase {
 	}
 
 	public function test_repair_stale_npc_layouts_appends_a_missing_section_before_the_notes_section(): void {
-		Schema::add_missing_blood_magic_template_section(); // Ensure sheet_full is current first.
+		Schema::add_missing_blood_magic_template_section();
 
 		$npc = $this->real_template( 'npc_full' );
 		Template::update( (int) $npc->id, [ 'layout' => $this->without_section( $npc->layout, 'vampire-blood-magic' ) ] );

@@ -1,7 +1,6 @@
 /**
- * 1.0.0-review F-075 (Pass H intake). A bulk action's selection outlived the search it was made
- * on: check a Toreador, search for Brujah instead, check one of those, and "Award XP" went to
- * both - the Toreador no longer on screen. A selection now belongs to one search.
+ * `searchKey` names the same search the same way on every page and in every
+ * order, and tells an edited search or another inventory apart.
  */
 import { searchKey } from './querySelection';
 

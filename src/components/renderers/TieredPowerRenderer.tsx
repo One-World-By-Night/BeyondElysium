@@ -1,9 +1,6 @@
 /**
- * Renders a tiered_power schema block (Disciplines, Gifts, Spheres,
- * Arts, Arcanoi, ...): the powers a character holds, either as numeric
- * levels or as named picks, depending on `displayMode`. Also exports the
- * `HeldPower` type and the label-building helpers used to format each
- * held entry.
+ * Renders a tiered_power schema block (Disciplines, Gifts, Spheres, Arts, Arcanoi,...): the powers a character holds,
+ * either as numeric levels or as named picks, depending on `displayMode`.
  */
 import { __ } from '@wordpress/i18n';
 import { localizedPowerName } from '../../lib/localizeName';
@@ -17,27 +14,24 @@ import type {
 import './TieredPowerRenderer.css';
 
 /**
- * One tiered power a character holds. A numeric level 1-5 holding sets
- * `level` and leaves `power_name` unset. An Elder-and-above holding is a
- * specific named power: `power_name` is set and looked up by name, with
- * `level` normally unset. Both can be set together for an imported
- * holding whose power name isn't in this block's own catalog, carrying
- * its own level directly rather than one derived by catalog lookup.
+ * One tiered power a character holds.
  */
 export interface HeldPower {
 	name: string;
 	level?: number;
 	power_name?: string;
-	/** Tier text for an entry with no catalog match; ignored when `level` is set or the power is found in the catalog. */
+	/**
+	 * Tier text for an entry with no catalog match.
+	 */
 	tier?: string;
-	/** Sorcery tradition this entry belongs to (Necromancy, Sadhana, ...); most tiered powers have none. */
+	/**
+	 * Sorcery tradition this entry belongs to (Necromancy, Sadhana,...).
+	 */
 	tradition?: string;
 }
 
 /**
- * Prefix a rendered label with the entry's tradition, when it carries one - Blood Magic's
- * own display rule (BE_PROCESS/releases/0.99.2-workflow.md: "Tradition: PathName"). A plain power
- * with no tradition renders exactly as it always has.
+ * Prefix a rendered label with the entry's tradition, when it carries one.
  */
 export function withTradition( held: HeldPower, label: string ): string {
 	return held.tradition ? `${ held.tradition }: ${ label }` : label;
@@ -65,10 +59,7 @@ function findLevel(
 }
 
 /**
- * Maps a numbered rank (1=basic, 2=intermediate, ...) to its tier name. Mirrors
- * `Cost_Engine::tier_for_rank()`/`Database\Seeder::TIER_RANKS` on the PHP side and
- * `Power_Display::tier_for_rank()`, its own exact twin - duplicated per-file rather
- * than shared, matching this codebase's established precedent for this one lookup.
+ * Maps a numbered rank (1=basic, 2=intermediate,...) to its tier name.
  */
 export const TIER_FOR_RANK: Record< number, string > = {
 	1: 'basic',
@@ -81,14 +72,7 @@ export const TIER_FOR_RANK: Record< number, string > = {
 };
 
 /**
- * Every real power at a given rank on a family's ladder - normally the single item
- * whose own `level` matches exactly, but D66 (1.2.5-design-workflow.md §A2: "anything
- * where more than one power exist on the same level... always show all") leaves
- * `level: null` on every item when several share one tier, so falls back to matching
- * by the rank's tier instead. Never rolled up to one entry - a caller that needs a
- * single name is a caller from before this fix existed. Exported for
- * `TieredPowerEditor.tsx`'s own `ladderRungLabel()` (1.2.10), which needs the
- * identical rank-from-tier logic rather than a third copy of it.
+ * Every real power at a given rank on a family's ladder.
  */
 export function findLevelsAtRank(
 	power: TieredPower | undefined,
@@ -109,13 +93,7 @@ export function findLevelsAtRank(
 }
 
 /**
- * Elder-and-above lookup: by the specific power's own name, not a number.
- *
- * Searches all three containers (1.2.10 E3). A pick lives in `elder` once a block declares
- * `_meta`, so searching `levels` alone found nothing and every pick above the elder rank
- * fell through to `elderLabel()`'s hardcoded `'elder'` default - measured on the real
- * catalog, `Celerity: Zephyr` (ascended) and `Animalism: Stampede` (master) both printed
- * "(elder)", on screen and in the signed PDF alike.
+ * Elder-and-above lookup: by the specific power's own name.
  */
 function findByPowerName(
 	power: TieredPower | undefined,
@@ -127,40 +105,26 @@ function findByPowerName(
 }
 
 /**
- * A tier value that is a parser placeholder rather than a real rank. The importer
- * writes `***` when it cannot map a raw trait onto the catalog, and that sentinel
- * reached players verbatim - a real sheet rendered "Combination: Sawafi Form (***)"
- * (owner-reported live, 2026-09-21). 1,637 production holdings carry it. These are
- * never real ranks and must never be shown as one.
+ * A tier value that is a parser placeholder.
  */
 const PLACEHOLDER_TIERS = new Set( [ '***', '', 'unknown' ] );
 
-/** Returns a tier safe to display, or undefined when it is a parser placeholder. */
+/**
+ * Returns a tier safe to display, or undefined when it is a parser placeholder.
+ */
 export function displayableTier( tier?: string | null ): string | undefined {
 	const trimmed = ( tier ?? '' ).trim();
 	return PLACEHOLDER_TIERS.has( trimmed.toLowerCase() ) ? undefined : trimmed;
 }
 
 /**
- * Builds a named label for an Elder-and-above held power: "Family: Power
- * (tier)" using the tier looked up from the catalog when the power is
- * found there, or "Family: Power {level}" when the entry carries its own
- * numbered level instead. A placeholder tier falls through to `elder`
- * rather than printing the sentinel.
+ * Builds a named label for an Elder-and-above held power.
  */
 export function elderLabel(
 	definition: TieredPowerDefinition,
 	held: HeldPower
 ): string {
-	// Prefers a fresh catalog tier lookup, then the entry's own stored tier, then 'elder' -
-	// the same lookup also backs the localized power name below (i18n-pt-br-design.md); the
-	// family name (held.name, e.g. "Celerity") has no translation in this pass and is never
-	// swapped, only the specific power's own name.
-	// D80: an unmatched import whose raw name carries no colon is stored with `power_name`
-	// equal to `name` (`custom_tiered_power_result()` splits on the first `": "` and falls
-	// back to the whole string for both), so the default format printed the family twice -
-	// "Valaren (Warrior): Valaren (Warrior) 4". Where the two are the same string there is
-	// no family/power distinction to draw, so the name is printed once.
+	// Prefers a fresh catalog tier lookup.
 	const selfNamed = held.power_name === held.name;
 
 	const found = findByPowerName(
@@ -178,10 +142,7 @@ export function elderLabel(
 		displayableTier( found?.tier ) ??
 		displayableTier( held.tier ) ??
 		'elder';
-	// U5/D67: on a family that is two ladders concatenated, the tier alone is ambiguous -
-	// `Path of Blood's Curse` has two basic Sabbat powers and two basic Tremere ones.
-	// `seamQualifier` names the tradition only where a family actually disagrees with
-	// itself, so a consistent family reads exactly as it did before.
+	// On a family that is two ladders concatenated, the tier alone is ambiguous.
 	const qualifier = seamQualifier(
 		findPower( definition, held.name ),
 		found
@@ -192,9 +153,8 @@ export function elderLabel(
 }
 
 /**
- * Builds a numeric-mode label for one held power: delegates to
- * `elderLabel()` for a named Elder-and-above pick, or renders
- * "Family {level}" for a plain numeric holding.
+ * Builds a numeric-mode label for one held power: delegates to `elderLabel()` for a named Elder-and-above pick, or
+ * renders "Family {level}" for a plain numeric holding.
  */
 export function numericLabel(
 	definition: TieredPowerDefinition,
@@ -209,9 +169,7 @@ export function numericLabel(
 }
 
 /**
- * The named label for one held power - a numeric level 1-5 looked up by number, or an
- * Elder-and-above power looked up by its own name, tagged with its real tier. Falls back
- * to whatever identifying text is available rather than ever rendering `undefined`.
+ * The named label for one held power.
  */
 export function namedLabel(
 	definition: TieredPowerDefinition,
@@ -232,18 +190,7 @@ export function namedLabel(
 }
 
 /**
- * Builds the label list "named" mode shows for one held power: the single label for an
- * Elder-and-above pick (Decision 037) - it's already the one specific power chosen, there
- * is no stack beneath it to expand - or one label per rung from 1 up to the held level for
- * a plain numbered holding. Decision 037 governs pricing cumulativeness, not display: a
- * player who wants every named rung listed sees the whole stack either way, sequential
- * block or not.
- *
- * D66 (1.2.5-design-workflow.md §A2, owner: "anything where more than one power exist on
- * the same level... always show all") - a rung tied between several named alternatives
- * (`level: null` on all of them) pushes every one of their names, never rolled up to one
- * entry; MET disciplines/gifts/etc. genuinely grant every power at a rank a character has
- * reached, not a single chosen pick, so this matches the real rule, not just the display.
+ * Builds the label list "named" mode shows for one held power: the single label for an Elder-and-above pick.
  */
 export function namedModeRows(
 	definition: TieredPowerDefinition,
@@ -261,8 +208,7 @@ export function namedModeRows(
 			continue;
 		}
 		for ( const entry of atRank ) {
-			// U5/D67: one rung of a concatenated family can hold powers from both ladders -
-			// see seamQualifier(). Twin of Power_Display::named_mode_rows().
+			// One rung of a concatenated family can hold powers from both ladders.
 			const label = localizedPowerName( entry );
 			const qualifier = seamQualifier( power, entry );
 			rows.push( qualifier ? `${ label } (${ qualifier })` : label );
@@ -272,11 +218,7 @@ export function namedModeRows(
 }
 
 /**
- * Renders the powers a character holds for a tiered_power block. Numeric
- * mode always shows a single total per power, e.g. "Celerity 3". Named
- * mode lists every named rung up to the held level for a plain numbered
- * holding, or the one specific power's name for an Elder-and-above pick.
- * Renders "None" when nothing is held.
+ * Renders the powers a character holds for a tiered_power block.
  */
 export function TieredPowerRenderer( {
 	blockSlug,
@@ -310,10 +252,7 @@ export function TieredPowerRenderer( {
 							</li>
 						);
 					}
-					// Named mode: every row stacks on its own line rather than joining
-					// into one comma-separated string, so a rank tied between many named
-					// alternatives (A2: "never roll up") stacks into cards instead of
-					// wrapping or scrolling sideways at phone width.
+					// Named mode: every row stacks on its own line.
 					const rows = namedModeRows( definition, held );
 					return (
 						<li key={ `${ held.name }-${ index }` }>

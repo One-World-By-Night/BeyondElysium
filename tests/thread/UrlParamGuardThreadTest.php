@@ -9,12 +9,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-001: Authorization::check_request() reads game_slug from the URL, but
- * `$request['game_slug']` resolves the JSON body, then the form body, then the query
- * string, and only then the URL. A conflicting game_slug in the query string or body used
- * to reach the handler after the permission check had already passed against the URL -
- * probed live: `/be-demo/characters?game_slug=kony` returned kony's characters to a
- * Storyteller of be-demo only. Url_Param_Guard refuses the conflict before any handler runs.
+ * Authorization::check_request() reads game_slug from the URL.
  */
 class UrlParamGuardThreadTest extends WP_UnitTestCase {
 

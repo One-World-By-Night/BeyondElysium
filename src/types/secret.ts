@@ -1,18 +1,21 @@
 /**
- * Type definitions for Storyteller-authored secrets and their reveals (1.1.0 §3.11).
+ * Type definitions for Storyteller-authored secrets and their reveals.
  */
 import type { AudienceRules, AudienceValue } from './plot';
 
 /**
- * What a secret may attach to. `faction`/`position` aren't listed - §3.11 never named them
- * as a secret's own attachment point, and F1/F2 didn't add that.
+ * What a secret may attach to.
  */
 export type SecretEntityType = 'plot' | 'item' | 'location' | 'npc';
 
-/** How a character came to learn a secret. */
+/**
+ * How a character came to learn a secret.
+ */
 export type RevealHow = 'game' | 'downtime' | 'rumor' | 'other';
 
-/** A single secret - a title/content pair with its own real, Audience-shaped visibility. */
+/**
+ * A single secret - a title/content pair with its own real, Audience-shaped visibility.
+ */
 export interface Secret {
 	id: number;
 	game_id: number;
@@ -27,7 +30,9 @@ export interface Secret {
 	updated_at: string;
 }
 
-/** Request body for creating a secret. */
+/**
+ * Request body for creating a secret.
+ */
 export interface CreateSecretRequest {
 	entity_type: SecretEntityType;
 	entity_id: number;
@@ -37,7 +42,9 @@ export interface CreateSecretRequest {
 	audience_rules?: AudienceRules | null;
 }
 
-/** Request body for updating a secret. */
+/**
+ * Request body for updating a secret.
+ */
 export interface UpdateSecretRequest {
 	title?: string;
 	content?: string;
@@ -45,7 +52,9 @@ export interface UpdateSecretRequest {
 	audience_rules?: AudienceRules | null;
 }
 
-/** One character learning one secret. */
+/**
+ * One character learning one secret.
+ */
 export interface SecretReveal {
 	id: number;
 	secret_id: number;
@@ -58,7 +67,9 @@ export interface SecretReveal {
 	created_at: string;
 }
 
-/** Request body for revealing a secret to a character. */
+/**
+ * Request body for revealing a secret to a character.
+ */
 export interface CreateSecretRevealRequest {
 	character_id: number;
 	how?: RevealHow;
@@ -68,9 +79,7 @@ export interface CreateSecretRevealRequest {
 }
 
 /**
- * One row of "What I Know" (`GET /my/secrets`) - a secret revealed to one of the caller's
- * own characters. `entity_name` is null when the viewer can't independently see that entity,
- * so a secret never discloses a hidden one.
+ * One row of "What I Know" (`GET /my/secrets`).
  */
 export interface MySecretRow {
 	id: number;

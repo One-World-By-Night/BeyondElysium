@@ -8,31 +8,7 @@ use BeyondElysium\Models\Release_Batch;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Releases a chronicle's own prepared draft batches on a recurring schedule (1.1.1 §3) -
- * weekly (a named weekday) and monthly (a day of the month, 1-28) rules, stored in
- * `be_games.settings.release_schedule.rules`. The schedule controls *when*, never *what*:
- * on the scheduled day, every batch already sitting in draft for that chronicle is released
- * as-is, exactly what a Storyteller would get manually setting that batch's own release_at -
- * nothing is fabricated. Additive: a chronicle with no rules is untouched, a chronicle whose
- * drafts are all empty on the scheduled day releases nothing, and a manual one-off batch
- * (`Release_Batch::create()`/setting `release_at` directly) works exactly as it always has.
- *
- * This is not the first shape this took. The original version created a brand-new, empty
- * batch the moment a rule became due, then released it in the same pass - which meant
- * whatever a Storyteller had actually prepared in a draft batch that week never went out at
- * all; only an empty, pointless one did. Found by this document's own required pre-deploy
- * trace (§3, happy path) before shipping, not after - see that trace for the full walkthrough.
- *
- * Run from `Core\Maintenance::run_release_sweep()`, immediately before the existing
- * due-batch release loop, so a batch promoted this pass releases the same pass rather than
- * waiting for the next quarter-hour tick.
- *
- * Overlap rule (owner ruling, 2026-09-17): when more than one rule is due for a chronicle on
- * the same calendar day, every currently-draft batch still only releases once - there is
- * nothing to duplicate, since the schedule promotes existing drafts rather than creating one
- * per rule.
- *
- * @see BE_PROCESS/releases/1.1.1-design-workflow.md §3
+ * Releases a chronicle's own prepared draft batches on a recurring schedule.
  */
 class Release_Scheduler {
 
@@ -55,10 +31,7 @@ class Release_Scheduler {
 	}
 
 	/**
-	 * The chronicle's own release-schedule rules, or an empty array when it has none -
-	 * `settings.release_schedule.rules` decodes as nested stdClass, matching every other
-	 * `settings` reader in this codebase (Spotlight::for_game(), Sessions_Controller's own
-	 * two-step cast).
+	 * The chronicle's own release-schedule rules, or an empty array when it has none.
 	 *
 	 * @param object $game
 	 * @return array<int,object>
@@ -70,10 +43,8 @@ class Release_Scheduler {
 	}
 
 	/**
-	 * Whether a rule is due right now: its own weekday/day-of-month matches today, its own
-	 * time-of-day has already passed, and it has not already fired today (`last_run_date`,
-	 * the rule's own idempotency cursor - there is no batch row yet at this point to lock
-	 * the way Release_Batch::find_for_update() locks an existing one).
+	 * Whether a rule is due right now: its weekday or day-of-month matches today, its time of day has passed, and it has
+	 * not already fired today (`last_run_date`).
 	 *
 	 * @param object $rule
 	 * @param string $today `Y-m-d`.
@@ -103,10 +74,7 @@ class Release_Scheduler {
 	}
 
 	/**
-	 * Promotes every draft batch this chronicle already holds to scheduled-and-due, for a
-	 * rule due right now, then advances each fired rule's own cursor. A chronicle with no
-	 * draft batches has nothing to promote - a quiet week, not an error - but the cursor
-	 * still advances so the same rule doesn't re-check every sweep for the rest of the day.
+	 * Promotes every draft batch this chronicle already holds to scheduled-and-due, for a rule due right now.
 	 *
 	 * @param object          $game
 	 * @param array<int,object> $rules

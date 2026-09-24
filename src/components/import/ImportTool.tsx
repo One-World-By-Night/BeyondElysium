@@ -1,8 +1,6 @@
 /**
- * ImportTool is the single-character exchange-file import wizard: upload a .gex
- * file, preview its contents, match players to WordPress accounts, resolve
- * flagged traits, and commit. Reuses ImportPreview for the shared preview and
- * resolution UI.
+ * ImportTool is the single-character exchange-file import wizard: upload a.gex file, preview its contents, match
+ * players to WordPress accounts, resolve flagged traits, and commit.
  */
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { useRef, useState } from '@wordpress/element';
@@ -31,10 +29,7 @@ const STAGES: { key: Stage; label: string }[] = [
 ];
 
 /**
- * Renders the .gex import wizard: upload a file, then walk through preview
- * counts, player matching, flagged-trait review, and commit. Commit applies the
- * reviewed job in a single transaction and is blocked while any trait or
- * duplicate remains unresolved.
+ * Renders the .gex import wizard: upload a file.
  */
 export function ImportTool( { gameSlug }: ImportToolProps ) {
 	const [ stage, setStage ] = useState< Stage >( 'upload' );
@@ -47,8 +42,7 @@ export function ImportTool( { gameSlug }: ImportToolProps ) {
 	const [ result, setResult ] = useState< ImportCommitResult | null >( null );
 	const fileInputRef = useRef< HTMLInputElement >( null );
 
-	// Lifted here, not local to ImportPreview, so every stage that reads it sees the same resolution choices.
-	// Held against the job they were made on: Start Over and a new file begin with none (1.0.0-review F-057).
+	// Lifted here, not local to ImportPreview.
 	const {
 		traitResolutions,
 		duplicateActions,

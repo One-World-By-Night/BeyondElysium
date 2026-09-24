@@ -1,9 +1,5 @@
 /**
- * Generates a fallback three-column card layout for a stack's blocks when no template
- * exists. Identity-field blocks are placed in column 1, resource pools in column 1 below
- * identity, and every other block (trait lists, tiered powers) is distributed across
- * columns 2 and 3 in stack section order, balanced by running item count. Exports
- * `generateLayout()` and the block/stack/layout shapes it operates on.
+ * Generates a fallback three-column card layout for a stack's blocks when no template exists.
  */
 
 export interface StackSection {
@@ -50,7 +46,9 @@ export interface Layout {
 	sections: LayoutSection[];
 }
 
-/** Number of catalog items or powers a block's definition declares, or 0 for neither. */
+/**
+ * Number of catalog items or powers a block's definition declares, or 0 for neither.
+ */
 function itemCount( block: SchemaBlockLike ): number {
 	if ( block.definition.items ) {
 		return block.definition.items.length;
@@ -66,7 +64,9 @@ interface Entry {
 	block: SchemaBlockLike;
 }
 
-/** Builds one output layout section for a stack entry at the given column and order. */
+/**
+ * Builds one output layout section for a stack entry at the given column and order.
+ */
 function buildSection(
 	entry: Entry,
 	column: number,
@@ -83,10 +83,8 @@ function buildSection(
 }
 
 /**
- * Builds a full three-column layout for a stack: sorts its sections by display order,
- * places identity and resource-pool blocks in column 1, then distributes the remaining
- * blocks across columns 2 and 3 by running item count so neither column grows
- * disproportionately heavier than the other.
+ * Builds a full three-column layout for a stack: sorts its sections by display order, places identity and
+ * resource-pool blocks in column 1.
  */
 export function generateLayout(
 	stack: StackLike,

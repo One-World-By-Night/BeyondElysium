@@ -5,12 +5,7 @@ namespace BeyondElysium\Core;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Central permission-check bridge for Beyond Elysium. Verifies a
- * capability against accessSchema's chronicle-scoped roles first, when
- * enabled for the site and the request names a game, falling back to
- * WordPress's own current_user_can() otherwise. Used by every REST
- * controller's permission callback and by any other code that needs to
- * gate an action.
+ * Central permission-check bridge for Beyond Elysium.
  */
 class Authorization {
 
@@ -20,9 +15,7 @@ class Authorization {
 	private const CLIENT_ID = 'beyond_elysium';
 
 	/**
-	 * Per-request memo of resolved accessSchema role-path checks, keyed by
-	 * "{email}|{role_path}" with a true/false value. Cleared at the start
-	 * of each PHP request; not a persistent cache.
+	 * Per-request memo of resolved accessSchema role-path checks, keyed by "{email}|{role_path}" with a true/false value.
 	 *
 	 * @var array<string,bool>
 	 */
@@ -30,17 +23,13 @@ class Authorization {
 
 	/**
 	 * The plugin's own REST requests currently being served, innermost last.
-	 * A stack rather than one slot because a handler can dispatch another
-	 * REST request internally (a transfer's verification callback in tests).
 	 *
 	 * @var \WP_REST_Request[]
 	 */
 	private static array $request_stack = [];
 
 	/**
-	 * Tracks which REST request is being served, so can() answers for the
-	 * chronicle in that request's URL. The stack is emptied on rest_api_init
-	 * so a request that threw mid-dispatch can never leak into the next.
+	 * Tracks which REST request is being served, so can() answers for the chronicle in that request's URL.
 	 */
 	public static function register(): void {
 		add_action( 'rest_api_init', [ self::class, 'reset_request_stack' ] );
@@ -48,14 +37,15 @@ class Authorization {
 		add_filter( 'rest_request_after_callbacks', [ self::class, 'pop_request' ], 10, 3 );
 	}
 
-	/** Forgets every tracked request. */
+	/**
+	 * Forgets every tracked request.
+	 */
 	public static function reset_request_stack(): void {
 		self::$request_stack = [];
 	}
 
 	/**
-	 * Records this plugin's REST request as the one being served. Runs on
-	 * rest_request_before_callbacks and passes the dispatch through untouched.
+	 * Records this plugin's REST request as the one being served.
 	 *
 	 * @param mixed            $response
 	 * @param array            $handler
@@ -85,14 +75,7 @@ class Authorization {
 	}
 
 	/**
-	 * Whether the current user holds `$capability` in the chronicle of the
-	 * REST request being served - the same resolution a route's permission
-	 * callback uses, so a handler's own "is this a Storyteller" decision can
-	 * never be wider than the route's (1.0.0-review F-009: a bare
-	 * current_user_can() is site-wide, which made a Storyteller of one
-	 * chronicle a Storyteller in every chronicle they merely play in).
-	 * Outside a REST request - WP-CLI, cron, activation - and on routes with
-	 * no chronicle in the URL, it is the plain site-wide capability.
+	 * Whether the current user holds `$capability` in the chronicle of the REST request being served.
 	 */
 	public static function can( string $capability ): bool {
 		$request = end( self::$request_stack );
@@ -103,36 +86,14 @@ class Authorization {
 	}
 
 	/**
-	 * Reports whether accessSchema-based authorization is enabled for this
-	 * site. Reads the be_asc_enabled option, defaulting to false when the
-	 * option has never been set.
+	 * Reports whether accessSchema-based authorization is enabled for this site.
 	 */
 	public static function asc_enabled(): bool {
 		return (bool) get_option( 'be_asc_enabled', false );
 	}
 
 	/**
-	 * Chronicle-scoped permission check for a REST request. Resolution
-	 * order:
-	 *
-	 *  1. Not logged in -> deny.
-	 *  2. Holds `be_manage_games` -> allow, regardless of route.
-	 *  3. No `game_slug` in the request's URL params -> plain
-	 *     `current_user_can( $capability )`.
-	 *  4. Game resolved, accessSchema enabled, and the game has an
-	 *     `asc_role_path` -> for each chronicle role that grants
-	 *     `$capability`, check "{asc_role_path}/{ROLE}" against
-	 *     accessSchema; any true result allows.
-	 *  5. `current_user_can( $capability )` false -> deny.
-	 *  6. `$allow_bootstrap` true and the game resolved -> allow without
-	 *     requiring a membership row.
-	 *  7. Otherwise -> allow only if a `be_game_members` row exists for
-	 *     this user and game whose role grants `$capability`; a
-	 *     `game_slug` that does not resolve to a real game can never have
-	 *     one, so this always denies in that case.
-	 *
-	 * `game_slug` is read only from `$request->get_url_params()`, never
-	 * from `$request['game_slug']` or `get_param()`.
+	 * Chronicle-scoped permission check for a REST request.
 	 *
 	 * @param string           $capability WordPress capability being checked.
 	 * @param \WP_REST_Request $request
@@ -187,14 +148,7 @@ class Authorization {
 	}
 
 	/**
-	 * Resolves which of the given capabilities the current user actually holds
-	 * for one chronicle - runs check_request() once per capability, reusing its
-	 * exact resolution order (accessSchema, the be_manage_games override,
-	 * membership rows) rather than duplicating any of it. Backs the per-chronicle
-	 * capabilities REST endpoint (page-consolidation-design.md): a client-side
-	 * chronicle switcher needs "what can I actually do in THIS chronicle," not
-	 * the site-wide, chronicle-blind snapshot `Plugin::enqueue_frontend()`
-	 * already localizes on every page regardless of which chronicle it names.
+	 * Resolves which of the given capabilities the current user holds for one chronicle.
 	 *
 	 * @param string[]         $capabilities
 	 * @param \WP_REST_Request $request      Must carry `game_slug` among its URL params.
@@ -209,12 +163,9 @@ class Authorization {
 	}
 
 	/**
-	 * Checks one email against one accessSchema role path, memoizing the
-	 * result for the rest of the request. Returns false immediately if the
-	 * accessSchema integration is not available.
+	 * Checks one email against one accessSchema role path, memoizing the result for the rest of the request.
 	 */
 	private static function check_asc_role_path( string $email, string $role_path ): bool {
-		// Guards against direct calls that skip the caller's own function_exists() check.
 		if ( ! function_exists( 'owc_asc_check_access' ) ) {
 			return false;
 		}
@@ -230,11 +181,7 @@ class Authorization {
 	}
 
 	/**
-	 * Normalizes an accessSchema role path to match accessSchema's own
-	 * slug format: each `/`-separated segment run through the same
-	 * `sanitize_title()` call accessSchema itself uses when a role path is
-	 * registered, regardless of how the stored path is cased or
-	 * punctuated.
+	 * Normalizes an accessSchema role path to accessSchema's own slug format.
 	 *
 	 * @param string $role_path
 	 * @return string
@@ -244,9 +191,7 @@ class Authorization {
 	}
 
 	/**
-	 * Returns the chronicle roles, in game-roles.php's map order, whose
-	 * grant list includes the given capability. Used to build the list of
-	 * accessSchema role paths to check for one capability.
+	 * Returns the chronicle roles, in game-roles.php's map order, whose grant list includes the given capability.
 	 *
 	 * @return string[]
 	 */
@@ -261,11 +206,7 @@ class Authorization {
 	}
 
 	/**
-	 * Whether a WordPress account can use everything a chronicle role grants
-	 * through the membership table. A membership only narrows what the site
-	 * already allows (check_request() asks the site first), so an HST, AST,
-	 * or Narrator on an account without the Editor role holds none of it -
-	 * unless accessSchema grants the role instead (1.0.0-review F-104).
+	 * Whether a WordPress account can use everything a chronicle role grants through the membership table.
 	 *
 	 * @param \WP_User $user
 	 * @param string   $role
@@ -281,9 +222,7 @@ class Authorization {
 	}
 
 	/**
-	 * Returns the capabilities the given chronicle role grants, from
-	 * game-roles.php's map. An unrecognized role returns an empty array,
-	 * granting nothing.
+	 * Returns the capabilities the given chronicle role grants, from game-roles.php's map.
 	 *
 	 * @return string[]
 	 */
@@ -292,9 +231,7 @@ class Authorization {
 	}
 
 	/**
-	 * Loads and caches game-roles.php's role-to-capabilities map for the
-	 * life of the request. Reads the file from disk only on the first
-	 * call; every later call returns the same cached array.
+	 * Loads and caches game-roles.php's role-to-capabilities map for the life of the request.
 	 *
 	 * @return array<string,string[]>
 	 */
@@ -307,17 +244,13 @@ class Authorization {
 	}
 
 	/**
-	 * Checks whether the current user has the given capability. When a
-	 * role path is supplied and accessSchema is available, checks that
-	 * role path first and returns its result if it resolves to a boolean;
-	 * otherwise falls back to WordPress's current_user_can().
+	 * Checks whether the current user has the given capability.
 	 *
 	 * @param string      $capability  WordPress capability name (e.g. 'be_manage_games').
 	 * @param string|null $role_path   Optional accessSchema role path (e.g. 'Chronicle/KONY/HST').
 	 * @return bool
 	 */
 	public static function check( string $capability, ?string $role_path = null ): bool {
-		// A logged-out visitor is a WP_User whose exists() is false, never null.
 		$user = wp_get_current_user();
 		if ( ! $user->exists() ) {
 			return false;
@@ -342,9 +275,8 @@ class Authorization {
 	}
 
 	/**
-	 * Builds a standard 403 WP_Error for a permission-denied REST
-	 * response, using the given message or a generic default when none is
-	 * supplied.
+	 * Builds a standard 403 WP_Error for a permission-denied REST response, using the given message or a generic default
+	 * when none is supplied.
 	 *
 	 * @param string $message Optional custom message.
 	 * @return \WP_Error

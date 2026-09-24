@@ -1,8 +1,5 @@
 /**
- * Storyteller Toolkit: the primary console for running a chronicle's plots. Switches
- * between a card-grid overview of all plots and a single plot's detail view, and hosts
- * the Allocate Actions, Generate Rumors, and Connect Character tools in a shared modal.
- * Mounted from both the front-end toolkit page and the wp-admin Plots screen.
+ * Storyteller Toolkit: the primary console for running a chronicle's plots.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -21,24 +18,23 @@ import './PlotManager.css';
 export interface PlotManagerProps {
 	gameSlug: string;
 	defaultStatus?: 'active' | 'resolved' | 'archived';
-	/** What the person can do in this chronicle, when the page resolved it; the site-wide snapshot otherwise (F-103). */
+	/**
+	 * What the person can do in this chronicle, when the page resolved it.
+	 */
 	capabilities?: MyCapabilities;
 	/**
-	 * Opens straight to this plot's detail view - the Downtime queue's own "open the plot
-	 * thread" link (1.1.0 §3.3) arrives via the URL's own `?open_plot=`, read by the caller.
+	 * Opens straight to this plot's detail view.
 	 */
 	initialSelectedPlotId?: number | null;
 }
 
-/** Which standalone tool is open in a modal, if any. */
+/**
+ * Which standalone tool is open in a modal, if any.
+ */
 type Tool = 'allocate' | 'rumors' | 'connect' | null;
 
 /**
- * Renders the Storyteller Toolkit: an overview grid of every plot, or - once a plot is
- * selected - that plot's full detail view with its own content and everything nested
- * under it. Also owns the shared modal that hosts the action allocator, rumor panel, and
- * connection manager tools. Shows a denial message for viewers who lack the manage
- * capability.
+ * Renders the Storyteller Toolkit: an overview grid of every plot.
  */
 export function PlotManager( {
 	gameSlug,

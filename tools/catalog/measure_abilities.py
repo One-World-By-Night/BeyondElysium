@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""D81 measurement: how many held custom Abilities the 1.3.2 re-key would resolve against the
-new `{stack}-abilities` blocks. Read-only, local be_dev only - never a production host.
+"""Measures how many held custom Abilities the re-key rules would resolve against the
+`{stack}-abilities` blocks. Read-only, local be_dev only - never a production host.
 
-The re-key rules (1.3.0 carry-forward, applied at 1.3.2 ingestion), in order, first match wins:
+The re-key rules, in order, first match wins:
 
 1. `sheet_data['met-abilities']` moves to `sheet_data['{stack}-abilities']` (Bete -> fera).
 2. A row's name equals a catalog item's name or alias (case-insensitive, trimmed) -> that item.
@@ -14,7 +14,7 @@ The re-key rules (1.3.0 carry-forward, applied at 1.3.2 ingestion), in order, fi
 
     tools/catalog/measure_abilities.py            # every local character, per stack
     tools/catalog/measure_abilities.py 1093       # one character, row by row
-    tools/catalog/measure_abilities.py --kind merits|flaws   # the same rules for D82
+    tools/catalog/measure_abilities.py --kind merits|flaws   # the same rules for Merits and Flaws
 """
 
 import json

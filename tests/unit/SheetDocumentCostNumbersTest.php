@@ -7,15 +7,8 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
 /**
- * A `count_is_cost` trait_list block (Combo Disciplines) stores a flat XP price in the
- * same field an ordinary block stores a rating in, so the signed PDF must label it as a
- * price - `Draw Fire (12 XP)` - and must never hand it to a rating display.
- *
- * 1.1.0 D3 made that conditional on a `cost_numbers` option defaulting to off, which is
- * the defect 1.2.11 D94 closes: the labelled price is now the default and the option
- * (`show_cost`) only chooses whether the price appears at all. These tests prove the
- * option really reaches `Trait_Display` through `Sheet_Document::build_sections()`, not
- * just the mode-switch logic in isolation.
+ * A `count_is_cost` trait_list block (Combo Disciplines) stores a flat XP price in the same field an ordinary block
+ * stores a rating.
  */
 class SheetDocumentCostNumbersTest extends TestCase {
 
@@ -45,14 +38,18 @@ class SheetDocumentCostNumbersTest extends TestCase {
 		return [ [ 'block_slug' => 'vampire-combo-disciplines', 'title' => 'Combo Disciplines' ] ];
 	}
 
-	/** D94: no option passed at all - the everyday case - still labels the price. */
+	/**
+	 * No option passed at all.
+	 */
 	public function test_a_flagged_block_labels_its_price_with_no_option_passed(): void {
 		$entry = $this->sections( $this->layout(), $this->combo_block( true ), $this->combo_sheet() )[0];
 
 		$this->assertSame( [ [ 'label' => null, 'rows' => [ 'Draw Fire (12 XP)' ] ] ], $entry['groups'] );
 	}
 
-	/** D94: an explicitly configured rating display loses to the price - it cannot be read as dots. */
+	/**
+	 * An explicitly configured rating display loses to the price.
+	 */
 	public function test_a_flagged_block_ignores_a_configured_rating_display(): void {
 		$entry = $this->sections( $this->layout(), $this->combo_block( true, 'dot' ), $this->combo_sheet() )[0];
 
@@ -65,7 +62,9 @@ class SheetDocumentCostNumbersTest extends TestCase {
 		$this->assertSame( [ [ 'label' => null, 'rows' => [ 'Draw Fire (12 XP)' ] ] ], $entry['groups'] );
 	}
 
-	/** Hiding the price drops the number entirely rather than turning it back into a rating. */
+	/**
+	 * Hiding the price drops the number entirely.
+	 */
 	public function test_show_cost_off_hides_the_price_and_keeps_the_note(): void {
 		$sheet_data = [ 'vampire-combo-disciplines' => [ [ 'name' => 'Draw Fire', 'total' => 12, 'note' => 'Tremere' ] ] ];
 
@@ -74,7 +73,9 @@ class SheetDocumentCostNumbersTest extends TestCase {
 		$this->assertSame( [ [ 'label' => null, 'rows' => [ 'Draw Fire (Tremere)' ] ] ], $entry['groups'] );
 	}
 
-	/** An ordinary block is untouched by any of this, whichever way the option is set. */
+	/**
+	 * An ordinary block is untouched by any of this, whichever way the option is set.
+	 */
 	public function test_an_unflagged_block_is_unaffected(): void {
 		$entry = $this->sections( $this->layout(), $this->combo_block( false, 'dot' ), $this->combo_sheet(), [ 'show_cost' => false ] )[0];
 

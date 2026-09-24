@@ -7,49 +7,34 @@ use Elementor\Controls_Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Elementor widget wrapper for the Boon Ledger. Registers the widget's name,
- * title, and icon with Elementor, exposes Content section controls
- * for the target game slug and an optional character ID, and renders a
- * single mount-point <div> that the front-end script hydrates with the
- * BoonLedger React component. A character ID of 0 shows the whole
- * chronicle's ledger; a nonzero ID scopes it to one character.
- *
- * @see BE_PROCESS/releases/workflow-0.7.md Step 5b
+ * Elementor widget wrapper for the Boon Ledger.
  */
 class Boon_Ledger extends Base_Widget {
 
 	/**
-	 * Returns the internal widget name Elementor uses to identify this
-	 * widget type. Elementor stores this string in page and template
-	 * markup wherever the widget is placed.
+	 * Returns the internal widget name Elementor uses to identify this widget type.
 	 */
 	public function get_name(): string {
 		return 'be-boon-ledger';
 	}
 
 	/**
-	 * Returns the human-readable label Elementor shows for this widget in
-	 * the editor's widget panel, search results, and layers panel. This is
-	 * the text an editor sees when placing the widget on a page.
+	 * Returns the human-readable label Elementor shows for this widget in the editor's widget panel, search results, and
+	 * layers panel.
 	 */
 	public function get_title(): string {
 		return __( 'Boon Ledger', 'beyond-elysium' );
 	}
 
 	/**
-	 * Returns the Elementor icon class shown next to this widget's title in
-	 * the widget panel. The value is an eicon-* class name supplied by
-	 * Elementor's built-in icon font.
+	 * Returns the Elementor icon class shown next to this widget's title in the widget panel.
 	 */
 	public function get_icon(): string {
 		return 'eicon-price-list';
 	}
 
 	/**
-	 * Builds the Elementor "Content" section shown in the editor panel for
-	 * this widget. Adds a read-only description note, a Game Slug text
-	 * control, and a Character ID number control that scopes the rendered
-	 * ledger to one character instead of the whole chronicle.
+	 * Builds the Elementor "Content" section shown in the editor panel for this widget.
 	 */
 	protected function register_controls(): void {
 		$this->start_controls_section( 'content_section', [
@@ -83,7 +68,9 @@ class Boon_Ledger extends Base_Widget {
 		return 'boon-ledger';
 	}
 
-	/** Adds a characterId entry only when one was set - absent means the whole game's ledger. */
+	/**
+	 * Adds a characterId entry only when one was set.
+	 */
 	protected function widget_config( array $settings ): array {
 		$config = [ 'gameSlug' => $settings['game_slug'] ];
 		if ( ! empty( $settings['character_id'] ) ) {

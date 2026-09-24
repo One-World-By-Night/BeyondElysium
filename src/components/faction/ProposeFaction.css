@@ -1,7 +1,4 @@
-/**
- * The player-facing propose-a-group form (1.1.0 §3.10, F1). One column at every width - it is
- * a short form, and a second column buys nothing here.
- */
+/* The player-facing propose-a-group form. */
 
 .be-propose-faction {
 	display: flex;

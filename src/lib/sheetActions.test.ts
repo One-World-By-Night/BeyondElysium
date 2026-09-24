@@ -1,8 +1,8 @@
 import { sheetActions } from './sheetActions';
 
 /**
- * Owner, 2026-09-15: the Character Sheet's ten toolbar buttons were "WAY too many". One picker
- * lists what the viewer can do; each action shows only to someone allowed to use it.
+ * The Character Sheet's toolbar: one picker lists what the viewer can do, and each action shows only to someone
+ * allowed to use it.
  */
 describe( 'sheetActions', () => {
 	it( 'offers a player the actions every viewer of the sheet has', () => {

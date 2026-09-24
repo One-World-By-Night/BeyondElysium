@@ -2,7 +2,9 @@ import { DOT } from './displayTemper';
 
 export type DotState = 'filled' | 'spent' | 'overflow';
 
-/** Each glyph a rating or a pool draws as a dot (`displayTrait()`, `displayTemper()`), by what it means. */
+/**
+ * Each glyph a rating or a pool draws as a dot (`displayTrait()`, `displayTemper()`), by what it means.
+ */
 export const DOT_STATES: Readonly< Record< string, DotState > > = {
 	[ DOT ]: 'filled',
 	'○': 'spent',
@@ -15,9 +17,7 @@ export interface TextRun {
 }
 
 /**
- * Splits display text into runs of dots and runs of everything else, so every dot on screen can
- * be drawn at one size whatever font the page uses (1.0.0-review F-016). A single space between
- * two dot runs - a pool's groups of five - stays inside the run.
+ * Splits display text into runs of dots and runs of everything else.
  */
 export function splitDots( text: string ): TextRun[] {
 	const glyphs = Object.keys( DOT_STATES ).join( '' );

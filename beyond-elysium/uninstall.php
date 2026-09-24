@@ -1,30 +1,16 @@
 <?php
 /**
- * Runs once, only when an administrator explicitly clicks "Delete" on this plugin from the
- * Plugins screen after deactivating it - never on a plain deactivation or an update.
- *
- * Safe by default: does nothing at all unless an administrator has explicitly turned on the
- * "delete data on uninstall" setting beforehand (Data_Management_Controller,
- * be_delete_data_on_uninstall option). Every chronicle's games, characters, and catalog
- * customizations survive a plain uninstall untouched, matching how this plugin has always
- * behaved - the setting makes that a real, documented choice instead of an accident.
- *
- * **On multisite** (1.0.2), deleting a plugin removes its files for the whole network, but
- * this file runs only once, in one site's context. Left unqualified that orphaned every other
- * chronicle's tables. It now walks every site and cleans each one that opted in - each site's
- * own setting decides its own data, so a chronicle that never asked for deletion keeps
- * everything even if a neighbour did.
+ * Runs once, only when an administrator explicitly clicks "Delete" on this plugin from the Plugins screen after
+ * deactivating it.
  */
 
-// WordPress core defines this constant right before including this file; its absence means
-// the file is being requested directly, not by core.
+// Refuses to run unless WordPress core is uninstalling the plugin.
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
 /**
- * Removes this plugin's data from whichever site is current. Reads that site's own opt-in
- * first and does nothing without it.
+ * Removes this plugin's data from whichever site is current.
  */
 $be_uninstall_current_site = static function (): void {
 	global $wpdb;
@@ -37,18 +23,11 @@ $be_uninstall_current_site = static function (): void {
 		$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . 'be_' . $table );
 	}
 
-	// Named options plus a wildcard sweep for anything dynamically-keyed (per-game/per-job
-	// transients such as be_game_stats_{slug}, be_import_job_{id}) that a fixed list would miss.
-	// MySQL's default LIKE escape character is backslash, confirmed directly - no ESCAPE clause needed.
+	// Deletes the named options and any dynamically-keyed transients.
 	$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'be\_%'" );
 	$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '\_transient\_be\_%' OR option_name LIKE '\_transient\_timeout\_be\_%'" );
 
-	// Per-user notification preference (v0.21.20) - not covered by the options sweep above.
-	//
-	// Scoped to this site's own users. `$wpdb->usermeta` is a single **global** table on a
-	// network, so the unqualified sweep this replaces would have cleared the preference for
-	// every user on every other chronicle the moment one chronicle uninstalled. On a
-	// single-site install this is every user, exactly as it always was.
+	// Per-user notification preference.
 	$user_ids = \BeyondElysium\Core\Multisite::user_ids_for_this_site();
 	if ( $user_ids ) {
 		$placeholders = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
@@ -62,10 +41,7 @@ $be_uninstall_current_site = static function (): void {
 
 	\BeyondElysium\Core\Capabilities::unregister();
 
-	// 1.1.0 §2.6: uploaded files live outside the media library, in this site's own
-	// uploads/beyond-elysium-private/ - the table rows above are already gone, so this is the
-	// only remaining trace of them, and `wp_upload_dir()` inside `remove_all()` resolves to
-	// this exact site regardless of which one `switch_to_blog()` has made current.
+	// Deletes the private upload directory.
 	\BeyondElysium\Services\Attachment_Storage::remove_all();
 };
 
@@ -74,8 +50,7 @@ if ( ! is_multisite() ) {
 	return;
 }
 
-// Batched rather than one get_sites() call: a network can be large, and this runs during a
-// request that is already deleting files.
+// Visits the sites in batches.
 $be_page = 0;
 do {
 	$be_sites = get_sites( [

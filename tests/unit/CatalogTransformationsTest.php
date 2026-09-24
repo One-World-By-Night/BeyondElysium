@@ -5,15 +5,7 @@ namespace BeyondElysium\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.3.1's rulings, asserted against the declared files themselves (`data/catalog/blocks/`).
- *
- * `bin/validate-catalog` already proves every file is well formed and has no overflow. That is
- * necessary and not sufficient: a file can be perfectly valid and still have split a family at
- * the wrong seam, dropped a path, or lost the alias held character data needs. These tests pin
- * the rulings the release document records - T-T4 and T-T5 by name - so a later regeneration
- * that quietly undoes one fails here rather than in a player's sheet.
- *
- * Pure file reads: no database, no WordPress.
+ * The catalog's rulings, asserted against the declared files under `data/catalog/blocks/`.
  */
 class CatalogTransformationsTest extends TestCase {
 
@@ -29,8 +21,7 @@ class CatalogTransformationsTest extends TestCase {
 	}
 
 	/**
-	 * A block's families keyed by name. The file itself holds a LIST of family objects - the
-	 * runtime shape, the only accepted one (owner ruling, 2026-09-22) - so this indexes it once.
+	 * A block's families keyed by name.
 	 *
 	 * @return array<string,array<string,mixed>>
 	 */
@@ -67,10 +58,7 @@ class CatalogTransformationsTest extends TestCase {
 	}
 
 	/**
-	 * T-T4, as ruled. The fused family was the Path of the Blood's Curse (Sabbat, rungs 1-5)
-	 * with Path of Curses glued on as rungs 6-10 - not a Tremere printing of the same path. So
-	 * the resolution is one five-rung Path of Blood's Curse, and the Tremere half is simply
-	 * Path of Curses, which already existed. No family may hold both halves again.
+	 * T-T4, as ruled.
 	 */
 	public function test_path_of_blood_s_curse_is_one_path_and_path_of_curses_is_another(): void {
 		$bm = $this->powers( 'vampire-blood-magic' );
@@ -95,7 +83,7 @@ class CatalogTransformationsTest extends TestCase {
 			}
 		}
 
-		// §5-b: three copies became one, and the other two names still resolve to it.
+		// B: three copies became one, and the other two names still resolve to it.
 		$this->assertCount( 1, $this->families_holding( 'Ravages of the Beast', [ 'vampire-blood-magic', 'vampire-disciplines' ] ) );
 		$this->assertContains( "Blood's Curse", $bm["Path of Blood's Curse"]['aliases'] );
 		$this->assertContains(
@@ -105,7 +93,9 @@ class CatalogTransformationsTest extends TestCase {
 		$this->assertArrayNotHasKey( "Blood's Curse", $bm );
 	}
 
-	/** T-T5: Valeren's duplicate opening rungs are gone and Healer/Warrior still stand alone. */
+	/**
+	 * T-T5: Valeren's duplicate opening rungs are gone and Healer/Warrior still stand alone.
+	 */
 	public function test_valeren_loses_its_duplicate_rungs_and_keeps_its_two_paths(): void {
 		$vd = $this->powers( 'vampire-disciplines' );
 
@@ -113,7 +103,7 @@ class CatalogTransformationsTest extends TestCase {
 			[ 'Sense Vitality', 'Anesthetic Touch', 'Burning Touch', 'Ending the Watch', 'Vengeance of Samiel' ],
 			$this->rung_names( $vd['Valeren'] )
 		);
-		// The misspellings survive only as aliases, so a sheet holding either still resolves.
+		// The misspellings survive only as aliases.
 		$this->assertSame( [ 'Sense Vitaility' ], $vd['Valeren']['levels'][0]['aliases'] );
 		$this->assertSame( [ 'Anethetic Touch' ], $vd['Valeren']['levels'][1]['aliases'] );
 
@@ -123,10 +113,6 @@ class CatalogTransformationsTest extends TestCase {
 		$this->assertCount( 5, $vd['Warrior']['levels'] );
 	}
 
-	/**
-	 * B-5 / §5-c: blood magic filed as Disciplines moves out, and nothing is lost on the way -
-	 * each old family name is recorded on the path that absorbed it.
-	 */
 	public function test_misfiled_paths_leave_the_discipline_block_and_are_recorded_where_they_land(): void {
 		$vd    = $this->powers( 'vampire-disciplines' );
 		$bm    = $this->powers( 'vampire-blood-magic' );
@@ -154,8 +140,8 @@ class CatalogTransformationsTest extends TestCase {
 	}
 
 	/**
-	 * The edition rule: a 'dark ages' or '2nd ed.' ladder-rank level leaves the base family for
-	 * its variant file, and the variant family says where it came from.
+	 * The edition rule: a 'dark ages' or '2nd ed.' ladder-rank level leaves the base family for its variant file, and the
+	 * variant family says where it came from.
 	 */
 	public function test_edition_printings_live_in_their_variant_files_with_their_origin(): void {
 		$base = $this->powers( 'vampire-disciplines' );
@@ -190,8 +176,7 @@ class CatalogTransformationsTest extends TestCase {
 	}
 
 	/**
-	 * An alias must never collide with a live name in the same family - two entries answering to
-	 * one name is the ambiguity aliases exist to remove.
+	 * An alias must never collide with a live name in the same family.
 	 */
 	public function test_no_alias_shadows_a_live_rung_or_family(): void {
 		foreach ( glob( self::BLOCKS . '*.json' ) ?: [] as $path ) {
@@ -214,7 +199,9 @@ class CatalogTransformationsTest extends TestCase {
 		}
 	}
 
-	/** Book costs, per `_meta` - the only authority on price. */
+	/**
+	 * Book costs, per `_meta`.
+	 */
 	public function test_book_costs_are_declared(): void {
 		$this->assertSame( [ 'basic' => 4, 'intermediate' => 8, 'advanced' => 12 ], $this->block( 'mage-spheres' )['definition']['_meta']['costs'] );
 		$this->assertSame( [ 'basic' => '+1', 'intermediate' => '+2', 'advanced' => '+3' ], $this->block( 'mage-spheres' )['definition']['_meta']['out_of_type'] );
@@ -226,7 +213,6 @@ class CatalogTransformationsTest extends TestCase {
 		);
 	}
 
-	/** Owner rulings of 2026-09-17: Black Wind is three rated powers, Equilibrium exists. */
 	public function test_kuei_jin_owner_rulings_are_in_the_file(): void {
 		$kj = $this->powers( 'kueijin-disciplines' );
 		$this->assertArrayNotHasKey( 'Black Wind', $kj );

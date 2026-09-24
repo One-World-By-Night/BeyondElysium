@@ -1,9 +1,4 @@
-/*
- * The one dot on the sheet and in the editor (1.0.0-review F-016): a trait's rating, a pool's
- * points, and the editor's trait summary all draw through WithDots, and DotTracker's dots are
- * this size too. A fixed size, never relative to the text around it, so a dot in one section
- * can't come out bigger than a dot in another.
- */
+/* The one dot used on the sheet and in the editor. */
 .be-dots {
 	display: inline-flex;
 	flex-wrap: wrap;

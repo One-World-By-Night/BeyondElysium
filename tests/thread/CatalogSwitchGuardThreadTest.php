@@ -2,6 +2,8 @@
 
 namespace BeyondElysium\Tests\Thread;
 
+require_once __DIR__ . '/../support/LegacyInstall.php';
+
 use BeyondElysium\Database\Manager;
 use BeyondElysium\Database\Option_Lock;
 use BeyondElysium\Models\Change;
@@ -13,13 +15,12 @@ use BeyondElysium\Services\Catalog_Cutover;
 use BeyondElysium\Services\Catalog_Reader;
 use WP_Error;
 use WP_REST_Request;
+use BeyondElysium\Tests\Support\LegacyInstall;
 use WP_UnitTestCase;
 
 /**
- * 1.3.3 pre-deploy trace: a save that lands between a character's re-key and the site's flip is
- * written to the retired block of a sheet that has already moved, and is invisible afterwards with
- * its XP spent. While a cutover run holds its lock, every save to the plugin's REST API is refused
- * (503); reads are not, and the refusal ends by itself when a run dies holding the lock.
+ * While a move onto per-creature lists runs, every write is refused with `catalog_switch_in_progress` and reads are
+ * unaffected.
  */
 class CatalogSwitchGuardThreadTest extends WP_UnitTestCase {
 
@@ -32,8 +33,6 @@ class CatalogSwitchGuardThreadTest extends WP_UnitTestCase {
 		parent::setUp();
 		do_action( 'rest_api_init' );
 
-		// apply() runs over the whole install, and this database's plugin tables outlive a run; clear
-		// every character inside this test's own transaction so a case sees only what it builds.
 		global $wpdb;
 		$wpdb->query( 'DELETE FROM ' . Manager::table( 'characters' ) );
 
@@ -42,14 +41,12 @@ class CatalogSwitchGuardThreadTest extends WP_UnitTestCase {
 		$this->player_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		Game_Member::set_role( $game_id, $this->player_id, 'player' );
 
-		$this->character_id = $this->character( 'Guarded Vampire', [ 'met-abilities' => [ [ 'name' => 'Melee', 'count' => 2 ] ] ], $this->player_id );
+		$this->character_id = $this->character( 'Guarded Vampire', [ 'vampire-abilities' => [ [ 'name' => 'Melee', 'count' => 2 ] ] ], $this->player_id );
 	}
 
 	public function tearDown(): void {
 		delete_option( Catalog_Cutover::OPTION );
-		delete_option( Catalog_Cutover::RECORD_OPTION );
 		Option_Lock::release( Catalog_Cutover::LOCK );
-		Catalog_Cutover::reset_cache();
 		parent::tearDown();
 	}
 
@@ -63,7 +60,9 @@ class CatalogSwitchGuardThreadTest extends WP_UnitTestCase {
 		return $id;
 	}
 
-	/** Holds the cutover lock as a run that claimed it `$seconds_ago` seconds ago. */
+	/**
+	 * Holds the cutover lock as a run that claimed it `$seconds_ago` seconds ago.
+	 */
 	private function hold_lock( int $seconds_ago = 0 ): void {
 		global $wpdb;
 		$this->assertTrue( Option_Lock::claim( Catalog_Cutover::LOCK, 1800 ) );
@@ -75,8 +74,8 @@ class CatalogSwitchGuardThreadTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->player_id );
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game}/characters/{$this->character_id}/changes" );
 		$request->set_param( 'change_type', 'add_trait' );
-		$request->set_param( 'category', 'met-abilities' );
-		$request->set_param( 'change_data', [ 'block_slug' => 'met-abilities', 'trait' => [ 'name' => 'Alertness', 'count' => 1 ] ] );
+		$request->set_param( 'category', 'vampire-abilities' );
+		$request->set_param( 'change_data', [ 'block_slug' => 'vampire-abilities', 'trait' => [ 'name' => 'Alertness', 'count' => 1 ] ] );
 		return rest_get_server()->dispatch( $request );
 	}
 
@@ -96,7 +95,7 @@ class CatalogSwitchGuardThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 503, $response->get_status() );
 		$this->assertSame( 'catalog_switch_in_progress', $response->as_error()->get_error_code() );
 		$this->assertSame( [], Change::for_character( $this->character_id ), 'no change row was created' );
-		$this->assertCount( 1, Character::find( $this->character_id )->sheet_data['met-abilities'] );
+		$this->assertCount( 1, Character::find( $this->character_id )->sheet_data['vampire-abilities'] );
 	}
 
 	public function test_a_read_is_never_refused(): void {
@@ -184,6 +183,7 @@ class CatalogSwitchGuardThreadTest extends WP_UnitTestCase {
 			$this->markTestSkipped( 'no declared catalog in this checkout' );
 		}
 
+		LegacyInstall::put_in_place();
 		$scenario = $this->character( 'A Scenario', [ 'met-abilities' => [ [ 'name' => 'Melee', 'count' => 2 ] ] ] );
 		$trigger  = $this->character( 'Z Trigger', [ 'met-abilities' => [ [ 'name' => 'Brawl', 'count' => 1 ] ] ] );
 		$change   = (int) Change::create( [
@@ -193,8 +193,7 @@ class CatalogSwitchGuardThreadTest extends WP_UnitTestCase {
 		] );
 		$this->assertGreaterThan( 0, $change );
 
-		// The instant the trigger is reached, everything before it - the scenario included - has been
-		// re-keyed, and the install has not been flipped yet: the window a save can land in.
+		// The instant the trigger is reached, everything before it.
 		$midrun = [];
 		$result = Catalog_Cutover::apply( $this->st_id, [ 'on_character' => function ( int $id ) use ( $trigger, $scenario, $change, &$midrun ) {
 			if ( $id !== $trigger ) {

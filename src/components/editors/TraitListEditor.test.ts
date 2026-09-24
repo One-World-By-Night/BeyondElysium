@@ -4,16 +4,13 @@ import type { EditableTrait } from './TraitListEditor';
 import type { TraitListDefinition } from '../../types';
 
 /**
- * 1.2.11 D86 - a held row's identity is its `name` alone, unless the item (or, as a default,
- * the block) carries `allow_multiples`, in which case the specialization label is part of it.
- *
- * Decision 082 made it name+specialization for every non-atomic block, which let a player hold
- * `Brawl (Wrestling)` and `Brawl (Boxing)` as two separate Brawls with separate dots and
- * separate XP. A specialization labels ONE holding; `allow_multiples` is what makes the label
- * part of the holding's identity, and Retainers is what it exists for.
+ * A held row's identity is its `name` alone, unless the item (or, as a default, the block) carries `allow_multiples`,
+ * in which case the specialization label is part of it.
  */
 
-/** An Abilities-shaped block: specializations, no multiples anywhere. */
+/**
+ * An Abilities-shaped block: specializations, no multiples anywhere.
+ */
 function abilities(
 	overrides: Partial< TraitListDefinition > = {}
 ): TraitListDefinition {
@@ -27,7 +24,9 @@ function abilities(
 	};
 }
 
-/** A Backgrounds-shaped block where Retainers alone is genuinely repeatable. */
+/**
+ * A Backgrounds-shaped block where Retainers alone is genuinely repeatable.
+ */
 function backgrounds(): TraitListDefinition {
 	return {
 		items: [
@@ -303,8 +302,7 @@ describe( 'saveTraitDraft - editing', () => {
 	} );
 
 	it( 'leaves two same-named rows alone when an edit changes nothing about identity', () => {
-		// Two rows of one name are not a state this editor can now create, but an import can.
-		// Editing one of them is an in-place edit, never a silent merge of the pair.
+		// Two rows of one name are not a state this editor can now create.
 		const rows = saveTraitDraft(
 			[
 				{ name: 'Retainers', count: 3 },

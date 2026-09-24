@@ -7,44 +7,19 @@ use BeyondElysium\Models\Game;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Keeps be_games rows aligned with owbn_chronicle posts, on sites running
- * the upstream owbn-chronicle-manager plugin (pinned in practice to
- * v2.16.4, the version this correlation was built and verified against).
- * Auto-provisions a be_games row the first time a chronicle post is
- * saved, correlated to that post via owbn_chronicle_post_id from
- * creation, and updates its name when the chronicle's title changes. A
- * trashed, draft, or otherwise unpublished chronicle post is left
- * untouched.
- *
- * Deliberately does NOT rewrite a be_games row's slug when the upstream
- * post's own chronicle_slug changes - an earlier version of this class
- * attempted that and was removed (see
- * BE_PROCESS/design/chronicle-rename-design.md §5 for the full history) because
- * there was no stable, collision-proof way to tell "this post's slug
- * changed" from "a different chronicle now happens to share a slug" with
- * no correlation column to anchor on. owbn_chronicle_post_id is that
- * anchor, and CR-6's drift detector (Health_Notice) exists specifically
- * so this deferred branch can be revisited safely later without anyone
- * having to remember it is missing - it will say so.
+ * Keeps be_games rows aligned with owbn_chronicle posts, on sites running the upstream owbn-chronicle-manager plugin.
  */
 class Chronicle_Sync {
 
 	/**
-	 * Hooks sync() onto save_post_owbn_chronicle at priority 20, after
-	 * chronicle post meta has been saved, so chronicle_slug and
-	 * post_title are already final by the time sync() reads them.
+	 * Hooks sync() onto save_post_owbn_chronicle.
 	 */
 	public static function register(): void {
-		// Runs after owbn-chronicle-manager's own save_post meta handler, at its default priority 10.
 		add_action( 'save_post_owbn_chronicle', [ self::class, 'sync' ], 20, 3 );
 	}
 
 	/**
 	 * Creates or updates the be_games row for one owbn_chronicle post.
-	 * Skips autosaves, revisions, and posts that are not published or
-	 * private. Creates a new row when no be_games row exists at the
-	 * chronicle's slug yet, or updates the existing row's name when the
-	 * post title has changed.
 	 *
 	 * @param int      $post_id
 	 * @param \WP_Post $post
@@ -73,15 +48,7 @@ class Chronicle_Sync {
 		$existing = Game::find_by_slug( $chronicle_slug );
 
 		if ( ! $existing ) {
-			// No existing row at this slug; creates one (game_type defaults to 'met').
-			// Correlated to this post from creation, UNLESS this exact post is already
-			// claimed by a different row - the real case this guards is a post whose
-			// chronicle_slug changed: the OLD row keeps its correlation (Section 5.3's
-			// deferred-rename decision - a slug change upstream does not migrate the
-			// existing row), so the NEW row created at the new slug must not also try to
-			// claim the same post, which the unique index would refuse anyway. Left NULL
-			// here, this new row is picked up correctly if a future admin manually
-			// corrects it, or if the deferred rename branch is ever built.
+			// No row at this slug yet: creates one, correlated to this post unless another row already holds it.
 			$post_id_for_new_row = self::post_already_claimed( $post_id, 0 ) ? null : $post_id;
 			$insert               = [ 'name' => $post->post_title, 'slug' => $chronicle_slug ];
 			if ( $post_id_for_new_row !== null ) {
@@ -89,9 +56,7 @@ class Chronicle_Sync {
 			}
 			$new_id = Game::create( $insert );
 
-			// GS-7: this path's payload is name/slug only (§2.1) - no membership row.
-			// Keyed to the post's own author, guarded against a save with no real user
-			// (a WP-CLI import or cron save has no post author worth trusting as 0).
+			// Adds the post's author as the game's HST.
 			$author_id = (int) $post->post_author;
 			if ( $new_id && $author_id > 0 ) {
 				\BeyondElysium\Models\Game_Member::set_role( (int) $new_id, $author_id, 'hst' );
@@ -99,9 +64,7 @@ class Chronicle_Sync {
 			return;
 		}
 
-		// A row another chronicle post already holds is that chronicle, whatever this post's slug
-		// says: a duplicated post keeps the slug it was copied with. Left alone rather than renamed
-		// or claimed - the same call the slug-rewrite branch above makes (1.0.0-review F-082).
+		// Leaves a row that another chronicle post already holds untouched.
 		if ( ! empty( $existing->owbn_chronicle_post_id ) && (int) $existing->owbn_chronicle_post_id !== $post_id ) {
 			return;
 		}
@@ -110,22 +73,14 @@ class Chronicle_Sync {
 			Game::update( $chronicle_slug, [ 'name' => $post->post_title ] );
 		}
 
-		// Opportunistic correlation for a row that predates this column: same two rules
-		// as Schema::backfill_owbn_chronicle_post_ids() (exact slug match already got us
-		// here; only "is this post already claimed by a different row" remains to check),
-		// expressed in one place rather than duplicated between create-time and backfill.
+		// Correlates a row that has no post yet to this post.
 		if ( empty( $existing->owbn_chronicle_post_id ) && ! self::post_already_claimed( $post_id, (int) $existing->id ) ) {
 			Game::update( $chronicle_slug, [ 'owbn_chronicle_post_id' => $post_id ] );
 		}
 	}
 
 	/**
-	 * Checks whether a chronicle post is already correlated to a different
-	 * games row than the one currently being synced, so neither the create
-	 * branch nor the opportunistic-correlation branch above ever contests
-	 * the unique index by claiming a post a sibling row already holds.
-	 * $except_game_id of 0 means "any row at all" - used from the create
-	 * branch, where there is no existing row's own id to exclude.
+	 * Whether a chronicle post is already correlated to a different games row than the one being synced.
 	 *
 	 * @param int $post_id
 	 * @param int $except_game_id

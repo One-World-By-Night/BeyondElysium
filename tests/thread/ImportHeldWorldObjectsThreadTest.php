@@ -11,12 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-007. A character's Equipment and Locations lists - which every transfer
- * document and exchange file carries, and which `gex-trait-list-map.php` promises become catalog
- * entries plus connections - were skipped on import, so a transferred or imported character
- * arrived holding nothing. Each entry now connects the character to the chronicle's catalog
- * entry of that name, adding the entry by name when the chronicle has none, with the entry's
- * note on the connection: exactly what the exporter writes back out.
+ * A character's Equipment and Locations lists become catalog entries plus connections on import.
  */
 class ImportHeldWorldObjectsThreadTest extends WP_UnitTestCase {
 

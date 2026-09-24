@@ -8,17 +8,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * GX-8/9: the `Transfers_Controller` REST layer - outbound initiate/
- * acknowledge/release/decline/list (ordinary, capability-gated ST actions),
- * and `inbound` (the plugin's second unauthenticated route), including a
- * full online round trip proven by routing both outbound legs' HTTP calls
- * (home's POST to the host, the host's own callback to `/verify/{code}`)
- * through `pre_http_request` to a REAL internal REST dispatch on this same
- * install - the closest a single-process PHPUnit run can get to two real
- * WordPress installations talking to each other, without faking either
- * side's actual response shape by hand.
- *
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-8, GX-9, §8, §10
+ * 9: the `Transfers_Controller` REST layer.
  */
 class TransfersControllerThreadTest extends WP_UnitTestCase {
 
@@ -150,11 +140,8 @@ class TransfersControllerThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Routes both outbound-side HTTP calls (home's POST to the host, and the
-	 * host's own callback to `/verify/{code}`) to a real internal REST
-	 * dispatch, so the full online handshake runs through the actual
-	 * plugin code on both "sides" - the closest a single-process test can
-	 * get to two real installations talking to each other.
+	 * Routes both outbound-side HTTP calls (home's POST to the host, and the host's own callback to `/verify/{code}`) to
+	 * a real internal REST dispatch.
 	 */
 	private function loopback_both_directions(): callable {
 		$callback = function ( $preempt, $parsed_args, $url ) {
@@ -184,18 +171,6 @@ class TransfersControllerThreadTest extends WP_UnitTestCase {
 		return $callback;
 	}
 
-	/**
-	 * Proves the full online handshake end to end, with a Storyteller on each side (owner
-	 * ruling 2026-09-14, 1.0.0-review F-003): home's own outbound POST, the host's
-	 * callback-verify against home's own `/verify/{code}`, the offer waiting at the host, the
-	 * host Storyteller's accept (which asks home again before importing), and home marking the
-	 * character received abroad - all through real plugin code on both "sides" via the loopback.
-	 *
-	 * Both chronicles share this one test database, so the character's uuid already exists at
-	 * home when it reaches the host. The host can only copy such a character, never overwrite
-	 * another chronicle's row - on two real installations the host would find nothing and the
-	 * copy would keep the uuid (`TransferHostApprovalThreadTest` covers both).
-	 */
 	public function test_full_online_round_trip_needs_a_storyteller_on_each_side(): void {
 		$callback = $this->loopback_both_directions();
 
@@ -247,11 +222,6 @@ class TransfersControllerThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'verify_failed', $response->as_error()->get_error_code() );
 	}
 
-	/**
-	 * 1.0.0-review F-059. A verified export is a player's to make, and its document differs from
-	 * a transfer's only in the `character_uuid` on its `<verification>` line - the line the hash
-	 * check strips. Added by hand, the export passed as a transfer no home Storyteller started.
-	 */
 	public function test_inbound_rejects_a_verified_export_dressed_up_as_a_transfer(): void {
 		$export = \BeyondElysium\Services\Character_Exporter::export( $this->character_id, [ 'verify' => true ] );
 		preg_match( '/code=([A-Za-z0-9-]+)/', $export['xml'], $m );
@@ -278,11 +248,7 @@ class TransfersControllerThreadTest extends WP_UnitTestCase {
 		$export = \BeyondElysium\Services\Character_Exporter::export( $this->character_id, [ 'as_transfer' => true ] );
 		preg_match( '/code=([A-Za-z0-9-]+)/', $export['xml'], $m );
 
-		// The loopback intercepts by PATH, not host, so this still reaches the same real
-		// verify endpoint and gets a real, otherwise-valid response - the callback itself
-		// isn't what catches this. What must catch it is the final issuer.site comparison:
-		// the resolved issuer really is home_url(), which does not match the site claimed
-		// in the request body below.
+		// The loopback intercepts by PATH.
 		$callback = $this->loopback_both_directions();
 		$response = $this->post( "/be/v1/{$this->host_slug}/transfers/inbound", [
 			'payload'        => $export['xml'],
@@ -299,8 +265,7 @@ class TransfersControllerThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_inbound_reports_unreachable_when_the_home_site_cannot_be_contacted_at_all(): void {
-		// No loopback registered here - this is a genuine network attempt, expected to fail
-		// to connect at all (this sandboxed test environment has no real internet access).
+		// No loopback registered here.
 		$response = $this->post( "/be/v1/{$this->host_slug}/transfers/inbound", [
 			'payload'        => '<?xml version="1.0"?><grapevine version="3.0"><vampire name="X"></vampire></grapevine>',
 			'short_code'     => 'ABCD-EFGH',

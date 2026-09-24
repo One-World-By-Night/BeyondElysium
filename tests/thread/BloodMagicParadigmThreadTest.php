@@ -13,13 +13,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 D5: the owner's Blood Magic ruling - any power in a flagged set prompts for a
- * Tradition when taken, from the block's WHOLE traditions list, never narrowed to a
- * power's own catalog-listed teachers. Reported 2026-09-16: Hunter's Wind (which the
- * real catalog only lists as taught by Thaumaturgy (Camarilla)) couldn't be taken as
- * Dur An Ki, a real paradigm the block otherwise offers.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.20
+ * A power in a flagged set prompts for a Tradition when taken, from the block's whole traditions list.
  */
 class BloodMagicParadigmThreadTest extends WP_UnitTestCase {
 
@@ -39,8 +33,7 @@ class BloodMagicParadigmThreadTest extends WP_UnitTestCase {
 		] );
 		$game_id = (int) Game::find_by_slug( $this->slug )->id;
 
-		// A real shape: Hunter's Wind's own catalog `traditions` map lists only its
-		// narrow teaching tradition, but the block's own whole list is wider.
+		// A real shape: Hunter's Wind's own catalog `traditions` map lists only its narrow teaching tradition.
 		Schema_Block::create( [
 			'slug' => 'bmp-blood-magic', 'name' => 'Blood Magic', 'section_type' => 'tiered_power', 'is_system' => 0,
 			'definition' => [

@@ -7,14 +7,7 @@ use BeyondElysium\Models\Template;
 use WP_UnitTestCase;
 
 /**
- * Layout schema validation (Step 2d), against a real be_schema_blocks table.
- *
- * This lives in the thread layer, not unit, because it is the one piece of
- * `Template::validate_layout()` that genuinely needs the database: every section's
- * `block_slug` has to exist in be_schema_blocks. TESTING.md is explicit that this kind of
- * check - "a template referencing a real block" - belongs here.
- *
- * @see BE_PROCESS/releases/workflow-0.3.md Step 1h, 2d
+ * Layout schema validation, against a real be_schema_blocks table.
  */
 class TemplateValidateLayoutTest extends WP_UnitTestCase {
 
@@ -64,9 +57,7 @@ class TemplateValidateLayoutTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Widened from 1-4 to 1-6 (2026-09-09): the real grid (templateLayout.ts) is 6 tracks
-	 * wide so a section's own `width` ('third'=2, 'half'=3, 'full'=6) can express a real
-	 * 50/50 or full-width row, not just N forced-equal columns.
+	 * Widened from 1-4 to 1-6: the real grid (templateLayout.ts) is 6 tracks wide.
 	 *
 	 * @dataProvider invalid_column_counts
 	 */

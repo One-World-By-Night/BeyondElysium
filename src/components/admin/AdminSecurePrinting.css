@@ -1,7 +1,4 @@
-/**
- * Secure printing settings screen (1.0.1 C4). Mostly leans on Admin.css; what is here is the
- * PEM blocks and the status table, which need monospace and real wrapping.
- */
+/* Secure printing settings screen. */
 
 .be-secure-printing__status th {
 	text-align: left;
@@ -44,8 +41,7 @@
 	overflow-x: auto;
 }
 
-/* The two PEM blocks and the wp-config lines are the only things here that can be wider than
-   a phone; everything else stacks on its own. */
+/* The two PEM blocks and the wp-config lines are the only things here that can be wider than a phone. */
 @media ( max-width: 768px ) {
 
 	.be-secure-printing__status,

@@ -4,9 +4,7 @@
 	padding: 0;
 }
 
-/* Decision 053: a compact, read-only-styled row (matching the sheet's own density) plus a
- * small edit-pencil trigger - replaces the previous always-visible inline
- * count/specialization/note inputs on every row. */
+/* A compact, read-only-styled row (matching the sheet's own density) plus a small edit-pencil trigger. */
 .be-trait-list-editor__row {
 	display: flex;
 	align-items: baseline;
@@ -66,9 +64,6 @@
 	background: var(--be-gray-23);
 }
 
-/* 1.2.7-design-workflow.md §E6: the brand accent is one chain now, not two that happen to
- * share a default - --be-st-accent (PlotManager.css's :root, falls through to --be-red-1
- * unless a chronicle or the site overrides it) rather than --be-red-1 directly. */
 .be-trait-list-editor .be-trait-list-editor__add-trigger {
 	padding: 0.35rem 0.9rem;
 	border: 1px solid var(--be-st-accent);
@@ -107,7 +102,7 @@
 	border-radius: 3px;
 }
 
-/* F1 (1.3.2.1): the "Who or what?" hint when the typed label is already held. */
+/* The "Who or what?" hint when the typed label is already held. */
 .be-trait-list-editor__modal-hint {
 	margin: 0;
 	font-size: 0.75rem;
@@ -126,7 +121,7 @@
 	cursor: pointer;
 }
 
-/* 1.1.0 D3: matches .be-tiered-power-editor__view-toggle.be-tiered-power-editor__view-toggle's own established look. */
+/* Matches.be-tiered-power-editor__view-toggle.be-tiered-power-editor__view-toggle's own established look. */
 .be-trait-list-editor .be-trait-list-editor__cost-toggle {
 	display: block;
 	margin: 0 0 0.5rem;
@@ -144,7 +139,7 @@
 	background: var(--be-gray-23);
 }
 
-/* 1.1.0 D4: the Reorder entry point matches the cost-toggle's own established look. */
+/* The Reorder entry point matches the cost-toggle's own established look. */
 .be-trait-list-editor .be-trait-list-editor__reorder-trigger {
 	display: block;
 	margin: 0 0 0.5rem;
@@ -166,10 +161,7 @@
 	align-items: center;
 }
 
-/* Drag handles are a desktop-only enhancement (1.1.0 D3.19's own wording); a touch
- * viewport never sees a mouse-only drag gesture anyway, so hiding the handle there
- * removes dead affordance rather than losing any real capability - Move up/Move
- * down cover touch and keyboard everywhere. */
+/* Drag handles are a desktop-only enhancement. */
 .be-trait-list-editor__drag-handle {
 	flex: 0 0 auto;
 	cursor: grab;

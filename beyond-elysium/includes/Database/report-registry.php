@@ -1,41 +1,6 @@
 <?php
 /**
- * The 19 GV301 reports (`GV-SOURCEMAP.md` "Output / Template Engine"), as a
- * declarative table rather than 19 hand-written classes - one row per report,
- * structurally parallel to `gv-exchange-shape.php` and
- * `vampire-clan-disciplines.php`.
- *
- * Each column tuple is `[ label, key, source ]`. `source` tells
- * `Services\Report_Document` how to resolve it:
- *
- *   field     Field_Registry::resolve_value() against the report's own
- *             `entity` (char/item/loc/rote) - the same key a GV301 report
- *             token and the query builder both already resolve
- *             (GV-SOURCEMAP.md: "the field registry serves both the
- *             template engine and the query engine").
- *   special   A GV301 "special keyword" (GV-SOURCEMAP.md's own table) -
- *             resolved once per document/row from the game or the row's own
- *             name, never from Field_Registry.
- *   ledger    Derived from `Models\Change` (XP history), matching
- *             `Sheet_Document::build_xp_history()`'s own source.
- *   player    From the WordPress user account (`Game_Member` + `WP_User`),
- *             not character storage - `field-map.php`'s own
- *             `email`/`phone`/`address` entries are `unmapped` for exactly
- *             this reason.
- *   plot      From `Models\Plot`/`Plot_Entry`, filtered by entry type.
- *   boons     A character's outstanding boons, naming the other party.
- *   equipment The items a character holds, through its world-object connections.
- *   unmapped  No BE equivalent yet. Rendered as an explicit `—` with the
- *             report's own footnote, never guessed (point-calculator-design.md
- *             §4.5's honesty contract, applied here).
- *
- * `capability` names who may run a report in a chronicle (1.0.0-review F-047).
- * Left out, a report is a Storyteller's (`be_manage_characters`) - every
- * character and player report relies on that default. Plot, action, and rumor
- * reports are `be_manage_plots`; `null` opens a report to every member
- * (catalog cards, the calendar, House Rules).
- *
- * @see BE_PROCESS/design/reports-cards-batch-design.md
+ * The Grapevine reports, as a declarative table.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -94,7 +59,6 @@ return [
 			[ 'Match', 'matchvalue', 'special' ],
 			[ 'Sort Value', 'sortvalue', 'special' ],
 		],
-		// The sort the report actually applies; Sort Value shows it (1.0.0-review F-074).
 		'sort' => 'name',
 	],
 
@@ -102,10 +66,6 @@ return [
 		'title'   => 'Statistics Report',
 		'shape'   => 'statistics',
 		'entity'  => 'char',
-		// Unlike merits-and-flaws-report/influence-report (fixed statfields), the
-		// generic Statistics Report takes its field/stat_type from the request
-		// (Reports_Controller, matching Query_Fields_Controller's own already-open
-		// field list) - GV301's own frmStatistics.frm lets the ST pick either.
 		'statfields' => null,
 		'stattype'   => null,
 	],
@@ -130,8 +90,7 @@ return [
 		'title'   => 'Vampire Status Report',
 		'shape'   => 'table',
 		'entity'  => 'char',
-		// Grapevine's own columns (Templates/Text/Vampire Status Report.txt); the Group, Date, and
-		// Description this report carried had nothing behind them (1.0.0-review F-072).
+		// Grapevine's own columns (Templates/Text/Vampire Status Report.txt).
 		'columns' => [
 			[ 'Name', 'name', 'field' ],
 			[ 'Title', 'title', 'field' ],
@@ -191,11 +150,6 @@ return [
 			[ 'Powers', 'powers', 'field' ],
 			[ 'Abilities', 'abilities', 'field' ],
 			[ 'Negatives', 'negatives', 'field' ],
-			// 1.1.0 §3.12 item 2 - reads row.properties directly, deliberately bypassing
-			// Query_Engine/Field_Registry: uses_left/expires_on never existed in Grapevine's
-			// own qkdata.gvd, so they cannot join query-inventories.php's exact 1:1 mirror of
-			// it (QueryInventoryMapTest) without corrupting that invariant for a field that
-			// was never part of what it verifies.
 			[ 'Uses Left', 'usesleft', 'special' ],
 			[ 'Expires', 'expireson', 'special' ],
 		],
@@ -206,9 +160,6 @@ return [
 		'title'   => 'Rote Cards',
 		'shape'   => 'card',
 		'entity'  => 'rote',
-		// 1.1.0 §3.15, C1 - a non-manager needs their own character's resolved stack to
-		// include this block (the engine pattern kept: a rule reads a block, never a
-		// creature type), and only sees cards for rotes that character actually holds.
 		'holder_block' => 'mage-rotes',
 		'columns' => [
 			[ 'Name', 'name', 'field' ],
@@ -256,13 +207,6 @@ return [
 	],
 
 	// -- table / plot ------------------------------------------------------------------
-	//
-	// `entry_type: 'action'` means real `Plot_Entry` rows with entry_type 'action'
-	// (Action_Allocator's own storage). `entry_type: 'rumor'` is NOT a Plot_Entry
-	// value at all - Plot_Entry::ENTRY_TYPES has no 'rumor' - it means a `be_plots`
-	// row itself tagged via the `apr_rumor` Connection (Rumor_Generator::tag_as_rumor()),
-	// read from `plots.description`/`game_date` directly. Report_Document's plot
-	// resolver branches on this registry value, not on a real shared column.
 
 	'plot-report' => [
 		'capability' => 'be_manage_plots',
@@ -320,7 +264,7 @@ return [
 		],
 	],
 
-	// -- calendar (no real data source yet - §5 of the design doc) ---------------------
+	// -- calendar --------------------------------------------------------------------
 
 	'game-calendar' => [
 		'capability' => null,
@@ -330,11 +274,7 @@ return [
 		'empty_note' => 'Beyond Elysium does not yet model a chronicle game-date schedule - this report will populate once that data exists.',
 	],
 
-	// -- house_rules (Decision 094's own catalog-item description field, added
-	// v0.99.18 - every schema block's items/tiered_power levels/families that
-	// carry one, gathered into one report; not entity-scoped like every other
-	// report above, since it reads the whole catalog rather than one row per
-	// character/plot/etc.) ------------------------------------------------------------
+	// -- house_rules -----------------------------------------------------------------
 
 	'house-rules' => [
 		'capability' => null,

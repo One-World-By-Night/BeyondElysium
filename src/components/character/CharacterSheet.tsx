@@ -1,8 +1,5 @@
 /**
- * CharacterSheet renders a character's read-only trait sheet: it resolves the
- * creature stack and template, lays out each section's block through
- * BlockRenderer, and hosts the toolbar for printing, editing, appearance
- * customization, and connections. Also renders the dedicated print-canvas page.
+ * CharacterSheet renders a character's read-only trait sheet.
  */
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -30,8 +27,7 @@ import { sectionTotal } from '../../lib/sectionTotal';
 import { readCollapsed, setCollapsed } from '../../lib/panelCollapse';
 
 /**
- * Sheet sections share the panel-collapse store with every other foldable panel, so their
- * keys are namespaced - a block slug is not guaranteed distinct from a panel id.
+ * Sheet sections share the panel-collapse store with every other foldable panel.
  */
 const SECTION_COLLAPSE_PREFIX = 'sheet-section:';
 import type {
@@ -44,9 +40,7 @@ import type { Character, SheetStyle } from '../../types/character';
 import './CharacterSheet.css';
 
 /**
- * Converts a character's sheet style into CSS custom properties for the sheet's
- * root element. Only keys the style actually sets are included, so an unset
- * field falls through to CharacterSheet.css's own defaults.
+ * Converts a character's sheet style into CSS custom properties for the sheet's root element.
  */
 function styleVars( style: SheetStyle ): CSSProperties {
 	const vars: Record< string, string > = {};
@@ -74,7 +68,9 @@ export interface CharacterSheetProps {
 	characterId: number;
 	gameSlug: string;
 	templateType?: string;
-	/** What the person can do in this chronicle, when the page resolved it; the site-wide snapshot otherwise (F-103). */
+	/**
+	 * What the person can do in this chronicle, when the page resolved it.
+	 */
 	capabilities?: MyCapabilities;
 }
 
@@ -94,7 +90,9 @@ type SheetState =
 			resolved: TemplateResolveResponse;
 	  };
 
-/** A style-load failure never blocks the sheet itself - it just renders unstyled. */
+/**
+ * A style-load failure never blocks the sheet itself.
+ */
 const NO_STYLE: SheetStyle = {};
 
 function isRestError( error: unknown ): error is RestError {
@@ -102,9 +100,7 @@ function isRestError( error: unknown ): error is RestError {
 }
 
 /**
- * Renders a character's sheet by resolving its creature stack and template,
- * then walking the resolved layout's sections in (column, order) and handing
- * each section's block definition and character data to BlockRenderer.
+ * Renders a character's sheet by resolving its creature stack and template.
  */
 export function CharacterSheet( {
 	characterId,
@@ -114,14 +110,11 @@ export function CharacterSheet( {
 }: CharacterSheetProps ) {
 	const [ state, setState ] = useState< SheetState >( { status: 'loading' } );
 	const [ style, setStyle ] = useState< SheetStyle >( NO_STYLE );
-	// null while the preflight hasn't resolved yet. Printing works either way; a chronicle with
-	// no signing certificate prints copies stamped UNSIGNED, and the toolbar says so.
 	const [ pdfAvailability, setPdfAvailability ] = useState< {
 		ok: boolean;
 		code: string;
 	} | null >( null );
-	// One picker for everything the sheet can do (owner, 2026-09-15): what's picked, and which
-	// action's panel is open below it.
+	// One picker for everything the sheet can do: what's picked, and which action's panel is open below it.
 	const [ chosenAction, setChosenAction ] = useState< SheetAction | '' >(
 		''
 	);
@@ -129,7 +122,7 @@ export function CharacterSheet( {
 	const panelRef = useRef< HTMLDivElement >( null );
 	const [ exportNotice, setExportNotice ] = useState< string | null >( null );
 	const [ exporting, setExporting ] = useState( false );
-	// Off by default - mints a fresh, real attestation row on every export, so it is not free to leave on.
+	// Off by default - mints a fresh, real attestation row on every export.
 	const [ includeVerification, setIncludeVerification ] = useState( false );
 	const [ ledgerDate, setLedgerDate ] = useState( () =>
 		new Date().toISOString().slice( 0, 10 )
@@ -146,8 +139,7 @@ export function CharacterSheet( {
 	const urlParams = new URLSearchParams( window.location.search );
 	const isPrintCanvas = isPrintCanvasPath( window.location.pathname );
 
-	// What to include when printing/exporting, off by default. Background and Notes always show on the
-	// page itself; only the print canvas hides them when they are not chosen.
+	// What to include when printing/exporting, off by default.
 	const [ printBackground, setPrintBackground ] = useState(
 		() => urlParams.get( 'print_background' ) === '1'
 	);
@@ -157,30 +149,15 @@ export function CharacterSheet( {
 	const [ printXpHistory, setPrintXpHistory ] = useState(
 		() => urlParams.get( 'print_xp_history' ) === '1'
 	);
-	// Every tiered_power section switches from "Celerity 3" to listing each named rung up
-	// to the held level (or the one specific power for an Elder-and-above pick) - nothing
-	// else in the app currently ever sets `displayMode`, so this is the only source of
-	// "named" mode today, on-screen or printed.
 	const [ printFullPowerNames, setPrintFullPowerNames ] = useState(
 		() => urlParams.get( 'print_full_power_names' ) === '1'
 	);
-	// 1.2.11 D94: a count_is_cost block's held entries (Combo Disciplines) always name
-	// their XP price - this only chooses whether that price is shown at all, and it is
-	// shown unless the URL says otherwise. Same "ticking either also changes this page"
-	// shape as printFullPowerNames above.
+	// A count_is_cost block's held entries (Combo Disciplines) always name their XP price.
 	const [ printShowCost, setPrintShowCost ] = useState(
 		() => urlParams.get( 'print_hide_cost' ) !== '1'
 	);
 
-	// The viewer's own expand/collapse clicks, keyed by block_slug - only ever holds an
-	// entry once they've clicked a section, so a section they never touched still reads
-	// straight from the template's own `collapsed` flag (isSectionCollapsed()).
-	//
-	// 1.2.9 U7e: seeded from, and written back to, the same per-viewer store the shared
-	// CollapsiblePanel uses, so folding a section away survives a reload. Sections keep
-	// this hand-rolled toggle rather than moving to CollapsiblePanel because a closed
-	// `<details>` renders nothing at all - it would silently drop the section from a
-	// printed sheet, which the `hidden` attribute below deliberately does not.
+	// The viewer's own expand/collapse clicks, keyed by block_slug.
 	const [ collapseOverrides, setCollapseOverrides ] = useState<
 		Record< string, boolean >
 	>( () => {
@@ -203,8 +180,7 @@ export function CharacterSheet( {
 				const character = await api
 					.characters( gameSlug )
 					.get( characterId );
-				// An NPC gets the NPC sheet, which adds the Storyteller-only sections - npc_quick's
-				// shorter one when it hasn't been upgraded to npc_full (1.1.0 §3.7 item 1).
+				// An NPC gets the NPC sheet.
 				const resolvedType = character.is_npc
 					? character.npc_detail === 'quick'
 						? 'npc_quick'
@@ -230,8 +206,7 @@ export function CharacterSheet( {
 					} )
 					.catch( () => undefined );
 
-				// Best-effort preflight: an availability-check failure leaves pdfAvailability
-				// null, so the unsigned note never shows over a transient network blip.
+				// Best-effort preflight: an availability-check failure leaves pdfAvailability null.
 				api.sheets( gameSlug )
 					.availability()
 					.then( ( loaded ) => {
@@ -276,7 +251,6 @@ export function CharacterSheet( {
 		};
 	}, [ characterId, gameSlug, templateType ] );
 
-	// Auto-opens the browser's print dialog on the print-canvas page once real content has replaced the loading skeleton.
 	useEffect( () => {
 		if (
 			! isPrintCanvas ||
@@ -309,10 +283,7 @@ export function CharacterSheet( {
 	const { character, stack, resolved } = state;
 
 	/**
-	 * Exports this character to a Grapevine `.gex` file and offers it as a
-	 * browser download. `hide_st` mirrors what a non-manager already sees
-	 * elsewhere on this sheet - a manager gets the full record, a player
-	 * gets their own character with ST-only text stripped the same way.
+	 * Exports this character to a Grapevine `.gex` file and offers it as a browser download.
 	 */
 	const handleExport = async () => {
 		setExporting( true );
@@ -363,11 +334,12 @@ export function CharacterSheet( {
 		}
 	};
 
-	// Sections flow in (column, order) reading order into a repeat(6, 1fr) CSS Grid, each spanning 2/6, 3/6, or 6/6 per its own width.
 	const sections = sortedForFlow( resolved.template.layout.sections );
 	const blockSlugs = sections.map( ( s ) => s.block_slug );
 
-	/** Print-only 3-column float grouping for Physical/Social/Mental Traits, each column holding both trait halves. */
+	/**
+	 * Print-only 3-column float grouping for Physical/Social/Mental Traits, each column holding both trait halves.
+	 */
 	const ATTRIBUTE_GROUPS: string[][] = [
 		[ 'met-physical-traits', 'met-physical-traits-neg' ],
 		[ 'met-social-traits', 'met-social-traits-neg' ],
@@ -391,8 +363,7 @@ export function CharacterSheet( {
 		const collapsed = isSectionCollapsed( section, collapseOverrides );
 
 		let title = resolveSectionTitle( section, character.sheet_data );
-		// 1.1.0 D1: a non-atomic trait_list section whose held entries all carry a
-		// numeric count shows its total after the title.
+		// A non-atomic trait_list section whose held entries all carry a numeric count shows its total after the title.
 		if (
 			block.section_type === 'trait_list' &&
 			! ( block.definition as TraitListDefinition ).atomic
@@ -440,9 +411,6 @@ export function CharacterSheet( {
 						{ title }
 					</button>
 				</h4>
-				{ /* Never unmounted - hidden keeps it out of view (and, on screen, out of layout)
-				 * without losing BlockRenderer's own state; @media print always shows it
-				 * regardless, so a collapsed section still prints in full. */ }
 				<div hidden={ collapsed }>
 					{ sectionGraphic && (
 						<img
@@ -492,9 +460,7 @@ export function CharacterSheet( {
 	};
 
 	/**
-	 * Runs the picked action: Print My Items opens its PDF and Edit this character opens the
-	 * editor; everything else opens its panel below the picker, in place of any panel already
-	 * open.
+	 * Runs the picked action: Print My Items opens its PDF and Edit this character opens the editor.
 	 */
 	function runAction() {
 		if ( chosenAction === 'items' ) {
@@ -569,11 +535,6 @@ export function CharacterSheet( {
 								<h4 className="be-character-sheet__section-title">
 									{ actionLabels[ openPanel ] }
 								</h4>
-								{ /* One help doc per open action - not every action has (or needs)
-								 * one (items/edit/appearance never set openPanel at all), and
-								 * print/gex share sheet-print-export's single doc. Written as
-								 * literal per-action helpKey props, not a lookup object, so
-								 * helpDocs.test.ts's static scan can see each one. */ }
 								{ ( openPanel === 'print' ||
 									openPanel === 'gex' ) && (
 									<HelpButton helpKey="sheet-print-export" />
@@ -772,8 +733,6 @@ export function CharacterSheet( {
 									/>
 								) }
 
-							{ /* On-screen history, independent of "include when printing" - that only
-							    controls what the printed sheet carries, not whether this view can see it. */ }
 							{ openPanel === 'history' && (
 								<ChangeHistory
 									characterId={ characterId }
@@ -781,8 +740,6 @@ export function CharacterSheet( {
 								/>
 							) }
 
-							{ /* be_manage_characters-gated server-side (point-calculator-design.md §5.5);
-							    the picker only offers it to a manager, but the route is the real control. */ }
 							{ openPanel === 'audit' && character.can_manage && (
 								<PointAudit
 									characterId={ characterId }
@@ -790,8 +747,6 @@ export function CharacterSheet( {
 								/>
 							) }
 
-							{ /* Ownership is enforced server-side (Apr_Controller); a non-owning,
-							    non-managing viewer never reaches this sheet at all (D33). */ }
 							{ openPanel === 'ledger' && (
 								<>
 									<label className="be-character-sheet__ledger-date">
@@ -831,9 +786,6 @@ export function CharacterSheet( {
 				</>
 			) }
 
-			{ /* §8.4: a travelling/visiting notice, always shown regardless of the Transfer panel's own
-			    toggle state - a manager editing this sheet needs to see this without an extra click,
-			    excluded from print the same way every other .be-character-sheet__chrome element is. */ }
 			{ ! isPrintCanvas && character.travelling_status && (
 				<div
 					className="be-character-sheet__chrome be-character-sheet__travelling-notice"
@@ -962,7 +914,6 @@ export function CharacterSheet( {
 					</div>
 				) }
 
-			{ /* Always on the page; on the print canvas only when chosen. Biography/notes HTML is already sanitized server-side. */ }
 			{ showsProseSection(
 				character.biography,
 				isPrintCanvas,

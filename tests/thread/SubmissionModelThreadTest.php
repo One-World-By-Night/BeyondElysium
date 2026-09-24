@@ -6,12 +6,7 @@ use BeyondElysium\Models\Submission;
 use WP_UnitTestCase;
 
 /**
- * F-122: `Submission`'s own model-level contract - the one-waiting-row-per-
- * (game, sender) rule enforced in `create()`, `transition()` clearing both
- * file columns (and stamping `answered_at`) the moment a row leaves
- * `waiting`, and `expire_stale()`'s 60-day sweep.
- *
- * @see BE_PROCESS/design/player-grapevine-file-design.md §5
+ * `Submission`'s own model-level contract.
  */
 class SubmissionModelThreadTest extends WP_UnitTestCase {
 
@@ -123,9 +118,7 @@ class SubmissionModelThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_transition_to_a_non_terminal_state_keeps_the_file(): void {
-		// 'waiting' itself is the only non-terminal state this model knows about; transitioning
-		// to it again (a no-op in practice, but a real call this test can make) must not wipe
-		// the file the same way a real terminal transition does.
+		// 'waiting' itself is the only non-terminal state this model knows about.
 		$id = Submission::create( $this->base_row() );
 
 		Submission::transition( $id, 'waiting' );

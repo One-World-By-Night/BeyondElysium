@@ -1,7 +1,5 @@
 /**
- * Storyteller Toolkit: game nights (1.1.0 §3.1) - the calendar of sessions, a form to
- * schedule one, and, per session, the sign-in roster and awarding attendance XP. Mounted
- * from both the front-end toolkit page and the wp-admin Game Nights screen.
+ * Storyteller Toolkit: game nights.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -25,12 +23,16 @@ export interface GameNightsProps {
 	capabilities?: MyCapabilities;
 }
 
-/** A MySQL datetime ("2026-10-02 17:00:00") to a <input type="datetime-local"> value. */
+/**
+ * A MySQL datetime to a <input type="datetime-local"> value.
+ */
 function toDatetimeLocalValue( mysql: string | null | undefined ): string {
 	return mysql ? mysql.replace( ' ', 'T' ).slice( 0, 16 ) : '';
 }
 
-/** The reverse of toDatetimeLocalValue() - back to a MySQL datetime. */
+/**
+ * The reverse of toDatetimeLocalValue().
+ */
 function toMysqlDatetime( localValue: string ): string {
 	return localValue.length === 16
 		? `${ localValue.replace( 'T', ' ' ) }:00`
@@ -57,13 +59,13 @@ export function GameNights( { gameSlug, capabilities }: GameNightsProps ) {
 	const [ awarding, setAwarding ] = useState( false );
 	const [ awardMessage, setAwardMessage ] = useState< string | null >( null );
 
-	// Downtime window (1.1.0 §3.3) - opens/deadline are per session, be_manage_apr only.
+	// Downtime window - opens/deadline are per session, be_manage_apr only.
 	const [ opensAt, setOpensAt ] = useState( '' );
 	const [ deadlineAt, setDeadlineAt ] = useState( '' );
 	const [ savingWindow, setSavingWindow ] = useState( false );
 	const [ windowError, setWindowError ] = useState< string | null >( null );
 
-	// Cast NPCs (1.1.0 §3.8) - who plays which NPC at the selected session.
+	// Cast NPCs - who plays which NPC at the selected session.
 	const [ castings, setCastings ] = useState< NpcCasting[] >( [] );
 	const [ npcs, setNpcs ] = useState< NpcProfile[] >( [] );
 	const [ members, setMembers ] = useState< EligibleMember[] >( [] );
@@ -76,21 +78,18 @@ export function GameNights( { gameSlug, capabilities }: GameNightsProps ) {
 	const [ settingsOpen, setSettingsOpen ] = useState( false );
 	const [ attendanceXp, setAttendanceXp ] = useState( 1 );
 	const [ reportXp, setReportXp ] = useState( 0 );
-	// D54: must match Spotlight::DEFAULT_SPOTLIGHT_DAYS - this panel showed 14 while the
-	// server actually enforced 42 until a save happened, so saving unchanged silently cut
-	// the real window.
+	// Must match Spotlight::DEFAULT_SPOTLIGHT_DAYS.
 	const [ spotlightDays, setSpotlightDays ] = useState( 42 );
 	const [ savingSettings, setSavingSettings ] = useState( false );
 
-	// After-game reports (1.1.0 §3.14, A1) - read state and awarding report XP per session.
+	// After-game reports - read state and awarding report XP per session.
 	const [ reports, setReports ] = useState< AfterGameReport[] >( [] );
 	const [ awardingReportXp, setAwardingReportXp ] = useState( false );
 	const [ awardReportMessage, setAwardReportMessage ] = useState<
 		string | null
 	>( null );
 
-	// Spotlight (1.1.0 §3.14, A2) - chronicle-wide, so it lives alongside the session list
-	// rather than inside a single session's own detail view.
+	// Spotlight - chronicle-wide.
 	const [ spotlightOpen, setSpotlightOpen ] = useState( false );
 	const [ spotlightRows, setSpotlightRows ] = useState< SpotlightRow[] >(
 		[]

@@ -1,9 +1,7 @@
 /**
- * "What you know" (1.1.0 §3.11) - the read-only list of secrets on one entity that the
- * current viewer's own characters actually reach, via the same `GET /secrets` route the
- * Storyteller's own `SecretsPanel` reads (already audience-filtered server-side for a
- * non-manager). Renders nothing at all when there's nothing to show, rather than an empty
- * "What you know" heading on every plot, item, location, and NPC.
+ * "What you know" - the read-only list of secrets on one entity that the current viewer's own characters actually
+ * reach, via the same `GET /secrets` route the Storyteller's own `SecretsPanel` reads (already audience-filtered
+ * server-side for a non-manager).
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

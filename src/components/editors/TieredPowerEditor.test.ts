@@ -14,7 +14,9 @@ import {
 import type { EditableHeldPower } from './TieredPowerEditor';
 import type { TieredPower, TieredPowerDefinition } from '../../types';
 
-/** A vampire-disciplines-shaped block: 2/2/1 ladder, real `_meta`. */
+/**
+ * A vampire-disciplines-shaped block: 2/2/1 ladder, real `_meta`.
+ */
 function metaDefinition( powers: TieredPower[] ): TieredPowerDefinition {
 	return {
 		powers,
@@ -131,14 +133,6 @@ describe( 'ladderCeiling (1.2.10 §A - the D68 fix)', () => {
 		expect( ladderCeiling( def ) ).toBe( 5 );
 	} );
 
-	/**
-	 * 1.3.2 regression, watched failing first against the unfixed function (which read
-	 * `ladder: {}` the same as "no ladder at all" and fell back to 5). Werewolf/Fera Gifts
-	 * are declared exactly this way (`reference/CATALOG-JSON-FORMAT.md` §4.2, "a pick-only
-	 * track... says so by declaring `ladder` as an explicit empty object") - every power is
-	 * bought by name from `elder`, never rated on a stepper, so the ceiling must be 0, not a
-	 * phantom 5-rung stepper nothing in the catalog prices.
-	 */
 	it( 'ceilings at 0 for a declared pick-only track, never the 5 fallback', () => {
 		const def: TieredPowerDefinition = {
 			powers: [],
@@ -153,10 +147,6 @@ describe( 'ladderCeiling (1.2.10 §A - the D68 fix)', () => {
 	} );
 
 	it( 'still falls back to 5 when _meta exists but declares no ladder key at all', () => {
-		// A pre-1.2.10 block re-emitted with a partial `_meta` and no `ladder` key -
-		// distinct from `ladder: {}`, which is a real declaration. `ladder` is normally
-		// required on `TieredPowerMeta`; the cast below constructs the "not even attempted"
-		// shape this branch exists to distinguish from "attempted and empty".
 		const def = {
 			powers: [],
 			sequential: false,
@@ -193,9 +183,6 @@ describe( 'incrementLevel / decrementLevel / clampToCeiling (E1 - a pick is neve
 	} );
 
 	it( 'a legacy total above the ceiling steps down one rung at a time, never jumping straight to the ceiling', () => {
-		// 1.2.10-design-workflow.md §A′: Celerity 9 on a 5-rung ladder is a real,
-		// approved total (5 rungs + 4 unnamed picks). Clicking "-" once must land on
-		// 8, not silently collapse to the ceiling and discard the picks it represents.
 		expect( decrementLevel( 9 ) ).toBe( 8 );
 	} );
 
@@ -220,12 +207,7 @@ describe( 'ladderRungLabel (checklist labels, no synthetic ladder for a custom p
 	} );
 
 	/**
-	 * 1.2.11 D93, amending this case. It previously asserted the comma-join
-	 * (`'Feral Claws, Eyes of the Beast'`) - one checkbox whose label was every name at
-	 * the rank run together, which the owner reported from the real sheet. A rung is one
-	 * thing you buy, so it gets one name; the others are carried as alternates rather
-	 * than dropped. D66's "never roll up to a placeholder" still holds - no name is lost,
-	 * and nothing renders as a bare `Protean 1`.
+	 * Amending this case.
 	 */
 	it( 'names a tied rung once and carries the rest as alternates, never comma-joined (D66/D93)', () => {
 		const tied: TieredPower = {
@@ -252,19 +234,12 @@ describe( 'ladderRungLabel (checklist labels, no synthetic ladder for a custom p
 } );
 
 /**
- * 1.2.11 D93 - the owner's own report, from a real sheet: the "List each level" view ran
- * every name at a rank together with commas. On pre-1.2.10 (production-shaped) data,
- * Animalism's rung 1 rendered
- * `Feral Whispers, Beckoning, Beast Within (2nd ed), Feral Speech (dark ages), Noah's Call (dark ages)`
- * in a single checkbox label.
- *
- * A rung is one purchase, so it shows one name: the line in play, which is the unqualified
- * printing. `seamQualifier()` is what says which that is - a level whose note carries
- * nothing beyond its tier word is the base printing, and an edition or tradition variant
- * carries `2nd ed` / `dark ages` / `Sabbat`.
+ * ladderRung: one name per rung, the rest as alternates.
  */
 describe( 'ladderRung (D93 - one name per rung, the rest as alternates)', () => {
-	/** The real pre-split shape: every basic-tier name tied at rung 1, variants noted. */
+	/**
+	 * The real pre-split shape: every basic-tier name tied at rung 1, variants noted.
+	 */
 	function preSplitAnimalism(): TieredPower {
 		return {
 			name: 'Animalism',

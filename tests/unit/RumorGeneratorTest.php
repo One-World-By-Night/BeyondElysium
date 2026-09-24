@@ -6,13 +6,7 @@ use BeyondElysium\Services\Rumor_Generator;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Port of `APREngineClass.AddStandardRumors` (GV301Source/Code/APREngineClass.cls).
- * `resolve_character_candidates()` and `rumor_config()` take plain arrays and touch no
- * database - the persistence and existing-title lookups are covered at the thread
- * layer.
- *
- * @see BE_PROCESS/releases/workflow-0.5.md Step 5g
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "Rumor auto-generation"
+ * Port of `APREngineClass.AddStandardRumors` (Code/APREngineClass.cls).
  */
 class RumorGeneratorTest extends TestCase {
 
@@ -87,7 +81,9 @@ class RumorGeneratorTest extends TestCase {
 		$this->assertSame( [ 'field' => 'influences', 'operator' => 'contains', 'value' => 'Bureaucracy' ], $result[0]['target_query'] );
 	}
 
-	/** 1.1.0 §3.4 item 4: "The generator sets both on every influence rumor." */
+	/**
+	 * The generator sets both on every influence rumor.
+	 */
 	public function test_an_influence_rumor_carries_its_own_rumor_level_key_and_match(): void {
 		$characters = [ $this->character( [ 'influences' => [ 'Bureaucracy' ] ] ) ];
 		$result     = Rumor_Generator::resolve_character_candidates( $characters, $this->toggles( [ 'influence_rumors' => true ] ), [] );
@@ -96,7 +92,9 @@ class RumorGeneratorTest extends TestCase {
 		$this->assertSame( 'Bureaucracy', $result[0]['rumor_level_match'] );
 	}
 
-	/** A rumor with no per-character rating to gate on never carries these keys at all. */
+	/**
+	 * A rumor with no per-character rating to gate on never carries these keys at all.
+	 */
 	public function test_a_personal_rumor_carries_no_rumor_level_key(): void {
 		$characters = [ $this->character( [ 'name' => 'Marcus Vitel' ] ) ];
 		$result     = Rumor_Generator::resolve_character_candidates( $characters, $this->toggles( [ 'personal_rumors' => true ] ), [] );
@@ -106,9 +104,7 @@ class RumorGeneratorTest extends TestCase {
 	}
 
 	/**
-	 * 1.0.0-review F-037: both toggles saved and changed nothing. A character's group and
-	 * subgroup are the fields Grapevine's own Group()/Subgroup() name for its creature type -
-	 * a vampire's Clan and Sect (rumor-group-map.php).
+	 * Both toggles saved and changed nothing.
 	 */
 	public function test_group_and_subgroup_toggles_title_a_rumor_with_the_characters_group_and_subgroup(): void {
 		$characters = [

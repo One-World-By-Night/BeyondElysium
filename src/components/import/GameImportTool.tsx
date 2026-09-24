@@ -1,8 +1,6 @@
 /**
- * GameImportTool is the full game-file import wizard: upload a .gv3 chronicle
- * file, preview its contents, choose a target chronicle, resolve collisions, and
- * commit. Reuses ImportPreview for the shared preview/resolution UI. Supports
- * both creating a brand new chronicle and merging into an existing one.
+ * GameImportTool is the full game-file import wizard: upload a.gv3 chronicle file, preview its contents, choose a
+ * target chronicle, resolve collisions, and commit.
  */
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { useRef, useState } from '@wordpress/element';
@@ -28,10 +26,8 @@ const STAGES: { key: Stage; label: string }[] = [
 ];
 
 /**
- * Renders the full game-file import wizard: upload a .gv3 file, preview the
- * chronicle it carries, choose whether to create a new chronicle or merge into
- * an existing one, resolve anything that collides, then commit. Reuses
- * ImportPreview unchanged for the Preview and Resolve stages.
+ * Renders the full game-file import wizard: upload a.gv3 file, preview the chronicle it carries, choose whether to
+ * create a new chronicle or merge into an existing one, resolve anything that collides.
  */
 export function GameImportTool() {
 	const [ stage, setStage ] = useState< Stage >( 'upload' );
@@ -55,8 +51,6 @@ export function GameImportTool() {
 	// The chronicle the current preview was checked against ('' until a merge target is confirmed).
 	const [ previewTarget, setPreviewTarget ] = useState( '' );
 
-	// Held against the job and target they were made on: Start Over, a new file, or another
-	// merge target begin with none (1.0.0-review F-057).
 	const {
 		traitResolutions,
 		duplicateActions,
@@ -95,9 +89,7 @@ export function GameImportTool() {
 	}
 
 	/**
-	 * Moving past the Target stage re-fetches the preview against the chosen target, so duplicates
-	 * shown at Resolve are real, never guessed client-side - and a new chronicle, which has nothing
-	 * to collide with, never keeps the duplicates found in a merge target picked before it.
+	 * Moving past the Target stage re-fetches the preview against the chosen target.
 	 */
 	async function confirmTarget() {
 		if ( ! preview ) {

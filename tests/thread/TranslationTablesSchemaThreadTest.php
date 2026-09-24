@@ -5,15 +5,8 @@ namespace BeyondElysium\Tests\Thread;
 use WP_UnitTestCase;
 
 /**
- * B1 (1.2.0 releases/1.2.0-design-workflow.md §4/§10): be_translation_strings and
- * be_translations exist with the shape the release document specifies, and the one real gap in
- * that shape - MySQL's UNIQUE key does not treat two NULL values as equal, so
- * UNIQUE(string_id, locale, context) does not by itself stop two context-less rows for the same
- * string+locale - is pinned here rather than left to be rediscovered. This is not a "watched
- * failing" test: the last two tests assert the gap's current, correct, documented behavior and
- * are expected to keep passing after B2 ships its own application-level guard.
- *
- * @see BE_PROCESS/releases/1.2.0-design-workflow.md §4
+ * Be_translation_strings and be_translations exist with their documented columns and unique keys, and two rows with a
+ * null context are not stopped by the database alone.
  */
 class TranslationTablesSchemaThreadTest extends WP_UnitTestCase {
 
@@ -77,13 +70,6 @@ class TranslationTablesSchemaThreadTest extends WP_UnitTestCase {
 		$this->assertFalse( $result, 'a second row with the same (string_id, locale, context) must be rejected' );
 	}
 
-	/**
-	 * The documented gap, not a bug in this test: MySQL's UNIQUE key does not consider two NULLs
-	 * equal, so two default (context IS NULL) rows for the same string+locale both insert
-	 * successfully at the raw SQL level. Models\Translation's upsert (B2) must guard this with an
-	 * explicit NULL-safe SELECT before insert - the schema comment says so and this pins the fact
-	 * it is guarding against.
-	 */
 	public function test_two_null_context_rows_are_not_stopped_by_the_db_alone(): void {
 		global $wpdb;
 		$strings = self::table( 'translation_strings' );

@@ -7,11 +7,7 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
 /**
- * 1.2.11 D94, the third place a `count_is_cost` block's stored number was read as a
- * quantity. The Point Audit labelled every held row `{name} ×{count}` whenever the count
- * was above one, so a Combo Discipline costing 8 XP printed as `Emerge Unscathed ×8` -
- * eight copies of a power a character holds once. Unlike the sheet and the PDF this was
- * never gated behind a viewer preference; it simply had no idea the number was a price.
+ * The third place a `count_is_cost` block's stored number was read as a quantity.
  */
 class PointAuditCostLabelTest extends TestCase {
 
@@ -36,7 +32,9 @@ class PointAuditCostLabelTest extends TestCase {
 		$this->assertSame( 'Emerge Unscathed (8 XP)', $lines[0]['label'] );
 	}
 
-	/** A one-point price is still a price - the `×N` rule hid it entirely below two. */
+	/**
+	 * A one-point price is still a price.
+	 */
 	public function test_a_price_of_one_is_still_labelled(): void {
 		$lines = $this->lines(
 			[ 'items' => [], 'count_is_cost' => true ],

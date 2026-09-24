@@ -1,15 +1,4 @@
 <?php
-/**
- * workflow-0.9.md Step 2a: a realistic dataset for performance measurement - 200+
- * characters, 50+ plots, 100+ world objects, across at least two games. Randomized
- * within realistic bounds, not hand-entered, run via `wp eval-file`.
- *
- * Reuses `seed-500-characters.php`'s character-generation shape rather than
- * reinventing it, but spans two games and adds plots/world objects, which that
- * Phase 0.6 fixture never needed.
- *
- * Usage: wp eval-file tests/fixtures/seed-0.9-performance-dataset.php --path=/path/to/wordpress
- */
 
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Character;
@@ -17,9 +6,7 @@ use BeyondElysium\Models\Plot;
 use BeyondElysium\Models\World_Object;
 use BeyondElysium\Database\Manager;
 
-// No periods - Game::create() runs the slug through sanitize_title(), which turns
-// "0.9" into "0-9", so a slug containing one would never match this constant again on
-// a re-run (find_by_slug() would search for the un-sanitized string forever).
+// No periods - Game::create() runs the slug through sanitize_title().
 const PERF9_GAME_SLUGS = [ 'perf-test-09-a', 'perf-test-09-b' ];
 const PERF9_CHARACTERS_PER_GAME = 110; // 220 total, comfortably over the 200 floor.
 const PERF9_PLOTS_PER_GAME      = 30;  // 60 total, over the 50 floor.
@@ -103,9 +90,7 @@ foreach ( PERF9_GAME_SLUGS as $game_index => $slug ) {
 	$existing_plots = (int) Manager::get_row(
 		'SELECT COUNT(*) AS c FROM ' . Manager::table( 'plots' ) . ' WHERE game_id = %d', $game->id
 	)->c;
-	// Plot::STATUSES is exactly ['active', 'resolved', 'archived'] - create() returns
-	// false (silently) for anything else, so this counts real successes, not loop
-	// iterations, and keeps trying until the target is actually met.
+	// Plot::STATUSES is exactly ['active', 'resolved', 'archived'].
 	$plot_statuses = [ 'active', 'active', 'active', 'resolved', 'archived' ];
 	$created_plots = 0;
 	$attempt       = 0;

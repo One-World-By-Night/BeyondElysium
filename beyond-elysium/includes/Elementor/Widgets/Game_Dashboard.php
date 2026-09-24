@@ -7,52 +7,34 @@ use Elementor\Controls_Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Elementor widget wrapper for the Game Dashboard, a chronicle's landing
- * page. Registers the widget's name, title, and icon with
- * Elementor, exposes Content section controls for the target game slug and
- * several optional quick-link page URLs, and renders a single mount-point
- * <div> that the front-end script hydrates with the GameDashboard React
- * component. The component itself picks between a Storyteller aggregate
- * view and a player-facing view based on the viewer's own capabilities;
- * every underlying route enforces its own capability checks server-side.
- *
- * @see BE_PROCESS/releases/workflow-0.9.md Step 7c
+ * Elementor widget wrapper for the Game Dashboard, a chronicle's landing page.
  */
 class Game_Dashboard extends Base_Widget {
 
 	/**
-	 * Returns the internal widget name Elementor uses to identify this
-	 * widget type. Elementor stores this string in page and template
-	 * markup wherever the widget is placed.
+	 * Returns the internal widget name Elementor uses to identify this widget type.
 	 */
 	public function get_name(): string {
 		return 'be-game-dashboard';
 	}
 
 	/**
-	 * Returns the human-readable label Elementor shows for this widget in
-	 * the editor's widget panel, search results, and layers panel. This is
-	 * the text an editor sees when placing the widget on a page.
+	 * Returns the human-readable label Elementor shows for this widget in the editor's widget panel, search results, and
+	 * layers panel.
 	 */
 	public function get_title(): string {
 		return __( 'Game Dashboard', 'beyond-elysium' );
 	}
 
 	/**
-	 * Returns the Elementor icon class shown next to this widget's title in
-	 * the widget panel. The value is an eicon-* class name supplied by
-	 * Elementor's built-in icon font.
+	 * Returns the Elementor icon class shown next to this widget's title in the widget panel.
 	 */
 	public function get_icon(): string {
 		return 'eicon-dashboard';
 	}
 
 	/**
-	 * Builds the Elementor "Content" section shown in the editor panel for
-	 * this widget. Adds a read-only description note, a Game Slug text
-	 * control, and optional URL controls for the sheet page plus the
-	 * Storyteller quick links to the approval queue, roster, and plots
-	 * pages.
+	 * Builds the Elementor "Content" section shown in the editor panel for this widget.
 	 */
 	protected function register_controls(): void {
 		$this->start_controls_section( 'content_section', [

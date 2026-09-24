@@ -113,12 +113,6 @@ describe( 'resolveBlurCommit (Decision 076)', () => {
 	} );
 } );
 
-/*
- * 1.2.9 U4 - grouped pick lists. The constraint these tests exist to hold is that
- * **grouping is a sort, never a filter**: an out-of-type Gift is legal (LotW Revised
- * charges +1 for one outside breed, auspice or tribe - a surcharge means purchasable),
- * so no section may be hidden, greyed, gated or excluded from search.
- */
 describe( 'buildOptionRows', () => {
 	const gifts: OptionGroup[] = [
 		{ label: 'Homid', options: [ 'Persuasion', 'Smell of Man' ] },
@@ -156,8 +150,7 @@ describe( 'buildOptionRows', () => {
 	} );
 
 	it( 'never hides a section for being out of type - every group given is laid out', () => {
-		// A Homid/Galliard/Fianna character may take a Get of Fenris gift; it costs 4
-		// instead of 3, and pricing is Cost_Engine's job, never this picker's.
+		// A Homid/Galliard/Fianna character may take a Get of Fenris gift.
 		const rows = buildOptionRows( gifts, '' );
 		expect( rows.filter( ( r ) => r.kind === 'heading' ) ).toHaveLength(
 			2

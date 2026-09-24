@@ -52,10 +52,7 @@ describe( 'sectionTotal', () => {
 } );
 
 /**
- * Same fixture, same expected output as
- * `TraitGroupingParityTest::test_section_total_matches_the_shared_fixture()` - this is
- * the TypeScript half of proving `sectionTotal()` and `Trait_Grouping::section_total()`
- * agree.
+ * Same fixture, same expected output as `TraitGroupingParityTest::test_section_total_matches_the_shared_fixture()`.
  */
 describe( 'sectionTotal — parity with Trait_Grouping::section_total()', () => {
 	input.sectionTotal.forEach( ( testCase, i ) => {

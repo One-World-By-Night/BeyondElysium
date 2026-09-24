@@ -1,8 +1,5 @@
 /**
- * ST tool for managing an entity's connections to other characters, plots, world objects,
- * or freeform tags. Renders a picker form for adding a new connection and a list of the
- * entity's existing connections with remove controls. Generic across entity types, so the
- * same component mounts from a plot, a world object card, and a character sheet.
+ * ST tool for managing an entity's connections to other characters, plots, world objects, or freeform tags.
  */
 import { useEffect, useMemo, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -17,14 +14,20 @@ import './ConnectionManager.css';
 
 export interface ConnectionManagerProps {
 	gameSlug: string;
-	/** The entity this manager is attached to - e.g. a plot's own connections tab. */
+	/**
+	 * The entity this manager is attached.
+	 */
 	entityType: EntityType;
 	entityId: number;
-	/** Narrows the world-object picker to one object type (e.g. "item" on a character sheet's item-connection affordance). Unset shows every type mixed together. */
+	/**
+	 * Narrows the world-object picker to one object type (e.g. "item" on a character sheet's item-connection affordance).
+	 */
 	objectTypeFilter?: ObjectType;
 }
 
-/** The connection target kind selectable in the form; "external" maps to a tag connection under the hood. */
+/**
+ * The connection target kind selectable in the form.
+ */
 type PickMode = 'character' | 'external' | 'plot' | 'world_object' | 'tag';
 
 const PICK_MODES: { value: PickMode; label: string }[] = [
@@ -42,10 +45,7 @@ const PICK_MODES: { value: PickMode; label: string }[] = [
 ];
 
 /**
- * Lets an ST add and remove connections between one entity and characters, plots, world
- * objects, or freeform tags. Offers a name-based picker for in-system entities and a
- * free-text "External" mode for people with no record in this system, and lists the
- * entity's existing connections with a remove control for each.
+ * Lets an ST add and remove connections between one entity and characters, plots, world objects, or freeform tags.
  */
 export function ConnectionManager( {
 	gameSlug,
@@ -70,9 +70,7 @@ export function ConnectionManager( {
 	const [ submitting, setSubmitting ] = useState( false );
 
 	/**
-	 * Fetches the current list of connections for this entity from the API and stores
-	 * the result. Sets an error message instead if the request fails, and is re-run
-	 * after every create or delete so the list stays current.
+	 * Fetches the current list of connections for this entity from the API and stores the result.
 	 */
 	function load() {
 		setLoading( true );
@@ -95,7 +93,7 @@ export function ConnectionManager( {
 
 	// Loaded once per game; backs both the picker dropdowns and the connections list's id-to-name resolution.
 	useEffect( () => {
-		// Every page, not the first 100: a picker that stops there hides the rest (1.0.0-review F-080).
+		// Every page, not the first 100.
 		everyPage( ( page ) =>
 			api.characters( gameSlug ).listPaginated( { page, per_page: 100 } )
 		)
@@ -121,8 +119,6 @@ export function ConnectionManager( {
 
 	/**
 	 * Resolves a display name for a connection's target entity, given its type and id.
-	 * Looks up the id in the already-loaded characters, plots, or world objects list and
-	 * falls back to a generic "#id" label when the entity is not found in that list.
 	 */
 	function resolveName( type: EntityType, id: number | null ): string {
 		if ( id === null ) {
@@ -170,9 +166,7 @@ export function ConnectionManager( {
 	}
 
 	/**
-	 * Submits the new-connection form. Maps the selected pick mode to a wire-level entity
-	 * type, treating "external" as a tag connection with the typed name as its label, then
-	 * creates the connection via the API, resets the form, and reloads the list.
+	 * Submits the new-connection form.
 	 */
 	async function addConnection( e: React.FormEvent ) {
 		e.preventDefault();
@@ -211,9 +205,7 @@ export function ConnectionManager( {
 	}
 
 	/**
-	 * Deletes one connection by id via the API. Reloads the connections list on success
-	 * so the removed item disappears immediately, or sets an error message if the
-	 * delete request fails.
+	 * Deletes one connection by id via the API.
 	 */
 	async function remove( id: number ) {
 		try {
@@ -228,8 +220,6 @@ export function ConnectionManager( {
 
 	/**
 	 * Returns the other end of a connection relative to this component's own entity.
-	 * A connection stores a source and a target; this checks which side matches the
-	 * current entity and returns the opposite side's type, id, and label.
 	 */
 	function otherEnd( connection: Connection ): {
 		type: EntityType;
@@ -262,9 +252,6 @@ export function ConnectionManager( {
 			? plots.map( ( p ) => ( { value: String( p.id ), text: p.title } ) )
 			: [];
 
-	// SearchableSelect operates on a flat display-name list with no id concept of its own
-	// (item-cards-design.md §"Assignment (staff side)"); a duplicate catalog name gets its
-	// id appended so both remain individually selectable.
 	const worldObjectDisplayToId = useMemo( () => {
 		const nameCounts = new Map< string, number >();
 		for ( const w of worldObjects ) {
@@ -282,12 +269,6 @@ export function ConnectionManager( {
 	}, [ worldObjects ] );
 	const worldObjectOptions = Array.from( worldObjectDisplayToId.keys() );
 
-	/*
-	 * U4d: sectioned by object type, but only when the list actually holds more than one -
-	 * this picker is often already narrowed by `objectTypeFilter`, and a single section
-	 * headed "item" over every row is noise, not structure. `groupCatalogItems` returns []
-	 * for a one-type list, which is exactly the "stay flat" signal.
-	 */
 	const worldObjectGroups = useMemo( () => {
 		const byId = new Map( worldObjects.map( ( w ) => [ w.id, w ] ) );
 		const types = new Set( worldObjects.map( ( w ) => w.object_type ) );

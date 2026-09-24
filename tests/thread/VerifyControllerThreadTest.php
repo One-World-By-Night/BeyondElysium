@@ -8,14 +8,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * GX-7: the public `GET /be/v1/verify/{code}` route - the plugin's first
- * unauthenticated REST endpoint. Confirms every response shape in §6.3
- * (valid, revoked, unknown, expired, malformed, rate-limited), that
- * `still_matches` is computed from a fresh canonical export rather than the
- * verify-embedded one (the two necessarily differ, since each carries its
- * own unique code), and that no request here requires being logged in.
- *
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-7, §6.3
+ * The public `GET /be/v1/verify/{code}` route.
  */
 class VerifyControllerThreadTest extends WP_UnitTestCase {
 
@@ -41,7 +34,7 @@ class VerifyControllerThreadTest extends WP_UnitTestCase {
 		] );
 		$this->character = Character::find( $this->character_id );
 
-		// Every request in this suite is anonymous - proves the route needs no login at all.
+		// Every request in this suite is anonymous.
 		wp_set_current_user( 0 );
 	}
 
@@ -67,11 +60,6 @@ class VerifyControllerThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_still_matches_is_computed_from_a_fresh_canonical_export_not_the_verify_document(): void {
-		// This is the load-bearing property of the whole hash design: the embedded-URL
-		// document minted by export(verify:true) is NEVER what gets hashed for the
-		// attestation, since every re-export mints a fresh code/URL and would never
-		// equal itself again. The canonical (id-empty) export is what's hashed both
-		// at issue time and at check time.
 		$result = \BeyondElysium\Services\Character_Exporter::export( $this->character_id, [ 'verify' => true ] );
 		preg_match( '/code=([A-Za-z0-9-]+)/', $result['xml'], $m );
 		$this->assertNotEmpty( $m[1] ?? null, 'the exported id field must carry a real verification code' );
@@ -88,12 +76,6 @@ class VerifyControllerThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_still_matches_is_unaffected_by_the_exporting_players_own_hide_st_choice(): void {
-		// A traveling player exporting their OWN character (the primary real-world case
-		// this endpoint exists for) always exports with hide_st true, since they are never
-		// a manager of their own sheet. still_matches() always re-checks with hide_st false
-		// (Verify_Controller has no way to know what the original caller chose) - if the
-		// attested hash were computed from the redacted document, this would permanently
-		// mismatch with nothing having actually changed. Confirms the fix, not the design.
 		$result = \BeyondElysium\Services\Character_Exporter::export( $this->character_id, [ 'hide_st' => true, 'verify' => true ] );
 		$this->assertStringNotContainsString( 'secret ST-only notes', $result['xml'], 'the exporting player\'s own copy is still genuinely redacted' );
 

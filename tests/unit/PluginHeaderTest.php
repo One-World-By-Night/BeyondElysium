@@ -5,10 +5,7 @@ namespace BeyondElysium\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.0.0-review F-021: WordPress matches an installed plugin against wordpress.org by its slug.
- * With no `Update URI`, anyone who published a plugin named `beyond-elysium` there with a higher
- * version would be offered to every install as an "update" - one click replacing this plugin with
- * a stranger's code. Beyond Elysium is never distributed through wordpress.org.
+ * WordPress matches an installed plugin against wordpress.org by its slug.
  */
 class PluginHeaderTest extends TestCase {
 
@@ -21,7 +18,6 @@ class PluginHeaderTest extends TestCase {
 		$this->assertSame( 'false', $this->header( 'Update URI' ) );
 	}
 
-	/** 1.0.0-review F-023: readme.txt shipped in every zip still claiming v0.99.14. */
 	public function test_readme_stable_tag_matches_the_plugin_version(): void {
 		$readme = (string) file_get_contents( dirname( __DIR__, 2 ) . '/beyond-elysium/readme.txt' );
 

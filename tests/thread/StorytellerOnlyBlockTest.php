@@ -9,10 +9,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Covers the storyteller_only block flag and both of the places it is
- * enforced: a character's sheet_data and a resolved template layout. Hiding
- * the section alone is not enough - the block's stored values would still
- * ship inside the character payload - so both are asserted separately.
+ * Covers the storyteller_only block flag and both of the places it is enforced: a character's sheet_data and a
+ * resolved template layout.
  */
 class StorytellerOnlyBlockTest extends WP_UnitTestCase {
 

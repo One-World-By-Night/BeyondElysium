@@ -9,9 +9,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-093 (Pass H intake `t3-content-controllers`). The boon ledger looked up each
- * boon's two links, and then each of the two characters, one query at a time - three queries a
- * boon, for a ledger that only grows, since a boon is never deleted.
+ * The boon ledger costs no more queries however long it is, names both parties of each boon, filters by either, keeps a
+ * party's id a number and leaves off a boon missing a party.
  */
 class BoonLedgerQueryCountThreadTest extends WP_UnitTestCase {
 
@@ -89,9 +88,8 @@ class BoonLedgerQueryCountThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * 1.0.0-review F-094: a party's id came back as text, and the ledger scoped to one character
-	 * sorts its boons into owed and owed-to by comparing that id with the character's number - so
-	 * both lists read "None".
+	 * A party's id came back as text, and the ledger scoped to one character sorts its boons into owed and owed-to by
+	 * comparing that id with the character's number.
 	 */
 	public function test_a_partys_id_is_a_number(): void {
 		$this->add_boons( 1 );

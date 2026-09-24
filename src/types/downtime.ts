@@ -1,12 +1,16 @@
 /**
- * Type definitions for downtime windows (1.1.0 §3.3): the per-date open/deadline gate on a
- * character's action entries and background uses, and the Storyteller queue built from it.
+ * Type definitions for downtime windows: the per-date open/deadline gate on a character's action entries and
+ * background uses, and the Storyteller queue built from it.
  */
 
-/** A character's downtime state for one game date - matches Services\Downtime_Window exactly. */
+/**
+ * A character's downtime state for one game date.
+ */
 export type DowntimeWindowState = 'none' | 'not_open' | 'open' | 'closed';
 
-/** How a held downtime answer currently stands, for the queue's own "answer_release_state" column. */
+/**
+ * How a held downtime answer currently stands, for the queue's own "answer_release_state" column.
+ */
 export type DowntimeAnswerReleaseState =
 	| 'not_answered'
 	| 'immediate'
@@ -14,7 +18,9 @@ export type DowntimeAnswerReleaseState =
 	| 'scheduled'
 	| 'released';
 
-/** One row in the Storyteller downtime queue - one action-allocation plot for a game date. */
+/**
+ * One row in the Storyteller downtime queue.
+ */
 export interface DowntimeQueueRow {
 	plot_id: number;
 	character_id: number;
@@ -26,6 +32,8 @@ export interface DowntimeQueueRow {
 	answered: boolean;
 	answer_release_state: DowntimeAnswerReleaseState;
 	window_state: DowntimeWindowState;
-	/** The plot's own staff owner (1.1.0 §3.6), or null when unassigned. */
+	/**
+	 * The plot's own staff owner, or null when unassigned.
+	 */
 	assigned_to: number | null;
 }

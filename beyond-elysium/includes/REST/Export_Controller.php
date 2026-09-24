@@ -9,23 +9,14 @@ use BeyondElysium\Services\Not_Exportable_Exception;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for exporting a character to a Grapevine `.gex` XML
- * document (GX-4). The writer itself (`GEX_Xml_Writer`) and the block-to-list
- * routing (`Character_Exporter`) do the real work; this controller is the
- * thin permission/lookup/response layer every other controller in this
- * project already follows.
- *
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-3, GX-4
+ * REST controller for exporting a character to a Grapevine `.gex` XML document.
  */
 class Export_Controller extends Base_Controller {
 
 	protected $rest_base = 'export';
 
 	/**
-	 * Registers the single-character export route. A chronicle manager may
-	 * export any character; a player may export only their own - the same
-	 * "manage or own" split every other per-character route in this plugin
-	 * already uses (e.g. `Characters_Controller::get_item()`).
+	 * Registers the single-character export route.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<id>\d+)/export', [
@@ -44,10 +35,7 @@ class Export_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Exports one character. Confirms the game and character exist and
-	 * belong to each other, enforces the manage-or-own split, then delegates
-	 * to `Character_Exporter::export()` and returns its `{xml, warnings,
-	 * transliterations}` shape unchanged.
+	 * Exports one character.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -68,16 +56,13 @@ class Export_Controller extends Base_Controller {
 			return $this->error( 'ownership_denied', __( 'You do not have permission to export this character.', 'beyond-elysium' ), 403 );
 		}
 
-		// A transfer document is issued only where a transfer is recorded - the outbound transfer
-		// route - never here, where nothing tracks it and a player could mint one (1.0.0-review F-059).
+		// A transfer document is issued only where a transfer is recorded.
 		if ( $request->get_param( 'as_transfer' ) ) {
 			return $this->error( 'use_transfer_route', __( 'Start a transfer from the character\'s Transfer panel, not from an export.', 'beyond-elysium' ), 400 );
 		}
 
 		try {
 			$result = Character_Exporter::export( (int) $character->id, [
-				// The server decides what Storyteller-only data leaves: a player's copy is always
-				// redacted, whatever the request says; a Storyteller may ask for one (F-058).
 				'hide_st' => ! $can_manage || (bool) $request->get_param( 'hide_st' ),
 				'verify'  => (bool) $request->get_param( 'verify' ),
 			] );
@@ -90,10 +75,7 @@ class Export_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up the game record for the given slug and returns a 404 error
-	 * when no game matches it. Matches every other controller's own copy
-	 * of this helper (`Characters_Controller::resolve_game()` and others) -
-	 * not shared via `Base_Controller`, so duplicated here the same way.
+	 * Looks up the game record for the given slug and returns a 404 error when no game matches it.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

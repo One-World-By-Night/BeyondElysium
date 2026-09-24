@@ -5,43 +5,28 @@ namespace BeyondElysium\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Every free-text column in the schema must have a decided answer to one question: can a
- * player read it, and if so what strips the `[ST]...[/ST]` markers out of it first?
- *
- * `[ST]` handling has now been missed on six controllers and found twice by accident - once
- * on world objects (D44, which then sat in the defects table marked open for three releases
- * after it was quietly fixed), and once on plots, plot entries, chronicles and connections
- * (1.0.1 A1). The point of this guard is the *next* column, not those. Add a `text` or
- * `longtext` column and the build fails here until you have decided which of the three
- * dispositions below it takes.
- *
- * Honest limit, stated so nobody over-trusts it: like `BooleanFlagCoverageTest`, this is
- * static analysis over a known list. It proves a column is accounted for and that the method
- * claiming to filter it actually names it - not that every route calls that method.
- * `StFilterCoverageThreadTest` and `FreeTextLeakThreadTest` cover the real routes.
- *
- * @see BE_PROCESS/releases/1.0.1-design-workflow.md §4, A2
+ * Every free-text column in the schema must have a decided answer to one question: can a player read it, and if so
+ * what strips the `[ST]...[/ST]` markers out of it first?
  */
 class FreeTextCoverageTest extends TestCase {
 
-	/** Machine data - JSON payloads and stored source documents, never prose anyone writes by hand. */
+	/**
+	 * Machine data - JSON payloads and stored source documents.
+	 */
 	private const STRUCTURED = '<structured>';
 
-	/** Never reaches a non-manager: the route requires a management capability, or drops the field. */
+	/**
+	 * Never reaches a non-manager: the route requires a management capability, or drops the field.
+	 */
 	private const MANAGER_ONLY = '<manager-only>';
 
 	/**
-	 * Real, human-authored prose that every viewer sees, always - no `[ST]` marker concept and
-	 * no player/manager split to filter on. Distinct from STRUCTURED (which is never prose a
-	 * person writes by hand) and from a `filter_*` method (which has nothing to strip). A
-	 * catalog term's translation is the clearest case: the whole point of 1.2.0's design
-	 * (releases/1.2.0-design-workflow.md §5.2, §5.4) is that a plain player reads it.
+	 * Real, human-authored prose that every viewer sees, always.
 	 */
 	private const PUBLIC_TERM = '<public-term>';
 
 	/**
-	 * Every free-text column, and the `St_Visibility` method that filters it - or the reason
-	 * it needs none. Adding a row here is a deliberate act; see the class docblock.
+	 * Every free-text column, and the `St_Visibility` method that filters it.
 	 */
 	private const KNOWN = [
 		'games.description'                         => 'filter_game',
@@ -67,34 +52,24 @@ class FreeTextCoverageTest extends TestCase {
 		'world_objects.description'                 => 'filter_world_object',
 		'world_objects.limitations'                 => 'filter_world_object',
 		'game_sessions.notes'                       => 'filter_session',
-		// Digest payload only - Notifications::send_daily_digests() reads and emails it, never
-		// exposed through any REST route or returned to any user, manager or player alike.
+		// Digest payload only - Notifications::send_daily_digests() reads and emails it.
 		'notification_queue.payload'                => self::STRUCTURED,
 		'characters.public_description'             => 'filter_npc_profile',
 		'npc_castings.brief'                         => 'filter_casting',
 		'secrets.content'                            => 'filter_secret',
 		// A Storyteller's own annotation about a reveal, never surfaced through /my/secrets.
 		'secret_reveals.note'                        => self::MANAGER_ONLY,
-		// GET .../world-objects/{id}/events is be_manage_world_objects-only (1.1.0 §3.12 item 3).
+		// GET.../world-objects/{id}/events is be_manage_world_objects-only.
 		'item_events.note'                           => self::MANAGER_ONLY,
-		// A player's own after-game report - the route itself never returns another player's
-		// report to a non-manager; this is defense in depth, not a gap the route relies on.
+		// A player's own after-game report.
 		'after_game_reports.did'                     => 'filter_report',
 		'after_game_reports.wants'                   => 'filter_report',
 		'after_game_reports.to_staff'                => 'filter_report',
 		'factions.description'                       => 'filter_faction',
 		'factions.goals'                              => 'filter_faction',
-		// A manager-only field in full (Factions_Controller::project_position() never
-		// includes it in a non-manager's projection at all).
 		'positions.notes'                             => self::MANAGER_ONLY,
-		// The Portuguese (or any locale's) translated name - every viewer sees it, always. See
-		// PUBLIC_TERM's own docblock above.
+		// The Portuguese (or any locale's) translated name.
 		'translations.translation'                    => self::PUBLIC_TERM,
-		// Only the §8 migration writes it, recording a conflict's losing value for the
-		// reviewer. Every Translations_Controller route requires be_manage_translations, so
-		// this never reaches a non-manager - the route drops it the same way every other
-		// MANAGER_ONLY field's route does, by requiring the capability on every route rather
-		// than filtering the field.
 		'translations.note'                           => self::MANAGER_ONLY,
 	];
 
@@ -144,9 +119,7 @@ class FreeTextCoverageTest extends TestCase {
 	}
 
 	/**
-	 * Every `<table>.<column>` declared as a free-text type in Schema.php's CREATE TABLE
-	 * statements. `varchar` is deliberately excluded - it holds names, slugs and enum-ish
-	 * values here, not prose a Storyteller writes a `[ST]` block into.
+	 * Every `<table>.<column>` declared as a free-text type in Schema.php's CREATE TABLE statements.
 	 *
 	 * @return string[]
 	 */
@@ -168,7 +141,9 @@ class FreeTextCoverageTest extends TestCase {
 		return $found;
 	}
 
-	/** The source of one `St_Visibility` method, or null if it has no such method. */
+	/**
+	 * The source of one `St_Visibility` method, or null if it has no such method.
+	 */
 	private function method_body( string $method ): ?string {
 		$source = (string) file_get_contents(
 			BE_PLUGIN_ROOT . '/beyond-elysium/includes/Services/St_Visibility.php'

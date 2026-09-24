@@ -1,8 +1,5 @@
 /**
- * The purchase-list switches a chronicle's HST has (1.3.4): each creature type buys from its own
- * Abilities, Backgrounds, Merits and Flaws, and an area switched on lets every creature type in the
- * chronicle buy from all of them. The switches are independent and all or nothing per area, and the
- * server owns what they mean; this only reads what is stored and builds a save.
+ * The purchase-list switches a chronicle's HST has.
  */
 export type PurchaseArea = 'abilities' | 'backgrounds' | 'merits_flaws';
 
@@ -14,7 +11,9 @@ export const PURCHASE_AREAS: readonly PurchaseArea[] = [
 
 export type PurchaseScope = Partial< Record< PurchaseArea, boolean > >;
 
-/** A chronicle's stored switches as plain booleans: an area is on only when it is stored as true. */
+/**
+ * A chronicle's stored switches as plain booleans: an area is on only when it is stored as true.
+ */
 export function readPurchaseScope(
 	stored: unknown
 ): Record< PurchaseArea, boolean > {
@@ -30,8 +29,7 @@ export function readPurchaseScope(
 }
 
 /**
- * The body of a save for one switch. It carries only that area: the server keeps every other switch
- * as it was, so two people saving different areas never undo each other.
+ * The body of a save for one switch.
  */
 export function purchaseScopeChange(
 	area: PurchaseArea,

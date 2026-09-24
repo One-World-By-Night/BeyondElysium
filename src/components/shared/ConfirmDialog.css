@@ -6,10 +6,7 @@
 	align-items: center;
 	justify-content: center;
 
-	/* Matches Modal.css's z-index exactly (mobile-sheet-design.md §3.8) - this dialog gates
-	 * discarding a player's unsaved character edits, and the two disagreeing by three
-	 * orders of magnitude meant it could paint underneath theme chrome or #wpadminbar
-	 * (99999) while the other modal component never could. */
+	/* Matches Modal.css's z-index exactly. */
 	z-index: 100000;
 }
 

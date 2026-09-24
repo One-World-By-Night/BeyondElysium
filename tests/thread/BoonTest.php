@@ -8,13 +8,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The two-connection invariant, self-boon rejection, and transactional creation
- * rolling back cleanly (workflow-0.7.md Step 3f). Lives in `tests/thread/`, not
- * `tests/unit/` as the workflow doc names it - boon creation touches `$wpdb` directly
- * (`Boons_Controller::create_item()`), which TESTING.md defines as the thread layer's
- * boundary, the same correction already made for `ConnectionTest.php` in 0.5.
- *
- * @see BE_PROCESS/releases/workflow-0.7.md Step 3
+ * The two-connection invariant, self-boon rejection, and transactional creation rolling back cleanly.
  */
 class BoonTest extends WP_UnitTestCase {
 
@@ -99,8 +93,6 @@ class BoonTest extends WP_UnitTestCase {
 	}
 
 	public function test_creditor_deleted_mid_flow_rolls_back_with_no_orphans(): void {
-		// Step 7's edge-case trace: the creditor is deleted between the client
-		// loading the form and submitting.
 		$admin = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		wp_set_current_user( $admin );
 
@@ -159,12 +151,6 @@ class BoonTest extends WP_UnitTestCase {
 		$this->assertCount( 1, $ledger, 'a repaid boon stays in the ledger, it is not deleted' );
 	}
 
-	/**
-	 * BE_PROCESS/releases/0.99.2-workflow.md: "Removed == repaid with a text as how" - there is no
-	 * separate delete/void concept. The note is optional (a boon paid normally may have
-	 * nothing to say); "entered in error" is not a special case, it is repaid with that
-	 * text as the how.
-	 */
 	public function test_repaying_records_how_it_was_settled(): void {
 		$admin = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		wp_set_current_user( $admin );
@@ -200,9 +186,6 @@ class BoonTest extends WP_UnitTestCase {
 
 	public function test_player_can_view_but_not_create_boons(): void {
 		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
-		// Step 1.5: the GET below now also needs chronicle membership, not just
-		// be_view_characters site-wide. The POST stays 403 regardless - subscriber never
-		// holds be_manage_world_objects site-wide, membership or not.
 		\BeyondElysium\Models\Game_Member::set_role( $this->game_id, $player, 'player' );
 		wp_set_current_user( $player );
 
@@ -216,12 +199,6 @@ class BoonTest extends WP_UnitTestCase {
 		$this->assertSame( 200, $this->dispatch( $ledger_req )->get_status() );
 	}
 
-	/**
-	 * BE_PROCESS/releases/0.99.2-workflow.md, "A fifth chronicle role, boons": the whole point of a
-	 * narrower be_manage_boons capability is that this role can run the ledger without the
-	 * Storyteller powers be_manage_world_objects also carries - proven both directions here,
-	 * not just asserted.
-	 */
 	public function test_a_boons_role_holder_can_create_and_repay_a_boon(): void {
 		$holder = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		\BeyondElysium\Models\Game_Member::set_role( $this->game_id, $holder, 'boons' );
@@ -243,10 +220,8 @@ class BoonTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The negative half of the same guarantee: a boons-role holder must not be able to
-	 * touch the rest of the world-object catalog (items, locations, rotes) - that catalog
-	 * is exactly what be_manage_world_objects governs, and this role deliberately does not
-	 * hold it.
+	 * The negative half of the same guarantee: a boons-role holder must not be able to touch the rest of the world-object
+	 * catalog (items, locations, rotes).
 	 */
 	public function test_a_boons_role_holder_cannot_manage_other_world_objects(): void {
 		$holder = self::factory()->user->create( [ 'role' => 'subscriber' ] );

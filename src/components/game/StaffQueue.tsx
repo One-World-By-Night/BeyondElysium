@@ -1,8 +1,5 @@
 /**
- * Storyteller Toolkit: My Queue (1.1.0 §3.6) - what the current viewer is personally on the
- * hook for in this chronicle: unanswered downtime assigned to them, ordinary plots waiting on
- * their own reply, their own NPC castings for sessions today or later (§3.8), and counts of
- * what nobody has claimed yet.
+ * Storyteller Toolkit: My Queue.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -17,8 +14,7 @@ import CollapsiblePanel from '../shared/CollapsiblePanel';
 import './StaffQueue.css';
 
 /**
- * A queue's summary row keeps its count visible when folded - a collapsed "Plots" that
- * doesn't say 3 hides the one fact that decides whether to open it.
+ * A queue's summary row keeps its count visible when folded.
  */
 function queueHeading( label: string, count: number ): string {
 	return count === 0
@@ -126,9 +122,6 @@ export function StaffQueue( { gameSlug, capabilities }: StaffQueueProps ) {
 				<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
 			) : (
 				<>
-					{ /* U7e: each queue folds away, with its count still on the summary row -
-					 * a Storyteller working one queue shouldn't have to scroll past three
-					 * others to reach it. */ }
 					<CollapsiblePanel
 						id="staff-queue:downtime"
 						className="be-staff-queue__section"

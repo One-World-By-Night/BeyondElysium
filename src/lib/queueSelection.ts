@@ -1,17 +1,14 @@
 /**
- * The Approval Queue's ticked changes, each kept with the review token of
- * the version the Storyteller ticked. A change ticked on another page is
- * no longer among the rows on screen, so its token has to travel with the
- * tick - without one, a change edited since would be approved as edited
- * (1.0.0-review F-101).
+ * The Approval Queue's ticked changes, each kept with the review token of the version the Storyteller ticked.
  */
 
-/** Change id to the review token it was ticked with. */
+/**
+ * Change id to the review token it was ticked with.
+ */
 export type QueueSelection = ReadonlyMap< number, string | undefined >;
 
 /**
- * Ticks a change with the token it was shown with, or unticks it. Returns
- * a new selection; the one given is left as it was.
+ * Ticks a change with the token it was shown with, or unticks it.
  */
 export function toggleSelection(
 	selection: QueueSelection,
@@ -28,8 +25,7 @@ export function toggleSelection(
 }
 
 /**
- * What a batch approval sends: every ticked id, and each one's token when
- * it had one.
+ * What a batch approval sends: every ticked id, and each one's token when it had one.
  */
 export function batchApproval( selection: QueueSelection ): {
 	ids: number[];

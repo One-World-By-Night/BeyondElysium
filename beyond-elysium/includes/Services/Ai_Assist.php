@@ -7,38 +7,17 @@ use BeyondElysium\Models\Game;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Server-side AI writing-assist integration (ai-writing-assist-design.md).
- *
- * The plugin's first outbound call to a third-party API and its first stored
- * secret held anywhere other than a `wp-config.php` constant (the signed-PDF
- * key is a single site-wide value an admin sets once via SSH; this needs a
- * variable number of keys, settable from wp-admin by an HST with no SSH
- * access at all, so it lives encrypted in the database instead).
- *
- * A key is resolved in two layers, matching this codebase's own existing
- * global-default/chronicle-fork precedent (schema blocks, templates -
- * Decision 011): a site-wide key an administrator configures, and an
- * optional per-chronicle key an HST can set to override it for their own
- * chronicle's own content. Site-wide catalog fields (Schema Block
- * descriptions, Credits) always use the site-wide key, since no chronicle
- * owns that data to begin with.
- *
- * Never trusts a client-asserted field_context/capability pairing - see
- * Ai_Assist_Controller::FIELD_CAPABILITIES, the one authoritative map.
+ * Server-side AI writing-assist integration.
  */
 class Ai_Assist {
 
-	/** Settings keys this class owns on both the site-wide options table and a game's own settings bag. */
+	/**
+	 * Settings keys this class owns on both the site-wide options table and a game's own settings bag.
+	 */
 	const KEY_FIELDS = [ 'ai_openai_key', 'ai_claude_key' ];
 
 	/**
-	 * Field -> provider name, for deriving the has_own_{provider}_key flag
-	 * redact_settings_read() exposes. A plain map, not a string-strip of
-	 * KEY_FIELDS - `str_replace(['ai_', '_key'], '', 'ai_openai_key')` looks
-	 * reasonable but is wrong: "openai_key" itself contains a second "ai_"
-	 * substring (op-en-AI_-key), so a naive prefix/suffix strip yields
-	 * "openkey", not "openai" - caught by
-	 * AiAssistThreadTest::test_redact_settings_read_strips_the_key_and_adds_a_boolean.
+	 * Field -> provider name, for deriving the has_own_{provider}_key flag redact_settings_read() exposes.
 	 */
 	const KEY_FIELD_PROVIDERS = [ 'ai_openai_key' => 'openai', 'ai_claude_key' => 'claude' ];
 
@@ -47,17 +26,7 @@ class Ai_Assist {
 	const SITE_PROVIDER_OPTION   = 'be_ai_provider';
 
 	/**
-	 * Optional overrides for a self-hosted or otherwise-compatible endpoint
-	 * (Ollama, LM Studio, vLLM, LocalAI, ...) speaking the same request/
-	 * response shape as OpenAI's Chat Completions API or Claude's Messages
-	 * API at a different URL, with a different model name than this
-	 * class's own built-in default. Neither is a secret - stored and
-	 * echoed back in plain text, unlike the KEY_FIELDS above. An Azure
-	 * OpenAI deployment (a different URL *shape* - per-deployment routing -
-	 * and a different `api-key` auth header, not `Authorization: Bearer`)
-	 * is deliberately out of scope; this only supports a plain OpenAI-
-	 * compatible base URL with the same Bearer-token auth every one of the
-	 * self-hosted options above already uses by default.
+	 * Optional overrides for a self-hosted.
 	 */
 	const SITE_OPENAI_BASE_URL_OPTION = 'be_ai_openai_base_url';
 	const SITE_OPENAI_MODEL_OPTION    = 'be_ai_openai_model';
@@ -68,25 +37,30 @@ class Ai_Assist {
 	const DEFAULT_OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
 	const DEFAULT_CLAUDE_URL = 'https://api.anthropic.com/v1/messages';
 
-	/** Revisit as provider model lineups change - HST pays their own usage, so cost-effective defaults over the most expensive tier. */
+	/**
+	 * Revisit as provider model lineups change.
+	 */
 	const OPENAI_MODEL = 'gpt-4o-mini';
 	const CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
 
-	/** A generous but bounded ceiling on how much of a field's own current text is ever sent upstream, protecting the HST's own API spend from one runaway field. */
+	/**
+	 * A generous but bounded ceiling on how much of a field's own current text is ever sent upstream, protecting the
+	 * HST's own API spend from one runaway field.
+	 */
 	const MAX_INPUT_CHARS = 8000;
 
-	/** The same protection for the short direction typed when a field is empty (1.0.0-review F-026). */
+	/**
+	 * The same protection for the short direction typed when a field is empty.
+	 */
 	const MAX_INSTRUCTION_CHARS = 1000;
 
-	/** Suggestions one user may request in any minute - far above real writing, well short of running up a bill. */
+	/**
+	 * Suggestions one user may request in any minute.
+	 */
 	const RATE_LIMIT_PER_MINUTE = 20;
 
 	/**
-	 * Short, human-readable framing for each field_context, folded into the
-	 * system prompt so the model writes in the right register without the
-	 * client needing to know anything about prompt engineering. Deliberately
-	 * generic and setting-flavored rather than naming specific OWBN
-	 * chronicle rules the model has no reliable knowledge of.
+	 * Short, human-readable framing for each field_context, folded into the system prompt.
 	 */
 	const FIELD_CONTEXTS = [
 		'character_biography'      => "a Mind's Eye Theatre character's biography",
@@ -109,12 +83,7 @@ class Ai_Assist {
 	];
 
 	/**
-	 * Generates a suggestion for one field. Resolves the effective provider
-	 * and key for the given chronicle (or the site-wide key when
-	 * `$game_slug` is null, for a site-wide field), then dispatches to that
-	 * provider. Every failure is a named code, never a raw exception or a
-	 * partial suggestion - the caller (the REST controller) turns these
-	 * directly into an HTTP response.
+	 * Generates a suggestion for one field.
 	 *
 	 * @param string      $field_context One of the FIELD_CONTEXTS keys.
 	 * @param string      $current_text  The field's own current value, '' if empty.
@@ -151,14 +120,8 @@ class Ai_Assist {
 	}
 
 	/**
-	 * Sends a minimal, cheap request to confirm a provider/key/endpoint
-	 * combination is actually reachable and authenticates - used by the
-	 * settings UI's own "Test Connection" button, before or instead of
-	 * relying on the first real ST's own use of a field to discover a
-	 * typo'd URL or a revoked key. Deliberately takes its own explicit
-	 * provider/key/base_url/model rather than resolving through
-	 * resolve_key(): the whole point is to test a value the admin just
-	 * typed, which may not be saved yet.
+	 * Sends a minimal, cheap request to confirm a provider/key/endpoint combination is actually reachable and
+	 * authenticates.
 	 *
 	 * @param string $provider
 	 * @param string $key
@@ -182,16 +145,7 @@ class Ai_Assist {
 	}
 
 	/**
-	 * Dispatches to the resolved provider's own call method - the one place
-	 * both generate() and test_connection() route through, so a future
-	 * third provider is one new branch here, not two.
-	 *
-	 * A chronicle's own endpoint is requested with wp_safe_remote_post(),
-	 * which refuses private, loopback, and reserved addresses: the people who
-	 * set it are a chronicle's Storytellers, not the server's administrators,
-	 * and an unrestricted request let them reach the host's own network
-	 * (1.0.0-review F-025). A site administrator's endpoint may still be a
-	 * self-hosted server on a local address.
+	 * Dispatches to the resolved provider's own call method.
 	 *
 	 * @param array{provider:string,key:string,base_url:string,model:string,scope?:string} $resolved
 	 * @param string $system
@@ -207,8 +161,8 @@ class Ai_Assist {
 	}
 
 	/**
-	 * Counts one suggestion request for a user and reports whether it is within
-	 * RATE_LIMIT_PER_MINUTE for the current minute (1.0.0-review F-026).
+	 * Counts one suggestion request for a user and reports whether it is within RATE_LIMIT_PER_MINUTE for the current
+	 * minute.
 	 *
 	 * @param int $user_id
 	 * @return bool
@@ -228,18 +182,7 @@ class Ai_Assist {
 	}
 
 	/**
-	 * Resolves which provider, (decrypted) key, and optional endpoint/model
-	 * override a request should use. A site-wide call (`$game_slug ===
-	 * null`) always uses the site-wide key for the site-wide provider
-	 * setting. A chronicle-scoped call returns null outright when that
-	 * chronicle hasn't opted in (`ai_assist_enabled`), otherwise prefers
-	 * the chronicle's own key for its own chosen provider and falls back
-	 * to the site-wide key for that same provider when the chronicle has
-	 * enabled the feature but supplied no key of its own. base_url/model
-	 * always come from whichever level actually supplied the key - a
-	 * chronicle using the site-wide key also gets the site-wide endpoint/
-	 * model override, never a mismatched pairing of one level's key with
-	 * another level's endpoint.
+	 * Resolves which provider, (decrypted) key, and optional endpoint/model override a request should use.
 	 *
 	 * @param string|null $game_slug
 	 * @return array{provider:string,key:string,base_url:string,model:string}|null
@@ -271,7 +214,7 @@ class Ai_Assist {
 					'key'      => $key,
 					'base_url' => (string) ( $game->settings->$base_url_field ?? '' ),
 					'model'    => (string) ( $game->settings->$model_field ?? '' ),
-					// The chronicle chose this endpoint, so it is requested as a safe URL (see dispatch()).
+					// A chronicle's own endpoint.
 					'scope'    => 'chronicle',
 				];
 			}
@@ -296,12 +239,8 @@ class Ai_Assist {
 	}
 
 	/**
-	 * Merges a settings write's incoming AI key fields into an existing
-	 * settings array: encrypts a real value before storage, and treats an
-	 * explicit empty string/null as "clear this key" (removed entirely,
-	 * rather than stored as an encrypted empty string) so resolve_key()'s
-	 * fallback to the site-wide key naturally applies again. Every other
-	 * field in $incoming/$existing is left untouched.
+	 * Merges a settings write's incoming AI key fields into an existing settings array: encrypts a real value before
+	 * storage and clears the key on an explicit empty string or null.
 	 *
 	 * @param array<string,mixed> $incoming What the request body's settings object contains.
 	 * @param array<string,mixed> $existing The game's settings before this write.
@@ -323,10 +262,8 @@ class Ai_Assist {
 	}
 
 	/**
-	 * Redacts a decoded settings object in place for an API response: never
-	 * echoes a stored key (encrypted or not) back to any client, replacing
-	 * each with a plain `has_own_{provider}_key` boolean the UI can render a
-	 * "configured" state from without ever seeing the value itself.
+	 * Redacts a decoded settings object in place for an API response: each stored key is replaced with a
+	 * `has_own_{provider}_key` boolean.
 	 *
 	 * @param \stdClass $settings Mutated in place.
 	 */
@@ -342,7 +279,9 @@ class Ai_Assist {
 		return $provider === 'claude' ? self::SITE_CLAUDE_KEY_OPTION : self::SITE_OPENAI_KEY_OPTION;
 	}
 
-	/** Truncates input text to `$max` characters (MAX_INPUT_CHARS by default), on a whitespace boundary where possible. */
+	/**
+	 * Truncates input text to `$max` characters (MAX_INPUT_CHARS by default), on a whitespace boundary where possible.
+	 */
 	private static function truncate( string $text, int $max = self::MAX_INPUT_CHARS ): string {
 		if ( function_exists( 'mb_strlen' ) ? mb_strlen( $text ) <= $max : strlen( $text ) <= $max ) {
 			return $text;
@@ -353,13 +292,7 @@ class Ai_Assist {
 	}
 
 	/**
-	 * Encrypts a plaintext API key for storage. AES-256-CBC with a key
-	 * derived from `wp_salt( 'auth' )` (a real secret every WordPress
-	 * install already has, never transmitted, rotated only if the site
-	 * owner rotates their own salts) via SHA-256 to get a proper 32-byte
-	 * key. A fresh random IV is generated per call and stored alongside the
-	 * ciphertext (IVs are not secret), base64-encoded as one string so it
-	 * fits an ordinary text column/option value.
+	 * Encrypts a plaintext API key for storage.
 	 *
 	 * @param string $plaintext
 	 * @return string
@@ -379,12 +312,7 @@ class Ai_Assist {
 	}
 
 	/**
-	 * Decrypts a value produced by encrypt(). Returns null (not an empty
-	 * string) for anything that fails to decode or decrypt, so a caller can
-	 * tell "no key configured" apart from "a key is configured but
-	 * corrupt/unreadable" if it ever needs to - both are currently treated
-	 * as "not available" by resolve_key(), but the distinction is preserved
-	 * here rather than collapsed early.
+	 * Decrypts a value produced by encrypt().
 	 *
 	 * @param string $encoded
 	 * @return string|null
@@ -406,13 +334,7 @@ class Ai_Assist {
 	}
 
 	/**
-	 * Calls an OpenAI-compatible Chat Completions endpoint - the real
-	 * OpenAI API by default, or a self-hosted/otherwise-compatible server
-	 * (Ollama, LM Studio, vLLM, LocalAI, ...) at an admin/HST-configured
-	 * `$base_url`. A site administrator's endpoint is requested with
-	 * `wp_remote_post()`, since a self-hosted server's whole point is usually
-	 * a local-network address; a chronicle's own endpoint with
-	 * `wp_safe_remote_post()` (`$safe`, see dispatch()).
+	 * Calls an OpenAI-compatible Chat Completions endpoint.
 	 *
 	 * @param string $key
 	 * @param string $system
@@ -447,8 +369,7 @@ class Ai_Assist {
 	}
 
 	/**
-	 * Calls a Claude-compatible Messages endpoint, requested the same way as
-	 * call_openai() - see its docblock.
+	 * Calls a Claude-compatible Messages endpoint, requested the same way as call_openai().
 	 *
 	 * @param string $key
 	 * @param string $system
@@ -483,10 +404,8 @@ class Ai_Assist {
 	}
 
 	/**
-	 * Shared response handling for both providers: a WP_Error (network
-	 * failure), a non-2xx HTTP status, or an unparseable body all become
-	 * the same `ai_provider_error` code rather than a raw exception - never
-	 * a partial or malformed suggestion reaches the caller.
+	 * Shared response handling for both providers: a WP_Error (network failure), a non-2xx HTTP status, or an unparseable
+	 * body all become the same `ai_provider_error` code.
 	 *
 	 * @param \WP_Error|array $response      wp_remote_post()'s own return shape.
 	 * @param callable        $extract_text  (array $decoded_body): ?string

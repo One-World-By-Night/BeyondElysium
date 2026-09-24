@@ -1,11 +1,5 @@
 /**
  * Admin page for managing sheet Templates.
- *
- * Without a game_slug in the page URL it manages the global templates every
- * chronicle shares - a site administrator's job. With one, it manages that
- * chronicle's own overrides: the chronicle's templates are listed and
- * editable, and each global template can be copied into a chronicle-only
- * override. Both forms compose TemplateLayoutEditor for the section layout.
  */
 import {
 	createInterpolateElement,
@@ -29,13 +23,13 @@ const EMPTY_FORM = {
 	layout: DEFAULT_LAYOUT,
 };
 
-/** Which collection the open form writes to. */
+/**
+ * Which collection the open form writes to.
+ */
 type Scope = 'global' | 'chronicle';
 
 /**
- * Renders the Templates admin page. Loads the global templates, plus the
- * chronicle's own when a game_slug is present, and saves through the
- * templatesGlobal API or the chronicle's templates API depending on scope.
+ * Renders the Templates admin page.
  */
 export function AdminTemplates() {
 	const [ templates, setTemplates ] = useState< Template[] >( [] );
@@ -57,15 +51,11 @@ export function AdminTemplates() {
 		!! window.beyondElysium?.capabilities?.be_manage_games;
 
 	/**
-	 * Fetches the global templates, and this chronicle's own when a game_slug
-	 * is present, storing both in state. Sets the error message on failure and
-	 * clears the loading flag either way.
+	 * Fetches the global templates, and this chronicle's own when a game_slug is present, storing both in state.
 	 */
 	function load() {
 		setLoading( true );
-		// per_page: 100 is the REST route's own hard cap - without it this call silently
-		// truncated to the route's default of 20, hiding whichever templates sorted past
-		// that point (same defect class as AdminSchemaBlocks.tsx's own fix).
+		// per_page: 100 is the REST route's own hard cap.
 		Promise.all( [
 			api.templatesGlobal.list( { per_page: 100 } ),
 			gameSlug
@@ -113,7 +103,9 @@ export function AdminTemplates() {
 		setForm( EMPTY_FORM );
 	}
 
-	/** Opens a create form for this chronicle pre-filled from a global template. */
+	/**
+	 * Opens a create form for this chronicle pre-filled from a global template.
+	 */
 	function startOverride( template: Template ) {
 		setEditingId( null );
 		setCreating( true );
@@ -128,10 +120,7 @@ export function AdminTemplates() {
 	}
 
 	/**
-	 * Submits the create or edit form to the global or chronicle collection,
-	 * depending on the form's scope, then reloads both lists and closes the
-	 * form. Surfaces any API error and tracks the saving state for the submit
-	 * button.
+	 * Submits the create or edit form to the global or chronicle collection, depending on the form's scope.
 	 */
 	async function save( e: React.FormEvent ) {
 		e.preventDefault();
@@ -173,8 +162,7 @@ export function AdminTemplates() {
 	}
 
 	/**
-	 * Deletes a template after the user confirms via a browser dialog, then
-	 * reloads the lists. Surfaces any API error without dismissing the tables.
+	 * Deletes a template after the user confirms via a browser dialog.
 	 */
 	async function remove( template: Template, removeScope: Scope ) {
 		const message =

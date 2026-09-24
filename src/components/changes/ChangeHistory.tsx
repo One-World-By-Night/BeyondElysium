@@ -1,8 +1,5 @@
 /**
- * Read-only audit trail of every change submitted for one character, approved and
- * rejected alike. Renders each change as a human-readable description with its
- * status, XP cost, submission/review metadata, and any reviewer note.
- * Newest submission first.
+ * Read-only audit trail of every change submitted for one character, approved and rejected alike.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -27,7 +24,9 @@ const STATUS_LABEL: Record< CharacterChange[ 'status' ], string > = {
 	rejected: __( 'Rejected', 'beyond-elysium' ),
 };
 
-/** What a change cost or refunded; nothing at all when it was free. */
+/**
+ * What a change cost or refunded.
+ */
 function ChangeCost( { cost }: { cost: number | string } ) {
 	const text = describeChangeCost( cost );
 	return text ? (
@@ -36,8 +35,7 @@ function ChangeCost( { cost }: { cost: number | string } ) {
 }
 
 /**
- * The entries a catalog update matched, folded away under its one-line description so a long
- * sheet does not push the rest of the history off the screen. Nothing for any other kind of change.
+ * The entries a catalog update matched, folded away under its one-line description.
  */
 function ChangeDetailList( { change }: { change: CharacterChange } ) {
 	const lines = describeChangeDetail(
@@ -60,9 +58,8 @@ function ChangeDetailList( { change }: { change: CharacterChange } ) {
 }
 
 /**
- * Renders the full change history for one character as a list, each entry showing its
- * status, a human-readable description of the change, its XP cost, who submitted and
- * reviewed it and when, and any reviewer note.
+ * Renders the full change history for one character as a list, each entry showing its status, a human-readable
+ * description of the change, its XP cost, who submitted and reviewed it and when, and any reviewer note.
  */
 export function ChangeHistory( { characterId, gameSlug }: ChangeHistoryProps ) {
 	const [ items, setItems ] = useState< CharacterChange[] >( [] );
@@ -79,7 +76,7 @@ export function ChangeHistory( { characterId, gameSlug }: ChangeHistoryProps ) {
 				setLoading( false );
 			} )
 			.catch( () => {
-				// Sets an explicit error rather than leaving items empty, so a fetch failure isn't shown as an empty history.
+				// Sets an explicit error.
 				setError(
 					__( 'Failed to load change history.', 'beyond-elysium' )
 				);

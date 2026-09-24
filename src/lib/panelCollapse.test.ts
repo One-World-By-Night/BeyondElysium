@@ -25,8 +25,7 @@ describe( 'readCollapsed', () => {
 	} );
 
 	it( 'ignores the pre-1.2.9 array shape', () => {
-		// The first cut of this module stored a bare array of collapsed ids. A viewer
-		// carrying one must land on defaults, not on a crash.
+		// A stored bare array of collapsed ids lands on the defaults.
 		window.localStorage.setItem( 'be-collapsed-panels', '["a","b"]' );
 		expect( readCollapsed() ).toEqual( {} );
 	} );
@@ -42,8 +41,6 @@ describe( 'readCollapsed', () => {
 
 describe( 'storedCollapsed', () => {
 	it( 'separates "expanded" from "never touched"', () => {
-		// The distinction the character sheet depends on: an untouched section follows its
-		// template's own `collapsed` flag, a touched one follows the viewer.
 		setCollapsed( 'touched', false );
 		expect( storedCollapsed( 'touched' ) ).toBe( false );
 		expect( storedCollapsed( 'untouched' ) ).toBeUndefined();

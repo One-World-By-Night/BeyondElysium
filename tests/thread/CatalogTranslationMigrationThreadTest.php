@@ -10,22 +10,8 @@ use BeyondElysium\Models\Translation_String;
 use WP_UnitTestCase;
 
 /**
- * B8, T6 (1.2.0 releases/1.2.0-design-workflow.md §8, §9): Schema::migrate_catalog_
- * translations_to_table()'s real recovery of existing name_pt/power_name_pt/CSV work, against
- * the real seeded catalog - not a hand-built fixture standing in for §8's own measured numbers.
- *
- * DELETEs (never TRUNCATEs - not rollback-safe inside WP_UnitTestCase's wrapped test
- * transaction) any translations rows a prior test run left, so T6 measures a genuinely clean
- * migration rather than under-counting keys a partial earlier run already has rows for. Both
- * tables are backed up first and restored in tearDown() - install-persistent tables (like
- * every other catalog table, PLATFORM.md) are not wrapped by the per-test transaction, so an
- * unconditional DELETE with no restore permanently empties them for every later test in the
- * same process. Found live: this exact class's own earlier DELETE-to-empty tearDown() was
- * silently breaking `CatalogTranslatorThreadTest`'s "38 retired terms" measurement - which
- * needs the pre-existing legacy rows this class also needs gone during its own run - whenever
- * this file happened to run first.
- *
- * @see BE_PROCESS/releases/1.2.0-design-workflow.md §8, §9 T6
+ * Schema::migrate_catalog_ translations_to_table()'s real recovery of existing name_pt/power_name_pt/CSV work,
+ * against the real seeded catalog.
  */
 class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 
@@ -56,17 +42,6 @@ class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * T6: against the real seeded catalog, pass 2 (CSV) alone recovers thousands of real rows.
-	 * §8's own "3,104 rows, 5 conflicts, 4,441 union" figures were measured against a real,
-	 * long-upgraded site's database, one still carrying pre-1.2.0 name_pt for pass 1 to harvest
-	 * - a fresh WP_UnitTestCase bootstrap can never be that database (B9 means the current
-	 * Seeder never writes name_pt at all, so a fresh install has none to harvest, by
-	 * construction - see test_pre_existing_name_pt_is_recovered_before_the_reseed_that_would_
-	 * erase_it for pass 1's own real coverage, against a fixture that actually has legacy data).
-	 * This asserts what a fresh catalog CAN prove - pass 2's thousands of real CSV-matched rows
-	 * - not a byte-exact number, and not pass 1's own conflict count, which is honestly zero here.
-	 */
 	public function test_t6_migration_against_the_real_catalog_matches_the_measured_shape(): void {
 		Schema::migrate_catalog_translations_to_table();
 
@@ -104,15 +79,6 @@ class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 
 	// ------------------------------------------------------------ conflict logic, on fixtures ----
 
-	/**
-	 * Schema_Block::create()/::update() strip() name_pt/power_name_pt unconditionally (B9
-	 * retired the one legitimate writer §5.5's strip() guard used to carve out for, Seeder's own
-	 * CSV-sourced path) - so pass 1's own real target, a row that already has name_pt baked into
-	 * its definition from before B9 shipped, can no longer be built through the model layer at
-	 * all. Inserted directly, bypassing the model exactly the way a real row upgraded from a
-	 * pre-1.2.0 install already sits in the table - not a caller this codebase's own write path
-	 * needs to support today.
-	 */
 	private function insert_block_with_baked_in_pt( string $slug, string $name, string $section_type, array $definition ): void {
 		Manager::insert( 'schema_blocks', [
 			'slug'         => $slug,
@@ -129,7 +95,9 @@ class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 		] );
 	}
 
-	/** A real DB pass-1 conflict: the same catalog term with two different name_pt values in two different blocks. */
+	/**
+	 * A real DB pass-1 conflict: the same catalog term with two different name_pt values in two different blocks.
+	 */
 	public function test_db_pass_conflict_keeps_the_first_value_and_records_the_loser_in_note(): void {
 		$this->insert_block_with_baked_in_pt(
 			'migration-conflict-a', 'Migration Conflict A', 'trait_list',
@@ -172,7 +140,9 @@ class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 		$this->assertEmpty( $translation->note );
 	}
 
-	/** tiered_power's power_name/power_name_pt is recovered the same way trait_list's name/name_pt is. */
+	/**
+	 * tiered_power's power_name/power_name_pt is recovered the same way trait_list's name/name_pt is.
+	 */
 	public function test_tiered_power_level_pt_is_recovered(): void {
 		$this->insert_block_with_baked_in_pt(
 			'migration-tiered-fixture', 'Migration Tiered Fixture', 'tiered_power',
@@ -195,21 +165,6 @@ class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 
 	// ----------------------------------------------------------------- upgrade ordering ----
 
-	/**
-	 * Severe bug found live, this exact release, after B9 landed: Schema::run_upgrade() called
-	 * migrate_catalog_translations_to_table() AFTER Seeder::seed_schema_blocks(), which was
-	 * safe only while Seeder still wrote fresh name_pt on every reseed (B8's own original
-	 * state). The instant B9 retired that write path, the same ordering became a real
-	 * data-loss bug: seed_schema_blocks() replaces a system block's whole definition (its own
-	 * documented, correct behavior for everything GVM/CSV-sourced - name_pt included, per
-	 * Seeder::ADMIN_OWNED_ENTRY_KEYS, which never listed it), so a real site's pre-1.2.0
-	 * name_pt would be permanently erased before the migration meant to recover it ever saw it.
-	 * A fresh WP_UnitTestCase bootstrap can't reproduce this - a fresh install never had legacy
-	 * name_pt to lose - so this simulates the one case that matters: a block carrying real
-	 * pre-1.2.0 data, the way every actual production site's does today. Proves the fix by
-	 * calling both steps directly, in Schema::run_upgrade()'s own real order - not the order
-	 * that would make this test trivially pass.
-	 */
 	public function test_pre_existing_name_pt_is_recovered_before_the_reseed_that_would_erase_it(): void {
 		$this->insert_block_with_baked_in_pt(
 			'legacy-data-fixture', 'Legacy Data Fixture', 'trait_list',
@@ -226,9 +181,7 @@ class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 		) );
 		$this->assertStringContainsString( '"name_pt"', $before, 'sanity check: the fixture really does carry legacy name_pt before any reseed' );
 
-		// This fixture is a custom (is_system = 0) block, so seed_schema_blocks() itself would
-		// leave it untouched - the real hazard is a SYSTEM block, so this simulates the reseed's
-		// own overwrite directly, the same shape seed_schema_blocks() applies to a real one.
+		// This fixture is a custom (is_system = 0) block.
 		Schema_Block::update( 'legacy-data-fixture', [
 			'definition' => [ 'items' => [ [ 'name' => 'Legacy Pre 1 2 0 Term' ] ] ],
 		] );
@@ -247,41 +200,16 @@ class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'Traducao Legada', $translation->translation );
 	}
 
-	// ------------------------------------------------------------------------------ T8 ----
-
-	/**
-	 * T8 (§9): the real, measured minimum-coverage floors MetCsvSeederTest used to assert
-	 * against each catalog's own built block - moot now that B9 means a built block never
-	 * carries name_pt at all - re-pointed at the table via the same block-scoped
-	 * Translation_String::count_for_review() the review screen itself uses (§6), against real
-	 * local data, not a bare non-zero check (the original tests' own stated reason to exist).
-	 *
-	 * These floors are pass 2 (CSV) alone, measured against a fresh bootstrap - a thread test's
-	 * own catalog has no pre-1.2.0 legacy name_pt for pass 1 to harvest (see the upgrade-
-	 * ordering test above), unlike a real, already-upgraded production site, where pass 1 adds
-	 * substantially more (e.g. vampire-disciplines measured 372 there, not 233 here - see
-	 * test_vampire_rituals_has_zero_coverage_via_pass_2_alone for the one catalog where that gap
-	 * is total, not partial).
-	 */
 	public function test_coverage_floors_for_the_major_catalogs_match_the_table(): void {
 		Schema::migrate_catalog_translations_to_table();
 
 		$minimums = [
-			'met-merits'                => 420,
-			'met-flaws'                 => 391,
-			'met-abilities'             => 45,
+			'vampire-merits'            => 418,
+			'vampire-flaws'             => 387,
+			'vampire-abilities'         => 44,
 			'vampire-combo-disciplines' => 359,
-			// 1.3.2: the declared vampire-disciplines.json (38 real families) replaced the
-			// GVM-built one (57, D67's concatenated/duplicate families still uncorrected)
-			// the moment the catalog overlay went live - fewer terms exist to match at all,
-			// which is the correction working as intended, not a coverage regression. A prior
-			// pass here recorded 151, measured against a `be_wptests` database already
-			// carrying leftover translation rows from an earlier catalog shape (the same
-			// install-persistent-table contamination class PLATFORM.md documents elsewhere) -
-			// re-measured against a genuinely fresh reseed, reproducibly, in isolation: 146.
 			'vampire-disciplines'       => 146,
-			// Same install-persistent-table contamination class as vampire-disciplines above -
-			// re-measured against a genuinely fresh reseed, reproducibly, in isolation: 513.
+			// Same install-persistent-table contamination class as vampire-disciplines above.
 			'vampire-blood-magic'       => 513,
 		];
 		foreach ( $minimums as $slug => $minimum ) {
@@ -291,15 +219,8 @@ class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A real, honest gap, not a silent one: vampire-rituals' items are tradition-prefixed
-	 * ("Thaumaturgy: Ward Versus Ghouls (basic)", build_met_rituals()'s own naming), but the
-	 * CSV's own Ritual rows carry the bare name ("Ward Versus Ghouls") - pass 2's Name_Key
-	 * match can never bridge that transform, so a fresh install recovers zero vampire-rituals
-	 * translations via this migration alone. Not a regression to fix here: every real
-	 * production site already has this catalog's translations recovered via pass 1 (measured
-	 * 1,184 there), since every one of them has genuine pre-1.2.0 name_pt baked in already -
-	 * this gap only ever reaches a brand new install, which starts with zero Portuguese
-	 * anywhere regardless and needs B10's review screen either way.
+	 * A real, honest gap, not a silent one: vampire-rituals' items are tradition-prefixed ("Thaumaturgy: Ward Versus
+	 * Ghouls (basic)", build_met_rituals()'s own naming).
 	 */
 	public function test_vampire_rituals_has_zero_coverage_via_pass_2_alone(): void {
 		Schema::migrate_catalog_translations_to_table();
@@ -309,8 +230,7 @@ class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The specific, human-checkable case MetCsvSeederTest's own test_alacrity_... pinned against
-	 * the block - now against the table instead, the real recovery path since B9.
+	 * The specific, human-checkable case MetCsvSeederTest's own test_alacrity_... pinned against the block.
 	 */
 	public function test_alacrity_has_the_real_drafted_portuguese_translation_via_the_table(): void {
 		Schema::migrate_catalog_translations_to_table();
@@ -322,16 +242,6 @@ class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'Presteza', $translation->translation );
 	}
 
-	/**
-	 * T8's own headline claim: "a reseed of a system block leaves every translation intact -
-	 * the thing preserve_admin_descriptions() had to be written for, now true by construction."
-	 * Modeled on PreserveAdminDescriptionsThreadTest's own real-reseed shape, against a real
-	 * system block. Unlike name_pt-in-the-definition (§1.5's own "a reseed destroys it" row,
-	 * survivable there only via a dedicated preservation pass matched by name), the
-	 * translations table is never written by Seeder at all, so there is nothing for
-	 * seed_schema_blocks() to overwrite - "by construction" is a fact about where the data
-	 * lives, not a behavior seed_schema_blocks() has to cooperate with.
-	 */
 	public function test_translations_survive_a_real_reseed_of_the_catalog(): void {
 		Schema::migrate_catalog_translations_to_table();
 

@@ -1,8 +1,5 @@
 /**
- * CharacterEditor is the character creation and editing screen: it renders a
- * BlockEditor per stack section for picking traits, plus background/notes,
- * portrait, and a pending-changes summary with submit/discard controls. Handles
- * both create mode (no character yet) and edit mode (an existing character).
+ * CharacterEditor is the character creation and editing screen.
  */
 import { useEffect, useMemo, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
@@ -37,13 +34,19 @@ import type { SubmitResult } from '../../store/characterEditorStore';
 import './CharacterEditor.css';
 
 export interface CharacterEditorProps {
-	/** Present = edit mode. Absent = create mode. */
+	/**
+	 * Present = edit mode.
+	 */
 	characterId?: number;
 	gameSlug: string;
-	/** Create mode only. Absent means the player picks a stack first. */
+	/**
+	 * Create mode only.
+	 */
 	stackSlug?: string;
 	templateType?: string;
-	/** What the person can do in this chronicle, when the page resolved it; the site-wide snapshot otherwise (F-103). */
+	/**
+	 * What the person can do in this chronicle, when the page resolved it.
+	 */
 	capabilities?: MyCapabilities;
 }
 
@@ -59,11 +62,8 @@ function sortedSections(
 }
 
 /**
- * Edits an existing character, or creates a new one, rendering the same
- * BlockEditor per stack section as the read-only sheet's own layout. Create
- * mode collects picks locally and creates an empty character shell first, then
- * applies every pick through the same diff/submit path an edit uses; edit mode
- * loads the character's current state directly into the editor store.
+ * Edits an existing character, or creates a new one, rendering the same BlockEditor per stack section as the
+ * read-only sheet's own layout.
  */
 export function CharacterEditor( {
 	characterId,
@@ -76,7 +76,7 @@ export function CharacterEditor( {
 
 	// ---- create-mode local state (no character exists yet, so nothing here lives in the store) ----
 	const [ createdId, setCreatedId ] = useState< number | null >( null );
-	// The name of a character just sent as a request to join this chronicle (1.0.0-review F-033).
+	// The name of a character just sent as a request to join this chronicle.
 	const [ joinRequested, setJoinRequested ] = useState< string | null >(
 		null
 	);
@@ -95,9 +95,8 @@ export function CharacterEditor( {
 	>( {} );
 	const [ creating, setCreating ] = useState( false );
 	const [ createError, setCreateError ] = useState< string | null >( null );
-	// admin-menu-consolidation-design.md: Storyteller-only, never shown to a player.
 	const [ createIsNpc, setCreateIsNpc ] = useState( false );
-	// "New NPC asks Quick or Full" (1.1.0 §3.7 item 1) - meaningless unless createIsNpc.
+	// "New NPC asks Quick or Full".
 	const [ createNpcDetail, setCreateNpcDetail ] = useState<
 		'full' | 'quick'
 	>( 'full' );
@@ -117,7 +116,7 @@ export function CharacterEditor( {
 	// Background/Notes are header fields that save directly, independent of the pending-changes flow below.
 	const biographyDraft = useRef< string >( '' );
 	const notesDraft = useRef< string >( '' );
-	// What was loaded or last saved: a save sends only the fields that differ from it (1.0.0-review F-076).
+	// What was loaded or last saved: a save sends only the fields that differ from it.
 	const headerSaved = useRef< { biography: string; notes: string } >( {
 		biography: '',
 		notes: '',
@@ -138,8 +137,6 @@ export function CharacterEditor( {
 		setSavingHeader( true );
 		setHeaderSaveError( null );
 		setHeaderSaveMessage( null );
-		// Only what was edited: a field left alone is not put back as it was when this editor
-		// opened, over whatever someone else has saved to it since.
 		const edited = changedFields(
 			{ biography: biographyDraft.current, notes: notesDraft.current },
 			headerSaved.current
@@ -164,12 +161,10 @@ export function CharacterEditor( {
 		}
 	}
 
-	// A WP attachment ID/URL, same picker pattern as SheetStyleEditor; local state so the image updates immediately.
+	// A WP attachment ID/URL, same picker pattern as SheetStyleEditor.
 	const [ portraitUrl, setPortraitUrl ] = useState< string | null >( null );
 	const [ savingPortrait, setSavingPortrait ] = useState( false );
 
-	// admin-menu-consolidation-design.md: flagging an existing character as an NPC (or
-	// back) after creation - Storyteller-only, never shown to a player.
 	const [ savingNpc, setSavingNpc ] = useState( false );
 
 	async function toggleNpc( nextIsNpc: boolean ) {
@@ -181,7 +176,6 @@ export function CharacterEditor( {
 			await api
 				.characters( gameSlug )
 				.update( effectiveCharacterId, { is_npc: nextIsNpc } );
-			// Reloads so the template re-resolves (sheet_full <-> npc_full follows is_npc directly).
 			await store.loadCharacter( effectiveCharacterId, gameSlug );
 		} catch ( err: unknown ) {
 			setHeaderSaveError(
@@ -195,7 +189,6 @@ export function CharacterEditor( {
 		}
 	}
 
-	// Staff assignment (1.1.0 §3.6): an NPC's own staff owner. Same reload-after-save shape as toggleNpc().
 	const [ savingAssignee, setSavingAssignee ] = useState( false );
 
 	async function assignNpc( assignedTo: number | null ) {
@@ -220,8 +213,7 @@ export function CharacterEditor( {
 		}
 	}
 
-	// "Make full NPC" (1.1.0 §3.7 item 1): a Quick NPC the Storyteller wants to develop
-	// further upgrades to the full sheet; there is no downgrade path back to Quick.
+	// "Make full NPC": a Quick NPC the Storyteller wants to develop further upgrades to the full sheet.
 	const [ savingNpcDetail, setSavingNpcDetail ] = useState( false );
 
 	async function upgradeToFullNpc() {
@@ -246,8 +238,7 @@ export function CharacterEditor( {
 		}
 	}
 
-	// Who's Who public profile (1.1.0 §3.7 item 3): a Storyteller-only panel, separate from
-	// the sheet itself, so it saves through its own PUT rather than the header-fields path.
+	// Who's Who public profile: a Storyteller-only panel, separate from the sheet itself.
 	const publicNameDraft = useRef( '' );
 	const publicDescriptionDraft = useRef( '' );
 	const [ publicImageUrl, setPublicImageUrl ] = useState< string | null >(
@@ -338,7 +329,6 @@ export function CharacterEditor( {
 	const effectiveCharacterId = characterId ?? createdId;
 	const isCreateMode = ! effectiveCharacterId;
 
-	// Edit mode: load the character once we have a real id.
 	useEffect( () => {
 		if ( effectiveCharacterId ) {
 			store.loadCharacter( effectiveCharacterId, gameSlug );
@@ -364,10 +354,6 @@ export function CharacterEditor( {
 		}
 	}, [ isCreateMode, stackSlug, gameSlug ] );
 
-	// Create mode: resolve the chosen stack for rendering its block editors.
-	// forCreation narrows any restricted identity field's options (a Vampire
-	// Clan/Sect subset, say) - safe only here, never for viewing/editing an
-	// already-existing character.
 	useEffect( () => {
 		if ( isCreateMode && chosenStackSlug ) {
 			api.creatureStacks
@@ -387,8 +373,7 @@ export function CharacterEditor( {
 
 	// Both modes resolve the template once a stack_slug is known, matching the read-only sheet exactly.
 	const activeStackSlug = isCreateMode ? chosenStackSlug : store.stackSlug;
-	// An NPC gets the NPC sheet, which adds the Storyteller-only sections - npc_quick's
-	// shorter one when a Quick NPC hasn't been upgraded to npc_full (1.1.0 §3.7 item 1).
+	// An NPC gets the NPC sheet.
 	const isNpc = isCreateMode ? createIsNpc : !! store.character?.is_npc;
 	const npcDetail = isCreateMode
 		? createNpcDetail
@@ -406,7 +391,7 @@ export function CharacterEditor( {
 					setTemplateError( null );
 				} )
 				.catch( () => {
-					// Shows an explicit error instead of silently rendering zero fields in either mode.
+					// Shows an explicit error.
 					setTemplate( null );
 					setTemplateError(
 						__(
@@ -419,10 +404,9 @@ export function CharacterEditor( {
 	}, [ activeStackSlug, gameSlug, templateType, isNpc, npcTemplateType ] );
 
 	const activeStack = isCreateMode ? createStack : store.stack;
-	// Mirrors CharacterSheet.tsx's own flowing grid layout exactly, so the editor matches the printed sheet.
+	// Mirrors CharacterSheet.tsx's own flowing grid layout exactly.
 	const sections = useMemo( () => sortedSections( template ), [ template ] );
 
-	// Unsaved-changes guard on navigation away, via the browser's beforeunload event.
 	useEffect( () => {
 		const dirty = isCreateMode
 			? Object.keys( draftSheetData ).length > 0
@@ -630,9 +614,6 @@ export function CharacterEditor( {
 												draftSheetData
 											) }
 										</h4>
-										{ /* One help doc per section_type, written as literal
-										 * per-type helpKey props (not a lookup object) so
-										 * helpDocs.test.ts's static scan can see each one. */ }
 										{ block.section_type ===
 											'trait_list' && (
 											<HelpButton helpKey="trait-editor" />
@@ -714,7 +695,6 @@ export function CharacterEditor( {
 		return null;
 	}
 
-	// Read-only degradation by capability: a viewer who can't edit is told so, not shown a disabled editor.
 	const canEdit = store.character.can_edit ?? false;
 	const canManage = store.character.can_manage ?? false;
 	const readOnly = ! canEdit;
@@ -741,9 +721,7 @@ export function CharacterEditor( {
 		publicNameDraft.current = store.character.public_name ?? '';
 		publicDescriptionDraft.current =
 			store.character.public_description ?? '';
-		// No dedicated URL field for public_image_id comes back from the sheet-header
-		// response; a freshly-picked one shows immediately via pickPublicImage()'s own
-		// attachment.url, same as the main portrait picker does.
+		// No dedicated URL field for public_image_id comes back from the sheet-header response.
 		setPublicImageId( store.character.public_image_id ?? null );
 		setPublicImageUrl( null );
 		setProfileAudience(
@@ -1063,12 +1041,6 @@ export function CharacterEditor( {
 					}
 					return (
 						<CollapsiblePanel
-							/*
-							 * U7e: block slugs are stack-wide, so a player who folds
-							 * Backgrounds away finds it folded on their next character of
-							 * the same creature type too - which is the point. Namespaced
-							 * to keep the editor's own state distinct from the sheet's.
-							 */
 							id={ `character-editor-section:${ section.block_slug }` }
 							className="be-character-editor__section"
 							key={ section.block_slug }
@@ -1130,12 +1102,6 @@ export function CharacterEditor( {
 				<CollapsiblePanel
 					id="character-editor-pending"
 					className="be-character-editor__summary"
-					/*
-					 * D74/U7c: re-open when a change is queued, even if the player folded the
-					 * panel away. Keyed on the count so 0 -> N forces it open and nobody
-					 * submits blind to what they changed; it never forces it shut, so folding
-					 * it again while changes are pending sticks.
-					 */
 					forceOpenKey={ pendingTotal }
 					heading={
 						<h4>
@@ -1150,12 +1116,6 @@ export function CharacterEditor( {
 					{ pendingTotal === 0 && (
 						<p>{ __( 'No unsaved changes.', 'beyond-elysium' ) }</p>
 					) }
-					{ /* D74: this list is unbounded - one entry per queued change - inside a
-					 * `position: sticky; bottom: 0` panel. Without a height cap it grew over
-					 * the editor it belongs to (7-8 changes covered 37-68% of the viewport,
-					 * owner-reported live 2026-09-21). The cap lives on the list, not the
-					 * panel, so the heading and the XP totals below stay visible while it
-					 * scrolls - the totals are the whole reason the panel exists. */ }
 					<ul className="be-character-editor__pending-list">
 						{ store.pendingChanges.map( ( change, i ) => {
 							const preview = store.previewCosts?.results[ i ];
@@ -1166,8 +1126,6 @@ export function CharacterEditor( {
 										<>
 											{ ' ' }
 											(
-											{ /* Homebrew has no catalog price: the player is told a Storyteller sets it,
-											 * not shown the 0 the server holds in its place (1.3.3 E5). */ }
 											{ previewPriceLabel( preview ) ?? (
 												<>
 													{ preview.xp_cost >= 0
@@ -1281,7 +1239,7 @@ export function CharacterEditor( {
 				) }
 				confirmLabel={ __( 'Discard', 'beyond-elysium' ) }
 				onConfirm={ () => {
-					// Navigates back to the sheet so the discard's effect is visible, not just a silent state reset.
+					// Navigates back to the sheet.
 					store.reset();
 					window.location.href = characterSheetUrl(
 						effectiveCharacterId,

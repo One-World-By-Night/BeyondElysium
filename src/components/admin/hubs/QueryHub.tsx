@@ -1,8 +1,5 @@
 /**
- * admin-menu-consolidation-design.md: replaces the separate "Query Tool" and
- * "Reports" wp-admin pages with one tabbed hub - both are "ask the roster a
- * question," one ad-hoc, one canned-to-signed-PDF. Each wrapped component
- * keeps its own <h1>, which doubles as the hub's live page title.
+ * One tabbed hub for the Query Tool and Reports: both ask the roster a question.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

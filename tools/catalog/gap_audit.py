@@ -8,11 +8,11 @@ For every GVM menu that carries items, counts how many of its items appear nowhe
 catalog, twice: RAW (exact lowercase name) and NORMALISED (case, punctuation, "Rite of" /
 "The " prefixes, trailing markers, `Base: Spec` / `Base (Spec)` forms, known aliases). The
 catalog is the union of the live dump (`out/live/blocks`) and every declared catalog
-directory given (default: this branch's `data/catalog/blocks`, read only). Then it classifies
-each menu with a residual gap (A-F, see CLASS_RULES) and counts how
-many local characters hold one of its missing items today as a custom entry.
+directory given (default: `data/catalog/blocks`, read only). Then it classifies each menu
+with a residual gap (A-F, see CLASS_RULES) and counts how many local characters hold one of
+its missing items today as a custom entry.
 
-Writes nothing but its own report. Reproduces `BE_PROCESS/releases/1.3-catalog-gap-audit.md`.
+Writes nothing but its own report.
 """
 
 import json
@@ -25,7 +25,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 CODE = HERE.parents[1]
-GVM = CODE / 'beyond-elysium' / 'data' / 'Grapevine Menus XML.gvm'
+GVM = CODE / 'tools' / 'catalog' / 'source' / 'Grapevine Menus XML.gvm'
 LIVE = HERE / 'out' / 'live' / 'blocks'
 DEFAULT_CATALOGS = [
     CODE / 'beyond-elysium' / 'data' / 'catalog' / 'blocks',
@@ -42,7 +42,7 @@ KNOWN_ALIASES = {'meditiation': 'meditation', 'renhekau': 'nomenclature', 'ushab
 def norm(s):
     s = (s or '').lower().strip()
     s = re.sub(r'[*^†#]+$', '', s).strip()
-    s = re.sub(r'\s*\[[^\]]*\]\s*$', '', s)                      # trailing [R2]-style markers
+    s = re.sub(r'\s*\[[^\]]*\]\s*$', '', s)                      # trailing bracketed markers
     s = re.sub(r'^(rite|ritual|rites) of (the )?', '', s)
     s = re.sub(r'^(the|a|an) ', '', s)
     s = re.sub(r',\s*(the|a|an)$', '', s)                           # "Touch of Nightshade, A"
@@ -104,9 +104,7 @@ def catalog_names(dirs):
                 add(it.get('name'), slug)
                 for a in it.get('aliases') or []:
                     add(a, slug)
-                # Lore's suggested specializations cover the Lores menus only (D81): "House:
-                # Aesin" as a Lore suggestion must not count as populating changeling-identity's
-                # empty House field.
+                # Lore's suggested specializations cover the Lores menus only.
                 for sp in it.get('specializations') or []:
                     lore_specs.update(variants(sp))
             powers = df.get('powers') or []
@@ -139,10 +137,10 @@ def gvm():
 
 # --- Classification ---------------------------------------------------------------------------
 # First matching rule wins. Each rule: (class, regex on menu name, target, note). Targets name a
-# proposed block/field; they are proposals for the owner, not decisions.
+# proposed block or field.
 
 CLASS_RULES = [
-    # F - needs an owner or source call; the note says what would settle it
+    # F - undecided; the note says what would settle it
     ('F', r'^(Threshold|Bardic Gift)$', 'changeling kith list?', 'Settle: read The Shining Host / Players Guide - are Thresholds and Bardic Gifts purchasable kith traits or descriptive flavour?'),
     ('F', r'^(Fronds|Psyche|Status, Wraith)$', 'wraith Shadow/Psyche list?', 'Settle: Oblivion\'s Shadow chapter - are Fronds a purchasable Shadow list, and does BE model the Shadow at all?'),
     ('F', r'^Totem Powers$', 'werewolf totem properties?', 'Settle: owner - do Totems become a catalog with powers, or stay a free-text identity value?'),
@@ -186,7 +184,7 @@ CLASS_RULES = [
     ('D', r'^Totem Powers$', 'werewolf totem properties (trait_list, with the Totem option list)', None),
     ('D', r'^Gangrel Animal Trait$', 'vampire clan Flaw-like list (trait_list) - Vampire is 1.3.1\'s line', None),
     ('D', r'^(Threshold|Bardic Gift)$', 'changeling kith lists: Thresholds (Kithain), Bardic Gifts (Satyr) (trait_list)', None),
-    # A - per-creature Merits / Flaws / Derangements, D20/D81 shape
+    # A - per-creature Merits / Flaws / Derangements
     ('A', r'^(Merits|Flaws)(, .+)?$', '{stack}-merits / {stack}-flaws (trait_list), generic + creature menu, as D20/D81', 'per-creature Merits/Flaws never merged into met-merits/met-flaws'),
     ('A', r'^Derangements(, .+)?$', 'met-derangements or {stack}-derangements (trait_list)', 'per-creature derangements'),
     ('A', r'^(Backgrounds|Influences)(, .+)?$', '{stack}-backgrounds (trait_list)', 'D20 already merged these; residual is drift or new items'),
@@ -316,7 +314,7 @@ def main():
     held = held_customs()
     import csv
     csv_cost = {}
-    for r in csv.reader(open(CODE / 'beyond-elysium' / 'data' / 'met-mechanics.csv')):
+    for r in csv.reader(open(CODE / 'tools' / 'catalog' / 'source' / 'met-mechanics.csv')):
         if len(r) > 14 and r[14].strip():
             csv_cost.setdefault(norm(r[0]), r[14].strip())
     menus = gvm()

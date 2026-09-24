@@ -11,15 +11,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-015 and F-031.
- *
- * F-015: approving a change checked "still pending" in the controller, then applied it with
- * nothing tying the check to the write. Two approvals landing together both applied: the XP
- * came off twice and the trait was added twice. Approval now claims the change itself, once.
- *
- * F-031: a player's resubmission rewrites a pending change in place, and approval acted on the
- * id alone - a Storyteller who read "Occult 2 -> 3" could approve "Occult 2 -> 5". The queue now
- * hands out a review token for exactly what it showed, and a stale token is refused.
+ * Approving a change applies it once: two approvals landing together apply it once, and a resubmission invalidates an
+ * earlier review token.
  */
 class ChangeApprovalIntegrityThreadTest extends WP_UnitTestCase {
 

@@ -19,21 +19,16 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Change Engine — submit, approve, reject, and apply changes to characters.
- *
- * Approval levels: auto < st (the `coordinator` tier was removed - 1.0.0-review F-043)
- * Auto-approved changes are applied immediately on submit.
- *
- * Snapshot threshold: every 25 approved changes a new snapshot is auto-created.
  */
 class Change_Engine {
 
-	/** Number of approved changes between automatic snapshots. */
+	/**
+	 * Number of approved changes between automatic snapshots.
+	 */
 	const SNAPSHOT_THRESHOLD = 25;
 
 	/**
-	 * Submits a change for a character. Determines the required approval
-	 * level for the change and, when it qualifies for automatic approval,
-	 * applies it immediately instead of leaving it pending.
+	 * Submits a change for a character.
 	 *
 	 * @param int   $character_id
 	 * @param array $change_data  Must include: change_type, category, change_data, xp_cost (optional).
@@ -54,9 +49,7 @@ class Change_Engine {
 		$resolved = self::resolve_approval_level( $character, (object) $change_data );
 		$level    = $resolved['level'];
 
-		// Every change is created pending, even one that qualifies for automatic approval:
-		// approve() applies a change only by claiming it from pending, so the one place a
-		// change's effects are applied also guarantees they are applied once (1.0.0-review F-015).
+		// Every change is created pending.
 		$insert = [
 			'character_id' => $character_id,
 			'change_type'  => $change_data['change_type'],
@@ -69,11 +62,7 @@ class Change_Engine {
 			'reason'       => $resolved['reason'],
 		];
 
-		// A still-pending resubmission of the same trait/field overwrites the one existing
-		// row instead of leaving a second, indistinguishable one in the queue (BE_PROCESS/
-		// 0.99.2-workflow.md, "Resubmitting creates duplicate pending changes"). Only applies
-		// when this submission would itself be pending - an auto-approved change is already a
-		// done deal, never a "duplicate pending" concern.
+		// A still-pending resubmission of the same trait/field overwrites the one existing row.
 		if ( $level !== 'auto' ) {
 			$owner_slug    = (string) ( $character->owner_slug ?? '' );
 			$duplicate_key = self::pending_duplicate_key( $change_data['change_type'], (array) ( $change_data['change_data'] ?? [] ), $owner_slug );
@@ -99,12 +88,7 @@ class Change_Engine {
 	}
 
 	/**
-	 * The field(s) that identify WHICH trait/resource/identity-field a change targets,
-	 * joined into one comparison key - two submissions with the same key are the same
-	 * submission resubmitted, not two different edits. Returns null for a change_type this
-	 * guard deliberately never applies to: `xp_earn`/`xp_adjust` (an ST awarding XP twice may
-	 * be entirely intentional), `import_note` (each import is its own real event) and
-	 * `catalog_rekey`/`catalog_rekey_revert` (written already approved, never pending).
+	 * The field(s) that identify WHICH trait/resource/identity-field a change targets, joined into one comparison key.
 	 *
 	 * @param string               $change_type
 	 * @param array<string,mixed>  $inner_data change_data's own nested payload (block_slug plus a trait/values/fields key).
@@ -120,10 +104,7 @@ class Change_Engine {
 			case 'add_trait':
 			case 'remove_trait':
 			case 'modify_trait':
-				// The holding, not the name (1.2.11 D88/D89). `Retainers (John Doe)` and
-				// `Retainers (Sue Smith)` are two purchases where the item allows multiples,
-				// and `Celerity: Precision` and `Celerity: Zephyr` are two picks - keyed by
-				// name alone, the second submission silently took over the first's queued row.
+				// Keyed by the holding, not the name.
 				$trait = is_array( $inner_data['trait'] ?? null ) ? $inner_data['trait'] : [];
 				if ( ! is_string( $trait['name'] ?? null ) || $trait['name'] === '' ) {
 					return null;
@@ -149,11 +130,7 @@ class Change_Engine {
 	}
 
 	/**
-	 * Finds this character's own existing pending change targeting the same
-	 * block/trait-or-field, if one exists. Scoped to the same change_type first (a cheap
-	 * database filter) and the exact identity key second (computed the same way for the
-	 * candidate as for the incoming submission, in PHP - change_data has no index to filter
-	 * this by directly).
+	 * Finds this character's own existing pending change targeting the same block/trait-or-field, if one exists.
 	 *
 	 * @return int|null The existing change's id, or null when there is no duplicate.
 	 */
@@ -168,15 +145,7 @@ class Change_Engine {
 	}
 
 	/**
-	 * One block's definition for this chronicle - its own fork where it has one, the global
-	 * catalog otherwise. The identity of a held row is a property of the block that declares
-	 * it (`allow_multiples`, per item or as a block default), so every consumer that asks
-	 * "which row does this change mean" resolves the block the same way, and a chronicle that
-	 * has forked a block gets its own answer.
-	 *
-	 * Deliberately not cached in a static: a block edited mid-request must be read as it now
-	 * is, and the lookup is one indexed row - `resolve_rule_level()` already makes the same
-	 * one on every submit.
+	 * One block's definition for this chronicle.
 	 *
 	 * @param string $owner_slug
 	 * @param string $block_slug
@@ -188,20 +157,9 @@ class Change_Engine {
 	}
 
 	/**
-	 * Approves a pending change and applies it to the character's sheet:
-	 * merges its effect into sheet_data, adjusts XP counters for XP-related
-	 * change types, marks it approved, and creates a snapshot when the
-	 * approved-change count crosses the threshold.
-	 *
-	 * All of it happens once, atomically. The change row is locked and must
-	 * still be pending, so two approvals landing together apply it exactly
-	 * once; the character row is locked too, so two approvals of different
-	 * changes on the same character cannot each write a sheet missing the
-	 * other's trait (1.0.0-review F-015). When `$expected_token` is given it
-	 * must match the change's current review_token(), so a reviewer never
-	 * approves content that was resubmitted after they looked (F-031). When
-	 * any write fails, every write is undone and the change stays pending
-	 * (F-056).
+	 * Approves a pending change and applies it to the character's sheet: merges its effect into sheet_data, adjusts XP
+	 * counters for XP-related change types, marks it approved, and creates a snapshot when the approved-change count
+	 * crosses the threshold.
 	 *
 	 * @param int         $change_id
 	 * @param int         $reviewed_by
@@ -228,10 +186,7 @@ class Change_Engine {
 			return false;
 		}
 
-		// A proposed catalog item is not sheet data: approving it writes a be_world_objects row
-		// and connects it to the proposing character (1.0.1 D3). Inside the same savepoint as
-		// everything else, so a failure to connect cannot leave an orphaned catalog entry
-		// behind a change still marked pending.
+		// A proposed catalog item writes a be_world_objects row and connects it to the proposing character.
 		if ( $change->change_type === 'propose_world_object' ) {
 			if ( ! self::create_proposed_object( $character, $change ) ) {
 				Transaction::rollback( $savepoint );
@@ -245,8 +200,7 @@ class Change_Engine {
 			return true;
 		}
 
-		// A proposed faction is not sheet data either (1.1.0 F1) - approving it writes a
-		// be_factions row and its proposer as leader, in the same savepoint as everything else.
+		// A proposed faction is not sheet data either.
 		if ( $change->change_type === 'propose_faction' ) {
 			if ( ! self::create_proposed_faction( $character, $change ) ) {
 				Transaction::rollback( $savepoint );
@@ -260,9 +214,7 @@ class Change_Engine {
 			return true;
 		}
 
-		// A purchase no price exists for is priced here, by the reviewer, before anything is written
-		// (1.3.3 E3): the price lands on the change record and on the trait, so the sheet row carries
-		// it and the deduction below is the number that was set - never the stored 0 it used to be.
+		// A purchase with no price is priced here by the reviewer before anything is written.
 		$priced_xp = null;
 		if ( ! empty( $change->change_data['cost_pending'] ) ) {
 			$priced = self::price_pending( $character, $change, $set_cost );
@@ -290,8 +242,7 @@ class Change_Engine {
 			$written = $written && Character::update_xp( (int) $character->id, 0, -(int) $xp_cost );
 		}
 
-		// All of it lands or none of it does: a sheet and XP already changed under a change still
-		// marked pending would change again at the next approval (1.0.0-review F-056).
+		// The sheet, XP and status change together or not at all.
 		if ( ! $written || ! Change::update_status( $change_id, 'approved', $reviewed_by, $notes ) ) {
 			Transaction::rollback( $savepoint );
 			return false;
@@ -308,9 +259,8 @@ class Change_Engine {
 	}
 
 	/**
-	 * The change data and signed total once a Storyteller has priced a purchase that was waiting for
-	 * one, or null when it cannot be priced: no price given, one that is not a whole number from 0 to
-	 * `Cost_Engine::MAX_CUSTOM_PRICE`, or a change with no section and trait for a price to attach to.
+	 * The change data and signed total once a Storyteller has priced a purchase that was waiting for one, or null when it
+	 * cannot be priced.
 	 *
 	 * @param object   $character
 	 * @param object   $change
@@ -327,24 +277,17 @@ class Change_Engine {
 			return null;
 		}
 
-		// The block the sheet holds it under now: a change left pending across the catalog cutover
-		// still names the retired slug (`apply_to_sheet()` maps it the same way).
-		$live       = Catalog_Cutover::live_slug( (string) ( $character->stack_slug ?? '' ), $block_slug );
-		$definition = self::block_definition( (string) ( $character->owner_slug ?? '' ), $live );
+		$definition = self::block_definition( (string) ( $character->owner_slug ?? '' ), $block_slug );
 		if ( ! is_object( $definition ) ) {
 			return null;
 		}
 
 		$sheet = is_array( $character->sheet_data ) ? $character->sheet_data : [];
-		return Cost_Engine::apply_set_price( $sheet, $definition, $live, (string) $change->change_type, $change_data, $set_cost );
+		return Cost_Engine::apply_set_price( $sheet, $definition, $block_slug, (string) $change->change_type, $change_data, $set_cost );
 	}
 
 	/**
-	 * Rejects a pending change. Marks the change as rejected and leaves
-	 * the character's sheet untouched. Only a change still in `pending`
-	 * status can be rejected - read under a row lock, like approve() - and
-	 * when `$expected_token` is given it must match the change's current
-	 * review_token().
+	 * Rejects a pending change.
 	 *
 	 * @param int         $change_id
 	 * @param int         $reviewed_by
@@ -372,9 +315,7 @@ class Change_Engine {
 	}
 
 	/**
-	 * Whether a locked change row may be reviewed: it exists, is still
-	 * pending, and - when a token is given - still holds exactly what the
-	 * reviewer was shown.
+	 * Whether a locked change row may be reviewed: it exists, is still pending.
 	 *
 	 * @param object|null $change
 	 * @param string|null $expected_token
@@ -389,23 +330,14 @@ class Change_Engine {
 	}
 
 	/**
-	 * Applies a change to a character's sheet_data and returns the
-	 * updated array. Dispatches on the change type to add, remove, or
-	 * modify a trait, merge resource or identity field values, or, for
-	 * XP-only change types, leave the sheet unchanged.
+	 * Applies a change to a character's sheet_data and returns the updated array.
 	 *
 	 * @param object $character Character row with decoded sheet_data.
 	 * @param object $change    Change row with decoded change_data.
 	 * @return array Updated sheet_data.
 	 */
 	/**
-	 * Writes an approved player proposal into the catalog and ties it to the character that
-	 * proposed it (1.0.1 D3).
-	 *
-	 * Both halves or neither. The player asked for their character to have the thing, so a
-	 * catalog row without the connection is only half of what was approved - and the caller's
-	 * savepoint covers this, so a failure here rolls the change back to pending rather than
-	 * leaving an orphan in the catalog.
+	 * Writes an approved player proposal into the catalog and ties it to the character that proposed it.
 	 *
 	 * @param object $character The proposing character.
 	 * @param object $change
@@ -444,8 +376,6 @@ class Change_Engine {
 			'label'       => 'owns',
 		] );
 
-		// 1.1.0 §3.12 item 3 - a proposed item's own approval is the one 'proposed' item event;
-		// a proposed location/rote carries no history at all (Item_Event is items-only).
 		if ( $connected && ( $data['object_type'] ?? '' ) === 'item' ) {
 			Item_Event::record( [
 				'game_id'         => (int) $game->id,
@@ -460,11 +390,8 @@ class Change_Engine {
 	}
 
 	/**
-	 * Writes an approved faction proposal (1.1.0 §3.10): the faction row itself
-	 * (`active`, `audience = restricted`, `created_via_proposal = 1`), then the proposer
-	 * as a leader member - never a `Connection`, since faction membership is its own join
-	 * table (`Faction_Member`'s own docblock explains why). Both halves or neither, the
-	 * same discipline `create_proposed_object()` already establishes.
+	 * Writes an approved faction proposal: the faction row itself (`active`, `audience = restricted`,
+	 * `created_via_proposal = 1`).
 	 *
 	 * @param object $character The proposing character.
 	 * @param object $change
@@ -502,12 +429,6 @@ class Change_Engine {
 		$sheet       = is_array( $character->sheet_data ) ? $character->sheet_data : [];
 		$change_data = is_array( $change->change_data ) ? $change->change_data : [];
 		$block_slug  = $change_data['block_slug'] ?? null;
-		// 1.3.3 C7: closes the race a pending change can outlive - a change submitted (or
-		// left pending) on a retired slug before the cutover lands in the live block whenever
-		// it is actually approved, no matter how long it sat in the queue.
-		if ( $block_slug !== null ) {
-			$block_slug = Catalog_Cutover::live_slug( (string) ( $character->stack_slug ?? '' ), $block_slug );
-		}
 
 		switch ( $change->change_type ) {
 			case 'add_trait':
@@ -519,11 +440,6 @@ class Change_Engine {
 				}
 				break;
 
-			// Both of these address ONE holding, and a holding is identified by more than its
-			// name (1.2.11 D88/D89): a `trait_list` row by its label where the item allows
-			// multiples, a `tiered_power` row by its own `power_name`. Matching on the name
-			// alone, `remove_trait` deleted every Retainer at once and every Elder pick of a
-			// family at once, and `modify_trait` raised whichever row happened to come first.
 			case 'remove_trait':
 				if ( $block_slug && isset( $sheet[ $block_slug ] ) && is_array( $sheet[ $block_slug ] ) ) {
 					$trait      = is_array( $change_data['trait'] ?? null ) ? $change_data['trait'] : $change_data;
@@ -581,7 +497,7 @@ class Change_Engine {
 			case 'import_note':
 			case 'catalog_rekey':
 			case 'catalog_rekey_revert':
-				// No sheet_data change; handled elsewhere (the catalog ones were applied by Catalog_Cutover itself).
+				// No sheet_data change.
 				break;
 		}
 
@@ -589,11 +505,8 @@ class Change_Engine {
 	}
 
 	/**
-	 * Determines the approval level required for a change, and any
-	 * citation explaining why: 'auto' or 'st', alongside an optional reason.
-	 * Only those two levels exist (owner ruling, 1.0.0-review F-043) - a rule
-	 * still stored as the retired 'coordinator' is a Storyteller's decision,
-	 * as it always was in practice, since nothing ever enforced it.
+	 * Determines the approval level required for a change, and any citation explaining why: 'auto' or 'st', alongside an
+	 * optional reason.
 	 *
 	 * @param object $character
 	 * @param object $change    Plain object with change_type, change_data['block_slug'].
@@ -606,11 +519,9 @@ class Change_Engine {
 	}
 
 	/**
-	 * The level the rules themselves resolve to: checks per-item and
-	 * block-level approval rules for the affected trait, applies any
-	 * game-level auto-approve setting, and returns the strictest level found,
-	 * alongside an optional reason string. `resolve_approval_level()`
-	 * normalizes what it returns.
+	 * The level the rules themselves resolve to: checks per-item and block-level approval rules for the affected trait,
+	 * applies any game-level auto-approve setting, and returns the strictest level found, alongside an optional reason
+	 * string.
 	 *
 	 * @param object $character
 	 * @param object $change    Plain object with change_type, change_data['block_slug'].
@@ -628,30 +539,19 @@ class Change_Engine {
 			return [ 'level' => 'st', 'reason' => null ];
 		}
 
-		// 1.1.0 F1: a faction proposal carries no block_slug, so nothing below this line
-		// would ever set $level - it would fall all the way through to the chronicle's own
-		// auto_approve default and, on such a chronicle, submit() would approve() it
-		// immediately with no capability check at all (the same latent gap logged as D63
-		// for propose_world_object - out of scope to fix here, but not one to repeat).
-		// Always 'st': the design's own "an HST approves it from the Approval Queue" is a
-		// real requirement, not just the common case.
 		if ( $change->change_type === 'propose_faction' ) {
 			return [ 'level' => 'st', 'reason' => null ];
 		}
 
-		// Unset, not 'st' - see strictest()'s own docblock for why. Coalesced to the
-		// 'st' safe default right before the game-level auto-approve check below.
+		// Unset until a rule decides.
 		$level  = null;
 		$reason = null;
 
-		// A custom entry has no catalog price or rule of its own, so it always needs a
-		// Storyteller - even on a chronicle that auto-approves by default (1.0.0-review F-030).
+		// A custom entry has no catalog price or rule of its own.
 		if ( ! empty( $change_data['trait']['custom'] ) ) {
 			$level = 'st';
 		}
 
-		// Nor does any rule settle a purchase nobody has named a cost for: approving it on a
-		// chronicle's own auto-approve would deduct the stored 0, which is the defect (1.3.3 E3).
 		if ( ! empty( $change_data['cost_pending'] ) ) {
 			$level = 'st';
 		}
@@ -668,10 +568,7 @@ class Change_Engine {
 				if ( $trait_name && ! empty( $definition->items ) ) {
 					foreach ( $definition->items as $item ) {
 						if ( ( $item->name ?? null ) === $trait_name ) {
-							// Per-count schedule ("Occult 1-3 auto, 4-5 st") is more specific than
-							// the flat approval below - checked first, and short-circuits the same
-							// way a flat approval match already does when a range actually covers
-							// the submitted count. No matching range falls through to the flat check.
+							// Per-count schedule ("Occult 1-3 auto, 4-5 st") is more specific than the flat approval below.
 							if ( ! empty( $item->approval_by_value ) ) {
 								$new_count = $change_data['trait']['count'] ?? null;
 								$range     = self::find_approval_range( $item->approval_by_value, $new_count );
@@ -694,8 +591,7 @@ class Change_Engine {
 					}
 				}
 
-				// Check the matched power's own level ladder (tiered_power blocks: Disciplines,
-				// Gifts, Arcanoi...) - a separate catalog shape items[] never covers.
+				// Check the matched power's own level ladder (tiered_power blocks: Disciplines, Gifts, Arcanoi...).
 				if ( $trait_name && ! empty( $definition->powers ) ) {
 					// Compared as integers: a level sent as the string "5" is the same rung as 5.
 					$held_level = isset( $change_data['trait']['level'] ) && is_numeric( $change_data['trait']['level'] ) ? (int) $change_data['trait']['level'] : null;
@@ -714,8 +610,7 @@ class Change_Engine {
 								$reason = $rung->reason;
 								$level  = self::strictest( $level, 'st' );
 							}
-							// Each level is already its own catalog row - a flat override per rung,
-							// never a range, since there's no gap between rows to span.
+							// Each level is already its own catalog row.
 							if ( isset( $rung->approval ) ) {
 								$level = self::strictest( $level, $rung->approval );
 							}
@@ -724,13 +619,7 @@ class Change_Engine {
 					}
 				}
 
-				// Check the matched resource pool's own per-value schedule (Willpower, Blood,
-				// Rage...) - resource_pool changes never populate change_data['trait'] at all,
-				// so this reads change_data['values'] instead, keyed on the pool's PERMANENT
-				// value (spending/regaining a temporary point in play never needs approval;
-				// permanently raising it via XP might).
-				// Every pool in the change is judged, not only the first - approval must never
-				// judge one pool while every pool is applied (F-030).
+				// Check the matched resource pool's own per-value schedule (Willpower, Blood, Rage...).
 				if ( ! empty( $change_data['values'] ) && ! empty( $definition->pools ) ) {
 					foreach ( (array) $change_data['values'] as $pool_name => $new_value ) {
 						$permanent = is_array( $new_value ) ? ( $new_value['permanent'] ?? null ) : $new_value;
@@ -750,11 +639,7 @@ class Change_Engine {
 					}
 				}
 
-				// Check the matched identity field's own per-option schedule (a specific Clan,
-				// a specific Generation background...) - identity_field changes populate
-				// change_data['fields'], never change_data['trait']. A multiselect's every
-				// selected value is checked; strictest wins across all of them.
-				// Every field in the change is judged, for the same reason as every pool.
+				// Checks the matched identity field's own per-option schedule.
 				if ( ! empty( $change_data['fields'] ) && ! empty( $definition->fields ) ) {
 					foreach ( (array) $change_data['fields'] as $field_name => $new_value ) {
 						$selected = is_array( $new_value ) ? $new_value : [ $new_value ];
@@ -796,16 +681,7 @@ class Change_Engine {
 			}
 		}
 
-		// Nothing above ever produced a real signal - fall back to the chronicle's own
-		// configured default (Decision 109): 'auto-approve unless a rule says otherwise'
-		// when settings.auto_approve is true, the existing safe 'st' default otherwise.
-		// This must be a null-coalesce onto whatever $level already is, never a check run
-		// afterward against the resolved value - a granular rule that itself resolved to
-		// 'st' (a power's approval_override, a matched pool/field schedule entry, none of
-		// which set $reason) is indistinguishable from "nothing fired" if checked by value
-		// after the fact, which is exactly the bug this replaces: those rules used to be
-		// silently washed out to 'auto' by a chronicle-wide auto_approve flag despite being
-		// an explicit, granular 'st' requirement.
+		// Falls back to the chronicle's own default approval setting.
 		$game = \BeyondElysium\Models\Game::find_by_slug( $character->owner_slug );
 		$chronicle_default = ( $game && ( $game->settings->auto_approve ?? false ) === true ) ? 'auto' : 'st';
 		$level = $level ?? $chronicle_default;
@@ -814,12 +690,7 @@ class Change_Engine {
 	}
 
 	/**
-	 * Awards XP to multiple characters in one call. Creates an approved
-	 * Change record and updates the XP counters for each character in the
-	 * given list, each pair inside its own transaction, so an award either
-	 * lands whole or not at all. Skips an id with no character behind it
-	 * rather than recording an award for nobody. Chronicle scoping is the
-	 * caller's job - this method has no chronicle to check against.
+	 * Awards XP to multiple characters in one call.
 	 *
 	 * @param array  $character_ids
 	 * @param int    $amount
@@ -862,21 +733,7 @@ class Change_Engine {
 	}
 
 	/**
-	 * Returns the stricter of two approval levels. Orders levels as
-	 * auto < st and returns whichever of the two inputs ranks at least as
-	 * strict as the other, treating any other level - the retired
-	 * 'coordinator' included - as equivalent to 'st'.
-	 *
-	 * `$a` is nullable and means "no signal has applied yet" - not the same
-	 * thing as an explicit 'st'. Before this distinction existed, the running
-	 * accumulator started hardcoded at the string 'st', which meant an
-	 * item's own `approval: 'auto'` (or a family's `approval_override:
-	 * 'auto'`, or a matched approval_by_value/approval_by_option range's
-	 * 'auto') could never actually win - strictest('st', 'auto') is 'st' by
-	 * this same ranking. A genuine, previously-undetected bug: an explicit
-	 * 'auto' override has never once resolved to auto anywhere in this
-	 * method's history, only ever to 'st'. Found writing a real test for the
-	 * per-value approval schedule, not assumed.
+	 * Returns the stricter of two approval levels.
 	 *
 	 * @param ?string $a Null means "nothing has applied yet" - returns `$b` outright.
 	 * @param string  $b
@@ -893,11 +750,8 @@ class Change_Engine {
 	}
 
 	/**
-	 * Finds the first `{from, to, approval, reason?}` range covering `$value`
-	 * (inclusive both ends) in an `approval_by_value` schedule. Returns null
-	 * when `$value` is null/non-numeric or no range covers it - the caller
-	 * falls back to whatever flat approval the item/pool/block otherwise
-	 * carries, never guesses a range for an uncovered value.
+	 * Finds the first `{from, to, approval, reason?}` range covering `$value` (inclusive both ends) in an
+	 * `approval_by_value` schedule.
 	 *
 	 * @param array<int,object> $ranges
 	 * @param mixed             $value

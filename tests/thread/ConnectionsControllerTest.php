@@ -7,11 +7,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Both endpoints of a connection must exist and belong to the game before creation
- * (workflow-0.5.md Step 3h) - a dangling or cross-game connection is invisible
- * corruption, not a validation nicety.
- *
- * @see BE_PROCESS/releases/workflow-0.5.md Step 3.2
+ * Both endpoints of a connection must exist and belong to the game before creation.
  */
 class ConnectionsControllerTest extends WP_UnitTestCase {
 

@@ -1,7 +1,6 @@
 /**
- * 1.0.0-review F-076 (Pass H intake). "Save Background & Notes" sent both fields every time,
- * from what the editor loaded. With the sheet open in two places, saving a biography put back
- * the notes as they were when that editor opened - erasing notes saved from the other one.
+ * `changedFields` sends only the fields that were edited, including one cleared
+ * back to empty, and nothing when nothing was edited.
  */
 import { changedFields } from './changedFields';
 

@@ -12,11 +12,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-088 (Pass H intake `t1-audit-stats-setup`, `t2-rendering`). An administrator
- * could delete a custom creature type its characters still used. The characters stayed, and
- * afterwards the Point Audit answered "Character not found in this game." for a character that
- * was right there, and the signed sheet came back a blank page - or, in a batch, quietly one
- * character short.
+ * A creature type that characters still use is not deleted and one no character uses is; the point audit and a signed
+ * sheet say the creature type is gone rather than the character.
  */
 class CreatureStackInUseThreadTest extends WP_UnitTestCase {
 
@@ -54,7 +51,9 @@ class CreatureStackInUseThreadTest extends WP_UnitTestCase {
 		return rest_get_server()->dispatch( $request );
 	}
 
-	/** A stack deleted before anything refused it, as it would be on a site that already did. */
+	/**
+	 * A stack deleted before anything refused it, as it would be on a site that already did.
+	 */
 	private function remove_stack_row( string $stack_slug ): void {
 		global $wpdb;
 		$wpdb->delete( $wpdb->prefix . 'be_creature_stacks', [ 'slug' => $stack_slug ] );

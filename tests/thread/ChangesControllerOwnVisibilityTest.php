@@ -7,14 +7,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Real security fix, not a UI nicety: `be_view_characters` is granted to every real WP
- * role (Capabilities::CAPS) - before this, `Changes_Controller::get_items()` had no
- * ownership filter at all, so any logged-in player could read any OTHER player's full
- * character change history (every trait purchase, XP amount, and ST reviewer note) by
- * ID, the same D33-class gap `CharactersControllerOwnVisibilityTest` already closed for
- * the character sheet itself. Found while adding an on-screen "view history" surface for
- * this same data (0.99.X-Ideas.md "Character audit trail") - the route it would call had
- * never actually been checked against a second player's character.
+ * Real security fix, not a UI nicety: `be_view_characters` is granted to every real WP role (Capabilities::CAPS).
  */
 class ChangesControllerOwnVisibilityTest extends WP_UnitTestCase {
 

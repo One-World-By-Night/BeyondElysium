@@ -8,12 +8,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Covers the dedicated approval-rules management engine: create, edit, and
- * delete a rule on a trait_list item and on a tiered_power power/level,
- * chronicle-scoped permission gating (administrator bypasses membership,
- * an hst member is allowed, a narrator member and a plain subscriber are
- * both denied), and that writing a rule forks the block for the chronicle
- * rather than mutating the shared global catalog.
+ * The approval-rules management engine: create, edit and delete a rule on a trait_list item and on a tiered_power
+ * power or level, with chronicle-scoped permission gating.
  */
 class ApprovalRulesControllerTest extends WP_UnitTestCase {
 

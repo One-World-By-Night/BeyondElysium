@@ -1,8 +1,5 @@
 /**
- * Resolves `CrossBlockRef` lookups against a character's sheet data: reading a value
- * from another block/field pair, building a section's title from its configured title
- * refs, and resolving a resource pool's display name from a keyed lookup table. Exports
- * `resolveCrossBlockValue()`, `resolveSectionTitle()`, and `resolvePoolName()`.
+ * Resolves `CrossBlockRef` lookups against a character's sheet data.
  */
 import type {
 	CrossBlockRef,
@@ -12,10 +9,7 @@ import type {
 import type { ResourcePoolValue } from './displayTemper';
 
 /**
- * Reads the value at `ref.block_slug`/`ref.field` from a character's sheet data and
- * returns it as a string. Handles both shapes block data can take: an identity field's
- * plain string or number, and a resource pool's `{permanent, temporary}` object, from
- * which only `permanent` is read.
+ * Reads the value at `ref.block_slug`/`ref.field` from a character's sheet data and returns it as a string.
  *
  * @return The resolved value as a string, or `null` if the block/field isn't present or
  *         hasn't been set yet (e.g. no Morality Path chosen).
@@ -46,9 +40,7 @@ export function resolveCrossBlockValue(
 }
 
 /**
- * Builds a section's displayed title. Returns `title` alone when `title_refs` is unset
- * or any referenced value fails to resolve; otherwise returns `title` followed by every
- * resolved ref's value, space-joined.
+ * Builds a section's displayed title.
  */
 export function resolveSectionTitle(
 	section: TemplateLayoutSection,
@@ -71,10 +63,8 @@ export function resolveSectionTitle(
 }
 
 /**
- * Resolves a resource pool's displayed name: returns `pool.name` unless `name_lookup`
- * maps the current value of its `keyed_by` reference to an entry in `table`. Only the
- * displayed name changes - the pool's storage key (`pool.name` itself) is never
- * affected.
+ * Resolves a resource pool's displayed name: returns `pool.name` unless `name_lookup` maps the current value of its
+ * `keyed_by` reference to an entry in `table`.
  */
 export function resolvePoolName(
 	pool: ResourcePool,

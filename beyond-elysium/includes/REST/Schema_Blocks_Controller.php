@@ -9,19 +9,15 @@ use BeyondElysium\Services\Rich_Text_Sanitizer;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for schema blocks, the reusable definitions (trait lists,
- * tiered powers, resource pools, identity fields) that character sheets are
- * built from. Supports listing, retrieving, creating, updating, and deleting
- * blocks, plus an optional per-game fork of a global block.
+ * REST controller for schema blocks, the reusable definitions (trait lists, tiered powers, resource pools, identity
+ * fields) that character sheets are built from.
  */
 class Schema_Blocks_Controller extends Base_Controller {
 
 	protected $rest_base = 'schema-blocks';
 
 	/**
-	 * Registers the REST routes for the schema block collection and for a
-	 * single block by slug. Wires up GET/POST on the collection endpoint
-	 * and GET/PUT/DELETE on the single-block endpoint.
+	 * Registers the REST routes for the schema block collection and for a single block by slug.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/' . $this->rest_base, [
@@ -57,14 +53,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 			],
 		] );
 
-		// GS-1 (guided-chronicle-setup-design.md §6): game-scoped write routes, identical
-		// callbacks to the ones above - update_item()/create_item() already read game_slug
-		// from the request to resolve a chronicle's own fork (find_or_create_fork_for_game()),
-		// but only a URL path param reaches Authorization::check_request()'s membership
-		// layer (Authorization.php:79-80 reads get_url_params() only, never a query/body
-		// param). Without this route, be_manage_schemas becoming editor-grantable would let
-		// any editor on the site write to any chronicle's fork - both halves of GS-1 or
-		// neither, per the design doc's own explicit warning.
+		// Game-scoped write routes, with the same callbacks as the routes above.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base, [
 			[
 				'methods'             => 'POST',
@@ -89,10 +78,8 @@ class Schema_Blocks_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns a paginated list of schema blocks, optionally filtered by
-	 * section_type, is_system, or a text search, and ordered by the
-	 * requested column and direction. When a game_slug is given,
-	 * substitutes that game's own fork in place of the global block.
+	 * Returns a paginated list of schema blocks, optionally filtered by section_type, is_system, or a text search, and
+	 * ordered by the requested column and direction.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response
@@ -119,9 +106,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns a single schema block by slug, substituting a game's own
-	 * fork of the block when a game_slug is given. Returns a 404 error
-	 * when no matching block exists.
+	 * Returns a single schema block by slug, substituting a game's own fork of the block when a game_slug is given.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -131,8 +116,6 @@ class Schema_Blocks_Controller extends Base_Controller {
 		if ( is_wp_error( $game_slug ) ) {
 			return $game_slug;
 		}
-		// find_for_game() falls back to the global block when the chronicle has no fork of
-		// its own - a chronicle route must never mistake that global block for its fork.
 		$block = Schema_Block::find_for_game( $request['slug'], $game_slug );
 		if ( ! $block || (string) $block->game_slug !== $game_slug ) {
 			return $this->error( 'not_found', __( 'Schema block not found.', 'beyond-elysium' ), 404 );
@@ -141,10 +124,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates a new global schema block from a required slug, name, and
-	 * section_type. Validates the definition structure against the shape
-	 * required for the given section_type, or builds a minimal default
-	 * definition when none is supplied.
+	 * Creates a new global schema block from a required slug, name, and section_type.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -183,9 +163,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 			return $game_slug;
 		}
 
-		// A slug already in use anywhere - the global catalog or any chronicle - would either
-		// collide or silently shadow another block, since a chronicle's row with the same slug
-		// is exactly what a fork is.
+		// A slug already in use anywhere.
 		if ( Schema_Block::slug_in_use( sanitize_title( $slug ) ) ) {
 			return $this->error( 'duplicate_slug', __( 'A schema block with this slug already exists.', 'beyond-elysium' ), 409 );
 		}
@@ -208,11 +186,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Updates an existing schema block by slug with any recognized fields
-	 * present in the request. When a game_slug is given, writes to
-	 * (creating if needed) that game's own fork of the block rather than
-	 * the shared global block. Validates section_type and definition when
-	 * included.
+	 * Updates an existing schema block by slug with any recognized fields present in the request.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -247,15 +221,14 @@ class Schema_Blocks_Controller extends Base_Controller {
 			}
 			$data['definition'] = $this->sanitize_definition( $section_type, $data['definition'] );
 
-			// What an administrator adds to a shared system block survives the next plugin update (F-011).
+			// What an administrator adds to a shared system block survives the next plugin update.
 			if ( $game_slug === '' && (int) $block->is_system === 1 && is_object( $block->definition ) ) {
 				$data['definition'] = \BeyondElysium\Database\Seeder::mark_admin_additions( $block->definition, $data['definition'] );
 			}
 		}
 
 		if ( ! empty( $data ) ) {
-			// A chronicle's first edit makes its copy of the block, and the save lands on that copy or
-			// nothing is kept - never the catalog block in its place (1.0.0-review F-109).
+			// A chronicle's first edit makes its copy of the block, and the save lands on that copy or nothing is kept.
 			$unit  = Transaction::begin( 'be_schema_block_save' );
 			$saved = ( $game_slug === '' || Schema_Block::find_or_create_fork_for_game( $request['slug'], $game_slug ) )
 				&& Schema_Block::update( $request['slug'], $data, $game_slug );
@@ -265,7 +238,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 			}
 			Transaction::commit( $unit );
 		}
-		// A catalog save reaches every chronicle's copy, past what each chronicle changed (1.0.0-review F-034).
+		// A catalog save reaches every chronicle's copy, past what each chronicle changed.
 		if ( $game_slug === '' && isset( $data['definition'] ) ) {
 			Schema_Block::refresh_forks( $request['slug'] );
 		}
@@ -273,23 +246,17 @@ class Schema_Blocks_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Deletes a schema block by slug after confirming it exists and is
-	 * not a system block. Returns a 404 error when no matching block
-	 * exists, or a 403 error when the block is a protected system block.
+	 * Deletes a schema block by slug after confirming it exists and is not a system block.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function delete_item( $request ) {
-		// Reached via the URL's own game_slug (GS-1) this deletes only that chronicle's
-		// fork, exact-match, never the global row a game-scoped route has no business
-		// touching - Schema_Block::delete()'s own exact-match query enforces this.
+		// Reached via the URL's own game_slug this deletes only that chronicle's fork, exact-match.
 		$game_slug = $this->write_scope( $request );
 		if ( is_wp_error( $game_slug ) ) {
 			return $game_slug;
 		}
-		// find_for_game() falls back to the global block when the chronicle has no fork of
-		// its own - a chronicle route must never mistake that global block for its fork.
 		$block = Schema_Block::find_for_game( $request['slug'], $game_slug );
 		if ( ! $block || (string) $block->game_slug !== $game_slug ) {
 			return $this->error( 'not_found', __( 'Schema block not found.', 'beyond-elysium' ), 404 );
@@ -304,12 +271,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns the chronicle a write targets: the `game_slug` in the route's own
-	 * URL, or '' for the global catalog. A `game_slug` anywhere else - the query
-	 * string or body of a global route - is refused rather than honored or
-	 * ignored: honoring it skipped the chronicle membership check, and ignoring
-	 * it would silently write the global block a caller meant to fork
-	 * (1.0.0-review F-002).
+	 * Returns the chronicle a write targets: the `game_slug` in the route's own URL, or '' for the global catalog.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return string|\WP_Error
@@ -328,9 +290,8 @@ class Schema_Blocks_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Defines the query parameters accepted by the schema block collection
-	 * endpoint: section_type/is_system/search filters, orderby/order sort
-	 * controls, and page/per_page pagination.
+	 * Defines the query parameters accepted by the schema block collection endpoint: section_type/is_system/search
+	 * filters, orderby/order sort controls, and page/per_page pagination.
 	 *
 	 * @return array
 	 */
@@ -374,9 +335,8 @@ class Schema_Blocks_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Defines the request parameters accepted when creating a schema
-	 * block: the required slug, name, and section_type, plus an optional
-	 * definition object.
+	 * Defines the request parameters accepted when creating a schema block: the required slug, name, and section_type,
+	 * plus an optional definition object.
 	 *
 	 * @return array
 	 */
@@ -404,10 +364,8 @@ class Schema_Blocks_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Checks that a definition value contains the array key required for
-	 * its section_type (items for trait_list, powers for tiered_power,
-	 * pools for resource_pool, fields for identity_field). Decodes a JSON
-	 * string or stdClass into a plain array first.
+	 * Checks that a definition value contains the array key required for its section_type (items for trait_list, powers
+	 * for tiered_power, pools for resource_pool, fields for identity_field).
 	 *
 	 * @param string $section_type
 	 * @param mixed  $definition
@@ -440,12 +398,8 @@ class Schema_Blocks_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Normalizes a definition (a JSON string, stdClass, or already-plain
-	 * array) to a plain array, narrows every `description` field inside it
-	 * through Rich_Text_Sanitizer, and narrows the three plain-text faceting
-	 * fields. Called only after validate_definition() has already confirmed
-	 * the required shape for section_type - this method reshapes nothing
-	 * else and validates nothing else.
+	 * Normalizes a definition (a JSON string, stdClass, or already-plain array) to a plain array, narrows every
+	 * `description` field inside it through Rich_Text_Sanitizer, and narrows the three plain-text faceting fields.
 	 *
 	 * @param string $section_type
 	 * @param mixed  $definition
@@ -464,15 +418,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Narrows a trait_list item's `group`, `subgroup` and `tier` - the three faceting
-	 * fields the admin editor gained in 1.2.9 U6a (D73). They are plain catalog
-	 * vocabulary, never rich text, so `sanitize_text_field()` is the right treatment and
-	 * `Rich_Text_Sanitizer` is deliberately not the place for it: that class states its
-	 * only job is narrowing `description`, and quietly widening it would make its own
-	 * contract untrue.
-	 *
-	 * An empty value is removed rather than stored as `''` - a blank group must not
-	 * become a group of its own in a picker.
+	 * Narrows a trait_list item's `group`, `subgroup` and `tier`.
 	 *
 	 * @param array<string,mixed> $definition
 	 * @param string              $section_type
@@ -505,9 +451,8 @@ class Schema_Blocks_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Builds an empty default definition shape for a given section_type,
-	 * used when creating a schema block without an explicit definition.
-	 * Returns an empty array for an unrecognized section_type.
+	 * Builds an empty default definition shape for a given section_type, used when creating a schema block without an
+	 * explicit definition.
 	 *
 	 * @param string $section_type
 	 * @return array

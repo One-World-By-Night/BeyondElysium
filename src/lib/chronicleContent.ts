@@ -1,6 +1,5 @@
 /**
- * What deleting a chronicle would destroy, in the words the Games screen's one confirmation
- * uses - counted by `GET /games/{slug}/content` (1.0.0-review F-036).
+ * What deleting a chronicle would destroy, in the words the Games screen's one confirmation uses.
  */
 import { _n, sprintf } from '@wordpress/i18n';
 import type { ChronicleContentCounts } from '../types';
@@ -120,8 +119,6 @@ export function describeChronicleContent(
 			)
 		);
 	}
-	// D1 (1.2.5-design-workflow.md §D): these nine were real content the confirmation dialog
-	// never named, the same gap Game::delete_with_content() had at the storage layer.
 	if ( counts.factions > 0 ) {
 		phrases.push(
 			sprintf(

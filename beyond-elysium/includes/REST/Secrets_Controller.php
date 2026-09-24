@@ -17,18 +17,15 @@ use BeyondElysium\Services\St_Visibility;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for Storyteller-authored secrets and their reveals (1.1.0 §3.11).
- * `be_manage_plots` writes both - the design's own chosen capability, reused rather than
- * inventing a new one, matching how `be_manage_plots`/`be_manage_world_objects` are already
- * the write gates for the entities a secret attaches to.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.11
+ * REST controller for Storyteller-authored secrets and their reveals.
  */
 class Secrets_Controller extends Base_Controller {
 
 	protected $rest_base = 'secrets';
 
-	/** Which capability decides whether a viewer manages the entity a secret is attached to. */
+	/**
+	 * Which capability decides whether a viewer manages the entity a secret is attached to.
+	 */
 	private const MANAGE_CAPABILITY = [
 		'plot'     => 'be_manage_plots',
 		'item'     => 'be_manage_world_objects',
@@ -50,8 +47,7 @@ class Secrets_Controller extends Base_Controller {
 			],
 		] );
 
-		// Registered before the numeric id route so /secrets/my is never shadowed - same
-		// convention as Plots_Controller's own /my/plots.
+		// Registered before the numeric id route.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/my/secrets', [
 			[
 				'methods'             => 'GET',
@@ -96,9 +92,7 @@ class Secrets_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Every secret attached to one entity - only once the viewer can see the entity itself
-	 * (a secret never surfaces through an entity a viewer couldn't otherwise open), then
-	 * narrowed to the secrets this viewer's own characters actually reach.
+	 * Every secret attached to one entity.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -138,11 +132,8 @@ class Secrets_Controller extends Base_Controller {
 	}
 
 	/**
-	 * "What I Know" (1.1.0 §3.11): every secret revealed to one of the caller's own
-	 * characters, grouped with the entity's type and name - null when the viewer can't
-	 * independently see that entity, so a secret never discloses a hidden one - and when/how
-	 * it was learned. A held reveal whose batch hasn't gone out yet is skipped entirely, the
-	 * same as it never happened.
+	 * "What I Know": every secret revealed to one of the caller's own characters, grouped with the entity's type and
+	 * name.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -196,8 +187,8 @@ class Secrets_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates a secret. 400 `invalid_param` on an unrecognized entity_type, or an entity_id
-	 * that doesn't resolve to a real entity of that type in this game.
+	 * Creates a secret. 400 `invalid_param` on an unrecognized entity_type, or an entity_id that doesn't resolve to a
+	 * real entity of that type in this game.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -329,8 +320,7 @@ class Secrets_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Every reveal of one secret - the Secrets panel's own "revealed to" list. Manager only,
-	 * same as everything else about a secret's own management.
+	 * Every reveal of one secret.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -345,9 +335,7 @@ class Secrets_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Reveals a secret to a character. 400 `invalid_param` on a character outside this game,
-	 * or an unrecognized `how`; 409 `already_revealed` when this character already has a
-	 * reveal for this secret.
+	 * Reveals a secret to a character. 400 `invalid_param` on a character outside this game, or an unrecognized `how`.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -411,9 +399,7 @@ class Secrets_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Resolves the real entity a secret attaches to - the parent-visibility check `get_items()`
-	 * needs and the existence check `create_item()` needs, in one place so both agree on what
-	 * "a real entity of that type" means.
+	 * Resolves the real entity a secret attaches.
 	 *
 	 * @param string $entity_type
 	 * @param int    $entity_id
@@ -460,8 +446,7 @@ class Secrets_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404
-	 * status when no game matches.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

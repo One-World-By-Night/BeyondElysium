@@ -1,9 +1,5 @@
 /**
- * The player-facing fixed page (page-consolidation-design.md): a chronicle switcher
- * plus tabs for Characters, Sheet, Edit, and My Plots & Rumors - replacing four
- * separate pages that each used to duplicate per chronicle. Takes zero required
- * props, same as VerifyCharacter - all of its state (which chronicle, which tab,
- * which character) comes from useChronicleSwitcher() and the URL.
+ * The player-facing fixed page: a chronicle switcher plus tabs for Characters, Sheet, Edit, and My Plots & Rumors.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -56,23 +52,17 @@ export function MyChroniclePage() {
 		retryGames,
 		accentColor,
 	} = useChronicleSwitcher();
-	// 1.2.7-design-workflow.md §E3 - see StorytellerToolkitPage.tsx's own identical comment.
 	const accentStyle: CSSProperties | undefined = accentColor
 		? ( { '--be-st-accent': accentColor } as CSSProperties )
 		: undefined;
 	const [ tab, setTab ] = useState( () =>
 		readTabFromUrl( PLAYER_TABS.dashboard )
 	);
-	// Selecting a different character navigates via CharacterList's own real link
-	// (a full page load to ?tab=sheet&character_id=N&game_slug=S), not client-side
-	// state - so this only ever needs to be read once, on mount.
 	const [ characterId ] = useState< number | undefined >(
 		readCharacterIdFromUrl
 	);
 	const [ reportKey, setReportKey ] = useState( 'game-calendar' );
 
-	// Rote Cards for mages (1.1.0 §3.15, C1) - which character to scope card reports to, and
-	// whether Rote Cards is even available for them.
 	const [ reportCharacters, setReportCharacters ] = useState< Character[] >(
 		[]
 	);
@@ -189,10 +179,6 @@ export function MyChroniclePage() {
 				onRetry={ retryGames }
 			/>
 
-			{ /* A non-member has no chronicle for the switcher above to show at all, and no
-			capabilities for the guard below to ever pass - this is how they reach the one
-			thing they can still do here (F-122). A real member reaches the same view from
-			the Characters tab below instead, with the tab strip still there to click back. */ }
 			{ ! loadingGames &&
 				games.length === 0 &&
 				tab === PLAYER_TABS.sendFile && <SendGrapevineFile /> }
@@ -215,7 +201,6 @@ export function MyChroniclePage() {
 					</p>
 				) }
 
-			{ /* Each tab shows what the person can do in this chronicle, so it waits for that (F-103). */ }
 			{ gameSlug && capabilitiesFor === gameSlug && (
 				<>
 					<TabStrip
@@ -226,8 +211,6 @@ export function MyChroniclePage() {
 
 					{ tab === PLAYER_TABS.sendFile && <SendGrapevineFile /> }
 
-					{ /* A proposal is attached to a character - "my character made a thing" - so it
-					needs one picked, the same way Sheet and Edit do (1.0.1 D3). */ }
 					{ tab === PLAYER_TABS.proposeItem &&
 						( characterId ? (
 							<ProposeWorldObject
@@ -271,7 +254,6 @@ export function MyChroniclePage() {
 
 					{ tab === PLAYER_TABS.characters && (
 						<>
-							{ /* The Edit tab edits whichever character was last opened, so starting another one needs its own way in (F-108). */ }
 							<p className="be-my-chronicle-page__new-character">
 								<a href={ newCharacterUrl( gameSlug ) }>
 									{ __(

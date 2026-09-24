@@ -8,21 +8,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The last two free-text fields that were still plain text when every comparable field had
- * become rich (1.0.1 D1): a chronicle's own `description`, and the generic `textarea`
- * identity-field type an NPC's roleplaying notes use.
- *
- * Both were plain for no reason anyone recorded - the chronicle description was sanitized
- * with `sanitize_textarea_field` while a plot's description one controller over used
- * `wp_kses_post`, and `Change_Validator::text()` ran `strip_tags()` over every identity value
- * including the one field type that is prose rather than a value.
- *
- * Making the chronicle description rich has a hard dependency this test also pins:
- * `St_Visibility::filter_game()` had to move from the byte-offset strip to the HTML-aware one
- * in the same commit, or a marker opening inside a tag and closing outside it leaves the tag
- * dangling.
- *
- * @see BE_PROCESS/releases/1.0.1-design-workflow.md D1
+ * The last two free-text fields that were still plain text when every comparable field had become rich: a chronicle's
+ * own `description`, and the generic `textarea` identity-field type an NPC's roleplaying notes use.
  */
 class RichTextHoldoutsThreadTest extends WP_UnitTestCase {
 
@@ -72,10 +59,6 @@ class RichTextHoldoutsThreadTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( '<script', $saved, 'wp_kses_post must drop scripts.' );
 	}
 
-	/**
-	 * The dependency D1 names: with `filter_game()` still on the byte-offset strip, cutting a
-	 * marker that opens inside `<em>` and closes outside it leaves `<em>` dangling.
-	 */
 	public function test_stripping_a_marker_out_of_rich_description_leaves_no_dangling_tag(): void {
 		global $wpdb;
 		$wpdb->update(
@@ -99,7 +82,9 @@ class RichTextHoldoutsThreadTest extends WP_UnitTestCase {
 		);
 	}
 
-	/** The block set `Change_Validator::validate()` resolves against. */
+	/**
+	 * The block set `Change_Validator::validate()` resolves against.
+	 */
 	private function blocks(): array {
 		return [
 			'notes-block' => (object) [

@@ -7,13 +7,7 @@ use BeyondElysium\Database\Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Static data-access model for one character learning one secret (1.1.0 §3.11) - a row in
- * `be_secret_reveals`, `UNIQUE (secret_id, character_id)` so the same character is only ever
- * revealed a given secret once. A reveal can itself be held for a release batch, the exact
- * `held`/`release_batch_id` gate `plots`/`plot_entries` already use (§3.2) - the character
- * only actually counts as having learned it once the reveal is unheld or its batch is out.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.11
+ * Static data-access model for one character learning one secret.
  */
 class Secret_Reveal {
 
@@ -49,8 +43,7 @@ class Secret_Reveal {
 	}
 
 	/**
-	 * Every reveal for one release batch - the "reveals" section of a batch's own item list
-	 * (§3.2), identical shape to `Plot::for_release_batch()`/`Plot_Entry::for_release_batch()`.
+	 * Every reveal for one release batch.
 	 *
 	 * @param int $release_batch_id
 	 * @return object[]
@@ -64,8 +57,7 @@ class Secret_Reveal {
 	}
 
 	/**
-	 * Every reveal naming one character, across every secret - `GET /my/secrets`'s own read,
-	 * oldest learned first.
+	 * Every reveal naming one character, across every secret.
 	 *
 	 * @param int $character_id
 	 * @return object[]
@@ -79,8 +71,7 @@ class Secret_Reveal {
 	}
 
 	/**
-	 * D51/D53's own bug class: $wpdb returns tinyint(1) as the string "0", which is truthy in
-	 * JavaScript. Casts `held` to a real bool per the 1.0.1 owner ruling.
+	 * Casts `held` to a real boolean.
 	 *
 	 * @param object $row
 	 * @return object
@@ -93,10 +84,7 @@ class Secret_Reveal {
 	}
 
 	/**
-	 * Whether a character has already been revealed a secret - checked by the controller
-	 * before insert for a clean 409, matching `Attendance::record()`'s/`Npc_Casting::
-	 * already_cast()`'s own "check first" convention rather than relying on the UNIQUE key
-	 * alone.
+	 * Whether a character has already been revealed a secret.
 	 *
 	 * @param int $secret_id
 	 * @param int $character_id
@@ -111,9 +99,7 @@ class Secret_Reveal {
 	}
 
 	/**
-	 * Creates a reveal. Validates `how` against the known values. Returns the new row's id,
-	 * or false when required fields are missing, `how` is invalid, or the insert fails
-	 * (including the UNIQUE constraint - the controller checks already_revealed() first).
+	 * Creates a reveal.
 	 *
 	 * @param array $data
 	 * @return int|false
@@ -140,9 +126,7 @@ class Secret_Reveal {
 	}
 
 	/**
-	 * Updates a reveal's release_batch_id and/or held flag - the release-batch item routes'
-	 * own "assign an already-held draft reveal to a batch" write, matching how a held plot or
-	 * entry is assigned to a batch after the fact.
+	 * Updates a reveal's release_batch_id and/or held flag.
 	 *
 	 * @param int   $id
 	 * @param array $data
@@ -174,7 +158,7 @@ class Secret_Reveal {
 	}
 
 	/**
-	 * Deletes every reveal of one secret - `Secret::delete()`'s own cascade.
+	 * Deletes every reveal of one secret.
 	 *
 	 * @param int $secret_id
 	 */
@@ -183,12 +167,10 @@ class Secret_Reveal {
 	}
 
 	/**
-	 * The character ids who have actually learned a secret right now - unheld reveals, plus
-	 * held ones whose batch is already out. `Services\Audience::connected_character_ids()`'s
-	 * own `'secret'` branch is this method's one real caller.
+	 * The character ids who have actually learned a secret right now.
 	 *
 	 * @param int   $secret_id
-	 * @param int[] $out_batch_ids The game's currently-out release batch ids (§3.2).
+	 * @param int[] $out_batch_ids The game's currently-out release batch ids.
 	 * @return int[]
 	 */
 	public static function visible_character_ids( int $secret_id, array $out_batch_ids ): array {
@@ -208,9 +190,7 @@ class Secret_Reveal {
 	}
 
 	/**
-	 * Whether one reveal has actually taken effect yet - unheld, or held with its batch out.
-	 * `GET /my/secrets`'s own per-reveal gate, the single-reveal sibling of
-	 * `visible_character_ids()`'s batch read.
+	 * Whether one reveal has actually taken effect yet.
 	 *
 	 * @param object $reveal
 	 * @param int[]  $out_batch_ids

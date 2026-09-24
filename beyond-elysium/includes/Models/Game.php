@@ -11,20 +11,11 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Static data-access model for chronicles (games).
- *
- * Game is a Database\Manager CRUD model backed by the games table. Each row is
- * one chronicle - name, slug, game_type, a JSON settings blob, and ASC role
- * path/notification configuration. delete_with_content() additionally cascades
- * a deletion to everything stored under the chronicle, and nothing else creates,
- * renames, or deletes a chronicle in a way that leaves that content for another
- * chronicle to inherit (1.0.0-review F-036).
  */
 class Game {
 
 	/**
-	 * Look up a single game by its slug. Returns the row with its settings
-	 * field decoded into an object, or null when no game with that slug
-	 * exists.
+	 * Look up a single game by its slug.
 	 *
 	 * @param string $slug
 	 * @return object|null
@@ -38,10 +29,7 @@ class Game {
 	}
 
 	/**
-	 * Hold a chronicle's row until the surrounding transaction ends, so two
-	 * writes that must not both pass the same check in one chronicle take
-	 * turns. False when the lock itself failed - a lock wait that timed out -
-	 * so the caller writes nothing unguarded. Must run inside a Transaction.
+	 * Hold a chronicle's row until the surrounding transaction ends.
 	 *
 	 * @param string $slug
 	 * @return bool
@@ -54,9 +42,7 @@ class Game {
 	}
 
 	/**
-	 * Same as lock(), by primary key rather than slug - for a caller whose
-	 * own row is keyed on game_id specifically so a rename can't orphan it
-	 * (Models/Submission.php, F-122).
+	 * Same as lock(), by primary key.
 	 *
 	 * @param int $id
 	 * @return bool
@@ -69,9 +55,7 @@ class Game {
 	}
 
 	/**
-	 * Look up a single game by its primary key. Returns the row with its
-	 * settings field decoded into an object, or null when no game with
-	 * that ID exists.
+	 * Look up a single game by its primary key.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -85,9 +69,7 @@ class Game {
 	}
 
 	/**
-	 * Return games matching optional filters. Supports filtering by game_type,
-	 * plus pagination and sort order across name, slug, and creation/update
-	 * dates.
+	 * Return games matching optional filters.
 	 *
 	 * @param array $args Filters: game_type, orderby, order, per_page, offset.
 	 * @return array
@@ -108,7 +90,6 @@ class Game {
 			$sql .= ' WHERE ' . implode( ' AND ', $where );
 		}
 
-		// The ?? default must apply in both branches or an unset orderby breaks the query.
 		$orderby = in_array( $args['orderby'] ?? 'name', [ 'name', 'slug', 'created_at', 'updated_at' ], true )
 			? ( $args['orderby'] ?? 'name' )
 			: 'name';
@@ -128,9 +109,7 @@ class Game {
 	}
 
 	/**
-	 * Count games matching the given filters. Accepts the same game_type filter
-	 * as all(), without pagination, and returns a plain integer total rather
-	 * than a result set.
+	 * Count games matching the given filters.
 	 *
 	 * @param array $args Same filters as all().
 	 * @return int
@@ -159,9 +138,7 @@ class Game {
 	}
 
 	/**
-	 * Insert a new game. Generates a unique slug from the name when one is
-	 * not supplied, JSON-encodes an array settings payload, and stamps
-	 * created_at and updated_at.
+	 * Insert a new game.
 	 *
 	 * @param array $data Game data.
 	 * @return int|false Insert ID or false on failure.
@@ -182,8 +159,7 @@ class Game {
 			'updated_at'  => current_time( 'mysql' ),
 		];
 
-		// Only set by Chronicle_Sync's create path and the correlation backfill - omitted
-		// here (rather than defaulted to null) so every other caller's insert is unaffected.
+		// Only set by Chronicle_Sync's create path and the correlation backfill.
 		if ( array_key_exists( 'owbn_chronicle_post_id', $data ) ) {
 			$insert['owbn_chronicle_post_id'] = $data['owbn_chronicle_post_id'];
 		}
@@ -192,12 +168,7 @@ class Game {
 	}
 
 	/**
-	 * Update a game identified by slug. Writes only the fields present in
-	 * $data, JSON-encodes an array settings payload, and stamps updated_at
-	 * before writing the row. Deliberately cannot change the slug - rename()
-	 * is the only path to that, since a slug change requires cascading to
-	 * every table and reference that names it, which this plain update
-	 * does not do.
+	 * Update a game identified by slug.
 	 *
 	 * @param string $slug
 	 * @param array  $data Fields to update.
@@ -227,19 +198,8 @@ class Game {
 	}
 
 	/**
-	 * Renames a chronicle: its own slug, every character's owner_slug, and
-	 * every schema-block fork's game_slug, its verification codes, and this
-	 * site's side of its transfers, atomically, keyed by numeric id rather
-	 * than by the slug that is changing. This is the only path that changes a
-	 * game's slug - update() cannot. Three conditions abort before anything
-	 * is written: a slug collision with a different game, a schema-block fork
-	 * already sitting at the destination slug (which would hit the forks
-	 * table's own unique index), or any other content a deleted chronicle
-	 * left at the destination, which this one would adopt. Page and Elementor
-	 * widget references are repaired after commit, individually, since
-	 * that repair calls wp_update_post() and must not run inside a
-	 * transaction that might roll back. See
-	 * BE_PROCESS/design/chronicle-rename-design.md §7.2 for the full reasoning.
+	 * Renames a chronicle: its own slug, every character's owner_slug, and every schema-block fork's game_slug, its
+	 * verification codes, and this site's side of its transfers, atomically, keyed by numeric id.
 	 *
 	 * @param int    $game_id
 	 * @param string $new_slug
@@ -287,8 +247,6 @@ class Game {
 			return [ 'changed' => false, 'error' => 'fork_collision', 'blocks' => $colliding_blocks ];
 		}
 
-		// Characters, verification codes, or transfers a deleted chronicle left at the
-		// destination would be silently adopted by this one.
 		$orphans = self::orphaned_content_counts( $new_slug );
 		if ( array_sum( $orphans ) > 0 ) {
 			Transaction::rollback( $savepoint );
@@ -324,8 +282,6 @@ class Game {
 				$old_slug
 			)
 		);
-		// Only this site's side of a transfer names this chronicle: home_slug on an outbound
-		// row, host_slug on an inbound one. The other slug belongs to the other site.
 		$transfers = $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$transfer_table} SET home_slug = %s WHERE direction = 'outbound' AND home_slug = %s",
@@ -363,11 +319,7 @@ class Game {
 	}
 
 	/**
-	 * Delete a chronicle that holds no content. Refuses (returns false) while
-	 * anything content_counts() counts is still stored under it: a row-only
-	 * delete used to leave that content keyed by the slug, where the next
-	 * chronicle created with the same name adopted it (1.0.0-review F-036).
-	 * Memberships and recent searches go with the row.
+	 * Delete a chronicle that holds no content.
 	 *
 	 * @param string $slug
 	 * @return bool
@@ -381,12 +333,7 @@ class Game {
 	}
 
 	/**
-	 * Delete a chronicle and everything stored under it: characters (with
-	 * their changes, snapshots, sheet styles, and connections), plots, world
-	 * objects, the chronicle's own templates and schema-block forks, saved
-	 * queries, verification codes, this site's side of its transfers, and
-	 * memberships. One transaction, so a failure partway through leaves
-	 * nothing deleted. Site-wide templates and blocks are never touched.
+	 * Deletes a chronicle and everything stored under it, in one transaction.
 	 *
 	 * @param string $slug
 	 * @return bool
@@ -412,13 +359,6 @@ class Game {
 		foreach ( World_Object::for_game( $game_id ) as $object ) {
 			$ok = World_Object::delete( (int) $object->id ) && $ok;
 		}
-		// D1/D2 (1.2.5-design-workflow.md §D): factions/positions/secrets each have their own
-		// join-table child (faction_members/position_history/secret_reveals) with no game_id
-		// of their own - Position::delete()/Faction::delete()/Secret::delete() already clean
-		// that join correctly, before deleting the parent row, exactly the ordering D2 exists
-		// to encode. Positions before factions: Faction::delete() only detaches a position
-		// (faction_id => null), it never deletes one, so the order between these two loops
-		// doesn't matter for correctness - kept this way for readability only.
 		foreach ( Position::for_game( $game_id ) as $position ) {
 			$ok = Position::delete( (int) $position->id ) && $ok;
 		}
@@ -431,8 +371,6 @@ class Game {
 
 		$transfer_table = Manager::table( 'character_transfers' );
 		$deletes        = [
-			// The chronicle's own template rows only: Template::for_game() merges in the
-			// site-wide templates, and deleting through it removed every custom one.
 			Manager::delete( 'templates', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'queries', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'schema_blocks', [ 'game_slug' => $slug ] ),
@@ -442,15 +380,6 @@ class Game {
 				$slug,
 				$slug
 			) ),
-			// D1: none of these six have a child table of their own referencing them, so a
-			// direct bulk delete by game_id is complete on its own - no per-row model loop
-			// needed. `Attendance`/`Npc_Casting` carry a real game_id column directly, not
-			// just a session_id join, so this doesn't depend on game_sessions' own deletion
-			// order either. `Release_Batch::delete()` is deliberately NOT used here - it
-			// refuses to delete an already-released batch (the correct single-row rule,
-			// wrong for a whole-chronicle wipe where most real batches are released) - by
-			// this point plots/plot_entries/secret_reveals referencing a batch are already
-			// gone (deleted above), so a plain bulk delete is safe and complete.
 			Manager::delete( 'attendance', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'npc_castings', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'after_game_reports', [ 'game_id' => $game_id ] ),
@@ -472,16 +401,14 @@ class Game {
 		return true;
 	}
 
-	/** Site-wide brand accent default (System Config -> Branding), 1.2.7-design-workflow.md §E1. */
+	/**
+	 * Site-wide brand accent default.
+	 */
 	const ACCENT_COLOR_OPTION = 'be_accent_color';
 
 	/**
-	 * Resolves this chronicle's effective brand accent color: its own override
-	 * (`settings.accent_color`, 1.2.7-design-workflow.md §E2), falling back to the
-	 * site-wide default, falling back to '' - which means "no override", not a
-	 * color - so `useChronicleSwitcher()` emits no inline style at all and every
-	 * `--be-st-accent` consumer falls through to its own CSS default unchanged
-	 * (Decision 041's "un-styled renders byte-identical" guarantee, reused).
+	 * Resolves this chronicle's effective brand accent color: its own override, falling back to the site-wide default,
+	 * falling back to ''.
 	 *
 	 * @param object $game A games row with `settings` already decoded.
 	 * @return string A hex color, or '' when nothing overrides the CSS default.
@@ -496,17 +423,7 @@ class Game {
 	}
 
 	/**
-	 * Counts everything stored under a chronicle that deleting its row alone
-	 * would leave behind. Recent searches and memberships are not counted -
-	 * nobody would call them the chronicle's content - but they are deleted
-	 * with it.
-	 *
-	 * D1 (1.2.5-design-workflow.md §D): factions/positions/secrets/game_sessions/
-	 * attendance/release_batches/notification_queue/npc_castings were real content
-	 * `delete_with_content()` silently left behind - this is the same gap, one level up:
-	 * `delete_item()`'s safety gate (`array_sum( $counts ) > 0`) never saw any of them either,
-	 * so a plain row-only delete could previously succeed on a chronicle that still held all
-	 * of this, with no refusal and no warning.
+	 * Counts everything stored under a chronicle that deleting its row alone would leave behind.
 	 *
 	 * @param object $game A games row.
 	 * @return array{characters:int,plots:int,world_objects:int,templates:int,schema_blocks:int,saved_queries:int,attestations:int,transfers:int,factions:int,positions:int,secrets:int,game_sessions:int,attendance:int,release_batches:int,notification_queue:int,npc_castings:int,after_game_reports:int}
@@ -537,11 +454,7 @@ class Game {
 	}
 
 	/**
-	 * Counts content stored under a slug that no chronicle holds - left by a
-	 * row-only delete before 1.0.0. A chronicle created or renamed onto such a
-	 * slug would adopt all of it, so neither is allowed to. Schema-block forks
-	 * are reported separately by rename()'s own fork_collision check and
-	 * counted here as well.
+	 * Counts content stored under a slug that no chronicle holds.
 	 *
 	 * @param string $slug
 	 * @return array{characters:int,schema_blocks:int,attestations:int,transfers:int}
@@ -571,9 +484,8 @@ class Game {
 	}
 
 	/**
-	 * Generate a slug guaranteed not to collide with an existing game, or with
-	 * content a deleted chronicle left under a slug. Sanitizes the base string
-	 * and appends an incrementing numeric suffix until the result is free.
+	 * Generate a slug guaranteed not to collide with an existing game, or with content a deleted chronicle left under a
+	 * slug.
 	 *
 	 * @param string $base
 	 * @return string
@@ -590,9 +502,7 @@ class Game {
 	}
 
 	/**
-	 * Decode a row's settings JSON field into an object in place. Passes
-	 * null rows through unchanged, and leaves a non-string settings value
-	 * untouched rather than attempting to decode it.
+	 * Decode a row's settings JSON field into an object in place.
 	 *
 	 * @param object|null $row Row from the database, or null when the query found nothing.
 	 * @return object|null The same row, or null when null was passed in.
@@ -601,7 +511,6 @@ class Game {
 		if ( $row && isset( $row->settings ) && is_string( $row->settings ) ) {
 			$row->settings = json_decode( $row->settings );
 		}
-		// Same "0"-is-truthy-in-JavaScript hazard as Schema_Block::decode_definition() (D53).
 		if ( $row && isset( $row->notifications_enabled ) ) {
 			$row->notifications_enabled = (bool) $row->notifications_enabled;
 		}

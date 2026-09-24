@@ -1,8 +1,6 @@
 /**
- * Dispatches a schema block to the renderer matching its section type
- * (trait_list, tiered_power, resource_pool, identity_field). Also
- * exports `toTraits()`, which converts a block's raw stored JSON into
- * the `Trait[]` shape the trait-list renderer and formatter expect.
+ * Dispatches a schema block to the renderer matching its section type (trait_list, tiered_power, resource_pool,
+ * identity_field).
  */
 import { __, sprintf } from '@wordpress/i18n';
 import type {
@@ -25,21 +23,28 @@ export interface BlockRendererProps {
 	sectionType: SectionType;
 	definition: BlockDefinition;
 	data: unknown;
-	/** Template section override, trait_list only. Null falls through to the block default. */
+	/**
+	 * Template section override, trait_list only.
+	 */
 	display?: DisplayType | null;
-	/** Stack display_preferences override, tiered_power only. */
+	/**
+	 * Stack display_preferences override, tiered_power only.
+	 */
 	displayMode?: 'named' | 'numeric';
-	/** Whether a count_is_cost trait_list block's flat XP price is shown at all (1.2.11 D94), trait_list only. */
+	/**
+	 * Whether a count_is_cost trait_list block's flat XP price is shown at all, trait_list only.
+	 */
 	showCost?: boolean;
-	/** The character's full sheet_data, resource_pool only, for a pool whose display name depends on another block's value. */
+	/**
+	 * The character's full sheet_data, resource_pool only, for a pool whose display name depends on another block's
+	 * value.
+	 */
 	sheetData?: Record< string, unknown >;
 }
 
 /**
- * Renders a block using the renderer matching its `sectionType`:
- * trait_list, tiered_power, resource_pool, or identity_field. An
- * unrecognized section type renders a visible warning naming the block
- * slug instead of rendering nothing.
+ * Renders a block using the renderer matching its `sectionType`: trait_list, tiered_power, resource_pool, or
+ * identity_field.
  */
 export function BlockRenderer( {
 	blockSlug,
@@ -121,11 +126,7 @@ export function BlockRenderer( {
 }
 
 /**
- * Converts a block's raw stored `sheet_data` value into `Trait[]` for
- * `displayTrait()`: reads each entry's numeric value from `total` or,
- * failing that, `count`, and combines a separate `specialization` field
- * with `note` into one displayed note string. Returns an empty array for
- * non-array input.
+ * Converts a block's raw stored `sheet_data` value into `Trait[]` for `displayTrait()`.
  *
  * @param data Raw `sheet_data[block_slug]` value, untyped JSON.
  * @return Trait[]

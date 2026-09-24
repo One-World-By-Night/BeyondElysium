@@ -1,11 +1,5 @@
 /**
  * Admin page for a chronicle's approval rules.
- * Lists every override currently set on that chronicle's trait_list items
- * (flat or per-value-range), tiered_power powers/levels, resource_pool
- * pools (per-value-range), and identity_field fields (per-option), and lets
- * a Storyteller create, edit, and delete one against a picked catalog
- * target. Also carries the chronicle's own default approval policy - what
- * happens when nothing below has an opinion.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -27,6 +21,7 @@ import type {
 	TraitListItem,
 } from '../../types';
 import { errorMessage } from '../../lib/errorMessage';
+import { everyPage } from '../../lib/everyPage';
 import { preselectedChronicle, writeGameToUrl } from '../../lib/pluginPages';
 import './Admin.css';
 
@@ -38,15 +33,15 @@ const EMPTY_FORM: ApprovalRuleRequest = {
 	reason: '',
 };
 
-/** True for the two section types whose rules are always addressed by a [from, to] range. */
+/**
+ * True for the two section types whose rules are always addressed by a [from, to] range.
+ */
 function isRangeType( type: ApprovalRuleTargetType ): boolean {
 	return type === 'item_range' || type === 'pool_range';
 }
 
 /**
- * Renders one rule's target column: the plain name for a flat item or
- * power, "name (level N)" for a tiered_power level, "name (from-to)" for a
- * value-range rule, and "name: option" for a field option rule.
+ * Renders one rule's target column.
  */
 function describeTarget( rule: ApprovalRule ): string {
 	if ( rule.level !== null ) {
@@ -67,11 +62,7 @@ function describeTarget( rule: ApprovalRule ): string {
 }
 
 /**
- * Renders the Approval Rules admin screen: a chronicle picker, the
- * chronicle's own default approval policy, the flat list of every rule
- * currently set for it, and a create/edit form whose target pickers
- * (block, then item/power/pool/field, then level/range/option) cascade
- * against that block's real catalog rather than free text.
+ * Renders the Approval Rules admin screen.
  */
 export function AdminApprovalRules() {
 	const [ games, setGames ] = useState< Game[] >( [] );
@@ -123,7 +114,9 @@ export function AdminApprovalRules() {
 		Promise.all( [
 			api.approvalRules( gameSlug ).list(),
 			api.approvalRules( gameSlug ).options(),
-			api.schemaBlocks.list( { per_page: 100 } ),
+			everyPage( ( page ) =>
+				api.schemaBlocks.listPaginated( { page, per_page: 100 } )
+			),
 			api.approvalRules( gameSlug ).defaultPolicy(),
 		] )
 			.then( ( [ ruleList, opts, blockList, policy ] ) => {
@@ -196,11 +189,7 @@ export function AdminApprovalRules() {
 	}
 
 	/**
-	 * Saves the chronicle-wide default approval policy: auto-approve unless
-	 * a rule below says otherwise, or the existing safe default (everything
-	 * needs Storyteller review unless a rule says auto). Saved beside the
-	 * rules, where the Storytellers who manage them can set it - the
-	 * chronicle's own settings route is a site administrator's (1.0.0-review F-102).
+	 * Saves the chronicle-wide default approval policy: auto-approve unless a rule below says.
 	 */
 	async function saveDefaultPolicy( auto: boolean ) {
 		if ( ! gameSlug ) {
@@ -305,9 +294,7 @@ export function AdminApprovalRules() {
 	const selectedPower = powers.find( ( p ) => p.name === form.target_name );
 	const selectedField = fields.find( ( f ) => f.name === form.target_name );
 
-	// Whether the current block/target combination shows an "Approval level" dropdown at
-	// all - a bare level target reads its approval from the level's own catalog row
-	// instead (matching the pre-existing rule for tiered_power levels).
+	// Whether the current block/target combination shows an "Approval level" dropdown at all.
 
 	return (
 		<div className="be-admin">
@@ -814,7 +801,6 @@ export function AdminApprovalRules() {
 					</>
 				) }
 
-				{ /* Every target type carries its own approval level, a Discipline level included (1.0.0-review F-035). */ }
 				<label>
 					{ __( 'Approval level', 'beyond-elysium' ) }
 					<select

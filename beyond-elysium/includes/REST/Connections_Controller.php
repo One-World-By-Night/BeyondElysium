@@ -16,12 +16,6 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * REST controller for connections between entities.
- *
- * A connection is a directed link between two entities (character, plot,
- * world object, or tag) identified by a source and target pair, with an
- * optional label and notes. Covers listing with several filter shapes,
- * creation with existence checks on both endpoints, and update/delete of an
- * existing connection.
  */
 class Connections_Controller extends Base_Controller {
 
@@ -29,18 +23,13 @@ class Connections_Controller extends Base_Controller {
 
 	/**
 	 * Registers the game-scoped connection routes.
-	 *
-	 * Adds the collection route for listing and creating connections, plus a
-	 * single-connection route for updating or deleting one.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/connections', [
 			[
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'get_items' ],
-				// Every link in the chronicle - who holds what, who is on which plot, whose action
-				// allocation is whose - is the staff's view. The one screen that lists them is theirs
-				// too (1.0.0-review F-063).
+				// Every link in the chronicle.
 				'permission_callback' => $this->permission_any( [ 'be_manage_connections', 'be_manage_plots' ] ),
 			],
 			[
@@ -67,11 +56,6 @@ class Connections_Controller extends Base_Controller {
 	/**
 	 * Lists connections for a game.
 	 *
-	 * Supports two filter shapes: a one-directional source/target pair
-	 * (`source_type`/`source_id`, `target_type`/`target_id`), or a
-	 * bidirectional lookup by a single entity (`entity_type`/`entity_id`)
-	 * that matches either side of the connection.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -84,8 +68,6 @@ class Connections_Controller extends Base_Controller {
 		$entity_type = $request->get_param( 'entity_type' );
 		$entity_id   = $request->get_param( 'entity_id' );
 
-		// A connection's notes are free text a Storyteller writes when tying an item or a
-		// location to a character, and may carry [ST] markers like any other prose field.
 		$can_manage = Authorization::check_request( 'be_manage_connections', $request );
 
 		if ( $entity_type && $entity_id ) {
@@ -133,11 +115,6 @@ class Connections_Controller extends Base_Controller {
 
 	/**
 	 * Creates a connection.
-	 *
-	 * Validates that both source_type and target_type are recognized entity
-	 * types, and that both endpoints actually exist in this game before
-	 * creating the row. A `tag` target has no backing row and skips the
-	 * existence check.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -197,10 +174,6 @@ class Connections_Controller extends Base_Controller {
 	/**
 	 * Updates a connection's label and/or notes.
 	 *
-	 * Sanitizes whichever of `label` and `notes` are present in the request
-	 * and writes only those fields; either may be omitted to leave it
-	 * unchanged.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -228,9 +201,6 @@ class Connections_Controller extends Base_Controller {
 	/**
 	 * Deletes a connection.
 	 *
-	 * Resolves the connection by ID, verifying it belongs to the game named
-	 * in the URL, then permanently removes the row.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -255,9 +225,8 @@ class Connections_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Writes a `given`/`taken` item event (1.1.0 §3.12 item 3) when a connection just
-	 * added or removed links a character to an item specifically - never for any other
-	 * entity pair a connection may name (a plot, a location, a tag).
+	 * Writes a `given`/`taken` item event when a connection just added or removed links a character to an item
+	 * specifically.
 	 *
 	 * @param string   $source_type
 	 * @param int      $source_id
@@ -303,13 +272,7 @@ class Connections_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Checks whether an entity of the given type and ID exists and belongs
-	 * to this game.
-	 *
-	 * Dispatches to the matching model for `character` and `plot`, and
-	 * queries the `world_objects` table directly for `world_object` since
-	 * only an existence and game-membership check is needed. A `tag` has no
-	 * backing row, so callers treat it as always valid.
+	 * Checks whether an entity of the given type and ID exists and belongs to this game.
 	 *
 	 * @param string $type
 	 * @param int    $id
@@ -345,9 +308,6 @@ class Connections_Controller extends Base_Controller {
 	/**
 	 * Resolves a connection by ID, verifying it belongs to the game named in the URL.
 	 *
-	 * Returns a 404 error when the game does not exist, or when the
-	 * connection is missing or belongs to a different game.
-	 *
 	 * @param int    $id
 	 * @param string $game_slug
 	 * @return object|\WP_Error
@@ -368,9 +328,6 @@ class Connections_Controller extends Base_Controller {
 
 	/**
 	 * Resolves a game by its slug.
-	 *
-	 * Looks up the game record for the given slug and returns a 404 error
-	 * when no game matches it.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

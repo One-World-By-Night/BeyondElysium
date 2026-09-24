@@ -1,8 +1,5 @@
 /**
  * Admin page for managing creature stack definitions.
- * Lists the system-seeded and chronicle-defined creature stacks, and
- * provides a form to create, edit, or delete a chronicle's own custom
- * stack definitions and character-creation rules.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -27,9 +24,6 @@ const EMPTY_FORM = {
 
 /**
  * Renders the Creature Stacks admin screen.
- * Lists all creature stacks with a filter to hide system-seeded ones,
- * and provides a form for creating, editing, and deleting a chronicle's
- * own custom creature stack definitions and character-creation rules.
  */
 export function AdminCreatureStacks() {
 	const [ stacks, setStacks ] = useState< CreatureStack[] >( [] );
@@ -44,8 +38,6 @@ export function AdminCreatureStacks() {
 
 	/**
 	 * Fetches the list of creature stacks from the API.
-	 * Populates the stack list on success and records the error message
-	 * on failure, tracking a loading flag throughout.
 	 */
 	function load() {
 		setLoading( true );
@@ -98,9 +90,6 @@ export function AdminCreatureStacks() {
 
 	/**
 	 * Creates or updates a creature stack from the current form state.
-	 * Validates that required fields are filled, calls the appropriate
-	 * create or update API endpoint, then closes the form and reloads
-	 * the list on success.
 	 */
 	async function save( e: React.FormEvent ) {
 		e.preventDefault();
@@ -143,8 +132,6 @@ export function AdminCreatureStacks() {
 
 	/**
 	 * Deletes a creature stack after confirmation.
-	 * Prompts the viewer to confirm, then calls the API to delete the
-	 * stack and reloads the list.
 	 */
 	async function remove( stack: CreatureStack ) {
 		// eslint-disable-next-line no-alert

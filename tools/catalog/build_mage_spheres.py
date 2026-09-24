@@ -1,18 +1,17 @@
-"""Emits data/catalog/blocks/mage-spheres.json (1.3.1).
+"""Emits data/catalog/blocks/mage-spheres.json.
 
     python3 build_mage_spheres.py <snapshot-dir>
 
 Ten Sphere families, each the five Laws of Ascension ranks. Two corrections
 against the seeded snapshot, both from the book:
 
-- **Costs 4/4/8/8/12** (1.3.0's D2, owner ruling 2026-09-21: the book is the
-  base). The snapshot carries 5/5/10/10/15, which is the *non-specialty*
-  column. The non-specialty surcharge stays in `out_of_type` as the scaling
-  +1/+2/+3 the book prints. Forward-only: nothing is refunded or migrated.
+- **Costs 4/4/8/8/12.** The snapshot carries 5/5/10/10/15, which is the
+  *non-specialty* column. The non-specialty surcharge stays in `out_of_type` as
+  the scaling +1/+2/+3 the book prints.
 - **Rank order Initiate, Apprentice** (Laws of the Ascension, WW05022, lists
   the five ranks Initiate, Apprentice, Disciple, Adept, Master). The GVM
-  printed the first two swapped. Both are basic at the same cost, so no price
-  moves; only the rung label does. See rulings/mage-spheres.json.
+  printed the first two swapped. Both are basic at the same cost, so only the
+  rung label moves. See rulings/mage-spheres.json.
 """
 
 import sys

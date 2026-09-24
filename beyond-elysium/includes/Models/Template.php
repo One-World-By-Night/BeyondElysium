@@ -8,21 +8,11 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Static data-access model for character sheet layout templates.
- *
- * Template is a Database\Manager CRUD model backed by the templates table.
- * Each row is a JSON layout description a React renderer walks - which block
- * goes where, in what order, at what width, and with which display override.
- * Resolution is game-scoped template, then global template, then (outside
- * this class, in Layout_Generator) generated from the stack's own section
- * order when neither exists.
- *
- * @see BE_PROCESS/releases/workflow-0.3.md Step 1
  */
 class Template {
 
 	/**
-	 * The 11 recognized display type slugs, in a fixed order. A template
-	 * section's `display` field is null or one of these.
+	 * The recognized display type slugs. A template section's `display` field is null or one of these.
 	 */
 	const DISPLAY_TYPES = [
 		'simple', 'multiplier', 'multiplier_dot', 'dot', 'cost', 'note_only',
@@ -30,9 +20,7 @@ class Template {
 	];
 
 	/**
-	 * Look up a single template by its primary key. Returns the row with its
-	 * layout field decoded, or null when no template with that ID exists or
-	 * its layout fails to decode.
+	 * Look up a single template by its primary key.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -48,21 +36,12 @@ class Template {
 	/**
 	 * Resolve the effective template for a stack + type, optionally scoped to a game.
 	 *
-	 * Chain, stopping at the first hit:
-	 *   1. game_id is not null: game-scoped row
-	 *   2. global row (game_id IS NULL)
-	 *   3. null - the caller falls back to the stack's section order
-	 *
-	 * A row whose `layout` fails to decode is a corrupt row: it is logged and treated as
-	 * a miss at that tier, not returned half-built.
-	 *
 	 * @param string   $stack_slug
 	 * @param string   $template_type
 	 * @param int|null $game_id
 	 * @return object|null
 	 */
 	public static function resolve( string $stack_slug, string $template_type, ?int $game_id ) {
-		// A null $game_id skips the game-scoped query entirely; only "IS NULL" rows count as global.
 		$game_row = $game_id !== null
 			? Manager::get_row(
 				'SELECT * FROM ' . Manager::table( 'templates' )
@@ -84,9 +63,7 @@ class Template {
 	}
 
 	/**
-	 * The resolution chain's decision logic, isolated from the database
-	 * fetch. Returns the game-scoped row if it decodes cleanly, otherwise
-	 * falls through to the global row, otherwise null.
+	 * The resolution chain's decision logic, isolated from the database fetch.
 	 *
 	 * @param object|null $game_row   Raw row from the game-scoped query, or null.
 	 * @param object|null $global_row Raw row from the global query, or null.
@@ -102,9 +79,8 @@ class Template {
 	}
 
 	/**
-	 * Return a merged template view for a game: every global template, with
-	 * that game's own overrides replacing the global of the same
-	 * (stack_slug, template_type) pair rather than appearing alongside it.
+	 * Return a merged template view for a game: every global template, with that game's own overrides replacing the
+	 * global of the same (stack_slug, template_type) pair.
 	 *
 	 * @param int   $game_id
 	 * @param array $args Filters: stack_slug, template_type.
@@ -128,9 +104,7 @@ class Template {
 	}
 
 	/**
-	 * Return only global templates (game_id IS NULL), never any game's own
-	 * overrides. Supports filtering by stack_slug and template_type, plus
-	 * pagination.
+	 * Return only global templates (game_id IS NULL).
 	 *
 	 * @param array $args Filters: stack_slug, template_type, per_page, offset.
 	 * @return array
@@ -140,11 +114,7 @@ class Template {
 	}
 
 	/**
-	 * Every template row regardless of scope - global or chronicle-owned, any stack.
-	 * `Catalog_Cutover::rewrite_templates()` (1.3.3 C6) needs this: a chronicle's own
-	 * forked template left on a retired slug renders an empty section exactly like a
-	 * global one would, so the sweep cannot stop at globals() the way
-	 * `Schema::repair_stale_default_layouts()` deliberately does.
+	 * Every template row regardless of scope.
 	 *
 	 * @param array $args Filters: stack_slug, template_type.
 	 * @return array
@@ -154,9 +124,7 @@ class Template {
 	}
 
 	/**
-	 * Insert a new template. A null or absent game_id makes it a global
-	 * template; validates the layout against the template schema before
-	 * inserting, and JSON-encodes it for storage.
+	 * Insert a new template.
 	 *
 	 * @param array $data Fields: game_id, stack_slug, name, template_type, layout.
 	 * @return int Insert ID, or 0 on failure (including a layout that fails validation).
@@ -185,9 +153,7 @@ class Template {
 	}
 
 	/**
-	 * Update a template. `game_id` is never part of the allowed fields - a global
-	 * template cannot be converted into a game override or vice versa; that is a create
-	 * plus a delete.
+	 * Update a template.
 	 *
 	 * @param int   $id
 	 * @param array $data Fields: name, template_type, layout.
@@ -224,10 +190,7 @@ class Template {
 	}
 
 	/**
-	 * Delete a template. Deleting a game override simply removes that row, so
-	 * the next resolve() for that game falls through to the global template.
-	 * Deleting an is_system global is refused outright, since those are
-	 * seeded defaults rather than user content.
+	 * Delete a template.
 	 *
 	 * @param int $id
 	 * @return bool False when the template does not exist or is a protected system global.
@@ -247,10 +210,8 @@ class Template {
 	}
 
 	/**
-	 * Validate a decoded layout against the template schema: version must be
-	 * 1, columns an integer from 1 to 6, and every section must name a
-	 * known, non-duplicate block_slug with a column in range and a
-	 * recognized display type.
+	 * Validate a decoded layout against the template schema: version must be 1, columns an integer from 1 to 6, and every
+	 * section must name a known, non-duplicate block_slug with a column in range and a recognized display type.
 	 *
 	 * @param mixed $layout
 	 * @return \WP_Error|null Null when valid.
@@ -303,7 +264,7 @@ class Template {
 				return new \WP_Error( 'invalid_layout', "Section '{$slug}': display must be null or one of the 11 display types.", [ 'status' => 400 ] );
 			}
 
-			// Checked like display: an unknown width once stopped every signed sheet on the stack (1.0.0-review F-077).
+			// Checks the width like display.
 			$width = $section['width'] ?? null;
 			if ( $width !== null && ! in_array( $width, [ 'third', 'half', 'full' ], true ) ) {
 				return new \WP_Error( 'invalid_layout', "Section '{$slug}': width must be null, third, half, or full.", [ 'status' => 400 ] );
@@ -315,9 +276,6 @@ class Template {
 
 	/**
 	 * Shared query helper behind globals(), for_game(), and similar callers.
-	 * Combines caller-supplied WHERE fragments with the common stack_slug,
-	 * template_type, and pagination filters, and drops any row whose layout
-	 * fails to decode from the result.
 	 *
 	 * @param string[] $where_extra SQL fragments already ANDed together with placeholders.
 	 * @param array    $values_extra Placeholder values for $where_extra, in order.
@@ -357,9 +315,8 @@ class Template {
 	}
 
 	/**
-	 * Build the merge key used to match a game override to its global
-	 * template: the row's stack_slug and template_type joined with a pipe,
-	 * used by for_game() to line up overrides with their globals.
+	 * Builds the merge key that matches a game override to its global template: the row's stack_slug and template_type
+	 * joined with a pipe.
 	 *
 	 * @param object $row
 	 * @return string
@@ -370,8 +327,6 @@ class Template {
 
 	/**
 	 * Normalize a layout value into an array before validation or storage.
-	 * Decodes a JSON string or re-encodes-then-decodes an object; anything
-	 * else, including an already-array value, passes through unchanged.
 	 *
 	 * @param mixed $layout
 	 * @return mixed The decoded array, or the original value if it was already something
@@ -389,9 +344,7 @@ class Template {
 	}
 
 	/**
-	 * Decode a row's layout JSON column into an array in place. Returns
-	 * null, logging the failure, when the row is null or its layout does
-	 * not decode to an array; also normalizes game_id and is_system to integers.
+	 * Decode a row's layout JSON column into an array in place.
 	 *
 	 * @param object|null $row
 	 * @return object|null The same row with `layout` decoded, or null when $row is null

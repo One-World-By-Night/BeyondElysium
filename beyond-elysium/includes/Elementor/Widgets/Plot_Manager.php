@@ -7,49 +7,35 @@ use Elementor\Controls_Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Elementor widget wrapper for the Plot Manager, the Storyteller dashboard
- * for browsing plots, managing connections, allocating actions, and
- * generating rumors. Registers the widget's name, title, and icon
- * with Elementor, exposes Content section controls for the target game slug
- * and a default status filter, and renders a single mount-point <div> that
- * the front-end script hydrates with the PlotManager React component.
- *
- * @see BE_PROCESS/releases/workflow-0.5.md Step 7a
+ * Elementor widget wrapper for the Plot Manager, the Storyteller dashboard for browsing plots, managing connections,
+ * allocating actions, and generating rumors.
  */
 class Plot_Manager extends Base_Widget {
 
 	/**
-	 * Returns the internal widget name Elementor uses to identify this
-	 * widget type. Elementor stores this string in page and template
-	 * markup wherever the widget is placed.
+	 * Returns the internal widget name Elementor uses to identify this widget type.
 	 */
 	public function get_name(): string {
 		return 'be-plot-manager';
 	}
 
 	/**
-	 * Returns the human-readable label Elementor shows for this widget in
-	 * the editor's widget panel, search results, and layers panel. This is
-	 * the text an editor sees when placing the widget on a page.
+	 * Returns the human-readable label Elementor shows for this widget in the editor's widget panel, search results, and
+	 * layers panel.
 	 */
 	public function get_title(): string {
 		return __( 'Plot Manager', 'beyond-elysium' );
 	}
 
 	/**
-	 * Returns the Elementor icon class shown next to this widget's title in
-	 * the widget panel. The value is an eicon-* class name supplied by
-	 * Elementor's built-in icon font.
+	 * Returns the Elementor icon class shown next to this widget's title in the widget panel.
 	 */
 	public function get_icon(): string {
 		return 'eicon-post-list';
 	}
 
 	/**
-	 * Builds the Elementor "Content" section shown in the editor panel for
-	 * this widget. Adds a read-only description note, a Game Slug text
-	 * control, and a Default Status Filter select that pre-filters the
-	 * rendered dashboard to active, resolved, or archived plots.
+	 * Builds the Elementor "Content" section shown in the editor panel for this widget.
 	 */
 	protected function register_controls(): void {
 		$this->start_controls_section( 'content_section', [
@@ -88,7 +74,9 @@ class Plot_Manager extends Base_Widget {
 		return 'plot-manager';
 	}
 
-	/** Adds a defaultStatus entry only when a filter was chosen. */
+	/**
+	 * Adds a defaultStatus entry only when a filter was chosen.
+	 */
 	protected function widget_config( array $settings ): array {
 		$config = [ 'gameSlug' => $settings['game_slug'] ];
 		if ( ! empty( $settings['default_status'] ) ) {

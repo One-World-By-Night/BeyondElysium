@@ -11,11 +11,9 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-063 (Pass H intake `t3-content-controllers`). Another character's action
- * allocation is private: the plot list leaves it out, since its title alone names the character.
- * But a player could still open it by id (200, with its title and its link to the character),
- * see it among a shared plot's child plots, and list the link itself through the connections
- * route, which any member could read.
+ * An allocation plot and its entries open only for their own player and the plot's staff: another player cannot open
+ * them, a shared plot lists the allocation among its children only for those who may open it, and a player cannot list
+ * connections while plot staff can.
  */
 class AllocationPlotPrivacyThreadTest extends WP_UnitTestCase {
 

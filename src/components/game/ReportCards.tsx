@@ -1,15 +1,15 @@
 /**
- * Front-end display of a card-shaped report (Location Cards, Rote Cards - the same
- * `Report_Document`/`Report_Writer` shape the signed PDF and the admin Reports page both
- * already use). Fetches the plain JSON form (`api.reports(gameSlug).document(reportKey)`)
- * and renders one card per row, exactly the columns the report registry declares.
+ * Front-end display of a card-shaped report (Location Cards, Rote Cards - the same `Report_Document`/`Report_Writer`
+ * shape the signed PDF and the admin Reports page both already use).
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import './ReportCards.css';
 
-/** One [label, value] pair; `Report_Document::resolve_one()` always resolves to a plain string. */
+/**
+ * One [label, value] pair.
+ */
 type CardField = [ string, string ];
 
 interface CardsDocument {
@@ -21,18 +21,18 @@ interface CardsDocument {
 
 export interface ReportCardsProps {
 	gameSlug: string;
-	/** A report-registry key whose shape is 'card' - 'location-cards' or 'rote-cards' here. */
+	/**
+	 * A report-registry key whose shape is 'card'.
+	 */
 	reportKey: string;
-	/** Scopes the report to one character (1.1.0 §3.15) - required for Rote Cards when the viewer isn't a manager. */
+	/**
+	 * Scopes the report to one character.
+	 */
 	characterId?: number;
 }
 
 /**
- * Renders every card's fields as a label/value list. A field's value is rendered as HTML,
- * not escaped plain text: a `text`-typed property (Appearance, Security, Description, ...)
- * is real `wp_kses_post()`-sanitized rich text by the time it reaches here, the same trust
- * boundary `WorldObjectCard.tsx`/`HouseRules.tsx` already rely on for the same data: a plain
- * `string`/`int` field carries no markup to begin with, so rendering it as HTML is a no-op.
+ * Renders every card's fields as a label/value list.
  */
 export function ReportCards( {
 	gameSlug,

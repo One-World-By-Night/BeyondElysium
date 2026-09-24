@@ -11,11 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §3.10 (F1): sects, coteries, packs, chantries and courts. `be_manage_factions`
- * writes; a plain viewer reads name/type/description for anything `Audience` clears, and
- * goals plus the member roster only once they are a member (or a manager) of it too.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.10
+ * Sects, coteries, packs, chantries and courts.
  */
 class FactionsThreadTest extends WP_UnitTestCase {
 
@@ -59,9 +55,6 @@ class FactionsThreadTest extends WP_UnitTestCase {
 		], $overrides ) );
 	}
 
-	// -------------------------------------------------------------------------
-	// Visibility: everyone who can see it reads name/type/description; goals
-	// and the roster are member-or-manager only.
 	// -------------------------------------------------------------------------
 
 	public function test_a_plain_viewer_does_not_see_goals(): void {
@@ -129,9 +122,6 @@ class FactionsThreadTest extends WP_UnitTestCase {
 		$this->assertTrue( $data[0]['is_leader'] );
 	}
 
-	// -------------------------------------------------------------------------
-	// Leader self-service: add/remove, but never remove the last leader, and a
-	// leader can never remove another leader.
 	// -------------------------------------------------------------------------
 
 	public function test_a_leader_can_add_a_member(): void {
@@ -208,9 +198,6 @@ class FactionsThreadTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->storyteller_id );
 		$response = $this->send( 'DELETE', "/factions/{$faction_id}/members/{$leader_character_id}" );
 
-		// Even a manager can't leave a faction leaderless via this route (the
-		// model-layer backstop in Faction_Member::remove()); they'd promote a
-		// replacement leader first, or delete the faction outright.
 		$this->assertSame( 400, $response->get_status() );
 	}
 

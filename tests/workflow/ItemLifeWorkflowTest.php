@@ -10,11 +10,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §7 trace 7: a Storyteller copies Silver Dagger for a character (restricted,
- * "Based on Silver Dagger"); the player marks two of three uses; a Storyteller records it
- * stolen by another character; History reads copied, used, used, stolen; the old printed
- * card's code verifies with a holder mismatch; a reprint for the new holder issues a new
- * code.
+ * Trace 7: a Storyteller copies Silver Dagger for a character (restricted, "Based on Silver Dagger").
  */
 class ItemLifeWorkflowTest extends WP_UnitTestCase {
 

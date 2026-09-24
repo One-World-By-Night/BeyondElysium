@@ -6,13 +6,7 @@ use BeyondElysium\Services\Display\Trait_Display;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `Trait_Display.php` (authoritative) and `displayTrait.ts` (the on-screen character
- * sheet's renderer) must agree - same trait, mode, and dot glyph in, same formatted
- * string out. Both read the same fixture and are checked against the same expected
- * output; this half proves the PHP side, `src/lib/displayTrait.test.ts` proves the
- * TypeScript side.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md SP-3
+ * `Trait_Display.php` (authoritative) and `displayTrait.ts` (the on-screen character sheet's renderer) must agree.
  */
 class TraitDisplayParityTest extends TestCase {
 
@@ -38,7 +32,7 @@ class TraitDisplayParityTest extends TestCase {
 				"Fixture case order drifted at index {$i}."
 			);
 
-			// Omitted when the case names no glyph, so the default dot is part of what both halves agree on.
+			// Omitted when the case names no glyph.
 			$actual = isset( $case->dot )
 				? Trait_Display::display_trait( $case->trait, $case->mode, $case->dot )
 				: Trait_Display::display_trait( $case->trait, $case->mode );
@@ -47,12 +41,6 @@ class TraitDisplayParityTest extends TestCase {
 		}
 	}
 
-	/**
-	 * The specific regression this project has already been bitten by once (D25,
-	 * a sibling bridging bug): signed-pdf-design.md SP-3 calls out this exact
-	 * leading-integer parse as a required direct assertion, not just an indirect
-	 * one via display_trait()'s simple_number mode.
-	 */
 	public function test_parse_total_reads_the_leading_integer_and_ignores_the_rest(): void {
 		$this->assertSame( 3, Trait_Display::parse_total( '3 (borrowed)' ) );
 	}

@@ -1,8 +1,5 @@
 /**
- * IdentityFieldEditor renders the editable controls for an identity_field block -
- * the character's named single-value fields such as Clan, Nature, or Generation.
- * Each field in the block definition renders as a select, multiselect, number,
- * textarea, or plain text input depending on its field_type.
+ * IdentityFieldEditor renders the editable controls for an identity_field block.
  */
 import { useId } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -22,20 +19,22 @@ export interface IdentityFieldEditorProps {
 		nextData: Record< string, IdentityFieldValue >
 	) => void;
 	readOnly?: boolean;
-	/** Only used by a textarea field's AI Assist button (ai-writing-assist-design.md). */
+	/**
+	 * Only used by a textarea field's AI Assist button.
+	 */
 	gameSlug?: string;
 }
 
-/** Returns a field's resolved list of selectable options, or an empty array if none. */
+/**
+ * Returns a field's resolved list of selectable options, or an empty array if none.
+ */
 function resolveOptions( field: IdentityField ): string[] {
 	return field.options ?? [];
 }
 
 /**
- * Renders one input per field in an identity_field block's definition: a checkbox
- * group for multiselect, a searchable or plain dropdown for select, or a number,
- * textarea, or text input otherwise. Reports every field change through onChange;
- * it never recalculates derived values itself.
+ * Renders one input per field in an identity_field block's definition: a checkbox group for multiselect, a searchable
+ * or plain dropdown for select, or a number, textarea, or text input.
  */
 export function IdentityFieldEditor( {
 	blockSlug,
@@ -236,10 +235,6 @@ export function IdentityFieldEditor( {
 							>
 								{ field.name }
 							</label>
-							{ /* Rich text since 1.0.1 D1 - the one identity field type that is
-							     prose rather than a value. HtmlEditor carries the AI Assist
-							     button itself, reading live editor content rather than a
-							     render-time snapshot. */ }
 							<HtmlEditor
 								id={ fieldId }
 								defaultValue={ textValue }

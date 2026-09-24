@@ -6,10 +6,7 @@ use BeyondElysium\Services\Fuzzy_Matcher;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `Fuzzy_Matcher` (workflow-0.8.md Step 5) - normalization, edit-distance thresholds,
- * and ranked suggestions, independent of any real import.
- *
- * @see BE_PROCESS/releases/workflow-0.8.md Step 5
+ * `Fuzzy_Matcher` - normalization, edit-distance thresholds, and ranked suggestions, independent of any real import.
  */
 class FuzzyMatcherTest extends TestCase {
 

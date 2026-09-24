@@ -6,9 +6,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * User request, 2026-09-11: a wp-admin "Docs" tab reading the plugin's own shipped
- * docs/*.md files through this route. `SLUGS` is the route's own allowlist, not a filter
- * applied after matching - a request for anything else never reaches the handler at all.
+ * The wp-admin Docs tab route reads only the plugin's own shipped `docs/*.md` files, through an allowlist.
  */
 class DocsControllerTest extends WP_UnitTestCase {
 
@@ -48,9 +46,7 @@ class DocsControllerTest extends WP_UnitTestCase {
 	}
 
 	public function test_requires_be_view_characters(): void {
-		// A user with no role at all - be_view_characters is granted broadly (every real
-		// role has it, Characters_Controller's own established convention), but a bare
-		// WP_User with no role holds no capabilities at all.
+		// A user with no role at all.
 		$user = self::factory()->user->create( [ 'role' => '' ] );
 		wp_set_current_user( $user );
 
@@ -60,9 +56,6 @@ class DocsControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 403, $response->get_status() );
 	}
 
-	/**
-	 * 1.0.0-help.md H-1: a screen's `?` reads its help page from `docs/help/{key}.md`.
-	 */
 	public function test_a_help_page_is_served_by_its_key(): void {
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'subscriber' ] ) );
 

@@ -8,13 +8,7 @@ use BeyondElysium\Services\Query_Engine;
 use WP_UnitTestCase;
 
 /**
- * Real item/location/rote rows through the real query engine - the
- * assertions that cannot be derived from anything already in the codebase,
- * because they depend on real GV ground truth (atomic vs not) and on a real
- * storage asymmetry (a rote's description) that only shows up against real
- * rows.
- *
- * @see BE_PROCESS/design/query-beyond-characters-design.md §12
+ * Real item/location/rote rows through the real query engine.
  */
 class QueryWorldObjectsTest extends WP_UnitTestCase {
 
@@ -73,8 +67,7 @@ class QueryWorldObjectsTest extends WP_UnitTestCase {
 	}
 
 	public function test_links_contains_at_least_on_a_location_behaves_atomically(): void {
-		// The first "Tunnel" entry fails the count comparison; only an atomic walk reaches
-		// the second one that satisfies it.
+		// The first "Tunnel" entry fails the count comparison.
 		World_Object::create( [
 			'game_id' => $this->game_id, 'object_type' => 'location', 'name' => 'Deep Warren',
 			'properties' => [ 'links' => [
@@ -89,9 +82,6 @@ class QueryWorldObjectsTest extends WP_UnitTestCase {
 	}
 
 	public function test_abilities_contains_at_least_on_an_item_does_not_behave_atomically(): void {
-		// Same shape as the location case above, but Item Abilities is NOT atomic
-		// (ItemClass.cls:313) - the walk must stop at the first entry and never reach
-		// the second, satisfying one.
 		World_Object::create( [
 			'game_id' => $this->game_id, 'object_type' => 'item', 'name' => 'Layered Charm',
 			'properties' => [ 'abilities' => [
@@ -106,9 +96,6 @@ class QueryWorldObjectsTest extends WP_UnitTestCase {
 	}
 
 	public function test_powers_contains_on_an_item_does_not_throw(): void {
-		// qkdata.gvd types 'powers' as list; ItemClass.cls:131 stores it as a String.
-		// Without the type override this reaches evaluate_list(string) - an uncaught
-		// TypeError, not a wrong answer.
 		World_Object::create( [
 			'game_id' => $this->game_id, 'object_type' => 'item', 'name' => 'Fortifying Fetish',
 			'properties' => [ 'powers' => 'Grants Fortitude 2 while worn.' ],
@@ -125,8 +112,7 @@ class QueryWorldObjectsTest extends WP_UnitTestCase {
 
 		$result = Query_Engine::statistics( $this->game_slug, [], 'AND', 'level', 'distribution', true, null, 'item' );
 
-		// A non-'field'-type distribution relabels its buckets "{value} {title}" (Query_Engine
-		// ::relabel_buckets()) - 'level' is registry type 'num' with title 'Level'.
+		// A non-'field'-type distribution relabels its buckets "{value} {title}" (Query_Engine::relabel_buckets()).
 		$this->assertArrayHasKey( '1 Level', $result['buckets'] );
 		$this->assertArrayHasKey( '5 Level', $result['buckets'] );
 	}

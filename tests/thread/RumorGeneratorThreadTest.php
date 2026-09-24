@@ -9,12 +9,8 @@ use BeyondElysium\Services\Rumor_Generator;
 use WP_UnitTestCase;
 
 /**
- * The database-touching half of Rumor Generation: persisting rumor-tagged plots,
- * skipping titles already present for a date, previous-date cloning with and without
- * `copy_previous`, and inactive characters excluded. The pure per-character candidate
- * logic is covered without a database in `tests/unit/RumorGeneratorTest.php`.
- *
- * @see BE_PROCESS/releases/workflow-0.5.md Step 5g
+ * The database-touching half of Rumor Generation: persisting rumor-tagged plots, skipping titles already present for
+ * a date, previous-date cloning with and without `copy_previous`, and inactive characters excluded.
  */
 class RumorGeneratorThreadTest extends WP_UnitTestCase {
 

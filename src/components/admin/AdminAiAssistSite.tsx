@@ -1,20 +1,5 @@
 /**
- * Site-wide AI Assist settings (ai-writing-assist-design.md): which provider
- * is active, and its API key - used directly by every site-wide field
- * (Schema Block catalog descriptions, Credits text), and as the fallback for
- * any chronicle that opts in without supplying its own key. be_manage_games
- * only - an administrator's own call, since this key is billed to whoever
- * supplies it and used across every chronicle on the site by default.
- *
- * A clear three-way choice - OpenAI, Claude, or Self-Hosted (OpenAI-
- * compatible) - only one of which is ever shown at a time. "Self-Hosted"
- * is not a third wire protocol: it stores as provider `openai` with a
- * base URL/model override, since every common self-hosted option (Ollama,
- * LM Studio, vLLM, LocalAI) speaks the same Chat Completions shape OpenAI's
- * own API does. There is no self-hosted equivalent for Claude's own
- * Messages API in common use, so that option isn't offered as a fourth
- * choice - a chronicle wanting a self-hosted server always gets it via
- * this option, regardless of which provider the button itself is labeled.
+ * Site-wide AI Assist settings: which provider is active, and its API key.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -54,8 +39,7 @@ export function AdminAiAssistSite() {
 				setSettings( result );
 				setOpenaiBaseUrl( result.openai_base_url );
 				setOpenaiModel( result.openai_model );
-				// A saved OpenAI-slot base URL means this was configured as self-hosted -
-				// the two share one storage slot (provider `openai` either way).
+				// A saved OpenAI-slot base URL means this was configured as self-hosted.
 				const isSelfHosted =
 					result.provider === 'openai' &&
 					( result.openai_base_url !== '' ||
@@ -78,8 +62,7 @@ export function AdminAiAssistSite() {
 		setError( null );
 		setMessage( null );
 		try {
-			// A blank key field is left untouched, not cleared - only an explicit "Clear" click
-			// sends the empty string that actually removes a stored key.
+			// A blank key field is left untouched.
 			const data: Partial< {
 				provider: string;
 				openai_key: string;

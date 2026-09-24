@@ -11,10 +11,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * A player buys a merit, a Storyteller opens the approval queue, the player changes their mind
- * and resubmits a bigger purchase, and the Storyteller - still looking at the first version -
- * clicks Approve (1.0.0-review F-031). The stale approval is refused; after reloading, the
- * Storyteller approves what is actually there, once, and a second click changes nothing (F-015).
+ * A player buys a merit, a Storyteller opens the approval queue, the player changes their mind and resubmits a bigger
+ * purchase, and the Storyteller.
  */
 class ChangeReviewWorkflowTest extends WP_UnitTestCase {
 

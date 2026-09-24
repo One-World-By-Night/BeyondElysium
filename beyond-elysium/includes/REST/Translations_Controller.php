@@ -11,34 +11,19 @@ use BeyondElysium\Services\Name_Key;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for catalog term translation (1.2.0). Site-wide, not
- * chronicle-scoped - translations are site data, one install one language
- * (Decision 106). Every route is gated on `be_manage_translations`, never
- * `be_manage_schemas` - see that capability's own registration comment for
- * why the two are deliberately independent.
- *
- * @see BE_PROCESS/releases/1.2.0-design-workflow.md §6
+ * REST controller for catalog term translation.
  */
 class Translations_Controller extends Base_Controller {
 
 	protected $rest_base = 'translations';
 
-	/** §6's own explicit cap - the default 100 a plain `get_pagination()` call would apply is
-	 * exactly the D38/D52 defect class this screen exists to not repeat, against 8,298 rows. */
+	/**
+	 * The most rows one page returns.
+	 */
 	private const MAX_PER_PAGE = 500;
 
 	/**
-	 * Registers all ten routes. Two of §6's own literal names - "stats" and "import" - are
-	 * deliberately NOT used as the final path segment here: this plugin already has a
-	 * `(?P<game_slug>[a-z0-9\-]+)/stats` route (Game_Stats_Controller) and a
-	 * `(?P<game_slug>[a-z0-9\-]+)/import` route (Import_Controller), and WordPress's route
-	 * matcher tries registered patterns in order - "translations" itself satisfies
-	 * `[a-z0-9\-]+`, so `/translations/stats` collided with the FIRST-registered pattern and
-	 * 404'd as "game_not_found" (confirmed live, not theorized). Renamed to `/progress` and
-	 * `/import-csv`, neither of which exists anywhere else in this plugin's route table
-	 * (checked directly against every registered `{game_slug}/X` pattern before picking
-	 * them) - correctness by construction, not by depending on Plugin.php's own controller
-	 * registration order staying exactly as it is today.
+	 * Registers all ten routes.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/' . $this->rest_base, [
@@ -139,7 +124,7 @@ class Translations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * §6: "Per-locale totals and per-block breakdown for the progress display."
+	 * "Per-locale totals and per-block breakdown for the progress display."
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -183,10 +168,8 @@ class Translations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Every distinct block a translatable term appears in, with a term count and how many of
-	 * those terms carry a real translation for $locale. Walked in PHP rather than a JSON_TABLE
-	 * query - "cheap" per §6's own framing already assumes a full-table read is fine at this
-	 * row count, and this stays portable without depending on a specific MySQL JSON feature.
+	 * Every distinct block a translatable term appears in, with a term count and how many of those terms carry a real
+	 * translation for $locale.
 	 *
 	 * @param string $locale
 	 * @return array<string,array{total:int,translated:int}>
@@ -229,7 +212,7 @@ class Translations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * §6: "Locales that have rows, plus the locales WordPress has installed."
+	 * "Locales that have rows, plus the locales WordPress has installed."
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response
@@ -247,9 +230,7 @@ class Translations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Create or replace one translation (§6): upsert on (string_id, locale, context). Accepts
-	 * either string_id or source_text - a translator naming a brand-new term (one rescan()
-	 * has not indexed yet) gets a string row created for them rather than a 404.
+	 * Create or replace one translation: upsert on (string_id, locale, context).
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -339,9 +320,7 @@ class Translations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * §6: "{ locale, rows: [{source_text, translation, status}] }. Backs CSV import and bulk
-	 * approve." Every row is independent - one bad row is skipped and counted, never aborts
-	 * the rest of the batch.
+	 * Bulk-updates translations: `{ locale, rows: [{source_text, translation, status}] }`.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -359,8 +338,7 @@ class Translations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The write side shared by bulk() and import()'s non-dry-run pass - kept as one method so
-	 * the two can never silently diverge in what counts as "updated" vs. "skipped" (T12).
+	 * The write side shared by bulk() and import()'s non-dry-run pass.
 	 *
 	 * @param string   $locale
 	 * @param array    $rows
@@ -403,7 +381,7 @@ class Translations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * §6: CSV download honouring the same filters as the list, text/csv, UTF-8 BOM.
+	 * CSV download honouring the same filters as the list, as text/csv with a UTF-8 BOM.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -418,7 +396,7 @@ class Translations_Controller extends Base_Controller {
 		$total   = Translation_String::count_for_review( $locale, $filters );
 		$rows    = Translation_String::list_for_review( $locale, $filters, max( 1, $total ), 0 );
 
-		$buffer = "\xEF\xBB\xBF"; // UTF-8 BOM, per §6.
+		$buffer = "\xEF\xBB\xBF";
 		$handle = fopen( 'php://temp', 'w+' );
 		if ( ! $handle ) {
 			return $this->error( 'export_failed', __( 'The export could not be generated.', 'beyond-elysium' ), 500 );
@@ -438,7 +416,7 @@ class Translations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * §6: multipart CSV. dry_run=1 reports counts and a sample without writing (T12).
+	 * Imports translations from a multipart CSV; dry_run=1 reports counts and a sample without writing.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -468,11 +446,7 @@ class Translations_Controller extends Base_Controller {
 		$conflicts  = 0;
 		$sample     = [];
 
-		// A conflict is the FILE disagreeing with itself - two rows for the same term with two
-		// different translations - not the file disagreeing with what's already in the
-		// database, which is an ordinary update (correcting an existing translation is the
-		// whole point of importing). This matches §8's own migration use of "conflict" for an
-		// internally-inconsistent source, not a source that disagrees with a prior state.
+		// A conflict is the FILE disagreeing with itself.
 		$seen_in_file = [];
 
 		foreach ( $rows as $row ) {
@@ -543,8 +517,8 @@ class Translations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The shared status/block/search/has_translation filter set list()/export() both read from
-	 * the same request shape (§6's own "CSV download honouring the same filters as the list").
+	 * The shared status/block/search/has_translation filter set that list() and export() both read from the same request
+	 * shape.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return array
@@ -565,9 +539,8 @@ class Translations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * A minimal, dependency-free CSV reader matching export()'s own three-column shape
-	 * (source_text, translation, status) - the header row is required and used to map columns
-	 * by name rather than position, so a hand-edited file with reordered columns still works.
+	 * A minimal, dependency-free CSV reader matching export()'s own three-column shape (source_text, translation,
+	 * status).
 	 *
 	 * @param string $contents
 	 * @return array<int,array<string,string>>
@@ -599,9 +572,7 @@ class Translations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Serves export()'s raw CSV bytes instead of JSON-encoding them, matched by callback
-	 * identity - the same pattern Sheets_Controller::serve_pdf_bytes() already established for
-	 * signed PDFs.
+	 * Serves export()'s raw CSV bytes.
 	 *
 	 * @param bool              $served
 	 * @param mixed             $result
@@ -622,7 +593,7 @@ class Translations_Controller extends Base_Controller {
 
 		header( 'Content-Type: text/csv; charset=UTF-8' );
 		header( 'Content-Disposition: attachment; filename="' . $data['filename'] . '"' );
-		echo $data['bytes']; // phpcs:ignore -- raw CSV bytes, not HTML output.
+		echo $data['bytes']; // phpcs:ignore
 		return true;
 	}
 }

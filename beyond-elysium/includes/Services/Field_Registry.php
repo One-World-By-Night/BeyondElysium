@@ -5,33 +5,28 @@ namespace BeyondElysium\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Grapevine's 231-key field registry (qkdata.gvd) and where each key lives
- * in Beyond Elysium.
- *
- * Template tokens such as [Name], [Clan], [XPUnspent], and [Disciplines]
- * are query keys, resolved the same way the query engine resolves them:
- * against this registry. Each row carries the key's title, value type, and
- * which inventories (character, player, item, and so on) it applies to.
- *
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "qkdata.gvd - the 231-key registry"
- * @see BE_PROCESS/releases/workflow-0.3.md Step 0
- * @see BE_PROCESS/releases/workflow-0.6.md Step 1
+ * Grapevine's 231-key field registry (qkdata.gvd) and where each key lives in Beyond Elysium.
  */
 class Field_Registry {
 
 	/**
-	 * Runtime copy of qkdata.gvd, read from the data/ directory rather
-	 * than the excluded GV301Source/ archive.
+	 * Runtime copy of qkdata.gvd, read from the data/ directory.
 	 */
 	const SOURCE_FILE = __DIR__ . '/../../data/qkdata.gvd';
 
-	/** Field-storage map: where each key lives in BE. */
+	/**
+	 * Field-storage map: where each key lives in BE.
+	 */
 	const MAP_FILE = __DIR__ . '/field-map.php';
 
-	/** Per-inventory storage descriptors and field maps for everything beyond `char`. */
+	/**
+	 * Per-inventory storage descriptors and field maps for everything beyond `char`.
+	 */
 	const INVENTORIES_FILE = __DIR__ . '/query-inventories.php';
 
-	/** The inventories the query builder actually offers - see query-beyond-characters-design.md §5.5. */
+	/**
+	 * The inventories the query builder actually offers.
+	 */
 	const QUERYABLE_INVENTORIES = [ 'char', 'item', 'loc', 'rote' ];
 
 	/** @var array<string,array{key:string,title:string,type:string,inventories:string[]}>|null */
@@ -44,9 +39,7 @@ class Field_Registry {
 	private static ?array $inventories = null;
 
 	/**
-	 * Returns every registry row, keyed by Grapevine field key. Parses the
-	 * source file on first call and caches the result for subsequent
-	 * calls within the same request.
+	 * Returns every registry row, keyed by Grapevine field key.
 	 *
 	 * @return array<string,array{key:string,title:string,type:string,inventories:string[]}>
 	 */
@@ -59,8 +52,6 @@ class Field_Registry {
 
 	/**
 	 * Returns the subset of registry rows that apply to a given inventory.
-	 * Filters the full registry down to rows whose `inventories` list
-	 * contains the requested inventory name.
 	 *
 	 * @param string $inventory One of: char, player, item, loc, rote, plot, rumor, action.
 	 * @return array<string,array>
@@ -75,9 +66,7 @@ class Field_Registry {
 	}
 
 	/**
-	 * Returns a single registry row for the given field key. Looks the
-	 * key up in the full registry, returning its title, type, and
-	 * inventory list, or null when no row exists for the key.
+	 * Returns a single registry row for the given field key.
 	 *
 	 * @param string $key
 	 * @return array{key:string,title:string,type:string,inventories:string[]}|null
@@ -87,13 +76,7 @@ class Field_Registry {
 	}
 
 	/**
-	 * Returns the field-storage map: where each Grapevine key lives in
-	 * Beyond Elysium. Loads and caches the map from its source file on
-	 * first call.
-	 *
-	 * Each entry has one of four source kinds: `column` (a be_characters
-	 * column), `json` (inside sheet_data), `derived` (computed, not
-	 * stored), or `unmapped` (no Beyond Elysium equivalent for the key).
+	 * Returns the field-storage map: where each Grapevine key lives in Beyond Elysium.
 	 *
 	 * @return array<string,array<string,mixed>>
 	 */
@@ -106,12 +89,6 @@ class Field_Registry {
 
 	/**
 	 * Returns the field-storage entry for one key, for the given inventory.
-	 * `char` (the default) reads `field-map.php`, unchanged. Any other
-	 * inventory reads its own map in `query-inventories.php`; a `char` key
-	 * looked up under a non-char inventory that does not declare it
-	 * returns null, never falling back to the char map - the two
-	 * inventories' storage is genuinely different (query-beyond-characters-
-	 * design.md §3b/§4a).
 	 *
 	 * @param string $key
 	 * @param string $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
@@ -125,9 +102,7 @@ class Field_Registry {
 	}
 
 	/**
-	 * Returns whether a key resolves to a real Beyond Elysium storage
-	 * location for the given inventory. True when the key has a field-
-	 * storage entry and that entry's source is not `unmapped`.
+	 * Returns whether a key resolves to a real Beyond Elysium storage location for the given inventory.
 	 *
 	 * @param string $key
 	 * @param string $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
@@ -139,12 +114,8 @@ class Field_Registry {
 	}
 
 	/**
-	 * Returns the value type to validate and resolve a key against for a
-	 * given inventory: the map entry's own `type` override when it
-	 * declares one (only `item.powers` does today, per §4d), otherwise the
-	 * registry's own declared type. Used by validation, value resolution,
-	 * and the field list so all three cannot disagree about a key whose
-	 * storage cannot hold what the registry says it is.
+	 * Returns the value type to validate and resolve a key against for a given inventory: the map entry's own `type`
+	 * override when it declares one (only `item.powers` does today).
 	 *
 	 * @param string $key
 	 * @param string $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
@@ -156,12 +127,9 @@ class Field_Registry {
 	}
 
 	/**
-	 * Returns one inventory's storage descriptor: which table it queries
-	 * (`storage`), the object_type to filter on when it is world-object-
-	 * backed, the columns a result list displays, and its field map (null
-	 * for `char`, meaning "field-map.php"). Loads and caches
-	 * query-inventories.php on first call, the same static-cache pattern
-	 * World_Object::schemas() uses for its own per-type data file.
+	 * Returns one inventory's storage descriptor: which table it queries (`storage`), the object_type to filter on when
+	 * it is world-object-backed, the columns a result list displays, and its field map (null for `char`, meaning
+	 * "field-map.php").
 	 *
 	 * @param string $inventory
 	 * @return array{storage:string,object_type?:string,result_columns:string[],fields:array|null}|null
@@ -174,9 +142,7 @@ class Field_Registry {
 	}
 
 	/**
-	 * Parses the qkdata.gvd source file into registry rows. Reads the
-	 * file as CSV with CRLF line endings and four quoted columns per row,
-	 * normalizing the type and inventory columns along the way.
+	 * Parses the qkdata.gvd source file into registry rows.
 	 *
 	 * @return array<string,array{key:string,title:string,type:string,inventories:string[]}>
 	 * @throws \RuntimeException If the source file is missing or unreadable.
@@ -191,7 +157,6 @@ class Field_Registry {
 			throw new \RuntimeException( 'Field registry source could not be read: ' . self::SOURCE_FILE );
 		}
 
-		// Split on literal CRLF rather than relying on fgetcsv() line-ending autodetection.
 		$lines = explode( "\r\n", rtrim( $contents, "\r\n" ) );
 
 		$rows = [];
@@ -220,9 +185,7 @@ class Field_Registry {
 	}
 
 	/**
-	 * Normalizes a raw type column value into one of the registry's
-	 * canonical types. Maps the "number" value to "num"; every other
-	 * value passes through unchanged.
+	 * Normalizes a raw type column value into one of the registry's canonical types.
 	 *
 	 * @param string $type Raw type column value.
 	 * @return string Normalized type: num, field, list, date, or bool.
@@ -232,9 +195,7 @@ class Field_Registry {
 	}
 
 	/**
-	 * Parses the inventory column into canonical inventory names. Tests
-	 * the raw value for each inventory's substring rather than splitting
-	 * on commas, so "play" matches "player" and "act" matches "action".
+	 * Parses the inventory column into canonical inventory names.
 	 *
 	 * @param string $raw Raw inventories column, e.g. "char,player,item".
 	 * @return string[] Canonical inventory names present, in a fixed order.

@@ -5,42 +5,32 @@ namespace BeyondElysium\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Validates a declared catalog file against `reference/CATALOG-JSON-FORMAT.md` §7.
- *
- * **A file is rejected, not silently degraded.** This is the gate that makes the declared
- * catalog worth having: under the flat GVM shape a family carrying twelve ladder-rank levels
- * against a real ceiling of five was invisible and simply mis-priced (D67, and D68 behind it).
- * Here it cannot be committed. `bin/validate-catalog` runs this over `data/catalog/**` and
- * `bin/verify` fails the build on any error, so a broken catalog never reaches a seed.
- *
- * **Built before the files it validates** (owner ruling, 2026-09-21), deliberately out of
- * release order. 1.3.0/1.3.1 emit ~118 files and 11,519 rows; generating them against no
- * machine check and validating only at cutover would mean discovering a systematic authoring
- * error 118 files late. Running this continuously as they are generated means a human review
- * is spent on rulings rather than on format errors a script should have caught.
- *
- * Pure: no database, no WordPress, no filesystem. `validate_block()` takes decoded data and
- * returns errors, so 1.3.2's own `Catalog_Reader` can reuse it rather than growing a second
- * copy of the rules that drifts from this one.
+ * Validates a declared catalog file. A file is rejected, not silently degraded.
  */
 class Catalog_Validator {
 
-	/** Section types a block file may declare. */
+	/**
+	 * Section types a block file may declare.
+	 */
 	private const SECTION_TYPES = [ 'trait_list', 'tiered_power', 'identity_field', 'resource_pool' ];
 
-	/** Envelope `format` versions this validator understands (format §3). */
+	/**
+	 * Envelope `format` versions this validator understands (format).
+	 */
 	private const FORMATS = [ 1 ];
 
-	/** Record kinds a catalog file may carry (format §3). */
+	/**
+	 * Record kinds a catalog file may carry (format).
+	 */
 	private const KINDS = [ 'block', 'stack', 'template', 'preset' ];
 
-	/** Template types, the second half of a template's `<stack>.<type>` slug (format §6). */
+	/**
+	 * Template types, the second half of a template's `<stack>.<type>` slug (format).
+	 */
 	private const TEMPLATE_TYPES = [ 'sheet_full', 'npc_full', 'npc_quick' ];
 
 	/**
-	 * Validates one decoded file of any kind: the shared envelope (rule 1 plus format §3's
-	 * required keys), then the payload for its kind. Cross-file references (rules 6 and 7) need
-	 * every file at once, so they are {@see validate_references()}'s job, not this one's.
+	 * Validates one decoded file of any kind: the shared envelope (rule 1 plus the format's required keys).
 	 *
 	 * @param array<string,mixed> $data Decoded file contents.
 	 * @param string              $stem The filename without extension.
@@ -91,8 +81,8 @@ class Catalog_Validator {
 	}
 
 	/**
-	 * Rule 6's shape half: a stack's sections each name a block, a label and an order, and an
-	 * `in_type_source` is a `"block_slug.Field"` join.
+	 * Rule 6's shape half: a stack's sections each name a block, a label and an order, and an `in_type_source` is a
+	 * `"block_slug.Field"` join.
 	 *
 	 * @param array<string,mixed> $definition
 	 * @return string[]
@@ -140,16 +130,6 @@ class Catalog_Validator {
 				if ( $join !== null && ( ! is_string( $join ) || ! preg_match( '/^[a-z0-9_-]+\\.[^.]+$/', $join ) ) ) {
 					$errors[] = sprintf( '%s ("%s") has `in_type_source` "%s" - it is a "block_slug.Field" join', $where, $section['block_slug'], is_string( $join ) ? $join : gettype( $join ) );
 				}
-				// 1.3.3 C1: `replaces` states, as data, the retired slug(s) this section's
-				// block took over for this stack - `Catalog_Cutover::live_slug()` and the
-				// re-key planner both read it. A retired slug can never also be a section this
-				// same stack still declares (the whole point of retiring it), and a slug can
-				// only ever be replaced once per stack - two sections both claiming to replace
-				// `met-abilities` would leave `live_slug()` unable to answer which one is right.
-				// Deliberately not checked here: whether a replaced slug is itself a declared
-				// block file elsewhere. `werewolf-rites` is real, live data for this exact
-				// reason - Werewolf's own stack still uses it directly while Fera/Bete replace
-				// it with `fera-rites` - so retirement is a per-stack fact, never a global one.
 				if ( array_key_exists( 'replaces', $section ) ) {
 					$replaces = $section['replaces'];
 					if ( ! is_array( $replaces ) || $replaces === [] || array_is_list( $replaces ) === false ) {
@@ -176,8 +156,7 @@ class Catalog_Validator {
 	}
 
 	/**
-	 * The block slugs a stack or template file points at - its sections, a stack's negative
-	 * blocks, its `in_type_source` joins and its `creation_rules` steps - plus a variant's base.
+	 * The block slugs a stack or template file points at.
 	 *
 	 * @param array<string,mixed> $data
 	 * @return string[]
@@ -214,9 +193,7 @@ class Catalog_Validator {
 	}
 
 	/**
-	 * Rules 6 and 7: every slug a file references resolves to a real file. A stack whose block
-	 * has no file would seed a section that renders nothing; a template for a stack that does
-	 * not exist is unreachable. Both fail rather than degrade.
+	 * Rules 6 and 7: every slug a file references resolves to a real file.
 	 *
 	 * @param array<string,mixed> $data
 	 * @param string[]            $block_slugs Every block file's slug in the catalog.
@@ -292,11 +269,7 @@ class Catalog_Validator {
 	}
 
 	/**
-	 * Rule 3. Every item carries a `name`; the three faceting fields are present even when
-	 * null, so "nobody set this" is distinguishable from "this file predates the field"; and
-	 * `cost` stays a string or null, never a bare number - a real cost is free text
-	 * (`"1 or 3"`, `"1-7"`) and quietly narrowing it to an integer is how a range becomes its
-	 * own floor.
+	 * Validates a trait_list block's payload.
 	 *
 	 * @param array<string,mixed> $definition
 	 * @return string[]
@@ -330,11 +303,7 @@ class Catalog_Validator {
 	}
 
 	/**
-	 * §3.5a (1.3.3 R1): a trait_list block's own rule for canonicalizing a custom row's raw
-	 * name against its real items, read generically by the re-key planner - declared today
-	 * only on `vampire-rituals`. `group_name_tier` is the only recognized `form`: the raw
-	 * `Group: Name (tier)` string, with `group_aliases`/`tier_words` normalizing known
-	 * spelling and abbreviation variants before the comparison.
+	 * Validates a trait_list block's own rule for canonicalizing a custom row's raw name against its real items.
 	 *
 	 * @param mixed $rule
 	 * @return string[]
@@ -382,12 +351,6 @@ class Catalog_Validator {
 		$errors = [];
 		$meta   = is_array( $definition['_meta'] ?? null ) ? $definition['_meta'] : [];
 
-		// The runtime list shape is the only accepted one (owner ruling, 2026-09-22): it is what
-		// the engine and `TieredPowerDefinition.powers: TieredPower[]` read. 1.3.0 and 1.3.1 once
-		// wrote two shapes - a map keyed by family name, bare-string picks, `name` on a rung -
-		// and this validator accepted both, so the disagreement surfaced only when a consumer
-		// indexed a key that one shape did not have. Nothing below can be trusted until the
-		// shape itself is right, so a map stops here.
 		if ( ! array_is_list( (array) $definition['powers'] ) ) {
 			$errors[] = '`definition.powers` must be a list of family objects, each carrying its own `name` - not a map keyed by family name';
 			return $errors;
@@ -398,12 +361,7 @@ class Catalog_Validator {
 			}
 		}
 
-		// An **untiered** track (S7) has no rank vocabulary by design - Changeling Realms are a
-		// flat 2 per level and Mage Rotes derive from the Sphere level invoked. Every rule keyed
-		// on ranks is therefore inapplicable, not merely satisfiable. Without this branch the
-		// validator rejects the very shape S7 exists to express, which would push whoever is
-		// authoring these files into inventing fake ranks to get past it - poisoning the data
-		// to satisfy the check that was supposed to protect it.
+		// An **untiered** track has no rank vocabulary by design.
 		if ( isset( $meta['untiered'] ) ) {
 			return array_merge( $errors, self::validate_untiered( $meta, (array) $definition['powers'] ) );
 		}
@@ -427,10 +385,6 @@ class Catalog_Validator {
 		foreach ( $ladder as $rungs ) {
 			$ceiling += (int) $rungs;
 		}
-		// A **pick-only** track (Werewolf and Fera Gifts) has ranks but no rating at all: every
-		// Gift is bought by name, and holding six Intermediate Gifts with no Basic ones is legal
-		// (1.2.10 §B). It says so by declaring `ladder` as an explicit empty object. An omitted
-		// ladder is still an error - "nobody declared this" must not read as "this has no rungs".
 		$pick_only = array_key_exists( 'ladder', $meta ) && $ladder === [];
 		if ( $ceiling < 1 && ! $pick_only ) {
 			$errors[] = '`_meta.ladder` sums to zero - the sum is the ceiling, so a block with no ladder can hold no rating. A pick-only track declares `"ladder": {}` explicitly';
@@ -449,13 +403,7 @@ class Catalog_Validator {
 	}
 
 	/**
-	 * An untiered track (S7): no ranks, no ladder, no picks - just numbered levels and a cost
-	 * rule. Still strict about the things that remain meaningful.
-	 *
-	 * `untiered` must state exactly one rule: a flat `cost_per_level`, or a `derived_from`
-	 * block plus `per_level`. Both at once is ambiguous and neither is a declaration at all -
-	 * which is the state Changeling Realms is in today, reaching the right answer through a
-	 * no-tier-vocabulary fallback that explains itself to nobody.
+	 * An untiered track: no ranks, no ladder, no picks.
 	 *
 	 * @param array<string,mixed> $meta
 	 * @param array<int,mixed>    $powers
@@ -512,8 +460,7 @@ class Catalog_Validator {
 	}
 
 	/**
-	 * A rung names its power in `power_name`, the key `PowerLevel` and every consumer read. A
-	 * rung carrying only `name` is the retired authoring shape and would render as a blank rung.
+	 * A rung names its power in `power_name`, the key `PowerLevel` and every consumer read.
 	 *
 	 * @param array<string,mixed> $level
 	 * @param int|string          $i
@@ -527,8 +474,7 @@ class Catalog_Validator {
 	}
 
 	/**
-	 * One family: the ladder's length and numbering, the pick ranks, and the two states a
-	 * declared file may not be in - a non-empty `overflow`, or a tier outside the vocabulary.
+	 * One family: the ladder's length and numbering, the pick ranks, and the two states a declared file may not be.
 	 *
 	 * @param array<string,mixed>  $power
 	 * @param string[]             $ranks
@@ -591,9 +537,7 @@ class Catalog_Validator {
 			}
 		}
 
-		// Rule 5, in its declared-file form. `overflow` exists so the GVM path can emit
-		// without losing data (1.2.10 §A1b) and is 1.3.1's worklist; an authored file has
-		// resolved that already, so a non-empty one here is D67 uncommitted, not data.
+		// Rule 5: a declared file carries no overflow.
 		$overflow = (array) ( $power['overflow'] ?? [] );
 		if ( $overflow !== [] ) {
 			$errors[] = sprintf(

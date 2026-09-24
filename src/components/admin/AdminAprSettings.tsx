@@ -1,10 +1,5 @@
 /**
- * Admin page for a chronicle's Action & Rumor configuration -
- * Grapevine's own frmGameInfo.frm screen. Two tabs: the five
- * action-allocation knobs (personal actions, carry-forward,
- * common actions, the actions-per-level table, and which
- * backgrounds grant an action), and the eight rumor-generation
- * toggles.
+ * Admin page for a chronicle's Action & Rumor configuration.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -19,7 +14,9 @@ import './AdminAprSettings.css';
 import { errorMessage } from '../../lib/errorMessage';
 import { preselectedChronicle, writeGameToUrl } from '../../lib/pluginPages';
 
-/** Grapevine's real defaults (APREngineClass.cls:69-84), offered only via Restore Grapevine defaults. */
+/**
+ * Grapevine's real defaults (APREngineClass.cls:69-84), offered only via Restore Grapevine defaults.
+ */
 const GV_DEFAULTS: AprSettings = {
 	personal_actions: 0,
 	carry_unused: false,
@@ -50,11 +47,7 @@ const GV_DEFAULTS: AprSettings = {
 type Tab = 'actions' | 'rumors';
 
 /**
- * Renders the Action & Rumor Settings admin screen: a chronicle
- * picker, an Actions tab (personal actions, carry/common toggles,
- * the actions-per-level table, the background_actions picker) and
- * a Rumors tab (the eight generation toggles), plus a one-click
- * restore of Grapevine's own original defaults.
+ * Renders the Action & Rumor Settings admin screen.
  */
 export function AdminAprSettings() {
 	const [ games, setGames ] = useState< Game[] >( [] );
@@ -113,7 +106,9 @@ export function AdminAprSettings() {
 			.finally( () => setLoading( false ) );
 	}, [ gameSlug ] );
 
-	/** Saves the whole current settings object, so any tab's edits (already applied to local state) persist together. */
+	/**
+	 * Saves the whole current settings object.
+	 */
 	async function save() {
 		if ( ! settings ) {
 			return;

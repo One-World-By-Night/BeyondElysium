@@ -1,11 +1,10 @@
 /**
- * How the help panel reads a help page's links and headings (1.0.0-help.md H-1). A help page
- * links to another by its file name, `roles.md`, and to a guide section as
- * `../st-guide.md#3-making-characters`; a guide links down into a help page the same way,
- * `help/send-grapevine-file.md`; the panel follows all three without leaving the screen.
+ * How the help panel reads a help page's links and headings.
  */
 
-/** The guides a help page can link into, served by `GET /docs/{slug}`. */
+/**
+ * The guides a help page can link into, served by `GET /docs/{slug}`.
+ */
 export const GUIDES = [
 	'st-guide',
 	'admin-guide',
@@ -57,9 +56,7 @@ export function headingText( markdown: string ): string {
 }
 
 /**
- * A heading's anchor the way GitHub makes one - lower case, punctuation dropped, each space a
- * hyphen - so `#9-action--rumor-settings-and-the-background-use-ledger` finds
- * "9. Action & Rumor Settings and the Background-Use Ledger".
+ * A heading's anchor the way GitHub makes one.
  */
 export function headingSlug( text: string ): string {
 	return text
@@ -69,8 +66,7 @@ export function headingSlug( text: string ): string {
 }
 
 /**
- * The anchor of every heading in a Markdown document, in order. A repeated heading gets `-1`,
- * `-2`, ... as GitHub gives it.
+ * The anchor of every heading in a Markdown document, in order.
  */
 export function headingAnchors( markdown: string ): string[] {
 	const seen = new Map< string, number >();
@@ -92,7 +88,7 @@ export function headingAnchors( markdown: string ): string[] {
 }
 
 /**
- * `base`, or `base-1`, `base-2`, ... when `seen` has handed it out before.
+ * `base`, or `base-1`, `base-2`,... when `seen` has handed it out before.
  */
 export function uniqueAnchor(
 	base: string,
@@ -112,7 +108,7 @@ export function pageTitle( markdown: string ): string {
 }
 
 /**
- * The page without its `# ` title, which the panel shows in its own header.
+ * The page without its `# ` title.
  */
 export function withoutTitle( markdown: string ): string {
 	return markdown.replace( /^\s*#\s+.*\n+/, '' );

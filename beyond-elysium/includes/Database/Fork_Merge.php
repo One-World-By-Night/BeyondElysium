@@ -5,37 +5,22 @@ namespace BeyondElysium\Database;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Keeps a chronicle's copy of a catalog block current (1.0.0-review F-034).
- *
- * A copy used to be the whole catalog definition as it stood the day the
- * chronicle first changed it, and no later catalog fix ever reached it. Now a
- * copy records what the chronicle itself changed, as it changes it
- * (`stamp()`), and a catalog update rebuilds the copy from the new catalog
- * with those changes laid back over it (`merge()`): every value the chronicle
- * set, entry it added, and entry it removed stays as the chronicle left it,
- * and everything else follows the catalog.
- *
- * The record ("changes") is plain data kept beside the copy:
- *
- *     keys    - definition-wide settings the chronicle changed, e.g. clan_disciplines
- *     lists   - list => entry id => { added: bool, keys: string[], levels: { id => ... } }
- *     removed - list => entry ids the chronicle removed
- *
- * An entry is found by its name - a power level by its power name, or its
- * number when it has none - the same identity `Seeder::merge_admin_entries()`
- * gives a catalog entry across a reseed. Pure: no database, no WordPress.
+ * Keeps a chronicle's copy of a catalog block current.
  */
 class Fork_Merge {
 
-	/** A copy nothing has changed yet. */
+	/**
+	 * A copy nothing has changed yet.
+	 */
 	const NO_CHANGES = [ 'keys' => [], 'lists' => [], 'removed' => [] ];
 
-	/** The definition lists whose entries are merged one by one. */
+	/**
+	 * The definition lists whose entries are merged one by one.
+	 */
 	const LISTS = [ 'items', 'pools', 'fields', 'powers' ];
 
 	/**
-	 * Records what one save of a copy changed, on top of what was recorded
-	 * before.
+	 * Records what one save of a copy changed, on top of what was recorded before.
 	 *
 	 * @param array<string,mixed> $stored   The copy as it was.
 	 * @param array<string,mixed> $incoming The copy as it's being saved.
@@ -47,11 +32,7 @@ class Fork_Merge {
 	}
 
 	/**
-	 * What a copy made before copies recorded their changes differs by from the
-	 * catalog it came from. Every value the copy holds that the catalog doesn't
-	 * is taken to be the chronicle's, so nothing it set is lost; an entry or
-	 * value the copy lacks is not taken as one it removed, since the catalog may
-	 * have added it since.
+	 * The changes a copy made before changes were recorded, found by comparing it with its catalog block.
 	 *
 	 * @param array<string,mixed> $catalog The catalog definition.
 	 * @param array<string,mixed> $copy    The chronicle's copy.
@@ -62,8 +43,7 @@ class Fork_Merge {
 	}
 
 	/**
-	 * Rebuilds a copy from the catalog's current definition, with the
-	 * chronicle's recorded changes laid back over it.
+	 * Rebuilds a copy from the catalog's current definition, with the chronicle's recorded changes laid back over it.
 	 *
 	 * @param array<string,mixed> $catalog The catalog definition as it now stands.
 	 * @param array<string,mixed> $copy    The chronicle's copy.
@@ -346,9 +326,7 @@ class Fork_Merge {
 	}
 
 	/**
-	 * When reading an old copy against the catalog, a value the catalog has and
-	 * the copy lacks was most likely added to the catalog since - a Portuguese
-	 * name, say - so it isn't the chronicle's removal. A save is exact.
+	 * Whether a value the catalog has and an old copy lacks was added to the catalog since the copy was made.
 	 *
 	 * @param array<string,mixed> $before
 	 * @param array<string,mixed> $after
@@ -373,8 +351,7 @@ class Fork_Merge {
 	}
 
 	/**
-	 * An entry's identity within its list: its `$id_key` value, or its level
-	 * number when that's empty.
+	 * An entry's identity within its list: its `$id_key` value, or its level number when that's empty.
 	 *
 	 * @param array<string,mixed> $entry
 	 */
@@ -451,8 +428,7 @@ class Fork_Merge {
 	}
 
 	/**
-	 * Whether two decoded JSON values are the same, whatever order an object's
-	 * keys were stored in - MySQL's JSON column reorders them.
+	 * Whether two decoded JSON values are the same, whatever order an object's keys were stored in.
 	 *
 	 * @param mixed $a
 	 * @param mixed $b

@@ -22,29 +22,21 @@ use BeyondElysium\Services\Rumor_Generator;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for plots: the storyteller-authored and player-submitted
- * threads that structure a game's ongoing story. Supports listing, single-
- * item retrieval with entries and connections, a player's cross-plot feed,
- * creation, update, deletion, and the action-allocation and rumor-generation
- * helper endpoints used to run a game date.
+ * REST controller for plots: the storyteller-authored and player-submitted threads that structure a game's ongoing
+ * story.
  */
 class Plots_Controller extends Base_Controller {
 
 	protected $rest_base = 'plots';
 
 	/**
-	 * Connection label marking a player plot's owning character (1.1.0 §2.3a) - distinct from
-	 * `Action_Allocator::ACTOR_LABEL` so a player's own free-standing plot, created through
-	 * `create_item()`, is never confused with an action-allocation record and never trips
-	 * `Action_Allocator`'s own single-plot-per-character assumptions.
+	 * Connection label marking a player plot's owning character.
 	 */
 	const OWNER_LABEL = 'plot_owner';
 
 	/**
-	 * Registers the REST routes for the plot collection, a single plot,
-	 * the player's cross-plot feed, the action-allocation and
-	 * rumor-generation helper endpoints, and a player plot's membership
-	 * (§2.3a). All routes are scoped to a game slug.
+	 * Registers the REST routes for the plot collection, a single plot, the player's cross-plot feed, the
+	 * action-allocation and rumor-generation helper endpoints, and a player plot's membership.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/plots', [
@@ -105,9 +97,7 @@ class Plots_Controller extends Base_Controller {
 			],
 		] );
 
-		// A player plot's membership (§2.3a). The outer gate is the same as create_item()'s -
-		// anyone who could conceivably own a player plot - and the real "owner or Storyteller"
-		// check runs inside each callback, since it depends on the specific plot in the URL.
+		// A player plot's membership.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/plots/(?P<id>\d+)/member-candidates', [
 			[
 				'methods'             => 'GET',
@@ -132,11 +122,7 @@ class Plots_Controller extends Base_Controller {
 			],
 		] );
 
-		// The one place a Storyteller's "direct this post to specific characters" picker
-		// (1.1.0 §2.4) can get a real answer - Audience::visible_character_ids() is otherwise
-		// only ever called from inside Entries_Controller's own validation, with nothing
-		// exposing it to a caller ahead of time. Manager-only: only a Storyteller may ever post
-		// a `characters`-audience entry in the first place.
+		// The characters a Storyteller's directed post can name.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/plots/(?P<id>\d+)/visible-characters', [
 			[
 				'methods'             => 'GET',
@@ -145,8 +131,7 @@ class Plots_Controller extends Base_Controller {
 			],
 		] );
 
-		// A rumor's level texts (1.1.0 §3.4) - upserted as a set, not one at a time, so "3 of 5
-		// levels written" and "delete a level by sending it empty" both have one obvious route.
+		// A rumor's level texts - upserted as a set.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/plots/(?P<id>\d+)/rumor-levels', [
 			[
 				'methods'             => 'PUT',
@@ -157,11 +142,9 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns a paginated list of plots for a game, optionally filtered
-	 * by status, initiated_by, search text, a date range, or whether a
-	 * character is tied to the plot (`character_plots`), and ordered
-	 * by the requested column and direction. Each plot is prepared with
-	 * its derived status and a thumbnail image URL.
+	 * Returns a paginated list of plots for a game, optionally filtered by status, initiated_by, search text, a date
+	 * range, or whether a character is tied to the plot (`character_plots`), and ordered by the requested column and
+	 * direction.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -184,15 +167,13 @@ class Plots_Controller extends Base_Controller {
 			'orderby'         => $request->get_param( 'orderby' ) ?: 'updated_at',
 			'order'           => $request->get_param( 'order' ) ?: 'DESC',
 		];
-		// A non-manager never sees another character's action-allocation plot in the list -
-		// its title alone already discloses who has one (§3.4/§5.8).
+		// A non-manager never sees another character's action-allocation plot in the list.
 		if ( ! $can_manage ) {
 			$args['exclude_actor_plots_not_owned_by'] = get_current_user_id();
 		}
 
 		if ( $can_manage ) {
-			// A manager sees everything, so the existing SQL-level pagination is exact and
-			// cheap - no reason to fetch more than one page.
+			// A manager sees everything.
 			$args['per_page'] = $pagination['per_page'];
 			$args['offset']   = $pagination['offset'];
 
@@ -202,13 +183,6 @@ class Plots_Controller extends Base_Controller {
 			}
 			$total = Plot::count_for_game( (int) $game->id, $args );
 		} else {
-			// Audience is decided in PHP (a `restricted` plot's rules can reference character
-			// sheet data no SQL WHERE clause here can see), so pagination has to happen after
-			// filtering, not before. Fetching the whole matching set first and paginating in
-			// PHP - real chronicles run to hundreds of plots, not tens of thousands - is the
-			// difference between "the last page is short because that's really all there is"
-			// and D38's own bug class: a page silently truncated to fewer than per_page rows
-			// while more real, visible plots existed past the cut a SQL LIMIT already made.
 			$all_matching = Plot::for_game( (int) $game->id, $args );
 			$visible      = Audience::filter( $all_matching, 'plot', get_current_user_id(), $request['game_slug'], false );
 
@@ -224,10 +198,7 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns a single plot along with its entries, connections, and
-	 * immediate child plots in one response. Strips note-type entries
-	 * for a viewer without be_manage_plots, and prepares each child the
-	 * same way a top-level plot is prepared.
+	 * Returns a single plot along with its entries, connections, and immediate child plots in one response.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -243,19 +214,12 @@ class Plots_Controller extends Base_Controller {
 			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
-		// Chronicle-scoped, not a bare current_user_can(): a site editor who is only a
-		// plain player in this specific chronicle must not see its ST notes or another
-		// character's allocation, even though the capability alone would pass (§3.4/§5.8).
 		$can_manage = Authorization::check_request( 'be_manage_plots', $request );
 
-		// Someone else's action allocation is not there for this viewer at all: its entries disclose
-		// exact background ratings, and its title and actor link name the character - which is why
-		// the list leaves it out (§3.4/§5.8, 1.0.0-review F-063).
 		if ( ! $can_manage && self::is_unowned_allocation( (int) $plot->id ) ) {
 			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
 		}
-		// A plot's own audience (1.1.0 §2.1) - never found rather than a 403, matching the
-		// non-disclosure choice the unowned-allocation check just above already made.
+		// A plot the viewer's audience excludes is reported as not found.
 		if ( ! Audience::can_see( $plot, 'plot', get_current_user_id(), $request['game_slug'], $can_manage ) ) {
 			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
 		}
@@ -267,11 +231,7 @@ class Plots_Controller extends Base_Controller {
 			$game_slug     = $request['game_slug'];
 			$out_batch_ids = Release_Batch::out_ids( (int) $plot->game_id );
 			$entries       = array_values( array_filter( $entries, static function ( $entry ) use ( $wp_user_id, $game_slug, $out_batch_ids, $plot ) {
-				// Note entries are ST-only; excluded from the response, not just hidden
-				// client-side. Every other entry follows its own audience (1.1.0 §2.4) - this
-				// embedded copy must apply the identical check Entries_Controller::get_items()
-				// does, since a caller reading this plot's own response never sees that route's
-				// separate filtering at all.
+				// Note entries are ST-only.
 				if ( $entry->entry_type === 'note' ) {
 					return false;
 				}
@@ -282,9 +242,7 @@ class Plots_Controller extends Base_Controller {
 		$plot->entries     = $entries;
 		$plot->connections = Connection::for_entity( 'plot', (int) $plot->id );
 		$plot->attachments = array_map( [ Attachment::class, 'public_shape' ], Attachment::for_entity( 'plot', (int) $plot->id ) );
-		// Immediate child plots are included and prepared the same way as the parent - an
-		// allocation nested under a shared plot only for those who could open it, and only for
-		// those its own audience reaches.
+		// Immediate child plots are included and prepared the same way as the parent.
 		$children = array_values( array_filter(
 			Plot::children( (int) $plot->id ),
 			static fn( $child ) => $can_manage || ! self::is_unowned_allocation( (int) $child->id )
@@ -298,13 +256,8 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Whether a plot is an action allocation for a character the current user does
-	 * not own AND is not an invited member of (§2.3a). A hard floor independent of
-	 * the plot's own `audience` column - it hides a stranger's private downtime plot
-	 * even from a row whose audience was somehow left `everyone` - but an owner's
-	 * own explicit invitation still lets a co-narrator in, exactly as it would for
-	 * any other player plot. Callers skip the check for a plot manager, who may see
-	 * every allocation.
+	 * Whether a plot is an action allocation for a character the current user does not own AND is not an invited member
+	 * of.
 	 *
 	 * @param int $plot_id
 	 * @return bool
@@ -319,10 +272,7 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The character a player plot belongs to, whichever of the two labels an owning
-	 * connection carries - `Action_Allocator::ACTOR_LABEL` for every per-character
-	 * allocation plot, `self::OWNER_LABEL` for one created through `create_item()`'s
-	 * player branch. Null for a plot with neither (a global plot has no owner).
+	 * The character a player plot belongs to, whichever of the two labels an owning connection carries.
 	 *
 	 * @param int $plot_id
 	 * @return int|null
@@ -338,9 +288,7 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Whether `$wp_user_id` owns a player plot - holds the character its owning
-	 * connection targets (§2.3a). False for a global plot (no owning connection at all)
-	 * and false for anyone but the one player who owns the character.
+	 * Whether `$wp_user_id` owns a player plot.
 	 *
 	 * @param int $plot_id
 	 * @param int $wp_user_id
@@ -356,10 +304,8 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns the current player's cross-plot feed: every plot directly
-	 * connected to one of their characters, plus every plot whose
-	 * target_query resolves to include one of their characters. Reports
-	 * which resolution methods were applied.
+	 * Returns the current player's cross-plot feed: every plot directly connected to one of their characters, plus every
+	 * plot whose target_query resolves to include one of their characters.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -396,9 +342,7 @@ class Plots_Controller extends Base_Controller {
 		}
 
 		$plots = array_values( $by_id );
-		// A plot reachable through a connection or a target_query match is not automatically
-		// visible - a plot connected to the player's own character for some in-fiction reason
-		// can still be storytellers-only (1.1.0 §2.1).
+		// A plot reachable through a connection or a target_query match is not automatically visible.
 		$plots = Audience::filter( $plots, 'plot', $wp_user_id, $request['game_slug'], $can_manage );
 		usort( $plots, static fn( $a, $b ) => strcmp( $b->updated_at, $a->updated_at ) );
 		foreach ( $plots as $plot ) {
@@ -415,19 +359,7 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates a new plot. A caller without be_manage_plots may only
-	 * create a player-initiated plot and cannot set st_notes, status,
-	 * plot_category, image_id, cliffhanger, or faction_goals - those
-	 * fields are filtered out by capability rather than trusted from
-	 * the request.
-	 *
-	 * A global plot (created by a manager) defaults to a `storytellers`
-	 * audience (owner ruling, 1.1.0 §2.3): a draft never reaches players by
-	 * accident. A player-created plot is always their own **player plot**
-	 * (§2.3a) - `restricted` to its owning character, named via
-	 * `character_id`, connected with the `plot_owner` label so `Audience`
-	 * finds the owner through it. Only a Storyteller may set `everyone` or
-	 * `audience_rules` on any plot; a player cannot widen their own.
+	 * Creates a new plot.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -445,7 +377,7 @@ class Plots_Controller extends Base_Controller {
 
 		$can_manage = Authorization::can( 'be_manage_plots' );
 
-		// parent_plot_id is validated here to return a clean 400 instead of a generic failure.
+		// parent_plot_id is validated here to return a clean 400.
 		$parent_plot_id = $request->get_param( 'parent_plot_id' );
 		if ( $parent_plot_id ) {
 			$parent = Plot::find( (int) $parent_plot_id );
@@ -466,12 +398,8 @@ class Plots_Controller extends Base_Controller {
 			'created_by'       => get_current_user_id(),
 		];
 
-		// Set inside the non-manager branch below; read again after Plot::create() succeeds,
-		// to connect the new plot to its owner.
 		$owner_character_id = null;
 
-		// Read once, ahead of the audience derivation below - a rumor's own default audience
-		// (1.1.0 §3.4 item 1) differs from an ordinary global plot's.
 		$is_rumor = $can_manage && $request->get_param( 'is_rumor' );
 
 		if ( $can_manage ) {
@@ -484,7 +412,6 @@ class Plots_Controller extends Base_Controller {
 				return $this->error( 'invalid_param', sprintf( __( 'plot_category must be one of: %s.', 'beyond-elysium' ), implode( ', ', Plot::PLOT_CATEGORIES ) ), 400 );
 			}
 			$data['plot_category'] = $plot_category ?: null;
-			// image_id must reference a real media attachment, or it silently renders nothing.
 			$image_id = $request->get_param( 'image_id' );
 			if ( ! empty( $image_id ) && get_post_type( (int) $image_id ) !== 'attachment' ) {
 				return $this->error( 'invalid_param', __( 'image_id must be a real media attachment.', 'beyond-elysium' ), 400 );
@@ -494,8 +421,7 @@ class Plots_Controller extends Base_Controller {
 			$faction_goals         = $request->get_param( 'faction_goals' );
 			$data['faction_goals'] = is_array( $faction_goals ) ? $faction_goals : null;
 
-			// A rumor's own target_query (1.1.0 §3.4) - unlike an ordinary plot, which has none
-			// at creation, a hand-written rumor may already name one, deriving its audience below.
+			// A rumor's own target_query.
 			$target_query = null;
 			if ( $is_rumor ) {
 				$target_query          = $request->get_param( 'target_query' ) ?: null;
@@ -511,12 +437,10 @@ class Plots_Controller extends Base_Controller {
 				}
 				$data['audience'] = $explicit_audience;
 			} elseif ( $is_rumor ) {
-				// A rumor with a target_query is restricted to whoever it matches; Public
-				// Knowledge (no target_query) reaches everyone (1.1.0 §3.4 item 1).
+				// A rumor with a target_query is restricted to whoever it matches.
 				$data['audience'] = $target_query ? Audience::RESTRICTED : Audience::EVERYONE;
 			} else {
-				// Audience is manager-only to set explicitly; a new global plot defaults to
-				// storytellers-only rather than everyone (owner ruling, 1.1.0 §2.3).
+				// Audience is manager-only to set explicitly.
 				$data['audience'] = Audience::STORYTELLERS;
 			}
 
@@ -540,9 +464,6 @@ class Plots_Controller extends Base_Controller {
 			// initiated_by is always forced to 'player' regardless of what the request sends.
 			$data['initiated_by'] = 'player';
 
-			// A player plot (1.1.0 §2.3a): always restricted to its owner, never everyone or
-			// rules - only a Storyteller may widen it afterward. character_id names the owner;
-			// D33's own rule applies here too, so it must be a character this player owns.
 			$character_id = (int) $request->get_param( 'character_id' );
 			if ( ! $character_id ) {
 				return $this->error( 'invalid_param', __( 'Missing required field: character_id.', 'beyond-elysium' ), 400 );
@@ -558,10 +479,6 @@ class Plots_Controller extends Base_Controller {
 			$owner_character_id = $character_id;
 		}
 
-		// A rumor is tagged the same way Rumor_Generator tags one, and a rumor whose tag didn't save
-		// is not kept as an ordinary plot (1.0.0-review F-111). A player plot's own owner
-		// connection is held to the identical standard - half of what was asked for is not
-		// a plot the request can be considered to have succeeded at creating.
 		$unit   = Transaction::begin( 'be_plot_create' );
 		$id     = Plot::create( $data );
 		$linked = true;
@@ -576,8 +493,6 @@ class Plots_Controller extends Base_Controller {
 				'created_by'  => get_current_user_id(),
 			] );
 		}
-		// Held from birth (1.1.0 §3.4 item 2): a rumor is always a draft until a release
-		// batch takes it out, the same rule as a rumor Rumor_Generator itself creates.
 		$held = ! $is_rumor || ( $id && Plot::update( $id, [ 'held' => true ] ) );
 		if ( ! $id || ! $linked || ! $held || ( $is_rumor && ! Rumor_Generator::tag_as_rumor( $id, (int) $game->id ) ) ) {
 			Transaction::rollback( $unit );
@@ -594,11 +509,7 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Updates an existing plot with any of the allowed fields present in
-	 * the request. Requires be_manage_plots, so unlike create_item no
-	 * per-capability field filtering is needed. Sanitizes rich-text and
-	 * plain-text fields, and validates status, plot_category, image_id,
-	 * initiated_by, and parent_plot_id when present.
+	 * Updates an existing plot with any of the allowed fields present in the request.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -639,7 +550,7 @@ class Plots_Controller extends Base_Controller {
 			}
 		}
 
-		// Validated here so an invalid value returns a 400 rather than a generic failure.
+		// Validated here so an invalid value returns a 400.
 		if ( isset( $data['status'] ) && ! in_array( $data['status'], Plot::STATUSES, true ) ) {
 			return $this->error( 'invalid_param', sprintf( __( 'status must be one of: %s.', 'beyond-elysium' ), implode( ', ', Plot::STATUSES ) ), 400 );
 		}
@@ -652,18 +563,13 @@ class Plots_Controller extends Base_Controller {
 		if ( isset( $data['initiated_by'] ) && ! in_array( $data['initiated_by'], Plot::INITIATORS, true ) ) {
 			return $this->error( 'invalid_param', sprintf( __( 'initiated_by must be one of: %s.', 'beyond-elysium' ), implode( ', ', Plot::INITIATORS ) ), 400 );
 		}
-		// An assignee must be a real member of this chronicle holding a staff role (1.1.0 §3.6) -
-		// never validated as a bare WordPress user id, which could name someone with no standing
-		// in this chronicle at all.
+		// An assignee must be a real member of this chronicle holding a staff role.
 		if ( array_key_exists( 'assigned_to', $data ) && $data['assigned_to'] ) {
 			$assignee = Game_Member::find( (int) $game->id, (int) $data['assigned_to'] );
 			if ( ! $assignee || ! in_array( $assignee->role, Game_Member::STAFF_ROLES, true ) ) {
 				return $this->error( 'invalid_assignee', __( 'assigned_to must be a chronicle member with role hst, ast, or narrator.', 'beyond-elysium' ), 400 );
 			}
 		}
-		// This route is already be_manage_plots-only, so a player's own plot can be widened
-		// to everyone or given rules here, but never through any route a player can reach
-		// (owner ruling, 1.1.0 §2.3a - only a Storyteller may widen a player plot).
 		if ( isset( $data['audience'] ) && ! in_array( $data['audience'], Audience::VALUES, true ) ) {
 			return $this->error( 'invalid_param', sprintf( __( 'audience must be one of: %s.', 'beyond-elysium' ), implode( ', ', Audience::VALUES ) ), 400 );
 		}
@@ -686,9 +592,6 @@ class Plots_Controller extends Base_Controller {
 			}
 		}
 
-		// A rumor's audience is re-derived from its target_query when the request changes one
-		// but not the other (1.1.0 §3.4 item 1) - an explicit audience/audience_rules in the
-		// same request always wins, matching create_item()'s own precedence.
 		if ( array_key_exists( 'target_query', $data ) && ! array_key_exists( 'audience_rules', $data )
 			&& Rumor_Generator::is_rumor( (int) $plot->id ) ) {
 			$target_query = $data['target_query'];
@@ -723,9 +626,7 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Deletes a plot after confirming it exists and belongs to the
-	 * requested game. Plot::delete() cascades the deletion to the
-	 * plot's entries and connections.
+	 * Deletes a plot after confirming it exists and belongs to the requested game.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -741,15 +642,13 @@ class Plots_Controller extends Base_Controller {
 			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
-		// A character's own plot goes with the character, never on its own (owner, 2026-09-15).
+		// A character's own plot goes with the character.
 		$actor = Action_Allocator::actor_character_id( (int) $plot->id );
 		if ( $actor !== null && Character::plot_id( $actor ) === (int) $plot->id ) {
 			return $this->error( 'character_plot', __( "A character's own plot is deleted with the character, not on its own.", 'beyond-elysium' ), 409 );
 		}
 
-		// Files first, while the rows naming them still exist: Plot::delete() removes the
-		// attachment rows itself, but never the files, since that needs
-		// Services\Attachment_Storage and Models does not depend on Services here.
+		// Deletes the attachment files first.
 		foreach ( Attachment::for_entity( 'plot', (int) $plot->id ) as $attachment ) {
 			Attachment_Storage::delete( $attachment->stored_name, $attachment->original_name );
 		}
@@ -759,12 +658,8 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Resolves the plot a membership route names, and reports whether the current
-	 * caller may act on its membership at all - a Storyteller, or the plot's own
-	 * owner (§2.3a). Shared by all three membership endpoints so each one applies
-	 * the identical visibility-then-ownership order: a plot this viewer cannot see
-	 * at all is reported not found, exactly as `get_item()` already does, before
-	 * anything about ownership is revealed.
+	 * Resolves the plot a membership route names, and reports whether the current caller may act on its membership at
+	 * all.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return array{0:object,1:object,2:bool,3:bool}|\WP_Error [$game, $plot, $can_manage, $is_owner]
@@ -790,12 +685,7 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Lists who may be invited into a player plot: active, non-NPC characters in this
-	 * chronicle, name and id only (§2.3a) - a player can never otherwise list another
-	 * character (D33), so this is the one narrow exception, and it stays narrow. Only
-	 * the plot's own owner or a Storyteller may see it; already-connected characters
-	 * (the owner, existing members) are left out, since inviting them again is not
-	 * a real choice.
+	 * Lists who may be invited into a player plot: active, non-NPC characters in this chronicle, name and id only.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -831,13 +721,7 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Every character who can currently see this plot - name and id only, the same narrow
-	 * disclosure `get_member_candidates()` already uses - for the entry form's "direct this
-	 * post to specific characters" picker (1.1.0 §2.4). Backs `Audience::visible_character_ids()`
-	 * with a real route: that method was otherwise only ever called from inside
-	 * `Entries_Controller`'s own validation, with nothing exposing the same answer to a caller
-	 * ahead of time - naming a character outside this list still 400s there regardless, this
-	 * route only lets the picker show the truth before the request is sent rather than after.
+	 * Every character who can currently see this plot.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -864,14 +748,7 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Upserts a rumor's level texts as a set (1.1.0 §3.4): `{levels: {"1": "text", ...}}`,
-	 * keys 1-10. A level sent with empty text is deleted rather than left as an empty row -
-	 * "3 of 5 levels written" counts real text, not placeholder rows. Not restricted to a
-	 * plot actually tagged as a rumor: `rumor_level_key`/`rumor_level_match` (set only by
-	 * `Rumor_Generator` on an influence rumor, or by hand via `update_item()`) are what makes
-	 * a level text visible at all - `Audience::can_see_entry()` hides every `rumor_level`
-	 * entry on a plot that carries neither, so writing one on an ordinary plot is inert, not
-	 * unsafe, and needs no extra gate here.
+	 * Upserts a rumor's level texts as a set: `{levels: {"1": "text",...}}`, keys 1-10.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -929,15 +806,7 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Adds a character to a player plot as a `plot_member` connection (§2.3a) - the
-	 * owner's own connection carries a different label
-	 * (`Action_Allocator::ACTOR_LABEL`/`self::OWNER_LABEL`) precisely so this route can
-	 * never touch it: the owner cannot be added again, and by the same structural
-	 * fact, `remove_member()` can never remove them either. A Storyteller may add any
-	 * character; the owning player is held to the picker's own narrowing
-	 * (active, non-NPC) even when they bypass the picker and post a character_id
-	 * directly - the same "don't trust a privileged filter from a non-manager" rule
-	 * D33 already established elsewhere.
+	 * Adds a character to a player plot as a `plot_member` connection.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -984,13 +853,7 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Removes a character from a player plot's membership (§2.3a). Scoped to
-	 * `plot_member` connections only - a mismatched label means either the id names
-	 * some other connection entirely or, structurally, the owner's own connection,
-	 * and either way this route reports it not found rather than touching it. A
-	 * Storyteller may remove any member; the owning player may remove only a member
-	 * they themselves added (`created_by`), never one a Storyteller added, and never
-	 * the owner - which is never reachable here at all.
+	 * Removes a character from a player plot's membership.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -1024,10 +887,7 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Previews a character's action allocation for a game date, or, when
-	 * commit is set, persists it as a plot. Validates parent_plot_id
-	 * before either previewing or committing. Preview mode never writes
-	 * to the database.
+	 * Previews a character's action allocation for a game date, or, when commit is set, persists it as a plot.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -1049,7 +909,7 @@ class Plots_Controller extends Base_Controller {
 			return $this->error( 'character_not_found', __( 'Character not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
-		// parent_plot_id is validated here so a bad value never reaches persist().
+		// parent_plot_id is validated here.
 		$parent_plot_id = $request->get_param( 'parent_plot_id' );
 		if ( $parent_plot_id ) {
 			$parent = Plot::find( (int) $parent_plot_id );
@@ -1078,15 +938,8 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Generates (or, when commit is set, persists) the standard rumor
-	 * set for a game date, with each rumor's recipient count resolved
-	 * via the query engine. Every generated rumor is created held, with
-	 * no release batch - a draft, invisible to every non-manager until a
-	 * Storyteller releases it in a batch (1.1.0 §3.4 items 2-3). Generation
-	 * itself never sends mail: the old "a rumor reached you" email at
-	 * generation time named a rumor whose text was still empty, and
-	 * duplicated whatever a later batch release sends anyway once the
-	 * Storyteller has actually written it (`Release_Engine::release()`).
+	 * Generates (or, when commit is set, persists) the standard rumor set for a game date, with each rumor's recipient
+	 * count resolved via the query engine.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -1121,14 +974,8 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Strips st_notes from a plot for any viewer without be_manage_plots,
-	 * attaches the plot's derived_status, resolves its cover image id to
-	 * a real URL at the given size, and reports whether the current
-	 * viewer owns it (§2.3a) - the one signal the client has no other way
-	 * to derive, and the exact test `may_manage_attachments()` itself
-	 * uses, so a client gating its own upload/delete controls on it never
-	 * shows a control the server would then 403. The single place this
-	 * preparation happens for both list and single-item responses.
+	 * Strips st_notes from a plot for any viewer without be_manage_plots, attaches the plot's derived_status, resolves
+	 * its cover image id to a real URL at the given size, and reports whether the current viewer owns it.
 	 *
 	 * @param object $plot
 	 * @param bool   $can_manage
@@ -1138,11 +985,9 @@ class Plots_Controller extends Base_Controller {
 		if ( ! $can_manage ) {
 			unset( $plot->st_notes );
 		}
-		// description and cliffhanger are ordinary rich text a Storyteller may mark with
-		// [ST]; st_notes above is Storyteller-only in full, so it is removed, not stripped.
 		St_Visibility::filter_plot( $plot, $game, $can_manage );
 		$plot->derived_status = Plot::derive_status( $plot );
-		// Cover image is resolved server-side to a URL rather than stored.
+		// Cover image is resolved server-side to a URL.
 		$plot->image_url = ! empty( $plot->image_id )
 			? wp_get_attachment_image_url( (int) $plot->image_id, $image_size )
 			: null;
@@ -1150,9 +995,7 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a WP_Error
-	 * with a 404 status when no game matches. Used by route callbacks to
-	 * resolve the game_slug URL parameter before performing further work.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error
@@ -1166,9 +1009,9 @@ class Plots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Defines the query parameters accepted by the plot collection
-	 * endpoint: status/initiated_by/search/date_from/date_to/character_plots filters,
-	 * orderby/order sort controls, and page/per_page pagination.
+	 * Defines the query parameters accepted by the plot collection endpoint:
+	 * status/initiated_by/search/date_from/date_to/character_plots filters, orderby/order sort controls, and
+	 * page/per_page pagination.
 	 *
 	 * @return array
 	 */

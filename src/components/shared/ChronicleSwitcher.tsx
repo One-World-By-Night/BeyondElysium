@@ -1,9 +1,5 @@
 /**
- * A labeled dropdown letting a viewer pick which of their own chronicles a
- * tabbed page is currently showing. Purely presentational - `useChronicleSwitcher()`
- * owns the actual state (which memberships exist, which is selected, that
- * chronicle's own resolved capabilities), matching the split every other
- * player-preference hook in this codebase already uses (`usePowerDisplayMode`).
+ * A labeled dropdown letting a viewer pick which of their own chronicles a tabbed page is currently showing.
  */
 import { __, sprintf } from '@wordpress/i18n';
 import type { MyGame } from '../../types';
@@ -14,7 +10,9 @@ export interface ChronicleSwitcherProps {
 	gameSlug: string;
 	onChange: ( slug: string ) => void;
 	loading: boolean;
-	/** The membership request failed; offers a retry instead of "you don't belong to any chronicle". */
+	/**
+	 * The membership request failed.
+	 */
 	failed?: boolean;
 	onRetry?: () => void;
 }
@@ -35,7 +33,7 @@ export function ChronicleSwitcher( {
 		);
 	}
 
-	// A failed request is not an empty membership list (1.0.0-review F-081).
+	// A failed request is not an empty membership list.
 	if ( failed ) {
 		return (
 			<p className="be-chronicle-switcher__status" role="alert">

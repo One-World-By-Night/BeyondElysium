@@ -62,7 +62,7 @@ of languages, shared by every chronicle on it.
 
 - **The table is the real data, not the CSV.** Exporting and re-importing a file is a
   convenience for a bulk pass; nothing about it is required, and the file is never the source
-  of truth the way `data/met-mechanics.csv` used to be.
+  of truth.
 - **A conflict during import means the file disagrees with itself** - two rows for the same
   term with two different translations - not that the file disagrees with what's already
   saved, which is an ordinary update and never flagged as a conflict.

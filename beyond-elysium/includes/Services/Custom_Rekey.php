@@ -5,35 +5,19 @@ namespace BeyondElysium\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The 1.3.3 re-key planner (design §3.5): what a character's `sheet_data` becomes when its
- * install moves from the shared GVM-era blocks (`met-abilities`, `met-merits`, `met-flaws`,
- * `werewolf-rites`) to the declared per-stack ones - and which custom rows can be safely
- * matched to a real catalog item on the way.
- *
- * Pure: no database, no WordPress. The caller resolves every block definition itself
- * (`Schema_Block::find_for_game()`, so a chronicle's fork is honored) and hands them in as
- * decoded objects, the same shape `Trait_Identity` already reads.
- *
- * **Deterministic only.** A custom row is re-keyed when one of six ordered tiers resolves it to
- * exactly one catalog item, and never on a fuzzy guess - a fuzzy candidate is only ever
- * *suggested* in the record. Five guards keep any row that would change its meaning exactly as
- * it is. The re-key never merges two rows, never writes XP, never touches a tiered row's
- * content and never moves a row except along a declared `replaces` pair (§3.11).
- *
- * **A catalog row is only ever respelled.** A moved catalog row whose name the replacement block
- * does not carry exactly is renamed to the declared spelling when a name-equivalence tier
- * (normalized, alias, decoration) resolves it to exactly one item there - the legacy and declared
- * catalogs spell some items differently in case, a hyphen or an apostrophe (R10). Nothing else
- * about the row changes, and one no tier resolves stays a retention gap.
+ * The re-key planner: what a character's `sheet_data` becomes when its install moves from the shared blocks
+ * (`met-abilities`, `met-merits`, `met-flaws`, `werewolf-rites`) to each stack's own, and which custom rows can be
+ * matched to a catalog item.
  */
 class Custom_Rekey {
 
-	/** Trailing markers a Grapevine export or a player leaves on a name, stripped by the decoration tier. */
+	/**
+	 * Trailing markers a Grapevine export or a player leaves on a name, stripped by the decoration tier.
+	 */
 	private const DECORATION_CHARS = '*^†#';
 
 	/**
-	 * `counts.respelled` is the catalog rows renamed to the declared spelling; `rekeyed`, `kept_custom`
-	 * and `by_tier` describe custom entries only, so those figures stay comparable across releases.
+	 * `counts.respelled` is the catalog rows renamed to the declared spelling.
 	 *
 	 * @param array<string,mixed>  $sheet_data      The character's current `sheet_data`.
 	 * @param array<string,object> $blocks          Block slug => decoded definition, for every block the
@@ -74,12 +58,11 @@ class Custom_Rekey {
 			unset( $new[ $retired ] );
 		}
 
-		// 1b. What the move itself puts at risk (R3): a catalog row the replacement block does not
-		// carry, and identities that were already doubled before anything moved.
+		// 1b. What the move puts at risk: a catalog row the replacement block does not carry.
 		[ $retention_gaps, $duplicates, $respell ] = self::audit_moved_rows( $new, $blocks, $moved, $offsets, $index );
 
 		// 2. Decide every custom row, in its own (or its replacement) block's terms.
-		$plans = []; // "slug" => [ index => [ base, decision ] ] - a `rekey` decision may still lose to a guard below.
+		$plans = []; // "slug" => [ index => [ base, decision ] ].
 		foreach ( $new as $slug => $rows ) {
 			if ( ! self::is_list( $rows ) ) {
 				continue;
@@ -115,8 +98,7 @@ class Custom_Rekey {
 			}
 		}
 
-		// 3. Collision guard, per non-atomic block: a candidate whose new identity is shared by
-		// another row there - one already held, or another candidate - stays exactly as it is.
+		// 3. Collision guard, per non-atomic block.
 		foreach ( $plans as $slug => $block_plans ) {
 			$definition = $blocks[ $slug ] ?? null;
 			if ( ! is_object( $definition ) || ! empty( $definition->atomic ) ) {
@@ -171,8 +153,6 @@ class Custom_Rekey {
 					continue;
 				}
 				if ( $catalog ) {
-					// A catalog row whose respelling lost to a guard is not a custom entry left custom:
-					// it is a row the declared block cannot resolve, so it is a gap.
 					$retention_gaps[] = [ 'block_from' => $plan['base']['block_from'], 'block_to' => $slug, 'index' => $i, 'name' => $plan['base']['from'], 'reason' => $decision['reason'] ];
 					continue;
 				}
@@ -193,18 +173,15 @@ class Custom_Rekey {
 	}
 
 	/**
-	 * The two things a block move can get wrong without changing a single value (§3.5 "Output"):
+	 * The two things a block move can get wrong without changing a single value:
 	 *
-	 * - **Retention gap.** A moved catalog row - one the character holds as a real catalog entry,
-	 *   not a custom one - whose name the replacement block does not carry, exactly or after the
-	 *   decoration strip. The row still moves, but the sheet would show it as a name its new
-	 *   block cannot resolve; `apply()` refuses the whole install until every gap is understood.
-	 *   A missing replacement definition is one gap for the block, not one per row - nothing about
-	 *   the rows could be judged. Only moved blocks are audited: a non-moved block's catalog rows
-	 *   are exactly where they were.
-	 * - **Pre-existing duplicate.** Two moved catalog rows that already share one identity in a
-	 *   non-atomic block (`Trait_Identity`) - a sheet that was doubled before this ever ran.
-	 *   Reported and never touched: the re-key never merges two rows (§3.11).
+	 * - **Retention gap.** A moved catalog row - one the character holds as a real catalog entry, not a custom one -
+	 *   whose name the replacement block does not carry, exactly or after the decoration strip. The row still moves, but
+	 *   the sheet would show it as a name its new block cannot resolve. A missing replacement definition is one gap for
+	 *   the block, not one per row. Only moved blocks are audited: a non-moved block's catalog rows are exactly where
+	 *   they were.
+	 * - **Pre-existing duplicate.** Two moved catalog rows that already share one identity in a non-atomic block
+	 *   (`Trait_Identity`). Reported and never touched: the move never merges two rows.
 	 *
 	 * @param array<string,mixed>  $new     `sheet_data` after the move.
 	 * @param array<string,object> $blocks
@@ -268,11 +245,8 @@ class Custom_Rekey {
 	}
 
 	/**
-	 * Whether a moved catalog row the replacement block does not carry exactly can be renamed to
-	 * one it does: the name-equivalence tiers only (normalized, alias, and the decoration strip
-	 * ahead of them), never a canonical or label reading and never a fuzzy guess. A row a
-	 * Storyteller priced or marked as an editor's working copy is left exactly as it is, as a
-	 * custom row would be.
+	 * Whether a moved catalog row the replacement block does not carry exactly can be renamed to one it does: the
+	 * name-equivalence tiers only (normalized, alias, and the decoration strip ahead of them).
 	 *
 	 * @param array<string,mixed> $row
 	 * @param array<string,mixed> $index `index_items()` of the replacement block.
@@ -296,8 +270,8 @@ class Custom_Rekey {
 	}
 
 	/**
-	 * One custom row's outcome: a `rekey` decision (the catalog item, the tier that decided and
-	 * where any label goes) or a `kept` one carrying the guard or reason that stopped it.
+	 * One custom row's outcome: a `rekey` decision (the catalog item, the tier that decided and where any label goes) or
+	 * a `kept` one carrying the guard or reason that stopped it.
 	 *
 	 * @param array<string,mixed> $row
 	 * @param array<string,mixed> $index `index_items()` of this row's block.
@@ -331,8 +305,7 @@ class Custom_Rekey {
 	}
 
 	/**
-	 * Tiers 1-4: the name as written, then with a trailing decoration stripped. The name-equivalence
-	 * half of `decide()`, shared with the respelling of a moved catalog row.
+	 * Tiers 1-4: the name as written.
 	 *
 	 * @param array<string,mixed> $index
 	 * @return array{tier:string,item?:object}|null
@@ -352,8 +325,8 @@ class Custom_Rekey {
 	}
 
 	/**
-	 * Lookup tables over one block's items, built once per block per plan: 1,291 rituals scanned
-	 * by 7,000 custom rows must not re-normalize every catalog name every time.
+	 * Lookup tables over one block's items, built once per block per plan: 1,291 rituals scanned by 7,000 custom rows
+	 * must not re-normalize every catalog name every time.
 	 *
 	 * @return array{items:array<int,object>,exact:array<string,array<int,object>>,normalized:array<string,array<int,object>>,alias:array<string,array<int,object>>,canonical:array<string,array<int,object>>,rule:?object}
 	 */
@@ -387,8 +360,7 @@ class Custom_Rekey {
 	}
 
 	/**
-	 * Tiers 1-3 on one candidate name. The first tier that matches at all decides; matching more
-	 * than one item there is `ambiguous`, never a pick.
+	 * Tiers 1-3 on one candidate name.
 	 *
 	 * @param array<string,mixed> $index
 	 * @return array{tier:string,item?:object}|null
@@ -425,7 +397,7 @@ class Custom_Rekey {
 	}
 
 	/**
-	 * Tier 5, only on a block that declares `name_canonicalization` (§3.5a).
+	 * Tier 5, only on a block that declares `name_canonicalization`.
 	 *
 	 * @param array<string,mixed> $index
 	 * @return array{tier:string,item?:object}|null
@@ -446,9 +418,8 @@ class Custom_Rekey {
 	}
 
 	/**
-	 * `Group: Name (tier)` reduced to a comparable key: the normalized group after
-	 * `group_aliases`, the normalized name, and the canonical tier word. Null when the string is
-	 * not that form or its tier word is not one the rule knows - an unknown word must not match.
+	 * `Group: Name (tier)` reduced to a comparable key: the normalized group after `group_aliases`, the normalized name,
+	 * and the canonical tier word.
 	 */
 	private static function canonical_key( string $name, object $rule ): ?string {
 		if ( ! preg_match( '/^\s*([^:]+?)\s*:\s*(.+?)\s*\(\s*([^()]+?)\s*\)\s*$/u', $name, $m ) ) {
@@ -473,9 +444,7 @@ class Custom_Rekey {
 	}
 
 	/**
-	 * Tier 6: `Base: Label` (tried first) or `Base (Label)`, with `Base` resolving through tiers
-	 * 1-3 only. The label lives in `specialization` where the item takes one, otherwise in the
-	 * row's note (Q1).
+	 * Tier 6: `Base: Label` (tried first) or `Base (Label)`, with `Base` resolving through tiers 1-3 only.
 	 *
 	 * @param array<string,mixed> $row
 	 * @param array<string,mixed> $index
@@ -510,9 +479,8 @@ class Custom_Rekey {
 	}
 
 	/**
-	 * The row as it reads once re-keyed: the catalog name, `custom` dropped, any label in its
-	 * home, and `rekeyed_from` recording exactly what the player wrote. Every other key is left
-	 * as found.
+	 * The row as it reads once re-keyed: the catalog name, `custom` dropped, any label in its home, and `rekeyed_from`
+	 * recording exactly what the player wrote.
 	 *
 	 * @param array<string,mixed> $row
 	 * @param array<string,mixed> $decision A `rekey` decision.

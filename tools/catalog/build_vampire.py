@@ -1,4 +1,4 @@
-"""Emits the Vampire Discipline and blood-magic files (1.3.1: B-4, B-5, B-6, B-7).
+"""Emits the Vampire Discipline and blood-magic files.
 
     python3 build_vampire.py <snapshot-dir> <dark-ages-menus.json>
 
@@ -8,24 +8,23 @@ _Faith and Fire_") decoded to JSON by the plugin's own GVM_Parser:
 
     php -r 'define("ABSPATH",1); spl_autoload_register(...);
             echo json_encode(GVM_Parser::parse_file($argv[1]));' \\
-        "GV301Source/Code/Dark Ages Menus.gvm" > da.json
+        "Dark Ages Menus.gvm" > da.json
 
 Writes, under data/catalog/blocks/:
 
 - `vampire-disciplines.json`, `vampire-blood-magic.json` - the bases.
 - `darkages-vampire_disciplines.json`, `darkages-vampire_blood-magic.json`,
   `2nded-vampire_disciplines.json`, `2nded-vampire_blood-magic.json` - the
-  edition printings the seeded families had fused into their own ladders
-  (format §4b: edition qualifiers are variants, `mode: add`).
+  edition printings, split out of the base ladders as `mode: add` variants.
 - `vampire-gargoyle-powers.json` - Faith and Fire's non-progressive Gargoyle
   powers, which are not a ladder.
 
-The rules, in order, per family (rulings/<slug>.json says which apply and why):
+The rules, in order, per family (rulings/<slug>.json says which apply):
 renames by position, renames, retiers, dropped levels, level aliases, exact
 duplicates, then the edition split, then the ladder fills. A family that still
-has a leftover ladder-rank level is a hard error: D67 cannot be written by
-accident. Every snapshot level is accounted for at the end - placed as a rung,
-a pick, an option, an alias, a variant rung, a moved item, or a recorded drop.
+has a leftover ladder-rank level is a hard error. Every snapshot level is
+accounted for at the end - placed as a rung, a pick, an option, an alias, a
+variant rung, a moved item, or a recorded drop.
 """
 
 import json
@@ -168,13 +167,9 @@ def strip_shared_tradition_notes(powers):
     """Drops a level's tradition note where the family is offered by more than one paradigm.
 
     A note like `Sabbat` on all five rungs of Lure of Flames records which sect's printing the
-    row came from, but the path's own `traditions` map lists five paradigms that offer it, so
-    the note reads as a restriction the catalog does not mean (owner ruling, 2026-09-22).
-
-    **It can never strip a discriminator.** D67's seam is a family whose levels *disagree* with
-    each other, and 1.2.9's `seam_qualifier()` shows a qualifier only in that case - so this
-    drops a note only when every rung in the family carries the same one, which no seam can be
-    made of. A family with mixed notes is left exactly as it is.
+    row came from, but the path's own `traditions` map lists five paradigms that offer it. A note
+    is dropped only when every rung in the family carries the same one; a family with mixed notes
+    is left exactly as it is.
 
     Returns (families touched, levels touched) for the build log.
     """
@@ -238,9 +233,8 @@ def main(snapshot_dir, da_path):
             rule = rulings[slug]['families'].get(fam['name'], {})
             raw[(slug, fam['name'])] = fam
             if rule.get('action') == 'drop':
-                # `reason` keeps the accounting honest: a family dropped because the same rows
-                # already exist elsewhere is not the same finding as one dropped because a
-                # later printing supersedes it.
+                # `reason` distinguishes rows that already exist elsewhere from a
+                # later printing that supersedes the family.
                 n = len(entries_of(fam))
                 accounting['snapshot'] += n
                 accounting['dropped_' + rule.get('reason', 'duplicate')] += n
@@ -254,8 +248,7 @@ def main(snapshot_dir, da_path):
             sources[(slug, fam['name'])] = fam.get('source') or fam['name']
 
     # Pass 2: merges, same block and cross block. Ladders must agree name for
-    # name once each side's own rulings have run - otherwise it is not the
-    # same path and the merge is refused.
+    # name once each side's own rulings have run, or the merge is refused.
     merged_extra = {VD: {}, BM: {}}
     for slug in (VD, BM):
         for name, st in list(states[slug].items()):
@@ -381,7 +374,7 @@ def main(snapshot_dir, da_path):
                 if variant == '2nd-ed':
                     prefer = research_2e.get(norm(name)) or research_2e.get(norm(src_menu)) or []
                     # Research order where MET 2e lists the family, otherwise the
-                    # snapshot's own order, so a rung keeps the place it had.
+                    # snapshot's own order.
                     order = prefer or [e['name'] for e in entries_of(info['fam'])]
                     base_ladder = ladder_from(info['base_state']['ladder'])[0] if info['base_state']['ladder'] else []
                     cands = sorted(base_ladder, key=lambda lv: 0 if norm(lv['name']) in {norm(p) for p in prefer} else 1)

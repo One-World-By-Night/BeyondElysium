@@ -1,13 +1,11 @@
 """Reads the private Vampire research (samples/research/vampire/) into one shape.
 
-Offline tooling for 1.3.1's B-7. The ~25 extraction files were written by
-different passes and nest their powers differently (`paths[]`, `ways[]`,
-named sub-objects, `powers[]` keyed by discipline). This flattens all of them
-to `(file, path_name, [(power_name, tier_or_level), ...])`, which is all a
-spelling reconciliation or a short-ladder fill needs.
+Offline tooling. The ~25 extraction files nest their powers differently
+(`paths[]`, `ways[]`, named sub-objects, `powers[]` keyed by discipline). This
+flattens all of them to `(file, path_name, [(power_name, tier_or_level), ...])`.
 
-Precedence (1.3.0 §2): OWBN packet > MET > tabletop, newest wins within a tier,
-only ever compared within one era. `PRECEDENCE` orders the folders.
+Precedence: OWBN packet > MET > tabletop, newest wins within a tier, only ever
+compared within one era. `PRECEDENCE` orders the folders.
 """
 
 import json

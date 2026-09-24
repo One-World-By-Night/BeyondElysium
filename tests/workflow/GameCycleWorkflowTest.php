@@ -13,19 +13,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §7 trace 3: a Storyteller creates Friday's session with a downtime window Monday
- * to Thursday 11:59pm and a default batch scheduled Friday 5pm. A player posts an action
- * Tuesday and records a background use; a Storyteller answers Wednesday (held); the player
- * sees no answer. After Thursday's deadline the player's edit 409s; one character gets an
- * extension and posts. Friday 5:00:01pm, before any cron run, the player loads the plot and
- * reads the answer; the sweep sends each player one email; a second sweep sends none. After
- * the game a Narrator signs in the characters and a visitor; attendance XP is awarded once;
- * a second award 409s.
- *
- * Time doesn't really pass during a test run, so each beat of the week is simulated by
- * setting the window/batch fields directly to where that beat needs them, exactly as
- * `DowntimeWindowThreadTest`/`ReleaseBatchThreadTest` already do for a single scenario each -
- * this just chains every one of them in the trace's own order against the same session.
+ * Trace 3: a Storyteller creates Friday's session with a downtime window Monday to Thursday 11:59pm and a default
+ * batch scheduled Friday 5pm.
  */
 class GameCycleWorkflowTest extends WP_UnitTestCase {
 
@@ -76,7 +65,7 @@ class GameCycleWorkflowTest extends WP_UnitTestCase {
 
 		$game_date = gmdate( 'Y-m-d', strtotime( '+5 days' ) );
 
-		// A default batch scheduled Friday 5pm - still in the future, so nothing is out yet.
+		// A default batch scheduled Friday 5pm.
 		wp_set_current_user( $hst_id );
 		$batch = $this->dispatch( 'POST', "/be/v1/{$this->slug}/release-batches", [
 			'name'       => 'Friday Batch',
@@ -84,8 +73,6 @@ class GameCycleWorkflowTest extends WP_UnitTestCase {
 		] );
 		$batch_id = (int) $batch->get_data()->id;
 
-		// Friday's session, a downtime window open right now (simulating Tuesday, inside
-		// Monday-to-Thursday), the batch above as its default.
 		$session = $this->dispatch( 'POST', "/be/v1/{$this->slug}/sessions", [
 			'game_date'             => $game_date,
 			'downtime_opens_at'     => gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS ),
@@ -110,8 +97,7 @@ class GameCycleWorkflowTest extends WP_UnitTestCase {
 		] );
 		$this->assertSame( 201, $background->get_status() );
 
-		// A Storyteller answers Wednesday (held) - no explicit release_batch_id, so it
-		// inherits the session's own default batch automatically.
+		// A Storyteller answers Wednesday (held).
 		wp_set_current_user( $hst_id );
 		$answer = $this->dispatch( 'POST', "/be/v1/{$this->slug}/plots/{$plot_id}/entries", [
 			'entry_type' => 'response', 'content' => 'Someone was here before you.',
@@ -146,8 +132,7 @@ class GameCycleWorkflowTest extends WP_UnitTestCase {
 		] );
 		$this->assertSame( 201, $extended_post->get_status() );
 
-		// Friday 5:00:01pm, before any cron run: the batch's own time has passed, so the
-		// player already reads the answer - Release_Batch::is_out_row(), no release() yet.
+		// Friday 5:00:01pm, before any cron run: the batch's own time has passed.
 		Release_Batch::update( $batch_id, [ 'release_at' => gmdate( 'Y-m-d H:i:s', time() - MINUTE_IN_SECONDS ) ] );
 		$this->assertSame( 'scheduled', Release_Batch::find( $batch_id )->status );
 		$this->assertNull( Release_Batch::find( $batch_id )->notified_at );
@@ -155,9 +140,7 @@ class GameCycleWorkflowTest extends WP_UnitTestCase {
 		$after_deadline = $this->dispatch( 'GET', "/be/v1/{$this->slug}/plots/{$plot_id}/entries" )->get_data();
 		$this->assertContains( $answer_id, array_map( static fn( $e ) => (int) $e->id, (array) $after_deadline ) );
 
-		// The sweep sends each player one email; a second sweep sends none. (Earlier steps -
-		// posting, answering - may have their own, unrelated notifications; only the sweep's
-		// own release mail matters here, so the capture is reset immediately before it.)
+		// The sweep sends each player one email.
 		$this->captured_mail = [];
 		Maintenance::run_release_sweep();
 		$this->assertCount( 1, $this->captured_mail );
@@ -178,8 +161,7 @@ class GameCycleWorkflowTest extends WP_UnitTestCase {
 		] );
 		$this->assertSame( 201, $sign_in_visitor->get_status() );
 
-		// A Narrator holds be_manage_sessions but not be_manage_characters - awarding
-		// attendance XP is a Storyteller's own action.
+		// A Narrator holds be_manage_sessions but not be_manage_characters.
 		wp_set_current_user( $hst_id );
 		$award = $this->dispatch( 'POST', "/be/v1/{$this->slug}/sessions/{$session_id}/award-attendance-xp" );
 		$this->assertSame( 200, $award->get_status() );

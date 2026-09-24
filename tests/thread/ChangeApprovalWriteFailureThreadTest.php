@@ -11,11 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-056. Approving a change wrote it to the sheet and the XP, then recorded the
- * approval without checking that write. When it failed - found live, with this branch's code
- * running against a database that did not have `review_notes` yet - the sheet and XP changed,
- * the change stayed pending, and approving it again from the queue applied it a second time.
- * The writes now land together or not at all.
+ * A failed write while approving a change is not recorded as an approval.
  */
 class ChangeApprovalWriteFailureThreadTest extends WP_UnitTestCase {
 
@@ -58,7 +54,9 @@ class ChangeApprovalWriteFailureThreadTest extends WP_UnitTestCase {
 		] );
 	}
 
-	/** Makes the one write that records an approval fail, the way a missing column does. */
+	/**
+	 * Makes the one write that records an approval fail, the way a missing column does.
+	 */
 	public function break_the_approval_write( string $query ): string {
 		$records_approval = str_starts_with( $query, 'UPDATE' )
 			&& str_contains( $query, 'be_character_changes' )

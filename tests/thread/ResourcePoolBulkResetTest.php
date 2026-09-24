@@ -7,11 +7,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * `POST /{game_slug}/resource-pools/bulk-reset` (bulk-operations-design.md Item 1) - the
- * ordinary end-of-session "everyone's Willpower/Blood refills" action, applied to a batch
- * of characters at once instead of one at a time. Writes `sheet_data` directly, never
- * routed through `Change_Engine`/`character_changes`, matching how a starting sheet is
- * written directly at creation.
+ * `POST /{game_slug}/resource-pools/bulk-reset`.
  */
 class ResourcePoolBulkResetTest extends WP_UnitTestCase {
 
@@ -70,8 +66,7 @@ class ResourcePoolBulkResetTest extends WP_UnitTestCase {
 
 		$response = $this->bulk_reset( [ $id ], 'vampire-resources', 'Blood' );
 		$this->assertSame( 200, $response->get_status() );
-		// Still counted - a no-op success, matching bulk_award_xp's own "count what applied"
-		// shape, not an error return.
+		// Still counted - a no-op success, matching bulk_award_xp's own "count what applied" shape.
 		$this->assertSame( 1, $response->get_data()['reset'] );
 
 		$character = Character::find( $id );

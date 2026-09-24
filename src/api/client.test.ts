@@ -1,8 +1,6 @@
 /**
- * 1.0.0-review F-096: the list calls that read a page's totals from its headers ask api-fetch
- * not to parse the response, and a failed one then rejected with the raw response instead of
- * the server's error - so the Approval Queue and Query Tool showed their generic message where
- * the server had said exactly what was wrong.
+ * The list calls that read a page's totals from its headers ask api-fetch not to parse the response, and a failed one
+ * then rejected with the raw response.
  */
 import apiFetch from '@wordpress/api-fetch';
 import api from './client';
@@ -14,6 +12,7 @@ const mockedFetch = apiFetch as unknown as jest.Mock;
 const pages: Array< [ string, () => Promise< unknown > ] > = [
 	[ 'characters', () => api.characters( 'kony' ).listPaginated() ],
 	[ 'the approval queue', () => api.changes( 'kony' ).queue() ],
+	[ 'schema blocks', () => api.schemaBlocks.listPaginated() ],
 	[ 'plots', () => api.plots( 'kony' ).listPaginated() ],
 	[ 'world objects', () => api.worldObjects( 'kony' ).listPaginated() ],
 	[

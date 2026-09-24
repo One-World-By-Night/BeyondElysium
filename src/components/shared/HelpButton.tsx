@@ -1,7 +1,5 @@
 /**
- * The `?` that opens a screen's help page in the side panel (1.0.0-help.md H-1). One panel is
- * open at a time: opening another screen's help closes this one, and closing the panel puts
- * focus back on the `?` that opened it.
+ * The `?` that opens a screen's help page in the side panel.
  */
 import { useEffect, useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -10,7 +8,9 @@ import HelpPanel from './HelpPanel';
 import './HelpPanel.css';
 
 export interface HelpButtonProps {
-	/** A file name in `docs/help/`, without `.md`. */
+	/**
+	 * A file name in `docs/help/`, without `.md`.
+	 */
 	helpKey: string;
 }
 

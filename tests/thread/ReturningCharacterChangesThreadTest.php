@@ -9,16 +9,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-044. Owner ruling 2026-09-14: when a character comes back to a chronicle that
- * already holds its sheet, show the Storyteller reviewing the transfer what differs before they
- * overwrite that sheet.
- *
- * The review listed the character as "the same character, already in this chronicle" and asked
- * for a decision, with nothing to base it on.
- *
- * Both chronicles live on this one test install, so the host's earlier copy can only hold the
- * character's uuid once the home row is gone - the same arrangement `TransferHostApprovalThreadTest`
- * uses.
+ * When a character returns to a chronicle that already holds its sheet, the reviewing Storyteller is shown what
+ * differs before overwriting it.
  */
 class ReturningCharacterChangesThreadTest extends WP_UnitTestCase {
 
@@ -46,7 +38,9 @@ class ReturningCharacterChangesThreadTest extends WP_UnitTestCase {
 		parent::tearDown();
 	}
 
-	/** Answers the host's verify callback through real REST dispatch. */
+	/**
+	 * Answers the host's verify callback through real REST dispatch.
+	 */
 	public function loopback( $preempt, $args, $url ) {
 		if ( strpos( $url, '/verify/' ) === false ) {
 			return $preempt;
@@ -59,22 +53,26 @@ class ReturningCharacterChangesThreadTest extends WP_UnitTestCase {
 		];
 	}
 
-	/** The sheet as the host last saw it. */
+	/**
+	 * The sheet as the host last saw it.
+	 */
 	private function sheet_when_it_left(): array {
 		return [
 			'vampire-identity'    => [ 'Clan' => 'Nosferatu', 'Sect' => 'Sabbat', 'Generation' => 8, 'Title' => 'Pack Priest' ],
-			'met-abilities'       => [ [ 'name' => 'Streetwise', 'count' => 4 ], [ 'name' => 'Stealth', 'count' => 3 ] ],
-			'met-merits'          => [ [ 'name' => 'Danger Sense', 'count' => 2 ] ],
+			'vampire-abilities'       => [ [ 'name' => 'Streetwise', 'count' => 4 ], [ 'name' => 'Stealth', 'count' => 3 ] ],
+			'vampire-merits'          => [ [ 'name' => 'Danger Sense', 'count' => 2 ] ],
 			'vampire-disciplines' => [ [ 'name' => 'Animalism', 'level' => 2 ], [ 'name' => 'Obfuscate', 'level' => 3 ] ],
 		];
 	}
 
-	/** The same sheet after more play at home. */
+	/**
+	 * The same sheet after more play at home.
+	 */
 	private function sheet_coming_back(): array {
 		return [
 			'vampire-identity'    => [ 'Clan' => 'Nosferatu', 'Sect' => 'Sabbat', 'Generation' => 8, 'Title' => 'Bishop' ],
-			'met-abilities'       => [ [ 'name' => 'Streetwise', 'count' => 5 ], [ 'name' => 'Stealth', 'count' => 3 ], [ 'name' => 'Brawl', 'count' => 2 ] ],
-			'met-merits'          => [],
+			'vampire-abilities'       => [ [ 'name' => 'Streetwise', 'count' => 5 ], [ 'name' => 'Stealth', 'count' => 3 ], [ 'name' => 'Brawl', 'count' => 2 ] ],
+			'vampire-merits'          => [],
 			'vampire-disciplines' => [ [ 'name' => 'Animalism', 'level' => 3 ], [ 'name' => 'Obfuscate', 'level' => 3 ], [ 'name' => 'Potence', 'level' => 1 ] ],
 		];
 	}
@@ -89,7 +87,7 @@ class ReturningCharacterChangesThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Home sends `$coming_back`; the host already holds `$host_copy` under the same uuid.
+	 * Home sends `$coming_back`.
 	 *
 	 * @return array<string,mixed> The review's one duplicate.
 	 */

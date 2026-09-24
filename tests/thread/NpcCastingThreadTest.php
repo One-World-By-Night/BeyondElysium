@@ -10,13 +10,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §3.8: a chronicle member cast to play an NPC for one session, and the brief they read
- * about it - the NPC's real and public name, the session's date/time/place, its resolved
- * sections with every Storyteller-only block removed except `npc-roleplaying-notes`, and the
- * casting's own free-text brief. The access window opens at casting and stays open through
- * the day after the session's game_date.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.8
+ * A chronicle member cast to play an NPC for one session, and the brief they read about it.
  */
 class NpcCastingThreadTest extends WP_UnitTestCase {
 

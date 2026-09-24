@@ -1,7 +1,7 @@
 /**
- * 1.0.0-review F-079 (Pass H intake `t3-remaining-components`). A resource pool can be defined
- * with no maximum. Its tracker's ceiling was the larger of the pool's value and 10 - so once the
- * pool reached 10, the ceiling was 10, "+" was disabled, and nothing on the sheet could raise it.
+ * `trackerMax` uses a pool's declared maximum, always leaves room to raise a
+ * pool with no maximum, and still shows ten dots for a small pool with no
+ * maximum.
  */
 import { trackerMax } from './poolMax';
 

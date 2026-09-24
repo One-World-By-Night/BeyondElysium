@@ -1,7 +1,5 @@
 /**
- * A game session's own sign-in roster (1.1.0 §3.1): every active, non-NPC character in the
- * chronicle with their player's name and a tick for whether they're signed in, plus a form
- * to add a visitor by name and home chronicle. A running count of who's actually present.
+ * A game session's own sign-in roster.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';

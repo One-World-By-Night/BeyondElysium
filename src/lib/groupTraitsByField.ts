@@ -1,8 +1,6 @@
 /**
- * Groups a block's held trait rows into nested group/subgroup buckets, driven by
- * per-item `group`/`subgroup` fields on the block's catalog definition rather than a
- * fixed category list. Exports `groupTraitsByField()` (also as the default export) and
- * the `NestedTraitGroup` shape it returns.
+ * Groups a block's held trait rows into nested group/subgroup buckets, driven by per-item `group`/`subgroup` fields
+ * on the block's catalog definition.
  */
 import type { TraitListDefinition } from '../types';
 
@@ -12,11 +10,8 @@ export interface NestedTraitGroup< T > {
 }
 
 /**
- * Groups `data` rows by the `group` and `subgroup` of the matching catalog item (looked
- * up by name in `definition.items`), falling back to "Other" for a row whose catalog
- * item has no group. Returns null when no catalog item declares a `group` at all, so
- * callers can fall back to their own default grouping. Groups and subgroups are each
- * sorted alphabetically in the result.
+ * Groups `data` rows by the `group` and `subgroup` of the matching catalog item (looked up by name in
+ * `definition.items`), falling back to "Other" for a row whose catalog item has no group.
  */
 export function groupTraitsByField< T extends { name: string } >(
 	data: T[],

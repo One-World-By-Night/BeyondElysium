@@ -6,23 +6,12 @@ use BeyondElysium\Services\Change_Validator;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.3.2's alias-routing item, at `Change_Validator`'s own lookup step - "accepting a
- * modify/remove against something already held" (the brief's own description of this
- * consumer). See `Services\Trait_Alias_Resolver` and
- * `BE_PROCESS/releases/1.3.2-design-workflow.md`.
- *
- * The one rule this file exists to prove both ways: a rename may resolve a NEW reference
- * (nothing held yet under either spelling) to the catalog's current name, but it must NEVER
- * repoint the identity of a row `sheet_data` already stores under the OLD spelling - that
- * row is still found and still edited under the name it was actually saved as, exactly as
- * it was before this release, or a rename would silently strand every existing holding.
- *
- * Pure: no database, no WordPress - matches `ChangeValidatorTest`'s own established fixture
- * style.
+ * Alias routing at `Change_Validator`'s lookup step: a modify or remove against something already held resolves a
+ * recorded former name.
  */
 class ChangeValidatorAliasRoutingTest extends TestCase {
 
-	/** @param bool $with_alias Whether the family/item declares its real `aliases`/`split_from` - the revert-test toggle. */
+	/** @param bool $with_alias Whether the family/item declares its `aliases`/`split_from`. */
 	private function blocks( bool $with_alias ): array {
 		$dry_nile = [ 'name' => 'Path of the Dry Nile' ];
 		if ( $with_alias ) {
@@ -62,7 +51,7 @@ class ChangeValidatorAliasRoutingTest extends TestCase {
 	}
 
 	// ---------------------------------------------------------------------------------
-	// The fix: a fresh reference under the old name resolves to the catalog's current one.
+	// A fresh reference under the old name resolves to the catalog's current one.
 	// ---------------------------------------------------------------------------------
 
 	public function test_a_new_power_reference_under_its_old_family_name_resolves_to_the_current_one(): void {
@@ -89,11 +78,6 @@ class ChangeValidatorAliasRoutingTest extends TestCase {
 		$this->assertSame( 'Meditation', $result['change_data']['trait']['name'] );
 	}
 
-	/**
-	 * Revert-test, watched failing first: with the same block declaring no `aliases` at all
-	 * (the pre-1.3.2 shape), the identical request reproduces the pre-fix defect - refused,
-	 * not silently priced against the wrong name.
-	 */
 	public function test_without_the_declared_alias_the_same_request_is_refused_not_silently_wrong(): void {
 		$result = $this->check(
 			'add_trait',
@@ -111,11 +95,8 @@ class ChangeValidatorAliasRoutingTest extends TestCase {
 	// ---------------------------------------------------------------------------------
 
 	/**
-	 * The dangerous case this class's own docblock warns about: a family the catalog
-	 * renamed, held under sheet_data's OLD spelling. A `remove_trait` must still find and
-	 * remove THAT row - if the alias check ran unconditionally and rewrote `trait.name` to
-	 * the catalog's current spelling first, `Change_Engine::apply_to_sheet()` would then
-	 * search for a row that does not exist under that name and silently do nothing.
+	 * The dangerous case this class's own docblock warns about: a family the catalog renamed, held under sheet_data's OLD
+	 * spelling.
 	 */
 	public function test_removing_a_row_already_held_under_the_old_name_keeps_the_old_name(): void {
 		$sheet = [ 'blood-magic' => [ [ 'name' => 'Path of Dry Nile', 'level' => 3 ] ] ];

@@ -12,8 +12,7 @@ import expected from '../../../tests/fixtures/trait-grouping-expected.json';
 
 /**
  * Same fixture, same expected output as `tests/unit/Display/TraitGroupingParityTest.php`'s
- * `resolve_display()`/`group_by_category()`/`sort_if_alphabetized()` cases - the TypeScript
- * half of proving these three pure helpers agree with their `Trait_Grouping` PHP twin.
+ * `resolve_display()`/`group_by_category()`/`sort_if_alphabetized()` cases.
  */
 describe( 'TraitListRenderer helpers — parity with Trait_Grouping', () => {
 	describe( 'resolveDisplay', () => {
@@ -69,10 +68,7 @@ describe( 'TraitListRenderer helpers — parity with Trait_Grouping', () => {
 } );
 
 /**
- * 1.1.0 D4: a player_order block (Rituals) never groups or alphabetizes -
- * `TraitListRenderer` itself calls this predicate at every point it would
- * otherwise group/sort, so this also proves the component's actual render
- * path skips them, not just a parallel copy of the same logic.
+ * A player_order block (Rituals) never groups or alphabetizes.
  */
 describe( 'groupsAndSorts', () => {
 	it( 'is true for an ordinary block', () => {

@@ -1,21 +1,14 @@
 /**
- * Type definitions for file uploads on a plot, item, or location
- * (1.1.0 §2.6). Mirrors Attachment::public_shape() exactly - never
- * carries stored_name, the server-only handle used to locate the
- * file on disk.
+ * Type definitions for file uploads on a plot, item, or location.
  */
 
 /**
- * The kind of entity an attachment may belong to. A narrower set
- * than EntityType (plot.ts) - a rote, boon, character, or tag can
- * never carry a file.
+ * The kind of entity an attachment may belong to.
  */
 export type AttachmentEntityType = 'plot' | 'item' | 'location';
 
 /**
- * A single uploaded file's public metadata, as returned by the
- * attachments endpoints. The actual bytes are fetched separately
- * via downloadUrl(), never embedded here.
+ * A single uploaded file's public metadata, as returned by the attachments endpoints.
  */
 export interface Attachment {
 	id: number;

@@ -7,14 +7,8 @@ use BeyondElysium\Models\Translation_String;
 use WP_UnitTestCase;
 
 /**
- * B2 (1.2.0 releases/1.2.0-design-workflow.md §4): Models\Translation's real CRUD and, most
- * load-bearing, upsert()'s fix for the gap TranslationTablesSchemaThreadTest (B1) pinned at the
- * raw-SQL layer - MySQL's UNIQUE key does not treat two NULLs as equal, so two default
- * (context-NULL) inserts for the same term+locale both succeed if nothing guards it.
- * upsert()'s own find_one() call is that guard; the tests below prove it holds, not just assert
- * that it should.
- *
- * @see BE_PROCESS/releases/1.2.0-design-workflow.md §4, §5.1
+ * `Models\Translation`'s CRUD, and `upsert()`'s handling of a null context: two upserts of the same term and locale
+ * with a null context leave one row.
  */
 class TranslationModelThreadTest extends WP_UnitTestCase {
 
@@ -62,10 +56,8 @@ class TranslationModelThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The fix, proven directly: two upsert() calls with identical (string_id, locale,
-	 * context=null) must produce exactly one row, carrying the second call's translation - not
-	 * two rows, which is what the equivalent raw $wpdb->insert() calls produce (pinned in
-	 * TranslationTablesSchemaThreadTest::test_two_null_context_rows_are_not_stopped_by_the_db_alone).
+	 * Two upsert() calls with identical (string_id, locale, context=null) produce exactly one row, carrying the second
+	 * call's translation.
 	 */
 	public function test_upsert_twice_with_null_context_updates_not_duplicates(): void {
 		$string_id = $this->make_string();
@@ -88,7 +80,9 @@ class TranslationModelThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'Corrected Draft', $row->translation, 'the surviving row must carry the latest text' );
 	}
 
-	/** Same guarantee, for a context-specific override rather than the default row. */
+	/**
+	 * Same guarantee, for a context-specific override.
+	 */
 	public function test_upsert_twice_with_the_same_context_updates_not_duplicates(): void {
 		$string_id = $this->make_string();
 
@@ -108,7 +102,9 @@ class TranslationModelThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 1, $count );
 	}
 
-	/** The homograph case (§4): a default upsert and a context-specific upsert for the SAME term+locale must coexist. */
+	/**
+	 * The homograph case: a default upsert and a context-specific upsert for the SAME term+locale must coexist.
+	 */
 	public function test_upsert_default_and_context_specific_coexist_for_the_same_term(): void {
 		$string_id = $this->make_string();
 
@@ -189,11 +185,6 @@ class TranslationModelThreadTest extends WP_UnitTestCase {
 		$this->assertArrayNotHasKey( 'map locale isolation term', $map );
 	}
 
-	/**
-	 * §4's status-vocabulary rule, stated explicitly: "Any non-empty translation renders,
-	 * whatever its status." A 'conflict' row is exactly the case this exists to protect - the
-	 * migration's own first-wins-with-a-conflict-flag rows must still render, not vanish.
-	 */
 	public function test_map_for_locale_includes_a_conflict_status_row(): void {
 		$string_id = $this->make_string( 'Map Conflict Status Term' );
 		Translation::create( [ 'string_id' => $string_id, 'locale' => 'pt_BR', 'translation' => 'Conflicted But Rendered', 'status' => 'conflict' ] );

@@ -5,34 +5,17 @@ namespace BeyondElysium\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * What makes one held `trait_list` row the same holding as another, rather than a second one
- * (1.2.11 D86/D88).
- *
- * A specialization labels ONE holding: `Brawl 5 (Wrestling)` is a single Brawl at 5, and
- * choosing a different focus must never let a player hold a second Brawl. What genuinely makes
- * the label part of a holding's identity is `allow_multiples` - `Retainers x3 (John Doe)` and
- * `Retainers x2 (Sue Smith)` are two real purchases, as are the field-of-study Abilities
- * (Lore, Crafts, Science, Performance, Linguistics, Hobby/Professional/Expert, City Secrets).
- *
- * This class exists for the same reason `Power_Levels` does: every consumer that decides
- * *which* held row a change means reads the rule from one place, so no second copy of it can
- * drift. The consumers are `Change_Validator` (refusing a duplicate), `Change_Engine`
- * (the pending-duplicate key, and applying a change to the sheet) and `Cost_Engine` (pricing a
- * change against what is already held). `src/lib/traitIdentity.ts` is its TypeScript twin.
- *
- * Pure: no database or WordPress calls. Callers hand it a block definition they have already
- * resolved - the chronicle's fork where one exists, never the global catalog by assumption.
+ * What makes one held `trait_list` row the same holding as another.
  */
 class Trait_Identity {
 
-	/** The separator inside a composite identity. It cannot appear in a name or a label. */
+	/**
+	 * The separator inside a composite identity.
+	 */
 	const SEPARATOR = "\0";
 
 	/**
-	 * Whether one catalog item may be held more than once, each holding labelled by its own
-	 * specialization. The item's own `allow_multiples` wins when it states one; otherwise the
-	 * block's flag is the default, and an item the catalog does not list - a custom entry -
-	 * takes that block default too.
+	 * Whether one catalog item may be held more than once, each holding labelled by its own specialization.
 	 *
 	 * @param object|null $definition A decoded `trait_list` block definition.
 	 * @param string      $name
@@ -51,9 +34,8 @@ class Trait_Identity {
 	}
 
 	/**
-	 * The identity of one held row: its `name` alone, or the name and its label joined by a
-	 * NUL when the item is multiples-capable. Amends Decision 082, which made it
-	 * name+specialization for every non-atomic block.
+	 * The identity of one held row: its `name` alone, or the name and its label joined by a NUL when the item is
+	 * multiples-capable.
 	 *
 	 * @param object|null $definition
 	 * @param string      $name
@@ -67,14 +49,8 @@ class Trait_Identity {
 	}
 
 	/**
-	 * The identity of one held `tiered_power` row: the family name alone for a plain numbered
-	 * holding (at most one per family), or family + `power_name` for an Elder-and-above pick,
-	 * since a family holds several distinct picks at once (Decision 037).
-	 *
-	 * The same rule `computeChanges.ts`'s `tieredPowerKey()` has always used on the client and
-	 * `Cost_Engine::find_held_power()` on the server - and the rule the change engine did not
-	 * use, which is D89: removing one pick removed every pick of its family, and two pending
-	 * picks of one family collapsed into a single queued change.
+	 * The identity of one held `tiered_power` row: the family name alone for a plain numbered holding (at most one per
+	 * family), or family + `power_name` for an Elder-and-above pick.
 	 *
 	 * @param string      $name
 	 * @param string|null $power_name
@@ -86,11 +62,6 @@ class Trait_Identity {
 
 	/**
 	 * The identity of one stored sheet row, or null when the row carries no usable name.
-	 *
-	 * Covers both section types from one entry point, because the two shapes are disjoint: a
-	 * `tiered_power` row carries `power_name` and never a `specialization`, a `trait_list` row
-	 * the other way round. A caller applying or pricing a change therefore needs no branch of
-	 * its own.
 	 *
 	 * @param object|null         $definition
 	 * @param array<string,mixed> $row
@@ -109,8 +80,7 @@ class Trait_Identity {
 	}
 
 	/**
-	 * The index of the first held row with this identity, or null when the character holds
-	 * none. This is what "which row does this change mean" resolves to everywhere.
+	 * The index of the first held row with this identity, or null when the character holds none.
 	 *
 	 * @param object|null $definition
 	 * @param array       $held     `sheet_data[block_slug]`.
@@ -128,14 +98,6 @@ class Trait_Identity {
 
 	/**
 	 * Which held row a `modify_trait` or `remove_trait` addresses, as an identity.
-	 *
-	 * A change names the row it acts on by its label - but a relabel changes exactly that, so
-	 * the row is addressed by the label it had before the edit when the client states one.
-	 * `previous` is display-only everywhere else (`Change_Validator::with_display_keys()`);
-	 * this is the single case where it identifies rather than decorates, because nothing else
-	 * in the payload can express "the holding that used to be called X". For an item that is
-	 * not multiples-capable the label is not part of the identity at all, so this is just the
-	 * name and `previous` changes nothing.
 	 *
 	 * @param object|null $definition
 	 * @param array       $trait    The change's own normalized trait.

@@ -7,16 +7,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The Storyteller Toolkit's World Objects tab (1.0.1 D2) gates on
- * `be_manage_world_objects` resolved *per chronicle*, so `GET
- * /{game_slug}/my/capabilities` has to return it. It did not before D2 - the catalog only
- * existed in wp-admin, so no front-end screen had ever needed it resolved that way, and a
- * tab keyed on a capability the route omits is simply invisible to everyone.
- *
- * Also pins the role boundary the tab depends on: an HST and an AST manage the catalog, a
- * Narrator and the chronicle's Harpy do not.
- *
- * @see BE_PROCESS/releases/1.0.1-design-workflow.md D2
+ * The Storyteller Toolkit's World Objects tab gates on `be_manage_world_objects` resolved *per chronicle*.
  */
 class WorldObjectsCapabilityThreadTest extends WP_UnitTestCase {
 

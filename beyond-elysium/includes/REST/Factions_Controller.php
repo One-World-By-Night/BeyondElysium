@@ -16,12 +16,7 @@ use BeyondElysium\Services\St_Visibility;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for chronicle factions and their court positions (1.1.0 §3.10, F1/F2) -
- * sects, coteries, packs, chantries, courts, and the offices within them. `be_manage_factions`
- * writes both; a plain viewer reads whatever `Audience` and each entity's own extra rule
- * (a faction's member-only goals/roster, a position's `holder_public`) allow.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.10
+ * REST controller for chronicle factions and their court positions.
  */
 class Factions_Controller extends Base_Controller {
 
@@ -139,9 +134,8 @@ class Factions_Controller extends Base_Controller {
 	// --- Factions -------------------------------------------------------------------
 
 	/**
-	 * Every faction in the chronicle a manager sees, or every one this viewer's own
-	 * characters can see per `Audience`, projected per §3.10's own visibility rule
-	 * (goals and the member roster are member/Storyteller-only, never in the plain list).
+	 * Lists the factions a manager sees, or the ones this viewer's own characters can see per `Audience`, with goals and
+	 * the member roster shown only to members and Storytellers.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -181,8 +175,7 @@ class Factions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates a faction directly - a Storyteller's own action, never restricted to
-	 * `Faction::PLAYER_PROPOSABLE_TYPES` the way `propose_faction` is.
+	 * Creates a faction directly.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -285,8 +278,7 @@ class Factions_Controller extends Base_Controller {
 	// --- Faction members --------------------------------------------------------------
 
 	/**
-	 * The member roster with rank and leader flags - manager or member only (§3.10:
-	 * "members and Storytellers also read... the member list with ranks and leaders").
+	 * The member roster with rank and leader flags.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -305,9 +297,7 @@ class Factions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The member roster's own display shape - `rank` for the model's `member_rank` column,
-	 * plus the character's current name. Shared by `get_members()` and `update_member()` so
-	 * both return the identical shape.
+	 * The member roster's own display shape.
 	 *
 	 * @param object $member
 	 * @return array<string,mixed>
@@ -325,9 +315,7 @@ class Factions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The name-only picker of active non-NPC characters in this chronicle, not already
-	 * members - the same narrow disclosure `Plots_Controller::get_member_candidates()`
-	 * already establishes (§2.3a). Leader or manager only, matching who may actually add one.
+	 * The name-only picker of active non-NPC characters in this chronicle.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -356,7 +344,7 @@ class Factions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Adds a character to a faction. A leader or a Storyteller only.
+	 * Adds a character to a faction.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -389,10 +377,7 @@ class Factions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Removes a character from a faction. A leader can't remove themself or another
-	 * leader (§3.10) - `Faction_Member::remove()` itself refuses to remove the last
-	 * remaining leader regardless of who asks; this adds the plain "no leader removes
-	 * any leader" rule on top for a non-manager caller specifically.
+	 * Removes a character from a faction.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -423,12 +408,7 @@ class Factions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Sets a member's rank and/or leader flag. A leader or a Storyteller may set `rank` -
-	 * the same gate as inviting or removing a member. Only a Storyteller may change
-	 * `is_leader` - granting or revoking leadership is a bigger structural change than a
-	 * plain internal title, and §3.10's "a leader can't act on another leader" rule already
-	 * puts leadership changes out of a leader's own reach for removal; this keeps the same
-	 * boundary for promotion and demotion.
+	 * Sets a member's rank and/or leader flag.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -599,8 +579,7 @@ class Factions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * A position's own full holder history - manager only, the same audience as
-	 * everything else naming who has held an office over time.
+	 * A position's own full holder history.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -624,7 +603,7 @@ class Factions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The title preset groups (F2) - data only, for the position title picker.
+	 * The title preset groups.
 	 *
 	 * @return \WP_REST_Response
 	 */
@@ -635,9 +614,7 @@ class Factions_Controller extends Base_Controller {
 	// --- Shared helpers -------------------------------------------------------------
 
 	/**
-	 * Validates a requested `audience`/`audience_rules` pair against the given values -
-	 * the same shape `Secrets_Controller::resolve_audience()`/
-	 * `World_Objects_Controller::resolve_audience()` already establish.
+	 * Validates a requested `audience`/`audience_rules` pair against the given values.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @param string[]         $valid_audiences
@@ -672,10 +649,7 @@ class Factions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Projects a faction row for the caller: everyone who can see it reads name, type,
-	 * description, and status; a member or manager also reads goals; a manager alone also
-	 * reads the raw audience_rules (never disclosed to a plain member, matching every other
-	 * entity's own "the rule itself is a Storyteller tool" convention).
+	 * Projects a faction row for the caller: everyone who can see it reads name, type, description, and status.
 	 *
 	 * @param object      $faction
 	 * @param bool        $can_manage
@@ -710,9 +684,7 @@ class Factions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Projects a position row: everyone who can see it reads the title and whether it's
-	 * held; `holder_public = 0` hides WHO from a non-manager without hiding THAT, per
-	 * §3.10 ("Held - not public"). A manager alone reads the raw audience_rules and notes.
+	 * Projects a position row: everyone who can see it reads the title and whether it's held.
 	 *
 	 * @param object $position
 	 * @param bool   $can_manage
@@ -789,9 +761,7 @@ class Factions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a faction by id, confirming it belongs to the URL's game. Manager-only
-	 * write routes call this directly - visibility has already been established by the
-	 * route's own capability gate.
+	 * Looks up a faction by id, confirming it belongs to the URL's game.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return object|\WP_Error
@@ -809,9 +779,7 @@ class Factions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a faction by id and resolves whether the current viewer may see it at
-	 * all - a manager always; a non-manager only when `Audience::can_see()` allows it,
-	 * via their own connected characters (membership).
+	 * Looks up a faction by id and resolves whether the current viewer may see it at all.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return array{0:object,1:bool,2:bool}|\WP_Error [faction, can_manage, is_member]

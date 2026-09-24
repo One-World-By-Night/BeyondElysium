@@ -11,21 +11,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 S4 item 4: rumor levels - a non-manager sees a level-L text only when one of their
- * own characters rates at least L in the rumor's `rumor_level_key`/`rumor_level_match` trait,
- * a manager always sees every level, level texts follow their plot's own release state
- * (never their own), and the `PUT .../rumor-levels` route upserts a level's text or deletes
- * it when sent empty.
- *
- * Uses the `abilities` field-map key (met-abilities/Occult) as the rating trait rather than a
- * real GVM-sourced Influence ("Media" in the design doc's own prose) - a real system trait_list
- * block, confirmed seeded by `PreserveAdminDescriptionsThreadTest`, that this test can set a
- * character's held count on directly without depending on GVM/CSV catalog specifics the
- * level-gate logic itself does not care about. `rumor_level_key` is a query key
- * (`field-map.php`'s `abilities`), never the raw block slug (`met-abilities`) it resolves to -
- * the same distinction `influences` already makes for a real influence rumor.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.4 item 4
+ * Rumor levels: a non-manager sees a level's text only when one of their own characters rates at least that level in
+ * the rumor's `rumor_level_key` and `rumor_level_match` trait; a manager always sees every level.
  */
 class RumorLevelsThreadTest extends WP_UnitTestCase {
 
@@ -65,12 +52,14 @@ class RumorLevelsThreadTest extends WP_UnitTestCase {
 			'created_by' => 1,
 		] );
 		if ( $count > 0 ) {
-			Character::update_sheet_data( $character_id, [ 'met-abilities' => [ [ 'name' => 'Occult', 'count' => $count ] ] ] );
+			Character::update_sheet_data( $character_id, [ 'vampire-abilities' => [ [ 'name' => 'Occult', 'count' => $count ] ] ] );
 		}
 		return $player_id;
 	}
 
-	/** A rumor plot rated by Occult, audience=everyone (isolating the level gate from the audience gate). */
+	/**
+	 * A rumor plot rated by Occult, audience=everyone (isolating the level gate from the audience gate).
+	 */
 	private function make_rumor_plot( bool $released ): int {
 		$plot_id = (int) Plot::create( [
 			'game_id'           => $this->game_id,

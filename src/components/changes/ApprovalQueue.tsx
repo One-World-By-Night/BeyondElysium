@@ -1,8 +1,5 @@
 /**
- * Storyteller queue of pending character changes awaiting review. Lists every pending
- * change across the game's characters with filters by character, change type, and
- * approval level, plus per-row and bulk approve/reject controls. A reject requires a
- * note explaining why; approvals do not.
+ * Storyteller queue of pending character changes awaiting review.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
@@ -30,10 +27,6 @@ export interface ApprovalQueueProps {
 	gameSlug: string;
 }
 
-/**
- * The submitter's display name, or their user id if the account no longer exists
- * (1.0.0-review F-116 - this used to always show the raw id).
- */
 function submitterLabel( item: QueueChange ): string {
 	return (
 		item.submitted_by_name ??
@@ -57,9 +50,8 @@ const CHANGE_TYPES: ChangeType[] = [
 ];
 
 /**
- * The price box for a change waiting for one: what it is priced per (a dot, or the whole pick), the
- * number field, and the total as it is typed. Required to approve; 0 is a real answer, so the box
- * starts empty rather than at 0, and empty is what keeps Approve off.
+ * The price box for a change waiting for one: what it is priced per (a dot, or the whole pick), the number field, and
+ * the total as it is typed.
  */
 function PriceField( {
 	item,
@@ -120,9 +112,8 @@ function PriceField( {
 }
 
 /**
- * Renders the pending-changes queue for every character in the game, with filters for
- * character, change type, and approval level. Supports approving or rejecting a single
- * change, selecting multiple changes for a bulk approval, and paginating through results.
+ * Renders the pending-changes queue for every character in the game, with filters for character, change type, and
+ * approval level.
  */
 export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 	const [ items, setItems ] = useState< QueueChange[] >( [] );
@@ -137,15 +128,14 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 	const [ selected, setSelected ] = useState< QueueSelection >( new Map() );
 	const [ rejecting, setRejecting ] = useState< number | null >( null );
 	const [ rejectNote, setRejectNote ] = useState( '' );
-	// What the Storyteller has typed as the price of each change waiting for one (1.3.3 E5).
+	// What the Storyteller has typed as the price of each change waiting for one.
 	const [ prices, setPrices ] = useState< Record< number, string > >( {} );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
 	const [ waitingCount, setWaitingCount ] = useState( 0 );
 
 	useEffect( () => {
-		// A player never sees either list (403), which counts as zero waiting - not an error
-		// worth surfacing on a page whose whole point is the Storyteller-review queue.
+		// A player never sees either list (403).
 		Promise.all( [
 			api
 				.submissions( gameSlug )
@@ -172,7 +162,7 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 	}, [ gameSlug ] );
 
 	useEffect( () => {
-		// Every character, not the route's first 100 (1.0.0-review F-100).
+		// Every character, not the route's first 100.
 		everyPage( ( pageNumber ) =>
 			api
 				.characters( gameSlug )
@@ -191,9 +181,8 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 	}, [ gameSlug ] );
 
 	/**
-	 * Fetches one page of pending changes matching the selected character and change-type
-	 * filters from the API and stores the results and total count. Re-runs whenever the
-	 * filters or page number change.
+	 * Fetches one page of pending changes matching the selected character and change-type filters from the API and stores
+	 * the results and total count.
 	 */
 	function load() {
 		setLoading( true );
@@ -203,7 +192,7 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 				status: 'pending',
 				character_id: characterId || undefined,
 				change_type: changeType || undefined,
-				// Filtered by the server, so the page and its total count only this level (F-099).
+				// Filtered by the server.
 				approval_level: approvalLevel || undefined,
 				page,
 				per_page: 20,
@@ -236,9 +225,7 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 	] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	/**
-	 * Applies a filter from its first page, with nothing ticked: a tick belongs to the
-	 * list it was made on, and an earlier page number can run past the filtered list's end
-	 * (1.0.0-review F-099).
+	 * Applies a filter from its first page, with nothing ticked.
 	 */
 	function applyFilter( set: () => void ) {
 		set();
@@ -253,16 +240,14 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 	}
 
 	/**
-	 * The review token the queue issued for one change - what the reviewer was shown.
+	 * The review token the queue issued for one change.
 	 */
 	function tokenFor( id: number ): string | undefined {
 		return items.find( ( item ) => item.id === id )?.review_token;
 	}
 
 	/**
-	 * Approves a single pending change by id. Sends the approval to the API and, on
-	 * success, reloads the queue so the approved row drops out of the pending list; on
-	 * failure, shows the error message instead.
+	 * Approves a single pending change by id.
 	 */
 	async function approveOne( item: QueueChange ) {
 		const id = item.id;
@@ -276,8 +261,6 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 			} );
 			load();
 		} catch ( err: unknown ) {
-			// Refused as already reviewed or edited since it was shown: reload so the row is current.
-			// load() clears the error first, so the message is set after it.
 			load();
 			setError(
 				errorMessage(
@@ -289,9 +272,7 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 	}
 
 	/**
-	 * Submits a rejection for the change currently being rejected, using the typed note
-	 * as the required reason. Sends the rejection to the API, clears the reject form, and
-	 * reloads the queue on success.
+	 * Submits a rejection for the change currently being rejected, using the typed note as the required reason.
 	 */
 	async function confirmReject( id: number ) {
 		if ( ! rejectNote.trim() ) {
@@ -318,22 +299,19 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 	}
 
 	/**
-	 * Approves every currently selected change in one batch request. Sends the selected
-	 * ids to the API, then clears the selection and reloads the queue so the approved
-	 * rows drop out of the pending list.
+	 * Approves every currently selected change in one batch request.
 	 */
 	async function approveSelected() {
 		if ( selected.size === 0 ) {
 			return;
 		}
 		try {
-			// Each change's token from when it was ticked, on whichever page (F-101).
+			// Each change's token from when it was ticked, on whichever page.
 			const { ids, tokens } = batchApproval( selected );
 			const result = await api
 				.changes( gameSlug )
 				.batchApprove( ids, tokens );
 			setSelected( new Map() );
-			// load() clears any error first, so the skipped notice is set after it.
 			load();
 			const notices: string[] = [];
 			if ( result.skipped.length > 0 ) {
@@ -559,11 +537,6 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 											</>
 										) }
 									</td>
-									{ /* Level/Submitted by/When: real information, but not what an ST triaging between
-									 * scenes needs first (mobile-sheet-design.md §5.5) - collapsed behind one native
-									 * disclosure per card at phone width rather than three more stacked rows. Desktop
-									 * keeps them as plain columns; .be-approval-queue__detail-toggle only renders at
-									 * phone width (Admin.css-style: display:none by default, shown in the media query). */ }
 									<td
 										className="be-approval-queue__detail-toggle"
 										data-label=""

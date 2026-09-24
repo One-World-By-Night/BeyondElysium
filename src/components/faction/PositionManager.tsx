@@ -1,9 +1,5 @@
 /**
- * The Storyteller Toolkit's Positions tab (1.1.0 §3.10, F2): a list-pane/detail-pane manager
- * for chronicle-wide offices - Prince, Sheriff, Archbishop, and the like - each optionally
- * scoped to a faction, with a title preset picker and a holder-history timeline. Only
- * `be_manage_factions` reaches this page, so every position here is seen with its full,
- * manager-only projection regardless of its own `holder_public`.
+ * The Storyteller Toolkit's Positions tab: a list-pane/detail-pane manager for chronicle-wide offices.
  */
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

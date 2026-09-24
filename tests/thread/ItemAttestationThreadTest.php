@@ -13,17 +13,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §3.13: a verification code for a printed Item Card - `Item_Attestation`, the item
- * sibling of `Attestation` (GX-7), sharing `Services\Short_Code` so the two tables' codes can
- * never collide, and `Verify_Controller` checking both.
- *
- * Delete revokes an item's codes outright (nothing left to verify against); a transfer
- * deliberately does NOT auto-revoke, since the design's own test list treats "a transfer
- * shows a holder mismatch" and "revoke" as two separate things - an old card stays live and
- * reports the mismatch through `still_matches`, rather than vanishing into a revoked state
- * with nothing left to report.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.13
+ * A verification code for a printed Item Card.
  */
 class ItemAttestationThreadTest extends WP_UnitTestCase {
 
@@ -66,7 +56,10 @@ class ItemAttestationThreadTest extends WP_UnitTestCase {
 		] );
 	}
 
-	/** Prints the item-cards report (the plain JSON route, not the PDF one) and returns its "Verify" line for the named item. */
+	/**
+	 * Prints the item-cards report (the plain JSON route, not the PDF one) and returns its "Verify" line for the named
+	 * item.
+	 */
 	private function print_verify_line( int $item_id ): ?string {
 		wp_set_current_user( $this->storyteller_id );
 		$request  = new WP_REST_Request( 'GET', "/be/v1/{$this->slug}/reports/item-cards" );
@@ -76,8 +69,7 @@ class ItemAttestationThreadTest extends WP_UnitTestCase {
 		foreach ( $data['cards'] as $card ) {
 			foreach ( $card as [ $label, $value ] ) {
 				if ( $label === 'Verify' ) {
-					// The last card printed for this run belongs to whichever item is currently
-					// in scope; every test in this file prints exactly one item at a time.
+					// The last card printed for this run belongs to whichever item is currently in scope.
 					return $value;
 				}
 			}
@@ -182,8 +174,7 @@ class ItemAttestationThreadTest extends WP_UnitTestCase {
 		$transfer->set_body_params( [ 'to_character_id' => $this->other_character_id, 'how' => 'traded' ] );
 		rest_get_server()->dispatch( $transfer );
 
-		// The OLD code, from before the transfer, is still live - not revoked - but its own
-		// attested holder no longer matches who holds the item now.
+		// The OLD code, from before the transfer, is still live.
 		$response = $this->verify( $code );
 		$this->assertSame( 200, $response->get_status() );
 		$data = $response->get_data();

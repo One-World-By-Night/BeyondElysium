@@ -1,14 +1,10 @@
 /**
  * Editor for a creature stack's section list and creation rules.
- *
- * Renders an add/edit/remove table for stack_definition.sections[], each
- * row picking a schema block, label, display order, required flag, and
- * optional negative block. Creation rules remain editable as raw JSON
- * behind a collapsible toggle.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
+import { everyPage } from '../../lib/everyPage';
 import type {
 	CreationRules,
 	SchemaBlock,
@@ -25,11 +21,7 @@ export interface CreatureStackDefinitionEditorProps {
 }
 
 /**
- * Renders the section list and creation-rules editor for one creature
- * stack. Section rows let staff choose a schema block (sourced from the
- * live block list), a label, display order, required flag, and optional
- * negative block, with add/remove controls. Creation rules are edited as
- * raw JSON behind a collapsible "advanced" panel that validates on apply.
+ * Renders the section list and creation-rules editor for one creature stack.
  */
 export function CreatureStackDefinitionEditor( {
 	stackDefinition,
@@ -45,9 +37,10 @@ export function CreatureStackDefinitionEditor( {
 	const [ rulesError, setRulesError ] = useState< string | null >( null );
 
 	useEffect( () => {
-		// Fetches up to 100 schema blocks (the REST route's max page size) for the picker.
-		api.schemaBlocks
-			.list( { per_page: 100 } )
+		// Fetches every schema block for the picker.
+		everyPage( ( page ) =>
+			api.schemaBlocks.listPaginated( { page, per_page: 100 } )
+		)
 			.then( setBlocks )
 			.catch( () => setBlocks( [] ) );
 	}, [] );
@@ -88,9 +81,7 @@ export function CreatureStackDefinitionEditor( {
 	}
 
 	/**
-	 * Parses the raw JSON textarea and, if valid, applies it as the new
-	 * creation rules. Leaves the existing rules untouched and shows an error
-	 * message when the input isn't valid JSON.
+	 * Parses the raw JSON textarea and, if valid, applies it as the new creation rules.
 	 */
 	function applyRules() {
 		try {

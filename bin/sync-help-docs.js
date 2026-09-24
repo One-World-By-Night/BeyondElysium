@@ -1,19 +1,7 @@
 #!/usr/bin/env node
 /**
- * Converts every beyond-elysium/docs/help/*.md file into the Gutenberg block HTML
- * beyondelysium.com's BetterDocs "docs" post type expects, resolving every internal
- * cross-reference (another help page, or one of the four already-synced top-level guides -
- * admin-guide.md, player-guide.md, st-guide.md, rest-api.md) to a real, live URL along the
- * way. Writes one JSON file, [{slug, title, content}, ...], for bin/push-help-docs.php to
- * apply on the remote site over SSH - this script never touches the live site itself.
- *
- * Usage: node bin/sync-help-docs.js [output-path]
- *   (default output: dist/help-docs.json)
- *
- * Then, on the target site (see dev/ssh-to-beyondelysium.sh):
- *   scp the output file to /tmp/help-docs.json and bin/push-help-docs.php to /tmp/, then
- *   `wp eval-file /tmp/push-help-docs.php` there. Idempotent by slug - safe to re-run
- *   whenever a help page changes; existing posts are updated in place, never duplicated.
+ * Converts every beyond-elysium/docs/help/*.md file into the Gutenberg block HTML beyondelysium.com's BetterDocs
+ * "docs" post type expects, resolving every internal cross-reference.
  */
 const fs = require( 'fs' );
 const path = require( 'path' );
@@ -24,8 +12,7 @@ const SITE = 'https://beyondelysium.com';
 const OUT =
 	process.argv[ 2 ] || path.join( __dirname, '..', 'dist', 'help-docs.json' );
 
-// The four top-level guides live one directory up from docs/help/ and were synced before
-// this script existed - their own source filename doesn't always match their live slug.
+// The four top-level guides live one directory up from docs/help/.
 const GUIDE_SLUGS = {
 	'admin-guide': 'admin-guide',
 	'player-guide': 'player-guide',
@@ -36,10 +23,6 @@ const GUIDE_SLUGS = {
 /**
  * Resolves a source file's own markdown links to live site URLs.
  *
- * The two document sets sit one directory apart, so the same link shape means opposite
- * things depending on which set the file belongs to:
- *   - in a help page:  `foo.md` is a sibling help page, `../foo.md` is a guide
- *   - in a guide:      `foo.md` is a sibling guide,     `help/foo.md` is a help page
  * @param markdown
  * @param allSlugs
  * @param isGuide
@@ -73,13 +56,8 @@ function extractTitle( markdown ) {
 }
 
 /**
- * Renders one top-level marked token to its own HTML, wrapped as the matching Gutenberg
- * block comment - static blocks (WordPress stores a static block's fully-rendered HTML
- * directly in post_content), not editor-reconstructible ones. A nested list's own inner
- * <ul>/<li> markup is left as plain HTML inside the single outer wp:list wrapper rather
- * than block-ified item by item - core's block renderer displays it correctly either way,
- * and hand-replicating Gutenberg's own inner-block markers for arbitrary nesting depth
- * would add real fragility for a purely cosmetic (editor-only) difference.
+ * Renders one top-level marked token to its own HTML, wrapped as the matching Gutenberg block comment.
+ *
  * @param token
  */
 function renderBlock( token ) {
@@ -110,16 +88,12 @@ function renderBlock( token ) {
 	if ( token.type === 'space' ) {
 		return null;
 	}
-	// Defensive fallback for anything a source survey of the 55 files never found (a code
-	// fence, blockquote, image, or raw HTML) - never silently drop real content.
 	const html = marked.parser( [ token ] ).trim();
 	return `<!-- wp:html -->\n${ html }\n<!-- /wp:html -->`;
 }
 
 function convert( markdown ) {
-	// The leading H1 is kept - the existing 4 guides' own converted content repeats their
-	// H1 as the post body's first heading too (post_title carries it a second time in the
-	// page chrome), so this matches established precedent rather than being redundant.
+	// The leading H1 is kept.
 	const tokens = marked.lexer( markdown );
 	return tokens.map( renderBlock ).filter( Boolean ).join( '\n\n' );
 }

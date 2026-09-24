@@ -13,10 +13,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Owner requirement, 2026-09-15: "All characters must have an auto-created <Character> [id] Plot
- * associated with them - PC and NPC alike - at creation. We would need to seed one for any
- * existing characters." Its player and the chronicle's Storytellers see it, no other player does,
- * and the character's action rounds sit under it (owner answers, same day).
+ * Every character has its own auto-created plot, PC and NPC alike, at creation and for existing characters.
  */
 class CharacterPlotThreadTest extends WP_UnitTestCase {
 
@@ -163,7 +160,7 @@ class CharacterPlotThreadTest extends WP_UnitTestCase {
 	public function test_existing_characters_get_their_plots_and_their_rounds_move_under_them(): void {
 		global $wpdb;
 		$character = $this->character( 'Before The Update', [ 'wp_user_id' => $this->alice ] );
-		// As an install before this release left it: no character plot, rounds with no parent.
+		// An existing install: no character plot, rounds with no parent.
 		Plot::delete( (int) Character::plot_id( $character ) );
 		$loose    = (int) Plot::create( [ 'game_id' => $this->game_id, 'title' => '2026-09-01 Before The Update', 'initiated_by' => 'player', 'game_date' => '2026-09-01' ] );
 		$chosen   = (int) Plot::create( [ 'game_id' => $this->game_id, 'title' => 'The Siege', 'initiated_by' => 'st' ] );
@@ -199,11 +196,6 @@ class CharacterPlotThreadTest extends WP_UnitTestCase {
 		return $ids;
 	}
 
-	/**
-	 * Owner, 2026-09-15: "I can't see or edit player plots or filter to show only player or only
-	 * not player." A character's plots - its own plot and every action round - on their own, or
-	 * everything else, with a total that counts the same plots.
-	 */
 	public function test_the_plot_list_shows_only_character_plots_or_leaves_them_out(): void {
 		$alices = $this->character( 'Filter Alice', [ 'wp_user_id' => $this->alice ] );
 		$npc    = $this->character( 'Filter Prince', [ 'is_npc' => 1 ] );

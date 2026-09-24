@@ -9,15 +9,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The non-game-scoped `/import/game/...` routes (workflow-0.8.md Step 9d-9f), against the
- * one real `.gv3` sample this repo has - `samples/data/personal-chron.gv3` (chronicle
- * "Personal", 1 vampire character "Ian Kincaid II", 48 items, 1 location, 18 queries, 0
- * rotes/actions/plots/rumors). Dispatched through the real REST server, exercising the
- * actual permission gate, transient job store, and transaction - not a direct
- * `Game_File_Parser`/`Import_Controller` call.
- *
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "GVBG binary game-file shape - verified 2026-09-10"
- * @see BE_PROCESS/releases/workflow-0.8.md Step 9d-9f
+ * The non-game-scoped `/import/game/...` routes, against the one real `.gv3` sample this repo has.
  */
 class GameImportControllerTest extends WP_UnitTestCase {
 
@@ -35,7 +27,7 @@ class GameImportControllerTest extends WP_UnitTestCase {
 
 	private function path( string $relative ): string {
 		$path = be_reference_path( $relative );
-		// Real players' sample files live in samples/, which is kept out of git (owner ruling 2026-09-14).
+		// Real players' sample files live in samples/.
 		if ( strpos( $relative, 'samples/' ) === 0 && ! file_exists( $path ) ) {
 			$this->markTestSkipped( "{$relative} is not present in this checkout." );
 		}
@@ -188,13 +180,9 @@ class GameImportControllerTest extends WP_UnitTestCase {
 		$character = Character::find_by_name_in_game( 'Ian Kincaid II', $game->slug );
 		$this->assertNotNull( $character );
 		$this->assertSame( 'vampire', $character->stack_slug );
-		// "Imported health levels are silently discarded" (0.99.2-workflow.md) - the file's
-		// own extended_health flag (true for this fixture, per GameFileParserTest) must
-		// survive onto the new chronicle instead of being parsed and dropped.
 		$this->assertTrue( $game->settings->extended_health );
 
-		// A blocked or failed create_new attempt must never leave a phantom chronicle -
-		// re-committing the SAME already-succeeded job must not create a second one.
+		// A blocked or failed create_new attempt must never leave a phantom chronicle.
 		$this->dispatch( $commit );
 		$this->assertSame( $before_games + 1, Game::count(), 'V13: re-committing must not import (or create a chronicle) twice' );
 	}

@@ -6,10 +6,7 @@ use BeyondElysium\Services\Change_Validator;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.0.0-review F-030: Change_Validator normalizes and refuses submitted change shapes the
- * engines would otherwise trust - misspelled or made-up names priced at 0 XP, custom entries on
- * blocks that don't allow them, multi-key pool and field changes judged by their first key,
- * string levels that dodged per-level rules, awarded pools bought for free, and a cleared Clan.
+ * Change_Validator normalizes and refuses submitted change shapes the engines would.
  */
 class ChangeValidatorTest extends TestCase {
 
@@ -55,7 +52,7 @@ class ChangeValidatorTest extends TestCase {
 		$this->assertSame( 'Occult', $result['change_data']['trait']['name'] );
 	}
 
-	// --- 1.3.3 E2: a price is a Storyteller's to set on homebrew --------------------------
+	// --- A price is a Storyteller's to set on homebrew ------------------------------------
 
 	public function test_a_players_price_on_a_custom_entry_is_dropped(): void {
 		$result = $this->check( 'add_trait', [ 'block_slug' => 'merits', 'trait' => [ 'name' => 'Occult Library', 'count' => 3, 'custom' => true, 'chosen_cost' => 0 ] ] );

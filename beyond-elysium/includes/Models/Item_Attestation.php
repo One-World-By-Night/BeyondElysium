@@ -8,20 +8,13 @@ use BeyondElysium\Services\Short_Code;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * A per-issuance verification code for an item (1.1.0 §3.13) - the item sibling of
- * `Attestation` (character verification, GX-7). Printing an Item Card issues one of these,
- * reusing the newest unrevoked code for that same item and holder when its attested name,
- * uses, and expiry still match, rather than minting a fresh one on every print.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.13
+ * A per-issuance verification code for an item.
  */
 class Item_Attestation {
 
 	/**
-	 * Issues a new attestation, or reuses the newest unrevoked one for this exact item and
-	 * holder if what it attested to still matches. `$holder` is the character currently
-	 * holding the item (or null, unheld), and is itself part of what "still matches" means -
-	 * a transfer to a new character never reuses the old holder's code.
+	 * Issues a new attestation, or reuses the newest unrevoked one for this exact item and holder if what it attested to
+	 * still matches.
 	 *
 	 * @param object      $item      A decoded row from `World_Object::find()`.
 	 * @param object|null $holder    A row from `Character::find()`, or null.
@@ -42,8 +35,7 @@ class Item_Attestation {
 	}
 
 	/**
-	 * Unconditionally mints a fresh attestation - `issue_or_reuse()` is the usual entry point;
-	 * this is exposed separately for callers (and tests) that need a guaranteed-new row.
+	 * Unconditionally mints a fresh attestation.
 	 *
 	 * @param object                    $item
 	 * @param object|null               $holder
@@ -75,8 +67,8 @@ class Item_Attestation {
 	}
 
 	/**
-	 * What is attested to for an item: the facts a printed card is meant to freeze, compared
-	 * against a live re-derivation later (`still_matches` in `Verify_Controller`).
+	 * What is attested to for an item: the facts a printed card is meant to freeze, compared against a live re-derivation
+	 * later (`still_matches` in `Verify_Controller`).
 	 *
 	 * @param object      $item
 	 * @param object|null $holder
@@ -94,8 +86,7 @@ class Item_Attestation {
 	}
 
 	/**
-	 * The most recently issued, not-yet-revoked attestation for this exact item and holder,
-	 * or null when none exists.
+	 * The most recently issued.
 	 *
 	 * @param int      $world_object_id
 	 * @param int|null $holder_id
@@ -115,10 +106,7 @@ class Item_Attestation {
 	}
 
 	/**
-	 * Revokes every unrevoked attestation for one item (1.1.0 §3.13) - delete's own cascade,
-	 * and the `POST .../revoke-cards` route. A transfer deliberately does NOT call this: an
-	 * old card stays live but reports a holder mismatch through `still_matches`, which would
-	 * have nothing left to report if the code were revoked out from under it instead.
+	 * Revokes every unrevoked attestation for one item.
 	 *
 	 * @param int $world_object_id
 	 * @return int Number of rows revoked.
@@ -134,9 +122,8 @@ class Item_Attestation {
 	}
 
 	/**
-	 * Resolves a human-typed short code to its attestation row, recording the lookup
-	 * (`check_count`/`last_checked_at`) regardless of outcome - same discipline as
-	 * `Attestation::resolve()`, which this mirrors exactly.
+	 * Resolves a human-typed short code to its attestation row, recording the lookup (`check_count`/`last_checked_at`)
+	 * regardless of outcome.
 	 *
 	 * @param string $short_code
 	 * @return object|null

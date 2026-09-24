@@ -7,13 +7,7 @@ use BeyondElysium\Database\Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Static data-access model for one character's membership in a faction (1.1.0 §3.10) - a
- * plain join row, not a `Connection`: faction membership is its own table because a
- * character's rank and leader flag are membership-specific data a generic connection has
- * nowhere to carry, and because `Audience::connected_character_ids()`'s new `faction`
- * branch needs to read it directly rather than filtering `be_connections` by label.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.10
+ * Static data-access model for one character's membership in a faction.
  */
 class Faction_Member {
 
@@ -58,9 +52,7 @@ class Faction_Member {
 	}
 
 	/**
-	 * Every faction a character belongs to, joined to its own `be_factions` row - used by
-	 * both `Query_Engine`'s new `faction_membership` source and a player's own "My Groups"
-	 * dashboard section.
+	 * Every faction a character belongs to, joined to its own `be_factions` row.
 	 *
 	 * @param int $character_id
 	 * @return object[] Each row carries both the membership fields and the faction's own columns.
@@ -82,9 +74,7 @@ class Faction_Member {
 	}
 
 	/**
-	 * Every character id belonging to one faction - `Audience::connected_character_ids()`'s
-	 * own `faction` entity-type branch reads this directly, the same shape `secret` already
-	 * uses for `Secret_Reveal`, never through `Connection`.
+	 * Every character id belonging to one faction.
 	 *
 	 * @param int $faction_id
 	 * @return int[]
@@ -94,9 +84,7 @@ class Faction_Member {
 	}
 
 	/**
-	 * Adds a character to a faction. Fails (returns false, not an insert error) if the
-	 * character is already a member - `UNIQUE (faction_id, character_id)` backs this at the
-	 * database level too, but checking first avoids a noisy duplicate-key warning in normal use.
+	 * Adds a character to a faction.
 	 *
 	 * @param int  $faction_id
 	 * @param int  $character_id
@@ -121,8 +109,7 @@ class Faction_Member {
 	}
 
 	/**
-	 * How many leaders a faction currently has - used to refuse removing or demoting the
-	 * last one, so a faction the proposer created can never end up with no leader at all.
+	 * How many leaders a faction currently has.
 	 *
 	 * @param int $faction_id
 	 * @return int
@@ -138,9 +125,7 @@ class Faction_Member {
 	}
 
 	/**
-	 * Sets or clears a member's leader flag. Refuses to clear the last remaining leader
-	 * (§3.10: "A leader can't remove themself or another leader" - the same rule applied to
-	 * demotion, since a faction with zero leaders could never again manage its own membership).
+	 * Sets or clears a member's leader flag.
 	 *
 	 * @param int  $faction_id
 	 * @param int  $character_id
@@ -161,8 +146,7 @@ class Faction_Member {
 	}
 
 	/**
-	 * Sets a member's rank (a free-text title within the faction, e.g. "Whip" - distinct
-	 * from a `be_positions` row, which is a chronicle-wide office rather than an internal rank).
+	 * Sets a member's rank: a free-text title within the faction, e.g. "Whip".
 	 *
 	 * @param int         $faction_id
 	 * @param int         $character_id
@@ -177,9 +161,7 @@ class Faction_Member {
 	}
 
 	/**
-	 * Removes a character from a faction. Refuses to remove the last remaining leader -
-	 * same reasoning as `set_leader()`'s own refusal, since removing is a stronger form of
-	 * the same "no faction with zero leaders" invariant.
+	 * Removes a character from a faction.
 	 *
 	 * @param int $faction_id
 	 * @param int $character_id
@@ -197,8 +179,7 @@ class Faction_Member {
 	}
 
 	/**
-	 * Removes every member of a faction being deleted outright - `Faction::delete()`'s own
-	 * cascade, the same shape `Secret_Reveal::delete_for_secret()` gives `Secret::delete()`.
+	 * Removes every member of a faction being deleted outright.
 	 *
 	 * @param int $faction_id
 	 * @return bool
@@ -208,7 +189,7 @@ class Faction_Member {
 	}
 
 	/**
-	 * D51/D53: a tinyint(1) reaches $wpdb as the string "0", which is truthy in JS.
+	 * Casts a row's `is_leader` flag to a real boolean.
 	 *
 	 * @param object|null $row
 	 * @return object|null

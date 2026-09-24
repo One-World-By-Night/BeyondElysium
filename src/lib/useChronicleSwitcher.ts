@@ -1,11 +1,5 @@
 /**
- * Drives an in-page chronicle switcher (page-consolidation-design.md): loads the
- * current user's real chronicle memberships (never the full install-wide list),
- * selects one (the URL's own `?game_slug=` first, then the first real membership),
- * keeps the URL in sync so a reload or a shared link preserves the choice, and
- * re-fetches this chronicle's own real capabilities every time the selection
- * changes - never the site-wide, chronicle-blind snapshot `window.beyondElysium
- * .capabilities` carries on every page load regardless of which chronicle it names.
+ * Drives an in-page chronicle switcher.
  */
 import { useEffect, useState } from '@wordpress/element';
 import api from '../api/client';
@@ -23,14 +17,18 @@ const EMPTY_CAPABILITIES: MyCapabilities = {
 	be_manage_factions: false,
 };
 
-/** Reads the current `?game_slug=` from the URL. Exported for testing without a hook-rendering dependency. */
+/**
+ * Reads the current `?game_slug=` from the URL.
+ */
 export function readGameSlugFromUrl(): string {
 	return (
 		new URLSearchParams( window.location.search ).get( 'game_slug' ) ?? ''
 	);
 }
 
-/** Writes `game_slug` into the URL without a page reload, so a bookmark or refresh preserves the switch. */
+/**
+ * Writes `game_slug` into the URL without a page reload.
+ */
 export function writeGameSlugToUrl( gameSlug: string ): void {
 	const url = new URL( window.location.href );
 	url.searchParams.set( 'game_slug', gameSlug );
@@ -38,9 +36,7 @@ export function writeGameSlugToUrl( gameSlug: string ): void {
 }
 
 /**
- * Loads the current user's memberships, telling a failed request apart from
- * belonging to no chronicle (1.0.0-review F-081). Exported for testing
- * without a hook-rendering dependency.
+ * Loads the current user's memberships, telling a failed request apart from belonging to no chronicle.
  */
 export async function fetchMemberships(
 	mine: () => Promise< MyGame[] >
@@ -58,18 +54,21 @@ export interface ChronicleSwitcherState {
 	setGameSlug: ( slug: string ) => void;
 	capabilities: MyCapabilities;
 	loadingGames: boolean;
-	/** The membership request failed - not the same as belonging to no chronicle. */
+	/**
+	 * The membership request failed.
+	 */
 	gamesFailed: boolean;
-	/** Asks for the memberships again after a failure. */
+	/**
+	 * Asks for the memberships again after a failure.
+	 */
 	retryGames: () => void;
 	loadingCapabilities: boolean;
-	/** The chronicle `capabilities` were resolved for - until it matches `gameSlug`, they aren't this chronicle's yet. */
+	/**
+	 * The chronicle `capabilities` were resolved.
+	 */
 	capabilitiesFor: string;
 	/**
-	 * This chronicle's resolved brand accent (1.2.7-design-workflow.md §E2) - its own
-	 * override, or the site-wide default, or '' when neither is set. '' means "apply no
-	 * inline style", never a color - the six `--be-st-accent` consumers fall through to
-	 * their own CSS default unchanged.
+	 * This chronicle's resolved brand accent.
 	 */
 	accentColor: string;
 }
@@ -86,8 +85,7 @@ export function useChronicleSwitcher(): ChronicleSwitcherState {
 	const [ loadingCapabilities, setLoadingCapabilities ] = useState( false );
 	const [ capabilitiesFor, setCapabilitiesFor ] = useState( '' );
 
-	// Loads the user's real memberships once, then resolves the initial selection: the
-	// URL's own game_slug when it names a real membership, the first membership otherwise.
+	// Loads the user's real memberships once.
 	useEffect( () => {
 		setLoadingGames( true );
 		fetchMemberships( () => api.games.mine() ).then(
@@ -104,8 +102,7 @@ export function useChronicleSwitcher(): ChronicleSwitcherState {
 		);
 	}, [ gamesAttempt ] );
 
-	// Re-resolves capabilities every time the selected chronicle changes, and keeps the
-	// URL's own game_slug in sync so a reload lands back on the same chronicle.
+	// Re-resolves capabilities every time the selected chronicle changes, and keeps the URL's own game_slug in sync.
 	useEffect( () => {
 		if ( ! gameSlug ) {
 			setCapabilities( EMPTY_CAPABILITIES );

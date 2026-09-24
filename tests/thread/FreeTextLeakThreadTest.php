@@ -10,23 +10,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The free-text leaks 1.0.1 A2's coverage guard found, proven on the real routes.
- *
- * `FreeTextCoverageTest` enumerates every `text`/`longtext` column in the schema and fails
- * until each one has a decided disposition. Running it for the first time failed on six
- * columns A1 had missed:
- *
- *   - `plots.resolution_details` / `plots.resolution_impact` - ordinary rich text on the same
- *     plot form as `description` and `cliffhanger`, written once a plot closes, reaching every
- *     player unfiltered.
- *   - `character_changes.notes` / `.review_notes` / `.reason` - a player reads their own change
- *     history, and the reviewing Storyteller writes two of those three fields.
- *   - `character_submissions.answer_note` - the Storyteller's written answer to a player's
- *     question, both returned over REST and mailed to them.
- *
- * These tests fail against the unfiltered code.
- *
- * @see BE_PROCESS/releases/1.0.1-design-workflow.md §4, A2
+ * Free-text leaks found by the coverage guard, proven closed on the real routes.
  */
 class FreeTextLeakThreadTest extends WP_UnitTestCase {
 

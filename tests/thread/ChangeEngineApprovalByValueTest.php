@@ -8,15 +8,7 @@ use BeyondElysium\Services\Change_Engine;
 use WP_UnitTestCase;
 
 /**
- * `Change_Engine::resolve_approval_level()`'s per-value/per-level approval
- * schedule, added across every section_type: a trait_list item's
- * `approval_by_value` (ranges keyed on the submitted count), a tiered_power
- * level's own `approval` (each level is already a discrete catalog row, no
- * range needed), a resource_pool's `approval_by_value` (ranges keyed on the
- * pool's PERMANENT value, never temporary), and an identity_field's
- * `approval_by_option` (keyed on the exact selected string, checked across
- * every value in a multiselect). Resolved against the resulting value only -
- * never a diff against the character's prior value.
+ * `Change_Engine::resolve_approval_level()`'s per-value and per-level approval schedules across every section_type.
  */
 class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 
@@ -36,7 +28,7 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 				'items' => [
 					[
 						'name'              => 'Occult',
-						'approval'          => 'st', // Fallback for a count no range covers.
+						'approval'          => 'st',
 						'approval_by_value' => [
 							[ 'from' => 1, 'to' => 3, 'approval' => 'auto' ],
 							[ 'from' => 4, 'to' => 5, 'approval' => 'st', 'reason' => 'Occult 4+ needs a Storyteller.' ],
@@ -143,8 +135,6 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 	}
 
 	public function test_resolution_is_by_resulting_value_only_regardless_of_the_starting_point(): void {
-		// Jumping straight to 5 (skipping 1-3 entirely in one submission) resolves
-		// identically to reaching 5 one dot at a time - state-based, never a diff.
 		$character = $this->make_character();
 		$resolved  = Change_Engine::resolve_approval_level( $character, (object) [
 			'change_type' => 'modify_trait',
@@ -227,8 +217,7 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 	}
 
 	public function test_spending_only_the_temporary_value_never_triggers_the_permanent_schedule(): void {
-		// Temporary dropping to 0 from spending, permanent unchanged at a safe value -
-		// approval must key off `permanent`, never `temporary`.
+		// Temporary dropping to 0 from spending, permanent unchanged at a safe value.
 		$character = $this->make_character();
 		$resolved  = Change_Engine::resolve_approval_level( $character, (object) [
 			'change_type' => 'modify_resource',
@@ -274,14 +263,6 @@ class ChangeEngineApprovalByValueTest extends WP_UnitTestCase {
 		$this->assertSame( 'Antediluvian generation needs a Storyteller.', $resolved['reason'], 'one flagged value among several must still win' );
 	}
 
-	// -------------------------------------------------------------------------
-	// Regression: a genuine, previously-undetected bug found while writing the
-	// tests above. The running accumulator inside resolve_approval_level()
-	// started hardcoded at the string 'st', so ANY explicit 'auto' override -
-	// a flat item approval, a tiered_power family's approval_override, or (as
-	// found here) one of this feature's own new ranges - could never actually
-	// win: strictest('st', 'auto') is 'st' under the pre-existing ranking.
-	// Fixed by starting the accumulator at null ("no signal yet") instead.
 	// -------------------------------------------------------------------------
 
 	public function test_a_flat_item_approval_of_auto_with_no_reason_now_genuinely_resolves_auto(): void {

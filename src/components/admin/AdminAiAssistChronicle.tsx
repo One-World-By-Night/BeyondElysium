@@ -1,16 +1,5 @@
 /**
- * A chronicle's own AI Assist settings (ai-writing-assist-design.md): opt-in
- * toggle, provider choice, and an optional key of the chronicle's own that
- * overrides the site-wide default for its own content (character/plot/
- * rumor/world-object fields). be_manage_apr - the same access tier as, and
- * the same Chronicle Setup hub as, Action & Rumor Settings, so an HST can
- * configure this without needing site-administrator access.
- *
- * A clear three-way choice - OpenAI, Claude, or Self-Hosted (OpenAI-
- * compatible) - only one of which is ever shown at a time. See
- * AdminAiAssistSite.tsx's own docblock for why "Self-Hosted" stores as
- * provider `openai` with a base URL/model override rather than being a
- * fourth backend value.
+ * A chronicle's own AI Assist settings.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

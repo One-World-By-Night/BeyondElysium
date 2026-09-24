@@ -5,12 +5,9 @@ namespace BeyondElysium\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Byte-level writer for Grapevine's VB6 binary file formats - the exact
- * inverse of `GV_Binary_Reader`, one primitive-writing method per
- * primitive-reading method there, same field widths and byte order.
+ * Byte-level writer for Grapevine's VB6 binary file formats.
  *
  * @see BeyondElysium\Services\GV_Binary_Reader
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-5
  */
 class GV_Binary_Writer {
 
@@ -18,10 +15,7 @@ class GV_Binary_Writer {
 	private string $data = '';
 
 	/**
-	 * Writes a VB6 Integer field: 2 bytes, little-endian, signed. A negative
-	 * value is converted to its unsigned 16-bit two's-complement bit
-	 * pattern before packing, the exact inverse of `int16()`'s
-	 * above-32767-means-negative conversion.
+	 * Writes a VB6 Integer field: 2 bytes, little-endian, signed.
 	 *
 	 * @param int $value
 	 * @return $this
@@ -32,8 +26,7 @@ class GV_Binary_Writer {
 	}
 
 	/**
-	 * Writes a VB6 Long field: 4 bytes, little-endian, signed - also used
-	 * for enum values, which VB6 stores at the same width.
+	 * Writes a VB6 Long field: 4 bytes, little-endian, signed.
 	 *
 	 * @param int $value
 	 * @return $this
@@ -55,8 +48,7 @@ class GV_Binary_Writer {
 	}
 
 	/**
-	 * Writes a VB6 Single field: 4 bytes, IEEE 754 little-endian, half the
-	 * width of `double()`.
+	 * Writes a VB6 Single field: 4 bytes, IEEE 754 little-endian, half the width of `double()`.
 	 *
 	 * @param float $value
 	 * @return $this
@@ -67,8 +59,7 @@ class GV_Binary_Writer {
 	}
 
 	/**
-	 * Writes a VB6 Boolean field: 2 bytes, `-1` for true and `0` for false -
-	 * VB6's own convention, matching what `bool()` reads back.
+	 * Writes a VB6 Boolean field: 2 bytes, `-1` for true and `0` for false.
 	 *
 	 * @param bool $value
 	 * @return $this
@@ -78,25 +69,13 @@ class GV_Binary_Writer {
 	}
 
 	/**
-	 * Writes a length-prefixed string field: a 16-bit length prefix
-	 * followed by that many ISO-8859-1 bytes, converted from the UTF-8
-	 * string given. Truncated at 32767 bytes (`PutStrB`'s own signed-Integer
-	 * length limit) - a string this long has never occurred in any real
-	 * Grapevine file this project holds, but the reference writer itself
-	 * would silently corrupt one, so truncating cleanly here (rather than
-	 * letting `int16()` wrap a too-large length into a bogus negative
-	 * prefix) is strictly safer than reproducing that failure mode.
-	 * Un-encodable characters are dropped, not substituted, matching
-	 * `GEX_Xml_Writer::ascii()`'s own reasoning for the sibling XML path.
+	 * Writes a length-prefixed string field: a 16-bit length prefix followed by that many ISO-8859-1 bytes, converted
+	 * string given.
 	 *
 	 * @param string $value
 	 * @return $this
 	 */
 	public function string( string $value ): self {
-		// iconv, not mb_convert_encoding(), matching GEX_Xml_Writer::ascii()'s own established
-		// approach - //TRANSLIT approximates what it can, //IGNORE drops what it can't, and
-		// iconv's real false-on-failure return (unlike mb_convert_encoding()'s narrower one)
-		// is worth guarding against directly rather than assuming it can never happen.
 		$encoded = @iconv( 'UTF-8', 'ISO-8859-1//TRANSLIT//IGNORE', $value );
 		if ( $encoded === false ) {
 			$encoded = preg_replace( '/[^\x00-\xFF]/', '', $value ) ?? '';
@@ -111,15 +90,8 @@ class GV_Binary_Writer {
 	}
 
 	/**
-	 * Writes a VB6 Date field: an OLE Automation double, epoch 1899-12-30,
-	 * `0.0` for null (Grapevine's own "unset" value) - the exact inverse of
-	 * `date()`. A date before the epoch encodes as a negative integer part
-	 * with the fractional part still counting forward from that day's own
-	 * midnight (sign-magnitude, not a continuous scale) - the same
-	 * convention `date()`'s own docblock documents for reading one back;
-	 * unreached by any real Beyond Elysium data (every stored date is well
-	 * after 1899) but implemented for genuine round-trip fidelity rather
-	 * than left to silently produce the wrong day for a hypothetical one.
+	 * Writes a VB6 Date field: an OLE Automation double, epoch 1899-12-30, `0.0` for null (Grapevine's own "unset"
+	 * value).
 	 *
 	 * @param string|null $value 'Y-m-d H:i:s' (or anything `strtotime()` accepts), or null.
 	 * @return $this

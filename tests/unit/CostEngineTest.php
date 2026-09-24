@@ -6,24 +6,20 @@ use BeyondElysium\Services\Cost_Engine;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Pure pricing logic (Step 3f). `cost_for_change()`/`is_in_type()` themselves are thin
- * `$wpdb`-touching wrappers around the functions tested here directly - matching this
- * project's established fetch/decision split (see `TemplateResolveTest` for
- * `Template::resolve_from_rows()`).
- *
- * @see BE_PROCESS/releases/workflow-0.4.md Step 3
- * @see BE_PROCESS/reference/DECISIONLOG.md Decision 025 (range cost pricing)
+ * Pure pricing logic.
  */
 class CostEngineTest extends TestCase {
 
-	/** json_decode(json_encode()) guarantees real nested-stdClass shape, matching how
-	 * Schema_Block::decode_definition() actually decodes - not a hand-rolled shortcut. */
+	/**
+	 * json_decode(json_encode()) guarantees real nested-stdClass shape, matching how Schema_Block::decode_definition()
+	 * actually decodes.
+	 */
 	private static function definition( array $data ) {
 		return json_decode( json_encode( $data ) );
 	}
 
 	// -----------------------------------------------------------------------
-	// price_item_cost / parse_cost_rule (Decision 025)
+	// price_item_cost / parse_cost_rule
 	// -----------------------------------------------------------------------
 
 	public function test_plain_integer_cost_ignores_chosen_cost(): void {
@@ -103,8 +99,7 @@ class CostEngineTest extends TestCase {
 	public function test_modify_trait_charges_only_the_count_delta(): void {
 		$definition = $this->trait_list_block();
 		$sheet = [ 'merits' => [ [ 'name' => 'Flaw of Note', 'count' => 1 ] ] ];
-		// Flaw of Note is priced at 2; going from count 1 to count 3 should charge for
-		// the 2 NEW units, not re-charge for the one already held.
+		// Flaw of Note is priced at 2.
 		$change_data = [ 'block_slug' => 'merits', 'trait' => [ 'name' => 'Flaw of Note', 'count' => 3 ] ];
 
 		$this->assertSame(
@@ -117,8 +112,7 @@ class CostEngineTest extends TestCase {
 		$definition = $this->trait_list_block( [ 'negative' => true ] );
 		$change_data = [ 'block_slug' => 'flaws', 'trait' => [ 'name' => 'Flaw of Note', 'count' => 1 ] ];
 
-		// Adding a flaw GRANTS points - a negative cost even though the catalog price is
-		// positive 2 (Decision 012 / GV-SOURCEMAP.md negative-list arithmetic).
+		// Adding a flaw GRANTS points.
 		$this->assertSame(
 			-2,
 			Cost_Engine::price_trait_list_change( [], $definition, 'flaws', 'add_trait', $change_data )
@@ -140,11 +134,7 @@ class CostEngineTest extends TestCase {
 	}
 
 	public function test_a_change_priced_at_zero_still_returns_a_real_zero_not_null(): void {
-		// Decision 014: a zero-cost change (e.g. a free item) must still flow through
-		// normal submit/approval - Cost_Engine's job is only to price it correctly as 0,
-		// never to signal "no cost" in a way that could be mistaken for "no change" and
-		// skip approval. Approval-level gating itself is Change_Engine's responsibility,
-		// verified independently of cost.
+		// A zero-cost change (e.g. a free item) must still flow through normal submit/approval.
 		$definition = self::definition( [ 'items' => [ [ 'name' => 'Free Thing', 'cost' => '0' ] ] ] );
 		$change_data = [ 'block_slug' => 'x', 'trait' => [ 'name' => 'Free Thing', 'count' => 1 ] ];
 
@@ -183,8 +173,7 @@ class CostEngineTest extends TestCase {
 		$sheet = [ 'disciplines' => [ [ 'name' => 'Celerity', 'level' => 2 ] ] ];
 		$change_data = [ 'block_slug' => 'disciplines', 'trait' => [ 'name' => 'Celerity', 'level' => 4 ] ];
 
-		// Level 2 -> 4: the level-3 step (5) plus the level-4 step (6) = 11, NOT one flat
-		// level-4 price.
+		// Level 2 -> 4: the level-3 step (5) plus the level-4 step (6) = 11, NOT one flat level-4 price.
 		$this->assertSame(
 			11,
 			Cost_Engine::price_tiered_power_change( $sheet, $definition, 'modify_trait', $change_data, true )
@@ -257,12 +246,6 @@ class CostEngineTest extends TestCase {
 		);
 	}
 
-	/**
-	 * Regression guard for defect D16: reads the field the seeder actually writes
-	 * (`cost`, free text), not a `base_cost` number that nothing has ever produced. 3 of
-	 * 468 real vampire-disciplines levels genuinely have no cost at all - must default to
-	 * 0, not crash.
-	 */
 	public function test_level_with_no_cost_field_at_all_defaults_to_zero(): void {
 		$definition = self::definition(
 			[
@@ -279,12 +262,7 @@ class CostEngineTest extends TestCase {
 	}
 
 	// -----------------------------------------------------------------------
-	// price_tiered_power_change - Elder-and-above picks (Decision 037,
-	// BE_PROCESS/releases/0.99.2-workflow.md "Cost_Engine cannot price an Elder-tier
-	// purchase"). Matched by power_name within the tier, not by numbered level -
-	// real met-mechanics.csv data confirms multiple distinct named powers can
-	// share one tier (e.g. Celerity's own Basic tier: Alacrity and Swiftness
-	// both cost 3), the same is true above the numbered ladder.
+	// price_tiered_power_change
 	// -----------------------------------------------------------------------
 
 	private function elder_power_block( array $levels ): object {
@@ -309,11 +287,6 @@ class CostEngineTest extends TestCase {
 		);
 	}
 
-	/**
-	 * Real met-mechanics.csv rows: lNum 6 ("Elder") prices at 12 XP with no
-	 * per-power cost of its own on many entries (most Elder+ catalog rows are
-	 * NPC-only or otherwise uncosted in the source) - confirmed 2026-09-12.
-	 */
 	public function test_elder_pick_with_no_explicit_cost_falls_back_to_the_tier_ladder(): void {
 		$definition = $this->elder_power_block( [
 			[ 'power_name' => 'Projectile', 'tier' => 'elder' ],
@@ -340,11 +313,9 @@ class CostEngineTest extends TestCase {
 	}
 
 	/**
-	 * innate/basic/intermediate/advanced/elder/master are each confirmed directly
-	 * against a real priced met-mechanics.csv row. ascended/methuselah continue the
-	 * same +3-per-tier progression but have no priced catalog example to confirm
-	 * independently - both real MET convention and the project owner's own
-	 * clarification (2026-09-12) place them there.
+	 * innate/basic/intermediate/advanced/elder/master are each confirmed directly against a real priced met-mechanics.csv
+	 * row. ascended/methuselah continue the same +3-per-tier progression but have no priced catalog example to confirm
+	 * independently.
 	 */
 	public function tierLadderProvider(): array {
 		return [
@@ -364,8 +335,7 @@ class CostEngineTest extends TestCase {
 			[ 'power_name' => 'Precision', 'tier' => 'elder', 'cost' => '12' ],
 		] );
 		$sheet       = [ 'disciplines' => [ [ 'name' => 'Celerity', 'power_name' => 'Precision' ] ] ];
-		// A removal must name which specific pick is leaving - a family can hold several
-		// at once, so `{name}` alone (correct for the numbered-ladder path) is ambiguous here.
+		// A removal must name which specific pick is leaving.
 		$change_data = [ 'block_slug' => 'disciplines', 'trait' => [ 'name' => 'Celerity', 'power_name' => 'Precision' ] ];
 
 		$this->assertSame(
@@ -375,9 +345,7 @@ class CostEngineTest extends TestCase {
 	}
 
 	/**
-	 * A family can hold several distinct Elder-and-above picks at once
-	 * (0.99.2-workflow.md: "you can have multiple powers at those levels") - removing
-	 * one refunds only that one, leaving a sibling pick under the same family untouched.
+	 * A family can hold several distinct Elder-and-above picks at once ("you can have multiple powers at those levels").
 	 */
 	public function test_removing_one_elder_pick_does_not_affect_a_sibling_pick_in_the_same_family(): void {
 		$definition = $this->elder_power_block( [
@@ -404,8 +372,7 @@ class CostEngineTest extends TestCase {
 		$sheet       = [ 'disciplines' => [ [ 'name' => 'Celerity', 'power_name' => 'Precision' ] ] ];
 		$change_data = [ 'block_slug' => 'disciplines', 'trait' => [ 'name' => 'Celerity', 'power_name' => 'Jaws of the Dragon' ] ];
 
-		// Not 3 (a "swap" delta) - Precision is untouched and still held, so this is a
-		// genuinely new, independent purchase at its own full 15 XP.
+		// Not 3 (a "swap" delta).
 		$this->assertSame(
 			15,
 			Cost_Engine::price_tiered_power_change( $sheet, $definition, 'add_trait', $change_data, true )
@@ -419,7 +386,6 @@ class CostEngineTest extends TestCase {
 		$sheet       = [ 'disciplines' => [ [ 'name' => 'Celerity', 'power_name' => 'Precision' ] ] ];
 		$change_data = [ 'block_slug' => 'disciplines', 'trait' => [ 'name' => 'Celerity', 'power_name' => 'Precision', 'tradition' => 'Necromancy' ] ];
 
-		// The pick itself isn't being bought or sold - only a tradition tag is changing.
 		$this->assertSame(
 			0,
 			Cost_Engine::price_tiered_power_change( $sheet, $definition, 'modify_trait', $change_data, true )

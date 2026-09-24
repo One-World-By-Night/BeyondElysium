@@ -11,10 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * F-122's review half: listing, reviewing, verifying, accepting, and
- * refusing a waiting submission through the real REST server.
- *
- * @see BE_PROCESS/design/player-grapevine-file-design.md §7
+ * Listing, reviewing, verifying, accepting and refusing a waiting submission through the real REST server.
  */
 class SubmissionsReviewThreadTest extends WP_UnitTestCase {
 
@@ -67,7 +64,9 @@ class SubmissionsReviewThreadTest extends WP_UnitTestCase {
 		return $request;
 	}
 
-	/** A waiting submission, created for real through the send-side REST route as $this->sender. */
+	/**
+	 * A waiting submission, created for real through the send-side REST route as $this->sender.
+	 */
 	private function real_waiting_submission( array $overrides = [] ): int {
 		$src_id = Character::create( array_merge( [
 			'name' => 'Review Test Vampire', 'stack_slug' => 'vampire',
@@ -107,9 +106,7 @@ class SubmissionsReviewThreadTest extends WP_UnitTestCase {
 		] );
 		$id = $this->real_waiting_submission();
 
-		// An administrator, not $this->hst - $this->hst genuinely has no standing in the other
-		// chronicle at all, so that account would correctly 403 on the permission check before
-		// ever reaching the game-id scoping this test means to exercise.
+		// An administrator, not $this->hst.
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
 		$response = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/thread-test-submissions-review-other/submissions/{$id}/review" ) );
 		$this->assertSame( 404, $response->get_status() );
@@ -208,12 +205,7 @@ class SubmissionsReviewThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * create_item() already strips a file's uuid before storing it (§5.1) - this test covers
-	 * the defense-in-depth case, a uuid that reached storage anyway (a bug, or a hand-edited
-	 * row). Import_Controller's own pre-existing matched_by='uuid_elsewhere' rule (F-003) is
-	 * what actually protects the other chronicle's character here: it can be seen (a real
-	 * duplicate needing a decision) but never silently overwritten, and even choosing
-	 * import_as_new drops the borrowed uuid rather than letting the new row inherit it.
+	 * create_item() already strips a file's uuid before storing it.
 	 */
 	public function test_a_uuid_in_the_file_can_never_overwrite_the_character_it_names(): void {
 		$elsewhere_id = Character::create( [
@@ -226,13 +218,12 @@ class SubmissionsReviewThreadTest extends WP_UnitTestCase {
 		$id  = $this->real_waiting_submission();
 		$row = Submission::find_with_file( $id );
 		$stored = json_decode( (string) $row->parsed, true );
-		$stored['characters'][0]['uuid'] = $elsewhere->uuid; // simulates a file that was never actually stripped
+		$stored['characters'][0]['uuid'] = $elsewhere->uuid;
 		global $wpdb;
 		$wpdb->update( $wpdb->prefix . 'be_character_submissions', [ 'parsed' => wp_json_encode( $stored ) ], [ 'id' => $id ] );
 
 		wp_set_current_user( $this->hst );
 
-		// No decision yet: blocked as a real duplicate, exactly as an ordinary import would be.
 		$blocked = $this->dispatch( $this->post( "/be/v1/{$this->game_slug}/submissions/{$id}/accept" ) );
 		$this->assertSame( 409, $blocked->get_status() );
 		$this->assertSame( 'unresolved_duplicates', $blocked->as_error()->get_error_code() );

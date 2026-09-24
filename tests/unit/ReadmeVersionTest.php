@@ -5,9 +5,7 @@ namespace BeyondElysium\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The README is the front page of the public repository, and it names the release and the zip to
- * download. It said 1.2.7 through six releases because nothing checked it. `bin/bump-version` now
- * rewrites both lines with the version, and this fails if they ever disagree with the plugin.
+ * The README is the front page of the public repository, and it names the release and the zip to download.
  */
 class ReadmeVersionTest extends TestCase {
 

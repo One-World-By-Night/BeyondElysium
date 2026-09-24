@@ -8,27 +8,15 @@ use BeyondElysium\Models\Schema_Block;
 use WP_UnitTestCase;
 
 /**
- * BM-8 (BE_PROCESS/releases/0.99.2-workflow.md): moving pre-Blood-Magic data onto the new shape.
- * Two separate concerns, two migration functions:
- *
- *   - Schema::migrate_blood_magic_schema_forks() - a chronicle's own game-scoped fork of
- *     vampire-disciplines still carrying tradition-prefixed powers.
- *   - Schema::migrate_blood_magic_held_picks() - a character's own held pick stored under
- *     the old shape, in either of the two real forms (see the function's own docblock).
- *
- * No manual tearDown() - WP_UnitTestCase's own ambient transaction rolls back every write
- * this file makes, the same guarantee every other thread test in this project relies on.
+ * Moving pre-Blood-Magic data onto the new shape.
  */
 class BloodMagicMigrationTest extends WP_UnitTestCase {
 
 	private const GAME = 'thread-test-blood-magic-migration';
 
 	/**
-	 * Forks vampire-disciplines for self::GAME and stashes onto it a synthetic
-	 * tradition-prefixed power plus one ordinary one, mirroring the real pre-Blood-Magic
-	 * shape - a byte-copy of the corrected global row (already free of colon-prefixed
-	 * names, since it was built by the real seeder) is not realistic on its own, so this
-	 * reconstructs the stale shape directly rather than relying on incidental fork timing.
+	 * Forks vampire-disciplines for self::GAME and stashes onto it a synthetic tradition-prefixed power plus one ordinary
+	 * one, mirroring the real pre-Blood-Magic shape.
 	 */
 	private function stale_fork_with( array $extra_powers ): void {
 		$fork       = Schema_Block::find_or_create_fork_for_game( 'vampire-disciplines', self::GAME );
@@ -59,19 +47,14 @@ class BloodMagicMigrationTest extends WP_UnitTestCase {
 
 		$power = current( array_filter( $blood_magic->definition->powers, static fn( $p ) => $p->name === 'Ash Path' ) );
 		$this->assertNotFalse( $power, 'the bare canonical name must exist in the new fork' );
-		// "Ash Path" is a real, already multi-tradition path in the global catalog (Wanga,
-		// Sadhana) - the transplant must merge Necromancy in as one more entry, not replace
-		// or narrow what was already there.
+		// "Ash Path" is a real, already multi-tradition path in the global catalog (Wanga, Sadhana).
 		$this->assertArrayHasKey( 'Necromancy', (array) $power->traditions );
 		$this->assertNull( ( (array) $power->traditions )['Necromancy'] );
 		$this->assertContains( 'Necromancy', $blood_magic->definition->traditions );
 	}
 
 	/**
-	 * The four Assamite caste names are castes, not traditions (D39's own trap) - they
-	 * already exist as their own ordinary vampire-disciplines families and must never be
-	 * split, even though their own name contains "/ "-adjacent punctuation of a similar
-	 * shape to a tradition prefix.
+	 * The four Assamite caste names are castes.
 	 */
 	public function test_a_quietus_caste_name_is_never_treated_as_a_tradition_prefix(): void {
 		$this->stale_fork_with( [ [ 'name' => 'Quietus, Cruscitus / Warrior', 'levels' => [] ] ] );
@@ -83,15 +66,11 @@ class BloodMagicMigrationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A path already present in the freshly-forked (already-correct, global-derived)
-	 * vampire-blood-magic catalog must gain the transplanted tradition as one more entry
-	 * in its `traditions` map, never a second duplicate power of the same name - the
-	 * common case, since find_or_create_fork_for_game() seeds a brand-new fork from the
-	 * already-correct 111-path global catalog.
+	 * A path already present in the freshly-forked (already-correct, global-derived) vampire-blood-magic catalog must
+	 * gain the transplanted tradition as one more entry in its `traditions` map.
 	 */
 	public function test_a_path_already_in_the_global_catalog_merges_rather_than_duplicates(): void {
-		// "Path of Blood" is real and seeded globally (multiple traditions) - use it so the
-		// merge path is exercised against genuine global data, not a synthetic stand-in.
+		// "Path of Blood" is real and seeded globally (multiple traditions).
 		$this->stale_fork_with( [ [ 'name' => 'Nahuallotl: Path of Blood', 'levels' => [] ] ] );
 
 		Schema::migrate_blood_magic_schema_forks();
@@ -158,12 +137,6 @@ class BloodMagicMigrationTest extends WP_UnitTestCase {
 		$this->assertSame( 2, $blood_magic[0]['level'] );
 	}
 
-	/**
-	 * D41/Decision 074's real keep_custom shape - the tradition sits in `name`, the path in
-	 * `power_name`. Chase Ashford's own real committed import (samples/data/1506_chase_ashford_.gex)
-	 * is exactly this. Spelling variance ("Dur-An-Ki") is folded to the canonical form
-	 * during the move, the same as Trait_Mapper does on import.
-	 */
 	public function test_a_pre_blood_magic_keep_custom_pick_moves_with_tradition_spelling_normalized(): void {
 		$id = $this->character_with_disciplines( [
 			[ 'name' => 'Dur-An-Ki', 'power_name' => 'Vine of Dionysus', 'level' => 4, 'custom' => true ],
@@ -172,8 +145,6 @@ class BloodMagicMigrationTest extends WP_UnitTestCase {
 		Schema::migrate_blood_magic_held_picks();
 
 		$character = Character::find( $id );
-		// The key itself is left in place, empty, exactly as a character with genuinely
-		// zero ordinary disciplines would already look - not specially removed.
 		$this->assertSame( [], $character->sheet_data['vampire-disciplines'] );
 
 		$blood_magic = $character->sheet_data['vampire-blood-magic'];
@@ -186,10 +157,7 @@ class BloodMagicMigrationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A keep_custom pick whose `name` does not resemble any real tradition must be left
-	 * exactly where it is - it is some other kind of custom discipline entry, not
-	 * mis-shapen Blood Magic data, and moving it would be a real, silent data change with
-	 * no basis for it.
+	 * A keep_custom pick whose `name` does not resemble any real tradition must be left exactly where it.
 	 */
 	public function test_a_custom_pick_with_an_unrecognizable_name_is_left_alone(): void {
 		$id = $this->character_with_disciplines( [

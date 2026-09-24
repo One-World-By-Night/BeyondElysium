@@ -17,15 +17,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-036 (closes D42).
- *
- * The Games screen's Delete removed only the `be_games` row. Everything keyed by the slug -
- * characters, schema-block forks, verification codes, transfers - stayed behind, and a new
- * chronicle created with the same name got the same slug and adopted all of it: another
- * group's full character sheets on its roster. Rename skipped verification codes and
- * transfers. The demo chronicle came back on every activation and upgrade after being
- * deleted. And the cascade meant for deleting a chronicle's content deleted every custom
- * site-wide template too, because it read templates through the global-merged lookup.
+ * (closes).
  */
 class ChronicleDeleteThreadTest extends WP_UnitTestCase {
 
@@ -203,8 +195,7 @@ class ChronicleDeleteThreadTest extends WP_UnitTestCase {
 		}
 		$this->assertTrue( Game::delete_with_content( 'be-demo' ) );
 
-		// An install upgrading from a version that predates the seeded-once flag, then any later
-		// activation or upgrade: none of them is a fresh install.
+		// An install upgrading from a version that predates the seeded-once flag.
 		delete_option( Seeder::DEMO_SEEDED_OPTION );
 		Seeder::seed_demo_characters( false );
 		Seeder::seed_demo_characters( false );

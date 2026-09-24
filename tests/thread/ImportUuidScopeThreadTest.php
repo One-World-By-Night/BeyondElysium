@@ -8,12 +8,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-003, the import half. A file whose character carries a uuid (every transfer
- * document does, and anyone can write one into an exchange file) matched that uuid across the
- * whole install and overwrote the character on the spot - even one in another chronicle, and
- * even when the Storyteller had chosen "Skip". A uuid match now counts only within the
- * receiving chronicle, still needs the Storyteller's decision, and a character that lives in
- * another chronicle can be skipped or copied, never overwritten.
+ * The import half.
  */
 class ImportUuidScopeThreadTest extends WP_UnitTestCase {
 

@@ -5,22 +5,14 @@ namespace BeyondElysium\Services\Display;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Resolves `CrossBlockRef` lookups against a character's resolved sheet data: reading a
- * value from another block/field pair, building a section's title from its configured
- * title refs, and resolving a resource pool's display name from a keyed lookup table.
- *
- * A TypeScript twin (src/lib/resolveCrossBlockRef.ts) drives the on-screen character
- * sheet and must stay in exact parity with this implementation, so the signed PDF export
- * renders the same section titles and pool names the player already sees on screen; see
- * tests/unit/Display/CrossBlockRefParityTest.php.
+ * Resolves `CrossBlockRef` lookups against a character's resolved sheet data: reading a value from another
+ * block/field pair, building a section's title from its configured title refs, and resolving a resource pool's
+ * display name from a keyed lookup table.
  */
 class Cross_Block_Ref {
 
 	/**
-	 * Reads the value at `$ref->block_slug`/`$ref->field` from a character's sheet data
-	 * and returns it as a string. Handles both shapes block data can take: an identity
-	 * field's plain string or number, and a resource pool's `{permanent, temporary}`
-	 * pair, from which only `permanent` is read.
+	 * Reads the value at `$ref->block_slug`/`$ref->field` from a character's sheet data and returns it as a string.
 	 *
 	 * @param object $ref        Has `block_slug` and `field` string properties.
 	 * @param array  $sheet_data Character sheet data (Character::decode_row() shape),
@@ -48,9 +40,7 @@ class Cross_Block_Ref {
 	}
 
 	/**
-	 * Builds a section's displayed title. Returns `$section->title` alone when
-	 * `title_refs` is unset or any referenced value fails to resolve; otherwise returns
-	 * `title` followed by every resolved ref's value, space-joined.
+	 * Builds a section's displayed title.
 	 *
 	 * @param object $section    Has a `title` string and an optional `title_refs` array
 	 *                           of ref objects (each with `block_slug`/`field`).
@@ -78,10 +68,8 @@ class Cross_Block_Ref {
 	}
 
 	/**
-	 * Resolves a resource pool's displayed name: returns `$pool->name` unless
-	 * `name_lookup` maps the current value of its `keyed_by` reference to an entry in
-	 * `table`. Only the displayed name changes - the pool's storage key (`$pool->name`
-	 * itself) is never affected.
+	 * Resolves a resource pool's displayed name: returns `$pool->name` unless `name_lookup` maps the current value of its
+	 * `keyed_by` reference to an entry in `table`.
 	 *
 	 * @param object $pool       Has a `name` string and an optional `name_lookup`
 	 *                           object (a `keyed_by` ref plus a string=>string `table`).

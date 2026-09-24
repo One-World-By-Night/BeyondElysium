@@ -8,8 +8,7 @@ use BeyondElysium\Services\Downtime_Window;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for the Storyteller downtime queue (1.1.0 §3.3): one row per action plot
- * for a game date, unanswered first.
+ * REST controller for the Storyteller downtime queue: one row per action plot for a game date, unanswered first.
  */
 class Downtime_Controller extends Base_Controller {
 
@@ -44,8 +43,7 @@ class Downtime_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404
-	 * status when no game matches.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

@@ -7,15 +7,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * workflow-0.9.md Step 0.5d - "if there is no account to connect a character to, we
- * should be able to add the email address so when they make an account we can say 'hey,
- * they have an account now - connect them!'" Never auto-linked (an unverified email match
- * would hand the character to whoever registers that address first) - only surfaced as
- * `pending_match` for a manager to confirm via the existing wp_user_id assignment path.
- *
- * Also covers the related, user-requested change to the player/character relationship:
- * "player_name should follow wp_user_id" - once a real account is attached, the stored
- * free-text player_name is no longer authoritative.
+ * A character can be created with a pending player email, which is never auto-linked to an account.
  */
 class CharacterPendingPlayerEmailTest extends WP_UnitTestCase {
 

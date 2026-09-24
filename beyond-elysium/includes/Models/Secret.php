@@ -8,19 +8,7 @@ use BeyondElysium\Database\Transaction;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Static data-access model for Storyteller-authored secrets attached to a plot, item,
- * location, or NPC (1.1.0 §3.11) - a title/content pair with its own real, `Audience`-shaped
- * `audience`/`audience_rules`, not simply "hidden until revealed." `storytellers` (the
- * schema default) means staff only, always; `restricted` means the characters it has been
- * revealed to (`Secret_Reveal`) plus anyone matching its rules; `everyone` means it has
- * become common knowledge.
- *
- * `faction` is a fifth entity type the design names (§3.10), left out of `ENTITY_TYPES` for
- * now - no `Faction` model exists yet (F1/F2, still unbuilt) to validate a secret's
- * `entity_id` against or to display a name for, the same gap N1/L1 already logged for the
- * identical reason. Closes automatically once F1/F2 ship.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.11
+ * Static data-access model for Storyteller-authored secrets attached to a plot, item, location, or NPC.
  */
 class Secret {
 
@@ -28,9 +16,7 @@ class Secret {
 	const ENTITY_TYPES = [ 'plot', 'item', 'location', 'npc' ];
 
 	/**
-	 * Valid stored `audience` values - duplicated from `Services\Audience::VALUES` rather
-	 * than imported, the same reasoning `Plot::AUDIENCE_VALUES`/`World_Object::AUDIENCE_VALUES`
-	 * give: Models does not depend on Services in this codebase.
+	 * Valid stored `audience` values.
 	 */
 	const AUDIENCE_VALUES = [ 'everyone', 'storytellers', 'restricted' ];
 
@@ -68,9 +54,7 @@ class Secret {
 	}
 
 	/**
-	 * Every secret in a chronicle, across every entity it's attached to - D1
-	 * (1.2.5-design-workflow.md §D), `Game::delete_with_content()`'s own cascade needs the
-	 * whole-game list, not one entity's slice.
+	 * Every secret in a chronicle, across every entity it's attached to.
 	 *
 	 * @param int $game_id
 	 * @return object[]
@@ -84,8 +68,7 @@ class Secret {
 	}
 
 	/**
-	 * Creates a secret. Validates entity_type and audience against their known values;
-	 * defaults audience to `storytellers` when omitted, matching the schema's own default.
+	 * Creates a secret.
 	 *
 	 * @param array $data
 	 * @return int|false Insert ID, or false on any validation failure or unencodable JSON.
@@ -120,10 +103,7 @@ class Secret {
 	}
 
 	/**
-	 * Updates a secret's title, content, audience, and/or audience_rules. entity_type/
-	 * entity_id/game_id are not editable - attaching a secret to a different entity is a
-	 * delete-and-recreate, matching `Connection::update()`'s own "the source/target never
-	 * change in place" precedent.
+	 * Updates a secret's title, content, audience, and/or audience_rules. entity_type/entity_id/game_id are not editable.
 	 *
 	 * @param int   $id
 	 * @param array $data
@@ -157,8 +137,7 @@ class Secret {
 	}
 
 	/**
-	 * Deletes a secret, cascading to its reveals - a reveal naming a secret that no longer
-	 * exists would be a dangling, meaningless row.
+	 * Deletes a secret, cascading to its reveals.
 	 *
 	 * @param int $id
 	 * @return bool
@@ -179,9 +158,9 @@ class Secret {
 	}
 
 	/**
-	 * Encode a value for a JSON column, matching `Plot::encode_json_field()`'s exact
-	 * contract: null stays null, an array/object is JSON-encoded, anything else is cast to
-	 * string as-is (never expected in real use, kept only so this never silently drops data).
+	 * Encode a value for a JSON column, matching `Plot::encode_json_field()`'s exact contract: null stays null, an
+	 * array/object is JSON-encoded, anything else is cast to string as-is (never expected in real use, kept only so this
+	 * never silently drops data).
 	 *
 	 * @param mixed $value
 	 * @return string|false|null False only when `wp_json_encode()` itself fails.
@@ -197,9 +176,7 @@ class Secret {
 	}
 
 	/**
-	 * Decodes the audience_rules JSON column on a row object in place. A NULL column value
-	 * is left as null; a non-NULL value that fails to decode is logged and replaced with
-	 * null rather than the row being dropped.
+	 * Decodes the audience_rules JSON column on a row object in place.
 	 *
 	 * @param object|null $row
 	 * @return object|null

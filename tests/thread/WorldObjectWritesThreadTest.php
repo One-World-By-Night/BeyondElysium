@@ -10,13 +10,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-067 and F-068 (Pass H intake `t3-content-controllers`).
- * - F-067: creating an item cleaned its name, description, and limitations; editing it stored
- *   whatever came in, so what a world object holds depended on which request last wrote it.
- *   Rarity and cost were never cleaned at all.
- * - F-068: a boon is a world object, and the generic world-object routes treated it like any
- *   item: PUT rewrote its terms, level, and status past the ledger's repayment flow, and DELETE
- *   erased the debt and both its links - the ledger's rule is that a boon is never deleted.
+ * Creating and editing a world object store the same cleaned values for its name, description and limitations.
  */
 class WorldObjectWritesThreadTest extends WP_UnitTestCase {
 
@@ -69,8 +63,7 @@ class WorldObjectWritesThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Found writing the test above: rarity is a 20-character column behind a free-text box, so a
-	 * longer rarity typed in the editor failed as "Failed to create world object." with a 500.
+	 * Found writing the test above: rarity is a 20-character column behind a free-text box.
 	 */
 	public function test_a_rarity_longer_than_its_column_is_refused_by_name_not_as_a_server_error(): void {
 		$response = $this->send( 'POST', '/world-objects', [ 'object_type' => 'item', 'name' => 'Relic', 'rarity' => 'Legendary artifact (unique)' ] );
@@ -118,12 +111,7 @@ class WorldObjectWritesThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Decision 111 (rich-text world-object fields). `properties` had no sanitization at all
-	 * before this - `validate_properties()` only checks structural shape (a number, a list,
-	 * a real date), never a string's own content. A `text` property (the world-object
-	 * editor's own rich-text fields, e.g. an item's Powers) is a real target for the
-	 * `wp_kses_post()` allowlist now that it's typed to; a `string` one (e.g. an item's
-	 * Concealability) carries no markup and stays plain.
+	 * (rich-text world-object fields).
 	 */
 	public function test_a_text_property_is_sanitized_as_html_and_a_string_one_as_plain_text(): void {
 		$unsafe  = [ 'powers' => 'Bites. <script>alert(1)</script> <strong>Bold.</strong>', 'concealability' => 'Easy <script>alert(2)</script>' ];

@@ -6,25 +6,12 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Strips ST-only text from a field, transcribed from `GameClass.STFilter` (VB6).
- *
- * The markers are configurable per game rather than a fixed `[ST]`/`[/ST]` pair -
- * they live on `be_games.settings.st_comment_start` / `st_comment_end`, defaulting
- * to `[ST]` / `[/ST]`. Passed an empty marker, `strip()` does no filtering, as
- * Grapevine does; a game's blank stored marker falls back to the default instead.
- *
- * This is the authoritative strip: it runs server-side, before `biography`/`notes`
- * ever reach a non-ST client. `src/lib/stripStSections.ts` is a second layer for
- * the sheet's own rendering, not a substitute for this one.
- *
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "ST data filtering (GameClass.STFilter)"
- * @see BE_PROCESS/releases/workflow-0.3.md Step 4g
  */
 class St_Filter {
 
 	/**
-	 * Removes every section of text between a start marker and an end marker,
-	 * scanning left to right and copying through any text outside a marked
-	 * section. Returns the text unchanged when either marker is empty.
+	 * Removes every section of text between a start marker and an end marker, scanning left to right and copying through
+	 * any text outside a marked section.
 	 *
 	 * @param string $text
 	 * @param string $start_marker
@@ -62,12 +49,7 @@ class St_Filter {
 	}
 
 	/**
-	 * Strips ST sections from a field using a game's configured markers. Reads
-	 * `st_comment_start`/`st_comment_end` from the game's settings, falling back
-	 * to `[ST]` / `[/ST]` when the game has not customized them - or has stored
-	 * a blank one. Unlike `strip()`, a chronicle's settings can never turn
-	 * filtering off: that would show every player every `[ST]` passage in it
-	 * (1.0.0-review F-061).
+	 * Strips ST sections from a field using a game's configured markers.
 	 *
 	 * @param string      $text
 	 * @param object|null $game_settings Decoded `be_games.settings`, or null.
@@ -80,20 +62,7 @@ class St_Filter {
 	}
 
 	/**
-	 * Same as strip_for_game(), for a field that may hold HTML rather than plain text
-	 * (character biography/notes, world-object description/limitations/text properties -
-	 * every one of them a rich-text field this filter already ran against before it could
-	 * hold HTML). `strip()` cuts by byte offset with no notion of tag boundaries, so a
-	 * marker placed across a paragraph break or inline formatting can leave a dangling
-	 * unclosed tag in what's left over.
-	 *
-	 * Two passes, and both are needed. `wp_kses_post()` re-narrows the markup - it costs
-	 * nothing when nothing was cut mid-tag and cannot reintroduce the secret text `strip()`
-	 * already removed. But it does **not** balance tags, which this function claimed it did
-	 * until 1.0.1 D1's own test measured it: a marker opening inside `<em>` and closing
-	 * after `</em>` takes the closing tag with it, and `wp_kses_post()` hands back the
-	 * unclosed `<em>` untouched, leaving it to swallow the rest of the page's formatting.
-	 * `force_balance_tags()` is WordPress's own function for exactly that and closes it.
+	 * Same as strip_for_game(), for a field that may hold HTML.
 	 *
 	 * @param string      $html
 	 * @param object|null $game_settings Decoded `be_games.settings`, or null.

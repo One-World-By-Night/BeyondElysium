@@ -2,16 +2,9 @@ import { readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 
 /**
- * Eight editor/shared components (ResourcePoolEditor, TraitListEditor, TieredPowerEditor,
- * IdentityFieldEditor, BlockEditor, SearchableSelect, ConfirmDialog, DotTracker) each had a
- * real, non-trivial CSS file sitting next to them that nothing ever imported - so none of it
- * ever reached the browser, and the theme's own generic `button`/`select` reset rules won by
- * default instead. Found live 2026-09-09: a resource pool's dot tracker rendered every dot
- * (filled or empty) as an identical unstyled pill button, making a real 5-of-10 Willpower
- * value visually indistinguishable from 0-of-10. `npm run build` reported success throughout,
- * same shape as D10 - a webpack success only proves the files that WERE imported compiled
- * cleanly, not that everything meant to ship actually did. This scans the real component tree
- * so a future component can't repeat it silently.
+ * Eight editor/shared components (ResourcePoolEditor, TraitListEditor, TieredPowerEditor, IdentityFieldEditor,
+ * BlockEditor, SearchableSelect, ConfirmDialog, DotTracker) each had a real, non-trivial CSS file sitting next to
+ * them that nothing ever imported.
  */
 
 function findComponentFiles(

@@ -6,9 +6,8 @@ use BeyondElysium\Services\Cost_Engine;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.0.0-review F-107. The editor offers a variable-cost item's choices from `src/lib/costChoices.ts`;
- * the server prices it by `Cost_Engine::parse_cost_rule()`. Both read the same cases, so the
- * editor never offers a cost the server would price differently.
+ * The editor's variable-cost choices in `src/lib/costChoices.ts` and the server's `Cost_Engine::parse_cost_rule()`
+ * read the same cases.
  */
 class CostChoicesParityTest extends TestCase {
 

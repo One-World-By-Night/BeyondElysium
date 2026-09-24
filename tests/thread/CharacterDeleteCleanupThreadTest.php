@@ -15,16 +15,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-014. What deleting a character leaves behind.
- *
- * A character's action allocation plot is hidden from other players only by its link to the
- * character, and deleting the character deleted that link: the plot - titled with the character's
- * name, its entries holding the character's exact Background ratings - turned up for every player
- * in the chronicle. A transfer still in motion stayed open forever, and a pending offer's code
- * still verified, so the host could accept a character its home chronicle had deleted.
- *
- * Decided here: a printed or exported sheet's verification code survives as history - it still
- * confirms the chronicle issued that document, and says the sheet no longer matches.
+ * What deleting a character leaves behind: its action allocation plot and the link that hides it from other players
+ * go with it.
  */
 class CharacterDeleteCleanupThreadTest extends WP_UnitTestCase {
 

@@ -1,26 +1,7 @@
 <?php
 /**
- * Query-time field maps for every queryable inventory beyond `char`, plus
- * each inventory's storage descriptor. `char` itself stays mapped by
- * `field-map.php` - this file's `char` entry declares `fields => null`
- * specifically so that stays true.
+ * Query-time field maps for every queryable inventory beyond `char`, plus each inventory's storage descriptor.
  *
- * A flat `field-map.php`-style map keyed by bare field name cannot express
- * this: nine of the 31 non-character keys collide with a character key
- * (`notes`, `abilities`, `powers`, `totem`, `affinity`, `spheres`, `type`,
- * `lastmodified`, `random`), six of those nine meaning genuinely different
- * storage, and `type` collides between two NON-character inventories
- * (`item.item_type` vs `location.location_type`) - a case no char/non-char
- * split can fix. Every entry here is therefore keyed by (inventory, key).
- *
- * Every `properties` entry is transcribed against two independent sources:
- * the matching GV class's `GetValue` (ItemClass/LocationClass/RoteClass),
- * and `Import_Controller::apply_import()`'s own already-shipped field->
- * storage mapping for the same three inventories - not invented, and not a
- * second implementation of the importer's own knowledge (verified against
- * it in QueryInventoryMapTest, not duplicated by hand a second time).
- *
- * @see BE_PROCESS/design/query-beyond-characters-design.md §6
  * @see BeyondElysium\Services\Field_Registry
  */
 
@@ -30,8 +11,6 @@ return [
 	'char' => [
 		'storage'        => 'characters',
 		'result_columns' => [ 'name', 'stack_slug', 'status' ],
-		// null means "use the existing 231-key map in field-map.php" - nothing about the
-		// character query path moves as part of this file existing.
 		'fields'         => null,
 	],
 
@@ -41,8 +20,6 @@ return [
 		'result_columns' => [ 'name', 'item_type', 'level' ],
 		'fields'         => [
 			'name'           => [ 'source' => 'column', 'column' => 'name' ],
-			// ItemClass.cls:133; Import_Controller.php:289's own comment: "The item's
-			// free-text Notes field maps to the world object's description column."
 			'notes'          => [ 'source' => 'column', 'column' => 'description' ],
 			'lastmodified'   => [ 'source' => 'column', 'column' => 'updated_at' ],
 			'random'         => [ 'source' => 'derived', 'note' => "GV's CInt(Rnd() * 100) - qkRandom" ],
@@ -54,17 +31,13 @@ return [
 			'damageamount'   => [ 'source' => 'properties', 'property' => 'damage_amount' ],
 			'concealability' => [ 'source' => 'properties', 'property' => 'concealability' ],
 			'appearance'     => [ 'source' => 'properties', 'property' => 'appearance' ],
-			// ItemClass.cls:131 returns a String even though qkdata.gvd types this `list` -
-			// Grapevine's own data file and Grapevine's own code disagree here. Storage
-			// (world-object-schemas.php's 'text') matches the code. Overriding the
-			// registry type to 'field' is what keeps evaluate_list() from ever seeing a
-			// string (an uncaught TypeError, not a wrong answer - §4d).
+			// Stored as a string although qkdata.gvd types it `list`.
 			'powers'         => [ 'source' => 'properties', 'property' => 'powers', 'type' => 'field' ],
-			// ItemClass.cls:313 - Item Abilities is NOT atomic.
+			// Item Abilities is not atomic.
 			'abilities'      => [ 'source' => 'properties', 'property' => 'abilities', 'atomic' => false ],
-			// ItemClass.cls:314 - Item Negatives is NOT atomic.
+			// Item Negatives is not atomic.
 			'negatives'      => [ 'source' => 'properties', 'property' => 'negatives', 'atomic' => false ],
-			// ItemClass.cls:315 - Item Availability is NOT atomic.
+			// Item Availability is not atomic.
 			'availability'   => [ 'source' => 'properties', 'property' => 'availability', 'atomic' => false ],
 		],
 	],
@@ -75,12 +48,9 @@ return [
 		'result_columns' => [ 'name', 'location_type', 'level' ],
 		'fields'         => [
 			'name'            => [ 'source' => 'column', 'column' => 'name' ],
-			// LocationClass.cls:112; Import_Controller.php:312.
 			'notes'           => [ 'source' => 'column', 'column' => 'description' ],
 			'lastmodified'    => [ 'source' => 'column', 'column' => 'updated_at' ],
 			'random'          => [ 'source' => 'derived', 'note' => "GV's CInt(Rnd() * 100) - qkRandom" ],
-			// The collision that proves a flat map can't work: 'type' means
-			// item_type for an item and location_type for a location.
 			'type'            => [ 'source' => 'properties', 'property' => 'location_type' ],
 			'level'           => [ 'source' => 'properties', 'property' => 'level' ],
 			'owner'           => [ 'source' => 'properties', 'property' => 'owner' ],
@@ -94,7 +64,7 @@ return [
 			'umbra'           => [ 'source' => 'properties', 'property' => 'umbra' ],
 			'affinity'        => [ 'source' => 'properties', 'property' => 'affinity' ],
 			'totem'           => [ 'source' => 'properties', 'property' => 'totem' ],
-			// LocationClass.cls:301 - Location Links IS atomic.
+			// Location Links is atomic.
 			'links'           => [ 'source' => 'properties', 'property' => 'links', 'atomic' => true ],
 		],
 	],
@@ -109,12 +79,10 @@ return [
 			'random'       => [ 'source' => 'derived', 'note' => "GV's CInt(Rnd() * 100) - qkRandom" ],
 			'level'        => [ 'source' => 'properties', 'property' => 'level' ],
 			'duration'     => [ 'source' => 'properties', 'property' => 'duration' ],
-			// Deliberately NOT the description column: Import_Controller.php:336 passes
-			// null for it and writes the real value to properties.description (:343). The
-			// column is never populated for a rote - reading it would return null forever.
+			// Rote descriptions live in properties.description.
 			'description'  => [ 'source' => 'properties', 'property' => 'description' ],
 			'grades'       => [ 'source' => 'properties', 'property' => 'grades' ],
-			// RoteClass.cls:255 - Rote Spheres IS atomic.
+			// Rote Spheres is atomic.
 			'spheres'      => [ 'source' => 'properties', 'property' => 'spheres', 'atomic' => true ],
 		],
 	],

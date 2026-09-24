@@ -6,9 +6,7 @@ use BeyondElysium\Services\Character_Diff;
 use WP_UnitTestCase;
 
 /**
- * `Character_Diff::compare()` on parsed exchange characters (1.0.0-review F-044): only real
- * differences, never an artifact of order, of the document's own identity, or of what an import
- * does not carry. A thread test only because the labels are translated strings.
+ * `Character_Diff::compare()` on parsed exchange characters: only real differences.
  */
 class CharacterDiffThreadTest extends WP_UnitTestCase {
 

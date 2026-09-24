@@ -1,7 +1,8 @@
 /**
- * 1.0.0-review F-057 (Pass H intake). Both import wizards kept their decisions across "Start
- * Over" and a change of merge target, keyed only by name - so an Overwrite chosen for one file's
- * "Prince Marcus" came up already chosen, and counted as resolved, for the next file's.
+ * Import decisions belong to one file and one merge target: nothing chosen
+ * carries over to the next file or to another chronicle, a decision can be
+ * withdrawn, an unmatched trait stops blocking once it is kept as written, and
+ * a file uploaded again is a new job.
  */
 import {
 	blockingCount,
@@ -136,14 +137,13 @@ describe( 'importDecisions', () => {
 } );
 
 /**
- * The game-file wizard counted its own way: every unmatched trait blocked even once kept as
- * written, and any choice at all resolved a character in another chronicle - neither of which the
- * server agrees with. Every import screen now counts through this one function (F-057).
+ * The game-file wizard counted its own way: every unmatched trait blocked even once kept as written, and any choice
+ * at all resolved a character in another chronicle.
  */
 describe( 'blockingCount', () => {
 	const unmatched = {
 		character: 'Ian Kincaid II',
-		block: 'met-merits',
+		block: 'vampire-merits',
 		raw: 'A Merit Nobody Catalogued',
 	};
 

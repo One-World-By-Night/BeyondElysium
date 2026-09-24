@@ -11,17 +11,8 @@ use BeyondElysium\Services\Report_Writer;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for the 19 reports: `GET /{game_slug}/reports` (the
- * registry, for the Reports admin page) and `GET /{game_slug}/reports/{report_key}/pdf`.
- *
- * `be_view_reports` gates the routes, and every real chronicle role holds it;
- * each report then needs its own capability (`Report_Document::required_capability()`):
- * character and player reports are a Storyteller's, plot, action, and rumor
- * reports need `be_manage_plots`, and only catalog cards, the calendar, and
- * House Rules are open to every member (1.0.0-review F-047). The list shows a
- * caller only the reports they may run.
- *
- * @see BE_PROCESS/design/reports-cards-batch-design.md §3.5
+ * REST controller for the 19 reports: `GET /{game_slug}/reports` (the registry, for the Reports admin page) and `GET
+ * /{game_slug}/reports/{report_key}/pdf`.
  */
 class Reports_Controller extends Base_Controller {
 
@@ -107,11 +98,7 @@ class Reports_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Plain JSON form of a report's resolved document - what a front-end
-	 * widget (an Elementor drop-in, a shortcode) renders live on a page,
-	 * as opposed to `get_pdf()`'s signed, downloadable form of the same
-	 * data. No `Pdf_Signer` involvement at all; this route never touches
-	 * signing.
+	 * Plain JSON form of a report's resolved document.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -145,8 +132,7 @@ class Reports_Controller extends Base_Controller {
 			return $document;
 		}
 
-		// With no certificate, or with secure printing switched off (1.0.1 C2), a report still
-		// prints, stamped UNSIGNED (1.0.0-review F-042).
+		// With no certificate, or with secure printing switched off, a report still prints, stamped UNSIGNED.
 		$signed   = Pdf_Signer::should_sign()['ok'];
 		$bytes    = Report_Writer::write( $document, $game, $signed );
 		$filename = sanitize_file_name( $request['game_slug'] . '-' . (string) $request['report_key'] ) . ( $signed ? '' : '-unsigned' ) . '.pdf';
@@ -155,8 +141,7 @@ class Reports_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Shared build step behind `get_document()` and `get_pdf()` - validates
-	 * the report key, parses `conditions`, and resolves the document.
+	 * Shared build step behind `get_document()` and `get_pdf()`.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return array<string,mixed>|\WP_Error
@@ -182,8 +167,7 @@ class Reports_Controller extends Base_Controller {
 
 		$character_id = $request->get_param( 'character_id' );
 
-		// 1.1.0 §3.15, C1 - a non-manager needs a character to scope this report to at all;
-		// a manager may still run it unscoped (every rote in the chronicle).
+		// A non-manager needs a character to scope this report to.
 		if ( $holder_block !== null && ! $can_manage && ( $character_id === null || $character_id === '' ) ) {
 			return $this->error( 'character_required', __( 'character_id is required.', 'beyond-elysium' ), 400 );
 		}
@@ -229,8 +213,7 @@ class Reports_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Whether the current caller holds the capability a report needs in the
-	 * chronicle being served.
+	 * Whether the current caller holds the capability a report needs in the chronicle being served.
 	 *
 	 * @param array<string,mixed> $report A registry row.
 	 */
@@ -240,10 +223,7 @@ class Reports_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Whether a character's resolved stack includes a given block among its own
-	 * `stack_definition->sections` (1.1.0 §3.15, C1) - the same section-scan shape
-	 * `Cost_Engine`/`Change_Validator`/`Layout_Generator` already use for "does this stack
-	 * have this block", never a creature-type check (the engine pattern, kept).
+	 * Whether a character's resolved stack includes a given block among its own `stack_definition->sections`.
 	 *
 	 * @param object $character
 	 * @param string $block_slug
@@ -261,11 +241,7 @@ class Reports_Controller extends Base_Controller {
 	}
 
 	/**
-	 * `GET /{game_slug}/reports/availability?character_id=` (1.1.0 §3.15, C1) - whether each
-	 * card report (item-cards, location-cards, rote-cards) is available for the given
-	 * character. A manager always sees every card report available; for a non-manager, only
-	 * rote-cards (the one card report with a `holder_block`) can ever be unavailable - the
-	 * others have no such gate.
+	 * `GET /{game_slug}/reports/availability?character_id=`.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -298,8 +274,7 @@ class Reports_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Same interception pattern as `Sheets_Controller::serve_pdf_bytes()`,
-	 * matched by callback identity so no other route is affected.
+	 * Same interception pattern as `Sheets_Controller::serve_pdf_bytes()`, matched by callback identity.
 	 *
 	 * @param bool              $served
 	 * @param \WP_REST_Response $result
@@ -320,7 +295,7 @@ class Reports_Controller extends Base_Controller {
 
 		header( 'Content-Type: application/pdf' );
 		header( 'Content-Disposition: attachment; filename="' . $data['filename'] . '"' );
-		echo $data['bytes']; // phpcs:ignore -- raw binary PDF bytes, not HTML output.
+		echo $data['bytes']; // phpcs:ignore
 		return true;
 	}
 

@@ -1,26 +1,8 @@
 <?php
 /**
- * Maps a parsed GEX character's raw scalar identity/resource fields (from
- * `GEX_Parser::parse_character_*()`, distinct from its `trait_lists`) onto
- * each real BE creature stack's `{stack}-identity`/`{stack}-resources`
+ * Maps a parsed GEX character's raw scalar identity/resource fields (from `GEX_Parser::parse_character_*()`, distinct
+ * from its `trait_lists`) onto each real BE creature stack's `{stack}-identity`/`{stack}-resources`
  * (`-virtues`/`-renown`) block field names.
- *
- * A resource pool's raw value is always a `{permanent, temporary}` pair,
- * matching GV's own `X`/`temp_X` field pairing.
- *
- * `Hunter` and `Various` are not mapped here: no BE creature stack exists
- * for either, so there is no destination block to map onto.
- *
- * `Nature`/`Demeanor` (the shared `met-archetypes` block) are not declared
- * per-stack here - every race whose raw record carries `nature`/`demeanor`
- * keys uses the identical BE field names, so `Import_Controller` maps them
- * once, universally.
- *
- * A raw field with no destination BE field is intentionally absent below -
- * not every stack's resources/identity block defines every possible field.
- *
- * @see BE_PROCESS/releases/workflow-0.8.md Step 4 (identity/resource mapping follow-up)
- * @see BE_PROCESS/reference/DECISIONLOG.md Decision 039
  */
 
 defined( 'ABSPATH' ) || exit;

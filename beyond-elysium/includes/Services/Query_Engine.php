@@ -12,20 +12,14 @@ use BeyondElysium\Models\Schema_Block;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Port of `QueryEngineClass.ProcessClause` (GV301Source/Code/QueryEngineClass.cls),
- * evaluating ST query conditions against character data.
- *
- * SQL narrows candidate characters by whatever indexed columns are ANDed into
- * the query; every condition itself is then evaluated in PHP against decoded
- * `sheet_data` rather than expressed as MySQL JSON functions, since the eleven
- * trait-list operators do not reduce to a single clean SQL expression.
- *
- * @see BE_PROCESS/releases/workflow-0.6.md
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "Query Engine"
+ * Port of `QueryEngineClass.ProcessClause` (Code/QueryEngineClass.cls), evaluating ST query conditions against
+ * character data.
  */
 class Query_Engine {
 
-	/** Applicable operators per `QueryKeyType`, from `QueryEngineClass.ProcessClause`. */
+	/**
+	 * Applicable operators per `QueryKeyType`, from `QueryEngineClass.ProcessClause`.
+	 */
 	const APPLICABLE_OPERATORS = [
 		'field' => [ 'contains', 'equals' ],
 		'num'   => [ 'equals', 'at_least', 'greater', 'less', 'no_more' ],
@@ -38,13 +32,13 @@ class Query_Engine {
 		],
 	];
 
-	/** The five "count comparison" trait operators - the atomic-duplicate-walk applies only to these. */
+	/**
+	 * The five "count comparison" trait operators.
+	 */
 	const NAMED_COUNT_OPERATORS = [ 'contains_no_more', 'contains_less', 'contains_exactly', 'contains_at_least', 'contains_more' ];
 
 	/**
-	 * Checks whether an operator applies to a given field type. Used by the
-	 * query builder UI to avoid ever offering an operator the server would
-	 * reject, and by validate_conditions() to check submitted queries.
+	 * Checks whether an operator applies to a given field type.
 	 *
 	 * @param string $type
 	 * @param string $operator
@@ -55,19 +49,12 @@ class Query_Engine {
 	}
 
 	/**
-	 * Evaluate one condition against one already-resolved value. Pure - no database
-	 * access - port of `ProcessClause`'s per-row, per-clause body.
-	 *
-	 * `$value` shape depends on `$type`:
-	 *   - field/num/date: scalar or null
-	 *   - bool: bool or null
-	 *   - list: array of `{name, count, note?}` entries, or null if the character has
-	 *     no such block at all (an empty array is a real empty list, not null)
+	 * Evaluate one condition against one already-resolved value.
 	 *
 	 * @param string     $type      One of: field, num, date, bool, list.
 	 * @param mixed      $value     The character's value for this field.
 	 * @param array      $condition `{operator, find?, value?, not?}`.
-	 * @param bool       $atomic    Whether the trait list is atomic (Decision 016/GV-SOURCEMAP "Atomic").
+	 * @param bool $atomic Whether the trait list is atomic ("Atomic").
 	 * @return array{match: bool, match_value: string}
 	 */
 	public static function evaluate_clause( string $type, $value, array $condition, bool $atomic = false ): array {
@@ -96,9 +83,7 @@ class Query_Engine {
 	}
 
 	/**
-	 * Evaluates a `field`-type condition (a plain string value) against the
-	 * `contains` or `equals` operator. Any other operator is inapplicable for
-	 * this type and always resolves to a non-match.
+	 * Evaluates a `field`-type condition (a plain string value) against the `contains` or `equals` operator.
 	 */
 	private static function evaluate_field( string $value, string $operator, array $condition, bool $not ): array {
 		$find = (string) ( $condition['find'] ?? '' );
@@ -114,9 +99,8 @@ class Query_Engine {
 	}
 
 	/**
-	 * Evaluates a `num`-type condition (a numeric value) against one of the
-	 * five numeric comparison operators: equals, at_least, greater, less, or
-	 * no_more. Any other operator always resolves to a non-match.
+	 * Evaluates a `num`-type condition (a numeric value) against one of the five numeric comparison operators: equals,
+	 * at_least, greater, less, or no_more.
 	 */
 	private static function evaluate_num( $value, string $operator, array $condition, bool $not ): array {
 		$number = (float) ( $condition['value'] ?? 0 );
@@ -138,9 +122,8 @@ class Query_Engine {
 	}
 
 	/**
-	 * Evaluates a `date`-type condition against one of the five comparison
-	 * operators: equals, at_least, greater, less, or no_more. An unparsable
-	 * comparison date makes the whole clause inapplicable rather than an error.
+	 * Evaluates a `date`-type condition against one of the five comparison operators: equals, at_least, greater, less, or
+	 * no_more.
 	 */
 	private static function evaluate_date( string $value, string $operator, array $condition, bool $not ): array {
 		$find = (string) ( $condition['find'] ?? '' );
@@ -167,9 +150,7 @@ class Query_Engine {
 	}
 
 	/**
-	 * Evaluates a `bool`-type condition against the `is_true` or `is_false`
-	 * operator. Any other operator is inapplicable for this type and always
-	 * resolves to a non-match.
+	 * Evaluates a `bool`-type condition against the `is_true` or `is_false` operator.
 	 */
 	private static function evaluate_bool( $value, string $operator, bool $not ): array {
 		$v = (bool) $value;
@@ -184,10 +165,9 @@ class Query_Engine {
 	}
 
 	/**
-	 * Evaluates a `list`-type condition against one of the trait-list
-	 * operators: the five `totals*` operators compare the list's own length,
-	 * `contains`/`contains_note` search by name or note text, and the five
-	 * `contains_*` count-comparison operators dispatch to evaluate_named_count().
+	 * Evaluates a `list`-type condition against one of the trait-list operators: the five `totals*` operators compare the
+	 * list's own length, `contains` and `contains_note` search by name or note text, and the five `contains_*` operators
+	 * compare counts.
 	 *
 	 * @param array  $list  `{name, count, note?}` entries.
 	 * @param string $operator
@@ -241,14 +221,7 @@ class Query_Engine {
 	}
 
 	/**
-	 * Evaluates the five "count comparison" trait operators. A non-atomic list
-	 * stops at its first matching-named entry regardless of whether the count
-	 * comparison itself passes; an atomic list keeps walking every occurrence
-	 * of the name until one satisfies the comparison or the list is exhausted.
-	 *
-	 * The trait must be present at all - absent from the list, this returns
-	 * match=false, which is what makes a negated `contains_no_more`/`contains_less`
-	 * clause match an absent trait.
+	 * Evaluates the five "count comparison" trait operators.
 	 *
 	 * @param array  $list
 	 * @param string $operator
@@ -303,15 +276,12 @@ class Query_Engine {
 			$match_value = '(none)';
 		}
 
-		// Applicable is always true here since $operator is always one of the five handled above.
 		return self::finish( true, false, $not, $match_value );
 	}
 
 	/**
-	 * Formats a trait entry as a readable match-reason label: `"Name xCount"`
-	 * when a count greater than 1 is present, or plain `Name` otherwise. A
-	 * simpler formatter than the sheet renderer's own `displayTrait.ts`, since
-	 * the query engine only needs a readable label, not per-display-type formatting.
+	 * Formats a trait entry as a readable match-reason label: `"Name xCount"` when a count greater than 1 is present, or
+	 * plain `Name`.
 	 *
 	 * @param array $entry
 	 * @return string
@@ -325,9 +295,7 @@ class Query_Engine {
 	}
 
 	/**
-	 * `Match = Applicable And (Match Xor QC.CompNot)` - the single rule every operator
-	 * funnels through. The `And` sitting outside the `Xor` is why a negated
-	 * inapplicable clause is still a non-match, not a rescue.
+	 * `Match = Applicable And (Match Xor QC.CompNot)`.
 	 *
 	 * @param bool   $applicable
 	 * @param bool   $raw_match
@@ -348,18 +316,7 @@ class Query_Engine {
 	private static array $section_type_cache = [];
 
 	/**
-	 * Resolve one field's value and type for one row, per that inventory's own
-	 * `source` kind - `field-map.php` for `char` (the default), or
-	 * `query-inventories.php`'s own map for anything else. Assumes the field
-	 * was already validated (`validate_conditions()`) - an unmapped or
-	 * uncomputable-derived field reaching here is a programming error, not a
-	 * query-time condition to handle gracefully.
-	 *
-	 * The `json` and `stack_relative_list` arms only ever run for the `char`
-	 * inventory: no world-object field-map entry declares either kind, so a
-	 * world-object row never reaches `$row->stack_slug`/`$row->owner_slug`,
-	 * neither of which it has. Enforced by the map data, not by a branch here
-	 * (query-beyond-characters-design.md §7.2).
+	 * Resolve one field's value and type for one row, per that inventory's own `source` kind.
 	 *
 	 * @param object $row       Decoded character or world-object row (its JSON column already an array).
 	 * @param string $field
@@ -382,18 +339,11 @@ class Query_Engine {
 				break;
 
 			case 'json':
-				// A field or pool named without a block lives on whichever block the character's
-				// own creature stack defines it on (field-map.php) - Willpower, Rank, Auspice. Read
-				// unconditionally until 1.0.0-review F-051, so each of those matched no one.
+				// A field or pool named without a block lives on the block the character's own creature stack defines it on.
 				$block = $map['block'] ?? self::block_holding( $row, $map );
-				// 1.3.3 C7: field-map.php/block_holding() both name a slug that may be retired on
-				// a cut-over install - the data itself now lives under the replacement key.
-				$live_block = $block !== null ? Catalog_Cutover::live_slug( (string) $row->stack_slug, $block ) : null;
+				// Swaps the shared block the map names for the block the stack declares in its place.
+				$live_block = $block !== null ? Catalog_Reader::current_slug( (string) $row->stack_slug, $block ) : null;
 				$data       = $live_block !== null ? ( $row->sheet_data[ $live_block ] ?? null ) : null;
-				// $live_block !== null is checked explicitly alongside $data, rather than relied
-				// on as an implication of it, so this stays provably null-safe through the extra
-				// live_slug() step above (PHPStan's ternary-implies-non-null narrowing does not
-				// chain reliably through it).
 				if ( $data !== null && $live_block !== null ) {
 					if ( isset( $map['field'] ) ) {
 						$value = $data[ $map['field'] ] ?? null;
@@ -411,9 +361,7 @@ class Query_Engine {
 					// GV's qkRandom: `CInt(Rnd() * 100)`.
 					$value = mt_rand( 0, 99 );
 				} elseif ( $field === 'group' ) {
-					// 1.1.0 F1: the "Group" field (field-map.php's own comment on why it isn't
-					// "faction") - every active faction this character belongs to, comma-joined.
-					// A disbanded faction never counts as a current membership for matching.
+					// Every active faction the character belongs to, comma-joined.
 					$names = array_map(
 						static fn( $m ) => (string) $m->faction_name,
 						array_filter(
@@ -423,10 +371,7 @@ class Query_Engine {
 					);
 					$value = implode( ', ', array_values( $names ) );
 				} elseif ( $field === 'position' ) {
-					// 1.1.0 F2: every title this character currently holds, comma-joined -
-					// regardless of that position's own audience/holder_public, which govern who
-					// may SEE the value elsewhere, not whether the Storyteller-only Query Tool can
-					// match against it.
+					// Every title the character currently holds, comma-joined.
 					$titles = array_map(
 						static fn( $p ) => (string) $p->title,
 						Position::for_character( (int) $row->id )
@@ -436,7 +381,6 @@ class Query_Engine {
 				break;
 
 			case 'stack_relative_list':
-				// e.g. 'influences': resolved per-character since the block slug depends on the character's own stack.
 				$block = str_replace( '{stack}', $row->stack_slug, $map['block_pattern'] );
 				$data  = $row->sheet_data[ $block ] ?? null;
 				if ( $data !== null ) {
@@ -458,10 +402,8 @@ class Query_Engine {
 	}
 
 	/**
-	 * Normalizes a block's held items to `{name, count, note?}` regardless of
-	 * whether it is a `trait_list` (`count`) or `tiered_power` (`level`) block.
-	 * Reads the block's definition to tell which shape applies, never guessing
-	 * from the key name.
+	 * Normalizes a block's held items to `{name, count, note?}` regardless of whether it is a `trait_list` (`count`) or
+	 * `tiered_power` (`level`) block.
 	 *
 	 * @param array  $items
 	 * @param string $block
@@ -478,10 +420,8 @@ class Query_Engine {
 	}
 
 	/**
-	 * The block on a character's own creature stack that defines a field or
-	 * pool `field-map.php` names without a block, through the chronicle's own
-	 * forks - null when the stack has no such field or pool (a vampire has no
-	 * Auspice).
+	 * The block on a character's own creature stack that defines a field or pool `field-map.php` names without a block,
+	 * through the chronicle's own forks.
 	 *
 	 * @param object              $row
 	 * @param array<string,mixed> $map A `json` field-map entry with `field` or `pool` and no `block`.
@@ -507,10 +447,7 @@ class Query_Engine {
 	}
 
 	/**
-	 * Resolves one field for many rows in a single query run, so the block
-	 * and catalog lookups behind each value are made once per stack rather
-	 * than once per row - for a caller outside `execute()`, such as rumor
-	 * generation reading every active character's Clan.
+	 * Resolves one field for many rows in a single query run.
 	 *
 	 * @param object[] $rows
 	 * @param string   $field
@@ -526,11 +463,8 @@ class Query_Engine {
 	}
 
 	/**
-	 * Looks up a block's `section_type` (e.g. `trait_list`, `tiered_power`)
-	 * through the chronicle's own fork when it has one (1.0.0-review F-013,
-	 * D43), defaulting to `trait_list` when the block has no explicit type
-	 * set. Caches the result per block and chronicle for the lifetime of the
-	 * request.
+	 * Looks up a block's `section_type` (e.g. `trait_list`, `tiered_power`) through the chronicle's own fork when it has
+	 * one, defaulting to `trait_list` when the block has no explicit type set.
 	 *
 	 * @param string $block
 	 * @param string $game_slug
@@ -546,13 +480,8 @@ class Query_Engine {
 	}
 
 	/**
-	 * Looks up whether a block's trait list is atomic, i.e. whether duplicate
-	 * entries of the same name are compared individually rather than collapsed,
-	 * resolved through this chronicle's own fork when one exists
-	 * (BE_PROCESS/design/background-ledger-apr-design.md §3.1) - this is a general
-	 * block lookup, used for any trait_list/tiered_power block a field-map
-	 * entry names, not only the backgrounds family Backgrounds_Catalog covers.
-	 * Returns false when the block has no definition or no `atomic` flag set.
+	 * Looks up whether a block's trait list is atomic, i.e. whether duplicate entries of the same name are compared
+	 * individually.
 	 *
 	 * @param string $block
 	 * @param string $game_slug
@@ -566,11 +495,8 @@ class Query_Engine {
 	}
 
 	/**
-	 * Builds a name -> source map (`'Influences'`, `'Backgrounds'`,
-	 * `'Backgrounds, <Type>'`) for every item in one merged backgrounds
-	 * block, resolved through this chronicle's own fork when one exists
-	 * (BE_PROCESS/design/background-ledger-apr-design.md §3.1). Delegates to the
-	 * shared lookup `Action_Allocator`/`Rumor_Generator` also use.
+	 * Builds a name -> source map (`'Influences'`, `'Backgrounds'`, `'Backgrounds, <Type>'`) for every item in one merged
+	 * backgrounds block, resolved through this chronicle's own fork when one exists.
 	 *
 	 * @param string $block
 	 * @param string $game_slug
@@ -583,15 +509,9 @@ class Query_Engine {
 	// Validation: rejects an unknown field, inapplicable operator, or missing required value.
 
 	/**
-	 * Validates a list of query conditions, checking that each field is
-	 * known, applies to the given inventory, has a Beyond Elysium
-	 * equivalent, is queryable, and that its operator applies to the
-	 * field's type with whatever `find`/`value` it requires. Returns the
-	 * first invalid condition found, naming the clause and reason - GV's
-	 * `qtError` silently skipped an unqueryable clause and widened the
-	 * result set instead; a null-valued clause matching nothing looks
-	 * identical to "no such rows exist", which is exactly the wrong-answer
-	 * shape this design deliberately does not reproduce.
+	 * Validates a list of query conditions, checking that each field is known, applies to the given inventory, has a
+	 * Beyond Elysium equivalent, is queryable, and that its operator applies to the field's type with whatever
+	 * `find`/`value` it requires.
 	 *
 	 * @param array[] $conditions
 	 * @param string  $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
@@ -620,13 +540,7 @@ class Query_Engine {
 			if ( $map === null || $map['source'] === 'unmapped' ) {
 				return [ 'index' => $index, 'message' => "Field \"{$field}\" has no Beyond Elysium equivalent and cannot be queried." ];
 			}
-			// A 'derived' field is normally blocked here because it has nothing
-			// resolve_value() can actually compute for it - 'random' is the one
-			// pre-existing exception. 1.1.0 F1/F2's 'group'/'position' are a second,
-			// real one: resolve_value()'s own 'derived' case fully computes both,
-			// and blocking them here would make a Storyteller's "Restricted to Faction
-			// contains <coterie>" (§7 trace 5) - a real, load-bearing audience rule,
-			// not a Query Tool curiosity - permanently unusable.
+			// A 'derived' field is normally blocked here.
 			if ( $map['source'] === 'derived' && ! in_array( $field, [ 'random', 'group', 'position' ], true ) ) {
 				return [ 'index' => $index, 'message' => "Field \"{$field}\" is not a stored value and cannot be queried." ];
 			}
@@ -637,7 +551,6 @@ class Query_Engine {
 				return [ 'index' => $index, 'message' => "Operator \"{$operator}\" does not apply to field \"{$field}\" (type {$type})." ];
 			}
 
-			// Which of find/value each operator needs varies by type; checked below.
 			$needs_find  = false;
 			$needs_value = false;
 
@@ -678,9 +591,7 @@ class Query_Engine {
 	// Query execution.
 
 	/**
-	 * Runs a query against every row of an inventory in a game, then sorts
-	 * and paginates the matches. Conditions are evaluated in PHP against a
-	 * decoded JSON column rather than expressed as SQL.
+	 * Runs a query against every row of an inventory in a game.
 	 *
 	 * @param string $game_slug
 	 * @param array  $conditions
@@ -700,8 +611,7 @@ class Query_Engine {
 			if ( $sort && ! empty( $sort['field'] ) ) {
 				$field     = $sort['field'];
 				$direction = ( $sort['direction'] ?? 'asc' ) === 'desc' ? -1 : 1;
-				// Each row's sort value is resolved once, not on both sides of every comparison
-				// (1.0.0-review F-027).
+				// Each row's sort value is resolved once.
 				$keyed = array_map( static fn( $row ) => [ self::resolve_value( $row, $field, $inventory )['value'], $row ], $matches );
 				usort( $keyed, static fn( $a, $b ) => $direction * ( $a[0] <=> $b[0] ) );
 				$matches = array_column( $keyed, 1 );
@@ -718,15 +628,15 @@ class Query_Engine {
 	}
 
 	/**
-	 * Block lookups remembered for the length of one query run - null outside
-	 * one, so nothing outlives the run that filled it (a static cache that did
-	 * could hand a later request, or a later test, a stale definition).
+	 * Block lookups remembered for the length of one query run.
 	 *
 	 * @var array<string,mixed>|null
 	 */
 	private static ?array $run_memo = null;
 
-	/** Starts a query run's memo, unless one is already running; returns whether this call owns it. */
+	/**
+	 * Starts a query run's memo, unless one is already running.
+	 */
 	private static function begin_run(): bool {
 		if ( self::$run_memo !== null ) {
 			return false;
@@ -735,7 +645,9 @@ class Query_Engine {
 		return true;
 	}
 
-	/** Ends the run's memo, when the caller is the one that started it. */
+	/**
+	 * Ends the run's memo, when the caller is the one that started it.
+	 */
 	private static function end_run( bool $owns_run ): void {
 		if ( $owns_run ) {
 			self::$run_memo = null;
@@ -743,8 +655,7 @@ class Query_Engine {
 	}
 
 	/**
-	 * Returns `$compute()`'s value, remembered under `$key` while a query run is
-	 * in progress.
+	 * Returns `$compute()`'s value, remembered under `$key` while a query run is in progress.
 	 *
 	 * @param string   $key
 	 * @param callable $compute
@@ -761,18 +672,8 @@ class Query_Engine {
 	}
 
 	/**
-	 * Builds the unpaginated match set for a query, shared by `execute()`
-	 * (which sorts and pages it) and `statistics()` (which aggregates over
-	 * the whole set). Every statistic runs the query first, then aggregates
-	 * over the result. Fetches rows via whichever of the two real storage
-	 * shapes the inventory declares - the clause-matching loop below is
-	 * otherwise identical regardless of which one supplied the rows.
-	 *
-	 * `$options` narrows what a viewer can reach before a single clause is
-	 * evaluated (1.0.0-review F-024): `exclude_npcs` drops NPC rows, and
-	 * `prepare_row` (a callable taking the row) redacts each row in place -
-	 * so a hidden value can neither be returned nor matched against, and a
-	 * condition on it cannot work as a yes/no oracle.
+	 * Builds the unpaginated match set for a query, shared by `execute()` (which sorts and pages it) and `statistics()`
+	 * (which aggregates over the whole set).
 	 *
 	 * @param string $game_slug
 	 * @param array  $conditions
@@ -835,9 +736,7 @@ class Query_Engine {
 	}
 
 	/**
-	 * Fetches every character row for a chronicle, decoded and ready for
-	 * clause evaluation. The `char` inventory's own row source, lifted
-	 * verbatim from `find_matches()`'s original character-only body.
+	 * Fetches every character row for a chronicle, decoded and ready for clause evaluation.
 	 *
 	 * @param string $game_slug
 	 * @return object[]
@@ -855,11 +754,7 @@ class Query_Engine {
 	}
 
 	/**
-	 * Fetches every world-object row of one object_type for a chronicle,
-	 * decoded and ready for clause evaluation. A game_slug that does not
-	 * resolve to a real game returns an empty result set rather than a
-	 * fatal - the same defensive shape `rows_for_characters()`'s own query
-	 * degrades to on a chronicle with no rows at all.
+	 * Fetches every world-object row of one object_type for a chronicle, decoded and ready for clause evaluation.
 	 *
 	 * @param string $game_slug
 	 * @param string $object_type
@@ -883,8 +778,8 @@ class Query_Engine {
 	}
 
 	/**
-	 * Decodes a world-object row's `properties` JSON column into an array in
-	 * place, the same pattern `decode_character()` applies to `sheet_data`.
+	 * Decodes a world-object row's `properties` JSON column into an array in place, the same pattern `decode_character()`
+	 * applies to `sheet_data`.
 	 *
 	 * @param object $row
 	 * @return object
@@ -901,16 +796,14 @@ class Query_Engine {
 	const STATISTIC_TYPES = [ 'distribution', 'distinct_distribution', 'specific_distribution', 'maxima', 'sums' ];
 
 	/**
-	 * Runs one of the five statistic types over a query's full, unpaginated
-	 * match set. `$trait` is required when `$stat_type` is
-	 * `specific_distribution`.
+	 * Runs one of the five statistic types over a query's full, unpaginated match set.
 	 *
 	 * @param string      $game_slug
 	 * @param array       $conditions
 	 * @param string      $logic
 	 * @param string      $key       Field-registry key to examine.
 	 * @param string      $stat_type One of self::STATISTIC_TYPES.
-	 * @param bool        $ok_zero   Whether `0`/`"(none)"` buckets count - the two distribution types only (Step 5h).
+	 * @param bool $ok_zero Whether `0`/`"(none)"` buckets count - the two distribution types only.
 	 * @param string|null $trait     Named trait, required for `specific_distribution`.
 	 * @param string      $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
 	 * @param array       $options   See find_matches(): `exclude_npcs`, `prepare_row`.
@@ -939,9 +832,7 @@ class Query_Engine {
 	}
 
 	/**
-	 * The statistic aggregation core. Pure - no database access - so it can be
-	 * unit-tested directly against a hand-built fixture, the same pattern as
-	 * `Action_Allocator::resolve_common_subactions()`.
+	 * The statistic aggregation core.
 	 *
 	 * @param array       $resolved         `{name, value}` pairs - one per character examined, value already resolved via `resolve_value()`.
 	 * @param string      $field_type       One of: field, num, date, bool, list.
@@ -995,11 +886,8 @@ class Query_Engine {
 	}
 
 	/**
-	 * Accumulates one character's list-type field value into the running
-	 * buckets/match_sets/total for whichever statistic type is being
-	 * computed. Dispatches to per-name counting for distinct_distribution,
-	 * maxima, and sums, or to a single count-based bucket for distribution
-	 * and specific_distribution.
+	 * Accumulates one character's list-type field value into the running buckets/match_sets/total for whichever statistic
+	 * type is being computed.
 	 *
 	 * @param string      $stat_type
 	 * @param array       $list        Normalized `{name, count}` entries.
@@ -1045,10 +933,7 @@ class Query_Engine {
 	}
 
 	/**
-	 * Accumulates one character's scalar field value into the running
-	 * buckets/match_sets/total. Distribution buckets by the value itself;
-	 * maxima and sums use one bucket keyed by the field's own title, since a
-	 * scalar field has only one possible datum per character.
+	 * Accumulates one character's scalar field value into the running buckets/match_sets/total.
 	 *
 	 * @param string $stat_type
 	 * @param mixed  $value
@@ -1085,10 +970,8 @@ class Query_Engine {
 	}
 
 	/**
-	 * Adds one character to a distribution bucket, incrementing the bucket's
-	 * count and the running total, and recording the character's name in that
-	 * bucket's match set. Skips zero/"(none)" buckets entirely when
-	 * `$ok_zero` is false.
+	 * Adds one character to a distribution bucket, incrementing the bucket's count and the running total, and recording
+	 * the character's name in that bucket's match set.
 	 *
 	 * @param string $bucket
 	 * @param string $char_name
@@ -1108,10 +991,7 @@ class Query_Engine {
 	}
 
 	/**
-	 * Relabels buckets after aggregation: `specific_distribution` buckets
-	 * become `"<Trait> x<N>"`; a non-`field` `distribution` gets its field
-	 * title appended (`"3 Willpower"`). `field`-type distributions are left
-	 * unrelabeled.
+	 * Relabels buckets after aggregation: `specific_distribution` buckets become `"<Trait> x<N>"`.
 	 *
 	 * @param string $stat_type
 	 * @param string $field_type
@@ -1147,9 +1027,8 @@ class Query_Engine {
 	}
 
 	/**
-	 * Decodes a raw character row's `sheet_data` column from a JSON string
-	 * into an array, if it has not already been decoded. Mutates and returns
-	 * the same row object.
+	 * Decodes a raw character row's `sheet_data` column from a JSON string into an array, if it has not already been
+	 * decoded.
 	 *
 	 * @param object $row
 	 * @return object
@@ -1165,27 +1044,6 @@ class Query_Engine {
 
 	/**
 	 * Resolves a plot's `target_query` to the character IDs it reaches.
-	 * `null` means "reaches everyone" - every character in the game, not just
-	 * active ones, since visibility is a question the caller controls separately.
-	 *
-	 * Uses the same engine as `execute()`: a `target_query` is just a
-	 * one-condition query.
-	 *
-	 * Always resolves against the `char` inventory, explicitly rather than
-	 * by relying on `find_matches()`'s own default - a plot's target_query
-	 * targets characters by definition (a plot cannot target an item), so
-	 * this is pinned rather than threaded (query-beyond-characters-
-	 * design.md §7.5).
-	 *
-	 * Deliberately uncached (D54, 1.1.0 §3.4). This used to memoize per
-	 * `(game_slug, target_query)` with no entity id in the key, so two plots
-	 * sharing an identical target_query would collide with each other's result -
-	 * a static property, so the collision outlives one PHPUnit test method as
-	 * easily as it would outlive one production request, exactly the bug class
-	 * `resolve_audience_rules()`'s own docblock names (`v0.21.28`/D40). Fixed by
-	 * removing the cache entirely, matching that sibling method's own shape - a
-	 * caller resolving the same query across many rows in one request is
-	 * expected to memoize locally, on its own stack, if it needs to.
 	 *
 	 * @param string     $game_slug
 	 * @param array|null $target_query `{field, operator, value}` or null.
@@ -1202,13 +1060,8 @@ class Query_Engine {
 	}
 
 	/**
-	 * Widens a `{field, operator, value}` target_query into the condition shape
-	 * `evaluate_clause()`'s own type-specific evaluators actually read - `find` for a
-	 * `field`/`date`/`list` type, `value` for a `num` type or a `list` count operator
-	 * (`totals*`). A target_query only ever carries `value`, so every caller turning one
-	 * into a query condition - `resolve_target_query()` itself, and a rumor's own
-	 * `audience_rules` derived from its target_query (1.1.0 §3.4 item 1) - needs both keys
-	 * populated, not just the one a target_query happens to name.
+	 * Widens a `{field, operator, value}` target_query into the condition shape `evaluate_clause()`'s own type-specific
+	 * evaluators actually read.
 	 *
 	 * @param array $target_query `{field, operator, value}`.
 	 * @return array{field: mixed, operator: mixed, find: mixed, value: mixed}
@@ -1223,17 +1076,8 @@ class Query_Engine {
 	}
 
 	/**
-	 * A character's held count/level in a named entry of a trait-list-shaped block, resolved
-	 * through the same block/fork logic `resolve_value()` already uses for every other
-	 * caller (1.1.0 §3.4 - rumor levels: "Media x3 reads levels 1-3"). Goes *through*
-	 * `resolve_value()` rather than adding a new case inside it - a trait block's held list
-	 * is already exactly what that method returns for a `json`/`stack_relative_list` field
-	 * with no `field`/`pool` narrowing, so this is a thin reduction over that list, the same
-	 * one `evaluate_named_count()` already performs for the query operators.
-	 *
-	 * Returns 0 when the key resolves to nothing, or the named entry is absent - "no rating"
-	 * and "not held at all" are the same answer here, matching every other absent-trait
-	 * convention in this engine.
+	 * A character's held count/level in a named entry of a trait-list-shaped block, resolved through the same block/fork
+	 * logic `resolve_value()` already uses for every other caller (rumor levels: "Media x3 reads levels 1-3").
 	 *
 	 * @param object $character A decoded character row.
 	 * @param string $key       A field-map key resolving to a trait-list-shaped block (e.g. `influences`).
@@ -1255,23 +1099,7 @@ class Query_Engine {
 	}
 
 	/**
-	 * Resolves an audience's `rules` (1.1.0 §2.1) to the character IDs it reaches - the
-	 * multi-condition sibling of `resolve_target_query()`, which a plot's own delivery rule
-	 * still uses unchanged. Distinct from it because an audience rule can combine several
-	 * conditions with AND/OR (`Query_Engine::find_matches()` already supports this; a
-	 * `target_query` never has), and because a null/empty rule set here means "matches
-	 * nobody" - unlike `resolve_target_query( null )`, which means everyone. `restricted`
-	 * with no rules and no connections is meant to be nobody-but-the-connections; falling
-	 * back to "everyone" would silently defeat the audience it was set to narrow.
-	 *
-	 * Always resolves against the `char` inventory: an audience is a question of which
-	 * characters may see something, never items or locations.
-	 *
-	 * Deliberately uncached. Found writing `AudienceThreadTest`, which failed on a stale
-	 * cross-test result the moment two tests happened to share a rule set - `resolve_target_query()`
-	 * had the identical shape, logged as D54 and fixed the same way in 1.1.0 S4. A caller
-	 * resolving the same rules across many rows in one request (`Audience::filter()`) is
-	 * expected to memoize locally, on the stack, if it needs to.
+	 * Resolves an audience's `rules` to the character IDs it reaches.
 	 *
 	 * @param string     $game_slug
 	 * @param array|null $rules `{logic: 'AND'|'OR', conditions: array}` or null.

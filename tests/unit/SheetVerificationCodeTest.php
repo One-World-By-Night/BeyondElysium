@@ -6,14 +6,8 @@ use BeyondElysium\Services\Sheet_Verification;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Pure-function coverage for Sheet_Verification::code_from() (F-122, §8.2):
- * whether a parsed character's `id` field is a real Beyond Elysium
- * verification URL. No network, no database - `id` is otherwise free text
- * (Grapevine's own use, or nothing at all), so this only needs to prove the
- * pattern matches exactly what Character_Exporter::export() writes and
- * rejects everything else.
- *
- * @see BE_PROCESS/design/player-grapevine-file-design.md §8.2
+ * Pure-function coverage for Sheet_Verification::code_from(): whether a parsed character's `id` field is a real
+ * Beyond Elysium verification URL.
  */
 class SheetVerificationCodeTest extends TestCase {
 

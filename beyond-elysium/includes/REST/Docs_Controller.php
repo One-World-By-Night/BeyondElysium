@@ -6,26 +6,18 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * REST controller that serves the plugin's shipped documentation files.
- *
- * Reads a Markdown file from the plugin's own `docs/` directory and returns
- * its raw content. The requested slug is constrained by the route's regex to
- * the fixed set of known documents, so there is no path-traversal surface to
- * defend against. A help page (`docs/help/{key}.md`, one per screen, opened by
- * the screen's `?` - 1.0.0-help.md H-1) is served only for a key that names
- * one of those files.
  */
 class Docs_Controller extends Base_Controller {
 
 	protected $rest_base = 'docs';
 
-	/** The allowed document slugs, used directly in the route's own regex. */
+	/**
+	 * The allowed document slugs, used directly in the route's own regex.
+	 */
 	const SLUGS = [ 'st-guide', 'admin-guide', 'player-guide', 'rest-api' ];
 
 	/**
 	 * Registers the docs route.
-	 *
-	 * Adds a single GET route whose slug segment is restricted by regex to
-	 * the values in `SLUGS`.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<slug>' . implode( '|', self::SLUGS ) . ')', [
@@ -79,9 +71,6 @@ class Docs_Controller extends Base_Controller {
 
 	/**
 	 * Returns the content of one shipped documentation file.
-	 *
-	 * Reads the Markdown file matching the requested slug from the plugin's
-	 * `docs/` directory and returns its slug and raw content.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error

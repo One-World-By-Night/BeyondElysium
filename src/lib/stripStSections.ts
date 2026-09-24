@@ -1,14 +1,10 @@
 /**
- * Removes ST-only (storyteller-only) text between configurable start and end markers
- * from a string. Exports `stripStSections()`, the single function in this file. Markers
- * are passed in by the caller rather than hardcoded, and an empty marker turns
- * filtering off entirely, returning the input unchanged.
+ * Removes ST-only (storyteller-only) text between configurable start and end markers from a string.
  */
 
 /**
- * Removes every substring beginning with `startMarker` and ending with `endMarker`
- * (inclusive of both markers) from `text`, then trims the result. An unterminated
- * opening marker removes everything from that point to the end of the string.
+ * Removes every substring beginning with `startMarker` and ending with `endMarker` (inclusive of both markers) from
+ * `text`.
  */
 export function stripStSections(
 	text: string,

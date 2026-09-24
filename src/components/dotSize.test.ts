@@ -2,10 +2,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 /**
- * 1.0.0-review F-016, owner ruling 2026-09-14: every dot the same size. The editor's pool control
- * drew its temporary row a quarter smaller than its permanent row, and the sheet drew a pool's dots
- * bolder and larger than a trait's. A tracker dot takes its size from the base dot rule; a dot in
- * text takes the size of the text around it, the same for a pool as for a trait.
+ * Every dot is the same size in the editor's pool control and on the sheet.
  */
 function rule( css: string, selector: string ): string {
 	const escaped = selector.replace( /[.*+?^${}()|[\]\\]/g, '\\$&' );

@@ -7,14 +7,7 @@ use BeyondElysium\Database\Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Static data-access model for an item's own history (1.1.0 §3.12, I1/I2).
- *
- * Written by: a character-item connection added (`given`) or removed (`taken`) through
- * `Connections_Controller`; the transfer route (`given`/`traded`/`stolen`/`lost`, as given);
- * the use route (`used`); the copy route (`copied`, I1); `propose_world_object` approval
- * (`proposed`); a Storyteller editing `uses_max`/`uses_left`/`expires_on` (`adjusted`).
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.12
+ * Static data-access model for an item's own history.
  */
 class Item_Event {
 
@@ -35,9 +28,7 @@ class Item_Event {
 	}
 
 	/**
-	 * Deletes every event recorded for one world object - D1 (1.2.5-design-workflow.md §D):
-	 * `World_Object::delete()` never cleaned this table, the one real gap in an otherwise
-	 * complete single-item delete.
+	 * Deletes every event recorded for one world object.
 	 *
 	 * @param int $world_object_id
 	 * @return bool
@@ -47,8 +38,7 @@ class Item_Event {
 	}
 
 	/**
-	 * Records one event. Returns the new row's id, or false when the event type is not
-	 * recognized or the insert fails.
+	 * Records one event.
 	 *
 	 * @param array $data
 	 * @return int|false
@@ -72,8 +62,7 @@ class Item_Event {
 	}
 
 	/**
-	 * The shape a client is given for one event - `GET .../events` is `be_manage_world_objects`
-	 * only, so nothing here needs redaction the way a player-reachable route would.
+	 * The shape a client is given for one event.
 	 *
 	 * @param object $event A row from `for_object()`.
 	 * @return array<string,mixed>

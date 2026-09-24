@@ -9,24 +9,16 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Static data-access model for items, locations, rotes, and boons.
- *
- * World_Object is a Database\Manager CRUD model backed by the world_objects
- * table. One shared schema serves all four object types, distinguished by an
- * object_type discriminator column plus a properties JSON bag whose allowed
- * keys are validated per type against the schema defined in
- * Services/world-object-schemas.php.
- *
- * @see BE_PROCESS/releases/workflow-0.7.md Step 1
  */
 class World_Object {
 
-	/** Source of truth for what each `object_type` may carry in `properties`. */
+	/**
+	 * Source of truth for what each `object_type` may carry in `properties`.
+	 */
 	const SCHEMAS_FILE = __DIR__ . '/../Services/world-object-schemas.php';
 
 	/**
-	 * Valid stored `audience` values (1.1.0 §2.1) - duplicated from `Services\Audience::VALUES`
-	 * rather than imported, the same reasoning `Plot::AUDIENCE_VALUES` gives: Models does not
-	 * depend on Services classes in this codebase.
+	 * Valid stored `audience` values.
 	 *
 	 * @var string[]
 	 */
@@ -36,9 +28,8 @@ class World_Object {
 	private static ?array $schemas = null;
 
 	/**
-	 * Return the object_type-to-properties schema map, loading it from
-	 * Services/world-object-schemas.php on first call and caching it in a
-	 * static property for every call after that.
+	 * Returns the object_type-to-properties schema map from Services/world-object-schemas.php, cached after the first
+	 * call.
 	 *
 	 * @return array<string,array<string,string>>
 	 */
@@ -50,9 +41,7 @@ class World_Object {
 	}
 
 	/**
-	 * Return the list of recognized object_type strings - the keys of the
-	 * schema map. Used by callers that need to validate or render these
-	 * values without duplicating the list.
+	 * Return the list of recognized object_type strings.
 	 *
 	 * @return string[]
 	 */
@@ -61,9 +50,7 @@ class World_Object {
 	}
 
 	/**
-	 * Look up a single world object by its primary key. Returns the row with
-	 * its properties field decoded, or null when no object with that ID
-	 * exists.
+	 * Look up a single world object by its primary key.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -77,11 +64,8 @@ class World_Object {
 	}
 
 	/**
-	 * Look up a single world object and lock its row for the rest of the current transaction
-	 * (1.1.0 §3.12 item 2 - the "use" route decrements `uses_left` and must never race with a
-	 * concurrent use of the same item). Same `SELECT ... FOR UPDATE` shape as
-	 * `Transfer::find_for_update()`/`Submission::find_for_update()`. Caller must already be
-	 * inside a `Transaction::begin()` block - a lock taken outside one releases immediately.
+	 * Look up a single world object and lock its row for the rest of the current transaction (the "use" route decrements
+	 * `uses_left` and must never race with a concurrent use of the same item).
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -95,9 +79,7 @@ class World_Object {
 	}
 
 	/**
-	 * Whether an item's uses are exhausted (1.1.0 §3.12 item 2) - true only when `uses_max` is
-	 * actually set (an item with no uses concept is never "used up") and `uses_left` has
-	 * reached zero or below. Derived on every read, never stored.
+	 * Whether an item's uses are exhausted.
 	 *
 	 * @param object $item A decoded item row.
 	 * @return bool
@@ -111,9 +93,6 @@ class World_Object {
 	}
 
 	/**
-	 * Whether an item's `expires_on` date has passed (1.1.0 §3.12 item 2), measured against
-	 * the site's own current date. Derived on every read, never stored.
-	 *
 	 * @param object $item A decoded item row.
 	 * @return bool
 	 */
@@ -127,9 +106,6 @@ class World_Object {
 
 	/**
 	 * Find a world object by exact name within one game and object_type.
-	 * Scoped by object_type as well as game, so an item and a location may
-	 * share a name without colliding. When more than one object matches,
-	 * returns the oldest row by ID rather than picking unpredictably.
 	 *
 	 * @param int    $game_id
 	 * @param string $object_type
@@ -149,13 +125,11 @@ class World_Object {
 	}
 
 	/**
-	 * Return world objects belonging to a game. Supports filtering by
-	 * object_type, rarity, and name/description search, plus pagination and
-	 * sort order.
+	 * Returns the world objects belonging to a game, filtered, paginated and sorted.
 	 *
 	 * @param int   $game_id
-	 * @param array $args Filters: object_type, rarity, search, copies ('exclude'|'only'|'include',
-	 *                    default 'exclude' - 1.1.0 §3.12 item 1), per_page, offset, orderby, order.
+	 * @param array $args Filters: object_type, rarity, search, copies ('exclude'|'only'|'include', default 'exclude'),
+	 *                    per_page, offset, orderby, order.
 	 * @return array
 	 */
 	public static function for_game( int $game_id, array $args = [] ): array {
@@ -188,8 +162,6 @@ class World_Object {
 
 	/**
 	 * Count world objects belonging to a game that match the given filters.
-	 * Accepts the same object_type, rarity, and search filters as
-	 * for_game(), without pagination, and returns a plain integer total.
 	 *
 	 * @param int   $game_id
 	 * @param array $args Same filters as for_game() (no pagination).
@@ -206,12 +178,7 @@ class World_Object {
 	}
 
 	/**
-	 * The shared WHERE-clause builder behind `for_game()` and `count_for_game()` - both
-	 * accept the same object_type/rarity/search filters and had built that part twice,
-	 * byte-for-byte, until this was extracted (1.1.1 audit). `copies` stays out of this
-	 * helper deliberately: only `for_game()` has ever applied it, and folding it in here
-	 * would change `count_for_game()`'s real behavior rather than just deduplicating it -
-	 * out of scope for a mechanical extraction.
+	 * The shared WHERE-clause builder behind `for_game()` and `count_for_game()`.
 	 *
 	 * @param int   $game_id
 	 * @param array $args
@@ -241,8 +208,7 @@ class World_Object {
 	}
 
 	/**
-	 * The immediate child locations of a location, via `parent_id` (1.1.0 §3.9 item 1 -
-	 * "Inside of"). Always empty for a non-location, and for a location with no children.
+	 * The immediate child locations of a location, via `parent_id` ("Inside of").
 	 *
 	 * @param int $id
 	 * @return object[]
@@ -252,14 +218,11 @@ class World_Object {
 			'SELECT * FROM ' . Manager::table( 'world_objects' ) . " WHERE parent_id = %d AND object_type = 'location' ORDER BY name ASC",
 			$id
 		);
-		// decode() never actually returns null for a real, non-null row - its nullable
-		// signature exists only for find()'s own "id doesn't exist" case.
 		return array_map( static fn( object $row ): object => self::decode( $row ) ?? $row, $rows ?: [] );
 	}
 
 	/**
-	 * Whether a location has any child location at all - the create-time check behind the
-	 * design's own `location_has_children` 409 on delete.
+	 * Whether a location has any child location at all.
 	 *
 	 * @param int $id
 	 * @return bool
@@ -269,10 +232,7 @@ class World_Object {
 	}
 
 	/**
-	 * Walk up a location's `parent_id` chain to its root, for breadcrumb display ("Downtown
-	 * › Elysium"). Stops after 50 hops as a safeguard against a corrupt or cyclic chain, even
-	 * though update() normally prevents a cycle from being created - identical shape to
-	 * `Plot::ancestors()`.
+	 * Walk up a location's `parent_id` chain to its root, for breadcrumb display ("Downtown › Elysium").
 	 *
 	 * @param int $id
 	 * @return object[] Nearest ancestor first.
@@ -299,9 +259,8 @@ class World_Object {
 	}
 
 	/**
-	 * Refuses a parent assignment that would make a location its own descendant, walking the
-	 * candidate parent's own chain up to 50 hops (the design's explicit cap, matching
-	 * ancestors()'s own safeguard) - identical shape to `Plot::assert_no_cycle()`.
+	 * Refuses a parent assignment that would make a location its own descendant, walking the candidate parent's own chain
+	 * up to 50 hops (the design's explicit cap, matching ancestors()'s own safeguard).
 	 *
 	 * @param int $id
 	 * @param int $new_parent_id
@@ -323,7 +282,7 @@ class World_Object {
 				) );
 			}
 			if ( in_array( $next, $chain, true ) ) {
-				// Breaks out on a pre-existing cycle rather than looping forever.
+				// Breaks out on a pre-existing cycle.
 				break;
 			}
 			$chain[] = $next;
@@ -333,8 +292,6 @@ class World_Object {
 
 	/**
 	 * Validate a properties payload against its object_type's schema.
-	 * Rejects unknown keys rather than storing them, and checks that int,
-	 * trait_list, and date typed fields hold values of the right shape.
 	 *
 	 * @param string $object_type
 	 * @param array  $properties
@@ -367,12 +324,8 @@ class World_Object {
 	}
 
 	/**
-	 * Sanitizes each string property value by its schema type, mirroring how the REST
-	 * controller already treats the fixed description/limitations columns: a `text`
-	 * property is a rich-text field (Decision 111) sanitized with `wp_kses_post()`, a
-	 * `string` one carries no markup and gets `sanitize_text_field()`. Called after
-	 * validate_properties() confirms every key and its structural shape are already
-	 * correct - a value validate_properties() would have rejected never reaches here.
+	 * Sanitizes each string property value by its schema type: a `text` property is rich text sanitized with
+	 * `wp_kses_post()`, a `string` one gets `sanitize_text_field()`.
 	 *
 	 * @param string $object_type
 	 * @param array  $properties
@@ -394,11 +347,7 @@ class World_Object {
 	}
 
 	/**
-	 * Insert a new world object. Validates object_type against the known
-	 * types and its properties against that type's schema before inserting,
-	 * JSON-encoding properties for storage. When a parent_id is given (a
-	 * location nested "inside of" another, 1.1.0 §3.9 item 1), checks that the
-	 * parent exists, is itself a location, and belongs to the same game.
+	 * Insert a new world object.
 	 *
 	 * @param array $data
 	 * @return int|false Insert ID, or false if object_type/properties/parent_id are invalid.
@@ -453,12 +402,7 @@ class World_Object {
 	}
 
 	/**
-	 * Update a world object. Writes only the fields present in $data, and
-	 * when properties is included, validates it against the object's
-	 * existing object_type before JSON-encoding and saving it. When
-	 * parent_id changes, checks the new parent is a real location in the
-	 * same game, is not the object itself, and would not create a cycle
-	 * (1.1.0 §3.9 item 1).
+	 * Update a world object.
 	 *
 	 * @param int   $id
 	 * @param array $data
@@ -516,9 +460,7 @@ class World_Object {
 	}
 
 	/**
-	 * Delete a world object by ID, cascading to connections that reference
-	 * it. Runs inside a transaction that correctly nests within an
-	 * already-open outer transaction, so a failure leaves nothing committed.
+	 * Delete a world object by ID, cascading to connections that reference it.
 	 *
 	 * @param int $id
 	 * @return bool
@@ -526,19 +468,15 @@ class World_Object {
 	public static function delete( int $id ): bool {
 		$savepoint = Transaction::begin( 'be_world_object_delete' );
 
-		// Attachment rows are keyed by object_type ('item'/'location'), not the generic
-		// 'world_object' Connection uses - Audience's own entity types, not this table's name.
+		// Attachment rows are keyed by object_type ('item'/'location').
 		$object = self::find( $id );
 		if ( $object ) {
 			Attachment::delete_for_entity( $object->object_type, $id );
 			if ( $object->object_type === 'item' ) {
-				// 1.1.0 §3.13 - a deleted item's own verification codes go with it; unlike a
-				// transfer, there is nothing left for a still_matches check to report on.
 				Item_Attestation::revoke_for_object( $id );
 			}
 		}
 		Connection::delete_for_entity( 'world_object', $id );
-		// D1 (1.2.5-design-workflow.md §D): the one real gap in this otherwise-complete delete.
 		Item_Event::delete_for_object( $id );
 		$result = Manager::delete( 'world_objects', [ 'id' => $id ] );
 
@@ -552,9 +490,7 @@ class World_Object {
 	}
 
 	/**
-	 * Decode a row's properties JSON field into an array in place. Passes
-	 * null rows through unchanged, and normalizes an unparseable or absent
-	 * value to an empty array.
+	 * Decode a row's properties JSON field into an array in place.
 	 *
 	 * @param object|null $row
 	 * @return object|null

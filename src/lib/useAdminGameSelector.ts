@@ -1,8 +1,5 @@
 /**
- * Loads the full install-wide chronicle list (`api.games.list()`, not a user's own
- * memberships - see `useChronicleSwitcher` for that) and selects the first one, the shape
- * seven wp-admin pages (Characters, Game Nights, Plots, Query, Release Batches, Reports,
- * World Objects) each hand-rolled identically until this was extracted (1.1.1 audit).
+ * Loads the full install-wide chronicle list and selects the first one, for the wp-admin pages that pick a chronicle.
  */
 import { useEffect, useState } from '@wordpress/element';
 import api from '../api/client';

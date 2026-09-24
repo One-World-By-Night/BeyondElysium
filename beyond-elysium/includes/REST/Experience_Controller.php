@@ -10,23 +10,18 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * REST controller for bulk experience awards.
- *
- * Exposes a single endpoint that awards the same amount of XP, with the same
- * reason, to a batch of characters at once, delegating the actual award and
- * history recording to `Change_Engine`.
  */
 class Experience_Controller extends Base_Controller {
 
 	protected $rest_base = 'experience';
 
-	/** The largest single award accepted - far above any real session award, well below the XP columns' range. */
+	/**
+	 * The largest single award accepted.
+	 */
 	const MAX_AWARD = 10000;
 
 	/**
 	 * Registers the experience routes.
-	 *
-	 * Adds a single POST route that bulk-awards XP to multiple characters at
-	 * once, gated by `be_manage_characters`.
 	 */
 	public function register_routes(): void {
 		// POST /be/v1/{game_slug}/experience/bulk-award.
@@ -41,13 +36,6 @@ class Experience_Controller extends Base_Controller {
 
 	/**
 	 * Bulk-awards XP to multiple characters.
-	 *
-	 * Validates the character ID list, amount, and reason, keeps only the
-	 * characters that belong to this chronicle - ids are sequential integers,
-	 * so any other id is refused rather than trusted (1.0.0-review F-029) -
-	 * then delegates to `Change_Engine::bulk_award_xp()` to apply the award to
-	 * each and record it in their change history. Refused ids come back in
-	 * `skipped`.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error

@@ -1,6 +1,5 @@
 /**
- * `@wordpress/scripts`' own lint config, with this project's exceptions. Each one was decided
- * against the code it would have flagged (1.0.0-review F-018).
+ * `@wordpress/scripts`' own lint config, with this project's exceptions.
  */
 module.exports = {
 	root: true,

@@ -9,14 +9,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-033, the joining half. Owner ruling 2026-09-14: anyone logged in can ask to join
- * a chronicle by starting a character, but they only become a player - and the character only
- * goes active - when an HST or AST approves.
- *
- * Creating a first character used to grant player membership on the spot, in any chronicle on
- * the install, with the character active unless that chronicle had turned on new-character
- * approval. Now a non-member's first character is a join request: pending, no membership, the
- * chronicle's Storytellers are emailed, and a Storyteller setting it active is the approval.
+ * The joining half.
  */
 class JoiningAChronicleThreadTest extends WP_UnitTestCase {
 

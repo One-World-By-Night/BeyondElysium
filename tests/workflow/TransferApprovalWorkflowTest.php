@@ -10,14 +10,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * A character travels between two chronicles with a Storyteller's approval on both sides (owner
- * ruling 2026-09-14, 1.0.0-review F-003). The home Storyteller sends the character; the offer
- * reaches the other chronicle, whose players can do nothing with it and whose Storyteller is
- * emailed; that Storyteller reviews it and accepts it; the home Storyteller marks the character
- * received abroad; and when the visit ends, the host sends it home.
- *
- * Both chronicles are on this one site, so the character's identity is already taken - by its
- * home row - and the host's copy gets its own.
+ * A character travels between two chronicles with a Storyteller's approval on both sides.
  */
 class TransferApprovalWorkflowTest extends WP_UnitTestCase {
 
@@ -30,7 +23,9 @@ class TransferApprovalWorkflowTest extends WP_UnitTestCase {
 		return true;
 	}
 
-	/** The two chronicles talk to each other over HTTP; here that is real REST dispatch on this site. */
+	/**
+	 * The two chronicles talk to each other over HTTP.
+	 */
 	public function loopback( $preempt, $args, $url ) {
 		if ( strpos( $url, '/verify/' ) !== false ) {
 			$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/be/v1/verify/' . rawurldecode( substr( $url, strrpos( $url, '/' ) + 1 ) ) ) );

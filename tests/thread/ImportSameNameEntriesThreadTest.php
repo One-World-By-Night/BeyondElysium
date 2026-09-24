@@ -11,12 +11,8 @@ use BeyondElysium\Services\GEX_Xml_Parser;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-053 (Pass H intake). Import decisions are keyed by name, and each entry in a file
- * looks up its match by name again. Two characters named "John Doe" in one file, set to Overwrite
- * against the chronicle's own John Doe, both landed on the same row: the second overwrote what the
- * first had just written, and the commit reported both as overwritten. Two same-named items did the
- * same. Within one commit, a row already written is never overwritten again - a later same-named
- * entry arrives as its own record, and the preview says so.
+ * Two same-named entries in one import file each arrive as their own record: same-named characters or items set to
+ * overwrite keep both, and the preview says a second same-named entry arrives as its own record.
  */
 class ImportSameNameEntriesThreadTest extends WP_UnitTestCase {
 
@@ -30,7 +26,9 @@ class ImportSameNameEntriesThreadTest extends WP_UnitTestCase {
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
 	}
 
-	/** A parsed exchange file holding one character per clan, every one named John Doe. */
+	/**
+	 * A parsed exchange file holding one character per clan, every one named John Doe.
+	 */
 	private function file_of_john_does( string ...$clans ): array {
 		$parsed = null;
 		foreach ( $clans as $clan ) {

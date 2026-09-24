@@ -9,13 +9,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Step 4, workflow-0.9.md (Decision 087). Exercises the real REST call sites
- * (`Changes_Controller::update_item()`/`batch_approve()`), not `Notifications` in
- * isolation - the thing actually worth proving is that the wiring only fires on a genuine
- * ST-initiated review, never on `Change_Engine::submit()`'s own internal auto-approve path.
- *
- * `pre_wp_mail` (WP 5.7+) short-circuits `wp_mail()` and hands back its args - real mail is
- * never attempted, and every assertion here reads the captured args instead of a live inbox.
+ * Notification wiring through the real REST call sites (`Changes_Controller::update_item()` and `batch_approve()`):
+ * email fires only when it should.
  */
 class NotificationsTest extends WP_UnitTestCase {
 
@@ -71,8 +66,8 @@ class NotificationsTest extends WP_UnitTestCase {
 		wp_set_current_user( $user_id );
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters/{$this->character_id}/changes" );
 		$request->set_param( 'change_type', 'add_trait' );
-		$request->set_param( 'category', 'met-merits' );
-		$request->set_param( 'change_data', [ 'block_slug' => 'met-merits', 'trait' => [ 'name' => $trait_name ] ] );
+		$request->set_param( 'category', 'vampire-merits' );
+		$request->set_param( 'change_data', [ 'block_slug' => 'vampire-merits', 'trait' => [ 'name' => $trait_name ] ] );
 		return (int) $this->dispatch( $request )->get_data()->id;
 	}
 
@@ -104,10 +99,7 @@ class NotificationsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The behavioral heart of 4d - Change_Engine::submit()'s own internal auto-approve
-	 * call never runs through either Changes_Controller call site Notifications is wired
-	 * into, so an auto-approved change must send nothing even though its final status is
-	 * 'approved' just like a real ST review's.
+	 * The behavioral heart of 4d.
 	 */
 	public function test_an_auto_approved_change_sends_no_mail(): void {
 		wp_set_current_user( $this->st_id );
@@ -122,11 +114,6 @@ class NotificationsTest extends WP_UnitTestCase {
 	}
 
 	public function test_batch_approving_two_changes_for_the_same_player_sends_one_mail(): void {
-		// Two DIFFERENT traits - BE_PROCESS/releases/0.99.2-workflow.md's "Resubmitting creates
-		// duplicate pending changes" fix means two submissions of the exact same trait now
-		// collapse into one pending row, which this test must not rely on to get two ids.
-		// Both are real catalog merits: a homebrew one waits for a Storyteller's price (1.3.3 E3)
-		// and is never approved in a batch, which is not what this test is about.
 		$first  = $this->submit_change_as( $this->player_id, 'Iron Will' );
 		$second = $this->submit_change_as( $this->player_id, 'Bruiser' );
 
@@ -177,8 +164,8 @@ class NotificationsTest extends WP_UnitTestCase {
 		wp_set_current_user( $manager_player_id );
 		$submit = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters/{$own_character_id}/changes" );
 		$submit->set_param( 'change_type', 'add_trait' );
-		$submit->set_param( 'category', 'met-merits' );
-		$submit->set_param( 'change_data', [ 'block_slug' => 'met-merits', 'trait' => [ 'name' => 'Iron Will' ] ] );
+		$submit->set_param( 'category', 'vampire-merits' );
+		$submit->set_param( 'change_data', [ 'block_slug' => 'vampire-merits', 'trait' => [ 'name' => 'Iron Will' ] ] );
 		$change_id = (int) $this->dispatch( $submit )->get_data()->id;
 
 		// Same user reviews their own submission - still current_user, no wp_set_current_user needed.

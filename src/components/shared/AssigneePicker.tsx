@@ -1,8 +1,5 @@
 /**
- * Who owns a plot or NPC (1.1.0 §3.6): unassigned, or one of this chronicle's own
- * hst/ast/narrator members. A plain `<select>` fed by `GET /{game}/staff` - the same
- * narrow, staff-readable roster every assignee picker in the plugin shares, rather than
- * the admin-only chronicle member list.
+ * Who owns a plot or NPC: unassigned, or one of this chronicle's own hst/ast/narrator members.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

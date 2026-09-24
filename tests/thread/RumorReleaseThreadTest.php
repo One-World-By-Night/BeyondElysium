@@ -14,12 +14,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 S4: rumors - held from birth with no email at generation (replacing the old
- * `RumorNotificationTest`'s now-obsolete premise that a commit itself emails the matched
- * player), audience derived from the target at creation, and delivery only through a
- * release batch (§3.2) exactly like any other held plot.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.4
+ * Rumors are held from birth with no email at generation, take their audience from the target at creation, and are
+ * released through release batches.
  */
 class RumorReleaseThreadTest extends WP_UnitTestCase {
 
@@ -199,7 +195,7 @@ class RumorReleaseThreadTest extends WP_UnitTestCase {
 			'created_by'  => 1,
 		] );
 
-		// Confirmed visible before the migration - today's actual, pre-1.1.0 behavior.
+		// Confirmed visible before the migration.
 		$this->assertTrue( Audience::can_see( Plot::find( $plot_id ), 'plot', $player_id, $this->game_slug, false ) );
 
 		Schema::migrate_rumors_to_release_batches();
@@ -230,14 +226,12 @@ class RumorReleaseThreadTest extends WP_UnitTestCase {
 		Schema::migrate_rumors_to_release_batches();
 		$first_batch_id = (int) Plot::find( $plot_id )->release_batch_id;
 
-		// A Storyteller moves it to a different, later batch afterward.
 		wp_set_current_user( $this->make_manager() );
 		$new_batch_request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/release-batches" );
 		$new_batch_request->set_param( 'name', 'A Later Batch' );
 		$new_batch_id = (int) $this->dispatch( $new_batch_request )->get_data()->id;
 		Plot::update( $plot_id, [ 'release_batch_id' => $new_batch_id ] );
 
-		// A later upgrade re-runs migrate() - the one-time guard must not move it back.
 		Schema::migrate_rumors_to_release_batches();
 
 		$this->assertNotSame( $first_batch_id, $new_batch_id );

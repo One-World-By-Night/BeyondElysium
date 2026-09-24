@@ -8,11 +8,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The REST layer around World_Object: creating each type, property validation at the
- * REST boundary, connected-character resolution and visibility filtering, cascading
- * delete, and the permission boundary (workflow-0.7.md Step 2).
- *
- * @see BE_PROCESS/releases/workflow-0.7.md Step 2
+ * The REST layer around World_Object: creating each type, property validation at the REST boundary,
+ * connected-character resolution and visibility filtering, cascading delete, and the permission boundary.
  */
 class WorldObjectsControllerTest extends WP_UnitTestCase {
 
@@ -206,9 +203,7 @@ class WorldObjectsControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * 1.0.0-review F-095 (Pass H intake `t3-content-controllers`): a list property - an item's
-	 * abilities, a rote's spheres - was compared as text, so filtering by one matched nothing and
-	 * warned "Array to string conversion".
+	 * A list property filters by an entry's name.
 	 */
 	public function test_a_list_property_filters_by_an_entrys_name(): void {
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );

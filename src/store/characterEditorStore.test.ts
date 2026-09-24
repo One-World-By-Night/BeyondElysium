@@ -1,7 +1,5 @@
 /**
- * A Zustand store is a plain state container - `.getState()` exercises it directly
- * without React or a DOM, so it fits this project's pure-logic unit-test convention the
- * same way `src/lib/*.test.ts` does.
+ * A Zustand store is a plain state container.
  */
 jest.mock( '../api/client', () => ( {
 	__esModule: true,
@@ -18,7 +16,9 @@ import { useCharacterEditorStore } from './characterEditorStore';
 
 const mockedApi = api as jest.Mocked< typeof api >;
 
-/** Lets every already-settled promise callback run. */
+/**
+ * Lets every already-settled promise callback run.
+ */
 async function flush() {
 	for ( let i = 0; i < 5; i++ ) {
 		await Promise.resolve();
@@ -96,8 +96,7 @@ describe( 'characterEditorStore.submitChanges', () => {
 
 		const result = await useCharacterEditorStore.getState().submitChanges();
 
-		// Both queued changes are attempted - the old behavior stopped after the first
-		// and never called create() for the second at all.
+		// Both queued changes are attempted.
 		expect( create ).toHaveBeenCalledTimes( 2 );
 		expect( result.submitted ).toHaveLength( 1 );
 		expect( result.failed ).toHaveLength( 1 );
@@ -110,8 +109,7 @@ describe( 'characterEditorStore.submitChanges', () => {
 
 		const failedCategory = result.failed[ 0 ].category;
 		const succeededCategory = result.submitted[ 0 ].category;
-		// The block that failed keeps its original (pre-edit) baseline, so it still shows
-		// as a pending diff; the block that succeeded is baselined so it does NOT.
+		// The block that failed keeps its original (pre-edit) baseline.
 		expect( state.originalSheetData[ failedCategory ] ).not.toEqual(
 			state.sheetData[ failedCategory ]
 		);
@@ -133,7 +131,6 @@ describe( 'characterEditorStore.submitChanges', () => {
 
 		const retry = await useCharacterEditorStore.getState().submitChanges();
 
-		// Only the one still-pending (previously failed) block is submitted again.
 		expect( create ).toHaveBeenCalledTimes( 1 );
 		expect( retry.submitted ).toHaveLength( 1 );
 		expect( retry.failed ).toHaveLength( 0 );
@@ -171,9 +168,7 @@ describe( 'characterEditorStore.submitChanges', () => {
 		expect( result.pending ).toHaveLength( 2 );
 
 		const state = useCharacterEditorStore.getState();
-		// The draft must still differ from the baseline - if these ever match, a fresh
-		// loadCharacter() (which reads the server's real, still-unapplied sheet_data) would
-		// silently overwrite the user's edit with no explanation, exactly the reported bug.
+		// The draft must still differ from the baseline.
 		expect( state.originalSheetData ).not.toEqual( state.sheetData );
 		expect( state.dirty ).toBe( true );
 		expect( state.pendingChanges ).toHaveLength( 2 );
@@ -204,9 +199,7 @@ describe( 'characterEditorStore.submitChanges', () => {
 	} );
 
 	/**
-	 * 1.0.0-review F-055 (Pass H intake). The requests go out one at a time, and nothing locks the
-	 * sheet meanwhile. The saved baseline was read from the live sheet once they came back, so an
-	 * edit made in between was marked saved without ever being sent, and its draft deleted.
+	 * While the requests are still out, an edit made after Submit stays unsaved and a second Submit is ignored.
 	 */
 	describe( 'while the requests are still out', () => {
 		let release: ( created: unknown ) => void;
@@ -394,7 +387,7 @@ describe( 'characterEditorStore.submitChanges', () => {
 } );
 
 /**
- * User request, 2026-09-11: "During sheet entry etc we need an auto save draft feature."
+ * Draft autosave: a draft of the sheet is saved locally on each edit and offered back on reload.
  */
 describe( 'characterEditorStore draft autosave', () => {
 	beforeEach( () => {
@@ -432,8 +425,7 @@ describe( 'characterEditorStore draft autosave', () => {
 		expect( state.restorableDraft?.sheetData ).toEqual( {
 			disciplines: [ { name: 'Obfuscate', count: 1 } ],
 		} );
-		// The draft is only ever offered, never auto-applied - the live sheetData still
-		// matches what the server actually returned until the player chooses to restore it.
+		// The draft is only ever offered.
 		expect( state.sheetData ).toEqual( { disciplines: [] } );
 	} );
 

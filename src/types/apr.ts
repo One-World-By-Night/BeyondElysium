@@ -1,16 +1,10 @@
 /**
- * Type definitions for a chronicle's Action & Rumor configuration
- * and its background-use ledger. The ledger tracks what a
- * background use spends; the settings decide what a background
- * grants to spend in the first place - see
- * BE_PROCESS/design/background-ledger-apr-design.md.
+ * Type definitions for a chronicle's Action & Rumor configuration and its background-use ledger.
  */
 
 /**
- * The full thirteen-knob Action & Rumor configuration for one
- * chronicle: five action-allocation knobs plus eight rumor-
- * generation toggles, always returned together since they share
- * one settings screen.
+ * The full Action & Rumor configuration for one chronicle: five action-allocation knobs plus eight rumor-generation
+ * toggles, always returned together.
  */
 export interface AprSettings {
 	personal_actions: number;
@@ -21,24 +15,26 @@ export interface AprSettings {
 	public_rumors: boolean;
 	personal_rumors: boolean;
 	race_rumors: boolean;
-	/** Recognized but inert - no character carries group/subgroup data to query against. */
+	/**
+	 * Recognized but inert - no character carries group/subgroup data to query against.
+	 */
 	group_rumors: boolean;
-	/** Recognized but inert - no character carries group/subgroup data to query against. */
+	/**
+	 * Recognized but inert - no character carries group/subgroup data to query against.
+	 */
 	subgroup_rumors: boolean;
 	influence_rumors: boolean;
 	previous_rumors: boolean;
 	copy_previous: boolean;
 }
 
-/** A partial update to a chronicle's Action & Rumor settings; only the included keys change. */
+/**
+ * A partial update to a chronicle's Action & Rumor settings.
+ */
 export type AprSettingsRequest = Partial< AprSettings >;
 
 /**
- * One background or influence name available across a chronicle's
- * creature stacks, for the background_actions picker. An
- * Influence-sourced name is already granted unconditionally on
- * every stack that has it, so choosing it as a background_actions
- * entry is a harmless no-op, not an error.
+ * One background or influence name available across a chronicle's creature stacks, for the background_actions picker.
  */
 export interface AprBackgroundOption {
 	name: string;
@@ -47,14 +43,15 @@ export interface AprBackgroundOption {
 }
 
 /**
- * A background a character currently holds, annotated with its
- * live budget when the character's most recent allocation granted
- * it a subaction. budget_total/budget_name are both null when no
- * live allocator subaction exists under this name yet.
+ * A background a character currently holds, annotated with its live budget when the character's most recent
+ * allocation granted it a subaction. budget_total/budget_name are both null when no live allocator subaction exists
+ * under this name yet.
  */
 export interface SpendableBackground {
 	name: string;
-	/** Null for Personal actions, which every allocation grants and no block holds. */
+	/**
+	 * Null for Personal actions.
+	 */
 	block_slug: string | null;
 	level: number;
 	source: string;
@@ -63,14 +60,15 @@ export interface SpendableBackground {
 }
 
 /**
- * One recorded background use: a spend against a background's
- * allocator budget, or an unbudgeted use recorded anyway (§4.1).
+ * One recorded background use: a spend against a background's allocator budget, or an unbudgeted use recorded anyway.
  * result starts empty and is filled in later by a Storyteller.
  */
 export interface BackgroundUse {
 	id: number;
 	name: string;
-	/** Null for a Personal-subaction use, which is not a catalog background. */
+	/**
+	 * Null for a Personal-subaction use.
+	 */
 	block_slug: string | null;
 	level: number;
 	cost: number;
@@ -79,11 +77,15 @@ export interface BackgroundUse {
 	character_id: number;
 	recorded_by: number;
 	recorded_at: string;
-	/** Only present on the response to POST - the plot the use was recorded onto. */
+	/**
+	 * Only present on the response to POST.
+	 */
 	plot_id?: number;
 }
 
-/** Request body for recording a new background use. */
+/**
+ * Request body for recording a new background use.
+ */
 export interface RecordBackgroundUseRequest {
 	game_date: string;
 	name: string;
@@ -91,7 +93,9 @@ export interface RecordBackgroundUseRequest {
 	text?: string;
 }
 
-/** Request body for editing an existing background use. */
+/**
+ * Request body for editing an existing background use.
+ */
 export interface UpdateBackgroundUseRequest {
 	text?: string;
 	result?: string;

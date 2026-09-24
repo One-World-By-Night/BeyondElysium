@@ -8,14 +8,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Owner ruling, 1.0.0-checklist.md item 19: a Narrator allocates actions for any
- * character in the chronicle, not just one they happen to own as a player. A Narrator
- * holds `be_manage_plots` (game-roles.php) - enough to call the allocate-actions route
- * for any character_id - but not `be_manage_characters`, so
- * `Characters_Controller::get_items()`'s D33 ownership filter forced the character
- * picker Action Allocator reads from down to their own characters only, usually none.
- * Fixed narrowly: the `wp_user_id` override alone (not `is_npc` visibility, not any
- * edit/delete/create path) also opens for a `be_manage_plots` holder.
+ * A Narrator allocates actions for any character in the chronicle.
  */
 class NarratorAllocatesAnyCharacterThreadTest extends WP_UnitTestCase {
 
@@ -36,9 +29,7 @@ class NarratorAllocatesAnyCharacterThreadTest extends WP_UnitTestCase {
 		] );
 		$game_id = (int) $wpdb->insert_id;
 
-		// A chronicle role only narrows a site-wide grant, never widens one (F-104) - be_manage_plots
-		// is editor-and-above only (Capabilities::CAPS), so a usable Narrator account must be at
-		// least an editor, exactly like every other Storyteller-tier role this test suite sets up.
+		// A chronicle role only narrows a site-wide grant.
 		$this->narrator = self::factory()->user->create( [ 'role' => 'editor' ] );
 		$this->player   = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		Game_Member::set_role( $game_id, $this->narrator, 'narrator' );

@@ -11,10 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §3.14, A1: a player writes one after-game report per character per session, editable
- * until the session's own `reports_due_at`; Storytellers read and mark read, never edit.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.14
+ * A player writes one after-game report per character per session, editable until the session's own `reports_due_at`.
  */
 class AfterGameReportThreadTest extends WP_UnitTestCase {
 

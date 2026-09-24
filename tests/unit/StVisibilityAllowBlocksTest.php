@@ -6,13 +6,8 @@ use BeyondElysium\Services\St_Visibility;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The NPC casting brief's own carve-out (1.1.0 §3.8): `St_Visibility::filter_layout()`'s
- * `$allow_blocks` param and the new `filter_sheet_data_blocks()` helper both hide every
- * Storyteller-only block except the ones named, rather than every one unconditionally.
- * Pure array manipulation - no WordPress dependency, so this runs as a plain unit test
- * rather than needing a real seeded stack the way the full integration test does.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.8
+ * The NPC casting brief's own carve-out: `St_Visibility::filter_layout()`'s `$allow_blocks` param and the new
+ * `filter_sheet_data_blocks()` helper both hide every Storyteller-only block except the ones named.
  */
 class StVisibilityAllowBlocksTest extends TestCase {
 
@@ -61,8 +56,7 @@ class StVisibilityAllowBlocksTest extends TestCase {
 			],
 		];
 
-		// A manager already sees everything regardless of $hidden/$allow_blocks - can_manage
-		// short-circuits before either list is even consulted.
+		// A manager already sees everything regardless of $hidden/$allow_blocks.
 		$filtered = St_Visibility::filter_layout( $layout, true, 'a-game', self::HIDDEN, [] );
 
 		$this->assertSame(

@@ -6,39 +6,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * workflow-0.9.md Step 1: every registered `/be/v1` route x four personas, dispatched
- * through the real REST server against raw HTTP responses - not a vibe.
- *
- * `tests/integration/` doesn't exist and was never meant to: `TESTING.md` deliberately
- * defines exactly three layers (unit/thread/workflow), and Step 1h's own file path
- * predates that decision - this lives in `tests/thread/` instead, the layer whose own
- * definition ("one full path through the stack, needs WordPress + MariaDB") already
- * describes exactly what this test does.
- *
- * Personas map onto real WP roles, since `Authorization::check()` reduces to
- * `current_user_can()` in this environment - no controller anywhere passes a
- * `role_path`, so the accessSchema branch is never entered today (Step 1d's own
- * finding, not invented here). The doc's five personas ("anonymous, logged-in with no
- * chronicle role, player, AST, HST") collapse to four *testable* ones here: every WP
- * role from subscriber up already carries `be_view_characters`/`be_edit_own_characters`
- * (Decision 023's own capability table), so "logged in, no chronicle role" and "player"
- * are indistinguishable by capability alone - the real difference between them is
- * object-level ownership, covered separately below, not a capability gate.
- *
- *   anonymous      - not logged in
- *   player         - subscriber, owns exactly one character in the fixture game
- *   st (editor)    - be_manage_characters/plots/world_objects/connections/run_queries,
- *                    NOT be_manage_games/schemas/templates/be_import
- *   admin          - every capability
- *
- * Each route is dispatched with a placeholder/nonexistent id or slug rather than a
- * fully valid payload - `permission_callback` always runs before the route handler, so
- * a denied persona gets 403 regardless, and an allowed persona gets whatever the
- * business logic returns (404/400/200) - never 403. That is the one thing this test
- * asserts: the permission boundary, not full business-logic correctness, which the
- * controller-specific thread tests already cover.
- *
- * @see BE_PROCESS/releases/workflow-0.9.md Step 1
+ * Every registered `/be/v1` route against four personas, dispatched through the real REST server.
  */
 class PermissionMatrixTest extends WP_UnitTestCase {
 
@@ -47,10 +15,6 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 	private int $player_id;
 	private int $st_id;
 	private int $admin_id;
-	// Step 1.5f's own fifth persona (workflow-0.9.md): "member of this chronicle vs.
-	// member of another." Same capability as $st_id, deliberately membered into a
-	// DIFFERENT game - proves the permission gate checks THIS chronicle's own membership,
-	// not merely "is this user an ST of anything, anywhere."
 	private string $other_game_slug = 'thread-test-matrix-foreign-game';
 	private int $other_game_id;
 	private int $foreign_st_id;
@@ -77,13 +41,8 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 		$this->admin_id     = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		$this->foreign_st_id = self::factory()->user->create( [ 'role' => 'editor' ] );
 
-		// Step 1.5, workflow-0.9.md: a game-scoped route now needs BOTH the site-wide WP
-		// capability (asserted below via user_can()) AND chronicle membership. `admin_id`
-		// needs neither - be_manage_games bypasses membership entirely
-		// (Authorization::check_request()'s step 2), matching a real site administrator.
 		\BeyondElysium\Models\Game_Member::set_role( $this->game_id, $this->player_id, 'player' );
 		\BeyondElysium\Models\Game_Member::set_role( $this->game_id, $this->st_id, 'hst' );
-		// Deliberately membered into the OTHER game only, never this one.
 		\BeyondElysium\Models\Game_Member::set_role( $this->other_game_id, $this->foreign_st_id, 'hst' );
 	}
 
@@ -121,21 +80,16 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 			'GET creature-stacks' => [ 'GET', '/be/v1/creature-stacks', 'be_view_characters' ],
 			'GET characters'      => [ 'GET', "/be/v1/{$g}/characters", 'be_view_characters' ],
 			'GET character changes (per-character)' => [ 'GET', "/be/v1/{$g}/characters/999999/changes", 'be_view_characters' ],
-			// The template editor's since 1.0.0-review F-069; a sheet uses resolve.
 			'GET templates (global)' => [ 'GET', '/be/v1/templates', 'be_manage_templates' ],
 			'GET plots'           => [ 'GET', "/be/v1/{$g}/plots", 'be_view_characters' ],
-			// Staff only since 1.0.0-review F-063: the list names whose action allocation is whose.
 			'GET connections'     => [ 'GET', "/be/v1/{$g}/connections", [ 'be_manage_connections', 'be_manage_plots' ] ],
 			'GET world-objects'   => [ 'GET', "/be/v1/{$g}/world-objects", 'be_view_characters' ],
 			'GET boons'           => [ 'GET', "/be/v1/{$g}/boons", 'be_view_characters' ],
 			'GET query-fields'    => [ 'GET', '/be/v1/query-fields', 'be_view_characters' ],
 
-			// Admin-only management. Required params supplied so validation doesn't mask
-			// the permission check for a denied persona.
 			'POST games'          => [ 'POST', '/be/v1/games', 'be_manage_games', [ 'name' => 'Matrix Test Game' ] ],
 			'DELETE games'        => [ 'DELETE', '/be/v1/games/nonexistent-slug', 'be_manage_games' ],
-			// The global catalog every chronicle shares is a site administrator's to change
-			// (1.0.0-review F-002) - a Storyteller customizes it through a chronicle's own routes.
+			// The global catalog every chronicle shares is a site administrator's to change.
 			'POST schema-blocks'  => [ 'POST', '/be/v1/schema-blocks', 'be_manage_games', [ 'slug' => 'matrix-test-block', 'name' => 'Matrix Test Block', 'section_type' => 'trait_list' ] ],
 			'DELETE schema-blocks' => [ 'DELETE', '/be/v1/schema-blocks/nonexistent', 'be_manage_games' ],
 			'POST creature-stacks' => [ 'POST', '/be/v1/creature-stacks', 'be_manage_games', [ 'slug' => 'matrix-test-stack', 'name' => 'Matrix Test Stack', 'stack_definition' => [] ] ],
@@ -161,10 +115,6 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 			'POST characters (create own)' => [ 'POST', "/be/v1/{$g}/characters", 'be_edit_own_characters' ],
 			'POST changes (submit own)'    => [ 'POST', "/be/v1/{$g}/characters/999999/changes", 'be_edit_own_characters' ],
 
-			// permission_any - a player can reach this via be_submit_actions even
-			// though they don't hold be_manage_plots (Decision 016's "everything is a
-			// plot" collapse - a player submitting their own action/rumor uses this
-			// same endpoint an ST uses to create a plot outright).
 			'POST plots' => [ 'POST', "/be/v1/{$g}/plots", [ 'be_submit_actions', 'be_manage_plots' ] ],
 		];
 	}
@@ -180,18 +130,10 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 			'anonymous'  => null,
 			'player'     => $this->player_id,
 			'st'         => $this->st_id,
-			// Step 1.5f's fifth axis: the SAME capability as 'st', held by a user who is
-			// a member of a DIFFERENT chronicle, never this one. A route with no
-			// game_slug at all (games/schema-blocks/creature-stacks/templates) is
-			// unaffected by chronicle membership - identical to 'st' there. A
-			// game-scoped route must deny this persona regardless of capability, which
-			// is exactly what distinguishes this axis from 'st' and is the one new thing
-			// this loop iteration proves that the other four personas cannot.
 			'foreign_st' => $this->foreign_st_id,
 			'admin'      => $this->admin_id,
 		];
-		// Same test both ways of detecting it: a game-scoped route names this fixture's
-		// own game_slug in its path.
+		// Same test both ways of detecting it: a game-scoped route names this fixture's own game_slug in its path.
 		$is_game_scoped = ( false !== strpos( $route, "/{$this->game_slug}/" ) );
 
 		foreach ( $personas as $persona => $user_id ) {
@@ -207,13 +149,6 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 						break;
 					}
 				}
-				// Character creation is deliberately exempt from pre-existing membership
-				// (Step 1.5d's $allow_bootstrap - see Characters_Controller::register_routes()'s
-				// own comment): a user's first character in a chronicle is what GRANTS
-				// their membership, so this one route cannot itself require it, or
-				// nobody could ever obtain their first membership row. Every other
-				// game-scoped route still must deny a real-capability, wrong-chronicle
-				// user - that is the one thing this axis exists to prove.
 				if ( 'foreign_st' === $persona && $is_game_scoped && 'POST characters (create own)' !== $this->dataName() ) {
 					$allowed = false; // Real capability, real membership - just the wrong chronicle.
 				}
@@ -257,11 +192,6 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 			}
 		}
 
-		// The one real hit is WordPress core's own auto-generated namespace index
-		// (WP_REST_Server::get_namespace_index(), GET /be/v1) - it returns route
-		// metadata only (methods, arg schemas), never character/game/plot data, and
-		// every REST namespace on every WP site gets one automatically; it is not a
-		// route this plugin registers or could usefully guard.
 		$this->assertSame( [ '/be/v1' ], $open, 'Every BE-registered route must have a permission_callback.' );
 	}
 
@@ -273,10 +203,7 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 		$owner_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		$other_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 
-		// Both are real members of this chronicle - what this test isolates is D33's
-		// object-level ownership check specifically, not chronicle membership (Step 1.5).
-		// Without this, other_id's expected 403 would be ambiguous between "not a member
-		// of this chronicle at all" and "a member, but not this character's owner."
+		// Both are real members of this chronicle.
 		\BeyondElysium\Models\Game_Member::set_role( $this->game_id, $owner_id, 'player' );
 		\BeyondElysium\Models\Game_Member::set_role( $this->game_id, $other_id, 'player' );
 
@@ -308,17 +235,9 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 			'owner_type' => 'chronicle', 'owner_slug' => $other_slug, 'wp_user_id' => $owner_id,
 		] );
 
-		// A real member of $this->game_slug (the URL actually dispatched below) - not of
-		// $other_slug, where the character actually lives. This is deliberate: the
-		// permission gate (Step 1.5) must pass on the strength of THIS game's membership
-		// alone, so the 404 asserted below comes from the handler's owner_slug-mismatch
-		// check, not from the new chronicle-membership gate denying them a 403 first.
 		\BeyondElysium\Models\Game_Member::set_role( $this->game_id, $owner_id, 'player' );
 
-		// The same character id, requested through the WRONG game's URL - the
-		// controller must resolve ownership against the real owner_slug, not just the
-		// numeric id, or a player could read/edit a character by guessing an id and
-		// swapping which game's route they hit.
+		// The same character id, requested through the WRONG game's URL.
 		wp_set_current_user( $owner_id );
 		$response = $this->dispatch( 'GET', "/be/v1/{$this->game_slug}/characters/{$character_id}" );
 		$this->assertSame( 404, $response->get_status(), 'A character must not be reachable through a different game\'s route.' );
@@ -338,10 +257,6 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 			'notes'    => 'Visible background. [ST]Hidden ST aside.[/ST] More visible text.',
 		] );
 
-		// The owner (a plain player) must never receive rp_notes at all, and must
-		// receive `notes` with the [ST]...[/ST] marker section removed, not the whole
-		// field blanked - St_Filter strips markers, Characters_Controller strips the
-		// whole rp_notes field, and they are not the same rule.
 		wp_set_current_user( $owner_id );
 		$data = $this->dispatch( 'GET', "/be/v1/{$this->game_slug}/characters/{$character_id}" )->get_data();
 		$this->assertFalse( property_exists( $data, 'rp_notes' ), 'A non-manager must never receive rp_notes at all.' );

@@ -6,22 +6,6 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Byte-level reader for Grapevine's VB6 binary file formats.
- *
- * Fields are packed back to back with no alignment or padding, in the exact
- * order each VB6 class serializes them. Strings carry a signed 16-bit
- * little-endian length prefix followed by ISO-8859-1 bytes.
- *
- * Primitive sizes:
- *   Integer  2 bytes, signed
- *   Long     4 bytes, signed
- *   Single   4 bytes, IEEE 754 little-endian
- *   Boolean  2 bytes (0 or -1)
- *   Double   8 bytes, IEEE 754 little-endian
- *   Date     8 bytes, OLE Automation double, epoch 1899-12-30
- *   Enum     4 bytes, same width as Long
- *
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "File Formats"
- * @see BE_PROCESS/releases/workflow-0.8.md Step 1
  */
 class GV_Binary_Reader {
 
@@ -36,8 +20,6 @@ class GV_Binary_Reader {
 
 	/**
 	 * Creates a reader positioned at the start of the given byte buffer.
-	 * Stores the raw data and a label used to identify the source in error
-	 * messages, and initializes the read position to zero.
 	 *
 	 * @param string $data  Raw bytes.
 	 * @param string $label Source name, for error messages.
@@ -49,9 +31,6 @@ class GV_Binary_Reader {
 
 	/**
 	 * Creates a reader by loading the full contents of a file from disk.
-	 * Reads the file at the given path into memory and labels the
-	 * resulting reader with the file's base name for use in error
-	 * messages.
 	 *
 	 * @param string $path Absolute path.
 	 * @return self
@@ -68,10 +47,7 @@ class GV_Binary_Reader {
 	}
 
 	/**
-	 * Checks that the buffer has enough remaining bytes for an upcoming
-	 * read. Compares the requested byte count against what is left between
-	 * the current position and the end of the buffer, and throws when the
-	 * read would run past the end of the data.
+	 * Checks that the buffer has enough remaining bytes for an upcoming read.
 	 *
 	 * @param int $bytes How many bytes the caller is about to consume.
 	 * @throws \RuntimeException When there are not enough bytes left.
@@ -91,8 +67,7 @@ class GV_Binary_Reader {
 	}
 
 	/**
-	 * Unpacks the next `$bytes` bytes with one `unpack()` format code and
-	 * advances the read position past them.
+	 * Unpacks the next `$bytes` bytes with one `unpack()` format code and advances the read position past them.
 	 *
 	 * @param string $format
 	 * @param int    $bytes
@@ -111,10 +86,7 @@ class GV_Binary_Reader {
 	}
 
 	/**
-	 * Reads a VB6 Integer field: 2 bytes, little-endian, signed. Unpacks
-	 * the next two bytes as an unsigned short, converts values above the
-	 * signed range to their negative equivalent, and advances the read
-	 * position by 2 bytes.
+	 * Reads a VB6 Integer field: 2 bytes, little-endian, signed.
 	 *
 	 * @return int
 	 */
@@ -125,10 +97,7 @@ class GV_Binary_Reader {
 	}
 
 	/**
-	 * Reads a VB6 Long field: 4 bytes, little-endian, signed. Also used
-	 * for enum values, which VB6 stores at the same width. Unpacks the
-	 * next four bytes, converts values above the signed range to their
-	 * negative equivalent, and advances the read position by 4 bytes.
+	 * Reads a VB6 Long field: 4 bytes, little-endian, signed.
 	 *
 	 * @return int
 	 */
@@ -139,9 +108,7 @@ class GV_Binary_Reader {
 	}
 
 	/**
-	 * Reads a VB6 Double field: 8 bytes, IEEE 754 little-endian. Unpacks
-	 * the next eight bytes as a double-precision float and advances the
-	 * read position by 8 bytes.
+	 * Reads a VB6 Double field: 8 bytes, IEEE 754 little-endian.
 	 *
 	 * @return float
 	 */
@@ -150,9 +117,7 @@ class GV_Binary_Reader {
 	}
 
 	/**
-	 * Reads a VB6 Single field: 4 bytes, IEEE 754 little-endian. Unpacks
-	 * the next four bytes as a single-precision float and advances the
-	 * read position by 4 bytes, half the width of `double()`.
+	 * Reads a VB6 Single field: 4 bytes, IEEE 754 little-endian.
 	 *
 	 * @return float
 	 */
@@ -161,9 +126,7 @@ class GV_Binary_Reader {
 	}
 
 	/**
-	 * Reads a VB6 Boolean field: 2 bytes, where 0 is false and -1 is
-	 * true. Delegates to `int16()` to consume the bytes and advance the
-	 * read position, then converts the result to a PHP bool.
+	 * Reads a VB6 Boolean field: 2 bytes, where 0 is false and -1 is true.
 	 *
 	 * @return bool
 	 */
@@ -173,9 +136,6 @@ class GV_Binary_Reader {
 
 	/**
 	 * Reads a length-prefixed string field and converts it to UTF-8.
-	 * Reads a 16-bit length prefix, then that many bytes from the buffer,
-	 * and converts them from ISO-8859-1, the encoding Grapevine writes,
-	 * to UTF-8.
 	 *
 	 * @return string
 	 */
@@ -196,11 +156,7 @@ class GV_Binary_Reader {
 	}
 
 	/**
-	 * Reads a VB6 Date field and converts it to a formatted timestamp
-	 * string. Reads an OLE Automation double with an epoch of 1899-12-30,
-	 * where the fractional part is the time of day, and formats the
-	 * result as `Y-m-d H:i:s`. Negative values are treated as a
-	 * sign-magnitude fraction rather than a continuous scale.
+	 * Reads a VB6 Date field and converts it to a formatted timestamp string.
 	 *
 	 * @return string|null 'Y-m-d H:i:s', or null for the zero value Grapevine uses as "unset".
 	 */
@@ -220,10 +176,7 @@ class GV_Binary_Reader {
 	}
 
 	/**
-	 * Returns the next bytes from the buffer without advancing the read
-	 * position. Reads a substring starting at the current offset, leaving
-	 * the position unchanged so a subsequent real read sees the same
-	 * bytes.
+	 * Returns the next bytes from the buffer without advancing the read position.
 	 *
 	 * @param int $bytes How many.
 	 * @return string
@@ -233,9 +186,7 @@ class GV_Binary_Reader {
 	}
 
 	/**
-	 * Returns the current read position within the buffer, as a byte
-	 * offset from the start of the data. Reflects the total number of
-	 * bytes consumed so far by prior reads.
+	 * Returns the current read position within the buffer, as a byte offset from the start of the data.
 	 *
 	 * @return int
 	 */
@@ -244,9 +195,7 @@ class GV_Binary_Reader {
 	}
 
 	/**
-	 * Returns the total size of the underlying buffer in bytes, regardless
-	 * of how much of it has been read so far. Reflects the full length of
-	 * the data the reader was constructed with.
+	 * Returns the total size of the underlying buffer in bytes, regardless of how much of it has been read so far.
 	 *
 	 * @return int
 	 */
@@ -255,9 +204,7 @@ class GV_Binary_Reader {
 	}
 
 	/**
-	 * Returns whether the read position has reached the end of the
-	 * buffer, meaning every byte has been consumed. Compares the current
-	 * offset against the total length of the buffer.
+	 * Returns whether the read position has reached the end of the buffer, meaning every byte has been consumed.
 	 *
 	 * @return bool
 	 */

@@ -1,8 +1,5 @@
 /**
- * The read-only NPC casting brief (1.1.0 §3.8): what a cast chronicle member reads about the
- * NPC they're playing tonight - resolved sections with every Storyteller-only block removed
- * except `npc-roleplaying-notes`, plus the casting's own free-text brief. Shared by the player
- * Dashboard card and My Queue's Castings section, since both just open the same document.
+ * The read-only NPC casting brief: what a cast chronicle member reads about the NPC they're playing tonight.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

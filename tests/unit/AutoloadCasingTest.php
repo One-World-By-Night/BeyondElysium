@@ -5,27 +5,19 @@ namespace BeyondElysium\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Regression guard for defect D1.
- *
- * composer.json maps BeyondElysium\ -> includes/ with PSR-4 only; there is no classmap
- * fallback for plugin classes. PSR-4 resolution is case-sensitive on every production
- * host, so a directory or filename whose casing does not match its namespace and class
- * name loads fine on macOS and fatals on Linux.
- *
- * This test walks each path segment with scandir() and compares names byte-for-byte.
- * file_exists(), realpath() and class_exists() all give a FALSE GREEN here: on a
- * case-insensitive filesystem realpath() returns the path it was handed rather than the
- * on-disk casing. Verified — an earlier version of this check passed against the broken
- * layout.
- *
- * @see BE_PROCESS/releases/workflow-0.2.1.md Step 1
+ * Every class file's path matches its namespace and class name exactly, as PSR-4 resolution on a case-sensitive host
+ * requires.
  */
 class AutoloadCasingTest extends TestCase {
 
-	/** Namespace prefix mapped by composer.json. */
+	/**
+	 * Namespace prefix mapped by composer.json.
+	 */
 	private const PREFIX = 'BeyondElysium\\';
 
-	/** Directory that prefix maps to, relative to the repo root. */
+	/**
+	 * Directory that prefix maps to, relative to the repo root.
+	 */
 	private const BASE = 'beyond-elysium/includes';
 
 	/**
@@ -122,9 +114,6 @@ class AutoloadCasingTest extends TestCase {
 
 	/**
 	 * The guard itself must detect a mismatch, or it proves nothing.
-	 *
-	 * Builds a deliberately mis-cased fixture and asserts the byte-exact check rejects it
-	 * while the naive checks accept it.
 	 */
 	public function test_the_check_actually_detects_a_mismatch(): void {
 		$tmp = sys_get_temp_dir() . '/be-casing-' . uniqid( '', true );

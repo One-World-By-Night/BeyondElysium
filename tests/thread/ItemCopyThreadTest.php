@@ -14,12 +14,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §3.12 item 1: copying an item for a specific character - every field, property, and
- * audience_rules copied, the copy forced to `restricted` audience, its own upload (if any)
- * copied to a brand-new private file, a `holds` connection from the character, and a `copied`
- * item event. All in one transaction.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.12 item 1
+ * Copying an item for a specific character: every field, property and audience rule is copied, the copy is always
+ * restricted, editing it leaves the source untouched, and the catalog list excludes copies by default.
  */
 class ItemCopyThreadTest extends WP_UnitTestCase {
 
@@ -87,7 +83,9 @@ class ItemCopyThreadTest extends WP_UnitTestCase {
 		], $overrides ) );
 	}
 
-	/** A real, valid PNG - generated with GD so it genuinely passes wp_check_filetype_and_ext(). */
+	/**
+	 * A real, valid PNG - generated with GD.
+	 */
 	private function real_png_path(): string {
 		$path  = tempnam( sys_get_temp_dir(), 'be-test-png-' );
 		$image = imagecreate( 2, 2 );

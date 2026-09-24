@@ -23,38 +23,25 @@ use BeyondElysium\Utils\Uuid;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for importing Grapevine exchange files into a game. Runs a
- * two-phase parse/commit flow: parse sniffs the file format, parses it with
- * the matching parser, classifies and resolves every character trait against
- * the schema catalog, and stores the result server-side keyed by a job id.
- * Commit re-derives that same result from the stored job, refuses to proceed
- * while any trait is unresolved or fuzzy-matched or any duplicate character
- * or world object is unaddressed, and then applies the import in a single
- * transaction: items, locations, and rotes become world object rows;
- * characters are created or, for an addressed duplicate, updated in place;
- * and each imported character receives an import_note change carrying the
- * source file, every fuzzy/custom trait, and the raw record for any data
- * the trait catalog does not cover. Re-committing an already-committed job
- * returns the original result rather than importing a second time.
- *
- * @see BE_PROCESS/releases/workflow-0.8.md Step 6, Step 9
+ * REST controller for importing Grapevine exchange files into a game.
  */
 class Import_Controller extends Base_Controller {
 
 	protected $rest_base = 'import';
 
-	/** Transient TTL for a parsed job, in seconds. */
+	/**
+	 * Transient TTL for a parsed job, in seconds.
+	 */
 	const JOB_TTL = HOUR_IN_SECONDS;
 
 	/**
-	 * Seconds after which a commit lock is stale - its request died mid-import.
+	 * Seconds after which a commit lock is stale.
 	 */
 	const COMMIT_LOCK_TTL = 600;
 
 	/**
-	 * Registers the REST routes for parsing an uploaded file, fetching a
-	 * parsed job's preview, and committing a reviewed job. All routes are
-	 * scoped to a game slug and require the be_import capability.
+	 * Registers the REST routes for parsing an uploaded file, fetching a parsed job's preview, and committing a reviewed
+	 * job.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/import/parse', [
@@ -83,9 +70,8 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Sniffs the uploaded file's format, parses it with the matching
-	 * parser, builds a review preview, and stores the parsed job server-
-	 * side keyed by a generated job id for a later commit call.
+	 * Sniffs the uploaded file's format, parses it with the matching parser, builds a review preview, and stores the
+	 * parsed job server-side keyed by a generated job id for a later commit call.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -110,7 +96,7 @@ class Import_Controller extends Base_Controller {
 		$format = self::sniff_format( $data );
 
 		if ( $format === 'GVBG' ) {
-			// Full game file import is not yet supported.
+			// Full game file import is not supported here.
 			return $this->error(
 				'unsupported_format',
 				__( 'Full game file import (.gv3) is not yet supported - export a .gex exchange file instead.', 'beyond-elysium' ),
@@ -149,12 +135,8 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Applies a previously parsed and reviewed import job. Refuses to
-	 * proceed while any trait remains fuzzy or unresolved, recomputed
-	 * fresh from the stored job rather than trusted from the client, then
-	 * creates every item, location, rote, and character in one
-	 * transaction. Re-posting an already-committed job id returns the
-	 * same stored result again rather than importing a second time.
+	 * Applies a previously parsed and reviewed import job: refuses to proceed while any trait remains fuzzy or
+	 * unresolved, then creates every item, location, rote and character in one transaction.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -175,15 +157,13 @@ class Import_Controller extends Base_Controller {
 			return $this->success( $job['committed_result'] );
 		}
 
-		// Held while the import runs, so a second commit of this job - another tab, another
-		// Storyteller, a retry - is turned away instead of importing it again (1.0.0-review F-070).
+		// Held while the import runs.
 		$lock = self::commit_lock_name( (string) $request['job_id'] );
 		if ( ! Option_Lock::claim( $lock, self::COMMIT_LOCK_TTL ) ) {
 			return self::commit_in_progress_error();
 		}
 
 		try {
-			// Read again under the lock: a commit that finished just before it was taken has stored its result.
 			$job = get_transient( $job_key );
 			if ( ! $job ) {
 				return $this->error( 'not_found', __( 'No import job found with that id - it may have expired.', 'beyond-elysium' ), 404 );
@@ -223,9 +203,7 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The lock a running commit of one import job holds. Job ids are unique
-	 * across both import routes, so the character-file and game-file commits
-	 * share one naming.
+	 * The lock a running commit of one import job holds.
 	 *
 	 * @param string $job_id
 	 * @return string
@@ -244,12 +222,8 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Checks a freshly re-derived preview for anything that must be
-	 * resolved before a commit may proceed: unresolved or flagged
-	 * traits, and any real duplicate character or world object left
-	 * unaddressed. Public and static so another controller can share the
-	 * same rule. Returns a plain array rather than a WP_Error since this
-	 * is callable outside an instance context.
+	 * Checks a freshly re-derived preview for anything that must be resolved before a commit may proceed: unresolved or
+	 * flagged traits, and any real duplicate character or world object left unaddressed.
 	 *
 	 * @param array<string,mixed> $preview
 	 * @param array<string,mixed> $resolutions
@@ -270,11 +244,6 @@ class Import_Controller extends Base_Controller {
 			];
 		}
 
-		// Every duplicate character needs the Storyteller's explicit skip/overwrite/import_as_new
-		// choice - a uuid match in this chronicle too: it is certainly the same character, but
-		// whether the incoming sheet replaces the one here is still a Storyteller's call
-		// (1.0.0-review F-003). A character that lives in another chronicle can be skipped or
-		// copied as a new character, never overwritten from here.
 		$duplicate_actions = (array) ( $resolutions['duplicates'] ?? [] );
 		$unaddressed       = [];
 		$elsewhere         = [];
@@ -335,19 +304,15 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Applies a fully-resolved import job within a single transaction:
-	 * creates every parsed item, location, and rote as a world object,
-	 * then creates or updates each parsed character. Public so it can be
-	 * reused directly once a caller has resolved which game to import
-	 * into; the caller is responsible for wrapping this call in its own
-	 * transaction.
+	 * Applies a fully-resolved import job within a single transaction: creates every parsed item, location, and rote as a
+	 * world object.
 	 *
 	 * @param int                  $game_id
 	 * @param string               $game_slug
 	 * @param array<string,mixed>  $parsed
 	 * @param string               $source_file
 	 * @param array<string,mixed>  $resolutions Duplicate/trait resolution choices (Chunk 1 of the Import plan) - see commit()'s own doc comment.
-	 * @param array<string,mixed>  $options `submitted_by` (int, F-122): the file came from a
+	 * @param array<string,mixed> $options `submitted_by` (int): the file came from a
 	 *                              player's own submission, not a Storyteller's upload - every
 	 *                              character created or overwritten is forced to that account
 	 *                              (never NPC, never a bare player_name, always active), since
@@ -357,9 +322,7 @@ class Import_Controller extends Base_Controller {
 	public static function apply_import( int $game_id, string $game_slug, array $parsed, string $source_file, array $resolutions, array $options = [] ): array {
 		$created = [ 'items' => [], 'locations' => [], 'rotes' => [], 'characters' => [] ];
 		$world_object_actions = (array) ( $resolutions['world_objects'] ?? [] );
-		// Rows this commit has already written. Decisions are keyed by name and every entry looks
-		// its match up again, so a second same-named entry in one file would otherwise overwrite
-		// what the first just wrote; it arrives as its own record instead (1.0.0-review F-053).
+		// Rows this commit has already written.
 		$written_objects    = [];
 		$written_characters = [];
 
@@ -464,7 +427,6 @@ class Import_Controller extends Base_Controller {
 				throw new \RuntimeException( "\"{$char_name}\" belongs to another chronicle and cannot be overwritten from this one." );
 			}
 			if ( $existing && $action === 'import_as_new' && $match['matched_by'] !== 'name' ) {
-				// A second row cannot carry the same uuid: the copy gets its own identity.
 				unset( $character['uuid'] );
 			}
 
@@ -486,15 +448,13 @@ class Import_Controller extends Base_Controller {
 			$created['characters'][] = $imported;
 		}
 
-		// Actions/plots/rumors/queries have no import destination; counted so they stay visible, not silently dropped.
+		// Actions/plots/rumors/queries have no import destination.
 		foreach ( [ 'actions', 'plots', 'rumors', 'queries' ] as $kind ) {
 			if ( ! empty( $parsed[ $kind ] ) ) {
 				$created[ "skipped_{$kind}" ] = count( $parsed[ $kind ] );
 			}
 		}
 
-		// calendar.entries only ever appears in a full game file (GVBG) parse - absent or
-		// empty for an ordinary single-character exchange file (1.1.0 §3.1).
 		if ( ! empty( $parsed['calendar']['entries'] ) ) {
 			$imported_dates = 0;
 			$skipped_dates  = 0;
@@ -522,10 +482,8 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates one imported item, location, or rote, or, for a duplicate
-	 * the ST chose to overwrite, updates the existing row in place
-	 * instead. Matches an existing object by exact name within the game
-	 * and object_type.
+	 * Creates one imported item, location, or rote, or, for a duplicate the ST chose to overwrite, updates the existing
+	 * row in place instead.
 	 *
 	 * @param int                  $game_id
 	 * @param string               $object_type 'item'|'location'|'rote'.
@@ -539,7 +497,7 @@ class Import_Controller extends Base_Controller {
 	private static function import_world_object( int $game_id, string $object_type, string $name, ?string $description, array $properties, array $duplicate_actions, array &$written = [] ): array {
 		$existing = $name !== '' ? World_Object::find_by_name_in_game( $game_id, $object_type, $name ) : null;
 		if ( $existing && isset( $written[ (int) $existing->id ] ) ) {
-			$existing = null; // An earlier same-named entry in this file already wrote it (F-053).
+			$existing = null;
 		}
 		$action = $existing ? ( $duplicate_actions[ "{$object_type}:{$name}" ] ?? '' ) : '';
 
@@ -571,16 +529,7 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Finds the local character a parsed record refers to, if any - by its
-	 * carried `uuid` first (only a transfer-marked export carries one at
-	 * all, per GX-8/9), falling back to a same-chronicle name match for
-	 * every ordinary file, which never carries a uuid. A `uuid` match is
-	 * definitive identity, not a guess, but it is only this chronicle's to
-	 * act on when the character lives here: a uuid held by a character in
-	 * another chronicle on this install comes back as `uuid_elsewhere`, which
-	 * can be skipped or copied but never overwritten (1.0.0-review F-003 -
-	 * anyone can write a uuid into a file). Every match still needs the
-	 * Storyteller's explicit choice (`blocking_reason()`).
+	 * Finds the local character a parsed record refers to, if any.
 	 *
 	 * @param array<string,mixed> $character
 	 * @param string              $game_slug
@@ -604,24 +553,18 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates one imported character with its resolved trait_list traits,
-	 * identity and resource fields, and XP totals, matching a player by
-	 * email where possible. When $existing is given, updates that
-	 * character in place instead of creating a new one. Records an
-	 * import_note change on the character carrying the source file and
-	 * everything the trait catalog did not resolve.
+	 * Creates one imported character with its resolved trait_list traits, identity and resource fields, and XP totals,
+	 * matching a player by email where possible. When $existing is given, updates that character in place instead.
 	 *
 	 * @param int                    $game_id
 	 * @param string                 $game_slug
 	 * @param array<string,mixed>    $character
 	 * @param string                 $source_file
-	 * @param array<string,string>   $player_emails_by_name GV player name -> email (Step 6d).
+	 * @param array<string,string>   $player_emails_by_name GV player name -> email.
 	 * @param array<string,array<string,mixed>> $trait_resolutions Indexed by resolution_key() - see resolve_trait_for_import().
-	 * @param object|null            $existing A real duplicate row to update in place instead of creating a new character (Chunk 1 of the Import plan) - null for a normal create.
-	 * @param int|null               $submitted_by F-122: the file came from this player's own
-	 *                               submission - the character always belongs to them (never
-	 *                               NPC, never a bare player_name) and starts active, since
-	 *                               accepting the submission is itself the approval.
+	 * @param object|null            $existing A real duplicate row to update in place instead of creating a new character.
+	 * @param int|null               $submitted_by Set when the file came from this player's own submission: the character
+	 *                               always belongs to them, is never an NPC or a bare player_name, and starts active.
 	 * @return array<string,mixed>
 	 */
 	private static function import_character( int $game_id, string $game_slug, array $character, string $source_file, array $player_emails_by_name, array $trait_resolutions, ?object $existing, ?int $submitted_by = null ): array {
@@ -651,9 +594,6 @@ class Import_Controller extends Base_Controller {
 				continue;
 			}
 
-			// Prefers this chronicle's own fork of the block when one exists, and its wider purchase list
-			// when the chronicle has opened one, so an entry only another creature type lists imports as
-			// the catalog entry it is (1.3.5).
 			$block = Purchase_Scope::widen( Schema_Block::find_for_game( $classification['block_slug'], $game_slug ), $game_slug );
 			if ( ! $block || ! in_array( $block->section_type, [ 'trait_list', 'tiered_power' ], true ) ) {
 				continue; // Neither shape this importer knows how to build sheet_data for.
@@ -666,12 +606,6 @@ class Import_Controller extends Base_Controller {
 				$target_slug = $target_block->slug;
 				self::require_clean_resolution( $result, $trait['name'], $target_slug );
 
-				// Branches on the block actually resolved against, not the originally
-				// classified one: a tiered_power list can now resolve against the
-				// blood-magic sibling (also tiered_power-shaped) as well as the primary
-				// block, and either can fall back further to the combo/ritae sibling
-				// (trait_list-shaped) - what shape to store never depends on which of
-				// those it was, only on the target block's own section_type.
 				if ( $target_block->section_type === 'tiered_power' ) {
 					if ( $result['outcome'] === 'custom' ) {
 						// level is set only when a real numbered holding was derived from the raw value.
@@ -686,7 +620,7 @@ class Import_Controller extends Base_Controller {
 						}
 						$fuzzy_or_custom[] = [ 'block' => $target_slug, 'name' => $trait['name'], 'reason' => 'custom' ];
 					} else {
-						// A numbered rung carries level; an Elder-and-above pick carries power_name instead, never both.
+						// A numbered rung carries level.
 						$entry = isset( $result['power_name'] )
 							? [ 'name' => $result['family'], 'power_name' => $result['power_name'] ]
 							: [ 'name' => $result['family'], 'level' => $result['level'] ];
@@ -696,9 +630,6 @@ class Import_Controller extends Base_Controller {
 						}
 					}
 				} else {
-					// Resolved against a trait_list-shaped block: either the list was
-					// classified trait_list to begin with, or a tiered_power resolution
-					// fell back to its combo/ritae sibling.
 					$entry = [ 'name' => $result['matched_name'] ?? $trait['name'], 'count' => (int) $trait['total'] ];
 					if ( $trait['note'] !== '' ) {
 						$entry['note'] = $trait['note'];
@@ -730,9 +661,7 @@ class Import_Controller extends Base_Controller {
 		$narrator   = $character['narrator'] ?? null;
 
 		if ( $submitted_by !== null ) {
-			// Never trusts the file's own player/NPC/narrator/status claims for a player-sent
-			// submission - accepting it is the Storyteller's approval, same as any other
-			// Storyteller-reviewed create (Characters_Controller::create_item()'s own rule).
+			// Never trusts the file's own player/NPC/narrator/status claims for a player-sent submission.
 			$wp_user_id  = $submitted_by;
 			$player_name = '';
 			$status      = 'active';
@@ -741,7 +670,6 @@ class Import_Controller extends Base_Controller {
 		}
 
 		if ( $existing !== null ) {
-			// Updates in place rather than delete-and-recreate, so existing connections survive; uuid/id and ownership are left untouched.
 			Character::update_header( (int) $existing->id, [
 				'name'       => $character['name'],
 				'status'     => $status,
@@ -751,16 +679,14 @@ class Import_Controller extends Base_Controller {
 				'biography'  => $character['biography'] ?? null,
 				'notes'      => $character['notes'] ?? null,
 			] );
-			// Replaces only the blocks a document of this stack fills in and keeps every other one -
-			// a changeling's Nature, a chronicle's own section. The whole sheet was replaced until
-			// 1.0.0-review F-049, so a character coming home lost everything the exchange can't carry.
+			// Replaces only the blocks this document fills in.
 			$kept = array_diff_key(
 				json_decode( (string) wp_json_encode( $existing->sheet_data ), true ) ?: [],
 				array_flip( self::carried_blocks( $stack_slug, $character ) )
 			);
 			Character::update_sheet_data( (int) $existing->id, array_merge( $kept, $sheet_data ) );
 
-			// update_xp() is delta-based, so the absolute imported totals are diffed against what's already stored.
+			// update_xp() is delta-based.
 			Character::update_xp(
 				(int) $existing->id,
 				(int) round( $experience['earned'] ) - (int) $existing->xp_earned,
@@ -775,11 +701,7 @@ class Import_Controller extends Base_Controller {
 				'stack_slug'  => $stack_slug,
 				'owner_type'  => 'chronicle',
 				'owner_slug'  => $game_slug,
-				// A transfer-marked export carries the character's real, permanent uuid
-				// (INTEROP-UUID.md) - preserved rather than reassigned, so it survives the
-				// move. Character::create() ignores this key entirely (falls through to
-				// generating a fresh one) unless it's both present and a syntactically
-				// valid uuid, so an ordinary file with no uuid at all is unaffected.
+				// A transfer-marked export carries the character's real, permanent uuid.
 				'uuid'        => $character['uuid'] ?? null,
 				'wp_user_id'  => $wp_user_id,
 				'player_name' => ( ! $wp_user_id && $player_name !== '' ) ? $player_name : null,
@@ -803,12 +725,7 @@ class Import_Controller extends Base_Controller {
 
 		$added_to_catalog = self::connect_held_world_objects( $game_id, $character_id, $held_objects );
 
-		// Records one import_note change per character carrying the source file and raw data not resolved into sheet_data.
-		// trait_lists is replaced with only the preserve_as_note/needs_design lists (e.g. Health
-		// Levels, Bonds) - sheet_block ones are already in sheet_data above, and discard_derived/
-		// world_object ones are intentionally not kept here either (rederivable, or now connected
-		// be_world_objects rows). Dropped entirely rather than kept as `[]` when there's nothing
-		// to preserve, so a character with no such lists gets the same shape as before this fix.
+		// Records one import_note change per character with the source file and the unresolved data.
 		$raw_record = $character;
 		if ( $preserved_lists ) {
 			$raw_record['trait_lists'] = $preserved_lists;
@@ -852,14 +769,7 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Connects an imported character to the items and locations its file says
-	 * it holds - the `world_object` lists `gex-trait-list-map.php` routes here,
-	 * which were skipped until 1.0.0-review F-007, so a transferred or imported
-	 * character arrived holding nothing. Each entry connects to this chronicle's
-	 * catalog entry of that name and type, added with just its name when the
-	 * chronicle has none; the entry's note goes on the connection, which is
-	 * exactly what `Character_Exporter::write_world_object_traits()` writes
-	 * back out. Connections are never duplicated.
+	 * Connects an imported character to the items and locations its file says it holds.
 	 *
 	 * @param int                                             $game_id
 	 * @param int                                             $character_id
@@ -905,10 +815,8 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Converts a parsed LinkedTraitList into the flat [{name, count, note?}]
-	 * shape a world object's trait_list-typed properties expect. Unlike a
-	 * character's trait_list traits, these values are not resolved against
-	 * a schema catalog.
+	 * Converts a parsed LinkedTraitList into the flat [{name, count, note?}] shape a world object's trait_list-typed
+	 * properties expect.
 	 *
 	 * @param array<string,mixed> $trait_list
 	 * @return array<int,array<string,mixed>>
@@ -926,23 +834,14 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Resolves one trait against a tiered_power block, falling back to a
-	 * blood-magic sibling tiered_power block and then a combo/ritae
-	 * sibling trait_list block when the primary resolution comes back
-	 * unresolved. A raw "{Tradition}: {Path}" name (Blood Magic moved out
-	 * of vampire-disciplines, BE_PROCESS/releases/0.99.2-workflow.md) or a held
-	 * Combo Discipline/Ritae power appears as a flat entry in the same raw
-	 * list as an ordinary power, distinguished only by matching a name in
-	 * the sibling catalog.
+	 * Resolves one trait against a tiered_power block, falling back to a blood-magic sibling tiered_power block and then a
+	 * combo/ritae sibling trait_list block when the primary resolution comes back unresolved.
 	 *
 	 * @param array<string,mixed> $trait
 	 * @param object              $block          Decoded tiered_power Schema_Block.
 	 * @param array<string,mixed> $classification `Trait_Mapper::classify_list()`'s result.
-	 * @param string              $game_slug      workflow-0.9.md Step 0.5e-3 - prefers this
-	 *                                             chronicle's own fork of a sibling block, if
-	 *                                             it has customized it.
-	 * @return array{0:array<string,mixed>,1:object} The resolution result and whichever
-	 *                                                 block it actually resolved against.
+	 * @param string              $game_slug      Prefers this chronicle's own fork of a sibling block, if it has one.
+	 * @return array{0:array<string,mixed>,1:object} The resolution result and whichever block it actually resolved against.
 	 */
 	private static function resolve_tiered_power_with_fallbacks( array $trait, $block, array $classification, string $game_slug = '' ): array {
 		$result = Trait_Mapper::resolve_tiered_power_trait( $trait['name'], $trait['total'], $block );
@@ -972,20 +871,15 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Resolves one classified trait, honoring an ST's explicit resolution
-	 * override before falling through to normal resolution. Shared by the
-	 * preview classification pass and the sheet-building pass so both
-	 * agree on the same outcome for the same character/block/raw-name
-	 * combination. The resolution key is always keyed on the originally
-	 * classified block, never the combo/ritae sibling block a
-	 * tiered_power resolution might fall back to instead.
+	 * Resolves one classified trait, honoring an ST's explicit resolution override before falling through to normal
+	 * resolution. Shared by the preview classification pass and the sheet-building pass.
 	 *
 	 * @param array<string,mixed>               $trait
 	 * @param object                             $block          The originally classified block (tiered_power or trait_list).
 	 * @param array<string,mixed>                $classification `Trait_Mapper::classify_list()`'s result.
 	 * @param string                             $char_name
 	 * @param array<string,array<string,mixed>>  $trait_resolutions Indexed by resolution_key() -> ['action' => 'apply_suggestion'|'skip', 'suggestion_name' => ?string].
-	 * @param string                             $game_slug workflow-0.9.md Step 0.5e-3.
+	 * @param string                             $game_slug Prefers this chronicle's own fork of a sibling block, if it has one.
 	 * @return array{0:array<string,mixed>,1:object}
 	 */
 	private static function resolve_trait_for_import( array $trait, $block, array $classification, string $char_name, array $trait_resolutions, string $game_slug = '' ): array {
@@ -1022,10 +916,8 @@ class Import_Controller extends Base_Controller {
 		if ( $action === 'keep_custom' && ! empty( $block->definition->allow_custom ) ) {
 			// Writes to this chronicle's own fork, never the shared global block.
 			if ( ! empty( $override['add_to_catalog'] ) ) {
-				// Reuses the known block slug from the override rather than re-reading $block->slug.
 				self::add_to_trait_list_catalog( (string) $override['block'], $trait['name'], $game_slug );
 			}
-			// Reuses the known block slug rather than a second read off $block itself.
 			return [ [ 'outcome' => 'custom', 'block_slug' => (string) $override['block'] ], $block ];
 		}
 
@@ -1042,12 +934,7 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Builds a synthetic 'custom' tiered-power resolution from a raw
-	 * trait, for an ST's explicit keep_custom override. Splits the raw
-	 * name into family and power name on the first colon. Also derives a
-	 * numbered level (1-5) from the raw total when there is no tier note
-	 * and the trait is not from a combo-shaped section, since a
-	 * note-carrying total is a cost, not a level.
+	 * Builds a synthetic 'custom' tiered-power resolution from a raw trait, for an ST's explicit keep_custom override.
 	 *
 	 * @param array<string,mixed> $trait
 	 * @return array{outcome:string,family:string,power_name:string,tier:string,level?:int}
@@ -1089,11 +976,8 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns the standard numbered-rung cost/tier ladder for a
-	 * tiered_power family's levels 1-5: costs 3/3/6/6/9 at tiers
-	 * basic/basic/intermediate/intermediate/advanced. Level 6 and above
-	 * (elder and beyond) has no numbered position and is not represented
-	 * here.
+	 * Returns the standard numbered-rung cost/tier ladder for a tiered_power family's levels 1-5: costs 3/3/6/6/9 at
+	 * tiers basic/basic/intermediate/intermediate/advanced.
 	 *
 	 * @return array<int,array{level:int,tier:string,cost:string,power_name:string}>
 	 */
@@ -1108,9 +992,8 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Normalizes a raw trait's tier note (written abbreviated, such as
-	 * "int." or "adv.") to the numbered-ladder tier label used by the
-	 * catalog, or null when the note is not a numbered-rung tier at all.
+	 * Normalizes a raw trait's tier note (written abbreviated, such as "int." or "adv.") to the numbered-ladder tier
+	 * label used by the catalog, or null when the note is not a numbered-rung tier at all.
 	 *
 	 * @param string $note
 	 * @return string|null
@@ -1125,23 +1008,14 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Permanently adds a power name into a tiered_power block's catalog,
-	 * for an ST who opts in via add_to_catalog rather than only
-	 * recording it on one character's sheet. Requires be_manage_schemas,
-	 * since this mutates data every future import and every character in
-	 * the chronicle reads. Idempotent: an already-named slot is never
-	 * overwritten, and a repeated call for the same power is a harmless
-	 * no-op. A failure here is logged and swallowed rather than failing
-	 * the character import.
+	 * Permanently adds a power name into a tiered_power block's catalog, for an ST who opts in via add_to_catalog. Requires
+	 * be_manage_schemas. An already-named slot is never overwritten; a failure is logged and does not fail the import.
 	 *
 	 * @param string $block_slug
 	 * @param string $family     The family name, already split from the raw trait name.
 	 * @param string $power_name
 	 * @param string $raw_tier   The trait's own raw tier note - `"basic"`/`"int."`/`"adv."`/other.
-	 * @param string $game_slug  workflow-0.9.md Step 0.5e - writes go to THIS chronicle's
-	 *                            own fork of the block, never the shared global catalog
-	 *                            (Decision 068's own original scope for this exact reason -
-	 *                            an ST's addition must not leak into every other chronicle).
+	 * @param string $game_slug  Writes go to this chronicle's own fork of the block, never the shared global catalog.
 	 * @return void
 	 */
 	private static function add_to_discipline_catalog( string $block_slug, string $family, string $power_name, string $raw_tier, string $game_slug ): void {
@@ -1194,7 +1068,7 @@ class Import_Controller extends Base_Controller {
 			}
 
 			if ( ! $filled ) {
-				// No open matching slot; appends a new one rather than overwriting an existing name.
+				// No open matching slot; appends a new one.
 				$target_power->levels[] = (object) ( $numbered_tier !== null
 					? [ 'tier' => $numbered_tier, 'cost' => '', 'power_name' => $power_name ]
 					: [ 'tier' => $raw_tier !== '' ? $raw_tier : 'elder', 'power_name' => $power_name ] );
@@ -1208,12 +1082,8 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Permanently adds a trait name into a trait_list block's catalog
-	 * (Merits, Backgrounds, Abilities, and similar), for an ST who opts
-	 * in via add_to_catalog. Writes to this chronicle's own fork of the
-	 * block, never the shared global block, and is idempotent on a
-	 * case-insensitive name match. A failure here is logged and
-	 * swallowed rather than failing the character import.
+	 * Permanently adds a trait name into a trait_list block's catalog (Merits, Backgrounds, Abilities, and similar), for
+	 * an ST who opts in via add_to_catalog.
 	 *
 	 * @param string $block_slug
 	 * @param string $name
@@ -1249,9 +1119,7 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Builds the composite key used to index and look up an ST's chosen
-	 * resolution for one character's trait within one block, joining the
-	 * three parts with a null byte to avoid collisions with real data.
+	 * Builds the composite key that indexes an ST's chosen resolution for one character's trait within one block.
 	 *
 	 * @param string $char_name
 	 * @param string $block_slug
@@ -1263,10 +1131,7 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Indexes the traits half of a commit's resolutions request body by
-	 * resolution_key() so the classification and import loops can look
-	 * up an ST's chosen resolution in constant time. Skips any entry
-	 * missing its character, block, or raw key.
+	 * Indexes the traits half of a commit's resolutions request body by resolution_key().
 	 *
 	 * @param array<int,array<string,mixed>> $traits Each: character, block, raw, action, suggestion_name?.
 	 * @return array<string,array<string,mixed>>
@@ -1283,10 +1148,7 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns a parsed character's name, or the literal string
-	 * "(unnamed)" when the record has no name. Used consistently across
-	 * preview and commit so a resolution key or duplicate lookup for a
-	 * nameless record stays identical between the two.
+	 * Returns a parsed character's name, or the literal string "(unnamed)" when the record has no name.
 	 *
 	 * @param array<string,mixed> $character
 	 * @return string
@@ -1296,10 +1158,8 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Confirms a trait's resolution outcome is clean (exact, normalized,
-	 * or custom) before it is written to a character's sheet_data,
-	 * throwing when it is not. A non-clean outcome here means the
-	 * underlying schema block changed between preview and commit.
+	 * Confirms a trait's resolution outcome is clean (exact, normalized, or custom) before it is written to a character's
+	 * sheet_data, throwing when it is not.
 	 *
 	 * @param array<string,mixed> $result
 	 * @param string              $raw_name
@@ -1318,10 +1178,7 @@ class Import_Controller extends Base_Controller {
 	private static $identity_map = null;
 
 	/**
-	 * Loads and caches the identity/resource field mapping table from
-	 * gex-identity-map.php, which maps each creature stack's raw
-	 * Grapevine scalar fields onto its identity_field and resource_pool
-	 * schema blocks.
+	 * Loads and caches the identity/resource field mapping table from gex-identity-map.php.
 	 *
 	 * @return array<string,array<string,mixed>>
 	 */
@@ -1333,12 +1190,9 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The sheet blocks an exchange document of this stack fills in: every
-	 * block its race's trait lists map to (with the blood-magic and combo
-	 * siblings those lists fold in), its identity and resource blocks, and
-	 * Nature/Demeanor when this document carries them. An overwrite replaces
-	 * these and keeps every other block, since a document cannot speak for a
-	 * block it has no place for (1.0.0-review F-049).
+	 * The sheet blocks an exchange document of this stack fills in: every block its race's trait lists map to (with the
+	 * blood-magic and combo siblings those lists fold in), its identity and resource blocks, and Nature/Demeanor when
+	 * this document carries them.
 	 *
 	 * @param string              $stack_slug
 	 * @param array<string,mixed> $character The parsed document character.
@@ -1377,12 +1231,7 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The identity/resource sheet_data a parsed character's raw scalars
-	 * would populate for its stack - the same fields
-	 * `apply_identity_and_resources()` writes during a real import, exposed
-	 * standalone so a caller can check a value (e.g. a sub-faction
-	 * restriction) before any character exists to check it against
-	 * (F-122's pre-send/pre-accept `creation_check()`).
+	 * The identity/resource sheet_data a parsed character's raw scalars would populate for its stack.
 	 *
 	 * @param string              $stack_slug
 	 * @param array<string,mixed> $character
@@ -1395,10 +1244,8 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Populates a stack's identity_field and resource_pool blocks
-	 * directly from the character's raw parsed scalars via the identity
-	 * map. Unlike trait_list values, these are carried straight across
-	 * from the raw record without catalog resolution.
+	 * Populates a stack's identity_field and resource_pool blocks directly from the character's raw parsed scalars via
+	 * the identity map.
 	 *
 	 * @param array<string,mixed> $sheet_data Mutated in place.
 	 * @param string              $stack_slug
@@ -1437,9 +1284,7 @@ class Import_Controller extends Base_Controller {
 			$fields = [];
 			foreach ( $map['identity']['fields'] as $be_field => $raw_key ) {
 				$value = $character[ $raw_key ] ?? null;
-				// Parsers hand an enum field back as its index; the sheet stores the label a
-				// Storyteller picks (a wraith's Ethnos). A number field stores a number, not the
-				// string the exchange writes. Both came back wrong until 1.0.0-review F-049.
+				// Parsers hand an enum field back as its index.
 				if ( isset( $enums[ $raw_key ] ) && is_int( $value ) ) {
 					$value = $enums[ $raw_key ][ $value ] ?? $value;
 				}
@@ -1467,9 +1312,8 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns a previously parsed import job's stored preview by job id.
-	 * Confirms the game exists and the job belongs to it, returning a
-	 * 404 error when the job cannot be found or has expired.
+	 * Returns a previously parsed import job's stored preview by job id, or a 404 when the job cannot be found or has
+	 * expired.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -1489,9 +1333,7 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Builds the transient key used to store and retrieve one import
-	 * job's parsed data and preview, namespaced by the job's id so
-	 * concurrent imports never collide.
+	 * Builds the transient key used to store one import job's parsed data and preview.
 	 *
 	 * @param string $job_id
 	 * @return string
@@ -1501,10 +1343,8 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Determines a file's format from its header: the literal string
-	 * <?xml for an XML export, or one of the GVBE/GVBM/GVBG binary magic
-	 * strings found at byte offset 2 (after their 2-byte length prefix).
-	 * Returns 'unknown' when neither pattern matches.
+	 * Determines a file's format from its header: the literal string <?xml for an XML export, or one of the
+	 * GVBE/GVBM/GVBG binary magic strings found at byte offset 2 (after their 2-byte length prefix).
 	 *
 	 * @param string $data
 	 * @return string 'GVBE'|'GVBM'|'GVBG'|'XML'|'unknown'
@@ -1523,14 +1363,9 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Builds the review preview structure from a parsed GEX structure:
-	 * counts per section, every trait_list classified, and for
-	 * sheet_block lists, every individual trait resolved into flagged/
-	 * unresolved buckets, plus every character and world object that
-	 * already exists in this chronicle by exact name, and any ST-chosen
-	 * resolutions already applied. Public so it can be reused unchanged
-	 * for a "create a new chronicle" preview, where the caller passes a
-	 * slug/id matching no real game so nothing can collide.
+	 * Builds the review preview structure from a parsed GEX structure: counts per section, every trait_list classified,
+	 * every trait of each sheet_block list resolved into flagged and unresolved buckets, and every character and world
+	 * object already in this chronicle by exact name.
 	 *
 	 * @param array<string,mixed> $parsed
 	 * @param string              $game_slug
@@ -1556,7 +1391,7 @@ class Import_Controller extends Base_Controller {
 		$unresolved            = [];
 		$duplicates            = [];
 		$world_object_duplicates = [];
-		// How many entries in the file share each matched name - one decision covers them all (F-053).
+		// How many entries in the file share each matched name.
 		$character_repeats = [];
 		$object_repeats    = [];
 		$block_cache            = [];
@@ -1600,9 +1435,7 @@ class Import_Controller extends Base_Controller {
 					// Another chronicle's character: its row id is not this Storyteller's to see.
 					'existing_id'   => $elsewhere ? 0 : (int) $existing->id,
 					'existing_uuid' => $existing->uuid,
-					// 'uuid': the same character, already in this chronicle. 'uuid_elsewhere': the
-					// same character, in another chronicle - skip or copy only. 'name': possibly two
-					// different characters sharing a name. All three need a decision.
+					// 'uuid': the same character, already here; 'uuid_elsewhere': the same character in another chronicle; 'name': a possible namesake.
 					'matched_by'    => $match['matched_by'],
 				];
 			}
@@ -1621,12 +1454,12 @@ class Import_Controller extends Base_Controller {
 
 				$block_slug = $classification['block_slug'];
 				if ( ! array_key_exists( $block_slug, $block_cache ) ) {
-					// Uses this chronicle's own fork, if any, and its wider purchase list, so preview classification matches commit exactly.
+					// Uses this chronicle's own fork, if any, and its wider purchase list.
 					$block_cache[ $block_slug ] = Purchase_Scope::widen( Schema_Block::find_for_game( $block_slug, $game_slug ), $game_slug );
 				}
 				$block = $block_cache[ $block_slug ];
 				if ( ! $block ) {
-					continue; // Declared mapping points at a block that doesn't exist in this install - nothing to resolve against.
+					continue;
 				}
 
 				foreach ( $value['traits'] as $trait ) {
@@ -1677,7 +1510,6 @@ class Import_Controller extends Base_Controller {
 			}
 		}
 		if ( ! empty( $parsed['characters'] ) ) {
-			// Whether ST filtering was on at export time cannot be detected from the file itself.
 			$warnings[] = __( 'If this file was exported with ST filtering on, hidden text has already been removed and cannot be recovered.', 'beyond-elysium' );
 		}
 
@@ -1728,10 +1560,8 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Adds `changes` to each duplicate matched in this chronicle: what differs
-	 * between the sheet already here and the one arriving, for a Storyteller
-	 * deciding whether to overwrite it (1.0.0-review F-044). A match in another
-	 * chronicle gets none - that sheet is not this chronicle's to read.
+	 * Adds `changes` to each duplicate matched in this chronicle: what differs between the sheet already here and the one
+	 * arriving, for a Storyteller deciding whether to overwrite it.
 	 *
 	 * @param array<int,array<string,mixed>> $duplicates `build_preview()`'s `duplicates`.
 	 * @param array<string,mixed>            $parsed
@@ -1760,10 +1590,7 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Suggests WP user matches for imported players not already matched
-	 * by email, searching by display name instead. Only surfaces
-	 * candidate matches; assigning a player to a WP user (or leaving
-	 * them unassigned) is a decision made at commit time, not here.
+	 * Suggests WP user matches for imported players not already matched by email, searching by display name instead.
 	 *
 	 * @param array<int,array<string,mixed>> $players
 	 * @return array<int,array<string,mixed>>
@@ -1779,7 +1606,6 @@ class Import_Controller extends Base_Controller {
 				continue; // Matched by email - nothing to flag.
 			}
 
-			// Searches display_name, since a GV player name is not a WP username.
 			$name_matches = $player['name']
 				? get_users( [
 					'search'         => $player['name'],
@@ -1802,9 +1628,7 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a WP_Error
-	 * with a 404 status when no game matches. Used by route callbacks to
-	 * resolve the game_slug URL parameter before performing further work.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

@@ -1,9 +1,7 @@
 import { stripStSections } from './stripStSections';
 
 /**
- * Same behavior, same edge cases as tests/unit/StFilterTest.php (the authoritative
- * server-side twin) - including the double-space-in-the-middle quirk from Trim() only
- * stripping the outer edges. That is faithful VB behavior, not a bug.
+ * Same behavior, same edge cases as tests/unit/StFilterTest.php (the authoritative server-side twin).
  */
 describe( 'stripStSections', () => {
 	it( 'strips a single marked section', () => {

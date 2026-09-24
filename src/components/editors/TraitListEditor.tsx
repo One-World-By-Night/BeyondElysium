@@ -1,8 +1,5 @@
 /**
- * TraitListEditor renders the editable list for a trait_list block - flat or
- * grouped catalogs such as Abilities, Backgrounds, or Merits/Flaws. Traits are
- * added and edited through a modal; each row shows a read-only summary with an
- * edit control, rather than permanently visible input fields.
+ * TraitListEditor renders the editable list for a trait_list block.
  */
 import { __, sprintf } from '@wordpress/i18n';
 import { useMemo, useState } from '@wordpress/element';
@@ -26,17 +23,25 @@ import api from '../../api/client';
 import type { TraitListDefinition } from '../../types';
 import './TraitListEditor.css';
 
-/** The editor's working-copy shape for one row; count maps to Trait.total once submitted. */
+/**
+ * The editor's working-copy shape for one row.
+ */
 export interface EditableTrait {
 	name: string;
 	count?: number;
 	specialization?: string;
 	note?: string;
-	/** Set when this row was entered as free text rather than chosen from the catalog. */
+	/**
+	 * Set when this row was entered as free text.
+	 */
 	custom?: boolean;
-	/** The player's choice for a variable-cost item, e.g. "1 or 3" or "1-7"; ignored for a fixed cost. */
+	/**
+	 * The player's choice for a variable-cost item, e.g. "1 or 3" or "1-7".
+	 */
 	chosen_cost?: number;
-	/** Marked for removal rather than deleted outright; removal is applied when changes are submitted. */
+	/**
+	 * Marked for removal rather than deleted outright.
+	 */
 	_removed?: boolean;
 }
 
@@ -46,17 +51,21 @@ export interface TraitListEditorProps {
 	definition: TraitListDefinition;
 	onChange: ( blockSlug: string, nextData: EditableTrait[] ) => void;
 	readOnly?: boolean;
-	/** Needed only for a player_order block's "Save order" call (1.1.0 D4). */
+	/**
+	 * Needed only for a player_order block's "Save order" call.
+	 */
 	gameSlug?: string;
 	characterId?: number;
 	/**
-	 * The whole sheet, read only to find this character's own identity values so their
-	 * matching pick-list sections sort first (1.2.9 U4c). Never written.
+	 * The whole sheet, read only to find this character's own identity values so their matching pick-list sections sort
+	 * first.
 	 */
 	sheetData?: Record< string, unknown >;
 }
 
-/** `index === null` means the modal is adding a new trait, not editing an existing row. */
+/**
+ * `index === null` means the modal is adding a new trait.
+ */
 interface DraftState {
 	index: number | null;
 	name: string;
@@ -64,7 +73,9 @@ interface DraftState {
 	count: number;
 	specialization: string;
 	note: string;
-	/** A variable-cost item's chosen cost; unset means the lowest, as the server prices it. */
+	/**
+	 * A variable-cost item's chosen cost.
+	 */
 	chosenCost?: number;
 }
 
@@ -77,12 +88,7 @@ const EMPTY_DRAFT: Omit< DraftState, 'index' > = {
 };
 
 /**
- * The index of the held row a drafted trait belongs to - the one it merges into rather than
- * sitting beside - or -1 when it is genuinely a new holding.
- *
- * An `atomic` block is exempt by declaration: it appends a fresh row every time (Merits,
- * Flaws, Rituals). A row already marked for removal is not a merge target. `excludeIndex`
- * is the row being edited, which can never collide with itself.
+ * The index of the held row a drafted trait belongs.
  */
 export function findTraitRowIndex(
 	rows: EditableTrait[],
@@ -103,8 +109,7 @@ export function findTraitRowIndex(
 }
 
 /**
- * The label a merged row keeps: its own, when it has one, and otherwise the incoming draft's.
- * A merge never silently discards a label the player has just typed onto a row that had none.
+ * The label a merged row keeps: its own, when it has one.
  */
 export function mergedSpecialization(
 	existing?: string,
@@ -113,7 +118,9 @@ export function mergedSpecialization(
 	return existing && existing !== '' ? existing : incoming || undefined;
 }
 
-/** One drafted trait as it will be stored, independent of the modal's own state shape. */
+/**
+ * One drafted trait as it will be stored, independent of the modal's own state shape.
+ */
 export interface TraitDraft {
 	name: string;
 	count: number;
@@ -124,15 +131,7 @@ export interface TraitDraft {
 }
 
 /**
- * Applies one drafted trait to the held rows and returns the next list - the single place
- * the row-identity rule is enforced, for adding (`index` null) and for editing alike.
- *
- * Adding a name whose identity is already held raises that row rather than sitting beside
- * it, and an edit that moves a row onto another row's identity merges into that
- * pre-existing target and drops the edited row (Decision 082's convention, kept). An edit
- * that leaves the identity alone is an ordinary in-place update: on a block where the label
- * is not part of the identity, that is every edit, since a row's name is fixed once it
- * exists.
+ * Applies one drafted trait to the held rows and returns the next list.
  */
 export function saveTraitDraft(
 	rows: EditableTrait[],
@@ -159,9 +158,7 @@ export function saveTraitDraft(
 		const next = [ ...rows ];
 		const target = next[ mergeIndex ];
 		const kept = mergedSpecialization( target.specialization, label );
-		// F2 (1.3.2.1): a merge is a count bump, so the target's own note describes the
-		// holding and is never overwritten - the draft's note is adopted only when the
-		// target had none, the same rule mergedSpecialization() applies to the label.
+		// A merge is a count bump.
 		const keptNote = mergedSpecialization( target.note, draft.note );
 		next[ mergeIndex ] = {
 			...target,
@@ -203,10 +200,7 @@ export function saveTraitDraft(
 }
 
 /**
- * Renders the trait list for a trait_list block: each held row shows as a compact
- * read-only summary (name plus a dot/count) with an edit button, and a "+ Add"
- * button opens the same modal blank for a new trait. Grouped blocks render their
- * items under group/subgroup headings; flat blocks render a single list.
+ * Renders the trait list for a trait_list block.
  */
 export function TraitListEditor( {
 	blockSlug,
@@ -224,15 +218,6 @@ export function TraitListEditor( {
 		[ definition.items ]
 	);
 
-	/*
-	 * U4: sections, when the catalog carries any. `groupCatalogItems` returns an empty
-	 * array for a block with no groups at all (Merits, Flaws, Rituals, Combos - 2,523
-	 * items between them), and the picker stays exactly as flat as it has always been.
-	 *
-	 * The character's own breed, auspice and tribe sort to the front. Sorting only -
-	 * every other section is still there, still searchable, still purchasable at the
-	 * out-of-type price. See catalogGroups.ts.
-	 */
 	const preferredGroups = useMemo(
 		() => identityGroupValues( sheetData ),
 		[ sheetData ]
@@ -263,7 +248,7 @@ export function TraitListEditor( {
 
 	const closeDraft = () => setDraft( null );
 
-	// The costs the drafted catalog item may be bought at, when it lets the player choose (F-107).
+	// The costs the drafted catalog item may be bought at, when it lets the player choose.
 	const draftChoices = draft
 		? costChoices(
 				definition.items.find( ( item ) => item.name === draft.name )
@@ -275,14 +260,10 @@ export function TraitListEditor( {
 			? { chosen_cost: draft.chosenCost }
 			: {};
 
-	// F1 (1.3.2.1): which label the modal asks for, if any - "Specialization" for a block
-	// that has them, "Who or what?" for a name this block/item lets be held more than once
-	// (the label IS the identity there), or no field at all for a plain item.
+	// Which label the modal asks for, if any.
 	const draftLabelPrompt = draft
 		? labelPrompt( definition, draft.name )
 		: null;
-	// The hint fires only for "Who or what?": leaving the label blank, or repeating one
-	// already used, adds to that existing holding rather than starting a new one.
 	const draftLabelAlreadyHeld =
 		draft && draftLabelPrompt === 'who_or_what'
 			? findTraitRowIndex(
@@ -333,13 +314,12 @@ export function TraitListEditor( {
 		draft && draft.index !== null ? data[ draft.index ] : null;
 	const editingRemoved = !! editingRow?._removed;
 
-	// Each row carries its original flat-array index through grouping, so edits still address the right row in `data`.
+	// Each row carries its original flat-array index through grouping.
 	const indexedRows = useMemo(
 		() => data.map( ( row, index ) => ( { ...row, index } ) ),
 		[ data ]
 	);
-	// 1.1.0 D4: a player_order block never groups - the player's own order is
-	// their grouping.
+	// A player_order block never groups.
 	const grouped = useMemo(
 		() =>
 			definition.player_order
@@ -410,8 +390,7 @@ export function TraitListEditor( {
 				</span>
 				{ typeof row.count === 'number' &&
 					row.count > 0 &&
-					// 1.2.11 D94: a count_is_cost row's number is a price, so it is
-					// never drawn as dots. The preference only hides it.
+					// A count_is_cost row's number is a price.
 					( definition.count_is_cost ? (
 						showCost && (
 							<span className="be-trait-list-editor__summary-detail">

@@ -1,8 +1,6 @@
 /**
- * QueryBuilder renders the clause-editing UI for a saved-character query: pick a
- * field, an operator valid for that field's type, and a value, chained together
- * with AND/OR match logic. Used by QueryTool's Search tab. The operator list
- * narrows automatically to whatever the chosen field's data type supports.
+ * QueryBuilder renders the clause-editing UI for a saved-character query: pick a field, an operator valid for that
+ * field's type, and a value, chained together with AND/OR match logic.
  */
 import { __ } from '@wordpress/i18n';
 import { useState } from '@wordpress/element';
@@ -22,7 +20,9 @@ import {
 import './QueryBuilder.css';
 
 export interface QueryBuilderProps {
-	/** Fetched and filtered to mapped fields by the caller, which also owns the active inventory. */
+	/**
+	 * Fetched and filtered to mapped fields by the caller.
+	 */
 	fields: QueryField[];
 	conditions: QueryCondition[];
 	logic: QueryLogic;
@@ -30,12 +30,7 @@ export interface QueryBuilderProps {
 }
 
 /**
- * Renders the clause editor for a saved query against whichever inventory
- * the caller is currently showing: add or remove clauses, choose AND/OR
- * match logic, and pick a field, operator, and value per clause. The
- * operator list for each clause is filtered to what its chosen field's type
- * actually supports, so the UI never offers an operator the server would
- * reject.
+ * Renders the clause editor for a saved query against whichever inventory the caller is currently showing.
  */
 export function QueryBuilder( {
 	fields,

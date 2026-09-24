@@ -11,19 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-003, F-005, F-006. Owner ruling 2026-09-14: "we need approval on BOTH sides."
- *
- * The home side was already a Storyteller's action. The host side was not: `inbound` - an
- * unauthenticated route - verified the payload against the claimed home site and then imported
- * it on the spot, overwriting any character on the whole install that carried the same uuid. A
- * payload needing review was parked in a one-hour transient nobody was told about. Now every
- * offer waits in its transfer row until a Storyteller of the receiving chronicle reviews and
- * accepts it, with the same explicit decisions an ordinary import needs; the host staff are
- * emailed; the home side's cancel revokes the offer; and the host can send a visitor home or
- * keep it.
- *
- * Both chronicles live on this one test install, so the character's uuid always exists here
- * already - at home. Tests that need the host to hold the character first move it there.
+ * A transfer needs approval on both sides: the inbound route verifies the payload, then waits for a host Storyteller.
  */
 class TransferHostApprovalThreadTest extends WP_UnitTestCase {
 
@@ -71,7 +59,9 @@ class TransferHostApprovalThreadTest extends WP_UnitTestCase {
 		return true;
 	}
 
-	/** Answers the host's verify callback, and home's POST to the host, through real REST dispatch. */
+	/**
+	 * Answers the host's verify callback, and home's POST to the host, through real REST dispatch.
+	 */
 	public function loopback( $preempt, $args, $url ) {
 		if ( strpos( $url, '/verify/' ) !== false ) {
 			$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/be/v1/verify/' . rawurldecode( substr( $url, strrpos( $url, '/' ) + 1 ) ) ) );
@@ -116,7 +106,6 @@ class TransferHostApprovalThreadTest extends WP_UnitTestCase {
 		] );
 	}
 
-	/** Export at home, then leave only the host's own earlier copy of the character holding its uuid. */
 	private function host_already_holds_the_character(): array {
 		$document = $this->transfer_document();
 		Character::delete( $this->character_id );
@@ -169,12 +158,6 @@ class TransferHostApprovalThreadTest extends WP_UnitTestCase {
 		$this->assertNull( $after->payload );
 	}
 
-	/**
-	 * 1.0.0-review F-070. Accepting checks the offer is still offered, asks the home chronicle to
-	 * verify it - a network call - and then imports. A second Storyteller's accept that finishes
-	 * inside that call left the first one importing the character again. The offer is checked a
-	 * second time, row-locked, before anything is written.
-	 */
 	public function test_an_accept_that_overlaps_one_that_already_finished_imports_nothing(): void {
 		[ $document, $host_copy ] = $this->host_already_holds_the_character();
 		$this->offer( $document );

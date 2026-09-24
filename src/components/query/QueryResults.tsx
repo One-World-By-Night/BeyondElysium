@@ -1,20 +1,6 @@
 /**
- * QueryResults renders a paginated, sortable table of character query results,
- * with a per-row match-reason column and a CSV export button. Used by QueryTool's
- * Search tab to display the output of a run query. The CSV export covers only
- * the currently loaded page of rows, not the full result set.
- *
- * Also the interface for `Change_Engine::bulk_award_xp()` (BE_PROCESS/releases/0.99.2-workflow.md,
- * "Bulk XP award has no interface") - the REST route and client method both already
- * existed and worked, with nothing in `src/` ever calling them. A query's result set is
- * exactly the "a group of characters" the endpoint was built for, so the award action lives
- * here rather than as a new screen. Gated on `be_manage_characters`, matching
- * `resolve_approval_level()`'s own manager-only default for `xp_earn`/`xp_adjust`.
- *
- * Two more bulk actions (bulk-operations-design.md) share the exact same shape: resetting
- * a resource pool's temporary rating back to its permanent one, and setting the same status
- * on every selected character. Neither needed new mechanism - both are ordinary desktop
- * query-result actions, gated and selected the same way the bulk-XP-award form already is.
+ * QueryResults renders a paginated, sortable table of character query results, with a per-row match-reason column and
+ * a CSV export button.
  */
 import { __, sprintf } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
@@ -25,9 +11,13 @@ import './QueryResults.css';
 
 export interface QueryResultsProps {
 	gameSlug: string;
-	/** One of Field_Registry::QUERYABLE_INVENTORIES - gates the bulk-XP-award form to 'char'. */
+	/**
+	 * One of Field_Registry::QUERYABLE_INVENTORIES.
+	 */
 	inventory: string;
-	/** This inventory's own result columns (query-inventories.php's result_columns), owned by the caller. */
+	/**
+	 * This inventory's own result columns (query-inventories.php's result_columns), owned by the caller.
+	 */
 	columns: { key: string; label: string }[];
 	items: QueryResultCharacter[];
 	total: number;
@@ -37,16 +27,14 @@ export interface QueryResultsProps {
 	onSort: ( field: string, direction: 'asc' | 'desc' ) => void;
 	sortField?: string;
 	sortDirection?: 'asc' | 'desc';
-	/** Names the search these results came from (searchKey()); a selection belongs to one search. */
+	/**
+	 * Names the search these results came from (searchKey()).
+	 */
 	searchKey?: string;
 }
 
 /**
- * Reads a column's display value off a result row. A world object's own
- * columns (name, description/'notes') sit at the top level same as a
- * character's; everything else queryable on it lives under its decoded
- * `properties` object (item_type, level, and so on) - the same `properties`
- * vs `column` split Query_Engine::resolve_value() reads server-side.
+ * Reads a column's display value off a result row.
  */
 function cellValue( item: QueryResultCharacter, key: string ): string {
 	const direct = item[ key ];
@@ -58,15 +46,8 @@ function cellValue( item: QueryResultCharacter, key: string ): string {
 }
 
 /**
- * Renders a paginated table of query results with sortable columns and a per-row
- * match-reason column explaining why each character matched. Includes a CSV
- * export button and Previous/Next pagination controls. The bulk-XP-award form
- * is offered only for the `char` inventory: on any other inventory, `items`
- * are addressed by `be_world_objects.id`, and awarding XP to whichever
- * *characters* happen to share those primary keys would be silent data
- * corruption behind a plausible success message
- * (query-beyond-characters-design.md §9.3, the highest-severity risk in the
- * whole feature).
+ * Renders a paginated table of query results with sortable columns and a per-row match-reason column explaining why
+ * each character matched.
  */
 export function QueryResults( {
 	gameSlug,
@@ -104,10 +85,7 @@ export function QueryResults( {
 		null
 	);
 
-	// A selection belongs to the search it was made on. In another inventory the same numeric ids
-	// mean different entities; in another search of the same inventory a checked row may no longer
-	// be on screen, and a bulk action would still reach it (1.0.0-review F-075). Paging and sorting
-	// are the same search and keep it.
+	// A selection belongs to the search it was made on.
 	useEffect( () => {
 		setSelected( new Set() );
 	}, [ inventory, searchKey ] );
@@ -116,8 +94,7 @@ export function QueryResults( {
 		inventory === 'char' &&
 		( window.beyondElysium?.capabilities?.be_manage_characters ?? false );
 
-	// Sourced from the server rather than hardcoded a second time client-side - the same
-	// "options" pattern Approval_Rules_Controller's own vocabulary route already established.
+	// Sourced from the server.
 	useEffect( () => {
 		if ( ! canBulkManage ) {
 			return;

@@ -6,11 +6,8 @@ use BeyondElysium\Models\World_Object;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Each `object_type`'s property schema accepts its own properties, rejects another
- * type's, and rejects unknown keys entirely (workflow-0.7.md Step 1f) - a typo'd
- * property that silently persists is a bug that surfaces months later in a report.
- *
- * @see BE_PROCESS/releases/workflow-0.7.md Step 1
+ * Each `object_type`'s property schema accepts its own properties, rejects another type's, and rejects unknown keys
+ * entirely.
  */
 class WorldObjectSchemaTest extends TestCase {
 
@@ -55,13 +52,6 @@ class WorldObjectSchemaTest extends TestCase {
 		$this->assertNull( $error );
 	}
 
-	/**
-	 * BE_PROCESS/releases/0.99.2-workflow.md: real bug found building it -
-	 * Boons_Controller::repay() passing `repaid_note` alongside `status`/`repaid_date`
-	 * silently no-op'd the ENTIRE update (validate_properties() rejects the whole set on any
-	 * one unrecognized key, and World_Object::update() returns false rather than partially
-	 * applying), not just the note. Regression guard now that the boon schema recognizes it.
-	 */
 	public function test_boon_accepts_a_repaid_note(): void {
 		$error = World_Object::validate_properties( 'boon', [
 			'status'      => 'repaid',

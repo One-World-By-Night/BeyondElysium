@@ -1,9 +1,5 @@
 /**
- * Owns the Storyteller's in-progress decisions on an import preview - the same state,
- * handlers, and blocking-count wiring `GameImportTool.tsx` and `ImportTool.tsx` each
- * hand-rolled identically around `importDecisions.ts`'s pure functions until this was
- * extracted (1.1.1 audit). Generic over the preview shape so both the game-file wizard
- * (`GameImportPreview`) and the character-file wizard (`ImportPreview`) share it.
+ * Owns the Storyteller's in-progress decisions on an import preview.
  */
 import { useState } from '@wordpress/element';
 import {
@@ -38,7 +34,9 @@ export interface UseImportDecisionsResult {
 		key: string,
 		action: DuplicateAction | null
 	) => void;
-	/** How many trait/duplicate/world-object decisions still block a commit. */
+	/**
+	 * How many trait/duplicate/world-object decisions still block a commit.
+	 */
 	blockingCount: () => number;
 }
 

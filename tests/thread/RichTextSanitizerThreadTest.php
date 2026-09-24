@@ -6,12 +6,8 @@ use BeyondElysium\Services\Rich_Text_Sanitizer;
 use WP_UnitTestCase;
 
 /**
- * `Rich_Text_Sanitizer` - the stricter-than-`wp_kses_post()` allowlist for a
- * catalog item's `description` field: formatting, lists, and tables survive;
- * images and anything else are stripped. Modeled on `Pdf_Writer`'s own
- * `PROSE_ALLOWED_TAGS`/`sanitize_prose()`, including its script/style
- * content-stripping fix (`wp_kses()` unwraps a disallowed tag but keeps its
- * inner text, so the tag's own content must be removed first).
+ * `Rich_Text_Sanitizer` - the stricter-than-`wp_kses_post()` allowlist for a catalog item's `description` field:
+ * formatting, lists, and tables survive.
  */
 class RichTextSanitizerThreadTest extends WP_UnitTestCase {
 

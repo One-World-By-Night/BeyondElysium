@@ -9,8 +9,8 @@ use BeyondElysium\Models\Game_Member;
 use WP_UnitTestCase;
 
 /**
- * The new-admin pointer to Chronicle Setup (1.3.6, guided-chronicle-setup-design.md §6.6): who
- * is pointed at which chronicle, where it shows, and that dismissing it is per user.
+ * The new-admin pointer to Chronicle Setup: who is pointed at which chronicle, where it shows, and that dismissing it
+ * is per user.
  */
 class SetupNoticeThreadTest extends WP_UnitTestCase {
 

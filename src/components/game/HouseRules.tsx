@@ -1,12 +1,5 @@
 /**
- * Front-end display of the "House Rules" report - every catalog item, tiered
- * power level, or tiered power family carrying a `description` note
- * (Decision 094), grouped by the schema block it lives on. A live view of
- * the same data `Reports_Controller::get_pdf()` renders as a signed PDF;
- * this component fetches the plain JSON form instead
- * (`api.reports(gameSlug).document('house-rules')`) and renders it directly
- * on the page - meant to be dropped in via the Elementor widget or the
- * `[be_house_rules]` shortcode, not just viewed from the admin Reports page.
+ * Front-end display of the "House Rules" report.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -46,10 +39,7 @@ const SECTION_LABELS: Record< keyof HouseRuleSections, string > = {
 };
 
 /**
- * Renders every set `description` section as raw HTML via
- * `dangerouslySetInnerHTML` - safe here because `Rich_Text_Sanitizer` has
- * already narrowed it server-side, at write time, the same trust boundary
- * `CharacterSheet.tsx` already relies on for biography/notes.
+ * Renders every set `description` section as raw HTML via `dangerouslySetInnerHTML`.
  */
 function SectionBlock( { label, html }: { label: string; html: string } ) {
 	return (

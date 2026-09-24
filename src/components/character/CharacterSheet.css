@@ -1,10 +1,4 @@
-/*
- * Decision 041: an approved override sets these custom properties inline
- * (CharacterSheet.tsx), scoped to one character's own sheet - the defaults here are
- * exactly the plugin's existing look, so a character with no override renders
- * byte-identical to before this existed. Nothing below reads a color/font literal
- * directly; every visual rule that should be overridable goes through one of these.
- */
+/* Custom properties for one character's sheet; an approved style override sets them inline. */
 .be-character-sheet {
 	--be-sheet-font: inherit;
 	--be-sheet-accent: var(--be-red-1);
@@ -27,14 +21,7 @@
 	color: var(--be-sheet-accent);
 }
 
-/*
- * A plain button reset to a bare heading - full width and left-aligned so the whole
- * title row is the click target, not just the text itself. D34: compound-class
- * specificity, since hello-elementor's own `button:focus, button:hover { background-color:
- * #c36; color: #fff }` (a pseudo-class beats a bare single class outright, not just a
- * source-order tie) painted the whole heading solid pink the moment it was clicked -
- * found live.
- */
+/* A plain button reset to a bare heading. */
 .be-character-sheet__section-toggle.be-character-sheet__section-toggle {
 	display: flex;
 	align-items: center;
@@ -133,10 +120,8 @@
 	font-size: 0.9rem;
 }
 
-/* The action picker (owner, 2026-09-15): one list and Go in place of a row of buttons. */
+/* The action picker: one list and Go in place of a row of buttons. */
 
-/* `width: auto`, or a theme's full-width `select` (hello-elementor's reset) pushes Go and the
- * help button onto a line of their own. */
 .be-character-sheet__action-select {
 	width: auto;
 	min-width: 14rem;
@@ -254,30 +239,6 @@
 	margin: 0;
 }
 
-/*
- * D26: neither CSS Grid auto-placement nor `columns: N` multi-column layout survived
- * real-browser verification. Grid's auto-placement burns through many rows before
- * column 2's items even start, given DOM order sorted by (column, order) - confirmed by
- * actually rendering it. `columns: N` + `break-inside: avoid` looked right in isolation,
- * but a narrow column forcing a phrase like "Graceful x2 ●●" to wrap destabilized the
- * browser's column-fragmentation height calculation badly enough that one section
- * visually painted on top of the next section's box below it, even though
- * getBoundingClientRect() reported clean, non-overlapping geometry for both - a real
- * paint/geometry mismatch, reproduced at both 1280px and 1920px viewports, not a
- * screenshot artifact and not fixed by more width alone.
- *
- * Each section already carries an explicit `column` number from the template layout
- * (CharacterSheet.tsx buckets sections into real arrays, one per column, before
- * rendering), so this is now three ordinary sibling `<div>` columns in normal block
- * flow - no CSS fragmentation involved anywhere, so this class of bug cannot recur.
- *
- * Six tracks, not three: a section's own `width` (templateLayout.ts's spanFor()) spans
- * 2 ('third'), 3 ('half'), or 6 ('full') of them, so three 'third' sections or two 'half'
- * sections both fill one row exactly and the next section starts a fresh row beneath -
- * real 50/50 and full-width rows (user report, 2026-09-09), not just three equal columns.
- * `minmax(0, 1fr)` lets a track genuinely narrow with its container; the 768px breakpoint
- * below handles the point where even that is no longer usable.
- */
 .be-character-sheet__grid {
 	display: grid;
 	grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -291,20 +252,7 @@
 	padding: 0.75rem;
 }
 
-/*
- * Print-only Physical/Social/Mental 3-column grouping (see CharacterSheet.tsx's own doc
- * comment for the full reasoning and the real print reference this matches). `contents`
- * makes both wrappers invisible to the Grid layout algorithm on screen - each section
- * participates directly in the outer `repeat(6,1fr)` grid via its own `width`, exactly as
- * if the wrappers were not there at all. Only `@media print` below gives them real layout.
- *
- * Both levels, not only the outer one (owner, 2026-09-15: "4 columns here, 1 there"): the
- * column wrapper alone stayed a grid item one track wide, so Physical, Social, and Mental
- * each took a sixth of a row, Abilities squeezed in beside them, and Backgrounds sat alone.
- * The grouping also puts each positive list beside its own negative one in the page's
- * order; every section's inline `order` (CharacterSheet.tsx) puts them back in the
- * template's.
- */
+/* Print-only Physical, Social and Mental three-column grouping. */
 .be-character-sheet__attributes,
 .be-character-sheet__attribute-column {
 	display: contents;
@@ -328,26 +276,10 @@
 		grid-template-columns: 1fr;
 	}
 
-	/*
-	 * Every section carries a desktop `gridColumn: span N` inline style (CharacterSheet.tsx),
-	 * the same construction CharacterEditor.css:68-79 already had to override for the same
-	 * reason (v0.21.21 Step 8d) - a collapsed 1fr grid still honors an inline `span N`, which
-	 * fabricates near-zero-width implicit tracks instead of a single full-width column.
-	 * `!important` is the only way to beat an inline style from a stylesheet; not a
-	 * specificity workaround, the correct tool for this one case.
-	 */
 	.be-character-sheet__section {
 		grid-column: 1 / -1 !important;
 	}
 
-	/*
-	 * 1.1.0 D2: the toolbar, its export notice, and whatever action panel it opens are
-	 * the first thing in the DOM (CharacterSheet.tsx renders them before the header),
-	 * so a flex column with everything at its default order: 0 already puts the Action
-	 * picker at the top - above the header - with no `order` push needed. This replaces
-	 * 0.99.21's own information-priority reorder (`order: 10`, chrome demoted below
-	 * content), which the owner found made the Action picker read as missing on a phone.
-	 */
 	.be-character-sheet {
 		display: flex;
 		flex-direction: column;
@@ -359,19 +291,7 @@
 	}
 }
 
-/*
- * Print output modeled on a real reference sheet (pp-samples/vampire-pc-print.html,
- * reviewed 2026-09-09): dense, chrome-free, print.css applies at `print,screen` weight
- * there but we only need `@media print` since the on-screen version already has its own
- * (lighter) look. Their print body is a fixed 6.5in width, 8pt Verdana, minimal underlined
- * section headers instead of boxed cards - a reference document, not a styled prop.
- *
- * The theme chrome hidden below (#wpadminbar/header/nav/footer) is WordPress/hello-elementor
- * structure outside this component's own DOM - there is no cheap per-page way to scope this
- * more narrowly (same reasoning Plugin.php gives for always enqueuing wp.media/wp.editor
- * rather than detecting "this page has a BE widget" ahead of Elementor's meta-based render),
- * and every page that mounts a character sheet is one this plugin controls the intent of.
- */
+/* Print output: dense and chrome-free. */
 @media print {
 
 	#wpadminbar,
@@ -408,18 +328,12 @@
 		background: var(--be-gray-29) !important;
 	}
 
-	/* Reserved for interactive-only UI (edit controls, print options themselves) - never
-	 * the header info band or a section explicitly opted into printing, both of which are
-	 * content and must print. */
+	/* Reserved for interactive-only UI (edit controls, print options themselves). */
 	.be-character-sheet__chrome {
 		display: none !important;
 	}
 
-	/* A collapsed section (1.0.0-review checklist item 21) always prints in full - `hidden`
-	 * is a screen-only convenience for a viewer skimming the page, never something that
-	 * should shrink a printed or exported document. Not `revert`: the browser's own
-	 * `[hidden] { display: none }` rule already lives in the user-agent origin `revert`
-	 * would fall right back to, so it wouldn't un-hide anything. */
+	/* A collapsed section always prints in full. */
 	.be-character-sheet [hidden] {
 		display: block !important;
 	}
@@ -447,33 +361,7 @@
 		border-radius: 0;
 	}
 
-	/*
-	 * CSS multi-column, not the on-screen 6-track grid and not a single-column stack.
-	 *
-	 * Grid was the original bug: grid rows do not fragment across a print page break, so a
-	 * tall section (Hitchens' 69-entry Abilities) beside a short one left a whole page of
-	 * blank space next to it. Decision 059 fixed that by collapsing print to one column -
-	 * which removed the gaps but made a real sheet absurdly long. Measured, not estimated:
-	 * Hitchens printed to **7 pages** single-column versus **3** here.
-	 *
-	 * Two corrections to Decision 059's own record, both verified directly:
-	 *  - It claimed `pp-samples/vampire-pc-print.html` "was already a plain single-column
-	 *    flow the whole time." It is not, and never was: that reference buckets sections
-	 *    into `.section_group` wrappers of `float: left; width: 33%` - a 3-across float
-	 *    layout. Floats fragment across pages; grid does not. That is the real lesson.
-	 *  - `order: var(--be-print-order)` never did anything. Every seeded template section
-	 *    carries `column: 1` with a globally unique flat `order`, so the reordering was
-	 *    always a no-op, and `order` has no meaning at all outside flex/grid - which this
-	 *    rule is no longer either. Removed here and inline in CharacterSheet.tsx.
-	 *
-	 * Multi-column is what the grid should have been: it fragments correctly across both
-	 * columns and pages. Defect D26 recorded `columns: 3` painting sections on top of one
-	 * another on SCREEN - but D26 also found a second, independent cause wearing the same
-	 * symptom (ResourcePoolRenderer's letter-spaced glyph string overflowing its own box),
-	 * which was fixed separately and no longer exists. Verified empirically here rather
-	 * than argued from that history: a real 3-page PDF of Hitchens rendered under this
-	 * rule shows clean two-column flow with zero overlap.
-	 */
+	/* CSS multi-column, not the on-screen 6-track grid and not a single-column stack. */
 	.be-character-sheet__grid {
 		display: block !important;
 		column-count: 2;
@@ -487,31 +375,10 @@
 		border-radius: 0;
 		padding: 0;
 
-		/*
-		 * Deliberately NOT `avoid`. Abilities alone is taller than a printable page, so
-		 * "don't break me" is unsatisfiable and the browser pushes the whole section to
-		 * the next column instead - which measured as a completely empty right-hand column
-		 * on page 1 (4 pages instead of 3). Letting a long list flow is both denser and
-		 * what the print reference's own floats do.
-		 */
 		break-inside: auto;
 	}
 
-	/*
-	 * User report, 2026-09-10: "NOT TWO COLUMNS. For...Physical/Social/Mental, we should
-	 * have 3 columns." Confirmed against the real print reference
-	 * (pp-samples/vampire-pc-print.html) before building this: it wraps exactly these six
-	 * blocks in three `.attributes{float:left;width:33%}` columns, distinct from the rest
-	 * of the page's own column grouping - see CharacterSheet.tsx's own doc comment for
-	 * why this is floats, not the multi-column this stylesheet uses everywhere else (two
-	 * real multi-column failure modes, both confirmed against generated PDFs, ruled it
-	 * out for this specific "3 known, fixed groups" case).
-	 *
-	 * `column-span: all` pulls the wrapper out of the outer 2-column flow to span the
-	 * full print width; ordinary floats inside that full-width band then lay Physical/
-	 * Social/Mental side by side, each column a plain block holding both its positive and
-	 * negative halves stacked together, matching the reference exactly.
-	 */
+	/* Physical, Social and Mental Traits print in three columns. */
 	.be-character-sheet__attributes {
 		display: block !important;
 		column-span: all;
@@ -523,10 +390,7 @@
 		width: 33%;
 	}
 
-	/* Classic float clearfix - without it, the wrapper's own height collapses to zero
-	 * (floats don't contribute to a parent's height), and whatever prints next (Abilities
-	 * onward) would wrap up alongside the floated columns instead of starting cleanly
-	 * beneath them. */
+	/* Classic float clearfix. */
 	.be-character-sheet__attributes::after {
 		content: "";
 		display: table;

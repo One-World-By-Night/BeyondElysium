@@ -9,10 +9,8 @@ use BeyondElysium\Models\Plot_Entry;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The four sections of `GET /{game}/my/queue` (1.1.0 §3.6): what a Storyteller or Narrator is
- * personally on the hook for in one chronicle, plus what nobody owns yet.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.6
+ * The four sections of `GET /{game}/my/queue`: what a Storyteller or Narrator is personally on the hook for in one
+ * chronicle, plus what nobody owns yet.
  */
 class Staff_Queue {
 
@@ -28,9 +26,8 @@ class Staff_Queue {
 	}
 
 	/**
-	 * Ordinary plots (never an action-allocation plot - that belongs to downtime() instead)
-	 * assigned to one staff member, whose newest player post is newer than its newest staff
-	 * post - the plots actually waiting on this person, not every plot they merely own.
+	 * Ordinary plots (never an action-allocation plot - that belongs to downtime() instead) assigned to one staff member,
+	 * whose newest player post is newer than its newest staff post.
 	 *
 	 * @param int $wp_user_id
 	 * @param int $game_id
@@ -58,9 +55,7 @@ class Staff_Queue {
 	}
 
 	/**
-	 * My castings for sessions today or later (§3.8) - any chronicle member's, not just a
-	 * Storyteller's, since anyone may be cast; this section of My Queue is simply the one
-	 * place a cast Storyteller would see it alongside their other work.
+	 * My castings for sessions today or later.
 	 *
 	 * @param int $wp_user_id
 	 * @param int $game_id
@@ -72,8 +67,7 @@ class Staff_Queue {
 	}
 
 	/**
-	 * Counts of unanswered downtime and unanswered plot posts nobody owns, so nothing falls
-	 * through an empty assignment.
+	 * Counts of unanswered downtime and unanswered plot posts nobody owns.
 	 *
 	 * @param int $game_id
 	 * @return array{downtime: int, plots: int}
@@ -81,9 +75,7 @@ class Staff_Queue {
 	public static function unassigned( int $game_id ): array {
 		$downtime_count = 0;
 		foreach ( Plot::for_game( $game_id, [ 'assigned_to' => null ] ) as $plot ) {
-			// game_date IS NULL is a character's own permanent home plot (Character::ensure_plot()),
-			// not a dated round - it carries the same apr_actor connection but is never itself
-			// something to answer, matching Action_Allocator::plots_assigned_to()'s own exclusion.
+			// game_date IS NULL is a character's own permanent home plot (Character::ensure_plot()).
 			if ( $plot->game_date === null || Action_Allocator::actor_character_id( (int) $plot->id ) === null ) {
 				continue;
 			}
@@ -107,10 +99,7 @@ class Staff_Queue {
 	}
 
 	/**
-	 * Whether an ordinary plot's newest player (`action`) post is newer than its newest staff
-	 * post - a held entry or a Storyteller-only `note`/`rumor_level` never counts as a staff
-	 * post, matching §3.5's own definition of what a Storyteller "post" is. Null when there is
-	 * no player post at all, or the newest post already belongs to staff.
+	 * Whether an ordinary plot's newest player (`action`) post is newer than its newest staff post.
 	 *
 	 * @param int $plot_id
 	 * @return array{newest_player_post_at: string, newest_staff_post_at: ?string}|null
@@ -148,10 +137,7 @@ class Staff_Queue {
 	}
 
 	/**
-	 * An action-allocation plot's action count, last action time, and current answer - the
-	 * same primitive Downtime_Window's own queue uses, duplicated at this narrow scope rather
-	 * than exposed there, since unassigned() only ever needs the answered/unanswered boolean,
-	 * never the full queue row shape.
+	 * An action-allocation plot's action count, last action time, and current answer.
 	 *
 	 * @param int $plot_id
 	 * @return array{0:int,1:?string,2:?object}

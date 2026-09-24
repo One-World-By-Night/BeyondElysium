@@ -10,11 +10,8 @@ use BeyondElysium\Services\Change_Engine;
 use WP_UnitTestCase;
 
 /**
- * Covers the reason-carrying half of resolve_approval_level() - a schema block item or
- * tiered_power level can now carry a `reason` string (the real-world approval authority
- * a bylaw import would set), which must always force at least `st`-level review and must
- * be attached to the resulting Change record. Real Storyteller/Coordinator approval
- * routing itself is never automated by this plugin - the reason is surfaced, not enforced.
+ * The reason-carrying half of `resolve_approval_level()`: a schema block item or tiered_power level can carry a
+ * `reason` string, which forces at least a Storyteller review.
  */
 class ChangeEngineBylawReasonTest extends WP_UnitTestCase {
 
@@ -106,8 +103,7 @@ class ChangeEngineBylawReasonTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_reason_cannot_be_downgraded_by_an_auto_approval_override(): void {
-		// Real scenario: an admin sets approval=auto for other reasons, but a bylaw reason
-		// is also present - the reason's implicit st-floor must win, never auto.
+		// Real scenario: an admin sets approval=auto for other reasons.
 		$character = $this->make_character();
 		$resolved  = Change_Engine::resolve_approval_level( $character, (object) [
 			'change_type' => 'add_trait',
@@ -132,7 +128,6 @@ class ChangeEngineBylawReasonTest extends WP_UnitTestCase {
 	public function test_tiered_power_level_reason_is_matched_by_exact_level_only(): void {
 		$character = $this->make_character();
 
-		// Level 1 carries no reason at all.
 		$unflagged = Change_Engine::resolve_approval_level( $character, (object) [
 			'change_type' => 'add_trait',
 			'change_data' => [ 'block_slug' => $this->tiered_power_slug, 'trait' => [ 'name' => 'Visceratika', 'level' => 1 ] ],
@@ -140,7 +135,6 @@ class ChangeEngineBylawReasonTest extends WP_UnitTestCase {
 		$this->assertSame( 'st', $unflagged['level'] );
 		$this->assertNull( $unflagged['reason'], 'level 1 has no reason of its own and must not inherit level 3/4\'s' );
 
-		// Level 3 (notify-style) and level 4 (approval-style) each carry their own distinct reason.
 		$level_three = Change_Engine::resolve_approval_level( $character, (object) [
 			'change_type' => 'add_trait',
 			'change_data' => [ 'block_slug' => $this->tiered_power_slug, 'trait' => [ 'name' => 'Visceratika', 'level' => 3 ] ],
@@ -197,8 +191,6 @@ class ChangeEngineBylawReasonTest extends WP_UnitTestCase {
 		$this->assertSame( 'st', $resolved['level'], 'game-level auto_approve must never wave through a real bylaw citation' );
 		$this->assertNotNull( $resolved['reason'] );
 
-		// Confirmed for real: the SAME game's plain (reason-less) item still gets the
-		// existing auto-approve convenience, proving this isn't a blanket regression.
 		$plain = Change_Engine::resolve_approval_level( $character, (object) [
 			'change_type' => 'add_trait',
 			'change_data' => [ 'block_slug' => $this->trait_list_slug, 'trait' => [ 'name' => 'Plain Item' ] ],
@@ -206,16 +198,6 @@ class ChangeEngineBylawReasonTest extends WP_UnitTestCase {
 		$this->assertSame( 'auto', $plain['level'] );
 	}
 
-	/**
-	 * Decision 109's own real bug: the old game-level auto_approve check ran AFTER
-	 * resolve_approval_level() had already settled on a level, and could only tell "nothing
-	 * fired" from "something fired" by checking whether $reason was null - but a power's own
-	 * explicit approval_override (or a matched pool/field schedule entry) resolves to 'st'
-	 * with no reason attached just as often as "nothing fired at all" does. Obfuscate's
-	 * approval_override='st' here carries no reason, so under the old code a chronicle-wide
-	 * auto_approve=true would have silently waved it through to 'auto' despite being an
-	 * explicit, granular Storyteller-review requirement - exactly the bug this test guards.
-	 */
 	public function test_an_explicit_granular_st_override_survives_chronicle_wide_auto_approve(): void {
 		$game_slug = 'thread-test-granular-st-survives-auto-approve';
 		Game::create( [

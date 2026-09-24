@@ -7,10 +7,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Step 3e audit findings: `is_npc` was never capability-gated on the actual write path
- * (only CharactersControllerNpcVisibilityTest's *listing* filter, D13, was) - a player
- * could set it directly on their own character via create or update. `status` and
- * `start_date` had no server-side format validation at all.
+ * Character writes are validated: `is_npc` is capability-gated on create and update and is a real boolean over REST, an
+ * invalid status or malformed start date is rejected, and a portrait must be a real attachment.
  */
 class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 
@@ -33,7 +31,9 @@ class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 		\BeyondElysium\Models\Game_Member::set_role( $game_id, $this->player_id, 'player' );
 	}
 
-	/** A Storyteller of this test's chronicle - an editor with an HST membership row. */
+	/**
+	 * A Storyteller of this test's chronicle.
+	 */
 	private function storyteller(): int {
 		$user_id = self::factory()->user->create( [ 'role' => 'editor' ] );
 		$game    = \BeyondElysium\Models\Game::find_by_slug( $this->game_slug );
@@ -46,7 +46,7 @@ class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters" );
 		$request->set_param( 'name', 'Sneaky NPC Attempt' );
-		$request->set_param( 'stack_slug', 'vampire' ); // a real registered stack - stack_slug is now validated against the catalog (GS-3)
+		$request->set_param( 'stack_slug', 'vampire' );
 		$request->set_param( 'is_npc', true );
 		$data = rest_get_server()->dispatch( $request )->get_data();
 
@@ -83,15 +83,6 @@ class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 		$this->assertSame( 1, (int) $data->is_npc, 'A manager must still be able to set is_npc - only non-managers are blocked.' );
 	}
 
-	/**
-	 * admin-menu-consolidation-design.md: $wpdb always returns column values as strings
-	 * regardless of SQL type, so an unset tinyint(1) came back over REST as the literal
-	 * string "0" - truthy in both PHP and JavaScript, which made the client-side NPC
-	 * checkbox (and, before this fix, CharacterSheet.tsx's own npc_full/sheet_full
-	 * template choice) permanently stuck reading every character as an NPC. Fixed once in
-	 * Character::decode_sheet(), the one place every row-returning method in that class
-	 * already funnels through.
-	 */
 	public function test_is_npc_is_a_real_boolean_over_rest_not_a_truthy_string(): void {
 		$admin_id     = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		$character_id = Character::create( [
@@ -119,7 +110,7 @@ class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters" );
 		$request->set_param( 'name', 'Bad Status Character' );
-		$request->set_param( 'stack_slug', 'vampire' ); // a real registered stack - stack_slug is now validated against the catalog (GS-3)
+		$request->set_param( 'stack_slug', 'vampire' );
 		$request->set_param( 'status', 'deceased-but-fabulous' );
 		$response = rest_get_server()->dispatch( $request );
 
@@ -134,7 +125,7 @@ class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 			'wp_user_id' => $this->player_id,
 		] );
 
-		// Status is a Storyteller's to set (1.0.0-review F-033), so its validation is checked as one.
+		// Status is a Storyteller's to set.
 		wp_set_current_user( $this->storyteller() );
 		$request = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/characters/{$character_id}" );
 		$request->set_param( 'status', 'not-a-real-status' );
@@ -180,10 +171,7 @@ class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Decision 054 - a player setting their own character's portrait is a self-service
-	 * edit like player_name/biography above, not a management action - but the value
-	 * still has to be a real media attachment, the same check
-	 * Sheet_Style_Controller::update_item() already applies to background_image_id.
+	 * A player setting their own character's portrait is a self-service edit like player_name/biography above.
 	 */
 	public function test_a_non_attachment_image_id_is_rejected(): void {
 		$character_id = Character::create( [
@@ -192,8 +180,6 @@ class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 			'wp_user_id' => $this->player_id,
 		] );
 
-		// A real post ID, deliberately the wrong post_type - not a made-up number, so this
-		// proves the check inspects the post type, not just "does this ID exist at all."
 		$not_an_attachment = self::factory()->post->create( [ 'post_type' => 'post' ] );
 
 		wp_set_current_user( $this->player_id );
@@ -226,9 +212,7 @@ class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 		$data = $response->get_data();
 		$this->assertSame( $attachment_id, (int) $data->image_id );
 
-		// image_url is resolved fresh on every GET, not stored - a second fetch is the
-		// real proof it round-trips, not just that update_item()'s own response happened
-		// to include it.
+		// image_url is resolved fresh on every GET.
 		$get_request  = new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/characters/{$character_id}" );
 		$get_response = rest_get_server()->dispatch( $get_request );
 		$get_data     = $get_response->get_data();

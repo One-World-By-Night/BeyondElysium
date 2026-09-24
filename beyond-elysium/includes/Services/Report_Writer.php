@@ -5,18 +5,7 @@ namespace BeyondElysium\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Turns a `Report_Document::build()` array into TCPDF pages, then page bytes -
- * the report-level sibling of `Pdf_Writer`. Dispatches on the document's own
- * `shape` string only (P7; reports-cards-batch-design.md §3.3) - never on a
- * report's identity.
- *
- * Signs through the same `Pdf_Signer::configure()` contract `Pdf_Writer`
- * uses: P6, "everything that prints inherits this generator." Asked to sign
- * where signing isn't available, it throws exactly as a character sheet
- * would; `Reports_Controller` passes `Pdf_Signer::availability()`, and an
- * unsigned report is stamped UNSIGNED on every page (1.0.0-review F-042).
- *
- * @see BE_PROCESS/design/reports-cards-batch-design.md §3.3
+ * Turns a `Report_Document::build()` array into TCPDF pages.
  */
 class Report_Writer {
 
@@ -94,10 +83,8 @@ class Report_Writer {
 	}
 
 	/**
-	 * A header row (repeated whenever a page break lands after it, via TCPDF's
-	 * own `setAutoPageBreak` page-break check on `Cell()`), then one row per
-	 * result - identical shape to `Pdf_Writer::draw_xp_history()`'s own table,
-	 * generalized to N columns.
+	 * A header row (repeated whenever a page break lands after it, via TCPDF's own `setAutoPageBreak` page-break check on
+	 * `Cell()`).
 	 *
 	 * @param array<string,mixed> $document
 	 */
@@ -145,11 +132,7 @@ class Report_Writer {
 	}
 
 	/**
-	 * N-up card grid at GV301's own 5in×3in card size (2 across on A4's
-	 * usable width, since 2×127mm already exceeds the ~180mm usable width at
-	 * anything less than a tight fit - measured directly, not guessed:
-	 * A4 usable width is 180mm, so 1 card per row at full size, 2 rows per
-	 * page (A4 usable height ~267mm / 76.2mm ≈ 3 rows, used at 2 for margin).
+	 * Draws the card grid at Grapevine's 5in×3in card size: one card per row and two rows per page on A4.
 	 *
 	 * @param array<string,mixed> $document
 	 */
@@ -215,8 +198,7 @@ class Report_Writer {
 	}
 
 	/**
-	 * Plot Report: one block per plot, prose rather than a table - the
-	 * report's own real "narrative" shape.
+	 * Plot Report: one block per plot, prose.
 	 *
 	 * @param array<string,mixed> $document
 	 */
@@ -244,8 +226,7 @@ class Report_Writer {
 	}
 
 	/**
-	 * Game Calendar: always the honest empty state today
-	 * (reports-cards-batch-design.md §5 - no real schedule data source yet).
+	 * Game Calendar: always the empty state.
 	 *
 	 * @param array<string,mixed> $document
 	 */
@@ -255,13 +236,7 @@ class Report_Writer {
 	}
 
 	/**
-	 * The only shape that renders actual rich HTML (tables, lists,
-	 * formatting) rather than a plain string - every `description` section
-	 * is re-sanitized through `Rich_Text_Sanitizer::sanitize()` immediately
-	 * before `writeHTML()`, the same defense-in-depth discipline
-	 * `Pdf_Writer::sanitize_prose()` already uses for biography/notes:
-	 * content already sanitized at write time should never reach TCPDF
-	 * unsanitized a second time, regardless of how it got into the row.
+	 * The only shape that renders actual rich HTML (tables, lists, formatting).
 	 *
 	 * @param array<string,mixed> $document
 	 */

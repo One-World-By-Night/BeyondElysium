@@ -11,15 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * A player proposes an item for their own character; a Storyteller approves it and the
- * catalog gains a row connected to that character (1.0.1 D3).
- *
- * The sharp edge this pins: the Approval Queue is gated on `be_manage_characters`, but
- * approving *this* change type writes the chronicle's catalog. Without the extra
- * `be_manage_world_objects` check, a role with character-approval rights but no catalog rights
- * could create catalog entries simply by approving them.
- *
- * @see BE_PROCESS/releases/1.0.1-design-workflow.md §3, D3
+ * A player proposes an item for their own character.
  */
 class ProposeWorldObjectThreadTest extends WP_UnitTestCase {
 
@@ -147,9 +139,7 @@ class ProposeWorldObjectThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The gap this whole check exists for. A Narrator holds neither capability and never
-	 * reaches the queue; the dangerous case is a role that manages characters but not the
-	 * catalog, which must be able to reject but never to approve.
+	 * A reviewer without catalog rights cannot approve an item proposal.
 	 */
 	public function test_a_reviewer_without_catalog_rights_cannot_approve_it(): void {
 		$change_id = (int) ( (array) $this->propose()->get_data() )['id'];
@@ -157,8 +147,6 @@ class ProposeWorldObjectThreadTest extends WP_UnitTestCase {
 		$reviewer = self::factory()->user->create( [ 'role' => 'editor' ] );
 		Game_Member::set_role( $this->game_id, $reviewer, 'hst' );
 
-		// An HST holds both, so take the catalog capability away to construct exactly the role
-		// the check defends against, rather than asserting against a role that cannot occur.
 		$user = new \WP_User( $reviewer );
 		$user->add_cap( 'be_manage_world_objects', false );
 

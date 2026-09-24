@@ -1,8 +1,6 @@
 /**
- * CharacterList renders the character roster: a sortable, filterable, paginated
- * table with per-row player assignment and delete controls for managers. Also
- * exports AssignPlayerModal, the modal used to link or unlink a character's
- * WordPress account.
+ * CharacterList renders the character roster: a sortable, filterable, paginated table with per-row player assignment
+ * and delete controls for managers.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -24,10 +22,14 @@ export interface CharacterListProps {
 	stackSlug?: string;
 	status?: string;
 	showNpcs?: boolean;
-	/** Base URL of the page that renders CharacterSheet; with none given, names render as plain text. */
+	/**
+	 * Base URL of the page that renders CharacterSheet.
+	 */
 	sheetPageUrl?: string;
 	perPage?: number;
-	/** What the person can do in this chronicle, when the page resolved it; the site-wide snapshot otherwise (F-103). */
+	/**
+	 * What the person can do in this chronicle, when the page resolved it.
+	 */
 	capabilities?: MyCapabilities;
 }
 
@@ -48,7 +50,9 @@ const COLUMNS: Array< { key: SortableColumn; label: string } > = [
 	{ key: 'player_name', label: __( 'Player', 'beyond-elysium' ) },
 ];
 
-/** Looks up a column's display label by key, for the phone-width `data-label` on each `<td>`. */
+/**
+ * Looks up a column's display label by key, for the phone-width `data-label` on each `<td>`.
+ */
 function labelFor( key: SortableColumn ): string {
 	return COLUMNS.find( ( c ) => c.key === key )?.label ?? '';
 }
@@ -58,7 +62,9 @@ const STATUS_OPTIONS = [ 'active', 'inactive', 'retired', 'dead', 'pending' ];
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-/** The travelling badge's hover text: where the character went, or where it came from. */
+/**
+ * The travelling badge's hover text: where the character went, or where it came from.
+ */
 function travellingTitle( status: TravellingStatus ): string {
 	const other =
 		status.chronicle ?? __( 'no host confirmed yet', 'beyond-elysium' );
@@ -90,9 +96,8 @@ function sheetLink(
 }
 
 /**
- * Character roster: sortable, filterable, and paginated, with search-by-name and
- * filters for creature type and status. All sorting, filtering, and paging happens
- * server-side against the current query, never client-side over a single fetched page.
+ * Character roster: sortable, filterable, and paginated, with search-by-name and filters for creature type and
+ * status.
  */
 export function CharacterList( {
 	gameSlug,
@@ -132,8 +137,7 @@ export function CharacterList( {
 	}, [ searchInput ] );
 
 	useEffect( () => {
-		// GS-3: narrows the filter to this chronicle's own enabled stacks - a filter
-		// dropdown should not offer a splat the chronicle doesn't run.
+		// Narrows the filter to this chronicle's own enabled stacks.
 		api.creatureStacks
 			.list( { game_slug: gameSlug } )
 			.then( setStacks )
@@ -176,7 +180,7 @@ export function CharacterList( {
 				setTotalPages( Math.max( 1, result.totalPages ) );
 			} )
 			.catch( () => {
-				// Shows an explicit error instead of silently rendering an empty roster.
+				// Shows an explicit error.
 				if ( ! cancelled ) {
 					setError(
 						__(
@@ -572,9 +576,6 @@ export function CharacterList( {
 
 /**
  * Modal for assigning or changing a character's linked WordPress user account.
- * Searches users by name or email as the query changes, and offers unassigning
- * the current player. When no account exists yet, records a pending email so the
- * character can later be confirmed once that person registers.
  */
 function AssignPlayerModal( {
 	character,
@@ -590,7 +591,6 @@ function AssignPlayerModal( {
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
 	const [ submitting, setSubmitting ] = useState( false );
-	// Recorded so a character can later be matched once this email registers an account.
 	const [ pendingEmail, setPendingEmail ] = useState(
 		character.pending_player_email ?? ''
 	);

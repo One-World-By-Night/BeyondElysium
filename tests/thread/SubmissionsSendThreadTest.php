@@ -9,12 +9,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * F-122's sending half through the real REST server: `preview`, `create`,
- * `withdraw`, and `/my/submissions`. Uploads real exported `.gex` XML from a
- * real database character, matching ImportControllerThreadTest's own
- * established pattern, rather than hand-authoring XML fixtures.
- *
- * @see BE_PROCESS/design/player-grapevine-file-design.md §6
+ * Sending a Grapevine file through the real REST server: `preview`, `create`, `withdraw` and `/my/submissions`.
  */
 class SubmissionsSendThreadTest extends WP_UnitTestCase {
 
@@ -56,9 +51,8 @@ class SubmissionsSendThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Exports a real database character to a real temp file, in the exact
-	 * multipart shape the REST server expects an upload in
-	 * (ImportControllerThreadTest's own established pattern).
+	 * Exports a real database character to a real temp file, in the exact multipart shape the REST server expects an
+	 * upload in (ImportControllerThreadTest's own established pattern).
 	 */
 	private function upload_request( string $route, string $xml, array $params = [], string $filename = 'sheet.gex' ): WP_REST_Request {
 		$tmp = tempnam( sys_get_temp_dir(), 'be-submission-test' );
@@ -74,8 +68,7 @@ class SubmissionsSendThreadTest extends WP_UnitTestCase {
 				'type'     => 'application/octet-stream',
 			],
 		] );
-		// WP_REST_Request::set_param() returns void, not $this - set every param here rather
-		// than chaining it at each call site.
+		// WP_REST_Request::set_param() returns void.
 		foreach ( $params as $key => $value ) {
 			$request->set_param( $key, $value );
 		}
@@ -91,8 +84,7 @@ class SubmissionsSendThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A real, exported vampire character's XML, ready to upload - not this chronicle's own
-	 * row, so create()'s duplicate matching never has anything real to match against.
+	 * A real, exported vampire character's XML, ready to upload.
 	 */
 	private function real_export( array $overrides = [] ): string {
 		$id = Character::create( array_merge( [
@@ -200,9 +192,6 @@ class SubmissionsSendThreadTest extends WP_UnitTestCase {
 
 	public function test_several_characters_without_an_index_asks_which_one(): void {
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'subscriber' ] ) );
-		// A real multi-character file isn't something this test builds by hand - it splices two
-		// real exports' <vampire> race tags into one <grapevine> document, exactly the shape
-		// GEX_Xml_Parser reads for a real multi-character upload.
 		$first  = $this->real_export( [ 'name' => 'First Character' ] );
 		$second = $this->real_export( [ 'name' => 'Second Character' ] );
 		preg_match( '/<vampire\b.*<\/vampire>/s', $first, $m1 );

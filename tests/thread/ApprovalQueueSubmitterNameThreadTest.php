@@ -9,10 +9,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-116. The Approval Queue showed "Submitted by" as a bare WordPress user id
- * ("1") instead of who actually submitted the change - every other reviewer-facing field
- * (character_name, approval_level) is resolved to something readable, but submitted_by never
- * was.
+ * The Approval Queue shows who submitted a change by name, not by a bare WordPress user id.
  */
 class ApprovalQueueSubmitterNameThreadTest extends WP_UnitTestCase {
 

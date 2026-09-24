@@ -24,15 +24,12 @@
 	flex-wrap: wrap;
 	gap: 0.25rem;
 
-	/* Visual summary only (Step 0.5's own decision) - the stepper is the real control now,
-	   this row is aria-hidden and carries no button semantics at all. */
+	/* Visual summary only: the stepper is the real control; this row is aria-hidden and carries no button semantics at all. */
 }
 
 .be-dot-tracker__dot {
 
-	/* Square = permanent, circle (.be-dot-tracker__dot--temp below) = temporary - shape
-	   carries the distinction, never size: every dot is this size, the same as the sheet's
-	   (Dots.css; 1.0.0-review F-016, owner ruling 2026-09-14). */
+	/* Square = permanent, circle (.be-dot-tracker__dot--temp below) = temporary. */
 	display: inline-block;
 	box-sizing: border-box;
 	width: 0.875rem;
@@ -79,13 +76,6 @@
 	font-variant-numeric: tabular-nums;
 }
 
-/* Corrected (1.2.5-design-workflow.md §C, live testing): hello-elementor's real rule is
- * `[type="button"], [type="submit"], button { ... }`, not a bare `button{...}` element
- * selector - this stepper sets `type="button"` explicitly, so the `[type="button"]`
- * alternative ties a single class on specificity (0,1,0 each) rather than losing to it,
- * and a tie falls back to fragile source order (confirmed live on kony-sabbat.net:
- * `.be-help-button`'s identical shape lost this exact tie). Compound-class (0,2,0) wins
- * outright, matching `.be-tiered-power-editor__stepper-button`'s own corrected fix. */
 .be-dot-tracker .be-dot-tracker__stepper-button {
 	width: 1.6rem;
 	height: 1.6rem;

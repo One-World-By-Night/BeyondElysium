@@ -1,7 +1,5 @@
 /**
- * What the Character Sheet's action picker offers a viewer (owner, 2026-09-15: one picker in
- * place of the toolbar's ten buttons). Each action shows only to someone allowed to use it; the
- * server checks again when it's used.
+ * What the Character Sheet's action picker offers a viewer.
  */
 
 export type SheetAction =

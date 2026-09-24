@@ -8,16 +8,7 @@ use BeyondElysium\Database\Transaction;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Static data-access model for scheduled release batches (1.1.0 §3.2).
- *
- * Rumors and downtime answers go out in batches, several between games, rather than the
- * instant a Storyteller writes them - a held plot or plot_entry carries a release_batch_id
- * pointing here, and stays invisible to a non-manager until this batch is out. `is_out_row()`
- * is the one rule the whole gate rests on: pure and unit-tested, since Services\Audience,
- * Services\Release_Engine, and this model's own transition checks all need the identical
- * answer to "is this batch out yet" and can never be allowed to drift apart.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.2
+ * Static data-access model for scheduled release batches.
  */
 class Release_Batch {
 
@@ -38,8 +29,7 @@ class Release_Batch {
 	}
 
 	/**
-	 * Every release batch for a chronicle, newest created first, optionally narrowed to one
-	 * status - the Releases tab's own Draft/Scheduled/Released lists each read this once.
+	 * Every release batch for a chronicle, newest created first, optionally narrowed to one status.
 	 *
 	 * @param int         $game_id
 	 * @param string|null $status One of STATUSES, or null for every status.
@@ -59,10 +49,7 @@ class Release_Batch {
 	}
 
 	/**
-	 * Creates a new release batch. game_id and name are required. status is derived, never
-	 * accepted from the caller: `scheduled` when release_at is given, `draft` otherwise -
-	 * matching the create route's own contract (§3.2). Returns the new row's id, or false
-	 * when name is missing.
+	 * Creates a new release batch. game_id and name are required. status is derived.
 	 *
 	 * @param array $data
 	 * @return int|false
@@ -86,11 +73,7 @@ class Release_Batch {
 	}
 
 	/**
-	 * Updates a draft or scheduled batch's name, release_at, and/or status. A released batch
-	 * is final and refuses every update; `status` here only ever moves between `draft` and
-	 * `scheduled` - reaching `released` is Release_Engine::release()'s job alone. Moving a
-	 * scheduled batch back to draft is refused once it is already out (§3.2's transition
-	 * table) - it would hide something non-managers may already have seen.
+	 * Updates a draft or scheduled batch's name, release_at, and/or status.
 	 *
 	 * @param int   $id
 	 * @param array $data
@@ -133,10 +116,7 @@ class Release_Batch {
 	}
 
 	/**
-	 * Look up a batch and lock its row until the surrounding transaction ends, so two
-	 * concurrent callers (a click and the cron sweep racing the same due batch) can't both
-	 * decide it still needs releasing. Must run inside a Transaction - Release_Engine::release()
-	 * is the one caller.
+	 * Look up a batch and lock its row until the surrounding transaction ends.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -149,10 +129,7 @@ class Release_Batch {
 	}
 
 	/**
-	 * Marks a batch released. Called only by Release_Engine::release(), from inside the
-	 * transaction that already holds this row's lock - the engine computes released_at
-	 * (COALESCE'd against release_at) and notified_at itself, since that arithmetic is the
-	 * idempotency check's own business, not this model's.
+	 * Marks a batch released.
 	 *
 	 * @param int    $id
 	 * @param string $released_at `Y-m-d H:i:s`.
@@ -169,11 +146,7 @@ class Release_Batch {
 	}
 
 	/**
-	 * Deletes a draft or scheduled batch, returning its plots and entries to draft - held
-	 * stays 1, release_batch_id clears to NULL (§3.2's gate table: that pair means "never,
-	 * it is a draft", not "visible"). A released batch can't be deleted - final means final -
-	 * and the caller (Release_Batches_Controller) is expected to have already turned that
-	 * into a 409 rather than relying on this silent false.
+	 * Deletes a draft or scheduled batch, returning its plots and entries to draft.
 	 *
 	 * @param int $id
 	 * @return bool
@@ -201,10 +174,7 @@ class Release_Batch {
 	}
 
 	/**
-	 * Every scheduled batch, across every chronicle, whose release_at has already passed -
-	 * what the quarter-hour sweep (§3.2, Core\Maintenance::run_release_sweep()) releases.
-	 * Global rather than game-scoped: the sweep has no single chronicle in view, the same
-	 * shape as Transfer::expire_stale().
+	 * Every scheduled batch, across every chronicle, whose release_at has already passed.
 	 *
 	 * @return object[]
 	 */
@@ -216,10 +186,7 @@ class Release_Batch {
 	}
 
 	/**
-	 * Whether a batch is "out" - released outright, or scheduled with a release_at that has
-	 * already passed. Visibility never waits for cron (§3.2): a batch due at 5pm is out at
-	 * 5:00:01 to whoever loads the page, not whenever the sweep next runs. Pure (no clock
-	 * read, no query) so it can be unit-tested against a fixed $now.
+	 * Whether a batch is "out".
 	 *
 	 * @param object $batch
 	 * @param string $now `Y-m-d H:i:s`, the same format `current_time('mysql')` returns.
@@ -233,9 +200,7 @@ class Release_Batch {
 	}
 
 	/**
-	 * The ids of every batch in a game that is currently out, per is_out_row(). Meant to be
-	 * called once per Audience::filter()/can_see() call and kept in a local variable (§3.2) -
-	 * never once per row, which would turn one page load into N queries.
+	 * The ids of every batch in a game that is currently out, per is_out_row().
 	 *
 	 * @param int $game_id
 	 * @return int[]

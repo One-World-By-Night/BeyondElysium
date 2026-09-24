@@ -8,15 +8,8 @@ use BeyondElysium\Services\Query_Engine;
 use WP_UnitTestCase;
 
 /**
- * D54: `Query_Engine::resolve_target_query()` used to memoize per `(game_slug, target_query)`
- * with no entity id in the key, so two plots (or two calls) sharing an identical target_query
- * would collide - a static property, so the collision would outlive one PHPUnit test method
- * as easily as it would outlive one production request, the exact bug class `resolve_audience_rules()`'s
- * own sibling was already found and fixed for in U2 (`AudienceThreadTest`). Fixed in 1.1.0 S4
- * by removing the cache entirely.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.4 item 6
- * @see BE_PROCESS/now/roadmap.md D54
+ * `Query_Engine::resolve_target_query()` memoizes per entity, so two plots sharing an identical target_query do not
+ * collide.
  */
 class ResolveTargetQueryCacheThreadTest extends WP_UnitTestCase {
 
@@ -45,7 +38,6 @@ class ResolveTargetQueryCacheThreadTest extends WP_UnitTestCase {
 			'the character matches before the rename'
 		);
 
-		// The character no longer matches the identical target_query object.
 		Character::update_header( $character_id, [ 'name' => 'Someone Else Now' ] );
 
 		$this->assertSame(

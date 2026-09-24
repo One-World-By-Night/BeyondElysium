@@ -8,30 +8,24 @@ use BeyondElysium\Database\Transaction;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Static data-access model for a chronicle group - a sect, coterie, pack, chantry, court,
- * or similar (1.1.0 §3.10) - with its own real, `Audience`-shaped `audience`/`audience_rules`,
- * the same discipline `Secret` already establishes: visibility is a first-class rule, not
- * "hidden until named."
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.10
+ * Static data-access model for a chronicle group.
  */
 class Faction {
 
 	/**
-	 * The full vocabulary a Storyteller may set directly. Free text is still accepted
-	 * (the schema column has no CHECK constraint) - this list is the picker's suggestions,
-	 * not an enforced enum, matching the design's own "suggested... free text allowed."
+	 * The full vocabulary a Storyteller may set directly.
 	 */
 	const FACTION_TYPES = [ 'sect', 'clan', 'coterie', 'pack', 'chantry', 'court', 'cabal', 'sept', 'motley', 'house', 'other' ];
 
-	/** The narrower subset a player's own `propose_faction` change may create (§3.10). */
+	/**
+	 * The narrower subset a player's own `propose_faction` change may create.
+	 */
 	const PLAYER_PROPOSABLE_TYPES = [ 'coterie', 'pack', 'cabal', 'motley', 'other' ];
 
 	const STATUSES = [ 'active', 'disbanded' ];
 
 	/**
-	 * Duplicated from `Services\Audience::VALUES` rather than imported - Models does not
-	 * depend on Services in this codebase (`Secret::AUDIENCE_VALUES`'s own precedent).
+	 * Duplicated from `Services\Audience::VALUES`.
 	 */
 	const AUDIENCE_VALUES = [ 'everyone', 'storytellers', 'restricted' ];
 
@@ -49,9 +43,7 @@ class Faction {
 	}
 
 	/**
-	 * Every faction in a chronicle, newest first. `$status` narrows to one status;
-	 * omitted returns every status, including disbanded ones (a Storyteller's own list
-	 * view needs to see those too, to reactivate one).
+	 * Every faction in a chronicle, newest first.
 	 *
 	 * @param int         $game_id
 	 * @param string|null $status
@@ -74,9 +66,7 @@ class Faction {
 	}
 
 	/**
-	 * Creates a faction. Validates `faction_type` (only when `$restrict_type` is true - a
-	 * player's own proposal, never a Storyteller's direct create) against
-	 * `PLAYER_PROPOSABLE_TYPES`, and `audience` against `AUDIENCE_VALUES` always.
+	 * Creates a faction.
 	 *
 	 * @param array $data
 	 * @param bool  $restrict_type Restricts `faction_type` to `PLAYER_PROPOSABLE_TYPES` (a player proposal).
@@ -121,9 +111,7 @@ class Faction {
 	}
 
 	/**
-	 * Updates a faction's editable fields. `created_via_proposal`/`game_id` never change
-	 * in place, matching `Secret::update()`'s own "identity fields are delete-and-recreate,
-	 * not edited" precedent.
+	 * Updates a faction's editable fields.
 	 *
 	 * @param int   $id
 	 * @param array $data
@@ -169,9 +157,7 @@ class Faction {
 	}
 
 	/**
-	 * Deletes a faction, cascading to its members and un-linking (never deleting) any
-	 * position that named it - a position is an independent title even without a faction,
-	 * matching `faction_id NULL` being a real, supported state.
+	 * Deletes a faction, cascading to its members and un-linking (never deleting) any position that named it.
 	 *
 	 * @param int $id
 	 * @return bool
@@ -193,7 +179,7 @@ class Faction {
 	}
 
 	/**
-	 * Encode a value for a JSON column - `Secret::encode_json_field()`'s exact contract.
+	 * Encode a value for a JSON column.
 	 *
 	 * @param mixed $value
 	 * @return string|false|null
@@ -209,8 +195,7 @@ class Faction {
 	}
 
 	/**
-	 * Decodes the `audience_rules` JSON column on a row object in place - `Secret::decode()`'s
-	 * exact contract, including its "corrupt JSON becomes null, logged, row kept" behavior.
+	 * Decodes the `audience_rules` JSON column on a row object in place.
 	 *
 	 * @param object|null $row
 	 * @return object|null
@@ -227,7 +212,6 @@ class Faction {
 			}
 			$row->audience_rules = $decoded;
 		}
-		// D51/D53: a tinyint(1) reaches $wpdb as the string "0", which is truthy in JS.
 		if ( $row && property_exists( $row, 'created_via_proposal' ) ) {
 			$row->created_via_proposal = (bool) $row->created_via_proposal;
 		}

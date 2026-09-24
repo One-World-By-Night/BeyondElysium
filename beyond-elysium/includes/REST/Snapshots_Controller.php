@@ -9,19 +9,14 @@ use BeyondElysium\Models\Game;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for character sheet snapshots. Exposes endpoints to list
- * and retrieve point-in-time captures of a character's sheet_data, and to
- * manually trigger a new capture. Snapshots are scoped to a game and a
- * character within that game.
+ * REST controller for character sheet snapshots.
  */
 class Snapshots_Controller extends Base_Controller {
 
 	protected $rest_base = 'snapshots';
 
 	/**
-	 * Registers the REST routes for a character's snapshot collection and
-	 * for a single snapshot by id. Both route groups require the
-	 * be_manage_characters capability.
+	 * Registers the REST routes for a character's snapshot collection and for a single snapshot by id.
 	 */
 	public function register_routes(): void {
 		// Collection: GET/POST /be/v1/{game_slug}/characters/{character_id}/snapshots.
@@ -50,9 +45,7 @@ class Snapshots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns a paginated list of snapshots for one character, most recent
-	 * first by default. Confirms the game and character exist before
-	 * querying.
+	 * Returns a paginated list of snapshots for one character, most recent first by default.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -82,9 +75,8 @@ class Snapshots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns a single snapshot by id after confirming the game and
-	 * character exist and that the snapshot belongs to the requested
-	 * character. Returns a 404 error otherwise.
+	 * Returns a single snapshot by id after confirming the game and character exist and that the snapshot belongs to the
+	 * requested character.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -115,8 +107,6 @@ class Snapshots_Controller extends Base_Controller {
 
 	/**
 	 * Creates a new snapshot capturing the character's current sheet_data.
-	 * Confirms the game and character exist before capturing, and returns
-	 * the created snapshot on success.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -142,9 +132,7 @@ class Snapshots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a WP_Error
-	 * with a 404 status when no game matches. Used by route callbacks to
-	 * resolve the game_slug URL parameter before performing further work.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error
@@ -158,9 +146,8 @@ class Snapshots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a character by id and confirms it belongs to the given game,
-	 * returning a WP_Error with a 404 status when the character does not
-	 * exist or belongs to a different game.
+	 * Looks up a character by id and confirms it belongs to the given game, returning a WP_Error with a 404 status when
+	 * the character does not exist or belongs to a different game.
 	 *
 	 * @param int    $character_id
 	 * @param string $game_slug
@@ -178,9 +165,8 @@ class Snapshots_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Defines the query parameters accepted by the snapshot collection
-	 * endpoint: a sort order plus page/per_page pagination, each with its
-	 * allowed values and defaults.
+	 * Defines the query parameters accepted by the snapshot collection endpoint: a sort order plus page/per_page
+	 * pagination, each with its allowed values and defaults.
 	 *
 	 * @return array
 	 */

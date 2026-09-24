@@ -7,11 +7,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Health Levels: an ordinary, unpriced trait_list per stack, seeded from Grapevine's own
- * HealthList.Initialize/.Append sequence (every *Class.cls) - Healthy(2), Bruised(3),
- * Wounded(2), Incapacitated(1) are identical everywhere; only the terminal box(es) differ.
- * Extended health only - old/standard Health is not offered. Wraith has no HealthList at
- * all (uses its own Corpus resource pool) and gets no health block. See
- * BE_PROCESS/design/health-level-tracker-design.md.
+ * HealthList.Initialize/.Append sequence (every *Class.cls).
  */
 class HealthLevelSeederTest extends TestCase {
 
@@ -77,9 +73,7 @@ class HealthLevelSeederTest extends TestCase {
 			$this->assertSame( 'trait_list', $block['section_type'], "{$stack}-health" );
 			$this->assertFalse( $block['definition']['allow_custom'], "{$stack}-health must not allow free-text add" );
 			foreach ( $block['definition']['items'] as $item ) {
-				// 1.3.2: the declared file states `"cost": null` explicitly rather than
-				// omitting the key - isset() reads false either way, so this still asserts
-				// "no real cost" under both shapes.
+				// The declared file states `"cost": null` explicitly.
 				$this->assertFalse( isset( $item['cost'] ), "{$stack}-health's '{$item['name']}' must carry no real cost" );
 			}
 		}
@@ -112,9 +106,6 @@ class HealthLevelSeederTest extends TestCase {
 		);
 	}
 
-	// -------------------------------------------------------------------------
-	// default_held: the real per-box counts, applied automatically at creation
-	// (Characters_Controller::create_item()), never left for manual +Add.
 	// -------------------------------------------------------------------------
 
 	public function test_default_held_counts_match_the_real_composition(): void {

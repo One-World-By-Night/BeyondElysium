@@ -7,48 +7,35 @@ use Elementor\Controls_Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Elementor widget wrapper for the Import Tool, a Grapevine character/game
- * exchange (.gex) file upload and preview wizard. Registers the widget's
- * name, title, and icon with Elementor, exposes a Content section
- * control for the target game slug, and renders a single mount-point <div>
- * that the front-end script hydrates with the ImportTool React component.
- *
- * @see BE_PROCESS/releases/workflow-0.8.md Step 8
+ * Elementor widget wrapper for the Import Tool, a Grapevine character/game exchange (.gex) file upload and preview
+ * wizard.
  */
 class Import_Tool extends Base_Widget {
 
 	/**
-	 * Returns the internal widget name Elementor uses to identify this
-	 * widget type. Elementor stores this string in page and template
-	 * markup wherever the widget is placed.
+	 * Returns the internal widget name Elementor uses to identify this widget type.
 	 */
 	public function get_name(): string {
 		return 'be-import-tool';
 	}
 
 	/**
-	 * Returns the human-readable label Elementor shows for this widget in
-	 * the editor's widget panel, search results, and layers panel. This is
-	 * the text an editor sees when placing the widget on a page.
+	 * Returns the human-readable label Elementor shows for this widget in the editor's widget panel, search results, and
+	 * layers panel.
 	 */
 	public function get_title(): string {
 		return __( 'Import Tool', 'beyond-elysium' );
 	}
 
 	/**
-	 * Returns the Elementor icon class shown next to this widget's title in
-	 * the widget panel. The value is an eicon-* class name supplied by
-	 * Elementor's built-in icon font.
+	 * Returns the Elementor icon class shown next to this widget's title in the widget panel.
 	 */
 	public function get_icon(): string {
 		return 'eicon-upload';
 	}
 
 	/**
-	 * Builds the Elementor "Content" section shown in the editor panel for
-	 * this widget. Adds a read-only description note and a Game Slug text
-	 * control that determines which chronicle an uploaded exchange file is
-	 * imported into.
+	 * Builds the Elementor "Content" section shown in the editor panel for this widget.
 	 */
 	protected function register_controls(): void {
 		$this->start_controls_section( 'content_section', [

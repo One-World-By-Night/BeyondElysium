@@ -15,24 +15,12 @@ use BeyondElysium\Models\Secret_Reveal;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Releases one scheduled batch (1.1.0 §3.2): flips it to released, then emails every
- * player who has new content because of it.
- *
- * Idempotent by construction - release() locks the batch row before checking notified_at,
- * so a click racing the cron sweep, or the sweep firing twice on the same batch, can only
- * ever send its emails once. Three callers reach this: Release_Batches_Controller's
- * `release-now` route, the `be_release_batch` single event scheduled the moment a batch is
- * first set to `scheduled`, and the `be_release_sweep` quarter-hour catch-all for anything
- * that missed its own single event or was never scheduled one at all.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.2
+ * Releases one scheduled batch: flips it to released.
  */
 class Release_Engine {
 
 	/**
-	 * Releases a batch. Returns false without sending anything when the batch doesn't exist
-	 * or was already notified - the caller does not need to distinguish "someone else just
-	 * released it" from "nothing to do here," since both mean the same thing to a player.
+	 * Releases a batch.
 	 *
 	 * @param int $batch_id
 	 * @return bool True only when this call is the one that actually released it.
@@ -55,15 +43,13 @@ class Release_Engine {
 
 		Transaction::commit( $savepoint );
 
-		// Sent after commit, not before: an email describing a release that then failed to
-		// commit would be a lie a rollback could never take back.
+		// Sends the release emails after the commit.
 		Notifications::flush_release();
 		return true;
 	}
 
 	/**
-	 * Queues one Notifications::enqueue_release() call per (player, held item) in this
-	 * batch - rumors, downtime answers, and secret reveals (1.1.0 §3.11) alike.
+	 * Queues one Notifications::enqueue_release() call per (player, held item) in this batch.
 	 *
 	 * @param object      $batch
 	 * @param object|null $game
@@ -92,8 +78,7 @@ class Release_Engine {
 	}
 
 	/**
-	 * A reveal names exactly one character - its own owner is the only recipient, unlike a
-	 * plot's or entry's audience-derived set.
+	 * A reveal names exactly one character.
 	 *
 	 * @param object $reveal
 	 * @return array<int,string[]> wp_user_id => that player's own character names reached.
@@ -103,9 +88,7 @@ class Release_Engine {
 	}
 
 	/**
-	 * A held plot (a rumor) reaches whoever its own audience already reaches -
-	 * Audience::visible_character_ids() is exactly that list, audience-normalized the same
-	 * way any other reader of this plot would see it (§3.2).
+	 * A held plot (a rumor) reaches whoever its own audience already reaches.
 	 *
 	 * @param object $plot
 	 * @param string $game_slug
@@ -116,10 +99,8 @@ class Release_Engine {
 	}
 
 	/**
-	 * A held entry reaches the characters connected to its own parent plot, by any label,
-	 * who can also see the entry itself - never the whole chronicle of an `everyone` plot,
-	 * even though the plot's own audience would otherwise reach everyone (§3.2's own wording:
-	 * "never the whole chronicle of an everyone plot").
+	 * A held entry reaches the characters connected to its own parent plot, by any label, who can also see the entry
+	 * itself.
 	 *
 	 * @param object $entry
 	 * @param string $game_slug
@@ -149,11 +130,7 @@ class Release_Engine {
 	}
 
 	/**
-	 * Resolves character ids to their owning players, grouping each player's own reached
-	 * character names together - a player with two qualifying characters gets one entry
-	 * naming both, matching the notification's own "New for Marcus Vitel and Isabel Cruz"
-	 * shape rather than two separate emails. An NPC (no wp_user_id) or an id that no longer
-	 * resolves is silently dropped; neither has a player to notify.
+	 * Resolves character ids to their owning players, grouping each player's own reached character names together.
 	 *
 	 * @param int[] $character_ids
 	 * @return array<int,string[]> wp_user_id => character names.

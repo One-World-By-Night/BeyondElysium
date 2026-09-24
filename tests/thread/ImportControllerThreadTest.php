@@ -6,12 +6,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The REST layer around `Import_Controller::parse()`/`get_job()`: real `.gex` fixture
- * uploads dispatched through the actual REST server, not a direct `GEX_Parser` call, so
- * the file-sniffing, permission boundary, and job-storage/retrieval round trip are all
- * exercised for real (workflow-0.8.md Step 6).
- *
- * @see BE_PROCESS/releases/workflow-0.8.md Step 6
+ * The REST layer around `Import_Controller::parse()`/`get_job()`: real `.gex` fixture uploads dispatched through the
+ * actual REST server.
  */
 class ImportControllerThreadTest extends WP_UnitTestCase {
 
@@ -119,9 +115,7 @@ class ImportControllerThreadTest extends WP_UnitTestCase {
 		wp_set_current_user( $admin );
 
 		$tmp = tempnam( sys_get_temp_dir(), 'be-import-test' );
-		// Length-prefixed "GVBG" header, matching how a real header is written (Root.bas
-		// PutStrB) - a fixed 4-byte offset sniff would miss this the same way a real
-		// GVBG file's header is laid out.
+		// Length-prefixed "GVBG" header, matching how a real header is written (Root.bas PutStrB).
 		file_put_contents( $tmp, "\x04\x00GVBG" );
 
 		$response = $this->dispatch( $this->upload_request( $tmp ) );
@@ -131,11 +125,6 @@ class ImportControllerThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'unsupported_format', $response->get_data()['code'] );
 	}
 
-	// -------------------------------------------------------------------------
-	// XML exchange files (workflow-0.8.md Step 9) - real samples, dispatched through the
-	// actual REST server exactly like the binary tests above, not a direct
-	// GEX_Xml_Parser call - proving the format-sniff branch and the "identical shape" it
-	// depends on actually hold end to end, not just at the parser layer.
 	// -------------------------------------------------------------------------
 
 	public function test_parsing_a_real_xml_gex_file_returns_the_correct_format_and_counts(): void {
@@ -177,12 +166,6 @@ class ImportControllerThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'Lethal', $claws->properties['damage_type'] );
 	}
 
-	/**
-	 * No `.gex` XML sample in this repo (real or otherwise) contains a character
-	 * element - refusing loudly is the point of `GEX_Xml_Parser`'s own design
-	 * (workflow-0.8.md Step 9c): a silent skip would let a character-bearing file
-	 * "succeed" as a clean, empty import instead of surfacing as a parse failure.
-	 */
 	public function test_an_xml_file_with_an_unrecognized_element_is_refused_not_silently_emptied(): void {
 		$admin = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		wp_set_current_user( $admin );
@@ -209,11 +192,8 @@ class ImportControllerThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Neither real sample `.gex` file in this repo carries a player record (confirmed
-	 * while writing this test: both parse to 0 players), so player matching (Step 6d) has
-	 * no real fixture to exercise it against. A hand-built minimal GVBE buffer - real
-	 * bytes in the real wire format, not a mock of `match_players()` - is the fallback,
-	 * same reasoning `GexParserTest` already used for the character-record dispatch path.
+	 * Neither real sample `.gex` file in this repo carries a player record (confirmed while writing this test: both parse
+	 * to 0 players).
 	 *
 	 * @param array<int,array{name:string,email:string}> $players
 	 * @return string

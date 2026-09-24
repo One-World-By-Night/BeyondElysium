@@ -10,8 +10,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Step 7a, workflow-0.9.md - `GET /{game_slug}/stats`, the ST dashboard's own aggregate
- * numbers.
+ * `GET /{game_slug}/stats`: the Storyteller dashboard's aggregate numbers.
  */
 class GameStatsControllerTest extends WP_UnitTestCase {
 
@@ -58,8 +57,8 @@ class GameStatsControllerTest extends WP_UnitTestCase {
 		wp_set_current_user( $player );
 		$submit = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters/{$vampire_id}/changes" );
 		$submit->set_param( 'change_type', 'add_trait' );
-		$submit->set_param( 'category', 'met-merits' );
-		$submit->set_param( 'change_data', [ 'block_slug' => 'met-merits', 'trait' => [ 'name' => 'Iron Will' ] ] );
+		$submit->set_param( 'category', 'vampire-merits' );
+		$submit->set_param( 'change_data', [ 'block_slug' => 'vampire-merits', 'trait' => [ 'name' => 'Iron Will' ] ] );
 		$this->dispatch( $submit );
 
 		wp_set_current_user( $this->st_id );
@@ -93,8 +92,7 @@ class GameStatsControllerTest extends WP_UnitTestCase {
 		$first = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/stats" ) )->get_data();
 		$this->assertSame( [], $first['characters_by_stack'] );
 
-		// A character created after the first request must not appear until the cache
-		// expires - proves flush actually caches rather than merely not erroring.
+		// A character created after the first request must not appear until the cache expires.
 		Character::create( [
 			'name' => 'Post Cache Character', 'stack_slug' => 'vampire',
 			'owner_type' => 'chronicle', 'owner_slug' => $this->game_slug,
@@ -109,12 +107,8 @@ class GameStatsControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The realistic workflow this cache has to survive: an ST checks the dashboard, goes
-	 * and approves something, and checks again - all well inside one CACHE_TTL window.
-	 * Without `Changes_Controller::update_item()`'s own `Game_Stats_Controller::
-	 * invalidate()` call, the second load would still show the just-approved change as
-	 * pending for up to a minute - found and fixed during this feature's own pre-deploy
-	 * trace, not by a separate bug report.
+	 * The realistic workflow this cache has to survive: an ST checks the dashboard, goes and approves something, and
+	 * checks again.
 	 */
 	public function test_approving_a_change_invalidates_the_stats_cache(): void {
 		$player      = self::factory()->user->create( [ 'role' => 'subscriber' ] );
@@ -127,8 +121,8 @@ class GameStatsControllerTest extends WP_UnitTestCase {
 		wp_set_current_user( $player );
 		$submit = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters/{$character_id}/changes" );
 		$submit->set_param( 'change_type', 'add_trait' );
-		$submit->set_param( 'category', 'met-merits' );
-		$submit->set_param( 'change_data', [ 'block_slug' => 'met-merits', 'trait' => [ 'name' => 'Iron Will' ] ] );
+		$submit->set_param( 'category', 'vampire-merits' );
+		$submit->set_param( 'change_data', [ 'block_slug' => 'vampire-merits', 'trait' => [ 'name' => 'Iron Will' ] ] );
 		$change_id = (int) $this->dispatch( $submit )->get_data()->id;
 
 		wp_set_current_user( $this->st_id );
@@ -144,9 +138,7 @@ class GameStatsControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Same proof as above, through the batch path instead of the single-change one -
-	 * `batch_approve()`'s own invalidate() call, gated on "only when something was really
-	 * approved" so an all-skipped batch does not pointlessly evict a still-valid cache.
+	 * Same proof as above, through the batch path.
 	 */
 	public function test_batch_approving_invalidates_the_stats_cache(): void {
 		$player       = self::factory()->user->create( [ 'role' => 'subscriber' ] );
@@ -159,8 +151,8 @@ class GameStatsControllerTest extends WP_UnitTestCase {
 		wp_set_current_user( $player );
 		$submit = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters/{$character_id}/changes" );
 		$submit->set_param( 'change_type', 'add_trait' );
-		$submit->set_param( 'category', 'met-merits' );
-		$submit->set_param( 'change_data', [ 'block_slug' => 'met-merits', 'trait' => [ 'name' => 'Iron Will' ] ] );
+		$submit->set_param( 'category', 'vampire-merits' );
+		$submit->set_param( 'change_data', [ 'block_slug' => 'vampire-merits', 'trait' => [ 'name' => 'Iron Will' ] ] );
 		$change_id = (int) $this->dispatch( $submit )->get_data()->id;
 
 		wp_set_current_user( $this->st_id );
@@ -174,10 +166,6 @@ class GameStatsControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 0, $after['pending_changes'] );
 	}
 
-	// -------------------------------------------------------------------------
-	// Roster health (queryable-player-inventory-design.md) - "no active character"
-	// and "only character has gone inactive" are the same condition: zero characters
-	// with status 'active'.
 	// -------------------------------------------------------------------------
 
 	public function test_players_without_active_character_covers_both_real_cases(): void {
@@ -249,7 +237,6 @@ class GameStatsControllerTest extends WP_UnitTestCase {
 	public function test_non_player_roles_are_never_counted(): void {
 		$st = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		Game_Member::set_role( $this->game_id, $st, 'hst' );
-		// No characters at all - would qualify if role filtering were missing.
 
 		$ids = Game_Member::ids_without_active_character( $this->game_id, $this->game_slug );
 		$this->assertNotContains( $st, $ids );

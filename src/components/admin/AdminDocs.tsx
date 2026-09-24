@@ -1,8 +1,5 @@
 /**
  * Admin page that displays the plugin's bundled documentation.
- * Renders the storyteller, admin, player, and REST API guides as tabbed
- * Markdown content, with in-page links between docs switching tabs
- * instead of navigating away.
  */
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -31,8 +28,6 @@ const TAB_SLUGS: string[] = TABS.map( ( tab ) => tab.slug );
 
 /**
  * Resolves a link's href to a known doc tab slug, if it matches one.
- * Strips any hash fragment and a trailing `.md` extension, then checks
- * the result against the set of known tab slugs.
  */
 function docLinkSlug( href: string ): DocSlug | null {
 	const base = href.split( '#' )[ 0 ].replace( /\.md$/, '' );
@@ -41,9 +36,6 @@ function docLinkSlug( href: string ): DocSlug | null {
 
 /**
  * Renders the Docs admin screen.
- * Shows the plugin's shipped Markdown documentation across four tabs
- * (storyteller, admin, player, and REST API guides), fetching and
- * caching each document's content the first time its tab is opened.
  */
 export function AdminDocs() {
 	const [ active, setActive ] = useState< DocSlug >( 'st-guide' );
@@ -53,8 +45,7 @@ export function AdminDocs() {
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
 
-	// A guide can link down into one help page (e.g. "Send a Grapevine File" from the Player
-	// Guide); it opens in the same side panel every screen's own `?` button uses.
+	// A guide can link down into one help page (e.g. "Send a Grapevine File" from the Player Guide).
 	const linkedHelpOwner = useRef(
 		Symbol( 'admin-docs-linked-help' )
 	).current;
@@ -105,9 +96,7 @@ export function AdminDocs() {
 		: '';
 
 	/**
-	 * Intercepts clicks on links inside the rendered document content. A link to another
-	 * known doc switches to that doc's tab; a link down into a help page opens it in the
-	 * side panel instead of letting the browser navigate to a dead relative URL.
+	 * Intercepts clicks on links inside the rendered document content.
 	 */
 	function onContentClick( e: MouseEvent< HTMLDivElement > ) {
 		const link = ( e.target as HTMLElement ).closest( 'a' );

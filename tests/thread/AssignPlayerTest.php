@@ -7,19 +7,10 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Decision 076 (2026-09-10): user report - "import > match players doesn't work. Always
- * says there's an email match even when the email doesn't exist in the system and leaves
- * the character unassigned - and there's no way to later assign them." The "always says a
- * match" half traced to `GEX_Xml_Parser::parse_string()` hardcoding `players: []` for
- * every XML file (that format carries no player identity data at all) - a parser
- * limitation, not a matching bug, fixed by making `ImportTool.tsx`'s message honest about
- * it rather than by "fixing" a matcher that was already correct on empty input.
- *
- * This file covers the other half: `wp_user_id` (the real WP-account link, distinct from
- * the already-editable free-text `player_name`) had no update path at all - `create_item()`
- * could set it, `update_item()` never could, for anyone, manager or not. So an
- * import-created character, or any character whose player changes, had no way to ever be
- * (re)assigned.
+ * Assigning a character's `wp_user_id` (the real WordPress-account link, distinct from the free-text `player_name`):
+ * a manager can assign a real player, unassign by sending zero, and leave an assignment untouched by omitting the field;
+ * a nonexistent user id is rejected; a non-manager cannot assign even to their own character; and the WordPress user
+ * search requires `be_manage_characters` and finds by display name or email.
  */
 class AssignPlayerTest extends WP_UnitTestCase {
 

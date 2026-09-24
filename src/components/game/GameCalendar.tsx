@@ -1,8 +1,5 @@
 /**
- * Front-end display of the "Game Calendar" report. Beyond Elysium does not yet model a
- * chronicle's own per-date schedule (`report-registry.php`'s own `empty_note`), so this
- * always renders the honest empty state today - built now so the page has a real home the
- * moment that data exists, rather than adding one later.
+ * Front-end display of the "Game Calendar" report.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

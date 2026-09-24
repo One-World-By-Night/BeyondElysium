@@ -10,12 +10,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-046 (D44). Owner ruling 2026-09-14: item and location text supports `[ST]` the
- * way character text does - hidden from anyone who isn't a Storyteller of the chronicle.
- *
- * Every member reads the world-object catalog, and nothing filtered it: a Storyteller's
- * `[ST]...[/ST]` note in an item's description, a location's security, or a boon's terms went to
- * every player, through the catalog and through the item, location, and rote cards.
+ * Item and location text supports `[ST]` as character text does: hidden from anyone who is not a Storyteller of the
+ * chronicle.
  */
 class WorldObjectStTextThreadTest extends WP_UnitTestCase {
 

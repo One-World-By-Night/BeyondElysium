@@ -10,15 +10,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-009: route permission callbacks were chronicle-scoped, but handlers then
- * decided "Storyteller or not" with a bare current_user_can(), which is site-wide. Every
- * HST is a WordPress editor by this plugin's role map, so a Storyteller from one chronicle
- * who plays in another was treated as that other chronicle's Storyteller - seeing every
- * sheet and granting themselves XP with no approval.
- *
- * Also F-039: the profile screen's per-user "customize sheet" grant never reached a player,
- * because the sheet-style routes required the capability from the chronicle role map, which
- * no player role carries - and those routes had no ownership check either.
+ * Route permission callbacks were chronicle-scoped.
  */
 class ChronicleScopedHandlerChecksThreadTest extends WP_UnitTestCase {
 

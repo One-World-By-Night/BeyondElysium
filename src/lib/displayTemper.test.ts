@@ -4,9 +4,7 @@ import temperInput from '../../tests/fixtures/temper-display-input.json';
 import temperExpected from '../../tests/fixtures/temper-display-expected.json';
 
 /**
- * 1.0.0-review F-016, owner ruling 2026-09-14: every dot the same size. A pool used Grapevine's
- * letter glyphs and collapsed each run of five into a capital, so a sheet showed a small dot, a
- * ring, and a big capital side by side; now a pool's points are the trait rating's own dot.
+ * A pool's dots are all the same size.
  */
 describe( 'displayTemper', () => {
 	it( 'a full pool renders one filled dot per point', () => {
@@ -54,8 +52,7 @@ describe( 'displayTemper', () => {
 } );
 
 /**
- * Same fixture, same expected output as `tests/unit/Display/TemperDisplayParityTest.php`
- * - this is the TypeScript half of proving the two renderers agree.
+ * Same fixture, same expected output as `tests/unit/Display/TemperDisplayParityTest.php`.
  */
 describe( 'displayTemper — parity with Temper_Display.php', () => {
 	temperInput.forEach( ( testCase, i ) => {

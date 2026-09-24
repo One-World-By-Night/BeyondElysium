@@ -9,28 +9,14 @@ use BeyondElysium\Tests\Support\PdfSigningTestFixture;
 use WP_UnitTestCase;
 
 /**
- * `Pdf_Writer::write()` end to end: structural output, the one behavior that
- * must survive real `wp_kses()` narrowing untouched (a `<script>` tag in
- * prose HTML never reaches TCPDF's `writeHTML()`), the UNSIGNED stamp on an
- * unsigned copy (1.0.0-review F-042), and - for a signed output, the default
- * (SP-8) - the three real proofs signed-pdf-design.md's SP-8 names
- * explicitly: a `/ByteRange`+`/Sig` dictionary is present, a real reader
- * reports a genuinely valid signature from an untrusted (self-signed) signer,
- * and flipping one byte of the signed content breaks verification. WordPress-only, not database-only -
- * `draw_prose()` calls the real `wp_kses()`, which this project's own
- * unit/thread split (TESTING.md) puts here rather than in `tests/unit`.
+ * `Pdf_Writer::write()` end to end: structural output, prose HTML surviving real `wp_kses()` narrowing (a `<script>` tag
+ * never reaches TCPDF's `writeHTML()`), the UNSIGNED stamp on an unsigned copy, and, for a signed output, a `/ByteRange`
+ * and `/Sig` dictionary, a real reader reporting a valid signature from an untrusted (self-signed) signer, and one flipped
+ * byte of the signed content breaking verification. A WordPress test rather than a database one: `draw_prose()` calls the
+ * real `wp_kses()`.
  *
- * A real throwaway self-signed certificate is generated once, shared with
- * every other thread or workflow test needing signing configured, via
- * `PdfSigningTestFixture::ensure()` (`tests/support/` - see that class's own
- * docblock for why this must be idempotent, at one fixed path, and never
- * deleted). `PdfSignerTest.php` (unit) needs several *different*
- * defined-or-not states within one file and uses `@runInSeparateProcess`
- * for that reason; `bin/verify` runs the unit and thread suites as two
- * separate PHP processes, so these constants can never leak into that file's
- * own run regardless.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md Section 3b, 3c, SP-7, SP-8
+ * A throwaway self-signed certificate is generated once and shared with every other test needing signing configured,
+ * via `PdfSigningTestFixture::ensure()`.
  */
 class PdfWriterThreadTest extends WP_UnitTestCase {
 
@@ -83,8 +69,7 @@ class PdfWriterThreadTest extends WP_UnitTestCase {
 	public function test_an_unrecognized_section_type_renders_the_visible_marker(): void {
 		file_put_contents( $this->pdf_path(), $this->write() );
 
-		// Word-wrap may fall inside the sentence, so match tolerant of a line break
-		// between words rather than the whole phrase as one unbroken line.
+		// Word-wrap may fall inside the sentence.
 		$this->assertMatchesRegularExpression(
 			'/unknown section type\s+"legacy_type" for block\s+"mystery"/',
 			self::extract_text( $this->pdf_path() )
@@ -119,8 +104,7 @@ class PdfWriterThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The test that proves the feature does what it claims (SP-8's own words):
-	 * a signed sheet is not just present, it actually detects tampering.
+	 * A signed sheet is not just present, it actually detects tampering.
 	 */
 	public function test_flipping_one_byte_of_signed_content_breaks_verification(): void {
 		$bytes = $this->write();
@@ -128,10 +112,7 @@ class PdfWriterThreadTest extends WP_UnitTestCase {
 		if ( ! preg_match( '/\/ByteRange\s*\[\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*\]/', $bytes, $m ) ) {
 			$this->fail( 'could not locate /ByteRange in the signed output to find a byte inside the signed content' );
 		}
-		// The middle of the first signed chunk - deep inside real page content, far from
-		// both the file header and the signature dictionary's own PDF syntax that sits
-		// at the chunk's tail end (flipping a byte there corrupts the dictionary itself,
-		// which fails to parse at all rather than cleanly failing a digest comparison).
+		// The middle of the first signed chunk.
 		$offset           = intdiv( (int) $m[2], 2 );
 		$bytes[ $offset ] = chr( ord( $bytes[ $offset ] ) ^ 0xFF );
 
@@ -141,8 +122,8 @@ class PdfWriterThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * 1.0.0-review F-042: an unsigned copy says so on every page, however many pages its
-	 * content runs to, and carries no signature dictionary at all.
+	 * An unsigned copy says so on every page, however many pages its content runs to, and carries no signature dictionary
+	 * at all.
 	 */
 	public function test_an_unsigned_copy_is_stamped_on_every_page(): void {
 		$history = array_fill( 0, 90, [ '2026-09-01', 'Raised Occult', '+2' ] );
@@ -174,10 +155,7 @@ class PdfWriterThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Reads real text back out of a generated PDF via `pdftotext` (poppler) when
-	 * available - the only reliable way to assert on TCPDF's actual rendered
-	 * content, since its content streams are compressed by default. Skips the
-	 * assertion rather than failing the whole suite on a machine without it.
+	 * Reads real text back out of a generated PDF via `pdftotext` (poppler) when available.
 	 */
 	private static function extract_text( string $path ): string {
 		if ( ! shell_exec( 'command -v pdftotext' ) ) {
@@ -187,10 +165,8 @@ class PdfWriterThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * `pdfsig` (poppler) is the one tool in this environment that actually parses a
-	 * PDF's embedded PKCS7/CMS signature dictionary and reports on it - there is no
-	 * PHP-native equivalent, and this project's own precedent (SP-1) is to verify a
-	 * real signature with a real external tool rather than reimplement the check.
+	 * `pdfsig` (poppler) is the one tool in this environment that actually parses a PDF's embedded PKCS7/CMS signature
+	 * dictionary and reports on it.
 	 */
 	private static function pdfsig( string $path ): string {
 		if ( ! shell_exec( 'command -v pdfsig' ) ) {
@@ -199,16 +175,6 @@ class PdfWriterThreadTest extends WP_UnitTestCase {
 		return (string) shell_exec( 'pdfsig ' . escapeshellarg( $path ) . ' 2>/dev/null' );
 	}
 
-	/**
-	 * 1.0.0-review F-118. Owner, 2026-09-15: a real print of a real, heavily-built
-	 * character (Hitchens, on kony-sabbat.net) "cuts off at 'Streetwise x5' etc." -
-	 * `draw_sections()` runs with `setAutoPageBreak(false)` (deliberate, so the 6-track
-	 * grid's own row-fit math owns pagination) and only ever checks whether a section
-	 * fits what's left of the CURRENT page, falling back to "start a fresh page and draw
-	 * it there" - never "this section is taller than any single page could ever hold."
-	 * `MultiCell()` with auto page break off does not overflow onto a new page on its
-	 * own; it just draws past the bottom margin, off the printable page entirely.
-	 */
 	public function test_a_section_taller_than_one_page_does_not_lose_its_last_rows(): void {
 		$rows = [];
 		for ( $i = 1; $i <= 120; $i++ ) {

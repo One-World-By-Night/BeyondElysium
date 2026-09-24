@@ -12,15 +12,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * User report, 2026-09-10: "we don't have the ability to DELETE characters." The REST
- * route (`DELETE /be/v1/{game_slug}/characters/{id}`) and `Character::delete()` both
- * already existed - `PermissionMatrixTest` even covers the route's own permission gate -
- * but nothing anywhere ever actually exercised what deletion DOES, and no UI control ever
- * called it. Building the first-ever UI control for this surfaced the real gap:
- * `Character::delete()` was a bare row delete with no cascade at all, which would have
- * left orphaned rows in `be_connections`/`be_character_changes`/`be_character_snapshots`/
- * `be_character_sheet_styles` the moment a real delete ever happened. Fixed to match
- * `Plot::delete()`'s existing cascade precedent (Decision 029) - this file proves it.
+ * `DELETE /be/v1/{game_slug}/characters/{id}` and `Character::delete()`: who may delete a character and what is
+ * removed.
  */
 class CharacterDeleteTest extends WP_UnitTestCase {
 
@@ -49,8 +42,7 @@ class CharacterDeleteTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Real fixture: a character carrying at least one row in every table the cascade is
-	 * supposed to clean up, not just the bare characters row.
+	 * Real fixture: a character carrying at least one row in every table the cascade is supposed to clean up.
 	 */
 	private function fully_populated_character(): int {
 		$character_id = Character::create( [
@@ -99,9 +91,7 @@ class CharacterDeleteTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The real fix: before this, a delete left orphaned rows in every one of these four
-	 * tables. Each is created for real, the character is deleted once, and every one is
-	 * confirmed gone - not assumed from reading the cascade code alone.
+	 * The real fix: before this, a delete left orphaned rows in every one of these four tables.
 	 */
 	public function test_deleting_a_character_cascades_to_connections_changes_snapshots_and_sheet_style(): void {
 		wp_set_current_user( $this->admin_id );
@@ -121,9 +111,7 @@ class CharacterDeleteTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The cascade must only ever touch the ONE character being deleted - a connection
-	 * where this character is only the TARGET (not the source) is a different entity's
-	 * own relationship and must survive.
+	 * The cascade must only ever touch the ONE character being deleted.
 	 */
 	public function test_deleting_a_character_does_not_touch_a_connection_where_it_is_only_the_target(): void {
 		wp_set_current_user( $this->admin_id );
@@ -145,10 +133,6 @@ class CharacterDeleteTest extends WP_UnitTestCase {
 
 		Character::delete( $doomed_id );
 
-		// delete_for_entity() removes a connection where the entity is EITHER side, same
-		// as Plot::delete()'s own established behavior for connections pointing at a
-		// deleted plot - a connection naming a now-nonexistent character on either end is
-		// exactly the orphan this cascade exists to prevent, so this one is correctly gone.
 		$between = array_filter( Connection::for_entity( 'character', $keeper_id ), static fn( $c ) => $c->label === 'rival' );
 		$this->assertEmpty( $between );
 		$this->assertNotNull( Character::plot_id( $keeper_id ), "the keeper's link to its own plot is its own, and stays" );

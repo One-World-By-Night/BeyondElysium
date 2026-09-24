@@ -8,11 +8,8 @@ use BeyondElysium\Services\Cost_Engine;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-013: a chronicle's own customization of a schema block (0.5e) is honored
- * everywhere except two lookups that read the global row. Cost_Engine's in-clan check loaded the
- * identity block for `in_type_source` from the global catalog, so a chronicle that forked
- * vampire-identity to add a bloodline and its in-clan Disciplines had that bloodline's purchases
- * priced - and approved - as out-of-clan.
+ * A chronicle's own customization of a schema block (0.5e) is honored everywhere except two lookups that read the
+ * global row.
  */
 class ForkAwarePricingThreadTest extends WP_UnitTestCase {
 

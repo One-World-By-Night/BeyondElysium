@@ -7,16 +7,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The templates REST controller: permission matrix, and the cross-scope edit refusal
- * from Step 2e - a game HST must not be able to touch a global template, or another
- * game's override, by guessing its id.
- *
- * The workflow doc calls this out as tests/integration/TemplatesControllerTest.php, but
- * this project has no integration layer (TESTING.md: unit / thread / workflow). A REST
- * endpoint exercised end to end against a real database is exactly what belongs in
- * tests/thread/, so it lives here instead.
- *
- * @see BE_PROCESS/releases/workflow-0.3.md Step 2g
+ * The templates REST controller: permission matrix, and the cross-scope edit refusal.
  */
 class TemplatesControllerTest extends WP_UnitTestCase {
 
@@ -69,7 +60,7 @@ class TemplatesControllerTest extends WP_UnitTestCase {
 	// -------------------------------------------------------------------------
 
 	public function test_template_lists_are_the_template_editors_not_a_viewers(): void {
-		// A sheet reaches its template through resolve (1.0.0-review F-069).
+		// A sheet reaches its template through resolve.
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'subscriber' ] ) );
 		$this->assertSame( 403, $this->dispatch( 'GET', '/be/v1/templates' )->get_status() );
 
@@ -97,11 +88,6 @@ class TemplatesControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 201, $response->get_status() );
 	}
 
-	/**
-	 * 1.0.0-review F-077. A section's width was never checked, so a layout saved through the API
-	 * with a width outside third, half, and full was stored - and every signed sheet on that
-	 * stack then failed to generate.
-	 */
 	public function test_a_section_width_outside_third_half_and_full_is_refused(): void {
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
 		$layout                          = $this->layout();
@@ -123,7 +109,7 @@ class TemplatesControllerTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Cross-scope edit refusal (Step 2e)
+	// Cross-scope edit refusal
 	// -------------------------------------------------------------------------
 
 	public function test_cannot_edit_a_global_template_through_a_game_scoped_route(): void {

@@ -6,24 +6,8 @@ use BeyondElysium\Services\GEX_Parser;
 use PHPUnit\Framework\TestCase;
 
 /**
- * GX-2: proves `GEX_Parser`'s twelve `parse_character_*` methods, now driven
- * by `gv-exchange-shape.php`'s shared `trait_lists` loop instead of a bare
- * `$add()` sequence, still read every race's trait-list run at the correct
- * position and count. Builds a synthetic, version-3.0 binary buffer for each
- * race directly from the shape table itself (scalars at their real byte
- * widths, an empty experience block, zero-count trait lists, zero boons,
- * empty tail strings) and confirms `parse_character()` reads it back with
- * zero desync - the class most likely to break silently if a shared-loop
- * slice boundary or version gate were transcribed one row off.
- *
- * This is a synthetic round-trip against this table, not a claim about real
- * Grapevine bytes - `GexParserTest`'s own real fixtures (`Sabbat.gex` for
- * vampire, `New Game Items.gex`/`Fetishes and Talens.gex` for items) remain
- * the authority on real-file shape; this suite exists because 11 of the 12
- * character races have no real character-bearing fixture in this repo at
- * all (gex-export-transfer-design.md §2a).
- *
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-2
+ * Proves `GEX_Parser`'s twelve `parse_character_*` methods, now driven by `gv-exchange-shape.php`'s shared
+ * `trait_lists` loop.
  */
 class GexParserShapeRoundTripTest extends TestCase {
 
@@ -67,13 +51,6 @@ class GexParserShapeRoundTripTest extends TestCase {
 			. pack( 'v', 0 ); // trait count
 	}
 
-	/**
-	 * Builds a complete, version-3.0 binary character record for one race,
-	 * driven entirely by that race's own shape entry: every scalar at its
-	 * real byte width, every trait list present (3.0 satisfies every
-	 * `min_version` gate) with zero traits, zero boons, and every tail
-	 * field as an empty string.
-	 */
 	private function build_character_buffer( string $race ): string {
 		$def = self::$shape[ $race ];
 		$buf = pack( 'v', $def['race_code'] );
@@ -87,10 +64,7 @@ class GexParserShapeRoundTripTest extends TestCase {
 		}
 
 		if ( $race === 'wraith' ) {
-			// The one race whose real byte order genuinely interleaves trait lists
-			// with free-text fields - build in that true order (GEX_Parser.php's own
-			// parse_character_wraith), matching read_trait_lists()'s 0/10, 10/5, 15/1
-			// slice points.
+			// The one race whose real byte order genuinely interleaves trait lists with free-text fields.
 			$lists = $def['trait_lists'];
 			foreach ( array_slice( $lists, 0, 10 ) as $spec ) {
 				$buf .= $this->encode_empty_trait_list( $spec['name'] );

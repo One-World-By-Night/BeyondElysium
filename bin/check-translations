@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 #
-# Fails if any .po file has a fuzzy or untranslated message against the current source.
-# Builds a fresh .pot from source into a scratch directory, merges it into a scratch copy
-# of each committed .po (never touching the real files), and reads msgfmt --statistics.
+# Fails if any .po file has a fuzzy or untranslated message against the current source. Builds a fresh .pot from source
+# into a scratch directory, merges it into a scratch copy of each committed .po, and reads msgfmt --statistics.
 #
-# Run from bin/verify, which skips this (with a note) when WP-CLI or gettext isn't installed -
-# same convention as the thread/workflow suite's WP_TESTS_DIR skip.
+# Run from bin/verify, which skips this when WP-CLI or gettext isn't installed.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

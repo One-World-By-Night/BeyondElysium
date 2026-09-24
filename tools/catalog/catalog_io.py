@@ -1,9 +1,9 @@
-"""Shared helpers for the 1.3.0 catalog emitter: reading the local dump, writing files in the
-human-first key order `reference/CATALOG-JSON-FORMAT.md` asks for, and the small amount of
-shape normalisation every block needs.
+"""Shared helpers for the catalog emitter: reading the local dump, writing files
+with the envelope keys in their fixed order, and the small amount of shape
+normalisation every block needs.
 
-Nothing here decides content. Content decisions - with the evidence for each - live in
-`rulings.py`, so a reviewer reads one file to see every judgement the emitter makes.
+Nothing here decides content. Content decisions - with the evidence for each -
+live in `rulings.py`.
 """
 
 import json
@@ -16,8 +16,8 @@ CATALOG = CODE_ROOT / 'beyond-elysium' / 'data' / 'catalog'
 
 
 def _samples():
-    """The private research folder: beside code/, or beside the main checkout when this runs
-    from a git worktree (worktrees do not carry the untracked samples/ directory)."""
+    """The private research folder: beside code/, or beside the main checkout when
+    this runs from a git worktree."""
     here = CODE_ROOT.parent / 'samples'
     if here.exists():
         return here
@@ -33,8 +33,7 @@ SAMPLES = _samples()
 EXTRACTED = '2026-09-22'
 TOOL = 'tools/catalog/emit_catalog.py'
 
-# Blocks another release authors in parallel (1.3.1). The emitter never writes them and never
-# copies data out of them - mortal-numina's overflow partly resolves when 1.3.1 fixes these.
+# Blocks the emitter never writes and never copies data out of.
 NOT_OURS = {
     'vampire-disciplines', 'vampire-blood-magic', 'vampire-rituals',
     'kueijin-disciplines', 'mage-spheres',
@@ -73,7 +72,7 @@ def load_dump(dump, kind, slug):
 
 
 def write(sub, slug, name, kind, definition, sources, section_type=None, variant=None, notes=None):
-    """Writes one catalog file in the envelope order of format §3."""
+    """Writes one catalog file with its envelope keys in their fixed order."""
     env = OrderedDict()
     env['format'] = 1
     env['slug'] = slug
@@ -98,10 +97,9 @@ def write(sub, slug, name, kind, definition, sources, section_type=None, variant
 
 
 def trait_item(item, **overrides):
-    """A trait_list item with every required facet present and no approval content.
-
-    Creature data carries zero approval levels (owner rule), so `approval`, `reason` and
-    `approval_by_value` are always emitted empty whatever the source said.
+    """A trait_list item with every required facet present and no approval content:
+    `approval`, `reason` and `approval_by_value` are always emitted empty whatever
+    the source said.
     """
     it = dict(item)
     it.pop('name_pt', None)

@@ -200,9 +200,7 @@ describe( 'resolvePoolName', () => {
 } );
 
 /**
- * Same fixture, same expected output as
- * `tests/unit/Display/CrossBlockRefParityTest.php` - this is the TypeScript half of
- * proving the two implementations agree.
+ * Same fixture, same expected output as `tests/unit/Display/CrossBlockRefParityTest.php`.
  */
 describe( 'resolveCrossBlockRef — parity with Cross_Block_Ref.php', () => {
 	it( 'resolveCrossBlockValue matches the shared fixture exactly', () => {

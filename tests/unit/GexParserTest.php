@@ -7,37 +7,14 @@ use BeyondElysium\Services\GEX_Parser;
 use PHPUnit\Framework\TestCase;
 
 /**
- * GVBE exchange-file parsing, against real Grapevine files in this repo plus a handful
- * of hand-built synthetic buffers for cases no real fixture covers.
- *
- * Real fixtures used:
- *   GV301Source/Code/New Game Items.gex        version 2.396 - no APR/XP-award/template
- *                                               section, 46 items
- *   GV301Source/Code/Fetishes and Talens.gex    version 2.397 - has the section (all
- *                                               three counts happen to be 0 in this file)
- *
- * None of `New Game Items.gex`, `Fetishes and Talens.gex`, or `Dark Ages Arsenal.gex`
- * (also real GVBE binary, version 2.399) contains any character records - all three are
- * pure item exchanges. `Artifacts and Devices.gex` and `Rotes.gex` also carry the `.gex`
- * extension but are actually XML (`<?xml` header, not `GVBE`), out of scope for this
- * binary parser.
- *
- * `samples/data/Sabbat.gex` (added 2026-09-10, GVBE binary, version 3.0) closes the gap
- * this docblock used to describe as permanent: it is a real character-bearing binary
- * exchange - 1 vampire ("Ian Kincaid II", 20 trait lists), 1 item, 1 location, 1 player -
- * and is used below as the real fixture for the binary character-record path. The
- * remaining hand-built synthetic byte buffers cover cases this one real file doesn't
- * reach (other races, other version-gated branches) - per workflow-0.8.md Step 2h's "real
- * fixtures, not mocks" rule, synthetic bytes are used only where no real fixture exists,
- * not as a substitute for one that does.
- *
- * @see BE_PROCESS/releases/workflow-0.8.md Step 2
+ * GVBE exchange-file parsing, against real Grapevine files in this repo plus a handful of hand-built synthetic
+ * buffers for cases no real fixture covers.
  */
 class GexParserTest extends TestCase {
 
 	private function path( string $relative ): string {
 		$path = be_reference_path( $relative );
-		// Real players' sample files live in samples/, which is kept out of git (owner ruling 2026-09-14).
+		// Real players' sample files live in samples/.
 		if ( strpos( $relative, 'samples/' ) === 0 && ! file_exists( $path ) ) {
 			$this->markTestSkipped( "{$relative} is not present in this checkout." );
 		}
@@ -49,11 +26,7 @@ class GexParserTest extends TestCase {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * The first, and only, real character-bearing binary exchange file in this repo
-	 * (added 2026-09-10). Version 3.0 - exactly what a writer emits (GX-1/GX-2) - with all
-	 * 20 vampire trait lists present, in exactly `VampireClass.Initialize()`'s declared
-	 * order, giving GX-1's shape table a byte-exact real fixture to prove itself against
-	 * before any writer trusts a row of it.
+	 * The first, and only, real character-bearing binary exchange file in this repo (added).
 	 */
 	public function test_sabbat_gex_parses_a_real_binary_vampire_with_all_20_trait_lists(): void {
 		$data = GEX_Parser::parse_file( $this->path( 'samples/data/Sabbat.gex' ) );
@@ -92,8 +65,7 @@ class GexParserTest extends TestCase {
 		$this->assertSame( 'Artifact', $first['item_type'] );
 		$this->assertSame( 'User Information', $first['item_subtype'] );
 
-		// The trait lists on this first item, for real coverage of parse_trait_list()
-		// beyond just the count.
+		// The trait lists on this first item, for real coverage of parse_trait_list() beyond just the count.
 		$this->assertSame( 'Tempers', $first['temper_list']['name'] );
 		$this->assertTrue( $first['temper_list']['alphabetized'] );
 		$this->assertCount( 1, $first['temper_list']['traits'] );
@@ -107,8 +79,7 @@ class GexParserTest extends TestCase {
 		$this->assertSame( [], $data['experience_awards'] );
 		$this->assertSame( [], $data['templates'] );
 
-		// This particular fixture happens to carry no characters, players, or other
-		// world objects - a pure item exchange.
+		// This particular fixture happens to carry no characters, players, or other world objects.
 		$this->assertSame( [], $data['characters'] );
 	}
 
@@ -117,10 +88,7 @@ class GexParserTest extends TestCase {
 
 		$this->assertSame( 2.397, $data['version'] );
 
-		// The section exists structurally in a 2.397 file (the counts are read), even
-		// though this particular fixture's counts all happen to be zero. The direct
-		// proof that a 2.396 buffer skips these reads entirely - not just that this one
-		// real file's counts are zero - is in the synthetic version-gating test below.
+		// The section exists structurally in a 2.397 file (the counts are read).
 		$this->assertNull( $data['calendar'] );
 		$this->assertNull( $data['apr_engine'] );
 		$this->assertSame( [], $data['experience_awards'] );
@@ -130,8 +98,7 @@ class GexParserTest extends TestCase {
 	}
 
 	public function test_dark_ages_arsenal_is_a_real_2399_file_and_parses_clean(): void {
-		// Exercises the deepest version threshold (2.399) end-to-end against a real
-		// file, even though (like the other two) it carries no character records.
+		// Exercises the deepest version threshold (2.399) end-to-end against a real file.
 		$data = GEX_Parser::parse_file( $this->path( 'GV301Source/Code/Dark Ages Arsenal.gex' ) );
 
 		$this->assertSame( 2.399, $data['version'] );
@@ -140,14 +107,10 @@ class GexParserTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Version gating (synthetic - proves the branch taken, not just that a real
-	// file's counts happened to be zero)
-	// -------------------------------------------------------------------------
 
 	/**
-	 * Build a minimal top-level GVBE buffer for a given version with every count
-	 * zero, honoring the real section-presence rules from
-	 * GameClass.LoadExchangeBinary (GameClass.cls lines 536-790):
+	 * Build a minimal top-level GVBE buffer for a given version with every count zero, honoring the real section-presence
+	 * rules from GameClass.LoadExchangeBinary (GameClass.cls lines 536-790):
 	 *
 	 *   >= 2.395            calendar count
 	 *   >= 2.397 (also)     APR count, XP-award count, template count
@@ -183,13 +146,6 @@ class GexParserTest extends TestCase {
 		$this->assertNull( $data['calendar'] );
 		$this->assertNull( $data['apr_engine'] );
 
-		// If parse_binary() had wrongly tried to read the three 2.397-only counts on
-		// this 2.396 buffer, it would either run past the end of a too-short buffer
-		// (RuntimeException) or, since this buffer only has the 2.396-shaped bytes,
-		// misread the real player/character/... counts as those three extra fields -
-		// either way the stream would desynchronize and the trailing eof() check in
-		// parse_binary() would fail. Reaching this line at all is half the proof;
-		// asserting eof()/tell() directly is the other half the task calls for.
 		$this->assertTrue( $reader->eof(), 'A correct 2.396 parse must consume every byte.' );
 		$this->assertSame( $reader->size(), $reader->tell() );
 	}
@@ -201,8 +157,7 @@ class GexParserTest extends TestCase {
 		$data = GEX_Parser::parse_binary( $reader );
 
 		$this->assertSame( 2.397, $data['version'] );
-		// Calendar count was 0, so no CalendarClass was read, but the count field
-		// itself still had to be consumed to reach this point without desyncing.
+		// Calendar count was 0, so no CalendarClass was read.
 		$this->assertNull( $data['calendar'] );
 		$this->assertNull( $data['apr_engine'] );
 		$this->assertSame( [], $data['experience_awards'] );
@@ -213,18 +168,13 @@ class GexParserTest extends TestCase {
 	}
 
 	public function test_a_2396_buffer_is_shorter_than_the_equivalent_2397_buffer(): void {
-		// Directly confirms the two buffers differ by exactly the three int16 fields
-		// the 2.397-only section adds - the most literal form of "the extra section is
-		// read" the task asks for.
+		// Directly confirms the two buffers differ by exactly the three int16 fields the 2.397-only section adds.
 		$buf_2396 = $this->build_minimal_buffer( 2.396 );
 		$buf_2397 = $this->build_minimal_buffer( 2.397 );
 
 		$this->assertSame( strlen( $buf_2396 ) + 6, strlen( $buf_2397 ) );
 	}
 
-	// -------------------------------------------------------------------------
-	// Character record dispatch (synthetic - no real fixture in this repo has any
-	// character data at all, see class doc comment)
 	// -------------------------------------------------------------------------
 
 	private function build_string( string $s ): string {
@@ -269,10 +219,8 @@ class GexParserTest extends TestCase {
 	}
 
 	/**
-	 * The Player/Status/ID/StartDate/Narrator/IsNPC/LastModified block every
-	 * character class ends its identity section with. At version 2.399 (>= 2.397),
-	 * StartDate is a plain date read on every class, including HunterClass/
-	 * DemonClass's unconditional read - so this one helper is valid for all twelve.
+	 * The Player/Status/ID/StartDate/Narrator/IsNPC/LastModified block every character class ends its identity section
+	 * with.
 	 */
 	private function build_id_block(): string {
 		return $this->build_string( 'Player' )
@@ -296,9 +244,7 @@ class GexParserTest extends TestCase {
 	}
 
 	/**
-	 * A full synthetic VampireClass record at version 2.399 - the deepest
-	 * version-gating of any character class (VampireClass.cls lines 640-762) - to
-	 * exercise every conditional branch and the trailing BoonClass loop end to end.
+	 * A full synthetic VampireClass record at version 2.399.
 	 */
 	private function build_vampire_character( float $version = 2.399, string $first_list = 'Physical' ): string {
 		$buf  = $this->build_int16( 2 ); // gvRaceVampire
@@ -353,7 +299,7 @@ class GexParserTest extends TestCase {
 		if ( $version >= 2.397 ) {
 			$buf .= $this->build_double( 0.0 ); // StartDate, "unset"
 		} else {
-			$buf .= $this->build_string( '' ); // legacy Narrator-as-date
+			$buf .= $this->build_string( '' );
 		}
 		$buf .= $this->build_string( 'Approved by ST' ); // Narrator
 		$buf .= $this->build_bool( false );               // IsNPC
@@ -392,9 +338,7 @@ class GexParserTest extends TestCase {
 	}
 
 	public function test_full_vampire_character_round_trip(): void {
-		// Wrap the single synthetic character record in a minimal but complete GEX
-		// buffer at version 2.399 so it goes through the real top-level parse_binary()
-		// path, not just the private character parser in isolation.
+		// Wrap the single synthetic character record in a minimal but complete GEX buffer at version 2.399.
 		$version = 2.399;
 		$buf  = pack( 'v', 4 ) . 'GVBE';
 		$buf .= pack( 'e', $version );
@@ -439,8 +383,7 @@ class GexParserTest extends TestCase {
 		$buf     = $this->build_vampire_character( $version );
 		$reader  = new GV_Binary_Reader( $buf );
 
-		// parse_character_vampire() is private - go through parse_character() via the
-		// int16 RaceType selector already embedded by build_vampire_character().
+		// parse_character_vampire() is private.
 		$ref    = new \ReflectionMethod( GEX_Parser::class, 'parse_character' );
 		$ref->setAccessible( true );
 		$char = $ref->invoke( null, $reader, $version );
@@ -453,7 +396,7 @@ class GexParserTest extends TestCase {
 		$this->assertSame( '', $char['coterie'] );
 		$this->assertSame( '', $char['sire'] );
 		$this->assertSame( '', $char['aura'] );
-		// Every trait list in this fixture is empty, so the backfilled pool max stays 0.
+		// Every trait list in this fixture is empty.
 		$this->assertSame( 0, $char['physical_max'] );
 		$this->assertSame( $char['physical_max'], $char['social_max'] );
 		$this->assertSame( $char['physical_max'], $char['mental_max'] );
@@ -462,9 +405,7 @@ class GexParserTest extends TestCase {
 	}
 
 	/**
-	 * 1.0.0-review F-089: every reader looked its first three lists up as "Physical", "Social", and
-	 * "Mental". A file naming the first one anything else crashed an old (pre-2.397) file's read
-	 * with a TypeError the import's error handling never caught, and warned on a newer one.
+	 * Every reader looked its first three lists up as "Physical", "Social", and "Mental".
 	 */
 	public function test_a_character_whose_first_list_has_another_name_still_reads(): void {
 		$ref = new \ReflectionMethod( GEX_Parser::class, 'parse_character' );
@@ -480,18 +421,8 @@ class GexParserTest extends TestCase {
 	}
 
 	/**
-	 * One minimal synthetic character for every remaining RaceType code (all eleven
-	 * besides Vampire, covered above), at version 2.399 - the newest, most heavily
-	 * gated shape each class supports - asserting each dispatches to the right
-	 * parser and round-trips to EOF without desyncing. Not a full field-by-field
-	 * check the way the Vampire test above is, but every field IS present and
-	 * correctly typed/ordered, since any mismatch against GEX_Parser's real read
-	 * sequence would throw a truncation error or fail the trailing eof() assertion.
-	 * Werewolf and Fera share the pre-2.395 packed-Honor/Glory/Wisdom quirk (see
-	 * GEX_Parser's own doc comment on parse_character_werewolf()); Hunter and Demon
-	 * are the two classes with almost no version conditionals at all; Wraith has no
-	 * Biography field; Various reads TemperList before the Physical/Social/Mental
-	 * block.
+	 * One minimal synthetic character for every remaining RaceType code (all eleven besides Vampire, covered above), at
+	 * version 2.399.
 	 */
 	public function test_every_race_type_code_dispatches_and_round_trips(): void {
 		$version = 2.399;
@@ -677,8 +608,7 @@ class GexParserTest extends TestCase {
 	}
 
 	/**
-	 * Decision 074 - shared by both the binary and XML readers, so exhaustively covered
-	 * once here rather than duplicated in `GexXmlParserTest`.
+	 * Shared by both the binary and XML readers.
 	 */
 	public function test_is_section_divider(): void {
 		$this->assertTrue( GEX_Parser::is_section_divider( [ 'name' => '——Blood Magic——', 'total' => '0', 'note' => '' ] ) );
@@ -691,10 +621,6 @@ class GexParserTest extends TestCase {
 		$this->assertFalse( GEX_Parser::is_section_divider( [ 'name' => '——Unbalanced', 'total' => '0', 'note' => '' ] ), 'must be wrapped on BOTH sides, not just prefixed' );
 	}
 
-	/**
-	 * workflow-0.9.md Step 0e - the label stamped onto every trait that follows a divider,
-	 * shared by both readers the same way `is_section_divider()` itself is.
-	 */
 	public function test_divider_label_strips_the_em_dash_wrapping(): void {
 		$this->assertSame( 'Blood Magic', GEX_Parser::divider_label( [ 'name' => '——Blood Magic——', 'total' => '0', 'note' => '' ] ) );
 		$this->assertSame( 'Combination Disciplines', GEX_Parser::divider_label( [ 'name' => '——Combination Disciplines——', 'total' => '0', 'note' => '' ] ) );

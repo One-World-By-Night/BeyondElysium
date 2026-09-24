@@ -7,11 +7,7 @@ use BeyondElysium\Database\Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Static data-access model for one position's holder history (1.1.0 §3.10, F2) - one row
- * per holder, `ended` null while they still hold it. Written only by `Position::set_holder()`;
- * never edited directly, an append-only log of who held an office and when.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.10
+ * Static data-access model for one position's holder history.
  */
 class Position_History {
 
@@ -29,8 +25,7 @@ class Position_History {
 	}
 
 	/**
-	 * Closes the position's own currently-open row (`ended IS NULL`), if one exists - the
-	 * outgoing holder's tenure ends the day the incoming holder (or a vacancy) begins.
+	 * Closes the position's own currently-open row (`ended IS NULL`), if one exists.
 	 *
 	 * @param int    $position_id
 	 * @param string $ended Y-m-d.

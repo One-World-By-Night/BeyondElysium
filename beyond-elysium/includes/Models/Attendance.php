@@ -7,15 +7,7 @@ use BeyondElysium\Database\Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Static data-access model for who signed in at a game session (1.1.0 §3.1).
- *
- * A row names either a real, active character in this chronicle (`character_id`) or a visitor
- * recorded by name and home chronicle (`visitor_name`/`visitor_chronicle`) - never both, and
- * never neither. `session_character`'s UNIQUE key allows any number of visitor rows per
- * session (MySQL treats each NULL `character_id` as distinct) while still refusing the same
- * character twice at one session.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.1
+ * Static data-access model for who signed in at a game session.
  */
 class Attendance {
 
@@ -33,8 +25,7 @@ class Attendance {
 	}
 
 	/**
-	 * The character ids who signed in at a session - visitor rows excluded, since they name no
-	 * real character. Used by award-attendance-xp to resolve who actually gets the award.
+	 * The character ids who signed in at a session.
 	 *
 	 * @param int $session_id
 	 * @return int[]
@@ -49,11 +40,8 @@ class Attendance {
 	}
 
 	/**
-	 * Records a sign-in: either a real character (character_id) or a visitor (visitor_name,
-	 * optionally visitor_chronicle), never both. Returns the new row's id, or false when
-	 * neither shape is present or the insert fails (including the same character signing in
-	 * twice at this session - the caller checks character_ids_for_session() first for a clean
-	 * 409 rather than relying on this alone).
+	 * Records a sign-in: either a real character (character_id) or a visitor (visitor_name, optionally
+	 * visitor_chronicle).
 	 *
 	 * @param int   $session_id
 	 * @param int   $game_id
@@ -103,9 +91,8 @@ class Attendance {
 	}
 
 	/**
-	 * The most recent game_date a character was recorded present at, across every session in
-	 * their chronicle, or null if they have never signed in. Used by the spotlight check
-	 * (§3.14) to find who hasn't been seen in a while.
+	 * The most recent game_date a character was recorded present at, across every session in their chronicle, or null if
+	 * they have never signed in.
 	 *
 	 * @param int $character_id
 	 * @return string|null Y-m-d, or null.

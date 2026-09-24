@@ -7,11 +7,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-066 (Pass H intake `t3-remaining-components`). Chronicle Setup saves one
- * sub-faction restriction at a time - Clan, then Sect - each built on the settings the page
- * loaded with, and the server replaced the whole `enabled_factions` map with whatever came in.
- * Saving Sect erased the Clan restriction saved a moment before, with nothing on screen to say
- * so. A write now changes only the stacks and fields it names.
+ * Saving a faction restriction keeps what is already saved: a second field keeps the first, another stack keeps the
+ * first stack, and saving a field again replaces that field while an empty list lifts it.
  */
 class FactionRestrictionMergeThreadTest extends WP_UnitTestCase {
 

@@ -8,18 +8,8 @@ use BeyondElysium\Services\Cost_Engine;
 use WP_UnitTestCase;
 
 /**
- * 1.3.2: seeds Vampire Disciplines and Wraith Arcanoi (OWBN variant included) end to end
- * from the real declared files under `data/catalog/`, through `Seeder::seed_schema_blocks()`
- * -> `Catalog_Reader::blocks_to_seed()` -> the real `Cost_Engine`, and confirms
- * ceiling/cost/out-of-type/elder all resolve identically to the same numbers
- * `CostEngineHeldPricingTest` (unit layer, a hand-built fixture) and
- * `TieredPowerLevelsThreadTest` already assert for the GVM-seeded shape - the whole point of
- * "closer to a direct decode than a transform" (1.3.2 build brief item 1).
- *
- * Do not run this against a shared WP_TESTS_DIR database until told it is free - see
- * `BE_PROCESS/releases/1.3.2-design-workflow.md`.
- *
- * @see BE_PROCESS/releases/1.3.2-design-workflow.md
+ * Vampire Disciplines and Wraith Arcanoi (OWBN variant included) seeded end to end from the real declared files
+ * through `Seeder::seed_schema_blocks()` and `Catalog_Reader::blocks_to_seed()`.
  */
 class DeclaredCatalogIngestionThreadTest extends WP_UnitTestCase {
 
@@ -42,19 +32,14 @@ class DeclaredCatalogIngestionThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Vampire Disciplines - the one genre whose out-of-type surcharge already
-	// worked under the GVM path (D75). The bridge must not regress it.
+	// Vampire Disciplines - the one genre whose out-of-type surcharge already worked under the GVM path
 	// -------------------------------------------------------------------------
 
 	public function test_vampire_disciplines_seeds_from_the_declared_file_not_gvm(): void {
 		$definition = $this->definition( 'vampire-disciplines' );
 
-		// assertEquals, not assertSame: the declared file's own key order need not match a
-		// PHP array literal's (CATALOG-JSON-FORMAT.md principle 4), and every rank here is
-		// read by name, never by position.
 		$this->assertEquals( [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ], (array) $definition->_meta->ladder );
-		// The declared file's own out_of_type_cost_modifier bridge (Catalog_Reader) - D75's
-		// one already-working case, preserved exactly rather than silently zeroed by cutover.
+		// The declared file's own out_of_type_cost_modifier bridge (Catalog_Reader).
 		$this->assertSame( 1, $definition->out_of_type_cost_modifier );
 	}
 
@@ -71,8 +56,6 @@ class DeclaredCatalogIngestionThreadTest extends WP_UnitTestCase {
 		$in_clan     = Cost_Engine::price_held_tiered_power( $definition, [ 'name' => 'Celerity', 'level' => 6 ], true );
 		$out_of_clan = Cost_Engine::price_held_tiered_power( $definition, [ 'name' => 'Celerity', 'level' => 6 ], false );
 
-		// Matches CostEngineHeldPricingTest::test_an_above_ceiling_level_out_of_clan_charges_the_modifier_on_every_rung_and_pick:
-		// 5 rungs + 1 pick = 6 chargeable units, each +1 out-of-clan.
 		$this->assertSame( $in_clan['xp'] + 6, $out_of_clan['xp'] );
 	}
 
@@ -85,10 +68,6 @@ class DeclaredCatalogIngestionThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Wraith Arcanoi - the book (base file), a scaling/exempting out-of-type
-	// expression the bridge must NOT flatten, and Innate filed as a pick, never
-	// a rung (matches TieredPowerLevelsThreadTest's own Argos assertion).
-	// -------------------------------------------------------------------------
 
 	public function test_wraith_arcanoi_seeds_from_the_declared_file_with_the_book_ladder(): void {
 		$definition = $this->definition( 'wraith-arcanoi' );
@@ -97,9 +76,7 @@ class DeclaredCatalogIngestionThreadTest extends WP_UnitTestCase {
 		// assertEquals, not assertSame - same key-order note as above.
 		$this->assertEquals( [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ], (array) $definition->_meta->ladder );
 		$this->assertSame( 2, $definition->_meta->costs->innate, 'Oblivion p.165: Innate now prices, never free' );
-		// out_of_type is not flat (innate is exempt at +0, every other rank is -1 for the
-		// Guild) - the bridge must leave the deprecated scalar unset rather than guess at a
-		// single flattened number the way D75 measured every non-Vampire genre wrongly doing.
+		// out_of_type is not flat (innate is exempt at +0, every other rank is -1 for the Guild).
 		$this->assertObjectNotHasProperty( 'out_of_type_cost_modifier', $definition );
 	}
 
@@ -123,9 +100,6 @@ class DeclaredCatalogIngestionThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'elder_pick', $result['basis'] );
 	}
 
-	// -------------------------------------------------------------------------
-	// The OWBN variant - a `mode: replace` file, seeded as its own complete row
-	// under its own slug, never merged into the base.
 	// -------------------------------------------------------------------------
 
 	public function test_the_owbn_variant_seeds_as_its_own_complete_row(): void {

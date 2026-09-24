@@ -1,11 +1,6 @@
 /**
- * Secure printing settings (1.0.1 C2-C4): the site-wide opt-in, what is currently
- * configured, and a generator for sites that cannot mint a certificate themselves.
- *
- * The plugin never installs a certificate. This screen will hand one over exactly once - the
- * key is in that response and nowhere else, never on disk and never in the database - along
- * with the wp-config.php lines to paste. Everything after that is SFTP and a text editor,
- * deliberately.
+ * Secure printing settings: the site-wide opt-in, what is currently configured, and a generator for sites that cannot
+ * mint a certificate themselves.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';

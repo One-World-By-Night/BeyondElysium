@@ -6,10 +6,8 @@ use BeyondElysium\Models\Saved_Query;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-092 (Pass H intake `t3-models`). A Storyteller's "Most Recent Search" is one row
- * per chronicle, found and updated on every run - and made when none is found. Two first runs at
- * once, from two tabs, each found none and each made one, and both stayed in the saved-query list
- * for good.
+ * Recent searches never double up: two first runs at once leave one recent search, a run folds recent searches already
+ * doubled into one, and named saved queries are never touched.
  */
 class RecentSearchDuplicateThreadTest extends WP_UnitTestCase {
 
@@ -27,7 +25,9 @@ class RecentSearchDuplicateThreadTest extends WP_UnitTestCase {
 		parent::tear_down();
 	}
 
-	/** The other tab's first run lands between this run's look for a row and its insert. */
+	/**
+	 * The other tab's first run lands between this run's look for a row and its insert.
+	 */
 	public function another_tab_saves_first( string $query ): string {
 		global $wpdb;
 		if ( ! $this->raced && str_starts_with( ltrim( $query ), "INSERT INTO `{$wpdb->prefix}be_queries`" ) ) {

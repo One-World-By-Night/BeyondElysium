@@ -1,8 +1,5 @@
 /**
- * A Storyteller's own view of the secrets attached to one entity - a plot, item, location,
- * or NPC (1.1.0 §3.11): create/edit/delete a secret, set its own audience, and reveal it to
- * characters (optionally held for a release batch). Embedded in the plot, item, location,
- * and NPC editors alike - one shared component rather than four near-identical copies.
+ * A Storyteller's own view of the secrets attached to one entity.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -240,8 +237,7 @@ function SecretRow( {
 			loadReveals();
 			onRevealsChanged();
 		} catch {
-			// Surfaced via the parent's own error banner on next load failure; kept local and
-			// silent here since a 409 (already revealed) is self-explanatory from the list.
+			// Surfaced via the parent's own error banner on next load failure.
 		} finally {
 			setRevealing( false );
 		}

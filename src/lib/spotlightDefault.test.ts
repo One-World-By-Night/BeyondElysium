@@ -2,11 +2,8 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 /**
- * D54: `GameNights.tsx` once defaulted its spotlight-days field to 14 while
- * `Spotlight::DEFAULT_SPOTLIGHT_DAYS` (the value actually enforced until a save happened) was
- * 42 - a Storyteller who saved the panel unchanged silently cut the real window. There is no
- * shared runtime constant across PHP and TypeScript, so this scans both source files directly
- * and fails if their literals ever drift apart again.
+ * `GameNights.tsx` once defaulted its spotlight-days field to 14 while `Spotlight::DEFAULT_SPOTLIGHT_DAYS` (the value
+ * actually enforced until a save happened) was 42.
  */
 describe( 'spotlight days default stays in sync with the server', () => {
 	it( 'GameNights.tsx defaults match Spotlight::DEFAULT_SPOTLIGHT_DAYS', () => {

@@ -14,15 +14,9 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * `Sheets_Controller`'s two routes, dispatched as real REST requests: `%PDF-`
- * bytes for an owner, `403` for a non-owner, an UNSIGNED-stamped copy when
- * the cert is unreadable, and ST-only values absent from the byte stream for a
- * non-manager. `rest_get_server()->dispatch()` stops short
- * of the real HTTP serve step, so `$response->get_data()['bytes']` is read
- * directly rather than needing the `rest_pre_serve_request` filter to fire
- * (Section 4c's own note on why this route shape stays testable).
- *
- * @see BE_PROCESS/design/signed-pdf-design.md Section 4c, SP-9
+ * `Sheets_Controller`'s two routes as real REST requests: PDF bytes for an owner, 403 for a non-owner, an
+ * UNSIGNED-stamped copy when the certificate is unreadable, and no Storyteller-only values in the byte stream for a
+ * non-Storyteller.
  */
 class SheetsControllerThreadTest extends WP_UnitTestCase {
 
@@ -50,11 +44,7 @@ class SheetsControllerThreadTest extends WP_UnitTestCase {
 			'created_by' => $this->manager_id,
 		] );
 
-		// Real chronicle membership, not just a WP role - Character::create() grants this
-		// automatically to a character's own owner, but $other_player_id owns nothing here
-		// and needs it granted explicitly to reach the route's permission_callback at all,
-		// so the D33 ownership *denial* this test exercises is this controller's own check,
-		// not an earlier, different denial for not being a chronicle member.
+		// Real chronicle membership.
 		\BeyondElysium\Models\Game_Member::ensure_player( (int) $game_id, $this->other_player_id );
 
 		Schema_Block::create( [
@@ -142,14 +132,7 @@ class SheetsControllerThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'ownership_denied', $response->as_error()->get_error_code() );
 	}
 
-	/**
-	 * 1.0.0-review F-042, owner ruling 2026-09-14: with no signing certificate a sheet still
-	 * prints - clearly marked unsigned, never passed off as a signed copy. It used to refuse with
-	 * `503 signing_unavailable`.
-	 */
 	public function test_with_no_signing_certificate_a_sheet_prints_marked_unsigned(): void {
-		// Hides, then always restores, the *shared* cert file (PdfWriterThreadTest's
-		// tests run in this same process and need it readable again immediately after).
 		$cert_path = BE_PDF_SIGNING_CERT;
 		rename( $cert_path, $cert_path . '.hidden' );
 		try {
@@ -204,9 +187,7 @@ class SheetsControllerThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The route answers "will this print be signed", which since 1.0.1 C2 means the
-	 * site-wide opt-in as well as the certificate - so a configured site that has not
-	 * switched secure printing on correctly reports not-ok.
+	 * The route answers "will this print be signed".
 	 */
 	public function test_availability_route_reports_ok_when_signing_is_configured_and_switched_on(): void {
 		update_option( \BeyondElysium\Services\Pdf_Signer::OPT_IN_OPTION, true );

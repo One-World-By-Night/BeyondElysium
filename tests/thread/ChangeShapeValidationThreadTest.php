@@ -12,11 +12,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-030, through the real change route: a player could buy a trait by misspelling
- * its name (0 XP), invent an Elder power (0 XP), smuggle a second pool into a resource change
- * that approval judged by the first, submit change types the route was never meant to take, and
- * write to sections their creature type doesn't have. On a chronicle that auto-approves by
- * default, none of it reached a Storyteller.
+ * The change route refuses a misspelled or invented name, a second pool smuggled into a resource change, and other
+ * malformed change shapes.
  */
 class ChangeShapeValidationThreadTest extends WP_UnitTestCase {
 
@@ -31,7 +28,7 @@ class ChangeShapeValidationThreadTest extends WP_UnitTestCase {
 		global $wpdb;
 		$wpdb->insert( $wpdb->prefix . 'be_games', [
 			'slug' => $this->slug, 'name' => $this->slug,
-			// Auto-approve by default (Decision 109) - the setting under which these went unreviewed.
+			// Auto-approve by default.
 			'settings' => wp_json_encode( [ 'auto_approve' => true ] ),
 			'created_by' => 1, 'created_at' => current_time( 'mysql' ), 'updated_at' => current_time( 'mysql' ),
 		] );

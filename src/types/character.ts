@@ -1,25 +1,17 @@
 /**
- * Type definitions for player and NPC characters and their edit
- * history. Covers the Character record itself, the request and
- * response shapes for the characters REST endpoints, character
- * changes and the approval queue, snapshots, and per-character
- * sheet style overrides.
+ * Type definitions for player and NPC characters and their edit history.
  */
 import type { ApprovalLevel } from './index';
 import type { AudienceRules, AudienceValue } from './plot';
 import type { TravellingStatus } from './transfer';
 
 /**
- * A character's full set of sheet block values, keyed by block
- * slug. Each value's shape depends on the section type of that
- * block, so the value type is intentionally left unstructured.
+ * A character's full set of sheet block values, keyed by block slug.
  */
 export type SheetData = Record< string, unknown >;
 
 /**
- * The lifecycle state of a submitted character change. A change
- * starts out pending and is then moved to approved or rejected
- * by a reviewer.
+ * The lifecycle state of a submitted character change.
  */
 export type ChangeStatus = 'pending' | 'approved' | 'rejected';
 
@@ -28,42 +20,63 @@ export type ChangeStatus = 'pending' | 'approved' | 'rejected';
 // ---------------------------------------------------------------------------
 
 /**
- * A single player or NPC character record as stored and returned
- * by the characters REST endpoints. Combines fixed identity and
- * status fields with the free-form sheet_data blob holding every
- * game-specific trait and resource value.
+ * A single player or NPC character record as stored and returned by the characters REST endpoints.
  */
 export interface Character {
-	/** Local auto-increment id, valid only on this WordPress installation. */
+	/**
+	 * Local auto-increment id, valid only on this WordPress installation.
+	 */
 	id: number;
-	/** Only on a create response: this character is its player's request to join the chronicle, waiting for a Storyteller. */
+	/**
+	 * Only on a create response: this character is its player's request to join the chronicle, waiting for a Storyteller.
+	 */
 	join_pending?: boolean;
-	/** Permanent identity that survives transfers between installations; use instead of `id` for cross-site references. */
+	/**
+	 * Permanent identity that survives transfers between installations.
+	 */
 	uuid: string;
 	name: string;
 	stack_slug: string;
 	owner_type: string;
 	owner_slug: string;
 	wp_user_id: number | null;
-	/** Player's display name; mirrors the linked account's name once wp_user_id is set, otherwise freely editable text. */
+	/**
+	 * Player's display name; mirrors the linked account's name once wp_user_id is set.
+	 */
 	player_name: string | null;
-	/** Email address for a not-yet-created account this character is meant to be linked to. */
+	/**
+	 * Email address for a not-yet-created account this character is meant to be linked to.
+	 */
 	pending_player_email?: string | null;
-	/** A matching real WP account found server-side, awaiting manager confirmation before linking. */
+	/**
+	 * A matching real WP account found server-side, awaiting manager confirmation before linking.
+	 */
 	pending_match?: { id: number; display_name: string } | null;
 	status: 'active' | 'inactive' | 'retired' | 'dead' | 'pending' | string;
 	is_npc: boolean;
-	/** How much of the sheet an NPC needs; always 'full' on a player character (1.1.0 §3.7). */
+	/**
+	 * How much of the sheet an NPC needs.
+	 */
 	npc_detail: 'full' | 'quick';
-	/** An NPC's staff owner (1.1.0 §3.6); always null on a player character. */
+	/**
+	 * An NPC's staff owner; always null on a player character.
+	 */
 	assigned_to: number | null;
-	/** Who's Who display name; null uses `name` as-is. NPC-only. */
+	/**
+	 * Who's Who display name.
+	 */
 	public_name?: string | null;
-	/** Who's Who description, [ST]...[/ST] stripped for a non-manager viewer. NPC-only. */
+	/**
+	 * Who's Who description, [ST]...[/ST] stripped for a non-manager viewer.
+	 */
 	public_description?: string | null;
-	/** WP attachment id for the Who's Who portrait; falls back to image_id when unset. NPC-only. */
+	/**
+	 * WP attachment id for the Who's Who portrait.
+	 */
 	public_image_id?: number | null;
-	/** Audience gating who can see this NPC's Who's Who profile at all (1.1.0 §3.7). */
+	/**
+	 * Audience gating who can see this NPC's Who's Who profile at all.
+	 */
 	profile_audience?: AudienceValue;
 	profile_audience_rules?: AudienceRules | null;
 	narrator: string | null;
@@ -72,18 +85,30 @@ export interface Character {
 	xp_unspent: number;
 	biography: string | null;
 	notes: string | null;
-	/** Only present for users with the be_manage_characters capability. */
+	/**
+	 * Only present for users with the be_manage_characters capability.
+	 */
 	rp_notes?: string | null;
-	/** WP attachment id for the character's portrait image; image_url is resolved from it server-side. */
+	/**
+	 * WP attachment id for the character's portrait image.
+	 */
 	image_id?: number | null;
 	image_url?: string | null;
-	/** Whether the current user may edit this character; present only on the single-character fetch. */
+	/**
+	 * Whether the current user may edit this character.
+	 */
 	can_edit?: boolean;
-	/** Whether the current user holds the be_manage_characters capability; present only on the single-character fetch. */
+	/**
+	 * Whether the current user holds the be_manage_characters capability.
+	 */
 	can_manage?: boolean;
-	/** Whether the current user may customize this character's sheet style; its own be_customize_sheet capability, not derived from can_manage. */
+	/**
+	 * Whether the current user may customize this character's sheet style.
+	 */
 	can_customize_sheet?: boolean;
-	/** Set only while an open transfer, either direction, touches this character (GX-8/9). */
+	/**
+	 * Set only while an open transfer, either direction, touches this character.
+	 */
 	travelling_status?: TravellingStatus | null;
 	sheet_data: SheetData;
 	created_by: number;
@@ -92,10 +117,7 @@ export interface Character {
 }
 
 /**
- * Request body for creating a new character via the characters
- * collection endpoint. Only name and stack_slug are required;
- * every other field is optional and takes a server-side default
- * when omitted.
+ * Request body for creating a new character via the characters collection endpoint.
  */
 export interface CreateCharacterRequest {
 	name: string;
@@ -104,7 +126,9 @@ export interface CreateCharacterRequest {
 	player_name?: string;
 	status?: string;
 	is_npc?: boolean;
-	/** Manager-only, meaningless on a PC; 'full' when omitted (1.1.0 §3.7). */
+	/**
+	 * Manager-only, meaningless on a PC.
+	 */
 	npc_detail?: 'full' | 'quick';
 	narrator?: string;
 	start_date?: string;
@@ -115,10 +139,7 @@ export interface CreateCharacterRequest {
 }
 
 /**
- * Request body for updating an existing character. Every field
- * is optional and only the fields included are changed. Most
- * fields simply skip on omission; wp_user_id and
- * pending_player_email each define their own clear/unassign rule.
+ * Request body for updating an existing character.
  */
 export interface UpdateCharacterRequest {
 	name?: string;
@@ -130,26 +151,31 @@ export interface UpdateCharacterRequest {
 	player_name?: string;
 	start_date?: string;
 	is_npc?: boolean;
-	/** be_manage_characters only, either template on the same character (1.1.0 §3.7). */
+	/**
+	 * be_manage_characters only, either template on the same character.
+	 */
 	npc_detail?: 'full' | 'quick';
 	image_id?: number | null;
-	/** null/0 unassigns; omitting the field entirely leaves it untouched. */
+	/**
+	 * null/0 unassigns; omitting the field entirely leaves it untouched.
+	 */
 	wp_user_id?: number | null;
-	/** Empty string clears it; omitting the field entirely leaves it untouched. */
+	/**
+	 * Empty string clears it.
+	 */
 	pending_player_email?: string;
-	/** be_manage_characters and NPC only; must be a chronicle member with role hst, ast, or narrator. null unassigns. */
+	/**
+	 * be_manage_characters and NPC only.
+	 */
 	assigned_to?: number | null;
 }
 
 // ---------------------------------------------------------------------------
-// NPC public profile ("Who's Who", 1.1.0 §3.7)
+// NPC public profile ("Who's Who")
 // ---------------------------------------------------------------------------
 
 /**
- * The public projection of an NPC that `Npc_Profiles_Controller` returns -
- * deliberately narrower than the full Character record: no sheet_data,
- * player, XP, notes, or status. `titles`/`factions` are always empty until
- * F1/F2 ship later in the same release.
+ * The public projection of an NPC that `Npc_Profiles_Controller` returns.
  */
 export interface NpcProfile {
 	id: number;
@@ -161,8 +187,7 @@ export interface NpcProfile {
 }
 
 /**
- * Request body for updating an NPC's five public-profile fields. Every
- * field is optional and only the fields included are changed.
+ * Request body for updating an NPC's five public-profile fields.
  */
 export interface UpdateNpcProfileRequest {
 	public_name?: string;
@@ -173,21 +198,19 @@ export interface UpdateNpcProfileRequest {
 }
 
 /**
- * A minimal summary of a WordPress user account. Used to present
- * a picker of candidate accounts to link to a character, and to
- * display which account a character is already linked to.
+ * A minimal summary of a WordPress user account.
  */
 export interface WpUserSummary {
 	id: number;
 	display_name: string;
-	/** Site administrators always see it; a Storyteller only after searching that exact address. */
+	/**
+	 * Site administrators always see it.
+	 */
 	email?: string;
 }
 
 /**
  * Query parameters accepted by the characters collection endpoint.
- * Supports pagination, ordering by any of the listed fields, and
- * filtering by status, stack, NPC flag, or a free-text search term.
  */
 export interface CharacterCollectionParams {
 	page?: number;
@@ -213,10 +236,7 @@ export interface CharacterCollectionParams {
 // ---------------------------------------------------------------------------
 
 /**
- * The kind of edit a character change represents: adding,
- * removing, or modifying a trait; adjusting a resource pool or
- * identity field; earning or spending XP; or recording an import
- * note or a catalog cutover.
+ * The kind of edit a character change represents: adding, removing, or modifying a trait.
  */
 export type ChangeType =
 	| 'add_trait'
@@ -227,30 +247,22 @@ export type ChangeType =
 	| 'xp_earn'
 	| 'xp_adjust'
 	| 'import_note'
-	// What a catalog cutover did to a sheet, and its undoing (1.3.3 R7). Written already approved by
-	// Catalog_Cutover, never submitted, never priced, never in the approval queue.
+	// What a catalog cutover did to a sheet, and its undoing.
 	| 'catalog_rekey'
 	| 'catalog_rekey_revert'
-	// A player proposing a catalog item, location or rote for their own character (1.0.1 D3).
-	// Not sheet data: approving it writes a world object and connects it to the character.
+	// A player proposing a catalog item, location or rote for their own character.
 	| 'propose_world_object'
-	// A player proposing a coterie/pack/cabal/motley for their own character (1.1.0 §3.10, F1).
-	// Not sheet data either: approving it writes a faction and makes the character its leader.
+	// A player proposing a coterie/pack/cabal/motley for their own character.
 	| 'propose_faction';
 
 /**
- * The data carried by a single character change. Its shape
- * depends on the owning change's change_type, so it is
- * intentionally left unstructured here rather than modeled as a
- * discriminated union.
+ * The data carried by a single character change.
  */
 export type ChangePayload = Record< string, unknown >;
 
 /**
- * A single recorded change to a character's sheet, including its
- * XP cost, review status, and who submitted and reviewed it. This
- * is the core record stored per edit and returned by the changes
- * endpoints.
+ * A single recorded change to a character's sheet, including its XP cost, review status, and who submitted and
+ * reviewed it.
  */
 export interface CharacterChange {
 	id: number;
@@ -264,19 +276,22 @@ export interface CharacterChange {
 	reviewed_by: number | null;
 	submitted_at: string;
 	reviewed_at: string | null;
-	/** The submitter's own note. */
+	/**
+	 * The submitter's own note.
+	 */
 	notes: string | null;
-	/** The reviewing Storyteller's note, kept apart from the submitter's. */
+	/**
+	 * The reviewing Storyteller's note, kept apart from the submitter's.
+	 */
 	review_notes?: string | null;
-	/** Citation naming the real-world approval authority, set at submission time. */
+	/**
+	 * Citation naming the real-world approval authority, set at submission time.
+	 */
 	reason: string | null;
 }
 
 /**
- * Request body for submitting a new character change. Identifies
- * the kind of change and its category, carries the change-specific
- * payload, and optionally overrides the XP cost and records
- * reviewer-facing notes.
+ * Request body for submitting a new character change.
  */
 export interface ChangeRequest {
 	change_type: ChangeType;
@@ -287,27 +302,24 @@ export interface ChangeRequest {
 }
 
 /**
- * Request body for approving or rejecting a pending change. The
- * status field records the reviewer's decision, and notes
- * optionally records the reviewer's reasoning.
+ * Request body for approving or rejecting a pending change.
  */
 export interface ChangeReviewRequest {
 	status: 'approved' | 'rejected';
 	notes?: string;
-	/** The review_token the queue issued; the server refuses the review if the change was edited since. */
+	/**
+	 * The review_token the queue issued.
+	 */
 	review_token?: string;
 	/**
-	 * What a purchase waiting for a price costs, in whole XP from 0 to 500: per dot for a trait list,
-	 * for the whole pick for a power. Required to approve a change that is waiting for one, and read
-	 * for no other (1.3.3 E4).
+	 * What a purchase waiting for a price costs, in whole XP from 0 to 500: per dot for a trait list, for the whole pick
+	 * for a power.
 	 */
 	xp_cost?: number;
 }
 
 /**
- * Query parameters accepted by a character's changes collection
- * endpoint. Supports pagination and ordering, and filtering by
- * review status or change type.
+ * Query parameters accepted by a character's changes collection endpoint.
  */
 export interface ChangeCollectionParams {
 	page?: number;
@@ -319,9 +331,6 @@ export interface ChangeCollectionParams {
 
 /**
  * Query parameters for the game-wide change approval queue.
- * Extends the per-character change filters with an optional
- * character_id, since the queue spans every character in a game
- * rather than being scoped to one.
  */
 export interface QueueCollectionParams extends ChangeCollectionParams {
 	character_id?: number;
@@ -329,51 +338,58 @@ export interface QueueCollectionParams extends ChangeCollectionParams {
 }
 
 /**
- * A single row in the game-wide approval queue. Extends
- * CharacterChange with the owning character's name and its
- * currently computed approval level, so the queue can render both
- * without a second lookup per row.
+ * A single row in the game-wide approval queue.
  */
 export interface QueueChange extends CharacterChange {
 	character_name: string | null;
 	approval_level: ApprovalLevel;
-	/** The submitter's display name; null if their account no longer exists. */
+	/**
+	 * The submitter's display name.
+	 */
 	submitted_by_name: string | null;
-	/** Identifies exactly the content shown; sent back with a review so a later edit is caught. */
+	/**
+	 * Identifies exactly the content shown.
+	 */
 	review_token: string;
-	/** For a change waiting for a price: what one price would cover. Null for every other change. */
+	/**
+	 * For a change waiting for a price: what one price would cover.
+	 */
 	cost_units?: CostUnits | null;
 }
 
-/** What one price covers: each dot of a trait list, or a whole pick of a tiered power. */
+/**
+ * What one price covers: each dot of a trait list, or a whole pick of a tiered power.
+ */
 export type PriceUnit = 'dot' | 'pick';
 
-/** How the server says a change waiting for a price is priced: per what, over how many (1.3.3 E5). */
+/**
+ * How the server says a change waiting for a price is priced: per what, over how many.
+ */
 export interface CostUnits {
 	per: PriceUnit;
 	units: number;
-	/** A flaw: the price is recorded on the row and nothing is deducted for it. */
+	/**
+	 * A flaw: the price is recorded on the row and nothing is deducted for it.
+	 */
 	negative?: boolean;
 }
 
 /**
- * A single row in a game's recent activity feed. Extends
- * CharacterChange with the owning character's name, covering
- * changes that have already been approved or rejected.
+ * A single row in a game's recent activity feed.
  */
 export interface ActivityChange extends CharacterChange {
 	character_name: string | null;
 }
 
 /**
- * Response from a batch-approve request. Lists which change ids
- * were successfully approved and which were skipped, so the
- * caller can reconcile its local queue state.
+ * Response from a batch-approve request.
  */
 export interface BatchApproveResponse {
 	approved: number[];
 	skipped: number[];
-	/** Changes left alone because they are waiting for a price; each needs its own review (1.3.3 E3). */
+	/**
+	 * Changes left alone because they are waiting for a price; each needs its own review.
+	 */
 	needs_cost?: number[];
 }
 
@@ -382,34 +398,34 @@ export interface BatchApproveResponse {
 // ---------------------------------------------------------------------------
 
 /**
- * The priced outcome for one proposed change, in the same order
- * as the request array it was computed from. Reports what the
- * change would cost and what approval level it would require,
- * without actually submitting it.
+ * The priced outcome for one proposed change, in the same order as the request array it was computed from.
  */
 export interface ChangePreviewResult {
 	xp_cost: number;
 	approval_level: ApprovalLevel;
-	/** Citation naming the real-world approval authority, when the matched rule carries one. */
+	/**
+	 * Citation naming the real-world approval authority, when the matched rule carries one.
+	 */
 	approval_reason: string | null;
 	/**
-	 * False when the purchase has no price yet - homebrew a Storyteller prices on approval - so the
-	 * screen says so instead of showing the 0 in `xp_cost` as if it were free (1.3.3 E2).
+	 * False when the purchase has no price yet.
 	 */
 	priced?: boolean;
 	unpriced_reason?: string | null;
-	/** Present when the server would refuse this change on submit; the cost is then 0. */
+	/**
+	 * Present when the server would refuse this change on submit.
+	 */
 	error?: { code: string; message: string };
 }
 
 /**
- * Response from previewing a batch of proposed changes. Lists the
- * priced outcome of each change alongside the character's running
- * unspent XP total after applying every proposed cost.
+ * Response from previewing a batch of proposed changes.
  */
 export interface PreviewChangesResponse {
 	results: ChangePreviewResult[];
-	/** Character's xp_unspent after applying every proposed change's cost. */
+	/**
+	 * Character's xp_unspent after applying every proposed change's cost.
+	 */
 	running_xp_unspent: number;
 }
 
@@ -419,8 +435,6 @@ export interface PreviewChangesResponse {
 
 /**
  * A saved point-in-time copy of a character's full sheet data.
- * Snapshots let a Storyteller or player compare or restore an
- * earlier version of a character's sheet.
  */
 export interface CharacterSnapshot {
 	id: number;
@@ -431,9 +445,7 @@ export interface CharacterSnapshot {
 }
 
 /**
- * Query parameters accepted by a character's snapshots collection
- * endpoint. Supports pagination and ordering of the returned
- * snapshot list.
+ * Query parameters accepted by a character's snapshots collection endpoint.
  */
 export interface SnapshotCollectionParams {
 	page?: number;
@@ -446,10 +458,7 @@ export interface SnapshotCollectionParams {
 // ---------------------------------------------------------------------------
 
 /**
- * A character's saved cosmetic sheet override, as returned by the
- * API. An empty object means no override has been saved yet and
- * the sheet uses its default appearance; this is returned instead
- * of a 404 when nothing has been customized.
+ * A character's saved cosmetic sheet override, as returned by the API.
  */
 export interface SheetStyle {
 	id?: number;
@@ -465,9 +474,7 @@ export interface SheetStyle {
 }
 
 /**
- * Request body for saving a character's sheet style override.
- * font_family is required; every color and graphic field is
- * optional and left unchanged when omitted.
+ * Request body for saving a character's sheet style override. font_family is required.
  */
 export interface SheetStyleInput {
 	font_family: string;
@@ -483,9 +490,8 @@ export interface SheetStyleInput {
 // ---------------------------------------------------------------------------
 
 /**
- * Request body for awarding the same amount of XP to a group of
- * characters at once, with a shared reason recorded against each
- * award.
+ * Request body for awarding the same amount of XP to a group of characters at once, with a shared reason recorded
+ * against each award.
  */
 export interface BulkXPRequest {
 	character_ids: number[];
@@ -494,9 +500,7 @@ export interface BulkXPRequest {
 }
 
 /**
- * Response from a bulk XP award. Reports how many characters were
- * awarded XP, the amount each received, and the reason recorded
- * against the award.
+ * Response from a bulk XP award.
  */
 export interface BulkXPResponse {
 	awarded: number;
@@ -509,9 +513,8 @@ export interface BulkXPResponse {
 // ---------------------------------------------------------------------------
 
 /**
- * Request body for resetting one named resource pool's temporary
- * rating back to its permanent one across a group of characters at
- * once.
+ * Request body for resetting one named resource pool's temporary rating back to its permanent one across a group of
+ * characters at once.
  */
 export interface BulkPoolResetRequest {
 	character_ids: number[];
@@ -520,9 +523,7 @@ export interface BulkPoolResetRequest {
 }
 
 /**
- * Response from a bulk pool reset. Reports how many characters were
- * actually touched (a character who doesn't hold the named pool, or
- * who belongs to a different chronicle, is not counted).
+ * Response from a bulk pool reset.
  */
 export interface BulkPoolResetResponse {
 	reset: number;
@@ -535,15 +536,16 @@ export interface BulkPoolResetResponse {
 // ---------------------------------------------------------------------------
 
 /**
- * Request body for setting the same status on a group of characters
- * at once.
+ * Request body for setting the same status on a group of characters at once.
  */
 export interface BulkStatusRequest {
 	character_ids: number[];
 	status: string;
 }
 
-/** One character's own outcome within a bulk-status request. */
+/**
+ * One character's own outcome within a bulk-status request.
+ */
 export interface BulkStatusResult {
 	id: number;
 	success: boolean;
@@ -551,10 +553,7 @@ export interface BulkStatusResult {
 }
 
 /**
- * Response from a bulk status update. `updated` counts only the
- * characters actually changed; `results` carries a per-character
- * outcome so a partial failure (an id outside this chronicle, say)
- * is visible rather than silently absorbed into the count.
+ * Response from a bulk status update.
  */
 export interface BulkStatusResponse {
 	results: BulkStatusResult[];
@@ -562,15 +561,7 @@ export interface BulkStatusResponse {
 }
 
 /**
- * Request body for exporting a character to a Grapevine exchange
- * file. hide_st asks for a player's copy - no Storyteller-only block,
- * no [ST]...[/ST]-marked text - and only matters to a Storyteller: a
- * player's own export is always that copy, whatever it sends. A
- * transfer document comes from the outbound transfer route, never
- * this one. verify mints a fresh attestation (GX-7) and embeds its
- * verification URL into the document's own id field (and, for XML, an
- * added <verification> element) - each call issues a new code, so this
- * is not free to call repeatedly for the same download.
+ * Request body for exporting a character to a Grapevine exchange file. hide_st asks for a player's copy.
  */
 export interface ExportCharacterOptions {
 	hide_st?: boolean;
@@ -578,10 +569,8 @@ export interface ExportCharacterOptions {
 }
 
 /**
- * Response from exporting a character: the exchange document text,
- * plus anything the Storyteller should see before relying on it -
- * a trait list with nowhere real to come from, and every ASCII
- * substitution made to non-English text.
+ * Response from exporting a character: the exchange document text, plus anything the Storyteller should see before
+ * relying on it.
  */
 export interface ExportCharacterResponse {
 	xml: string;
@@ -590,9 +579,7 @@ export interface ExportCharacterResponse {
 }
 
 /**
- * One priced or unpriced holding on the point audit (point-calculator-design.md
- * §5.4). `xp` is `null` when the line is unpriced - never `0` as a stand-in
- * for "free"; check `unpriced_reason` instead of treating a null xp as an error.
+ * One priced or unpriced holding on the point audit.
  */
 export interface PointAuditLine {
 	block_slug: string;
@@ -622,9 +609,7 @@ export interface PointAuditLine {
 }
 
 /**
- * The point audit envelope. `complete` is always `false` - no state of the
- * data can make a full-sheet total complete (§4.5) - so a caller must never
- * display `net_total` without `coverage` and `caveat` alongside it.
+ * The point audit envelope.
  */
 export interface PointAudit {
 	character_id: number;

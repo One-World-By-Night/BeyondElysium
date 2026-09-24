@@ -11,10 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §7 trace 5: a player proposes a coterie; an HST approves it from the Approval
- * Queue; the proposer is its leader and adds two members by name; a Storyteller makes a
- * haven Restricted to "Faction contains" the coterie; members see it and everyone else
- * gets a 404; a member removed by the leader loses it on the next request.
+ * Trace 5: a player proposes a coterie.
  */
 class CoterieWorkflowTest extends WP_UnitTestCase {
 

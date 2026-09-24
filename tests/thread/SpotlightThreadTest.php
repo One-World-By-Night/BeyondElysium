@@ -12,11 +12,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §3.14, A2: the spotlight check - every active, non-NPC character's own attention
- * profile, flagged (no staff post ever, or none within the chronicle's spotlight window)
- * first, then least recent attention.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.14
+ * The spotlight check - every active, non-NPC character's own attention profile, flagged (no staff post ever, or none
+ * within the chronicle's spotlight window) first.
  */
 class SpotlightThreadTest extends WP_UnitTestCase {
 
@@ -141,8 +138,7 @@ class SpotlightThreadTest extends WP_UnitTestCase {
 	// -------------------------------------------------------------------------
 
 	public function test_active_plots_excludes_action_rounds(): void {
-		// Character::create() already gives every character its own permanent plot
-		// (apr_actor, game_date null) - excluded the same way as an explicit action round.
+		// Character::create() already gives every character its own permanent plot (apr_actor, game_date null).
 		$character_id = $this->make_character( 'Plotted' );
 		$this->make_plot( $character_id, null, 'active' );
 		$this->make_plot( $character_id, '2026-01-01', 'active' );

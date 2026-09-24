@@ -1,20 +1,17 @@
 #!/usr/bin/env python3
-"""1.3.0 C4 - the precedence resolver, generalised from Fera's `_extractor/resolve.py`.
+"""The precedence resolver, generalised from Fera's `_extractor/resolve.py`.
 
-The rule (1.3.0 design doc section 2): **OWBN packet > MET > tabletop. Newest wins within a
-tier. Only ever compare sources from the same line and era.**
+The rule: **OWBN packet > MET > tabletop. Newest wins within a tier. Only ever compare
+sources from the same line and era.**
 
 * Authority tier first, recency only as the tiebreaker inside a tier - an old OWBN packet
-  beats a new tabletop book (Lore of the Clans, 2015, must not override house rules).
-* Era is its own axis. Faith and Fire (Dark Ages) is newer than Laws of the Night Revised
-  (Modern Nights), and unguarded recency would push Dark Ages values onto modern characters.
-  A cross-era comparison is **refused**, never silently resolved: Dark Ages content belongs in
-  a variant file (format section 4b), not in a precedence contest.
+  beats a new tabletop book.
+* Era is its own axis. A cross-era comparison is **refused**, never silently resolved: Dark
+  Ages content belongs in a variant file, not in a precedence contest.
 * A cross-line comparison is refused the same way - two lines' same-named items are separate
-  rows by construction (section 5.1 rule 4).
+  rows by construction.
 
-Used when producing files, not at seed time (the 2026-09-21 reconciliation moved it to
-tools/). Run `precedence.py --self-test` for T-C6.
+Used when producing files, not at seed time. Run `precedence.py --self-test`.
 """
 
 import sys
@@ -65,17 +62,17 @@ def self_test():
     owbn = Source('OWBN Toreador packet', 'owbn', 'vampire', 'modern', 2011)
     cb = Source('Changing Breeds 1', 'met', 'fera', 'modern', 2001)
 
-    # T-C6 (a): same line, same era, same tier - the newer source wins.
+    # Same line, same era, same tier - the newer source wins.
     assert resolve([(lotn, '3'), (lotn_r, '4')]) == (lotn_r, '4')
     # Authority before recency: a 2011 packet beats a 2015 tabletop book.
     assert resolve([(lotc, '1'), (owbn, '2')]) == (owbn, '2')
-    # T-C6 (b): a Dark Ages source never supersedes a Modern Nights one - refused, not resolved.
+    # A Dark Ages source never supersedes a Modern Nights one - refused, not resolved.
     try:
         resolve([(lotn_r, '3'), (fnf, '4')])
         raise AssertionError('cross-era comparison was resolved instead of refused')
     except Refused:
         pass
-    # Section 5.1 rule 4: two lines' same-named items are never compared.
+    # Two lines' same-named items are never compared.
     try:
         resolve([(lotn_r, '3'), (cb, '3')])
         raise AssertionError('cross-line comparison was resolved instead of refused')

@@ -6,14 +6,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * No test file for this controller existed before this one (2026-09-09) - a real,
- * significant gap: `POST /schema-blocks` (creating any brand-new custom block) has never
- * worked, for the entire life of this project. `validate_definition()` checked
- * `is_object( $definition )`, but a real JSON REST request body always decodes to a plain
- * PHP array (confirmed live, `WP_REST_Request::get_param()`), never a stdClass - so the
- * check could never pass for any genuine request, only for a value constructed directly
- * in PHP. Found building the admin UI's structured definition editor, which finally
- * exercised this path against a real POST body for the first time.
+ * The schema blocks routes: create, update and list, with real JSON bodies and the sanitizing each definition kind gets.
  */
 class SchemaBlocksControllerTest extends WP_UnitTestCase {
 
@@ -28,6 +21,26 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 
 	private function dispatch( WP_REST_Request $request ) {
 		return rest_get_server()->dispatch( $request );
+	}
+
+	public function test_the_catalog_runs_past_one_page_and_the_second_page_holds_the_rest(): void {
+		$first = new WP_REST_Request( 'GET', '/be/v1/schema-blocks' );
+		$first->set_query_params( [ 'per_page' => 100 ] );
+		$page_one = $this->dispatch( $first );
+		$total    = (int) $page_one->get_headers()['X-WP-Total'];
+
+		$this->assertGreaterThan( 100, $total, 'the declared catalog holds more blocks than one page can carry' );
+		$this->assertCount( 100, $page_one->get_data() );
+
+		$second = new WP_REST_Request( 'GET', '/be/v1/schema-blocks' );
+		$second->set_query_params( [ 'per_page' => 100, 'page' => 2 ] );
+		$page_two = $this->dispatch( $second );
+
+		$this->assertCount( $total - 100, $page_two->get_data() );
+		$this->assertSame( [], array_intersect(
+			array_column( $page_one->get_data(), 'slug' ),
+			array_column( $page_two->get_data(), 'slug' )
+		), 'no block appears on both pages' );
 	}
 
 	public function test_creating_a_trait_list_block_with_a_real_json_body_succeeds(): void {
@@ -97,10 +110,6 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 'Danger Sense', $response->get_data()->definition->items[0]->name );
 	}
 
-	// -------------------------------------------------------------------------
-	// description sanitization (Rich_Text_Sanitizer) - a global-admin-editable,
-	// never-imported/exported free-text field for a house rule or page
-	// reference; formatting/lists/tables survive, images and scripts don't.
 	// -------------------------------------------------------------------------
 
 	public function test_creating_a_trait_list_block_sanitizes_item_descriptions(): void {
@@ -178,10 +187,6 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 		$this->assertSame( '<ul><li>Level note</li></ul>', $power->levels[0]->description->reference );
 	}
 
-	// -------------------------------------------------------------------------
-	// per-value/per-level approval schedules round-trip through the REST layer
-	// unchanged - Change_Engine.php is what interprets them, this controller
-	// only persists whatever shape is submitted.
 	// -------------------------------------------------------------------------
 
 	public function test_a_trait_list_items_approval_by_value_round_trips(): void {

@@ -8,11 +8,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §3.7 item 1: "New NPC asks Quick or Full" - creating an NPC lets a Storyteller pick
- * `npc_detail`, a plain PC always gets 'full' regardless of what's sent, and an existing Quick
- * NPC can be upgraded to Full ("Make Full NPC") but the reverse is never offered.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.7
+ * An NPC is created as a quick or a full one: a Storyteller can create a quick NPC and upgrade it to full, an NPC
+ * defaults to full, a player character is always full, and a player cannot flag a character quick or change its detail.
  */
 class QuickNpcThreadTest extends WP_UnitTestCase {
 
@@ -86,8 +83,7 @@ class QuickNpcThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_non_manager_cannot_flag_their_own_character_quick_even_as_an_npc(): void {
-		// A non-manager's is_npc claim is never trusted either (pre-existing behavior) - this
-		// only confirms npc_detail follows the same distrust, not a new gate of its own.
+		// A non-manager's is_npc claim is never trusted either (pre-existing behavior).
 		$response = $this->create_character( $this->player_id, [
 			'name' => 'Not Really An NPC', 'stack_slug' => 'vampire', 'is_npc' => true, 'npc_detail' => 'quick',
 		] );

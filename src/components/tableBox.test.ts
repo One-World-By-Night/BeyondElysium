@@ -2,15 +2,12 @@ import { readdirSync, readFileSync, statSync } from 'fs';
 import { join, relative } from 'path';
 
 /**
- * 1.0.0-review F-019. In a theme with a narrow content column, the character list and the
- * approval queue ran hundreds of pixels past their widget into the page around it, and on a phone
- * the roster scrolled the whole page sideways. Owner, 2026-09-15: sideways scrolling on a phone is
- * not an answer either. Every front-end table sits directly inside a `.be-table-box`, and stacks
- * into cards (`be-responsive-table`) whenever that box is narrow - src/styles/breakpoints.css.
- * wp-admin screens are left out: WordPress lays those out, not a theme.
+ * Tables too small to need cards: two short columns fit any phone.
  */
 
-/** Tables too small to need cards - two short columns fit any phone. */
+/**
+ * Tables too small to need cards.
+ */
 const FITS_ANY_PHONE = [ 'be-import-preview__counts' ];
 
 function frontEndComponents( dir: string, out: string[] ): string[] {
@@ -78,12 +75,8 @@ test( 'cards follow the width of the table box, not the screen', () => {
 } );
 
 /**
- * The boundary is exclusive on purpose, and the admin cap must stay clear of it.
- *
- * `.be-admin` used to cap at exactly 960px while the card rule read `max-width: 960px`, which
- * matches *at* 960 - so every wp-admin table pinned itself to the cap and then stacked every
- * row into a card, on every desktop, for the whole of 1.0.0. Two independent changes keep that
- * from recurring; this pins both.
+ * A wp-admin table is never pinned exactly to the card boundary: the boundary is exclusive, and the admin cap stays
+ * clear of it.
  */
 test( 'a wp-admin table is never pinned exactly to the card boundary', () => {
 	const adminCss = readFileSync(

@@ -1,11 +1,6 @@
 /**
- * Formats a single held-state entry as a short human-readable string, e.g.
- * "Iron Will ×5", "Auspex 1", "Necromancy: Ash Path", "Generation: 9",
- * "Willpower: 6 perm / 6 temp" - the TypeScript twin of
- * `Point_Audit`'s own server-side label building (point-calculator-design.md
- * §5.6), kept for parity testing and any future client-only use. The audit
- * panel itself displays the server's own label directly rather than calling
- * this a second time - "one formatting authority", per the same section.
+ * Formats a single held-state entry as a short human-readable string, e.g. "Iron Will ×5", "Auspex 1", "Necromancy:
+ * Ash Path", "Generation: 9", "Willpower: 6 perm / 6 temp".
  */
 import {
 	withTradition,
@@ -29,8 +24,7 @@ interface HeldPoolValue {
 }
 
 /**
- * Describes one held trait_list entry: bare name, or "Name ×N" when held
- * more than once.
+ * Describes one held trait_list entry: bare name, or "Name ×N" when held more than once.
  */
 export function describeTraitListHolding( held: HeldTraitListEntry ): string {
 	const count = held.count ?? 1;
@@ -38,10 +32,8 @@ export function describeTraitListHolding( held: HeldTraitListEntry ): string {
 }
 
 /**
- * Describes one held tiered_power entry: "Name: PowerName" for an
- * Elder-and-above pick, "Name N" for a numbered level, bare "Name" for
- * neither - then prefixed with its tradition, if any (Blood Magic's own
- * "Tradition: PathName" rule, TieredPowerRenderer.tsx's withTradition()).
+ * Describes one held tiered_power entry: "Name: PowerName" for an Elder-and-above pick, "Name N" for a numbered
+ * level, bare "Name" for neither.
  */
 export function describeTieredPowerHolding( held: HeldPower ): string {
 	let label = held.name;
@@ -65,8 +57,7 @@ export function describeResourcePoolHolding(
 }
 
 /**
- * Describes one held identity_field value: "Name: value", or "Name: —" when
- * unset - never omitted, matching §4.4's "never omit these lines" rule.
+ * Describes one held identity_field value: "Name: value", or "Name: —" when unset.
  */
 export function describeIdentityFieldHolding(
 	name: string,
@@ -80,9 +71,7 @@ export function describeIdentityFieldHolding(
 }
 
 /**
- * Dispatches on section type to the matching describe*Holding() function
- * above. `held` is typed loosely since its real shape depends entirely on
- * `sectionType` - each branch narrows it before use.
+ * Dispatches on section type to the matching describe*Holding() function above.
  */
 export function describeHolding(
 	sectionType: SectionTypeForHolding,

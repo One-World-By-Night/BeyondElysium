@@ -1,10 +1,6 @@
 /**
- * The background-use ledger panel: shared between the Storyteller's
- * Action Allocator tool (after a commit) and a player's own
- * character sheet. Shows each budgeted subaction's spend against
- * its allocation, every other held background as an unbudgeted
- * spend target, and - for a Storyteller - the clear-by-character
- * and clear-by-date operations.
+ * The background-use ledger panel: shared between the Storyteller's Action Allocator tool (after a commit) and a
+ * player's own character sheet.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -18,27 +14,19 @@ export interface BackgroundLedgerProps {
 	characterId: number;
 	gameDate: string;
 	/**
-	 * The committed allocation's own subactions, when the caller already has
-	 * them (the Storyteller's Action Allocator, right after a commit) - used
-	 * to show total/growth alongside the spend. Omit entirely on the
-	 * player-facing sheet panel, which cannot call the ST-only allocate-
-	 * actions route: spendable_for()'s own budget_total/budget_name (always
-	 * live-accurate, §5.4's note on staleness) is enough on its own to know
-	 * which backgrounds are budgeted.
+	 * The committed allocation's own subactions, when the caller already has them (the Storyteller's Action Allocator,
+	 * right after a commit).
 	 */
 	subactions?: Subaction[];
-	/** True for a Storyteller/manager view: shows results, edit controls, and the clear operations. */
+	/**
+	 * True for a Storyteller/manager view: shows results, edit controls, and the clear operations.
+	 */
 	canManage: boolean;
 }
 
 /**
- * Renders the ledger for one character on one game date: a record-a-use
- * row for every background that currently has a budgeted subaction (known
- * either from the subactions prop or from spendable_for()'s own
- * annotation), an unbudgeted section for every other held background, and
- * (for a manager) the two clear operations. Reloads its own data whenever
- * the character or date changes, independent of whatever re-fetches the
- * allocation itself.
+ * Renders the ledger for one character on one game date: a record-a-use row for every background that currently has a
+ * budgeted subaction, and an unbudgeted section for the rest.
  */
 export function BackgroundLedger( {
 	gameSlug,
@@ -200,8 +188,7 @@ export function BackgroundLedger( {
 	}
 
 	function renderUse( use: BackgroundUse ) {
-		// A player's own not-yet-adjudicated use (no result recorded yet) stays clearable
-		// even outside the manager view - once an ST fills in a result it locks (§5.7).
+		// A player's own not-yet-adjudicated use (no result recorded yet) stays clearable even outside the manager view.
 		const canClearThis = canManage || use.result === '';
 		return (
 			<li key={ use.id } className="be-background-ledger__use">

@@ -8,10 +8,11 @@ regardless of what any client UI shows or hides.
 no relationship to returns `404` (not `403`), so a chronicle's existence is never leaked to
 someone outside it.
 
-While a catalog cutover runs (`wp be cutover apply` or `rollback`, a few seconds), every
+While an upgrade moves a site onto each creature type's own lists (a few seconds), every
 write to a route here is answered `503 catalog_switch_in_progress` and reads are not
-affected. A run that died holding its lock stops refusing after two minutes. See [Switching
-a Site to the Declared Catalog](help/catalog-cutover.md).
+affected. A run that died holding its lock stops refusing after two minutes. See [Moving an
+Older Site to the Per-Creature
+Lists](admin-guide.md#moving-an-older-site-to-the-per-creature-lists).
 
 **Manually maintained against the controllers, not auto-generated** — the "generated so it
 cannot drift" tooling this ideally deserves (Step 9b, workflow-0.9.md) was not built this

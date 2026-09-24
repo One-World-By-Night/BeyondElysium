@@ -16,9 +16,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.3.4: an HST can open a purchase list to every creature type - Abilities, Backgrounds, and Merits and
- * Flaws, each switch on its own. Two small creature types stand in for the real ones, with one entry each
- * that only the other has, so every assertion is about a name the widening either did or did not add.
+ * An HST can open a purchase list to every creature type.
  */
 class PurchaseScopeThreadTest extends WP_UnitTestCase {
 
@@ -26,7 +24,9 @@ class PurchaseScopeThreadTest extends WP_UnitTestCase {
 	private int $player;
 	private int $character;
 
-	/** Family suffix => [ own item names, the name only the other creature type has ]. */
+	/**
+	 * Family suffix => [ own item names, the name only the other creature type has ].
+	 */
 	private const LISTS = [
 		'abilities'   => [ [ 'Alertness', 'Brawl' ], 'Psb Cosmology', '2' ],
 		'backgrounds' => [ [ 'Allies' ], 'Psb Avatar', '1' ],
@@ -51,8 +51,6 @@ class PurchaseScopeThreadTest extends WP_UnitTestCase {
 			$own_items   = array_map( static fn( $name ) => [ 'name' => $name, 'cost' => '1' ], $shared );
 			$other_items = array_merge( $own_items, [ [ 'name' => $only_other, 'cost' => $cost ] ] );
 			if ( $suffix === 'backgrounds' ) {
-				// Entries only the other creature type has, that carry their own rules: Psb Avatar always waits
-				// for a Storyteller, and Psb Followers may be held several times over under different labels.
 				$other_items[1]['approval'] = 'st';
 				$other_items[]              = [ 'name' => 'Psb Followers', 'cost' => '1', 'allow_multiples' => true ];
 			}
@@ -253,8 +251,6 @@ class PurchaseScopeThreadTest extends WP_UnitTestCase {
 			$this->markTestSkipped( 'no declared catalog in this checkout' );
 		}
 		delete_option( Catalog_Cutover::OPTION );
-		delete_option( Catalog_Cutover::RECORD_OPTION );
-		Catalog_Cutover::reset_cache();
 		global $wpdb;
 		$wpdb->query( 'DELETE FROM ' . \BeyondElysium\Database\Manager::table( 'characters' ) );
 
@@ -268,7 +264,5 @@ class PurchaseScopeThreadTest extends WP_UnitTestCase {
 		$this->assertNotContains( 'met-abilities', $family, 'the retired shared list is nobody\'s purchase list' );
 
 		delete_option( Catalog_Cutover::OPTION );
-		delete_option( Catalog_Cutover::RECORD_OPTION );
-		Catalog_Cutover::reset_cache();
 	}
 }

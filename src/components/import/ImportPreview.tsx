@@ -1,8 +1,6 @@
 /**
- * ImportPreview renders the shared review content for both import wizards
- * (ImportTool's .gex flow and GameImportTool's .gv3 flow): record counts,
- * warnings, duplicate records, and flagged/unresolved trait lists, each with
- * its own resolution control.
+ * ImportPreview renders the shared review content for both import wizards (ImportTool's.gex flow and
+ * GameImportTool's.gv3 flow).
  */
 import { createInterpolateElement } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -30,13 +28,17 @@ export interface ImportPreviewProps {
 		character: string,
 		action: DuplicateAction | null
 	) => void;
-	/** Keyed by "{type}:{name}", matching DuplicateWorldObject. */
+	/**
+	 * Keyed by "{type}:{name}", matching DuplicateWorldObject.
+	 */
 	worldObjectActions: Record< string, DuplicateAction >;
 	onWorldObjectActionChange: (
 		key: string,
 		action: DuplicateAction | null
 	) => void;
-	/** False when accepting a transfer, whose one character cannot be skipped. Default true. */
+	/**
+	 * False when accepting a transfer, whose one character cannot be skipped.
+	 */
 	allowSkip?: boolean;
 }
 
@@ -77,8 +79,7 @@ const COUNT_LABELS: Record< string, string > = {
 };
 
 /**
- * What differs between a sheet already in this chronicle and the same character arriving, so the
- * Storyteller can see what Overwrite would change before choosing it (1.0.0-review F-044).
+ * What differs between a sheet already in this chronicle and the same character arriving.
  */
 function SheetChanges( {
 	character,
@@ -173,10 +174,8 @@ function SheetChanges( {
 }
 
 /**
- * Renders the shared preview content for both import wizards: record counts,
- * warnings, duplicate characters, duplicate items/locations/rotes, flagged and
- * unresolved traits, and players needing a match. Resolution choices are lifted
- * to the caller (ImportTool or GameImportTool) and passed back in as props.
+ * Renders the shared preview content for both import wizards: record counts, warnings, duplicate characters,
+ * duplicate items/locations/rotes, flagged and unresolved traits, and players needing a match.
  */
 export function ImportPreview( {
 	preview,
@@ -635,7 +634,6 @@ export function ImportPreview( {
 												'beyond-elysium'
 											) }
 										>
-											{ /* Escape hatch when the fuzzy suggestion is wrong: keeps the raw value instead of forcing a match. */ }
 											<label className="be-import-preview__keep-custom">
 												<input
 													type="checkbox"
@@ -764,7 +762,7 @@ export function ImportPreview( {
 											) }
 										</span>
 									) }
-									{ /* No catalog match exists at all, so the only choice offered is keeping it as written. */ }{ ' ' }
+									{  }{ ' ' }
 									<label className="be-import-preview__keep-custom">
 										<input
 											type="checkbox"

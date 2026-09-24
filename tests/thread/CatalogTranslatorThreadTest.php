@@ -9,21 +9,15 @@ use BeyondElysium\Services\Catalog_Translator;
 use WP_UnitTestCase;
 
 /**
- * B3 (1.2.0 releases/1.2.0-design-workflow.md §5): map()'s caching and bust, decorate()'s four
- * section-type shapes (T2), the missing/empty/unknown-locale fallback chain (T3), rescan()
- * against the real seeded catalog (T5), and strip()'s exact-inverse-at-any-depth guarantee
- * (T7) - including the round trip through real JSON encode/decode, not just in-memory PHP
- * values, since that is the shape §5.5's hazard actually takes.
- *
- * @see BE_PROCESS/releases/1.2.0-design-workflow.md §5, §9
+ * Catalog term translation: map()'s caching and bust, decorate()'s four section-type shapes, the missing, empty and
+ * unknown-locale fallback chain, rescan() against the real seeded catalog, and strip().
  */
 class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 
 	private const LOCALE = 'pt_BR';
 
 	public function tearDown(): void {
-		// Every test bumps the version option via bust_cache() or a direct write; reset it so
-		// tests do not leak a stale version (and therefore a stale transient key) into the next.
+		// Every test bumps the version option via bust_cache() or a direct write.
 		delete_option( 'be_translations_version' );
 		parent::tearDown();
 	}
@@ -47,10 +41,7 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The real point of the transient: a second map() call must not re-query. Proven by
-	 * writing directly around the model layer (bypassing bust_cache()) and confirming the
-	 * cached, now-stale value is still what comes back - if this test failed, it would mean
-	 * every call was hitting the database live, which is the opposite of §5.1's design.
+	 * The real point of the transient: a second map() call must not re-query.
 	 */
 	public function test_map_is_cached_across_calls(): void {
 		$this->make_translated_string( 'Caching Proof Term', 'Original' );
@@ -86,8 +77,7 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 
 		Catalog_Translator::bust_cache();
 
-		// Both locales' NEW transient keys (post-bump) must reflect fresh reads, not the old
-		// pre-bump cached arrays - proven by confirming a fresh insert after the bump is visible.
+		// Both locales' NEW transient keys (post-bump) must reflect fresh reads.
 		$string_id = (int) Translation_String::create( [ 'source_text' => 'Post Bust Term' ] );
 		Translation::create( [ 'string_id' => $string_id, 'locale' => self::LOCALE, 'translation' => 'Visible After Bust' ] );
 		$map = Catalog_Translator::map( self::LOCALE );
@@ -96,7 +86,9 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 
 	// -------------------------------------------------------------------------- decorate() ----
 
-	/** T2: trait_list gets name_pt; name is untouched. */
+	/**
+	 * Trait_list gets name_pt.
+	 */
 	public function test_decorate_trait_list_adds_name_pt_leaves_name_untouched(): void {
 		$this->make_translated_string( 'Decorated Merit', 'Merito Decorado' );
 		$block = (object) [
@@ -110,7 +102,9 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'Merito Decorado', $result->definition->items[0]->name_pt );
 	}
 
-	/** T2: tiered_power gets name_pt on the family and power_name_pt on each level. */
+	/**
+	 * Tiered_power gets name_pt on the family and power_name_pt on each level.
+	 */
 	public function test_decorate_tiered_power_adds_both_pt_fields(): void {
 		$this->make_translated_string( 'Decorated Path', 'Caminho Decorado' );
 		$this->make_translated_string( 'Decorated Level One', 'Nivel Um Decorado' );
@@ -136,7 +130,9 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'Nivel Um Decorado', $power->levels[0]->power_name_pt );
 	}
 
-	/** T2: identity_field gets label_pt on the field, options_pt as a canonical=>translated map, options untouched. */
+	/**
+	 * Identity_field gets label_pt on the field, options_pt as a canonical=>translated map, options untouched.
+	 */
 	public function test_decorate_identity_field_adds_label_pt_and_options_pt(): void {
 		$this->make_translated_string( 'Decorated Field', 'Campo Decorado' );
 		$this->make_translated_string( 'Decorated Option', 'Opcao Decorada' );
@@ -160,7 +156,9 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 		$this->assertArrayNotHasKey( 'Untranslated Option', $field->options_pt, 'no map entry means no key at all, never a blank one' );
 	}
 
-	/** A number-type identity_field with no options gets label_pt only - never a spurious options_pt. */
+	/**
+	 * A number-type identity_field with no options gets label_pt only.
+	 */
 	public function test_decorate_identity_field_without_options_gets_no_options_pt_key(): void {
 		$this->make_translated_string( 'Decorated Number Field', 'Campo Numerico Decorado' );
 		$block = (object) [
@@ -174,7 +172,9 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 		$this->assertObjectNotHasProperty( 'options_pt', $result->definition->fields[0] );
 	}
 
-	/** T2: resource_pool gets label_pt per pool. */
+	/**
+	 * Resource_pool gets label_pt per pool.
+	 */
 	public function test_decorate_resource_pool_adds_label_pt(): void {
 		$this->make_translated_string( 'Decorated Pool', 'Piscina Decorada' );
 		$block = (object) [
@@ -186,7 +186,6 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 10, $result->definition->pools[0]->max, 'unrelated fields must be untouched' );
 	}
 
-	/** decorate() overwrites a stale, pre-1.2.0 baked-in name_pt with the table's current value. */
 	public function test_decorate_overwrites_a_stale_pre_existing_name_pt(): void {
 		$this->make_translated_string( 'Superseded Term', 'Valor Novo Da Tabela' );
 		$block = (object) [
@@ -199,9 +198,8 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'Valor Novo Da Tabela', $result->definition->items[0]->name_pt );
 	}
 
-	// --------------------------------------------------------------- T3: fallback triggers ----
+	// --------------------------------------------------------------- Fallback triggers --------
 
-	/** No translation row at all: decorate() adds nothing, leaving the English fallback to fire downstream. */
 	public function test_decorate_with_no_matching_translation_adds_no_pt_key(): void {
 		Translation_String::create( [ 'source_text' => 'Never Translated Term' ] );
 		$block = (object) [
@@ -212,7 +210,9 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 		$this->assertObjectNotHasProperty( 'name_pt', $result->definition->items[0] );
 	}
 
-	/** An empty-string translation is excluded by Translation::map_for_locale() (B2) - decorate() inherits that for free. */
+	/**
+	 * An empty-string translation is excluded by Translation::map_for_locale().
+	 */
 	public function test_decorate_with_an_empty_translation_adds_no_pt_key(): void {
 		$string_id = (int) Translation_String::create( [ 'source_text' => 'Emptied Out Term' ] );
 		Translation::create( [ 'string_id' => $string_id, 'locale' => self::LOCALE, 'translation' => '' ] );
@@ -224,7 +224,9 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 		$this->assertObjectNotHasProperty( 'name_pt', $result->definition->items[0] );
 	}
 
-	/** An unknown/untranslated locale leaves the block entirely unchanged. */
+	/**
+	 * An unknown/untranslated locale leaves the block entirely unchanged.
+	 */
 	public function test_decorate_with_an_unknown_locale_leaves_the_block_unchanged(): void {
 		$this->make_translated_string( 'Only In Portuguese', 'Apenas Em Portugues' );
 		$block = (object) [
@@ -244,7 +246,9 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 
 	// ------------------------------------------------------------------------------ strip() ----
 
-	/** T7: every PT_KEYS key is removed, at every depth, across all four section-type shapes at once. */
+	/**
+	 * Every PT_KEYS key is removed, at every depth, across all four section-type shapes at once.
+	 */
 	public function test_strip_removes_every_pt_key_at_every_depth(): void {
 		$definition = (object) [
 			'items'  => [ (object) [ 'name' => 'A', 'name_pt' => 'A-pt' ] ],
@@ -270,13 +274,6 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'C', $stripped->powers[0]->levels[0]->power_name );
 	}
 
-	/**
-	 * The real §5.5 hazard: decorate() then a genuine JSON round trip (what Schema_Blocks_
-	 * Controller's GET response and a client's PUT body actually are) then strip(). The
-	 * decoded shape after a round trip has options_pt as a stdClass, not a PHP array - strip()
-	 * must handle both, which this proves by exercising the real conversion rather than a
-	 * hand-built fixture that only ever looks like the in-memory shape.
-	 */
 	public function test_strip_after_a_real_json_round_trip_still_removes_options_pt(): void {
 		$this->make_translated_string( 'Round Trip Field', 'Campo De Ida E Volta' );
 		$this->make_translated_string( 'Round Trip Option', 'Opcao De Ida E Volta' );
@@ -308,22 +305,7 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 	// ------------------------------------------------------------------------------ rescan() ----
 
 	/**
-	 * T5: against the real seeded catalog - not a fixture - rescan() finds the measured volume
-	 * and orphans nothing new against its own immediately-prior scan.
-	 *
-	 * **1.3.2 note, corrected.** A prior pass here asserted `38` on the theory that "this
-	 * environment's very first reseed is the one that replaces the GVM-built catalog with the
-	 * declared one," so `rescan()` would see the retirement as a delta. That does not hold:
-	 * `Catalog_Reader::available()` only checks that `data/catalog/blocks/` exists on disk -
-	 * true unconditionally, from this install's very first activation - so a fresh
-	 * `WP_UnitTestCase` bootstrap never has a GVM-only phase for an earlier scan to have run
-	 * against. The retirement is real (D67 concatenated families resolved, Black Wind split
-	 * into aspects, the 2nd-ed. Necromancy drop, Gifts moving a power's own name out from
-	 * under `name` into `power_name`), but only visible as a genuine upgrade's before/after
-	 * delta, on a database that already has a pre-declared-catalog baseline scan - not
-	 * reproducible from a single from-scratch install. The orphan mechanism itself is proven
-	 * correctly, with a synthetic before/after fixture, by
-	 * test_rescan_orphans_a_term_whose_block_is_deleted() below.
+	 * Against the real seeded catalog.
 	 */
 	public function test_rescan_against_the_real_seeded_catalog_finds_the_measured_volume(): void {
 		$result = Catalog_Translator::rescan();
@@ -336,16 +318,10 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 		$second = Catalog_Translator::rescan();
 		$this->assertSame( 0, $second['added'], 'nothing new exists on an unchanged catalog' );
 		$this->assertGreaterThan( 0, $second['updated'] );
-		// Same corrected 1.3.2 note as above: a from-scratch install has no prior scan to
-		// retire anything against, on the first rescan() or the second alike.
 		$this->assertSame( 0, $second['orphaned'] );
 	}
 
 	public function test_rescan_finds_a_newly_created_block(): void {
-		// The first call's own 'added' count reflects indexing the WHOLE catalog for the first
-		// time in this test's transaction - not a meaningful baseline to compare a second call
-		// against. Once the catalog is fully indexed, the second call's 'added' should be
-		// exactly the one new fixture term, nothing else.
 		Catalog_Translator::rescan();
 		Schema_Block::create( [
 			'slug'         => 'rescan-fixture-block',
@@ -359,11 +335,6 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 		$this->assertNotNull( $row );
 	}
 
-	/**
-	 * The exact bug the aggregate-before-upsert design in rescan() exists to prevent: a term
-	 * appearing in two different blocks must show BOTH in used_in after one rescan, not just
-	 * whichever block the walk happened to visit last.
-	 */
 	public function test_rescan_aggregates_used_in_across_multiple_blocks_for_the_same_term(): void {
 		Schema_Block::create( [
 			'slug' => 'rescan-aggregate-a', 'name' => 'Rescan Aggregate A', 'section_type' => 'trait_list',

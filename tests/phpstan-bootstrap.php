@@ -1,10 +1,6 @@
 <?php
 /**
- * Constants the plugin's guard clauses rely on, defined so static analysis does not report
- * them as undefined. Not loaded at runtime.
- *
- * Guarded: phpstan-wordpress defines some WordPress constants itself, and PHPStan loads
- * bootstrap files in each parallel worker.
+ * Constants the plugin's guard clauses rely on, defined so static analysis does not report them as undefined.
  */
 
 defined( 'ABSPATH' )        || define( 'ABSPATH', dirname( __DIR__ ) . '/beyond-elysium/' );

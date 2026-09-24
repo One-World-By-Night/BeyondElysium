@@ -1,8 +1,6 @@
 /**
- * QueryTool is the Storyteller character-search widget: it hosts the Search,
- * Statistics, and Saved Queries tabs, owns the query-building and results state,
- * and calls the query REST endpoints. QueryBuilder, QueryResults, and
- * StatisticsView render its three tabs.
+ * QueryTool is the Storyteller character-search widget: it hosts the Search, Statistics, and Saved Queries tabs, owns
+ * the query-building and results state, and calls the query REST endpoints.
  */
 import { __ } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
@@ -29,7 +27,9 @@ export interface QueryToolProps {
 
 type Tab = 'query' | 'statistics' | 'saved';
 
-/** The four inventories the query builder offers - Field_Registry::QUERYABLE_INVENTORIES. */
+/**
+ * The four inventories the query builder offers.
+ */
 const INVENTORIES: { value: string; label: string }[] = [
 	{ value: 'char', label: __( 'Characters', 'beyond-elysium' ) },
 	{ value: 'item', label: __( 'Items', 'beyond-elysium' ) },
@@ -37,7 +37,9 @@ const INVENTORIES: { value: string; label: string }[] = [
 	{ value: 'rote', label: __( 'Rotes', 'beyond-elysium' ) },
 ];
 
-/** Result-table columns per inventory - matches query-inventories.php's own result_columns. */
+/**
+ * Result-table columns per inventory.
+ */
 const RESULT_COLUMNS: Record< string, { key: string; label: string }[] > = {
 	char: [
 		{ key: 'name', label: __( 'Name', 'beyond-elysium' ) },
@@ -67,9 +69,8 @@ const RESULT_COLUMNS: Record< string, { key: string; label: string }[] > = {
 const PER_PAGE = 20;
 
 /**
- * The Storyteller search tool: build and run a query against characters, view
- * results or statistics, and save, load, rename, or delete saved queries. Tabs
- * switch between the Search, Statistics, and Saved Queries views.
+ * The Storyteller search tool: build and run a query against characters, view results or statistics, and save, load,
+ * rename, or delete saved queries.
  */
 export function QueryTool( { gameSlug }: QueryToolProps ) {
 	const [ tab, setTab ] = useState< Tab >( 'query' );
@@ -79,7 +80,7 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 	const [ logic, setLogic ] = useState< QueryLogic >( 'AND' );
 
 	const [ results, setResults ] = useState< QueryResultCharacter[] >( [] );
-	// The search the shown results came from, so a bulk selection never outlives it.
+	// The search the shown results came from.
 	const [ resultsFor, setResultsFor ] = useState( '' );
 	const [ total, setTotal ] = useState( 0 );
 	const [ page, setPage ] = useState( 1 );
@@ -99,9 +100,6 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 	const [ savedQueries, setSavedQueries ] = useState< SavedQuery[] >( [] );
 	const [ saveName, setSaveName ] = useState( '' );
 
-	// The field list is fetched once here (not independently in QueryBuilder/StatisticsView)
-	// and re-fetched whenever the inventory changes - a Clan clause built against the char
-	// field list has no meaning once the field list itself has moved to Items.
 	useEffect( () => {
 		api.queryFields
 			.list( inventory )
@@ -122,12 +120,7 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 	}, [ gameSlug ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	/**
-	 * Switches the active inventory and clears every piece of state that
-	 * belonged to the previous one - stale conditions built against a field
-	 * list that no longer applies, a stale result set, and a stale
-	 * statistics result. This is the fix for Grapevine's own frmQuery.frm:
-	 * 1203 bug, applied to the one place a stale inventory could otherwise
-	 * survive a switch.
+	 * Switches the active inventory and clears every piece of state that belonged to the previous one.
 	 */
 	function switchInventory( next: string ) {
 		setInventory( next );
@@ -211,7 +204,7 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 			} );
 			setStatsResult( result );
 		} catch ( err: unknown ) {
-			// Shows an explicit error instead of a null result indistinguishable from "nothing run yet."
+			// Shows an explicit error.
 			setStatsResult( null );
 			setStatsError(
 				errorMessage(
@@ -248,13 +241,7 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 	}
 
 	/**
-	 * Restores a saved query's inventory FIRST, before its conditions - the
-	 * direct fix for Grapevine's own frmQuery.frm:1203, which loaded a saved
-	 * query's Inventory and then immediately overwrote it with qiCharacters
-	 * on the next validate, silently re-running a saved item/location/rote
-	 * query against characters instead. Setting conditions before the
-	 * inventory would show clauses whose fields are not in the (still-char)
-	 * field list for one render.
+	 * Restores a saved query's inventory FIRST, before its conditions.
 	 */
 	function loadSavedQuery( saved: SavedQuery ) {
 		setInventory( saved.inventory );

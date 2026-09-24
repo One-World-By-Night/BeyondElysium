@@ -7,13 +7,7 @@ use BeyondElysium\REST\Import_Controller;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 S1: a full game file's own calendar.entries become real Game_Session rows on import -
- * date part only, skipping a date that already exists rather than duplicating or overwriting it.
- * `Import_Controller::apply_import()` is called directly (public static), the same shared writer
- * both `Import_Controller` and `Game_Import_Controller` commit through - calendar.entries never
- * appears in an ordinary single-character exchange file, only in a full game file (GVBG) parse.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.1
+ * A full game file's own calendar.entries become real Game_Session rows on import.
  */
 class GameImportCalendarThreadTest extends WP_UnitTestCase {
 
@@ -35,7 +29,9 @@ class GameImportCalendarThreadTest extends WP_UnitTestCase {
 		$this->game_id = (int) $wpdb->insert_id;
 	}
 
-	/** A minimal, shape-complete $parsed array - every key apply_import() iterates over. */
+	/**
+	 * A minimal, shape-complete $parsed array.
+	 */
 	private function synthetic_parsed( array $calendar_entries ): array {
 		return [
 			'players'    => [],

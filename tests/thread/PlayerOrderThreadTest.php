@@ -9,13 +9,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 D4: a `player_order`-flagged block's held entries can be reordered
- * directly, with no approval and no XP - `PUT /{game}/characters/{id}/order/
- * {block_slug}`. Uses `vampire-rituals` (the seeded trait_list half of the two
- * flagged blocks; `vampire-blood-magic` is the tiered_power half, covered by
- * the same controller logic since it reads `sheet_data` generically).
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.19
+ * A `player_order`-flagged block's held entries can be reordered directly, with no approval and no XP.
  */
 class PlayerOrderThreadTest extends WP_UnitTestCase {
 
@@ -79,8 +73,6 @@ class PlayerOrderThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_stale_list_gets_409(): void {
-		// The names don't match what's actually at those indexes - another tab (or an
-		// approved change) already changed the list since this client loaded it.
 		$response = $this->put_order( $this->owner, 'vampire-rituals', [
 			'order' => [ 2, 0, 1 ],
 			'names' => [ 'Ritual A', 'Ritual B', 'Ritual C' ],
@@ -116,11 +108,6 @@ class PlayerOrderThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'not_player_order', $response->as_error()->get_error_code() );
 	}
 
-	/**
-	 * Regression check, not this route's own behavior: confirms D4's changes didn't
-	 * disturb `Change_Engine::apply_to_sheet()`'s existing append-only order-preserving
-	 * behavior for a player_order block.
-	 */
 	public function test_adding_a_ritual_still_appends(): void {
 		$character = Character::find( $this->character );
 		$change    = (object) [

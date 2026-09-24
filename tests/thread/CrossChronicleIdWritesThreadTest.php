@@ -10,11 +10,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-008 and F-029: routes that take a row id in the URL or body must
- * refuse a row that belongs to a different chronicle than the one in the URL.
- * Change ids and character ids are sequential integers, so a Storyteller of one
- * chronicle could approve another chronicle's pending changes or grant its
- * characters XP just by guessing numbers.
+ * Routes that take a row id in the URL or body refuse a row that belongs to a different chronicle than the one in the
+ * URL.
  */
 class CrossChronicleIdWritesThreadTest extends WP_UnitTestCase {
 

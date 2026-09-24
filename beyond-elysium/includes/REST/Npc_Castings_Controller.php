@@ -15,12 +15,7 @@ use BeyondElysium\Services\Sheet_Document;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for NPC casting (1.1.0 §3.8) - a chronicle member loaned "how to play this
- * character tonight" for one session. CRUD is `be_manage_characters` only; the brief and its
- * PDF are readable by the cast member themselves (while their access window is open) or a
- * manager, matching `Sheets_Controller::get_pdf()`'s own manager-or-owner shape.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.8
+ * REST controller for NPC casting.
  */
 class Npc_Castings_Controller extends Base_Controller {
 
@@ -40,8 +35,7 @@ class Npc_Castings_Controller extends Base_Controller {
 			],
 		] );
 
-		// Registered before the numeric id route so neither literal path is ever shadowed -
-		// same convention as Plots_Controller's own /my/plots.
+		// Registered before the numeric id route.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/castings/my-upcoming', [
 			[
 				'methods'             => 'GET',
@@ -50,10 +44,7 @@ class Npc_Castings_Controller extends Base_Controller {
 			],
 		] );
 
-		// Every chronicle member, any role, name and id only - who a casting may name, since
-		// the owner ruled anyone can be cast. Deliberately not /{game}/members: that path
-		// already belongs to Game_Members_Controller's own be_manage_games-only full roster,
-		// which an ordinary HST/AST could never reach at all.
+		// Every chronicle member, any role, name and id only.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/castings/members', [
 			[
 				'methods'             => 'GET',
@@ -95,7 +86,7 @@ class Npc_Castings_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Every casting for one session - a manager sees them all, anyone else sees only their own.
+	 * Every casting for one session.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -127,8 +118,8 @@ class Npc_Castings_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Casts a chronicle member to play an NPC for a session. 400 `not_an_npc`/`not_a_member`,
-	 * 409 `already_cast` when this NPC already has a casting at this session.
+	 * Casts a chronicle member to play an NPC for a session. 400 `not_an_npc`/`not_a_member`, 409 `already_cast` when
+	 * this NPC already has a casting at this session.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -219,8 +210,7 @@ class Npc_Castings_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Every chronicle member, any role, name and id only - the casting screen's own member
-	 * picker (1.1.0 §3.8), broader than `GET /my/queue/staff`'s hst/ast/narrator-only roster.
+	 * Every chronicle member, any role, name and id only.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -244,9 +234,7 @@ class Npc_Castings_Controller extends Base_Controller {
 	}
 
 	/**
-	 * A chronicle member's own upcoming castings (today or later) - the player Dashboard's
-	 * "You're playing {NPC}" card. Broader than `GET /my/queue`'s own `castings` section,
-	 * which is gated to staff capabilities a plain cast player very often does not hold.
+	 * A chronicle member's own upcoming castings (today or later).
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -265,13 +253,9 @@ class Npc_Castings_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The casting brief: the NPC's real and public name, the session's date/time/place, the
-	 * resolved `npc_quick`/`npc_full` sections (Storyteller-only blocks removed except
-	 * `npc-roleplaying-notes`), and the casting's own `brief` text - never XP, status, change
-	 * history, connections, secrets, or the real player. Readable by the cast member while
-	 * their access window is open (casting through the day after the session), or a manager
-	 * at any time; everyone else 403s, matching every other visibility check in this plugin
-	 * (denied, not "not found," since a manager confirms the casting itself already exists).
+	 * The casting brief: the NPC's real and public name, the session's date/time/place, the resolved
+	 * `npc_quick`/`npc_full` sections (Storyteller-only blocks removed except `npc-roleplaying-notes`), and the casting's
+	 * own `brief` text.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -292,8 +276,7 @@ class Npc_Castings_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The same brief, as a PDF - "Casting brief" titled, signed exactly like a character sheet
-	 * (stamped UNSIGNED when signing is off).
+	 * The same brief, as a PDF.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -318,8 +301,8 @@ class Npc_Castings_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Resolves the casting a `brief`/`brief.pdf` request names, and refuses (403) unless the
-	 * current user is either a manager or the cast member with their access window still open.
+	 * Resolves the casting a `brief`/`brief.pdf` request names, and refuses (403) unless the current user is either a
+	 * manager or the cast member with their access window still open.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return array{0:object,1:object}|\WP_Error
@@ -344,8 +327,7 @@ class Npc_Castings_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up the casting a `PUT`/`DELETE` request names, confirmed to belong to the URL's
-	 * game - the shared resolve step `update_item()`/`delete_item()` both need.
+	 * Looks up the casting a `PUT`/`DELETE` request names, confirmed to belong to the URL's game.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return object|\WP_Error
@@ -364,9 +346,8 @@ class Npc_Castings_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Intercepts the normal JSON-serialize-and-serve step for exactly `get_brief_pdf()`'s
-	 * route, matched by callback identity - identical mechanism to
-	 * `Sheets_Controller::serve_pdf_bytes()`.
+	 * Intercepts the normal JSON-serialize-and-serve step for exactly `get_brief_pdf()`'s route, matched by callback
+	 * identity.
 	 *
 	 * @param bool              $served
 	 * @param \WP_REST_Response $result
@@ -387,13 +368,12 @@ class Npc_Castings_Controller extends Base_Controller {
 
 		header( 'Content-Type: application/pdf' );
 		header( 'Content-Disposition: attachment; filename="' . $data['filename'] . '"' );
-		echo $data['bytes']; // phpcs:ignore -- raw binary PDF bytes, not HTML output.
+		echo $data['bytes']; // phpcs:ignore
 		return true;
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404
-	 * status when no game matches.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

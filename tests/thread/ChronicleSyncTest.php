@@ -7,20 +7,12 @@ use BeyondElysium\Models\Game;
 use WP_UnitTestCase;
 
 /**
- * Step 6a, workflow-0.9.md - keeps `be_games` aligned with `owbn_chronicle` CPTs.
- * `owbn-chronicle-manager` itself is not installed in this test environment (confirmed,
- * matching `PLATFORM.md`'s own accessSchema note - no OWBN plugin beyond `owbn-core` has
- * ever been present here) - this exercises `Chronicle_Sync::sync()` directly against a
- * real `owbn_chronicle` post and real `chronicle_slug` post meta, both plain WordPress
- * core mechanics that need no third-party plugin present to construct correctly. What
- * this deliberately does NOT prove: that `owbn-chronicle-manager`'s real save form
- * actually results in this exact post/meta shape - that is WordPress core's own
- * `save_post`/`save_post_{$post_type}` behavior, not something specific to this project.
+ * `Chronicle_Sync` keeps `be_games` aligned with `owbn_chronicle` posts.
  */
 class ChronicleSyncTest extends WP_UnitTestCase {
 
 	private function chronicle( string $slug, string $title = 'Thread Test Chronicle', string $status = 'publish' ): int {
-		register_post_type( 'owbn_chronicle' ); // No-op if owbn-chronicle-manager already registered it; needed here since it isn't installed.
+		register_post_type( 'owbn_chronicle' ); // No-op if owbn-chronicle-manager already registered it.
 		$post_id = wp_insert_post( [
 			'post_type'   => 'owbn_chronicle',
 			'post_title'  => $title,
@@ -68,22 +60,6 @@ class ChronicleSyncTest extends WP_UnitTestCase {
 		$this->assertNotContains( 'No Slug Yet', array_column( $games_before, 'name' ) );
 	}
 
-	/**
-	 * Not a cascade test - `Chronicle_Sync` deliberately does not attempt one (see its own
-	 * class doc comment: the deferred-rename branch is still not built, on purpose - CR-6's
-	 * drift detector is what makes leaving it deferred safe). Documents the actual, accepted
-	 * behavior if `chronicle_slug` were ever changed despite the upstream immutability: a
-	 * second, independent `be_games` row at the new slug, old row untouched.
-	 *
-	 * The assertion that matters most here, added with the owbn_chronicle_post_id column:
-	 * the OLD row keeps its correlation to the post, and the NEW row's correlation is left
-	 * NULL rather than also claiming the same post - proving the unique index's own
-	 * guarantee (one post, at most one games row) holds even in exactly the scenario that
-	 * would otherwise try to violate it twice in a row for the same post. This is the
-	 * assertion that proves the previously-removed rename attempt's failure mode - two rows
-	 * silently sharing one upstream identity - cannot recur, independent of how clever any
-	 * future lookup logic is: the storage layer itself refuses it.
-	 */
 	public function test_changing_the_slug_still_creates_a_second_row_and_the_unique_index_survives_it(): void {
 		$post_id = $this->chronicle( 'thread-sync-oldslug', 'Original Chronicle' );
 		Chronicle_Sync::sync( $post_id, get_post( $post_id ), false );
@@ -103,9 +79,7 @@ class ChronicleSyncTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * 1.0.0-review F-082 (Pass H intake `t1-sync-data-credits-apr-db`). A chronicle post's slug is
-	 * plain, editable meta: a duplicated post keeps it. Saving the second post found the first
-	 * chronicle by slug alone and renamed it to the new post's title.
+	 * Another post sharing the slug does not rename or claim the chronicle.
 	 */
 	public function test_another_post_sharing_the_slug_does_not_rename_or_claim_the_chronicle(): void {
 		$first = $this->chronicle( 'thread-sync-shared', 'Kony Sabbat' );

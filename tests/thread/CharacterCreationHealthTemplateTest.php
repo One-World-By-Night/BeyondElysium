@@ -7,11 +7,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * A `trait_list` block's `default_held` template (health-level-tracker-design.md's real,
- * corrected shape) is applied automatically by `Characters_Controller::create_item()` on a
- * bare create - the same way Grapevine itself pre-fills a fresh character's health boxes,
- * never left for a one-time manual +Add. Never overwrites a block the caller already
- * supplied a value for, and never applies to a block with no `default_held` at all.
+ * A `trait_list` block's `default_held` template is applied automatically by `Characters_Controller::create_item()`
+ * on a bare create.
  */
 class CharacterCreationHealthTemplateTest extends WP_UnitTestCase {
 
@@ -89,10 +86,7 @@ class CharacterCreationHealthTemplateTest extends WP_UnitTestCase {
 		$data      = rest_get_server()->dispatch( $this->create_request( 'vampire' ) )->get_data();
 		$character = Character::find( (int) $data->id );
 
-		// The starting sheet is written directly, never priced or turned into Change
-		// records (Characters_Controller's own convention) - confirmed here specifically
-		// because Health, unlike most trait_list content, is now populated with no
-		// caller input at all.
+		// The starting sheet is written directly.
 		$this->assertSame( 0, (int) $character->xp_earned );
 		$this->assertSame( 0, (int) $character->xp_unspent );
 	}

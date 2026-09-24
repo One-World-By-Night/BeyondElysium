@@ -23,10 +23,11 @@ panel - see [Print / Export](sheet-print-export.md).
     "+5 XP (session attendance)."
   - Its **XP** cost, when the change has one. A homebrew purchase still waiting for a price
     reads **Price set on approval**.
-  - A **Catalog update** line, one per character, when a site is switched to the newer
-    catalog. Open **Matched entries** under it to see each custom entry that became a
-    catalog item, as "what it was → what it is". See [Switching a Site to the Declared
-    Catalog](catalog-cutover.md).
+  - A **Catalog update** line, one per character, when an upgrade moves a site onto each
+    creature type's own lists. Open **Matched entries** under it to see each custom entry
+    that became a catalog item, as "what it was → what it is". See [Moving an Older Site to
+    the Per-Creature
+    Lists](../admin-guide.md#moving-an-older-site-to-the-per-creature-lists).
   - When it was submitted, and, once reviewed, when.
   - The submitter's own note, if there is one.
   - The Storyteller's note, labeled "Storyteller: ...," if there is one - kept separate from

@@ -6,11 +6,6 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Plain WordPress shortcodes, for a page that isn't built with Elementor.
- * Each shortcode renders the exact same `[data-be-widget]` mount-point
- * markup an Elementor widget would (`Elementor\Widgets\House_Rules`, for
- * example) - `Plugin::enqueue_frontend()` already loads the hydration
- * bundle unconditionally on every front-end page, so a shortcode needs no
- * enqueue of its own, only the markup.
  */
 class Shortcodes {
 
@@ -19,8 +14,8 @@ class Shortcodes {
 	}
 
 	/**
-	 * `[be_house_rules game="chronicle-slug"]` - the same live House Rules
-	 * view the `House_Rules` Elementor widget renders (Decision 094).
+	 * `[be_house_rules game="chronicle-slug"]` - the same live House Rules view the `House_Rules` Elementor widget
+	 * renders.
 	 *
 	 * @param array<string,string>|string $atts
 	 */

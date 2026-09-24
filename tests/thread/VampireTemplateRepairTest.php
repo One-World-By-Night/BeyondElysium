@@ -7,20 +7,14 @@ use BeyondElysium\Models\Template;
 use WP_UnitTestCase;
 
 /**
- * `Schema::repair_stale_default_layouts()` is the one-time data correction for a template
- * already seeded before a `Seeder::default_template_sections()` fix shipped - seeding is
- * deliberately idempotent ("skip if a global template already exists"), so fixing the
- * source data alone never reaches an install that seeded before the fix. Two real
- * corrections have needed this: vampire's layout was missing Combo Disciplines and Ritae
- * entirely (found comparing the stack's own definition to what actually rendered), and
- * every stack's layout was still the old fixed-3-column shape, missing the `width` field
- * the real 6-track grid needs for a 50/50 or full-width row. Both found and fixed
- * 2026-09-09.
+ * `Schema::repair_stale_default_layouts()` corrects a system template seeded with an outdated section list: it adds the
+ * missing sections and leaves a chronicle's own template and an up-to-date one untouched.
  */
 class VampireTemplateRepairTest extends WP_UnitTestCase {
 
-	/** A layout in the pre-width shape - every real template seeded before 2026-09-09
-	 * looked exactly like this: real sections, but no `width` key anywhere. */
+	/**
+	 * A layout in the pre-width shape.
+	 */
 	private function stale_layout(): array {
 		return [
 			'version'  => 1,
@@ -97,10 +91,7 @@ class VampireTemplateRepairTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The detection signal is "every section already carries a real `width`" - a template
-	 * that's already on the new shape (whether that's because it was already repaired, or
-	 * because someone re-saved it through the structured editor after this field existed)
-	 * must not be silently overwritten, custom title and all.
+	 * The detection signal is "every section already carries a real `width`".
 	 */
 	public function test_a_template_already_on_the_new_shape_is_left_untouched(): void {
 		$layout = [

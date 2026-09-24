@@ -9,15 +9,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * workflow-0.9.md Step 0a - the real root cause of "player hand-enters a character, it
- * fails at the end and leaves an empty row": CharacterEditor.tsx's create path submitted
- * every starting pick as an ordinary XP change against a character whose xp_unspent is
- * always 0, and Changes_Controller rejects any change costing more than that for a
- * non-manager - so a player's very first pick was rejected outright and submitChanges()
- * abandoned every pick after it. Fixed by creating the whole starting sheet atomically,
- * the same one-shot pattern Import_Controller::commit() already uses. These tests dispatch
- * as a real non-manager, which is exactly the persona every prior test of this route never
- * used - D18/D22/D33 were each found the same way, by testing the actually-relevant persona.
+ * A player hand-enters a new character: the starting picks land on the sheet directly, never as XP changes.
  */
 class CharacterHandEntryCreationTest extends WP_UnitTestCase {
 
@@ -41,21 +33,21 @@ class CharacterHandEntryCreationTest extends WP_UnitTestCase {
 			'name'             => 'Thread Test Hand Entry Stack',
 			'stack_definition' => [
 				'sections' => [
-					[ 'block_slug' => 'met-abilities', 'label' => 'Abilities', 'display_order' => 1, 'required' => true ],
-					[ 'block_slug' => 'met-merits', 'label' => 'Merits', 'display_order' => 2, 'required' => false ],
+					[ 'block_slug' => 'vampire-abilities', 'label' => 'Abilities', 'display_order' => 1, 'required' => true ],
+					[ 'block_slug' => 'vampire-merits', 'label' => 'Merits', 'display_order' => 2, 'required' => false ],
 				],
 			],
 		] );
 
 		$this->player_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
-		// A player of this chronicle - a non-member's first character is a join request instead (1.0.0-review F-033).
+		// A player of this chronicle.
 		\BeyondElysium\Models\Game_Member::set_role( (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}be_games WHERE slug = %s", $this->game_slug ) ), $this->player_id, 'player' );
 	}
 
 	private function starting_sheet(): array {
 		return [
-			'met-abilities' => [ [ 'name' => 'Brawl', 'count' => 3 ] ],
-			'met-merits'    => [ [ 'name' => 'Iron Will', 'count' => 1 ] ],
+			'vampire-abilities' => [ [ 'name' => 'Brawl', 'count' => 3 ] ],
+			'vampire-merits'    => [ [ 'name' => 'Iron Will', 'count' => 1 ] ],
 		];
 	}
 
@@ -75,8 +67,8 @@ class CharacterHandEntryCreationTest extends WP_UnitTestCase {
 		$this->assertSame( 'active', $data->status, 'No approval setting on this game - unchanged default behavior.' );
 
 		$character = Character::find( $data->id );
-		$this->assertSame( [ [ 'name' => 'Brawl', 'count' => 3 ] ], $character->sheet_data['met-abilities'] );
-		$this->assertSame( [ [ 'name' => 'Iron Will', 'count' => 1 ] ], $character->sheet_data['met-merits'] );
+		$this->assertSame( [ [ 'name' => 'Brawl', 'count' => 3 ] ], $character->sheet_data['vampire-abilities'] );
+		$this->assertSame( [ [ 'name' => 'Iron Will', 'count' => 1 ] ], $character->sheet_data['vampire-merits'] );
 
 		global $wpdb;
 		$changes = $wpdb->get_var(

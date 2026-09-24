@@ -7,15 +7,7 @@ use BeyondElysium\Database\Schema;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for the site-wide uninstall-data setting and a full data
- * export.
- *
- * Backs the "keep, download, or delete" choice an administrator gets before
- * removing this plugin: `delete_on_uninstall` (this resource's GET/PUT half)
- * is the opt-in `uninstall.php` checks - off by default, so a plain
- * uninstall keeps every chronicle's data untouched unless explicitly turned
- * on. `export()` is the "download" half - a full JSON dump of every plugin
- * table, available at any time, not only right before an uninstall.
+ * REST controller for the site-wide uninstall-data setting and a full data export.
  */
 class Data_Management_Controller extends Base_Controller {
 
@@ -24,9 +16,7 @@ class Data_Management_Controller extends Base_Controller {
 	const DELETE_OPTION = 'be_delete_data_on_uninstall';
 
 	/**
-	 * Registers the settings routes and the export route, all gated on
-	 * `be_manage_games` - the same site-wide capability the authorization
-	 * settings resource uses.
+	 * Registers the settings routes and the export route, all gated on `be_manage_games`.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/' . $this->rest_base, [
@@ -75,9 +65,7 @@ class Data_Management_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns every row of every plugin table as one JSON object, keyed by
-	 * table name. The client turns this into a downloaded file; the route
-	 * itself just returns data, the same as any other GET endpoint.
+	 * Returns every row of every plugin table as one JSON object, keyed by table name.
 	 *
 	 * @param \WP_REST_Request $request Unused - see get_item()'s own note.
 	 * @return \WP_REST_Response

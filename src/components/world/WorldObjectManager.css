@@ -1,6 +1,3 @@
-/* minmax(0, 1fr), not 1fr: a bare 1fr track never shrinks below its widest content, so the
- * catalog table pushed the whole list past a phone screen even inside its scroll box
- * (1.0.0-review F-019). */
 .be-world-manager {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));

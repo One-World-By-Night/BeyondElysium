@@ -5,40 +5,25 @@ namespace BeyondElysium\Services\Display;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Renders a resource pool's permanent/temporary values as a row of dots - the same
- * dot a trait's rating uses (1.0.0-review F-016, owner ruling 2026-09-14: every dot
- * the same size). A point held is a filled dot, a permanent point currently spent an
- * empty dot, and a temporary point above permanent a ringed dot; dots group in fives
- * so a large pool stays countable.
- *
- * Transcribed from `GameClass.DisplayTemper` (VB6) - GV-SOURCEMAP.md "DisplayTemper" -
- * which drew letters (`o`, `ø`, `õ`) that Grapevine's own Windows font turned into
- * dots, and collapsed each run of five into a capital. On the web and in the PDF the
- * letters stayed letters and the capitals put two dot sizes side by side, so the
- * glyphs and the grouping changed; the filled/spent/overflow arithmetic did not.
- *
- * An exact behavioral twin of `src/lib/displayTemper.ts`: the signed PDF *is* the
- * sheet and must match it character for character. Both sides read the same fixture;
- * see tests/unit/Display/TemperDisplayParityTest.php.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md
+ * Renders a resource pool's permanent/temporary values as a row of dots.
  */
 class Temper_Display {
 
-	/** A point held - also every trait rating's dot (`Trait_Display`). */
+	/**
+	 * A point held - also every trait rating's dot (`Trait_Display`).
+	 */
 	public const DOT = "\u{25CF}"; // ●
 
 	private const SPENT    = "\u{25CB}"; // ○ - a permanent point currently spent.
 	private const OVERFLOW = "\u{25C9}"; // ◉ - a temporary point above permanent.
 
-	/** Dots are grouped, space-separated, in runs of this many. */
+	/**
+	 * Dots are grouped, space-separated, in runs of this many.
+	 */
 	private const GROUP = 5;
 
 	/**
-	 * Renders a resource pool as a row of dots: filled up to the lesser of permanent
-	 * and temporary, then spent or overflow dots for the remainder. A temporary value
-	 * above permanent renders as overflow past the permanent track rather than being
-	 * clamped.
+	 * Renders a resource pool as a row of dots: filled up to the lesser of permanent and temporary.
 	 *
 	 * @param int $permanent
 	 * @param int $temporary
@@ -57,10 +42,6 @@ class Temper_Display {
 		$groups   = array_chunk( mb_str_split( $dots, 1, 'UTF-8' ), self::GROUP );
 		$rendered = implode( ' ', array_map( static fn( array $group ): string => implode( '', $group ), $groups ) );
 
-		// 1.1.0 D1: every dot readout also shows its number - bare when current
-		// equals permanent, "current/permanent" otherwise, so an over- or
-		// under-spent pool reads unambiguously rather than requiring the viewer
-		// to count dots.
 		$suffix = $temporary === $permanent ? (string) $permanent : "{$temporary}/{$permanent}";
 		return $rendered === '' ? $suffix : "{$rendered} {$suffix}";
 	}

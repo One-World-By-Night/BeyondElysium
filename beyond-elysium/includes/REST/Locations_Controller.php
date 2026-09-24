@@ -12,15 +12,7 @@ use BeyondElysium\Services\Audience;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for a location's four named links - owner, domain, haven, based_at
- * (1.1.0 §3.9 item 2) - and the "who's here" roster item 4 reads from the same links.
- *
- * `GET` is `be_view_characters` (every real role) rather than `be_manage_world_objects`,
- * since "who's here" is a player-facing feature; the method itself narrows what a
- * non-manager actually sees. Writing a link is `be_manage_world_objects` only, matching
- * `World_Objects_Controller`'s own write gate for everything else about a location.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.9
+ * REST controller for a location's four named links.
  */
 class Locations_Controller extends Base_Controller {
 
@@ -50,11 +42,7 @@ class Locations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * A Storyteller sees every link on the location, each with its label and the source
-	 * character's real name. A non-manager sees only "who's here" (item 4): `based_at` links
-	 * whose character is an NPC and whose public profile audience (§3.7) reaches this viewer
-	 * - never a plain player character's `based_at`, and never any `owner`/`domain`/`haven`
-	 * link at all (the design's own "never another player's haven").
+	 * A Storyteller sees every link on the location, each with its label and the source character's real name.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -100,11 +88,7 @@ class Locations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Resolves one connection row into the Links panel's own display shape - id, label, the
-	 * source character's id, and a name (the NPC's public name when it has one, matching
-	 * `Npc_Profiles_Controller::public_shape()`'s identical fallback, otherwise its real
-	 * name). Null when the source character no longer exists (a stale link left behind by a
-	 * deleted character - shown nowhere rather than fatally erroring the whole list).
+	 * Resolves one connection row into the Links panel's own display shape.
 	 *
 	 * @param object $link
 	 * @return array{id:int,label:string,source_type:string,source_id:int,name:string}|null
@@ -127,8 +111,8 @@ class Locations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates a location link. 400 `invalid_param` on an unrecognized label or a source that
-	 * isn't a real character in this game.
+	 * Creates a location link. 400 `invalid_param` on an unrecognized label or a source that isn't a real character in
+	 * this game.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -180,8 +164,8 @@ class Locations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a location by id, confirming it belongs to the URL's game and is really a
-	 * location (never an item, rote, or boon).
+	 * Looks up a location by id, confirming it belongs to the URL's game and is really a location (never an item, rote,
+	 * or boon).
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return object|\WP_Error
@@ -199,8 +183,7 @@ class Locations_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404
-	 * status when no game matches.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

@@ -8,12 +8,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-010: GET /wp-users searched every account on the site by name, login, or
- * email and returned up to 50 email addresses to any WordPress editor - every Storyteller of
- * every chronicle on a shared install. WordPress's own /wp/v2/users hides emails from editors.
- * The site-wide search is now a site administrator's (adding chronicle members); a chronicle's
- * Storyteller assigning a player searches through the chronicle's own route, by at least three
- * letters of a name, and sees an email only when they already typed that exact address.
+ * GET /wp-users searched every account on the site by name, login, or email and returned up to 50 email addresses to
+ * any WordPress editor.
  */
 class WpUserSearchThreadTest extends WP_UnitTestCase {
 

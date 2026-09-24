@@ -7,12 +7,8 @@ use BeyondElysium\Services\Trait_Mapper;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `Trait_Mapper`'s five-outcome trait resolution and Decision 036's per-list
- * classification (workflow-0.8.md Step 4). Pure-function tests against hand-built
- * block fixtures - no DB, no real import data.
- *
- * @see BE_PROCESS/releases/workflow-0.8.md Step 4
- * @see BE_PROCESS/reference/DECISIONLOG.md Decision 036
+ * `Trait_Mapper`'s five-outcome trait resolution and per-list classification. Pure-function tests against hand-built
+ * block fixtures: no database, no real import data.
  */
 class TraitMapperTest extends TestCase {
 
@@ -77,7 +73,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Ambiguity (Step 4g)
+	// Ambiguity
 	// -------------------------------------------------------------------------
 
 	public function test_a_name_matching_two_different_blocks_is_flagged_not_silently_picked(): void {
@@ -91,13 +87,61 @@ class TraitMapperTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Decision 036: whole-list classification
+	// Whole-list classification
 	// -------------------------------------------------------------------------
 
 	public function test_shared_universal_list_classifies_as_a_sheet_block(): void {
 		$result = Trait_Mapper::classify_list( 'vampire', 'Abilities' );
 		$this->assertSame( 'sheet_block', $result['outcome'] );
-		$this->assertSame( 'met-abilities', $result['block_slug'] );
+		$this->assertSame( 'vampire-abilities', $result['block_slug'] );
+	}
+
+	public function test_abilities_merits_flaws_and_rites_land_on_each_creature_types_own_lists(): void {
+		if ( ! \BeyondElysium\Services\Catalog_Reader::available() ) {
+			$this->markTestSkipped( 'no declared catalog in this checkout' );
+		}
+
+		$expected = [
+			'vampire'    => [ 'Abilities' => 'vampire-abilities', 'Merits' => 'vampire-merits', 'Flaws' => 'vampire-flaws' ],
+			'werewolf'   => [ 'Abilities' => 'werewolf-abilities', 'Merits' => 'werewolf-merits', 'Flaws' => 'werewolf-flaws', 'Rites' => 'werewolf-rites' ],
+			'fera'       => [ 'Abilities' => 'fera-abilities', 'Merits' => 'fera-merits', 'Flaws' => 'fera-flaws', 'Rites' => 'fera-rites' ],
+			'bete'       => [ 'Abilities' => 'fera-abilities', 'Merits' => 'fera-merits', 'Flaws' => 'fera-flaws', 'Rites' => 'fera-rites' ],
+			'mage'       => [ 'Abilities' => 'mage-abilities', 'Merits' => 'mage-merits', 'Flaws' => 'mage-flaws' ],
+			'changeling' => [ 'Abilities' => 'changeling-abilities', 'Merits' => 'changeling-merits', 'Flaws' => 'changeling-flaws' ],
+			'wraith'     => [ 'Abilities' => 'wraith-abilities', 'Merits' => 'wraith-merits', 'Flaws' => 'wraith-flaws' ],
+			'mortal'     => [ 'Abilities' => 'mortal-abilities', 'Merits' => 'mortal-merits', 'Flaws' => 'mortal-flaws' ],
+			'mummy'      => [ 'Abilities' => 'mummy-abilities', 'Merits' => 'mummy-merits', 'Flaws' => 'mummy-flaws' ],
+			'kueijin'    => [ 'Abilities' => 'kueijin-abilities', 'Merits' => 'kueijin-merits', 'Flaws' => 'kueijin-flaws' ],
+			'demon'      => [ 'Abilities' => 'demon-abilities', 'Merits' => 'demon-merits', 'Flaws' => 'demon-flaws' ],
+		];
+
+		foreach ( $expected as $stack => $lists ) {
+			foreach ( $lists as $list => $block ) {
+				$result = Trait_Mapper::classify_list( $stack, $list );
+				$this->assertSame( 'sheet_block', $result['outcome'], "{$stack} {$list}" );
+				$this->assertSame( $block, $result['block_slug'], "{$stack} {$list}" );
+			}
+		}
+	}
+
+	/**
+	 * The block classification names for each of these lists is a block the stack declares, for every shipped stack.
+	 */
+	public function test_every_block_the_import_names_is_one_its_stack_declares(): void {
+		if ( ! \BeyondElysium\Services\Catalog_Reader::available() ) {
+			$this->markTestSkipped( 'no declared catalog in this checkout' );
+		}
+
+		foreach ( \BeyondElysium\Services\Catalog_Reader::stacks_to_seed() as $stack => $data ) {
+			$declared = array_column( $data['stack_definition']['sections'], 'block_slug' );
+			foreach ( [ 'Abilities', 'Merits', 'Flaws', 'Rites' ] as $list ) {
+				$result = Trait_Mapper::classify_list( $stack, $list );
+				if ( ( $result['outcome'] ?? '' ) !== 'sheet_block' ) {
+					continue; // Lists with no block on this stack are kept as a note.
+				}
+				$this->assertContains( $result['block_slug'], $declared, "{$stack} {$list} -> {$result['block_slug']} is not a block the stack declares" );
+			}
+		}
 	}
 
 	public function test_influences_and_backgrounds_both_resolve_to_the_merged_stack_block(): void {
@@ -109,8 +153,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	public function test_health_levels_resolves_to_the_stacks_own_health_block(): void {
-		// HealthList is a plain LinkedTraitList in Grapevine's own source, same construct
-		// as Influences/Backgrounds - routes the same way, not preserved as a note.
+		// HealthList is a plain LinkedTraitList in Grapevine's own source, same construct as Influences/Backgrounds.
 		$vampire  = Trait_Mapper::classify_list( 'vampire', 'Health Levels' );
 		$werewolf = Trait_Mapper::classify_list( 'werewolf', 'Health Levels' );
 
@@ -131,8 +174,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	public function test_fera_singular_location_spelling_also_routes_to_world_objects(): void {
-		// FeraClass.Class_Initialize spells this "Location", not "Locations" -
-		// GV301Source/Code/FeraClass.cls line 906.
+		// FeraClass.Class_Initialize spells this "Location".
 		$result = Trait_Mapper::classify_list( 'fera', 'Location' );
 		$this->assertSame( 'world_object', $result['outcome'] );
 	}
@@ -149,9 +191,8 @@ class TraitMapperTest extends TestCase {
 	}
 
 	/**
-	 * 1.0.0-review F-049: Fera and Bete keep Gifts in fera-gifts and Health Levels in
-	 * werewolf-health, and a Bete's Backgrounds live in fera-backgrounds - all three pointed at
-	 * blocks those stacks never hold, so every one was dropped on export and on import.
+	 * Fera and Bete keep Gifts in fera-gifts and Health Levels in werewolf-health, and a Bete's Backgrounds live in
+	 * fera-backgrounds.
 	 */
 	public function test_fera_and_bete_lists_route_to_the_blocks_those_stacks_hold(): void {
 		foreach ( [ 'fera', 'bete' ] as $stack ) {
@@ -174,10 +215,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Step 4d: tiered_power resolution. Confirmed directly against a real Grapevine
-	// record, not guessed - a numbered rung is the bare family name plus a numeric
-	// Total; an Elder-and-above pick is a self-describing "Family: Power (tier)" name,
-	// picked from a short menu of choices a character can hold several of at once.
+	// Tiered_power resolution
 	// -------------------------------------------------------------------------
 
 	/**
@@ -248,8 +286,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	public function test_a_second_distinct_elder_pick_in_the_same_family_also_resolves(): void {
-		// Decision 037: a character can hold several Elder-and-above picks in the same
-		// family at once - each is its own independent trait, not a conflicting level.
+		// A character can hold several Elder-and-above picks in the same family at once.
 		$result = Trait_Mapper::resolve_tiered_power_trait(
 			'Fortitude: Fortitude of the Wolf (elder)', '1', $this->tiered_power_block()
 		);
@@ -285,13 +322,6 @@ class TraitMapperTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// The shape real Grapevine binary exports actually use, verified against the real
-	// `Sabbat.gex` sample: "{Family}: {Power}" at EVERY tier, no trailing "(tier)"
-	// parenthetical (the tier rides in the trait's separate `note`), and `Total` carrying
-	// the level's cost rather than its level number. All 27 of that file's held
-	// Disciplines were `unresolved` before this - the old parser required the
-	// parenthetical, so every one fell through to the numbered-rung path and missed.
-	// -------------------------------------------------------------------------
 
 	public function test_a_basic_tier_power_resolves_without_any_tier_parenthetical(): void {
 		// The exact shape Sabbat.gex carries: note="basic", total="3" (a cost, not a level).
@@ -306,9 +336,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	public function test_an_elder_tier_power_resolves_without_a_parenthetical_too(): void {
-		// Tier vocabulary is never consulted for matching - the tier comes back FROM the
-		// catalog - so elder/master/ascended/methuselah (costs 12/15/18/21) need no
-		// special handling beyond what basic/int./adv. already get.
+		// Tier vocabulary is never consulted for matching.
 		$result = Trait_Mapper::resolve_tiered_power_trait(
 			'Fortitude: Personal Armor', '12', $this->tiered_power_block()
 		);
@@ -319,8 +347,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	public function test_a_family_name_containing_a_colon_is_not_split_at_the_first_colon(): void {
-		// Over a hundred real seeded families contain their own colon ("Akhu: Path of
-		// Blood", "Wanga: Ash Path"). A blind first-colon split mis-parses every one.
+		// Over a hundred real seeded families contain their own colon ("Akhu: Path of Blood", "Wanga: Ash Path").
 		$block = (object) [
 			'slug'         => 'vampire-disciplines',
 			'section_type' => 'tiered_power',
@@ -343,14 +370,9 @@ class TraitMapperTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// workflow-0.9.md Step 0d - tradition-prefixed numbered rungs, export decorations
-	// -------------------------------------------------------------------------
 
 	public function test_a_tradition_prefixed_family_resolves_as_a_numbered_rung_not_an_unresolved_named_pick(): void {
-		// The real reported failure: "Thaumaturgy: Focused Mind" never resolved, even
-		// though a sorcery path (here standing in as "Fortitude") is a real, directly
-		// seeded top-level family (Decision 064) - the tradition prefix is not itself a
-		// seeded family and must never be treated as one.
+		// The real reported failure: "Thaumaturgy: Focused Mind" never resolved.
 		$result = Trait_Mapper::resolve_tiered_power_trait( 'Thaumaturgy: Fortitude', '3', $this->tiered_power_block() );
 
 		$this->assertSame( 'exact', $result['outcome'] );
@@ -360,10 +382,6 @@ class TraitMapperTest extends TestCase {
 	}
 
 	public function test_a_tradition_prefix_is_not_applied_when_the_family_name_itself_contains_a_colon(): void {
-		// Must not fire for the pre-existing "Akhu: Path of Blood" shape (a real family
-		// name that itself contains a colon) - the text after the FIRST colon
-		// ("Path of Blood: Taste of Vitae") is not itself a seeded family, so this stays on
-		// the existing longest-prefix path, unaffected by the new check running first.
 		$block = (object) [
 			'slug'         => 'vampire-disciplines',
 			'section_type' => 'tiered_power',
@@ -386,9 +404,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	/**
-	 * Real Grapevine export decoration, confirmed against actual `.gex` samples, not
-	 * guessed - a trailing `*` on a bare family name, a power name, or right before a
-	 * colon. Checked directly: no real seeded family name contains a literal `*`.
+	 * Real Grapevine export decoration, confirmed against actual `.gex` samples.
 	 */
 	public function test_a_trailing_star_decoration_is_stripped_before_matching(): void {
 		$bare = Trait_Mapper::resolve_tiered_power_trait( 'Fortitude*', '1', $this->tiered_power_block() );
@@ -410,12 +426,8 @@ class TraitMapperTest extends TestCase {
 	}
 
 	/**
-	 * Found running all four real GEX files this project has through the real import
-	 * pipeline (2026-09-11, "we need some better matching too") - `sanitize a leading
-	 * "The " on the suffix, tried only after the exact check fails. Confirmed against the
-	 * real seeded catalog first, not guessed: "Ash Path" and "Path of Blood" are both real
-	 * bare family names with no "The", but Grapevine's export text sometimes carries one
-	 * ("Mortis: The Ash Path", "Thaumaturgy: The Path of Blood").
+	 * Found running all four real GEX files this project has through the real import pipeline ("we need some better
+	 * matching too").
 	 */
 	public function test_a_leading_the_on_the_family_suffix_is_tried_as_a_fallback(): void {
 		$block = (object) [
@@ -436,8 +448,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	public function test_a_family_genuinely_named_the_something_is_not_broken_by_the_fallback(): void {
-		// The one real seeded family that DOES start with "The " - the fallback must never
-		// fire for it, since the exact check above already matches it on the first try.
+		// The one real seeded family that DOES start with "The ".
 		$block = (object) [
 			'slug'         => 'vampire-disciplines',
 			'section_type' => 'tiered_power',
@@ -454,7 +465,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Blood magic (BE_PROCESS/releases/0.99.2-workflow.md, BM-7) - tradition-label normalization
+	// Blood magic - tradition-label normalization
 	// -------------------------------------------------------------------------
 
 	/**
@@ -483,10 +494,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	/**
-	 * Confirmed against a real .gex export (Chase Ashford, 2026-09-11): the file spells the
-	 * tradition "Dur-An-Ki" throughout, never "Dur An Ki" - a hyphen where the catalog uses a
-	 * space. Case/whitespace/punctuation-insensitive normalization resolves this exactly,
-	 * with no fuzzy matching needed.
+	 * Confirmed against a real.gex export (Chase Ashford): the file spells the tradition "Dur-An-Ki" throughout.
 	 */
 	public function test_a_hyphenated_tradition_spelling_normalizes_to_the_catalog_form(): void {
 		$result = Trait_Mapper::resolve_tiered_power_trait( 'Dur-An-Ki: Path of Blood', '1', $this->blood_magic_block() );
@@ -496,9 +504,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	/**
-	 * Confirmed against the same real file: "Sadhanna" (one stray letter) for what the
-	 * catalog spells "Sadhana". A single, unambiguous fuzzy match against the known
-	 * tradition list is trusted; nothing else in a 6-item list is anywhere close to it.
+	 * Confirmed against the same real file: "Sadhanna" (one stray letter) for what the catalog spells "Sadhana".
 	 */
 	public function test_a_single_letter_typo_in_a_tradition_name_fuzzy_normalizes(): void {
 		$result = Trait_Mapper::resolve_tiered_power_trait( 'Sadhanna: Path of Blood', '1', $this->blood_magic_block() );
@@ -508,13 +514,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	/**
-	 * Confirmed against the same real file: "Eastern Necromancy" for what the catalog
-	 * simply calls "Necromancy" - a genuinely different phrasing, not a typo, failing both
-	 * the normalized-exact check and the fuzzy check's own first-letter/length window. The
-	 * power and level this raw name resolves against are real either way, so the trait
-	 * still resolves - but its tradition is stored exactly as the source file wrote it
-	 * rather than silently guessed at, since a wrong guess is worse than an honest,
-	 * human-correctable one.
+	 * Confirmed against the same real file: "Eastern Necromancy" for what the catalog simply calls "Necromancy".
 	 */
 	public function test_an_unrecognized_tradition_phrasing_is_kept_verbatim_not_guessed(): void {
 		$result = Trait_Mapper::resolve_tiered_power_trait( 'Eastern Necromancy: Path of Blood', '1', $this->blood_magic_block() );
@@ -524,13 +524,8 @@ class TraitMapperTest extends TestCase {
 	}
 
 	/**
-	 * A block that is not blood-magic flagged (every tiered_power block before this
-	 * feature, and every other creature type's Discipline-shaped list today) must never
-	 * have its tradition text touched - normalize_blood_magic_tradition() is a no-op there.
-	 * Regression guard: this is exactly the ordinary-discipline shape
-	 * test_a_tradition_prefixed_family_resolves_as_a_numbered_rung_not_an_unresolved_named_pick
-	 * already covers, asserted here explicitly against a deliberately mis-cased/hyphenated
-	 * label that WOULD normalize if the block were blood-magic flagged.
+	 * A block that is not blood-magic flagged (every other tiered_power block, and every other creature type's
+	 * Discipline-shaped list) must never have its tradition text touched.
 	 */
 	public function test_tradition_normalization_never_runs_against_a_non_blood_magic_block(): void {
 		$result = Trait_Mapper::resolve_tiered_power_trait( 'thau-maturgy: Fortitude', '3', $this->tiered_power_block() );
@@ -539,14 +534,6 @@ class TraitMapperTest extends TestCase {
 		$this->assertSame( 'thau-maturgy', $result['tradition'], 'an ordinary tiered_power block never normalizes a tradition label' );
 	}
 
-	/**
-	 * Found the same pass as the "The " fallback above - the single largest real failure
-	 * class by volume across the four real files (22 of ~73 combined unresolved traits).
-	 * `vampire-combo-disciplines`' own catalog is bare ("Blood Sight", "Animal
-	 * Magnetism"), confirmed directly, not assumed; Grapevine's export text prefixes a
-	 * combo with "Combo: "/"Combination: " and often appends a trailing
-	 * constituent-disciplines note the catalog never carries.
-	 */
 	public function test_a_combo_prefix_and_trailing_annotation_are_stripped_before_matching(): void {
 		$combo_block = $this->block( 'vampire-combo-disciplines', [ 'Blood Sight', 'Animal Magnetism', 'Shroud of Absence' ], true );
 
@@ -561,14 +548,6 @@ class TraitMapperTest extends TestCase {
 		$this->assertSame( 'exact', $bracket['outcome'] );
 	}
 
-	/**
-	 * The `*` decoration (Step 0d) is deliberately NOT stripped by `resolve_trait()` the
-	 * way `resolve_tiered_power_trait()` strips it - checked directly, not assumed by
-	 * analogy: `vampire-rituals` has 73 real seeded names that genuinely contain a literal
-	 * `*` as part of the catalog data itself ("Thaumaturgy: Alter Blood* (Basic)").
-	 * Stripping it here would turn that real exact match into a false fuzzy/unresolved
-	 * result - this asserts the non-combo path is left alone.
-	 */
 	public function test_a_star_decoration_is_not_stripped_on_the_non_combo_trait_list_path(): void {
 		$ritual_block = $this->block( 'vampire-rituals', [ 'Thaumaturgy: Alter Blood* (Basic)' ], true );
 
@@ -588,7 +567,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// resolve_chosen() - applying an ST's picked suggestion (Decision 061)
+	// resolve_chosen() - applying an ST's picked suggestion
 	// -------------------------------------------------------------------------
 
 	public function test_resolve_chosen_applies_a_trait_list_suggestion(): void {
@@ -600,8 +579,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	public function test_resolve_chosen_applies_a_numbered_rung_family_suggestion(): void {
-		// The raw name was the typo the ST is correcting; the level (raw_total) is
-		// unaffected by a family-name fix and must still resolve against it.
+		// The raw name was the typo the ST is correcting.
 		$result = Trait_Mapper::resolve_chosen(
 			'Fortitde', '3', 'Fortitude', $this->tiered_power_block(), []
 		);
@@ -612,8 +590,6 @@ class TraitMapperTest extends TestCase {
 	}
 
 	public function test_resolve_chosen_applies_an_elder_pick_power_name_suggestion(): void {
-		// raw_name keeps its real family + tier ("Fortitude: ... (elder)") - only the
-		// fuzzy middle segment is replaced by the chosen suggestion.
 		$result = Trait_Mapper::resolve_chosen(
 			'Fortitude: Personal Armour (elder)', '1', 'Personal Armor',
 			$this->tiered_power_block(), []

@@ -6,11 +6,8 @@ use BeyondElysium\Database\Seeder;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.1.0 §3.7 item 2 (NPC agenda fields) and item 1 (Quick NPC): the roleplaying-notes block
- * gains three agenda fields ahead of its original eight, and a new, non-storyteller-only
- * npc-quick-stats block backs the condensed npc_quick template.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.7
+ * The NPC blocks: the roleplaying-notes block carries three agenda fields ahead of its eight notes fields, and the
+ * npc-quick-stats block, which is not storyteller-only, backs the condensed npc_quick template.
  */
 class SeederNpcTest extends TestCase {
 
@@ -72,7 +69,6 @@ class SeederNpcTest extends TestCase {
 	}
 
 	public function test_quick_stats_is_not_storyteller_only(): void {
-		// A player cast to play the NPC (§3.8) needs to read it, unlike npc-roleplaying-notes.
 		$this->assertArrayNotHasKey( 'storyteller_only', self::$blocks['npc-quick-stats'] );
 	}
 

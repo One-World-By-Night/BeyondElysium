@@ -1,7 +1,6 @@
 /**
- * Splits the Send a Grapevine File form's chronicle picker into "Your chronicles" (the
- * sender's own real memberships) and "Other chronicles" (every other chronicle on the site,
- * F-122) - a plain function so the no-repeats rule can be tested without mounting the form.
+ * Splits the Send a Grapevine File form's chronicle picker into "Your chronicles" (the sender's own real memberships)
+ * and "Other chronicles" (every other chronicle on the site).
  */
 import type { MyGame, Game } from '../types';
 

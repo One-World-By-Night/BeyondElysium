@@ -1,8 +1,6 @@
 /**
- * Top-level dashboard for world objects: combines the catalog list, a
- * detail view, and a create/edit form into one list-pane/detail-pane
- * layout. Owns which object is selected and which view (list, create,
- * edit) is active, and refreshes the list after a save.
+ * Top-level dashboard for world objects: combines the catalog list, a detail view, and a create/edit form into one
+ * list-pane/detail-pane layout.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -22,7 +20,9 @@ import './WorldObjectManager.css';
 export interface WorldObjectManagerProps {
 	gameSlug: string;
 	defaultType?: ObjectType;
-	/** Whether to show create/edit controls; the REST API enforces permissions regardless. */
+	/**
+	 * Whether to show create/edit controls.
+	 */
 	showEditor?: boolean;
 }
 
@@ -35,10 +35,8 @@ type View =
 	| { mode: 'transfer'; id: number };
 
 /**
- * Renders the world object catalog in a list pane alongside a detail
- * pane that shows either the selected object, a create form, or an edit
- * form depending on the current view. Switches views and refreshes the
- * list after a create or edit is saved.
+ * Renders the world object catalog in a list pane alongside a detail pane that shows either the selected object, a
+ * create form, or an edit form depending on the current view.
  */
 export function WorldObjectManager( {
 	gameSlug,
@@ -234,9 +232,7 @@ export function WorldObjectManager( {
 }
 
 /**
- * Loads the object being edited by ID, then renders it inside the
- * schema-driven editor once loaded. Shows a loading message while the
- * fetch is in flight and an error message if it fails.
+ * Loads the object being edited by ID.
  */
 function EditWrapper( {
 	gameSlug,
@@ -258,7 +254,7 @@ function EditWrapper( {
 			.get( id )
 			.then( setObject )
 			.catch( () => {
-				// Reports a load failure instead of leaving the view stuck on "Loading…".
+				// Reports a load failure.
 				setError(
 					__(
 						'Failed to load this item. Try again.',
@@ -292,10 +288,7 @@ function EditWrapper( {
 }
 
 /**
- * Loads the object being duplicated by ID, then renders a create-mode
- * editor pre-filled from it - same load pattern as `EditWrapper`, but the
- * loaded object is passed as `duplicateFrom` rather than `object`, so the
- * editor always submits a create.
+ * Loads the object being duplicated by ID.
  */
 function DuplicateWrapper( {
 	gameSlug,
@@ -350,10 +343,7 @@ function DuplicateWrapper( {
 }
 
 /**
- * A small character-picker form for "Copy for a character" (1.1.0 §3.12 item 1) - picks a
- * character, optionally renames the copy, and posts the copy route. On success the new copy
- * opens in the editor (`onSaved`), matching the design's own "returns the copy for the
- * editor."
+ * A small character-picker form for "Copy for a character".
  */
 function CopyForCharacterWrapper( {
 	gameSlug,
@@ -452,9 +442,7 @@ const TRANSFER_HOW_OPTIONS: { value: ItemTransferHow; label: string }[] = [
 ];
 
 /**
- * A small form for transferring an item to a new character, or losing it (1.1.0 §3.12 item
- * 4) - a recipient picker (hidden for `how: 'lost'`, which clears every holder connection
- * with nobody new), a `how` select, and an optional note.
+ * A small form for transferring an item to a new character, or losing it.
  */
 function TransferItemWrapper( {
 	gameSlug,
@@ -560,8 +548,7 @@ function TransferItemWrapper( {
 }
 
 /**
- * Revokes every verification code ever printed for one item (1.1.0 §3.13) - a single
- * confirm-then-call action, not a form; nothing about the item itself changes.
+ * Revokes every verification code ever printed for one item.
  */
 function RevokeCardsButton( {
 	gameSlug,

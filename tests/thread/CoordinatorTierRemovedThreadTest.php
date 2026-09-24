@@ -12,13 +12,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-043 (Decision 085). Owner ruling 2026-09-14: remove the `coordinator` approval
- * tier; existing coordinator rules become Storyteller rules.
- *
- * An approval rule could require a "coordinator", and the engine computed that level, but nothing
- * enforced it - every HST approved such a change - and a plain WordPress install has no
- * coordinator role at all. A rule that looked stricter than Storyteller review behaved exactly
- * like it.
+ * The `coordinator` approval tier is removed: existing coordinator rules become Storyteller rules.
  */
 class CoordinatorTierRemovedThreadTest extends WP_UnitTestCase {
 

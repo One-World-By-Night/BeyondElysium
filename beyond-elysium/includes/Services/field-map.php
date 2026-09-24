@@ -2,26 +2,7 @@
 /**
  * Where each of the 231 qkdata.gvd keys lives in BE.
  *
- * Four source kinds:
- *
- *   column    A real be_characters column.
- *   json      Inside sheet_data. Three shapes:
- *               - block only              a trait_list/tiered_power block, whole list
- *               - block + field           one identity_field, on a stack-specific block
- *               - block + pool + part     one resource_pool value ('permanent'/'temporary')
- *             `field` or `pool` without `block` means the name is not unique to one
- *             stack (e.g. every splat has a "Willpower" pool, several have a "Faction"
- *             identity field) - it identifies the field/pool by name within whichever
- *             block the character's own creature stack defines it on.
- *   derived   Computed, not stored. `note` explains how.
- *   unmapped  No BE equivalent (yet, or ever). `note` explains why. An unmapped key must
- *             fail loudly wherever it is used - GV's qtError silently skips the clause and
- *             widens the result set, which is the one GV behavior BE deliberately does not
- *             reproduce (GV-SOURCEMAP.md).
- *
  * @see BeyondElysium\Services\Field_Registry
- * @see BE_PROCESS/releases/workflow-0.3.md Step 0c
- * @see BE_PROCESS/releases/workflow-0.6.md Step 1e
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -31,16 +12,7 @@ return [
 	// -- Identity / header -----------------------------------------------------------
 	'name'         => [ 'source' => 'column', 'column' => 'name' ],
 	'race'         => [ 'source' => 'column', 'column' => 'stack_slug' ],
-	// 1.1.0 F1: the real GV "faction grouping" key this note used to say wasn't modeled -
-	// resolves to the character's active be_factions memberships, comma-joined (a plain
-	// 'field' type in qkdata.gvd, matching every other single-string GV field; 'contains'
-	// substring-matches the joined string, which is how "Group contains Coterie of Thorns"
-	// works for a character in more than one faction). The design doc's own prose names
-	// this query key "faction" - already a real, different key here (Wraith's own identity
-	// field, `field` => 'Faction', a few lines below) - so this uses "group" instead, the
-	// one already-unmapped real GV key whose own note anticipated exactly this feature,
-	// rather than repurposing "faction" and breaking Wraith's existing identity-field query
-	// support (Decision logged in the 1.1.0 F1 commit-plan entry).
+	// 'group': the character's active be_factions memberships, comma-joined.
 	'group'        => [ 'source' => 'derived', 'note' => 'resolved per-character from be_faction_members (Query_Engine::resolve_value())' ],
 	'subgroup'     => [ 'source' => 'unmapped', 'note' => 'no BE equivalent; GV faction grouping is not modeled as character data' ],
 	'xpearned'     => [ 'source' => 'column', 'column' => 'xp_earned' ],
@@ -61,7 +33,6 @@ return [
 	'mentalmax'    => [ 'source' => 'derived', 'note' => 'trait cap comes from stack creation rules, not stored per-character' ],
 
 	'abilities'    => [ 'source' => 'json', 'block' => 'met-abilities' ],
-	// Every creature stack's Influence entries live inside its own {stack_slug}-backgrounds block, resolved per-character by stack_slug.
 	'influences'   => [ 'source' => 'stack_relative_list', 'block_pattern' => '{stack}-backgrounds', 'filter_source' => 'Influences' ],
 	'backgrounds'  => [ 'source' => 'unmapped', 'note' => 'block is {stack_slug}-backgrounds, not a fixed slug; importer must resolve it by stack' ],
 	'healthlevels' => [ 'source' => 'unmapped', 'note' => 'block is {stack_slug}-health (not a fixed slug, and not present on wraith); stack_relative_list has no whole-block form yet, only filter_source' ],
@@ -117,8 +88,7 @@ return [
 	'breed'      => [ 'source' => 'json', 'field' => 'Breed' ],
 	'auspice'    => [ 'source' => 'json', 'field' => 'Auspice' ],
 	'pack'       => [ 'source' => 'json', 'field' => 'Pack' ],
-	// 1.1.0 F2: resolves to the titles this character currently holds, comma-joined - the
-	// same 'field'-type substring-match shape as 'group' above.
+	// 'position': the titles the character currently holds, comma-joined.
 	'position'   => [ 'source' => 'derived', 'note' => 'resolved per-character from be_positions (Query_Engine::resolve_value())' ],
 	'notoriety'  => [ 'source' => 'unmapped', 'note' => 'Garou spirit notoriety not modeled' ],
 	'totem'      => [ 'source' => 'json', 'field' => 'Totem' ],
@@ -230,7 +200,7 @@ return [
 	'address'   => [ 'source' => 'unmapped', 'note' => 'no Player entity modeled in BE' ],
 	'active'    => [ 'source' => 'unmapped', 'note' => 'legacy GV pre-2.3.97 compatibility flag; no BE equivalent' ],
 
-	// -- Items / Rotes / Locations (workflow-0.7.md, not yet built) ------------------------
+	// -- Items / Rotes / Locations ---------------------------------------------------
 	'type'             => [ 'source' => 'unmapped', 'note' => 'world objects (items/locations) are workflow-0.7.md' ],
 	'subtype'          => [ 'source' => 'unmapped', 'note' => 'world objects (items) are workflow-0.7.md' ],
 	'level'            => [ 'source' => 'unmapped', 'note' => 'world objects (items/rotes/locations) are workflow-0.7.md' ],
@@ -266,7 +236,7 @@ return [
 	// -- Demon -----------------------------------------------------------------------
 	'torment' => [ 'source' => 'json', 'block' => 'demon-resources', 'pool' => 'Torment', 'part' => 'permanent' ],
 	'faith'   => [ 'source' => 'json', 'block' => 'demon-resources', 'pool' => 'Faith', 'part' => 'permanent' ],
-	'lores'   => [ 'source' => 'json', 'block' => 'demon-lores' ],
+	'lores'   => [ 'source' => 'unmapped', 'note' => 'Demon Lores are Lore specializations on demon-abilities and the Lore families of demon-evocations; the Grapevine list is not modeled' ],
 
 	// -- Temporary counterparts of the permanent pools above -----------------------------
 	'tempwillpower'    => [ 'source' => 'json', 'pool' => 'Willpower', 'part' => 'temporary' ],

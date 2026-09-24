@@ -7,11 +7,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * `POST /{game_slug}/characters/bulk-status` and `GET /{game_slug}/characters/statuses`
- * (bulk-operations-design.md Item 2) - "retire, transfer" (excluding actual
- * chronicle-to-chronicle transfer, which already means something else in this codebase)
- * "or mark inactive across a selection," validated against the same `Character::STATUSES`
- * a single `PUT /{game_slug}/characters/{id}` already enforces (Decision 102).
+ * `POST /{game_slug}/characters/bulk-status` and `GET /{game_slug}/characters/statuses`.
  */
 class CharacterBulkStatusTest extends WP_UnitTestCase {
 
@@ -78,7 +74,6 @@ class CharacterBulkStatusTest extends WP_UnitTestCase {
 		$this->assertFalse( $results[0]['success'] );
 		$this->assertSame( 'not_found', $results[0]['error'] );
 
-		// Never touched - a bad ID in the batch must not silently corrupt another chronicle's character.
 		$this->assertSame( 'active', Character::find( $foreign )->status );
 	}
 

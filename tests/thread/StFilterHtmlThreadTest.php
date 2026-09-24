@@ -6,12 +6,7 @@ use BeyondElysium\Services\St_Filter;
 use WP_UnitTestCase;
 
 /**
- * Decision 111 (rich-text world-object/plot fields, 1.0.0-review "basically all textarea
- * form spaces should be htmlarea"). `St_Filter::strip()` cuts by byte offset with no notion
- * of HTML structure - it was written for plain-text `biography`/`notes` and has been reused
- * unchanged for every field this pass makes rich text. `strip_html_for_game()` is the same
- * cut plus a defensive `wp_kses_post()` pass, kept in its own thread test since that
- * function is real WordPress, unavailable at the unit layer `StFilterTest` runs at.
+ * (rich-text world-object/plot fields, -review "basically all textarea form spaces should be htmlarea").
  */
 class StFilterHtmlThreadTest extends WP_UnitTestCase {
 
@@ -23,9 +18,8 @@ class StFilterHtmlThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The real risk this method exists for: a marker placed mid-tag, cutting a `<strong>`
-	 * open without its matching close. The secret word must still be gone; a dangling tag
-	 * left by the cut must not bleed its formatting into every paragraph after it.
+	 * The real risk this method exists for: a marker placed mid-tag, cutting a `<strong>` open without its matching
+	 * close.
 	 */
 	public function test_a_marker_that_splits_a_tag_leaves_no_dangling_open_tag(): void {
 		$result = St_Filter::strip_html_for_game(

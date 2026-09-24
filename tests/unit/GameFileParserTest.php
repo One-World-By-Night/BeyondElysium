@@ -7,21 +7,13 @@ use BeyondElysium\Services\Game_File_Parser;
 use PHPUnit\Framework\TestCase;
 
 /**
- * GVBG binary game-file parsing (workflow-0.8.md Step 9f), against the one real `.gv3`
- * sample this repo has - `samples/data/personal-chron.gv3` (21,074 bytes, `Version = 3.0`).
- *
- * `samples/data/` is `.distignore`d (excluded from the shipped artifact), so this fixture
- * is real but not guaranteed present in every checkout - matching `GexParserTest`'s own
- * discipline for `GV301Source/Code/` fixtures.
- *
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "GVBG binary game-file shape - verified 2026-09-10"
- * @see BE_PROCESS/releases/workflow-0.8.md Step 9f
+ * GVBG binary game-file parsing, against the one real `.gv3` sample this repo has.
  */
 class GameFileParserTest extends TestCase {
 
 	private function path( string $relative ): string {
 		$path = be_reference_path( $relative );
-		// Real players' sample files live in samples/, which is kept out of git (owner ruling 2026-09-14).
+		// Real players' sample files live in samples/.
 		if ( strpos( $relative, 'samples/' ) === 0 && ! file_exists( $path ) ) {
 			$this->markTestSkipped( "{$relative} is not present in this checkout." );
 		}
@@ -37,8 +29,6 @@ class GameFileParserTest extends TestCase {
 		$data = $this->real_sample();
 
 		$this->assertEqualsWithDelta( 3.0, $data['version'], 0.0001 );
-		// GameClass.EntityCount() - the sourcemap's own confirmed 1+1+18+48+0+1+0+0+0 = 69,
-		// matching the file's own `Size` header field read separately below.
 		$this->assertSame( 69, $data['size'] );
 
 		$walked = count( $data['players'] ) + count( $data['characters'] ) + count( $data['queries'] )
@@ -73,11 +63,7 @@ class GameFileParserTest extends TestCase {
 	}
 
 	public function test_the_calendar_is_read_unconditionally_with_no_presence_flag(): void {
-		// The divergence this class's own doc comment calls the nastiest one - if this
-		// were wrongly gated behind an outer count check (GVBE's shape), the whole rest
-		// of the file would desynchronize and the EOF assertion above would already have
-		// failed. This test exists so a future "simplification" toward GVBE's shape fails
-		// here first, with a clear message, rather than as an opaque desync elsewhere.
+		// The divergence this class's own doc comment calls the nastiest one.
 		$data = $this->real_sample();
 
 		$this->assertNotNull( $data['calendar'] );
@@ -122,9 +108,7 @@ class GameFileParserTest extends TestCase {
 	}
 
 	public function test_a_desynchronized_stream_is_refused_not_silently_misread(): void {
-		// A well-formed header/version/size but truncated immediately after - guarantees
-		// EOF is reached before the container finishes reading, exercising the same
-		// "did we land exactly on EOF" guard GexParserTest's own equivalent test does.
+		// A well-formed header/version/size but truncated immediately after.
 		$put_str = static function ( string $s ): string {
 			return pack( 'v', strlen( $s ) ) . $s;
 		};

@@ -9,27 +9,7 @@ use BeyondElysium\Services\Setup_Status;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The Chronicle Setup checklist's status endpoint (GS-4,
- * guided-chronicle-setup-design.md §6.3-6.4): `GET /{game_slug}/setup-status`.
- *
- * The rows themselves, and what makes each one `ok`, `attention` or `info`, are
- * `Services\Setup_Status`'s. This adds what only a request can know: whether the viewer can act
- * on each row.
- *
- * Two deliberate differences from `Game_Stats_Controller`, the precedent this shape otherwise
- * follows exactly:
- *
- *  1. No transient. A checklist that shows "no Storytellers assigned" sixty seconds after one
- *     was assigned is worse than no checklist - every query is a bounded COUNT(*) or a
- *     single-row read, so there is nothing worth caching.
- *  2. Capability `be_manage_characters` - staff: an administrator or editor site-wide, then
- *     narrowed by chronicle role to an HST or AST. `actionable` is still reported per row, so an
- *     AST reads the checklist read-only and an HST acts on the rows their own capability
- *     covers. It was `be_view_characters` until 1.3.2.2 - "the widest capability that still
- *     requires a real user" - which let any player read the chronicle's governance settings;
- *     Chronicle Setup is for staff (owner, 2026-09-23).
- *
- * @see BE_PROCESS/design/guided-chronicle-setup-design.md §6.3, §6.4
+ * The Chronicle Setup checklist's status endpoint: `GET /{game_slug}/setup-status`.
  */
 class Setup_Status_Controller extends Base_Controller {
 

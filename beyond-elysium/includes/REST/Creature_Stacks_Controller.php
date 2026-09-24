@@ -9,12 +9,6 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * REST controller for creature stacks.
- *
- * A creature stack is the named, reusable definition of what a character
- * sheet looks like for one creature type: which schema blocks it includes,
- * in what order, and what creation rules apply. Covers listing, single-stack
- * retrieval (optionally resolved against a game's customized blocks),
- * creation, update, and deletion.
  */
 class Creature_Stacks_Controller extends Base_Controller {
 
@@ -22,9 +16,6 @@ class Creature_Stacks_Controller extends Base_Controller {
 
 	/**
 	 * Registers the creature stack routes.
-	 *
-	 * Adds the collection route for listing and creating stacks, plus a
-	 * single-stack route for retrieval, update, and deletion by slug.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/' . $this->rest_base, [
@@ -70,9 +61,6 @@ class Creature_Stacks_Controller extends Base_Controller {
 	/**
 	 * Lists creature stacks with optional filters and pagination.
 	 *
-	 * Supports filtering by game line, system flag, and search text, with
-	 * configurable sort order.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response
 	 */
@@ -88,10 +76,7 @@ class Creature_Stacks_Controller extends Base_Controller {
 			'offset'    => $pagination['offset'],
 		];
 
-		// Optional; when omitted, every stack is offered, unchanged. When present, narrows
-		// to the chronicle's own settings.enabled_stacks (GS-3, guided-chronicle-setup-design.md
-		// §6.2) - a creation/picker filter only, never applied to any read path that already
-		// holds a character of a since-disabled stack.
+		// Optional; when omitted, every stack is offered, unchanged.
 		$game_slug = (string) ( $request->get_param( 'game_slug' ) ?? '' );
 		$items     = $game_slug !== '' ? Creature_Stack::all_for_game( $game_slug, $args ) : Creature_Stack::all( $args );
 		$total     = $game_slug !== '' ? count( $items ) : Creature_Stack::count( $args );
@@ -103,10 +88,6 @@ class Creature_Stacks_Controller extends Base_Controller {
 	/**
 	 * Retrieves a single creature stack by slug.
 	 *
-	 * With `?resolve=true`, also resolves and returns every schema block the
-	 * stack references. An optional `game_slug` prefers that game's own
-	 * customized blocks over the global catalog wherever it has forked them.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -114,16 +95,12 @@ class Creature_Stacks_Controller extends Base_Controller {
 		$slug = $request['slug'];
 
 		if ( $request->get_param( 'resolve' ) ) {
-			// game_slug is optional so the base catalog still resolves with no game context.
 			$game_slug = (string) ( $request->get_param( 'game_slug' ) ?? '' );
 			$resolved  = Creature_Stack::resolve( $slug, $game_slug );
 			if ( ! $resolved ) {
 				return $this->error( 'not_found', __( 'Creature stack not found.', 'beyond-elysium' ), 404 );
 			}
-			// Opt-in only, and never inside resolve() itself - viewing/editing an
-			// already-existing character must always see every real option,
-			// even one this chronicle has since restricted (Decision 092's own
-			// "never a data filter" rule, applied to this second axis).
+			// Narrowing to the chronicle's enabled stacks is opt-in.
 			if ( $request->get_param( 'for_creation' ) ) {
 				$resolved = Creature_Stack::narrow_for_creation( $resolved, $slug, $game_slug );
 			}
@@ -139,10 +116,6 @@ class Creature_Stacks_Controller extends Base_Controller {
 
 	/**
 	 * Creates a new creature stack.
-	 *
-	 * Validates the required fields and the shape of `stack_definition`,
-	 * rejects a duplicate slug, and creates the record with `is_system`
-	 * always false since only the base catalog is a system stack.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -190,9 +163,6 @@ class Creature_Stacks_Controller extends Base_Controller {
 	/**
 	 * Updates an existing creature stack by slug.
 	 *
-	 * Writes only the fields present in the request, revalidating
-	 * `stack_definition` if it is one of them.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -216,7 +186,7 @@ class Creature_Stacks_Controller extends Base_Controller {
 				return $validation_error;
 			}
 
-			// A section an administrator adds to a system stack survives the next plugin update (F-011).
+			// A section an administrator adds to a system stack survives the next plugin update.
 			if ( (int) $stack->is_system === 1 ) {
 				$incoming = is_string( $data['stack_definition'] )
 					? json_decode( $data['stack_definition'], true )
@@ -233,12 +203,6 @@ class Creature_Stacks_Controller extends Base_Controller {
 
 	/**
 	 * Deletes a creature stack by slug.
-	 *
-	 * Looks up the stack, refuses to delete it if it is a system stack or any
-	 * character in any chronicle is still that creature type, and otherwise
-	 * removes the record permanently. A character can't change creature type,
-	 * and one whose type is gone has no sheet, audit, or export
-	 * (1.0.0-review F-088).
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -277,9 +241,6 @@ class Creature_Stacks_Controller extends Base_Controller {
 
 	/**
 	 * Defines the query parameters accepted by the collection endpoint.
-	 *
-	 * Covers game line, system flag, and search filtering, sort order, and
-	 * pagination.
 	 *
 	 * @return array
 	 */
@@ -328,9 +289,6 @@ class Creature_Stacks_Controller extends Base_Controller {
 	/**
 	 * Defines the parameters accepted by the create endpoint.
 	 *
-	 * Declares slug and name as required strings, game_line with a default,
-	 * and the stack_definition and creation_rules objects.
-	 *
 	 * @return array
 	 */
 	private function get_create_params(): array {
@@ -362,10 +320,6 @@ class Creature_Stacks_Controller extends Base_Controller {
 
 	/**
 	 * Validates the structure of a stack_definition value.
-	 *
-	 * Accepts a JSON string, a decoded object, or a plain array, normalizing
-	 * all three to an array before checking that it has a `sections` array
-	 * whose entries each declare a `block_slug` and a `display_order`.
 	 *
 	 * @param mixed $definition
 	 * @return \WP_Error|null

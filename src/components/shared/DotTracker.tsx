@@ -1,8 +1,5 @@
 /**
- * Editable permanent/temporary resource pool tracker (Willpower, Blood,
- * Renown, ...). Shows a row of state-colored dots per track alongside a
- * numeric value and +/- stepper buttons for adjusting it, up to a shared
- * maximum. Can be rendered read-only.
+ * Editable permanent/temporary resource pool tracker (Willpower, Blood, Renown,...).
  */
 import { __ } from '@wordpress/i18n';
 import {
@@ -33,13 +30,7 @@ const STATE_CLASS: Record< DotState, string > = {
 };
 
 /**
- * Renders permanent and temporary tracks for one resource pool sharing a
- * single maximum. Each track shows a row of dots reflecting its state
- * (filled, spent, overflow, empty) plus its numeric value, with +/-
- * buttons to adjust it. The dot rows are `aria-hidden`, decorative
- * summaries only - the numeric value and stepper buttons are the
- * operable, screen-reader-visible controls. `readOnly` disables both
- * steppers and marks the whole tracker `aria-disabled`.
+ * Renders permanent and temporary tracks for one resource pool sharing a single maximum.
  */
 export function DotTracker( {
 	permanent,

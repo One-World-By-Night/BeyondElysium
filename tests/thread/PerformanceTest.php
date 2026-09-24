@@ -6,29 +6,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * workflow-0.9.md Step 2: every user-facing path against a realistic dataset
- * (`tests/fixtures/seed-0.9-performance-dataset.php` - 220 characters, 60 plots, 120
- * world objects, 2 games), dispatched through the real REST server, real wall-clock
- * time, no mocks.
- *
- * Also closes the workflow-0.9.md Planned-vs-Built Audit's own Bucket 3 item 6: Phase
- * 0.6's real, measured performance numbers (Decision-log table) existed only as a
- * one-time snapshot, with nothing asserting the bounds going forward - a future
- * regression would go unnoticed until it was bad enough to be user-visible. This is
- * that test.
- *
- * These numbers are in-process PHP dispatch time (no HTTP round-trip, no network
- * latency, a warm local dev environment) - a lower bound, not a production SLA. They
- * exist to catch a regression relative to themselves over time, not to promise what a
- * real host under real concurrent load will do; workflow-0.9.md Step 10c's production
- * PHP/MySQL verification is the place that question actually gets answered.
- *
- * Requires the fixture to have been run first (`wp eval-file
- * tests/fixtures/seed-0.9-performance-dataset.php`) - this test skips itself rather
- * than seeding 220 characters inline on every run, which would make the numbers
- * measure fixture-creation cost, not the paths this step actually cares about.
- *
- * @see BE_PROCESS/releases/workflow-0.9.md Step 2
+ * Every user-facing path against a realistic dataset (220 characters, 60 plots, 120 world objects, 2 games),
+ * dispatched through the real REST server.
  */
 class PerformanceTest extends WP_UnitTestCase {
 
@@ -97,9 +76,6 @@ class PerformanceTest extends WP_UnitTestCase {
 		$wpdb->queries = [];
 		$g = self::GAME_SLUG;
 		$this->dispatch( 'GET', "/be/v1/{$g}/characters", [ 'per_page' => 20 ] );
-		// A per-character N+1 (resolving each one's stack separately) would produce
-		// roughly 20+ queries for 20 results - a small constant count either way
-		// proves the list is batched, not looped.
 		$this->assertLessThan( 10, count( $wpdb->queries ), 'Character list query count suggests an N+1.' );
 	}
 
@@ -120,11 +96,7 @@ class PerformanceTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * find_matches() for a world-object inventory is a full-table SELECT *
-	 * evaluated in PHP, same as the character path (§7.3) - fine at today's
-	 * catalog sizes, but 0.99.X-Ideas.md schedules expanding the Mage rotes
-	 * catalog to 500-900+ entries, which puts real volume through this exact
-	 * path for the first time (query-beyond-characters-design.md §5.5/QB-10).
+	 * find_matches() for a world-object inventory is a full-table SELECT * evaluated in PHP, same as the character path.
 	 */
 	public function test_world_object_query_under_300ms(): void {
 		$g  = self::GAME_SLUG;

@@ -1,8 +1,5 @@
 /**
- * Draws display text with every dot as a CSS circle of one fixed size (1.0.0-review F-016, owner
- * ruling 2026-09-14: all dots the same size, the large one) - a trait's rating and a pool's
- * points alike. Glyphs were not enough: a theme's font lacking one of them made the browser borrow
- * it from another font, at another size. The run keeps its glyphs as its accessible name.
+ * Draws display text with every dot as a CSS circle of one fixed size.
  */
 import { Fragment } from '@wordpress/element';
 import { DOT_STATES, splitDots } from '../../lib/dotRuns';

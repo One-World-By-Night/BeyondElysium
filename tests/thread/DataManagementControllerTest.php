@@ -8,9 +8,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Covers the uninstall-data setting (defaults to keeping data, an
- * administrator can turn on delete) and the full export route this
- * plugin's "keep, download, or delete" choice is built from.
+ * Covers the uninstall-data setting (defaults to keeping data, an administrator can turn on delete) and the full
+ * export route this plugin's "keep, download, or delete" choice is built from.
  */
 class DataManagementControllerTest extends WP_UnitTestCase {
 

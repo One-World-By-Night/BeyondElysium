@@ -11,11 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §3.10 (F2): court/office positions - free-text titles (with a preset picker),
- * optionally under a faction, with `holder_public = 0` hiding WHO holds a visible position
- * from a non-manager without hiding THAT it is held.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.10
+ * Court/office positions.
  */
 class PositionsThreadTest extends WP_UnitTestCase {
 
@@ -52,9 +48,6 @@ class PositionsThreadTest extends WP_UnitTestCase {
 		return [ $player_id, $character_id ];
 	}
 
-	// -------------------------------------------------------------------------
-	// holder_public = 0: everyone still sees the title is held, no non-manager
-	// sees by whom.
 	// -------------------------------------------------------------------------
 
 	public function test_a_non_public_holder_is_hidden_from_a_plain_viewer(): void {
@@ -102,9 +95,6 @@ class PositionsThreadTest extends WP_UnitTestCase {
 		$this->assertFalse( $data[0]['held'] );
 	}
 
-	// -------------------------------------------------------------------------
-	// set_holder() records history; changing holders closes the outgoing row
-	// and opens a new one, never leaving two open rows at once.
 	// -------------------------------------------------------------------------
 
 	public function test_changing_the_holder_closes_the_previous_history_row(): void {
@@ -165,8 +155,7 @@ class PositionsThreadTest extends WP_UnitTestCase {
 		$faction_id = (int) Faction::create( [ 'game_id' => $this->game_id, 'name' => 'The Camarilla', 'faction_type' => 'sect', 'created_by' => $this->storyteller_id ] );
 		$this->send( 'POST', '/positions', [ 'title' => 'Prince', 'faction_id' => $faction_id ] );
 
-		// A "?" embedded straight into the route string never matches any registered
-		// route pattern - the param has to be set via WP_REST_Request::set_param().
+		// A "?" embedded straight into the route string never matches any registered route pattern.
 		$request = new WP_REST_Request( 'GET', "/be/v1/{$this->slug}/positions" );
 		$request->set_param( 'faction_id', $faction_id );
 		$scoped   = rest_get_server()->dispatch( $request )->get_data();
@@ -198,9 +187,7 @@ class PositionsThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// `notes` is now an HtmlEditor field (1.2.5-design-workflow.md §B2) -
-	// wp_kses_post(), not sanitize_textarea_field(), which would silently strip
-	// every real formatting tag a Storyteller actually types.
+	// `notes` is now an HtmlEditor field
 	// -------------------------------------------------------------------------
 
 	public function test_notes_keeps_real_formatting_on_create(): void {

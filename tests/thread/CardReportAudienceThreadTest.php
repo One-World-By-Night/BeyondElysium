@@ -11,12 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 U5: the item-cards and location-cards reports filter by audience for a non-Storyteller
- * (§2.5's own explicit requirement), while "Print My Items" (the `character_id`-scoped case)
- * stays connection-only and unaffected - a character's own held items must keep printing
- * regardless of the item's general audience, since holding it is already the authorization.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §2.5, U5
+ * The item-cards and location-cards reports filter by audience for a non-Storyteller.
  */
 class CardReportAudienceThreadTest extends WP_UnitTestCase {
 

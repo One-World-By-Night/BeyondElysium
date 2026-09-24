@@ -8,10 +8,6 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Abstract base class for all Beyond Elysium REST controllers.
- *
- * Defines the shared REST namespace, standard success/error response
- * helpers, chronicle-scoped permission-callback builders, and pagination
- * helpers that every concrete controller in this plugin builds on.
  */
 abstract class Base_Controller extends \WP_REST_Controller {
 
@@ -22,10 +18,6 @@ abstract class Base_Controller extends \WP_REST_Controller {
 
 	/**
 	 * Builds a standard success response.
-	 *
-	 * Wraps the given data and HTTP status in a `WP_REST_Response` object.
-	 * Every controller in this plugin returns its successful results through
-	 * this helper so they share one consistent response shape.
 	 *
 	 * @param mixed $data    Response data.
 	 * @param int   $status  HTTP status code.
@@ -38,11 +30,6 @@ abstract class Base_Controller extends \WP_REST_Controller {
 	/**
 	 * Builds a standard error response.
 	 *
-	 * Wraps a machine-readable error code, a human-readable message, and an
-	 * HTTP status into a `WP_Error` object. Every controller in this plugin
-	 * returns its failures through this helper so they share one consistent
-	 * shape.
-	 *
 	 * @param string $code    Error code.
 	 * @param string $message Error message.
 	 * @param int    $status  HTTP status code.
@@ -54,13 +41,6 @@ abstract class Base_Controller extends \WP_REST_Controller {
 
 	/**
 	 * Builds a permission callback that checks a single WordPress capability.
-	 *
-	 * The returned closure receives the current `WP_REST_Request` and
-	 * delegates to `Authorization::check_request()`, which resolves the
-	 * capability check against the chronicle named by the request's
-	 * `game_slug`. `$allow_bootstrap` is passed straight through for the one
-	 * route that must let a user reach a chronicle before they hold any
-	 * membership in it.
 	 *
 	 * @param string $capability      WordPress capability.
 	 * @param bool   $allow_bootstrap See `Authorization::check_request()`.
@@ -75,12 +55,7 @@ abstract class Base_Controller extends \WP_REST_Controller {
 	}
 
 	/**
-	 * Builds a permission callback that passes if the current user holds any
-	 * one of the given capabilities.
-	 *
-	 * Checks each capability in turn via `Authorization::check_request()`
-	 * and returns true on the first match, denying only once none of them
-	 * pass. Chronicle-scoped the same way `permission()` is.
+	 * Builds a permission callback that passes if the current user holds any one of the given capabilities.
 	 *
 	 * @param string[] $capabilities
 	 * @return callable
@@ -97,12 +72,7 @@ abstract class Base_Controller extends \WP_REST_Controller {
 	}
 
 	/**
-	 * Builds a permission callback that passes only if the current user
-	 * holds every one of the given capabilities.
-	 *
-	 * Checks each capability in turn via `Authorization::check_request()`
-	 * and denies as soon as one fails, requiring all of them to pass.
-	 * Chronicle-scoped the same way `permission()` is.
+	 * Builds a permission callback that passes only if the current user holds every one of the given capabilities.
 	 *
 	 * @param string[] $capabilities
 	 * @return callable
@@ -121,17 +91,6 @@ abstract class Base_Controller extends \WP_REST_Controller {
 	/**
 	 * Resolves pagination parameters from the request, applying defaults and limits.
 	 *
-	 * Reads `page` and `per_page` from the request, defaulting to page 1 and
-	 * 20 items per page, clamping `per_page` to a maximum of `$max` (100 by
-	 * default), and computing the row offset those two values imply.
-	 *
-	 * `$max` exists for the rare screen that genuinely pages through
-	 * thousands of rows (Translations_Controller, §6: "a screen paging
-	 * through 8,298 rows is precisely where [a missing per_page] would
-	 * land") - every other caller omits it and keeps the existing 100 cap
-	 * unchanged, matching this method's own signature before this parameter
-	 * was added.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @param int              $max
 	 * @return array{ page: int, per_page: int, offset: int }
@@ -146,11 +105,6 @@ abstract class Base_Controller extends \WP_REST_Controller {
 
 	/**
 	 * Adds pagination headers to a response.
-	 *
-	 * Computes the total page count from the given total and per-page
-	 * values, then sets the `X-WP-Total` and `X-WP-TotalPages` headers on
-	 * the response. The `$page` parameter is accepted for a consistent call
-	 * signature but is not itself used to compute either header.
 	 *
 	 * @param \WP_REST_Response $response
 	 * @param int               $total       Total items.

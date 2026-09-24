@@ -1,8 +1,5 @@
 /**
- * Player-facing game landing page: the current user's own characters, their
- * pending changes, and their plot feed. Shown by GameDashboard to any viewer
- * without manager capabilities.
- * Reuses MyPlotsFeed unchanged for the plot section.
+ * Player-facing game landing page: the current user's own characters, their pending changes, and their plot feed.
  */
 import { __, sprintf } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
@@ -22,12 +19,8 @@ export interface PlayerDashboardProps {
 }
 
 /**
- * Builds the character sheet URL for one character, appending its id and chronicle
- * as query parameters to the configured sheet page URL. Returns null when no sheet
- * page URL is configured, so callers can render a plain label instead of a link.
- * Omitting game_slug here was a real latent bug (page-consolidation-design.md) -
- * harmless while every chronicle had its own dedicated sheet page to fall back on,
- * load-bearing now that one shared page resolves its chronicle from this param.
+ * Builds the character sheet URL for one character, appending its id and chronicle as query parameters to the
+ * configured sheet page URL.
  */
 function sheetLink(
 	sheetPageUrl: string | undefined,
@@ -44,9 +37,8 @@ function sheetLink(
 }
 
 /**
- * Renders the player's personal dashboard: a list of their characters linking to each
- * character's sheet, a list of their own pending changes, and their plot feed via
- * MyPlotsFeed.
+ * Renders the player's personal dashboard: a list of their characters linking to each character's sheet, a list of
+ * their own pending changes, and their plot feed via MyPlotsFeed.
  */
 export function PlayerDashboard( {
 	gameSlug,

@@ -1,8 +1,5 @@
 /**
- * Storyteller Toolkit plot overview. Renders every plot in a chronicle as a filterable
- * card grid with status/initiator/search controls, plus an inline form for creating a
- * new plot with an optional cover image and category. Paginated server-side, 24 cards
- * per page.
+ * Storyteller Toolkit plot overview.
  */
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -23,9 +20,13 @@ export interface PlotListProps {
 	gameSlug: string;
 	onSelect?: ( plotId: number ) => void;
 	defaultStatus?: PlotStatus;
-	/** Called after a successful create, with the new plot's id. */
+	/**
+	 * Called after a successful create, with the new plot's id.
+	 */
 	onCreated?: ( plotId: number ) => void;
-	/** Shows the Arc/Subplot/Season/Episode category picker on create. */
+	/**
+	 * Shows the Arc/Subplot/Season/Episode category picker on create.
+	 */
 	expandedEnabled?: boolean;
 }
 
@@ -39,9 +40,7 @@ const PLOT_CATEGORIES: PlotCategory[] = [
 ];
 
 /**
- * Renders every plot in the chronicle as a card grid, showing each plot's cover image,
- * title, category, and status. Provides filter controls for status, initiator, and a
- * text search, plus a form for creating a new plot.
+ * Renders every plot in the chronicle as a card grid, showing each plot's cover image, title, category, and status.
  */
 export function PlotList( {
 	gameSlug,
@@ -78,9 +77,8 @@ export function PlotList( {
 	const [ createError, setCreateError ] = useState< string | null >( null );
 
 	/**
-	 * Fetches one page of plots matching the current status, initiator, and search
-	 * filters from the API and stores the results and total count. Re-runs whenever
-	 * the filters or page number change.
+	 * Fetches one page of plots matching the current status, initiator, and search filters from the API and stores the
+	 * results and total count.
 	 */
 	function load() {
 		setLoading( true );
@@ -115,8 +113,7 @@ export function PlotList( {
 	] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	/**
-	 * Applies a filter change and starts over at the first page, where a narrower list
-	 * still has plots to show.
+	 * Applies a filter change and starts over at the first page, where a narrower list still has plots to show.
 	 */
 	function refilter( apply: () => void ) {
 		apply();
@@ -127,8 +124,6 @@ export function PlotList( {
 		if ( ! expandedEnabled ) {
 			return;
 		}
-		// A Subplot/Episode needs a parent, selectable from the full plot list.
-		// Every page, not the first 100 (1.0.0-review F-080).
 		everyPage( ( pageNumber ) =>
 			api
 				.plots( gameSlug )
@@ -142,9 +137,7 @@ export function PlotList( {
 		newCategory === 'subplot' || newCategory === 'episode';
 
 	/**
-	 * Opens the media library picker so the user can choose a cover image for the new
-	 * plot. Stores the chosen attachment's id and URL in local state for the create form
-	 * to submit and preview; does nothing if the picker is dismissed without a selection.
+	 * Opens the media library picker.
 	 */
 	async function pickCover() {
 		const attachment = await pickMediaImage(
@@ -156,9 +149,7 @@ export function PlotList( {
 	}
 
 	/**
-	 * Submits the new-plot creation form. Validates that a title is present and that a
-	 * Subplot or Episode has a parent selected, then creates the plot via the API, resets
-	 * the form fields, reloads the list, and notifies the parent through onCreated.
+	 * Submits the new-plot creation form.
 	 */
 	async function createPlot( e: React.FormEvent ) {
 		e.preventDefault();

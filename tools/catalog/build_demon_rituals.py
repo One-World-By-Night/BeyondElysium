@@ -1,18 +1,15 @@
 """Converts samples/research/demon/owbn/rituals.json (the Demon: The Fallen
 Ritual extraction from the OWBN Fallen Genre Packet, 2021) into
-data/catalog/blocks/demon-rituals.json, conforming to
-BE_PROCESS/reference/CATALOG-JSON-FORMAT.md §4.1 (trait_list).
+data/catalog/blocks/demon-rituals.json, a trait_list block.
 
-Offline, one-time tooling. Not part of the plugin, not run at runtime, not
-run by bin/verify. Kept here so the method is reproducible and reviewable,
-matching tools/grimoire/'s precedent.
+Offline tooling: not part of the plugin, not run at runtime, not run by
+bin/verify.
 
-Each ritual's real Primary Lore / Secondary Lore + dot-rating prerequisites
-(printed as bullet-dot strings, e.g. "Lore of the Celestials ••")
-are parsed into this format's `prerequisites` shape, pointing at
-demon-evocations (built by build_demon_evocations.py) by Lore name. Minimum
-casting time and Backlash - real mechanical data with no equivalent field in
-this format - are folded into `note` rather than dropped.
+Each ritual's Primary Lore / Secondary Lore + dot-rating prerequisites
+(printed as bullet-dot strings, e.g. "Lore of the Celestials ••") are parsed
+into the `prerequisites` shape, pointing at demon-evocations (built by
+build_demon_evocations.py) by Lore name. Minimum casting time and Backlash are
+folded into `note`.
 """
 
 import json

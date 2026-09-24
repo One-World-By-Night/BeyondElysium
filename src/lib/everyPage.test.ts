@@ -1,8 +1,6 @@
 /**
- * 1.0.0-review F-080 (Pass H intake `t3-remaining-components`). The character, plot, and item
- * pickers - Connect, Allocate actions, a rumor's or subplot's parent - asked for one page of 100,
- * the route's largest, and showed that as the whole list. In a chronicle past 100, the rest
- * could not be picked, and nothing said so.
+ * `everyPage` gathers every page of a long list, asks once for a list that fits
+ * on one page, and stops at an empty page even if the total says there is more.
  */
 import { everyPage } from './everyPage';
 

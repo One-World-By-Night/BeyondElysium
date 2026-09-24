@@ -7,11 +7,7 @@ use BeyondElysium\Database\Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Static data-access model for a player's own after-game report on one character at one
- * session (1.1.0 §3.14, A1) - what their character did, what they want next, and anything
- * for staff. A Storyteller reads and marks one read; they never edit a player's own words.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.14
+ * Static data-access model for a player's own after-game report on one character at one session.
  */
 class After_Game_Report {
 
@@ -29,8 +25,7 @@ class After_Game_Report {
 	}
 
 	/**
-	 * The report a character already has for a session, or null when none exists yet - the
-	 * unique key create()/update() both key off.
+	 * The report a character already has for a session, or null when none exists yet.
 	 *
 	 * @param int $session_id
 	 * @param int $character_id
@@ -73,7 +68,7 @@ class After_Game_Report {
 	}
 
 	/**
-	 * Whether a session has any report at all - `Game_Session::is_in_use()`'s own check.
+	 * Whether a session has any report at all.
 	 *
 	 * @param int $session_id
 	 * @return bool
@@ -83,8 +78,7 @@ class After_Game_Report {
 	}
 
 	/**
-	 * The character ids with a report already filed for a session - `award_report_xp()`'s own
-	 * recipient list.
+	 * The character ids with a report already filed for a session.
 	 *
 	 * @param int $session_id
 	 * @return int[]
@@ -94,9 +88,7 @@ class After_Game_Report {
 	}
 
 	/**
-	 * Creates a new report. Returns the new row's id, or false when one already exists for
-	 * this exact session and character (the caller checks `find_for_session()` first for a
-	 * clean 409 rather than relying on this alone).
+	 * Creates a new report.
 	 *
 	 * @param array $data
 	 * @return int|false
@@ -116,7 +108,7 @@ class After_Game_Report {
 	}
 
 	/**
-	 * Updates a report's own three text fields. Writes only the fields present in $data.
+	 * Updates a report's own three text fields.
 	 *
 	 * @param int   $id
 	 * @param array $data
@@ -138,8 +130,7 @@ class After_Game_Report {
 	}
 
 	/**
-	 * Marks a report read by a Storyteller. Idempotent - re-marking an already-read report
-	 * simply overwrites who/when, never errors.
+	 * Marks a report read by a Storyteller.
 	 *
 	 * @param int $id
 	 * @param int $read_by

@@ -5,12 +5,7 @@ namespace BeyondElysium\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.0.0-review F-004: D40 moved every "am I already inside a transaction" decision into
- * `Database\Transaction`'s call-depth counter, because in production (`autocommit=1`) a
- * nested `START TRANSACTION` silently commits the outer one. Four REST controllers kept their
- * own copy of the old `SELECT @@autocommit` check, and the import paths among them became live
- * the moment approving a change started opening a `Transaction` of its own. Nothing but
- * `Transaction` may open, release, or roll back a transaction.
+ * Moved every "am I already inside a transaction" decision into `Database\Transaction`'s call-depth counter.
  */
 class TransactionPatternTest extends TestCase {
 

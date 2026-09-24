@@ -84,9 +84,7 @@ describe( 'describeChange', () => {
 } );
 
 /**
- * Same fixture, same expected output as
- * `tests/unit/Display/ChangeDescriptionParityTest.php` - this is the TypeScript
- * half of proving the two renderers agree.
+ * Same fixture, same expected output as `tests/unit/Display/ChangeDescriptionParityTest.php`.
  */
 describe( 'describeChange — parity with Change_Description.php', () => {
 	changeDescriptionInput.forEach( ( testCase, i ) => {
@@ -104,8 +102,7 @@ describe( 'describeChange — parity with Change_Description.php', () => {
 } );
 
 /**
- * 1.0.0-review F-084: the words were bare English that never reached the translation file.
- * Same cases as `ChangeDescriptionTranslationThreadTest.php`.
+ * The words were bare English that never reached the translation file.
  */
 describe( 'describeChange — translation', () => {
 	afterEach( () => {
@@ -201,7 +198,6 @@ describe( 'describeChange — translation', () => {
 				left = left.replace( /⟦[^⟦⟧]*⟧/g, '' );
 			} while ( left !== before );
 
-			// An imported note's reason is the importer's own text, never a phrase of ours.
 			const ownText =
 				testCase.change_type === 'import_note'
 					? ( testCase.change_data as { reason?: string } ).reason ??
@@ -225,7 +221,6 @@ describe( 'describeChangeDetail', () => {
 			label: 'Kindred',
 		},
 		{ outcome: 'kept', from: 'Basket Weaving', reason: 'no_match' },
-		// A kept entry is not listed even if the record names the item it would have become.
 		{ outcome: 'kept', from: 'Brawling', to: 'Brawl', reason: 'collision' },
 	];
 

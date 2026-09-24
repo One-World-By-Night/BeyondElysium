@@ -8,12 +8,8 @@ use BeyondElysium\Models\Schema_Block;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-065 (Pass H intake `t3-schema-seeder`). Two one-time migrations rewrite one
- * block at a time and then checked `$wpdb->last_error` once - which only knows about the last
- * query. A block whose rewrite failed ahead of one that succeeded was marked done with the rest,
- * and never looked at again: a chronicle's Disciplines priced flat for good, or a coordinator
- * rule left standing. A migration is now marked done only when every block it rewrote was
- * written.
+ * A one-time migration is not marked done while any of its rows failed: flat-priced copies stay unmarked while one
+ * failed, and coordinator rules stay unretired while one rewrite failed.
  */
 class OneTimeMigrationPartialRunThreadTest extends WP_UnitTestCase {
 
@@ -31,7 +27,9 @@ class OneTimeMigrationPartialRunThreadTest extends WP_UnitTestCase {
 		parent::tearDown();
 	}
 
-	/** Fails the update of one block row, the way a lock timeout or a dropped connection would. */
+	/**
+	 * Fails the update of one block row, the way a lock timeout or a dropped connection would.
+	 */
 	public function break_one_block( string $query ): string {
 		return str_starts_with( $query, 'UPDATE' ) && str_contains( $query, 'be_schema_blocks' ) && preg_match( "/`id` = '?{$this->broken_id}'?(?!\\d)/", $query )
 			? 'UPDATE be_thread_no_such_table SET id = 1'

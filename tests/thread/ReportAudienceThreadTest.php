@@ -11,14 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-047. Every chronicle role, players included, holds `be_view_reports`, and a
- * report for a non-Storyteller hid only NPCs: any player could read every other player's
- * characters and sheet values (Character Roster, Search, Equipment...), everyone's XP history,
- * every plot with its entries, every other player's actions and the Storyteller responses, and
- * could search any sheet field across the chronicle through `conditions`. Each report now names
- * who may run it: character and player reports need `be_manage_characters`, plot, action, and
- * rumor reports need `be_manage_plots`, and only the catalog cards, House Rules, and the calendar
- * stay open to every member.
+ * Reports for a non-Storyteller hide every character and sheet value the viewer's own characters cannot reach.
  */
 class ReportAudienceThreadTest extends WP_UnitTestCase {
 

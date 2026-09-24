@@ -71,19 +71,14 @@ describe( 'toTraits (D25)', () => {
 
 /**
  * Same fixture, same expected output as `tests/unit/Display/TraitGroupingParityTest.php`'s
- * `test_to_traits_reads_count_falling_back_to_total()` - the highest-value single
- * assertion in the signed-PDF porting effort (signed-pdf-design.md Section 2d, SP-3).
- * This is the TypeScript half of proving `toTraits()` and `Trait_Grouping::to_traits()`
- * agree, on top of the hand-written cases above.
+ * `test_to_traits_reads_count_falling_back_to_total()`.
  */
 describe( 'toTraits — parity with Trait_Grouping::to_traits() (D25)', () => {
 	fixtureInput.toTraits.forEach( ( testCase, i ) => {
 		it( `matches the shared fixture: ${ testCase.case }`, () => {
 			const result = toTraits( testCase.data );
 
-			// `toTraits()` genuinely returns `undefined` for a missing total/note (asserted
-			// above); a JSON fixture can only represent that as `null`. Normalizing here
-			// bridges that JS-only distinction without changing `toTraits()` itself.
+			// `toTraits()` genuinely returns `undefined` for a missing total/note (asserted above).
 			const normalized = result.map( ( trait ) => ( {
 				name: trait.name,
 				total: trait.total ?? null,

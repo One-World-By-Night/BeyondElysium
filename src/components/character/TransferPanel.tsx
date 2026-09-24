@@ -1,13 +1,5 @@
 /**
- * Chronicle-to-chronicle character transfer (GX-8/9), from the character
- * sheet's own "Transfer" panel. Initiates an outbound transfer - downloading
- * the exchange document always works (the offline carrier), and giving a
- * host site also offers it there directly, where it waits for that
- * chronicle's Storytellers - then, once one is open, offers the manual
- * acknowledge/release/decline actions §8.1 describes for the home side. A
- * visiting (inbound) character offers the host's own send-home and keep
- * actions (1.0.0-review F-003, F-006). Offers still waiting for review are
- * decided on the Import page, since they have no character here yet.
+ * Chronicle-to-chronicle character transfer, from the character sheet's own "Transfer" panel.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -23,8 +15,8 @@ export interface TransferPanelProps {
 }
 
 /**
- * Renders either the outbound-initiate form (no open transfer yet) or the
- * current transfer's status plus whatever manual actions its state allows.
+ * Renders either the outbound-initiate form (no open transfer yet) or the current transfer's status plus whatever
+ * manual actions its state allows.
  */
 export function TransferPanel( {
 	gameSlug,

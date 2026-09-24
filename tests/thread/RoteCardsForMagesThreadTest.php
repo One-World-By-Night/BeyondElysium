@@ -11,12 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §3.15, C1: Rote Cards scoped to a mage's own held rotes, when a non-manager views it.
- * The engine pattern is kept throughout - the rule reads `report-registry.php`'s own
- * `holder_block` ('mage-rotes'), never a hardcoded creature type, so any future stack that
- * gains a rote-shaped block gets the identical behavior for free.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.15
+ * Rote Cards scoped to a mage's own held rotes, when a non-manager views it.
  */
 class RoteCardsForMagesThreadTest extends WP_UnitTestCase {
 
@@ -34,8 +29,7 @@ class RoteCardsForMagesThreadTest extends WP_UnitTestCase {
 		$this->storyteller_id = self::factory()->user->create( [ 'role' => 'editor' ] );
 		Game_Member::set_role( $this->game_id, $this->storyteller_id, 'hst' );
 
-		// Two real names from the actual seeded mage-rotes catalog, not invented ones - the
-		// same "measure the real data" discipline this project has followed throughout.
+		// Two real names from the actual seeded mage-rotes catalog.
 		$catalog = Schema_Block::find_by_slug( 'mage-rotes' );
 		$items   = $catalog->definition->items ?? [];
 		$this->assertGreaterThanOrEqual( 2, count( $items ), 'the real mage-rotes catalog must have at least two items for this test to mean anything' );
@@ -105,8 +99,7 @@ class RoteCardsForMagesThreadTest extends WP_UnitTestCase {
 		Game_Member::set_role( $this->game_id, $player, 'player' );
 		$character_id = $this->make_mage( $player );
 
-		// A third, real rote this character does NOT hold - proves the card list is scoped,
-		// not just "every rote in the chronicle."
+		// A third, real rote this character does NOT hold.
 		$catalog     = Schema_Block::find_by_slug( 'mage-rotes' );
 		$unheld_name = (string) ( $catalog->definition->items[2]->name ?? 'Unheld Rote' );
 		World_Object::create( [
@@ -137,7 +130,7 @@ class RoteCardsForMagesThreadTest extends WP_UnitTestCase {
 		Game_Member::set_role( $this->game_id, $player, 'player' );
 		$character_id = $this->make_mage( $player );
 
-		// Neither rote_a nor rote_b has a world object yet - both cards are fallback cards.
+		// Neither rote_a nor rote_b has a world object yet.
 		$response = $this->rote_cards( $player, $character_id );
 		$cards    = $response->get_data()['cards'];
 
@@ -167,7 +160,7 @@ class RoteCardsForMagesThreadTest extends WP_UnitTestCase {
 			}
 		}
 		$this->assertNotNull( $a_card );
-		// The real card's own columns (Level among them) - not the three-field fallback shape.
+		// The real card's own columns (Level among them).
 		$this->assertContains( [ 'Level', '3' ], $a_card );
 	}
 

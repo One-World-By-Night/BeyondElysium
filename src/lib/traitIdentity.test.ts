@@ -4,11 +4,13 @@ import { traitRowIdentity, labelPrompt } from './traitIdentity';
 import type { TraitListDefinition } from '../types';
 
 /**
- * 1.3.2.1 F1/F3 - `labelPrompt()` decides which label the editor asks for, and the
- * separator `traitRowIdentity()` joins on is a real escape, not a raw byte on disk (F3).
+ * `labelPrompt()` decides which label the editor asks for, and the separator `traitRowIdentity()` joins on is a real
+ * escape.
  */
 
-/** An Abilities-shaped block: specializations, no multiples anywhere. */
+/**
+ * An Abilities-shaped block: specializations, no multiples anywhere.
+ */
 function abilities(
 	overrides: Partial< TraitListDefinition > = {}
 ): TraitListDefinition {
@@ -22,7 +24,9 @@ function abilities(
 	};
 }
 
-/** A Backgrounds-shaped block: no specializations, Retainers alone repeatable. */
+/**
+ * A Backgrounds-shaped block: no specializations, Retainers alone repeatable.
+ */
 function backgrounds(): TraitListDefinition {
 	return {
 		items: [
@@ -59,8 +63,7 @@ describe( 'labelPrompt', () => {
 	} );
 
 	it( 'keeps asking for a specialization even where the item also allows multiples', () => {
-		// Lore is allow_multiples on a block that has_specializations - the label is still
-		// "Specialization", since that block already keeps each label as its own row.
+		// Lore is allow_multiples on a block that has_specializations.
 		const block = abilities();
 		block.items[ 0 ].allow_multiples = true;
 		expect( labelPrompt( block, 'Brawl' ) ).toBe( 'specialization' );

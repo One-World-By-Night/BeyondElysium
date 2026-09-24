@@ -1,11 +1,13 @@
 /**
- * Type definitions for a chronicle's release batches (1.1.0 §3.2): scheduling rumors and
- * downtime answers to go out together, several between games.
+ * Type definitions for a chronicle's release batches: scheduling rumors and downtime answers to go out together,
+ * several between games.
  */
 
 export type ReleaseBatchStatus = 'draft' | 'scheduled' | 'released';
 
-/** One release batch, with its held item counts for the list/detail views. */
+/**
+ * One release batch, with its held item counts for the list/detail views.
+ */
 export interface ReleaseBatch {
 	id: number;
 	game_id: number;
@@ -21,15 +23,16 @@ export interface ReleaseBatch {
 	entry_count: number;
 }
 
-/** Request body for creating a batch. Scheduled when release_at is given, draft otherwise. */
+/**
+ * Request body for creating a batch.
+ */
 export interface CreateReleaseBatchRequest {
 	name: string;
 	release_at?: string;
 }
 
 /**
- * Request body for updating a draft or scheduled batch. status here is only ever 'draft' or
- * 'scheduled' - reaching 'released' is a separate action (releaseNow).
+ * Request body for updating a draft or scheduled batch. status here is only ever 'draft' or 'scheduled'.
  */
 export interface UpdateReleaseBatchRequest {
 	name?: string;
@@ -37,7 +40,9 @@ export interface UpdateReleaseBatchRequest {
 	status?: 'draft' | 'scheduled';
 }
 
-/** One held item in a batch's items list - a rumor (held plot) or a downtime answer (held entry). */
+/**
+ * One held item in a batch's items list.
+ */
 export interface ReleaseBatchItem {
 	type: 'plot' | 'entry';
 	id: number;
@@ -47,20 +52,26 @@ export interface ReleaseBatchItem {
 	content?: string;
 }
 
-/** A batch's held items, grouped by kind. Reveals (§3.11) always list empty until K1 ships. */
+/**
+ * A batch's held items, grouped by kind.
+ */
 export interface ReleaseBatchItems {
 	rumors: ReleaseBatchItem[];
 	entries: ReleaseBatchItem[];
 	reveals: ReleaseBatchItem[];
 }
 
-/** One item to add when releasing a single rumor or answer with no pre-existing batch. */
+/**
+ * One item to add when releasing a single rumor or answer with no pre-existing batch.
+ */
 export interface ReleaseNowItem {
 	type: 'plot' | 'entry';
 	id: number;
 }
 
-/** Request body for release-now with no pre-existing batch: creates, fills, and releases in one call. */
+/**
+ * Request body for release-now with no pre-existing batch: creates, fills, and releases in one call.
+ */
 export interface ReleaseNowSingleRequest {
 	name?: string;
 	items: ReleaseNowItem[];

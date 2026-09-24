@@ -11,11 +11,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §3.12 item 2: an item with a set number of uses, or an expiry date - both derived
- * (`used_up`, `expired`), never stored, and a "use" route reachable by a manager or by a
- * player whose own character actually holds the item.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.12 item 2
+ * An item with a set number of uses, or an expiry date: it is used up at zero uses left, expires on a past date, and
+ * refuses use when it has no uses set, is used up or has expired.
  */
 class ItemUsesThreadTest extends WP_UnitTestCase {
 
@@ -145,8 +142,7 @@ class ItemUsesThreadTest extends WP_UnitTestCase {
 		$item_id = $this->make_item( [ 'uses_max' => 3, 'uses_left' => 3 ] );
 		$this->hold( $item_id, $this->character_id );
 
-		// other_player owns other_character, but passes character_id as their OWN character,
-		// which never holds this item - refused as not_holder, never touching another player's character.
+		// other_player owns other_character.
 		$response = $this->use_item( $this->other_player_id, $item_id, $this->other_character_id );
 		$this->assertSame( 403, $response->get_status() );
 	}

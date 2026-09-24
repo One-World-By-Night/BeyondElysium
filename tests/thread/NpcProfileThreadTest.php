@@ -12,12 +12,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §3.7 item 3: "Who's Who" - an NPC's public profile. A Storyteller sees every NPC
- * regardless of `profile_audience`; a player sees only the projection {id, name,
- * public_description, image_url, titles, factions} for an NPC whose audience reaches them,
- * never the NPC's real sheet, status, or assignment.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.7
+ * An NPC's public profile (Who's Who): a manager sets it, a player sees only the NPCs whose audience reaches them, the
+ * projection never includes sheet or status fields, and a denied player gets a 404.
  */
 class NpcProfileThreadTest extends WP_UnitTestCase {
 
@@ -214,8 +210,7 @@ class NpcProfileThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// titles/factions (F1/F2): each keeps the same visibility rule it has on its
-	// own dedicated route, never a looser one just because it is reached from here.
+	// titles/factions: each keeps the same visibility rule it has on its own dedicated route
 	// -------------------------------------------------------------------------
 
 	public function test_titles_and_factions_reach_a_manager_in_full(): void {

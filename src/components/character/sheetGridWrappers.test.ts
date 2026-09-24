@@ -2,16 +2,14 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 /**
- * Owner, 2026-09-15: the sheet came out "4 columns here, 1 there". Print groups Physical, Social,
- * and Mental Traits into three columns, and the wrappers that grouping needs sat in the on-screen
- * grid as one narrow track each - three sixths of a row for six sections meant to fill two rows
- * of thirds. On screen every wrapper between the grid and its sections has to step aside, and
- * each section keeps the place its template gives it, whatever wrapper holds it.
+ * The trait-group wrappers the print layout needs do not take up tracks in the on-screen grid.
  */
 const css = readFileSync( join( __dirname, 'CharacterSheet.css' ), 'utf8' );
 const tsx = readFileSync( join( __dirname, 'CharacterSheet.tsx' ), 'utf8' );
 
-/** The stylesheet without comments and without its `@media print` block. */
+/**
+ * The stylesheet without comments and without its `@media print` block.
+ */
 function screenRules(): string {
 	const source = css.replace( /\/\*[\s\S]*?\*\//g, '' );
 	const start = source.indexOf( '@media print' );
@@ -34,7 +32,9 @@ function screenRules(): string {
 	return source.slice( 0, start ) + source.slice( end + 1 );
 }
 
-/** The declarations every rule naming `className` sets on screen, run together. */
+/**
+ * The declarations every rule naming `className` sets on screen, run together.
+ */
 function declarationsFor( className: string, rules: string ): string {
 	const found: string[] = [];
 	const rule = /([^{}]+)\{([^{}]*)\}/g;

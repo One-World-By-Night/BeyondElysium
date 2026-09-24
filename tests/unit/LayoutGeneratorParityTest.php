@@ -6,12 +6,7 @@ use BeyondElysium\Services\Layout_Generator;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `Layout_Generator.php` (authoritative) and `generateLayout.ts` (client-side "no
- * template at all" path) must agree - same stack in, same layout JSON out. Both read the
- * same fixture and are checked against the same expected output; this half proves the
- * PHP side, `src/lib/generateLayout.test.ts` proves the TypeScript side.
- *
- * @see BE_PROCESS/releases/workflow-0.3.md Step 4f, 8b-ii
+ * `Layout_Generator.php` (authoritative) and `generateLayout.ts` (client-side "no template at all" path) must agree.
  */
 class LayoutGeneratorParityTest extends TestCase {
 

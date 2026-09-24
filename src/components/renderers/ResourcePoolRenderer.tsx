@@ -1,9 +1,6 @@
 /**
- * Renders a resource_pool schema block (Blood, Willpower, Renown, ...)
- * as one row per pool, showing its resolved display label and its
- * permanent/temporary value rendered as glyphs via `displayTemper()`.
- * Pools missing from the character's data fall back to their default
- * starting value.
+ * Renders a resource_pool schema block (Blood, Willpower, Renown,...) as one row per pool, showing its resolved
+ * display label and its permanent/temporary value rendered as glyphs via `displayTemper()`.
  */
 import { displayTemper, type ResourcePoolValue } from '../../lib/displayTemper';
 import { resolvePoolName } from '../../lib/resolveCrossBlockRef';
@@ -16,16 +13,14 @@ export interface ResourcePoolRendererProps {
 	blockSlug: string;
 	data: Record< string, ResourcePoolValue >;
 	definition: ResourcePoolDefinition;
-	/** The character's full sheet_data, used to resolve a pool's display name when it depends on another block's value. */
+	/**
+	 * The character's full sheet_data, used to resolve a pool's display name when it depends on another block's value.
+	 */
 	sheetData?: Record< string, unknown >;
 }
 
 /**
- * Renders a resource_pool section (Blood, Willpower, Renown, ...) via
- * `displayTemper()`. A pool absent from the character's data starts at
- * the block's own default rather than rendering blank. The storage key
- * for each pool is always `pool.name`; only its displayed label can vary
- * per character via `name_lookup`.
+ * Renders a resource_pool section (Blood, Willpower, Renown,...) via `displayTemper()`.
  */
 export function ResourcePoolRenderer( {
 	blockSlug,
@@ -40,8 +35,7 @@ export function ResourcePoolRenderer( {
 					permanent: pool.default_start,
 					temporary: pool.default_start,
 				};
-				// A name_lookup override (e.g. a breed-specific pool name) always wins -
-				// label_pt only ever translates the pool's own plain name (1.2.0 §5.6).
+				// A name_lookup override (e.g. a breed-specific pool name) always wins.
 				const resolvedName = resolvePoolName( pool, sheetData ?? {} );
 				const label =
 					resolvedName === pool.name

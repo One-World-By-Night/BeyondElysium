@@ -11,11 +11,8 @@ use BeyondElysium\Tests\Support\RowLockProbe;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-090 (Pass H intake `t3-models`). Creating a connection looked for an identical
- * one and then inserted, with nothing holding the two together: requests that arrived together
- * each found none and each inserted, and the item was listed on the character twice. On local
- * MySQL, six simultaneous creates left up to six rows. Each create now holds its source's row
- * while it checks and writes, so the next one finds the first.
+ * Creating a connection holds a lock while the connection is checked and written: another request waits, a create that
+ * cannot hold its source writes nothing, and an identical connection returns the first.
  */
 class ConnectionCreateRaceThreadTest extends WP_UnitTestCase {
 
@@ -25,7 +22,6 @@ class ConnectionCreateRaceThreadTest extends WP_UnitTestCase {
 	public function setUp(): void {
 		parent::setUp();
 
-		// A committed character, so a second connection's lock attempt measures this request's hold.
 		$this->source = Character::find_by_name_in_game( 'Isolde Marchetti', 'be-demo' );
 		$this->assertNotNull( $this->source, 'The demo chronicle seeds Isolde Marchetti.' );
 		$this->game_id = (int) Game::find_by_slug( 'be-demo' )->id;

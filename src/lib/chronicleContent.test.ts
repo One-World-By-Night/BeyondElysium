@@ -59,10 +59,8 @@ describe( 'chronicleContent', () => {
 			);
 		} );
 
-		// D1 (1.2.5-design-workflow.md §D): the nine kinds the confirmation dialog never
-		// named before this fix, so an admin deleting a chronicle without --with-content
-		// could lose them with no warning at all.
-		it( 'names the D1 content kinds the confirmation dialog used to silently skip', () => {
+		// The nine kinds beyond the first eight.
+		it( 'names the nine further kinds of chronicle content', () => {
 			expect(
 				describeChronicleContent( {
 					...NONE,

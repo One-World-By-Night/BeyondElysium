@@ -9,12 +9,9 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-069 (Pass H intake `t3-config-controllers-bootstrap`). `GET /templates/{id}`
- * handed any logged-in user any chronicle's own template by counting ids - no membership, and
- * none of the Storyteller-only sections taken out that the sheet's own `resolve` takes out. The
- * template lists were open to every member too. A sheet reaches its template through `resolve`
- * alone; the lists and the id route are the template editor's, and the id route answers for a
- * shared template only.
+ * Who may read a template: a player cannot read templates directly, no one reads a chronicle's own template by id, the
+ * template editor still lists shared and its own templates, and a player still gets their sheet template through
+ * resolve.
  */
 class TemplateReadScopeThreadTest extends WP_UnitTestCase {
 

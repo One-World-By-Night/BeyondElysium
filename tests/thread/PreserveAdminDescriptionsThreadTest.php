@@ -7,21 +7,13 @@ use BeyondElysium\Models\Schema_Block;
 use WP_UnitTestCase;
 
 /**
- * `Seeder::seed_schema_blocks()` replaces a system block's entire `definition`
- * on every call (R5 - the catalog stays in sync with GVM/CSV source data on
- * every plugin version bump). `description` is the one field on a catalog
- * item that source data never populates - it exists purely because a site
- * admin typed a house rule or page reference into it - so without
- * `Seeder::preserve_admin_descriptions()`, a real reseed would silently
- * destroy every admin-written note in the entire global catalog the next
- * time this plugin updates. This is the regression guard proving it doesn't,
- * against a real system block and a real reseed, not a constructed fixture.
+ * A reseed keeps a catalog item's admin-set `description`, the one field an item carries only from an administrator.
  */
 class PreserveAdminDescriptionsThreadTest extends WP_UnitTestCase {
 
 	public function test_a_trait_list_items_description_survives_a_real_reseed(): void {
-		$block = Schema_Block::find_by_slug( 'met-abilities' );
-		$this->assertSame( 1, (int) $block->is_system, 'met-abilities must be a real system block for this test to mean anything' );
+		$block = Schema_Block::find_by_slug( 'vampire-abilities' );
+		$this->assertSame( 1, (int) $block->is_system, 'vampire-abilities must be a real system block for this test to mean anything' );
 
 		$definition = json_decode( wp_json_encode( $block->definition ), true );
 		$found      = false;
@@ -32,15 +24,13 @@ class PreserveAdminDescriptionsThreadTest extends WP_UnitTestCase {
 			}
 		}
 		unset( $item );
-		$this->assertTrue( $found, 'Occult must exist in the real met-abilities catalog for this test to mean anything' );
+		$this->assertTrue( $found, 'Occult must exist in the real vampire-abilities catalog for this test to mean anything' );
 
-		Schema_Block::update( 'met-abilities', [ 'definition' => $definition ] );
+		Schema_Block::update( 'vampire-abilities', [ 'definition' => $definition ] );
 
-		// The real reseed - unconditional inside seed_schema_blocks() itself,
-		// exactly what a plugin version bump triggers via maybe_upgrade().
 		Seeder::seed_schema_blocks();
 
-		$reseeded = Schema_Block::find_by_slug( 'met-abilities' );
+		$reseeded = Schema_Block::find_by_slug( 'vampire-abilities' );
 		$occult   = null;
 		foreach ( $reseeded->definition->items as $item ) {
 			if ( $item->name === 'Occult' ) {
@@ -100,12 +90,7 @@ class PreserveAdminDescriptionsThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The one deliberate limitation: a renamed source item loses its old note
-	 * rather than the reseed guessing which new item it belongs to now
-	 * (Decision 043's tie rule, applied to a rename). Proven directly with a
-	 * throwaway custom (is_system = 0) block reseeded manually through the
-	 * same preserve/update pair a real system block goes through, since a
-	 * real GVM item can't be renamed out from under this test.
+	 * The one deliberate limitation: a renamed source item loses its old note.
 	 */
 	public function test_a_renamed_item_does_not_carry_its_old_description_forward(): void {
 		$method = new \ReflectionMethod( Seeder::class, 'preserve_admin_edits' );

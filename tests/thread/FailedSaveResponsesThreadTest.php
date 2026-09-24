@@ -10,12 +10,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-109 (found triaging F-020). Six saves never looked at whether their write
- * landed: an approval rule's create, change, and clear, the Schema Blocks editor, the Creature
- * Stacks editor, a boon's repayment, and a chronicle's AI Assist settings. A write that failed -
- * a lost connection, a lock wait that timed out - was answered 200 or 201 as if it had saved,
- * with the old data or nothing. A chronicle's copy of a block that couldn't be made was
- * answered with the catalog block, and a rule "saved" onto it went nowhere.
+ * (found triaging).
  */
 class FailedSaveResponsesThreadTest extends WP_UnitTestCase {
 
@@ -42,7 +37,9 @@ class FailedSaveResponsesThreadTest extends WP_UnitTestCase {
 		parent::tear_down();
 	}
 
-	/** Fails every write of one kind to one table, as a lost connection or lock timeout would. */
+	/**
+	 * Fails every write of one kind to one table, as a lost connection or lock timeout would.
+	 */
 	public function break_writes( string $query ): string {
 		global $wpdb;
 		[ $verb, $table ] = explode( ' ', $this->broken . ' ' );

@@ -1,34 +1,23 @@
 /**
- * What makes one held `trait_list` row the same holding as another, rather than a second one
- * (1.2.11 D86/D88).
- *
- * A specialization labels ONE holding: `Brawl 5 (Wrestling)` is a single Brawl at 5, and
- * choosing a different focus must never let a player hold a second Brawl. What genuinely makes
- * the label part of a holding's identity is `allow_multiples` - `Retainers x3 (John Doe)` and
- * `Retainers x2 (Sue Smith)` are two real purchases, as are the field-of-study Abilities.
- *
- * This module is the twin of `BeyondElysium\Services\Trait_Identity`, written for the same
- * reason `powerLevels.ts` is `Power_Levels`'s twin: every consumer that decides *which* held
- * row a change means reads the rule from one place per language, so the two cannot drift and
- * no third copy of the rule can appear. The consumers are the editor, `computeChanges`, the
- * change validator, the change engine (pending-duplicate key, apply) and the cost engine.
+ * What makes one held `trait_list` row the same holding as another.
  */
 import type { TraitListDefinition } from '../types';
 
-/** The separator inside a composite identity. It cannot appear in a name or a label. */
+/**
+ * The separator inside a composite identity.
+ */
 const SEPARATOR = '\u0000';
 
-/** One row or draft, as far as identity is concerned. */
+/**
+ * One row or draft, as far as identity is concerned.
+ */
 export interface IdentifiableTrait {
 	name: string;
 	specialization?: string;
 }
 
 /**
- * Whether one catalog item may be held more than once, each holding labelled by its own
- * specialization. The item's own `allow_multiples` wins when it states one; otherwise the
- * block's flag is the default, and an item the catalog does not list - a custom entry - takes
- * that block default too.
+ * Whether one catalog item may be held more than once, each holding labelled by its own specialization.
  */
 export function allowsMultiples(
 	definition: TraitListDefinition,
@@ -44,9 +33,8 @@ export function allowsMultiples(
 }
 
 /**
- * The identity of one held row: its `name` alone, or the name and its label joined by a NUL
- * when the item is multiples-capable. Amends Decision 082, which made it name+specialization
- * for every non-atomic block.
+ * The identity of one held row: its `name` alone, or the name and its label joined by a NUL when the item is
+ * multiples-capable.
  */
 export function traitRowIdentity(
 	definition: TraitListDefinition,
@@ -58,14 +46,7 @@ export function traitRowIdentity(
 }
 
 /**
- * Which label the editor should ask for, if any, for a drafted name on this block - the same
- * rule `allowsMultiples()` states, read as a UI decision rather than an identity one (1.3.2.1).
- *
- * A block that takes specializations always asks for one, even for a multiples-capable item
- * (Lore's field of study is itself the label). Otherwise, a name this block or item lets be
- * held more than once asks "Who or what?" - the label IS the identity there, so leaving it
- * blank merges into whichever holding of that name already exists. A plain item, or an empty
- * name, gets no field at all.
+ * Which label the editor should ask for, if any, for a drafted name on this block.
  */
 export function labelPrompt(
 	definition: TraitListDefinition,

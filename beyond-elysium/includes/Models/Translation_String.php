@@ -9,29 +9,13 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Static data-access model for the locale-independent catalog term index.
- *
- * One row per distinct English string the catalog contains, keyed by
- * `Services\Name_Key::for()` on `source_key`. `used_in` (the design
- * document's "usage" concept - see Database\Schema's own comment on the
- * table for why the column itself is not literally named that) records
- * where the string appears; `Services\Catalog_Translator::rescan()` is
- * what walks the schema blocks and calls `upsert_from_scan()` per term
- * found. Never deletes a string on its own - see that method's docblock.
- *
- * @see BE_PROCESS/releases/1.2.0-design-workflow.md §4, §5.3
  */
 class Translation_String {
 
 	private const TABLE = 'translation_strings';
 
 	/**
-	 * A `first_seen`/`last_seen`-ready timestamp with microsecond precision - `current_time(
-	 * 'mysql')` only gives whole seconds, and Catalog_Translator::rescan() (B3) tells
-	 * "orphaned" apart from "touched by this scan" by comparing timestamps at a precision
-	 * where two fast rescans landing in the same second is the ordinary case, not an edge
-	 * case (confirmed live - see the schema column's own comment in Database\Schema). Every
-	 * write to first_seen/last_seen must go through this, never current_time('mysql')
-	 * directly, or the column's datetime(6) precision buys nothing.
+	 * A `first_seen`/`last_seen`-ready timestamp with microsecond precision.
 	 *
 	 * @return string
 	 */
@@ -63,9 +47,7 @@ class Translation_String {
 	}
 
 	/**
-	 * Convenience for REST callers that supply the raw English string rather
-	 * than a pre-computed key (§6: `POST /translations` accepts either
-	 * `source_text` or `string_id`).
+	 * Convenience for REST callers that supply the raw English string.
 	 *
 	 * @param string $source_text
 	 * @return object|null
@@ -75,9 +57,11 @@ class Translation_String {
 	}
 
 	/**
+	 * Creates a translation string row and returns its id.
+	 *
 	 * @param array $data source_key (optional - computed from source_text if absent),
 	 *                     source_text (required), used_in (optional array), first_seen
-	 *                     (optional), last_seen (optional - pass null explicitly for the §8
+	 *                     (optional), last_seen (optional - pass null explicitly
 	 *                     step-4 "CSV-only, never confirmed in the catalog" case; array_key_exists
 	 *                     is used rather than `??` specifically so an explicit null is honored
 	 *                     instead of being silently replaced with "now").
@@ -130,16 +114,7 @@ class Translation_String {
 	}
 
 	/**
-	 * The write side of a catalog rescan (§5.3). Finds the row by its
-	 * Name_Key, and either refreshes an existing one's `used_in`/`last_seen`
-	 * (first_seen is never touched once set) or inserts a new row. Returns
-	 * the row's id either way, so the caller can key a translation to it
-	 * without a second lookup.
-	 *
-	 * Never deletes. A string a rescan does not find again is simply never
-	 * touched - its `last_seen` goes stale, which is what makes it
-	 * "orphaned" (never a flag, never a delete) so a translation already
-	 * made for it is never lost when a catalog is temporarily narrowed.
+	 * The write side of a catalog rescan.
 	 *
 	 * @param string $source_text
 	 * @param array  $used_in
@@ -165,10 +140,7 @@ class Translation_String {
 	}
 
 	/**
-	 * The review list (§6 `GET /translations`): every string, LEFT JOINed to
-	 * its translation for one locale so an untranslated term still lists
-	 * with `translation: null`. `$filters['status']`/`['has_translation']`
-	 * therefore filter on the joined row, not the string itself.
+	 * The review list (`GET /translations`): every string, LEFT JOINed to its translation for one locale.
 	 *
 	 * @param string $locale
 	 * @param array  $filters status, block (searches `used_in`), search
@@ -198,10 +170,7 @@ class Translation_String {
 	}
 
 	/**
-	 * Total matching `list_for_review()`'s filters, unpaginated - what the
-	 * REST controller reports as `X-WP-Total` (§6's own D38/D52 warning
-	 * about a missing total is exactly why this exists as its own method
-	 * rather than `count( list_for_review( ..., PHP_INT_MAX ) )`).
+	 * Total matching `list_for_review()`'s filters, unpaginated.
 	 *
 	 * @param string $locale
 	 * @param array  $filters Same shape as list_for_review().
@@ -222,13 +191,7 @@ class Translation_String {
 	}
 
 	/**
-	 * Shared WHERE-clause builder behind list_for_review()/count_for_review()
-	 * (Character::build_where()'s established pattern, 1.1.1 audit) - both
-	 * accept the identical filter vocabulary and must never build it twice.
-	 *
-	 * `$locale` is deliberately not part of the WHERE clause it returns -
-	 * the LEFT JOIN's own ON clause needs it ahead of these bind values, so
-	 * callers splice it in themselves (see the two callers above).
+	 * Shared WHERE-clause builder behind list_for_review()/count_for_review().
 	 *
 	 * @param string $locale
 	 * @param array  $filters
@@ -248,8 +211,7 @@ class Translation_String {
 		}
 
 		if ( ! empty( $filters['block'] ) ) {
-			// used_in is a JSON array of {block, section_type, role} objects; JSON_SEARCH
-			// finds a string match anywhere in it without needing to know which key it's under.
+			// used_in is a JSON array of {block, section_type, role} objects.
 			$where[]  = 'JSON_SEARCH(s.used_in, "one", %s) IS NOT NULL';
 			$values[] = $filters['block'];
 		}

@@ -13,16 +13,9 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-071, F-072, F-073, F-074 (Pass H intake `t1-print-reports`). Four reports
- * printed columns that could never hold anything:
- * - F-071: Experience History and Player Point History showed each change's Earned and Unspent
- *   as 0 for every award (and a spend as its cost under Earned), where Grapevine shows the
- *   totals after each change; an ordinary change's Reason always read "—".
- * - F-072: Vampire Status Report's Date was always blank and its Group and Description were
- *   never mapped; Grapevine's report is Name, Title, Clan, Status, and Boons.
- * - F-073: Character Equipment's Item column was "—" for every character, though the items a
- *   character holds are right there as connections.
- * - F-074: Search Report's Match column was "—" for every row, and its sort was a no-op.
+ * The columns of the print reports: Experience History shows the totals after each change and its reason, Player Point
+ * History runs the totals across a player's characters, Vampire Status Report is Grapevine's name, title, clan, status
+ * and boons, Character Equipment names the items a character holds, and Search Report says why each character matched.
  */
 class ReportColumnsThreadTest extends WP_UnitTestCase {
 

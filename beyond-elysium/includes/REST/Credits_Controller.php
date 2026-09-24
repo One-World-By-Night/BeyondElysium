@@ -6,11 +6,6 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * REST controller for the plugin's credits and in-memoriam content.
- *
- * Backed by two plain WordPress options rather than a database table - this
- * is small, site-wide, rarely-changed text, not per-chronicle data. Read is
- * open to any logged-in viewer (the same floor as be_view_characters); write
- * is restricted to a site administrator.
  */
 class Credits_Controller extends Base_Controller {
 
@@ -20,8 +15,10 @@ class Credits_Controller extends Base_Controller {
 	const MEMORIAM_OPTION = 'be_in_memoriam';
 	const DEFAULT_CREDITS = 'Beyond Elysium was created by Greg Hacke for One World by Night.';
 
-	/** The starting in-memoriam list, seeded once; freely editable from there. */
-	// Alphabetical by first name - owner ruling, 2026-09-12.
+	/**
+	 * The starting in-memoriam list, seeded once.
+	 */
+	// Alphabetical by first name.
 	const DEFAULT_MEMORIAM = [
 		[ 'name' => 'Arielle M.', 'note' => '' ],
 		[ 'name' => 'Ash White', 'note' => '' ],
@@ -39,10 +36,6 @@ class Credits_Controller extends Base_Controller {
 
 	/**
 	 * Registers the credits routes.
-	 *
-	 * Adds a GET route open to any logged-in viewer and a PUT route
-	 * restricted to be_manage_games, both operating on the same
-	 * credits-text-plus-memoriam-list payload shape.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/' . $this->rest_base, [
@@ -62,10 +55,6 @@ class Credits_Controller extends Base_Controller {
 	/**
 	 * Returns the current credits text and in-memoriam list.
 	 *
-	 * Reads both options, seeding sensible defaults (including the
-	 * permanent Arielle entry) the first time either is read before
-	 * ever being set.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response
 	 */
@@ -78,11 +67,6 @@ class Credits_Controller extends Base_Controller {
 
 	/**
 	 * Updates the credits text and/or in-memoriam list.
-	 *
-	 * Accepts either field independently; a field left out of the
-	 * request body is left unchanged. The saved list fully replaces
-	 * whatever was there before, name-by-name edits and removals
-	 * included.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -115,8 +99,7 @@ class Credits_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns the stored in-memoriam list, seeding it with
-	 * DEFAULT_MEMORIAM the first time it is ever read before anyone
+	 * Returns the stored in-memoriam list, seeding it with DEFAULT_MEMORIAM the first time it is ever read before anyone
 	 * has saved their own list.
 	 *
 	 * @return array

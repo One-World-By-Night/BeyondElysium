@@ -101,9 +101,7 @@ describe( 'isSectionCollapsed', () => {
 } );
 
 /**
- * Same fixture, same expected output as `tests/unit/Display/Layout_FlowTest.php` - this is
- * the TypeScript half of proving spanFor()/sortedForFlow() and their PHP twin, Layout_Flow,
- * agree.
+ * Same fixture, same expected output as `tests/unit/Display/Layout_FlowTest.php`.
  */
 describe( 'templateLayout — parity with Layout_Flow.php', () => {
 	it( 'spanFor matches the shared fixture for every case', () => {

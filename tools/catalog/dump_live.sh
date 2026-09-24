@@ -1,13 +1,9 @@
 #!/usr/bin/env bash
 #
-# Dumps the local seeded catalog (system schema blocks, creature stacks, system templates)
-# into one JSON file per record, as the input emit_catalog.py reads. Local be_dev only -
-# never point this at a production host.
+# Dumps the local seeded catalog (system schema blocks, creature stacks, system templates) into one JSON file per
+# record, as the input emit_catalog.py reads. Local be_dev only: never point this at a production host.
 #
 # Usage: tools/catalog/dump_live.sh [out-dir]     (default: tools/catalog/out/live)
-#
-# --raw matters: without it the mysql client double-escapes an already-escaped quote inside
-# one mage-rotes item name and the output stops being valid JSON (see README.md).
 set -euo pipefail
 cd "$(dirname "$0")"
 OUT="${1:-out/live}"

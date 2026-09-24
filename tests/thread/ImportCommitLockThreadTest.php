@@ -8,15 +8,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-070 (Pass H intake `t1-import`). Committing an import read "has this job been
- * committed?" and wrote the answer only once the whole import had run. Two commits of one job
- * that overlapped - two tabs, two Storytellers, a retry after a slow response - both ran it: an
- * Overwrite's XP change applied twice, a file's items and characters landed twice, a game file
- * made two chronicles. A commit now holds the job while it runs; one that arrives meanwhile is
- * turned away, and one that arrives after gets the stored result.
- *
- * One PHP process cannot run two requests at once, so the overlapping commit is the lock row a
- * running commit holds, written directly.
+ * Committing an import holds a lock: a file commit that overlaps a running one is turned away, a game-file commit that
+ * overlaps a running one makes no second chronicle, and a commit that fails lets the job be committed again.
  */
 class ImportCommitLockThreadTest extends WP_UnitTestCase {
 

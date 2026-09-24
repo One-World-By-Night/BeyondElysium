@@ -5,41 +5,24 @@ namespace BeyondElysium\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Where an attachment's bytes actually live, and the one place that decides (1.1.0 §2.6).
- *
- * Deliberately not the WordPress media library: a media library file is a public URL anyone
- * can open, and an attachment must follow its entity's own audience instead. Every file lives
- * under this site's own `uploads/beyond-elysium-private/`, one random 32-hex-character
- * directory per file, holding one file each named after its own sanitized original name - the
- * random part is what resists guessing; the filename inside is kept only so a file open from
- * disk (a Storyteller's own backup, a support request) still shows something recognizable.
- *
- * **Honest limit, also recorded in the admin guide**: the deny-all `.htaccess` this class
- * writes is honoured by Apache. A host serving static files straight from nginx may not read
- * `.htaccess` at all - what still protects a file there is that its path is 32 random hex
- * characters deep and never disclosed anywhere. Unguessable, not locked; `Attachments_Controller`
- * is what actually enforces who may read one, on every request, regardless of what any web
- * server would otherwise have served directly.
+ * Where an attachment's bytes actually live, and the one place that decides.
  */
 class Attachment_Storage {
 
-	/** Images and PDFs only (owner ruling) - matched against the file's real, sniffed type, never its claimed one. */
+	/**
+	 * Images and PDFs only - matched against the file's real, sniffed type.
+	 */
 	const ALLOWED_MIME_TYPES = [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf' ];
 
-	/** 10 MB (owner ruling), matched against the size PHP itself reports for the uploaded file. */
+	/**
+	 * 10 MB, matched against the size PHP itself reports for the uploaded file.
+	 */
 	const MAX_BYTES = 10 * 1024 * 1024;
 
 	const PRIVATE_SUBDIR = 'beyond-elysium-private';
 
 	/**
-	 * This site's own private storage root, creating it (and its deny-all guard files) the
-	 * first time anything is stored. Idempotent, so a fresh install and an upgrade both reach
-	 * the same state without a dedicated migration step - the identical reasoning
-	 * `Schema::add_column_if_missing()` already applies to columns, applied here to a directory.
-	 *
-	 * `wp_upload_dir()` is already correctly scoped to the current site on a multisite network
-	 * (WordPress's own `sites/{blog_id}/` structure), so this needs no game- or site-specific
-	 * path component of its own.
+	 * This site's own private storage root, creating it (and its deny-all guard files) the first time anything is stored.
 	 *
 	 * @return string Absolute path, no trailing slash.
 	 */
@@ -60,10 +43,8 @@ class Attachment_Storage {
 	}
 
 	/**
-	 * Validates and stores one uploaded file (the shape of a single `$_FILES` entry), returning
-	 * what `Attachment::create()` needs. Validates MIME from the file's actual contents
-	 * (`wp_check_filetype_and_ext()`), never the upload's own claimed type or its filename's
-	 * extension - a renamed executable is refused here regardless of what it calls itself.
+	 * Validates and stores one uploaded file (the shape of a single `$_FILES` entry), returning what
+	 * `Attachment::create()` needs.
 	 *
 	 * @param array<string,mixed> $uploaded_file One `$_FILES` entry - untrusted request input,
 	 *                             not a shape PHP or a client is ever guaranteed to send intact,
@@ -80,19 +61,12 @@ class Attachment_Storage {
 			return new \WP_Error( 'file_too_large', __( 'Files must be 10 MB or smaller.', 'beyond-elysium' ), [ 'status' => 400 ] );
 		}
 
-		// Trusted the same way every other upload consumer in this codebase already trusts
-		// get_file_params() (Game_Import_Controller, Import_Controller, Submissions_Controller,
-		// none of which call is_uploaded_file() either): tmp_name is never client-supplied, it
-		// is whatever PHP's own multipart parser (or, in a test, WP_REST_Request::set_file_params())
-		// put there before this code ever ran.
 		$tmp_name = (string) ( $uploaded_file['tmp_name'] ?? '' );
 		if ( $tmp_name === '' || ! is_file( $tmp_name ) ) {
 			return new \WP_Error( 'upload_error', __( 'The file could not be uploaded.', 'beyond-elysium' ), [ 'status' => 400 ] );
 		}
 
 		$checked = wp_check_filetype_and_ext( $tmp_name, (string) ( $uploaded_file['name'] ?? '' ) );
-		// 'type' is false, never absent, when the real content doesn't match any allowed
-		// extension - (string) turns that into '', which the allow-list below correctly refuses.
 		$mime = (string) $checked['type'];
 		if ( ! in_array( $mime, self::ALLOWED_MIME_TYPES, true ) ) {
 			return new \WP_Error(
@@ -113,10 +87,6 @@ class Attachment_Storage {
 			return new \WP_Error( 'storage_failed', __( 'The file could not be saved.', 'beyond-elysium' ), [ 'status' => 500 ] );
 		}
 
-		// copy(), not move_uploaded_file(): PHP's own upload tmp file is cleaned up on its own
-		// at the end of the request either way, and copy() works across filesystem boundaries
-		// (wp-content/uploads can be a different mount than the tmp directory) the same plain
-		// rename() would not.
 		$target_path = $target_dir . '/' . $original_name;
 		if ( ! copy( $tmp_name, $target_path ) ) {
 			return new \WP_Error( 'storage_failed', __( 'The file could not be saved.', 'beyond-elysium' ), [ 'status' => 500 ] );
@@ -131,9 +101,8 @@ class Attachment_Storage {
 	}
 
 	/**
-	 * Copies an already-stored file to a brand-new random directory, for an item copy (1.1.0
-	 * §3.12 item 1) - so editing the copy's file can never touch the source's, and vice versa.
-	 * The source file itself is never modified or moved.
+	 * Copies an already-stored file to a new random directory for an item copy; the source file is never modified or
+	 * moved.
 	 *
 	 * @param string $stored_name   The source attachment's stored_name.
 	 * @param string $original_name The source attachment's original_name.
@@ -167,9 +136,8 @@ class Attachment_Storage {
 	}
 
 	/**
-	 * The real path to an already-stored file on disk, reconstructed from the two values a
-	 * decoded `Attachment` row carries - never trusted from a caller, since both come from the
-	 * database row the caller already had to look up by id first.
+	 * The real path to an already-stored file on disk, reconstructed from the two values a decoded `Attachment` row
+	 * carries.
 	 *
 	 * @param string $stored_name
 	 * @param string $original_name
@@ -180,9 +148,7 @@ class Attachment_Storage {
 	}
 
 	/**
-	 * Removes one attachment's file and its containing directory. Safe to call for a file that
-	 * is already gone - a caller that fails partway through a create-then-record sequence, or a
-	 * row whose file was already cleaned up by hand, does not need to check first.
+	 * Removes one attachment's file and its containing directory.
 	 *
 	 * @param string $stored_name
 	 * @param string $original_name
@@ -195,17 +161,12 @@ class Attachment_Storage {
 		}
 		$dir = dirname( $path );
 		if ( is_dir( $dir ) ) {
-			@rmdir( $dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- only removes if now empty; a leftover file from a race is left rather than losing it.
+			@rmdir( $dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
 		}
 	}
 
 	/**
-	 * Removes the entire private storage tree for this site - called only from `uninstall.php`,
-	 * only when the site's own delete-on-uninstall option is set (1.0.0's established pattern),
-	 * matching the design doc's own "uninstall also removes the site's private upload
-	 * directory." Never called from multisite's own subsite-deletion cleanup (`Multisite.php`)
-	 * today - that gap is the same documented, accepted limitation `now/roadmap.md` already
-	 * records for this plugin's database tables on a subsite deleted without the plugin loaded.
+	 * Removes the entire private storage tree for this site.
 	 *
 	 * @return void
 	 */

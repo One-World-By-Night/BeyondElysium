@@ -7,11 +7,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * NPCs must never reach a non-manager, regardless of what the request asks for
- * (workflow-0.3.md Step 6f). Found with no server-side enforcement at all while
- * building CharacterList - `is_npc` was a plain pass-through filter.
- *
- * @see BE_PROCESS/releases/workflow-0.3.md Step 6f
+ * NPCs must never reach a non-manager, regardless of what the request asks for.
  */
 class CharactersControllerNpcVisibilityTest extends WP_UnitTestCase {
 
@@ -30,9 +26,7 @@ class CharactersControllerNpcVisibilityTest extends WP_UnitTestCase {
 		] );
 		$game_id = (int) $wpdb->insert_id;
 
-		// Owned by the player fixture below - a non-manager only ever sees their own
-		// character (the visibility fix this file predates), so an unowned fixture would
-		// be invisible to every "player" test case regardless of NPC status.
+		// Owned by the player fixture below.
 		$this->player_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		\BeyondElysium\Models\Game_Member::set_role( $game_id, $this->player_id, 'player' );
 

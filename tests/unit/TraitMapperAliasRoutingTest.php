@@ -6,12 +6,7 @@ use BeyondElysium\Services\Trait_Mapper;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.3.2's alias-routing item, at `Trait_Mapper`'s own lookup step - import matching
- * (the brief's own description of this consumer). See `Services\Trait_Alias_Resolver` and
- * `BE_PROCESS/releases/1.3.2-design-workflow.md`.
- *
- * Pure: no database, no WordPress - matches `TraitMapperTest`'s own established fixture
- * style.
+ * Alias routing at `Trait_Mapper`'s lookup step, for import matching. Pure: no database.
  */
 class TraitMapperAliasRoutingTest extends TestCase {
 
@@ -48,7 +43,7 @@ class TraitMapperAliasRoutingTest extends TestCase {
 	}
 
 	// ---------------------------------------------------------------------------------
-	// The fix: a raw import name resolves via a recorded alias.
+	// A raw import name resolves via a recorded alias.
 	// ---------------------------------------------------------------------------------
 
 	public function test_a_numbered_rung_import_resolves_a_family_by_its_recorded_alias(): void {
@@ -69,8 +64,8 @@ class TraitMapperAliasRoutingTest extends TestCase {
 	}
 
 	/**
-	 * A named-pick import (`"{Family}: {Power}"`) resolves the RUNG by its own recorded
-	 * alias once the family itself is found.
+	 * A named-pick import (`"{Family}: {Power}"`) resolves the RUNG by its own recorded alias once the family itself is
+	 * found.
 	 */
 	public function test_a_named_pick_import_resolves_a_rung_by_its_recorded_alias(): void {
 		$result = Trait_Mapper::resolve_tiered_power_trait( 'Path of the Dry Nile: HopeDisolves', '6', $this->renamed_family_block( true ) );
@@ -79,9 +74,6 @@ class TraitMapperAliasRoutingTest extends TestCase {
 		$this->assertSame( 'Hope Dissolves', $result['power_name'] );
 	}
 
-	// ---------------------------------------------------------------------------------
-	// Revert-test, watched failing first: without the declared alias, the identical raw
-	// name reproduces the pre-fix outcome.
 	// ---------------------------------------------------------------------------------
 
 	public function test_without_the_declared_alias_the_family_import_falls_through_to_fuzzy_or_unresolved(): void {
@@ -117,8 +109,8 @@ class TraitMapperAliasRoutingTest extends TestCase {
 	}
 
 	/**
-	 * Kuei-Jin's real ambiguous `split_from`: three families all split from `Black Wind`
-	 * with nothing else to distinguish them - the import matcher must not guess one either.
+	 * Kuei-Jin's real ambiguous `split_from`: three families all split from `Black Wind` with nothing else to distinguish
+	 * them.
 	 */
 	public function test_an_ambiguous_split_from_family_does_not_resolve_during_import(): void {
 		$block = (object) [

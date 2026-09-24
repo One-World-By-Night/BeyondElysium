@@ -13,24 +13,23 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * REST controller exposing aggregate statistics for a single game's storyteller dashboard.
- * Returns character counts grouped by stack and by status, the count of pending changes,
- * the count of active plots, and a bounded list of recent activity. Restricted to users
- * with the be_manage_characters capability.
  */
 class Game_Stats_Controller extends Base_Controller {
 
 	protected $rest_base = 'stats';
 
-	/** How long one game's cached stats remain valid before recomputing, in seconds. */
+	/**
+	 * How long one game's cached stats remain valid before recomputing, in seconds.
+	 */
 	const CACHE_TTL = MINUTE_IN_SECONDS;
 
-	/** How many Change rows "recent activity" shows. */
+	/**
+	 * How many Change rows "recent activity" shows.
+	 */
 	const RECENT_ACTIVITY_LIMIT = 10;
 
 	/**
-	 * Registers the REST route for retrieving one game's storyteller dashboard
-	 * statistics. Exposes a single GET endpoint scoped to the game slug and
-	 * gated behind the be_manage_characters capability.
+	 * Registers the REST route for retrieving one game's storyteller dashboard statistics.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/stats', [
@@ -52,10 +51,8 @@ class Game_Stats_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns the aggregate dashboard statistics for one game: character counts
-	 * by stack and by status, the pending change count, the active plot count,
-	 * and a bounded list of recent activity with character names attached.
-	 * Serves the cached value when available and populates the cache otherwise.
+	 * Returns the aggregate dashboard statistics for one game: character counts by stack and by status, the pending
+	 * change count, the active plot count, and a bounded list of recent activity with character names attached.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -72,7 +69,6 @@ class Game_Stats_Controller extends Base_Controller {
 			return $this->success( $cached );
 		}
 
-		// Each metric below is a single dedicated query; none re-derives another's result.
 		$recent_activity = Change::for_game( $game->slug, [ 'per_page' => self::RECENT_ACTIVITY_LIMIT ] );
 
 		// Attaches each recent-activity item's character name via a bounded per-row lookup.
@@ -92,8 +88,6 @@ class Game_Stats_Controller extends Base_Controller {
 			'active_plots'                      => Plot::count_for_game( (int) $game->id, [ 'status' => 'active', 'exclude_character_plots' => true ] ),
 			'recent_activity'                   => $recent_activity,
 			'players_without_active_character'  => count( Game_Member::ids_without_active_character( (int) $game->id, $game->slug ) ),
-			// 1.1.0 §3.14 - computed the identical way Spotlight's own flagged rows are, so
-			// this number and the Spotlight screen can never disagree.
 			'characters_needing_attention'      => Spotlight::flagged_count( (int) $game->id, $game->slug, $game->settings ? (array) $game->settings : [] ),
 		];
 
@@ -103,11 +97,7 @@ class Game_Stats_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns the actual player list behind `players_without_active_character`'s
-	 * count - every player-role member of this game with zero active characters,
-	 * resolved to a display name. Not itself cached; the count on the main stats
-	 * endpoint is what's cheap to poll, this detail is fetched only when a
-	 * Storyteller actually opens the roster-health card.
+	 * Returns the actual player list behind `players_without_active_character`'s count.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -134,9 +124,8 @@ class Game_Stats_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Deletes the cached statistics transient for one game, forcing the next
-	 * request to recompute and re-cache the dashboard values. Used to invalidate
-	 * stale stats after a change affecting the counts has been made.
+	 * Deletes the cached statistics transient for one game, forcing the next request to recompute and re-cache the
+	 * dashboard values.
 	 *
 	 * @param string $game_slug
 	 * @return void
@@ -146,9 +135,7 @@ class Game_Stats_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a WP_Error
-	 * with a 404 status when no game matches. Used by route callbacks to
-	 * resolve the game_slug URL parameter before performing further work.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

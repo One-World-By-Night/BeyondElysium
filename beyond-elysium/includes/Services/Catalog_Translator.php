@@ -9,32 +9,25 @@ use BeyondElysium\Models\Translation_String;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Runtime and maintenance operations for catalog term translation (1.2.0).
- *
- * map() is the one query the render path pays for, transient-cached and version-busted.
- * decorate() adds display translations to a resolved schema block; strip() is its exact
- * inverse, removing them before a definition is ever persisted (§5.5's round-trip hazard).
- * rescan() keeps the string index honest against the real, current catalog.
- *
- * @see BE_PROCESS/releases/1.2.0-design-workflow.md §5
+ * Runtime and maintenance operations for catalog term translation.
  */
 class Catalog_Translator {
 
 	private const TRANSIENT_PREFIX = 'be_translations_';
 	private const VERSION_OPTION   = 'be_translations_version';
 
-	/** The four keys decorate() ever adds, and the only keys strip() ever removes. */
+	/**
+	 * The four keys decorate() ever adds, and the only keys strip() ever removes.
+	 */
 	private const PT_KEYS = [ 'name_pt', 'power_name_pt', 'options_pt', 'label_pt' ];
 
 	/**
+	 * The Portuguese (Brazil) draft for each catalog name the plugin ships: a `name,translation` CSV.
+	 */
+	const PT_BR_NAMES_PATH = __DIR__ . '/../../data/translations/pt_BR.csv';
+
+	/**
 	 * The whole locale's dictionary, source_key => translation, transient-cached.
-	 *
-	 * An English install (or any locale with zero rows) pays one transient read - a plain
-	 * `wp_options` row on a site with no persistent object cache - and gets an empty array
-	 * back; no special-cased fast path is needed because the emptiness itself is what gets
-	 * cached (§5.1). Busting is `bust_cache()` bumping VERSION_OPTION, which changes every
-	 * transient key derived from it, orphaning the old entries rather than deleting them - the
-	 * same discipline already used elsewhere in this codebase.
 	 *
 	 * @param string $locale
 	 * @return array<string,string> source_key => translation.
@@ -52,23 +45,14 @@ class Catalog_Translator {
 	}
 
 	/**
-	 * Bumps the version option so every locale's cached map is invalidated at once - callers
-	 * do not need to know which locale a write touched. One `update_option`, per §5.1.
+	 * Bumps the version option.
 	 */
 	public static function bust_cache(): void {
 		update_option( self::VERSION_OPTION, (int) get_option( self::VERSION_OPTION, 1 ) + 1, false );
 	}
 
 	/**
-	 * Adds display translations to a resolved schema block's definition, in place, and
-	 * returns the same object. Never touches the canonical `name`/`options`/`items` a block
-	 * already carries - only adds the `_pt` fields in PT_KEYS, and only where the locale's
-	 * map actually has an entry.
-	 *
-	 * Deliberately overwrites any `name_pt` a block's definition already carries (the pre-1.2.0
-	 * CSV-sourced value B9 retires) rather than leaving a pre-existing one alone: the table
-	 * this reads from is the new source of truth, and a stale baked-in value must not survive
-	 * a native speaker's correction here just because it happened to be set first.
+	 * Adds display translations to a resolved schema block's definition, in place, and returns the same object.
 	 *
 	 * @param object $block A schema_blocks row with ->section_type and ->definition already
 	 *                       decoded (Schema_Block::decode_row()'s own shape).
@@ -128,9 +112,7 @@ class Catalog_Translator {
 	}
 
 	/**
-	 * §5.6: `label_pt` translates the field's own name; `options_pt` is a
-	 * `{canonical_option: translated}` map, added only when at least one option actually has a
-	 * translation - never an empty map sitting on every field whether it has data or not.
+	 * `label_pt` translates the field's own name.
 	 *
 	 * @param object               $definition
 	 * @param array<string,string> $map
@@ -167,9 +149,7 @@ class Catalog_Translator {
 	}
 
 	/**
-	 * Looks $item->$source_field up in the map and sets $item->$pt_field when found. A missing
-	 * or empty source field, or no matching translation, leaves $item untouched - the absence
-	 * of the _pt key is what every consumer's English-fallback rule already checks for.
+	 * Looks $item->$source_field up in the map and sets $item->$pt_field when found.
 	 *
 	 * @param object               $item
 	 * @param string               $source_field
@@ -188,14 +168,7 @@ class Catalog_Translator {
 	}
 
 	/**
-	 * Sets a property this codebase's decorated objects genuinely do not declare - every one
-	 * of PT_KEYS is additive metadata a plain schema_blocks definition has no static shape
-	 * for. Routing the write through its own function, with the property name arriving as a
-	 * parameter rather than a same-scope literal, is what keeps PHPStan from re-deriving a
-	 * concrete property name and flagging it as undefined - the same reason set_pt()'s own
-	 * three call sites (each passing a literal 'name_pt'/'power_name_pt'/'label_pt') are
-	 * already clean. Not a suppression: PHPStan genuinely cannot verify a name across a call
-	 * boundary, which is the honest state of affairs for an intentionally dynamic property.
+	 * Sets a property this codebase's decorated objects genuinely do not declare.
 	 *
 	 * @param object $item
 	 * @param string $property
@@ -206,15 +179,7 @@ class Catalog_Translator {
 	}
 
 	/**
-	 * The exact inverse of decorate(): removes every PT_KEYS key, at any depth, from an
-	 * array|object definition. Structure-agnostic on purpose - unlike decorate(), which must
-	 * know each section_type's shape to know where to add a translation, removal only needs
-	 * to know the four key names, so one recursive walk covers every section_type without a
-	 * matching switch statement to keep in sync as new shapes are added.
-	 *
-	 * Called from Schema_Block::create()/::update() (B5) before wp_json_encode(), so a
-	 * decorated definition read back through a GET-edit-PUT round trip in an admin editor can
-	 * never persist a `_pt` key into the definition it does not belong in (§5.5).
+	 * The exact inverse of decorate(): removes every PT_KEYS key, at any depth, from an array|object definition.
 	 *
 	 * @param array|object $definition
 	 * @return array|object The same type it was given.
@@ -232,8 +197,6 @@ class Catalog_Translator {
 			return $definition;
 		}
 
-		// The array|object parameter type makes this exhaustive - is_object() above and
-		// is_array() here cover every value the type system allows in.
 		foreach ( self::PT_KEYS as $key ) {
 			unset( $definition[ $key ] );
 		}
@@ -246,25 +209,13 @@ class Catalog_Translator {
 	}
 
 	/**
-	 * Walks every schema_blocks row - system blocks and every chronicle fork alike, matching
-	 * §1.2's own "across all blocks including the three live chronicle forks" measurement -
-	 * collects every distinct term, and upserts be_translation_strings once per term with its
-	 * full aggregated usage. Usage is aggregated across the whole catalog before any upsert
-	 * runs: Translation_String::upsert_from_scan() replaces used_in rather than merging it, so
-	 * calling it once per raw occurrence would leave only whichever block was walked last.
-	 *
-	 * A string this walk does not find keeps its last_seen unchanged - "orphaned" is never a
-	 * flag or a delete, only a last_seen that fell behind, so a translation already made for a
-	 * term is never lost when a catalog is temporarily narrowed (§5.3).
+	 * Walks every schema_blocks row.
 	 *
 	 * @return array{added:int,updated:int,orphaned:int}
 	 */
 	public static function rescan(): array {
 		global $wpdb;
-		// Microsecond precision, not current_time('mysql') - a full rescan is fast enough
-		// that two calls landing in the same wall-clock second is the ordinary case, and
-		// second-granularity made a genuinely orphaned row indistinguishable from one this
-		// scan just touched (confirmed live, see Translation_String::now_micro()'s docblock).
+		// Microsecond precision.
 		$scan_started_at = Translation_String::now_micro();
 
 		$existing_keys = array_flip( $wpdb->get_col(
@@ -316,12 +267,32 @@ class Catalog_Translator {
 	}
 
 	/**
-	 * Every `(name, name_pt)` / `(power_name, power_name_pt)` pair already baked into the
-	 * seeded catalog - the pre-1.2.0 CSV-sourced mechanism §8's migration recovers into the
-	 * table. Only `trait_list` and `tiered_power` ever carried this (the CSV mechanism never
-	 * touched `identity_field`/`resource_pool`), so this walks only those two shapes, unlike
-	 * `extract_terms()`'s full four-shape dispatch. A pair with an empty pt value is skipped -
-	 * nothing to recover.
+	 * The shipped Portuguese (Brazil) drafts, one pair per row of the file in file order.
+	 *
+	 * @return array<int,array{0:string,1:string}> [name, translation]. Empty when the file is absent or unreadable.
+	 */
+	public static function shipped_pt_pairs( string $path = self::PT_BR_NAMES_PATH ): array {
+		$handle = is_readable( $path ) ? fopen( $path, 'r' ) : false;
+		if ( ! $handle ) {
+			return [];
+		}
+
+		$pairs = [];
+		fgetcsv( $handle, 0, ',', '"', '\\' );
+		while ( ( $row = fgetcsv( $handle, 0, ',', '"', '\\' ) ) !== false ) {
+			$name        = trim( (string) ( $row[0] ?? '' ) );
+			$translation = trim( (string) ( $row[1] ?? '' ) );
+			if ( '' !== $name && '' !== $translation ) {
+				$pairs[] = [ $name, $translation ];
+			}
+		}
+		fclose( $handle );
+
+		return $pairs;
+	}
+
+	/**
+	 * Every `(name, name_pt)` / `(power_name, power_name_pt)` pair already baked into the seeded catalog.
 	 *
 	 * @return array<int,array{0:string,1:string}> [source_text, existing_pt].
 	 */
@@ -363,10 +334,7 @@ class Catalog_Translator {
 	}
 
 	/**
-	 * Every distinct term a decoded definition carries, by section_type, each as
-	 * `[$source_text, $role]`. `$role` is what a future usage-display groups by; it is not
-	 * used for matching. A term with no meaningful text (empty name, blank option) is skipped
-	 * rather than producing a translatable "" row.
+	 * Every distinct term a decoded definition carries, by section_type, each as `[$source_text, $role]`.
 	 *
 	 * @param string $section_type
 	 * @param object $definition

@@ -10,20 +10,7 @@ use BeyondElysium\Services\Setup_Status;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Points a new admin at Chronicle Setup (guided-chronicle-setup-design.md §6.6, built in 1.3.6).
- *
- * Shown to someone who can set up a chronicle that has no characters yet, on the WordPress
- * Dashboard, the Plugins page and Beyond Elysium's own screens - never on Chronicle Setup itself,
- * which is the thing it points at. The design's own condition was any chronicle with a row needing
- * attention; that would nag every established chronicle for good (kony's Creature types row is
- * unset by default and stays that way), so it is limited to a chronicle nobody has created a
- * character in. A chronicle with no characters always has one row needing attention, the
- * Characters row, so the rows are asked only for the count the sentence quotes.
- *
- * An administrator is pointed at every such chronicle; anyone else only at a chronicle they are the
- * HST of. The demo chronicle is sample data and is never mentioned. Dismissal is per user and per
- * chronicle and dismisses the pointer, never the condition (§5.5): the checklist still says what
- * is left.
+ * Points a new admin at Chronicle Setup.
  */
 class Setup_Notice {
 
@@ -87,7 +74,9 @@ class Setup_Notice {
 		update_user_meta( $user_id, self::DISMISSED_META, array_values( array_unique( array_merge( $current, array_filter( $slugs ) ) ) ) );
 	}
 
-	/** Handles the Dismiss link: a nonce-checked GET that records the dismissal and returns to the page it came from. */
+	/**
+	 * Handles the Dismiss link: a nonce-checked GET that records the dismissal and returns to the page it came from.
+	 */
 	public static function maybe_dismiss(): void {
 		if ( ! isset( $_GET[ self::DISMISS_ACTION ] ) ) {
 			return;

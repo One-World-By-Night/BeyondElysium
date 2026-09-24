@@ -5,22 +5,14 @@ namespace BeyondElysium\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * What differs between the sheet a chronicle already holds and the same character arriving in
- * an exchange document - shown to the Storyteller reviewing a transfer before they accept it
- * (1.0.0-review F-044, owner ruling 2026-09-14: show a diff when a character comes back).
- *
- * Both sides are compared in the shape `GEX_Xml_Parser` produces: the arriving character as
- * parsed, and the character already here exported through `Character_Exporter` and parsed
- * back. Comparing like with like keeps this free of any creature type's own fields - it walks
- * whatever details, trait lists, and experience totals the document carries. It can only show
- * what an exchange document can carry.
+ * What differs between the sheet a chronicle already holds and the same character arriving in an exchange document.
  */
 class Character_Diff {
 
 	/**
-	 * Parsed keys that are not a detail of the sheet: the document's own identity, the player
-	 * and narrator names each site keeps for itself, pool sizes the parser derives from the
-	 * trait lists, the lists compared on their own, and boons, which an import never applies.
+	 * Parsed keys that are not a detail of the sheet: the document's own identity, the player and narrator names each
+	 * site keeps for itself, pool sizes the parser derives from the trait lists, the lists compared on their own, and
+	 * boons.
 	 */
 	private const NOT_DETAILS = [ 'id', 'uuid', 'player', 'narrator', 'last_modified', 'physical_max', 'social_max', 'mental_max', 'experience', 'trait_lists', 'boons' ];
 
@@ -37,8 +29,7 @@ class Character_Diff {
 	}
 
 	/**
-	 * One row per difference. `here` is null for something only arriving, `arriving` is null for
-	 * something only here.
+	 * One row per difference.
 	 *
 	 * @param array<string,mixed> $here
 	 * @param array<string,mixed> $arriving
@@ -74,8 +65,7 @@ class Character_Diff {
 	}
 
 	/**
-	 * The two totals only. An import sets the totals and never copies the history entries, so
-	 * each site's log holds its own entries and comparing them would report every one.
+	 * The two totals only.
 	 *
 	 * @param array<string,mixed> $here
 	 * @param array<string,mixed> $arriving
@@ -117,8 +107,7 @@ class Character_Diff {
 	}
 
 	/**
-	 * Compares two lists of entries grouped under a label, so the same entry listed in a
-	 * different order is no difference, and two entries sharing a label compare as a set.
+	 * Compares two lists of entries grouped under a label.
 	 *
 	 * @param array<int,mixed>                     $here
 	 * @param array<int,mixed>                     $arriving

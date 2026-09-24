@@ -5,27 +5,17 @@ namespace BeyondElysium\Services\Display;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Renders a single trait's name, total, and note into one of twelve display-mode
- * strings (dot ratings, x-multipliers, cost annotations, and so on) that a trait
- * list's `display` setting selects per trait. Ported from the TypeScript
- * `displayTrait()` used by the on-screen character sheet so the signed PDF export
- * renders every trait identically instead of re-deriving these formatting rules a
- * second time - see tests/unit/Display/TraitDisplayParityTest.php for the
- * shared-fixture proof that both languages agree.
- *
- * Pure functions with no WordPress calls and no database access, exactly like
- * Layout_Generator.
+ * Renders a single trait's name, total, and note into one of twelve display-mode strings (dot ratings, x-multipliers,
+ * cost annotations, and so on) that a trait list's `display` setting selects per trait.
  *
  * @see src/lib/displayTrait.ts
- * @see BE_PROCESS/design/signed-pdf-design.md SP-3
  */
 class Trait_Display {
 
 	/**
-	 * Renders a trait's name, total, and note as a display string, with the exact
-	 * format determined by `$mode`: some modes show a multiplier count, some render
-	 * dots, some fold the note into parentheses, and some drop the name entirely. An
-	 * unrecognized mode falls back to the bare trait name.
+	 * Renders a trait's name, total, and note as a display string, with the exact format determined by `$mode`: some
+	 * modes show a multiplier count, some render dots, some fold the note into parentheses, and some drop the name
+	 * entirely.
 	 *
 	 * @param object $trait Decoded trait with a `name` string and optional `total`
 	 *                      (int|float|string) and `note` (string) properties.
@@ -33,7 +23,7 @@ class Trait_Display {
 	 *                      note_only, cost_only, dot_separate, simple_dots,
 	 *                      simple_number, simple_note, cost_number, cost_xp.
 	 * @param string $dot   Glyph used by dot-rendering modes, defaulting to the one dot a
-	 *                      resource pool's points use too (1.0.0-review F-016).
+	 *                      resource pool's points use too.
 	 * @return string
 	 */
 	public static function display_trait( object $trait, string $mode, string $dot = Temper_Display::DOT ): string {
@@ -65,7 +55,6 @@ class Trait_Display {
 			case 'dot':
 				$out = $trait->name;
 				$d   = self::dots( $total, $dot );
-				// 1.1.0 D1: the count always follows the dots, even at 0 (no dots to follow).
 				$out .= $d !== '' ? " {$d} {$total}" : " {$total}";
 				return $note !== '' ? "{$out} ({$note})" : $out;
 
@@ -82,18 +71,14 @@ class Trait_Display {
 				return "{$trait->name} ({$total})";
 
 			case 'dot_separate':
-				// The note is folded into the repeated label rather than appended
-				// once; count is at least 1.
+				// The note is folded into the repeated label.
 				$label    = $note !== '' ? "{$trait->name} ({$note})" : $trait->name;
 				$count    = $total < 2 ? 1 : $total;
 				$repeated = implode( $dot, array_fill( 0, $count, $label ) );
-				// 1.1.0 D1: the real total follows, even though the repeat count
-				// above is clamped to a minimum of 1 and so can't itself be read
-				// as the count.
 				return "{$repeated} {$total}";
 
 			case 'simple_dots':
-				// The name is dropped entirely; only dots (and, per D1, the count) are shown.
+				// The name is dropped entirely.
 				$d = self::dots( $total, $dot );
 				return $d !== '' ? "{$d} {$total}" : (string) $total;
 
@@ -104,18 +89,12 @@ class Trait_Display {
 				return $note;
 
 			case 'cost_number':
-				// 1.1.0 D3: for a count_is_cost block, the stored total is a flat
-				// XP cost, not a rating - drawn as a number instead of dots when
-				// the viewer's cost-numbers preference is on.
+				// A count_is_cost block's stored total is a flat XP cost, drawn as a number instead of dots when the cost-numbers preference is on.
 				$out = "{$trait->name} {$total} XP";
 				return $note !== '' ? "{$out} ({$note})" : $out;
 
 			case 'cost_xp':
-				// 1.2.11 D94: the default for a count_is_cost block - "Draw Fire
-				// (12 XP)". The unit is part of the rendering, not a preference,
-				// because the number is a price and reads as a rating without it.
-				// The note joins the price inside the same parentheses rather than
-				// opening a second pair, matching 'cost' above.
+				// A count_is_cost block's default: the price with its unit, e.g. "Draw Fire (12 XP)".
 				$priced = "{$total} XP";
 				$inner  = $note !== '' ? "{$priced}, {$note}" : $priced;
 				return "{$trait->name} ({$inner})";
@@ -126,15 +105,7 @@ class Trait_Display {
 	}
 
 	/**
-	 * Parses a leading integer from the start of a trait's total value, stopping at
-	 * the first non-digit character. A numeric value passes through directly
-	 * (truncated toward zero); a string that doesn't begin with a number (e.g.
-	 * "borrowed" rather than "3 (borrowed)") parses to 0 - the same leading-integer
-	 * behavior as Grapevine's VB6 `Val()`.
-	 *
-	 * Public, unlike its TypeScript twin's module-private `parseTotal` - the parity
-	 * test asserts this exact rule directly, per signed-pdf-design.md SP-3's call-out
-	 * of this specific case.
+	 * Parses a leading integer from the start of a trait's total value, stopping at the first non-digit character.
 	 *
 	 * @param int|float|string|null $total
 	 * @return int
@@ -153,8 +124,7 @@ class Trait_Display {
 	}
 
 	/**
-	 * Repeats the dot glyph `$count` times, or returns '' for a zero or negative
-	 * count - `str_repeat()` rejects a negative count outright, unlike JS `repeat()`.
+	 * Repeats the dot glyph `$count` times, or returns '' for a zero or negative count.
 	 */
 	private static function dots( int $count, string $dot ): string {
 		return str_repeat( $dot, max( 0, $count ) );

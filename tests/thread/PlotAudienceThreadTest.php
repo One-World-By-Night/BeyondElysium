@@ -12,14 +12,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 U3: plots enforce their own audience on every reader, a new global plot defaults to
- * `storytellers` rather than `everyone` (owner ruling), and a player-created plot is always a
- * real player plot - restricted to its owning character (§2.3a) - never wide open.
- *
- * These tests fail against the pre-1.1.0 code: `get_items()`/`get_item()`/`get_my_plots()` had
- * no audience concept at all, and `create_item()` never required or used `character_id`.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §2.3, §2.3a, U3
+ * Plots enforce their own audience on every reader, a new global plot defaults to `storytellers`.
  */
 class PlotAudienceThreadTest extends WP_UnitTestCase {
 
@@ -230,13 +223,6 @@ class PlotAudienceThreadTest extends WP_UnitTestCase {
 		$this->assertNotContains( 'Secret Plot', $titles );
 	}
 
-	/**
-	 * The D38-class bug this design doc's own §6 gate names by name: fetching a SQL-paginated
-	 * page and *then* dropping invisible rows from it would silently truncate a page below
-	 * `per_page` while more real, visible plots existed past the cut a SQL LIMIT already made.
-	 * Proven directly: 3 visible plots plus 2 storytellers-only ones, asked for 2 per page -
-	 * the total must read 3 (not 5, not the raw SQL row count), and both pages must be full.
-	 */
 	public function test_the_list_total_and_paging_reflect_only_what_is_actually_visible(): void {
 		$manager = $this->make_manager();
 		wp_set_current_user( $manager );
@@ -298,10 +284,6 @@ class PlotAudienceThreadTest extends WP_UnitTestCase {
 		$player       = $this->make_player();
 		$character_id = $this->make_character( $player );
 
-		// Plot::create() only defaults audience to `storytellers` through the REST create path
-		// (Plots_Controller::create_item()) - a direct model call like this one falls through to
-		// the raw schema default of `everyone`, so the audience is set explicitly here to actually
-		// exercise "a connection alone doesn't override a stricter audience".
 		$plot_id = (int) Plot::create( [ 'game_id' => $this->game_id, 'title' => 'Connected But Secret', 'created_by' => 1, 'audience' => Audience::STORYTELLERS ] );
 		Connection::create( [
 			'game_id'     => $this->game_id,
@@ -375,9 +357,7 @@ class PlotAudienceThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Action plots (Character::ensure_plot(), Action_Allocator::create_own_plot()) - both bypass
-	// create_item()'s own defaulting, so they must set `audience` themselves or take the schema's
-	// raw 'everyone' default (1.1.0 §1.1's second-survey finding).
+	// Action plots (Character::ensure_plot(), Action_Allocator::create_own_plot())
 	// -------------------------------------------------------------------------
 
 	public function test_a_characters_own_action_plot_is_restricted_to_them(): void {

@@ -7,12 +7,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Real security fix, not a UI nicety: `be_view_characters` is granted to every real WP
- * role (Capabilities::CAPS) - before this, `Characters_Controller::get_items()` and
- * `get_item()` had no ownership filter at all, so any logged-in player could read any
- * OTHER player's full character sheet, by browsing the list or by ID. Found by asking
- * the user directly to confirm the assumed "players only see their own character"
- * behavior actually held - it did not.
+ * Real security fix, not a UI nicety: `be_view_characters` is granted to every real WP role (Capabilities::CAPS).
  */
 class CharactersControllerOwnVisibilityTest extends WP_UnitTestCase {
 
@@ -35,9 +30,7 @@ class CharactersControllerOwnVisibilityTest extends WP_UnitTestCase {
 
 		$this->player_a = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		$this->player_b = self::factory()->user->create( [ 'role' => 'subscriber' ] );
-		// player_a is the one every test below dispatches as; player_b is only ever the
-		// OTHER character's owner, never the acting user, so only player_a needs a
-		// membership row here.
+		// player_a is the one every test below dispatches.
 		\BeyondElysium\Models\Game_Member::set_role( $game_id, $this->player_a, 'player' );
 
 		$this->character_a = Character::create( [

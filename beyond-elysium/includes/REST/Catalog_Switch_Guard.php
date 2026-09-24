@@ -8,29 +8,24 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Refuses every save to the plugin's REST API while a catalog cutover run holds its lock.
- *
- * `apply()` re-keys one character at a time and flips the install last, and until the flip
- * `live_slug()` is the identity function. A change approved in between is written to the retired
- * block of a sheet that has already moved: invisible on the declared sheet afterwards, with its XP
- * already spent, and `apply()` reports nothing. A run takes seconds, so the saves are refused
- * instead (503, try again); reads are not. The refusal ends by itself if a run dies holding the lock.
  */
 class Catalog_Switch_Guard {
 
-	/** HTTP methods that read and change nothing. */
+	/**
+	 * HTTP methods that read and change nothing.
+	 */
 	const READ_METHODS = [ 'GET', 'HEAD', 'OPTIONS' ];
 
 	/**
-	 * Hooks the check onto every REST dispatch, just after `Url_Param_Guard` and before WordPress
-	 * calls a route's permission callback.
+	 * Hooks the check onto every REST dispatch, just after `Url_Param_Guard` and before WordPress calls a route's
+	 * permission callback.
 	 */
 	public static function register(): void {
 		add_filter( 'rest_request_before_callbacks', [ self::class, 'check' ], 6, 3 );
 	}
 
 	/**
-	 * Returns a 503 error for a write to this plugin's routes while a cutover run is in flight;
-	 * otherwise passes the dispatch through untouched.
+	 * Returns a 503 error for a write to this plugin's routes while a cutover run is in flight.
 	 *
 	 * @param mixed            $response Null, or an earlier filter's result.
 	 * @param array            $handler  The matched route handler.

@@ -1,8 +1,5 @@
 /**
- * Storyteller tool for allocating game-night actions to a character. Presents a form to
- * pick a character and game date, requests the computed subaction allocation from the
- * server, and displays it in a preview table with a commit action. Can pre-fill a parent
- * plot so a committed action lands directly under it.
+ * Storyteller tool for allocating game-night actions to a character.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -16,16 +13,15 @@ import './ActionAllocator.css';
 
 export interface ActionAllocatorProps {
 	gameSlug: string;
-	/** Pre-fills the parent plot when opened from inside a plot's own scroll. */
+	/**
+	 * Pre-fills the parent plot when opened from inside a plot's own scroll.
+	 */
 	defaultParentPlotId?: number;
 }
 
 /**
- * Lets a Storyteller choose a character and game date, preview the resulting action
- * allocation, and commit it as a plot entry. The allocation totals are computed entirely
- * server-side from the character's traits and game configuration; this component only
- * displays the preview and sends the commit request, it does not allow editing individual
- * subaction totals before saving.
+ * Lets a Storyteller choose a character and game date, preview the resulting action allocation, and commit it as a
+ * plot entry.
  */
 export function ActionAllocator( {
 	gameSlug,
@@ -48,7 +44,7 @@ export function ActionAllocator( {
 	const [ error, setError ] = useState< string | null >( null );
 
 	useEffect( () => {
-		// Every page, not the first 100 (1.0.0-review F-080).
+		// Every page, not the first 100.
 		everyPage( ( page ) =>
 			api.characters( gameSlug ).listPaginated( { page, per_page: 100 } )
 		)
@@ -73,9 +69,7 @@ export function ActionAllocator( {
 	}, [ gameSlug ] );
 
 	/**
-	 * Submits the preview form. Requests the computed action allocation for the selected
-	 * character and game date from the API without committing it, and stores the result
-	 * in the preview table.
+	 * Submits the preview form.
 	 */
 	async function preview( e: React.FormEvent ) {
 		e.preventDefault();
@@ -100,9 +94,8 @@ export function ActionAllocator( {
 	}
 
 	/**
-	 * Commits the previewed action allocation for the selected character and game date,
-	 * optionally under the selected parent plot. Stores the resulting subactions and the
-	 * new plot's id so the form can show a committed confirmation.
+	 * Commits the previewed action allocation for the selected character and game date, optionally under the selected
+	 * parent plot.
 	 */
 	async function commit() {
 		if ( ! characterId || ! gameDate ) {

@@ -6,13 +6,7 @@ use BeyondElysium\Services\GEX_Parser;
 use PHPUnit\Framework\TestCase;
 
 /**
- * GX-1's shared field-order authority (`gv-exchange-shape.php`) - the data
- * table a future writer (GX-3/GX-5) trusts instead of re-deriving Grapevine's
- * container shape independently. This suite proves the table's own internal
- * consistency; `QueryWorldObjectsTest`-style round-trip proof that the table
- * matches the real readers is GX-2's job once they're re-pointed at it.
- *
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-1, GX-10
+ * The shared field-order table (`gv-exchange-shape.php`) is internally consistent.
  */
 class GvExchangeShapeTest extends TestCase {
 
@@ -30,7 +24,9 @@ class GvExchangeShapeTest extends TestCase {
 		);
 	}
 
-	/** 1.0.0-review F-048: a stack that travels as another race travels as one this table knows. */
+	/**
+	 * A stack that travels as another race travels as one this table knows.
+	 */
 	public function test_every_stack_exchange_race_is_a_race_with_a_shape(): void {
 		foreach ( GEX_Parser::STACK_EXCHANGE_RACE as $stack => $race ) {
 			$this->assertArrayHasKey( $race, self::$shape, $stack );
@@ -69,7 +65,7 @@ class GvExchangeShapeTest extends TestCase {
 	}
 
 	/**
-	 * ListDisplayType (PublicTypes.bas:52-62): ldDefault=-1 .. ldSimpleDots=8.
+	 * ListDisplayType (PublicTypes.bas:52-62): ldDefault=-1.. ldSimpleDots=8.
 	 */
 	public function test_every_display_value_is_inside_list_display_types_real_range(): void {
 		foreach ( self::$shape as $race => $def ) {
@@ -136,8 +132,6 @@ class GvExchangeShapeTest extends TestCase {
 	}
 
 	public function test_no_shared_field_map_or_query_inventory_concepts_leak_into_this_table(): void {
-		// GX-1's own rule: this table is exclusively facts about the file format - no
-		// BeyondElysium block slugs, no field labels, no per-chronicle anything.
 		$json = json_encode( self::$shape );
 		foreach ( [ 'block_pattern', 'filter_source', 'stack', 'game_id', 'game_slug' ] as $forbidden ) {
 			$this->assertStringNotContainsString( $forbidden, $json );

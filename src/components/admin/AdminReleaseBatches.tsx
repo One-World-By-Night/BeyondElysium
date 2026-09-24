@@ -1,6 +1,5 @@
 /**
- * Admin page for release batches (1.1.0 §3.2). Renders a chronicle picker plus the
- * shared ReleaseBatches component - one tab of the wp-admin Plots hub.
+ * Admin page for release batches.
  */
 import { __ } from '@wordpress/i18n';
 import ReleaseBatches from '../game/ReleaseBatches';
@@ -25,11 +24,6 @@ export function AdminReleaseBatches() {
 				onGameChange={ setGameSlug }
 				loading={ loading }
 			>
-				{ /* key={gameSlug} remounts ReleaseBatches so its internal state resets when
-				 * the chronicle changes. No capabilities prop, matching AdminPlots.tsx: canIn()
-				 * falls back to the site-wide window.beyondElysium.capabilities snapshot, which
-				 * this page's own be_manage_plots gate already guarantees true for anyone who
-				 * could open it at all. */ }
 				{ gameSlug && (
 					<ReleaseBatches key={ gameSlug } gameSlug={ gameSlug } />
 				) }

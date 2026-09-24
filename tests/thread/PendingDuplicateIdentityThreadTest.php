@@ -12,15 +12,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.2.11 D88/D89, through the real change route on a chronicle that queues rather than
- * auto-approves: the pending-duplicate guard must key on what identifies a holding, not on
- * its name alone.
- *
- * `Change_Engine::submit()` overwrites a still-pending change when a new submission targets
- * the same thing ("resubmitting creates duplicate pending changes", 0.99.2-workflow.md). Keyed
- * by `{block_slug}:{name}`, two genuinely different holdings read as the same submission and
- * the second silently destroys the first - found by 1.2.11's own browser pass, with both
- * requests returning 201 and the same change id.
+ * Through the real change route on a chronicle that queues.
  */
 class PendingDuplicateIdentityThreadTest extends WP_UnitTestCase {
 
@@ -33,7 +25,7 @@ class PendingDuplicateIdentityThreadTest extends WP_UnitTestCase {
 		do_action( 'rest_api_init' );
 
 		global $wpdb;
-		// No auto_approve: every change stays pending, which is the only state the guard runs in.
+		// No auto_approve: every change stays pending.
 		$wpdb->insert( $wpdb->prefix . 'be_games', [
 			'slug' => $this->slug, 'name' => $this->slug,
 			'created_by' => 1, 'created_at' => current_time( 'mysql' ), 'updated_at' => current_time( 'mysql' ),
@@ -126,11 +118,6 @@ class PendingDuplicateIdentityThreadTest extends WP_UnitTestCase {
 		$this->assertCount( 1, $this->pending() );
 	}
 
-	/**
-	 * D89, the same defect on the tiered_power path - and unlike D88 this one is reachable on
-	 * real data today: a family holds several distinct Elder-and-above picks at once
-	 * (Decision 037), and production carries 2,116 `power_name` holdings.
-	 */
 	public function test_two_elder_picks_of_one_family_are_two_pending_changes(): void {
 		$first  = $this->add( 'tpi-disciplines', [ 'name' => 'Celerity', 'power_name' => 'Precision' ] );
 		$second = $this->add( 'tpi-disciplines', [ 'name' => 'Celerity', 'power_name' => 'Zephyr' ] );

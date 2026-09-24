@@ -1,27 +1,25 @@
 /**
- * The Approval Queue's pricing rules for a purchase that has no catalog price (1.3.3 E5): which
- * changes are waiting for a Storyteller's number, what that number may be, what the total comes to
- * and whether Approve is allowed yet. Pure, so the queue component only wires it to inputs.
- *
- * The server is the authority on every one of these - it refuses an approval without a usable
- * price and works the total out itself - so what is here only keeps the screen from offering
- * something the server would refuse.
+ * The Approval Queue's pricing rules for a purchase that has no catalog price.
  */
 import { __, _n, sprintf } from '@wordpress/i18n';
 import type { CostUnits, PriceUnit } from '../types/character';
 
-/** The most a Storyteller may price one unit of a custom purchase; the server enforces the same. */
+/**
+ * The most a Storyteller may price one unit of a custom purchase.
+ */
 export const MAX_CUSTOM_PRICE = 500;
 
-/** Whether a change is waiting for a Storyteller to name its cost. */
+/**
+ * Whether a change is waiting for a Storyteller to name its cost.
+ */
 export function isCostPending( change: { change_data?: unknown } ): boolean {
 	const data = change.change_data as Record< string, unknown > | undefined;
 	return data?.cost_pending === true;
 }
 
 /**
- * The price a reviewer typed: a whole number of XP from 0 to the ceiling, where 0 is a real answer,
- * or null when the box is blank or holds anything else.
+ * The price a reviewer typed: a whole number of XP from 0 to the ceiling, where 0 is a real answer, or null when the
+ * box is blank or holds anything else.
  */
 export function parsePrice( text: string | undefined ): number | null {
 	const trimmed = ( text ?? '' ).trim();
@@ -32,14 +30,18 @@ export function parsePrice( text: string | undefined ): number | null {
 	return price <= MAX_CUSTOM_PRICE ? price : null;
 }
 
-/** What the price box is called: a trait list is priced per dot, a power as one pick. */
+/**
+ * What the price box is called: a trait list is priced per dot, a power as one pick.
+ */
 export function priceUnitLabel( per: PriceUnit ): string {
 	return per === 'dot'
 		? __( 'XP per dot', 'beyond-elysium' )
 		: __( 'XP', 'beyond-elysium' );
 }
 
-/** The total the typed price comes to, or null until there is a usable price and a basis for it. */
+/**
+ * The total the typed price comes to, or null until there is a usable price and a basis for it.
+ */
 export function priceTotal(
 	text: string | undefined,
 	basis: CostUnits | null | undefined
@@ -52,8 +54,7 @@ export function priceTotal(
 }
 
 /**
- * Whether Approve is allowed for a change. One with a price already is always; one waiting for a
- * price only once a usable number has been typed for that change.
+ * Whether Approve is allowed for a change.
  */
 export function canApprove(
 	change: { id: number; change_data?: unknown },
@@ -64,7 +65,9 @@ export function canApprove(
 	);
 }
 
-/** The notice for changes a batch approval left alone because they need a price first. */
+/**
+ * The notice for changes a batch approval left alone.
+ */
 export function costNeededMessage( count: number ): string {
 	return sprintf(
 		/* translators: %d: number of changes that need a price before they can be approved */
@@ -79,8 +82,7 @@ export function costNeededMessage( count: number ): string {
 }
 
 /**
- * What the player's preview says instead of "0 XP" for a purchase with no price yet, or null when it
- * is priced (or the server did not say).
+ * What the player's preview says.
  */
 export function previewPriceLabel( preview: {
 	priced?: boolean;

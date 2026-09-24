@@ -2,14 +2,9 @@ import { readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 
 /**
- * `CharacterEditor.tsx` sets an inline desktop `gridColumn: span N` on every section
- * (v0.21.21 Step 8d found this fabricates near-zero-width implicit grid tracks at phone
- * width unless the phone-width media query explicitly overrides it with `!important`).
- * `CharacterSheet.tsx` carries the identical inline style and had no such override until
- * this test was written - the read-only sheet, the single most-used mobile surface this
- * plugin has, was scrolling horizontally by 83% of the screen width on a real phone. This
- * scans the real component tree so a future component copying the same inline-span pattern
- * can't repeat that silently - there is no other automated phone-width check in this repo.
+ * `CharacterEditor.tsx` sets an inline desktop `gridColumn: span N` on every section (d found this fabricates
+ * near-zero-width implicit grid tracks at phone width unless the phone-width media query explicitly overrides it with
+ * `!important`).
  */
 
 function findComponentFiles(

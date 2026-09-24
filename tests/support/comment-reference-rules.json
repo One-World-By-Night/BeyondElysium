@@ -1,0 +1,124 @@
+{
+	"rules": [
+		{
+			"name": "version",
+			"description": "a release or plugin version number",
+			"pattern": "(?<![\\w.])v?\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?(?![\\w])",
+			"flags": ""
+		},
+		{
+			"name": "version_x",
+			"description": "a version series such as 1.3.x",
+			"pattern": "\\b\\d+\\.\\d+\\.x\\b",
+			"flags": ""
+		},
+		{
+			"name": "version_word",
+			"description": "a two-part version after v, version, release, since, from, until, before or after",
+			"pattern": "(?<![\\w.])(?:v|version |release |since |from |until |before |after )\\d+\\.\\d+(?![\\d.])",
+			"flags": ""
+		},
+		{
+			"name": "decision",
+			"description": "a decision number",
+			"pattern": "\\bDecisions? \\d+|(?<![\\w-])D\\d{1,3}\\b",
+			"flags": ""
+		},
+		{
+			"name": "finding",
+			"description": "a review finding id",
+			"pattern": "\\bF-\\d+\\b|\\d\\.\\d\\.\\d-review|\\breview F\\b",
+			"flags": ""
+		},
+		{
+			"name": "step",
+			"description": "a plan step",
+			"pattern": "\\bSteps? \\d|\\bworkflow-\\d|\\bStep [A-Z]\\b",
+			"flags": ""
+		},
+		{
+			"name": "item_id",
+			"description": "a plan item id such as S1, D8 or R2",
+			"pattern": "(?<![\\w-])(?!H[1-6]\\b|A[345]\\b|X1\\b|UTF8\\b|VB6\\b|MD5\\b|SHA1\\b)[A-Z]{1,2}\\d{1,2}[a-z]?(?![\\w-])|(?<![\\w-])(?!UTF-|SHA-|ISO-|RFC-|PSR-|WP-)[A-Z]{2,3}-\\d{1,3}\\b",
+			"flags": ""
+		},
+		{
+			"name": "document_pointer",
+			"description": "a pointer to a process document",
+			"pattern": "BE_PROCESS|design-workflow|DECISIONLOG|GV-SOURCEMAP|\\breleases/|/design/|GV301Source|\\b[\\w./-]+\\.md\\b|\\bdesign docs?\\b|\\brelease document\\b|\\bdesign document\\b",
+			"flags": ""
+		},
+		{
+			"name": "item_reference",
+			"description": "a plan item pointer such as (item 12)",
+			"pattern": "\\(items? \\d+[a-z]?(?:,[^)]*)?\\)",
+			"flags": ""
+		},
+		{
+			"name": "section_sign",
+			"description": "a document section reference",
+			"pattern": "§",
+			"flags": ""
+		},
+		{
+			"name": "date",
+			"description": "a calendar date",
+			"pattern": "\\b20\\d\\d-\\d\\d-\\d\\d\\b",
+			"flags": ""
+		},
+		{
+			"name": "owner",
+			"description": "a project owner ruling",
+			"pattern": "\\bowner\\b\\W+(?:ruling|instruction|decision|question|said|verdict|word|call|approved|asked|direction)|\\bowner's\\s+(?:ruling|instruction|decision|call|word|question|verdict)|\\(owner[,)]|\\bthe (?:owner|user)\\s+(?:said|asked|ruled|wants|wanted|decided|approved|confirmed)",
+			"flags": ""
+		},
+		{
+			"name": "since_tag",
+			"description": "a @since or @version tag",
+			"pattern": "@since|@version",
+			"flags": ""
+		},
+		{
+			"name": "phase",
+			"description": "a phase reference",
+			"pattern": "\\bphase \\d|\\bsub-?phase\\b",
+			"flags": "i"
+		},
+		{
+			"name": "intake",
+			"description": "a review intake reference",
+			"pattern": "\\bPass H\\b|\\bintake\\b|\\bdocs-pass\\b",
+			"flags": ""
+		},
+		{
+			"name": "audit_finding",
+			"description": "an audit finding reference",
+			"pattern": "\\baudit findings?\\b|\\(audit\\)|\\b3e\\b",
+			"flags": ""
+		},
+		{
+			"name": "gate_language",
+			"description": "acceptance or test-process wording",
+			"pattern": "\\bacceptance (?:gate|example)\\b|\\bwatched failing\\b|\\brevert-test\\b|\\bmutation-checked\\b",
+			"flags": "i"
+		},
+		{
+			"name": "release_relative",
+			"description": "release-relative wording",
+			"pattern": "\\b(?:before|after|since|in) this (?:release|version|fix|commit)\\b|\\bnext release\\b|\\bthis release\\b",
+			"flags": "i"
+		},
+		{
+			"name": "plan_item",
+			"description": "a numbered plan or checklist item",
+			"pattern": "\\b(?:checklist )?items? \\d+(?:\\s*-\\s*\\d+)?\\b|\\bquestion \\d+\\b",
+			"flags": "i"
+		},
+		{
+			"name": "test_history",
+			"description": "the history of a test file",
+			"pattern": "\\bno test file\\b|\\bexisted before\\b",
+			"flags": "i"
+		}
+	]
+}

@@ -9,18 +9,8 @@ use BeyondElysium\Models\Schema_Block;
 use WP_UnitTestCase;
 
 /**
- * "Port ALL 22 test characters into the DEFAULT instance to demonstrate that it WORKS...
- * make it part of our core install" (2026-09-09) - ported from
- * tests/fixtures/seed-stock-characters.php (originally written against the real `kony`
- * chronicle) into a dedicated `be-demo` game instead, so it ships with the plugin without
- * ever touching a real chronicle's own roster.
- *
- * seed_demo_characters() also runs once during the WordPress test suite's own bootstrap
- * (Schema::maybe_upgrade(), version-gated - fires outside any single test's transaction,
- * the same as on a real install), so be-demo can legitimately already exist before any
- * test method here runs. Removed in setUp() - with the seeded-once flag - so every test
- * gets a genuinely clean, deterministic fresh-install slate rather than depending on
- * bootstrap timing. What a non-fresh install does is in `ChronicleDeleteThreadTest`.
+ * "Port ALL 22 test characters into the DEFAULT instance to demonstrate that it WORKS... make it part of our core
+ * install".
  */
 class SeedDemoCharactersTest extends WP_UnitTestCase {
 
@@ -75,10 +65,8 @@ class SeedDemoCharactersTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * 1.0.0-review F-049: the fixtures promised real catalog names and shipped Gifts under old
-	 * "Tribe: Gift (tier)" labels no catalog holds, a Blood Magic path filed under Disciplines,
-	 * and identity values no select offers - every one of them turned custom or moved blocks the
-	 * first time the character was exported and imported back.
+	 * Every demo trait is a real catalog name in its own block - a Gift by its plain name, a Blood Magic path under Blood
+	 * Magic - and every identity value is one its select offers.
 	 */
 	public function test_every_demo_trait_and_identity_value_is_a_real_catalog_entry(): void {
 		$problems = [];

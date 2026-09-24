@@ -1,9 +1,6 @@
 /**
- * Diffs a character's sheet data against its pre-edit baseline and emits `Change`
- * payloads shaped to match what the server-side change engine reads - a `block_slug`
- * plus a `trait`, `values`, or `fields` key depending on change type. Exports
- * `computeChanges()`, the entry point, plus a re-exported `SheetData` type; the
- * per-section-type diffing helpers are internal to this module.
+ * Diffs a character's sheet data against its pre-edit baseline and emits `Change` payloads shaped to match what the
+ * server-side change engine reads.
  */
 
 import type { SchemaBlock, TraitListDefinition } from '../types';
@@ -17,17 +14,7 @@ import type { IdentityFieldValue } from '../components/editors/IdentityFieldEdit
 export type { SheetData };
 
 /**
- * Pairs held rows across the two sheets, in two passes (1.2.11 D88).
- *
- * Pass one matches rows of the same **identity** - the holding itself, which for an item that
- * allows multiples includes its label. Pass two pairs off whatever is left within each name,
- * in arrival order, which is what a relabel looks like: the identity moved, but it is still
- * the same holding being edited rather than one destroyed and another bought.
- *
- * Name-order pairing alone read "remove Retainers (John Doe)" as "relabel John to Sue, then
- * remove a Retainer" - and that removal named no label, so the engine deleted both holdings.
- * Identity pairing alone would read every relabel as a remove plus an add, refunding and
- * recharging a holding whose only change was its spelling.
+ * Pairs held rows across the two sheets, in two passes.
  */
 function pairTraitRows(
 	definition: TraitListDefinition,
@@ -78,9 +65,7 @@ function pairTraitRows(
 }
 
 /**
- * Diffs an original and current trait list into add/remove/modify change requests, matching
- * entries by identity rather than array position so a reordered list produces no changes and
- * a holding that may legitimately be held twice is diffed as itself (`pairTraitRows`).
+ * Diffs an original and current trait list into add/remove/modify change requests, matching entries by identity.
  */
 function diffTraitList(
 	blockSlug: string,
@@ -119,12 +104,6 @@ function diffTraitList(
 				change_data: {
 					block_slug: blockSlug,
 					trait: { name, ...changed },
-					/*
-					 * Display-only, with one exception: `specialization` is how the server
-					 * knows WHICH holding a relabel addresses, since the trait's own label is
-					 * the new value (Trait_Identity::target_of, 1.2.11 D88). Everything else
-					 * here is still only shown to the reviewer.
-					 */
 					previous: {
 						name: o.name,
 						count: o.count ?? 1,
@@ -159,9 +138,7 @@ function diffTraitList(
 		} );
 	}
 
-	// A removal must name WHICH holding is leaving wherever the label is part of what
-	// identifies it - `{name}` alone is right for an ordinary trait and, on a multiples item,
-	// would take every row of that name with it.
+	// A removal must name WHICH holding is leaving wherever the label is part of what identifies it.
 	for ( const row of removed ) {
 		const labelled =
 			allowsMultiples( definition, row.name ) && row.specialization
@@ -181,24 +158,16 @@ function diffTraitList(
 }
 
 /**
- * Identity key for one held tiered-power row: the family name alone for a plain
- * numbered holding (at most one per family), or name+power_name for an Elder-and-above
- * pick (Decision 037) - a family can hold several distinct Elder+ picks at once
- * (0.99.2-workflow.md: "you can have multiple powers at those levels"), so power_name
- * must be part of the identity rather than colliding on the shared family name. The
- * NUL separator can't appear in either field, so no real name can collide with it.
+ * Identity key for one held tiered-power row: the family name alone for a plain numbered holding (at most one per
+ * family), or name+power_name for an Elder-and-above pick.
  */
 function tieredPowerKey( row: EditableHeldPower ): string {
 	return row.power_name ? `${ row.name }\u0000${ row.power_name }` : row.name;
 }
 
 /**
- * Diffs an original and current tiered-power list into add/remove/modify change
- * requests, matching entries by tieredPowerKey() rather than name alone - two rows
- * sharing a family name but naming different Elder-and-above picks are two independent
- * entries, never a "swap" of one into the other. A power's tradition is compared
- * alongside its level, and clearing a tradition is emitted as an explicit empty string
- * rather than an omitted key so the change is applied rather than dropped as a no-op.
+ * Diffs an original and current tiered-power list into add/remove/modify change requests, matching entries by
+ * tieredPowerKey().
  */
 function diffTieredPower(
 	blockSlug: string,
@@ -216,10 +185,7 @@ function diffTieredPower(
 	);
 	const allKeys = new Set( [ ...origByKey.keys(), ...curByKey.keys() ] );
 
-	// Tradition is carried through verbatim and omitted when absent; power_name is always
-	// included when present - it identifies which specific Elder-and-above pick this row
-	// is, not a value that changes on an already-matched row (two different power_names
-	// are two different keys above, never one row's power_name changing in place).
+	// Tradition is carried through verbatim and omitted when absent.
 	const traitOf = ( row: EditableHeldPower ) => {
 		const trait: {
 			name: string;
@@ -245,7 +211,7 @@ function diffTieredPower(
 
 		if ( o && c ) {
 			if ( o.level !== c.level || o.tradition !== c.tradition ) {
-				// A cleared tradition is sent as an explicit empty string rather than an omitted key.
+				// A cleared tradition is sent as an explicit empty string.
 				const trait = traitOf( c );
 				if ( o.tradition && ! c.tradition ) {
 					( trait as { tradition?: string } ).tradition = '';
@@ -267,9 +233,7 @@ function diffTieredPower(
 				change_data: { block_slug: blockSlug, trait: traitOf( c ) },
 			} );
 		} else if ( o ) {
-			// A removal must name which specific pick is leaving when the family holds
-			// more than one - {name} alone (correct for a plain numbered holding) would
-			// be ambiguous for an Elder-and-above pick with siblings under the same name.
+			// A removal must name which specific pick is leaving when the family holds more than one.
 			const trait: { name: string; power_name?: string } = {
 				name: o.name,
 			};
@@ -287,7 +251,9 @@ function diffTieredPower(
 	return changes;
 }
 
-/** Whether two resource-pool values have equal permanent and temporary amounts. */
+/**
+ * Whether two resource-pool values have equal permanent and temporary amounts.
+ */
 function poolsEqual(
 	a: ResourcePoolValue | undefined,
 	b: ResourcePoolValue | undefined
@@ -299,9 +265,8 @@ function poolsEqual(
 }
 
 /**
- * Diffs an original and current map of resource-pool values, returning one
- * `modify_resource` change per pool whose permanent or temporary amount differs. A pool
- * missing from one side is compared against a zeroed default.
+ * Diffs an original and current map of resource-pool values, returning one `modify_resource` change per pool whose
+ * permanent or temporary amount differs.
  */
 function diffResourcePool(
 	blockSlug: string,
@@ -330,7 +295,9 @@ function diffResourcePool(
 	return changes;
 }
 
-/** Whether two identity-field values are equal, comparing array values by content. */
+/**
+ * Whether two identity-field values are equal, comparing array values by content.
+ */
 function valuesEqual( a: IdentityFieldValue, b: IdentityFieldValue ): boolean {
 	if ( Array.isArray( a ) || Array.isArray( b ) ) {
 		return JSON.stringify( a ?? [] ) === JSON.stringify( b ?? [] );
@@ -339,9 +306,8 @@ function valuesEqual( a: IdentityFieldValue, b: IdentityFieldValue ): boolean {
 }
 
 /**
- * Diffs an original and current map of identity-field values, returning one
- * `modify_identity` change per field whose value differs. Array values are compared by
- * content rather than by reference.
+ * Diffs an original and current map of identity-field values, returning one `modify_identity` change per field whose
+ * value differs.
  */
 function diffIdentityField(
 	blockSlug: string,
@@ -371,10 +337,8 @@ function diffIdentityField(
 }
 
 /**
- * Diffs every block a stack declares against its current values, dispatching to the
- * matching diff routine by the block's `section_type`. A block present in neither
- * `original` nor `current` produces no changes, and a block whose `section_type` isn't
- * recognized is skipped rather than throwing.
+ * Diffs every block a stack declares against its current values, dispatching to the matching diff routine by the
+ * block's `section_type`.
  */
 export function computeChanges(
 	original: SheetData,

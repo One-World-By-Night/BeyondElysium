@@ -8,12 +8,6 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Static data-access model for chronicle role assignments.
- *
- * Game_Member is a Database\Manager CRUD model backed by the game_members
- * table. Each row assigns one WordPress user a single role - hst, ast,
- * narrator, or player - within one game. This model only stores the
- * assignment; what a role actually grants is defined separately in
- * includes/Database/game-roles.php and enforced by Authorization::check_request().
  */
 class Game_Member {
 
@@ -22,8 +16,6 @@ class Game_Member {
 
 	/**
 	 * Return every membership row for one game, ordered oldest first.
-	 * Includes every role - hst, ast, narrator, and player - with no
-	 * filtering and no pagination.
 	 *
 	 * @param int $game_id
 	 * @return array
@@ -35,12 +27,13 @@ class Game_Member {
 		);
 	}
 
-	/** @var string[] Roles eligible for staff assignment (1.1.0 §3.6) and S5's unassigned-post fallback. */
+	/**
+	 * @var string[] Roles eligible for staff assignment and the unassigned-post fallback.
+	 */
 	public const STAFF_ROLES = [ 'hst', 'ast', 'narrator' ];
 
 	/**
-	 * Every hst/ast/narrator member of one game - who a plot or NPC may be assigned to
-	 * (§3.6), and who an unassigned player post falls back to notifying (§3.5).
+	 * Every hst/ast/narrator member of one game.
 	 *
 	 * @param int $game_id
 	 * @return array
@@ -66,9 +59,7 @@ class Game_Member {
 	}
 
 	/**
-	 * Return every membership row for one WordPress user across every game they
-	 * belong to, ordered oldest first. One row per game the user has any role
-	 * in, regardless of which role it is.
+	 * Return every membership row for one WordPress user across every game they belong to, ordered oldest first.
 	 *
 	 * @param int $wp_user_id
 	 * @return array
@@ -81,9 +72,7 @@ class Game_Member {
 	}
 
 	/**
-	 * Look up one user's membership row in one game. Returns the row holding
-	 * their assigned role, or null when they hold no membership in that game
-	 * at all.
+	 * Look up one user's membership row in one game.
 	 *
 	 * @param int $game_id
 	 * @param int $wp_user_id
@@ -98,9 +87,7 @@ class Game_Member {
 	}
 
 	/**
-	 * Add or change a user's role in a game. Updates the existing membership row
-	 * in place when one already exists, preserving its id and created_at rather
-	 * than deleting and recreating it; inserts a new row otherwise.
+	 * Add or change a user's role in a game.
 	 *
 	 * @param int    $game_id
 	 * @param int    $wp_user_id
@@ -132,9 +119,7 @@ class Game_Member {
 	}
 
 	/**
-	 * Grant `player` role if this user has no membership row in this game yet; a
-	 * no-op otherwise. Never overwrites an existing row, so a user who already
-	 * holds a higher role such as hst is never downgraded by this call.
+	 * Grant `player` role if this user has no membership row in this game yet.
 	 *
 	 * @param int $game_id
 	 * @param int $wp_user_id
@@ -153,13 +138,7 @@ class Game_Member {
 	}
 
 	/**
-	 * Returns the `wp_user_id` of every `player`-role member of a game who holds
-	 * zero `active` characters in it - "no active character" and "only character
-	 * has gone inactive" are the same condition, not two (queryable-player-
-	 * inventory-design.md). A player with no characters at all and a player whose
-	 * only character is retired/dead/pending both count: neither has an `active`
-	 * one. `owner_type = 'chronicle'` matches every other per-game character
-	 * count in this codebase (`Character::counts_by_stack_for_game()`, etc.).
+	 * Returns the `wp_user_id` of every `player`-role member of a game who holds zero `active` characters in it.
 	 *
 	 * @param int    $game_id
 	 * @param string $game_slug
@@ -189,9 +168,7 @@ class Game_Member {
 	}
 
 	/**
-	 * Remove a user's membership row for one game entirely, deleting whatever
-	 * role - hst, ast, narrator, or player - they held. Does not affect their
-	 * membership in any other game.
+	 * Remove a user's membership row for one game entirely, deleting whatever role.
 	 *
 	 * @param int $game_id
 	 * @param int $wp_user_id
@@ -203,10 +180,7 @@ class Game_Member {
 	}
 
 	/**
-	 * Remove every membership row for a user across every game. Wired to
-	 * WordPress's `deleted_user` action, which fires for both
-	 * `wp_delete_user()` and `wpmu_delete_user()`, so a deleted account leaves
-	 * no orphaned membership rows behind.
+	 * Remove every membership row for a user across every game.
 	 *
 	 * @param int $wp_user_id
 	 * @return void

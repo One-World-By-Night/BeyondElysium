@@ -6,8 +6,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Step 1.5e, workflow-0.9.md - `be_asc_enabled` (`Authorization::asc_enabled()`) could
- * only ever be flipped via `update_option()` directly before this route existed.
+ * The route that flips `be_asc_enabled` (`Authorization::asc_enabled()`).
  */
 class AuthorizationSettingsControllerTest extends WP_UnitTestCase {
 
@@ -51,9 +50,6 @@ class AuthorizationSettingsControllerTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->admin_id );
 		$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/be/v1/authorization-settings' ) );
 
-		// Neither accessSchema nor owbn-client is installed on the test harness (confirmed
-		// plugin list, same as every real environment this project has run in to date) -
-		// asserting the real, measured value here, not a mocked one.
 		$this->assertFalse( $response->get_data()['client_detected'] );
 	}
 

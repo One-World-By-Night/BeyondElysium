@@ -1,11 +1,9 @@
-"""Shared helpers for the 1.3.1 catalog builders.
+"""Shared helpers for the catalog builders.
 
 Offline tooling. Nothing here runs inside the plugin or under bin/verify.
 
 The builders read a **snapshot** of the live seeded blocks (one JSON file per
-slug, the raw `definition` column exported with `mysql --raw`) rather than
-re-running the seeder, because the snapshot is exactly what 1.2.10's split
-produced and what the D67 partition was measured against:
+slug, the raw `definition` column exported with `mysql --raw`):
 
     for s in vampire-disciplines vampire-blood-magic vampire-rituals \\
              kueijin-disciplines mage-spheres; do
@@ -15,8 +13,7 @@ produced and what the D67 partition was measured against:
     done
 
 Every structural decision a builder makes beyond reading the snapshot lives in
-a rulings file next to it (`rulings/<slug>.json`) with the evidence for it, so
-a reviewer can check the ruling rather than reverse-engineer the script.
+a rulings file next to it (`rulings/<slug>.json`) with the evidence for it.
 """
 
 import json
@@ -38,8 +35,7 @@ SAMPLES_ROOT = Path(os.environ.get('BE_SAMPLES', str(REPO_ROOT / 'samples')))
 LADDER_RANKS = ('basic', 'intermediate', 'advanced')
 LADDER_2_2_1 = OrderedDict([('basic', 2), ('intermediate', 2), ('advanced', 1)])
 
-# The same substring table Seeder::normalize_tier() uses, so a note reads the
-# same way here as it did when the snapshot was seeded.
+# Tier words a note can carry, as substring needles: (needle, tier).
 _TIER_NEEDLES = (
     ('innate', 'innate'), ('basic', 'basic'), ('int', 'intermediate'),
     ('adv', 'advanced'), ('elder', 'elder'), ('master', 'master'),
@@ -85,7 +81,7 @@ def edition_of(note):
 
 def qualifier_of(note):
     """What a note says beyond its tier word and edition tag - `(Setite)`,
-    `tzimisce` - or None. Rendered beside the tier by 1.2.9's U5 seam."""
+    `tzimisce` - or None."""
     text = (note or '').strip()
     m = re.search(r'\(([^)]*)\)', text)
     if m:
@@ -103,8 +99,7 @@ def qualifier_of(note):
 
 def all_levels(family):
     """Every level a snapshot family holds, in source order: ladder, then each
-    elder rank's picks, then overflow - never flattened into one list in the
-    emitted file, only here so a builder can see everything once."""
+    elder rank's picks, then overflow."""
     out = []
     for lv in family.get('levels', []):
         out.append(('levels', lv))
@@ -120,8 +115,7 @@ def ladder_from(entries, ladder=LADDER_2_2_1):
     """Fills a declared ladder rank by rank, source order within a rank.
 
     `entries` are dicts with at least `name` and `tier`. Returns
-    (rungs, leftovers). A builder must treat any leftover as an error to rule
-    on - it is D67 reappearing - never as data to drop.
+    (rungs, leftovers).
     """
     by_rank = OrderedDict((r, []) for r in ladder)
     leftovers = []
@@ -143,7 +137,7 @@ def ladder_from(entries, ladder=LADDER_2_2_1):
 
 def family_record(source, levels, elder=None, traditions=None, restriction=None,
                   description=None, extra=None):
-    """One family in the format doc's fixed key order (§4.2): source, levels,
+    """One family in the catalog format's fixed key order: source, levels,
     elder, traditions, restriction, description, then anything else."""
     rec = OrderedDict()
     rec['source'] = source
@@ -173,18 +167,19 @@ def envelope(slug, name, section_type, provenance, definition, variant=None):
 
 
 def runtime_shape(definition):
-    """The one catalog shape (owner ruling, 2026-09-22): the runtime list the engine and
+    """The one catalog shape: the runtime list the engine and
     `src/types` read - `TieredPowerDefinition.powers: TieredPower[]`, `PowerLevel`.
 
-    The builders assemble families in a map keyed by name, which is what makes merges and
-    rulings keyed by family name easy. This turns that map into the list, once, at write time:
+    The builders assemble families in a map keyed by name. This turns that map
+    into the list, once, at write time:
 
     - `powers` becomes a list of family objects, each carrying `name`;
-    - a rung's `name` becomes `power_name`, and it carries its rank's `cost` from `_meta.costs`
-      (the only price - so the per-level figure can never disagree with it);
-    - every `elder` pick becomes a full object `{level: null, tier, power_name, cost}`;
-    - key order follows 1.3.0's `catalog_io.py`, and null `traditions`/`restriction`/
-      `description` are omitted as 1.3.0's files omit them.
+    - a rung's `name` becomes `power_name`, and it carries its rank's `cost`
+      from `_meta.costs`;
+    - every `elder` pick becomes a full object `{level: null, tier, power_name,
+      cost}`;
+    - key order follows `catalog_io.py`, and null `traditions`/`restriction`/
+      `description` are omitted.
     """
     powers = definition.get('powers')
     if not isinstance(powers, dict):
@@ -254,10 +249,8 @@ def meta(ranks, costs, out_of_type=None, ladder=LADDER_2_2_1):
     return m
 
 
-# Behaviour flags the seeder sets on a definition today. A declared file replaces
-# the seed, so it must carry them or ingestion silently changes behaviour.
-# `out_of_type_cost_modifier` is deliberately absent: `_meta.out_of_type`
-# supersedes it (1.2.10 S1 marks it @deprecated).
+# Behaviour flags a definition carries into the declared file.
+# `out_of_type_cost_modifier` is absent: `_meta.out_of_type` supersedes it.
 DEFINITION_FLAGS = ('atomic', 'sequential', 'allow_custom', 'player_order', 'shape')
 
 
@@ -266,8 +259,7 @@ def flags_from(snapshot):
 
 
 def partition(definition):
-    """(families, rungs, picks, overflow) for one emitted definition - the same
-    count 1.2.10's partition measurement takes, so before/after compare."""
+    """(families, rungs, picks, overflow) for one emitted definition."""
     rungs = picks = overflow = 0
     powers = definition.get('powers', {})
     for fam in (powers.values() if isinstance(powers, dict) else powers):

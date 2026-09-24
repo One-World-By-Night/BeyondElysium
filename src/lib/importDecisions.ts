@@ -1,8 +1,5 @@
 /**
- * The choices a Storyteller makes reviewing an import - how to resolve each flagged trait, each
- * character already on the site, and each item, location, or rote already in the catalog - and
- * the rule that keeps them honest: they belong to the preview they were made on. Another file, or
- * another chronicle to merge into, starts with none (1.0.0-review F-057).
+ * The choices a Storyteller makes reviewing an import.
  */
 import { duplicateActionsFor } from './duplicateActions';
 import type {
@@ -14,7 +11,9 @@ import type {
 } from '../types/import';
 
 export interface ImportDecisions {
-	/** The preview these were made on, from previewKey(). */
+	/**
+	 * The preview these were made on, from previewKey().
+	 */
 	madeFor: string;
 	traits: Record< string, TraitResolution >;
 	duplicates: Record< string, DuplicateAction >;
@@ -24,25 +23,22 @@ export interface ImportDecisions {
 type Kind = 'traits' | 'duplicates' | 'worldObjects';
 
 /**
- * Names one preview: the import job it came from and the chronicle it was
- * checked against, if any. Uploading a file again is a new job, so it is a
- * new preview too.
+ * Names one preview: the import job it came from and the chronicle it was checked against, if any.
  */
 export function previewKey( jobId: string, target = '' ): string {
 	return `${ jobId }|${ target }`;
 }
 
 /**
- * An empty set of decisions for one preview - what a new file or a new
- * merge target starts with.
+ * An empty set of decisions for one preview.
  */
 export function noDecisions( madeFor = '' ): ImportDecisions {
 	return { madeFor, traits: {}, duplicates: {}, worldObjects: {} };
 }
 
 /**
- * The decisions that apply to a preview: the ones made on it, or none at
- * all when the ones held were made on a different preview.
+ * The decisions that apply to a preview: the ones made on it, or none at all when the ones held were made on a
+ * different preview.
  */
 export function decisionsFor(
 	decisions: ImportDecisions,
@@ -53,7 +49,6 @@ export function decisionsFor(
 
 /**
  * Records one decision on a preview, or withdraws it when given null.
- * Decisions held for a different preview are dropped, never added to.
  */
 export function withDecision< K extends Kind >(
 	decisions: ImportDecisions,
@@ -73,9 +68,8 @@ export function withDecision< K extends Kind >(
 }
 
 /**
- * Builds the lookup key for one flagged or unresolved trait row, combining its
- * character, block, and raw value with its row index - what a trait decision
- * is recorded under.
+ * Builds the lookup key for one flagged or unresolved trait row, combining its character, block, and raw value with
+ * its row index.
  */
 export function keyFor(
 	trait: FlaggedTrait | UnresolvedTrait,
@@ -85,9 +79,7 @@ export function keyFor(
 }
 
 /**
- * Counts the decisions still blocking a commit or a transfer accept, after the
- * Storyteller's choices - the same rules `Import_Controller::blocking_reason()`
- * enforces server-side, for a character file, a game file, and a transfer alike.
+ * Counts the decisions still blocking a commit or a transfer accept, after the Storyteller's choices.
  */
 export function blockingCount(
 	preview: ImportPreview,
@@ -98,7 +90,6 @@ export function blockingCount(
 	const stillFlagged = preview.flagged_traits.filter(
 		( t, i ) => ! traitResolutions[ keyFor( t, i ) ]
 	).length;
-	// An unresolved entry marked "keep as written" is no longer blocking, same as a resolved flagged trait.
 	const stillUnresolved = preview.unresolved.filter(
 		( t, i ) => ! traitResolutions[ keyFor( t, i ) ]
 	).length;

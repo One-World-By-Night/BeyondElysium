@@ -10,19 +10,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * `[ST]...[/ST]` must be stripped everywhere a Storyteller can write prose, not only on a
- * character sheet and a world object.
- *
- * Four controllers had no filtering at all when 1.0.1 was planned - plots, plot entries, the
- * chronicle's own description, and connection notes - so a Storyteller who marked text in a
- * plot description handed it straight to every player connected to that plot. Measured on
- * both production sites first: zero real markers, so this closed a latent gap rather than a
- * live leak. These tests fail against the unfiltered code.
- *
- * `plots.st_notes` is deliberately not tested for stripping - it is removed wholesale for a
- * non-manager, which is stronger.
- *
- * @see BE_PROCESS/releases/1.0.1-design-workflow.md §2, A1
+ * `[ST]...[/ST]` must be stripped everywhere a Storyteller can write prose.
  */
 class StFilterCoverageThreadTest extends WP_UnitTestCase {
 

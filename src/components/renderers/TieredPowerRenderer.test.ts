@@ -45,9 +45,6 @@ describe( 'elderLabel/numericLabel/namedLabel (Decision 074)', () => {
 	} );
 
 	it( 'a keep_custom power with a real derived level shows that level, not "(elder)"', () => {
-		// The exact shape a real Dur-An-Ki/Sadhanna path takes after import (real bug:
-		// 1506_chase_ashford_.gex's "Blood Magic" paths all rendered as generic "(elder)"
-		// despite holding a genuine numbered level 1-5).
 		const held = {
 			name: 'Dur-An-Ki',
 			power_name: 'Awakening of the Steel',
@@ -59,12 +56,6 @@ describe( 'elderLabel/numericLabel/namedLabel (Decision 074)', () => {
 	} );
 
 	it( 'a keep_custom power with no derivable level falls back to its own stored tier text, not the hardcoded default', () => {
-		// Decision 074's rule still holds: a real stored tier wins over the hardcoded
-		// default. This case originally used `***` as its example, which turned out to be
-		// the importer's "could not map this" sentinel rather than tier text - and it was
-		// reaching players verbatim ("Combination: Sawafi Form (***)", owner-reported
-		// 2026-09-21, 1,637 production holdings). The rule is unchanged; the example now
-		// uses tier text that actually means something. Placeholders are covered below.
 		const held = {
 			name: 'Dur-An-Ki',
 			power_name: 'Something Unrecognizable',
@@ -147,11 +138,6 @@ describe( 'withTradition (0.99.2 Blood magic, BM-5)', () => {
 	} );
 } );
 
-// "I want all power levels listed in printout, full names for all levels" - named mode's
-// whole point is listing every named rung a player holds, not just the current one.
-// Decision 037 governs pricing cumulativeness (whether buying level 3 is priced as summed
-// steps or a flat lookup), not what "named" display mode shows - a player who wants the
-// full stack sees it regardless of whether the block happens to be sequential.
 describe( 'namedModeRows (0.99.2, "Query beyond characters" sibling ask: full stack listed)', () => {
 	it( 'lists every named rung from 1 up to the held level for a plain numbered holding', () => {
 		expect(
@@ -175,9 +161,7 @@ describe( 'namedModeRows (0.99.2, "Query beyond characters" sibling ask: full st
 	} );
 
 	it( 'a non-sequential block still expands the full stack, not just the current rung', () => {
-		// DEFINITION carries no `sequential` flag at all (non-sequential, matching
-		// vampire-disciplines' own real shape, Decision 037) - the old behavior showed
-		// only "Lightning Reflexes" here; the fix lists the whole held stack instead.
+		// DEFINITION carries no `sequential` flag at all (non-sequential, matching vampire-disciplines' own real shape).
 		expect(
 			namedModeRows( DEFINITION, { name: 'Celerity', level: 5 } )
 		).toEqual( [
@@ -189,10 +173,7 @@ describe( 'namedModeRows (0.99.2, "Query beyond characters" sibling ask: full st
 		] );
 	} );
 
-	// D66 (1.2.5-design-workflow.md §A2, owner: "anything where more than one power
-	// exist on the same level... always show all") - several powers tied at one rank
-	// (`level: null` on all of them, matching real seeded data) must all appear, never
-	// rolled up to one entry.
+	// Several powers tied at one rank (`level: null` on all of them, matching real seeded data) must all appear.
 	describe( 'a rank tied between several named powers', () => {
 		const TIED_DEFINITION: TieredPowerDefinition = {
 			powers: [
@@ -236,10 +217,7 @@ describe( 'namedModeRows (0.99.2, "Query beyond characters" sibling ask: full st
 } );
 
 /**
- * Same fixture, same expected output as `tests/unit/Display/PowerDisplayParityTest.php` -
- * this is the TypeScript half of proving the two label-formatting implementations agree.
- * Every case is transcribed 1:1 from this file's own tests above, per SP-3
- * (BE_PROCESS/design/signed-pdf-design.md).
+ * Same fixture, same expected output as `tests/unit/Display/PowerDisplayParityTest.php`.
  */
 describe( 'label helpers — parity with Power_Display.php', () => {
 	interface FixtureCase {

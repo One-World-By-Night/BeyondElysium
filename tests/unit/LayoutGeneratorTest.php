@@ -6,11 +6,7 @@ use BeyondElysium\Services\Layout_Generator;
 use PHPUnit\Framework\TestCase;
 
 /**
- * generate() takes an already-resolved stack + blocks map, so it needs no database - the
- * $wpdb-dependent lookup lives in generate_for_stack(), covered separately in the thread
- * layer.
- *
- * @see BE_PROCESS/releases/workflow-0.3.md Step 4f, 8b-ii
+ * generate() takes an already-resolved stack + blocks map.
  */
 class LayoutGeneratorTest extends TestCase {
 
@@ -80,8 +76,7 @@ class LayoutGeneratorTest extends TestCase {
 	}
 
 	public function test_balances_columns_by_running_item_count_not_just_alternating(): void {
-		// A big block first, then two small ones - a naive alternator would put the two
-		// small ones on opposite sides; balancing by load keeps both with the light column.
+		// A big block first, then two small ones.
 		$stack = $this->stack( [
 			[ 'block_slug' => 'big',    'display_order' => 10 ],
 			[ 'block_slug' => 'small1', 'display_order' => 20 ],

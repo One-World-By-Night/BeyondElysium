@@ -5,17 +5,12 @@ namespace BeyondElysium\Core;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Plugin deactivation entry point. Strips Beyond Elysium's custom
- * capabilities back off every role they were granted to and clears the
- * daily maintenance sweep, leaving database tables and stored data
- * untouched. Runs once when the plugin is deactivated in wp-admin.
+ * Plugin deactivation entry point.
  */
 class Deactivator {
 
 	/**
-	 * Removes every custom capability this plugin registered from all of
-	 * its granted roles. Does not drop tables or delete any stored data;
-	 * reactivating the plugin re-registers the same capabilities.
+	 * Removes every custom capability this plugin registered from all of its granted roles.
 	 */
 	public static function deactivate(): void {
 		Capabilities::unregister();

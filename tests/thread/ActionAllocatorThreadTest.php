@@ -10,12 +10,9 @@ use BeyondElysium\Services\Background_Ledger;
 use WP_UnitTestCase;
 
 /**
- * The database-touching half of the Action Allocator: persisting one plot per
- * character-date, re-running idempotently, carrying state from a real prior plot, and
- * the `IfDoneSetDone` completion rule read back from real entries. The pure computation
- * itself is covered without a database in `tests/unit/ActionAllocatorTest.php`.
- *
- * @see BE_PROCESS/releases/workflow-0.5.md Step 4e/4f
+ * The database-touching half of the Action Allocator: persisting one plot per character-date, re-running
+ * idempotently, carrying state from a real prior plot, and the `IfDoneSetDone` completion rule read back from real
+ * entries.
  */
 class ActionAllocatorThreadTest extends WP_UnitTestCase {
 
@@ -89,13 +86,6 @@ class ActionAllocatorThreadTest extends WP_UnitTestCase {
 		$this->assertCount( 3, $entries );
 	}
 
-	/**
-	 * The real risk persist() used to carry (§3.3): it deleted every `action` entry on
-	 * its plot before re-creating the allocator's own set, wiping out a player's free-
-	 * text post and any recorded Background_Ledger use in the same stroke. Both must
-	 * survive a re-allocation untouched, and the allocator's own subactions still get
-	 * refreshed exactly as before.
-	 */
 	public function test_persist_never_deletes_a_free_text_post_or_a_ledger_entry_on_re_allocation(): void {
 		$plot_id = Action_Allocator::persist( $this->character_id, '2026-01-01' );
 
@@ -122,8 +112,6 @@ class ActionAllocatorThreadTest extends WP_UnitTestCase {
 	public function test_second_week_carries_unused_and_growth_from_the_first(): void {
 		Action_Allocator::persist( $this->character_id, '2026-01-01' );
 
-		// Simulate the ST partially spending week 1's Resources subaction and recording
-		// growth, by editing the persisted entry directly the way an ST's PUT would.
 		$plot_id = Action_Allocator::persist( $this->character_id, '2026-01-01' );
 		$entries = Plot_Entry::for_plot( $plot_id, [ 'entry_type' => 'action' ] );
 		foreach ( $entries as $entry ) {
@@ -164,11 +152,7 @@ class ActionAllocatorThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The allocator entry's own action/result fields (§2.3) can never carry this -
-	 * nothing writes them. Completion now means every budgeted subaction (Personal,
-	 * Bureaucracy, Resources - this fixture's character has all three per setUp())
-	 * has at least one Background_Ledger entry, and every one of those entries has
-	 * a non-empty result (§5.5).
+	 * The allocator entry's own action/result fields can never carry this.
 	 */
 	public function test_is_complete_requires_a_ledger_entry_with_a_result_for_every_budgeted_subaction(): void {
 		$plot_id = Action_Allocator::persist( $this->character_id, '2026-01-01' );
@@ -192,8 +176,6 @@ class ActionAllocatorThreadTest extends WP_UnitTestCase {
 	public function test_a_players_own_free_text_action_entry_does_not_break_completion_check(): void {
 		$plot_id = Action_Allocator::persist( $this->character_id, '2026-01-01' );
 
-		// A player's own plain-text action post on the same plot (entry_type 'action'
-		// but not allocator JSON) must be ignored by is_complete()'s decode, not crash it.
 		Plot_Entry::create( [
 			'plot_id' => $plot_id, 'author_id' => 1, 'entry_type' => 'action',
 			'content' => 'I spend Bureaucracy 2 to smooth over the paperwork.',

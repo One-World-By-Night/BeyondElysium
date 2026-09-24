@@ -10,17 +10,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-025 and F-026.
- *
- * F-025: a chronicle's AI Assist settings are an HST's or AST's to set, and their endpoint URL
- * was requested with wp_remote_post() - any address, the host's private network and localhost
- * included - and the test route's three different failure messages made it a port scanner. A
- * chronicle's requests now go through wp_safe_remote_post(); a private-network endpoint stays a
- * site administrator's setting.
- *
- * F-026: the generate route's permission check passed any field_context it did not know; the
- * instruction text was sent upstream at any length; nothing limited how fast one user could
- * spend the configured key.
+ * AI Assist settings are an HST's or AST's to set, and a chronicle's endpoint URL is requested only where it is safe
+ * to.
  */
 class AiAssistHardeningThreadTest extends WP_UnitTestCase {
 

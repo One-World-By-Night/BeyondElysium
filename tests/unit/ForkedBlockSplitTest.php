@@ -7,22 +7,13 @@ use BeyondElysium\Services\Cost_Engine;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.2.10, found during pre-deploy checks 2026-09-22 - a **chronicle's forked block would have
- * kept the old price forever**.
- *
- * `seed_schema_blocks()` refreshes `is_system = 1` rows only, which is correct: a reseed must
- * never overwrite a chronicle's own edited block. The consequence nobody had traced is that a
- * fork keeps the flat pre-1.2.10 shape, and a flat block has no `_meta`, so `Cost_Engine`
- * falls through to the pre-1.2.10 one-tier-per-rank fallback - **45 XP for a Discipline at 5,
- * where the reseeded global charges 27**. Two prices for the same Discipline on one install,
- * on exactly the chronicles engaged enough to have house rules, and no reseed ever heals it.
- *
- * `Schema::split_forked_tiered_powers()` migrates the fork instead of refreshing it: its own
- * powers and edits are kept, only the container split and `_meta` are added.
+ * A chronicle's forked `tiered_power` block is re-split into the three containers like the global block.
  */
 class ForkedBlockSplitTest extends TestCase {
 
-	/** A fork as it sits in the database today: flat `levels`, no `_meta`, ties nulled (D66). */
+	/**
+	 * A fork as it sits in the database: flat `levels`, no `_meta`, ties nulled.
+	 */
 	private function flat_fork(): array {
 		return [
 			'sequential' => true,
@@ -40,7 +31,7 @@ class ForkedBlockSplitTest extends TestCase {
 					],
 				],
 				[
-					// The chronicle's own house power - the reason they forked at all.
+					// The chronicle's own house power.
 					'name'   => 'House Discipline',
 					'levels' => [
 						[ 'level' => null, 'tier' => 'basic', 'cost' => '3', 'power_name' => 'House One' ],
@@ -55,7 +46,6 @@ class ForkedBlockSplitTest extends TestCase {
 		return json_decode( (string) json_encode( $definition ) );
 	}
 
-	/** The defect itself, so the fix cannot be quietly reverted. */
 	public function test_an_unmigrated_fork_prices_the_old_way(): void {
 		$result = Cost_Engine::price_held_tiered_power( $this->decoded( $this->flat_fork() ), [ 'name' => 'Animalism', 'level' => 5 ], true );
 
@@ -82,7 +72,9 @@ class ForkedBlockSplitTest extends TestCase {
 		$this->assertSame( 'Stampede', $family['elder']['master'][0]['power_name'] );
 	}
 
-	/** The chronicle's own reason for forking must survive the migration untouched. */
+	/**
+	 * The chronicle's own reason for forking must survive the migration untouched.
+	 */
 	public function test_a_chronicles_own_house_power_survives(): void {
 		$split = Seeder::split_stored_definition( 'vampire-disciplines', $this->flat_fork() );
 
@@ -101,7 +93,9 @@ class ForkedBlockSplitTest extends TestCase {
 		$this->assertSame( 15, $result['xp'], 'Stampede is master, and must price as master on a fork too' );
 	}
 
-	/** Idempotent: an upgrade runs this every time, and a second run must change nothing. */
+	/**
+	 * Idempotent: an upgrade runs this every time, and a second run must change nothing.
+	 */
 	public function test_running_it_twice_is_a_no_op(): void {
 		$once = Seeder::split_stored_definition( 'vampire-disciplines', $this->flat_fork() );
 		$this->assertNotNull( $once );

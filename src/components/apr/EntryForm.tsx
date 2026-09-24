@@ -1,8 +1,5 @@
 /**
- * Form for adding a new entry to a plot's timeline. Renders an entry-type selector (when
- * more than one type is available), a rich-text content editor, an optional event-date
- * field, and a submit button that posts the entry through the API. A non-manager viewer
- * only ever sees the action entry type; a manager sees response, note, and resolution too.
+ * Form for adding a new entry to a plot's timeline.
  */
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -19,17 +16,19 @@ import './EntryForm.css';
 export interface EntryFormProps {
 	gameSlug: string;
 	plotId: number;
-	/** Whether the viewer holds be_manage_plots - controls which entry types are offered. */
+	/**
+	 * Whether the viewer holds be_manage_plots.
+	 */
 	canManage: boolean;
 	onCreated: () => void;
-	/** Shows an optional Timeline date field when true. */
+	/**
+	 * Shows an optional Timeline date field when true.
+	 */
 	expandedEnabled?: boolean;
 }
 
 /**
- * Renders a form for posting a new entry to a plot. The set of entry types offered depends
- * on the viewer's permissions - a player sees only "action," while a manager sees the full
- * set of entry types. Submits the entry through the API and clears the form on success.
+ * Renders a form for posting a new entry to a plot.
  */
 export function EntryForm( {
 	gameSlug,
@@ -47,15 +46,13 @@ export function EntryForm( {
 	);
 	const contentDraft = useRef( '' );
 	const contentId = `be-entry-content-${ plotId }`;
-	// Drives the Post button's disabled state; HtmlEditor is uncontrolled, so content
-	// itself can't be read at render time the way a plain textarea's value could.
+	// Drives the Post button's disabled state.
 	const [ hasContent, setHasContent ] = useState( false );
 	const [ eventDate, setEventDate ] = useState( '' );
 	const [ submitting, setSubmitting ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
 
-	// A player may only choose plot (public) or storytellers (private to themself and
-	// staff); only a manager may direct a post to specific characters (1.1.0 §2.4).
+	// A player may only choose plot (public) or storytellers (private to themself and staff).
 	const [ audience, setAudience ] = useState< EntryAudienceValue >( 'plot' );
 	const [ audienceCharacterIds, setAudienceCharacterIds ] = useState<
 		number[]
@@ -95,9 +92,7 @@ export function EntryForm( {
 	}
 
 	/**
-	 * Submits the entry form. Sends the trimmed content, selected entry type, and optional
-	 * event date to the API, then clears the content and date fields and notifies the
-	 * parent via onCreated.
+	 * Submits the entry form.
 	 */
 	async function submit( e: React.FormEvent ) {
 		e.preventDefault();
@@ -128,9 +123,7 @@ export function EntryForm( {
 			} );
 			contentDraft.current = '';
 			setHasContent( false );
-			// The form stays mounted for the next entry, so the editor's own live content -
-			// not just the ref - needs clearing (same tinymce API HtmlEditor's own AI Assist
-			// acceptance uses internally).
+			// The form stays mounted for the next entry.
 			tinymce?.get( contentId )?.setContent( '' );
 			setEventDate( '' );
 			setAudience( 'plot' );
@@ -269,8 +262,6 @@ export function EntryForm( {
 					setHasContent( html.trim() !== '' );
 				} }
 				rows={ 3 }
-				// action entries are player-authored - AI assist stays ST-only, only
-				// offered for the other three types canManage already gates.
 				aiAssist={
 					canManage && entryType !== 'action'
 						? {

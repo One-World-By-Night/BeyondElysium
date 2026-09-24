@@ -9,19 +9,14 @@ use BeyondElysium\Services\Point_Audit;
 use WP_UnitTestCase;
 
 /**
- * `Point_Audit` against the real seeder output and the real demo characters
- * (point-calculator-design.md §7 PC-6) - never hand-built fixtures for the
- * catalog itself.
- *
- * @see BE_PROCESS/design/point-calculator-design.md
+ * `Point_Audit` against the real seeder output and the real demo characters.
  */
 class PointAuditTest extends WP_UnitTestCase {
 
 	private static string $game_slug;
 
 	public static function wpSetUpBeforeClass( $factory ): void {
-		// Demo data seeds into the real 'be-demo' game as part of ordinary plugin
-		// activation - confirm it, rather than assuming it, since this test depends on it.
+		// Demo data seeds into the real 'be-demo' game as part of ordinary plugin activation.
 		self::$game_slug = 'be-demo';
 	}
 
@@ -72,9 +67,6 @@ class PointAuditTest extends WP_UnitTestCase {
 		$isolde = $this->find_demo_character( 'Isolde Marchetti' );
 		$report = Point_Audit::for_character( (int) $isolde->id );
 
-		// Expected, not a bug (point-calculator-design.md §7 PC-6): the priced total is
-		// always well below her real 80 XP of record, since most of her sheet is
-		// currently unpriceable (attribute traits, identity fields, ...).
 		$this->assertLessThan( 0, $report['variance'] );
 		$this->assertSame( 80, $report['xp_spent_of_record'] );
 	}
@@ -126,35 +118,17 @@ class PointAuditTest extends WP_UnitTestCase {
 		Character::delete( $character_id );
 	}
 
-	/** Owner ruling, 1.0.0-review F-040: levels add up - a Discipline at level five audits as every level up to it. */
 	public function test_a_discipline_at_level_five_audits_as_every_level_up_to_it(): void {
 		$block      = Schema_Block::find_by_slug( 'vampire-disciplines' );
 		$definition = $block->definition;
 		$this->assertNotEmpty( $definition->sequential ?? false );
 
-		// D66 (1.2.5-design-workflow.md §A): most seeded families tie several powers at
-		// one tier, so `level` is null on all of them - a real numbered `level === 5`
-		// item is now the exception, not the rule. The per-rank cost is the block's own
-		// real ladder, not any one family's own items - `Cost_Engine::block_tier_costs()`
-		// takes a plurality vote across every power in the block specifically because a
-		// single family can carry a rare miskeyed cost (D66's own found example:
-		// Animalism's "Drawing Out the Beast" costs 3 where every other real
-		// advanced-tier item, including its own sibling, costs 9); mirrored here rather
-		// than reading the block-scoped private method directly.
-		// 1.2.10 S6. This built its expected costs by mapping one tier per rank - basic 1,
-		// intermediate 2, advanced 3, elder 4, master 5 - and so expected a level-5 holding
-		// to cost through the **master** rate. That is the inference the release deletes: a
-		// declared 2/2/1 ladder makes rank 5 the *advanced* rung, and elder and master are
-		// picks that no rating ever passes through.
-		//
-		// Expected costs now come from the block's declared ladder and its per-rank prices,
-		// read the same way the engine reads them.
+		// Most seeded families tie several powers at one tier.
 		$meta   = $definition->_meta;
 		$ladder = (array) $meta->ladder;
 		$prices = (array) $meta->costs;
 
-		// Book order from `_meta.ranks`, never the ladder's stored key order (MySQL's JSON
-		// column re-sorts it to basic, advanced, intermediate).
+		// Book order from `_meta.ranks`.
 		$order = array_values( array_filter( (array) ( $meta->ranks ?? array_keys( $ladder ) ), static fn( $r ): bool => isset( $ladder[ $r ] ) ) );
 
 		$costs_by_rank = [];
@@ -168,9 +142,7 @@ class PointAuditTest extends WP_UnitTestCase {
 		$ceiling = array_sum( $ladder );
 		$this->assertArrayHasKey( $ceiling, $costs_by_rank, 'the declared ladder must price every rung' );
 
-		// Any family with a full ladder will do - the assertion is about the arithmetic, and
-		// the per-rank price is the block's, not this family's (D66: one Animalism advanced
-		// row carries 3 where every sibling carries 9, which the plurality vote outweighs).
+		// Any family with a full ladder will do.
 		$power = null;
 		foreach ( $definition->powers as $candidate ) {
 			if ( count( $candidate->levels ) === $ceiling ) {
@@ -215,13 +187,13 @@ class PointAuditTest extends WP_UnitTestCase {
 			'owner_slug' => self::$game_slug,
 			'stack_slug' => 'vampire',
 			'sheet_data' => [
-				'met-merits' => [ [ 'name' => 'Iron Will', 'count' => 3 ], [ 'name' => 'Iron Will', 'count' => 2 ] ],
+				'vampire-merits' => [ [ 'name' => 'Iron Will', 'count' => 3 ], [ 'name' => 'Iron Will', 'count' => 2 ] ],
 			],
 			'created_by' => 1,
 		] );
 
 		$report = Point_Audit::for_character( $character_id );
-		$merit_lines = array_values( array_filter( $report['lines'], static fn( $l ) => $l['block_slug'] === 'met-merits' ) );
+		$merit_lines = array_values( array_filter( $report['lines'], static fn( $l ) => $l['block_slug'] === 'vampire-merits' ) );
 
 		$this->assertCount( 2, $merit_lines, 'find_held_trait()-style first-match logic would collapse this to one line' );
 
@@ -229,13 +201,11 @@ class PointAuditTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * 1.0.0-review F-085: the summary's most common reason was the machine key with its
-	 * underscores swapped for spaces, so a translated chronicle read it in English.
+	 * The summary's most common reason was the machine key with its underscores swapped for spaces.
 	 */
 	public function test_the_caveat_names_its_most_common_reason_through_translation(): void {
 		$isolde = $this->find_demo_character( 'Isolde Marchetti' );
 
-		// The sentence becomes "count|reason", and every other phrase is marked as translated.
 		$mark = static function ( $translation, $text ) {
 			return str_contains( $text, 'could not be priced' ) ? '%1$d|%2$s' : '⟦' . $translation . '⟧';
 		};

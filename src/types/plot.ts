@@ -1,50 +1,38 @@
 /**
- * Type definitions for plots and their child actions and rumors,
- * plot entries and connections, and the action-allocation and
- * rumor-generation response shapes. A plot, action, and rumor all
- * share this same Plot record, distinguished by their place in
- * the parent/child hierarchy and by tags.
+ * Type definitions for plots and their child actions and rumors, plot entries and connections, and the
+ * action-allocation and rumor-generation response shapes.
  */
 import type { QueryCondition, QueryLogic } from './query';
 import type { Attachment } from './attachment';
 
 /**
- * The stored lifecycle state of a plot: active, resolved, or
- * archived. Set directly by a Storyteller, as opposed to
- * DerivedPlotStatus, which is computed.
+ * The stored lifecycle state of a plot: active, resolved, or archived.
  */
 export type PlotStatus = 'active' | 'resolved' | 'archived';
 
 /**
- * A plot's computed display status: not yet started, currently
- * active, or finished. Derived server-side from its dates and
- * stored status rather than stored itself.
+ * A plot's computed display status: not yet started, currently active, or finished.
  */
 export type DerivedPlotStatus = 'pending' | 'active' | 'finished';
 
 /**
- * Who originated a plot: a player through their own actions, or
- * a Storyteller.
+ * Who originated a plot: a player through their own actions, or a Storyteller.
  */
 export type InitiatedBy = 'player' | 'st';
 
 /**
- * The kind of a single plot entry: a player's action, a
- * Storyteller's response, a freestanding note, or a resolution
+ * The kind of a single plot entry: a player's action, a Storyteller's response, a freestanding note, or a resolution
  * entry.
  */
 export type EntryType = 'action' | 'response' | 'note' | 'resolution';
 
 /**
- * The kind of entity a connection can link: a character, a plot,
- * a world object, or a tag.
+ * The kind of entity a connection can link: a character, a plot, a world object, or a tag.
  */
 export type EntityType = 'character' | 'plot' | 'world_object' | 'tag';
 
 /**
- * A saved query shape used to target a plot or rumor at a set of
- * matching characters. Recipients are resolved by running this
- * query rather than being listed individually.
+ * A saved query shape used to target a plot or rumor at a set of matching characters, resolved by running the query.
  */
 export interface TargetQuery {
 	field: string;
@@ -53,15 +41,12 @@ export interface TargetQuery {
 }
 
 /**
- * A display-only grouping label for a top-level plot, such as an
- * arc or season. Purely organizational; no behavior branches on
- * this value.
+ * A display-only grouping label for a top-level plot, such as an arc or season.
  */
 export type PlotCategory = 'arc' | 'subplot' | 'season' | 'episode';
 
 /**
- * A single faction's stated goal within a plot, along with the
- * key NPCs pursuing it and the strategy they are using.
+ * A single faction's stated goal within a plot, along with the key NPCs pursuing it and the strategy they are using.
  */
 export interface FactionGoal {
 	faction: string;
@@ -71,20 +56,14 @@ export interface FactionGoal {
 }
 
 /**
- * Who may see a plot, item, or location (1.1.0 §2.1): everyone in
- * the chronicle, Storytellers/Narrators only, or a Storyteller-
- * defined rule set (AudienceRules) plus any character directly
- * connected to it. Matches Services\Audience::VALUES exactly -
- * a different, non-overlapping vocabulary from a plot entry's own
- * EntryAudienceValue below.
+ * Who may see a plot, item, or location: everyone in the chronicle, Storytellers/Narrators only, or a
+ * Storyteller-defined rule set (AudienceRules) plus any character directly connected to it.
  */
 export type AudienceValue = 'everyone' | 'storytellers' | 'restricted';
 
 /**
- * A Storyteller-defined rule set narrowing a `restricted` audience
- * to characters matching a query, in the same {conditions, logic}
- * shape the query builder already uses (resolved server-side
- * against the `char` inventory).
+ * A Storyteller-defined rule set narrowing a `restricted` audience to characters matching a query, in the same
+ * {conditions, logic} shape the query builder already uses (resolved server-side against the `char` inventory).
  */
 export interface AudienceRules {
 	conditions: QueryCondition[];
@@ -92,20 +71,13 @@ export interface AudienceRules {
 }
 
 /**
- * Who may see a single plot entry (1.1.0 §2.4): everyone who can
- * see the parent plot (the default), Storytellers/Narrators and
- * the entry's own author only, or a Storyteller post directed at
- * specific characters via audience_character_ids. A player may
- * only choose `plot` or `storytellers` for their own entry; only a
- * Storyteller may direct one to `characters`.
+ * Who may see a single plot entry.
  */
 export type EntryAudienceValue = 'plot' | 'storytellers' | 'characters';
 
 /**
- * A character option in a narrow, name-and-id-only picker, such as
- * a player plot's invite candidates or an entry's directed-post
- * recipients. Deliberately excludes every other character field -
- * neither picker may disclose more about a character than this.
+ * A character option in a narrow, name-and-id-only picker, such as a player plot's invite candidates or an entry's
+ * directed-post recipients.
  */
 export interface CharacterOption {
 	id: number;
@@ -113,27 +85,31 @@ export interface CharacterOption {
 }
 
 /**
- * A single plot, action, or rumor record - all three share this
- * same shape, distinguished by parent_plot_id and by tags rather
- * than by separate types. Holds its status, timeline, and
- * resolution details, and optionally its entries, connections,
- * and children.
+ * A single plot, action, or rumor record.
  */
 export interface Plot {
 	id: number;
 	game_id: number;
-	/** Parent plot id; null for a top-level plot, forming a Plot -> Action -> Rumor hierarchy. */
+	/**
+	 * Parent plot id; null for a top-level plot, forming a Plot -> Action -> Rumor hierarchy.
+	 */
 	parent_plot_id: number | null;
-	/** Cover image attachment id; image_url is resolved from it server-side. */
+	/**
+	 * Cover image attachment id.
+	 */
 	image_id: number | null;
 	image_url: string | null;
 	title: string;
 	description: string | null;
 	status: PlotStatus;
-	/** Computed server-side from status and dates; status remains the authoritative stored value. */
+	/**
+	 * Computed server-side from status and dates.
+	 */
 	derived_status: DerivedPlotStatus;
 	initiated_by: InitiatedBy;
-	/** Null on an ordinary plot, action, or rumor; those stay initiated_by/tag-driven instead. */
+	/**
+	 * Null on an ordinary plot, action, or rumor.
+	 */
 	plot_category: PlotCategory | null;
 	created_by: number;
 	first_introduced: string | null;
@@ -145,35 +121,50 @@ export interface Plot {
 	faction_goals: FactionGoal[] | null;
 	cliffhanger: string | null;
 	target_query: TargetQuery | null;
-	/** Only present for users with the be_manage_plots capability. */
+	/**
+	 * Only present for users with the be_manage_plots capability.
+	 */
 	st_notes?: string | null;
-	/** Defaults to `storytellers` for a Storyteller-created plot, `restricted` for a player plot. */
+	/**
+	 * Defaults to `storytellers` for a Storyteller-created plot, `restricted` for a player plot.
+	 */
 	audience: AudienceValue;
-	/** Only meaningful when audience is `restricted`; null otherwise. */
+	/**
+	 * Only meaningful when audience is `restricted`.
+	 */
 	audience_rules: AudienceRules | null;
-	/** Whether the current viewer owns this player plot (§2.3a) - always false for a global plot. */
+	/**
+	 * Whether the current viewer owns this player plot.
+	 */
 	is_owner: boolean;
-	/** Release batch gate (1.1.0 §3.2) - held plus a null release_batch_id means "draft, never visible". */
+	/**
+	 * Release batch gate: held plus a null release_batch_id means "draft, never visible".
+	 */
 	held: boolean;
 	release_batch_id: number | null;
-	/** This plot's staff owner (1.1.0 §3.6), or null when unassigned. */
+	/**
+	 * This plot's staff owner, or null when unassigned.
+	 */
 	assigned_to: number | null;
 	created_at: string;
 	updated_at: string;
-	/** Only present on the single-plot fetch. */
+	/**
+	 * Only present on the single-plot fetch.
+	 */
 	entries?: PlotEntry[];
 	connections?: Connection[];
-	/** Only present on the single-plot fetch. */
+	/**
+	 * Only present on the single-plot fetch.
+	 */
 	attachments?: Attachment[];
-	/** Immediate child plots, included in the same fetch. */
+	/**
+	 * Immediate child plots, included in the same fetch.
+	 */
 	children?: Plot[];
 }
 
 /**
- * A single entry in a plot's timeline: a player's action, a
- * Storyteller's response, a note, or a resolution. Ordered by
- * created_at and optionally carries its own in-fiction event
- * date.
+ * A single entry in a plot's timeline: a player's action, a Storyteller's response, a note, or a resolution.
  */
 export interface PlotEntry {
 	id: number;
@@ -181,22 +172,28 @@ export interface PlotEntry {
 	author_id: number;
 	entry_type: EntryType;
 	content: string;
-	/** A Timeline entry's in-fiction date, independent of created_at. */
+	/**
+	 * A Timeline entry's in-fiction date, independent of created_at.
+	 */
 	event_date: string | null;
-	/** Defaults to `plot` (public) when omitted. */
+	/**
+	 * Defaults to `plot` (public) when omitted.
+	 */
 	audience: EntryAudienceValue;
-	/** Only meaningful when audience is `characters`; null otherwise. */
+	/**
+	 * Only meaningful when audience is `characters`.
+	 */
 	audience_character_ids: number[] | null;
-	/** Release batch gate (1.1.0 §3.2) - held plus a null release_batch_id means "draft, never visible". */
+	/**
+	 * Release batch gate: held plus a null release_batch_id means "draft, never visible".
+	 */
 	held: boolean;
 	release_batch_id: number | null;
 	created_at: string;
 }
 
 /**
- * A link between two entities, such as a character connected to
- * a plot or to another character. Carries an optional label and
- * notes describing the nature of the relationship.
+ * A link between two entities, such as a character connected to a plot or to another character.
  */
 export interface Connection {
 	id: number;
@@ -212,9 +209,7 @@ export interface Connection {
 }
 
 /**
- * Request body for creating a new plot, action, or rumor. Only
- * title is required; every other field is optional and takes a
- * server-side default when omitted.
+ * Request body for creating a new plot, action, or rumor.
  */
 export interface CreatePlotRequest {
 	title: string;
@@ -225,28 +220,40 @@ export interface CreatePlotRequest {
 	start_date?: string;
 	end_date?: string;
 	st_notes?: string;
-	/** Set to create this plot as a child of an existing plot. */
+	/**
+	 * Set to create this plot as a child of an existing plot.
+	 */
 	parent_plot_id?: number;
-	/** be_manage_plots only; tags the new plot as a rumor via the apr_rumor connection. */
+	/**
+	 * be_manage_plots only; tags the new plot as a rumor via the apr_rumor connection.
+	 */
 	is_rumor?: boolean;
-	/** be_manage_plots only. */
+	/**
+	 * be_manage_plots only.
+	 */
 	plot_category?: PlotCategory;
 	cliffhanger?: string;
 	faction_goals?: FactionGoal[];
-	/** Cover image attachment id; be_manage_plots only. */
+	/**
+	 * Cover image attachment id.
+	 */
 	image_id?: number;
-	/** be_manage_plots only; a player plot is always forced to `restricted` regardless of this field. */
+	/**
+	 * be_manage_plots only; a player plot is always forced to `restricted` regardless of this field.
+	 */
 	audience?: AudienceValue;
-	/** be_manage_plots only; requires audience: 'restricted'. */
+	/**
+	 * be_manage_plots only; requires audience: 'restricted'.
+	 */
 	audience_rules?: AudienceRules;
-	/** Player branch only: the player's own character this plot belongs to. */
+	/**
+	 * Player branch only: the player's own character this plot belongs to.
+	 */
 	character_id?: number;
 }
 
 /**
  * Request body for updating an existing plot, action, or rumor.
- * Every field is optional; only the fields included in the
- * request are changed.
  */
 export interface UpdatePlotRequest {
 	title?: string;
@@ -259,29 +266,38 @@ export interface UpdatePlotRequest {
 	resolution_details?: string;
 	resolution_impact?: string;
 	st_notes?: string;
-	/** Changes this plot's parent; null moves it to the top level. */
+	/**
+	 * Changes this plot's parent.
+	 */
 	parent_plot_id?: number | null;
-	/** Display grouping label; null clears it. */
+	/**
+	 * Display grouping label.
+	 */
 	plot_category?: PlotCategory | null;
 	cliffhanger?: string | null;
 	faction_goals?: FactionGoal[] | null;
-	/** Cover image attachment id; null clears it. */
+	/**
+	 * Cover image attachment id.
+	 */
 	image_id?: number | null;
 	audience?: AudienceValue;
-	/** Requires audience: 'restricted'; ignored otherwise. */
+	/**
+	 * Requires audience: 'restricted'.
+	 */
 	audience_rules?: AudienceRules | null;
-	/** be_manage_plots only; must be a chronicle member with role hst, ast, or narrator. null unassigns. */
+	/**
+	 * be_manage_plots only; must be a chronicle member with role hst, ast, or narrator. null unassigns.
+	 */
 	assigned_to?: number | null;
 }
 
-/** The plot list's character filter. */
+/**
+ * The plot list's character filter.
+ */
 export type CharacterPlotFilter = 'only' | 'exclude';
 
 /**
  * Query parameters accepted by the plots collection endpoint.
- * Supports pagination, ordering, filtering by status, initiator,
- * or whether a character is tied to the plot, a free-text search,
- * and a date range.
  */
 export interface PlotCollectionParams {
 	status?: PlotStatus;
@@ -289,7 +305,9 @@ export interface PlotCollectionParams {
 	search?: string;
 	date_from?: string;
 	date_to?: string;
-	/** `only`: each character's own plot and its action rounds; `exclude`: every other plot. */
+	/**
+	 * `only`: each character's own plot and its action rounds.
+	 */
 	character_plots?: CharacterPlotFilter;
 	orderby?: 'title' | 'status' | 'created_at' | 'updated_at';
 	order?: 'ASC' | 'DESC';
@@ -298,13 +316,14 @@ export interface PlotCollectionParams {
 }
 
 /**
- * Response from the player-facing "my plots" endpoint: the plots
- * resolved as relevant to the current player, plus which
- * resolution mechanisms contributed to that list.
+ * Response from the player-facing "my plots" endpoint: the plots resolved as relevant to the current player, plus
+ * which resolution mechanisms contributed to that list.
  */
 export interface MyPlotsResponse {
 	plots: Plot[];
-	/** Which resolution mechanisms are active; kept as an object for response-shape stability. */
+	/**
+	 * Which resolution mechanisms are active.
+	 */
 	resolution: {
 		direct_connections: boolean;
 		target_query: boolean;
@@ -312,25 +331,27 @@ export interface MyPlotsResponse {
 }
 
 /**
- * Request body for creating a new plot entry. entry_type and
- * content are required; event_date is optional and only
- * meaningful for a Timeline-style entry.
+ * Request body for creating a new plot entry. entry_type and content are required.
  */
 export interface CreateEntryRequest {
 	entry_type: EntryType;
 	content: string;
-	/** A Timeline entry's in-fiction date. */
+	/**
+	 * A Timeline entry's in-fiction date.
+	 */
 	event_date?: string;
-	/** A player may only choose `plot` (the default) or `storytellers`; `characters` is manager-only. */
+	/**
+	 * A player may only choose `plot` (the default) or `storytellers`.
+	 */
 	audience?: EntryAudienceValue;
-	/** Required, non-empty, when audience is `characters`; manager-only. */
+	/**
+	 * Required, non-empty, when audience is `characters`.
+	 */
 	audience_character_ids?: number[];
 }
 
 /**
- * Request body for creating a new connection between two
- * entities. source_type and source_id identify the origin;
- * target_type and target_id identify the other end, when known.
+ * Request body for creating a new connection between two entities. source_type and source_id identify the origin.
  */
 export interface CreateConnectionRequest {
 	source_type: EntityType;
@@ -342,9 +363,7 @@ export interface CreateConnectionRequest {
 }
 
 /**
- * Request body for updating an existing connection. Only its
- * label and notes may be changed; both are optional and only
- * included fields are updated.
+ * Request body for updating an existing connection.
  */
 export interface UpdateConnectionRequest {
 	label?: string;
@@ -352,12 +371,7 @@ export interface UpdateConnectionRequest {
 }
 
 /**
- * A single subaction produced by allocating a character's actions
- * across their held powers. Reports the power's name, its level,
- * how many actions it received in total, how many went unused,
- * and how much it grew. unused already reflects any
- * Background_Ledger spends debited against it; spent/over_budget
- * report that debit explicitly.
+ * A single subaction produced by allocating a character's actions across their held powers.
  */
 export interface Subaction {
 	name: string;
@@ -371,8 +385,6 @@ export interface Subaction {
 
 /**
  * Response from allocating a character's actions for a game date.
- * Lists the resulting subactions and whether the allocation was
- * actually committed or only previewed.
  */
 export interface AllocateActionsResponse {
 	subactions: Subaction[];
@@ -382,23 +394,21 @@ export interface AllocateActionsResponse {
 }
 
 /**
- * A single generated rumor candidate, not yet committed. Carries
- * its title, category, the target query used to find recipients,
- * and a description of the rumor's content.
+ * A single generated rumor candidate.
  */
 export interface RumorCandidate {
 	title: string;
 	category: string;
 	target_query: TargetQuery | null;
 	description: string;
-	/** Number of characters actually matched by target_query. */
+	/**
+	 * Number of characters actually matched by target_query.
+	 */
 	recipient_count: number;
 }
 
 /**
- * Response from generating rumors for a game date. Lists the
- * generated rumor candidates and whether they were actually
- * committed or only previewed.
+ * Response from generating rumors for a game date.
  */
 export interface GenerateRumorsResponse {
 	rumors: RumorCandidate[];

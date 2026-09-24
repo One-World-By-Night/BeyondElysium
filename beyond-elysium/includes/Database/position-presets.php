@@ -1,9 +1,6 @@
 <?php
 /**
- * Title preset groups for the position title picker (1.1.0 §3.10, F2) - data only, no
- * creature-specific code. Each group is a list of titles the picker offers together;
- * titles stay free text on the actual `be_positions.title` column regardless, so picking
- * from a group is a convenience, never an enforced enum.
+ * Title preset groups for the position title picker.
  *
  * @return array<string,string[]> preset group label => titles.
  */

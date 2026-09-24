@@ -3,35 +3,12 @@
 namespace BeyondElysium\Tests\Support;
 
 /**
- * Shared throwaway self-signed cert/key generation for every thread or
- * workflow test that needs `Pdf_Signer::availability()` to report ok.
- * `tests/` has no PSR-4 autoloading (only `beyond-elysium/includes/` does),
- * so this file is `require_once`d directly by each test file that calls
- * `ensure()`, rather than relying on class autoloading across test suites -
- * `--testsuite thread` and `--testsuite workflow` run as separate PHP
- * processes (`bin/verify --all`), and PHPUnit only `require`s files inside
- * whichever single suite directory it was told to run, so a class defined in
- * `tests/thread/SomeTest.php` is simply never loaded during a `workflow`-only
- * run and cannot be referenced from one.
- *
- * Idempotent and never deletes its files: PHP constants can only be
- * `define()`d once per process, so whichever test class runs first within a
- * suite "owns" the definition for the rest of that suite's run; a second
- * class deleting the file out from under an already-defined constant would
- * break every class using it that runs after. Temp files, cleaned up by the
- * OS in the ordinary course of things - throwaway self-signed test material,
- * nothing sensitive.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md Section 3c, SP-7, SP-8, SP-12
+ * Shared throwaway self-signed cert/key generation for every thread or workflow test that needs
+ * `Pdf_Signer::availability()` to report ok.
  */
 class PdfSigningTestFixture {
 
 	public static function ensure(): void {
-		// Secure printing is an opt-in since 1.0.1 C2, and a certificate alone no longer
-		// signs anything. Every caller of this fixture wants signing to actually happen, so
-		// the switch belongs here with the certificate rather than repeated in each test.
-		// Set before the early return: the constants survive a whole process, the option does
-		// not - a test that deletes it would otherwise silently unsign every later class.
 		update_option( \BeyondElysium\Services\Pdf_Signer::OPT_IN_OPTION, true );
 
 		if ( defined( 'BE_PDF_SIGNING_CERT' ) ) {

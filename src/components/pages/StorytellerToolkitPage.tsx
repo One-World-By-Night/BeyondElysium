@@ -1,12 +1,6 @@
 /**
- * The Storyteller-facing fixed page (page-consolidation-design.md): a chronicle
- * switcher plus tabs for Dashboard, Approval Queue, Plots & Rumors, Boon Ledger, and
- * Items & Locations - replacing separate pages that each used to duplicate per
- * chronicle. Each tab hides itself when `useChronicleSwitcher()`'s per-chronicle
- * capabilities say the current user doesn't hold it in the currently selected
- * chronicle - an AST who only narrates one chronicle sees fewer tabs there than
- * in one they HST, resolved fresh on every switch rather than read from the
- * site-wide, chronicle-blind snapshot every page already carries.
+ * The Storyteller-facing fixed page: a chronicle switcher plus tabs for Dashboard, Approval Queue, Plots & Rumors,
+ * Boon Ledger, and Items & Locations.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -47,18 +41,13 @@ export function StorytellerToolkitPage() {
 		retryGames,
 		accentColor,
 	} = useChronicleSwitcher();
-	// 1.2.7-design-workflow.md §E3 - only set when a chronicle (or the site) actually
-	// overrides the accent; an unset chronicle sends no inline style at all, so the six
-	// --be-st-accent consumers fall through to CharacterSheet.css's/PlotManager.css's own
-	// CSS default unchanged (Decision 041's "un-styled renders byte-identical" guarantee).
 	const accentStyle: CSSProperties | undefined = accentColor
 		? ( { '--be-st-accent': accentColor } as CSSProperties )
 		: undefined;
 	const [ tab, setTab ] = useState( () =>
 		readTabFromUrl( STORYTELLER_TABS.dashboard )
 	);
-	// The Downtime queue's own "open the plot thread" link (1.1.0 §3.3) arrives as
-	// ?open_plot=; read once, not kept in sync with the URL afterward.
+	// The Downtime queue's own "open the plot thread" link arrives as ?open_plot=.
 	const [ openPlotId ] = useState( () => {
 		const raw = new URLSearchParams( window.location.search ).get(
 			'open_plot'
@@ -114,8 +103,6 @@ export function StorytellerToolkitPage() {
 		},
 	].filter( Boolean ) as Tab[];
 
-	// The previously-active tab can become unavailable after switching to a chronicle
-	// where the user holds a narrower role - falls back to the first tab still visible.
 	useEffect( () => {
 		if ( tabs.length > 0 && ! tabs.some( ( t ) => t.key === tab ) ) {
 			setTab( tabs[ 0 ].key );

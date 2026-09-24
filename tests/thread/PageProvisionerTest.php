@@ -6,13 +6,8 @@ use BeyondElysium\Core\Page_Provisioner;
 use WP_UnitTestCase;
 
 /**
- * page-consolidation-design.md: four fixed pages, none of them chronicle-specific -
- * My Chronicle and Storyteller Toolkit each resolve their own chronicle from a
- * client-side switcher, and Print/Verify never needed one at all. Provisioning no
- * longer waits for a game to exist (the old per-chronicle model's own reason for
- * that gate is gone), and creates no data-be-config at all - every widget here
- * reads its state from the URL or its own hook, not from config baked in at
- * creation time.
+ * Four fixed front-end pages, none chronicle-specific: My Chronicle and Storyteller Toolkit resolve their chronicle
+ * from a client-side switcher, and Print and Verify need none.
  */
 class PageProvisionerTest extends WP_UnitTestCase {
 

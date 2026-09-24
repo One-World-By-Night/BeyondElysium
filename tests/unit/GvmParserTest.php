@@ -8,11 +8,6 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Menu parsing, both serializations, against the real Grapevine files in this repo.
- *
- * Fixture tests, not mocks. The XML and binary menu sets are the same data written two
- * ways, which makes a parity check a free and very strong correctness test.
- *
- * @see BE_PROCESS/releases/workflow-0.8.md Steps 1 and 3
  */
 class GvmParserTest extends TestCase {
 
@@ -44,8 +39,7 @@ class GvmParserTest extends TestCase {
 	}
 
 	public function test_reads_singles_as_four_bytes(): void {
-		// VB6 Single (4 bytes) is not the same width as Double (8 bytes) - Experience,
-		// XP history, and several per-stack stat fields use Single (workflow-0.8.md Step 2).
+		// Single (4 bytes) is not the same width as Double (8 bytes).
 		$reader = new GV_Binary_Reader( pack( 'g*', 0.0, -1.5, 12.25 ) );
 
 		$this->assertSame( 0.0, $reader->single() );
@@ -117,9 +111,7 @@ class GvmParserTest extends TestCase {
 	}
 
 	public function test_a_second_single_is_not_consumed_as_part_of_a_double(): void {
-		// Two Singles back to back must read as two distinct 4-byte values, not one
-		// Double plus a truncation - the exact desynchronization this class's own doc
-		// comment warns about.
+		// Two Singles back to back must read as two distinct 4-byte values.
 		$reader = new GV_Binary_Reader( pack( 'g', 1.5 ) . pack( 'g', 2.5 ) );
 
 		$this->assertSame( 1.5, $reader->single() );
@@ -127,9 +119,6 @@ class GvmParserTest extends TestCase {
 	}
 
 	public function test_ole_date_against_an_independently_verifiable_reference(): void {
-		// 44562 is 2022-01-01 in the OLE Automation date system, checkable against any
-		// online OLE-date converter - not derived from this class's own arithmetic.
-		// 44562.5 carries the fractional day as noon.
 		$this->assertSame( '2022-01-01 00:00:00', ( new GV_Binary_Reader( pack( 'e', 44562.0 ) ) )->date() );
 		$this->assertSame( '2022-01-01 12:00:00', ( new GV_Binary_Reader( pack( 'e', 44562.5 ) ) )->date() );
 	}
@@ -185,15 +174,10 @@ class GvmParserTest extends TestCase {
 
 	/**
 	 * The binary and XML files are the same data in two serializations.
-	 *
-	 * This is the strongest correctness check available for the binary reader: a single
-	 * mis-sized field desynchronizes the stream and every later value diverges. In
-	 * particular it catches reading Category or Display as 2 bytes instead of 4 — they are
-	 * VB6 enums, which are Longs.
 	 */
 	public function test_binary_and_xml_agree(): void {
 		$binary_path = $this->path( 'GV301Source/Code/Grapevine Menus.gvm' );
-		$xml_path    = BE_PLUGIN_PATH . '/data/Grapevine Menus XML.gvm';
+		$xml_path    = $this->path( 'tools/catalog/source/Grapevine Menus XML.gvm' );
 
 		if ( ! file_exists( $binary_path ) ) {
 			$this->markTestSkipped( 'Binary menu file is not present in this checkout.' );
@@ -256,8 +240,8 @@ class GvmParserTest extends TestCase {
 	}
 
 	/**
-	 * Includes and submenus are stored as items in the binary format, discriminated by
-	 * the Cost field: '+' for an include, ':' for a submenu.
+	 * Includes and submenus are stored as items in the binary format, discriminated by the Cost field: '+' for an
+	 * include, ':' for a submenu.
 	 */
 	public function test_binary_separates_includes_and_submenus_from_items(): void {
 		$path = $this->path( 'GV301Source/Code/Grapevine Menus.gvm' );

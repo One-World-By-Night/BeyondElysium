@@ -13,26 +13,8 @@ use BeyondElysium\Services\GEX_Xml_Parser;
 use WP_UnitTestCase;
 
 /**
- * GX-3/GX-4: `Character_Exporter` against a real vampire character with real
- * `sheet_data` set against this install's own already-seeded global MET
- * catalog (`vampire-identity`, `vampire-resources`, `met-merits`,
- * `vampire-backgrounds`, `vampire-health` - every install ships these
- * pre-seeded, per the Storyteller Guide; this suite deliberately does not
- * insert its own competing schema_blocks/creature_stacks rows, since the
- * real ones already exist globally and a same-slug insert collides), a real
- * `be_connections` item, a real approved XP history, and a real
- * `import_note` change carrying a `preserve_as_note` list (Bonds, which has
- * no live BE model) - proving every routing outcome `gex-trait-list-map.php`
- * defines at once, then confirming the whole document round-trips through
- * our own `GEX_Xml_Parser` cleanly.
- *
- * `Toreador`/`Camarilla`/`Humanity`/`Bureaucracy` (Influences)/`Allies`
- * (Backgrounds) are confirmed real entries in the seeded catalog, not
- * fabricated test values - queried directly against the global
- * `vampire-identity`/`vampire-backgrounds` block definitions before writing
- * this test.
- *
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-3, GX-4
+ * `Character_Exporter` against a real vampire character with real `sheet_data`, set against this install's seeded
+ * global catalog.
  */
 class CharacterExporterThreadTest extends WP_UnitTestCase {
 
@@ -63,7 +45,7 @@ class CharacterExporterThreadTest extends WP_UnitTestCase {
 					'Willpower' => [ 'permanent' => 6, 'temporary' => 6 ],
 					'Morality'  => [ 'permanent' => 7, 'temporary' => 7 ],
 				],
-				'met-merits'          => [ [ 'name' => 'Common Sense', 'count' => 1 ] ],
+				'vampire-merits'      => [ [ 'name' => 'Common Sense', 'count' => 1 ] ],
 				'vampire-backgrounds' => [
 					[ 'name' => 'Allies', 'count' => 3 ],
 					[ 'name' => 'Bureaucracy', 'count' => 2 ],

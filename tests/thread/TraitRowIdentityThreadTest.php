@@ -11,13 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.2.11 D86, through the real change route: a held row's identity is its `name` alone
- * unless the item - or, as a default, the block - carries `allow_multiples`, in which case
- * the specialization label is part of it.
- *
- * The editor enforces the same rule by merging; this is the half that stops a crafted
- * request creating the row the editor refuses to. `Change_Engine::apply_to_sheet()` appends
- * an `add_trait` unconditionally, so nothing below the validator would catch it.
+ * Through the real change route: a held row's identity is its `name` alone unless the item.
  */
 class TraitRowIdentityThreadTest extends WP_UnitTestCase {
 
@@ -50,12 +44,6 @@ class TraitRowIdentityThreadTest extends WP_UnitTestCase {
 				[ 'name' => 'Generation', 'cost' => '1' ],
 			] ],
 		] );
-		// 1.3.2.1 F7: the real production shape - no `has_specializations` at all, only
-		// `allow_multiples` (every real `{stack}-backgrounds` block). Distinct from
-		// `tri-backgrounds` above, which sets `has_specializations` and so never exercised
-		// the gap F1 closed: the editor's own label field only ever rendered where
-		// `has_specializations` was true, so a plain Backgrounds-shaped block had no way to
-		// type a label at all.
 		Schema_Block::create( [
 			'slug' => 'tri-plain-backgrounds', 'name' => 'Plain Backgrounds', 'section_type' => 'trait_list', 'is_system' => 0,
 			'definition' => [ 'items' => [
@@ -150,10 +138,7 @@ class TraitRowIdentityThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * 1.3.2.1 F1/F7 guard: the server path was always correct - this proves it end to end on
-	 * the real production shape (no `has_specializations`), not just on `tri-backgrounds`
-	 * above. Expected to pass unchanged; the gap this release closes is that the editor had
-	 * no field to type "Bob" or "Sue" into on a block shaped like this one.
+	 * Guard: the server path was always correct.
 	 */
 	public function test_two_labelled_retainers_on_a_plain_backgrounds_block_are_two_rows(): void {
 		$this->assertSame( 201, $this->add( 'tri-plain-backgrounds', [ 'name' => 'Retainers', 'count' => 3, 'specialization' => 'Bob' ] )->get_status() );
@@ -203,8 +188,7 @@ class TraitRowIdentityThreadTest extends WP_UnitTestCase {
 		$this->add( 'tri-backgrounds', [ 'name' => 'Retainers', 'count' => 2, 'specialization' => 'Sue Smith' ] );
 		$this->assertCount( 2, $this->rows( 'tri-backgrounds' ) );
 
-		// `previous` is what says WHICH holding is being relabelled - the only thing in the
-		// payload that can, since the trait's own label is the new value.
+		// `previous` is what says WHICH holding is being relabelled.
 		$collide = $this->submit( [
 			'change_type' => 'modify_trait',
 			'change_data' => [
@@ -220,7 +204,9 @@ class TraitRowIdentityThreadTest extends WP_UnitTestCase {
 		$this->assertSame( [ 'John Doe', 'Sue Smith' ], $labels );
 	}
 
-	/** D88 consumer 3: a modify lands on the holding it names, not the first row of that name. */
+	/**
+	 * Consumer 3: a modify lands on the holding it names.
+	 */
 	public function test_raising_one_retainer_does_not_raise_the_other(): void {
 		$this->add( 'tri-backgrounds', [ 'name' => 'Retainers', 'count' => 3, 'specialization' => 'John Doe' ] );
 		$this->add( 'tri-backgrounds', [ 'name' => 'Retainers', 'count' => 2, 'specialization' => 'Sue Smith' ] );
@@ -237,7 +223,9 @@ class TraitRowIdentityThreadTest extends WP_UnitTestCase {
 		$this->assertSame( [ 'John Doe', 'Sue Smith' ], array_map( static fn( $row ) => $row['specialization'], $rows ) );
 	}
 
-	/** D88 consumer 3: removing one labelled holding leaves the other standing. */
+	/**
+	 * Consumer 3: removing one labelled holding leaves the other standing.
+	 */
 	public function test_removing_one_retainer_leaves_the_other(): void {
 		$this->add( 'tri-backgrounds', [ 'name' => 'Retainers', 'count' => 3, 'specialization' => 'John Doe' ] );
 		$this->add( 'tri-backgrounds', [ 'name' => 'Retainers', 'count' => 2, 'specialization' => 'Sue Smith' ] );
@@ -253,7 +241,9 @@ class TraitRowIdentityThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'Sue Smith', $rows[0]['specialization'] );
 	}
 
-	/** D89: the same rule on the tiered_power path, where a family holds several named picks. */
+	/**
+	 * The same rule on the tiered_power path, where a family holds several named picks.
+	 */
 	public function test_removing_one_elder_pick_leaves_the_family_s_other_picks(): void {
 		$this->add( 'tri-disciplines', [ 'name' => 'Celerity', 'power_name' => 'Precision' ] );
 		$this->add( 'tri-disciplines', [ 'name' => 'Celerity', 'power_name' => 'Zephyr' ] );
@@ -299,7 +289,9 @@ class TraitRowIdentityThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'Jack Doe', $this->rows( 'tri-backgrounds' )[0]['specialization'] );
 	}
 
-	/** A change that could never apply is refused rather than approved into a silent no-op. */
+	/**
+	 * A change that could never apply is refused.
+	 */
 	public function test_changing_a_holding_you_do_not_have_is_refused(): void {
 		$this->add( 'tri-backgrounds', [ 'name' => 'Retainers', 'count' => 3, 'specialization' => 'John Doe' ] );
 

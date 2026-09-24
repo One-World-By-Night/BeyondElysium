@@ -14,10 +14,6 @@ use WP_UnitTestCase;
 
 /**
  * Boolean-shaped tinyint(1) columns must reach REST clients as real integers.
- * `$wpdb` returns every column as a string, and the string "0" is truthy in
- * JavaScript - D51 was exactly this for `is_npc`. Left uncast on
- * `storyteller_only`, it made the Schema Blocks editor mark every block it saved
- * as Storyteller-only, hiding Abilities from every player on a live chronicle.
  */
 class BooleanFlagTypesThreadTest extends WP_UnitTestCase {
 
@@ -94,8 +90,7 @@ class BooleanFlagTypesThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// 1.1.0 F1/F2: factions, faction_members, positions each added a fresh
-	// tinyint(1) column - proof they were cast on arrival, not left for a D51 repeat.
+	// Factions, faction_members, positions each added a fresh tinyint(1) column
 	// -------------------------------------------------------------------------
 
 	public function test_faction_created_via_proposal_is_a_boolean(): void {

@@ -7,49 +7,34 @@ use Elementor\Controls_Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Elementor widget wrapper for World Objects, the item/location/rote catalog
- * with an optional create/edit form. Registers the widget's name, title,
- * and icon with Elementor, exposes Content section controls for
- * the target game slug, the default type tab, and whether editor controls
- * are shown, and renders a single mount-point <div> that the front-end
- * script hydrates with the WorldObjectManager React component.
- *
- * @see BE_PROCESS/releases/workflow-0.7.md Step 5a
+ * Elementor widget wrapper for World Objects, the item/location/rote catalog with an optional create/edit form.
  */
 class World_Objects extends Base_Widget {
 
 	/**
-	 * Returns the internal widget name Elementor uses to identify this
-	 * widget type. Elementor stores this string in page and template
-	 * markup wherever the widget is placed.
+	 * Returns the internal widget name Elementor uses to identify this widget type.
 	 */
 	public function get_name(): string {
 		return 'be-world-objects';
 	}
 
 	/**
-	 * Returns the human-readable label Elementor shows for this widget in
-	 * the editor's widget panel, search results, and layers panel. This is
-	 * the text an editor sees when placing the widget on a page.
+	 * Returns the human-readable label Elementor shows for this widget in the editor's widget panel, search results, and
+	 * layers panel.
 	 */
 	public function get_title(): string {
 		return __( 'World Objects', 'beyond-elysium' );
 	}
 
 	/**
-	 * Returns the Elementor icon class shown next to this widget's title in
-	 * the widget panel. The value is an eicon-* class name supplied by
-	 * Elementor's built-in icon font.
+	 * Returns the Elementor icon class shown next to this widget's title in the widget panel.
 	 */
 	public function get_icon(): string {
 		return 'eicon-product-images';
 	}
 
 	/**
-	 * Builds the Elementor "Content" section shown in the editor panel for
-	 * this widget. Adds a read-only description note, a Game Slug text
-	 * control, a Default Type select that chooses which catalog tab opens
-	 * first, and a switcher that shows or hides the create/edit controls.
+	 * Builds the Elementor "Content" section shown in the editor panel for this widget.
 	 */
 	protected function register_controls(): void {
 		$this->start_controls_section( 'content_section', [
@@ -97,7 +82,9 @@ class World_Objects extends Base_Widget {
 		return 'world-objects';
 	}
 
-	/** Defaults the type to "item" and normalizes the editor-visibility switcher to a boolean. */
+	/**
+	 * Defaults the type to "item" and normalizes the editor-visibility switcher to a boolean.
+	 */
 	protected function widget_config( array $settings ): array {
 		return [
 			'gameSlug'    => $settings['game_slug'],

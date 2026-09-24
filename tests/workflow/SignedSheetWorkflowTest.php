@@ -14,14 +14,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The scenario a person would describe (TESTING.md's own standard for this
- * layer): a Storyteller sets up a chronicle and a character for their
- * player; the player prints their own signed sheet and gets a real,
- * verifiable PDF back; a second, unrelated player who tries the same
- * character is denied. The first workflow-layer test this project has -
- * `tests/workflow/` held only a `.gitkeep` before this.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md Section 9, SP-12
+ * The scenario a person would describe: a Storyteller sets up a chronicle and a character for their player.
  */
 class SignedSheetWorkflowTest extends WP_UnitTestCase {
 
@@ -31,8 +24,6 @@ class SignedSheetWorkflowTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_player_prints_their_own_sheet_and_a_stranger_is_denied(): void {
-		// The Storyteller sets up the chronicle: a schema block, a creature stack built
-		// from it, and a layout to print through.
 		$hst_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		wp_set_current_user( $hst_id );
 
@@ -73,8 +64,7 @@ class SignedSheetWorkflowTest extends WP_UnitTestCase {
 			'created_by'    => $hst_id,
 		] );
 
-		// The player's own character - Character::create() grants this player real
-		// chronicle membership as a side effect, the ordinary path to holding a sheet.
+		// The player's own character.
 		$player_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 
 		$character_id = Character::create( [
@@ -106,8 +96,7 @@ class SignedSheetWorkflowTest extends WP_UnitTestCase {
 			$this->assertStringContainsString( 'Signature Validation: Signature is Valid.', $report );
 		}
 
-		// A second, unrelated player tries the same character and is refused - the sheet
-		// is Wrenna's own player's to print, not any logged-in chronicle member's.
+		// A second, unrelated player tries the same character and is refused.
 		$stranger_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		\BeyondElysium\Models\Game_Member::ensure_player( (int) Game::find_by_slug( 'signed-sheet-workflow' )->id, $stranger_id );
 

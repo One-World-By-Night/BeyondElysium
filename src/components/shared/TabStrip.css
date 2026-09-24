@@ -6,10 +6,6 @@
 	margin: 1rem 0;
 }
 
-/* D34: compound-class specificity beats hello-elementor's own input[type=...]/button reset
- * (border/background/padding/width) on the front-end pages this shared component also
- * renders on (My Chronicle, Storyteller Toolkit) - the same defense every other front-end
- * form control in this plugin needs. */
 .be-tab-strip__select.be-tab-strip__select {
 	width: auto;
 	min-width: 14rem;

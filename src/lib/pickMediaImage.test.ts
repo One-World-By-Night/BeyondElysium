@@ -1,7 +1,5 @@
 /**
- * 1.0.0-review F-097: closing the media picker without choosing an image left its promise
- * pending forever. WordPress's own Select button closes the frame before it announces the
- * selection, so a close can't settle the promise on the spot - the selection would be lost.
+ * Closing the media picker without choosing an image left its promise pending forever.
  */
 import { pickMediaImage } from './pickMediaImage';
 

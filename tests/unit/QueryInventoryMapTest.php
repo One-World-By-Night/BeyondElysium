@@ -8,15 +8,7 @@ use BeyondElysium\Services\Query_Engine;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Proves query-inventories.php's 42 entries against two independent
- * authorities - world-object-schemas.php (the properties column's real
- * shape) and Field_Registry::for_inventory() (qkdata.gvd's own key counts)
- * - before Query_Engine ever reads a single one of them. A key set that
- * silently drifted from either authority would produce a plausible-looking
- * query that reads a property nothing writes, or a field list that omits a
- * real key.
- *
- * @see BE_PROCESS/design/query-beyond-characters-design.md §6, QB-3
+ * Proves query-inventories.php's 42 entries against two independent authorities.
  */
 class QueryInventoryMapTest extends TestCase {
 
@@ -27,9 +19,7 @@ class QueryInventoryMapTest extends TestCase {
 	}
 
 	/**
-	 * Every `properties` entry names a key that exists in that object_type's
-	 * real schema - mirrors FieldRegistryTest::assert_json_entry_resolves()'s
-	 * own "every mapped key resolves to something real" discipline.
+	 * Every `properties` entry names a key that exists in that object_type's real schema.
 	 */
 	public function test_every_properties_entry_names_a_real_schema_property(): void {
 		foreach ( self::WORLD_OBJECT_TYPE_BY_INVENTORY as $inventory => $object_type ) {
@@ -48,8 +38,7 @@ class QueryInventoryMapTest extends TestCase {
 	}
 
 	/**
-	 * Every `column` entry names a real be_world_objects column - mirrors
-	 * known_character_columns() in FieldRegistryTest.
+	 * Every `column` entry names a real be_world_objects column.
 	 */
 	public function test_every_column_entry_names_a_real_world_object_column(): void {
 		foreach ( self::WORLD_OBJECT_TYPE_BY_INVENTORY as $inventory => $object_type ) {
@@ -67,11 +56,7 @@ class QueryInventoryMapTest extends TestCase {
 	}
 
 	/**
-	 * Each inventory's key set equals Field_Registry::for_inventory()'s
-	 * exactly, in both directions, so a qkdata re-read cannot silently
-	 * desync from the map - the same 1:1 discipline
-	 * FieldRegistryTest::test_every_registry_key_has_a_map_entry() applies
-	 * to the char map.
+	 * Each inventory's key set equals Field_Registry::for_inventory()'s exactly, in both directions.
 	 */
 	public function test_key_sets_match_the_registry_exactly(): void {
 		foreach ( array_keys( self::WORLD_OBJECT_TYPE_BY_INVENTORY ) as $inventory ) {
@@ -92,10 +77,7 @@ class QueryInventoryMapTest extends TestCase {
 	}
 
 	/**
-	 * A list-typed key whose registry type is NOT overridden must resolve to
-	 * a property the schema declares trait_list - the assertion that catches
-	 * §4d's TypeError class (a string read where evaluate_list() expects an
-	 * array) before resolve_value() can ever produce one.
+	 * A list-typed key whose registry type is NOT overridden must resolve to a property the schema declares trait_list.
 	 */
 	public function test_every_unoverridden_list_key_resolves_to_a_trait_list_property(): void {
 		foreach ( self::WORLD_OBJECT_TYPE_BY_INVENTORY as $inventory => $object_type ) {
@@ -107,7 +89,6 @@ class QueryInventoryMapTest extends TestCase {
 					continue;
 				}
 				if ( isset( $entry['type'] ) ) {
-					// A declared override (item.powers) is deliberately exempt - that's the point of it.
 					continue;
 				}
 				$this->assertSame(
@@ -120,10 +101,8 @@ class QueryInventoryMapTest extends TestCase {
 	}
 
 	/**
-	 * item.powers is qkdata's one key whose registry type ('list') its real
-	 * storage cannot hold (ItemClass.cls:131 returns a String) - the
-	 * override that keeps it out of the assertion above must actually be
-	 * present, not merely assumed exempt.
+	 * item.powers is qkdata's one key whose registry type ('list') its real storage cannot hold (ItemClass.cls:131
+	 * returns a String).
 	 */
 	public function test_item_powers_carries_the_field_type_override(): void {
 		$entry = Field_Registry::inventory( 'item' )['fields']['powers'];
@@ -133,10 +112,7 @@ class QueryInventoryMapTest extends TestCase {
 	}
 
 	/**
-	 * atomic is true for exactly loc.links and rote.spheres - transcribed
-	 * from LocationClass.cls:301 and RoteClass.cls:255 - and explicitly
-	 * false (not merely absent) for every item list, per ItemClass.cls:
-	 * 312-315.
+	 * atomic is true for exactly loc.links and rote.spheres.
 	 */
 	public function test_atomic_matches_the_vb6_ground_truth_exactly(): void {
 		$this->assertTrue( Field_Registry::inventory( 'loc' )['fields']['links']['atomic'] );
@@ -151,10 +127,9 @@ class QueryInventoryMapTest extends TestCase {
 	}
 
 	/**
-	 * The two known key collisions this feature exists to prove a flat map
-	 * cannot express: 'notes' means the description column for a world
-	 * object (never the notes column, which be_world_objects does not
-	 * have), and 'type' means a different property per inventory.
+	 * The two known key collisions this feature exists to prove a flat map cannot express: 'notes' means the description
+	 * column for a world object (never the notes column, which be_world_objects does not have), and 'type' means a
+	 * different property per inventory.
 	 */
 	public function test_the_documented_key_collisions_resolve_as_designed(): void {
 		$this->assertSame( 'description', Field_Registry::inventory( 'item' )['fields']['notes']['column'] );
@@ -165,9 +140,8 @@ class QueryInventoryMapTest extends TestCase {
 	}
 
 	/**
-	 * A rote's description is never the be_world_objects.description column
-	 * (Import_Controller.php never writes it for a rote) - it must read the
-	 * properties.description key instead, per §6.5.
+	 * A rote's description is never the be_world_objects.description column (Import_Controller.php never writes it for a
+	 * rote).
 	 */
 	public function test_rote_description_reads_the_property_not_the_column(): void {
 		$entry = Field_Registry::inventory( 'rote' )['fields']['description'];
@@ -175,9 +149,6 @@ class QueryInventoryMapTest extends TestCase {
 		$this->assertSame( 'description', $entry['property'] );
 	}
 
-	// -------------------------------------------------------------------------
-	// resolve_value() against hand-built world-object rows - no database, the
-	// properties/column/derived arms never touch one for a non-char inventory.
 	// -------------------------------------------------------------------------
 
 	private function item_row( array $properties = [] ): object {

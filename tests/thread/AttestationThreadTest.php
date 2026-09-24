@@ -7,13 +7,8 @@ use BeyondElysium\Models\Character;
 use WP_UnitTestCase;
 
 /**
- * GX-7: `Attestation::issue()`/`resolve()`/`revoke()`/`find()`/`sweep_expired()`
- * against a real character row and a real `be_character_attestations` table -
- * the token/short-code generation, the stored snapshot, the `check_count`/
- * `last_checked_at` bookkeeping on every `resolve()` call regardless of
- * outcome, and expiry sweeping.
- *
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-7, §6.2
+ * `Attestation::issue()`/`resolve()`/`revoke()`/`find()`/`sweep_expired()` against a real character row and a real
+ * `be_character_attestations` table.
  */
 class AttestationThreadTest extends WP_UnitTestCase {
 

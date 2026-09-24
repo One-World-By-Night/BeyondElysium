@@ -36,7 +36,6 @@
 	margin-bottom: 1rem;
 }
 
-/* Decision 055/D34: compound-class specificity beats hello-elementor's reset.css. */
 .be-action-allocator__form.be-action-allocator__form select {
 	width: auto;
 	box-sizing: border-box;

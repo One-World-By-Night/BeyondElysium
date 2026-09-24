@@ -21,33 +21,25 @@ use BeyondElysium\Services\St_Visibility;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for a player-sent Grapevine file, waiting for a
- * Storyteller's review (F-122, owner: "Players need to be able to submit GEX
- * that ST can approve. Same process as a send sheet/transfer/visit thing.").
- *
- * Reuses `Import_Controller`'s own parse/preview/commit machinery wholesale
- * rather than a second pipeline - the gap this closes was a front door and a
- * waiting room, not a missing importer. Covers both halves: sending
- * (`preview`, `create`, `withdraw`, `/my/submissions`) and a Storyteller's
- * review (`list`, `review`, `verification`, `accept`, `refuse`).
- *
- * @see BE_PROCESS/design/player-grapevine-file-design.md §6, §7
+ * REST controller for a player-sent Grapevine file waiting for a Storyteller's review. Reuses `Import_Controller`'s
+ * parse, preview and commit machinery.
  */
 class Submissions_Controller extends Base_Controller {
 
 	protected $rest_base = 'submissions';
 
-	/** An uploaded file larger than this is refused before it is even read. */
+	/**
+	 * An uploaded file larger than this is refused before it is even read.
+	 */
 	const MAX_UPLOAD_BYTES = 5 * MB_IN_BYTES;
 
-	/** Waiting submissions a single chronicle may hold before new ones are turned away. */
+	/**
+	 * Waiting submissions a single chronicle may hold before new ones are turned away.
+	 */
 	const MAX_WAITING = 50;
 
 	public function register_routes(): void {
-		// Registered before the game-scoped routes below: WordPress matches routes in
-		// registration order, and /(?P<game_slug>...)/submissions would otherwise read
-		// /my/submissions as the waiting list of a chronicle literally named "my"
-		// (Games_Controller's own /my/games relies on the identical ordering).
+		// Registered before the game-scoped routes.
 		register_rest_route( $this->namespace, '/my/submissions', [
 			[
 				'methods'             => 'GET',
@@ -60,10 +52,7 @@ class Submissions_Controller extends Base_Controller {
 			[
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'preview' ],
-				// Bootstrap gate: the site-wide capability plus a real chronicle, no
-				// membership required - every WordPress role down to subscriber holds
-				// be_edit_own_characters, so this is genuinely "anyone signed in"
-				// (Characters_Controller::create_item()'s own join-request path).
+				// Bootstrap gate: the site-wide capability plus a real chronicle, no membership required.
 				'permission_callback' => $this->permission( 'be_edit_own_characters', true ),
 			],
 		] );
@@ -117,10 +106,7 @@ class Submissions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Reads an uploaded Grapevine file and reports what it holds - format,
-	 * every character it carries, and whether each is allowed in this
-	 * chronicle - without storing anything. The first real look a sender
-	 * gets before choosing which character is theirs and committing to send.
+	 * Reads an uploaded Grapevine file and reports what it holds.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -160,11 +146,7 @@ class Submissions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Records a request to send one character from an uploaded file to this
-	 * chronicle. Stores only the chosen character - every other list in the
-	 * file is emptied, and its uuid is dropped (1.0.0-review F-003/F-059: a
-	 * uuid in a file proves nothing, so a later accept matches by name only,
-	 * same as any ordinary import).
+	 * Records a request to send one character from an uploaded file to this chronicle.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -252,10 +234,6 @@ class Submissions_Controller extends Base_Controller {
 			);
 		}
 
-		// Kept only when the file is XML, holds one character, and that character carries a
-		// real Beyond Elysium verification code (§5.1) - needed to re-hash the file at review
-		// time. A multi-character file's own $xml still names every character; storing it here
-		// would be no narrower than storing the whole upload, so it is dropped instead.
 		$verification_source = ( $format === 'XML' && count( $parsed['characters'] ) === 1 ) ? $xml : null;
 
 		$home_chronicle = $request->get_param( 'home_chronicle' );
@@ -296,9 +274,7 @@ class Submissions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * A sender withdraws their own still-waiting submission. Another
-	 * chronicle's row, or another sender's, is treated identically to a
-	 * missing one - never revealing that a request exists at all.
+	 * A sender withdraws their own still-waiting submission.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -330,8 +306,7 @@ class Submissions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * This chronicle's own waiting submissions, newest first - the Import
-	 * page's own Waiting for Review list, alongside transfers.
+	 * This chronicle's own waiting submissions, newest first.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -342,9 +317,7 @@ class Submissions_Controller extends Base_Controller {
 			return $game;
 		}
 
-		// The model stays a thin data layer with no WP-API dependency (Transfer's own
-		// precedent); resolving the sender's display name for the list view - not just
-		// review() - happens here instead.
+		// Resolves the sender's display name for the list view.
 		$rows = array_map( function ( $row ) {
 			$sender = get_userdata( (int) $row->submitted_by );
 			$row->sender_name = $sender ? $sender->display_name : null;
@@ -355,12 +328,8 @@ class Submissions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Shows a waiting submission the way the Import page shows a parsed
-	 * file: counts, duplicates needing a decision, and traits needing
-	 * review, plus who sent it and whether it still passes the same
-	 * creation checks it passed when it arrived (a restriction can change
-	 * while a file waits). Never blocks review on a verification failure -
-	 * that is what the separate `verification` route is for.
+	 * Shows a waiting submission the way the Import page shows a parsed file: counts, duplicates needing a decision and
+	 * traits needing review, plus who sent it and whether it still passes the creation checks.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -405,9 +374,7 @@ class Submissions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Checks a waiting submission's own verification code, if it carries
-	 * one - a real callback to the issuing site's own /verify/{code}
-	 * (Sheet_Verification), never blocking review or acceptance either way.
+	 * Checks a waiting submission's own verification code, if it carries one.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -429,12 +396,8 @@ class Submissions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Accepts a waiting submission: re-checks it still passes the creation
-	 * rules, requires every duplicate/trait decision an import would, then
-	 * imports the character in one transaction under the sender's own
-	 * identity - joining as an ordinary character, or visiting with a real
-	 * transfer row so the existing Visiting badge and Send home/Keep for
-	 * good apply unchanged.
+	 * Accepts a waiting submission: re-checks it still passes the creation rules, requires every duplicate/trait decision
+	 * an import would.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -455,8 +418,7 @@ class Submissions_Controller extends Base_Controller {
 		$stored    = json_decode( (string) $pre->parsed, true );
 		$character = $stored['characters'][0] ?? [];
 
-		// Resolved before the transaction opens, same ordering Transfers_Controller::accept()
-		// uses - a network call must never happen while a row lock is held.
+		// Resolved before the transaction opens.
 		$verified_issuer = null;
 		if ( $pre->verification_source !== null ) {
 			$verification = Sheet_Verification::check( (string) $pre->verification_source, $character );
@@ -568,8 +530,7 @@ class Submissions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Refuses a waiting submission with an optional note back to the
-	 * sender. Nothing was ever written for it.
+	 * Refuses a waiting submission with an optional note back to the sender.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -596,10 +557,7 @@ class Submissions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The waiting submission named in the URL, when it belongs to this
-	 * chronicle. Shared by review(), verification(), and refuse() - accept()
-	 * re-reads and row-locks its own copy instead, since it needs the
-	 * pre-transaction verification call to happen before any lock is taken.
+	 * The waiting submission named in the URL, when it belongs to this chronicle.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @param object           $game
@@ -642,8 +600,7 @@ class Submissions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The caller's own last submissions across every chronicle they've sent
-	 * one to, newest first.
+	 * The caller's own last submissions across every chronicle they've sent one to, newest first.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response
@@ -651,11 +608,7 @@ class Submissions_Controller extends Base_Controller {
 	public function get_my_submissions( $request ) {
 		$rows = Submission::for_user( get_current_user_id() );
 
-		// Always filtered, never conditionally: this route is not chronicle-scoped, so there
-		// is no single chronicle to resolve `be_manage_characters` against - the same
-		// judgment the games list route makes for a chronicle description. A Storyteller
-		// reviewing a submission reads it through the be_import-gated /review route, which
-		// is unfiltered, so nothing a Storyteller actually needs is lost here.
+		// Always filtered: this route is not chronicle-scoped.
 		foreach ( $rows as $row ) {
 			St_Visibility::filter_submission( $row, null, false );
 		}
@@ -664,9 +617,7 @@ class Submissions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Reads and parses an uploaded Grapevine file, common to preview() and
-	 * create_item(). Rejects an oversized, unreadable, wrong-format, or
-	 * unparseable file before either caller does anything format-specific.
+	 * Reads and parses an uploaded Grapevine file, common to preview() and create_item().
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return array{xml:string,parsed:array<string,mixed>,format:string,source_file:string}|\WP_Error
@@ -714,12 +665,7 @@ class Submissions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Whether a parsed character may be created in this chronicle - the
-	 * enabled_stacks (Decision 092) and sub-faction (Decision 097) checks
-	 * `Characters_Controller::create_item()` already enforces for a
-	 * hand-built character, applied here to a file's own character before any
-	 * row exists to check. Null means allowed; a string is the reason it
-	 * isn't, in the exact wording a sender or Storyteller should read.
+	 * Whether a parsed character may be created in this chronicle.
 	 *
 	 * @param object               $game
 	 * @param array<string,mixed>  $character
@@ -779,10 +725,7 @@ class Submissions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Whether this user already has a pending-approval, hand-built join
-	 * character waiting in this chronicle - the other half of the "one
-	 * waiting request per person per chronicle" rule, matching the exact
-	 * query `Characters_Controller::create_item()`'s own join branch uses.
+	 * Whether this user already has a pending-approval, hand-built join character waiting in this chronicle.
 	 *
 	 * @param object $game
 	 * @param int    $user_id

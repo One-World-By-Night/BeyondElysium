@@ -8,10 +8,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 S1: the Game Calendar report reads real Game_Session rows instead of its old,
- * permanently-empty state.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.1
+ * The Game Calendar report reads real Game_Session rows.
  */
 class GameCalendarReportThreadTest extends WP_UnitTestCase {
 

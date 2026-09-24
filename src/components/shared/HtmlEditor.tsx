@@ -1,8 +1,5 @@
 /**
- * Rich-text HTML editor field backed by WordPress's classic TinyMCE
- * editor rather than a plain textarea. Renders a textarea that TinyMCE
- * replaces after mount, and reports content changes through `onChange`.
- * Supports a read-only mode that skips TinyMCE entirely.
+ * Rich-text HTML editor field backed by WordPress's classic TinyMCE editor.
  */
 import { useEffect, useRef } from '@wordpress/element';
 import AiAssistButton from './AiAssistButton';
@@ -16,22 +13,23 @@ export interface HtmlEditorProps {
 	onChange: ( html: string ) => void;
 	readOnly?: boolean;
 	rows?: number;
-	/** Shows WordPress's "Add Media" button in the toolbar when true. Off by default. */
+	/**
+	 * Shows WordPress's "Add Media" button in the toolbar when true.
+	 */
 	mediaButtons?: boolean;
-	/** Loads TinyMCE's table plugin and toolbar button when true. Off by default - biography/notes/plot fields don't need it; a field whose sanitizer allows `<table>` should pass this. */
+	/**
+	 * Loads TinyMCE's table plugin and toolbar button when true.
+	 */
 	tables?: boolean;
-	/** Adds an AI Assist button above the editor (ai-writing-assist-design.md). Omit for a field with no field_context yet. */
+	/**
+	 * Adds an AI Assist button above the editor.
+	 */
 	aiAssist?: { capability: string; fieldContext: string; gameSlug?: string };
 }
 
 /**
- * Initializes WordPress's classic TinyMCE editor on a textarea identified
- * by `id`, with a bold/italic/lists/link toolbar and optional quicktags
- * and media-button support. Uncontrolled after mount - TinyMCE owns the
- * DOM directly, and `onChange` fires from TinyMCE's own change/input/blur
- * events rather than from a controlled `value` prop. Skips initialization
- * entirely when `readOnly` is true. Tears down the TinyMCE instance on
- * unmount.
+ * Initializes WordPress's classic TinyMCE editor on a textarea identified by `id`, with a bold/italic/lists/link
+ * toolbar and optional quicktags and media-button support.
  */
 export function HtmlEditor( {
 	id,
@@ -88,9 +86,7 @@ export function HtmlEditor( {
 					capability={ aiAssist.capability }
 					fieldContext={ aiAssist.fieldContext }
 					gameSlug={ aiAssist.gameSlug }
-					// TinyMCE owns this field's real content after mount - a plain defaultValue
-					// snapshot would go stale the moment someone types, so read the live editor
-					// instance when one exists rather than trusting a render-time prop.
+					// TinyMCE owns this field's real content after mount.
 					currentValue={ () =>
 						tinymce?.get( id )?.getContent() ?? defaultValue
 					}

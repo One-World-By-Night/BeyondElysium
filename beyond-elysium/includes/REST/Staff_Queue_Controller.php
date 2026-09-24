@@ -9,8 +9,8 @@ use BeyondElysium\Services\Staff_Queue;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for My Queue (1.1.0 §3.6): what a Storyteller or Narrator is personally on
- * the hook for in one chronicle, plus the staff roster an assignee picker offers.
+ * REST controller for My Queue: what a Storyteller or Narrator is personally on the hook for in one chronicle, plus
+ * the staff roster an assignee picker offers.
  */
 class Staff_Queue_Controller extends Base_Controller {
 
@@ -25,10 +25,7 @@ class Staff_Queue_Controller extends Base_Controller {
 			],
 		] );
 
-		// A narrow disclosure (name and id only) so a plot editor, downtime row, or NPC editor
-		// can offer an assignee picker without needing be_manage_games - the chronicle-wide
-		// member list Game_Members_Controller returns is real-name-and-email and admin-only,
-		// which this route deliberately does not need to be.
+		// A narrow disclosure (name and id only).
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/staff', [
 			[
 				'methods'             => 'GET',
@@ -59,8 +56,7 @@ class Staff_Queue_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Every hst/ast/narrator member of this chronicle, name and id only - who a plot, downtime
-	 * row, or NPC may be assigned to.
+	 * Every hst/ast/narrator member of this chronicle, name and id only.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -84,8 +80,7 @@ class Staff_Queue_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404
-	 * status when no game matches.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

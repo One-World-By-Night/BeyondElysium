@@ -6,10 +6,8 @@ use BeyondElysium\Services\Display\Change_Description;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-084 (Pass H intake `t2-rendering`). A change's description - "Added Occult x3",
- * "Blood: 10 perm / 8 temp" - is read on the Approval Queue, the dashboards, and the signed
- * sheet's XP history. Its words were bare English that never reached the translation file, so a
- * chronicle running in Portuguese read them in English however complete its translation was.
+ * A change's description reads in the chronicle's own translation, plural forms included, with no word of any
+ * description left outside translation.
  */
 class ChangeDescriptionTranslationThreadTest extends WP_UnitTestCase {
 
@@ -77,7 +75,6 @@ class ChangeDescriptionTranslationThreadTest extends WP_UnitTestCase {
 				$left   = (string) preg_replace( '/⟦[^⟦⟧]*⟧/u', '', $left );
 			} while ( $left !== $before );
 
-			// An imported note's reason is the importer's own text, never a phrase of ours.
 			$own_text = $case['change_type'] === 'import_note' ? (string) ( $case['change_data']['reason'] ?? '' ) : '';
 			$this->assertSame( $own_text, $left, sprintf( 'case "%s" read "%s"', $case['name'], $described ) );
 		}

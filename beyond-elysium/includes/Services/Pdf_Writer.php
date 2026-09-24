@@ -5,38 +5,7 @@ namespace BeyondElysium\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Turns `Sheet_Document::for_characters()`'s arrays into TCPDF pages, then
- * page bytes. Dispatches on a section's own `section_type` string only - no
- * `stack_slug`, no block-slug identity, no `if ( $stack === 'vampire' )`
- * anywhere (P7; signed-pdf-design.md Section 3b). Every string this class
- * draws was already formatted by `Sheet_Document`/`Services\Display\*`; this
- * class only places it.
- *
- * A signed output has `Pdf_Signer::configure()` run between the
- * `new \TCPDF(...)` call and the first `AddPage()`, so a layout bug and a
- * signing bug can never be confused for each other (SP-7's own explicit
- * constraint, which is why the two were built and tested as separate passes
- * even though both landed in this file). An unsigned one skips it and is
- * stamped UNSIGNED on every page instead (1.0.0-review F-042).
- *
- * Layout replicates `CharacterSheet.tsx`'s own on-screen grid exactly: a
- * 6-track row, sections placed in `(column, order)` flow sequence (already
- * sorted by `Sheet_Document`/`Layout_Flow`) and auto-wrapping to a new row
- * when a section's own span (2, 3, or 6 of 6 tracks) doesn't fit what's left
- * in the current row - the same behavior `repeat(6, 1fr)` CSS Grid auto-flow
- * produces on screen. The one on-screen special case NOT ported here is
- * `CharacterSheet.tsx`'s hardcoded `ATTRIBUTE_GROUPS` float group (Section
- * 3b) - it exists only to work around a CSS-specific float quirk with no PDF
- * analogue, and reproducing it would import the one piece of creature-
- * specific-by-slug code on the sheet into a generator whose whole point is
- * having none.
- *
- * DejaVu Sans throughout, not Helvetica, per Section 4b/5 ruling 5: real
- * catalog text carries characters outside Latin-1 (a typographic apostrophe,
- * `'` U+2019, is one - not just non-Western scripts), and Helvetica's base-14
- * font program only covers WinAnsi encoding.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md Section 3a, 3b, SP-7
+ * Turns `Sheet_Document::for_characters()`'s arrays into TCPDF pages.
  */
 class Pdf_Writer {
 
@@ -51,9 +20,7 @@ class Pdf_Writer {
 	private const FOOTNOTE_SIZE        = 7;
 
 	/**
-	 * The tags `writeHTML()` renders acceptably (Section 5 ruling 6) - anything
-	 * outside this set is flattened to text by `wp_kses()` before it ever
-	 * reaches TCPDF, rather than corrupting layout or silently vanishing.
+	 * The tags `writeHTML()` renders acceptably.
 	 */
 	private const PROSE_ALLOWED_TAGS = [
 		'p'          => [],
@@ -77,11 +44,7 @@ class Pdf_Writer {
 	];
 
 	/**
-	 * Signed unless the caller says otherwise. Asked to sign where signing isn't
-	 * available, `Pdf_Signer::configure()` throws and the exception propagates,
-	 * so this method never returns unsigned bytes by accident. Asked not to sign
-	 * (`Sheets_Controller` passes `Pdf_Signer::availability()`), every page is
-	 * stamped UNSIGNED (1.0.0-review F-042).
+	 * Signed unless the caller says.
 	 *
 	 * @param array<int,array<string,mixed>> $documents One entry per `Sheet_Document` result.
 	 * @param object                         $game      The issuing chronicle - `Pdf_Signer::configure()`'s own `Name`/`Reason` metadata.
@@ -150,18 +113,9 @@ class Pdf_Writer {
 	}
 
 	/**
-	 * The 6-track row-flow: sections are placed in the order given (already
-	 * `(column, order)`-sorted by `Sheet_Document`/`Layout_Flow`), and a
-	 * section whose span doesn't fit what's left in the current row starts a
-	 * new one - a section is never split mid-row. A row taller than the
-	 * remaining page starts a fresh page instead of overflowing it. A
-	 * section taller than a whole fresh page on its own - a heavily-built
-	 * character's Abilities can easily run past one page in a two-track
-	 * column (1.0.0-review F-118: a real print "cuts off" mid-list, since
-	 * `setAutoPageBreak(false)` for this method means TCPDF never inserts a
-	 * page break on its own, it simply draws past the bottom margin) - gets
-	 * its own row and `draw_overflowing_section()`'s real multi-page flow
-	 * instead of `draw_section()`'s single fixed position.
+	 * The 6-track row-flow: sections are placed in the order given (already `(column, order)`-sorted by
+	 * `Sheet_Document`/`Layout_Flow`), and a section whose span doesn't fit what's left in the current row starts a new
+	 * one.
 	 *
 	 * @param array<int,array<string,mixed>> $sections
 	 */
@@ -195,8 +149,7 @@ class Pdf_Writer {
 			$section_height                 = $title_height + $body_height;
 
 			if ( $section_height > $max_page_height ) {
-				// No position on any single page could ever hold this section - it gets a
-				// row (and, since it spans past one page, a fresh page) to itself.
+				// No position on any single page could ever hold this section.
 				if ( $cursor > 0 ) {
 					$row_y     += $row_height + self::ROW_GAP;
 					$cursor     = 0;
@@ -233,12 +186,8 @@ class Pdf_Writer {
 	}
 
 	/**
-	 * Draws a section too tall for any single page, letting TCPDF's own text flow carry
-	 * it across as many pages as it needs - the one place in `draw_sections()` that
-	 * re-enables `setAutoPageBreak()`, restored to `false` again before returning so
-	 * every other (page-fitting) section keeps using the grid's own manual pagination
-	 * unchanged. Always starts on a fresh page: a partial page above it would waste
-	 * space `MultiCell()`'s own flow can't reclaim once it starts.
+	 * Draws a section too tall for any single page, letting TCPDF's own text flow carry it across as many pages as it
+	 * needs.
 	 *
 	 * @param array<string,mixed> $section
 	 * @return float The Y position immediately below the section, on whichever page
@@ -256,10 +205,6 @@ class Pdf_Writer {
 		$pdf->setAutoPageBreak( false );
 
 		$end_y = $pdf->GetY();
-		// MultiCell( ..., $ln = 1 ) can leave Y at (or past) this page's own bottom margin
-		// once the last line lands exactly at the page edge - draw_sections()' own
-		// row-fit check on the NEXT section would then see a full page as having room
-		// left. A fresh page for whatever comes next is exactly what a full page means.
 		return $end_y >= $page_bottom ? $pdf->GetPageHeight() : $end_y;
 	}
 
@@ -295,11 +240,7 @@ class Pdf_Writer {
 	}
 
 	/**
-	 * Flattens a section's `groups` (trait_list) or `rows` (every other known
-	 * type) into one newline-joined block. A section with neither key - a
-	 * block whose `section_type` this version doesn't recognize - renders
-	 * Grapevine's own rule: a visible broken marker beats a silent blank
-	 * (matching `BlockRenderer.tsx`'s identical default branch).
+	 * Flattens a section's `groups` (trait_list) or `rows` (every other known type) into one newline-joined block.
 	 *
 	 * @param array<string,mixed> $section
 	 */
@@ -345,13 +286,7 @@ class Pdf_Writer {
 	}
 
 	/**
-	 * `wp_kses()` unwraps a disallowed tag but keeps its inner text - correct
-	 * for something like a stray `<span>`, wrong for `<script>`/`<style>`,
-	 * whose content was never meant to be read as prose at all (confirmed
-	 * directly: `wp_kses('<script>alert(1)</script>', $narrow_list)` returns
-	 * the bare text `alert(1)`, not nothing). Removed first, via the same
-	 * regex WordPress's own `wp_strip_all_tags()` uses for the identical
-	 * problem, before the real allowlist narrowing runs.
+	 * `wp_kses()` unwraps a disallowed tag but keeps its inner text.
 	 */
 	private static function sanitize_prose( string $html ): string {
 		$html = (string) preg_replace( '@<(script|style)[^>]*?>.*?</\\1>@si', '', $html );

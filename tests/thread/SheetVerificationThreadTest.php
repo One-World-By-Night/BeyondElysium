@@ -13,13 +13,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * F-122, §8: Sheet_Verification::check() against a real verification code,
- * resolved through a real internal REST dispatch via `pre_http_request` -
- * the same loopback technique TransfersControllerThreadTest already
- * established, since a single-process test can't make a genuine second-site
- * HTTP call.
- *
- * @see BE_PROCESS/design/player-grapevine-file-design.md §8
+ * Sheet_Verification::check() against a real verification code, resolved through a real internal REST dispatch via
+ * `pre_http_request`.
  */
 class SheetVerificationThreadTest extends WP_UnitTestCase {
 
@@ -49,11 +44,7 @@ class SheetVerificationThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Intercepts by URL substring, not host - matching TransfersControllerThreadTest's own
-	 * established precedent - so a code's real, home_url()-based base still resolves to a
-	 * genuine local REST dispatch. A URL naming a different host, on purpose, resolves the
-	 * same way: the real response's own issuer.site is still home_url(), which is exactly how
-	 * an issuer_mismatch is exercised for real rather than faked.
+	 * Intercepts by URL substring.
 	 */
 	private function loopback(): callable {
 		$callback = function ( $preempt, $parsed_args, $url ) {
@@ -78,9 +69,9 @@ class SheetVerificationThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Exports the test character exactly as a player would for their own verified sheet
-	 * (hide_st true - the primary real case, F-122 §8.1's own reasoning) and parses the
-	 * resulting document back into the shape a Storyteller's review would hold it in.
+	 * Exports the test character exactly as a player would for their own verified sheet (hide_st true - the primary real
+	 * case) and parses the resulting document back into the shape a Storyteller's review would hold it
+	 * in.
 	 *
 	 * @return array{xml:string,character:array<string,mixed>}
 	 */
@@ -95,14 +86,6 @@ class SheetVerificationThreadTest extends WP_UnitTestCase {
 		$this->assertSame( [ 'status' => 'none' ], $result );
 	}
 
-	/**
-	 * The bug this whole feature exists to avoid: a player's own export is redacted
-	 * ([ST] notes stripped), but before this fix sheet_hash always covered the UNREDACTED
-	 * sheet - so this exact scenario (nothing has actually changed) would have read
-	 * "changed" for every character carrying Storyteller-only content. Watched failing
-	 * first: reverting Character_Exporter's document_hash computation to sheet_hash alone
-	 * reproduces exactly this false "changed" result.
-	 */
 	public function test_a_players_own_verified_export_with_st_notes_reads_unchanged(): void {
 		$callback = $this->loopback();
 		[ 'xml' => $xml, 'character' => $character ] = $this->export_and_reparse();
@@ -177,10 +160,8 @@ class SheetVerificationThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The loopback resolves every /verify/ call against this same install regardless of the
-	 * URL's own claimed host (matching TransfersControllerThreadTest's own "by path, not
-	 * host" precedent) - so a code whose embedded base names a different site than the real
-	 * issuer (home_url()) is exercised for real, not faked.
+	 * The loopback resolves every /verify/ call against this same install regardless of the URL's own claimed host
+	 * (matching TransfersControllerThreadTest's own "by path, not host" precedent).
 	 */
 	public function test_a_base_not_matching_the_real_issuer_reads_issuer_mismatch(): void {
 		$callback = $this->loopback();
@@ -198,11 +179,6 @@ class SheetVerificationThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'issuer_mismatch', $result['status'] );
 	}
 
-	/**
-	 * A code issued before this fix (no document_hash in its stored attested JSON) falls back
-	 * to sheet_hash - the unredacted comparison - and says so via compared_with, rather than
-	 * fataling on a missing key.
-	 */
 	public function test_a_pre_1_0_0_code_falls_back_to_sheet_hash_and_says_so(): void {
 		$canonical  = Character_Exporter::export( $this->character_id, [ 'hide_st' => false ] );
 		$sheet_hash = hash( 'sha256', $canonical['xml'] );
@@ -215,7 +191,6 @@ class SheetVerificationThreadTest extends WP_UnitTestCase {
 			'short_code'     => 'OLD1-CODE',
 			'kind'           => 'gex',
 			'sheet_hash'     => $sheet_hash,
-			// Deliberately the pre-1.0.0 shape: no document_hash key at all.
 			'attested'       => wp_json_encode( [
 				'name'       => $this->character->name,
 				'stack'      => $this->character->stack_slug,
@@ -232,8 +207,7 @@ class SheetVerificationThreadTest extends WP_UnitTestCase {
 
 		$callback = $this->loopback();
 		$export   = Character_Exporter::export( $this->character_id, [ 'hide_st' => false ] );
-		// The same canonical export, with the old code's URL spliced in - standing in for a
-		// file whose "Include verification code" export predates this fix.
+		// The same canonical export, with the old code's URL spliced.
 		$xml       = str_replace( ' id=""', ' id="' . home_url( '/be-verify/?code=OLD1-CODE' ) . '"', $export['xml'] );
 		$character = GEX_Xml_Parser::parse_string( $xml )['characters'][0];
 

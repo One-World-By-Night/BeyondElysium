@@ -7,28 +7,15 @@ use BeyondElysium\Database\Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Static data-access model for one locale's translated text for one catalog
- * term. `context` is NULL for the default translation and a block slug for
- * a homograph override (§4).
- *
- * MySQL does not treat two NULLs as equal in a UNIQUE key, so
- * `UNIQUE(string_id, locale, context)` alone does not stop two default
- * (context-NULL) rows for the same term+locale - confirmed live in
- * `tests/thread/TranslationTablesSchemaThreadTest.php`, pinned there rather
- * than fixed at the schema layer. `upsert()` below is the fix: it always
- * looks a row up with `find_one()`'s explicit NULL-safe branch before
- * deciding to insert or update, so it can never create a second
- * context-NULL row for a term+locale already holding one. Never call
- * `create()` directly for a term that might already have a translation -
- * that is exactly the bypass the pinned test documents.
- *
- * @see BE_PROCESS/releases/1.2.0-design-workflow.md §4
+ * Static data-access model for one locale's translated text for one catalog term.
  */
 class Translation {
 
 	private const TABLE = 'translations';
 
-	/** Statuses `resolve_approval_level()`-style code may need to compare against. */
+	/**
+	 * Statuses `resolve_approval_level()`-style code may need to compare against.
+	 */
 	public const STATUSES = [ 'draft', 'needs_review', 'approved', 'conflict' ];
 
 	/**
@@ -41,11 +28,6 @@ class Translation {
 
 	/**
 	 * The NULL-safe lookup every other method in this class routes through.
-	 * A plain `context = %s` silently matches nothing when `$context` is
-	 * null (SQL's `NULL = NULL` is unknown, not true) - branches explicitly
-	 * instead of relying on MySQL's `<=>` operator, matching this
-	 * codebase's existing style of explicit `isset()`/ternary filter
-	 * branches over compact-but-implicit SQL.
 	 *
 	 * @param int         $string_id
 	 * @param string      $locale
@@ -72,20 +54,16 @@ class Translation {
 	}
 
 	/**
-	 * @param array $data string_id, locale, translation, status (default
-	 *                    'draft'), context (default null), updated_by
-	 *                    (default the current user, or null outside a
-	 *                    request - e.g. the B8 migration).
+	 * Creates a translation row and returns its id, or false when string_id or locale is missing.
+	 *
+	 * @param array $data string_id, locale, translation, status (default 'draft'), context (default null),
+	 *                    updated_by (default the current user, or null outside a request).
 	 * @return int|false
 	 */
 	public static function create( array $data ) {
 		if ( empty( $data['string_id'] ) || empty( $data['locale'] ) ) {
 			return false;
 		}
-		// Resolved once, not inline: `in_array($data['status'] ?? 'draft', ...) ? $data['status']
-		// : 'draft'` reads $data['status'] a second time in its true-branch without the
-		// coalesce, which is an undefined-key access on the common, default-status path - a
-		// bug caught live by this file's own thread test, not by inspection.
 		$status = $data['status'] ?? 'draft';
 		$status = in_array( $status, self::STATUSES, true ) ? $status : 'draft';
 
@@ -95,7 +73,6 @@ class Translation {
 			'context'     => $data['context'] ?? null,
 			'translation' => $data['translation'] ?? '',
 			'status'      => $status,
-			// Only the §8 migration ever sets this, recording a conflict's losing value.
 			'note'        => $data['note'] ?? null,
 			'updated_by'  => $data['updated_by'] ?? ( get_current_user_id() ?: null ),
 			'updated_at'  => current_time( 'mysql' ),
@@ -137,12 +114,7 @@ class Translation {
 	}
 
 	/**
-	 * Create-or-replace on `(string_id, locale, context)` (§6 `POST
-	 * /translations`) - `find_one()`'s NULL-safe lookup first, then update
-	 * that row or insert a new one. The one method the schema comment and
-	 * class docblock both point at as the fix for the NULL-context gap;
-	 * never bypass it with a direct `create()` call for a term that might
-	 * already be translated.
+	 * Create-or-replace on `(string_id, locale, context)` (`POST /translations`).
 	 *
 	 * @param int         $string_id
 	 * @param string      $locale
@@ -182,11 +154,7 @@ class Translation {
 	}
 
 	/**
-	 * The dictionary `Services\Catalog_Translator::map()` (§5.1) caches in a
-	 * transient - one query, joined to the string index for `source_key`,
-	 * default (context-NULL) rows only, non-empty translations only (an
-	 * emptied-out translation is "no translation," never a blank render -
-	 * §4's status-vocabulary rule).
+	 * The dictionary `Services\Catalog_Translator::map()` caches in a transient.
 	 *
 	 * @param string $locale
 	 * @return array<string,string> source_key => translation.

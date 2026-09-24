@@ -1,8 +1,5 @@
 /**
  * Generic modal dialog shell rendered via a portal into `document.body`.
- * Provides a titled header with a close button, a body area for
- * children, and an optional footer. Closes on Escape or a backdrop
- * click, and manages focus on open and close.
  */
 import { createPortal, useEffect, useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -17,10 +14,7 @@ export interface ModalProps {
 }
 
 /**
- * Renders `children` and an optional `footer` inside a titled dialog,
- * portaled to `document.body` so it stacks above the surrounding layout
- * regardless of where it was opened from. Calls `onClose` on Escape or a
- * backdrop click; a click inside the dialog itself does not close it.
+ * Renders `children` and an optional `footer` inside a titled dialog, portaled to `document.body`.
  */
 export function Modal( { title, onClose, children, footer }: ModalProps ) {
 	const dialogRef = useRef< HTMLDivElement >( null );
@@ -35,7 +29,6 @@ export function Modal( { title, onClose, children, footer }: ModalProps ) {
 		return () => document.removeEventListener( 'keydown', onKeyDown );
 	}, [ onClose ] );
 
-	// Moves focus into the dialog on open and restores it to the previously focused element on close.
 	useEffect( () => {
 		const previouslyFocused = dialogRef.current?.ownerDocument
 			.activeElement as HTMLElement | null;
@@ -49,8 +42,6 @@ export function Modal( { title, onClose, children, footer }: ModalProps ) {
 			role="presentation"
 			onClick={ onClose }
 		>
-			{ /* Keeps a click inside the dialog from reaching the backdrop, which closes it. Nothing
-			here to operate: Escape and the close button close it from the keyboard. */ }
 			{ /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */ }
 			<div
 				className="be-modal"

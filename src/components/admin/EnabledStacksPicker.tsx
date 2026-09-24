@@ -1,9 +1,6 @@
 /**
- * The one genuinely new control the Chronicle Setup checklist needs
- * (GS-2/GS-5, guided-chronicle-setup-design.md §6.1): a checkbox list over
- * whatever creature stacks exist. Engine-pure - no creature-specific code,
- * renders whatever `Creature_Stack::all()` returns, so a twelfth stack
- * (a future `hunter`, per §3.7) needs no change here.
+ * The one genuinely new control the Chronicle Setup checklist needs: a checkbox list over whatever creature stacks
+ * exist.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -18,11 +15,8 @@ export interface EnabledStacksPickerProps {
 }
 
 /**
- * Renders a checkbox per real creature stack, pre-checked to the chronicle's
- * current `enabled_stacks` (every box checked when the setting is absent -
- * "all eleven" is the default, not a guess). Refuses to save zero
- * selections (§9's named risk: an empty array must never be stored as
- * "none").
+ * Renders a checkbox per real creature stack, pre-checked to the chronicle's current `enabled_stacks` (every box
+ * checked when the setting is absent - "all eleven" is the default, not a guess).
  */
 export function EnabledStacksPicker( {
 	enabled,

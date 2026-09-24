@@ -8,10 +8,7 @@ beforeEach( () => {
 } );
 
 describe( 'readStoredCostVisibility', () => {
-	// 1.2.11 D94: the default flipped. Until this release the preference chose between
-	// dots and numbers and defaulted to dots, which is what left a price rendering as an
-	// unlabelled rating for every viewer who never found the toggle. It now chooses only
-	// whether the labelled price is shown, and showing it is the default.
+	// The default flipped.
 	it( 'defaults to showing the price with nothing stored', () => {
 		expect( readStoredCostVisibility() ).toBe( true );
 	} );
@@ -31,9 +28,6 @@ describe( 'readStoredCostVisibility', () => {
 		expect( readStoredCostVisibility() ).toBe( true );
 	} );
 
-	// The 1.1.0 key is deliberately not read: 'dots' meant "draw this as a rating", a
-	// choice that no longer exists, and silently reading it as "hide the price" would
-	// take the number away from a viewer who never asked for that.
 	it( 'ignores the retired 1.1.0 preference key', () => {
 		window.localStorage.setItem( 'be-cost-display-mode', 'dots' );
 		expect( readStoredCostVisibility() ).toBe( true );

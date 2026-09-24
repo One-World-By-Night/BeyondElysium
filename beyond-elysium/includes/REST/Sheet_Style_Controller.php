@@ -10,16 +10,16 @@ use BeyondElysium\Models\Sheet_Style;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for a character's sheet style override: font, accent/
- * background/text colors, a background image, and per-section graphics.
- * Reading a style requires be_view_characters; writing one requires
- * be_customize_sheet. Exactly one style row exists per character.
+ * REST controller for a character's sheet style override: font, accent/background/text colors, a background image,
+ * and per-section graphics.
  */
 class Sheet_Style_Controller extends Base_Controller {
 
 	protected $rest_base = 'sheet-style';
 
-	/** Font family values accepted for a character's sheet style; rendered directly as CSS. */
+	/**
+	 * Font family values accepted for a character's sheet style.
+	 */
 	const ALLOWED_FONTS = [
 		'', 'Georgia, serif', "'Times New Roman', serif", "'Garamond', serif",
 		"'Trajan Pro', 'Cinzel', serif", "'Cormorant Garamond', serif",
@@ -27,9 +27,7 @@ class Sheet_Style_Controller extends Base_Controller {
 	];
 
 	/**
-	 * Registers the REST routes for retrieving, updating, and deleting a
-	 * character's sheet style override. All three routes are scoped to a
-	 * game slug and character id.
+	 * Registers the REST routes for retrieving, updating, and deleting a character's sheet style override.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<character_id>\d+)/sheet-style', [
@@ -52,13 +50,7 @@ class Sheet_Style_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Permission callback for writing a sheet style. `be_customize_sheet` is a
-	 * per-user grant made on the profile screen (User_Settings), not something
-	 * a chronicle role carries, so it is checked site-wide; membership in the
-	 * chronicle is checked through `be_view_characters`, which every chronicle
-	 * role holds. Checking it as a chronicle capability - the old rule - meant
-	 * the grant never reached a player (1.0.0-review F-039). Which sheet may be
-	 * styled is the handler's ownership check.
+	 * Permission callback for writing a sheet style.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return true|\WP_Error
@@ -70,9 +62,8 @@ class Sheet_Style_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns a character's sheet style override with the background image
-	 * and section graphic attachment ids resolved to real URLs. Returns an
-	 * empty object, not a 404, when the character has no override saved.
+	 * Returns a character's sheet style override with the background image and section graphic attachment ids resolved to
+	 * real URLs.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -108,10 +99,8 @@ class Sheet_Style_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Validates and saves a character's sheet style override: font must be
-	 * one of the allowed choices, colors must be valid hex values, and
-	 * background_image_id/section_graphics must reference real media
-	 * attachments. Persists the validated data and returns the saved style.
+	 * Validates and saves a character's sheet style override: font must be one of the allowed choices, colors must be
+	 * valid hex values, and background_image_id/section_graphics must reference real media attachments.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -172,9 +161,7 @@ class Sheet_Style_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Deletes a character's sheet style override entirely, reverting the
-	 * character to the default sheet appearance. Confirms the character
-	 * exists before deleting.
+	 * Deletes a character's sheet style override entirely, reverting the character to the default sheet appearance.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -195,9 +182,7 @@ class Sheet_Style_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Checks whether a string is a 6-digit hex color value prefixed with
-	 * a hash character, such as #1a1a1a. Used to validate color fields
-	 * before they are saved and rendered as CSS.
+	 * Checks whether a string is a 6-digit hex color value prefixed with a hash character, such as #1a1a1a.
 	 *
 	 * @param string $value
 	 * @return bool
@@ -207,9 +192,8 @@ class Sheet_Style_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a character by id and confirms both the game and the
-	 * character exist and that the character belongs to that game,
-	 * returning a WP_Error with a 404 status otherwise.
+	 * Looks up a character by id and confirms both the game and the character exist and that the character belongs to
+	 * that game, returning a WP_Error with a 404 status.
 	 *
 	 * @param int    $character_id
 	 * @param string $game_slug
@@ -230,9 +214,8 @@ class Sheet_Style_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Refuses a sheet-style write on a character the current user may not
-	 * edit: a Storyteller of this chronicle may style any sheet, anyone else
-	 * only their own.
+	 * Refuses a sheet-style write on a character the current user may not edit: a Storyteller of this chronicle may style
+	 * any sheet, anyone else only their own.
 	 *
 	 * @param object $character
 	 * @return \WP_Error|null Null when the write may proceed.

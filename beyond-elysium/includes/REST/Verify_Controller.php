@@ -14,34 +14,16 @@ use BeyondElysium\Services\Not_Exportable_Exception;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The plugin's first unauthenticated REST route (GX-7): answers "is this
- * character document still current" for anyone holding a short verification
- * code, with no login required. Confirmed to be the first such route in this
- * plugin - `grep -rn "__return_true"` across `includes/` returned nothing
- * before this file - so it carries its own explicit security posture rather
- * than inheriting a pattern that doesn't exist elsewhere:
- *
- *   - Keyed by a random per-issuance code, never the character's own UUID.
- *   - The response echoes what was attested at issue time (a stored copy,
- *     never a live read) plus `still_matches` - five booleans, the only
- *     live information disclosed.
- *   - An unknown, expired, or malformed code returns a bare 404, with no
- *     distinction between "never existed" and "expired" - never an oracle.
- *   - `revoked: true` sets `valid: false` and suppresses `still_matches`
- *     entirely, but is a real 200, not a 404 - a receiving chronicle must be
- *     able to tell "this document is void" from "this code is bogus".
- *   - Rate limited at 30/minute per IP via a transient. The rate-limit
- *     response never depends on whether the code was real.
- *   - Never returned, at any outcome: `sheet_data`, biography, notes, the
- *     UUID, `wp_user_id`, player identity, or the local numeric id.
- *
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-7, §6.2, §6.3
+ * The plugin's first unauthenticated REST route: answers "is this character document still current" for anyone
+ * holding a short verification code, with no login required.
  */
 class Verify_Controller extends Base_Controller {
 
 	protected $rest_base = 'verify';
 
-	/** Requests allowed per IP per rolling minute. */
+	/**
+	 * Requests allowed per IP per rolling minute.
+	 */
 	private const RATE_LIMIT = 30;
 
 	public function register_routes(): void {
@@ -49,7 +31,7 @@ class Verify_Controller extends Base_Controller {
 			[
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'verify' ],
-				// Deliberate: this route is public by design (GX-7), not an oversight.
+				// Deliberate: this route is public by design.
 				'permission_callback' => '__return_true',
 			],
 		] );
@@ -69,9 +51,6 @@ class Verify_Controller extends Base_Controller {
 			return self::not_found();
 		}
 
-		// 1.1.0 §3.13 - character attestations are checked first, then item attestations; a
-		// short code space shared via Services\Short_Code means the two can never collide, so
-		// this order is never ambiguous.
 		$attestation = Attestation::resolve( $code );
 		if ( $attestation !== null ) {
 			if ( $attestation->expires_at !== null && strtotime( $attestation->expires_at ) < time() ) {
@@ -125,9 +104,7 @@ class Verify_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The item-shaped verify response (1.1.0 §3.13) - public like a character's own: never the
-	 * item's description or powers, never a player's name, only what was attested at issue
-	 * time plus whether it still matches a live read.
+	 * The item-shaped verify response.
 	 *
 	 * @param object $attestation A row from `Item_Attestation::resolve()`.
 	 * @return \WP_REST_Response
@@ -183,11 +160,7 @@ class Verify_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Compares the attestation's stored snapshot against a live read of the
-	 * character. A character that no longer exists (deleted since issuance)
-	 * reports every field as no longer matching, rather than erroring - the
-	 * document plainly isn't current anymore, which is exactly the question
-	 * this endpoint answers.
+	 * Compares the attestation's stored snapshot against a live read of the character.
 	 *
 	 * @param object $attestation
 	 * @return array<string,bool>
@@ -202,7 +175,7 @@ class Verify_Controller extends Base_Controller {
 		try {
 			$current_hash = hash( 'sha256', Character_Exporter::export( (int) $character->id )['xml'] );
 		} catch ( Not_Exportable_Exception ) {
-			$current_hash = null; // Its creature type no longer has an exchange shape to compare.
+			$current_hash = null;
 		}
 
 		return [
@@ -215,9 +188,7 @@ class Verify_Controller extends Base_Controller {
 	}
 
 	/**
-	 * A bare 404 with no distinguishing detail - unknown, expired, and
-	 * malformed codes are all indistinguishable from one another, so this
-	 * endpoint cannot be used to enumerate real codes.
+	 * A bare 404 with no distinguishing detail.
 	 *
 	 * @return \WP_Error
 	 */
@@ -226,11 +197,7 @@ class Verify_Controller extends Base_Controller {
 	}
 
 	/**
-	 * A fixed-window counter, 30 requests per rolling minute per IP,
-	 * transient-backed. Adequate for this audience per the design doc's own
-	 * assessment, not a defense against a determined attacker - the real
-	 * mitigation is that no response here, rate-limited or not, ever
-	 * discloses whether a given code is real.
+	 * A fixed-window counter: 30 requests per rolling minute per IP, transient-backed.
 	 *
 	 * @return bool
 	 */

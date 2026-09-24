@@ -11,26 +11,17 @@ use BeyondElysium\Services\St_Visibility;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for the games resource. Exposes endpoints to list, create,
- * retrieve, update, and delete games, which are the top-level container each
- * chronicle's characters, plots, and other data belong to. Games are identified
- * by a unique slug in addition to their numeric id.
+ * REST controller for the games resource.
  */
 class Games_Controller extends Base_Controller {
 
 	protected $rest_base = 'games';
 
 	/**
-	 * Registers the REST routes for the games collection and for a single game
-	 * addressed by slug. Wires up GET/POST on the collection endpoint and
-	 * GET/PUT/DELETE on the single-game endpoint, each gated by the appropriate
-	 * capability.
+	 * Registers the REST routes for the games collection and for a single game addressed by slug.
 	 */
 	public function register_routes(): void {
-		// The current user's own real chronicle memberships - page-consolidation-design.md's
-		// chronicle switcher (unlike GET /games, which lists every chronicle on the install
-		// to any logged-in user) reads this, never the full collection, so a player can never
-		// see a chronicle they hold no membership in.
+		// The current user's own real chronicle memberships.
 		register_rest_route( $this->namespace, '/my/games', [
 			[
 				'methods'             => 'GET',
@@ -39,11 +30,6 @@ class Games_Controller extends Base_Controller {
 			],
 		] );
 
-		// What the current user can actually do in one specific chronicle - answers
-		// with every flag false for a user with no real relationship to this chronicle
-		// rather than a 403, so a switcher can render "no access here" instead of failing
-		// outright; open to any logged-in user rather than gated by a capability this
-		// route's own job is to determine.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/my/capabilities', [
 			[
 				'methods'             => 'GET',
@@ -88,7 +74,6 @@ class Games_Controller extends Base_Controller {
 			],
 		] );
 
-		// What deleting a chronicle would take with it, so the Games screen can say so in its one confirmation.
 		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<slug>[a-z0-9\-]+)/content', [
 			[
 				'methods'             => 'GET',
@@ -97,10 +82,6 @@ class Games_Controller extends Base_Controller {
 			],
 		] );
 
-		// Owner ruling, 1.0.0-checklist.md item 18: a narrow slice of update_item()'s own
-		// settings, carved into its own route (Decision 109's Default Approval Policy is the
-		// precedent) so an HST can save these three without the full be_manage_games the rest
-		// of update_item() still requires - a rename, description, or asc_role_path change.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/chronicle-setup', [
 			[
 				'methods'             => 'PUT',
@@ -109,9 +90,7 @@ class Games_Controller extends Base_Controller {
 			],
 		] );
 
-		// Site-wide brand accent default (1.2.7-design-workflow.md §E1) - a chronicle-agnostic
-		// plain option, not part of any one game's own settings, so it gets its own tiny route
-		// rather than living under /games/{slug}.
+		// Site-wide brand accent default.
 		register_rest_route( $this->namespace, '/branding', [
 			[
 				'methods'             => 'GET',
@@ -138,8 +117,7 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Sets the site-wide brand accent default. An empty string clears it
-	 * (every chronicle falls through to `theme.css`'s own `--be-red-1`).
+	 * Sets the site-wide brand accent default.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -154,9 +132,8 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns a paginated list of games, optionally filtered by game_type and
-	 * ordered by the requested column and direction. Available to any user
-	 * who can view characters.
+	 * Returns a paginated list of games, optionally filtered by game_type and ordered by the requested column and
+	 * direction.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response
@@ -172,10 +149,6 @@ class Games_Controller extends Base_Controller {
 		];
 
 		$items = Game::all( $args );
-		// Deliberately conservative. A chronicle description is a short blurb shown in
-		// pickers and lists, and this route has no single chronicle to scope a role check
-		// against, so anyone without the site-wide capability has it stripped. Over-filtering
-		// a blurb costs nothing; under-filtering leaks.
 		$can_manage = current_user_can( 'be_manage_games' );
 		foreach ( $items as $item ) {
 			if ( isset( $item->settings ) && $item->settings instanceof \stdClass ) {
@@ -190,11 +163,7 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns every chronicle the current user actually holds a membership row
-	 * in, each with the role they hold there - the real data source for an
-	 * in-page chronicle switcher (page-consolidation-design.md), as opposed to
-	 * get_items()'s full collection, which lists every chronicle on the install
-	 * to any logged-in user and must never back a front-end picker.
+	 * Returns every chronicle the current user actually holds a membership row in, each with the role they hold there.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response
@@ -206,9 +175,6 @@ class Games_Controller extends Base_Controller {
 		foreach ( $memberships as $membership ) {
 			$game = Game::find( (int) $membership->game_id );
 			if ( ! $game ) {
-				// A membership row surviving a game's own row-only delete (Game::delete()'s
-				// documented "row only, content becomes unreachable" behavior) - skipped
-				// rather than surfaced as a broken entry in the switcher.
 				continue;
 			}
 			$games[] = [
@@ -222,13 +188,7 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns what the current user can actually do in one specific chronicle -
-	 * the same five flags `Plugin::enqueue_frontend()` localizes site-wide, but
-	 * resolved per chronicle through `Authorization::check_request()` instead
-	 * of a single `current_user_can()` snapshot computed before any chronicle
-	 * is known. A game slug that doesn't resolve still returns every flag
-	 * false rather than a 404 or 403, so a switcher can render "no access
-	 * here" instead of a hard failure.
+	 * Returns what the current user can actually do in one specific chronicle.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response
@@ -240,15 +200,13 @@ class Games_Controller extends Base_Controller {
 			'be_manage_schemas',
 			'be_manage_connections',
 			'be_manage_boons',
-			// Added for the Storyteller Toolkit's World Objects tab (1.0.1 D2). The catalog
-			// existed only in wp-admin before that, so no front-end screen had ever needed
-			// this capability resolved per chronicle.
+			// Gates the Storyteller Toolkit's World Objects tab.
 			'be_manage_world_objects',
-			// Added for the Storyteller Toolkit's Game Nights tab (1.1.0 §3.1).
+			// Gates the Storyteller Toolkit's Game Nights tab.
 			'be_manage_sessions',
-			// Added for GameNights.tsx's own downtime-window editor (1.1.0 §3.3).
+			// Gates the Game Nights downtime-window editor.
 			'be_manage_apr',
-			// Added for the Storyteller Toolkit's Factions tab (1.1.0 §3.10, F1/F2).
+			// Gates the Storyteller Toolkit's Factions tab.
 			'be_manage_factions',
 		];
 
@@ -262,17 +220,12 @@ class Games_Controller extends Base_Controller {
 
 		return $this->success( [
 			'capabilities' => Authorization::capabilities_for_request( $capability_list, $request ),
-			// 1.2.7-design-workflow.md §E2 - resolved here (chronicle -> site default -> unset)
-			// rather than a separate route, since every chronicle-scoped page already calls
-			// this once per switch (useChronicleSwitcher()'s own second effect).
 			'accent_color' => Game::resolve_accent_color( $game ),
 		] );
 	}
 
 	/**
-	 * Returns a single game identified by its slug, or a 404 error when no
-	 * game with that slug exists. Available to any user who can view
-	 * characters.
+	 * Returns a single game identified by its slug, or a 404 error when no game with that slug exists.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -290,11 +243,7 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates a new game from the request's name, slug, game_type, description,
-	 * and settings fields. Generates a slug from the name when none is given,
-	 * or validates that an explicitly supplied slug is not already in use.
-	 * Triggers the be_after_upgrade action so provisioning that depends on a
-	 * game existing can run.
+	 * Creates a new game from the request's name, slug, game_type, description, and settings fields.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -312,15 +261,13 @@ class Games_Controller extends Base_Controller {
 			return $this->error( 'duplicate_slug', __( 'A game with this slug already exists.', 'beyond-elysium' ), 409 );
 		}
 
-		// A slug still holding a deleted chronicle's content would hand that content to this one (1.0.0-review F-036).
 		if ( ! empty( $slug ) && array_sum( Game::orphaned_content_counts( sanitize_title( $slug ) ) ) > 0 ) {
 			return $this->error( 'slug_has_orphaned_content', __( 'A deleted chronicle\'s characters or records are still stored under this slug. Choose a different slug.', 'beyond-elysium' ), 409 );
 		}
 
 		$settings = $request->get_param( 'settings' );
 		if ( is_array( $settings ) ) {
-			// A create request is very unlikely to carry an AI key, but if one ever does,
-			// it must never be stored in plaintext - same encrypt/clear rule as an update.
+			// Encrypts or clears an AI key, as an update does.
 			$settings = Ai_Assist::merge_settings_write( $settings, [] );
 		}
 
@@ -337,9 +284,7 @@ class Games_Controller extends Base_Controller {
 			return $this->error( 'create_failed', __( 'Failed to create game.', 'beyond-elysium' ), 500 );
 		}
 
-		// GS-7 (guided-chronicle-setup-design.md §2.1, §3.3): this path writes no
-		// membership row today, and the one-time backfill can never run again - a
-		// chronicle created here would otherwise start with zero members forever.
+		// Makes the creator the chronicle's HST.
 		$creator_id = get_current_user_id();
 		if ( $creator_id > 0 ) {
 			\BeyondElysium\Models\Game_Member::set_role( (int) $id, $creator_id, 'hst' );
@@ -356,14 +301,7 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Updates an existing game identified by slug with any of the recognized
-	 * fields present in the request body. A slug change is routed through
-	 * Game::rename() - the only path that cascades the change to every
-	 * character, schema-block fork, page, and Elementor widget that names
-	 * the old slug - rather than through the plain field update, which
-	 * cannot change the slug at all. Coerces notifications_enabled to 0/1,
-	 * and treats a request with no recognized fields as a no-op rather than
-	 * a failure.
+	 * Updates an existing game identified by slug with any of the recognized fields present in the request body.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -420,8 +358,7 @@ class Games_Controller extends Base_Controller {
 		}
 
 		$data = [];
-		// Only fields present in the request are included in the update. slug is handled
-		// above, through rename() - Game::update() cannot change it at all.
+		// Only fields present in the request are included in the update. slug is handled above, through rename().
 		foreach ( [ 'name', 'game_type', 'description', 'settings', 'asc_role_path', 'notifications_enabled' ] as $field ) {
 			$value = $request->get_param( $field );
 			if ( $value !== null ) {
@@ -429,17 +366,11 @@ class Games_Controller extends Base_Controller {
 			}
 		}
 
-		// Merge, never replace: `settings` is a shared bag (enabled_stacks, apr.*,
-		// require_new_character_approval, auto_approve, ...) and Game::update() writes the
-		// column wholesale (R6) - a caller sending only `enabled_stacks` must not silently
-		// erase kony's own real `apr` object. Same hazard background-ledger-apr-design.md
-		// flags for the Apr_Controller editor; one shared merge here covers both (GS-2/GS-6).
+		// Merges `settings` into the stored settings rather than replacing them.
 		if ( isset( $data['settings'] ) ) {
 			$existing = (array) ( $game->settings ?? new \stdClass() );
 			$incoming = (array) $data['settings'];
-			// enabled_factions goes one level further: Chronicle Setup saves one stack's field at a
-			// time, so a write changes the fields it names and keeps every other restriction - the
-			// second save no longer erases the first (1.0.0-review F-066).
+			// enabled_factions merges stack by stack and field by field.
 			if ( isset( $incoming['enabled_factions'] ) && is_array( $incoming['enabled_factions'] ) ) {
 				$incoming['enabled_factions'] = self::merge_faction_restrictions(
 					json_decode( (string) wp_json_encode( $existing['enabled_factions'] ?? [] ), true ) ?: [],
@@ -454,7 +385,7 @@ class Games_Controller extends Base_Controller {
 			$data['notifications_enabled'] = $data['notifications_enabled'] ? 1 : 0;
 		}
 
-		// An empty $data set is treated as a no-op rather than a failure.
+		// An empty $data set is treated as a no-op.
 		if ( ! empty( $data ) ) {
 			$ok = Game::update( $current_slug, $data );
 			if ( ! $ok ) {
@@ -470,25 +401,14 @@ class Games_Controller extends Base_Controller {
 			Ai_Assist::redact_settings_read( $updated->settings );
 		}
 		if ( $rename_report !== null ) {
-			// stdClass from $wpdb->get_row() - a dynamic property here is not the PHP 8.2
-			// deprecation (that applies to declared classes only), and this is the one
-			// response the cascade report belongs on: the same request that triggered it.
 			$updated->rename_report = $rename_report;
 		}
 		return $this->success( $updated );
 	}
 
 	/**
-	 * Saves exactly the Chronicle Setup settings an HST may set for their own
-	 * chronicle (owner ruling, 1.0.0-checklist.md item 18): enabled_stacks (creature
-	 * types), enabled_factions (sub-faction restrictions),
-	 * require_new_character_approval, accent_color, and purchase_scope (1.3.4: which
-	 * purchase lists are open to every creature type). Merges into the chronicle's existing settings
-	 * object the same way update_item() does - never a wholesale replace - since both
-	 * routes write the same shared `settings` column (R6). Only these three field
-	 * names are ever read from the request; every other game field (name, slug,
-	 * description, asc_role_path, ...) still requires the full be_manage_games
-	 * update_item() gates on.
+	 * Saves exactly the Chronicle Setup settings an HST may set for their own chronicle: enabled_stacks,
+	 * enabled_factions, require_new_character_approval, accent_color and purchase_scope.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -502,9 +422,6 @@ class Games_Controller extends Base_Controller {
 		}
 
 		$incoming = [];
-		// accent_color added 1.2.7-design-workflow.md §E2 - a narrow chronicle-level override
-		// of the site's own brand accent default, same bar as the other three (be_manage_chronicle_setup,
-		// not the full be_manage_games update_item() otherwise requires).
 		foreach ( [ 'enabled_stacks', 'enabled_factions', 'require_new_character_approval', 'accent_color', 'purchase_scope' ] as $field ) {
 			$value = $request->get_param( $field );
 			if ( $value !== null ) {
@@ -516,15 +433,12 @@ class Games_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'At least one of enabled_stacks, enabled_factions, require_new_character_approval, accent_color, or purchase_scope is required.', 'beyond-elysium' ), 400 );
 		}
 
-		// Empty string clears the override (falls through to the site-wide default); anything
-		// else must be a real hex color, same validation Sheet_Style_Controller's own
-		// accent_color field already applies (Decision 041 precedent).
+		// Empty string clears the override (falls through to the site-wide default).
 		if ( isset( $incoming['accent_color'] ) && $incoming['accent_color'] !== '' && ! self::is_valid_hex_color( (string) $incoming['accent_color'] ) ) {
 			return $this->error( 'invalid_param', __( 'accent_color must be a hex color like #1a1a1a.', 'beyond-elysium' ), 400 );
 		}
 
-		// Each area is switched on or off by itself, so a write may carry one and leave the others as
-		// they are (1.3.4). An unknown area or a value that is not plainly on or off is refused.
+		// Each area is switched on or off by itself.
 		if ( isset( $incoming['purchase_scope'] ) ) {
 			$switches = \BeyondElysium\Services\Purchase_Scope::sanitize( $incoming['purchase_scope'] );
 			if ( $switches === null ) {
@@ -534,7 +448,7 @@ class Games_Controller extends Base_Controller {
 		}
 
 		$existing = (array) ( $game->settings ?? new \stdClass() );
-		// Same one-stack-at-a-time merge update_item() itself applies (1.0.0-review F-066).
+		// Same one-stack-at-a-time merge update_item() itself applies.
 		if ( isset( $incoming['enabled_factions'] ) && is_array( $incoming['enabled_factions'] ) ) {
 			$incoming['enabled_factions'] = self::merge_faction_restrictions(
 				json_decode( (string) wp_json_encode( $existing['enabled_factions'] ?? [] ), true ) ?: [],
@@ -564,8 +478,7 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Counts everything deleting this chronicle would delete with it -
-	 * Game::content_counts(), the same numbers delete_item() refuses on.
+	 * Counts everything deleting this chronicle would delete with it.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -579,12 +492,7 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Deletes a chronicle identified by slug. A chronicle that still holds
-	 * content is deleted only when `with_content` is set, and then with all
-	 * of it; without the flag the request is refused with 409
-	 * `chronicle_has_content` and the counts, so the caller can show exactly
-	 * what would be lost. Nothing is ever left behind under the slug for a
-	 * later chronicle to inherit (1.0.0-review F-036).
+	 * Deletes a chronicle identified by slug.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -611,9 +519,8 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Defines the query parameters accepted by the games collection endpoint:
-	 * a game_type filter, orderby/order sort controls, and page/per_page
-	 * pagination, each with its allowed values and defaults.
+	 * Defines the query parameters accepted by the games collection endpoint: a game_type filter, orderby/order sort
+	 * controls, and page/per_page pagination, each with its allowed values and defaults.
 	 *
 	 * @return array
 	 */
@@ -648,10 +555,9 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Merges a write's sub-faction restrictions into the stored ones, stack
-	 * by stack and field by field: a field the write names takes its new
-	 * list (an empty list lifts that field's restriction), and every stack or
-	 * field it doesn't name keeps its own.
+	 * Merges a write's sub-faction restrictions into the stored ones, stack by stack and field by field: a field the
+	 * write names takes its new list (an empty list lifts that field's restriction), and every stack or field it doesn't
+	 * name keeps its own.
 	 *
 	 * @param array<string,mixed> $existing Stored `enabled_factions`, stack => field => allowed values.
 	 * @param array<mixed>        $incoming The write's `enabled_factions`, the same shape.
@@ -670,10 +576,7 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Checks whether a string is a 6-digit hex color prefixed with a hash,
-	 * such as #1a1a1a - same rule `Sheet_Style_Controller`'s own accent_color
-	 * field already applies, duplicated rather than shared across two
-	 * controllers for one regex line.
+	 * Checks whether a string is a 6-digit hex color prefixed with a hash, such as #1a1a1a.
 	 *
 	 * @param string $value
 	 * @return bool
@@ -683,9 +586,8 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Defines the request parameters accepted when creating a game: the
-	 * required name, an optional slug and game_type, a free-text description,
-	 * and an arbitrary settings object, each with its sanitization rule.
+	 * Defines the request parameters accepted when creating a game: the required name, an optional slug and game_type, a
+	 * free-text description, and an arbitrary settings object, each with its sanitization rule.
 	 *
 	 * @return array
 	 */
@@ -705,8 +607,7 @@ class Games_Controller extends Base_Controller {
 				'default' => 'met',
 				'sanitize_callback' => 'sanitize_text_field',
 			],
-			// Rich text, same allowlist as post content - matches biography/notes and
-			// every plot free-text field (1.0.1 D1).
+			// Rich text, same allowlist as post content.
 			'description' => [
 				'type'              => 'string',
 				'sanitize_callback' => 'wp_kses_post',
@@ -718,10 +619,7 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Defines the request parameters accepted when updating a game: the same
-	 * fields as create, each optional since a PUT only changes the fields it
-	 * includes. Malformed values are rejected by the REST parameter schema
-	 * before reaching the model layer.
+	 * Defines the request parameters accepted when updating a game: the same fields as create, each optional.
 	 *
 	 * @return array
 	 */

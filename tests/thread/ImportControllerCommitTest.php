@@ -8,16 +8,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * workflow-0.8.md Step 6e-6h: `Import_Controller::commit()`. No real character-bearing
- * `.gex` fixture exists in this repo (confirmed in `GexParserTest`'s own doc comment), so
- * these tests inject a hand-built `$parsed` structure directly into the job transient -
- * shaped exactly as `GEX_Parser::parse_binary()` really returns it (every key checked
- * against the parser source, not guessed) - and drive `commit()` through the real REST
- * server against a real `met-merits` catalog and a real `Change_Engine`/`World_Object`,
- * same as `ChangesControllerBudgetTest`. This exercises everything downstream of parsing
- * without mocking any of it.
- *
- * @see BE_PROCESS/releases/workflow-0.8.md Step 6
+ * `Import_Controller::commit()`, with a hand-built `$parsed` structure injected directly.
  */
 class ImportControllerCommitTest extends WP_UnitTestCase {
 
@@ -44,12 +35,8 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A minimal vampire character record, shaped exactly like
-	 * `GEX_Parser::parse_character_vampire()`'s real return array. `$merit_trait_name` is
-	 * injected as the sole entry of the "Merits" trait list so each test can control
-	 * whether it resolves cleanly. `$extra_trait_lists` merges in additional named lists
-	 * (keyed by GV list name, same shape as "Merits" below) for tests exercising
-	 * non-sheet_block classifications (preserve_as_note, needs_design, ...).
+	 * A minimal vampire character record, shaped exactly like `GEX_Parser::parse_character_vampire()`'s real return
+	 * array.
 	 */
 	private function synthetic_character( string $merit_trait_name, array $extra_trait_lists = [] ): array {
 		return [
@@ -169,18 +156,16 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$this->assertSame( 12, (int) $character->xp_earned );
 		$this->assertSame( 5, (int) $character->xp_unspent );
 
-		$merits = $character->sheet_data['met-merits'] ?? [];
+		$merits = $character->sheet_data['vampire-merits'] ?? [];
 		$this->assertCount( 1, $merits );
 		$this->assertSame( 'Iron Will', $merits[0]['name'] );
 		$this->assertSame( 3, $merits[0]['count'] );
 
-		// Identity/resource field mapping (Decision 039) - Step 4 never scoped this;
-		// values are carried straight across, never resolved against a catalog.
+		// Identity/resource field mapping.
 		$this->assertSame( 'Toreador', $character->sheet_data['vampire-identity']['Clan'] );
 		$this->assertSame( 'Humanity', $character->sheet_data['vampire-identity']['Morality Path'] );
 		$this->assertSame( 'Survivor', $character->sheet_data['met-archetypes']['Nature'] );
-		// sheet_data round-trips through JSON (Character::create()/find()), which does
-		// not distinguish 12.0 from 12 - assertEquals, not assertSame, on the values.
+		// sheet_data round-trips through JSON (Character::create()/find()).
 		$this->assertEquals(
 			[ 'permanent' => 12, 'temporary' => 12 ],
 			$character->sheet_data['vampire-resources']['Blood']
@@ -200,14 +185,6 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$this->assertCount( 1, $import_notes );
 	}
 
-	/**
-	 * "Imported health levels are silently discarded" (0.99.2-workflow.md) is fixed - Health
-	 * Levels now resolves to the stack's own `{stack}-health` sheet_block, same as
-	 * Influences/Backgrounds. Bonds still has no BE model and remains the real example of a
-	 * `preserve_as_note`-classified list surviving into the import_note's raw_record instead
-	 * of being stripped along with the sheet_block lists that really were fully resolved
-	 * elsewhere.
-	 */
 	public function test_preserve_as_note_trait_lists_survive_into_the_import_note(): void {
 		wp_set_current_user( $this->admin_id );
 
@@ -233,16 +210,14 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$this->assertNotNull( $preserved, 'preserve_as_note lists must not be stripped from the raw_record.' );
 		$preserved_names = array_column( $preserved, 'name' );
 		$this->assertContains( 'Bonds', $preserved_names );
-		// Merits and Health Levels are both sheet_block-classified and already live in
-		// sheet_data - neither may also be duplicated into the preserved note.
+		// Merits and Health Levels are both sheet_block-classified and already live in sheet_data.
 		$this->assertNotContains( 'Merits', $preserved_names );
 		$this->assertNotContains( 'Health Levels', $preserved_names );
 	}
 
 	/**
-	 * The real fix: an imported character's "Health Levels" list lands in
-	 * `{stack}-health` sheet_data exactly like any other trait_list import (Merits'
-	 * own path), carrying the real per-character box counts instead of being discarded.
+	 * The real fix: an imported character's "Health Levels" list lands in `{stack}-health` sheet_data exactly like any
+	 * other trait_list import (Merits' own path), carrying the real per-character box counts.
 	 */
 	public function test_health_levels_imports_into_the_stacks_own_health_block(): void {
 		wp_set_current_user( $this->admin_id );
@@ -279,13 +254,7 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Every open-catalog trait_list block (Merits, Backgrounds, and so on) seeds with
-	 * `allow_custom: true`, so an unrecognized trait in one of those always resolves
-	 * `custom`, never `unresolved`. The `{stack}-health` blocks are the one deliberate
-	 * exception (a fixed, closed set of real Grapevine box names), but `tiered_power`
-	 * blocks have no `allow_custom` concept at all (Trait_Mapper's own doc comment), so a
-	 * discipline family that plainly doesn't exist is the real, reachable unresolved case
-	 * exercised here.
+	 * Every open-catalog trait_list block (Merits, Backgrounds, and so on) seeds with `allow_custom: true`.
 	 */
 	public function test_commit_is_refused_while_a_tiered_power_trait_is_unresolved(): void {
 		wp_set_current_user( $this->admin_id );
@@ -307,9 +276,9 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Step 4d, against real seeded `vampire-disciplines` data: a numbered rung
-	 * (`Fortitude`/Total `3`, real level 3 = "Resilience") and an Elder-and-above pick
-	 * via its real self-describing name (`Trait_Mapper`'s confirmed real format).
+	 * Against real seeded `vampire-disciplines` data: a numbered rung (`Fortitude`/Total `3`, real level 3 =
+	 * "Resilience") and an Elder-and-above pick via its real self-describing name (`Trait_Mapper`'s confirmed real
+	 * format).
 	 */
 	public function test_commit_resolves_real_tiered_power_traits(): void {
 		wp_set_current_user( $this->admin_id );
@@ -320,9 +289,6 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 			'traits' => [
 				[ 'name' => 'Fortitude', 'total' => '3', 'note' => '' ],
 				[ 'name' => 'Fortitude: Personal Armor (elder)', 'total' => '1', 'note' => '' ],
-				// A real Combo Discipline (Decision 040): a flat entry in this SAME
-				// "Disciplines" list, resolved via the vampire-disciplines/
-				// vampire-combo-disciplines fallback, not a separate GEX list.
 				[ 'name' => 'Smothering Darkness', 'total' => '5', 'note' => '' ],
 			],
 		];
@@ -374,9 +340,6 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$this->assertSame( 403, $response->get_status() );
 	}
 
-	// -------------------------------------------------------------------------
-	// Chunk 1 of the Import plan: name-scoped duplicate detection (the user's own
-	// explicit rule - name only, never uuid) and its three commit-time resolutions.
 	// -------------------------------------------------------------------------
 
 	public function test_a_duplicate_character_is_reported_in_the_preview(): void {
@@ -470,7 +433,7 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$this->assertSame( 12, (int) $updated->xp_earned, 'the import carries an absolute total (12), replacing the stale 3 via a computed delta' );
 		$this->assertSame( 5, (int) $updated->xp_unspent );
 
-		$merits = $updated->sheet_data['met-merits'] ?? [];
+		$merits = $updated->sheet_data['vampire-merits'] ?? [];
 		$this->assertSame( 'Iron Will', $merits[0]['name'] ?? null );
 	}
 
@@ -504,9 +467,7 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 	public function test_committing_with_an_applied_trait_resolution_uses_the_chosen_name(): void {
 		wp_set_current_user( $this->admin_id );
 
-		// "Iron Wil" is one letter short of the real seeded merit "Iron Will" - close
-		// enough to land in Fuzzy_Matcher::suggest()'s threshold, same as every other
-		// fuzzy-outcome test in this file relies on real seeded catalog data.
+		// "Iron Wil" is one letter short of the real seeded merit "Iron Will".
 		$job_id = $this->inject_job( $this->synthetic_parsed( [ $this->synthetic_character( 'Iron Wil' ) ] ) );
 		$job    = get_transient( 'be_import_job_' . $job_id );
 		$this->assertNotEmpty( $job['preview']['flagged_traits'], 'the typo must actually be flagged fuzzy for this test to mean anything' );
@@ -530,21 +491,11 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
 
 		$character = Character::find( (int) $data['characters'][0]['id'] );
-		$merits    = $character->sheet_data['met-merits'] ?? [];
+		$merits    = $character->sheet_data['vampire-merits'] ?? [];
 		$this->assertCount( 1, $merits );
 		$this->assertSame( 'Iron Will', $merits[0]['name'], 'the corrected suggestion name, not the raw typo, must be what gets stored' );
 	}
 
-	/**
-	 * Decision 068 - before this, `test_commit_is_refused_while_a_tiered_power_trait_is_
-	 * unresolved()` above proved the ONLY thing possible for a genuinely unresolved
-	 * tiered_power trait: permanent refusal, with no resolution mechanism the client (or
-	 * even a raw API request) could apply - `keep_custom` was found live against a real
-	 * user's real `.gex` file with 13 such entries and no way through the wizard at all.
-	 * This proves the fix end to end: the same "Not A Real Discipline Family" raw name
-	 * that 409s above now commits successfully and lands in sheet_data, readable and
-	 * flagged custom, once the ST explicitly chooses to keep it as written.
-	 */
 	public function test_committing_with_keep_custom_resolves_a_genuinely_unresolved_tiered_power(): void {
 		wp_set_current_user( $this->admin_id );
 
@@ -583,8 +534,6 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$this->assertTrue( $held[0]['custom'] );
 		$this->assertArrayNotHasKey( 'level', $held[0], 'a custom pick has no seeded ladder position, same shape as an Elder+ pick (Decision 037)' );
 
-		// Also recorded on the import_note change (the same fuzzy_or_custom tracking a
-		// custom trait_list entry already gets), not silently absorbed.
 		$change = \BeyondElysium\Models\Change::for_character( (int) $found->id )[0];
 		$this->assertSame( 'import_note', $change->change_type );
 		$custom_list = $change->change_data['fuzzy_or_custom'];
@@ -592,20 +541,8 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Decision 074: a real export can supply a `keep_custom` power with NO note at all
-	 * and the held level sitting directly in the raw total - confirmed against a real
-	 * character's own file (`1506_chase_ashford_.gex`, "Blood Magic" named paths under
-	 * families this catalog has never seeded). Before this fix every one of those
-	 * rendered as a generic "elder" pick despite genuinely holding a normal level 1-5.
-	 *
-	 * Uses a synthetic family/power name, not a real Dur-An-Ki path - workflow-0.9.md
-	 * Step 0d later made this exact real example ("Dur-An-Ki: Awakening of the Steel")
-	 * start resolving to a real catalog match instead of staying unresolved, once checked
-	 * directly against the live catalog: "Awakening of the Steel" turned out to already be
-	 * seeded (mechanically identical levels/costs/power-names to "Dur An Ki: Awakening the
-	 * Steel", the same power seeded twice under two spellings by two different source
-	 * passes) - a real, separate data-quality finding, not a reason to weaken this test's
-	 * own "genuinely unseeded" premise.
+	 * A real export can supply a `keep_custom` power with NO note at all and the held level sitting directly in the raw
+	 * total.
 	 */
 	public function test_committing_with_keep_custom_preserves_a_real_numbered_level_when_no_note_is_present(): void {
 		wp_set_current_user( $this->admin_id );
@@ -643,15 +580,6 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$this->assertTrue( $held['custom'] );
 	}
 
-	/**
-	 * workflow-0.9.md Step 0e: the real, narrow gap Decision 074's own heuristic left open -
-	 * "Vicente de las Navas de Tolosa's Holy Shield" (a real combo, flat cost 3, not yet in
-	 * the combo catalog) previously misread its cost as "level 3" of a discipline family,
-	 * because nothing distinguished a combo-shaped custom entry from a genuine numbered
-	 * rung once the divider row that named its real source section was already dropped.
-	 * `GEX_Parser`'s divider stamping (Step 0e-1) now carries that section through onto the
-	 * trait itself - this proves `custom_tiered_power_result()` actually honours it.
-	 */
 	public function test_committing_with_keep_custom_does_not_misread_a_combo_shaped_costs_a_level(): void {
 		wp_set_current_user( $this->admin_id );
 
@@ -688,11 +616,6 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$this->assertArrayNotHasKey( 'level', $held, 'a combo-section cost must never be misread as a discipline level' );
 	}
 
-	/**
-	 * The other half of Decision 074's real total - a note-carrying export's total is a
-	 * level's COST, not its number (Trait_Mapper's own established rule), so this must
-	 * NOT be reinterpreted as a level even when it happens to be a small digit string.
-	 */
 	public function test_committing_with_keep_custom_does_not_treat_a_cost_as_a_level_when_a_note_is_present(): void {
 		wp_set_current_user( $this->admin_id );
 
@@ -728,14 +651,7 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Decision 081: `keep_custom` extended to `trait_list` blocks (Merits/Backgrounds/
-	 * Abilities/...), not just `tiered_power` - found on a real Chase Ashford import where
-	 * a genuinely correct name ("Cult", "Spirit Allies", "Negotiation") fuzzy-matched
-	 * something else in the catalog and had no way to be kept as itself, only forced into
-	 * the wrong match. Uses a real fuzzy pair confirmed against this project's own seeded
-	 * `met-merits` catalog ("Of Embrace Fortold" suggesting the real "Of Embrace
-	 * Foretold") rather than a synthetic one, so this proves the fix against real data,
-	 * not just a hand-built fixture that happens to look fuzzy.
+	 * `keep_custom` extended to `trait_list` blocks (Merits/Backgrounds/ Abilities/...).
 	 */
 	public function test_committing_with_keep_custom_preserves_a_fuzzy_matched_trait_list_entry_as_written(): void {
 		wp_set_current_user( $this->admin_id );
@@ -764,7 +680,7 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
 
 		$found = Character::find( (int) $data['characters'][0]['id'] );
-		$held  = $found->sheet_data['met-merits'][0];
+		$held  = $found->sheet_data['vampire-merits'][0];
 		$this->assertSame(
 			'Of Embrace Fortold',
 			$held['name'],
@@ -777,15 +693,6 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$this->assertSame( 'Of Embrace Fortold', $change->change_data['fuzzy_or_custom'][0]['name'] );
 	}
 
-	/**
-	 * Decision 068 follow-up, user request 2026-09-10: "if I said yes to a discipline, it
-	 * would create the top and just add 1-5 for it's levels." A genuinely new family, held
-	 * at "basic" tier -> the real MET numbered ladder (3/3/6/6/9,
-	 * basic/basic/intermediate/intermediate/advanced) is created, but only the level whose
-	 * tier matches what was actually held gets a real name - the other four stay blank for
-	 * an admin to fill in, never invented (confirmed with the user directly before
-	 * building this, not assumed).
-	 */
 	public function test_add_to_catalog_creates_a_numbered_ladder_naming_only_the_held_level(): void {
 		wp_set_current_user( $this->admin_id ); // administrator: holds be_manage_schemas too.
 
@@ -815,9 +722,6 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$response = $this->dispatch( $request );
 		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
 
-		// workflow-0.9.md Step 0.5e: the write lands in THIS chronicle's own fork of the
-		// block, never the shared global catalog (Decisions 078/080's own lesson - a
-		// direct global write to an is_system block vanishes on the very next reseed).
 		$global_names = array_column(
 			\BeyondElysium\Models\Schema_Block::find_by_slug( 'vampire-disciplines' )->definition->powers,
 			'name'
@@ -852,9 +756,7 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Elder-and-above has no numbered ladder position in real catalog data at all
-	 * (Decision 037) - a genuinely new family held at that tier gets one unlabeled-level
-	 * pick, not a fabricated 1-5 ladder that doesn't apply to it.
+	 * Elder-and-above has no numbered ladder position in real catalog data at all.
 	 */
 	public function test_add_to_catalog_adds_a_single_pick_for_an_elder_tier_family(): void {
 		wp_set_current_user( $this->admin_id );
@@ -891,24 +793,11 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * `be_import` alone (what commits an import at all) must NOT be enough to mutate the
-	 * shared catalog - only `be_manage_schemas` is. Real finding while writing this test:
-	 * on a stock install, `Capabilities::CAPS` grants both `be_import` and
-	 * `be_manage_schemas` to `administrator` ONLY - no real WP role today can reach the
-	 * commit route at all without also holding `be_manage_schemas`, so this specific gap
-	 * is currently unreachable in practice. The gate is still real defense-in-depth
-	 * (matches every other catalog-write path in this plugin, and protects against a
-	 * future `Capabilities::CAPS`/chronicle-role change granting `be_import` more
-	 * broadly without `be_manage_schemas` alongside it) - tested here by stripping the
-	 * capability directly, since no named role can construct this combination today.
-	 * The character import itself must succeed regardless; only the catalog write is
-	 * refused.
+	 * `be_import` alone (what commits an import at all) must NOT be enough to mutate the shared catalog.
 	 */
 	public function test_add_to_catalog_is_silently_ignored_without_be_manage_schemas(): void {
 		$st_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
-		// remove_cap() only clears a PER-USER override - it does nothing here, since
-		// be_manage_schemas comes from the administrator ROLE, not a per-user grant.
-		// add_cap( $cap, false ) is what actually suppresses a role-granted capability.
+		// remove_cap() only clears a PER-USER override.
 		( new \WP_User( $st_id ) )->add_cap( 'be_manage_schemas', false );
 		wp_set_current_user( $st_id );
 		$this->assertTrue( user_can( $st_id, 'be_import' ) );
@@ -942,17 +831,6 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$this->assertEmpty( $found, 'without be_manage_schemas, the catalog must be completely unchanged' );
 	}
 
-	/**
-	 * User report, 2026-09-10: "import stripped the formatting on notes and such." Real
-	 * Grapevine `notes`/`biography` is plain text using blank-line paragraphs and single
-	 * newlines for structure (confirmed directly against Laslo Throndsen's real 71,747-char
-	 * field - zero HTML markup) - but `CharacterSheet.tsx` renders both fields via
-	 * `dangerouslySetInnerHTML`, exactly like `Characters_Controller`'s own normal write
-	 * path already expects (`wp_kses_post()` on save, TinyMCE's `wpautop` on edit). Bare
-	 * newlines collapse to one run-on line the instant a browser renders them as HTML -
-	 * this proves `import_character()` now converts them the same way every other write
-	 * path already does, rather than storing plain text into an HTML-shaped column.
-	 */
 	public function test_multi_paragraph_notes_survive_import_as_real_paragraphs(): void {
 		wp_set_current_user( $this->admin_id );
 

@@ -1,7 +1,5 @@
 /**
- * The help side panel (1.0.0-help.md H-1; owner answer Q1): a screen's help page slides in
- * from the right and leaves the screen usable. A link to another help page or to a guide
- * section opens there too, with Back to return.
+ * The help side panel: a screen's help page slides in from the right and leaves the screen usable.
  */
 import { createPortal, useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -28,7 +26,9 @@ type Page =
 	| { kind: 'help'; key: string; anchor: string }
 	| { kind: 'guide'; slug: GuideSlug; anchor: string };
 
-/** Heading ids carry this, so a help page's anchors never collide with the screen's own. */
+/**
+ * Heading ids carry this.
+ */
 const ANCHOR_PREFIX = 'be-help-';
 
 function escapeAttribute( value: string ): string {
@@ -49,9 +49,8 @@ function plainText( html: string ): string {
 }
 
 /**
- * A page's HTML: its title left to the panel header, its sections one heading level down under
- * that title, each heading given the anchor links use, and each table cell labelled with its
- * column so the table can read as cards.
+ * A page's HTML: its title left to the panel header, its sections one heading level down under that title, each
+ * heading given the anchor links use, and each table cell labelled with its column.
  */
 function renderPage( markdown: string ): string {
 	const seen = new Map< string, number >();
@@ -176,9 +175,8 @@ export function HelpPanel( { helpKey, onClose }: HelpPanelProps ) {
 	}, [ loaded, page ] );
 
 	/**
-	 * Follows a link inside the page: another help page or a guide opens in the panel, a
-	 * section scrolls into view, the web opens in a new tab. Nothing else navigates the screen
-	 * away.
+	 * Follows a link inside the page: another help page or a guide opens in the panel, a section scrolls into view, the
+	 * web opens in a new tab.
 	 */
 	function follow( event: MouseEvent< HTMLDivElement > ) {
 		const href = ( event.target as HTMLElement )

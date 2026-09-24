@@ -7,15 +7,7 @@ use BeyondElysium\Database\Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Static data-access model for one chronicle's game nights (1.1.0 §3.1).
- *
- * A session is the anchor every other 1.1.0 storytelling-tools item hangs off: the downtime
- * window a release batch (§3.2) and rumor levels (§3.4) key off, the attendance roll that
- * awards XP, and the date a casting (§3.6) or after-game report (§3.14) belongs to. Uniqueness
- * is one session per calendar date per chronicle - Grapevine itself never ran two game nights
- * the same day, and neither does this.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.1
+ * Static data-access model for one chronicle's game nights.
  */
 class Game_Session {
 
@@ -34,8 +26,7 @@ class Game_Session {
 	}
 
 	/**
-	 * Look up a session by its chronicle and calendar date, or null when none exists yet for
-	 * that date - the create route's own duplicate check reads this before inserting.
+	 * Look up a session by its chronicle and calendar date, or null when none exists yet for that date.
 	 *
 	 * @param int    $game_id
 	 * @param string $game_date Y-m-d.
@@ -51,9 +42,7 @@ class Game_Session {
 	}
 
 	/**
-	 * Every session for a chronicle, soonest first, optionally narrowed to a date range - the
-	 * calendar view's own `from`/`to` query params. Every member reads this regardless of
-	 * capability; the controller strips the XP-awarded fields for a non-manager, not this method.
+	 * Every session for a chronicle, soonest first, optionally narrowed to a date range.
 	 *
 	 * @param int         $game_id
 	 * @param string|null $from Y-m-d, inclusive.
@@ -78,8 +67,7 @@ class Game_Session {
 	}
 
 	/**
-	 * Creates a new session. game_id and game_date are required; every other field is
-	 * optional. Returns the new row's id, or false when game_date is missing.
+	 * Creates a new session. game_id and game_date are required.
 	 *
 	 * @param array $data
 	 * @return int|false
@@ -119,7 +107,7 @@ class Game_Session {
 	}
 
 	/**
-	 * Updates a session. Writes only the fields present in $data.
+	 * Updates a session.
 	 *
 	 * @param int   $id
 	 * @param array $data
@@ -156,8 +144,7 @@ class Game_Session {
 	}
 
 	/**
-	 * Deletes a session. The caller (Sessions_Controller) checks is_in_use() first and refuses
-	 * with 409 rather than calling this on a session that already has real data hanging off it.
+	 * Deletes a session.
 	 *
 	 * @param int $id
 	 * @return bool
@@ -167,8 +154,8 @@ class Game_Session {
 	}
 
 	/**
-	 * Whether a session has real data recorded against it and can no longer be deleted -
-	 * attendance, a casting, or an after-game report (1.1.0 §3.14).
+	 * Whether a session has real data recorded against it and can no longer be deleted: attendance, a casting or an
+	 * after-game report.
 	 *
 	 * @param int $id
 	 * @return bool
@@ -179,7 +166,9 @@ class Game_Session {
 			|| After_Game_Report::exists_for_session( $id );
 	}
 
-	/** Every datetime-typed column besides created_at/updated_at, shared by create() and update(). */
+	/**
+	 * Every datetime-typed column besides created_at/updated_at, shared by create() and update().
+	 */
 	private static function datetime_fields(): array {
 		return [
 			'downtime_opens_at',
@@ -193,8 +182,7 @@ class Game_Session {
 	}
 
 	/**
-	 * JSON-encodes a value for storage, or returns null unchanged - a legitimate value, not
-	 * something to encode as the string "null".
+	 * JSON-encodes a value for storage, or returns null unchanged.
 	 *
 	 * @param mixed $value
 	 * @return string|false|null
@@ -204,9 +192,7 @@ class Game_Session {
 	}
 
 	/**
-	 * Decodes the downtime_extensions JSON column on a row object in place. A NULL column
-	 * value is left as null; a non-NULL value that fails to decode is logged and replaced with
-	 * null rather than the row being dropped.
+	 * Decodes the downtime_extensions JSON column on a row object in place.
 	 *
 	 * @param object $row
 	 * @return object

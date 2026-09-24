@@ -1,8 +1,6 @@
 /**
- * The Storyteller Toolkit's combined Factions tab (1.1.0 §3.10, F1/F2): factions and their
- * positions share one tab with an inner sub-strip, the same way court offices are scoped to
- * a faction in the data model itself - `PositionManager` needs the current faction list for
- * its own faction-scope picker, so it is loaded once here rather than twice.
+ * The Storyteller Toolkit's combined Factions tab: factions and their positions share one tab with an inner
+ * sub-strip, the same way court offices are scoped to a faction in the data model itself.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

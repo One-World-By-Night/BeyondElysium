@@ -1,14 +1,9 @@
 /**
- * The costs a player may choose for a variable-cost catalog item - "1 or 3",
- * "1-7" - read the way `Cost_Engine::parse_cost_rule()` reads them, so the
- * editor offers exactly the prices the server charges (1.0.0-review F-107;
- * `tests/fixtures/cost-choices.json` holds both to the same cases).
+ * The costs a player may choose for a variable-cost catalog item.
  */
 
 /**
- * Every cost this item may be bought at, lowest first as written, or null
- * when its cost is fixed - a single number, unreadable, or a range written
- * high to low, which the server always prices at its first number.
+ * Every cost this item may be bought at, lowest first as written, or null when its cost is fixed.
  */
 export function costChoices( cost: string | undefined ): number[] | null {
 	const trimmed = ( cost ?? '' ).trim();

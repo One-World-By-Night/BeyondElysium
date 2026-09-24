@@ -7,11 +7,8 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
 /**
- * 1.1.0 D1: a non-atomic trait_list section whose held entries all carry a numeric
- * count shows its own total after the section title, in the signed PDF exactly as on
- * screen (CharacterSheet.tsx carries the identical rule). Confirms the total actually
- * reaches build_sections()'s output, not just Trait_Grouping::section_total() in
- * isolation.
+ * A non-atomic trait_list section whose held entries all carry a numeric count shows its own total after the section
+ * title, in the signed PDF exactly as on screen (CharacterSheet.tsx carries the identical rule).
  */
 class SheetDocumentSectionTotalTest extends TestCase {
 

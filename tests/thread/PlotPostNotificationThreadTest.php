@@ -13,10 +13,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 S5: plot post notifications - who a new post reaches, the per-person preference
- * (immediate/daily/off), the daily digest, and that no email ever carries the post's own text.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.5
+ * Plot post notifications.
  */
 class PlotPostNotificationThreadTest extends WP_UnitTestCase {
 

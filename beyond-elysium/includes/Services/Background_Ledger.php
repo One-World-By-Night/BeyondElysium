@@ -10,27 +10,14 @@ use BeyondElysium\Models\Plot_Entry;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The background-use ledger: the missing write path for the `action`/`result`
- * fields Action_Allocator has persisted on every subaction, unwritten, since
- * 0.5. A use is a `be_plot_entries` row on the character's own action-
- * allocation plot for that game date, marked `source: 'ledger'` so
- * Action_Allocator::persist() never regenerates or deletes it - there is no
- * separate table; the ledger is a spend log against the allocator's own
- * budget, per the Grapevine migration that folded the standalone influence-
- * use pool into the action-point system in the first place.
- *
- * @see BE_PROCESS/design/background-ledger-apr-design.md §0, §4, §5
+ * The background-use ledger: the missing write path for the `action`/`result` fields Action_Allocator has persisted
+ * on every subaction, unwritten.
  */
 class Background_Ledger {
 
 	/**
-	 * Every background a character holds with count > 0, each annotated with
-	 * its catalog source and, when the character's single most recent
-	 * allocation granted it a subaction, that subaction's current unused
-	 * budget - led by Personal actions whenever that allocation granted them,
-	 * which every character gets without holding anything (1.0.0-review F-105).
-	 * A character whose stack has no backgrounds block at all (e.g. `bete`)
-	 * and no allocation returns an empty array, not an error.
+	 * Every background a character holds with count > 0, each annotated with its catalog source and, when the character's
+	 * single most recent allocation granted it a subaction, that subaction's current unused budget.
 	 *
 	 * @param int $character_id
 	 * @return array[] {name, block_slug, level, source, budget_total, budget_name}
@@ -41,10 +28,7 @@ class Background_Ledger {
 			return [];
 		}
 
-		// The stored allocator entry's own `unused` only reflects ledger spends as of the
-		// last persist() call - re-applying apply_spends() here against that same plot's
-		// own ledger entries keeps budget_total live-accurate for any use recorded since,
-		// without requiring an ST to re-run the allocator first.
+		// Re-applies the ledger spends to the stored allocator entry.
 		$latest_plot_id = Action_Allocator::latest_plot_id( $character_id );
 		$budget_by_name = [];
 		if ( $latest_plot_id ) {
@@ -95,13 +79,6 @@ class Background_Ledger {
 
 	/**
 	 * Debits a set of ledger entries against a set of allocator subactions.
-	 * Pure and total - no database access, the same house style as
-	 * Action_Allocator::resolve_common_subactions(). `base` is taken from
-	 * each subaction's own `unused` (already carry-forward-adjusted), not
-	 * `total`, so carry_unused keeps working unchanged. A ledger entry whose
-	 * name matches no subaction debits nothing and is reported separately as
-	 * unbudgeted_spends, rather than being silently dropped or forced onto
-	 * the wrong budget (§4.1).
 	 *
 	 * @param array $subactions Output of Action_Allocator::allocate() or subactions_for_plot().
 	 * @param array $entries    Decoded ledger entries: [{name, cost, ...}, ...].
@@ -114,8 +91,7 @@ class Background_Ledger {
 			if ( $name === '' ) {
 				continue;
 			}
-			// Floored here, where it is read, not only where record() writes it: a stored cost
-			// below one must never hand uses back (1.0.0-review F-038).
+			// Floored at one.
 			$spent_by_name[ $name ] = ( $spent_by_name[ $name ] ?? 0 ) + max( 1, (int) ( $entry['cost'] ?? 1 ) );
 		}
 
@@ -145,8 +121,8 @@ class Background_Ledger {
 	}
 
 	/**
-	 * Returns the decoded ledger entries for a character on one game date,
-	 * or an empty array when no allocation plot exists yet for that pair.
+	 * Returns the decoded ledger entries for a character on one game date, or an empty array when no allocation plot
+	 * exists yet for that pair.
 	 *
 	 * @param int    $character_id
 	 * @param string $game_date
@@ -161,9 +137,7 @@ class Background_Ledger {
 	}
 
 	/**
-	 * Returns every decoded ledger entry on a plot, regardless of which
-	 * character or date it belongs to. Used by Action_Allocator::is_complete(),
-	 * which only has the plot id in scope.
+	 * Returns every decoded ledger entry on a plot, regardless of which character or date it belongs to.
 	 *
 	 * @param int $plot_id
 	 * @return array[]
@@ -180,13 +154,7 @@ class Background_Ledger {
 	}
 
 	/**
-	 * Records one background use. Validates that the named background is
-	 * one the character actually holds - never trusting a client-sent level
-	 * or block_slug, both re-derived here. Writes onto the character's
-	 * allocation plot for that date, creating a bare one first if no
-	 * allocation has ever been run for it yet, since a use is always
-	 * recordable, budgeted or not (§4.1) - a player should not have to wait
-	 * for an ST to run the allocator before they can log what they did.
+	 * Records one background use.
 	 *
 	 * @param int    $character_id
 	 * @param string $game_date
@@ -207,10 +175,7 @@ class Background_Ledger {
 		$backgrounds_slug = "{$character->stack_slug}-backgrounds";
 
 		if ( $name === Action_Allocator::PERSONAL_NAME ) {
-			// Personal is not a catalog background - every character is granted this
-			// subaction unconditionally (§1.7), so a use against it needs no held-trait
-			// check. Recording one is how is_complete() (§5.5) can ever be satisfied for
-			// it, since it can never appear in a character's own backgrounds sheet.
+			// Personal is not a catalog background.
 			$level = 0;
 		} else {
 			$held_trait = null;
@@ -226,8 +191,7 @@ class Background_Ledger {
 			$level = (int) ( $held_trait['count'] ?? 0 );
 		}
 
-		// The use, and the date's plot when it's the first, land together or not at all; the
-		// character's row keeps an allocation from making a second plot meanwhile (F-091).
+		// The use, and the date's plot when it's the first, land together or not at all.
 		$unit = Transaction::begin( 'be_ledger_record' );
 		Character::lock( $character_id );
 		$plot_id = Action_Allocator::find_own_plot_id( $character_id, $game_date )
@@ -269,10 +233,7 @@ class Background_Ledger {
 	}
 
 	/**
-	 * Edits a ledger entry's text, result, or cost. Refuses (returns false)
-	 * when the entry does not exist or is not a ledger entry - an allocator
-	 * budget row or a player's own free-text action post is never editable
-	 * through this method.
+	 * Edits a ledger entry's text, result, or cost.
 	 *
 	 * @param int   $entry_id
 	 * @param array $fields Any of: text, result, cost.
@@ -303,8 +264,6 @@ class Background_Ledger {
 
 	/**
 	 * Deletes one ledger entry (frmInfluenceUse.frm's "Clear this use").
-	 * Refuses when the entry is not a ledger entry - an allocator budget row
-	 * is never deletable through this method.
 	 *
 	 * @param int $entry_id
 	 * @return bool
@@ -318,11 +277,7 @@ class Background_Ledger {
 	}
 
 	/**
-	 * Deletes every ledger entry for one character, optionally bounded to a
-	 * game-date range - Grapevine's "Clear all for this Character"
-	 * (frmInfluenceUse.frm:446-488), made explicitly scoped rather than
-	 * accidentally date-bound the way the original was (§1.4). Never
-	 * touches an allocator budget entry, on this or any other character's plot.
+	 * Deletes every ledger entry for one character, optionally bounded to a game-date range.
 	 *
 	 * @param int         $character_id
 	 * @param string|null $from `Y-m-d`, inclusive.
@@ -356,10 +311,7 @@ class Background_Ledger {
 	}
 
 	/**
-	 * Deletes every ledger entry for one game date across the whole
-	 * chronicle - Grapevine's "Clear all for this Date"
-	 * (APREngineClass.cls:415-439 / frmActionList.frm:464-466). Never
-	 * touches an allocator budget entry.
+	 * Deletes every ledger entry for one game date across the whole chronicle.
 	 *
 	 * @param int    $game_id
 	 * @param string $game_date
@@ -379,9 +331,8 @@ class Background_Ledger {
 	}
 
 	/**
-	 * Deletes only the ledger-marked entries across a set of plots, leaving
-	 * every allocator budget entry and every player's own free-text action
-	 * post untouched. Shared by clear_for_character() and clear_for_date().
+	 * Deletes only the ledger-marked entries across a set of plots, leaving every allocator budget entry and every
+	 * player's own free-text action post untouched.
 	 *
 	 * @param int[] $plot_ids
 	 * @return int Entries deleted.
@@ -400,11 +351,7 @@ class Background_Ledger {
 	}
 
 	/**
-	 * Decodes an entry's `content` as ledger data. Returns null when the
-	 * content is not valid JSON, or when it is valid JSON that is not a
-	 * ledger-managed entry - an allocator budget row or a player's own
-	 * free-text action post sharing the same entry_type. Attaches the
-	 * entry's own row id, which the stored content itself does not carry.
+	 * Decodes an entry's `content` as ledger data.
 	 *
 	 * @param int    $entry_id
 	 * @param string $content

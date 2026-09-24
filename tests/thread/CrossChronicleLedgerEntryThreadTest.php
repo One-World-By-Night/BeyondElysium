@@ -12,11 +12,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-052 (Pass H intake). A Background use's edit and clear routes found the ledger
- * entry by its id alone, then checked only that the caller could manage the chronicle in the URL -
- * so a Storyteller of one chronicle could record a forged result on another chronicle's Background
- * use, rewrite its text or cost, or delete it, by counting plot-entry ids. The class F-008 and
- * F-029 closed for changes and XP awards.
+ * A Storyteller cannot adjudicate, rewrite or clear another chronicle's background use; their own chronicle's
+ * background use still takes a result.
  */
 class CrossChronicleLedgerEntryThreadTest extends WP_UnitTestCase {
 

@@ -1,10 +1,5 @@
 /**
- * Landing page for the top-level "Beyond Elysium" wp-admin click
- * (admin-menu-consolidation-design.md). Previously this click landed
- * directly on the Games page with no real dashboard content at all - this
- * is the first real content there: an about/what's-where reference, the
- * widgets & shortcodes inventory, and a dynamic call-to-action that's
- * prominent only while the only chronicle present is the seeded demo one.
+ * Landing page for the top-level "Beyond Elysium" wp-admin click.
  */
 import {
 	createInterpolateElement,
@@ -220,7 +215,7 @@ export function AdminDashboard() {
 								),
 								{
 									toolkit: (
-										// eslint-disable-next-line jsx-a11y/anchor-has-content -- the translated words fill it
+										// eslint-disable-next-line jsx-a11y/anchor-has-content
 										<a
 											href={ storytellerTabUrl(
 												STORYTELLER_TABS.dashboard

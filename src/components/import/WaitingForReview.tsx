@@ -1,8 +1,6 @@
 /**
- * WaitingForReview lists everything a chronicle's Storyteller hasn't yet acted on, above the
- * Import page's own wizard: an incoming transfer offer or visit, and a player-sent Grapevine
- * file (F-122) - both reviewed the same way an uploaded file is, and both add nothing until a
- * Storyteller accepts (1.0.0-review F-003, F-006; player-grapevine-file-design.md §10.2).
+ * WaitingForReview lists everything a chronicle's Storyteller hasn't yet acted on, above the Import page's own
+ * wizard: an incoming transfer offer or visit, and a player-sent Grapevine file.
  */
 import { useEffect, useState } from '@wordpress/element';
 import type { ReactNode } from 'react';
@@ -32,8 +30,7 @@ interface RestError {
 }
 
 /**
- * Renders nothing while nothing is waiting, so the Import page looks exactly as it did for a
- * chronicle that never receives either kind of offer.
+ * Renders nothing while nothing is waiting.
  */
 export function WaitingForReview( { gameSlug }: WaitingForReviewProps ) {
 	const [ rows, setRows ] = useState< Row[] >( [] );

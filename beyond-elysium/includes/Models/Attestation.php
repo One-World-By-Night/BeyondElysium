@@ -8,26 +8,13 @@ use BeyondElysium\Services\Short_Code;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * A per-issuance verification token (GX-7). Exporting a character or signing
- * a PDF mints a fresh, random token here rather than ever publishing the
- * character's own UUID as the public verification key - a UUIDv7 is partly
- * a timestamp and is published as the permanent, cross-plugin character
- * identifier (`INTEROP-UUID.md`), so it can never be rotated or revoked
- * without breaking that separate contract. Revoking one issuance never
- * touches another.
- *
- * Token/short-code generation itself lives in `Services\Short_Code` (1.1.0 §3.13), shared with
- * `Item_Attestation` so the two tables' codes can never collide.
- *
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-7, §6.2
+ * A per-issuance verification token.
  */
 class Attestation {
 
 	/**
-	 * Issues a new attestation for a character: a fresh random token and
-	 * short code, a stored copy of exactly what is being attested to (never
-	 * re-derived live later - that is what makes `still_matches` meaningful),
-	 * and the sha256 of the canonicalized document this issuance covers.
+	 * Issues a new attestation for a character: a fresh random token and short code, a stored copy of what is being
+	 * attested to, and the sha256 of the canonicalized document this issuance covers.
 	 *
 	 * @param object $character A row from `Character::find()`.
 	 * @param string $kind      'gex' | 'pdf' | 'transfer'.
@@ -38,7 +25,7 @@ class Attestation {
 	 * @param string|null $document_hash sha256 of the canonicalized document actually handed
 	 *                     over (redacted when the export itself was, unredacted otherwise) -
 	 *                     what a receiving chronicle's own copy of the file is compared
-	 *                     against (`Sheet_Verification::check()`, F-122). Defaults to
+	 *                     against (`Sheet_Verification::check()`). Defaults to
 	 *                     `$sheet_hash` when omitted, so an unredacted export (a transfer, or
 	 *                     any Storyteller-initiated one) needs no separate value.
 	 * @return object The newly created row, decoded (see `find()`).
@@ -78,8 +65,7 @@ class Attestation {
 	}
 
 	/**
-	 * Revokes an attestation by its numeric id. Idempotent - revoking an
-	 * already-revoked row simply leaves its existing `revoked_at` alone.
+	 * Revokes an attestation by its numeric id.
 	 *
 	 * @param int $id
 	 * @return bool
@@ -95,12 +81,8 @@ class Attestation {
 	}
 
 	/**
-	 * Resolves a human-typed short code to its attestation row, recording
-	 * the lookup (`check_count`/`last_checked_at`) regardless of outcome -
-	 * an issuing Storyteller seeing a code being probed is itself a useful
-	 * signal (§6.3). Returns null for a code that simply does not exist;
-	 * callers distinguish revoked/expired from "never existed" themselves,
-	 * since only the caller knows which of those must 404 versus 200.
+	 * Resolves a human-typed short code to its attestation row, recording the lookup (`check_count`/`last_checked_at`)
+	 * regardless of outcome.
 	 *
 	 * @param string $short_code
 	 * @return object|null
@@ -123,9 +105,7 @@ class Attestation {
 	}
 
 	/**
-	 * Looks up an attestation by its numeric id, decoded. Used by callers
-	 * that already have the id (e.g. right after `issue()`), never by the
-	 * public verification endpoint, which only ever receives a short code.
+	 * Looks up an attestation by its numeric id, decoded.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -137,11 +117,7 @@ class Attestation {
 	}
 
 	/**
-	 * Marks every attestation past its own `expires_at` as revoked, so a
-	 * later `resolve()` treats it the same way as an explicit revocation.
-	 * Not yet wired to a cron - no caller needs scheduled sweeping until
-	 * GX-8/9's transfer state machine depends on `pending` attestations
-	 * actually expiring.
+	 * Marks every attestation past its own `expires_at` as revoked.
 	 *
 	 * @return int Number of rows swept.
 	 */

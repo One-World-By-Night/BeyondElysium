@@ -7,13 +7,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Background and Notes are meant to be real rich text (a htmlarea in the editor), but both
- * fields were sanitized with sanitize_textarea_field() on create and left completely
- * unsanitized on update - the first stripped every tag down to plain text (so formatting
- * silently vanished on every save, which is what read as "the field isn't there"), the
- * second was a stored-XSS gap. Found and fixed 2026-09-09 alongside the editor UI that
- * finally exposes these fields at all. wp_kses_post() is the fix on both paths: real
- * formatting survives, script/event-handler-bearing markup does not.
+ * Background and Notes are meant to be real rich text (a htmlarea in the editor).
  */
 class CharactersControllerRichTextTest extends WP_UnitTestCase {
 
@@ -36,7 +30,7 @@ class CharactersControllerRichTextTest extends WP_UnitTestCase {
 	public function test_real_formatting_survives_create(): void {
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters" );
 		$request->set_param( 'name', 'Rich Text Test' );
-		$request->set_param( 'stack_slug', 'vampire' ); // a real registered stack - stack_slug is now validated against the catalog (GS-3)
+		$request->set_param( 'stack_slug', 'vampire' );
 		$request->set_param( 'biography', '<p>Born in <strong>Prague</strong>.</p><ul><li>Exiled</li></ul>' );
 		$request->set_param( 'notes', '<em>Handle with care.</em>' );
 
@@ -49,7 +43,7 @@ class CharactersControllerRichTextTest extends WP_UnitTestCase {
 	public function test_script_tags_are_stripped_but_formatting_is_not_on_create(): void {
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters" );
 		$request->set_param( 'name', 'XSS Attempt' );
-		$request->set_param( 'stack_slug', 'vampire' ); // a real registered stack - stack_slug is now validated against the catalog (GS-3)
+		$request->set_param( 'stack_slug', 'vampire' );
 		$request->set_param( 'biography', '<p>Safe text</p><script>alert(1)</script>' );
 
 		$data = rest_get_server()->dispatch( $request )->get_data();

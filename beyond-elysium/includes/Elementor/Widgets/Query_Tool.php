@@ -7,50 +7,34 @@ use Elementor\Controls_Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Elementor widget wrapper for the Query Tool, the Storyteller search and
- * statistics tool for a chronicle. Registers the widget's name, title, icon,
- * with Elementor, exposes a Content section control for the
- * target game slug, and renders a single mount-point <div> that the
- * front-end script hydrates with the QueryTool React component. The REST
- * routes behind that component enforce their own capability checks; this
- * widget only places the mount point on the page.
- *
- * @see BE_PROCESS/releases/workflow-0.6.md Step 8g
+ * Elementor widget wrapper for the Query Tool, the Storyteller search and statistics tool for a chronicle.
  */
 class Query_Tool extends Base_Widget {
 
 	/**
-	 * Returns the internal widget name Elementor uses to identify this
-	 * widget type. Elementor stores this string in page and template
-	 * markup wherever the widget is placed.
+	 * Returns the internal widget name Elementor uses to identify this widget type.
 	 */
 	public function get_name(): string {
 		return 'be-query-tool';
 	}
 
 	/**
-	 * Returns the human-readable label Elementor shows for this widget in
-	 * the editor's widget panel, search results, and layers panel. This is
-	 * the text an editor sees when placing the widget on a page.
+	 * Returns the human-readable label Elementor shows for this widget in the editor's widget panel, search results, and
+	 * layers panel.
 	 */
 	public function get_title(): string {
 		return __( 'Query Tool', 'beyond-elysium' );
 	}
 
 	/**
-	 * Returns the Elementor icon class shown next to this widget's title in
-	 * the widget panel. The value is an eicon-* class name supplied by
-	 * Elementor's built-in icon font.
+	 * Returns the Elementor icon class shown next to this widget's title in the widget panel.
 	 */
 	public function get_icon(): string {
 		return 'eicon-search';
 	}
 
 	/**
-	 * Builds the Elementor "Content" section shown in the editor panel for
-	 * this widget. Adds a read-only description note and a Game Slug text
-	 * control that determines which chronicle the rendered tool builds and
-	 * runs queries against.
+	 * Builds the Elementor "Content" section shown in the editor panel for this widget.
 	 */
 	protected function register_controls(): void {
 		$this->start_controls_section( 'content_section', [

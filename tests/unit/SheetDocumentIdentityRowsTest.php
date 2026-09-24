@@ -7,10 +7,8 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
 /**
- * 1.0.0-review F-078 (Pass H intake `t2-rendering`). A multiselect identity field holds a list,
- * and the signed sheet cast every identity value to a string - so a character's chosen options
- * printed on the signed, official document as the word "Array". It prints the choices, joined
- * the way the on-screen sheet joins them.
+ * Identity rows in a sheet document: a multiselect prints its choices rather than the word array, an empty choice
+ * prints a dash, and a plain value prints as it is.
  */
 class SheetDocumentIdentityRowsTest extends TestCase {
 

@@ -1,8 +1,5 @@
 /**
  * ErrorBoundary contains a rendering crash within one widget's own React tree.
- * Wraps a widget's children; on a thrown error it swaps in a fallback message
- * naming the widget instead of leaving that section of the page blank.
- * Every other widget mounted on the same page keeps rendering normally.
  */
 import { Component } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -10,7 +7,9 @@ import type { ReactNode } from 'react';
 import './ErrorBoundary.css';
 
 export interface ErrorBoundaryProps {
-	/** Shown in the fallback message, e.g. the widget name. */
+	/**
+	 * Shown in the fallback message, e.g. the widget name.
+	 */
 	label: string;
 	children: ReactNode;
 }
@@ -20,10 +19,8 @@ interface ErrorBoundaryState {
 }
 
 /**
- * Catches a thrown rendering error anywhere in its child tree and swaps in a
- * fallback message instead of an unhandled crash. Implemented as a class
- * component, since React has no hook equivalent for `componentDidCatch`/
- * `getDerivedStateFromError`.
+ * Catches a thrown rendering error anywhere in its child tree and shows a fallback message instead of an unhandled
+ * crash.
  */
 export class ErrorBoundary extends Component<
 	ErrorBoundaryProps,

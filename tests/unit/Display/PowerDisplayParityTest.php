@@ -6,16 +6,8 @@ use BeyondElysium\Services\Display\Power_Display;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `Power_Display.php` (authoritative for the signed-PDF exporter) and
- * `TieredPowerRenderer.tsx`'s label helpers (authoritative for the on-screen
- * character sheet) must agree - same held power and definition in, same label
- * text out. Both read the same fixture and are checked against the same expected
- * output; this half proves the PHP side, `TieredPowerRenderer.test.ts`'s own
- * "parity with Power_Display.php" block proves the TypeScript side. Every case
- * here is transcribed 1:1 from `TieredPowerRenderer.test.ts`'s existing cases,
- * per SP-3.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md Section 2d, Section 3, SP-3
+ * `Power_Display.php` (authoritative for the signed-PDF exporter) and `TieredPowerRenderer.tsx`'s label helpers
+ * (authoritative for the on-screen character sheet) must agree.
  */
 class PowerDisplayParityTest extends TestCase {
 
@@ -37,11 +29,7 @@ class PowerDisplayParityTest extends TestCase {
 	}
 
 	/**
-	 * Dispatches one fixture case to the Power_Display method it names. A
-	 * `with_tradition` case composes it around whichever inner label method the
-	 * case names, mirroring how TieredPowerRenderer.test.ts itself calls
-	 * `withTradition( held, numericLabel( ... ) )` / `withTradition( held,
-	 * namedLabel( ... ) )` rather than ever passing withTradition a bare literal.
+	 * Dispatches one fixture case to the Power_Display method it names.
 	 *
 	 * @param array<string,mixed> $held
 	 * @return string|string[]

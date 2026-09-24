@@ -12,12 +12,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * `Setup_Status_Controller`'s row computation (GS-4,
- * guided-chronicle-setup-design.md §6.3-6.4) - each row's status derived
- * from real rows, never stored, plus `actionable` for an administrator, an
- * HST and an AST - and, since 1.3.2.2, a refusal for everyone who is not staff.
- *
- * @see BE_PROCESS/design/guided-chronicle-setup-design.md §6.3
+ * `Setup_Status_Controller`'s row computation.
  */
 class SetupStatusControllerTest extends WP_UnitTestCase {
 
@@ -90,11 +85,6 @@ class SetupStatusControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 'attention', $row['status'] );
 	}
 
-	/**
-	 * page-consolidation-design.md: the four fixed pages are chronicle-independent -
-	 * provisioning them once turns this row green for every chronicle on the install,
-	 * not just the one that happened to trigger it.
-	 */
 	public function test_provisioning_the_fixed_pages_turns_the_front_end_pages_row_green_for_every_chronicle(): void {
 		\BeyondElysium\Core\Page_Provisioner::maybe_provision();
 
@@ -118,13 +108,6 @@ class SetupStatusControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 'ok', $row['status'] );
 	}
 
-	/**
-	 * Owner ruling, 1.0.0-checklist.md item 18 (2026-09-15) - superseded this test's own
-	 * prior name and premise (`git log` has the original "actionable_false" version, back
-	 * when both rows were be_manage_games-only): an HST is a WordPress editor with a real
-	 * be_game_members row in their own chronicle, and now genuinely gets actionable:true on
-	 * the two rows this ruling names, not just visibility.
-	 */
 	public function test_an_hst_sees_actionable_true_on_creature_types_and_new_character_approval(): void {
 		$game = Game::find_by_slug( $this->game_slug );
 		Game_Member::set_role( (int) $game->id, $this->editor_id, 'hst' );
@@ -136,18 +119,11 @@ class SetupStatusControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 'attention', $this->row( $data['items'], 'enabled_stacks' )['status'], 'status is unrelated to actionable' );
 		$this->assertTrue( $this->row( $data['items'], 'enabled_stacks' )['actionable'] );
 		$this->assertTrue( $this->row( $data['items'], 'require_new_character_approval' )['actionable'] );
-		// Unrelated to item 18 - assigning Storytellers (Chronicle Access) stays administrator-only.
+		// Assigning Storytellers (Chronicle Access) stays administrator-only.
 		$this->assertFalse( $this->row( $data['items'], 'storytellers' )['actionable'] );
 	}
 
 	/**
-	 * 1.3.2.2, owner ruling 2026-09-23: Chronicle Setup is for staff. This route used to be
-	 * `be_view_characters` - "the widest capability that still requires a real user"
-	 * (guided-chronicle-setup-design.md 6.3), chosen so an HST could read the checklist before
-	 * they could act on it - and this case asserted that a player member got a 200 with every
-	 * row greyed. That let any player read the chronicle's governance settings, so the route now
-	 * needs `be_manage_characters` and a player, a narrator and a Harpy are each refused.
-	 *
 	 * @dataProvider non_staff_chronicle_roles
 	 */
 	public function test_a_member_who_is_not_staff_is_refused_the_checklist( string $chronicle_role ): void {
@@ -171,9 +147,7 @@ class SetupStatusControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The AST half of the same ruling (item 27): an AST does not hold
-	 * be_manage_chronicle_setup either, even though they hold almost everything else an
-	 * HST does.
+	 * The AST half of the same ruling: an AST does not hold be_manage_chronicle_setup either.
 	 */
 	public function test_an_ast_sees_actionable_false_on_creature_types_and_new_character_approval(): void {
 		$game   = Game::find_by_slug( $this->game_slug );
@@ -246,8 +220,7 @@ class SetupStatusControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * 1.3.6: these four rows were `info` whatever the chronicle did, so a finished function never
-	 * showed as finished. Each now reads `info` until the chronicle has set something of its own.
+	 * These four rows were `info` whatever the chronicle did.
 	 */
 	public function test_the_four_optional_rows_read_info_until_the_chronicle_sets_something(): void {
 		foreach ( [ 'approval_rules', 'catalog_customisation', 'sheet_templates', 'downtime_and_rumors' ] as $id ) {
@@ -328,10 +301,6 @@ class SetupStatusControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 'ok', $this->status_of( 'catalog_customisation' ) );
 	}
 
-	/**
-	 * 1.3.6: the five settings that used to sit below the checklist are rows of it, each `info`
-	 * until the chronicle has set something of its own.
-	 */
 	public function test_the_five_setting_rows_read_info_until_the_chronicle_sets_something(): void {
 		foreach ( [ 'plot_features', 'branding', 'faction_restrictions', 'purchase_lists', 'grapevine_files' ] as $id ) {
 			$this->assertSame( 'info', $this->status_of( $id ), $id );

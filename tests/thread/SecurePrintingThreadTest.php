@@ -8,17 +8,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Secure printing is an opt-in (1.0.1 C2), and the plugin will mint a certificate but never
- * install one (C3).
- *
- * The opt-in matters because a certificate reaching the server is not consent to sign with
- * it: an admin may install one to test, or inherit one from a previous operator. Before this,
- * the mere presence of two readable files turned signing on for every print on the site.
- *
- * The generator's whole contract is what it does *not* do - no filesystem write, no database
- * write, administrator only. Those are the assertions worth having.
- *
- * @see BE_PROCESS/releases/1.0.1-design-workflow.md §2.3, C2-C4
+ * Secure printing is an opt-in, and the plugin will mint a certificate but never install one.
  */
 class SecurePrintingThreadTest extends WP_UnitTestCase {
 
@@ -55,14 +45,8 @@ class SecurePrintingThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The distinction the settings screen and the character sheet both depend on: "switched
-	 * off" and "no certificate" are different states and must not collapse into one message.
-	 *
-	 * Asserted as a relationship rather than against a fixed code, deliberately. Whether the
-	 * signing constants are defined depends on which other tests have run in this process
-	 * (`PdfSigningTestFixture` defines them), and a test that silently assumes one or the
-	 * other passes alone and fails in the full suite - which is exactly what the first
-	 * version of this test did.
+	 * The distinction the settings screen and the character sheet both depend on: "switched off" and "no certificate" are
+	 * different states and must not collapse into one message.
 	 */
 	public function test_switched_off_reports_the_opt_in_not_the_certificate(): void {
 		delete_option( Pdf_Signer::OPT_IN_OPTION );
@@ -133,8 +117,7 @@ class SecurePrintingThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The load-bearing claim of the whole design: generating writes nothing anywhere. If this
-	 * ever stops being true there is a private key sitting on the server to protect.
+	 * The load-bearing claim of the whole design: generating writes nothing anywhere.
 	 */
 	public function test_generating_a_certificate_stores_nothing(): void {
 		if ( ! Pdf_Signer::can_generate() ) {
@@ -156,7 +139,6 @@ class SecurePrintingThreadTest extends WP_UnitTestCase {
 			'Generating must not write a single option - not the key, not the passphrase.'
 		);
 
-		// The passphrase must actually protect the key, not merely be accepted.
 		$this->assertFalse(
 			openssl_pkey_get_private( $generated['private_key'], 'the-wrong-passphrase' ),
 			'The exported key must be encrypted with the passphrase given.'

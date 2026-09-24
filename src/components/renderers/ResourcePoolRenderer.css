@@ -1,15 +1,4 @@
-/*
- * D26 follow-up: `flex-wrap: wrap` matters here, not just for looks. Without it, a long
- * glyph string in a narrow column (the character sheet's own columns, workflow-0.3.md,
- * are frequently this narrow) has nowhere to go but past this row's own right edge -
- * `overflow: visible` is the default, so the text keeps painting instead of stopping,
- * visually bleeding into whatever content sits nearby in the document. That looked
- * exactly like the neighboring box itself was broken (confirmed live: DOM geometry via
- * getBoundingClientRect() was clean the entire time - this was always a paint-only
- * overflow, never a real layout collision). Wrapping keeps the glyphs inside this row's
- * own box - worst case they drop to a second line under the label, which is a minor
- * cosmetic compromise in a narrow column, not a rendering bug.
- */
+/* A pool's glyph string wraps in a narrow column. */
 .be-resource-pool__row {
 	display: flex;
 	flex-wrap: wrap;
@@ -23,12 +12,6 @@
 	font-weight: 600;
 }
 
-/*
- * displayTemper()'s dots are the same glyph a trait's rating uses, so they take the size of
- * the surrounding text exactly as a trait's do - no size or weight of their own
- * (1.0.0-review F-016, owner ruling 2026-09-14: every dot the same size). They used to be
- * Grapevine's letters, bolded and enlarged to read as pips.
- */
 .be-resource-pool__glyphs {
 	overflow-wrap: anywhere;
 }

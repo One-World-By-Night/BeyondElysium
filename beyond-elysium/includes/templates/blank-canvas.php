@@ -2,12 +2,6 @@
 /**
  * Bare WordPress page template with no theme chrome.
  *
- * Skips get_header()/get_footer(), so no theme header, nav, footer or
- * page-title markup renders on this page. wp_head()/wp_footer() still
- * fire so WordPress core and other plugins that depend on them (including
- * this plugin's own React bundle) continue to work. Used for a print-
- * friendly blank canvas layout.
- *
  * @var WP_Post $post
  */
 

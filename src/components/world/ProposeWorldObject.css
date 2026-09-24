@@ -1,7 +1,4 @@
-/**
- * The player-facing propose-an-item form (1.0.1 D3). One column at every width - it is a
- * short form, and a second column buys nothing here.
- */
+/* The player-facing propose-an-item form. */
 
 .be-propose-object {
 	display: flex;

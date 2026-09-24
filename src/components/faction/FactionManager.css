@@ -43,8 +43,6 @@
 	text-transform: capitalize;
 }
 
-/* The theme's own active/focus button style fills this row with a dark pink
- * background - #666 reads as barely-legible gray-on-pink there. */
 .be-faction-manager__list button.is-active .be-faction-manager__type {
 	color: inherit;
 	opacity: 0.85;

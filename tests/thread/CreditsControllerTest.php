@@ -7,10 +7,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * User request, 2026-09-11: a front-end "Powered by BeyondElysium (Credits)" footer whose
- * modal shows credits text plus an editable in-memoriam list. Backed by two plain options,
- * not a table - covers the default seeding, the be_manage_games write gate, and that a
- * save fully replaces the stored list rather than merging into it.
+ * The Powered by BeyondElysium (Credits) footer: default seeding, the capability gate and the editable in-memoriam
+ * list, backed by two plain options.
  */
 class CreditsControllerTest extends WP_UnitTestCase {
 

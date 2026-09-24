@@ -44,7 +44,7 @@ Anyone holding `be_manage_translations` - its own capability, independent of `be
 
 ## Things to know
 
-- **The table is the real data, not the CSV.** Exporting and re-importing a file is a convenience for a bulk pass; nothing about it is required, and the file is never the source of truth the way `data/met-mechanics.csv` used to be.
+- **The table is the real data, not the CSV.** Exporting and re-importing a file is a convenience for a bulk pass; nothing about it is required, and the file is never the source of truth.
 - **A conflict during import means the file disagrees with itself** - two rows for the same term with two different translations - not that the file disagrees with what's already saved, which is an ordinary update and never flagged as a conflict.
 - **An untranslated term falls back to English everywhere** - a printed sheet, a signed PDF, never a blank.
 - **Rescanning never loses a translation.** A term temporarily missing from the catalog (a chronicle narrowed its enabled creature types, say) just stops updating its own "last seen" timestamp; the translation is still there the moment the term reappears.

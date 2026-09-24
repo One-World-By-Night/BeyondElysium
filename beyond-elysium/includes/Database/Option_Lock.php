@@ -5,20 +5,12 @@ namespace BeyondElysium\Database;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * A named lock held across requests: one timestamped row in the options
- * table, inserted only if absent - the way WordPress's own updater locks.
- * MySQL decides which of two requests inserts it, so exactly one holds it.
- * A lock older than its time-to-live is stale and can be taken over, so a
- * request that died holding one never blocks the work for good.
- *
- * Used for the data upgrade (1.0.0-review F-064) and for committing an
- * import job (F-070).
+ * A named lock held across requests: one timestamped row in the options table, inserted only if absent.
  */
 class Option_Lock {
 
 	/**
-	 * Takes the lock if no one holds it, or if the one holding it has held it
-	 * longer than `$ttl` seconds.
+	 * Takes the lock if no one holds it, or if the one holding it has held it longer than `$ttl` seconds.
 	 *
 	 * @param string $name Option name for the lock row.
 	 * @param int    $ttl  Seconds after which a held lock is stale.
@@ -47,9 +39,7 @@ class Option_Lock {
 	}
 
 	/**
-	 * When the lock was last claimed, or 0 when nobody holds it. Read with plain SQL, not
-	 * `get_option()`: `claim()` inserts with plain SQL, which a persistent object cache never hears
-	 * about, so `get_option()` can keep answering "no such option" for a lock that is held.
+	 * When the lock was last claimed, or 0 when nobody holds it.
 	 *
 	 * @param string $name Option name for the lock row.
 	 * @return int Unix time of the claim.

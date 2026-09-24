@@ -7,22 +7,13 @@ use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Schema_Block;
-use BeyondElysium\Services\Catalog_Cutover;
 use BeyondElysium\Services\Change_Engine;
 use BeyondElysium\Services\Cost_Engine;
 use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.3.3 E2-E7: a purchase with no catalog price is held for a Storyteller's number instead of
- * being approved at a stored 0. Real dispatch through the REST server, against a real character
- * and the real seeded catalog, for the whole path: a player submits homebrew, it is held with
- * `cost_pending`, the preview says so, the Storyteller prices it at approval, the right total is
- * deducted and the row carries the price the Point Audit reads back.
- *
- * `vampire-backgrounds` is used for the trait list because it is a section of the vampire stack
- * both before and after the catalog cutover; a flaw's slug is resolved through
- * `Catalog_Cutover::live_slug()` for the same reason.
+ * A purchase with no catalog price is held for a Storyteller's number.
  */
 class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 
@@ -81,7 +72,7 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 		return [ 'name' => 'Occult Library', 'count' => $count, 'custom' => true ] + $extra;
 	}
 
-	// --- E2: a purchase with no price is held for one ------------------------------------
+	// --- A purchase with no price is held for one ----------------------------------------
 
 	public function test_a_players_homebrew_is_held_with_cost_pending_and_costs_nothing_yet(): void {
 		$response = $this->submit( $this->player_id, 'vampire-backgrounds', $this->homebrew() );
@@ -151,7 +142,7 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_the_preview_of_a_catalog_purchase_is_priced_as_before(): void {
-		$iron_will = Catalog_Cutover::live_slug( 'vampire', 'met-merits' );
+		$iron_will = 'vampire-merits';
 		$results   = $this->preview( $this->player_id, [
 			[ 'change_type' => 'add_trait', 'change_data' => [ 'block_slug' => $iron_will, 'trait' => [ 'name' => 'Iron Will' ] ] ],
 		] )->get_data()['results'];
@@ -179,7 +170,7 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 		$this->assertTrue( $result['priced'] );
 	}
 
-	// --- E3: the Storyteller sets the price at approval ---------------------------------
+	// --- The Storyteller sets the price at approval -------------------------------------
 
 	private function pending_homebrew( int $count = 3 ): int {
 		$change = $this->submit( $this->player_id, 'vampire-backgrounds', $this->homebrew( $count ) )->get_data();
@@ -199,7 +190,7 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 	public function test_a_purchase_waiting_for_a_price_is_a_storyteller_decision_even_where_a_rule_would_auto_approve(): void {
 		Game::update( $this->game_slug, [ 'settings' => [ 'auto_approve' => true ] ] );
 		$character = Character::find( $this->character_id );
-		$catalog   = [ 'block_slug' => Catalog_Cutover::live_slug( 'vampire', 'met-merits' ), 'trait' => [ 'name' => 'Iron Will' ] ];
+		$catalog   = [ 'block_slug' => 'vampire-merits', 'trait' => [ 'name' => 'Iron Will' ] ];
 
 		$plain   = Change_Engine::resolve_approval_level( $character, (object) [ 'change_type' => 'add_trait', 'change_data' => $catalog ] );
 		$pending = Change_Engine::resolve_approval_level( $character, (object) [ 'change_type' => 'add_trait', 'change_data' => $catalog + [ 'cost_pending' => true ] ] );
@@ -254,7 +245,7 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_price_set_on_a_change_that_already_has_one_is_ignored(): void {
-		$iron_will = Catalog_Cutover::live_slug( 'vampire', 'met-merits' );
+		$iron_will = 'vampire-merits';
 		$change    = $this->submit( $this->st_id, $iron_will, [ 'name' => 'Iron Will' ] )->get_data();
 		$this->assertArrayNotHasKey( 'cost_pending', $change->change_data );
 		$catalog_cost = (int) $change->xp_cost;
@@ -274,7 +265,7 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_homebrew_flaw_records_its_price_and_grants_nothing(): void {
-		$flaws = Catalog_Cutover::live_slug( 'vampire', 'met-flaws' );
+		$flaws = 'vampire-flaws';
 		$id    = (int) $this->submit( $this->player_id, $flaws, [ 'name' => 'Odd Curse', 'count' => 2, 'custom' => true ] )->get_data()->id;
 
 		$this->assertTrue( Change_Engine::approve( $id, $this->st_id, null, null, 3 ) );
@@ -346,7 +337,7 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 6, $row['chosen_cost'], 'the row now stands for everything paid on it, so the audit agrees' );
 	}
 
-	// --- E4: the review route takes the price ------------------------------------------
+	// --- The review route takes the price ----------------------------------------------
 
 	/** @param array<string,mixed> $params */
 	private function review( int $change_id, array $params ) {
@@ -431,7 +422,7 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_price_offered_for_a_change_that_already_has_one_is_ignored_by_the_route(): void {
-		$iron_will = Catalog_Cutover::live_slug( 'vampire', 'met-merits' );
+		$iron_will = 'vampire-merits';
 		$change    = $this->submit( $this->st_id, $iron_will, [ 'name' => 'Iron Will' ] )->get_data();
 
 		$response = $this->review( (int) $change->id, [ 'status' => 'approved', 'xp_cost' => 9 ] );
@@ -441,7 +432,7 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_an_ordinary_approval_asks_nothing_about_price(): void {
-		$iron_will = Catalog_Cutover::live_slug( 'vampire', 'met-merits' );
+		$iron_will = 'vampire-merits';
 		$change    = $this->submit( $this->player_id, $iron_will, [ 'name' => 'Iron Will' ] )->get_data();
 
 		$response = $this->review( (int) $change->id, [ 'status' => 'approved' ] );
@@ -458,7 +449,7 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'pending', Change::find( $id )->status );
 	}
 
-	// --- E5: the queue says what a price covers -----------------------------------------
+	// --- The queue says what a price covers ---------------------------------------------
 
 	/** @return array<int,object> The queue rows, by change id. */
 	private function queue(): array {
@@ -493,14 +484,14 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_the_queue_marks_a_waiting_flaw_as_negative(): void {
-		$flaws = Catalog_Cutover::live_slug( 'vampire', 'met-flaws' );
+		$flaws = 'vampire-flaws';
 		$id    = (int) $this->submit( $this->player_id, $flaws, [ 'name' => 'Odd Curse', 'count' => 2, 'custom' => true ] )->get_data()->id;
 
 		$this->assertTrue( $this->queue()[ $id ]->cost_units['negative'] );
 	}
 
 	public function test_a_change_that_already_has_a_price_carries_no_units(): void {
-		$iron_will = Catalog_Cutover::live_slug( 'vampire', 'met-merits' );
+		$iron_will = 'vampire-merits';
 		$id        = (int) $this->submit( $this->player_id, $iron_will, [ 'name' => 'Iron Will' ] )->get_data()->id;
 
 		$this->assertNull( $this->queue()[ $id ]->cost_units ?? null );
@@ -525,35 +516,11 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 6.0, (float) Change::find( $id )->xp_cost );
 	}
 
-	public function test_a_change_left_pending_across_the_cutover_is_priced_against_the_block_it_lands_in(): void {
-		global $wpdb;
-		$legacy = 'met-abilities';
-		$live   = 'vampire-abilities';
-		$change = $this->submit( $this->player_id, $legacy, $this->homebrew( 2 ) )->get_data();
-		$this->assertTrue( $change->change_data['cost_pending'] );
-
-		// The install is switched with the change still in the queue, and - as 1.3.4 will do - the
-		// retired block is gone. The change still names it; the price has to be worked out against the
-		// block the row lands in, exactly as `apply_to_sheet()` files it.
-		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . \BeyondElysium\Database\Manager::table( 'schema_blocks' ) . ' WHERE slug = %s', $legacy ) );
-		update_option( Catalog_Cutover::OPTION, 'declared' );
-		Catalog_Cutover::reset_cache();
-		try {
-			$this->assertTrue( Change_Engine::approve( (int) $change->id, $this->st_id, null, null, 3 ) );
-		} finally {
-			delete_option( Catalog_Cutover::OPTION );
-			Catalog_Cutover::reset_cache();
-		}
-
-		$this->assertSame( 14, $this->unspent(), 'three XP a dot, two dots' );
-		$this->assertSame( 3, $this->held( $live )[0]['chosen_cost'], 'and the row is filed under the live block' );
-	}
-
 	// --- batch approve -----------------------------------------------------------------
 
 	public function test_a_batch_approval_skips_a_purchase_waiting_for_a_price_and_names_it(): void {
 		$waiting   = $this->pending_homebrew();
-		$iron_will = Catalog_Cutover::live_slug( 'vampire', 'met-merits' );
+		$iron_will = 'vampire-merits';
 		$ready     = (int) $this->submit( $this->st_id, $iron_will, [ 'name' => 'Iron Will', 'custom' => false ] )->get_data()->id;
 
 		wp_set_current_user( $this->st_id );

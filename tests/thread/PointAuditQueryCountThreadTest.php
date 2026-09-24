@@ -8,9 +8,8 @@ use BeyondElysium\Services\Point_Audit;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-087 (Pass H intake `t1-audit-stats-setup`). The Point Audit asked whether each
- * held Discipline was in-clan by loading the character's creature stack and the chronicle's
- * identity block again for every one: three queries a Discipline, for the same answer inputs.
+ * The point audit costs no more queries for eight more Disciplines, and in-clan and out-of-clan Disciplines still price
+ * apart.
  */
 class PointAuditQueryCountThreadTest extends WP_UnitTestCase {
 

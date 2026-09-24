@@ -1,9 +1,6 @@
 /**
- * The itemised point audit (point-calculator-design.md): every held line on
- * a character's sheet, priced or explicitly marked unpriced with a reason.
- * `net_total` never renders without the coverage counters and caveat beside
- * it (§4.5) - this is not a bill, and the component's whole job is to make
- * that impossible to miss.
+ * The itemised point audit: every held line on a character's sheet, priced or explicitly marked unpriced with a
+ * reason.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -63,12 +60,7 @@ function groupBySection(
 }
 
 /**
- * Renders one line: a priced line shows its XP and basis; an unpriced line
- * is rendered in the same list, visually marked, never collapsed into a
- * footnote - an ST must see that Occult 4 was not counted while reading the
- * same list that counted Iron Will (§7 PC-8). `line.label` is already
- * server-rendered (`Point_Audit`, §5.6) - the client displays it as-is
- * rather than re-deriving it, so there is exactly one formatting authority.
+ * Renders one line: a priced line shows its XP and basis.
  */
 function AuditLine( { line }: { line: PointAuditLine } ) {
 	const label = line.label;
@@ -112,9 +104,7 @@ function AuditLine( { line }: { line: PointAuditLine } ) {
 }
 
 /**
- * Renders the collapsible point-audit panel for one character. Fetches on
- * mount; a 403 (non-manager) or any other failure shows a plain message
- * rather than a silently empty report.
+ * Renders the collapsible point-audit panel for one character.
  */
 export function PointAudit( { characterId, gameSlug }: PointAuditProps ) {
 	const [ report, setReport ] = useState< PointAuditReport | null >( null );
@@ -190,9 +180,6 @@ export function PointAudit( { characterId, gameSlug }: PointAuditProps ) {
 				<p className="be-point-audit__caveat">{ report.caveat }</p>
 			</div>
 
-			{ /* U7e: an audit of a long-lived character runs to hundreds of lines. The totals
-			 * strip above is what most viewers came for; the per-section breakdown folds
-			 * away so reaching one section doesn't mean scrolling past the rest. */ }
 			{ groupBySection( report.lines ).map(
 				( [ sectionLabel, lines ] ) => (
 					<CollapsiblePanel

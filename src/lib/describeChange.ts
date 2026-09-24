@@ -1,9 +1,6 @@
 /**
- * Formats a single `Change` record as a short human-readable string, e.g. "Celerity 2 →
- * 3", for display in an approval queue. Exports `describeChange()`, which switches on
- * the change's type and reads whatever fields that type's `change_data` carries -
- * `trait`, `previous`, `values`, `fields`, or `amount`/`reason` - falling back to a
- * generic label when an expected field isn't present.
+ * Formats a single `Change` record as a short human-readable string, e.g. "Celerity 2 → 3", for display in an
+ * approval queue.
  */
 
 import { __, _n, sprintf } from '@wordpress/i18n';
@@ -30,7 +27,6 @@ interface ChangeDataLike {
 	// `catalog_rekey`: what the cutover did to one character's sheet (Catalog_Cutover::rekey_character()).
 	counts?: { moved_rows?: number; rekeyed?: number; respelled?: number };
 	records?: CatalogRekeyRecord[];
-	// `catalog_rekey_revert`: the rollback restored a sheet that had changed since the cutover.
 	forced?: boolean;
 }
 
@@ -42,11 +38,7 @@ interface CatalogRekeyRecord {
 }
 
 /**
- * Builds the display string for one change, branching on `changeType`: trait additions,
- * removals, and modifications; resource and identity field updates; XP earn/adjust
- * entries; and imported notes. Falls back to showing only the new value when a
- * `previous` side isn't available, and to a generic label for an unrecognized type.
- * Every word is translated; names, numbers, and reasons are the change's own (1.0.0-review F-084).
+ * Builds the display string for one change, branching on `changeType`: trait additions, removals, and modifications.
  */
 export function describeChange(
 	changeType: ChangeType,
@@ -156,7 +148,7 @@ export function describeChange(
 				return __( 'Identity updated', 'beyond-elysium' );
 			}
 			const [ field, value ] = entries[ 0 ];
-			// A multiselect's choices read as the sheet shows them (F-086).
+			// A multiselect's choices read as the sheet shows them.
 			return sprintf(
 				/* translators: 1: identity field name, 2: its new value */
 				__( '%1$s → %2$s', 'beyond-elysium' ),
@@ -271,9 +263,8 @@ export function describeChange(
 }
 
 /**
- * The lines that sit beneath a change's one-line description: for a catalog update, each custom
- * entry it matched to a catalog item as "what it was -> what it is". Empty for every other kind.
- * The signed sheet's history table has room for one line per change, so this has no PHP twin.
+ * The lines that sit beneath a change's one-line description: for a catalog update, each custom entry it matched to a
+ * catalog item as "what it was -> what it is".
  */
 export function describeChangeDetail(
 	changeType: ChangeType,
@@ -300,9 +291,7 @@ export function describeChangeDetail(
 }
 
 /**
- * A change's XP cost or refund as it reads beside its description - "+3 XP", "-2 XP" - or null
- * when it costs nothing. The column arrives as a decimal string ("0.00"), so "free" is decided on
- * the number, never on the raw value: compared as a string, every free change printed "+0 XP".
+ * A change's XP cost or refund as it reads beside its description.
  */
 export function describeChangeCost( cost: number | string ): string | null {
 	const amount = Number( cost );

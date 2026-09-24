@@ -11,26 +11,7 @@ use BeyondElysium\REST\Approval_Rules_Controller;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The rows of a chronicle's Chronicle Setup checklist (guided-chronicle-setup-design.md
- * §6.4), and the one place that decides what each says. Two callers ask it: the
- * `GET /{game_slug}/setup-status` route the Chronicle Setup screen reads, and the wp-admin
- * pointer that tells a new admin a chronicle is not set up (`Core\Setup_Notice`), so the two can
- * never disagree about what needs doing.
- *
- * §5.5's rule, restated because it is the one most likely to be quietly violated at build
- * time: **no stored completion state of any kind.** Every row's status is derived on read from
- * the rows that actually exist, and every query here is a bounded COUNT(*) or a single-row
- * read, so there is nothing worth caching. A row that needs attention reads `attention`; an
- * optional row reads `info` until the chronicle has set something of its own and `ok` from
- * then on (1.3.6) - a choice made, a fork, an override, a saved setting. Before 1.3.6 the
- * optional rows were `info` whatever was done, so a finished function never showed as finished.
- *
- * No `ORDER BY` on `schema_blocks` (v0.21.29's own sort-buffer overflow, `Schema_Block.php`'s
- * own doc comment): the fork count is a bare `COUNT(*) WHERE game_slug = %s`, and the rules
- * read only the chronicle's own forks.
- *
- * A row carries no `actionable` flag. It names the capability that would let a viewer act on it
- * (`fix.capability`), and the caller with a viewer in hand decides.
+ * The rows of a chronicle's Chronicle Setup checklist, and the one place that decides what each says.
  */
 class Setup_Status {
 
@@ -65,8 +46,7 @@ class Setup_Status {
 	}
 
 	/**
-	 * How many rows are in each state, and how many there are to do. The demo chronicle's own row
-	 * is left out of `total`: it asks for nothing, so "3 of 14 done" would never reach 14.
+	 * How many rows are in each state, and how many there are to do.
 	 *
 	 * @param array<int,array<string,mixed>> $rows
 	 * @return array{attention:int,ok:int,info:int,total:int}
@@ -100,8 +80,6 @@ class Setup_Status {
 					count( $enabled )
 				)
 				: __( 'All 11 creature types are available. Narrow this to what your chronicle actually runs.', 'beyond-elysium' ),
-			// Owner ruling, 1.0.0-checklist.md item 18: an HST sets this for their own
-			// chronicle now, not a site administrator only.
 			'fix'        => [ 'kind' => 'inline', 'capability' => 'be_manage_chronicle_setup' ],
 		];
 	}
@@ -145,8 +123,6 @@ class Setup_Status {
 					? __( 'A player-created character starts pending, awaiting Storyteller approval.', 'beyond-elysium' )
 					: __( 'A player-created character starts active immediately, with no Storyteller review.', 'beyond-elysium' ) )
 				: __( 'Not chosen yet. Today, unset means a new character goes active immediately with no Storyteller ever seeing it.', 'beyond-elysium' ),
-			// Owner ruling, 1.0.0-checklist.md item 18: an HST sets this for their own
-			// chronicle now, not a site administrator only.
 			'fix'        => [ 'kind' => 'inline', 'capability' => 'be_manage_chronicle_setup' ],
 		];
 	}
@@ -155,10 +131,7 @@ class Setup_Status {
 	 * @return array<string,mixed>
 	 */
 	private static function row_front_end_pages( object $game ): array {
-		// page-consolidation-design.md: the four fixed pages are chronicle-independent
-		// (each resolves its own chronicle via a switcher, not a baked gameSlug), so this
-		// checks their real existence directly rather than counting per-chronicle content -
-		// the old LIKE-on-post_content check has nothing left to count under this model.
+		// Checks the four fixed pages' real existence directly.
 		$missing = [];
 		foreach ( \BeyondElysium\Core\Page_Provisioner::PAGES as $slug => $page ) {
 			if ( ! get_page_by_path( $slug, OBJECT, 'page' ) ) {
@@ -224,8 +197,7 @@ class Setup_Status {
 	}
 
 	/**
-	 * No `ORDER BY` - v0.21.29's own sort-buffer overflow against the real
-	 * catalog's largest blocks; a bare `COUNT(*)` never triggers it.
+	 * The Catalog customisation row of the setup checklist.
 	 *
 	 * @return array<string,mixed>
 	 */
@@ -317,8 +289,7 @@ class Setup_Status {
 	}
 
 	/**
-	 * A stored list of allowed values counts as a choice made, even a full one: the row reports what
-	 * the chronicle has decided, not whether the decision narrowed anything.
+	 * A stored list of allowed values counts as a choice made.
 	 *
 	 * @return array<string,mixed>
 	 */

@@ -14,43 +14,23 @@ use BeyondElysium\Models\Plot_Entry;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Port of `APREngineClass.AddStandardRumors` (GV301Source/Code/APREngineClass.cls).
- * Generates plots the same way Action_Allocator generates them: real chronicle
- * data in, `be_plots` rows out, no separate "rumor" table.
- *
- * A generated rumor is a plot shell (title + `target_query`), held from birth with an
- * audience derived from that target_query, and an ST fills in its actual description
- * afterward the same way as any other plot. `RumorClass`'s per-level text bodies (1.1.0
- * §3.4 item 4) are ported as far as an influence rumor's own `rumor_level_key`/
- * `rumor_level_match` - the level texts themselves are written afterward through
- * `Plots_Controller::update_rumor_levels()`, not generated here, except when a "copy
- * previous" clone carries an earlier date's already-written levels forward.
- *
- * @see BE_PROCESS/releases/workflow-0.5.md Step 5
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.4
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "Rumor auto-generation"
+ * Port of `APREngineClass.AddStandardRumors` (Code/APREngineClass.cls).
  */
 class Rumor_Generator {
 
-	/** `PublicRumorTitle` constant from the VB6 source. */
+	/**
+	 * `PublicRumorTitle` constant source.
+	 */
 	const PUBLIC_TITLE = 'Public Knowledge';
 
 	/**
-	 * Connections tagging a plot as a generated rumor carry this label, with
-	 * `target_type: 'tag'`, since a rumor has no single owning entity the way
-	 * an action allocation has its character.
+	 * Connections tagging a plot as a generated rumor carry this label, with `target_type: 'tag'`.
 	 */
 	const RUMOR_LABEL = 'apr_rumor';
 
 	/**
-	 * Generates the standard rumor set for a game date, over active characters
-	 * only, skipping any title already present at that date. Persists the
-	 * generated plots only when `$commit` is true; otherwise returns the
-	 * candidate list for preview.
-	 *
-	 * A commit holds the chronicle's row from reading the date's rumors to
-	 * writing its own, so two at once can't each find the date empty, and
-	 * writes every rumor - plot and tag - or none of them (1.0.0-review F-111).
+	 * Generates the standard rumor set for a game date, over active characters only, skipping any title already present
+	 * at that date.
 	 *
 	 * @param int    $game_id
 	 * @param string $game_date `Y-m-d`.
@@ -91,7 +71,7 @@ class Rumor_Generator {
 			$existing[ self::PUBLIC_TITLE ] = true;
 		}
 
-		// Active characters only, pre-resolved here so the candidate logic below stays pure.
+		// Active characters only, pre-resolved here.
 		$active     = Character::all_for_game( $game->slug, [ 'status' => 'active' ] );
 		$groups     = $toggles['group_rumors'] ? self::group_values( $active, 'group' ) : [];
 		$subgroups  = $toggles['subgroup_rumors'] ? self::group_values( $active, 'subgroup' ) : [];
@@ -133,12 +113,7 @@ class Rumor_Generator {
 	}
 
 	/**
-	 * Generates personal, race, group, subgroup, and influence rumor candidates
-	 * per character, in Grapevine's order. Pure - no database access.
-	 * `$characters` entries are `{name, stack_slug, stack_label, group,
-	 * subgroup, influences}`, already filtered to active characters and
-	 * pre-resolved by the caller; `group`/`subgroup` are `{field, label, value}`
-	 * or null for a creature type without one (`group_values()`).
+	 * Generates personal, race, group, subgroup, and influence rumor candidates per character, in Grapevine's order.
 	 *
 	 * @param array[] $characters
 	 * @param array   $toggles
@@ -163,9 +138,7 @@ class Rumor_Generator {
 				] );
 			}
 
-			// A group or subgroup rumor is titled with the value itself ("Brujah", "Camarilla"),
-			// as Grapevine titles it; a bare number says nothing on its own, so it carries its
-			// field ("Rank 2").
+			// A group or subgroup rumor is titled with the value itself ("Brujah", "Camarilla"), as Grapevine titles it.
 			foreach ( [ 'group' => 'group_rumors', 'subgroup' => 'subgroup_rumors' ] as $kind => $toggle ) {
 				$held = $character[ $kind ] ?? null;
 				if ( ! $toggles[ $toggle ] || $held === null || $held['value'] === '' ) {
@@ -179,8 +152,7 @@ class Rumor_Generator {
 
 			if ( $toggles['influence_rumors'] ) {
 				foreach ( $character['influences'] as $influence_name ) {
-					// Levels (1.1.0 §3.4 item 4): an influence rumor is the one candidate type
-					// with a real per-character rating to gate on - the Influence itself.
+					// An influence rumor is gated on the character's rating in the Influence itself.
 					self::add_candidate( $candidates, $existing, "{$influence_name} Influence", 'influence', [
 						'field' => 'influences', 'operator' => 'contains', 'value' => $influence_name,
 					], [
@@ -198,11 +170,7 @@ class Rumor_Generator {
 	private static ?array $group_map = null;
 
 	/**
-	 * Each character's group or subgroup - the field `rumor-group-map.php`
-	 * names for its creature type, read through the query engine so a
-	 * chronicle's own blocks and a field shared by several types (Auspice)
-	 * resolve the same way a rumor's target will. A character whose type has
-	 * no such field is left out.
+	 * Each character's group or subgroup.
 	 *
 	 * @param object[] $characters
 	 * @param string   $which 'group' | 'subgroup'.
@@ -236,9 +204,7 @@ class Rumor_Generator {
 	}
 
 	/**
-	 * Adds a candidate to the list if its title is not already claimed for this
-	 * date. Two characters that would produce the same title yield one rumor,
-	 * not two duplicates.
+	 * Adds a candidate to the list if its title is not already claimed for this date.
 	 *
 	 * @param array[] $candidates
 	 * @param array   $existing
@@ -246,7 +212,7 @@ class Rumor_Generator {
 	 * @param string  $category
 	 * @param array   $target_query
 	 * @param array   $extra Merged onto the candidate - `rumor_level_key`/`rumor_level_match`
-	 *                       for an influence rumor (1.1.0 §3.4 item 4), empty otherwise.
+	 *                       for an influence rumor, empty otherwise.
 	 * @return void
 	 */
 	private static function add_candidate( array &$candidates, array &$existing, string $title, string $category, array $target_query, array $extra = [] ): void {
@@ -263,10 +229,8 @@ class Rumor_Generator {
 	}
 
 	/**
-	 * Collects the names of every Influence-sourced entry on a character's
-	 * merged backgrounds sheet, using the same `source`-tag lookup
-	 * `Action_Allocator::catalog_sources()` uses. Returns an empty array when
-	 * the character's stack has no backgrounds block.
+	 * Collects the names of every Influence-sourced entry on a character's merged backgrounds sheet, using the same
+	 * `source`-tag lookup `Action_Allocator::catalog_sources()` uses.
 	 *
 	 * @param object $character
 	 * @return string[]
@@ -295,16 +259,8 @@ class Rumor_Generator {
 	}
 
 	/**
-	 * Clones the previous rumor-generation date's titles and target queries
-	 * forward, skipping anything already present at `$game_date`.
-	 * `$copy_previous` decides whether the cloned plot's `description` carries
-	 * over too - and, since a level text is part of a rumor's own written
-	 * content the same way its description is (1.1.0 §3.4 item 4: "'Copy
-	 * previous' copies levels too"), whether its `rumor_level_key`/`match` and
-	 * any level texts already written on it carry forward as well.
-	 *
-	 * "Previous date" is the most recent earlier date this game has any
-	 * rumor-tagged plot for.
+	 * Clones the previous rumor-generation date's titles and target queries forward, skipping anything already present at
+	 * `$game_date`.
 	 *
 	 * @param int    $game_id
 	 * @param string $game_date
@@ -350,14 +306,7 @@ class Rumor_Generator {
 	}
 
 	/**
-	 * Persists one candidate as a plot row, then tags it as a rumor via a
-	 * `tag`-type connection so it can be distinguished from manually-created
-	 * plots later. Held from birth, with an audience derived from its own
-	 * target_query - Public Knowledge (no target_query) reaches everyone, any
-	 * other candidate is restricted to whoever its target_query matches
-	 * (1.1.0 §3.4 items 1-2), and, when the candidate carries them (an
-	 * influence rumor, or a "copy previous" clone of one), its rumor-level
-	 * key/match and any already-written level texts.
+	 * Persists one candidate as a plot row.
 	 *
 	 * @param int    $game_id
 	 * @param string $game_date
@@ -406,9 +355,6 @@ class Rumor_Generator {
 
 	/**
 	 * Tags an already-created plot as a rumor via the `apr_rumor` connection.
-	 * The one piece of "what makes a plot a rumor" logic, shared between
-	 * auto-generation (`persist_one()` above) and manual rumor creation
-	 * (`Plots_Controller::create_item()`) so both paths stay identical.
 	 *
 	 * @param int $plot_id
 	 * @param int $game_id
@@ -426,9 +372,7 @@ class Rumor_Generator {
 	}
 
 	/**
-	 * Whether a plot carries the `apr_rumor` tag - the read-side counterpart to
-	 * `tag_as_rumor()`, used by `Plots_Controller::update_item()` to know whether a
-	 * `target_query` change should re-derive the rumor's audience (1.1.0 §3.4 item 1).
+	 * Whether a plot carries the `apr_rumor` tag.
 	 *
 	 * @param int $plot_id
 	 * @return bool
@@ -443,9 +387,7 @@ class Rumor_Generator {
 	}
 
 	/**
-	 * Collects every rumor-tagged plot's title already present for this game
-	 * and date. Used as a lookup set so generation can skip titles that would
-	 * otherwise be duplicated.
+	 * Collects every rumor-tagged plot's title already present for this game and date.
 	 *
 	 * @param int    $game_id
 	 * @param string $game_date
@@ -460,9 +402,7 @@ class Rumor_Generator {
 	}
 
 	/**
-	 * Fetches rumor-tagged plots for a game on an exact date, joining plots to
-	 * connections on the `apr_rumor` tag label. Decodes each plot's
-	 * `target_query` from JSON before returning it.
+	 * Fetches rumor-tagged plots for a game on an exact date, joining plots to connections on the `apr_rumor` tag label.
 	 *
 	 * @param int    $game_id
 	 * @param string $game_date
@@ -492,9 +432,7 @@ class Rumor_Generator {
 	}
 
 	/**
-	 * Finds the most recent date strictly before `$game_date` that has any
-	 * rumor-tagged plot for this game. Used to locate the prior generation
-	 * date to clone forward from.
+	 * Finds the most recent date strictly before `$game_date` that has any rumor-tagged plot for this game.
 	 *
 	 * @param int    $game_id
 	 * @param string $game_date
@@ -521,10 +459,8 @@ class Rumor_Generator {
 	}
 
 	/**
-	 * Reads rumor-generation toggles from `be_games.settings.apr`, falling back
-	 * to a fixed set of defaults for any toggle a chronicle has not configured.
-	 * Returns one boolean per toggle type (public, personal, race, group,
-	 * subgroup, influence, previous, copy_previous).
+	 * Reads rumor-generation toggles from `be_games.settings.apr`, defaulting any toggle a chronicle has not configured;
+	 * returns one boolean per toggle type.
 	 *
 	 * @param object $game
 	 * @return array

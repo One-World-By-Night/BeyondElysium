@@ -1,8 +1,6 @@
 /**
- * admin-menu-consolidation-design.md: replaces the separate "Games," "Schema
- * Blocks," "Creature Stacks," "Templates," and "Approval Rules" wp-admin
- * pages with one tabbed hub - all five are global, cross-chronicle admin
- * rather than "configure this one chronicle" (that's ChronicleSetupHub).
+ * One tabbed hub for Games, Schema Blocks, Creature Stacks, Templates and Approval Rules: all global, cross-chronicle
+ * admin.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -48,8 +46,7 @@ export function SystemConfigHub() {
 			key: TABS.schemaBlocks,
 			label: __( 'Schema Blocks', 'beyond-elysium' ),
 		},
-		// Creature stacks are shared by every chronicle and have no per-chronicle copy, so only a
-		// site administrator may change them; a chronicle narrows its stacks in Chronicle Setup.
+		// Creature stacks are shared by every chronicle and have no per-chronicle copy.
 		capabilities?.be_manage_games && {
 			key: TABS.creatureStacks,
 			label: __( 'Creature Stacks', 'beyond-elysium' ),

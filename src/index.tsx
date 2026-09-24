@@ -1,11 +1,5 @@
 /**
- * Beyond Elysium — React widget hydration router and plugin entry
- * point. Scans the DOM for elements with [data-be-widget] and
- * hydrates the corresponding lazy-loaded React component into
- * each mount point.
- *
- * Elementor widgets render:
- *   <div data-be-widget="character-sheet" data-be-config='{"characterId":42}'></div>
+ * Beyond Elysium — React widget hydration router and plugin entry point.
  */
 
 import { createRoot } from '@wordpress/element';
@@ -15,10 +9,7 @@ import './styles/theme.css';
 import './styles/breakpoints.css';
 
 /**
- * Maps each data-be-widget attribute value to a lazy loader for
- * its React component. Front-end entries back Elementor widgets;
- * the admin- prefixed entries back the equivalent wp-admin pages
- * using the same hydration mechanism.
+ * Maps each data-be-widget attribute value to a lazy loader for its React component.
  */
 const widgetRegistry: Record<
 	string,
@@ -39,19 +30,10 @@ const widgetRegistry: Record<
 	'verify-character': () =>
 		import( './components/character/VerifyCharacter' ),
 	'house-rules': () => import( './components/game/HouseRules' ),
-	// page-consolidation-design.md's two fixed, tabbed pages - replace the ten
-	// per-chronicle-duplicated pages below with a shell each, wrapping the same
-	// inner widgets (still registered here too, since Elementor may still place
-	// any of them individually).
 	'my-chronicle': () => import( './components/pages/MyChroniclePage' ),
 	'storyteller-toolkit-page': () =>
 		import( './components/pages/StorytellerToolkitPage' ),
 
-	// wp-admin pages, mounted the same way as a front-end Elementor widget.
-	// admin-menu-consolidation-design.md: 16 flat pages collapsed to 8 - the individual
-	// widget entries below stay registered (some Admin.php render_* methods removed, but
-	// the hub components still import and render these same components directly), plus
-	// four new hub entries and the new landing dashboard.
 	'admin-dashboard': () => import( './components/admin/AdminDashboard' ),
 	'admin-games': () => import( './components/admin/AdminGames' ),
 	'admin-characters': () => import( './components/admin/AdminCharacters' ),
@@ -82,13 +64,6 @@ const widgetRegistry: Record<
 		import( './components/admin/hubs/SystemConfigHub' ),
 };
 
-/**
- * Parses the JSON config from a mount point's data-be-config
- * attribute, filling in characterId from the ?character_id= URL
- * query var when the config does not already carry a non-zero
- * value, and letting a game_slug URL param override the config's
- * own gameSlug when present.
- */
 function parseConfig( el: HTMLElement ): Record< string, unknown > {
 	const raw = el.getAttribute( 'data-be-config' );
 	let config: Record< string, unknown > = {};
@@ -124,16 +99,11 @@ function parseConfig( el: HTMLElement ): Record< string, unknown > {
 }
 
 /**
- * Hydrates every Beyond Elysium widget mount point currently on
- * the page: finds each [data-be-widget] element, loads its
- * component, parses its config, and mounts it inside an error
- * boundary.
+ * Hydrates every Beyond Elysium widget mount point currently on the page: finds each [data-be-widget] element, loads
+ * its component, parses its config, and mounts it inside an error boundary.
  */
 async function hydrateWidgets(): Promise< void > {
-	// Zero-risk detection, never injection - this plugin owns only the DOM
-	// subtree under [data-be-widget], never the page's own <head> (mobile-sheet-
-	// design.md §2.8). A missing viewport meta tag turns every phone-width fix
-	// in breakpoints.css into a silent no-op; this at least makes that diagnosable.
+	// Zero-risk detection, never injection.
 	if ( ! document.querySelector( 'meta[name="viewport"]' ) ) {
 		console.warn(
 			'[BE] No <meta name="viewport"> found on this page - phone-width layout will not apply correctly.'
@@ -158,19 +128,9 @@ async function hydrateWidgets(): Promise< void > {
 		try {
 			const { default: Component } = await loader();
 			const config = parseConfig( el );
-			// wp-dark-mode/wp-dark-mode-ultimate force background-color/border-color/color
-			// with !important onto every plain <button> site-wide when active
-			// (html.wp-dark-mode-active body button:not(.wp-dark-mode-ignore, .wp-dark-mode-ignore *)),
-			// which wins over this plugin's own --be-* token styling regardless of selector
-			// specificity - found live testing kony-sabbat.net (a real button rendered with a
-			// clashing gold border and solid red fill neither this plugin nor the theme ever
-			// asked for). wp-dark-mode's own documented escape hatch excludes an element and
-			// every descendant from that one rule; applied once here, at the root every widget
-			// mounts into, rather than on each of the dozens of <button> elements individually.
 			el.classList.add( 'wp-dark-mode-ignore' );
 			const root = createRoot( el );
-			// Admin pages already carry their own PHP-rendered memorial footer
-			// (Admin_Menu::render_mount()) - this one is for front-end widgets only.
+			// Admin pages already carry their own PHP-rendered memorial footer (Admin_Menu::render_mount()).
 			const isAdminWidget = widgetName.startsWith( 'admin-' );
 			root.render(
 				<ErrorBoundary label={ widgetName }>

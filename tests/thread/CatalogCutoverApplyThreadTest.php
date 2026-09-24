@@ -2,6 +2,8 @@
 
 namespace BeyondElysium\Tests\Thread;
 
+require_once __DIR__ . '/../support/LegacyInstall.php';
+
 use BeyondElysium\Database\Manager;
 use BeyondElysium\Database\Option_Lock;
 use BeyondElysium\Database\Seeder;
@@ -13,12 +15,11 @@ use BeyondElysium\Models\Snapshot;
 use BeyondElysium\Models\Template;
 use BeyondElysium\Services\Catalog_Cutover;
 use BeyondElysium\Services\Catalog_Reader;
+use BeyondElysium\Tests\Support\LegacyInstall;
 use WP_UnitTestCase;
 
 /**
- * R5: `Catalog_Cutover::apply()` (§3.6). It runs over the whole install - including the demo
- * chronicle the test database is seeded with, which is real coverage rather than noise: every demo
- * sheet is re-keyed and none may be lost.
+ * `Catalog_Cutover::apply()`.
  */
 class CatalogCutoverApplyThreadTest extends WP_UnitTestCase {
 
@@ -30,12 +31,9 @@ class CatalogCutoverApplyThreadTest extends WP_UnitTestCase {
 		if ( ! Catalog_Reader::available() ) {
 			$this->markTestSkipped( 'no declared catalog in this checkout' );
 		}
-		// apply() runs over the whole install, and this database's plugin tables outlive a run (only
-		// WordPress's own are reinstalled), so the demo chronicle it holds can be months stale. Clear
-		// every character inside this test's own transaction - rolled back after - so each case sees
-		// only what it builds; the current demo fixtures get their own explicit case instead.
 		global $wpdb;
 		$wpdb->query( 'DELETE FROM ' . Manager::table( 'characters' ) );
+		LegacyInstall::put_in_place();
 
 		$this->actor = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		Game::create( [ 'slug' => $this->game, 'name' => 'Cutover Apply' ] );
@@ -43,9 +41,7 @@ class CatalogCutoverApplyThreadTest extends WP_UnitTestCase {
 
 	public function tearDown(): void {
 		delete_option( Catalog_Cutover::OPTION );
-		delete_option( Catalog_Cutover::RECORD_OPTION );
 		Option_Lock::release( Catalog_Cutover::LOCK );
-		Catalog_Cutover::reset_cache();
 		parent::tearDown();
 	}
 
@@ -97,34 +93,26 @@ class CatalogCutoverApplyThreadTest extends WP_UnitTestCase {
 		) );
 	}
 
-	public function test_every_current_demo_fixture_survives_the_cutover(): void {
-		// The 22 shipped demo characters are real sheets in a real catalog: a retention gap here (the
-		// Fera and Bete rites did have one, found by the R4 probe) would refuse the demo site's cutover.
+	public function test_the_shipped_demo_characters_need_nothing_moved(): void {
+		// The 22 demo characters already hold each creature type's own blocks: a plan finds nothing to lose or change.
 		$fixtures = Seeder::demo_fixtures();
-		$ids      = [];
 		foreach ( $fixtures as $fixture ) {
-			$id         = (int) Character::create( [
+			Character::create( [
 				'name' => $fixture['name'], 'stack_slug' => $fixture['stack_slug'], 'owner_type' => 'chronicle',
 				'owner_slug' => $this->game, 'status' => 'active', 'sheet_data' => $fixture['sheet_data'],
 			] );
-			$ids[ $id ] = $fixture;
 		}
 
 		$plan = Catalog_Cutover::plan( $this->game );
-		$this->assertSame( [], $plan['retention_gaps'], 'every catalog row a demo character holds exists in its declared block' );
+		$this->assertSame( [], $plan['retention_gaps'] );
 		$this->assertSame( count( $fixtures ), $plan['characters'] );
+		$this->assertSame( 0, $plan['characters_changed'] );
 
-		$this->assertSame( 'applied', Catalog_Cutover::apply( $this->actor )['status'] );
+		$result = Catalog_Cutover::apply( $this->actor );
 
-		foreach ( $ids as $id => $fixture ) {
-			$sheet = Character::find( $id )->sheet_data;
-			foreach ( Catalog_Cutover::replacement_map( $fixture['stack_slug'] ) as $retired => $live ) {
-				$this->assertArrayNotHasKey( $retired, $sheet, "{$fixture['name']}: {$retired} moved" );
-				if ( isset( $fixture['sheet_data'][ $retired ] ) ) {
-					$this->assertCount( count( $fixture['sheet_data'][ $retired ] ), $sheet[ $live ], "{$fixture['name']}: every {$retired} row arrived in {$live}" );
-				}
-			}
-		}
+		$this->assertSame( 'applied', $result['status'] );
+		$this->assertSame( 0, $result['characters_rekeyed'] );
+		$this->assertSame( count( $fixtures ), $result['characters_unchanged'] );
 	}
 
 	public function test_apply_rekeys_the_install_and_flips_it(): void {
@@ -162,8 +150,6 @@ class CatalogCutoverApplyThreadTest extends WP_UnitTestCase {
 		$this->assertSame( $this->actor, (int) $change->submitted_by );
 		$this->assertSame( $this->actor, (int) $change->reviewed_by );
 
-		// The record's own hashes name the sheet before and after, and the "after" one holds against
-		// what MySQL actually stored - its JSON column re-orders object keys.
 		$this->assertSame( Catalog_Cutover::hash_value( $original ), $change->change_data['before_hash'] );
 		$this->assertSame( Catalog_Cutover::hash_value( Character::find( $id )->sheet_data ), $change->change_data['after_hash'] );
 		$this->assertSame( 4, $change->change_data['counts']['moved_rows'] );
@@ -195,9 +181,7 @@ class CatalogCutoverApplyThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_the_genuinely_new_declared_sections_reach_the_system_templates(): void {
-		// Demon's declared stack carries evocations and rituals (D91), which no legacy template
-		// ever showed: rewriting slugs alone cannot add them, completing the template from its
-		// stack can.
+		// Demon's declared stack carries evocations and rituals.
 		$sections = static fn() => array_column( Template::resolve( 'demon', 'sheet_full', null )->layout['sections'], 'block_slug' );
 		$this->assertNotContains( 'demon-evocations', $sections() );
 
@@ -207,17 +191,14 @@ class CatalogCutoverApplyThreadTest extends WP_UnitTestCase {
 		$this->assertContains( 'demon-rituals', $sections() );
 	}
 
-	public function test_the_record_holds_what_rollback_needs_and_the_lock_is_released(): void {
+	public function test_each_moved_character_is_recorded_and_the_lock_is_released(): void {
 		$id = $this->character( 'vampire', 'Apply Vampire', $this->vampire_sheet() );
 
 		Catalog_Cutover::apply( $this->actor );
 
-		$record = get_option( Catalog_Cutover::RECORD_OPTION );
-		$this->assertSame( $this->actor, $record['actor'] );
-		$this->assertArrayHasKey( $id, $record['characters'] );
-		$this->assertSame( (int) $this->rekey_changes( $id )[0]->id, $record['characters'][ $id ]['change_id'] );
-		$this->assertNotEmpty( $record['templates'], 'the rewritten templates are recorded with their pre-image' );
-		$this->assertArrayHasKey( 'vampire', $record['stacks'] );
+		$rekeys = $this->rekey_changes( $id );
+		$this->assertCount( 1, $rekeys );
+		$this->assertSame( $this->actor, (int) $rekeys[0]->submitted_by );
 		$this->assertTrue( Option_Lock::claim( Catalog_Cutover::LOCK, 60 ), 'the lock is free again' );
 	}
 
@@ -235,7 +216,7 @@ class CatalogCutoverApplyThreadTest extends WP_UnitTestCase {
 		$this->assertCount( 1, $this->rekey_changes( $id ) );
 	}
 
-	public function test_pending_changes_are_rewritten_and_their_pre_image_recorded(): void {
+	public function test_pending_changes_are_rewritten(): void {
 		$id      = $this->character( 'vampire', 'Apply Vampire', $this->vampire_sheet() );
 		$pending = Change::create( [
 			'character_id' => $id, 'change_type' => 'add_trait', 'category' => 'met-merits',
@@ -246,10 +227,6 @@ class CatalogCutoverApplyThreadTest extends WP_UnitTestCase {
 
 		$this->assertSame( 'vampire-merits', Change::find( $pending )->change_data['block_slug'] );
 		$this->assertSame( 'pending', Change::find( $pending )->status );
-		$this->assertSame(
-			[ [ 'id' => $pending, 'from' => 'met-merits', 'to' => 'vampire-merits' ] ],
-			get_option( Catalog_Cutover::RECORD_OPTION )['pending']
-		);
 	}
 
 	public function test_a_character_changed_between_plan_and_apply_is_replanned_from_a_fresh_read(): void {
@@ -284,7 +261,6 @@ class CatalogCutoverApplyThreadTest extends WP_UnitTestCase {
 		$this->assertFalse( Catalog_Cutover::is_declared() );
 		$this->assertSame( $sheets, $this->sheets(), 'not even the good character was touched' );
 		$this->assertSame( [], $this->rekey_changes( $good ) );
-		$this->assertFalse( get_option( Catalog_Cutover::RECORD_OPTION ) );
 		$this->assertTrue( Option_Lock::claim( Catalog_Cutover::LOCK, 60 ), 'a refusal releases the lock' );
 	}
 

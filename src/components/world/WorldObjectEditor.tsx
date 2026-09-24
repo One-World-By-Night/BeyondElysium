@@ -1,9 +1,5 @@
 /**
- * Create/edit form for a world object (item, location, or rote). Builds
- * its fields from the object type's property schema, so scalar and
- * trait-list properties both render and save without component-specific
- * code per type. Submits a create or update request depending on
- * whether an existing object was passed in.
+ * Create/edit form for a world object (item, location, or rote).
  */
 import { useEffect, useId, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -19,15 +15,16 @@ import './WorldObjectEditor.css';
 
 export interface WorldObjectEditorProps {
 	gameSlug: string;
-	/** One of the catalog types - boons are created through BoonLedger, not here. */
+	/**
+	 * One of the catalog types.
+	 */
 	objectType: ObjectType;
-	/** When set, edits this object instead of creating a new one. */
+	/**
+	 * When set, edits this object.
+	 */
 	object?: WorldObject | null;
 	/**
-	 * When set (and `object` is not), pre-fills a fresh create form from an
-	 * existing object's fields - "Duplicate" rather than "New" - so a
-	 * Storyteller making a one-off variant doesn't retype it from a blank
-	 * form. Still submits as a create; the source object is never touched.
+	 * When set (and `object` is not), pre-fills a fresh create form from an existing object's fields.
 	 */
 	duplicateFrom?: WorldObject | null;
 	onSaved?: ( object: WorldObject ) => void;
@@ -40,11 +37,8 @@ type PropertyValue =
 	| Array< { name: string; count?: number; note?: string } >;
 
 /**
- * Renders a create/edit form generated from the object type's property
- * schema (`WORLD_OBJECT_SCHEMAS`): name, description, rarity, cost and
- * limitations fields, plus one field per schema property. Trait-list
- * properties get a free-text repeatable-row editor rather than a
- * catalog picker, since world-object trait lists have no fixed catalog.
+ * Renders a create/edit form generated from the object type's property schema (`WORLD_OBJECT_SCHEMAS`): name,
+ * description, rarity, cost and limitations fields, plus one field per schema property.
  */
 export function WorldObjectEditor( {
 	gameSlug,
@@ -55,8 +49,6 @@ export function WorldObjectEditor( {
 	onCancel,
 }: WorldObjectEditorProps ) {
 	const schema = WORLD_OBJECT_SCHEMAS[ objectType ] ?? {};
-	// Duplicating pre-fills the same fields editing would show, but only ever backs a create -
-	// `object` itself stays unset here, so `submit()` below takes the create path, never update.
 	const source = object ?? duplicateFrom;
 	const isDuplicating = ! object && !! duplicateFrom;
 
@@ -73,14 +65,12 @@ export function WorldObjectEditor( {
 	const [ rarity, setRarity ] = useState( source?.rarity ?? '' );
 	const [ cost, setCost ] = useState( source?.cost ?? '' );
 	const limitationsDraft = useRef( source?.limitations ?? '' );
-	// Duplicating never carries the source's own database id, so 'new' is unique per
-	// duplicate too - not just per genuine create.
+	// Duplicating never carries the source's own database id.
 	const editorKey = object?.id ?? 'new';
 	const [ properties, setProperties ] = useState<
 		Record< string, PropertyValue >
 	>( ( source?.properties as Record< string, PropertyValue > ) ?? {} );
-	// Duplicating never carries the source's own audience forward either - a one-off variant
-	// starts world-visible like any other new item, same as it starts with no connections.
+	// Duplicating never carries the source's own audience forward either.
 	const [ audience, setAudience ] = useState< AudienceValue >(
 		isDuplicating ? 'everyone' : object?.audience ?? 'everyone'
 	);
@@ -91,7 +81,7 @@ export function WorldObjectEditor( {
 	const [ saving, setSaving ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
 
-	// "Inside of" (1.1.0 §3.9 item 1) - locations only.
+	// "Inside of" - locations only.
 	const [ parentId, setParentId ] = useState< string >(
 		object?.parent_id ? String( object.parent_id ) : ''
 	);
@@ -331,9 +321,8 @@ export function WorldObjectEditor( {
 }
 
 /**
- * Renders one schema-driven property field: a repeatable trait-list
- * editor, a textarea for long text, or a text/number/date input
- * otherwise. Derives its visible label from the property's key.
+ * Renders one schema-driven property field: a repeatable trait-list editor, a textarea for long text, or a
+ * text/number/date input.
  */
 function PropertyField( {
 	fieldKey,
@@ -378,9 +367,6 @@ function PropertyField( {
 		return (
 			<div className="be-world-editor__field">
 				<span>{ label }</span>
-				{ /* Not fieldId: useId()'s colons are valid HTML but break wp.editor's own
-				 * jQuery-selector lookup ("Syntax error, unrecognized expression: #:r7:"),
-				 * found live. fieldKey is already a clean, page-unique identifier. */ }
 				<HtmlEditor
 					id={ `be-world-object-property-${ fieldKey }` }
 					defaultValue={ textValue }
@@ -420,9 +406,8 @@ function PropertyField( {
 }
 
 /**
- * Repeatable-row editor for a trait-list property: each row has name,
- * count and note inputs plus a remove button, with a button to append a
- * new blank row. Reports the full updated entry array on every change.
+ * Repeatable-row editor for a trait-list property: each row has name, count and note inputs plus a remove button,
+ * with a button to append a new blank row.
  */
 function TraitListField( {
 	entries,

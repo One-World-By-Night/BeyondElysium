@@ -6,21 +6,13 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Database schema definition, creation and migration for Beyond Elysium.
- *
- * Defines every plugin table via create_tables(), tracks the installed
- * schema version against the running plugin version, and runs migrate()
- * steps to bring an existing installation's tables and data up to date.
- * maybe_upgrade() is the single entry point that drives all of this on
- * every request.
  */
 class Schema {
 
 	/**
-	 * The plugin's current database schema version, matching the plugin
-	 * release version. Compared against the stored VERSION_OPTION value by
-	 * maybe_upgrade() to decide whether migrations need to run.
+	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.3.6';
+	const DB_VERSION = '1.3.7';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -28,27 +20,22 @@ class Schema {
 	const VERSION_OPTION = 'be_db_version';
 
 	/**
-	 * Option key holding the upgrade lock: the time the running upgrade
-	 * started. Only one request upgrades at a time.
+	 * Option key holding the upgrade lock: the time the running upgrade started.
 	 */
 	const UPGRADE_LOCK_OPTION = 'be_upgrade_lock';
 
 	/**
-	 * Seconds after which an upgrade lock is stale and may be taken over -
-	 * how long a failed upgrade waits before it is tried again.
+	 * Seconds after which an upgrade lock is stale and may be taken over.
 	 */
 	const UPGRADE_LOCK_TTL = 600;
 
 	/**
-	 * Option key holding why the last upgrade did not finish, shown to
-	 * administrators until an upgrade does.
+	 * Option key holding why the last upgrade did not finish, shown to administrators until an upgrade does.
 	 */
 	const UPGRADE_ERROR_OPTION = 'be_upgrade_error';
 
 	/**
-	 * Short names of every table create_tables() creates, unprefixed past `be_`. Kept as
-	 * an explicit list rather than derived from create_tables()'s SQL, so a table rename
-	 * or addition has one obvious place to update this too.
+	 * Short names of every table create_tables() creates, unprefixed past `be_`.
 	 *
 	 * @var string[]
 	 */
@@ -90,11 +77,7 @@ class Schema {
 	];
 
 	/**
-	 * Reports which of the plugin's own tables do not currently exist in
-	 * the database. Compares TABLES against a live SHOW TABLES query, since
-	 * dbDelta() never reports failure to its caller and maybe_upgrade()
-	 * would otherwise have no way to tell an empty install apart from a
-	 * broken one.
+	 * Reports which of the plugin's own tables do not currently exist in the database.
 	 *
 	 * @return string[] Short table names (matching TABLES), not full prefixed names.
 	 */
@@ -117,10 +100,6 @@ class Schema {
 
 	/**
 	 * Creates every plugin database table via dbDelta.
-	 * Issues one CREATE TABLE statement per table, safe to run on both a
-	 * fresh install and an existing one - dbDelta() only applies the
-	 * differences. Runs migrate() and refreshes the stored schema version
-	 * once every table statement has been issued.
 	 */
 	public static function create_tables(): void {
 		global $wpdb;
@@ -186,7 +165,7 @@ class Schema {
 			KEY game_line (game_line)
 		) $charset_collate;" );
 
-		// be_characters: one row per character sheet; the uuid unique index is added later by migrate(), after backfilling.
+		// be_characters: one row per character sheet.
 		dbDelta( "CREATE TABLE {$prefix}characters (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			uuid char(36) NOT NULL DEFAULT '',
@@ -263,10 +242,7 @@ class Schema {
 			KEY idx_change (change_id)
 		) $charset_collate;" );
 
-		// be_character_attestations: per-issuance verification tokens (GX-7). Keyed by a
-		// random per-issuance token/short_code, never the character's own UUID - a UUIDv7
-		// is partly a timestamp and is published as the permanent cross-plugin key
-		// (INTEROP-UUID.md), so it must never double as a revocable, rotatable public key.
+		// be_character_attestations: per-issuance verification tokens.
 		dbDelta( "CREATE TABLE {$prefix}character_attestations (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			character_uuid char(36) NOT NULL,
@@ -290,13 +266,7 @@ class Schema {
 			KEY idx_game (game_slug, issued_at)
 		) $charset_collate;" );
 
-		// be_character_transfers: chronicle-to-chronicle travel state (GX-8/9). Not
-		// be_connections - a transfer is a fact about one character's relationship to two
-		// chronicles across two WordPress installs, not a relationship between two BE
-		// records on this one (gex-export-transfer-design.md §2h). One row per leg of a
-		// journey; the newest non-terminal row for a uuid+direction is the authoritative
-		// travel state (§7.3) - enforced in Models/Transfer.php, not by a unique index,
-		// since a composite unique index would fight its own in-place state transitions.
+		// be_character_transfers: chronicle-to-chronicle travel state.
 		dbDelta( "CREATE TABLE {$prefix}character_transfers (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			character_uuid char(36) NOT NULL,
@@ -325,12 +295,7 @@ class Schema {
 			KEY idx_host (host_slug, state)
 		) $charset_collate;" );
 
-		// be_character_submissions: a player-sent Grapevine file waiting for a Storyteller's
-		// review (F-122). Not be_character_transfers - the sender's file may carry no uuid at
-		// all (and any it does carry is dropped, 1.0.0-review F-003/F-059), and there is no
-		// home site to call back to until a Storyteller accepts and a real character exists.
-		// `parsed`/`verification_source` hold only what the request needs while it waits, and
-		// both are cleared the moment the row leaves 'waiting' (Models/Submission.php).
+		// be_character_submissions: a player-sent Grapevine file waiting for a Storyteller's review.
 		dbDelta( "CREATE TABLE {$prefix}character_submissions (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			game_id bigint(20) unsigned NOT NULL,
@@ -396,12 +361,7 @@ class Schema {
 			FULLTEXT KEY ft_plot_text (title, description)
 		) $charset_collate;" );
 
-		// be_plot_entries: timeline entries attached to a plot; event_date is the in-fiction date.
-		// audience_character_ids only applies when audience = 'characters' (a Storyteller post
-		// aimed at specific characters, 1.1.0 §2.4); NULL otherwise. held/release_batch_id are
-		// the same release-batch gate as plots (1.1.0 §3.2). level (1-10) only applies to a
-		// 'rumor_level' entry (1.1.0 §3.4); it carries no held/release_batch_id of its own -
-		// a level text follows its plot's own release state, never its own.
+		// be_plot_entries: timeline entries attached to a plot.
 		dbDelta( "CREATE TABLE {$prefix}plot_entries (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			plot_id bigint(20) unsigned NOT NULL,
@@ -528,11 +488,7 @@ class Schema {
 			KEY idx_wp_user (wp_user_id)
 		) $charset_collate;" );
 
-		// be_attachments: private uploads on a plot or world object (1.1.0 §2.6). The file itself
-		// lives outside the uploads tree the media library serves from - stored_name is a random
-		// 32-hex-char component of that private path, never the original filename, and is never
-		// echoed in any REST response. Visibility is the owning entity's own audience, checked by
-		// Attachments_Controller on every download - this table records what exists, not who may see it.
+		// be_attachments: private uploads on a plot or world object.
 		dbDelta( "CREATE TABLE {$prefix}attachments (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			game_id bigint(20) unsigned NOT NULL,
@@ -549,7 +505,7 @@ class Schema {
 			KEY idx_game (game_id)
 		) $charset_collate;" );
 
-		// be_game_sessions: one row per game night (1.1.0 §3.1).
+		// be_game_sessions: one row per game night.
 		dbDelta( "CREATE TABLE {$prefix}game_sessions (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			game_id bigint(20) unsigned NOT NULL,
@@ -588,8 +544,7 @@ class Schema {
 			KEY idx_character (character_id)
 		) $charset_collate;" );
 
-		// be_release_batches: scheduled batches rumors and downtime answers go out in
-		// (1.1.0 §3.2, owner ruling - several releases between games, never immediate).
+		// be_release_batches: scheduled batches rumors and downtime answers go out in.
 		dbDelta( "CREATE TABLE {$prefix}release_batches (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			game_id bigint(20) unsigned NOT NULL,
@@ -606,11 +561,7 @@ class Schema {
 			KEY idx_due (status, release_at)
 		) $charset_collate;" );
 
-		// be_notification_queue: daily-digest plot-post notifications (1.1.0 §3.5) queued for a
-		// user who has opted into 'daily' rather than 'immediate' - Maintenance::run() sends one
-		// digest per user and deletes the rows it sent. payload is longtext, not the design
-		// doc's literal `json` type, matching how every other JSON-shaped column in this schema
-		// (plots.target_query, plots.audience_rules, ...) is already modeled.
+		// be_notification_queue: daily-digest plot-post notifications queued for a user who has opted into 'daily'.
 		dbDelta( "CREATE TABLE {$prefix}notification_queue (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			wp_user_id bigint(20) unsigned NOT NULL,
@@ -622,10 +573,7 @@ class Schema {
 			KEY idx_user (wp_user_id)
 		) $charset_collate;" );
 
-		// be_npc_castings: a chronicle member cast to play one NPC for one session (1.1.0
-		// §3.8) - a per-session loan of "how to play this character tonight," separate from
-		// characters.assigned_to (S6's permanent staff owner). brief is longtext, not the
-		// design doc's literal wording, matching this schema's own JSON/free-text convention.
+		// be_npc_castings: a chronicle member cast to play one NPC for one session.
 		dbDelta( "CREATE TABLE {$prefix}npc_castings (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			game_id bigint(20) unsigned NOT NULL,
@@ -641,9 +589,7 @@ class Schema {
 			KEY idx_wp_user (wp_user_id)
 		) $charset_collate;" );
 
-		// be_secrets: a Storyteller-authored secret attached to a plot, item, location, or NPC
-		// (1.1.0 §3.11) - a real Audience-shaped audience/audience_rules pair in its own
-		// right, not simply "hidden until revealed."
+		// be_secrets: a Storyteller-authored secret attached to a plot, item, location, or NPC.
 		dbDelta( "CREATE TABLE {$prefix}secrets (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			game_id bigint(20) unsigned NOT NULL,
@@ -661,10 +607,7 @@ class Schema {
 			KEY idx_entity (entity_type, entity_id)
 		) $charset_collate;" );
 
-		// be_secret_reveals: one character learning one secret - held/release_batch_id is the
-		// same per-item gate plots/plot_entries already use (§3.2), applied per reveal rather
-		// than to the whole secret, since different characters can learn the same secret at
-		// different times.
+		// be_secret_reveals: one character learning one secret.
 		dbDelta( "CREATE TABLE {$prefix}secret_reveals (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			secret_id bigint(20) unsigned NOT NULL,
@@ -681,9 +624,7 @@ class Schema {
 			KEY idx_release_batch (release_batch_id)
 		) $charset_collate;" );
 
-		// be_item_events: an item's own history (1.1.0 §3.12, I1/I2) - I1 writes only 'copied'
-		// for now; I2 adds given/taken/traded/stolen/lost/used/proposed/adjusted once it ships.
-		// The full column set is built now since I1 already needs the table to exist at all.
+		// be_item_events: an item's own history.
 		dbDelta( "CREATE TABLE {$prefix}item_events (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			game_id bigint(20) unsigned NOT NULL,
@@ -698,12 +639,7 @@ class Schema {
 			KEY idx_object_created (world_object_id, created_at)
 		) $charset_collate;" );
 
-		// be_item_attestations: an item's own verification codes (1.1.0 §3.13) - the item
-		// sibling of be_character_attestations (GX-7), sharing Services\Short_Code so a
-		// character code and an item code can never collide against the one shared
-		// GET /be/v1/verify/{code} route. No expires_at/sheet_hash/kind of its own: an item has
-		// no document-format variant to distinguish and no canonicalized-export hash to compare
-		// against - still_matches instead re-derives name/holder/uses_left/expires_on live.
+		// be_item_attestations: an item's own verification codes.
 		dbDelta( "CREATE TABLE {$prefix}item_attestations (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			game_slug varchar(100) NOT NULL,
@@ -723,9 +659,7 @@ class Schema {
 			KEY idx_object (world_object_id)
 		) $charset_collate;" );
 
-		// be_after_game_reports: one player-written report per character per session (1.1.0
-		// §3.14, A1) - what did your character do, what do you want next, anything for staff.
-		// Storytellers read and mark read; they never edit a player's own words.
+		// be_after_game_reports: one player-written report per character per session.
 		dbDelta( "CREATE TABLE {$prefix}after_game_reports (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			game_id bigint(20) unsigned NOT NULL,
@@ -744,11 +678,7 @@ class Schema {
 			KEY idx_character (character_id)
 		) $charset_collate;" );
 
-		// be_factions: sects, coteries, packs, chantries, courts and similar groups (1.1.0
-		// §3.10, F1). A real Audience-shaped audience/audience_rules pair, same discipline as
-		// be_secrets - visibility is a first-class rule, not "hidden until named." parent_id
-		// is a plain nullable self-reference like every other relationship in this schema -
-		// no FOREIGN KEY anywhere in this codebase, app-level integrity only.
+		// be_factions: sects, coteries, packs, chantries, courts and similar groups.
 		dbDelta( "CREATE TABLE {$prefix}factions (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			game_id bigint(20) unsigned NOT NULL,
@@ -768,9 +698,7 @@ class Schema {
 			KEY idx_game_status (game_id, status)
 		) $charset_collate;" );
 
-		// be_faction_members: one row per character in a faction, at most one leader flag
-		// per member (not enforced at the row level - a faction may have more than one
-		// leader, checked in the model).
+		// be_faction_members: one row per character in a faction.
 		dbDelta( "CREATE TABLE {$prefix}faction_members (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			faction_id bigint(20) unsigned NOT NULL,
@@ -784,9 +712,7 @@ class Schema {
 			KEY idx_character (character_id)
 		) $charset_collate;" );
 
-		// be_positions: a chronicle office (Prince, Sheriff, Grand Elder, ...), optionally tied
-		// to a faction (a court seat) or standing alone (an independent title). holder_public
-		// controls whether a non-Storyteller sees who holds it or only that it is held.
+		// be_positions: a chronicle office, optionally tied to a faction.
 		dbDelta( "CREATE TABLE {$prefix}positions (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			game_id bigint(20) unsigned NOT NULL,
@@ -807,8 +733,7 @@ class Schema {
 			KEY idx_character (character_id)
 		) $charset_collate;" );
 
-		// be_position_history: one row per holder change, written whenever a position's
-		// character_id changes - never edited afterward, an append-only log.
+		// be_position_history: one row per holder change, written whenever a position's character_id changes.
 		dbDelta( "CREATE TABLE {$prefix}position_history (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			position_id bigint(20) unsigned NOT NULL,
@@ -820,26 +745,7 @@ class Schema {
 			KEY idx_position (position_id)
 		) $charset_collate;" );
 
-		// be_translation_strings: the locale-independent index of every distinct English catalog
-		// term (1.2.0 releases/1.2.0-design-workflow.md §4). One row per string, rebuilt by
-		// Catalog_Translator::rescan(); used_in records which blocks the string appears in - the
-		// design doc's own "usage" concept, renamed at the SQL layer only: USAGE is a MySQL 8
-		// reserved word and is invalid as a bare column identifier (confirmed live - dbDelta's
-		// CREATE TABLE fails with a syntax error naming it).
-		// first_seen/last_seen are datetime(6) - microsecond precision - not the plain-second
-		// datetime every other timestamp column in this file uses. Catalog_Translator::rescan()
-		// (B3) tells "orphaned" apart from "touched by this scan" by comparing a captured scan
-		// start time against last_seen, and the design doc itself says a full rescan "takes
-		// well under a second" - meaning two rescans landing in the same wall-clock second is
-		// the ordinary case, not an edge case. Confirmed live: with second precision, a term
-		// orphaned by a deletion between two fast rescans was silently missed, because its
-		// stale last_seen and the new scan's start time were the identical second-granularity
-		// string, and `<` is false on equality. Models\Translation_String::now_micro() is what
-		// every write to these two columns must go through instead of current_time('mysql').
-		// last_seen is nullable (first_seen is not): §8 step 4's migration recovers a CSV-only
-		// term matching no live catalog string with a NULL last_seen, deliberately - the string
-		// has never actually been confirmed present in the catalog, which is a different, more
-		// honest state than "seen once, now stale." Every write still sets first_seen for real.
+		// be_translation_strings: the locale-independent index of every distinct English catalog term.
 		dbDelta( "CREATE TABLE {$prefix}translation_strings (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			source_key varchar(191) NOT NULL,
@@ -852,16 +758,7 @@ class Schema {
 			KEY idx_last_seen (last_seen)
 		) $charset_collate;" );
 
-		// be_translations: per-locale translated text for a be_translation_strings row. context is
-		// NULL for the default translation and a block slug for a homograph override - the same
-		// string-different-meaning shape as "Calm" (1.3.0 §5.1 rule 3: a Gift in one block, an
-		// unrelated Mental Trait in another). NOTE: MySQL does not treat two NULLs as equal in a
-		// UNIQUE key, so this constraint alone does not prevent two context-NULL rows for the same
-		// string+locale - Models\Translation's upsert must explicitly guard that case with a
-		// NULL-safe lookup before insert, not rely on ON DUPLICATE KEY UPDATE.
-		// note: only ever written by the §8 migration, for exactly the case its own text
-		// describes - "keep the first, set status = 'conflict', and record the loser in the
-		// row's own note so the reviewer can choose." No other write path sets it.
+		// be_translations: per-locale translated text for a be_translation_strings row.
 		dbDelta( "CREATE TABLE {$prefix}translations (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			string_id bigint(20) unsigned NOT NULL,
@@ -879,21 +776,12 @@ class Schema {
 
 		self::migrate();
 
-		// The schema version is recorded by the caller once every step after this one has run too,
-		// never here: recorded first, a later failure left the site reading as upgraded (1.0.0-review F-064).
-
-		// Clears the cached health-notice state so any fix is reflected immediately.
+		// Clears the cached health-notice state.
 		\BeyondElysium\Core\Health_Notice::clear_cache();
 	}
 
 	/**
 	 * Post-dbDelta migration steps.
-	 *
-	 * dbDelta handles columns and plain indexes. Anything that needs data to exist in a
-	 * particular state first — a UNIQUE index over a column dbDelta just backfilled with
-	 * a constant default, for example — has to run here, in order, after dbDelta.
-	 *
-	 * Every step must be idempotent: this runs on every activation and every upgrade.
 	 */
 	public static function migrate(): void {
 		self::backfill_character_uuids();
@@ -902,11 +790,9 @@ class Schema {
 		self::rename_fera_gifts_sheet_data_key();
 		self::add_name_order_indexes();
 		self::backfill_game_members();
-		// A pure structure change with no row-content reseed hazard, so it is safe to run here.
 		self::add_schema_block_game_scoping();
 		self::add_storyteller_only_to_schema_blocks();
 		self::add_fork_changes_to_schema_blocks();
-		// Must run after the columns above exist; rewrites row content, never structure.
 		self::split_forked_tiered_powers();
 		self::add_owbn_chronicle_post_id();
 		self::backfill_owbn_chronicle_post_ids();
@@ -914,7 +800,7 @@ class Schema {
 		self::remove_coordinator_approvals();
 		self::make_power_ladders_cumulative();
 		self::carry_storyteller_only_to_forks();
-		// Before any reseed, so an old copy's own changes are told apart from the update's (F-034).
+		// Records what each chronicle copy of a block has changed.
 		self::record_fork_changes();
 		self::seed_character_plots();
 		self::preserve_existing_signing_choice();
@@ -933,19 +819,8 @@ class Schema {
 	}
 
 	/**
-	 * Secure printing became an opt-in in 1.0.1 (C2), defaulting off. For a *new* install that
-	 * is right. For a site that was already signing, flipping it off at upgrade would silently
-	 * stop signing sheets that chronicles rely on being signed - a behaviour change nobody
-	 * asked for, announced nowhere, discovered the next time someone printed.
-	 *
-	 * So: an install that already has a working certificate at upgrade time keeps signing. A
-	 * site with no certificate gets the documented default of off, and ticking the box is a
-	 * deliberate act either way.
-	 *
-	 * Found by 1.0.1's own pre-deploy trace, not by reading the design - the local install has
-	 * a certificate configured and stopped signing the moment the option landed.
-	 *
-	 * Idempotent: writes only when the option has never been set.
+	 * Sets the secure-printing opt-in for an install that has never set it: on when a working certificate already exists,
+	 * otherwise off.
 	 */
 	private static function preserve_existing_signing_choice(): void {
 		if ( get_option( \BeyondElysium\Services\Pdf_Signer::OPT_IN_OPTION, null ) !== null ) {
@@ -956,9 +831,7 @@ class Schema {
 	}
 
 	/**
-	 * Adds one column to an existing table if it is not already there. Shared by the four
-	 * 1.1.0 audience migrations below rather than four independent copies of the same
-	 * information_schema probe - each still logs its own table/column on failure.
+	 * Adds one column to an existing table if it is not already there.
 	 *
 	 * @param string $table      Fully prefixed table name (from self::table()).
 	 * @param string $column     Column name to check for.
@@ -984,8 +857,7 @@ class Schema {
 	}
 
 	/**
-	 * Gives an existing plots table its 1.1.0 audience columns. A fresh install already has
-	 * them from create_tables(); this brings an upgrade up to the same shape.
+	 * Adds the audience columns to an existing plots table.
 	 */
 	public static function add_audience_to_plots(): void {
 		$table = self::table( 'plots' );
@@ -994,7 +866,7 @@ class Schema {
 	}
 
 	/**
-	 * Gives an existing plot_entries table its 1.1.0 audience columns.
+	 * Adds the audience columns to an existing plot_entries table.
 	 */
 	public static function add_audience_to_plot_entries(): void {
 		$table = self::table( 'plot_entries' );
@@ -1003,7 +875,7 @@ class Schema {
 	}
 
 	/**
-	 * Gives an existing world_objects table its 1.1.0 audience columns.
+	 * Adds the audience columns to an existing world_objects table.
 	 */
 	public static function add_audience_to_world_objects(): void {
 		$table = self::table( 'world_objects' );
@@ -1012,10 +884,7 @@ class Schema {
 	}
 
 	/**
-	 * Gives an existing world_objects table its 1.1.0 "Inside of" column (§3.9 item 1) - a
-	 * location nested inside another location. Never meaningful for an item, rote, or boon;
-	 * nothing here enforces that at the schema level, matching how `object_type` itself is a
-	 * plain column with app-level validation, not a per-type table.
+	 * Adds the "Inside of" column to an existing world_objects table: the location a location sits inside.
 	 */
 	public static function add_parent_id_to_world_objects(): void {
 		$table = self::table( 'world_objects' );
@@ -1023,8 +892,7 @@ class Schema {
 	}
 
 	/**
-	 * Gives an existing world_objects table its 1.1.0 "based on" column (§3.12, I1) - the
-	 * source item an item copy was made from.
+	 * Adds the "based on" column to an existing world_objects table: the source item an item copy was made from.
 	 */
 	public static function add_based_on_id_to_world_objects(): void {
 		$table = self::table( 'world_objects' );
@@ -1032,26 +900,7 @@ class Schema {
 	}
 
 	/**
-	 * Preserves every existing plot's real visibility under 1.1.0's new audience column
-	 * (owner, 2026-09-16: "Player plots do what global can - but are ST/Narrator and player +
-	 * anyone added to it").
-	 *
-	 * A plot connected to a character via Action_Allocator::ACTOR_LABEL ('apr_actor') is that
-	 * character's own personal plot - already hidden from every other player by
-	 * Plot::actor_ownership_exclusion(). Setting its audience to 'restricted' with no rules
-	 * makes the new audience system agree with what Plot::actor_ownership_exclusion() already
-	 * enforces: restricted-with-no-rules-and-no-other-connections means "the owner only",
-	 * which is exactly today's behavior. The owner's connection itself is untouched, so
-	 * Audience::visible_character_ids() finds the owner through it - see Services\Audience.
-	 *
-	 * Every other existing plot is left at the column's own default, 'everyone' - unchanged
-	 * from how every non-personal plot behaves today. New plots created after this migration
-	 * get 1.1.0's own defaults (Storytellers-only for a global plot, owner-only for a player
-	 * plot) from Plots_Controller::create_item(), not from this one-time backfill.
-	 *
-	 * Idempotent via a dedicated option, since re-running the UPDATE is harmless but pointless
-	 * once done - a Storyteller may deliberately widen a personal plot's audience afterward,
-	 * and a later upgrade must never overwrite that choice back to 'restricted'.
+	 * Sets every personal actor plot's audience to 'restricted', matching who can already see it.
 	 */
 	public static function migrate_actor_plots_to_restricted_audience(): void {
 		if ( get_option( 'be_actor_plots_audience_migrated' ) ) {
@@ -1081,23 +930,8 @@ class Schema {
 	}
 
 	/**
-	 * §8's one-time recovery of translation work that already exists, into the new
-	 * source-string-keyed table (1.2.0 releases/1.2.0-design-workflow.md §8). Idempotent via
-	 * `be_catalog_translations_migrated`, the same pattern every migration in this file uses.
-	 *
-	 * 1. `Catalog_Translator::rescan()` builds the string index every pass below keys against.
-	 * 2. Pass 1 (database): every existing `name_pt`/`power_name_pt` pair already baked into
-	 *    the seeded catalog, first value per key wins, a second DIFFERING value marks the
-	 *    KEPT row `status = 'conflict'` and records the loser in its own `note` - never
-	 *    overwrites the kept translation, so a native speaker still sees the value that was
-	 *    actually live, with the alternative flagged for them to adjudicate.
-	 * 3. Pass 2 (CSV): `met-mechanics.csv`'s `Name`/`Name-PT`, filling only keys pass 1 did
-	 *    not touch. A CSV name matching no catalog string still gets a `translation_strings`
-	 *    row - with `last_seen` left `null`, since it has never actually been confirmed
-	 *    present in the catalog - kept rather than discarded, so a later catalog addition
-	 *    picks the translation up automatically the moment a real rescan finds it.
-	 * 4. Real counts logged, matching §8's own warning: "a migration whose real numbers are
-	 *    not measured is how the ~4,150 figure got into the changelog."
+	 * Recovers existing translation work into the translations table, once: the Portuguese names already stored in the
+	 * catalog's block data first, then the shipped drafts for names still without a translation.
 	 */
 	public static function migrate_catalog_translations_to_table(): void {
 		if ( get_option( 'be_catalog_translations_migrated' ) ) {
@@ -1114,8 +948,7 @@ class Schema {
 			'csv_orphaned'  => 0,
 		];
 
-		// Pass 1: database. $seen tracks, per key, the winning translation's own row id and
-		// value - first wins, everything after either matches (no-op) or conflicts.
+		// Pass 1: translations already stored in the seeded catalog.
 		$seen = [];
 		foreach ( \BeyondElysium\Services\Catalog_Translator::harvest_existing_pt_pairs() as [ $text, $pt ] ) {
 			$key    = \BeyondElysium\Services\Name_Key::for( $text );
@@ -1144,81 +977,59 @@ class Schema {
 			}
 		}
 
-		// Pass 2: CSV, filling only what pass 1 did not. The CSV itself can disagree with
-		// itself (§8's own measurement: 18 keys internally inconsistent) - the same
-		// first-wins-then-conflict rule applies within this pass, not just against pass 1,
-		// or a second CSV row for an already-CSV-seen key would be silently discarded with
-		// no record anyone ever disagreed (the exact bug class B7's import() classification
-		// had, fixed there the same way).
-		if ( file_exists( \BeyondElysium\Database\Seeder::MET_CSV_PATH ) ) {
-			// 'Name-PT' is outside KEPT_COLUMNS (B9 retired it - Seeder never reads it again),
-			// but this one-time migration still needs it, straight from the file, exactly once.
-			$csv = \BeyondElysium\Services\MET_CSV_Parser::parse_file( \BeyondElysium\Database\Seeder::MET_CSV_PATH, [ 'Name-PT' ] );
-			foreach ( $csv['rows'] as $row ) {
-				$name    = trim( (string) ( $row['Name'] ?? '' ) );
-				$name_pt = trim( (string) ( $row['Name-PT'] ?? '' ) );
-				if ( '' === $name || '' === $name_pt ) {
+		// Pass 2: the shipped drafts, filling only the names pass 1 left without a translation.
+		foreach ( \BeyondElysium\Services\Catalog_Translator::shipped_pt_pairs() as [ $name, $name_pt ] ) {
+			$key = \BeyondElysium\Services\Name_Key::for( $name );
+
+			if ( isset( $seen[ $key ] ) ) {
+				if ( 1 === $seen[ $key ]['pass'] ) {
 					continue;
 				}
-				$key = \BeyondElysium\Services\Name_Key::for( $name );
-
-				if ( isset( $seen[ $key ] ) ) {
-					if ( 1 === $seen[ $key ]['pass'] ) {
-						continue; // Pass 1 already has a value for this key - it wins, no conflict.
-					}
-					if ( $seen[ $key ]['value'] !== $name_pt ) {
-						self::record_migration_conflict( (int) $seen[ $key ]['id'], $name_pt );
-						++$counts['csv_conflicts'];
-					}
-					continue;
+				if ( $seen[ $key ]['value'] !== $name_pt ) {
+					self::record_migration_conflict( (int) $seen[ $key ]['id'], $name_pt );
+					++$counts['csv_conflicts'];
 				}
+				continue;
+			}
 
-				$string = \BeyondElysium\Models\Translation_String::find_by_source_key( $key );
-				if ( ! $string ) {
-					// Not in the live catalog - kept anyway, last_seen null (§8 step 4).
-					$new_id = \BeyondElysium\Models\Translation_String::create( [
-						'source_text' => $name,
-						'last_seen'   => null,
-					] );
-					if ( ! $new_id ) {
-						continue;
-					}
-					$string = \BeyondElysium\Models\Translation_String::find( (int) $new_id );
-					++$counts['csv_orphaned'];
-				}
-				if ( ! $string ) {
-					continue;
-				}
-
-				$id = \BeyondElysium\Models\Translation::create( [
-					'string_id'   => (int) $string->id,
-					'locale'      => 'pt_BR',
-					'translation' => $name_pt,
-					'status'      => 'draft',
+			$string = \BeyondElysium\Models\Translation_String::find_by_source_key( $key );
+			if ( ! $string ) {
+				$new_id = \BeyondElysium\Models\Translation_String::create( [
+					'source_text' => $name,
+					'last_seen'   => null,
 				] );
-				if ( $id ) {
-					$seen[ $key ] = [ 'id' => $id, 'value' => $name_pt, 'pass' => 2 ];
-					++$counts['csv_added'];
+				if ( ! $new_id ) {
+					continue;
 				}
+				$string = \BeyondElysium\Models\Translation_String::find( (int) $new_id );
+				++$counts['csv_orphaned'];
+			}
+			if ( ! $string ) {
+				continue;
+			}
+
+			$id = \BeyondElysium\Models\Translation::create( [
+				'string_id'   => (int) $string->id,
+				'locale'      => 'pt_BR',
+				'translation' => $name_pt,
+				'status'      => 'draft',
+			] );
+			if ( $id ) {
+				$seen[ $key ] = [ 'id' => $id, 'value' => $name_pt, 'pass' => 2 ];
+				++$counts['csv_added'];
 			}
 		}
 
 		\BeyondElysium\Services\Catalog_Translator::bust_cache();
 
-		// A real, queryable record (§8: "report the counts into the upgrade log, and assert
-		// them in the migration's own test") - not error_log(), which every other migration in
-		// this file reserves for the failure case only, and which was found live to interact
-		// badly with PdfSignerTest's own @runInSeparateProcess isolation (the identical failure
-		// shape D48 already documented for a different stray-output cause).
+		// Records the migration's counts.
 		update_option( 'be_catalog_translations_migration_counts', $counts, false );
 
 		update_option( 'be_catalog_translations_migrated', 1 );
 	}
 
 	/**
-	 * Marks an already-created translation row as a conflict and records the losing value in
-	 * its own note - appending, not overwriting, if a third or later value also collides on
-	 * the same key. The kept translation itself is never touched; first value wins.
+	 * Marks an already-created translation row as a conflict and records the losing value in its own note.
 	 *
 	 * @param int    $translation_id
 	 * @param string $losing_value
@@ -1240,8 +1051,7 @@ class Schema {
 	}
 
 	/**
-	 * Gives an existing plots table its 1.1.0 rumor-level columns (§3.4). A fresh install
-	 * already has them from create_tables(); this brings an upgrade up to the same shape.
+	 * Adds the rumor-level columns to an existing plots table.
 	 */
 	public static function add_rumor_levels_to_plots(): void {
 		$table = self::table( 'plots' );
@@ -1250,30 +1060,28 @@ class Schema {
 	}
 
 	/**
-	 * Gives an existing plot_entries table its 1.1.0 `level` column (§3.4).
+	 * Adds the `level` column to an existing plot_entries table.
 	 */
 	public static function add_level_to_plot_entries(): void {
 		self::add_column_if_missing( self::table( 'plot_entries' ), 'level', 'tinyint(3) unsigned DEFAULT NULL AFTER release_batch_id' );
 	}
 
 	/**
-	 * Gives an existing plots table its 1.1.0 staff-assignment column (§3.6).
+	 * Adds the staff-assignment column to an existing plots table.
 	 */
 	public static function add_assigned_to_to_plots(): void {
 		self::add_column_if_missing( self::table( 'plots' ), 'assigned_to', 'bigint(20) unsigned DEFAULT NULL AFTER rumor_level_match' );
 	}
 
 	/**
-	 * Gives an existing characters table its 1.1.0 staff-assignment column (§3.6) - an NPC's
-	 * staff owner, unused on a player character.
+	 * Adds the staff-assignment column to an existing characters table.
 	 */
 	public static function add_assigned_to_to_characters(): void {
 		self::add_column_if_missing( self::table( 'characters' ), 'assigned_to', 'bigint(20) unsigned DEFAULT NULL AFTER sheet_data' );
 	}
 
 	/**
-	 * Gives an existing characters table its 1.1.0 quick-NPC and public-profile columns (§3.7).
-	 * `npc_detail`/the five profile fields are meaningful only on an NPC; unused on a PC.
+	 * Adds the quick-NPC and public-profile columns to an existing characters table.
 	 */
 	public static function add_npc_profile_to_characters(): void {
 		$table = self::table( 'characters' );
@@ -1286,23 +1094,7 @@ class Schema {
 	}
 
 	/**
-	 * Preserves every existing rumor's visibility under 1.1.0's held-from-birth rule (§3.4):
-	 * every plot ever tagged `apr_rumor` gets `held = 1` and joins one already-`released`
-	 * batch per chronicle, named "Released before 1.1.0" - so a non-manager who could read a
-	 * rumor before this migration can still read it after, through the release-batch gate
-	 * instead of through an unheld plot. Their `audience` is never touched here - U1's own
-	 * migration already set it correctly, and a Storyteller may since have widened or
-	 * narrowed it deliberately.
-	 *
-	 * One batch per chronicle rather than one batch for every rumor, or one shared batch
-	 * across every chronicle: `Release_Batch` is game-scoped everywhere else in this
-	 * codebase (`for_game()`, the Releases tab), and a single cross-chronicle batch would be
-	 * the first row in this table not to be.
-	 *
-	 * Idempotent via a dedicated option: re-running would otherwise create a second
-	 * "Released before 1.1.0" batch per chronicle every upgrade, and a Storyteller may
-	 * deliberately move a rumor to a later draft/scheduled batch afterward, which a repeat
-	 * run must never overwrite back.
+	 * Puts every existing rumor into a released batch, one per chronicle, so it stays visible to whoever could read it.
 	 */
 	public static function migrate_rumors_to_release_batches(): void {
 		if ( get_option( 'be_rumor_release_migrated' ) ) {
@@ -1336,11 +1128,7 @@ class Schema {
 	}
 
 	/**
-	 * One chronicle's own share of `migrate_rumors_to_release_batches()`: a fresh "Released
-	 * before 1.1.0" batch, marked released immediately, and every one of this game's own
-	 * pre-1.1.0 rumors pointed at it. Split into its own method (rather than a loop body)
-	 * so each chronicle's own `$wpdb->last_error` check runs in a function scope with no
-	 * earlier check to be mistakenly narrowed against.
+	 * Puts one chronicle's existing rumors into a fresh released batch.
 	 *
 	 * @param int    $game_id
 	 * @param string $rumor_label
@@ -1383,10 +1171,7 @@ class Schema {
 	}
 
 	/**
-	 * Gives every character made before 1.0.0 its own plot, and moves its action
-	 * rounds that sit under no plot beneath it (owner, 2026-09-15). A round a
-	 * Storyteller nested under a plot stays where it is. Runs once; a character
-	 * whose plot couldn't be written is logged, and the next upgrade tries again.
+	 * Gives every character its own plot and moves its action rounds that sit under no plot beneath it.
 	 */
 	public static function seed_character_plots(): void {
 		if ( get_option( 'be_character_plots_seeded' ) ) {
@@ -1399,7 +1184,6 @@ class Schema {
 		$plots       = self::table( 'plots' );
 		$connections = self::table( 'connections' );
 
-		// A character whose chronicle no longer exists has nowhere to keep a plot.
 		$ids = $wpdb->get_col(
 			"SELECT ch.id FROM {$characters} ch
 			 INNER JOIN {$games} g ON g.slug = ch.owner_slug
@@ -1438,13 +1222,8 @@ class Schema {
 	}
 
 	/**
-	 * Records, for every chronicle copy of a catalog block made before copies
-	 * recorded their own changes, how it differs from the catalog block it came
-	 * from - so the next catalog update keeps those differences and brings the
-	 * copy everything else (1.0.0-review F-034). Every difference is taken to be
-	 * the chronicle's, so nothing it set is lost. Runs before the reseed, while
-	 * the catalog still matches what the copy was made from as closely as it
-	 * ever will; a copy already recorded is left alone.
+	 * Records, for every chronicle copy of a catalog block made before copies recorded their own changes, how it differs
+	 * from the catalog block it came from.
 	 */
 	public static function record_fork_changes(): void {
 		global $wpdb;
@@ -1470,10 +1249,7 @@ class Schema {
 	}
 
 	/**
-	 * Adds `fork_changes` to `schema_blocks`: what a chronicle's copy of a
-	 * catalog block has changed, so catalog updates can reach the rest of it
-	 * (1.0.0-review F-034). Null on a global block, and on a copy made before
-	 * the column existed until `record_fork_changes()` fills it.
+	 * Adds `fork_changes` to `schema_blocks`: what a chronicle's copy of a catalog block has changed.
 	 */
 	public static function add_fork_changes_to_schema_blocks(): void {
 		global $wpdb;
@@ -1494,12 +1270,7 @@ class Schema {
 	}
 
 	/**
-	 * Marks every chronicle's copy of a Storyteller-only block Storyteller-only
-	 * too, exactly once (1.0.0-review F-062). Copies were always made unflagged,
-	 * which changed nothing while the shared block's flag hid the block in
-	 * every chronicle; once a copy decides for its own chronicle, an old copy
-	 * would show a hidden block to that chronicle's players. Runs once, so a
-	 * chronicle that opens its copy afterwards keeps that choice.
+	 * Marks every chronicle's copy of a Storyteller-only block Storyteller-only too, exactly once.
 	 */
 	public static function carry_storyteller_only_to_forks(): void {
 		if ( get_option( 'be_fork_storyteller_only_carried' ) ) {
@@ -1523,12 +1294,7 @@ class Schema {
 	}
 
 	/**
-	 * Makes every chronicle's copy of a tiered-power block price its levels
-	 * cumulatively, exactly once (owner ruling "levels add up", 1.0.0-review
-	 * F-040). The shared blocks get it from the reseed; a copy is never
-	 * reseeded, and every copy made before this release carries the old seed's
-	 * `sequential: false` without any chronicle having chosen it. After this
-	 * runs, a chronicle that switches its copy back to flat pricing keeps it.
+	 * Makes every chronicle's copy of a tiered-power block price its levels cumulatively, exactly once.
 	 */
 	public static function make_power_ladders_cumulative(): void {
 		if ( get_option( 'be_power_ladders_cumulative' ) ) {
@@ -1539,8 +1305,7 @@ class Schema {
 		$table = self::table( 'schema_blocks' );
 		$rows  = $wpdb->get_results( "SELECT id, definition FROM {$table} WHERE section_type = 'tiered_power' AND game_slug <> ''" );
 
-		// Every write is checked, not only the last: `last_error` knows about the last query alone, so
-		// a failure ahead of a success was marked done with the rest (1.0.0-review F-065).
+		// Every write is checked.
 		$failed = false;
 		foreach ( $rows ?: [] as $row ) {
 			$definition = json_decode( (string) $row->definition, true );
@@ -1561,12 +1326,8 @@ class Schema {
 	}
 
 	/**
-	 * Turns every approval rule stored as the retired `coordinator` level into
-	 * a Storyteller (`st`) rule, in every schema block - shared and forked -
-	 * exactly once (owner ruling, 1.0.0-review F-043). Nothing ever enforced
-	 * the coordinator tier, so this changes what the editors show, not what
-	 * happens to a change. Reads each definition as it is stored and rewrites
-	 * only the rows that held one.
+	 * Turns every approval rule stored at the retired `coordinator` level into a Storyteller (`st`) rule, in every schema
+	 * block, exactly once.
 	 */
 	public static function remove_coordinator_approvals(): void {
 		if ( get_option( 'be_coordinator_tier_removed' ) ) {
@@ -1577,7 +1338,7 @@ class Schema {
 		$table = self::table( 'schema_blocks' );
 		$rows  = $wpdb->get_results( "SELECT id, definition FROM {$table} WHERE definition LIKE '%coordinator%'" );
 
-		// Every write is checked, not only the last (F-065, as above).
+		// Every write is checked.
 		$failed = false;
 		foreach ( $rows ?: [] as $row ) {
 			$definition = json_decode( (string) $row->definition, true );
@@ -1599,10 +1360,7 @@ class Schema {
 	}
 
 	/**
-	 * Replaces `coordinator` with `st` wherever a definition names an approval
-	 * level - an entry's `approval`/`approval_override`, a schedule entry's
-	 * `approval`, or an `approval_rules` value - and nowhere else, so reason
-	 * text that mentions a coordinator is left alone.
+	 * Replaces `coordinator` with `st` wherever a definition names an approval level.
 	 *
 	 * @param array<mixed> $node
 	 * @param bool         $changed Set true when anything was replaced.
@@ -1629,12 +1387,7 @@ class Schema {
 	}
 
 	/**
-	 * Gives a change's reviewer their own column. `notes` used to hold both the
-	 * submitter's note and, once reviewed, the reviewer's - which replaced it
-	 * (1.0.0-review F-032). Adds `review_notes`, then moves the reviewer text
-	 * that reviewed rows already carry in `notes` into it, exactly once: after
-	 * the split, a reviewed row's `notes` is the submitter's and must never be
-	 * moved again.
+	 * Gives a change's reviewer their own column.
 	 */
 	public static function add_review_notes_to_character_changes(): void {
 		global $wpdb;
@@ -1673,11 +1426,7 @@ class Schema {
 	}
 
 	/**
-	 * Adds the owbn_chronicle_post_id column and its unique index to an
-	 * existing games table. Fresh installs get both from create_tables();
-	 * this brings an upgrade up to the same shape. Column and index are
-	 * each probed independently so a partially-applied prior run (e.g. the
-	 * column exists but the index add failed) still completes correctly.
+	 * Adds the owbn_chronicle_post_id column and its unique index to an existing games table.
 	 */
 	public static function add_owbn_chronicle_post_id(): void {
 		global $wpdb;
@@ -1715,15 +1464,8 @@ class Schema {
 	}
 
 	/**
-	 * Correlates each games row with the owbn_chronicle post it corresponds
-	 * to, by exact slug match, wherever that correlation is not already
-	 * set. Every failure mode leaves the row NULL rather than guessing:
-	 * zero or more than one matching post, or a post already claimed by a
-	 * different row, are each skipped and logged rather than resolved by a
-	 * best guess. Runs on every upgrade (not one-time-guarded), so a
-	 * chronicle post that appears later gets correlated on the next
-	 * upgrade with no manual step - see
-	 * BE_PROCESS/design/chronicle-rename-design.md §8.2 for the full reasoning.
+	 * Correlates each games row with the owbn_chronicle post it corresponds to, by exact slug match, wherever that
+	 * correlation is not already set.
 	 */
 	public static function backfill_owbn_chronicle_post_ids(): void {
 		global $wpdb;
@@ -1759,7 +1501,6 @@ class Schema {
 				continue;
 			}
 
-			// Re-checked in the WHERE, not just the initial read, so this can never re-point an already-correlated row.
 			$wpdb->query(
 				$wpdb->prepare(
 					"UPDATE {$games_table} SET owbn_chronicle_post_id = %d WHERE id = %d AND owbn_chronicle_post_id IS NULL",
@@ -1772,10 +1513,6 @@ class Schema {
 
 	/**
 	 * Adds any Combo Disciplines missing from the seeded catalog.
-	 *
-	 * Appends "Eye for the Weakness of Steel" to vampire-combo-disciplines
-	 * when it is not already present. Idempotent: does nothing once the
-	 * entry exists.
 	 */
 	public static function add_missing_combo_disciplines(): void {
 		$block = \BeyondElysium\Models\Schema_Block::find_by_slug( 'vampire-combo-disciplines' );
@@ -1802,25 +1539,8 @@ class Schema {
 	}
 
 	/**
-	 * Adds the `vampire-blood-magic` section to vampire's own `sheet_full` template for
-	 * every install that seeded it before Blood Magic existed (BE_PROCESS/releases/0.99.2-workflow.md
-	 * BM-9) - the layout-repair counterpart to add_missing_combo_disciplines() above, which
-	 * does the same for a catalog rather than a layout. Deliberately its own narrow,
-	 * one-off function rather than a generalization of repair_stale_default_layouts()'s
-	 * width-based staleness check: VampireTemplateRepairTest::
-	 * test_a_template_already_on_the_new_shape_is_left_untouched establishes that a template
-	 * genuinely missing sections the current code defines is not, on that basis alone, stale
-	 * - an admin's own deliberate trim via the structured editor looks identical. Only a
-	 * chronicle's own customized (`is_system = 0`) template is left untouched here too,
-	 * matching that same established rule.
-	 *
-	 * Every section shares `column: 1` (Seeder::build_layout_sections()'s "single flowing
-	 * sequence" convention - visual placement comes from `order` + `width` alone), so
-	 * inserting means shifting every later section's `order` up by one.
-	 *
-	 * Must run after Seeder::seed_schema_blocks() has seeded vampire-blood-magic, and before
-	 * repair_stale_npc_layouts(), which propagates this same addition into npc_full.
-	 * Idempotent: a template that already has the section is left untouched.
+	 * Adds the `vampire-blood-magic` section to vampire's own `sheet_full` template for every install that seeded it
+	 * before Blood Magic existed.
 	 */
 	public static function add_missing_blood_magic_template_section(): void {
 		foreach ( \BeyondElysium\Models\Template::globals( [ 'stack_slug' => 'vampire', 'template_type' => 'sheet_full' ] ) as $template ) {
@@ -1869,11 +1589,9 @@ class Schema {
 	}
 
 	/**
-	 * Removes the duplicate "Awakening of the Steel" power family from
-	 * vampire-disciplines, keeping the tradition-prefixed "Dur An Ki:
-	 * Awakening the Steel" entry, and rewrites any character's held pick
-	 * stored under the bare name to the surviving name. Idempotent: does
-	 * nothing once the bare entry is gone.
+	 * Removes the duplicate "Awakening of the Steel" power family from vampire-disciplines, keeping the
+	 * tradition-prefixed "Dur An Ki: Awakening the Steel" entry, and rewrites any character's held pick stored under the
+	 * bare name to the surviving name.
 	 */
 	public static function dedupe_awakening_of_the_steel(): void {
 		$bare_name      = 'Awakening of the Steel';
@@ -1906,7 +1624,6 @@ class Schema {
 			return; // Already deduped; nothing to do.
 		}
 		if ( ! $has_surviving ) {
-			// No surviving entry to fall back to; refuse rather than lose data.
 			return;
 		}
 
@@ -1917,10 +1634,7 @@ class Schema {
 	}
 
 	/**
-	 * Rewrites every character's held vampire-disciplines pick stored under
-	 * the name `$from` to `$to`. Only the family name is changed; level,
-	 * power_name and tier all carry over unchanged. Processes characters in
-	 * batches so a large table does not exhaust memory in one request.
+	 * Rewrites every character's held vampire-disciplines pick stored under the name `$from` to `$to`.
 	 *
 	 * @param string $from
 	 * @param string $to
@@ -1972,10 +1686,7 @@ class Schema {
 	}
 
 	/**
-	 * Adds an index on the `name` column to every table whose default
-	 * listing order sorts by name, so that sort can be satisfied from the
-	 * index instead of a filesort. Idempotent: skips a table that already
-	 * has the index.
+	 * Adds an index on the `name` column to every table whose default listing order sorts by name.
 	 */
 	public static function add_name_order_indexes(): void {
 		foreach ( [ 'schema_blocks', 'creature_stacks', 'games', 'world_objects' ] as $short_name ) {
@@ -1985,8 +1696,6 @@ class Schema {
 
 	/**
 	 * Adds a plain KEY index to a table if it does not already exist.
-	 * Checks information_schema.statistics for the index name first, then
-	 * issues an ALTER TABLE ADD KEY and logs any resulting database error.
 	 */
 	private static function add_index_if_missing( string $table, string $index_name, string $column ): void {
 		global $wpdb;
@@ -2012,10 +1721,8 @@ class Schema {
 	}
 
 	/**
-	 * Renames the `werewolf-gifts` sheet_data key to `fera-gifts` for every
-	 * fera/bete character that still has held picks stored under the old
-	 * key. Only touches a row that has the old key and not yet the new
-	 * one, so a repeat run or a fresh install is a harmless no-op.
+	 * Renames the `werewolf-gifts` sheet_data key to `fera-gifts` for every fera/bete character that still has held picks
+	 * stored under the old key.
 	 */
 	public static function rename_fera_gifts_sheet_data_key(): void {
 		global $wpdb;
@@ -2039,12 +1746,8 @@ class Schema {
 	}
 
 	/**
-	 * Rewrites a held Gift's stored `name` from its old compound label
-	 * (e.g. "Silver Fangs: Falcon's Grasp (basic)") to the plain catalog
-	 * name (e.g. "Falcon's Grasp") for werewolf-gifts and fera-gifts.
-	 * Only rewrites a name that both changes under extraction and matches
-	 * a real entry in the freshly reseeded catalog; anything else is left
-	 * untouched. Processes characters in batches.
+	 * Rewrites a held Gift's stored `name` from its old compound label (e.g. "Silver Fangs: Falcon's Grasp (basic)") to
+	 * the plain catalog name (e.g. "Falcon's Grasp") for werewolf-gifts and fera-gifts.
 	 */
 	public static function migrate_held_gift_names_to_grouped_fields(): void {
 		global $wpdb;
@@ -2055,9 +1758,6 @@ class Schema {
 		foreach ( [ 'werewolf-gifts', 'fera-gifts' ] as $slug ) {
 			$block = \BeyondElysium\Models\Schema_Block::find_by_slug( $slug );
 			if ( ! $block || ! is_array( $block->definition->items ?? null ) ) {
-				// 1.3.2's A4a conversion moved both blocks to `tiered_power` (`powers`, not
-				// `items`) - this migration's compound-string premise predates that and no
-				// longer applies to either slug; skip rather than warn on a missing property.
 				continue;
 			}
 			$names = [];
@@ -2122,10 +1822,7 @@ class Schema {
 	}
 
 	/**
-	 * Strips a Gift's compound-label prefix and tier suffix, leaving just
-	 * the plain catalog name - e.g. "Gurahl (Ursine): Heightened Senses
-	 * (basic)" becomes "Heightened Senses". A name with no ": " prefix
-	 * passes through with only the tier suffix stripped.
+	 * Strips a Gift's compound-label prefix and tier suffix, leaving just the plain catalog name.
 	 */
 	private static function extract_plain_gift_name( string $stored_name ): string {
 		$name       = $stored_name;
@@ -2137,11 +1834,7 @@ class Schema {
 	}
 
 	/**
-	 * The four Assamite caste names Blood Magic deliberately excludes from tradition
-	 * splitting everywhere - Seeder.php's met-csv-map.php config, this migration, and
-	 * migrate_blood_magic_held_picks() all agree on this exact literal list. A caste name
-	 * happens to contain ": "-adjacent punctuation of its own kind but is never a
-	 * tradition prefix - the same trap D39 avoided populating vampire-clan-disciplines.php.
+	 * The four Assamite caste names Blood Magic excludes from tradition splitting.
 	 *
 	 * @return string[]
 	 */
@@ -2153,25 +1846,8 @@ class Schema {
 	}
 
 	/**
-	 * Splits a stale, pre-Blood-Magic chronicle fork of vampire-disciplines (a
-	 * game-scoped copy made before the Blood Magic redesign, BE_PROCESS/releases/0.99.2-workflow.md)
-	 * the same way Seeder::build_met_blood_magic_powers() already split the global row: any
-	 * power whose name is "{Tradition}: {Path}" - excluding the four Assamite caste names,
-	 * see blood_magic_excluded_power_names() - moves to that same game's own
-	 * vampire-blood-magic fork, created via Schema_Block::find_or_create_fork_for_game() if
-	 * the chronicle has no fork of it yet.
-	 *
-	 * Deliberately does NOT re-run the CSV-driven canonical-path/ladder-merge logic against
-	 * a fork's own content - a fork may not carry every sibling tradition's data to merge
-	 * against, and this must never lose or alter a chronicle's real customization. Each
-	 * power is transplanted one-to-one, reshaped to the new field convention (name split on
-	 * the first ": ", tradition recorded in a one-entry `traditions` map) - UNLESS a power
-	 * of that same bare name already exists in the target vampire-blood-magic fork (the
-	 * common case: find_or_create_fork_for_game() seeds a brand-new fork from the already-
-	 * correct global 111-path catalog), in which case only the tradition entry is merged
-	 * into the existing power rather than adding a duplicate.
-	 *
-	 * Idempotent: a fork already free of colon-prefixed powers is left untouched.
+	 * Splits a stale chronicle fork of vampire-disciplines: any power named "{Tradition}: {Path}", excluding the four
+	 * Assamite caste names, moves to that chronicle's own vampire-blood-magic fork, created if it does not exist.
 	 */
 	public static function migrate_blood_magic_schema_forks(): void {
 		global $wpdb;
@@ -2257,40 +1933,16 @@ class Schema {
 	}
 
 	/**
-	 * Moves a character's own held vampire-disciplines pick to vampire-blood-magic when its
-	 * stored name identifies it as a pre-Blood-Magic tradition-prefixed pick, splitting the
-	 * name into the bare canonical path plus a `tradition` field. Covers both real shapes a
-	 * character can hold:
-	 *
-	 *   - A catalog-matched pick stored as "{Tradition}: {Path}" - the ordinary case, its
-	 *     tradition text already canonically spelled since it came from an exact catalog
-	 *     match rather than raw free text.
-	 *   - A keep_custom pick from before Blood Magic existed (D41/Decision 074), stored
-	 *     with the tradition in `name` and the actual path in `power_name` - Chase
-	 *     Ashford's own real committed import (data-samples/1506_chase_ashford_.gex) is
-	 *     exactly this shape. Real .gex exports spell a tradition inconsistently (verified
-	 *     2026-09-11 - "Dur-An-Ki", "Sadhanna"), so `name` is matched against the real
-	 *     tradition list the same normalized-then-single-unambiguous-fuzzy way
-	 *     Trait_Mapper::normalize_blood_magic_tradition() matches on import - and, same as
-	 *     that method, a `name` matching neither is left alone rather than guessed at,
-	 *     since it may simply be some other, unrelated keep_custom pick.
-	 *
-	 * Must run after Seeder::seed_schema_blocks() has seeded vampire-blood-magic and after
-	 * migrate_blood_magic_schema_forks(), for the same "reshape, never re-derive" reasoning
-	 * that migration follows - see its own docblock.
-	 *
-	 * Idempotent: a character with nothing to migrate is never written to. Processes
-	 * characters in batches, matching migrate_held_gift_names_to_grouped_fields()'s pattern.
+	 * Moves a character's own held vampire-disciplines pick to vampire-blood-magic when its stored name identifies it as
+	 * a pre-Blood-Magic tradition-prefixed pick, splitting the name into the bare canonical path plus a `tradition`
+	 * field.
 	 */
 	public static function migrate_blood_magic_held_picks(): void {
 		global $wpdb;
 		$table    = self::table( 'characters' );
 		$excluded = self::blood_magic_excluded_power_names();
 
-		// The real, curated 14-tradition list (Seeder::build_met_blood_magic_powers()) -
-		// duplicated here rather than read from the seeded catalog, since a character's
-		// own stored data must migrate consistently regardless of what any one chronicle's
-		// catalog fork currently contains.
+		// The 14 Blood Magic traditions.
 		$known_traditions = [
 			'Akhu', 'Bacaban', 'Dark Thaumaturgy', 'Dur An Ki', 'Judicium', 'Koldunism', 'Mortis',
 			'Nahuallotl', 'Necromancy', 'Sadhana', 'Sielanic', 'Thaumaturgy (Anarch)', 'Thaumaturgy (Camarilla)', 'Wanga',
@@ -2372,16 +2024,6 @@ class Schema {
 	}
 
 	/**
-	 * Matches a raw string (e.g. a keep_custom pick's `name` field, which pre-Blood-Magic
-	 * held a tradition rather than a power name) against the real tradition list: an exact
-	 * match once case/whitespace/punctuation is normalized, then a fuzzy match only when it
-	 * is the single unambiguous candidate - the same two-tier rule
-	 * Trait_Mapper::normalize_blood_magic_tradition() applies on import, duplicated here in
-	 * miniature since this is one-off migration code with no reason to depend on the
-	 * Services layer. Returns null (never the raw text) when nothing matches confidently -
-	 * for this migration, null means "this probably isn't a tradition at all", not "keep it
-	 * as typed", since an unmatched name here decides whether the whole entry moves.
-	 *
 	 * @param string[] $known_traditions
 	 */
 	private static function match_known_blood_magic_tradition( string $raw, array $known_traditions ): ?string {
@@ -2396,9 +2038,6 @@ class Schema {
 
 	/**
 	 * Assigns a UUIDv7 to every character row that does not already have one.
-	 *
-	 * Processes rows in batches so a large chronicle does not exhaust memory
-	 * or run long enough to hit a request timeout during activation.
 	 */
 	public static function backfill_character_uuids(): void {
 		global $wpdb;
@@ -2423,9 +2062,7 @@ class Schema {
 	}
 
 	/**
-	 * Adds the UNIQUE index on be_characters.uuid, once every row holds a
-	 * value. Skips adding the index if it already exists, and refuses if
-	 * any row still has a blank uuid.
+	 * Adds the UNIQUE index on be_characters.uuid, once every row holds a value.
 	 */
 	public static function add_character_uuid_index(): void {
 		global $wpdb;
@@ -2465,11 +2102,6 @@ class Schema {
 
 	/**
 	 * Adds the `storyteller_only` column to `schema_blocks`.
-	 *
-	 * Marks a block whose contents must never reach a viewer without
-	 * `be_manage_characters`, both in a resolved template layout and in a
-	 * character's own `sheet_data`. Skips the change when the column is
-	 * already present, so this is safe to run on every activation and upgrade.
 	 */
 	public static function add_storyteller_only_to_schema_blocks(): void {
 		global $wpdb;
@@ -2492,11 +2124,8 @@ class Schema {
 	}
 
 	/**
-	 * Adds the `game_slug` column to `schema_blocks` and replaces its
-	 * unique index on `slug` alone with a unique index on `(slug,
-	 * game_slug)`. An empty string means the global/system scope. Skips
-	 * each step that has already been applied, so this is safe to run on
-	 * every activation and upgrade.
+	 * Adds the `game_slug` column to `schema_blocks` and gives it a unique index on `(slug, game_slug)` in place of the
+	 * one on `slug` alone.
 	 */
 	public static function add_schema_block_game_scoping(): void {
 		global $wpdb;
@@ -2549,10 +2178,7 @@ class Schema {
 	}
 
 	/**
-	 * Converts an existing `characters.xp_unspent` column from unsigned to
-	 * signed, so a character's XP balance can go negative. CREATE TABLE
-	 * already declares the column signed for a fresh install; this brings
-	 * an existing table in line. Safe to run repeatedly.
+	 * Converts an existing `characters.xp_unspent` column from unsigned to signed.
 	 */
 	public static function make_xp_unspent_signed(): void {
 		global $wpdb;
@@ -2580,13 +2206,7 @@ class Schema {
 	}
 
 	/**
-	 * Rebuilds a creature stack's default `sheet_full` template layout when
-	 * it is out of date, so a correction to default_template_sections()
-	 * reaches a chronicle that already seeded its template before the fix
-	 * shipped. Only touches system (non-customized) global templates, and
-	 * only when at least one section is missing its `width` value, a
-	 * `title_refs` reference the current default expects, or its
-	 * `block_slug` no longer exists in the current layout.
+	 * Rebuilds a creature stack's default `sheet_full` template layout when it is out of date.
 	 */
 	public static function repair_stale_default_layouts(): void {
 		foreach ( \BeyondElysium\Models\Creature_Stack::all() as $stack ) {
@@ -2610,17 +2230,11 @@ class Schema {
 					$fresh_by_slug[ $fresh_section['block_slug'] ] = $fresh_section;
 				}
 
-				// Detects a renamed or removed block_slug that a plain field-presence check
-				// would miss. Deliberately one-directional only (stored minus fresh, never
-				// the reverse) - VampireTemplateRepairTest::test_a_template_already_on_the_new_shape_is_left_untouched
-				// establishes that an is_system template genuinely missing sections the
-				// current code defines (an admin's own deliberate trim via the structured
-				// editor is exactly this) must NOT be treated as stale on that basis alone.
-				// Adding a brand-new default section (e.g. vampire-blood-magic,
-				// BE_PROCESS/releases/0.99.2-workflow.md BM-9) to an already-current, already-seeded
-				// template needs its own dedicated, narrowly-scoped repair instead - see
-				// Seeder::add_missing_template_section().
-				$has_renamed_slug = (bool) array_diff( array_column( $sections, 'block_slug' ), array_keys( $fresh_by_slug ) );
+				$known_slugs = array_keys( $fresh_by_slug );
+				foreach ( $stack->stack_definition->sections ?? [] as $stack_section ) {
+					$known_slugs[] = (string) ( $stack_section->block_slug ?? '' );
+				}
+				$has_renamed_slug = (bool) array_diff( array_column( $sections, 'block_slug' ), $known_slugs );
 
 				$up_to_date = ! empty( $sections ) && ! $has_renamed_slug && ! array_filter(
 					$sections,
@@ -2644,71 +2258,12 @@ class Schema {
 	}
 
 	/**
-	 * Repairs an existing, already-seeded `npc_full` template whose section list has
-	 * fallen behind its stack's current `sheet_full` - the same class of drift
-	 * repair_stale_default_layouts() fixes for `sheet_full` itself, needed separately
-	 * because Seeder::seed_npc_templates() only ever builds `npc_full` once (guarded by
-	 * "already exists? skip") and never revisits it afterward. Blood Magic's own new
-	 * `vampire-blood-magic` section (BE_PROCESS/releases/0.99.2-workflow.md BM-9) would otherwise
-	 * reach a fresh `sheet_full` but never an already-seeded `npc_full`.
-	 *
-	 * Merges rather than rebuilds from scratch: every section `sheet_full` currently has
-	 * that `npc_full` is missing is appended (in `sheet_full`'s own order/column
-	 * position), and the `npc-roleplaying-notes` section - always last, full-width - is
-	 * moved to the end again rather than left stranded in the middle. A section
-	 * `npc_full` already has is left exactly as it is, so a chronicle would never lose
-	 * npc_full-specific fields this way (none exist today, but this must not assume that
-	 * stays true forever).
-	 *
-	 * Must run after repair_stale_default_layouts(), which is what makes the `sheet_full`
-	 * this reads from correct in the first place.
+	 * Repairs an existing, already-seeded `npc_full` template whose section list has fallen behind its stack's current
+	 * `sheet_full`.
 	 */
 	/**
-	 * Completes every system `sheet_full` and `npc_full` from its own stack: any block the
-	 * stack declares that the template does not already show is inserted beside its own kind
-	 * (1.2.11, the seeded half of D92).
-	 *
-	 * **The defect this closes.** Template rows have only ever been inserted from
-	 * `Seeder::default_template_sections()`, a hand-written per-stack list, so a block added to
-	 * a stack after that list was written is declared, resolved, seeded onto characters - and
-	 * shown by nothing. Measured identically on `be_dev` and on kony before this shipped: 22
-	 * full sheets, **every one of the 20 whose stack declares a health block missing it**, and
-	 * `met-derangements` missing from 18 of 22. Health Levels have been applied to every
-	 * character at creation since v0.99.23 and have never appeared on a single sheet.
-	 *
-	 * **Generic on purpose.** It reads each stack's own declared sections rather than a second
-	 * hand-written list, because a hand-written list is exactly what caused this - a third
-	 * block added tomorrow needs no change here. 1.3.0's declared template files fix the same
-	 * defect on the file side; this fixes every install already seeded, which 1.3.2's cutover
-	 * is too late to help.
-	 *
-	 * **Placement.** Each missing block is inserted directly after the template row of the
-	 * nearest block the stack declares *before* it and the template already shows, so Health
-	 * lands beside Virtues and Resources rather than at the end. With no such anchor - the
-	 * missing block is the first the stack declares - it goes to the front. The new row
-	 * inherits its anchor's `width`, which keeps the row rhythm the rest of the sheet already
-	 * has, and takes its title from the stack's own declared `label`.
-	 *
-	 * **What it deliberately does not touch.**
-	 * - `npc_quick`, by design: all ten are identity + `npc-quick-stats` +
-	 *   `npc-roleplaying-notes`, a reference card rather than a sheet, and completing one from
-	 *   its stack would turn it into a full sheet.
-	 * - A chronicle's own template (`is_system = 0`). Its absences are an ST's arrangement, and
-	 *   from the outside a deliberate trim and a never-added section are the same thing - the
-	 *   rule `repair_stale_default_layouts()`, `repair_stale_npc_layouts()` and
-	 *   `add_missing_blood_magic_template_section()` all already follow, established by
-	 *   `VampireTemplateRepairTest::test_a_template_already_on_the_new_shape_is_left_untouched`.
-	 * - `npc-roleplaying-notes`, which no stack declares, so it is never inserted - and is
-	 *   moved back to the end afterwards so an insertion cannot strand it mid-sheet, matching
-	 *   `repair_stale_npc_layouts()`'s own convention.
-	 *
-	 * A storyteller-only block would be inserted like any other if a stack ever declared one
-	 * (none does today); `St_Visibility` is what keeps it off a player's sheet, at render time,
-	 * for every template alike - this is not the layer that decides visibility.
-	 *
-	 * Must run after `repair_stale_npc_layouts()`, which is what makes the layouts this
-	 * completes correct in the first place. Idempotent: a template already showing everything
-	 * its stack declares is not written at all.
+	 * Completes every system `sheet_full` and `npc_full` from its own stack: any block the stack declares that the
+	 * template does not already show is inserted beside its own kind (the seeded half of).
 	 */
 	public static function complete_full_sheet_templates(): void {
 		foreach ( \BeyondElysium\Models\Creature_Stack::all() as $stack ) {
@@ -2777,9 +2332,8 @@ class Schema {
 	}
 
 	/**
-	 * Inserts one declared block into a layout directly after the nearest earlier-declared
-	 * block the layout already shows, inheriting that anchor's width. Front of the list when
-	 * the block is the first its stack declares.
+	 * Inserts one declared block into a layout directly after the nearest earlier-declared block the layout already
+	 * shows, taking that block's width.
 	 *
 	 * @param array    $sections      The layout's sections.
 	 * @param string[] $declared_order Every block the stack declares, in its declared order.
@@ -2809,8 +2363,6 @@ class Schema {
 				'block_slug' => $slug,
 				'column'     => 1,
 				'order'      => 0, // Renumbered by the caller once every insertion is done.
-				// The stack's own label in every real case; the same generic fallback
-				// Seeder::block_label() uses for a slug its own map does not name.
 				'title'      => $label !== '' ? $label : ucwords( str_replace( '-', ' ', $slug ) ),
 				'display'    => self::default_display_for_block( $slug ),
 				'collapsed'  => false,
@@ -2822,17 +2374,8 @@ class Schema {
 	}
 
 	/**
-	 * How a newly inserted section should render its held rows.
-	 *
-	 * A counted `trait_list` - Health boxes, Abilities, Backgrounds - is a name plus a rating,
-	 * so it renders as dots; without this a health block lists five bare words and the box
-	 * counts that are the whole point of it (`Bruised 3`) are invisible. An `atomic` list is
-	 * name-only by declaration (Merits, Flaws, Derangements, Rituals), and every other section
-	 * type carries its own renderer, so both take the null the hand-written defaults give them.
-	 *
-	 * Matches what `Seeder::default_template_sections()` already writes by hand for every one
-	 * of these blocks, derived from the block instead of restated - and only ever applied to a
-	 * section this repair inserts, never to one an install already has.
+	 * How a newly inserted section renders its held rows: a counted `trait_list` as dots, everything else with the
+	 * default.
 	 */
 	private static function default_display_for_block( string $slug ): ?string {
 		$block = \BeyondElysium\Models\Schema_Block::find_by_slug( $slug );
@@ -2869,12 +2412,9 @@ class Schema {
 					continue; // Already has every section sheet_full does.
 				}
 
-				// The notes section must stay last, full-width, regardless of where the
-				// newly-appended sheet_full sections land.
 				$notes = array_values( array_filter( $sections, static fn( $s ) => $s['block_slug'] === 'npc-roleplaying-notes' ) );
 				$rest  = array_values( array_filter( $sections, static fn( $s ) => $s['block_slug'] !== 'npc-roleplaying-notes' ) );
 
-				// $missing is already confirmed non-empty above, so this list always has at least one order value.
 				$next_order = 1 + max( array_column( array_merge( $rest, $missing ), 'order' ) );
 				foreach ( $notes as &$note_section ) {
 					$note_section['order'] = $next_order++;
@@ -2892,12 +2432,9 @@ class Schema {
 	}
 
 	/**
-	 * One-time backfill of `be_game_members` from each user's existing
-	 * site-wide access: every user holding `be_manage_characters` becomes
-	 * `hst` in every game, and every character's own owning WordPress user
-	 * becomes `player` in that character's game. Runs once, guarded by the
-	 * `be_game_members_backfilled` option, so membership removed afterward
-	 * by an operator is never silently restored.
+	 * One-time backfill of `be_game_members` from each user's existing site-wide access: every user holding
+	 * `be_manage_characters` becomes `hst` in every game, and every character's own owning WordPress user becomes
+	 * `player` in that character's game.
 	 */
 	public static function backfill_game_members(): void {
 		if ( get_option( 'be_game_members_backfilled' ) ) {
@@ -2947,9 +2484,6 @@ class Schema {
 
 	/**
 	 * Run migrations when the installed schema version is behind the code.
-	 *
-	 * register_activation_hook only fires on activation, so a plugin file update alone
-	 * would otherwise never migrate. Called on every request via Plugin::init().
 	 */
 	public static function maybe_upgrade(): void {
 		$installed     = get_option( self::VERSION_OPTION, '0.0.0' );
@@ -2967,8 +2501,6 @@ class Schema {
 		try {
 			self::run_upgrade( $fresh_install );
 		} catch ( \Throwable $e ) {
-			// Recorded, logged, and left locked until the lock goes stale: a step that fails every
-			// time retries every few minutes instead of failing every request (1.0.0-review F-064).
 			update_option( self::UPGRADE_ERROR_OPTION, [
 				'version' => self::DB_VERSION,
 				'message' => $e->getMessage(),
@@ -2984,96 +2516,72 @@ class Schema {
 	}
 
 	/**
-	 * Every step of an upgrade, in order. Throws if a step does; the caller
-	 * records the new schema version only once this returns.
+	 * Every step of an upgrade, in order: tables, translation recovery, catalog reseed and the migrations after it, the
+	 * move onto per-creature lists, stacks and templates, retired-block removal, translation rescan, demo data and
+	 * capabilities.
 	 *
 	 * @param bool $fresh_install Whether no schema version was recorded before this upgrade.
 	 */
 	private static function run_upgrade( bool $fresh_install ): void {
 		self::create_tables();
 
-		// Must run before seed_schema_blocks() below, not after - B9 (1.2.0 §8) means Seeder no
-		// longer writes name_pt/power_name_pt at all, so seed_schema_blocks() replacing a
-		// system block's whole definition (its own documented, correct behavior for everything
-		// GVM/CSV-sourced) would permanently erase a real site's pre-1.2.0 translation data
-		// before this migration ever ran, on the very upgrade meant to recover it. Found live,
-		// this exact ordering, measuring a fresh WP_UnitTestCase bootstrap against a real
-		// catalog: a fresh install (nothing to harvest either way) masked it completely, and
-		// only a database carrying genuine pre-1.2.0 name_pt - exactly what a real production
-		// site upgrading to 1.2.0 has - would have shown the loss.
+		// Recovers existing translation data into the translations table.
 		self::migrate_catalog_translations_to_table();
 
-		// Refreshes system schema blocks/stacks so a block-map correction reaches existing installs.
+		// Refreshes the system schema blocks.
 		Seeder::seed_schema_blocks();
 
-		// Must run after seed_schema_blocks(), which would otherwise overwrite this addition.
 		self::add_missing_combo_disciplines();
 
-		// Must run after seed_schema_blocks(), for the same reason as the call above.
 		self::dedupe_awakening_of_the_steel();
 
-		// Must run after seed_schema_blocks() has refreshed the werewolf-gifts/fera-gifts catalogs.
 		self::migrate_held_gift_names_to_grouped_fields();
 
-		// Blood magic (BE_PROCESS/releases/0.99.2-workflow.md, BM-8): must run after
-		// seed_schema_blocks() has seeded the global vampire-blood-magic catalog, and the
-		// schema-fork split must run before the held-picks migration reads it.
 		self::migrate_blood_magic_schema_forks();
 		self::migrate_blood_magic_held_picks();
 
+		// Moves an install still on the shared lists onto the per-creature catalog.
+		$move = \BeyondElysium\Services\Catalog_Cutover::ensure_declared();
+		if ( ! in_array( $move['status'], [ 'already_declared', 'marked', 'applied' ], true ) ) {
+			throw new \RuntimeException( \BeyondElysium\Services\Catalog_Cutover::refusal_message( $move ) );
+		}
+		delete_option( 'be_catalog_cutover_record' );
+
 		Seeder::seed_creature_stacks();
 		Seeder::reconcile_stack_blocks();
+
+		// Drops the empty sections of the two blocks no stack lists any more from the system templates.
+		\BeyondElysium\Services\Retired_Blocks::drop_from_system_templates();
+
 		Seeder::seed_default_templates();
 
-		// Must run after seed_default_templates(), whose sheet_full layout it builds on.
 		Seeder::seed_npc_templates();
 
-		// Must run after seed_schema_blocks(), since a rebuilt layout can reference a new block slug.
 		self::repair_stale_default_layouts();
 
-		// Must run after seed_schema_blocks() has seeded vampire-blood-magic, and before
-		// repair_stale_npc_layouts(), which propagates this same addition into npc_full.
 		self::add_missing_blood_magic_template_section();
 
-		// Must run after repair_stale_default_layouts() and the call above, which are what
-		// make the sheet_full layout this reads from correct in the first place.
 		self::repair_stale_npc_layouts();
 
-		// 1.3.3 C6: on an already-declared install, catches any template - global or a
-		// chronicle's own fork - still naming a slug this upgrade's own seed_schema_blocks()
-		// pass retired. A no-op on a legacy install (is_declared() false) and a no-op on a
-		// second run of a declared one (rewrite_templates() is idempotent by construction).
-		if ( \BeyondElysium\Services\Catalog_Cutover::is_declared() ) {
-			\BeyondElysium\Services\Catalog_Cutover::rewrite_templates();
-		}
-
-		// Must run last of the template repairs: it completes both sheet_full and npc_full from
-		// each stack's own declaration, so it needs the layouts above already correct (1.2.11 D92).
 		self::complete_full_sheet_templates();
 
-		// 1.3.2: re-syncs `translation_strings` against whatever `seed_schema_blocks()` and the
-		// migrations above just wrote - format §4a mitigation 1. A declared file can rename or
-		// alias a catalog term (43 rung aliases, 4 family aliases, 14 moved families per the
-		// 1.3.1 doc), and `Name_Key::for()` derives a translation key from the current name, so
-		// the current name must be re-indexed after every reseed or its translation coverage
-		// looks like it silently dropped. Upsert-based and already exposed on demand via the
-		// Translations REST route, so this is safe to run on every upgrade, not just this one.
+		// Deletes each retired block that nothing names any more.
+		\BeyondElysium\Services\Retired_Blocks::remove_unused();
+
+		// Re-indexes the catalog's terms for translation.
 		\BeyondElysium\Services\Catalog_Translator::rescan();
 
 		// Demo data, seeded on a fresh install only.
 		Seeder::seed_demo_characters( $fresh_install );
 
-		// Re-registers capabilities so a new one reaches existing installs, not just fresh activations.
+		// Registers capabilities.
 		\BeyondElysium\Core\Capabilities::register();
 
-		// Must run after seed_demo_characters(), which Page_Provisioner's hook listener depends on existing.
 		do_action( 'be_after_upgrade' );
 	}
 
 	/**
 	 * Builds the fully-qualified table name for a short table name.
-	 * Combines the WordPress table prefix with the plugin's own 'be_'
-	 * prefix.
 	 */
 	public static function table( string $name ): string {
 		global $wpdb;
@@ -3081,24 +2589,7 @@ class Schema {
 	}
 
 	/**
-	 * Re-splits every **chronicle-forked** `tiered_power` block into 1.2.10's three containers.
-	 *
-	 * `Seeder::seed_schema_blocks()` refreshes `is_system = 1` rows only, which is right - a
-	 * reseed must never overwrite a chronicle's own edited block. The consequence, found
-	 * during pre-deploy checks on 2026-09-22, is that **a fork would keep the flat pre-1.2.10
-	 * shape forever**: no `_meta`, so `Cost_Engine` falls through to the pre-1.2.10
-	 * one-tier-per-rank fallback and prices a Discipline at 5 as **45 XP** where the reseeded
-	 * global prices **27**. Two prices for the same Discipline on one install, on precisely
-	 * the chronicles engaged enough to have forked something - and no reseed ever heals it.
-	 *
-	 * So the fork is migrated instead of refreshed: its **own** powers and its own edits are
-	 * kept, and only the container split and `_meta` are added, using the same
-	 * `split_levels()`/`meta_for()` the seeder uses rather than a second copy of the rule.
-	 *
-	 * Idempotent by construction - a definition that already declares `_meta` is skipped, so
-	 * this is safe on every upgrade and a no-op on an install that has already run it. A
-	 * failure on one fork is logged and the rest continue: one malformed chronicle block must
-	 * not stop an upgrade.
+	 * Re-splits every chronicle-forked `tiered_power` block into its three containers.
 	 */
 	private static function split_forked_tiered_powers(): void {
 		global $wpdb;

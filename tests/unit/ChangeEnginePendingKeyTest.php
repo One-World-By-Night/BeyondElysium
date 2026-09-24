@@ -6,10 +6,7 @@ use BeyondElysium\Services\Change_Engine;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `pending_duplicate_key()` decides whether a new submission is the same one resubmitted. The
- * catalog cutover's records are written already approved and are never submitted, so they must
- * never be keyed - and the check has to be by type, not by the payload happening to lack a block,
- * so these carry the same `block_slug` and `trait` an ordinary add would.
+ * `pending_duplicate_key()` decides whether a new submission is the same one resubmitted.
  */
 class ChangeEnginePendingKeyTest extends TestCase {
 

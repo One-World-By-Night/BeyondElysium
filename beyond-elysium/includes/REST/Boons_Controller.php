@@ -12,25 +12,19 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * REST controller for boons: debts owed between characters.
- *
- * Models a boon as a `world_object` row of type `boon` connected to exactly
- * two characters through `be_connections` rows labeled `owed_by` and
- * `owed_to`, so the debt is readable symmetrically from either character.
- * Provides listing with filtering, creation, and marking a boon repaid.
  */
 class Boons_Controller extends Base_Controller {
 
 	protected $rest_base = 'boons';
 
-	/** Connection labels linking a boon object to its two parties. */
+	/**
+	 * Connection labels linking a boon object to its two parties.
+	 */
 	const OWED_BY_LABEL = 'owed_by';
 	const OWED_TO_LABEL = 'owed_to';
 
 	/**
 	 * Registers the game-scoped boon routes.
-	 *
-	 * Adds the collection route for listing and creating boons, plus a
-	 * dedicated route for marking a single boon repaid.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/boons', [
@@ -57,11 +51,6 @@ class Boons_Controller extends Base_Controller {
 
 	/**
 	 * Lists every boon in the game as a resolved ledger.
-	 *
-	 * Loads all `boon` world objects for the game, resolves each one's two
-	 * connected characters, and returns them sorted with outstanding boons
-	 * first and each group ordered by date descending. Supports filtering by
-	 * character (either side of the debt), boon level, and status.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -120,11 +109,6 @@ class Boons_Controller extends Base_Controller {
 	/**
 	 * Resolves each boon's two connections into owed_by/owed_to character summaries.
 	 *
-	 * Reads every boon's `owed_by` and `owed_to` connections in one query and
-	 * their characters' names in one more, rather than three queries a boon
-	 * (1.0.0-review F-093). Each summary is an id/name pair; a boon missing
-	 * either party, or whose character is gone, has no entry.
-	 *
 	 * @param int[] $boon_ids
 	 * @return array<int,array{owed_by: array, owed_to: array}> Keyed by boon id.
 	 */
@@ -158,7 +142,7 @@ class Boons_Controller extends Base_Controller {
 		foreach ( $connections as $connection ) {
 			$character = $names[ (int) $connection->target_id ] ?? null;
 			if ( $character !== null ) {
-				// A number, as the ledger compares it with the character it's scoped to (F-094).
+				// A number, as the ledger compares it with the character it's scoped to.
 				$sides[ (int) $connection->source_id ][ $connection->label ] = [ 'id' => (int) $character->id, 'name' => $character->name ];
 			}
 		}
@@ -174,12 +158,6 @@ class Boons_Controller extends Base_Controller {
 
 	/**
 	 * Creates a boon.
-	 *
-	 * Validates the two character parameters and the boon level, then
-	 * creates the `world_object` row and its two `owed_by`/`owed_to`
-	 * connections inside one transaction so a failure partway through leaves
-	 * nothing behind. The debtor and creditor must be two distinct
-	 * characters in this game.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -256,10 +234,6 @@ class Boons_Controller extends Base_Controller {
 	/**
 	 * Marks a boon repaid.
 	 *
-	 * Sets the boon's status to `repaid` and stamps a server-side
-	 * `repaid_date` on its properties. The row itself is never deleted; a
-	 * repaid boon remains in the ledger as history.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -278,8 +252,6 @@ class Boons_Controller extends Base_Controller {
 		$properties['status']      = 'repaid';
 		$properties['repaid_date'] = current_time( 'Y-m-d' );
 
-		// Optional: how the boon was actually settled - "entered in error" is not a special
-		// case, it is repaid with that as the how (owner's ruling, BE_PROCESS/releases/0.99.2-workflow.md).
 		$note = $request->get_param( 'repaid_note' );
 		if ( $note !== null && $note !== '' ) {
 			$properties['repaid_note'] = sanitize_textarea_field( (string) $note );
@@ -293,10 +265,6 @@ class Boons_Controller extends Base_Controller {
 
 	/**
 	 * Resolves a game by its slug.
-	 *
-	 * Looks up the game record for the given slug and returns a 404 error
-	 * when no game matches it. Every route handler in this controller calls
-	 * this first to scope its work to a real, existing game.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

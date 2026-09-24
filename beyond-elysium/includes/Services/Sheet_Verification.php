@@ -5,26 +5,18 @@ namespace BeyondElysium\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Checks a player-sent Grapevine file (F-122) against the Beyond Elysium
- * verification code it may carry in its `id` field - the same code a
- * "Include verification code" export writes (GX-7). Never trusts the file's
- * own claims about itself: the code is resolved against the issuing site's
- * own public `/verify/{code}` route (`Verify_Controller`), the same
- * callback-based trust model `Transfers_Controller::verify_with_home()`
- * already uses for a transfer.
- *
- * @see BE_PROCESS/design/player-grapevine-file-design.md §8
+ * Checks a player-sent Grapevine file against the Beyond Elysium verification code it may carry in its `id` field.
  */
 class Sheet_Verification {
 
-	/** How long a resolved check is cached, keyed by code + file hash. */
+	/**
+	 * How long a resolved check is cached, keyed by code + file hash.
+	 */
 	private const CACHE_TTL = 5 * MINUTE_IN_SECONDS;
 
 	/**
-	 * Extracts a verification code from a parsed character's `id` field, when
-	 * it is a real Beyond Elysium verification URL - `id` is otherwise free
-	 * text (Grapevine's own use, or nothing at all), so anything not matching
-	 * this exact shape is simply "no code," not a parse error.
+	 * Extracts a verification code from a parsed character's `id` field, when it is a real Beyond Elysium verification
+	 * URL.
 	 *
 	 * @param array<string,mixed> $character A parsed GEX character record.
 	 * @return array{base:string,code:string}|null
@@ -43,10 +35,8 @@ class Sheet_Verification {
 	}
 
 	/**
-	 * Resolves a file's verification code against its issuing site and
-	 * compares the file's own bytes against what that site attested to.
-	 * Never blocks anything - the result is information for the reviewing
-	 * Storyteller (`player-grapevine-file-design.md` §8.4), not a gate.
+	 * Resolves a file's verification code against its issuing site and compares the file's own bytes against what that
+	 * site attested to.
 	 *
 	 * @param string               $xml       The raw uploaded document text.
 	 * @param array<string,mixed>  $character The parsed character this document holds.
@@ -77,9 +67,7 @@ class Sheet_Verification {
 	 * @return array<string,mixed>
 	 */
 	private static function resolve( string $base, string $code, string $xml, array $character ): array {
-		// wp_safe_remote_get(), not wp_remote_get(): $base came from a file anyone signed in
-		// can upload, so private/loopback hosts must be refused the same way any other
-		// operator-supplied URL is treated elsewhere in this plugin.
+		// Fetches with wp_safe_remote_get().
 		$response = wp_safe_remote_get(
 			untrailingslashit( $base ) . '/wp-json/be/v1/verify/' . rawurlencode( $code ),
 			[ 'timeout' => 10, 'redirection' => 2 ]
@@ -117,8 +105,7 @@ class Sheet_Verification {
 		$actual_hash    = hash( 'sha256', Character_Exporter::canonicalize_transfer_payload( $xml ) );
 		$hashes_match   = $expected_hash !== '' && hash_equals( $expected_hash, $actual_hash );
 
-		// 'race' is the parsed character's own field name for its BE stack_slug (e.g.
-		// 'vampire') - the same value Attestation::issue() stored as attested.stack.
+		// 'race' is the parsed character's own field name for its BE stack_slug (e.g. 'vampire').
 		$file = [
 			'name'       => (string) ( $character['name'] ?? '' ),
 			'stack'      => (string) ( $character['race'] ?? '' ),

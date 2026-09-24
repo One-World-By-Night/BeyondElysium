@@ -2,15 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 
 /**
- * `max-width: 768px` is the one phone breakpoint this plugin's front-end
- * widgets and editors use (mobile-sheet-design.md §5.1) - not WordPress
- * core's 782px, since these are front-end widgets in a theme's own layout,
- * not wp-admin panels. `WorldObjectManager.css` carried `767px`, one pixel
- * off from every other file, which at exactly 768px device width (a common
- * tablet-portrait size) meant it alone stayed two-column while every sibling
- * component had already collapsed. This scans every stylesheet under `src/`
- * so a second breakpoint value can't drift in silently, the same idiom
- * `cssImports.test.ts` and `gridCollapse.test.ts` already established.
+ * `max-width: 768px` is the one phone breakpoint this plugin's front-end widgets and editors use.
  */
 
 const ALLOWED_WIDTH_QUERY = 'max-width: 768px';

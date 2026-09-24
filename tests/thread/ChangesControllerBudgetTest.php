@@ -7,14 +7,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * workflow-0.4.md V13: `xp_cost` used to be trusted verbatim from the request, so a
- * player could submit any number - including 0 - for a change that really costs XP,
- * bypassing the editor UI's own budget guard entirely and going into `xp_unspent`
- * negative with no ST ever reviewing it. Real dispatch through the REST server against a
- * real character and a real `met-merits` catalog cost ("Iron Will" is "3-5", defaulting
- * to 3 with no chosen_cost), not a mock.
- *
- * @see BE_PROCESS/releases/workflow-0.9.md Planned-vs-Built Audit, item 1
+ * `xp_cost` is computed on the server, never trusted from the request.
  */
 class ChangesControllerBudgetTest extends WP_UnitTestCase {
 
@@ -40,8 +33,7 @@ class ChangesControllerBudgetTest extends WP_UnitTestCase {
 			'name' => 'Budget Test Character', 'stack_slug' => 'vampire',
 			'owner_type' => 'chronicle', 'owner_slug' => $this->game_slug, 'wp_user_id' => $player,
 		] );
-		// D27: xp_earned/xp_unspent are set via update_xp(), never trusted in create()'s
-		// own data array.
+		// Xp_earned/xp_unspent are set via update_xp().
 		Character::update_xp( $this->character_id, 2, 2 );
 
 		$this->player_id = $player;
@@ -54,8 +46,8 @@ class ChangesControllerBudgetTest extends WP_UnitTestCase {
 	private function add_iron_will_request(): WP_REST_Request {
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters/{$this->character_id}/changes" );
 		$request->set_param( 'change_type', 'add_trait' );
-		$request->set_param( 'category', 'met-merits' );
-		$request->set_param( 'change_data', [ 'block_slug' => 'met-merits', 'trait' => [ 'name' => 'Iron Will' ] ] );
+		$request->set_param( 'category', 'vampire-merits' );
+		$request->set_param( 'change_data', [ 'block_slug' => 'vampire-merits', 'trait' => [ 'name' => 'Iron Will' ] ] );
 		// A malicious/buggy client submitting a fake low cost - must never be trusted.
 		$request->set_param( 'xp_cost', 0 );
 		return $request;

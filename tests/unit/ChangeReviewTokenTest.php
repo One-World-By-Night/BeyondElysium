@@ -6,9 +6,7 @@ use BeyondElysium\Models\Change;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.0.0-review F-031: Change::review_token() identifies exactly what a reviewer was shown, so
- * a player's resubmission - which rewrites the pending row in place - invalidates any token
- * taken before it. Pure: no database access.
+ * Change::review_token() identifies exactly what a reviewer was shown.
  */
 class ChangeReviewTokenTest extends TestCase {
 

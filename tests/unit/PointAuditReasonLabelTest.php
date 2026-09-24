@@ -6,9 +6,8 @@ use BeyondElysium\Services\Point_Audit;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.0.0-review F-085 (Pass H intake `t1-audit-stats-setup`). The Point Audit names each unpriced
- * line's reason on screen from `PointAudit.tsx`'s own labels, and the server's summary sentence
- * names the most common one. Both read the same words, so one translation serves both.
+ * The point audit's reason labels: the summary names each reason as the screen does, every reason the audit can give
+ * has a label, and a reason with no label still reads as words.
  */
 class PointAuditReasonLabelTest extends TestCase {
 

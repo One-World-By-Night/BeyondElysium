@@ -7,13 +7,8 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
 /**
- * 1.2.10 S2/S2b - a family's flat level list splits into three containers, and the split is
- * the D68 fix: the stepper reads `levels`, the pick list reads `elder`, and they cannot be
- * confused because they are not the same array.
- *
- * The invariant every test here protects is that the three containers **partition** the
- * input - nothing invented, nothing dropped. Measured against the real seeded catalog while
- * this was built: 5,518 levels in, 3,039 rungs + 503 picks + 1,976 overflow, exact.
+ * A family's flat level list splits into three containers: the stepper reads `levels` and the pick list reads
+ * `elder`.
  */
 class SeederTieredPowerSplitTest extends TestCase {
 
@@ -55,7 +50,6 @@ class SeederTieredPowerSplitTest extends TestCase {
 
 	public function test_above_ladder_ranks_become_picks_keyed_by_rank_never_flattened(): void {
 		// The two depths must stay separate: `elder` is the section, its keys are ranks.
-		// Merging them is precisely what recreated D68.
 		$split = $this->split( 'vampire-disciplines', [
 			$this->level( 'basic', 'One' ),
 			$this->level( 'elder', 'Blink' ),
@@ -69,9 +63,6 @@ class SeederTieredPowerSplitTest extends TestCase {
 	}
 
 	public function test_wraith_innate_is_a_pick_below_the_ladder_not_a_rung(): void {
-		// MET-POWER-ACQUISITION.md: innate "sits below the ladder, is never counted in the
-		// rating." It is in `ranks` but absent from `ladder`, so it files as a pick - the
-		// same mechanism as an above-ladder rank, in the other direction.
 		$split = $this->split( 'wraith-arcanoi', [
 			$this->level( 'innate', 'Sense Gauntlet' ),
 			$this->level( 'basic', 'Enshroud' ),
@@ -83,7 +74,6 @@ class SeederTieredPowerSplitTest extends TestCase {
 	}
 
 	public function test_ladder_rank_levels_beyond_the_ceiling_go_to_overflow_carrying_no_rung_number(): void {
-		// D67's signal. A family whose two ladders are split correctly has none of these.
 		$levels = [];
 		foreach ( [ 'basic', 'basic', 'basic', 'intermediate', 'intermediate', 'advanced', 'advanced' ] as $i => $tier ) {
 			$levels[] = $this->level( $tier, 'P' . $i );
@@ -125,9 +115,7 @@ class SeederTieredPowerSplitTest extends TestCase {
 	}
 
 	public function test_meta_declares_the_ladder_and_derives_costs_from_the_blocks_own_data(): void {
-		// Costs are read back out of the block, never declared here - so this release
-		// changes no price on any sheet. D69/D70's wrong values stay wrong until 1.3.0
-		// corrects them against the books.
+		// Costs are read back out of the block.
 		$meta = $this->meta( 'vampire-disciplines', [ [
 			'name'   => 'Celerity',
 			'levels' => [ $this->level( 'basic', 'One', '3' ), $this->level( 'intermediate', 'Two', '6' ) ],
@@ -140,9 +128,8 @@ class SeederTieredPowerSplitTest extends TestCase {
 	}
 
 	public function test_meta_costs_never_invent_a_rank_the_block_does_not_declare(): void {
-		// D72 leaked combo-Discipline names into `mortal-numina`'s tier field. They must not
-		// reappear as declared ranks carrying declared prices.
-		$meta = $this->meta( 'mortal-numina', [ [
+		// A tier that is not one of the block's ranks is left out of the costs, never declared as a rank with a price.
+		$meta = $this->meta( 'demon-evocations', [ [
 			'name'   => 'Numen',
 			'levels' => [ $this->level( 'basic', 'Real', '3' ) ],
 			'elder'  => [ 'telepathy + presence' => [ $this->level( 'telepathy + presence', 'Bogus', '9' ) ] ],

@@ -6,14 +6,7 @@ use BeyondElysium\Services\Query_Engine;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Port of `QueryEngineClass.ProcessClause` (GV301Source/Code/QueryEngineClass.cls) - a
- * spec test, not a fixture test. One case per operator per applicable type, every
- * inapplicable pairing, every operator negated, a missing block, an empty list, the
- * `contains_less` presence rule, and an atomic list where only the second duplicate
- * satisfies the comparison.
- *
- * @see BE_PROCESS/releases/workflow-0.6.md Step 2l
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "Query Engine"
+ * Port of `QueryEngineClass.ProcessClause` (Code/QueryEngineClass.cls).
  */
 class QueryOperatorTest extends TestCase {
 
@@ -36,8 +29,6 @@ class QueryOperatorTest extends TestCase {
 	}
 
 	public function test_field_negated_inapplicable_operator_is_still_a_non_match(): void {
-		// GV-SOURCEMAP.md: "the And is applied outside the Xor" - a negated
-		// inapplicable clause does not become a match.
 		$this->assertFalse( Query_Engine::evaluate_clause( 'field', 'Vampire', [ 'operator' => 'at_least', 'value' => 3, 'not' => true ] )['match'] );
 	}
 
@@ -197,8 +188,7 @@ class QueryOperatorTest extends TestCase {
 	}
 
 	/**
-	 * Totals operate on list LENGTH, not the sum of counts (Step 2g) - two entries
-	 * totaling 100 combined dots must not satisfy `totals_at_least 3`.
+	 * Totals operate on list LENGTH.
 	 */
 	public function test_totals_is_length_not_sum_of_counts(): void {
 		$list = $this->traits( [ [ 'Celerity', 50 ], [ 'Fortitude', 50 ] ] );
@@ -206,8 +196,7 @@ class QueryOperatorTest extends TestCase {
 	}
 
 	/**
-	 * `contains_less` and `contains_no_more` require the trait to be present (Step 2h) -
-	 * the single most likely thing to get wrong. A missing trait is not "≤ N".
+	 * `contains_less` and `contains_no_more` require the trait to be present.
 	 */
 	public function test_contains_less_requires_presence(): void {
 		$empty = [];
@@ -220,9 +209,7 @@ class QueryOperatorTest extends TestCase {
 	}
 
 	/**
-	 * A negated `contains_no_more`/`contains_less` against an ABSENT trait DOES match -
-	 * `Match = Applicable(true) And (false Xor CompNot(true)) = true`. A faithful port
-	 * preserves this exactly as GV computes it, not the "intuitive" reading.
+	 * A negated `contains_no_more`/`contains_less` against an ABSENT trait DOES match.
 	 */
 	public function test_negated_contains_no_more_matches_when_trait_absent(): void {
 		$empty = [];
@@ -234,22 +221,17 @@ class QueryOperatorTest extends TestCase {
 	}
 
 	public function test_missing_block_is_null_and_inapplicable(): void {
-		// A character without this block at all - value resolves to null upstream of
-		// evaluate_clause(), which must treat it exactly like GV's IsNull(CharData).
+		// A character without this block at all.
 		$result = Query_Engine::evaluate_clause( 'list', null, [ 'operator' => 'contains', 'find' => 'Celerity' ] );
 		$this->assertFalse( $result['match'] );
 		$this->assertSame( 'N/A', $result['match_value'] );
 	}
 
 	/**
-	 * Atomic lists must be scanned for every duplicate (Step 2k) - GV's loop:
-	 * `Loop Until Match Or TraitList.Atomic = False Or TraitList.Off`. A non-atomic
-	 * list stops at the FIRST matching-named entry regardless of outcome; only an
-	 * atomic list keeps walking to a later duplicate.
+	 * Atomic lists must be scanned for every duplicate.
 	 */
 	public function test_non_atomic_list_stops_at_first_matching_named_entry(): void {
-		// First "Celerity" is level 1 (fails >= 3); a second "Celerity" at level 5
-		// exists but must never be reached on a non-atomic list.
+		// First "Celerity" is level 1 (fails >= 3).
 		$list = $this->traits( [ [ 'Celerity', 1 ], [ 'Celerity', 5 ] ] );
 		$this->assertFalse( Query_Engine::evaluate_clause( 'list', $list, [ 'operator' => 'contains_at_least', 'find' => 'Celerity', 'value' => 3 ], false )['match'] );
 	}
@@ -272,7 +254,7 @@ class QueryOperatorTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Applicability table (Step 8a: the UI must never offer what the server rejects)
+	// Applicability table (a: the UI must never offer what the server rejects)
 	// -------------------------------------------------------------------------
 
 	public function test_is_applicable_matches_the_full_table(): void {

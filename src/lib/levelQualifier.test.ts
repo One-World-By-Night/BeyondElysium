@@ -35,9 +35,6 @@ describe( 'levelQualifier', () => {
 	} );
 
 	it( 'finds nothing in a note with no tier word at all', () => {
-		// `Seeder::normalize_tier()` falls back to the raw note as the tier, so the whole
-		// string is already shown as the tier - and D72's corrupted `mortal-numina` values
-		// land here, which must not be surfaced as if they were qualifiers.
 		expect( levelQualifier( 'telepathy + presence' ) ).toBeUndefined();
 		expect( levelQualifier( 'legend' ) ).toBeUndefined();
 	} );

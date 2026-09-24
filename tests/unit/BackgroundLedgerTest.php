@@ -6,12 +6,7 @@ use BeyondElysium\Services\Background_Ledger;
 use PHPUnit\Framework\TestCase;
 
 /**
- * apply_spends() is pure and total - no database access, the same pattern as
- * Action_Allocator::resolve_common_subactions() (ActionAllocatorTest). Covers
- * the debit rule exactly as specified: base comes from unused, not total, so
- * carry_unused keeps working unchanged; over_budget is a flag, never a clamp.
- *
- * @see BE_PROCESS/design/background-ledger-apr-design.md §5.4
+ * apply_spends() is pure and total.
  */
 class BackgroundLedgerTest extends TestCase {
 
@@ -107,8 +102,7 @@ class BackgroundLedgerTest extends TestCase {
 	}
 
 	/**
-	 * 1.0.0-review F-038: a stored cost below one - zero, or a forged negative - must never
-	 * hand uses back. Floored where it is read, not only where record() writes it.
+	 * A stored cost below one.
 	 */
 	public function test_a_cost_below_one_counts_as_one_use(): void {
 		$subactions = [ $this->subaction( 'Bureaucracy', 4 ) ];

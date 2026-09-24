@@ -9,16 +9,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-024 and F-041.
- *
- * F-024: the Query Tool returned whole character rows to anyone holding be_run_queries - the
- * narrator role included - with only rp_notes and [ST] text removed. NPCs came back,
- * Storyteller-only blocks came back in sheet_data, and a condition on [ST] text answered yes or no
- * for each character. It also stripped [ST] text for the chronicle's own Storytellers.
- *
- * F-041 (owner ruling 2026-09-14): the Query Tool is a Storyteller's - narrators lose it. The
- * redaction F-024 added stays behind the routes as a second line: should anyone but a Storyteller
- * ever reach a query again, they still get no NPC and no hidden data.
+ * The Query Tool redacts character rows for anyone who is not a Storyteller of the chronicle.
  */
 class QueryVisibilityThreadTest extends WP_UnitTestCase {
 
@@ -74,8 +65,8 @@ class QueryVisibilityThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The second line: what a non-Storyteller's query would reach, run straight through the
-	 * engine with the options the controller builds for one.
+	 * The second line: what a non-Storyteller's query would reach, run straight through the engine with the options the
+	 * controller builds for one.
 	 */
 	public function test_a_query_run_for_anyone_but_a_storyteller_never_reaches_npcs_or_hidden_data(): void {
 		// Outside a request, Authorization::can() answers site-wide - a subscriber is nobody's Storyteller.

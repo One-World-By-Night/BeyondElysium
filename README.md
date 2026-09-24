@@ -2,7 +2,7 @@
 
 Character management for Mind's Eye Theatre LARP, built as a WordPress plugin for [One World by Night](https://www.owbn.net/).
 
-**`v1.3.6` — released and running in production chronicles.**
+**`v1.3.7` — released and running in production chronicles.**
 
 ## What It Does
 
@@ -48,7 +48,7 @@ BeyondElysium runs character sheets, player submissions, and Storyteller approva
 
 ## Installation
 
-Download `beyond-elysium-1.3.6.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
+Download `beyond-elysium-1.3.7.zip` from [Releases](https://github.com/One-World-By-Night/BeyondElysium/releases) and install it through **Plugins → Add New → Upload Plugin**.
 
 That zip is the built, ready-to-run plugin. The `beyond-elysium/` folder here is its *source* — `build/` and `vendor/` are generated rather than committed, so copying that folder into `wp-content/plugins/` will not work. To build it yourself:
 
@@ -59,7 +59,7 @@ npm install && npm run build
 ./bin/verify        # lint, static analysis, and the test suite
 ```
 
-An install from before 1.3.4 keeps the older Abilities, Merits and Flaws lists, shared by every creature type, until an administrator switches it with `wp be cutover plan` and then `apply`. The switch never touches XP and can be rolled back; see [Switching a Site to the Declared Catalog](Documents/help/catalog-cutover.md). A new install needs none of that.
+An install from before 1.3.4 shared one Abilities, Merits and Flaws list across every creature type. The upgrade moves it onto each creature type's own lists by itself and never touches XP; see [Moving an Older Site to the Per-Creature Lists](Documents/admin-guide.md#moving-an-older-site-to-the-per-creature-lists).
 
 Requires PHP 8.2, WordPress 6.0 or newer, and [Elementor](https://wordpress.org/plugins/elementor/). On WordPress 6.5+ the dependency is declared in the plugin header, so WordPress offers to install Elementor for you and won't activate this plugin without it. Tested against PHP 8.2.33, MySQL 8.4.6, and WordPress 7.1.
 
@@ -83,7 +83,6 @@ The plugin ships its own in-app documentation — four guides and a per-screen h
 - [Admin Guide](Documents/admin-guide.md) — schema blocks, creature stacks, adding a creature type without code.
 - [Player Guide](Documents/player-guide.md) — creating and editing a character, submitting changes, experience, plots.
 - [REST API Reference](Documents/rest-api.md) — every route, its capability, and what it does.
-- [Switching a Site to the Declared Catalog](Documents/help/catalog-cutover.md) — for a site set up before 1.3.4.
 
 The page behind every in-app Help button is in [Documents/help](Documents/help/) as well.
 

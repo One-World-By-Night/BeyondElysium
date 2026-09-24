@@ -6,29 +6,13 @@ use BeyondElysium\Services\GEX_Xml_Parser;
 use PHPUnit\Framework\TestCase;
 
 /**
- * GEX XML exchange-file parsing (workflow-0.8.md Step 9), against real XML `.gex` files in
- * this repo - `GexParserTest`'s own doc comment already flagged the original two (Rotes,
- * Artifacts and Devices) as carrying the `.gex` extension while actually being `<?xml`
- * documents, out of scope for the binary parser.
- *
- * Three more real samples arrived 2026-09-10 (Decision 068), all character-bearing - two
- * `<vampire>`, one `<werewolf>` - closing the gap the class's own history records: no
- * character-bearing XML sample existed when it originally shipped, so it only ever
- * implemented `<item>`/`<rote>`. GX-2 (gex-export-transfer-design.md) added the other ten
- * `RaceType`s, driven by `gv-exchange-shape.php` rather than hand-written per class - see
- * `GexXmlParserGenericRaceTest` for their own coverage, still against synthetic documents
- * only, since no real sample exists for any of them - matching `GexParserTest`'s own
- * honesty about its synthetic fixtures. The refusal path here covers only a genuinely
- * unrecognized element name, not any real `RaceType`.
- *
- * @see BE_PROCESS/releases/workflow-0.8.md Step 9
- * @see BE_PROCESS/reference/DECISIONLOG.md Decision 068
+ * GEX XML exchange-file parsing, against real XML `.gex` files in this repo.
  */
 class GexXmlParserTest extends TestCase {
 
 	private function path( string $relative ): string {
 		$path = be_reference_path( $relative );
-		// Real players' sample files live in samples/, which is kept out of git (owner ruling 2026-09-14).
+		// Real players' sample files live in samples/.
 		if ( strpos( $relative, 'samples/' ) === 0 && ! file_exists( $path ) ) {
 			$this->markTestSkipped( "{$relative} is not present in this checkout." );
 		}
@@ -129,10 +113,6 @@ class GexXmlParserTest extends TestCase {
 	}
 
 	public function test_a_trait_with_no_val_attribute_defaults_total_to_one(): void {
-		// Real data, not a guess: <trait name="Technocracy"/> in the real file has
-		// neither val= nor note= at all. GX-0 defect 1: real Grapevine omits val when a
-		// trait's Total is 1 (LinkedTraitList.cls:833), so an absent attribute means "1",
-		// not "0" - the old '' default silently zeroed every single-dot trait on import.
 		$data  = GEX_Xml_Parser::parse_file( $this->path( 'GV301Source/Code/Artifacts and Devices.gex' ) );
 		$claws = current( array_filter( $data['items'], static fn( $i ) => $i['name'] === 'Claws' ) );
 
@@ -142,14 +122,6 @@ class GexXmlParserTest extends TestCase {
 		);
 	}
 
-	/**
-	 * GX-0 defect 1, at real scale. Verified directly against this file's own raw XML
-	 * (not the design doc's retelling of it): 27 real `<trait>` elements total, 21 of them
-	 * carry no `val` attribute at all, and the literal string `val="1"` appears zero times
-	 * anywhere in the file. Since no trait in this file explicitly writes `val="1"`, every
-	 * parsed trait reading `total === '1'` must be one of those 21 defaulted ones - a
-	 * whole-file invariant, not a single cherry-picked example.
-	 */
 	public function test_no_val_attribute_across_the_real_file_now_defaults_to_one_for_all_21(): void {
 		$data = GEX_Xml_Parser::parse_file( $this->path( 'GV301Source/Code/Artifacts and Devices.gex' ) );
 
@@ -168,7 +140,7 @@ class GexXmlParserTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Real character-bearing files (Decision 068)
+	// Real character-bearing files
 	// -------------------------------------------------------------------------
 
 	public function test_a_real_vampire_export_matches_the_binary_readers_shape(): void {
@@ -185,25 +157,17 @@ class GexXmlParserTest extends TestCase {
 		$this->assertSame( 6, $character['path_traits'] );
 		$this->assertSame( 12, $character['blood'] );
 		$this->assertSame( 6, $character['willpower'] );
-		// temp_* mirrors the permanent value - the same fallback the binary reader itself
-		// uses for a source with no separate temp field.
 		$this->assertSame( $character['willpower'], $character['temp_willpower'] );
 
 		$this->assertSame( 728.0, $character['experience']['earned'] );
 		$this->assertSame( 39.0, $character['experience']['unspent'] );
 		$this->assertCount( 99, $character['experience']['history'] );
-		// The date-only bug this decision found and fixed: a history entry dated only
-		// "08/20/2021" must read as real midnight, not whatever time the test happened to
-		// run at (DateTime::createFromFormat() silently fills unspecified fields from the
-		// current system time without a leading `!`).
 		$this->assertSame( '2021-08-20 00:00:00', $character['experience']['history'][0]['when'] );
 
 		$this->assertArrayHasKey( 'Disciplines', $character['trait_lists'] );
 		$this->assertArrayHasKey( 'Abilities', $character['trait_lists'] );
 
-		// Confirmed genuinely absent from every real XML sample - emitted as the same
-		// empty/false defaults the binary reader uses when its own source lacks them,
-		// never omitted.
+		// Confirmed genuinely absent from every real XML sample.
 		$this->assertSame( '', $character['coterie'] );
 		$this->assertSame( '', $character['player'] );
 		$this->assertFalse( $character['is_npc'] );
@@ -211,9 +175,8 @@ class GexXmlParserTest extends TestCase {
 	}
 
 	/**
-	 * 1.0.0-review F-049: Grapevine writes a vampire's coterie, player, and narrator and a
-	 * werewolf's player and narrator (VampireClass.cls:358,380,384; WerewolfClass.cls:369,373) -
-	 * the parser always emitted them empty, so a player's name never survived an export.
+	 * Grapevine writes a vampire's coterie, player, and narrator and a werewolf's player and narrator
+	 * (VampireClass.cls:358,380,384; WerewolfClass.cls:369,373).
 	 */
 	public function test_a_vampire_and_a_werewolf_keep_their_player_narrator_and_coterie(): void {
 		$data = GEX_Xml_Parser::parse_string(
@@ -239,10 +202,6 @@ class GexXmlParserTest extends TestCase {
 		$this->assertSame( 6, $character['rage'] );
 		$this->assertSame( 6, $character['gnosis'] );
 		$this->assertSame( 6, $character['willpower'] );
-		// Real-data quirk confirmed directly (not assumed): this sample carries
-		// honor=""/glory="" but no `wisdom` attribute at all - both resolve to 0 with no
-		// special-casing needed, SimpleXML already treats a missing attribute and an
-		// empty one identically under (int)/(float) casts.
 		$this->assertSame( 0, $character['honor'] );
 		$this->assertSame( 0, $character['glory'] );
 		$this->assertSame( 0, $character['wisdom'] );
@@ -251,33 +210,17 @@ class GexXmlParserTest extends TestCase {
 	}
 
 	public function test_a_second_real_vampire_export_cross_validates_against_the_manual_import(): void {
-		// Hitchens exists in this project's own seeded data too, manually imported from a
-		// PDF (working.md/DECISIONLOG's own record) with XP 1491/79 - "the user's own
-		// choice between two conflicting source figures." This real .gex export matches
-		// that figure exactly, independent corroboration this parser reads the real value
-		// correctly, not just that it doesn't crash.
 		$data      = GEX_Xml_Parser::parse_file( $this->path( 'samples/data/hitchens-vampire.gex' ) );
 		$character = $data['characters'][0];
 
 		$this->assertSame( 'Hitchens', $character['name'] );
 		$this->assertSame( 'Pander', $character['clan'] );
 		$this->assertSame( 8, $character['generation'] );
-		// The exact real-world case the user's own generation-cap defect report named:
-		// 8th generation, Willpower 12 - confirms the parser reads the real stored value
-		// rather than something already capped upstream.
 		$this->assertSame( 12, $character['willpower'] );
 		$this->assertSame( 1491.0, $character['experience']['earned'] );
 		$this->assertSame( 79.0, $character['experience']['unspent'] );
 	}
 
-	/**
-	 * Decision 074: a real PuppetPrince export (a third-party MET character tracker,
-	 * confirmed against this same character's own printed sheet, `samples/data/Chase
-	 * Ashford.pdf`) inserts zero-value, em-dash-wrapped pseudo-traits into a long
-	 * Disciplines list purely to group it for a human reader - `"——Blood Magic——"`,
-	 * `"——Combination Disciplines——"` - with no game-mechanical meaning at all. Before
-	 * this fix both rows surfaced as real traits needing an ST's manual review.
-	 */
 	public function test_a_real_export_with_section_divider_rows_does_not_surface_them_as_traits(): void {
 		$data        = GEX_Xml_Parser::parse_file( $this->path( 'samples/data/1506_chase_ashford_.gex' ) );
 		$character   = $data['characters'][0];
@@ -294,20 +237,11 @@ class GexXmlParserTest extends TestCase {
 			);
 		}
 
-		// A real held power sitting immediately either side of a divider row must
-		// survive - proves the filter removes exactly the header rows, not a whole
-		// neighboring range by mistake.
+		// A real held power sitting immediately either side of a divider row must survive.
 		$this->assertContains( 'Watcher Valeren', $names );
 		$this->assertContains( 'Dur-An-Ki: Awakening of the Steel', $names );
 	}
 
-	/**
-	 * workflow-0.9.md Step 0e: the divider row is still dropped (Decision 074, proven
-	 * above), but its label now survives as every following trait's own `section` - real
-	 * fix for "Vicente de las Navas de Tolosa's Holy Shield" (a real combo, cost 3)
-	 * previously misread as "level 3" of a discipline family, since nothing told the
-	 * level-derivation heuristic it came from a combo section rather than a real ladder.
-	 */
 	public function test_traits_carry_the_section_they_actually_sat_under(): void {
 		$data        = GEX_Xml_Parser::parse_file( $this->path( 'samples/data/1506_chase_ashford_.gex' ) );
 		$disciplines = $data['characters'][0]['trait_lists']['Disciplines']['traits'];
@@ -322,17 +256,12 @@ class GexXmlParserTest extends TestCase {
 			$by_name["Vicente de las Navas de Tolosa's Holy Shield"]['section'] ?? null
 		);
 
-		// Real, ordinary Disciplines (Fortitude) and "Watcher Valeren" both sit BEFORE the
-		// first divider in this real file - confirmed directly, not assumed - so both must
-		// carry no `section` at all, not an empty string or a stale value from elsewhere.
 		$this->assertArrayNotHasKey( 'section', $by_name['Fortitude'] ?? [ 'section' => null ] );
 		$this->assertArrayNotHasKey( 'section', $by_name['Watcher Valeren'] ?? [ 'section' => null ] );
 	}
 
 	// -------------------------------------------------------------------------
-	// GX-0 defects 2-7 - no real aura/NPC/boon-carrying file exists in this repo
-	// (export/transfer design doc's risk ledger), so these are hand-built against
-	// VampireClass.OutputToFile's exact real attribute names (VampireClass.cls:360-427).
+	// Defects 2-7 - no real aura/NPC/boon-carrying file exists in this repo
 	// -------------------------------------------------------------------------
 
 	private function vampire_xml( string $attributes, string $body = '' ): string {
@@ -369,9 +298,6 @@ class GexXmlParserTest extends TestCase {
 	}
 
 	public function test_aura_and_aurabonus_are_read_as_separate_attributes(): void {
-		// The corrected shape (export/transfer design doc §2d): our writer will emit a
-		// genuine 'aurabonus' attribute rather than reproducing real Grapevine's malformed
-		// duplicate-'aura' output, so the reader supports that corrected shape.
 		$data = GEX_Xml_Parser::parse_string( $this->vampire_xml( 'aura="Serene" aurabonus="+2"' ) );
 		$this->assertSame( 'Serene', $data['characters'][0]['aura'] );
 		$this->assertSame( '+2', $data['characters'][0]['aura_bonus'] );
@@ -401,16 +327,6 @@ class GexXmlParserTest extends TestCase {
 		);
 	}
 
-	/**
-	 * Real production data, not a synthetic guess: kony-sabbat.net's "Chase Ashford" and
-	 * Boston's "Laslo Throndsen" both carry val="" (present but empty) rather than a fully
-	 * omitted val attribute, on real note-only atomic lists (Rituals, Merits, Derangements)
-	 * where a "0" state has no meaning - a character either holds the ritual/merit/flaw or
-	 * doesn't. This is a Dialect B web-tool export quirk (gex-export-transfer-design.md §2e:
-	 * "empty attributes written as attr=\"\""), not desktop Grapevine's own omit-by-default
-	 * behaviour, but produces the identical GX-0 defect 1 corruption via a different byte
-	 * shape - both must default to '1', not just the fully-absent case.
-	 */
 	public function test_an_explicitly_empty_val_defaults_to_one_same_as_an_absent_val(): void {
 		$data = GEX_Xml_Parser::parse_string(
 			'<?xml version="1.0"?><grapevine version="2.396">' .
@@ -423,11 +339,6 @@ class GexXmlParserTest extends TestCase {
 		$this->assertSame( '1', $data['rotes'][0]['sphere_list']['traits'][0]['total'] );
 	}
 
-	/**
-	 * The other half of the same real production finding: a genuinely explicit val="0" -
-	 * confirmed live on kony-sabbat.net as a deliberately zeroed "REMOVED" merit - is a real,
-	 * intentional value and must never be touched by the val=""/absent-val default.
-	 */
 	public function test_an_explicit_val_of_zero_is_never_defaulted_to_one(): void {
 		$data = GEX_Xml_Parser::parse_string(
 			'<?xml version="1.0"?><grapevine version="2.396">' .
@@ -467,8 +378,6 @@ class GexXmlParserTest extends TestCase {
 	}
 
 	public function test_temp_attributes_absent_still_mirror_permanent(): void {
-		// The pre-existing, correct fallback for a source with no separate temp value
-		// (matching the binary reader's own behaviour) - must survive the fix untouched.
 		$data      = GEX_Xml_Parser::parse_string( $this->vampire_xml( '' ) );
 		$character = $data['characters'][0];
 
@@ -513,10 +422,7 @@ class GexXmlParserTest extends TestCase {
 	}
 
 	/**
-	 * No `<character>` element (or any character-race element) exists in any real GEX
-	 * XML sample in this repo. Refusing loudly rather than silently skipping the element
-	 * is the whole point (workflow-0.8.md Step 9c) - a silent skip would let a
-	 * character-bearing file "succeed" as a clean, empty import.
+	 * No `<character>` element (or any character-race element) exists in any real GEX XML sample in this repo.
 	 */
 	public function test_an_unrecognized_element_throws_by_name_rather_than_silently_skipping(): void {
 		$this->expectException( \RuntimeException::class );

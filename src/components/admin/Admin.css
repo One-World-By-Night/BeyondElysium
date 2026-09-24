@@ -1,13 +1,3 @@
-/*
- * 1600px, not 960px. The old 960 cap predated the container-query table mechanism and
- * collided with it exactly: `@container be-table ( max-width: 960px )` matches *at* 960, so
- * every wp-admin table - Characters, the Approval Queue, query results - pinned itself to the
- * cap and then stacked every row into a card, on every desktop, since 1.0.0. The boundary is
- * exclusive now as well, so this no longer sits on a knife edge either way.
- *
- * A cap is still worth having so prose doesn't run the full width of an ultrawide monitor;
- * 1600px is simply past any table this admin renders.
- */
 .be-admin {
 	max-width: 1600px;
 	margin-top: 1rem;
@@ -228,14 +218,6 @@
 	font-size: 0.8rem;
 }
 
-/* Decision 049: title_refs'/name_lookup's nested rows (TemplateLayoutEditor.tsx,
- * SchemaBlockDefinitionEditor.tsx) sit inside a table cell that already carries
- * `.be-def-editor__table input/select { width: 100% }` (specificity 0,2,0) - matching
- * that exactly (`.be-def-editor__inline-row select`, also 0,2,0) would only win by
- * source order, which is fragile. Scoped through both a nesting wrapper and the row
- * itself (0,3,0) to win outright regardless of where either rule sits in the file - listed
- * once per wrapper class rather than one compound selector, since either can contain a row
- * without the other. */
 .be-def-editor__title-refs,
 .be-def-editor__name-lookup {
 	margin-top: 0.3rem;

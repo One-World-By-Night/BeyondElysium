@@ -8,10 +8,9 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-102 (docs-pass intake, question 24). Approval Rules shows a chronicle's Default
- * Approval Policy to the Storytellers who manage its rules, but saved it through the chronicle's
- * own settings route, which only a site administrator may use - so an HST or AST clicking either
- * choice got a permission error and the policy never changed.
+ * The chronicle's default approval policy: a Storyteller sets it through the chronicle-setup route and keeps every
+ * other setting, it returns to pending by default, a narrator cannot set it, the general chronicle settings route is
+ * not the Storyteller's to use, and a missing choice is refused.
  */
 class DefaultApprovalPolicyThreadTest extends WP_UnitTestCase {
 

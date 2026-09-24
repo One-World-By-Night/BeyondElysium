@@ -6,9 +6,8 @@ use BeyondElysium\Core\User_Settings;
 use WP_UnitTestCase;
 
 /**
- * Decision 041: `be_customize_sheet` granted per-user (WP user meta, toggled on the
- * standard profile.php/user-edit.php screen), additive to the role-based grant in
- * `Capabilities::CAPS` - never a replacement for it.
+ * `be_customize_sheet` granted per-user (WP user meta, toggled on the standard profile.php/user-edit.php screen),
+ * additive to the role-based grant in `Capabilities::CAPS`.
  */
 class UserSettingsTest extends WP_UnitTestCase {
 
@@ -18,8 +17,7 @@ class UserSettingsTest extends WP_UnitTestCase {
 		$this->assertFalse( current_user_can( 'be_customize_sheet' ), 'A bare subscriber must not have it by default.' );
 
 		update_user_meta( $user_id, User_Settings::CUSTOMIZE_SHEET_META, '1' );
-		// Capabilities are cached on the WP_User object - re-fetch the current user so
-		// the filter is re-evaluated against the fresh meta value.
+		// Capabilities are cached on the WP_User object.
 		wp_set_current_user( $user_id );
 
 		$this->assertTrue( current_user_can( 'be_customize_sheet' ), 'The per-user grant must be additive, not require a role change.' );

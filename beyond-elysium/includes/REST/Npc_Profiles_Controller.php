@@ -13,15 +13,7 @@ use BeyondElysium\Services\St_Visibility;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for NPC public profiles (1.1.0 §3.7 item 3) - the "Who's Who" projection a
- * plain player may see, deliberately narrower than the full character record
- * `Characters_Controller` returns: id, a display name, a description, an image, titles, and
- * factions - never `sheet_data`, player, XP, notes, or status.
- *
- * `titles`/`factions` are always empty for now - F1/F2 (§3.10), the items this projection's
- * own two fields describe, do not exist yet in this codebase. Not a stub for the sake of a
- * stub: the projection shape is real and final, only its two forward-referenced fields have
- * nothing to fill them with until those items ship later in this same release.
+ * REST controller for NPC public profiles.
  */
 class Npc_Profiles_Controller extends Base_Controller {
 
@@ -54,8 +46,7 @@ class Npc_Profiles_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Every NPC whose public profile the viewer can see - every NPC at all for a manager,
-	 * otherwise filtered through Audience against each NPC's own profile_audience.
+	 * Every NPC whose public profile the viewer can see.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -80,8 +71,7 @@ class Npc_Profiles_Controller extends Base_Controller {
 	}
 
 	/**
-	 * One NPC's public profile - the same projection get_items() returns, or 404 when the
-	 * character isn't an NPC or the viewer's audience doesn't reach it.
+	 * One NPC's public profile.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -106,8 +96,7 @@ class Npc_Profiles_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Updates one NPC's five public-profile fields. 400 not_an_npc on a PC - the profile
-	 * fields exist on every character row, but only ever mean something on an NPC.
+	 * Updates one NPC's five public-profile fields. 400 not_an_npc on a PC.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -162,9 +151,8 @@ class Npc_Profiles_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The projection Audience::can_see()/filter() actually read: {id, audience, audience_rules}
-	 * built from an NPC's own profile_audience/profile_audience_rules columns, matching §3.7
-	 * item 3's own wording exactly.
+	 * The projection Audience::can_see() and filter() read: {id, audience, audience_rules}, built from an NPC's own
+	 * profile_audience and profile_audience_rules columns.
 	 *
 	 * @param object $npc
 	 * @return object
@@ -178,13 +166,8 @@ class Npc_Profiles_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The public projection itself: id, a display name (public_name when set, else the real
-	 * name), the description ([ST]-stripped for a non-manager), an image (public_image_id
-	 * when set, else the character's own portrait), the titles this NPC currently holds
-	 * (F2) and the factions it belongs to (F1) - each filtered by its own visibility rule
-	 * for a non-manager, exactly as it would be read directly from `/positions`/`/factions`:
-	 * a `holder_public = 0` title never names its holder here either, and a faction only
-	 * appears once its own `Audience` clears this viewer.
+	 * The public projection: id, a display name, the description, an image, the titles the NPC holds and the factions it
+	 * belongs to, each filtered by its own visibility rule for a non-manager.
 	 *
 	 * @param object $npc
 	 * @param object $game
@@ -238,8 +221,7 @@ class Npc_Profiles_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404
-	 * status when no game matches.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

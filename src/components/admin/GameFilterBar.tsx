@@ -1,8 +1,6 @@
 /**
- * The Loading / no-games-yet / game-select shape seven wp-admin pages (Characters, Game
- * Nights, Plots, Query, Release Batches, Reports, World Objects) each hand-rolled
- * identically until this was extracted (1.1.1 audit) - paired with `useAdminGameSelector`
- * for the state and data-loading half of the same duplication.
+ * The Loading / no-games-yet / game-select shape seven wp-admin pages (Characters, Game Nights, Plots, Query, Release
+ * Batches, Reports, World Objects) share.
  */
 import { __ } from '@wordpress/i18n';
 import type { Game } from '../../types';
@@ -12,9 +10,13 @@ export interface GameFilterBarProps {
 	gameSlug: string;
 	onGameChange: ( slug: string ) => void;
 	loading: boolean;
-	/** Extra controls rendered inside the same filter row, after the game select. */
+	/**
+	 * Extra controls rendered inside the same filter row, after the game select.
+	 */
 	extraFilters?: React.ReactNode;
-	/** The page's own content, rendered below the filter row once a game is loaded. */
+	/**
+	 * The page's own content, rendered below the filter row once a game is loaded.
+	 */
 	children?: React.ReactNode;
 }
 

@@ -1,9 +1,5 @@
 /**
  * Detail view for a single world object (item, location, rote, or boon).
- * Renders its scalar and trait-list properties from the object type's
- * schema, rarity/cost/limitations metadata, and either a full connection
- * manager or a read-only list of connected characters depending on the
- * viewer's permissions.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -65,11 +61,7 @@ const EVENT_LABELS: Record< ItemEvent[ 'event' ], string > = {
 const TEXT_TYPES = new Set( [ 'string', 'text', 'int', 'date' ] );
 
 /**
- * Loads and renders one world object's detail view: scalar properties
- * rendered as text, trait-list properties formatted through
- * `displayTrait()`, plus rarity/cost/limitations metadata and the
- * object's connected characters. Shows loading and error states while
- * the fetch is in flight or if it fails.
+ * Loads and renders one world object's detail view.
  */
 export function WorldObjectCard( {
 	gameSlug,
@@ -78,8 +70,6 @@ export function WorldObjectCard( {
 	const [ object, setObject ] = useState< WorldObject | null >( null );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
-	// "Who's here" (1.1.0 §3.9 item 4) - the same /links route the editor's Links panel uses,
-	// audience-narrowed to based_at NPCs already for a non-manager viewer.
 	const [ whosHere, setWhosHere ] = useState< LocationLink[] >( [] );
 
 	useEffect( () => {
@@ -150,8 +140,6 @@ export function WorldObjectCard( {
 					</nav>
 				) }
 			<h3 className="be-world-card__name">{ object.name }</h3>
-			{ /* 1.1.0 §3.12 item 1 - based_on is absent entirely for an ordinary item, null when
-				the source has since been deleted. */ }
 			{ object.based_on && (
 				<p className="be-world-card__based-on">
 					{ sprintf(
@@ -180,8 +168,6 @@ export function WorldObjectCard( {
 
 			<dl className="be-world-card__properties">
 				{ Object.entries( schema ).map( ( [ key, type ] ) => {
-					// Display over Grapevine text (1.1.0 §3.9 item 3): a location's Owner/Where
-					// prefer a real link/parent name, already resolved server-side.
 					const value =
 						object.object_type === 'location' &&
 						( key === 'owner' || key === 'where' ) &&
@@ -317,7 +303,6 @@ export function WorldObjectCard( {
 				</>
 			) }
 
-			{ /* Full connection manager when permitted, otherwise a read-only connected-characters list. */ }
 			{ window.beyondElysium?.capabilities?.be_manage_connections ? (
 				<>
 					<h4>{ __( 'Connections', 'beyond-elysium' ) }</h4>
@@ -360,9 +345,7 @@ export function WorldObjectCard( {
 }
 
 /**
- * A manager-only history section for one item (1.1.0 §3.12 item 3) - every event recorded
- * against it, oldest first. Loaded on mount rather than gated behind a tab, since this
- * component has no existing tab UI to reuse.
+ * A manager-only history section for one item.
  */
 function ItemHistory( {
 	gameSlug,
@@ -409,9 +392,8 @@ function ItemHistory( {
 }
 
 /**
- * Renders a list of trait-list property entries (name, count, note)
- * using the same `displayTrait()` formatter as character-sheet trait
- * lists. Renders "None" when the entry list is empty or not an array.
+ * Renders a list of trait-list property entries (name, count, note) using the same `displayTrait()` formatter as
+ * character-sheet trait lists.
  */
 function TraitList( {
 	entries,

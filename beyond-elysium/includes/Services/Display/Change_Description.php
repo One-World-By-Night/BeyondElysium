@@ -5,40 +5,19 @@ namespace BeyondElysium\Services\Display;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Formats one `character_changes` row as a short human-readable string, e.g.
- * "Celerity 2 -> 4" - an exact PHP twin of `src/lib/describeChange.ts`, so a
- * signed PDF's XP history table reads the same descriptions the on-screen
- * approval queue and change history already show, instead of a third,
- * independently-derived wording (signed-pdf-design.md Section 3a's `xp_history`
- * field). Verified against the TypeScript original by having both read the
- * same JSON fixture and assert the same output; see
- * tests/unit/Display/ChangeDescriptionParityTest.php and
- * src/lib/describeChange.test.ts.
- *
- * Also carries `xp_delta()`, the signed-amount convention `Change_Engine::approve()`
- * and `Character_Exporter::write_experience()` each already apply inline when a
- * change is approved - restated here as a named, callable form since neither of
- * those is a shared helper and `xp_history` needs the same arithmetic a third
- * time. Not a refactor of either existing site; both are left exactly as they are.
- *
- * Operates only on plain data passed in as arguments - no database access; its
- * words go through `__()` so a translated chronicle reads its own language.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md Section 3a, SP-5
+ * Formats one `character_changes` row as a short human-readable string, e.g. "Celerity 2 -> 4".
  */
 class Change_Description {
 
 	/**
-	 * Builds the display string for one change, branching on `$change_type` and
-	 * reading whatever fields that type's `$change_data` carries. Falls back to
-	 * showing only the new value when a `previous` side isn't available, and to
-	 * a generic label for an unrecognized type.
+	 * Builds the display string for one change, branching on `$change_type` and reading whatever fields that type's
+	 * `$change_data` carries.
 	 *
 	 * @param string               $change_type
 	 * @param array<string,mixed>  $change_data
 	 */
 	public static function describe( string $change_type, array $change_data ): string {
-		// Every word is translated; names, numbers, and reasons are the change's own (1.0.0-review F-084).
+		// Every word is translated.
 		switch ( $change_type ) {
 			case 'add_trait':
 				$trait = (array) ( $change_data['trait'] ?? [] );
@@ -99,7 +78,7 @@ class Change_Description {
 				}
 				$field = array_key_first( $fields );
 				$value = $fields[ $field ];
-				// A multiselect's choices read as the sheet shows them, never "Array" (F-086).
+				// A multiselect's choices read as the sheet shows them.
 				$value = is_array( $value ) ? implode( ', ', array_map( 'strval', $value ) ) : (string) $value;
 				/* translators: 1: identity field name, 2: its new value */
 				return sprintf( __( '%1$s → %2$s', 'beyond-elysium' ), $field, $value );
@@ -170,10 +149,8 @@ class Change_Description {
 	}
 
 	/**
-	 * The signed XP delta one approved change actually applied, matching
-	 * `Change_Engine::approve()`'s own inline arithmetic: `xp_earn`/`xp_adjust`
-	 * carry an already-signed `amount`; every other costed change is a spend
-	 * (negative); an uncosted change (e.g. `import_note`) is zero.
+	 * The signed XP delta one approved change actually applied, matching `Change_Engine::approve()`'s own inline
+	 * arithmetic: `xp_earn`/`xp_adjust` carry an already-signed `amount`.
 	 *
 	 * @param array<string,mixed> $change_data
 	 */

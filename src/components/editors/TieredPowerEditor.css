@@ -22,12 +22,6 @@
 	min-width: 8rem;
 }
 
-/*
- * Two-class compound selector, not a single class - D34/Decision 045: the live
- * hello-elementor theme ships `input[type=text]{width:100%}` in its own reset at
- * specificity (0,1,1), which beats a plain `.be-tiered-power-editor__tradition` (0,1,0)
- * regardless of source order and would stretch this box across the whole row.
- */
 .be-tiered-power-editor__row .be-tiered-power-editor__tradition {
 	flex: 0 0 auto;
 	box-sizing: border-box;
@@ -42,8 +36,7 @@
 	opacity: 0.8;
 }
 
-/* Blood magic: a power with no tradition chosen yet - same compound-selector
-   discipline as the rule above (D34/Decision 045), for the same reason. */
+/* Blood magic: a power with no tradition chosen yet. */
 .be-tiered-power-editor__row .be-tiered-power-editor__tradition--required {
 	border-color: var(--be-red-7);
 }
@@ -65,13 +58,6 @@
 	text-align: center;
 }
 
-/* Corrected (1.2.5-design-workflow.md §C, live testing): hello-elementor's real rule is
- * `[type="button"], [type="submit"], button { ... }`, not a bare `button{...}` element
- * selector - since this stepper sets `type="button"` explicitly, the `[type="button"]`
- * alternative applies at specificity 0,1,0, an exact TIE with a single class, not a loss
- * the class safely avoids. A tie falls back to source order, which is fragile (confirmed
- * live on kony-sabbat.net: `.be-help-button`'s identical shape lost this exact tie).
- * Compound-class (0,2,0) wins outright, matching the fix already applied there. */
 .be-tiered-power-editor .be-tiered-power-editor__stepper-button {
 	width: 1.6rem;
 	height: 1.6rem;
@@ -92,8 +78,7 @@
 	cursor: default;
 }
 
-/* stylelint-disable @stylistic/max-line-length -- real BEM class names, ancestor-
-   qualified for D34 specificity, genuinely don't fit in 80 columns. */
+/* stylelint-disable @stylistic/max-line-length */
 .be-tiered-power-editor .be-tiered-power-editor__stepper-button:not(:disabled):hover,
 .be-tiered-power-editor .be-tiered-power-editor__stepper-button:not(:disabled):focus-visible {
 	/* stylelint-enable @stylistic/max-line-length */
@@ -105,7 +90,6 @@
 	font-size: 0.85rem;
 }
 
-/* Additive-first, matching TraitListEditor.css - see its own comment for the reasoning. */
 .be-tiered-power-editor .be-tiered-power-editor__remove {
 	flex: 0 0 auto;
 	padding: 0.15rem 0.4rem;
@@ -122,14 +106,12 @@
 	color: var(--be-red-6);
 }
 
-/* stylelint-disable-next-line @stylistic/max-line-length -- real BEM class name,
-   ancestor-qualified for D34 specificity, genuinely doesn't fit in 80 columns. */
+/* stylelint-disable-next-line @stylistic/max-line-length */
 .be-tiered-power-editor__row--removed .be-tiered-power-editor .be-tiered-power-editor__remove {
 	color: var(--be-gray-8);
 	font-weight: 600;
 }
 
-/* Same bare-class safety as the stepper buttons above (hello-elementor's element-selector reset). */
 .be-tiered-power-editor .be-tiered-power-editor__view-toggle {
 	flex: 0 0 auto;
 	padding: 0.1rem 0.4rem;
@@ -146,13 +128,6 @@
 	background: var(--be-gray-23);
 }
 
-/* flex-basis 100% forces this onto its own line below the name/toggle - the row's own
-   flex-wrap (above) is what lets it actually drop there instead of overflowing.
-   One rung per line, numbered (1.2.11 D93): the owner reads this as a ladder, so it is a
-   real <ol> in a column rather than a wrapped row of chips. The native marker is
-   suppressed because the checkbox comes first - the number is drawn after it, inside the
-   label - while the <ol> keeps the list semantics a screen reader and the print sheet
-   need. */
 .be-tiered-power-editor__checklist {
 	display: flex;
 	flex: 1 1 100%;
@@ -178,16 +153,13 @@
 	font-variant-numeric: tabular-nums;
 }
 
-/* The other names filed at this same rung, kept as a note rather than run together on the
-   line. Muted and tiny so a rung is no taller than it was without one. */
+/* The other names filed at this same rung, kept as a note. */
 .be-tiered-power-editor__rung-alternates {
 	color: var(--be-gray-8);
 	font-size: 0.85em;
 	cursor: help;
 }
 
-/* Same bare-class safety as the stepper buttons (hello-elementor's element-selector
-   reset, D34) - this sits directly under the ladder it belongs to. */
 .be-tiered-power-editor .be-tiered-power-editor__add-elder {
 	align-self: flex-start;
 	flex: 0 0 auto;
@@ -206,9 +178,7 @@
 	background: var(--be-gray-23);
 }
 
-/* Desktop: the tradition field and remove button stay inline exactly as before; the
- * modal trigger below is never shown. Same field styling as TraitListEditor's own modal
- * (mobile-sheet-design.md §4.5(4)). */
+/* Desktop: the tradition field and remove button stay inline exactly as before. */
 .be-tiered-power-editor__row-detail {
 	display: contents;
 }
@@ -231,13 +201,7 @@
 	color: var(--be-gray-6);
 }
 
-/*
- * Phone width (§4.5(4)): the tradition field and remove action - a six-control inline
- * row that survived only by wrapping raggedly - collapse behind one "Details" trigger
- * per row, the same summary-row-plus-modal shape Decision 053 already established for
- * TraitListEditor. The stepper stays inline: it is the primary interaction, not a rare
- * one, unlike tradition/remove.
- */
+/* Phone width: the tradition field and remove action. */
 @media ( max-width: 768px ) {
 
 	.be-tiered-power-editor__row-detail {
@@ -257,7 +221,7 @@
 	}
 }
 
-/* 1.1.0 D4: matches .be-tiered-power-editor .be-tiered-power-editor__view-toggle's own established look. */
+/* Matches.be-tiered-power-editor.be-tiered-power-editor__view-toggle's own established look. */
 .be-tiered-power-editor .be-tiered-power-editor__reorder-trigger {
 	display: block;
 	margin: 0 0 0.5rem;
@@ -283,10 +247,7 @@
 	border-bottom: 1px solid var(--be-gray-23);
 }
 
-/* Drag handles are a desktop-only enhancement; a touch viewport never sees a
- * mouse-only drag gesture anyway, so hiding the handle there removes dead
- * affordance rather than losing any real capability - Move up/Move down cover
- * touch and keyboard everywhere. */
+/* Drag handles are a desktop-only enhancement. */
 .be-tiered-power-editor__drag-handle {
 	flex: 0 0 auto;
 	cursor: grab;
@@ -312,10 +273,7 @@
 	margin: 0.5rem 0;
 }
 
-/*
- * E2 (1.2.10): the elder-and-above pick list, grouped by rank - a completely separate
- * area from the ladder rows above, never sharing a count or a control with them.
- */
+/* The elder-and-above pick list, grouped by rank. */
 .be-tiered-power-editor__picks {
 	margin: 0.5rem 0;
 }
@@ -338,7 +296,7 @@
 	padding: 0;
 }
 
-/* 1.1.0 D5: a blood_magic block's add flow pauses here until a paradigm is chosen. */
+/* A blood_magic block's add flow pauses here until a paradigm is chosen. */
 .be-tiered-power-editor__pending-add {
 	display: flex;
 	flex-wrap: wrap;

@@ -8,9 +8,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 S1: game sessions, sign-in attendance, and attendance XP.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.1
+ * Game sessions, sign-in attendance, and attendance XP.
  */
 class GameSessionsThreadTest extends WP_UnitTestCase {
 
@@ -310,8 +308,7 @@ class GameSessionsThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// release_schedule (1.1.1 §3) - a sibling of settings.sessions, saved and
-	// validated through the same route.
+	// release_schedule - a sibling of settings.sessions, saved and validated through the same route
 	// -------------------------------------------------------------------------
 
 	public function test_release_schedule_rules_are_saved_and_returned(): void {

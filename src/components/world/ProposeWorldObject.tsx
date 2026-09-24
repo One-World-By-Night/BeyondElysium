@@ -1,13 +1,5 @@
 /**
- * A player proposes an item, location or rote for their own character (1.0.1 D3).
- *
- * It submits an ordinary `propose_world_object` change, so it lands in the Approval Queue a
- * Storyteller already works daily rather than a second list nobody remembers to check.
- * Approving it writes the catalog entry and connects it to the character in one transaction;
- * rejecting writes nothing.
- *
- * The per-type property fields come from the same `WORLD_OBJECT_SCHEMAS` the catalog editor
- * renders, so a player fills in exactly the fields a Storyteller would.
+ * A player proposes an item, location or rote for their own character.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -20,7 +12,9 @@ import './ProposeWorldObject.css';
 
 export interface ProposeWorldObjectProps {
 	gameSlug: string;
-	/** The character the proposal is attached to - "my character made a thing". */
+	/**
+	 * The character the proposal is attached.
+	 */
 	characterId: number;
 }
 
@@ -33,8 +27,7 @@ export function ProposeWorldObject( {
 	characterId,
 }: ProposeWorldObjectProps ) {
 	const types = Object.keys( WORLD_OBJECT_SCHEMAS ).filter(
-		// A boon is a transaction between two characters, recorded by a Harpy - never
-		// something a player proposes into the catalog.
+		// A boon is a transaction between two characters, recorded by a Harpy.
 		( t ) => t !== 'boon'
 	);
 
@@ -56,8 +49,7 @@ export function ProposeWorldObject( {
 			.catch( () => setCharacter( null ) );
 	}, [ gameSlug, characterId ] );
 
-	// Properties belong to the chosen type; keeping them across a type change would submit
-	// fields that type has never heard of.
+	// Properties belong to the chosen type.
 	useEffect( () => {
 		setProperties( {} );
 	}, [ objectType ] );
@@ -186,9 +178,7 @@ export function ProposeWorldObject( {
 			</div>
 
 			{ Object.entries( schema )
-				// A trait_list property is a Storyteller-side structure (availability lists, security
-				// traits); a player proposing "my character made a thing" has no business filling one
-				// in, and an approver can add it afterwards.
+				// A trait_list property is a Storyteller-side structure (availability lists, security traits).
 				.filter( ( [ , kind ] ) => kind !== 'trait_list' )
 				.map( ( [ key, kind ] ) => (
 					<label key={ key }>

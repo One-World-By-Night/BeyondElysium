@@ -1,17 +1,8 @@
 #!/usr/bin/env php
 <?php
 /**
- * Validates every declared catalog file against reference/CATALOG-JSON-FORMAT.md §7 - each
- * file's envelope and payload, then (rules 6 and 7) that every slug it references has a file.
- *
- * Run from bin/verify, which fails the build on any error - a malformed catalog must never
- * reach a seed. Exits 0 and says so when no catalog directory exists yet: the files arrive
- * with 1.3.0/1.3.1 and this validator is deliberately built first (owner ruling, 2026-09-21)
- * so every one of them is machine-checked as it is generated rather than at cutover.
- *
- * Usage:
- *   bin/validate-catalog            validate data/catalog/**
- *   bin/validate-catalog <dir>      validate a directory of files instead
+ * Validates every declared catalog file: each file's envelope and payload, then that every slug it references has a
+ * file. Run from bin/verify, which fails the build on any error.
  */
 
 // The service guards on ABSPATH, as every shipped file does; define it before requiring.
@@ -88,8 +79,6 @@ foreach ( $decoded as $path => $data ) {
 
 	$bad_files++;
 	printf( "  %s  (%d)\n", $path, count( $errors ) );
-	// Cap the per-file listing: a systematic authoring error can produce one line per row,
-	// and 11,519 of them buries the one file that actually needs looking at.
 	foreach ( array_slice( $errors, 0, 15 ) as $e ) {
 		echo "      - {$e}\n";
 	}

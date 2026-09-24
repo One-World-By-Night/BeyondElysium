@@ -1,8 +1,6 @@
 /**
- * "What I Know" (1.1.0 §3.11) - My Chronicle's own tab listing every secret revealed to one
- * of the current player's characters, across every plot, item, location, or NPC it's
- * attached to. `entity_name` is null when the viewer can't independently see that entity -
- * the secret itself is still shown, just without naming what it's about.
+ * "What I Know" - My Chronicle's own tab listing every secret revealed to one of the current player's characters,
+ * across every plot, item, location, or NPC it's attached to.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';

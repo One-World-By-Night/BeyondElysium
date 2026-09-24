@@ -1,11 +1,5 @@
 /**
- * Public, unauthenticated verification page (GX-7). Resolves a short
- * attestation code - minted when a character is exported with the
- * `verify` option - to what was attested at issue time, plus whether
- * it still matches the character today. Reads `?code=` off its own
- * URL the same way CharacterSheet.tsx reads `?character_id=`, and also
- * accepts one typed in by hand, since the codes are deliberately
- * human-typeable (no 0/O/1/I/L in the alphabet).
+ * Public, unauthenticated verification page.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -67,10 +61,7 @@ function isRestError( error: unknown ): error is RestError {
 }
 
 /**
- * Renders the outcome of checking one verification code: not found,
- * rate limited, a real error, or - when the code resolves - what was
- * attested and, unless the attestation was revoked, whether it still
- * matches the character today.
+ * Renders the outcome of checking one verification code: not found, rate limited, a real error.
  */
 export function VerifyCharacter() {
 	const [ code, setCode ] = useState( () => codeFromUrl() );
@@ -208,10 +199,8 @@ export function VerifyCharacter() {
 }
 
 /**
- * Renders one resolved attestation: the revoked banner (which
- * suppresses still_matches entirely) or the snapshot plus live
- * match checklist. Branches on `kind` - `'item'` is never a real
- * character document kind, so the two shapes can't be confused.
+ * Renders one resolved attestation: the revoked banner (which suppresses still_matches entirely) or the snapshot plus
+ * live match checklist.
  */
 function VerifyResult( { data }: { data: VerifyResponse } ) {
 	if ( data.kind === 'item' ) {

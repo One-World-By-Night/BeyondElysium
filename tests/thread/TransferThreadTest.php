@@ -6,13 +6,7 @@ use BeyondElysium\Models\Transfer;
 use WP_UnitTestCase;
 
 /**
- * GX-8/9: `Transfer`'s own model-level contract - the one-open-row-per-
- * (uuid, direction) rule enforced in `create()` rather than a fighting
- * unique index, `find_open()`, the timestamp stamping `transition()` does
- * for specific destination states, and `open_states_for_game()` merging
- * both directions into one badge lookup without an N+1 (§7.3).
- *
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-8, GX-9, §7.2, §7.3, §8.1
+ * 9: `Transfer`'s own model-level contract.
  */
 class TransferThreadTest extends WP_UnitTestCase {
 

@@ -11,10 +11,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 S6: staff assignment (`plots.assigned_to`/`characters.assigned_to`, restricted to a
- * real hst/ast/narrator member of the chronicle) and My Queue's four sections.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.6
+ * Staff assignment (`plots.assigned_to`/`characters.assigned_to`, restricted to a real hst/ast/narrator member of the
+ * chronicle) and My Queue's four sections.
  */
 class StaffQueueThreadTest extends WP_UnitTestCase {
 

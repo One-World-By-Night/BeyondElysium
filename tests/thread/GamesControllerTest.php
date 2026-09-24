@@ -9,13 +9,8 @@ use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Schema_Block;
 
 /**
- * Step 3a/3e audit findings, both around slug collisions:
- * - create_item(): an explicit (not name-derived) colliding slug used to fall through
- *   to the database's own UNIQUE constraint and surface as a generic create_failed 500.
- * - update_item(): Game::update()'s boolean return was discarded entirely - a colliding
- *   slug silently failed the UPDATE, and the code went on to look up the *other* game
- *   that already held the requested slug, returning that game's data as if the edit had
- *   succeeded.
+ * The games routes: create and rename guard slug collisions, settings payloads are validated, `my games` returns only
+ * real memberships with the real role, and the capabilities and setup routes respect the caller's chronicle role.
  */
 class GamesControllerTest extends WP_UnitTestCase {
 
@@ -72,12 +67,6 @@ class GamesControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 'Game thread-test-game-a', $still_there->name );
 	}
 
-	/**
-	 * This test used to certify the bug as working: a rename that only ever touched
-	 * be_games, leaving every character orphaned at the old owner_slug. Now asserts the
-	 * cascade actually moved the character - the single most likely way Game::rename()'s
-	 * fix could regress is exactly this assertion quietly being lost again.
-	 */
 	public function test_a_normal_rename_still_succeeds(): void {
 		$this->create_game( 'thread-test-rename-source' );
 		$character_id = Character::create( [
@@ -100,12 +89,6 @@ class GamesControllerTest extends WP_UnitTestCase {
 		$this->assertCount( 0, Character::all_for_game( 'thread-test-rename-source' ) );
 	}
 
-	/**
-	 * Before 1.0.0 a row-only delete left a chronicle's schema-block forks behind (D42, fixed
-	 * by 1.0.0-review F-036), so an install can still hold a fork outliving its game at a slug
-	 * a later chronicle then tries to rename into. That must abort with a named error, not
-	 * silently merge or hit the forks table's own unique index as a generic 500.
-	 */
 	public function test_renaming_into_a_slug_with_an_orphaned_schema_block_fork_is_rejected(): void {
 		$this->create_game( 'thread-test-fork-source' );
 		Schema_Block::find_or_create_fork_for_game( 'vampire-disciplines', 'thread-test-fork-target' );
@@ -133,11 +116,6 @@ class GamesControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 400, $response->get_status(), 'The PUT route previously had no args schema at all, so this reached Game::update() unvalidated.' );
 	}
 
-	/**
-	 * Step 1.5c/1.5e (workflow-0.9.md) - asc_role_path is a D27-class field: present on
-	 * neither this controller's own field list nor Game::update()'s allowlist until this
-	 * fix, so it would have been silently dropped with no error on either layer.
-	 */
 	public function test_asc_role_path_can_be_set_and_read_back(): void {
 		$this->create_game( 'thread-test-asc-role-path-game' );
 
@@ -153,8 +131,7 @@ class GamesControllerTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// GET /my/games (page-consolidation-design.md) - the real chronicle-switcher
-	// data source, never the full collection.
+	// GET /my/games - the real chronicle-switcher data source
 	// -------------------------------------------------------------------------
 
 	public function test_my_games_returns_only_real_memberships_with_the_real_role(): void {
@@ -206,21 +183,13 @@ class GamesControllerTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// GET /{game_slug}/my/capabilities (page-consolidation-design.md) - the exact
-	// scenario a chronicle switcher exists to make safe: an HST in one chronicle,
-	// nothing at all in another.
+	// GET /{game_slug}/my/capabilities
 	// -------------------------------------------------------------------------
 
 	public function test_capabilities_reflect_hst_in_one_chronicle_and_nothing_in_another(): void {
 		$hst_chronicle     = $this->create_game( 'thread-test-caps-hst-game' )->get_data();
 		$stranger_chronicle = $this->create_game( 'thread-test-caps-stranger-game' )->get_data();
 
-		// A real HST needs both layers: a WP role that actually holds the raw
-		// be_manage_characters/be_manage_plots capability (Capabilities.php grants those
-		// to editor+ only, never subscriber), plus the chronicle-scoped 'hst' membership
-		// row that Authorization::check_request() uses to decide WHICH chronicle it
-		// applies to. A subscriber can never pass regardless of their game_members role -
-		// this is the real two-layer model, not a test bug to work around.
 		$user = self::factory()->user->create( [ 'role' => 'editor' ] );
 		Game_Member::set_role( (int) $hst_chronicle->id, $user, 'hst' );
 		wp_set_current_user( $user );
@@ -270,12 +239,7 @@ class GamesControllerTest extends WP_UnitTestCase {
 	}
 
 	public function test_capabilities_route_denies_a_logged_out_visitor_outright(): void {
-		// The route's own gate is a bare is_user_logged_in(), not a specific capability -
-		// its whole job is to determine capabilities, so it can't be gated by one of them.
-		// A fully anonymous visitor is denied at that gate before Authorization::
-		// check_request() ever runs, distinct from the "resolvable route, no real
-		// relationship to this chronicle" case above, which always answers 200 with every
-		// flag false.
+		// The route's own gate is a bare is_user_logged_in().
 		$game = $this->create_game( 'thread-test-caps-logged-out-game' )->get_data();
 		$slug = $game->slug;
 
@@ -285,11 +249,7 @@ class GamesControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * 1.0.0-review checklist item 22 (Chronicle Setup's new "Plot Features" switch).
-	 * `settings.plots` is a new, one-level-deeper key than `enabled_stacks`/`auto_approve` -
-	 * confirms the same merge (`Games_Controller::update_item()`) round-trips a nested
-	 * object just as cleanly, and that saving it doesn't erase an unrelated sibling key
-	 * already in `settings`, exactly as `enabled_stacks` never erases `auto_approve`.
+	 * Chronicle Setup's "Plot Features" switch.
 	 */
 	public function test_saving_expanded_plots_via_rest_round_trips_and_does_not_clobber_a_sibling_key(): void {
 		$slug = $this->create_game( 'thread-test-expanded-plots-game' )->get_data()->slug;
@@ -313,19 +273,11 @@ class GamesControllerTest extends WP_UnitTestCase {
 		$this->assertTrue( $game->settings->auto_approve );
 	}
 
-	/**
-	 * Owner ruling, 1.0.0-checklist.md item 18 (2026-09-15): an HST saves their own
-	 * chronicle's creature types, sub-faction restrictions, and new-character approval -
-	 * previously be_manage_games only, unreachable by anyone but a site administrator. The
-	 * new /chronicle-setup route (be_manage_chronicle_setup) carries exactly these three
-	 * fields, merged into the shared settings object the same way update_item() does.
-	 */
 	public function test_an_hst_can_save_their_own_chronicles_setup_settings(): void {
 		$slug    = $this->create_game( 'thread-test-hst-chronicle-setup-game' )->get_data()->slug;
 		$game_id = \BeyondElysium\Models\Game::find_by_slug( $slug )->id;
 
-		// A sibling settings key, written as the site administrator, must survive the HST's
-		// own write below - the same "no clobber" guarantee update_item()'s own merge gives.
+		// A sibling settings key, written as the site administrator, must survive the HST's own write below.
 		$seed = new WP_REST_Request( 'PUT', "/be/v1/games/{$slug}" );
 		$seed->set_url_params( [ 'slug' => $slug ] );
 		$seed->set_param( 'settings', [ 'auto_approve' => true ] );
@@ -351,9 +303,7 @@ class GamesControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The AST half of the same ruling (item 27): an AST does not hold
-	 * be_manage_chronicle_setup, so the same route 403s for them even in their own
-	 * chronicle - "an AST loses Chronicle Setup."
+	 * The AST half of the same ruling: an AST does not hold be_manage_chronicle_setup.
 	 */
 	public function test_an_ast_cannot_save_the_chronicles_setup_settings(): void {
 		$slug    = $this->create_game( 'thread-test-ast-chronicle-setup-game' )->get_data()->slug;
@@ -372,10 +322,7 @@ class GamesControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The new route only ever reads enabled_stacks/enabled_factions/
-	 * require_new_character_approval - a stray name/description/asc_role_path in the same
-	 * request body is silently ignored, never applied, so an HST cannot use this narrow
-	 * route to smuggle through a change still gated on the full be_manage_games elsewhere.
+	 * The new route only ever reads enabled_stacks/enabled_factions/require_new_character_approval.
 	 */
 	public function test_the_chronicle_setup_route_ignores_fields_it_does_not_own(): void {
 		$slug    = $this->create_game( 'thread-test-chronicle-setup-scope-game' )->get_data()->slug;
@@ -396,11 +343,6 @@ class GamesControllerTest extends WP_UnitTestCase {
 		$this->assertNotSame( 'Renamed by an HST through the narrow route', $game->name );
 	}
 
-	/**
-	 * 1.2.7-design-workflow.md §E2/§E5 - accent_color joins the same three-field
-	 * whitelist above, same be_manage_chronicle_setup bar. An empty string clears the
-	 * override rather than being rejected as invalid.
-	 */
 	public function test_an_hst_can_save_and_clear_their_own_chronicles_accent_color(): void {
 		$slug    = $this->create_game( 'thread-test-hst-accent-color-game' )->get_data()->slug;
 		$game_id = \BeyondElysium\Models\Game::find_by_slug( $slug )->id;
@@ -442,12 +384,6 @@ class GamesControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 400, $response->get_status() );
 	}
 
-	/**
-	 * 1.2.7-design-workflow.md §E1/§E2 - the full resolution order get_my_capabilities()
-	 * resolves: a chronicle's own override wins over the site-wide default, the site-wide
-	 * default applies when the chronicle sets none, and '' (never a color) means neither
-	 * is set - the signal useChronicleSwitcher() reads as "apply no inline style".
-	 */
 	public function test_my_capabilities_resolves_accent_color_chronicle_over_site_default(): void {
 		$slug    = $this->create_game( 'thread-test-accent-resolution-game' )->get_data()->slug;
 		$game_id = \BeyondElysium\Models\Game::find_by_slug( $slug )->id;
@@ -474,7 +410,6 @@ class GamesControllerTest extends WP_UnitTestCase {
 		$this->assertSame( '#8b0000', $response->get_data()['accent_color'], "the chronicle's own override wins over the site default" );
 	}
 
-	/** 1.2.7-design-workflow.md §E1 - the site-wide default, be_manage_games only. */
 	public function test_branding_route_round_trips_and_denies_a_non_admin(): void {
 		$get = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/be/v1/branding' ) );
 		$this->assertSame( 200, $get->get_status() );

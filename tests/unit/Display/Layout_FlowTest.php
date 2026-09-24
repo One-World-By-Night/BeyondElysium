@@ -6,18 +6,7 @@ use BeyondElysium\Services\Display\Layout_Flow;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `Layout_Flow.php` (authoritative) and `templateLayout.ts` (the on-screen sheet's own
- * grid math) must agree - same width or section list in, same span or flow order out. Both
- * read the same fixture and are checked against the same expected output; this half proves
- * the PHP side, `src/lib/templateLayout.test.ts` proves the TypeScript side.
- *
- * The first six cases below are `templateLayout.test.ts`'s own existing named cases,
- * transcribed 1:1 rather than only left to the fixture loop; the stability test and the
- * fixture-driven parity tests are this port's own required additions - see
- * signed-pdf-design.md's Test Plan (`Display\Layout_FlowTest.php` - `spanFor(null) === 2`;
- * `sortedForFlow()` stable within equal `(column, order)`).
- *
- * @see BE_PROCESS/design/signed-pdf-design.md Section 3b, SP-3
+ * `Layout_Flow.php` (authoritative) and `templateLayout.ts` (the on-screen sheet's own grid math) must agree.
  */
 class Layout_FlowTest extends TestCase {
 
@@ -29,10 +18,7 @@ class Layout_FlowTest extends TestCase {
 	// -- Transcribed 1:1 from templateLayout.test.ts ---------------------------------
 
 	/**
-	 * Every template authored before the width field existed has no width at all - on
-	 * the PHP side that arrives as null, never an unset array key. This is also the
-	 * single named assertion signed-pdf-design.md's Test Plan calls out explicitly:
-	 * `spanFor(null) === 2`.
+	 * Every template authored before the width field existed has no width at all.
 	 */
 	public function test_span_for_defaults_to_third_two_of_six_when_width_is_unset(): void {
 		$this->assertSame( 2, Layout_Flow::span_for( null ) );
@@ -76,14 +62,6 @@ class Layout_FlowTest extends TestCase {
 
 	// -- This port's own required addition: sortedForFlow() stability ----------------
 
-	/**
-	 * The other named assertion from signed-pdf-design.md's Test Plan: sortedForFlow()
-	 * must be stable within equal (column, order). PHP's own usort() is only guaranteed
-	 * stable as of PHP 8.0, and Layout_Flow::sorted_for_flow() does not rely on that
-	 * guarantee anyway - it breaks ties with an explicit original-index comparison. This
-	 * test proves the observable behavior a caller actually depends on, independent of
-	 * how the implementation gets there.
-	 */
 	public function test_sorted_for_flow_is_stable_for_equal_column_and_order(): void {
 		$sections = [
 			[ 'block_slug' => 'first', 'column' => 1, 'order' => 1, 'title' => 'First', 'display' => null, 'collapsed' => false ],

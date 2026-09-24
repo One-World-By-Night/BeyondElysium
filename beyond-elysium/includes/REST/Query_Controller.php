@@ -13,24 +13,17 @@ use BeyondElysium\Services\St_Visibility;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for the character query builder. Runs ad-hoc filtered
- * queries and statistics against a game's characters, and manages saved
- * queries an ST can re-run later. All endpoints require the be_run_queries
- * capability.
+ * REST controller for the character query builder.
  */
 class Query_Controller extends Base_Controller {
 
 	protected $rest_base = 'query';
 
 	/**
-	 * Registers the REST routes for running a query, running a statistic,
-	 * and listing, creating, updating, and deleting saved queries. All
-	 * routes are scoped to a game slug and require be_run_queries.
+	 * Registers the REST routes for running a query, running a statistic, and listing, creating, updating, and deleting
+	 * saved queries.
 	 */
 	public function register_routes(): void {
-		// An unvalidated 'inventory' previously reached Saved_Query::save_recent() and
-		// be_queries.inventory directly (query-beyond-characters-design.md §5.4/§8) - this
-		// enum is what closes that, on every route that accepts the field.
 		$inventory_arg = [ 'type' => 'string', 'enum' => Field_Registry::QUERYABLE_INVENTORIES ];
 
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/query', [
@@ -82,10 +75,6 @@ class Query_Controller extends Base_Controller {
 
 	/**
 	 * Runs a filtered query against one inventory of a game's data.
-	 * Validates every condition against the field registry before
-	 * execution and returns a 400 error naming the offending clause when a
-	 * condition is invalid. Strips ST-only fields from a `char` result
-	 * before returning it.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -111,8 +100,7 @@ class Query_Controller extends Base_Controller {
 			'per_page' => $request->get_param( 'per_page' ),
 		];
 
-		// Character rows are redacted inside the engine, before matching, for anyone who is not a
-		// Storyteller of this chronicle; a Storyteller gets them whole (1.0.0-review F-024).
+		// The engine redacts character rows for anyone who is not a Storyteller of this chronicle.
 		$result = Query_Engine::execute( $request['game_slug'], $conditions, $logic, $paging, $inventory, $this->visibility_options( $inventory, $game ) );
 
 		Saved_Query::save_recent( (int) $game->id, get_current_user_id(), $inventory, $logic === 'AND', $conditions );
@@ -122,10 +110,8 @@ class Query_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Runs a statistical aggregation (such as a distribution or average)
-	 * over a game's characters matching a set of filter conditions.
-	 * Validates the stat_type and, for specific_distribution, the required
-	 * trait parameter, before execution.
+	 * Runs a statistical aggregation (such as a distribution or average) over a game's characters matching a set of
+	 * filter conditions.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -172,9 +158,7 @@ class Query_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns every saved query belonging to one game, so a storyteller can
-	 * browse and re-run a previously saved set of filter conditions.
-	 * Confirms the game exists before querying.
+	 * Returns every saved query belonging to one game.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -188,10 +172,7 @@ class Query_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Saves a new named query for a game: its conditions, match-all/
-	 * match-any logic, inventory type, and sort order. Requires a name
-	 * and validates the conditions against the field registry before
-	 * saving.
+	 * Saves a new named query for a game: its conditions, match-all/match-any logic, inventory type, and sort order.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -233,10 +214,8 @@ class Query_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Updates a saved query's name, inventory, sort order, logic, or
-	 * conditions with any recognized fields present in the request.
-	 * Re-validates conditions when they are included, and treats a
-	 * request with no recognized fields as a no-op rather than a failure.
+	 * Updates a saved query's name, inventory, sort order, logic, or conditions with any recognized fields present in the
+	 * request.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -262,9 +241,7 @@ class Query_Controller extends Base_Controller {
 			$data['match_all'] = strtoupper( (string) $request->get_param( 'logic' ) ) === 'AND';
 		}
 		if ( $request->get_param( 'conditions' ) !== null ) {
-			// Validated against the inventory this same request is setting, if any -
-			// otherwise the query's own already-stored inventory. Either way, conditions
-			// are never validated against a stale or wrong inventory.
+			// Validated against the inventory this same request is setting, if any.
 			$inventory  = (string) ( $data['inventory'] ?? $query->inventory );
 			$conditions = (array) $request->get_param( 'conditions' );
 			$error      = Query_Engine::validate_conditions( $conditions, $inventory );
@@ -274,7 +251,7 @@ class Query_Controller extends Base_Controller {
 			$data['conditions'] = $conditions;
 		}
 
-		// An empty $data set is treated as a no-op rather than a failure.
+		// An empty $data set is treated as a no-op.
 		if ( ! empty( $data ) && ! Saved_Query::update( (int) $query->id, $data ) ) {
 			return $this->error( 'update_failed', __( 'Failed to update saved query.', 'beyond-elysium' ), 500 );
 		}
@@ -282,9 +259,8 @@ class Query_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Deletes a saved query after confirming it exists and belongs to the
-	 * requested game, returning a 404 error when no match is found.
-	 * Responds with an empty 204 on success.
+	 * Deletes a saved query after confirming it exists and belongs to the requested game, returning a 404 error when no
+	 * match is found.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -303,8 +279,7 @@ class Query_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Refuses a change to someone else's saved query unless the viewer is a
-	 * Storyteller of this chronicle (1.0.0-review F-028).
+	 * Refuses a change to someone else's saved query unless the viewer is a Storyteller of this chronicle.
 	 *
 	 * @param object $query
 	 * @return \WP_Error|null Null when the change may proceed.
@@ -317,22 +292,15 @@ class Query_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The Query Tool is a Storyteller's (owner ruling, 1.0.0-review F-041): it needs
-	 * `be_run_queries` and `be_manage_characters` in the chronicle, however either was
-	 * granted - a chronicle role, a WordPress role, or accessSchema.
+	 * The Query Tool is a Storyteller's: it needs `be_run_queries` and `be_manage_characters` in the chronicle, however
+	 * either was granted.
 	 */
 	private function storyteller_only(): callable {
 		return $this->permission_all( [ 'be_run_queries', 'be_manage_characters' ] );
 	}
 
 	/**
-	 * What a query may reach for the current viewer. A Storyteller of this
-	 * chronicle queries everything - and since F-041 only Storytellers pass
-	 * these routes' permission check. This stays as a second line: anyone else
-	 * would never reach an NPC, and every character row would be redacted
-	 * exactly as the character routes redact it before a single clause is
-	 * evaluated, so hidden text or blocks could neither come back in results nor
-	 * answer a condition. World objects are unaffected.
+	 * What a query may reach for the current viewer.
 	 *
 	 * @param string $inventory
 	 * @param object $game
@@ -353,9 +321,8 @@ class Query_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a saved query by id and confirms it belongs to the game
-	 * identified by the given slug, returning a WP_Error with a 404
-	 * status when the game or the query cannot be found.
+	 * Looks up a saved query by id and confirms it belongs to the game identified by the given slug, returning a WP_Error
+	 * with a 404 status when the game or the query cannot be found.
 	 *
 	 * @param int    $id
 	 * @param string $game_slug
@@ -374,9 +341,7 @@ class Query_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a WP_Error
-	 * with a 404 status when no game matches. Used by route callbacks to
-	 * resolve the game_slug URL parameter before performing further work.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

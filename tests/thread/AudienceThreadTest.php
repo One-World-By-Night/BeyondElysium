@@ -10,12 +10,7 @@ use BeyondElysium\Services\Audience;
 use WP_UnitTestCase;
 
 /**
- * `Services\Audience` is the one place a plot's or world object's "who can see this" is
- * decided (1.1.0 §2.1-2.2). These tests exercise the three audience values against real
- * connections and real query-engine rule matching - the two things `can_see()`/`filter()`
- * cannot get right without a real database.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §2.1, §2.2
+ * `Services\Audience` is the one place a plot's or world object's "who can see this" is decided.
  */
 class AudienceThreadTest extends WP_UnitTestCase {
 
@@ -60,8 +55,7 @@ class AudienceThreadTest extends WP_UnitTestCase {
 		$plot   = (object) [ 'id' => $plot_id, 'audience' => Audience::STORYTELLERS, 'audience_rules' => null ];
 		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 
-		// The character is connected to the plot, but the audience is storytellers-only
-		// regardless - being connected must never itself override a stricter audience value.
+		// The character is connected to the plot.
 		$this->assertFalse( Audience::can_see( $plot, 'plot', $player, $this->game_slug, false ) );
 	}
 
@@ -94,11 +88,6 @@ class AudienceThreadTest extends WP_UnitTestCase {
 		$this->assertFalse( Audience::can_see( $plot, 'plot', $other_player, $this->game_slug, false ) );
 	}
 
-	/**
-	 * The Tremere-chantry case from the owner's own request: a character matching a rule sees
-	 * a restricted location even with no connection to it at all, and a character of a
-	 * different clan does not.
-	 */
 	public function test_restricted_world_object_is_visible_through_a_matching_rule(): void {
 		$vampire_identity = $this->seed_vampire_identity_block();
 
@@ -226,9 +215,7 @@ class AudienceThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Seeds a minimal vampire-identity schema block with a Clan field, so `clan` resolves as
-	 * a real queryable field rather than needing the full stock seed data. Returns the block
-	 * slug `Query_Engine`/`Field_Registry` expect (`field-map.php`: clan -> vampire-identity.Clan).
+	 * Seeds a minimal vampire-identity schema block with a Clan field.
 	 */
 	private function seed_vampire_identity_block(): string {
 		global $wpdb;

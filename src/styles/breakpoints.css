@@ -1,28 +1,12 @@
-/**
- * The one breakpoint system for this plugin's front-end widgets and
- * editors. `max-width: 768px` is the only width-based media query
- * `src/**\/*.css` may use (see breakpointConsistency.test.ts) - not
- * WordPress core's 782px, since these are front-end widgets in a
- * theme's own layout, not wp-admin panels, and 768 already matched
- * five of the six files that had a breakpoint before this existed.
- *
- * mobile-sheet-design.md §5.1-§5.2.
- */
+/* The one breakpoint system for this plugin's front-end widgets and editors. */
 
 :root {
-	--be-tap: 44px;            /* WCAG 2.5.5 AAA; 2.5.8 AA is 24 */
-	--be-tap-min: 32px;        /* dense contexts; still clears 2.5.8 with margin */
+	--be-tap: 44px;
+	--be-tap-min: 32px;
 	--be-input-font-min: 16px; /* iOS focus-zoom threshold */
 }
 
-/*
- * Touch-target floor, applied once. `min-height`/`min-width`, never
- * `height`/`width` - a 26x26 button grows to 44x44, nothing shrinks.
- * A bare-class/attribute selector beats hello-elementor's `button{...}`
- * element reset without `!important` (same reasoning as DotTracker.css
- * and TieredPowerEditor.css's own documented fixes for the identical
- * collision).
- */
+/* Touch-target floor, applied once. */
 @media ( max-width: 768px ) {
 
 	[class^="be-"] button,
@@ -35,20 +19,6 @@
 		min-width: var(--be-tap);
 	}
 
-	/* min-height/min-width have no effect on a default `display: inline` element - a
-	 * <button> already defaults to inline-block (or block) in every real browser, but an
-	 * <a> defaults to plain inline, so the rule above silently no-ops on any plugin link
-	 * without this. Found live measuring PoweredByFooter's own link at 81x17 after the
-	 * floor above was already shipped and should have caught it.
-	 *
-	 * `.be-powered-by__link` is deliberately excluded: it is one word inline inside the
-	 * sentence "Powered by BeyondElysium", not a game control this item is scoped to
-	 * (mobile-sheet-design.md §4.1's three real mobile users are all inside the
-	 * character sheet/editor/approval queue) - forcing it to 44px would paint an
-	 * oversized tap zone around 12px text, mid-sentence, which is a worse result than
-	 * the small-target problem it would fix. A real, deliberate exception, not an
-	 * oversight - if a future plugin link needs the floor, this selector already
-	 * covers it once `:not()` is dropped. */
 	a[class^="be-"]:not(.be-powered-by__link) {
 		display: inline-flex;
 		align-items: center;
@@ -63,15 +33,7 @@
 	}
 }
 
-/*
- * The box every front-end table lives in (1.0.0-review F-019). A table lays out in columns only
- * while its box is wider than 960px; in a narrower box - every phone, a tablet, a theme's narrow
- * content column - `.be-responsive-table` stacks each row into a card, so a table never has to be
- * scrolled sideways on a phone. A theme with a narrow content column used to push the character
- * list and the approval queue hundreds of pixels past the widget into the page around it. Only a
- * desktop table with more columns than even a wide box holds - a query with many columns - scrolls
- * inside its box.
- */
+/* The box every front-end table lives in. */
 .be-table-box {
 	container: be-table / inline-size;
 	width: 100%;
@@ -79,25 +41,13 @@
 	overflow-x: auto;
 }
 
-/*
- * Shared table-to-card mechanism (§5.5). Each <td> renders
- * data-label={columnTitle}; this is the only CSS that pattern needs.
- * Every front-end table uses it but Import's two-column counts.
- *
- * Keyed to the table's box, not the screen, and proofed against a theme's own table styles
- * (1.0.0-review F-019): hello-elementor gives every cell a full border, 15px of padding, and a
- * striped and hover background, which boxed each line of a card and pushed a row of action
- * buttons past the card's edge. A cell's content now wraps under its label when it doesn't fit
- * beside it.
- */
+/* Shared table-to-card mechanism. */
 @container be-table ( width < 960px ) {
 
 	.be-responsive-table thead {
 		display: none;
 	}
 
-	/* border-box, or a card's own padding and border land on top of 100% in a theme that
-	 * doesn't set it globally, and every card comes out wider than its box. */
 	.be-responsive-table,
 	.be-responsive-table tbody,
 	.be-responsive-table tr,
@@ -123,8 +73,6 @@
 		overflow-wrap: anywhere;
 	}
 
-	/* Four element steps and two classes, to outrank the theme's striped and hovered
-	 * `table tbody > tr:nth-child(odd) > td` (0,1,3) without !important. */
 	.be-responsive-table.be-responsive-table > tbody > tr > td {
 		background: transparent;
 	}

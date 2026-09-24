@@ -1,8 +1,5 @@
 /**
- * ResourcePoolEditor renders the editable dot trackers for a resource_pool block -
- * paired permanent/temporary point pools such as Blood Pool, Willpower, or Rage.
- * Each pool in the block definition gets its own DotTracker control. Changing a
- * pool's value reports the whole block's data back through one onChange call.
+ * ResourcePoolEditor renders the editable dot trackers for a resource_pool block.
  */
 import DotTracker, { type DotTrackerValue } from '../shared/DotTracker';
 import { resolvePoolName } from '../../lib/resolveCrossBlockRef';
@@ -20,15 +17,14 @@ export interface ResourcePoolEditorProps {
 		nextData: Record< string, ResourcePoolValue >
 	) => void;
 	readOnly?: boolean;
-	/** The character's full sheet_data, used to resolve a pool's display name from another block's value. */
+	/**
+	 * The character's full sheet_data, used to resolve a pool's display name from another block's value.
+	 */
 	sheetData?: Record< string, unknown >;
 }
 
 /**
- * Renders a DotTracker control per pool defined in a resource_pool block, such as
- * Blood Pool or Willpower. Each tracker edits its pool's permanent and temporary
- * values independently; every change is reported back through onChange as the
- * full updated pool map.
+ * Renders a DotTracker control per pool defined in a resource_pool block, such as Blood Pool or Willpower.
  */
 export function ResourcePoolEditor( {
 	blockSlug,

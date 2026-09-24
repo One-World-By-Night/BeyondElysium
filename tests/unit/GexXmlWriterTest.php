@@ -6,10 +6,7 @@ use BeyondElysium\Services\GEX_Xml_Writer;
 use PHPUnit\Framework\TestCase;
 
 /**
- * GX-3: `GEX_Xml_Writer`, the PHP port of Grapevine's own `XMLWriterClass`.
- * Every behavior here is cited to `GV301Source/Code/XMLWriterClass.cls`.
- *
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-3, GX-10
+ * `GEX_Xml_Writer`, the PHP port of Grapevine's own `XMLWriterClass`.
  */
 class GexXmlWriterTest extends TestCase {
 
@@ -60,15 +57,11 @@ class GexXmlWriterTest extends TestCase {
 
 		$w2 = new GEX_Xml_Writer();
 		$w2->begin_tag( 'vampire' )->write_attribute( 'npc', false, false )->end_tag();
-		// false === the omit value false, so it must be entirely absent, matching
-		// VampireClass.cls:385's real WriteAttribute "npc", IsNPC, False.
 		$this->assertStringNotContainsString( 'npc=', $w2->render() );
 	}
 
 	public function test_a_zero_omit_default_still_suppresses_a_literal_zero(): void {
-		// WerewolfClass.cls's real WriteAttribute "notoriety", Notoriety, 0 - the
-		// classic PHP falsy-comparison trap this must NOT fall into, since a real
-		// notoriety of 0 is the overwhelmingly common case and must be omitted.
+		// WerewolfClass.cls's real WriteAttribute "notoriety", Notoriety, 0.
 		$w = new GEX_Xml_Writer();
 		$w->begin_tag( 'werewolf' )->write_attribute( 'notoriety', 0, 0 )->end_tag();
 		$this->assertStringNotContainsString( 'notoriety=', $w->render() );
@@ -79,8 +72,6 @@ class GexXmlWriterTest extends TestCase {
 	}
 
 	public function test_aurabonus_is_the_attribute_name_never_a_second_aura(): void {
-		// The deliberate correction over VampireClass.cls:375-376's real duplicate-'aura'
-		// write bug (gex-export-transfer-design.md §2d).
 		$w = new GEX_Xml_Writer();
 		$w->begin_tag( 'vampire' )
 			->write_attribute( 'aura', 'Serene' )
@@ -90,11 +81,7 @@ class GexXmlWriterTest extends TestCase {
 		$xml = $w->render();
 		$this->assertStringContainsString( 'aura="Serene"', $xml );
 		$this->assertStringContainsString( 'aurabonus="+2"', $xml );
-		// 'aurabonus=' itself contains the substring 'aura' but not 'aura=' (no equals
-		// sign right after "aura") - counting occurrences of 'aura=' this way correctly
-		// finds exactly one real `aura=` attribute plus zero stray duplicates, proving
-		// the real Grapevine bug (two attributes both named literally "aura") isn't
-		// reproduced.
+		// 'aurabonus=' itself contains the substring 'aura' but not 'aura=' (no equals sign right after "aura").
 		$this->assertSame( 1, substr_count( $xml, 'aura=' ) );
 		$this->assertSame( 1, substr_count( $xml, 'aurabonus=' ) );
 	}
@@ -161,8 +148,8 @@ class GexXmlWriterTest extends TestCase {
 	}
 
 	/**
-	 * The real round-trip proof: a document this writer produces must be
-	 * readable by our own reader with the values unchanged.
+	 * The real round-trip proof: a document this writer produces must be readable by our own reader with the values
+	 * unchanged.
 	 */
 	public function test_a_written_document_parses_back_through_our_own_reader(): void {
 		$w = new GEX_Xml_Writer();

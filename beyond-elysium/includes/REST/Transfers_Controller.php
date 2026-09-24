@@ -16,35 +16,20 @@ use BeyondElysium\Services\Not_Exportable_Exception;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for chronicle-to-chronicle character transfer (GX-8/9).
- * A transfer needs a Storyteller's approval on both sides (owner ruling,
- * 2026-09-14): the home chronicle's Storyteller initiates it, and the
- * receiving chronicle's Storyteller reviews the offer and accepts or refuses
- * it - nothing is written to the receiving chronicle before that.
- *
- * `inbound` is this plugin's SECOND unauthenticated route (after
- * `Verify_Controller`) - it has to be, since the caller is another WordPress
- * installation with no session on this one - and carries the same posture:
- * trust comes from an independent callback to the sender's own
- * `/verify/{code}`, never from the POST body alone. All it can do is leave an
- * offer waiting for review.
- *
- * The payload crossing the wire is a real `.gex` XML document (the same one
- * `Character_Exporter`/`GEX_Xml_Parser` already read and write), not a
- * bespoke envelope - one serializer for both the file download and the wire
- * transfer, and an ST can read what left (§8.2).
- *
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-8, GX-9, §8
- * @see BE_PROCESS/releases/1.0.0-review.md F-003, F-005, F-006
+ * REST controller for chronicle-to-chronicle character transfer.
  */
 class Transfers_Controller extends Base_Controller {
 
 	protected $rest_base = 'transfers';
 
-	/** Inbound offers accepted per IP per rolling minute. */
+	/**
+	 * Inbound offers accepted per IP per rolling minute.
+	 */
 	const INBOUND_RATE_LIMIT = 10;
 
-	/** Offers one chronicle may hold waiting for review before new ones are turned away. */
+	/**
+	 * Offers one chronicle may hold waiting for review before new ones are turned away.
+	 */
 	const MAX_WAITING_OFFERS = 50;
 
 	public function register_routes(): void {
@@ -106,19 +91,14 @@ class Transfers_Controller extends Base_Controller {
 			[
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'inbound' ],
-				// Deliberate: the caller is another WordPress install with no session here
-				// (GX-8/9, matching Verify_Controller's own precedent). Trust comes from
-				// this handler's own callback-verify against the sender's home site, and
-				// the most it can do is leave an offer for this chronicle's Storytellers.
+				// Called by another WordPress install, so it carries no session here.
 				'permission_callback' => '__return_true',
 			],
 		] );
 	}
 
 	/**
-	 * Lists every transfer row this chronicle is party to on this site -
-	 * outbound rows it is home to, inbound rows it hosts - newest first,
-	 * without stored payloads.
+	 * Lists every transfer row this chronicle is party to on this site.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -133,14 +113,8 @@ class Transfers_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Initiates an outbound transfer: exports the character as a transfer
-	 * document (real verification attestation embedded, uuid carried),
-	 * takes a snapshot of the sheet as it leaves, records a `pending`
-	 * transfer row, and - when a host site was given - POSTs the payload
-	 * there directly, where it waits for the host's Storytellers. The row
-	 * stays `pending` until the home Storyteller marks it received abroad;
-	 * the exported document is always returned, so the offline carrier -
-	 * download and email it - always works.
+	 * Initiates an outbound transfer: exports the character as a transfer document (real verification attestation
+	 * embedded, uuid carried), takes a snapshot of the sheet as it leaves, records a `pending` transfer row.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -165,8 +139,7 @@ class Transfers_Controller extends Base_Controller {
 		$host_slug  = trim( (string) $request->get_param( 'host_slug' ) );
 		$has_host   = $host_site !== '' && $host_slug !== '';
 
-		// Full ST content, never hide_st - the receiving Storyteller needs to run this
-		// character for real, exactly the reasoning §8.2 gives for choosing XML at all.
+		// Full ST content, never hide_st.
 		try {
 			$export = Character_Exporter::export( $character_id, [ 'hide_st' => false, 'as_transfer' => true ] );
 		} catch ( Not_Exportable_Exception $e ) {
@@ -193,7 +166,6 @@ class Transfers_Controller extends Base_Controller {
 				'initiated_by'   => get_current_user_id(),
 			] );
 		} catch ( \RuntimeException $e ) {
-			// Another send of this character was recorded first, or the row didn't save (1.0.0-review F-110).
 			return Transfer::find_open( $character->uuid, 'outbound' ) !== null ? $this->already_travelling() : $this->transfer_not_recorded();
 		}
 
@@ -217,9 +189,7 @@ class Transfers_Controller extends Base_Controller {
 				'notes'          => __( 'Waiting for the host chronicle\'s Storytellers to accept it.', 'beyond-elysium' ),
 			] );
 		} else {
-			// Unreachable host, or the host turned the offer away - the row stays pending
-			// rather than guessing; the offline carrier (the file this response still
-			// includes) always works regardless of what the host's server is doing.
+			// Unreachable host, or the host turned the offer away.
 			Transfer::transition( $transfer_id, 'pending', [ 'notes' => $post['note'] ?? ( $body['message'] ?? null ) ] );
 		}
 
@@ -232,27 +202,21 @@ class Transfers_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Home ST marks a still-pending outbound transfer as received abroad -
-	 * once the host's Storytellers have accepted it, or the host confirmed
-	 * receipt some other way (email, a phone call).
+	 * Home ST marks a still-pending outbound transfer as received abroad.
 	 */
 	public function acknowledge( $request ) {
 		return $this->manual_transition( $request, 'home', 'pending', 'abroad' );
 	}
 
 	/**
-	 * Home ST permanently gives the character up - a real move, not travel.
-	 * Only legal from `abroad`: a character still merely `pending` hasn't
-	 * been confirmed to have arrived anywhere yet.
+	 * Home ST permanently gives the character up.
 	 */
 	public function release( $request ) {
 		return $this->manual_transition( $request, 'home', 'abroad', 'released' );
 	}
 
 	/**
-	 * Home ST cancels a still-pending transfer - the host never took it, or
-	 * never will. Revokes the transfer's verification code, so an offer still
-	 * waiting at the host can no longer be accepted.
+	 * Home ST cancels a still-pending transfer.
 	 */
 	public function decline( $request ) {
 		$response = $this->manual_transition( $request, 'home', 'pending', 'declined' );
@@ -263,7 +227,7 @@ class Transfers_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Host ST sends a visiting character back - the visit is over.
+	 * Host ST sends a visiting character back.
 	 */
 	public function send_home( $request ) {
 		return $this->manual_transition( $request, 'host', 'visiting', 'sent_home' );
@@ -277,8 +241,7 @@ class Transfers_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Host ST refuses an offer. Nothing was ever written for it; the stored
-	 * payload is discarded.
+	 * Host ST refuses an offer.
 	 */
 	public function refuse( $request ) {
 		return $this->manual_transition( $request, 'host', 'offered', 'declined', [ 'payload' => null ] );
@@ -286,8 +249,6 @@ class Transfers_Controller extends Base_Controller {
 
 	/**
 	 * Shared body for the manual, single-legal-predecessor state transitions.
-	 * `home` actions apply to this chronicle's outbound rows, `host` actions
-	 * to the inbound rows it hosts.
 	 *
 	 * @param \WP_REST_Request     $request
 	 * @param string               $side 'home' | 'host'.
@@ -307,18 +268,7 @@ class Transfers_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Receives a transfer offer from another chronicle - possibly on another
-	 * WordPress installation entirely. Never trusts the POST body on its own:
-	 * calls back to the claimed home site's own public verify endpoint, and
-	 * only once that confirms the payload is genuine, current, and really
-	 * issued by the site it claims to be from does it record the offer - in
-	 * its transfer row, payload included - and tell this chronicle's
-	 * Storytellers. Nothing is imported here; `accept()` does that, after a
-	 * Storyteller has reviewed it (1.0.0-review F-003, F-005).
-	 *
-	 * This authenticates the issuer, not the requester: anyone who stands up
-	 * their own Beyond Elysium install can attest to and send a character
-	 * here. Such an offer can only wait for a Storyteller to refuse it.
+	 * Receives a transfer offer from another chronicle.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -383,7 +333,6 @@ class Transfers_Controller extends Base_Controller {
 				'initiated_by'   => get_current_user_id(),
 			] );
 		} catch ( \RuntimeException $e ) {
-			// Another offer of this character was recorded first, or the row didn't save (1.0.0-review F-110).
 			return Transfer::find_open( $uuid, 'inbound' ) !== null ? $this->already_offered() : $this->transfer_not_recorded();
 		}
 
@@ -400,10 +349,8 @@ class Transfers_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Shows a waiting offer the way the Import page shows a parsed file:
-	 * counts, duplicates needing a decision, and traits needing review. A
-	 * character this chronicle already holds also shows what differs from
-	 * that sheet (1.0.0-review F-044).
+	 * Shows a waiting offer the way the Import page shows a parsed file: counts, duplicates needing a decision, and
+	 * traits needing review.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -431,13 +378,7 @@ class Transfers_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Accepts a waiting offer with the Storyteller's decisions - the same
-	 * `resolutions` shape an import commit takes. The home site is asked
-	 * again first, so an offer its Storytellers have since cancelled cannot
-	 * be accepted; then the character is imported in one transaction, the
-	 * row moves to `visiting`, and the stored payload is discarded. A
-	 * character arriving back at the chronicle it left also closes that
-	 * chronicle's outbound row as `returned`.
+	 * Accepts a waiting offer with the Storyteller's decisions.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -478,9 +419,6 @@ class Transfers_Controller extends Base_Controller {
 
 		$savepoint = Transaction::begin( 'be_transfer_accept' );
 
-		// Checked again, row-locked, now that the home chronicle has answered: another Storyteller's
-		// accept that finished during that call must not see this one import the character again
-		// (1.0.0-review F-070).
 		$still_offered = Transfer::find_for_update( (int) $offer->id );
 		if ( $still_offered === null || $still_offered->state !== 'offered' ) {
 			Transaction::rollback( $savepoint );
@@ -513,8 +451,8 @@ class Transfers_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The transfer named in the URL, when it belongs to this chronicle's side
-	 * of the journey and is in the state an action requires.
+	 * The transfer named in the URL, when it belongs to this chronicle's side of the journey and is in the state an
+	 * action requires.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @param string           $side 'home' (outbound rows) | 'host' (inbound rows).
@@ -546,8 +484,7 @@ class Transfers_Controller extends Base_Controller {
 	}
 
 	/**
-	 * A transfer row without its stored payload - the full character document
-	 * is the import's to read, not every response's to carry.
+	 * A transfer row without its stored payload.
 	 *
 	 * @param object|null $transfer
 	 * @return object|null
@@ -560,12 +497,8 @@ class Transfers_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Calls the claimed home site's own public verify endpoint and confirms
-	 * every check §8.2 requires before an inbound payload can be trusted:
-	 * the code resolves, is not revoked, its attested sheet hash matches
-	 * this exact payload, and the issuer really is the site it claims to
-	 * be. Never trusts the POST body alone - this callback is the whole
-	 * authentication mechanism (§8.2).
+	 * Calls the claimed home site's public verify endpoint and confirms the code resolves, is not revoked, its attested
+	 * sheet hash matches this exact payload, and the issuer is the site it claims to be.
 	 *
 	 * @param string $home_site
 	 * @param string $short_code
@@ -596,17 +529,12 @@ class Transfers_Controller extends Base_Controller {
 			return $this->error( 'verify_failed', __( 'This transfer is no longer valid according to the home chronicle.', 'beyond-elysium' ), 400 );
 		}
 
-		// Only a code the home chronicle issued for a transfer vouches for one. A verified export's
-		// code is a player's to mint, and its document passes the hash below with a uuid added by
-		// hand (1.0.0-review F-059).
+		// Only a code the home chronicle issued for a transfer vouches for one.
 		if ( ( $data['kind'] ?? '' ) !== 'transfer' ) {
 			return $this->error( 'verify_failed', __( 'The home chronicle did not issue this code for a transfer.', 'beyond-elysium' ), 400 );
 		}
 
-		// sheet_hash was hashed from the canonical (no verification URL/uuid) document, never
-		// the one actually transmitted - reconstruct that same canonical form before comparing
-		// (§8.2's own "sha256(canonicalize(payload))"), the same way Verify_Controller's own
-		// still_matches() always re-derives its comparison hash rather than hashing a held file.
+		// sheet_hash was hashed from the canonical (no verification URL/uuid) document.
 		$expected_hash = (string) ( $data['attested']['sheet_hash'] ?? '' );
 		$actual_hash   = hash( 'sha256', Character_Exporter::canonicalize_transfer_payload( $payload ) );
 		if ( $expected_hash === '' || ! hash_equals( $expected_hash, $actual_hash ) ) {
@@ -642,9 +570,7 @@ class Transfers_Controller extends Base_Controller {
 	}
 
 	/**
-	 * POSTs a transfer payload to another chronicle's inbound route. Uses
-	 * `wp_safe_remote_post()`, not `wp_remote_post()`, since the target URL
-	 * is operator-supplied rather than a hardcoded trusted endpoint.
+	 * POSTs a transfer payload to another chronicle's inbound route.
 	 *
 	 * @param string $host_site
 	 * @param string $host_slug
@@ -678,8 +604,8 @@ class Transfers_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Counts one inbound request against the caller's IP for the rolling
-	 * minute, the same transient pattern as Verify_Controller's own limit.
+	 * Counts one inbound request against the caller's IP for the rolling minute, the same transient pattern as
+	 * Verify_Controller's own limit.
 	 */
 	private static function is_rate_limited(): bool {
 		$ip  = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) );
@@ -695,9 +621,7 @@ class Transfers_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up the game record for the given slug and returns a 404 error
-	 * when no game matches it. Matches every other controller's own copy
-	 * of this helper - not shared via `Base_Controller`.
+	 * Looks up the game record for the given slug and returns a 404 error when no game matches it.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

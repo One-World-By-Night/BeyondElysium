@@ -1,8 +1,5 @@
 /**
  * Player-facing feed of plots and rumors the current user is connected to or reached by.
- * Fetches the list from the API, renders it as a clickable list of titles, and shows the
- * full PlotThread view for whichever plot is selected. Reused as-is by the player
- * dashboard, not a separate implementation.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -17,9 +14,8 @@ export interface MyPlotsFeedProps {
 }
 
 /**
- * Renders the current player's personal plot feed: a list of plots they are connected to
- * or have been reached by, each opening into the full PlotThread view when clicked. Shows
- * loading and error states while the feed is being fetched from the API.
+ * Renders the current player's personal plot feed: a list of plots they are connected to or have been reached by,
+ * each opening into the full PlotThread view when clicked.
  */
 export function MyPlotsFeed( { gameSlug }: MyPlotsFeedProps ) {
 	const [ data, setData ] = useState< MyPlotsResponse | null >( null );

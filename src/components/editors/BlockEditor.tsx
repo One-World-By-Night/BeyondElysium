@@ -1,8 +1,6 @@
 /**
- * BlockEditor dispatches to the correct editor component for a schema block's
- * section_type, wiring the shared blockSlug/data/onChange/readOnly props through to
- * whichever editor handles that type: trait_list, tiered_power, resource_pool, or
- * identity_field. Falls back to a read-only unknown-type warning for anything else.
+ * BlockEditor dispatches to the correct editor component for a schema block's section_type, wiring the shared
+ * blockSlug/data/onChange/readOnly props through to whichever editor handles that type.
  */
 import { __, sprintf } from '@wordpress/i18n';
 import type {
@@ -30,19 +28,23 @@ export interface BlockEditorProps {
 	onChange: ( blockSlug: string, nextData: unknown ) => void;
 	costFor?: ( power: EditableHeldPower ) => number | null;
 	readOnly?: boolean;
-	/** The character's full sheet_data, used to resolve a pool's display name from another block's value. */
+	/**
+	 * The character's full sheet_data, used to resolve a pool's display name from another block's value.
+	 */
 	sheetData?: Record< string, unknown >;
-	/** Consumed by identity_field's own textarea fields (AI Assist) and a player_order block's "Save order" call (1.1.0 D4). */
+	/**
+	 * Consumed by identity_field's own textarea fields (AI Assist) and a player_order block's "Save order" call.
+	 */
 	gameSlug?: string;
-	/** Needed only for a player_order block's "Save order" call (1.1.0 D4). */
+	/**
+	 * Needed only for a player_order block's "Save order" call.
+	 */
 	characterId?: number;
 }
 
 /**
- * Renders the editor for one schema block, chosen by its section_type: trait_list,
- * tiered_power, resource_pool, or identity_field. Passes through blockSlug, data,
- * onChange, and readOnly to whichever editor component handles that type.
- * An unrecognized section_type renders a read-only warning instead of a blank editor.
+ * Renders the editor for one schema block, chosen by its section_type: trait_list, tiered_power, resource_pool, or
+ * identity_field.
  */
 export function BlockEditor( {
 	blockSlug,

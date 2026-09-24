@@ -7,12 +7,9 @@ use Elementor\Widget_Base;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The shape every Beyond Elysium Elementor widget shares (1.1.1 §4 audit): the single
- * "beyond-elysium" category, and a `render()` that prints one mount-point `<div>` carrying
- * `data-be-widget`/`data-be-config` for the front-end hydration router (`src/index.tsx`) to
- * pick up. Twelve widgets hand-rolled both identically until this was extracted - each
- * concrete widget now only supplies `get_name()`, `get_title()`, `get_icon()`,
- * `register_controls()`, and the two methods below.
+ * The shape every Beyond Elysium Elementor widget shares: the single "beyond-elysium" category, and a `render()` that
+ * prints one mount-point `<div>` carrying `data-be-widget` and `data-be-config` for the front-end hydration router
+ * (`src/index.tsx`) to pick up.
  */
 abstract class Base_Widget extends Widget_Base {
 
@@ -23,12 +20,13 @@ abstract class Base_Widget extends Widget_Base {
 		return [ 'beyond-elysium' ];
 	}
 
-	/** The `data-be-widget` slug the front-end hydration router matches on. */
+	/**
+	 * The `data-be-widget` slug the front-end hydration router matches on.
+	 */
 	abstract protected function widget_slug(): string;
 
 	/**
-	 * This widget's own config, built from its resolved Elementor settings - becomes
-	 * `data-be-config`'s JSON payload.
+	 * This widget's own config, built from its resolved Elementor settings.
 	 *
 	 * @param array<string,mixed> $settings `$this->get_settings_for_display()`.
 	 * @return array<string,mixed>

@@ -6,11 +6,7 @@ use BeyondElysium\Services\Display\Cross_Block_Ref;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `Cross_Block_Ref.php` (signed PDF export) and `resolveCrossBlockRef.ts` (on-screen
- * character sheet) must agree - same ref/section/pool and sheet data in, same resolved
- * value out. Both read the same fixture and are checked against the same expected
- * output; this half proves the PHP side, `src/lib/resolveCrossBlockRef.test.ts` proves
- * the TypeScript side.
+ * `Cross_Block_Ref.php` (signed PDF export) and `resolveCrossBlockRef.ts` (on-screen character sheet) must agree.
  */
 class CrossBlockRefParityTest extends TestCase {
 
@@ -19,7 +15,9 @@ class CrossBlockRefParityTest extends TestCase {
 		return json_decode( file_get_contents( $path ) );
 	}
 
-	/** Deep-converts a decoded stdClass tree into a plain nested array. */
+	/**
+	 * Deep-converts a decoded stdClass tree into a plain nested array.
+	 */
 	private function to_array( $decoded ): array {
 		return json_decode( json_encode( $decoded ), true );
 	}

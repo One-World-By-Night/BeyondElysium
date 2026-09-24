@@ -1,21 +1,18 @@
 /**
- * Type definitions for chronicle-to-chronicle character transfer
- * (GX-8/9): the transfer row itself, the derived travelling/
- * visiting badge merged onto a character, the outbound initiate
- * action's response, and the receiving side's review of an offer.
+ * Type definitions for chronicle-to-chronicle character transfer.
  */
 import type { ImportedEntity, ImportPreview } from './import';
 
 /**
- * One leg of a character's journey - an outbound row on the home
- * chronicle, an inbound row on the host. Mirrors `be_character_transfers`
- * directly.
+ * One leg of a character's journey.
  */
 export interface Transfer {
 	id: number;
 	character_uuid: string;
 	character_id: number | null;
-	/** The character's name when the transfer was made - an offer has no local character yet. */
+	/**
+	 * The character's name when the transfer was made.
+	 */
 	character_name: string | null;
 	direction: 'outbound' | 'inbound';
 	state: string;
@@ -36,30 +33,29 @@ export interface Transfer {
 }
 
 /**
- * The derived badge `Characters_Controller` merges onto a character
- * row - present only while a transfer touching that character, from
- * either side, is still open.
+ * The derived badge `Characters_Controller` merges onto a character row.
  */
 export interface TravellingStatus {
 	character_uuid: string;
 	direction: 'outbound' | 'inbound';
 	state: string;
-	/** Null on an outbound row until a host has confirmed - no chronicle name to show yet. */
+	/**
+	 * Null on an outbound row until a host has confirmed.
+	 */
 	chronicle: string | null;
 	since: string;
 }
 
 /**
- * Response from initiating an outbound transfer. `xml` is present
- * whenever the offline carrier is still usable - always, so the
- * download always works even when a host was also POSTed to
- * directly.
+ * Response from initiating an outbound transfer.
  */
 export interface InitiateTransferResponse {
 	transfer: Transfer;
 	xml: string;
 	warnings: string[];
-	/** What the host answered: `pending_review` while its Storytellers decide; `message` when it turned the offer away. */
+	/**
+	 * What the host answered: `pending_review` while its Storytellers decide.
+	 */
 	host?: {
 		accepted?: boolean;
 		pending_review?: boolean;

@@ -14,16 +14,7 @@ use BeyondElysium\Services\Sheet_Document;
 use WP_UnitTestCase;
 
 /**
- * `Sheet_Document::for_characters()` against a real seeded character, stack,
- * and template - the four things SP-5 requires proof of: sections come back
- * in `(column, order)` flow order regardless of declaration order, every
- * section's rows are already-final strings (not raw data), a Storyteller-only
- * section is present for a manager and absent for a non-manager (both the
- * section AND its `sheet_data`, matching the `v0.21.28` lesson St_Visibility
- * already guards), and a block whose `section_type` this version doesn't
- * recognize is still surfaced in `sections` rather than silently dropped.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md Section 3a, SP-5
+ * `Sheet_Document::for_characters()` against a real seeded character, stack, and template.
  */
 class SheetDocumentThreadTest extends WP_UnitTestCase {
 
@@ -85,11 +76,6 @@ class SheetDocumentThreadTest extends WP_UnitTestCase {
 			'storyteller_only' => 1,
 		] );
 
-		// A block whose section_type this version doesn't recognize - simulates a value
-		// that predates or postdates this build's own known set. Created as a normally
-		// valid type first (create() validates against a fixed list) then flipped directly,
-		// the same way a real forward/backward-incompatible row would already sit in the
-		// table - not reachable through Schema_Block::create() itself.
 		Schema_Block::create( [
 			'slug'         => 'sheetdoc-mystery',
 			'name'         => 'Mystery',
@@ -99,12 +85,7 @@ class SheetDocumentThreadTest extends WP_UnitTestCase {
 		] );
 		Manager::update( 'schema_blocks', [ 'section_type' => 'legacy_type' ], [ 'slug' => 'sheetdoc-mystery' ] );
 
-		// A dedicated stack, not the real 'vampire' one - Creature_Stack::resolve()'s
-		// block list is scoped to whatever a stack's own stack_definition declares
-		// (confirmed against CharacterSheet.tsx's identical `stack.blocks[block_slug]`
-		// lookup), so a custom template's sections must belong to a stack that actually
-		// declares them. Reusing the real, shared 'vampire' stack here would mean
-		// mutating global fixture data every other test also depends on.
+		// A dedicated stack, not the real 'vampire' one.
 		Creature_Stack::create( [
 			'slug'             => 'sheetdoc-stack',
 			'name'             => 'Sheetdoc Test Stack',
@@ -120,8 +101,6 @@ class SheetDocumentThreadTest extends WP_UnitTestCase {
 			'created_by'       => $this->manager_id,
 		] );
 
-		// Declared out of (column, order) sequence on purpose, so a correctly-flowed
-		// result proves real sorting rather than an accidental match to declaration order.
 		Template::create( [
 			'stack_slug'    => 'sheetdoc-stack',
 			'name'          => 'Sheet Document Test Layout',
@@ -214,10 +193,7 @@ class SheetDocumentThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * `Hook` is a `textarea` identity field, which became rich text in 1.0.1 D1 - but these
-	 * rows are drawn as plain text, so the markup has to be flattened here or a signed sheet
-	 * prints literal `<p>` tags at a player. Two paragraphs must also not run together into
-	 * one unreadable line.
+	 * `Hook` is a `textarea` identity field.
 	 */
 	public function test_a_rich_text_identity_field_is_flattened_not_printed_as_tags(): void {
 		Character::update_sheet_data( $this->character_id, [

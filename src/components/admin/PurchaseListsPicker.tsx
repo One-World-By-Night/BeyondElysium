@@ -1,7 +1,6 @@
 /**
- * The three purchase-list switches on the Chronicle Setup screen (1.3.4): Abilities, Backgrounds, and
- * Merits and Flaws, each on its own. Engine-pure, like the pickers beside it - it knows nothing about
- * any creature type, only which areas can be opened.
+ * The three purchase-list switches on the Chronicle Setup screen: Abilities, Backgrounds, and Merits and Flaws, each
+ * on its own.
  */
 import { __ } from '@wordpress/i18n';
 import {
@@ -11,9 +10,13 @@ import {
 } from '../../lib/purchaseScope';
 
 export interface PurchaseListsPickerProps {
-	/** The chronicle's stored `settings.purchase_scope`, whatever shape it arrived in. */
+	/**
+	 * The chronicle's stored `settings.purchase_scope`, whatever shape it arrived in.
+	 */
 	scope: unknown;
-	/** The area being saved right now, if any; every switch waits while one is. */
+	/**
+	 * The area being saved right now, if any.
+	 */
 	savingArea: PurchaseArea | null;
 	onChange: ( area: PurchaseArea, on: boolean ) => void;
 }
@@ -24,7 +27,7 @@ export default function PurchaseListsPicker( {
 	onChange,
 }: PurchaseListsPickerProps ) {
 	const current = readPurchaseScope( scope );
-	// Read at render, not module load, so a translation that arrives late still applies.
+	// Read at render, not module load.
 	const labels: Record< PurchaseArea, string > = {
 		abilities: __( 'Abilities from every creature type', 'beyond-elysium' ),
 		backgrounds: __(

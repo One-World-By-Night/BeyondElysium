@@ -10,24 +10,15 @@ use BeyondElysium\Models\Schema_Block;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for a player's own held-entry order on a `player_order`-flagged
- * trait_list or tiered_power block (Blood Magic, Rituals - 1.1.0 D4). Writes
- * `sheet_data[block_slug]`'s array order directly, under the same row lock and
- * transaction `Change_Engine::approve()` uses for every other sheet write
- * (`Character::lock()` + `Database\Transaction`), but bypasses Change_Engine
- * entirely: reordering already-held entries changes nothing about what the
- * character holds, so there is no change record and no XP.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.19
+ * REST controller for a player's own held-entry order on a `player_order`-flagged trait_list or tiered_power block
+ * (Blood Magic, Rituals).
  */
 class Character_Order_Controller extends Base_Controller {
 
 	protected $rest_base = 'order';
 
 	/**
-	 * A player may reorder their own character's flagged sections; a chronicle
-	 * manager may reorder any character's - the same "manage or own" split every
-	 * other per-character route in this plugin already uses.
+	 * A player may reorder their own character's flagged sections.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<id>\d+)/order/(?P<block_slug>[a-z0-9\-]+)', [
@@ -40,15 +31,7 @@ class Character_Order_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Body: `{ order: number[], names: string[] }`. `order` lists the block's
-	 * *current* array indexes in their new sequence; `names` is the name the
-	 * client saw at each of those indexes when it loaded the list. Locks the
-	 * character row, re-reads the live list, and only writes when `order` is a
-	 * real permutation of the live list's indexes and every named index still
-	 * holds the name the client expects - otherwise the list changed since the
-	 * client loaded it (another tab saved first, or a change was approved that
-	 * added/removed an entry) and the write is refused with 409 `sheet_changed`
-	 * rather than silently corrupting it.
+	 * Body: `{ order: number[], names: string[] }`.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -110,12 +93,8 @@ class Character_Order_Controller extends Base_Controller {
 	}
 
 	/**
-	 * `$order` must be a permutation of `$current`'s own indexes (same length,
-	 * every index 0..n-1 present exactly once) and `$names[$k]` must equal the
-	 * name actually held at `$current[$order[$k]]` for every position - the
-	 * compare side of the compare-and-swap. A count mismatch (an entry was added
-	 * or removed since the client loaded the list) fails here too, before any
-	 * index is even read.
+	 * `$order` must be a permutation of `$current`'s own indexes (same length, every index 0..n-1 present exactly once)
+	 * and `$names[$k]` must equal the name actually held at `$current[$order[$k]]` for every position.
 	 *
 	 * @param array<int,array<string,mixed>> $current
 	 * @param array<int,mixed>               $order

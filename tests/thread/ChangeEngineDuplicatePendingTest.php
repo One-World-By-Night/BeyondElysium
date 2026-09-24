@@ -10,12 +10,7 @@ use BeyondElysium\Services\Change_Engine;
 use WP_UnitTestCase;
 
 /**
- * BE_PROCESS/releases/0.99.2-workflow.md, "Resubmitting creates duplicate pending changes": a player
- * who edits the same trait twice before a Storyteller reviews it used to leave two
- * identical pending rows in the queue. submit() now overwrites the one existing pending row
- * targeting the same block/trait-or-field instead of inserting a second.
- *
- * No manual tearDown() - WP_UnitTestCase's own ambient transaction rolls back every write.
+ * Resubmitting the same trait or field before review updates the one pending change instead of adding a second.
  */
 class ChangeEngineDuplicatePendingTest extends WP_UnitTestCase {
 
@@ -106,11 +101,6 @@ class ChangeEngineDuplicatePendingTest extends WP_UnitTestCase {
 		$this->assertSame( 'pending', Change::find( $second_id )->status );
 	}
 
-	/**
-	 * xp_earn/xp_adjust are deliberately excluded from this guard - an ST awarding XP twice
-	 * (e.g. two separate downtime events) is a real, intended scenario, not an accidental
-	 * resubmission, and pending_duplicate_key() returns null for these change_types.
-	 */
 	public function test_xp_adjustments_are_never_treated_as_duplicates_of_each_other(): void {
 		$character = $this->make_character();
 

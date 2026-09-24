@@ -14,11 +14,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-038: the generic entries route let any player post an action entry onto
- * another character's action-allocation plot - a plot the rest of the API hides from them -
- * and accepted a body carrying the Action & Rumor system's own `allocator`/`ledger` JSON
- * markers, which the budget code trusts. A forged ledger use with a negative cost handed a
- * player extra actions.
+ * The generic entries route let any player post an action entry onto another character's action-allocation plot.
  */
 class PlotEntryWritesThreadTest extends WP_UnitTestCase {
 
@@ -64,7 +60,9 @@ class PlotEntryWritesThreadTest extends WP_UnitTestCase {
 		] );
 	}
 
-	/** An action-allocation plot for one character, with a three-use Resources budget row. */
+	/**
+	 * An action-allocation plot for one character, with a three-use Resources budget row.
+	 */
 	private function allocation_plot( int $character_id, string $title ): int {
 		$plot_id = Plot::create( [
 			'game_id' => $this->game_id, 'title' => $title, 'initiated_by' => 'player',

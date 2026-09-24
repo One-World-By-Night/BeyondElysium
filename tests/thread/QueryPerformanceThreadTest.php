@@ -7,11 +7,8 @@ use BeyondElysium\Services\Query_Engine;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-027: sorting query results called resolve_value() for both sides of every
- * comparison, and each call re-loaded the block definition from the database - n log n round
- * trips, each decoding a whole catalog block (653 queries and 846 ms to sort 34 vampires by
- * Disciplines). Sort values are now resolved once per row, and block lookups are remembered for
- * the length of one query run.
+ * Sorting query results called resolve_value() for both sides of every comparison, and each call re-loaded the block
+ * definition from the database.
  */
 class QueryPerformanceThreadTest extends WP_UnitTestCase {
 
@@ -30,7 +27,7 @@ class QueryPerformanceThreadTest extends WP_UnitTestCase {
 			Character::create( [
 				'name' => "Scholar {$i}", 'stack_slug' => 'vampire',
 				'owner_type' => 'chronicle', 'owner_slug' => $this->slug,
-				'sheet_data' => [ 'met-abilities' => array_map(
+				'sheet_data' => [ 'vampire-abilities' => array_map(
 					static fn( $n ) => [ 'name' => "Skill {$n}", 'count' => 1 ],
 					range( 1, ( $i % 5 ) + 1 )
 				) ],
@@ -50,14 +47,7 @@ class QueryPerformanceThreadTest extends WP_UnitTestCase {
 		);
 
 		$this->assertSame( 20, $result['total'] );
-		// One row fetch, a handful of block lookups, and - since 1.2.0 - Catalog_Translator::
-		// map()'s own one-time cold-cache cost (a version-option read, the transient miss,
-		// Translation::map_for_locale()'s join, and the two writes that cache it) the first time
-		// any block decodes in a request. Measured directly (SAVEQUERIES + a real query dump,
-		// not guessed): 1 characters + 4 pre-existing block lookups + 5 for map()'s cold miss =
-		// 10, exactly - never more, since map() is transient-cached for the rest of the request
-		// after that. 15 leaves real headroom above that ceiling while still catching a genuine
-		// regression back to one query per row (20+).
+		// One row fetch, a handful of block lookups.
 		$this->assertLessThan( 15, $wpdb->num_queries - $before );
 	}
 

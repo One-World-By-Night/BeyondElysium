@@ -14,13 +14,9 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-091 (Pass H intake `t3-content-controllers`). Allocating a character's actions
- * made the date's plot, the link marking it as theirs, and one entry per action as separate
- * writes. One failing part-way left a plot with no owner - which every member could then open,
- * with the character's action budget in it - or a plot with some of its actions missing. Nothing
- * held two allocations for the same character apart either: on local MySQL, six at once made six
- * plots for one character and date. Recording a background use shared the plot half, and
- * reported a use as recorded when its entry never saved.
+ * An allocation that fails partway leaves no plot behind: a failed owner link or failed action entries write nothing,
+ * the route says the allocation failed, a background use that fails to save is not reported as recorded, and a second
+ * allocation for a character waits for the first.
  */
 class AllocationWritesThreadTest extends WP_UnitTestCase {
 
@@ -60,7 +56,9 @@ class AllocationWritesThreadTest extends WP_UnitTestCase {
 		parent::tear_down();
 	}
 
-	/** Fails every insert into one table, as a lost connection or lock timeout would. */
+	/**
+	 * Fails every insert into one table, as a lost connection or lock timeout would.
+	 */
 	public function break_inserts( string $query ): string {
 		global $wpdb;
 		return $this->broken_table !== '' && str_starts_with( ltrim( $query ), "INSERT INTO `{$wpdb->prefix}be_{$this->broken_table}`" )
@@ -123,7 +121,6 @@ class AllocationWritesThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_another_allocation_for_the_character_waits_for_the_first(): void {
-		// A committed character, so a second connection's lock attempt measures this allocation's hold.
 		$isolde = Character::find_by_name_in_game( 'Isolde Marchetti', 'be-demo' );
 		$this->assertNotNull( $isolde );
 

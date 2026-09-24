@@ -11,15 +11,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 §3.9: a location nested "inside of" another, its four named links (owner, domain,
- * haven, based_at), "who's here," and the Grapevine-text-vs-linked-name display preference.
- *
- * The faction half of item 2/5 (a faction as a link source, a faction owner's members counted
- * as connected) is deliberately not covered here - no `Faction`/`Faction_Member` model exists
- * yet (F1/F2, §3.10, still unbuilt), and `Location_Link::SOURCE_TYPES` is `['character']`
- * only until then. Logged, not silently dropped.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.9
+ * A location nested "inside of" another, its four named links, "who's here," and the Grapevine-text-vs-linked-name
+ * display preference.
  */
 class LocationStructureThreadTest extends WP_UnitTestCase {
 
@@ -107,7 +100,6 @@ class LocationStructureThreadTest extends WP_UnitTestCase {
 		$city  = $this->make_location( [ 'name' => 'Downtown' ] );
 		$block = $this->make_location( [ 'name' => 'Elysium', 'parent_id' => $city ] );
 
-		// Setting the city's parent to its own child would create a cycle.
 		$response = $this->send( 'PUT', "/world-objects/{$city}", [ 'parent_id' => $block ] );
 
 		$this->assertSame( 400, $response->get_status() );
@@ -256,7 +248,7 @@ class LocationStructureThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Audience: a character connected via any location link is always connected (§2.5).
+	// Audience: a character connected via any location link is always connected
 	// -------------------------------------------------------------------------
 
 	public function test_a_haven_holder_always_sees_a_storytellers_only_location(): void {

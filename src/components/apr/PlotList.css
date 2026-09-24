@@ -1,5 +1,3 @@
-/* Decision 057. Tokens inherited from .be-plot-manager (PlotManager.css).
-   D34 throughout: compound-class specificity so hello-elementor's reset.css can't win. */
 
 .be-plot-list__new-button.be-plot-list__new-button {
 	margin-bottom: 1rem;

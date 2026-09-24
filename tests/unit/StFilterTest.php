@@ -7,12 +7,6 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Transcribed from `GameClass.STFilter`.
- *
- * `Trim()` only strips leading/trailing whitespace, not whatever is left in the middle
- * once a marked section is cut out - a marker with a space on both sides leaves both
- * spaces behind, doubled up. That is faithful VB behavior, not a bug to smooth over.
- *
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "ST data filtering (GameClass.STFilter)"
  */
 class StFilterTest extends TestCase {
 
@@ -38,8 +32,6 @@ class StFilterTest extends TestCase {
 	}
 
 	public function test_trims_only_the_outer_edges_not_whitespace_left_in_the_middle(): void {
-		// 3 spaces before the marker + 3 after it = 6 left behind in the middle; the
-		// 2 trailing spaces at the very end are the only ones Trim() removes.
 		$this->assertSame(
 			'Before' . str_repeat( ' ', 6 ) . 'After',
 			St_Filter::strip( 'Before   [ST]hidden[/ST]   After  ', '[ST]', '[/ST]' )
@@ -81,12 +73,6 @@ class StFilterTest extends TestCase {
 		);
 	}
 
-	/**
-	 * 1.0.0-review F-061. Grapevine treats a blank marker as "filtering off" for the one
-	 * Storyteller at the keyboard; here it would show every player every `[ST]` passage in the
-	 * chronicle, and nothing in the product shows or sets the markers. A blank stored marker
-	 * falls back to the default instead.
-	 */
 	public function test_strip_for_game_never_turns_filtering_off_for_a_blank_stored_marker(): void {
 		foreach ( [ [ '', '' ], [ '', '[/ST]' ], [ '[ST]', '' ] ] as [ $start, $end ] ) {
 			$settings = (object) [ 'st_comment_start' => $start, 'st_comment_end' => $end ];
@@ -102,6 +88,5 @@ class StFilterTest extends TestCase {
 		);
 	}
 
-	// strip_html_for_game() calls wp_kses_post(), a real WordPress function unavailable at
-	// this unit layer - see tests/thread/StFilterHtmlThreadTest.php.
+	// strip_html_for_game() calls wp_kses_post(), a real WordPress function unavailable at this unit layer.
 }

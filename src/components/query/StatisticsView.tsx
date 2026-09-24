@@ -1,8 +1,6 @@
 /**
- * StatisticsView renders the Statistics tab of the query tool: choose a field
- * and a statistic type, run it, and display the result as a bar chart with
- * expandable buckets. Used by QueryTool alongside the Search and Saved Queries
- * tabs.
+ * StatisticsView renders the Statistics tab of the query tool: choose a field and a statistic type, run it, and
+ * display the result as a bar chart with expandable buckets.
  */
 import { __, sprintf } from '@wordpress/i18n';
 import { useState } from '@wordpress/element';
@@ -40,9 +38,8 @@ const STAT_TYPES: { value: StatisticType; label: string }[] = [
 ];
 
 /**
- * Renders the statistics tab: pick a field and a statistic type (distribution,
- * maxima, sums, etc.), run it, and show the result as a bar chart scaled to the
- * largest bucket. Each bucket expands to list the character names behind it.
+ * Renders the statistics tab: pick a field and a statistic type (distribution, maxima, sums, etc.), run it, and show
+ * the result as a bar chart scaled to the largest bucket.
  */
 export function StatisticsView( {
 	fields,

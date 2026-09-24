@@ -7,27 +7,15 @@ use BeyondElysium\Services\Pdf_Signer;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for the secure-printing settings screen (1.0.1 C2-C4).
- *
- * Two jobs, and a hard line between them. It reports whether signing is configured and
- * whether an administrator has switched it on, and it will mint a self-signed pair on
- * request. **It never installs one.** Owner ruling, 2026-09-16: no web upload of a key, and
- * nothing written to the filesystem or the database. `wp-config.php` constants stay the only
- * source `Pdf_Signer` reads, and SFTP stays how files reach the server.
- *
- * The gap this closes is narrower than "configuring signing": a host with no shell cannot run
- * `openssl req` at all, and that - not file placement - is what locks a chronicle out of
- * signed printing forever. PHP's openssl *extension* needs no shell, and adds no dependency:
- * TCPDF already signs through `openssl_pkcs7_sign()`, so a PDF cannot be signed without it
- * regardless of where the certificate came from.
- *
- * @see BE_PROCESS/releases/1.0.1-design-workflow.md §2.3, C3
+ * REST controller for the secure-printing settings screen.
  */
 class Signing_Controller extends Base_Controller {
 
 	protected $rest_base = 'signing';
 
-	/** A generated key is useless without a passphrase of at least this length. */
+	/**
+	 * A generated key is useless without a passphrase of at least this length.
+	 */
 	private const MIN_PASSPHRASE = 8;
 
 	public function register_routes(): void {
@@ -47,9 +35,6 @@ class Signing_Controller extends Base_Controller {
 			],
 		] );
 
-		// Administrator only - deliberately stricter than the rest of this controller, and
-		// stricter than be_manage_games, because this is the one route where a private key
-		// exists at all. POST only, so there is no bookmarkable or shareable URL for it.
 		register_rest_route( $this->namespace, '/' . $this->rest_base . '/certificate', [
 			[
 				'methods'             => 'POST',
@@ -62,10 +47,8 @@ class Signing_Controller extends Base_Controller {
 	}
 
 	/**
-	 * What the settings screen shows: which of the three constants are defined, whether the
-	 * two files are readable, whether the opt-in is on, and whether this host could mint a
-	 * pair at all. Never a key, never a passphrase - the passphrase constant is reported only
-	 * as defined or not, which is all the screen needs to say "you're set up".
+	 * What the settings screen shows: which of the three constants are defined, whether the two files are readable,
+	 * whether the opt-in is on, and whether this host could mint a pair at all.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response
@@ -102,12 +85,8 @@ class Signing_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Mints a self-signed certificate and private key in memory and returns them once, with
-	 * the exact `wp-config.php` constants to paste.
-	 *
-	 * Nothing here touches the filesystem or the database. The passphrase encrypts the key on
-	 * the way out and is not retained. The response is marked `no-store` so no proxy or
-	 * browser cache keeps the one copy of the key that will ever exist.
+	 * Mints a self-signed certificate and private key in memory and returns them once, with the exact `wp-config.php`
+	 * constants to paste.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error

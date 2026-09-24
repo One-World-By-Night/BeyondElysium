@@ -10,10 +10,10 @@
     failOnWarning="true"
     failOnRisky="true">
 
-    <!-- Three layers, see BE_PROCESS/now/TESTING.md.
+    <!-- Three layers.
          unit     - pure logic, no WordPress, no database
-         thread   - one full path through the stack, needs WordPress + MariaDB
-         workflow - multi-actor scenarios, needs WordPress + MariaDB -->
+         thread   - one full path through the stack, needs WordPress and a database
+         workflow - multi-actor scenarios, needs WordPress and a database -->
     <testsuites>
         <testsuite name="unit">
             <directory suffix="Test.php">tests/unit</directory>

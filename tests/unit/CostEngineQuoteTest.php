@@ -6,13 +6,7 @@ use BeyondElysium\Services\Cost_Engine;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.3.3 E1 (design §3.10): a purchase with no catalog price is unpriced, not free. Until this
- * every approved custom purchase deducted a stored 0 and nothing let a Storyteller set a price.
- * The quote says which case a change is - `priced` - so the controller can hold an unpriced one
- * for a Storyteller's number and the player's preview can say so instead of "0 XP".
- *
- * Per Q2 (owner, 2026-09-23) only a CUSTOM purchase is unpriced: a catalog item with no cost
- * keeps pricing at 0, exactly as it always has.
+ * A purchase with no catalog price is unpriced.
  */
 class CostEngineQuoteTest extends TestCase {
 
@@ -165,8 +159,7 @@ class CostEngineQuoteTest extends TestCase {
 	}
 
 	public function test_a_custom_flag_wins_over_a_catalog_name(): void {
-		// The validator strips the flag from a name the catalog carries, so this only arises when
-		// something flags one anyway - and a flagged row has never been priced from the catalog.
+		// The validator strips the flag from a name the catalog carries.
 		$quote = Cost_Engine::quote_trait_list_change( [], self::block(), 'm', 'add_trait', self::change( 'm', [ 'name' => 'Iron Will', 'count' => 2, 'custom' => true ] ) );
 
 		$this->assertSame( [ 'xp' => 0, 'priced' => false, 'unpriced_reason' => self::UNPRICED ], $quote );
@@ -323,7 +316,7 @@ class CostEngineQuoteTest extends TestCase {
 		$this->assertSame( [ 'per' => 'pick', 'units' => 0 ], Cost_Engine::price_units( $sheet, self::powers(), 'p', 'remove_trait', self::change( 'p', [ 'name' => 'Dur-An-Ki: Path of Spirit', 'custom' => true ] ) ) );
 	}
 
-	// --- what a Storyteller's price makes of a purchase that was waiting for one (E3) -------
+	// --- what a Storyteller's price makes of a purchase that was waiting for one ------------
 
 	public function test_a_price_becomes_a_per_dot_total_and_lands_on_the_trait(): void {
 		$change = self::change( 'm', [ 'name' => 'Occult Library', 'count' => 3, 'custom' => true ], [ 'cost_pending' => true ] );

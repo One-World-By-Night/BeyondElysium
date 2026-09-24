@@ -3,10 +3,8 @@ import { join } from 'path';
 import { headingAnchors, helpTarget } from '../lib/helpPage';
 
 /**
- * 1.0.0-help.md H-1's coverage guard. Every `?` opens a help page that exists, every link in a
- * help page opens something - another help page or a guide, at a heading that is really there -
- * and every help page is reachable: from a screen's `?`, or, for a page no one screen owns, from
- * a link in another page.
+ * The help pages' coverage guard: every `?` opens a help page that exists, every link in a help page opens something
+ * at a heading that is really there, and every help page is reachable.
  */
 const DOCS = join( __dirname, '../../beyond-elysium/docs' );
 const HELP = join( DOCS, 'help' );
@@ -30,7 +28,9 @@ function sourceFiles( dir: string ): string[] {
 	} );
 }
 
-/** Every `helpKey="..."` a screen passes to its `?`. */
+/**
+ * Every `helpKey="..."` a screen passes to its `?`.
+ */
 const usedKeys = new Set(
 	sourceFiles( join( __dirname, '..' ) ).flatMap( ( file ) =>
 		[ ...read( file ).matchAll( /helpKey="([a-z0-9-]+)"/g ) ].map(
@@ -40,8 +40,7 @@ const usedKeys = new Set(
 );
 
 /**
- * Screens whose `?` waits for the owner's review of the three pilot pages - Character Editor,
- * Character Sheet, Approval Queue (1.0.0-help.md H-2). Wiring one removes it from this list.
+ * Screens whose `?` is not wired to a help page yet. Wiring one removes it from this list.
  */
 const WAITING_FOR_PILOT_REVIEW = [
 	'profile-settings',
@@ -49,10 +48,11 @@ const WAITING_FOR_PILOT_REVIEW = [
 	'signed-sheets',
 ];
 
-/** Pages no single screen owns: concepts and reference, reached by links from other pages. */
+/**
+ * Pages no single screen owns: concepts and reference, reached by links from other pages.
+ */
 const LINKED_ONLY = [
 	'approval-flow',
-	'catalog-cutover',
 	'chronicles',
 	'grapevine',
 	'roles',

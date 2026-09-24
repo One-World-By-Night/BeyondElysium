@@ -1,22 +1,14 @@
 /**
- * Type definitions and supporting lookup tables for the ad hoc
- * character query builder. Covers field and operator types, the
- * operator label and applicability tables, query condition and
- * request shapes, statistics requests, and saved queries.
+ * Type definitions and supporting lookup tables for the ad hoc character query builder.
  */
 
 /**
- * The kind of value a queryable field holds: a plain text field,
- * a number, a date, a boolean, or a list of items. Determines
- * which operators are applicable to that field.
+ * The kind of value a queryable field holds: a plain text field, a number, a date, a boolean, or a list of items.
  */
 export type FieldType = 'field' | 'num' | 'date' | 'bool' | 'list';
 
 /**
- * A single comparison operator usable in a query condition, such
- * as "contains" or "at least". Different operators apply to
- * different field types, and some expect a find value to search
- * for while others expect a numeric value to compare against.
+ * A single comparison operator usable in a query condition, such as "contains" or "at least".
  */
 export type QueryOperator =
 	| 'contains'
@@ -40,9 +32,7 @@ export type QueryOperator =
 	| 'is_false';
 
 /**
- * The set of operators applicable to each field type. Used to
- * populate the operator picker in the query builder once a field
- * of a given type has been selected.
+ * The set of operators applicable to each field type.
  */
 export const OPERATORS_BY_TYPE: Record< FieldType, QueryOperator[] > = {
 	field: [ 'contains', 'equals' ],
@@ -66,8 +56,7 @@ export const OPERATORS_BY_TYPE: Record< FieldType, QueryOperator[] > = {
 };
 
 /**
- * The human-readable label shown for each query operator in the
- * query builder UI, such as "is at least" for at_least.
+ * The human-readable label shown for each query operator in the query builder UI, such as "is at least" for at_least.
  */
 export const OPERATOR_LABELS: Record< QueryOperator, string > = {
 	contains: 'contains',
@@ -92,8 +81,7 @@ export const OPERATOR_LABELS: Record< QueryOperator, string > = {
 };
 
 /**
- * Operators whose condition needs a find value: a name or string
- * to search for, rather than a number to compare against.
+ * Operators whose condition needs a find value: a name or string to search.
  */
 export const FIND_OPERATORS: QueryOperator[] = [
 	'contains',
@@ -107,8 +95,7 @@ export const FIND_OPERATORS: QueryOperator[] = [
 ];
 
 /**
- * Operators whose condition needs a numeric value to compare
- * against, rather than a find string to search for.
+ * Operators whose condition needs a numeric value to compare against.
  */
 export const VALUE_OPERATORS: QueryOperator[] = [
 	'at_least',
@@ -128,10 +115,7 @@ export const VALUE_OPERATORS: QueryOperator[] = [
 ];
 
 /**
- * A single queryable field exposed by the query builder, such as
- * a trait or identity value. Records its key, display title, and
- * value type, and whether it is currently mapped to real sheet
- * data.
+ * A single queryable field exposed by the query builder, such as a trait or identity value.
  */
 export interface QueryField {
 	key: string;
@@ -141,9 +125,7 @@ export interface QueryField {
 }
 
 /**
- * A single condition within a query: which field to test, which
- * operator to apply, the find or value operand it needs, and
- * whether the result should be negated.
+ * A single condition within a query: which field to test.
  */
 export interface QueryCondition {
 	field: string;
@@ -154,16 +136,12 @@ export interface QueryCondition {
 }
 
 /**
- * Whether a query's conditions must all match (AND) or any one of
- * them may match (OR).
+ * Whether a query's conditions must all match (AND) or any one of them may match (OR).
  */
 export type QueryLogic = 'AND' | 'OR';
 
 /**
- * A single character returned by a query. Carries the core
- * identifying fields plus an optional human-readable match reason,
- * and allows arbitrary additional fields requested by the query
- * itself.
+ * A single character returned by a query.
  */
 export interface QueryResultCharacter {
 	id: number;
@@ -176,9 +154,7 @@ export interface QueryResultCharacter {
 }
 
 /**
- * Request body for running a query against a chronicle's
- * characters. Specifies which inventory to search, the conditions
- * and logic to apply, optional sorting, and pagination.
+ * Request body for running a query against a chronicle's characters.
  */
 export interface RunQueryRequest {
 	inventory?: string;
@@ -190,9 +166,8 @@ export interface RunQueryRequest {
 }
 
 /**
- * The kind of aggregate a statistics request computes: a value
- * distribution, a distinct-value distribution, a distribution
- * over one specific value, the maximum found, or a sum total.
+ * The kind of aggregate a statistics request computes: a value distribution, a distinct-value distribution, a
+ * distribution over one specific value, the maximum found, or a sum total.
  */
 export type StatisticType =
 	| 'distribution'
@@ -202,9 +177,7 @@ export type StatisticType =
 	| 'sums';
 
 /**
- * Request body for running a statistics aggregate over the
- * characters matching a set of query conditions. Names the field
- * and trait to aggregate and which kind of statistic to compute.
+ * Request body for running a statistics aggregate over the characters matching a set of query conditions.
  */
 export interface RunStatisticsRequest {
 	inventory?: string;
@@ -217,9 +190,7 @@ export interface RunStatisticsRequest {
 }
 
 /**
- * The result of a statistics aggregate: value buckets and their
- * counts, which characters fall into each bucket, and the overall
- * total and maximum found.
+ * The result of a statistics aggregate: value buckets and their counts.
  */
 export interface StatisticsResult {
 	buckets: Record< string, number >;
@@ -229,10 +200,8 @@ export interface StatisticsResult {
 }
 
 /**
- * A query saved by a user for reuse, including its conditions,
- * matching mode, and sort order. is_recent_search marks an
- * automatically retained recent search rather than one the user
- * deliberately named and saved.
+ * A query saved by a user for reuse, including its conditions, matching mode, and sort order. is_recent_search marks
+ * an automatically retained recent search.
  */
 export interface SavedQuery {
 	id: number;
@@ -250,9 +219,7 @@ export interface SavedQuery {
 }
 
 /**
- * Request body for saving a query. name and conditions are
- * required; inventory, logic, and sort fields are optional and
- * take server-side defaults when omitted.
+ * Request body for saving a query. name and conditions are required.
  */
 export interface SaveQueryRequest {
 	name: string;
@@ -264,10 +231,7 @@ export interface SaveQueryRequest {
 }
 
 /**
- * Builds a plain-English description of a single query condition,
- * such as "Clan contains Toreador". Combines the field title with
- * the operator's label and its find or value operand, handling
- * negation and operators that need both a find and a value.
+ * Builds a plain-English description of a single query condition, such as "Clan contains Toreador".
  */
 export function describeCondition(
 	condition: QueryCondition,

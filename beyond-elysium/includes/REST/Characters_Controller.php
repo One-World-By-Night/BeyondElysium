@@ -14,30 +14,18 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * REST controller for player and non-player characters.
- *
- * Covers the full character resource: listing with filtering and
- * pagination, single-character retrieval, the player's own "my characters"
- * view, creation (including hand-entered starting sheets), header updates,
- * deletion, and a WordPress-user search used to assign a character to a
- * real account.
  */
 class Characters_Controller extends Base_Controller {
 
 	protected $rest_base = 'characters';
 
 	/**
-	 * Valid character status values; "pending" applies only when a game requires
-	 * approval for new characters. Kept as a local alias of `Character::STATUSES`
-	 * (Decision 102) so every existing `self::STATUSES` call site here needs no change.
+	 * Valid character status values.
 	 */
 	const STATUSES = Character::STATUSES;
 
 	/**
 	 * Registers the character routes.
-	 *
-	 * Adds the game-scoped collection and single-character routes, the
-	 * current user's "my characters" route, and a site-wide WordPress-user
-	 * search route used to assign a character to a real account.
 	 */
 	public function register_routes(): void {
 		// Lists and creates characters for a game.
@@ -51,7 +39,6 @@ class Characters_Controller extends Base_Controller {
 			[
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'create_item' ],
-				// Bootstraps access so a player with no prior membership can create their first character.
 				'permission_callback' => $this->permission( 'be_edit_own_characters', true ),
 			],
 		] );
@@ -65,8 +52,6 @@ class Characters_Controller extends Base_Controller {
 			],
 		] );
 
-		// The fixed status vocabulary, for a bulk-status picker to source from rather
-		// than hardcoding the list a second time client-side.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/statuses', [
 			[
 				'methods'             => 'GET',
@@ -75,7 +60,7 @@ class Characters_Controller extends Base_Controller {
 			],
 		] );
 
-		// Sets the same status on a batch of characters at once (bulk-operations-design.md).
+		// Sets the same status on a batch of characters at once.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/bulk-status', [
 			[
 				'methods'             => 'POST',
@@ -99,15 +84,11 @@ class Characters_Controller extends Base_Controller {
 			[
 				'methods'             => 'DELETE',
 				'callback'            => [ $this, 'delete_item' ],
-				// Narrower than be_manage_characters on purpose (1.0.0-checklist.md item 27):
-				// an AST may edit and bulk-manage characters but not permanently delete one.
 				'permission_callback' => $this->permission( 'be_delete_characters' ),
 			],
 		] );
 
-		// Site-wide WordPress user search - adding chronicle members on Chronicle Access, a site
-		// administrator's job. Returns email addresses, so it is never a Storyteller's
-		// directory of every account on the site (1.0.0-review F-010).
+		// Site-wide WordPress user search.
 		register_rest_route( $this->namespace, '/wp-users', [
 			[
 				'methods'             => 'GET',
@@ -128,11 +109,6 @@ class Characters_Controller extends Base_Controller {
 
 	/**
 	 * Searches WordPress users by display name, email, or login.
-	 *
-	 * A purpose-built search used to find and assign a real WordPress
-	 * account to a character, since core's own users REST route does not
-	 * expose email. Returns up to 50 matches with id, display name, and
-	 * email.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response
@@ -159,13 +135,7 @@ class Characters_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Finds an account to assign as a character's player, for a Storyteller
-	 * of this chronicle. Any account on the site can be assigned, so the
-	 * search covers them all - but narrowly: at least three characters,
-	 * matched against display name and login only, at most 20 results, and
-	 * no email addresses. An email comes back only when the search is itself
-	 * that exact address, which confirms an account the Storyteller already
-	 * knows rather than revealing one (1.0.0-review F-010).
+	 * Finds an account to assign as a character's player, for a Storyteller of this chronicle.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response
@@ -207,11 +177,6 @@ class Characters_Controller extends Base_Controller {
 	/**
 	 * Sets the same status on a batch of characters at once.
 	 *
-	 * Validates the character ID list and the requested status against
-	 * `Character::STATUSES`, then delegates to `Character::bulk_update_status()`,
-	 * which checks each ID against this game before writing and returns a
-	 * per-ID result rather than an all-or-nothing transaction.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -242,11 +207,6 @@ class Characters_Controller extends Base_Controller {
 	/**
 	 * Lists characters for a game with optional filters and pagination.
 	 *
-	 * Supports an exact UUID lookup that short-circuits the normal filtered
-	 * listing, plus filtering by status, stack, owner, NPC flag, and search
-	 * text. Restricts non-managers to their own characters, hides NPCs from
-	 * non-managers, and strips ST-only content from the response for them.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -268,10 +228,7 @@ class Characters_Controller extends Base_Controller {
 		}
 
 		$can_manage = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
-		// A Narrator holds be_manage_plots, not be_manage_characters - they allocate actions for
-		// any character in the chronicle (1.0.0-checklist.md item 19), which needs the full
-		// roster to pick from, but not the edit/delete/create powers $can_manage still gates
-		// everywhere else in this file, and not NPC visibility (line below, unchanged).
+		// A Narrator may list every character, to allocate actions.
 		$can_view_roster = $can_manage || \BeyondElysium\Core\Authorization::can( 'be_manage_plots' );
 
 		$pagination = $this->get_pagination( $request );
@@ -280,7 +237,6 @@ class Characters_Controller extends Base_Controller {
 			'stack_slug' => $request->get_param( 'stack_slug' ),
 			// A non-manager is restricted to their own characters regardless of the requested wp_user_id.
 			'wp_user_id' => $can_view_roster ? $request->get_param( 'wp_user_id' ) : get_current_user_id(),
-			// NPCs are hidden from non-managers, and default to excluded even for a manager unless explicitly requested.
 			'is_npc'     => $can_manage && $request->get_param( 'is_npc' ) !== null ? $request->get_param( 'is_npc' ) : 0,
 			'search'     => $request->get_param( 'search' ),
 			'orderby'    => $request->get_param( 'orderby' ) ?: 'name',
@@ -291,18 +247,15 @@ class Characters_Controller extends Base_Controller {
 
 		$items = Character::all_for_game( $request['game_slug'], $args );
 
-		// One extra query for the whole page rather than an N+1 (§7.3) - the newest open
-		// transfer per uuid, from either side this chronicle is party to.
+		// The newest open transfer per uuid for the page.
 		$travel_states = Transfer::open_states_for_game( $request['game_slug'] );
 
 		foreach ( $items as $item ) {
-			// Uses the thumbnail size since a roster renders many of these per page.
 			$item->image_url = $item->image_id ? wp_get_attachment_image_url( (int) $item->image_id, 'thumbnail' ) : null;
 			$item->travelling_status = $travel_states[ $item->uuid ] ?? null;
 			self::apply_computed_player_fields( $item, $can_manage );
 		}
 
-		// Looked up once for the whole page rather than once per character.
 		$hidden = $can_manage ? [] : Schema_Block::storyteller_only_slugs( $game->slug );
 		foreach ( $items as $item ) {
 			St_Visibility::filter_character( $item, $game, $can_manage, $hidden );
@@ -315,11 +268,6 @@ class Characters_Controller extends Base_Controller {
 
 	/**
 	 * Retrieves a single character by ID, scoped to the game.
-	 *
-	 * Restricts a non-manager to viewing only their own character, strips
-	 * ST-only content when the viewer is not a manager, and adds computed
-	 * fields such as image URL, editability, and the viewer's own
-	 * capability flags.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -341,8 +289,6 @@ class Characters_Controller extends Base_Controller {
 		}
 
 		$can_manage      = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
-		// See get_items()'s identical comment: a Narrator (be_manage_plots, not
-		// be_manage_characters) may view any character in the chronicle to allocate for it.
 		$can_view_roster = $can_manage || \BeyondElysium\Core\Authorization::can( 'be_manage_plots' );
 
 		// A non-manager (and not a Narrator viewing someone else's) may only view their own character.
@@ -352,11 +298,10 @@ class Characters_Controller extends Base_Controller {
 
 		St_Visibility::filter_character( $character, $game, $can_manage );
 
-		// Computed permission flags so the client can decide whether to render an editor or a read-only sheet.
+		// Computed permission flags.
 		$character->can_edit   = $this->can_edit_character( $character );
 		$character->can_manage = $can_manage;
-		// A per-user grant (User_Settings), not a chronicle role, so it is checked site-wide - and
-		// only for a sheet the viewer may already edit, matching the sheet-style routes' own rule.
+		// A per-user grant (User_Settings).
 		$character->can_customize_sheet = current_user_can( 'be_customize_sheet' )
 			&& ( $can_manage || (int) $character->wp_user_id === get_current_user_id() );
 
@@ -365,7 +310,6 @@ class Characters_Controller extends Base_Controller {
 			? wp_get_attachment_image_url( (int) $character->image_id, 'medium' )
 			: null;
 
-		// The sheet's own travelling notice and warning-styled edit affordance (§8.4) key off this.
 		$character->travelling_status = Transfer::open_states_for_game( $request['game_slug'] )[ $character->uuid ] ?? null;
 
 		self::apply_computed_player_fields( $character, $can_manage );
@@ -375,10 +319,6 @@ class Characters_Controller extends Base_Controller {
 
 	/**
 	 * Lists the current user's own characters in this game.
-	 *
-	 * Resolves every character owned by the current user via
-	 * `Character::find_for_user()`, adding a thumbnail image URL to each
-	 * and stripping ST-only content when the viewer is not a manager.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -391,7 +331,6 @@ class Characters_Controller extends Base_Controller {
 
 		$items      = Character::find_for_user( get_current_user_id(), $request['game_slug'] );
 		$can_manage = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
-		// Looked up once for the whole page rather than once per character.
 		$hidden     = $can_manage ? [] : Schema_Block::storyteller_only_slugs( $game->slug );
 
 		foreach ( $items as $item ) {
@@ -404,12 +343,6 @@ class Characters_Controller extends Base_Controller {
 
 	/**
 	 * Computes the player_name and pending_match fields on a character.
-	 *
-	 * When a character has a real `wp_user_id`, overwrites `player_name`
-	 * with that user's current display name, since the stored column is not
-	 * authoritative once an account is attached. When it has none, resolves
-	 * a `pending_match` candidate from `pending_player_email`, visible only
-	 * to a manager.
 	 *
 	 * @param object $character
 	 * @param bool   $can_manage
@@ -437,11 +370,6 @@ class Characters_Controller extends Base_Controller {
 	/**
 	 * Creates a new character in the game.
 	 *
-	 * Validates the required fields, resolves status and owning user
-	 * according to the caller's role, validates any hand-entered starting
-	 * sheet data against the chosen creature stack's blocks, and creates
-	 * the character record in one call.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -461,9 +389,7 @@ class Characters_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'Missing required field: stack_slug.', 'beyond-elysium' ), 400 );
 		}
 
-		// GS-3 (guided-chronicle-setup-design.md §6.2): the real enforcement point for
-		// enabled_stacks - the client-side picker filter is an affordance, this is the
-		// control. Absent/empty enabled_stacks means every stack is allowed, unchanged.
+		// Refuses a creature type this chronicle has not enabled.
 		$allowed_stacks = array_column( Creature_Stack::all_for_game( $request['game_slug'] ), 'slug' );
 		if ( ! in_array( $stack_slug, $allowed_stacks, true ) ) {
 			return $this->error(
@@ -487,9 +413,7 @@ class Characters_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', sprintf( __( 'status must be one of: %s.', 'beyond-elysium' ), implode( ', ', self::STATUSES ) ), 400 );
 		}
 
-		// Someone with no standing in this chronicle - no membership, no accessSchema grant - is
-		// asking to join: the character waits for a Storyteller, and so does their membership
-		// (owner ruling, 1.0.0-review F-033).
+		// A newcomer with no membership or accessSchema grant asks to join.
 		$joining = ! $is_manager && ! \BeyondElysium\Core\Authorization::can( 'be_edit_own_characters' );
 		if ( $joining ) {
 			$waiting = Manager::get_var(
@@ -500,8 +424,7 @@ class Characters_Controller extends Base_Controller {
 			if ( (int) $waiting > 0 ) {
 				return $this->error( 'join_already_requested', __( 'Your character is already waiting for this chronicle\'s Storytellers to approve it.', 'beyond-elysium' ), 409 );
 			}
-			// The other half of the same one-waiting-request rule (F-122, §2.2): a sent
-			// Grapevine file waiting for this chronicle blocks a second, hand-built request too.
+			// A waiting Grapevine file for this chronicle blocks a second request.
 			if ( \BeyondElysium\Models\Submission::has_waiting( (int) $game->id, get_current_user_id() ) ) {
 				return $this->error( 'join_already_requested', __( 'Your character is already waiting for this chronicle\'s Storytellers to approve it.', 'beyond-elysium' ), 409 );
 			}
@@ -512,7 +435,7 @@ class Characters_Controller extends Base_Controller {
 		} elseif ( $joining ) {
 			$status = 'pending';
 		} else {
-			// A non-manager's status is never trusted; it is pending only if the game requires approval, active otherwise.
+			// A non-manager's status is never trusted.
 			$status = ! empty( $game->settings->require_new_character_approval ) ? 'pending' : 'active';
 		}
 
@@ -528,10 +451,6 @@ class Characters_Controller extends Base_Controller {
 		}
 		$sheet_data = $sheet_data ?: [];
 
-		// Resolved unconditionally, even on a bare create with no hand-entered sheet_data -
-		// needed below to apply each block's own default_held starting template (e.g. a new
-		// vampire's Health Levels), not only to validate sheet_data the caller supplied.
-		// Resolves against the game's own customized blocks, not just the base catalog.
 		$resolved = Creature_Stack::resolve( $stack_slug, $request['game_slug'] );
 		if ( ! $resolved ) {
 			return $this->error( 'invalid_param', __( 'stack_slug does not resolve to a real creature stack.', 'beyond-elysium' ), 400 );
@@ -547,11 +466,7 @@ class Characters_Controller extends Base_Controller {
 				);
 			}
 
-			// The real enforcement point for a sub-faction restriction ("Vampire yes,
-			// but no Sabbat") beneath the whole-stack enabled_stacks check above -
-			// Creature_Stacks_Controller's for_creation narrowing is the picker
-			// affordance, this is the control. Absent/empty restriction means every
-			// value is allowed, same convention as enabled_stacks itself.
+			// Enforces the chronicle's sub-faction restrictions.
 			$disallowed = Creature_Stack::find_disallowed_identity_value( $stack_slug, $sheet_data, $resolved['blocks'], $request['game_slug'] );
 			if ( $disallowed ) {
 				return $this->error(
@@ -567,10 +482,7 @@ class Characters_Controller extends Base_Controller {
 			}
 		}
 
-		// A block that ships its own starting template (trait_list's `default_held`, e.g.
-		// Health Levels) is applied automatically here, the same way Grapevine itself
-		// pre-fills a fresh character's health boxes - never overwriting a block the
-		// caller already supplied a value for.
+		// Applies each block's own default_held starting template.
 		foreach ( $resolved['blocks'] as $block_slug => $block ) {
 			if ( array_key_exists( $block_slug, $sheet_data ) ) {
 				continue;
@@ -587,14 +499,14 @@ class Characters_Controller extends Base_Controller {
 			'owner_type'  => 'chronicle',
 			'owner_slug'  => $request['game_slug'],
 			'wp_user_id'  => $wp_user_id,
-			// Stored only when there is no wp_user_id; otherwise resolved live from the account.
+			// Stored only when there is no wp_user_id.
 			'player_name' => $wp_user_id
 				? null
 				: ( $request->get_param( 'player_name' ) ? sanitize_text_field( $request->get_param( 'player_name' ) ) : null ),
 			'status'      => $status,
 			// A non-manager's is_npc claim is never trusted.
 			'is_npc'      => $is_manager && $request->get_param( 'is_npc' ) ? 1 : 0,
-			// "New NPC asks Quick or Full" (1.1.0 §3.7 item 1) - meaningless on a PC either way.
+			// Whether a new NPC is quick or full.
 			'npc_detail'  => $is_manager && $request->get_param( 'npc_detail' ) === 'quick' ? 'quick' : 'full',
 			'narrator'    => $request->get_param( 'narrator' ) ? sanitize_text_field( $request->get_param( 'narrator' ) ) : null,
 			'start_date'  => $start_date,
@@ -626,11 +538,6 @@ class Characters_Controller extends Base_Controller {
 	/**
 	 * Updates the header fields of a character.
 	 *
-	 * Applies only an allowlisted set of fields; sheet_data is never
-	 * touched here. Restricts is_npc, wp_user_id, and pending_player_email
-	 * to managers, sanitizes rich-text fields, and validates status,
-	 * start_date, and image_id.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -655,11 +562,7 @@ class Characters_Controller extends Base_Controller {
 
 		$is_manager = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
 
-		// A player edits their own character's story and portrait. Status, the assigned narrator,
-		// Storyteller-only notes, and the NPC flag are a Storyteller's: a player setting status
-		// let a pending new character activate itself - undoing "Require new character
-		// approval" - and brought dead ones back, and rp_notes is never even shown to them
-		// (1.0.0-review F-033).
+		// A player edits their own character's story and portrait.
 		$allowed_fields = [ 'name', 'biography', 'notes', 'player_name', 'start_date', 'image_id' ];
 		if ( $is_manager ) {
 			array_push( $allowed_fields, 'status', 'narrator', 'rp_notes', 'is_npc', 'npc_detail' );
@@ -687,8 +590,7 @@ class Characters_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', sprintf( __( 'status must be one of: %s.', 'beyond-elysium' ), implode( ', ', self::STATUSES ) ), 400 );
 		}
 
-		// "Make full NPC" (1.1.0 §3.7 item 1) - a plain field flip; sheet_data never depends on
-		// npc_detail, so nothing held is lost either direction.
+		// Promotes a quick NPC to a full one.
 		if ( isset( $data['npc_detail'] ) && ! in_array( $data['npc_detail'], [ 'full', 'quick' ], true ) ) {
 			return $this->error( 'invalid_param', __( 'npc_detail must be one of: full, quick.', 'beyond-elysium' ), 400 );
 		}
@@ -718,7 +620,6 @@ class Characters_Controller extends Base_Controller {
 				$data['pending_player_email'] = sanitize_email( $raw );
 			}
 		}
-		// Clears any pending email once a real player is actually assigned in this request.
 		if ( isset( $data['wp_user_id'] ) && $data['wp_user_id'] !== null && ! $request->has_param( 'pending_player_email' ) ) {
 			$data['pending_player_email'] = null;
 		}
@@ -737,7 +638,6 @@ class Characters_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'start_date must be a valid date (YYYY-MM-DD).', 'beyond-elysium' ), 400 );
 		}
 
-		// Verifies image_id actually references a media attachment.
 		if ( ! empty( $data['image_id'] ) && get_post_type( (int) $data['image_id'] ) !== 'attachment' ) {
 			return $this->error( 'invalid_param', __( 'image_id must be a real media attachment.', 'beyond-elysium' ), 400 );
 		}
@@ -746,9 +646,7 @@ class Characters_Controller extends Base_Controller {
 			$data['is_npc'] = $data['is_npc'] ? 1 : 0;
 		}
 
-		// Staff assignment (1.1.0 §3.6): an NPC's own staff owner. Gated on the character's
-		// current is_npc state, not a same-request change to it - assigned_to only ever makes
-		// sense on what already is an NPC. Manager-only, matching every other assignment field.
+		// Staff assignment for an NPC.
 		if ( $is_manager && $character->is_npc && $request->has_param( 'assigned_to' ) ) {
 			$raw = $request->get_param( 'assigned_to' );
 			if ( $raw === null || $raw === '' || (int) $raw === 0 ) {
@@ -773,10 +671,6 @@ class Characters_Controller extends Base_Controller {
 
 	/**
 	 * Deletes a character.
-	 *
-	 * Resolves the game and character, verifying the character belongs to
-	 * it, then permanently removes the character record. Requires
-	 * `be_manage_characters`.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -803,9 +697,6 @@ class Characters_Controller extends Base_Controller {
 	/**
 	 * Resolves a game by slug, returning a WP_Error if not found.
 	 *
-	 * Looks up the game record for the given slug and returns a 404 error
-	 * when no game matches it.
-	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error
 	 */
@@ -819,9 +710,6 @@ class Characters_Controller extends Base_Controller {
 
 	/**
 	 * Checks whether the current user can edit the given character.
-	 *
-	 * A manager can edit any character in the game. A non-manager can edit
-	 * only the character whose `wp_user_id` matches their own account.
 	 *
 	 * @param object $character
 	 * @return bool
@@ -837,10 +725,6 @@ class Characters_Controller extends Base_Controller {
 	/**
 	 * Checks whether a value is a valid Y-m-d date string.
 	 *
-	 * Parses the value with `DateTime::createFromFormat()` and confirms the
-	 * parsed date formats back to exactly the input string, rejecting
-	 * values like "2026-02-30" that parse but do not round-trip.
-	 *
 	 * @param mixed $value
 	 * @return bool
 	 */
@@ -854,9 +738,6 @@ class Characters_Controller extends Base_Controller {
 
 	/**
 	 * Defines the query parameters accepted by the collection endpoint.
-	 *
-	 * Covers status, stack, NPC, search, UUID, exact-match filtering, sort
-	 * order, and pagination.
 	 *
 	 * @return array
 	 */

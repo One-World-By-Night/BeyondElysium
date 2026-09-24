@@ -7,11 +7,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * `st_notes` and `note` entries must never reach a non-manager, and a player creating a
- * plot must not be able to set `initiated_by`, `status` or `st_notes` regardless of what
- * the request body sends (workflow-0.5.md Step 2c/2e).
- *
- * @see BE_PROCESS/releases/workflow-0.5.md Step 2
+ * `st_notes` and `note` entries must never reach a non-manager, and a player creating a plot must not be able to set
+ * `initiated_by`, `status` or `st_notes` regardless of what the request body sends.
  */
 class PlotsControllerTest extends WP_UnitTestCase {
 
@@ -31,13 +28,6 @@ class PlotsControllerTest extends WP_UnitTestCase {
 		$this->game_id = (int) $wpdb->insert_id;
 	}
 
-	/**
-	 * Step 1.5, workflow-0.9.md: every subscriber fixture below needs a real chronicle
-	 * membership row now, not just the site-wide capability Capabilities::CAPS already
-	 * grants every WP role. Each test creates its own fresh player rather than sharing one
-	 * via setUp(), so this is called per-test, right after that user is created - matching
-	 * what a real backfilled or admin-added player membership would look like.
-	 */
 	private function make_player(): int {
 		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		\BeyondElysium\Models\Game_Member::set_role( $this->game_id, $player, 'player' );
@@ -45,8 +35,7 @@ class PlotsControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A real character for a player, owned by them - 1.1.0 §2.3a requires a real
-	 * character_id to create a player plot, matching D33's own ownership rule.
+	 * A real character for a player, owned by them.
 	 */
 	private function make_character( int $wp_user_id ): int {
 		return (int) Character::create( [
@@ -104,10 +93,6 @@ class PlotsControllerTest extends WP_UnitTestCase {
 		$create = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots" );
 		$create->set_param( 'title', 'Plot With A Note' );
 		$create->set_param( 'st_notes', 'top secret' );
-		// This test is about st_notes/note-entry visibility specifically, orthogonal to the
-		// 1.1.0 audience system - a new global plot defaults to storytellers-only, which
-		// would hide the whole plot from the unrelated player below before either assertion
-		// ever ran.
 		$create->set_param( 'audience', 'everyone' );
 		$plot_id = $this->dispatch( $create )->get_data()->id;
 
@@ -183,9 +168,6 @@ class PlotsControllerTest extends WP_UnitTestCase {
 		wp_set_current_user( $player );
 		$edit_after = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/entries/{$entry_id}" );
 		$edit_after->set_param( 'content', 'edited after response' );
-		// 409, not 403: the player still owns this entry - it's a state conflict (an ST
-		// already responded), not a permission problem. See `entry_locked` in
-		// Entries_Controller::update_item().
 		$this->assertSame( 409, $this->dispatch( $edit_after )->get_status() );
 	}
 
@@ -232,9 +214,8 @@ class PlotsControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Decision 055 - the real hierarchy the user asked for: a Plot at the top, an Action
-	 * created under it, a Rumor created under that Action. get_item() on the Plot must
-	 * surface the Action as a child; the Rumor is reachable the same way one level down.
+	 * The hierarchy: a Plot at the top, an Action created under it, a Rumor created under that Action. get_item() on the
+	 * Plot must surface the Action as a child.
 	 */
 	public function test_plot_action_rumor_hierarchy_is_navigable(): void {
 		$admin = self::factory()->user->create( [ 'role' => 'administrator' ] );
@@ -269,8 +250,7 @@ class PlotsControllerTest extends WP_UnitTestCase {
 		$this->assertCount( 1, $action_view->children );
 		$this->assertSame( $rumor_id, $action_view->children[0]->id );
 
-		// Manual rumor creation, not just the generator - the actual bug report this
-		// decision fixes: is_rumor tags the plot with apr_rumor, same as the generator.
+		// Manual rumor creation, not just the generator.
 		global $wpdb;
 		$tag = $wpdb->get_row( $wpdb->prepare(
 			"SELECT * FROM {$wpdb->prefix}be_connections WHERE source_type = 'plot' AND source_id = %d AND label = 'apr_rumor'",
@@ -311,7 +291,6 @@ class PlotsControllerTest extends WP_UnitTestCase {
 		$b_req->set_param( 'parent_plot_id', $a_id );
 		$b_id = $this->dispatch( $b_req )->get_data()->id;
 
-		// A -> B already exists; trying to set A's parent to B would create a cycle.
 		$cycle_req = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/plots/{$a_id}" );
 		$cycle_req->set_param( 'parent_plot_id', $b_id );
 		$response = $this->dispatch( $cycle_req );
@@ -344,11 +323,8 @@ class PlotsControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Decision 057 - a real leak found while building the Storyteller Toolkit's card grid:
-	 * `get_item()` attached `children` via `Plot::children()` (raw rows) without ever
-	 * running them through `prepare_plot()`, so a child plot's `st_notes` reached ANY
-	 * logged-in viewer regardless of `be_manage_plots` - the exact thing `prepare_plot()`
-	 * exists to strip for the parent plot itself. Live since v0.14.0.
+	 * A real leak found while building the Storyteller Toolkit's card grid: `get_item()` attached `children` via
+	 * `Plot::children()` (raw rows) without ever running them through `prepare_plot()`.
 	 */
 	public function test_a_childs_st_notes_are_stripped_for_a_non_manager(): void {
 		$st     = self::factory()->user->create( [ 'role' => 'administrator' ] );
@@ -357,9 +333,6 @@ class PlotsControllerTest extends WP_UnitTestCase {
 		wp_set_current_user( $st );
 		$plot_req = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots" );
 		$plot_req->set_param( 'title', 'Parent Plot' );
-		// This test is about children inheriting the parent's st_notes-stripping, orthogonal
-		// to the 1.1.0 audience system - a new global plot defaults to storytellers-only,
-		// which would hide the parent from the unrelated player below entirely.
 		$plot_req->set_param( 'audience', 'everyone' );
 		$plot_id = $this->dispatch( $plot_req )->get_data()->id;
 
@@ -379,10 +352,7 @@ class PlotsControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * 1.0.0-review checklist item 23: `st_notes` could always be set at creation but had no
-	 * edit form anywhere - this update path (`update_item()`'s own `$rich_text_fields`,
-	 * unrelated to my new UI) had no test at all despite being the field's only way to
-	 * change once a plot already exists.
+	 * `st_notes` can be added and changed on an existing plot, and is sanitized.
 	 */
 	public function test_st_notes_can_be_added_and_changed_on_an_existing_plot_sanitized(): void {
 		$st = self::factory()->user->create( [ 'role' => 'administrator' ] );
@@ -442,17 +412,10 @@ class PlotsControllerTest extends WP_UnitTestCase {
 		$this->assertNotEmpty( $single->image_url );
 		$this->assertStringContainsString( 'canola', $single->image_url );
 		$this->assertNotEmpty( $in_list->image_url );
-		// get_items() resolves 'thumbnail', get_item() resolves 'medium' - different sizes,
-		// so the two URLs must not be byte-identical.
+		// get_items() resolves 'thumbnail', get_item() resolves 'medium'.
 		$this->assertNotSame( $single->image_url, $in_list->image_url );
 	}
 
-	/**
-	 * Decision 057 - update_item() previously applied NO sanitization at all (create_item()
-	 * sanitized every field, update_item() passed raw request values straight through).
-	 * A plain string with no markup should still round-trip correctly through the new
-	 * wp_kses_post()/sanitize_text_field() split, proving the fix didn't just move the bug.
-	 */
 	public function test_update_item_sanitizes_rich_and_plain_fields(): void {
 		$admin = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		wp_set_current_user( $admin );

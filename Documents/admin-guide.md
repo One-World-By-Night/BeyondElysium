@@ -199,34 +199,55 @@ a sample of what changed, and nothing is written until **Commit import**.
 **Why a CSV at all, when the table is authoritative:** the file is a convenience for the
 initial bulk pass - a volunteer exports 500 untranslated Werewolf Gift names, works through
 them in a spreadsheet over a week, imports, checks the dry-run counts, commits. It is an
-**export of a live table**, never the source of truth the way `data/met-mechanics.csv` used
-to be - importing it needs no repository, no build, no deploy, and no developer. The in-app
+**export of a live table**, never the source of truth - importing it needs no repository,
+no build, no deploy, and no developer. The in-app
 inline edit is for the other half of the job: a Storyteller spots a wrong term mid-session,
 searches it, fixes one field, and it is right on every sheet, every chronicle fork, and every
 printed PDF on the next page load - no ticket, no file, no deploy.
 
-## Switching a Site to the Declared Catalog
+## Moving an Older Site to the Per-Creature Lists
 
-Beyond Elysium ships two catalogs. The old one shares Abilities, Merits, Flaws and Werewolf
-rites across every creature type. The newer one gives each creature type its own lists,
-prices and groupings. **A new install starts on the newer one**, so none of this applies to
-it. A site set up before 1.3.4 stays on the old one until someone switches it, once, with
-WP-CLI, and it can change back.
+Sites set up before 1.3.4 share one Abilities list, one Merits list, one Flaws list and one
+Rites list across every creature type. Each creature type now has its own lists, with its
+own prices and groupings, and a new install starts on them. **An older site is moved by the
+upgrade itself.** There is nothing to run and nothing to switch on.
 
-```
-wp be cutover plan
-wp be cutover apply --user=<you> --yes
-wp be cutover rollback --user=<you> --yes
-wp be cutover status
-```
+For each character holding rows in a shared list, the upgrade:
 
-`plan` is read-only and tells you exactly what `apply` would do, character by character.
-`apply` moves every character's rows into the new sections, matches the custom entries that
-are plainly a catalog item, and never touches XP. Each character keeps a snapshot of its
-sheet from before, so `rollback` restores it exactly. Read [Switching a Site to the Declared
-Catalog](help/catalog-cutover.md) before you run it: it says what is matched, what stays
-custom, when `apply` refuses, and why importing the characters again does worse than
-switching.
+- **Moves the rows** to that creature type's own section, in the same order, with the same
+  dots.
+- **Turns a custom entry that plainly is a catalog item into that item.** "Lore: Sabbat",
+  "Brawl (Boxing)" and "Meditiation" pick up the real item's price and rules. Only a sure
+  match counts: the same name apart from case or punctuation, a recorded former name, a
+  trailing footnote mark, a ritual written in another common form, or a "Base: Label" entry,
+  where the label becomes the specialization or a note. A guess never counts.
+- **Gives a catalog name the catalog's spelling.** If the old list said "Fortune-telling"
+  and the new one says "Fortune-Telling", the row takes the new spelling and nothing else
+  about it changes.
+- **Leaves everything else as it was.** Homebrew the catalog has no answer for stays custom,
+  shown and editable as before.
+- **Never touches XP.** Not earned, not unspent. Nothing is repriced and nobody is refunded.
+
+Each character that changes gets one **Catalog update** line in its [change
+history](help/sheet-history.md), with the matches listed under it, and a snapshot of the
+sheet as it was. Changes waiting in the approval queue are pointed at the new sections, and
+templates and creature types are switched at the end. On real chronicles about four in ten
+custom entries match; the rest stay custom and keep working.
+
+The move takes a few seconds. While it runs people can read but not save: a save gets "The
+site is being moved to the new catalog and can't save anything for a moment. Try again in a
+minute."
+
+When the upgrade can't move everyone it stops, and a notice across the top of wp-admin says
+why. The two usual causes write nothing: a character holds an entry its creature type's own
+list doesn't have (add the entry to that list in Schema Blocks, or take it off the
+character), or a character belongs to no chronicle (assign it to one, or delete it). The
+upgrade tries again by itself once the cause is fixed.
+
+When every character is moved, the shared Abilities, Merits and Flaws blocks and two blocks
+no creature type lists any more (Demon Lores and Mortal Numina) are deleted from Schema
+Blocks. A block something still uses stays, and the PHP error log names what uses it. Take a
+database backup before the upgrade, as you would for any.
 
 ## Adding a Creature Type Without Code
 

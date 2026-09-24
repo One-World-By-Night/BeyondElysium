@@ -7,11 +7,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Step 1.5e, workflow-0.9.md - the operator surface for `be_game_members`. Before this
- * route existed the only way to grant, change or remove a chronicle role was calling
- * `Game_Member::set_role()`/`remove()` directly. Gated `be_manage_games` throughout -
- * chronicle membership is an HST-and-above act (Step 1.5b: `be_manage_games` is never
- * grantable per-game), matching how creating/deleting a chronicle already works.
+ * The operator route for `be_game_members`: granting, changing and removing a chronicle role.
  */
 class GameMembersControllerTest extends WP_UnitTestCase {
 
@@ -131,10 +127,7 @@ class GameMembersControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 404, $response->get_status() );
 	}
 	/**
-	 * 1.0.0-review F-104 (docs-pass intake, question 14): without accessSchema, a chronicle role
-	 * needs a WordPress role that holds its powers - an HST, AST, or Narrator must be an Editor. A
-	 * Narrator given to a plain subscriber account could open nothing, and Chronicle Access gave
-	 * no sign of it.
+	 * Without accessSchema, a chronicle role needs a WordPress role that holds its powers.
 	 */
 	public function test_each_member_says_whether_their_account_can_use_their_role(): void {
 		$editor = self::factory()->user->create( [ 'role' => 'editor' ] );

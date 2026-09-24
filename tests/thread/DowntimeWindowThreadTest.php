@@ -13,10 +13,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 S3: downtime windows - enforcement on action entries and background uses, extensions,
- * held-by-default answers, and the Storyteller queue.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.3
+ * Downtime windows - enforcement on action entries and background uses, extensions, held-by-default answers, and the
+ * Storyteller queue.
  */
 class DowntimeWindowThreadTest extends WP_UnitTestCase {
 
@@ -62,7 +60,9 @@ class DowntimeWindowThreadTest extends WP_UnitTestCase {
 		return rest_get_server()->dispatch( $request );
 	}
 
-	/** Creates a session for a game date, with the given window fields, as a manager. */
+	/**
+	 * Creates a session for a game date, with the given window fields, as a manager.
+	 */
 	private function make_session( string $game_date, ?string $opens = null, ?string $deadline = null ): int {
 		wp_set_current_user( $this->make_manager() );
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/sessions" );
@@ -76,7 +76,9 @@ class DowntimeWindowThreadTest extends WP_UnitTestCase {
 		return (int) $this->dispatch( $request )->get_data()->id;
 	}
 
-	/** Creates the character's own action-allocation plot for a game date directly. */
+	/**
+	 * Creates the character's own action-allocation plot for a game date directly.
+	 */
 	private function make_action_plot( string $game_date ): int {
 		$character = Character::find( $this->character_id );
 		return (int) Action_Allocator::create_own_plot( $character, $game_date );
@@ -169,7 +171,6 @@ class DowntimeWindowThreadTest extends WP_UnitTestCase {
 
 	public function test_no_session_for_the_date_means_no_window_at_all(): void {
 		$plot_id = $this->make_action_plot( '2026-10-02' );
-		// Deliberately no make_session() call.
 
 		$response = $this->post_action( $plot_id );
 		$this->assertSame( 201, $response->get_status() );

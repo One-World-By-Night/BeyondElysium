@@ -1,25 +1,5 @@
 /**
- * Boon ledger for a game or a single character. Displays outstanding and
- * repaid boons with who owes whom, level, date, status and terms, and
- * provides a form to record a new boon and a control to mark one repaid.
- * When scoped to a character, splits the list into boons owed by them
- * and boons owed to them.
- *
- * The ledger itself is readable by anyone who can view characters - recording and
- * repaying are gated on `be_manage_boons` (the `boons` chronicle role, or any Storyteller),
- * checked here the same way GameDashboard.tsx gates its own manager controls (Decision
- * 057's UI-affordance pattern: the client hides what a viewer cannot use, the server is the
- * real enforcement either way).
- *
- * That flag is a SITE-WIDE capability check with no per-game scoping (it is computed once,
- * for every page, before any game is known - Plugin::enqueue_frontend()) - the same
- * limitation `be_manage_characters`/`be_manage_plots` already accept for the exact same
- * reason. It is more visible here specifically because `be_manage_boons` is deliberately
- * granted broadly (every WP role, not just administrator/editor - see Capabilities.php's own
- * comment), so any logged-in visitor may see these controls even on a game where they hold
- * no boons-managing role at all. Attempting to use them there still gets a real 403 from
- * Authorization::check_request()'s own per-game check - a visible-but-non-functional
- * button, not a security gap.
+ * Boon ledger for a game or a single character.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -32,20 +12,20 @@ import './BoonLedger.css';
 
 export interface BoonLedgerProps {
 	gameSlug: string;
-	/** 0 (default) shows the whole game's ledger; a character ID scopes to that character. */
+	/**
+	 * 0 (default) shows the whole game's ledger.
+	 */
 	characterId?: number;
-	/** What the person can do in this chronicle, when the page resolved it; the site-wide snapshot otherwise (F-103). */
+	/**
+	 * What the person can do in this chronicle, when the page resolved it.
+	 */
 	capabilities?: MyCapabilities;
 }
 
 const BOON_LEVEL_SUGGESTIONS = [ 'trivial', 'minor', 'major', 'life' ];
 
 /**
- * Renders the boon ledger for a game, or for a single character when
- * `characterId` is provided. Loads boon records from the API, offers a
- * form for recording a new boon, and lets any outstanding boon be marked
- * repaid. When scoped to a character, shows two tables - boons owed by
- * them and boons owed to them - otherwise renders one combined table.
+ * Renders the boon ledger for a game, or for a single character when `characterId` is provided.
  */
 export function BoonLedger( {
 	gameSlug,
@@ -161,10 +141,8 @@ export function BoonLedger( {
 }
 
 /**
- * Renders a table of boons with owed-by, owed-to, level, date, status and
- * terms columns, plus a repay action for outstanding entries. Repaid
- * rows get a distinct style and show how they were settled, when recorded.
- * Renders a "None" message when empty.
+ * Renders a table of boons with owed-by, owed-to, level, date, status and terms columns, plus a repay action for
+ * outstanding entries.
  */
 function BoonTable( {
 	boons,
@@ -317,9 +295,8 @@ function BoonTable( {
 }
 
 /**
- * The inline "mark repaid" confirmation: an optional note on how it was actually settled
- * ("entered in error" is not a special case - a mistaken entry is repaid with that as the
- * how, BE_PROCESS/releases/0.99.2-workflow.md), then Confirm or Cancel.
+ * The inline "mark repaid" confirmation: an optional note on how it was actually settled ("entered in error" is not a
+ * special case - a mistaken entry is repaid with that as the how).
  */
 function RepayControl( {
 	onConfirm,
@@ -356,10 +333,8 @@ function RepayControl( {
 }
 
 /**
- * Form for recording a new boon between two characters: owed-by and
- * owed-to character IDs, a level (offered as suggestions), and optional
- * terms. Requires both character fields and a level before submitting,
- * and surfaces an error if the create request fails.
+ * Form for recording a new boon between two characters: owed-by and owed-to character IDs, a level (offered as
+ * suggestions), and optional terms.
  */
 function CreateBoonForm( {
 	gameSlug,

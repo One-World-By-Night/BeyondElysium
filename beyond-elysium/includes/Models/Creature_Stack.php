@@ -8,20 +8,11 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Static data-access model for creature stack definitions.
- *
- * Creature_Stack is a Database\Manager CRUD model backed by the creature_stacks
- * table. Each row is one playable creature type - Vampire, Werewolf, Mage, and
- * so on - identified by slug, holding a stack_definition JSON tree of
- * section/trait layout and a creation_rules JSON payload governing new-character
- * point allocation. resolve() expands a stack into its definition plus every
- * schema block it references.
  */
 class Creature_Stack {
 
 	/**
-	 * Look up a single creature stack by its slug. Returns the row with its
-	 * stack_definition and creation_rules JSON fields decoded, or null when no
-	 * stack with that slug exists.
+	 * Look up a single creature stack by its slug.
 	 *
 	 * @param string $slug
 	 * @return object|null
@@ -35,9 +26,7 @@ class Creature_Stack {
 	}
 
 	/**
-	 * Look up a single creature stack by its primary key. Returns the row with
-	 * its stack_definition and creation_rules JSON fields decoded, or null when
-	 * no stack with that ID exists.
+	 * Look up a single creature stack by its primary key.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -51,9 +40,7 @@ class Creature_Stack {
 	}
 
 	/**
-	 * Return creature stacks matching optional filters. Supports filtering by
-	 * game_line, system flag, and name search, plus pagination and sort order
-	 * across name, slug, game_line, and creation date.
+	 * Return creature stacks matching optional filters.
 	 *
 	 * @param array $args Filters: game_line, is_system, search, orderby, order, per_page, offset.
 	 * @return array
@@ -84,7 +71,6 @@ class Creature_Stack {
 			$sql .= ' WHERE ' . implode( ' AND ', $where );
 		}
 
-		// The ?? default must apply in both branches or an unset orderby breaks the query.
 		$orderby = in_array( $args['orderby'] ?? 'name', [ 'name', 'slug', 'game_line', 'created_at' ], true )
 			? ( $args['orderby'] ?? 'name' )
 			: 'name';
@@ -104,24 +90,7 @@ class Creature_Stack {
 	}
 
 	/**
-	 * Filters all() by the given chronicle's own `settings.enabled_stacks`
-	 * (GS-2, guided-chronicle-setup-design.md §6.1) - a plain array of stack
-	 * slugs, absent or empty meaning "all eleven," an unknown slug in the
-	 * list simply ignored rather than erroring. `be_creature_stacks` itself
-	 * has no `game_slug` column and never will (R1) - enablement is a
-	 * property of the chronicle, read from `be_games.settings`, not of the
-	 * stack.
-	 *
-	 * BINDING RULE (§6.2): this method is a **creation and picker filter,
-	 * never a data filter**. It exists to narrow `Creature_Stacks_Controller`'s
-	 * collection response and the character-creation picker it feeds -
-	 * nothing else may call it. `Character::all_for_game()`, `Character::find()`,
-	 * `Creature_Stack::resolve()`, `Template::resolve()`, the sheet, the
-	 * editor, the query engine, GEX export, and the approval queue all stay
-	 * on `Creature_Stack::find_by_slug()`/`resolve()` directly and are never
-	 * touched by this method or by what a chronicle has since disabled. A
-	 * chronicle that drops Wraith still owes its retired wraiths a readable
-	 * sheet - `EnabledStacksFilterTest` is the acceptance gate for that rule.
+	 * Filters all() by the given chronicle's own `settings.enabled_stacks`.
 	 *
 	 * @param string $game_slug
 	 * @param array  $args Same filters as all().
@@ -146,9 +115,7 @@ class Creature_Stack {
 	}
 
 	/**
-	 * Count creature stacks matching the given filters. Accepts the same
-	 * game_line, is_system, and search filters as all(), without pagination,
-	 * and returns a plain integer total.
+	 * Count creature stacks matching the given filters.
 	 *
 	 * @param array $args Same filters as all().
 	 * @return int
@@ -187,29 +154,15 @@ class Creature_Stack {
 	}
 
 	/**
-	 * Resolve a creature stack into its full definition: the stack row itself,
-	 * plus every schema block its sections reference, keyed by slug. When
-	 * $game_slug is given, a chronicle's own customized fork of a block is
-	 * returned in place of the global one; an empty $game_slug returns only the
-	 * base catalog.
+	 * Resolve a creature stack into its full definition: the stack row itself, plus every schema block its sections
+	 * reference, keyed by slug.
 	 *
 	 * @param string $slug
 	 * @param string $game_slug
 	 * @return array|null [ 'stack' => object, 'blocks' => array ] or null if not found.
 	 */
 	/**
-	 * Global blocks no stack's own `stack_definition` ever references, because they only ever
-	 * reach a character through an NPC template's layout instead (`npc_full`/`npc_quick`,
-	 * 1.1.0 §3.7) - not creature-specific, shared by every stack. Included unconditionally
-	 * below so `Creature_Stack::resolve()`'s own blocks map has them ready whenever a caller's
-	 * layout happens to reference one; an unreferenced entry here is simply never rendered,
-	 * the same as any other block a chronicle's layout doesn't currently use.
-	 *
-	 * Found as a real bug (not by design), while building the NPC casting brief (N2): every
-	 * `npc_full`/`npc_quick` template has referenced `npc-roleplaying-notes` since it shipped
-	 * in v0.21.28, but this method's own blocks map never included it, so the section has
-	 * silently never rendered anywhere - the character editor, the read-only sheet, or a
-	 * signed PDF - for any NPC, in any chronicle, ever.
+	 * Global blocks no stack's own `stack_definition` ever references.
 	 */
 	private const GLOBAL_NPC_BLOCK_SLUGS = [ 'npc-roleplaying-notes', 'npc-quick-stats' ];
 
@@ -233,8 +186,7 @@ class Creature_Stack {
 		$block_slugs = array_values( array_unique( array_merge( $block_slugs, self::GLOBAL_NPC_BLOCK_SLUGS ) ) );
 		$blocks = Schema_Block::find_by_slugs_for_game( $block_slugs, $game_slug );
 
-		// A chronicle that has opened a purchase list (1.3.4) buys from every creature type's entries
-		// for that area, so the editor, the sheet and the validator all read the wider list.
+		// A chronicle that has opened a purchase list buys from every creature type's entries for that area.
 		if ( $game_slug !== '' ) {
 			$blocks = \BeyondElysium\Services\Purchase_Scope::widen_blocks( $blocks, $game_slug );
 		}
@@ -246,20 +198,8 @@ class Creature_Stack {
 	}
 
 	/**
-	 * Narrows every `identity_field` option list in an already-resolved
-	 * stack down to this game's `settings.enabled_factions.{stack_slug}`
-	 * restriction - "Vampire yes, but no Sabbat," beneath `enabled_stacks`'
-	 * own whole-stack toggle. A field absent from the restriction, or with
-	 * an empty list, is left fully unrestricted (every option) - the exact
-	 * "absent/empty means all" convention `all_for_game()` itself already
-	 * uses for `enabled_stacks`, so an empty array can never be mistaken for
-	 * "no options allowed."
-	 *
-	 * Creation-time only, by design: callers choose when to call this - it
-	 * is never invoked from `resolve()` itself, so viewing or editing an
-	 * already-existing character (whose held value may since have been
-	 * restricted) is never affected. Mirrors `enabled_stacks`' own binding
-	 * rule (Decision 092) applied to a second, finer-grained axis.
+	 * Narrows every `identity_field` option list in an already-resolved stack down to this game's
+	 * `settings.enabled_factions.{stack_slug}` restriction.
 	 *
 	 * @param array{stack:object,blocks:array<string,object>} $resolved
 	 * @return array{stack:object,blocks:array<string,object>}
@@ -296,13 +236,8 @@ class Creature_Stack {
 	}
 
 	/**
-	 * Finds the first catalog-item value submitted in `$sheet_data` that
-	 * this game's `enabled_factions` restriction disallows, for a
-	 * creature stack's own identity fields. The real enforcement point
-	 * (`narrow_for_creation()`'s picker narrowing is an affordance, this is
-	 * the control - the same relationship `all_for_game()`/`create_item()`'s
-	 * own `enabled_stacks` check already has). Absent restriction, or an
-	 * absent/empty per-field list, means every value is allowed.
+	 * Finds the first catalog-item value submitted in `$sheet_data` that this game's `enabled_factions` restriction
+	 * disallows, for a creature stack's own identity fields.
 	 *
 	 * @param array<string,mixed>   $sheet_data Keyed by block_slug, as a character's own sheet_data is shaped.
 	 * @param array<string,object>  $blocks     Keyed by block_slug, as resolve()['blocks'] returns.
@@ -341,9 +276,7 @@ class Creature_Stack {
 	}
 
 	/**
-	 * Insert a new creature stack. Sanitizes the slug, JSON-encodes
-	 * stack_definition and creation_rules, and defaults game_line to 'met' when
-	 * not supplied.
+	 * Insert a new creature stack.
 	 *
 	 * @param array $data Stack data.
 	 * @return int|false Insert ID or false on failure.
@@ -365,9 +298,7 @@ class Creature_Stack {
 	}
 
 	/**
-	 * Update a creature stack identified by slug. Writes only the fields present
-	 * in $data - name, game_line, stack_definition, creation_rules - JSON-encoding
-	 * the two definition fields when present, and stamps updated_at.
+	 * Update a creature stack identified by slug.
 	 *
 	 * @param string $slug
 	 * @param array  $data Fields to update.
@@ -399,9 +330,7 @@ class Creature_Stack {
 	}
 
 	/**
-	 * Delete a creature stack identified by slug. Refuses to delete a stack
-	 * flagged is_system, returning false rather than removing a seeded default,
-	 * and returns false when no stack with that slug exists.
+	 * Delete a creature stack identified by slug.
 	 *
 	 * @param string $slug
 	 * @return bool
@@ -419,9 +348,7 @@ class Creature_Stack {
 	}
 
 	/**
-	 * Decode a row's stack_definition and creation_rules JSON fields into arrays
-	 * in place. Passes null rows through unchanged, leaving any field that is
-	 * not a JSON string untouched.
+	 * Decode a row's stack_definition and creation_rules JSON fields into arrays in place.
 	 *
 	 * @param object|null $row
 	 * @return object|null
@@ -435,7 +362,6 @@ class Creature_Stack {
 				$row->$field = json_decode( $row->$field );
 			}
 		}
-		// Same "0"-is-truthy-in-JavaScript hazard as Schema_Block::decode_definition() (D53).
 		if ( isset( $row->is_system ) ) {
 			$row->is_system = (bool) $row->is_system;
 		}
@@ -443,16 +369,13 @@ class Creature_Stack {
 	}
 
 	/**
-	 * Normalize a value for storage in a JSON column. Encodes an array or object
-	 * to a JSON string, passes an existing string through unchanged, and falls
-	 * back to an empty JSON object for anything else.
+	 * Normalize a value for storage in a JSON column.
 	 *
 	 * @param mixed $value
 	 * @return string
 	 */
 	private static function encode_if_array( $value ): string {
 		if ( is_array( $value ) || is_object( $value ) ) {
-			// An empty string for a value that can't be encoded: the JSON column refuses the write.
 			return (string) wp_json_encode( $value );
 		}
 		return is_string( $value ) ? $value : '{}';

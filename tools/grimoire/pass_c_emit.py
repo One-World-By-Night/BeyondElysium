@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """
-Pass C - cross-check against the index oracle (I1), apply the shipped
-CSV's own mechanical prose guards up front (so a violation is caught here,
-not first by GrimoireCsvTest after the file is already checked in), and
-emit beyond-elysium/data/grimoire-rotes.csv candidate rows.
+Pass C - cross-check against the index oracle, apply the shipped CSV's own
+mechanical prose guards up front, and emit tools/catalog/source/grimoire-rotes.csv
+candidate rows.
 
-Never emits a description column (R3). `source` always ends with the
-"Enlightened Grimoire p. N" element per §8.2 - the provenance trail back to
-the page a Storyteller would need if a Grimoire-sourced rote is questioned.
+Never emits a description column. `source` always ends with the "Enlightened
+Grimoire p. N" element.
 """
 import csv
 import json
@@ -45,13 +43,9 @@ def main():
     unconfirmed = 0
     for e in chapter_entries:
         if e["key"] not in index_keys:
-            # I1: the book's own index is the strong invariant. A chapter
-            # entry the index never lists is, empirically, almost always
-            # two adjacent names glued together by an unresolved column- or
-            # page-break interleave ("Banishing Blessing Bless the Heavenly
-            # Flower") rather than a genuinely index-missing rote - ship
-            # only what both passes agree on rather than guess which half
-            # (if either) of a glued name is real.
+            # The book's own index is the invariant: a chapter entry the index
+            # never lists is not shipped; only what both passes agree on is
+            # emitted.
             unconfirmed += 1
             continue
         name = e["name"]

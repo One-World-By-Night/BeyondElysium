@@ -9,15 +9,6 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Static data-access model for narrative threads: plots, actions, and rumors.
- *
- * Plot is a Database\Manager CRUD model backed by the plots table, one shared
- * schema for what were previously three separate narrative types. What
- * distinguishes an action from a plot from a rumor is its initiated_by value,
- * its target_query, and the entry types posted to its thread, not a separate
- * table or schema. Plots can nest under a parent_plot_id to form arcs,
- * subplots, seasons, and episodes.
- *
- * @see BE_PROCESS/releases/workflow-0.5.md Step 1.1
  */
 class Plot {
 
@@ -28,28 +19,21 @@ class Plot {
 	const INITIATORS = [ 'player', 'st' ];
 
 	/**
-	 * Display and filtering grouping labels only; nothing branches behavior on
-	 * this value. An ordinary plot, action, or rumor leaves this null.
+	 * Display and filtering grouping labels only.
 	 *
 	 * @var string[]
 	 */
 	const PLOT_CATEGORIES = [ 'arc', 'subplot', 'season', 'episode' ];
 
 	/**
-	 * Valid stored `audience` values (1.1.0 §2.1) - duplicated from `Services\Audience::VALUES`
-	 * rather than imported, the same reasoning `actor_ownership_exclusion()` below already
-	 * gives for duplicating the literal `'apr_actor'`: Models does not depend on Services in
-	 * this codebase.
+	 * Valid stored `audience` values.
 	 *
 	 * @var string[]
 	 */
 	const AUDIENCE_VALUES = [ 'everyone', 'storytellers', 'restricted' ];
 
 	/**
-	 * Look up a single plot by its primary key. A row whose target_query or
-	 * faction_goals field fails to decode is treated as corrupt: the error is
-	 * logged and that field is returned as null rather than the plot being
-	 * dropped entirely.
+	 * Look up a single plot by its primary key.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -63,9 +47,7 @@ class Plot {
 	}
 
 	/**
-	 * Return the immediate child plots of a given plot via the parent_plot_id
-	 * hierarchy - an action nested under a plot, or a rumor, subplot, or episode
-	 * nested under whichever plot it belongs to. Ordered oldest first.
+	 * Return the immediate child plots of a given plot via the parent_plot_id hierarchy.
 	 *
 	 * @param int $plot_id
 	 * @return object[]
@@ -80,8 +62,6 @@ class Plot {
 
 	/**
 	 * Walk up a plot's parent_plot_id chain to its root, for breadcrumb display.
-	 * Stops after 50 hops as a safeguard against a corrupt or cyclic chain, even
-	 * though update() normally prevents a cycle from being created.
 	 *
 	 * @param int $plot_id
 	 * @return object[] Nearest ancestor first.
@@ -108,11 +88,7 @@ class Plot {
 	}
 
 	/**
-	 * Return plots belonging to a game. Supports filtering by status,
-	 * initiated_by, title/description search, and a created_at date range, plus
-	 * pagination and sort order; defaults to newest-updated first. date_from
-	 * and date_to filter on created_at (when the thread started), not on the
-	 * plot's in-fiction start_date/end_date.
+	 * Return plots belonging to a game.
 	 *
 	 * @param int   $game_id
 	 * @param array $args Filters: status, initiated_by, search, date_from, date_to,
@@ -125,7 +101,6 @@ class Plot {
 		$table = Manager::table( 'plots' );
 		[ $where, $values ] = self::build_where( $game_id, $args );
 
-		// Aliased as p: actor_ownership_exclusion()'s NOT EXISTS clause correlates against p.id.
 		$sql = 'SELECT p.* FROM ' . $table . ' p WHERE ' . implode( ' AND ', $where );
 
 		$orderby = in_array( $args['orderby'] ?? 'updated_at', [ 'title', 'status', 'created_at', 'updated_at' ], true )
@@ -144,10 +119,7 @@ class Plot {
 	}
 
 	/**
-	 * Count plots belonging to a game that match the given filters. Accepts the
-	 * same status, initiated_by, search, and date range filters as for_game(),
-	 * without pagination, and returns a plain integer total. `exclude_character_plots`
-	 * leaves out each character's own plot.
+	 * Count plots belonging to a game that match the given filters.
 	 *
 	 * @param int   $game_id
 	 * @param array $args
@@ -158,18 +130,13 @@ class Plot {
 		$table = Manager::table( 'plots' );
 		[ $where, $values ] = self::build_where( $game_id, $args );
 
-		// Aliased as p: actor_ownership_exclusion()'s NOT EXISTS clause correlates against p.id.
 		$sql = 'SELECT COUNT(*) FROM ' . $table . ' p WHERE ' . implode( ' AND ', $where );
 		$sql = $wpdb->prepare( $sql, $values );
 		return (int) $wpdb->get_var( $sql );
 	}
 
 	/**
-	 * The shared WHERE-clause builder behind `for_game()` and `count_for_game()` - both
-	 * accept the identical filter vocabulary (status, initiated_by, search, date range,
-	 * actor-ownership exclusion, character-plot filtering, assigned_to, and
-	 * exclude_character_plots), and had built it twice, byte-for-byte, until this was
-	 * extracted (1.1.1 audit).
+	 * The shared WHERE-clause builder behind `for_game()` and `count_for_game()`.
 	 *
 	 * @param int   $game_id
 	 * @param array $args
@@ -224,7 +191,7 @@ class Plot {
 			}
 		}
 
-		// A character's own plot holds that character's story; it isn't a storyline of its own.
+		// A character's own plot holds that character's story.
 		if ( ! empty( $args['exclude_character_plots'] ) ) {
 			$where[]  = 'NOT ( p.game_date IS NULL AND EXISTS (
 				SELECT 1 FROM ' . Manager::table( 'connections' ) . " c
@@ -237,10 +204,7 @@ class Plot {
 	}
 
 	/**
-	 * The WHERE clause fragment for the plot list's character filter (owner, 2026-09-15: "filter
-	 * to show only player or only not player"). `only` keeps the plots a character is tied to by
-	 * `apr_actor` - its own plot and each action round - and `exclude` keeps every other plot.
-	 * Any other value filters nothing.
+	 * The WHERE clause fragment for the plot list's character filter.
 	 *
 	 * @return array{0: string, 1: string[]}|null The clause and its bound values, or null.
 	 */
@@ -254,18 +218,8 @@ class Plot {
 	}
 
 	/**
-	 * Builds the WHERE clause fragment (and its bound values) that excludes
-	 * any plot whose `apr_actor` connection targets a character not owned
-	 * by the given user - including an NPC's allocation, whose character
-	 * has no wp_user_id at all. A plot with no `apr_actor` connection (an
-	 * ordinary plot or rumor) is never excluded by this clause.
-	 *
-	 * Applied at the SQL level, not by filtering the fetched rows in PHP,
-	 * so a non-manager's X-WP-Total header always matches what for_game()
-	 * actually returns for them
-	 * (BE_PROCESS/design/background-ledger-apr-design.md §3.4/§5.8 - an allocation
-	 * plot's title alone already discloses who has one, and its entries
-	 * disclose a character's exact background dot ratings).
+	 * Builds the WHERE clause fragment (and its bound values) that excludes any plot whose `apr_actor` connection targets
+	 * a character not owned by the given user.
 	 *
 	 * @param int $wp_user_id
 	 * @return array{0:string,1:array} [clause, bound values]
@@ -274,9 +228,7 @@ class Plot {
 		$connections_table = Manager::table( 'connections' );
 		$characters_table  = Manager::table( 'characters' );
 
-		// 'apr_actor' - must match Services\Action_Allocator::ACTOR_LABEL exactly. Not
-		// imported: Models does not depend on Services in this codebase, so the label is
-		// duplicated here rather than reversing that dependency for one string constant.
+		// 'apr_actor' is Services\Action_Allocator::ACTOR_LABEL.
 		$clause = "NOT EXISTS (
 			SELECT 1 FROM {$connections_table} c
 			LEFT JOIN {$characters_table} ch ON ch.id = c.target_id
@@ -289,10 +241,7 @@ class Plot {
 	}
 
 	/**
-	 * Return plots reachable through direct connections from a user's
-	 * characters in a game. Collects every character the user owns, follows
-	 * their plot connections in either direction, and returns the matching
-	 * plots newest updated first.
+	 * Return plots reachable through direct connections from a user's characters in a game.
 	 *
 	 * @param int $game_id
 	 * @param int $wp_user_id
@@ -328,7 +277,6 @@ class Plot {
 		$plots = [];
 		foreach ( array_keys( $plot_ids ) as $plot_id ) {
 			$plot = self::find( $plot_id );
-			// Skips a connection whose plot no longer exists rather than returning a null entry.
 			if ( $plot && (int) $plot->game_id === $game_id ) {
 				$plots[] = $plot;
 			}
@@ -342,12 +290,8 @@ class Plot {
 	}
 
 	/**
-	 * Return plots eligible for target_query resolution in a game: those with
-	 * an explicit non-null target_query, plus those with a null target_query
-	 * that carry an 'apr_rumor' tag connection marking them intentionally
-	 * public. A plot with no connections and no target_query set is not a
-	 * candidate - a null target_query only means "reaches everyone" when the
-	 * apr_rumor tag says so.
+	 * Returns plots eligible for target_query resolution in a game: those with an explicit target_query, and those with
+	 * no target_query that carry an 'apr_rumor' tag connection.
 	 *
 	 * @param int $game_id
 	 * @return object[]
@@ -369,8 +313,7 @@ class Plot {
 	}
 
 	/**
-	 * Every plot held for one release batch (§3.2) - a batch's own "Rumors" list, and
-	 * Release_Engine::release()'s recipient collection for the plot half of a batch.
+	 * Every plot held for one release batch.
 	 *
 	 * @param int $release_batch_id
 	 * @return object[]
@@ -384,10 +327,8 @@ class Plot {
 	}
 
 	/**
-	 * Derive a plot's lifecycle state from its dates relative to a reference
-	 * date, independent of the stored status column. Returns 'pending' when
-	 * as_of is before start_date, 'active' when within range or end_date is
-	 * unset, and 'finished' otherwise; defaults as_of to today when omitted.
+	 * Derive a plot's lifecycle state from its dates relative to a reference date, independent of the stored status
+	 * column.
 	 *
 	 * @param object      $plot
 	 * @param string|null $as_of `Y-m-d` date to compare against; defaults to today.
@@ -408,9 +349,7 @@ class Plot {
 	}
 
 	/**
-	 * Insert a new plot. Validates status, initiated_by, and plot_category
-	 * against their allowed values, and when a parent_plot_id is given, checks
-	 * that the parent exists and belongs to the same game before nesting under it.
+	 * Insert a new plot.
 	 *
 	 * @param array $data
 	 * @return int|false Insert ID, or false if status/initiated_by is invalid or a JSON value can't be encoded.
@@ -432,7 +371,6 @@ class Plot {
 		$parent_plot_id = ! empty( $data['parent_plot_id'] ) ? (int) $data['parent_plot_id'] : null;
 		if ( $parent_plot_id !== null ) {
 			$parent = self::find( $parent_plot_id );
-			// A parent must exist and belong to the same game, or nesting would leak across chronicles.
 			if ( ! $parent || (int) $parent->game_id !== (int) $data['game_id'] ) {
 				return false;
 			}
@@ -493,10 +431,7 @@ class Plot {
 	}
 
 	/**
-	 * Update a plot. Writes only the fields present in $data, revalidates
-	 * status, initiated_by, and plot_category when present, and when
-	 * parent_plot_id changes, checks the new parent belongs to the same game
-	 * and would not create a cycle.
+	 * Update a plot.
 	 *
 	 * @param int   $id
 	 * @param array $data
@@ -580,9 +515,7 @@ class Plot {
 	}
 
 	/**
-	 * Verify that setting $plot_id's parent to $new_parent_id would not make
-	 * $plot_id its own ancestor. Walks $new_parent_id's existing ancestor chain
-	 * looking for $plot_id, throwing if found.
+	 * Verify that setting $plot_id's parent to $new_parent_id would not make $plot_id its own ancestor.
 	 *
 	 * @param int $plot_id
 	 * @param int $new_parent_id
@@ -605,7 +538,7 @@ class Plot {
 				) );
 			}
 			if ( in_array( $next, $chain, true ) ) {
-				// Breaks out on a pre-existing cycle rather than looping forever.
+				// Breaks out on a pre-existing cycle.
 				break;
 			}
 			$chain[] = $next;
@@ -614,10 +547,7 @@ class Plot {
 	}
 
 	/**
-	 * Delete a plot by ID, cascading to its entries and to connections
-	 * referencing it. Runs inside a transaction that correctly nests within an
-	 * already-open outer transaction, so a failure partway through leaves
-	 * nothing committed.
+	 * Delete a plot by ID, cascading to its entries and to connections referencing it.
 	 *
 	 * @param int $id
 	 * @return bool
@@ -627,10 +557,7 @@ class Plot {
 
 		Plot_Entry::delete_for_plot( $id );
 		Connection::delete_for_entity( 'plot', $id );
-		// Row only - the file on disk is this class's caller's job (Plots_Controller::delete_item()),
-		// never this Model's: removing it needs Services\Attachment_Storage, and Models does not
-		// depend on Services in this codebase (the same reasoning Plot::AUDIENCE_VALUES's own
-		// docblock gives for duplicating a Services constant rather than importing it).
+		// Row only - the file on disk is this class's caller's job (Plots_Controller::delete_item()).
 		Attachment::delete_for_entity( 'plot', $id );
 		$result = Manager::delete( 'plots', [ 'id' => $id ] );
 
@@ -644,9 +571,7 @@ class Plot {
 	}
 
 	/**
-	 * JSON-encode a value for storage in the target_query column. A thin
-	 * wrapper around encode_json_field(), kept separate only to name its
-	 * purpose clearly at each call site.
+	 * JSON-encode a value for storage in the target_query column.
 	 *
 	 * @param mixed $value
 	 * @return string|false|null
@@ -656,9 +581,7 @@ class Plot {
 	}
 
 	/**
-	 * Normalize a value for storage in a JSON column. Passes null through
-	 * unchanged, JSON-encodes an array or object, and casts anything else to a
-	 * plain string.
+	 * Normalize a value for storage in a JSON column.
 	 *
 	 * @param mixed $value
 	 * @return string|false|null False when the value can't be encoded; create() and update() then write nothing.
@@ -674,10 +597,7 @@ class Plot {
 	}
 
 	/**
-	 * Decode the target_query and faction_goals JSON columns on a row object in
-	 * place. A NULL column value is left as null (a legitimate value, not
-	 * corruption); a non-NULL value that fails to decode is logged and replaced
-	 * with null rather than the row being dropped.
+	 * Decode the target_query and faction_goals JSON columns on a row object in place.
 	 *
 	 * @param object|null $row
 	 * @return object|null
@@ -712,8 +632,6 @@ class Plot {
 			$row->$field = $decoded;
 		}
 
-		// D51/D53's own bug class: $wpdb returns tinyint(1) as the string "0", which is
-		// truthy in JavaScript. Cast to a real bool per the 1.0.1 owner ruling.
 		if ( property_exists( $row, 'held' ) ) {
 			$row->held = (bool) $row->held;
 		}
@@ -722,10 +640,7 @@ class Plot {
 	}
 
 	/**
-	 * Whether one of `$wp_user_id`'s own characters holds a `plot_member` connection to
-	 * this plot (§2.3a) - an invited co-narrator, never the owner. Shared by
-	 * `Plots_Controller` and `Entries_Controller` (1.1.1 audit) - both had their own,
-	 * identical private copy of this check.
+	 * Whether one of `$wp_user_id`'s own characters holds a `plot_member` connection to this plot.
 	 *
 	 * @param int $plot_id
 	 * @param int $wp_user_id

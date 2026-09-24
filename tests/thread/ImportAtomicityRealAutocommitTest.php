@@ -7,16 +7,7 @@ use PHPUnit\Framework\TestCase;
 use WP_REST_Request;
 
 /**
- * 1.0.0-review F-004, and deliberately NOT a `WP_UnitTestCase` - see
- * `TransactionRealAutocommitTest` for why a test built on that harness cannot see this bug.
- *
- * Both import routes wrapped the whole import in their own `START TRANSACTION`, decided by
- * the pre-D40 `SELECT @@autocommit` check. Every imported character gets an auto-approved
- * import note, and approving a change opens a `Transaction` (F-015) - which, under real
- * `autocommit=1`, issues its own `START TRANSACTION` and silently commits everything the
- * import had written so far. A file whose second character failed kept the first character,
- * and a game-file import kept a chronicle the route's own docblock promises "a failed or
- * blocked attempt never leaves behind".
+ * Both import routes roll back the whole import when a step fails, on a real autocommit connection.
  */
 class ImportAtomicityRealAutocommitTest extends TestCase {
 
@@ -83,7 +74,9 @@ class ImportAtomicityRealAutocommitTest extends TestCase {
 		$wpdb->query( "SET autocommit = {$value};" );
 	}
 
-	/** A vampire record shaped like `GEX_Parser::parse_character_vampire()`'s return. */
+	/**
+	 * A vampire record shaped like `GEX_Parser::parse_character_vampire()`'s return.
+	 */
 	private function character( string $name ): array {
 		return [
 			'race' => 'vampire', 'name' => $name, 'player' => '', 'nature' => '', 'demeanor' => '',
@@ -98,8 +91,7 @@ class ImportAtomicityRealAutocommitTest extends TestCase {
 	}
 
 	/**
-	 * The first character imports cleanly; the second cannot be inserted (its name is longer
-	 * than the column, so `$wpdb->insert()` refuses it), which throws inside the import.
+	 * The first character imports cleanly.
 	 */
 	private function parsed_with_a_failing_second_character(): array {
 		return [

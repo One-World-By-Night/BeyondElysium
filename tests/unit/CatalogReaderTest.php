@@ -6,10 +6,8 @@ use BeyondElysium\Services\Catalog_Reader;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The 1.3.2 declared-catalog loader: load -> validate -> seed, against both synthetic
- * fixtures (isolating one behavior at a time) and the real shipped files under
- * `data/catalog/` (proving the loader against what 1.3.0/1.3.1 actually authored, not just
- * a hand-built shape). See `BE_PROCESS/releases/1.3.2-design-workflow.md`.
+ * The declared-catalog loader: load, validate and seed, against synthetic fixtures and the real shipped files under
+ * `data/catalog/`.
  */
 class CatalogReaderTest extends TestCase {
 
@@ -40,10 +38,7 @@ class CatalogReaderTest extends TestCase {
 	}
 
 	/**
-	 * Builds a temp `data/catalog`-shaped tree from `['blocks/foo' => [...], 'stacks/bar' =>
-	 * [...]]`, returns its root. Every fixture is completed with the envelope fields a real
-	 * file always carries (`format`, `provenance`) unless the caller already supplied them,
-	 * so a test can focus on the one field under test.
+	 * Builds a temp `data/catalog`-shaped tree from `['blocks/foo' => [...], 'stacks/bar' => [...]]`, returns its root.
 	 *
 	 * @param array<string,array<string,mixed>> $files Path (without `.json`) => decoded content.
 	 */
@@ -105,15 +100,11 @@ class CatalogReaderTest extends TestCase {
 		$this->assertSame( 0, $block['created_by'] );
 		$this->assertSame( 'Iron Will', $block['definition']['items'][0]['name'] );
 		$this->assertSame( '1 or 3', $block['definition']['items'][0]['cost'] );
-		// tier/group/subgroup survive as real null, not dropped - exactly the shape
-		// Cost_Engine/TraitListRenderer already read for every other trait_list block.
 		$this->assertNull( $block['definition']['items'][0]['tier'] );
 	}
 
 	public function test_name_canonicalization_survives_ingestion_unmodified(): void {
-		// 1.3.3 R1 (§3.5a): declared block data the re-key planner reads generically - the
-		// reader must hand it through exactly as authored, key order and all, not strip or
-		// normalize a definition key it has no reason to know about.
+		// Declared block data the re-key planner reads generically.
 		$rule = [
 			'form'          => 'group_name_tier',
 			'tier_words'    => [ 'b' => 'Basic', 'int' => 'Intermediate' ],
@@ -184,8 +175,7 @@ class CatalogReaderTest extends TestCase {
 		$this->assertSame( [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ], $definition['_meta']['ladder'] );
 		$this->assertCount( 5, $definition['powers'][0]['levels'] );
 		$this->assertCount( 1, $definition['powers'][0]['elder']['elder'] );
-		// Defaults filled in exactly the way make_tiered_power_block() does for a block
-		// with no $extra override - the fixture declared neither key.
+		// Defaults filled in exactly the way make_tiered_power_block() does for a block with no $extra override.
 		$this->assertTrue( $definition['sequential'] );
 		$this->assertTrue( $definition['allow_custom'] );
 	}
@@ -232,7 +222,9 @@ class CatalogReaderTest extends TestCase {
 		$this->assertTrue( $definition['sequential'] );
 	}
 
-	/** mage-rotes' own shape: a trait_list carrying its own `_meta.untiered.derived_from`. */
+	/**
+	 * mage-rotes' own shape: a trait_list carrying its own `_meta.untiered.derived_from`.
+	 */
 	public function test_a_trait_lists_own_meta_untiered_survives_ingestion_unmodified(): void {
 		$root = $this->build_catalog( [
 			'blocks/plain-rotes' => [
@@ -257,7 +249,9 @@ class CatalogReaderTest extends TestCase {
 		$this->assertSame( 1, $definition['_meta']['untiered']['per_level'] );
 	}
 
-	/** Item-level allow_multiples overriding the block default - pure data passthrough (D86). */
+	/**
+	 * Item-level allow_multiples overriding the block default.
+	 */
 	public function test_item_level_allow_multiples_survives_ingestion_unmodified(): void {
 		$root = $this->build_catalog( [
 			'blocks/plain-backgrounds' => [
@@ -295,7 +289,7 @@ class CatalogReaderTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// mode: add - the merge reader (item 4).
+	// mode: add - the merge reader
 	// -------------------------------------------------------------------------
 
 	public function test_add_variant_unions_elder_picks_into_a_same_named_base_family(): void {
@@ -355,14 +349,6 @@ class CatalogReaderTest extends TestCase {
 		$this->assertCount( 2, $definition['powers'] );
 	}
 
-	/**
-	 * Review index §3 item 3: `alternatives` (a rung's own field), `category_values` (a
-	 * tiered_power family's own field) and `option_aliases` (an identity_field's own field)
-	 * are never touched by `apply_definition_defaults()` or `merge_add_variant()` - both
-	 * operate only on the specific top-level/family keys they document - so a direct decode
-	 * carries all three through unmodified with no dedicated read path needed for any of
-	 * them.
-	 */
 	public function test_alternatives_category_values_and_option_aliases_all_survive_direct_decode(): void {
 		$root = $this->build_catalog( [
 			'blocks/plain-arcanoi' => $this->tiered_file( 'plain-arcanoi', [
@@ -528,8 +514,7 @@ class CatalogReaderTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// 1.3.3 C2: `replaces` (1.3.3 C1) is data for the cutover to read, never a
-	// `Creature_Stack::stack_definition` field.
+	// `replaces` is data for the cutover to read
 	// -------------------------------------------------------------------------
 
 	private function stack_with_replaces_fixture(): array {
@@ -575,9 +560,57 @@ class CatalogReaderTest extends TestCase {
 		$this->assertArrayNotHasKey( 'plain-stack', $maps, 'a stack that declares no `replaces` contributes no entry' );
 	}
 
-	// -------------------------------------------------------------------------
-	// Round trip against the real shipped catalog - the whole point of the format
-	// (measure against real authored files, not only hand-built fixtures).
+	public function test_current_slug_answers_the_stacks_own_block_and_leaves_everything_else_alone(): void {
+		$root = $this->build_catalog( $this->stack_with_replaces_fixture() );
+
+		$this->assertSame( 'test-stack-abilities', Catalog_Reader::current_slug( 'test-stack', 'met-abilities', $root ) );
+		$this->assertSame( 'test-stack-merits', Catalog_Reader::current_slug( 'test-stack', 'met-merits', $root ) );
+		$this->assertSame( 'met-derangements', Catalog_Reader::current_slug( 'test-stack', 'met-derangements', $root ), 'a block the stack does not replace is returned unchanged' );
+		$this->assertSame( 'met-abilities', Catalog_Reader::current_slug( 'plain-stack', 'met-abilities', $root ), 'a stack that replaces nothing returns the slug it was given' );
+		$this->assertSame( 'met-abilities', Catalog_Reader::current_slug( 'no-such-stack', 'met-abilities', $root ), 'an unknown stack returns the slug it was given' );
+		$this->assertSame( 'vampire-abilities', Catalog_Reader::current_slug( 'test-stack', 'vampire-abilities', $root ), 'a slug that is not replaced is returned unchanged' );
+	}
+
+	/**
+	 * The lookup reads the stacks' own declarations and needs no install state.
+	 */
+	public function test_current_slug_needs_no_install_state(): void {
+		if ( ! Catalog_Reader::available() ) {
+			$this->markTestSkipped( 'no declared catalog in this checkout' );
+		}
+
+		$this->assertSame( 'vampire-abilities', Catalog_Reader::current_slug( 'vampire', 'met-abilities' ) );
+	}
+
+	/**
+	 * For all eleven shipped stacks the lookup names a block the stack declares: Abilities, Merits and Flaws on each
+	 * creature type's own blocks (a Bete uses Fera's), and Rites on `werewolf-rites` for Werewolf and `fera-rites` for a
+	 * Fera or a Bete.
+	 */
+	public function test_current_slug_lands_on_a_block_each_real_stack_declares(): void {
+		if ( ! Catalog_Reader::available() ) {
+			$this->markTestSkipped( 'no declared catalog in this checkout' );
+		}
+		$stacks = Catalog_Reader::stacks_to_seed();
+		$this->assertCount( 11, $stacks );
+
+		foreach ( $stacks as $stack => $data ) {
+			$declared = array_column( $data['stack_definition']['sections'], 'block_slug' );
+			foreach ( [ 'met-abilities', 'met-merits', 'met-flaws' ] as $shared ) {
+				$current = Catalog_Reader::current_slug( $stack, $shared );
+				$this->assertNotSame( $shared, $current, "{$stack}: {$shared} maps to the stack's own list" );
+				$this->assertContains( $current, $declared, "{$stack}: {$current} is not a block the stack declares" );
+			}
+		}
+
+		$this->assertSame( 'fera-abilities', Catalog_Reader::current_slug( 'bete', 'met-abilities' ), 'a Bete uses Fera\'s lists' );
+		$this->assertSame( 'fera-merits', Catalog_Reader::current_slug( 'bete', 'met-merits' ) );
+		$this->assertSame( 'fera-flaws', Catalog_Reader::current_slug( 'bete', 'met-flaws' ) );
+		$this->assertSame( 'werewolf-rites', Catalog_Reader::current_slug( 'werewolf', 'werewolf-rites' ), 'Werewolf keeps its own Rites list' );
+		$this->assertSame( 'fera-rites', Catalog_Reader::current_slug( 'fera', 'werewolf-rites' ) );
+		$this->assertSame( 'fera-rites', Catalog_Reader::current_slug( 'bete', 'werewolf-rites' ) );
+	}
+
 	// -------------------------------------------------------------------------
 
 	public function test_round_trips_a_real_full_ladder_block_vampire_disciplines(): void {
@@ -589,7 +622,6 @@ class CatalogReaderTest extends TestCase {
 		$this->assertSame( 'tiered_power', $block['section_type'] );
 		$this->assertSame( [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ], $block['definition']['_meta']['ladder'] );
 		$this->assertTrue( $block['definition']['sequential'] );
-		// D75's one already-working case - the bridge must preserve it exactly.
 		$this->assertSame( 1, $block['definition']['out_of_type_cost_modifier'] );
 	}
 
@@ -634,28 +666,16 @@ class CatalogReaderTest extends TestCase {
 		$this->assertSame( 'Intermediate', $rule['tier_words']['int'] );
 		$this->assertSame( 'Koldunism', $rule['group_aliases']['Koldunic'] );
 
-		// Every alias must resolve to a group the block's own items really carry - an alias to a
-		// group that does not exist would silently never match anything.
+		// Every alias must resolve to a group the block's own items really carry.
 		$groups = array_unique( array_column( Catalog_Reader::blocks_to_seed()['vampire-rituals']['definition']['items'], 'group' ) );
 		foreach ( $rule['group_aliases'] as $alias => $group ) {
 			$this->assertContains( $group, $groups, "alias \"{$alias}\" points at a group the catalog does not have" );
 		}
 	}
 
-	/**
-	 * 1.3.3 C2: a `replaces` pair can never cross section types - a stack cutover moves rows
-	 * between blocks by re-keying them, and `Custom_Rekey` (R2) assumes the target block reads
-	 * the same shape (`trait_list` row or `tiered_power` row) as the one it replaces. Checked
-	 * against the real GVM path (what a retired slug still seeds as, unreplaced) and the real
-	 * declared catalog (what replaces it) - every stack, every pair, not just Vampire's.
-	 */
-	public function test_every_replaced_pair_shares_a_section_type_with_its_retired_gvm_block(): void {
+	public function test_every_replaced_pair_moves_between_trait_lists(): void {
 		if ( ! Catalog_Reader::available() ) {
 			$this->markTestSkipped( 'no declared catalog in this checkout' );
-		}
-		$gvm_blocks = [];
-		foreach ( \BeyondElysium\Database\Seeder::get_gvm_blocks_to_seed() as $block ) {
-			$gvm_blocks[ $block['slug'] ] = $block;
 		}
 		$declared = Catalog_Reader::blocks_to_seed();
 		$maps     = Catalog_Reader::replacement_maps();
@@ -663,13 +683,9 @@ class CatalogReaderTest extends TestCase {
 
 		foreach ( $maps as $stack => $map ) {
 			foreach ( $map as $old => $new ) {
-				$this->assertArrayHasKey( $old, $gvm_blocks, "{$stack}: retired block \"{$old}\" has no GVM counterpart to compare against" );
+				$this->assertContains( $old, [ 'met-abilities', 'met-merits', 'met-flaws', 'werewolf-rites' ], "{$stack}: \"{$old}\" is not one of the trait lists that was retired" );
 				$this->assertArrayHasKey( $new, $declared, "{$stack}: replacement block \"{$new}\" is not itself a declared block" );
-				$this->assertSame(
-					$gvm_blocks[ $old ]['section_type'],
-					$declared[ $new ]['section_type'],
-					"{$stack}: \"{$new}\" replaces \"{$old}\" but they are different section types"
-				);
+				$this->assertSame( 'trait_list', $declared[ $new ]['section_type'], "{$stack}: \"{$new}\" replaces \"{$old}\" but is not a trait list" );
 			}
 		}
 	}
@@ -729,11 +745,7 @@ class CatalogReaderTest extends TestCase {
 }
 
 /**
- * `wp_json_encode()` is a WordPress function unavailable in this bare-PHPUnit unit suite
- * (no WP bootstrap - see CLAUDE.md's test-layer split). Every other test file in this suite
- * that writes its own JSON fixture uses plain `json_encode()`; named separately here only so
- * the intent ("this is a test fixture, not the plugin's own encode path") stays visible at
- * the call site.
+ * `wp_json_encode()` is a WordPress function unavailable in this bare-PHPUnit unit suite (no WP bootstrap).
  */
 function wp_json_encode_for_test( $data ): string {
 	return (string) json_encode( $data, JSON_PRETTY_PRINT );

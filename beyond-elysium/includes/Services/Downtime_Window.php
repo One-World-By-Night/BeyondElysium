@@ -10,15 +10,7 @@ use BeyondElysium\Models\Release_Batch;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Whether a character's downtime is open for a game date (1.1.0 §3.3), and the Storyteller
- * queue of that date's action plots.
- *
- * A game date's window is stored on its session (`downtime_opens_at`/`downtime_deadline_at`,
- * §3.1) - no session for that date, or a session with both fields empty, means no window at
- * all, today's behavior unchanged. A character's own `downtime_extensions` entry replaces the
- * deadline for that character only, never the open time.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.3
+ * Whether a character's downtime is open for a game date, and the Storyteller queue of that date's action plots.
  */
 class Downtime_Window {
 
@@ -28,9 +20,7 @@ class Downtime_Window {
 	const CLOSED   = 'closed';
 
 	/**
-	 * A character's downtime state for a game date. `none` when the date has no session, or a
-	 * session with neither window field set - the caller should not enforce anything in that
-	 * case, matching today's behavior.
+	 * A character's downtime state for a game date.
 	 *
 	 * @param int    $game_id
 	 * @param string $game_date `Y-m-d`.
@@ -55,9 +45,8 @@ class Downtime_Window {
 	}
 
 	/**
-	 * The pure rule behind state(): an extension, when present, replaces the deadline for that
-	 * character only - it never moves the open time. Neither field set at all means there is no
-	 * window to enforce, distinct from a window that is simply open with no deadline.
+	 * The pure rule behind state(): an extension, when present, replaces the deadline for that character only; neither
+	 * field set means there is no window to enforce.
 	 *
 	 * @param string|null $opens     `Y-m-d H:i:s`, or null for "already open from the start."
 	 * @param string|null $deadline  `Y-m-d H:i:s`, or null for "never closes."
@@ -81,14 +70,13 @@ class Downtime_Window {
 	}
 
 	/**
-	 * The Storyteller queue for one game date (§3.3): one row per action-allocation plot for
-	 * that date, unanswered first, then oldest action first.
+	 * The Storyteller queue for one game date: one row per action-allocation plot for that date, unanswered first.
 	 *
 	 * @param int    $game_id
 	 * @param string $game_date `Y-m-d`.
 	 * @return array[] Each: plot_id, character_id, character_name, player_id, player_name,
 	 *                  action_count, last_action_at, answered, answer_release_state, window_state,
-	 *                  assigned_to (§3.6, null when unassigned).
+	 *                  assigned_to (null when unassigned).
 	 */
 	public static function queue_for_date( int $game_id, string $game_date ): array {
 		$rows = [];
@@ -128,10 +116,7 @@ class Downtime_Window {
 	}
 
 	/**
-	 * Every unanswered action-allocation plot assigned to one staff member, across every game
-	 * date - the My Queue downtime section (1.1.0 §3.6: "unanswered action plots assigned to
-	 * me, any game date"). Answered plots are left out entirely, not just sorted last, unlike
-	 * queue_for_date()'s own single-date view.
+	 * Every unanswered action-allocation plot assigned to one staff member, across every game date.
 	 *
 	 * @param int $wp_user_id
 	 * @param int $game_id
@@ -167,10 +152,8 @@ class Downtime_Window {
 	}
 
 	/**
-	 * One action-allocation plot's action count, most recent action timestamp, and its current
-	 * answer (the response entry, if any, whose id is newer than the newest action's - matching
-	 * an answer to the action it actually answers by insertion order, never a string timestamp
-	 * comparison, which two entries created within the same second can tie on).
+	 * One action-allocation plot's action count, most recent action timestamp, and its current answer: the response
+	 * entry, if any, newer than the newest action.
 	 *
 	 * @param int $plot_id
 	 * @return array{0:int,1:?string,2:?object} [action_count, last_action_at, answer entry or null].

@@ -5,44 +5,19 @@ namespace BeyondElysium\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Configures TCPDF's document signature from three `wp-config.php`
- * constants - `BE_PDF_SIGNING_CERT`, `BE_PDF_SIGNING_KEY`,
- * `BE_PDF_SIGNING_PASSPHRASE` - never a WordPress option, since the
- * passphrase is the one secret this plugin holds (signed-pdf-design.md §3c).
- *
- * Never a *silent* unsigned PDF: `configure()` throws rather than no-op when
- * signing isn't available. An install with no certificate still prints
- * (1.0.0-review F-042, owner ruling 2026-09-14) - the writers check
- * `availability()`, skip `configure()`, and `mark_unsigned()` stamps every
- * page, so an unsigned copy can never pass for a signed one.
- *
- * `BE_PDF_SIGNING_PASSPHRASE` undefined or empty means "the key has no
- * passphrase" (an `-nodes`/`-noenc`-generated key), not a misconfiguration -
- * so an existing unencrypted key keeps working rather than being stranded.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md §3c
+ * Configures TCPDF's document signature from three `wp-config.php` constants.
  */
 class Pdf_Signer {
 
 	/**
 	 * Reads a `wp-config.php`-only constant by name, or '' if undefined.
-	 * Indirected through a variable name - rather than a bare constant
-	 * token - so PHPStan never sees a literal `BE_PDF_SIGNING_*` fetch: this
-	 * codebase never defines these constants (only each production host's
-	 * own `wp-config.php` does), so a bare token is either an undefined-
-	 * constant error, or, once stubbed for analysis, a compile-time-known
-	 * value that makes every emptiness check below look unreachable. Both
-	 * are analysis artifacts, not real conditions - the actual value is
-	 * genuinely unknown until runtime.
 	 */
 	private static function const_string( string $name ): string {
 		return defined( $name ) ? (string) constant( $name ) : '';
 	}
 
 	/**
-	 * Reports whether signing is fully configured, without ever touching
-	 * the passphrase - so an admin notice or a UI preflight can ask "is
-	 * signing ready" without that secret entering another code path.
+	 * Reports whether signing is fully configured, without ever touching the passphrase.
 	 *
 	 * @return array{ok:bool,code:string}
 	 */
@@ -66,26 +41,19 @@ class Pdf_Signer {
 	}
 
 	/**
-	 * The site-wide secure-printing switch. Absent means off (1.0.1 C2).
-	 *
-	 * Site-wide rather than per-chronicle because the certificate itself is site-wide: a
-	 * per-chronicle switch would imply per-chronicle certificates, which nobody asked for and
-	 * which multiplies the one genuinely dangerous thing here, key handling.
+	 * The site-wide secure-printing switch.
 	 */
 	const OPT_IN_OPTION = 'be_secure_printing';
 
-	/** Whether an administrator has switched secure printing on. Default off. */
+	/**
+	 * Whether an administrator has switched secure printing on.
+	 */
 	public static function opted_in(): bool {
 		return (bool) get_option( self::OPT_IN_OPTION, false );
 	}
 
 	/**
-	 * Whether a document should actually be signed - the question every writer asks, as
-	 * opposed to `availability()`'s narrower "is a usable certificate configured".
-	 *
-	 * Deliberately a separate method rather than folding the option into `availability()`:
-	 * the settings screen and the admin health notice need to tell "no certificate" apart
-	 * from "certificate present, signing switched off", and a single merged answer cannot.
+	 * Whether a document should actually be signed.
 	 *
 	 * @return array{ok:bool,code:string}
 	 */
@@ -98,11 +66,7 @@ class Pdf_Signer {
 	}
 
 	/**
-	 * Which of the three constants are defined, and whether the two file paths are readable -
-	 * for the settings screen to say "you're set up" or name what's missing.
-	 *
-	 * Reports the passphrase constant only as defined or not. Its value is read on exactly one
-	 * line of this class, in `configure()`, and never leaves it.
+	 * Which of the three constants are defined, and whether the two file paths are readable.
 	 *
 	 * @return array<string,array{defined:bool,readable:bool|null}>
 	 */
@@ -115,8 +79,7 @@ class Pdf_Signer {
 				'readable' => $value !== '' ? is_readable( $value ) : null,
 			];
 		}
-		// An empty passphrase is a legitimate configuration (an -nodes key), not a gap, so
-		// this row is informational and never a failure on its own.
+		// An empty passphrase is a legitimate configuration (an -nodes key).
 		$report['BE_PDF_SIGNING_PASSPHRASE'] = [
 			'defined'  => defined( 'BE_PDF_SIGNING_PASSPHRASE' ),
 			'readable' => null,
@@ -126,9 +89,7 @@ class Pdf_Signer {
 	}
 
 	/**
-	 * Whether this host can mint a pair at all. The openssl *extension*, not the command-line
-	 * binary: the binary needs shell access, which shared hosting commonly blocks, and that is
-	 * the gap generation exists to close.
+	 * Whether this host can mint a pair at all.
 	 */
 	public static function can_generate(): bool {
 		return function_exists( 'openssl_pkey_new' )
@@ -139,15 +100,8 @@ class Pdf_Signer {
 	}
 
 	/**
-	 * Mints a self-signed certificate and an encrypted private key in memory, and returns
-	 * them with the `wp-config.php` lines to paste.
-	 *
-	 * Writes nothing. Not the key, not the passphrase, not the certificate - not to the
-	 * filesystem and not to the database. The caller hands the result to the administrator
-	 * once and forgets it; there is deliberately no way to ask for it again.
-	 *
-	 * Self-signed is the point. A reader will report "signature valid, signer not trusted"
-	 * rather than a green tick, which is what a chronicle's own attestation actually is.
+	 * Mints a self-signed certificate and an encrypted private key in memory, and returns them with the `wp-config.php`
+	 * lines to paste.
 	 *
 	 * @param string $common_name Shown as the signer's name in a PDF reader.
 	 * @param string $passphrase  Encrypts the exported key. Not retained.
@@ -192,7 +146,9 @@ class Pdf_Signer {
 		];
 	}
 
-	/** Drains openssl's error queue into one message, so a failure says something real. */
+	/**
+	 * Drains openssl's error queue into one message.
+	 */
 	private static function openssl_error(): string {
 		$messages = [];
 		while ( $message = openssl_error_string() ) { // phpcs:ignore
@@ -205,18 +161,7 @@ class Pdf_Signer {
 	}
 
 	/**
-	 * Configures `$pdf`'s signature. Caller's responsibility, not this
-	 * method's: call this between `new TCPDF(...)` and the first
-	 * `AddPage()` - `setSignature()`'s own `/ByteRange` and `/Contents`
-	 * placeholder are reserved during construction and back-filled at
-	 * `Output()`, verified against TCPDF's own `examples/example_052.php`
-	 * at tag 6.11.4 (§2a). Throws rather than silently no-op'ing when
-	 * `availability()` would report failure, so a caller that skips the
-	 * preflight check still cannot produce an unsigned PDF by accident.
-	 *
-	 * The passphrase is read here, on this one line, and nowhere else in
-	 * this class: never assigned to a property, never returned, never
-	 * logged, never included in any exception message.
+	 * Configures `$pdf`'s signature.
 	 *
 	 * @param \TCPDF $pdf
 	 * @param object $game Provides the signature's own `Name`/`Reason` metadata.
@@ -246,9 +191,7 @@ class Pdf_Signer {
 	}
 
 	/**
-	 * Stamps a red UNSIGNED notice into the top margin of every page. Call it
-	 * after all content is drawn, so it reaches every page however many the
-	 * content ran to, and only on a document `configure()` never touched.
+	 * Stamps a red UNSIGNED notice into the top margin of every page.
 	 *
 	 * @param \TCPDF $pdf
 	 */

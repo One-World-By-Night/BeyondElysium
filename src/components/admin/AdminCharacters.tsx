@@ -1,8 +1,5 @@
 /**
  * Admin page for the staff character roster.
- * Lets staff choose a chronicle and browse its full character list,
- * reusing the shared CharacterList component with a toggle between
- * player characters and NPCs.
  */
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -19,9 +16,6 @@ import './Admin.css';
 
 /**
  * Renders the Characters admin screen.
- * Loads the list of chronicles, lets the viewer pick one from a dropdown,
- * and displays that chronicle's characters through CharacterList, with a
- * checkbox to switch the roster between player characters and NPCs.
  */
 export function AdminCharacters() {
 	const { games, gameSlug, setGameSlug, loading } = useAdminGameSelector();

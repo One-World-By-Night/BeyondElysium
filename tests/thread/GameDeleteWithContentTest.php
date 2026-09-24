@@ -24,15 +24,7 @@ use BeyondElysium\Models\World_Object;
 use WP_UnitTestCase;
 
 /**
- * Direct follow-on to Decision 071, same day: "we can delete the demo chronicle content?"
- * `Game::delete()` was a bare row delete - every character/plot/world object/game-scoped
- * template/saved query it owned was left behind. `Game::delete_with_content()` is the real
- * cascade.
- *
- * The original safeguard still holds: the plain delete behind the Games screen's one-click
- * button never destroys a chronicle's content. Since 1.0.0-review F-036 it also never leaves
- * that content behind for a same-named chronicle to inherit - it refuses instead, and the
- * screen asks separately whether to delete the content too (`ChronicleDeleteThreadTest`).
+ * `Game::delete_with_content()` deletes a chronicle and everything stored under it.
  */
 class GameDeleteWithContentTest extends WP_UnitTestCase {
 
@@ -83,14 +75,7 @@ class GameDeleteWithContentTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * D1 (1.2.5-design-workflow.md §D): nine real content kinds `delete_with_content()`
-	 * silently left behind - factions/positions/secrets (each with their own join-table
-	 * child, D2's own ordering lesson), game_sessions, attendance, release_batches,
-	 * notification_queue, npc_castings, after_game_reports. Also proves the matching
-	 * `content_counts()` fix: the exact safety gate `delete_item()`'s plain, non-cascading
-	 * delete refuses on when it sees real content - before this fix, a chronicle holding
-	 * only these nine kinds would have reported all-zero counts and let the plain delete
-	 * through, orphaning every row checked here.
+	 * Nine real content kinds `delete_with_content()` silently left behind.
 	 */
 	public function test_delete_with_content_removes_the_nine_kinds_d1_found_missing(): void {
 		$slug    = 'thread-test-d1-delete-with-content-' . wp_generate_password( 8, false );
@@ -144,8 +129,7 @@ class GameDeleteWithContentTest extends WP_UnitTestCase {
 		] );
 		$this->assertNotFalse( $report_id, 'fixture sanity check' );
 
-		// content_counts() is the exact gate delete_item() refuses a plain delete on - before
-		// this fix it never saw any of these nine, so it would have reported zero here.
+		// content_counts() is the exact gate delete_item() refuses a plain delete.
 		$game   = Game::find_by_slug( $slug );
 		$counts = Game::content_counts( $game );
 		$this->assertGreaterThan( 0, $counts['factions'] );
@@ -177,10 +161,6 @@ class GameDeleteWithContentTest extends WP_UnitTestCase {
 		$this->assertNull( self::table_find( 'after_game_reports', $report_id ) );
 	}
 
-	/**
-	 * D1's second half: `World_Object::delete()` never cleaned `item_events`, the one real
-	 * gap in an otherwise-complete single-item delete.
-	 */
 	public function test_world_object_delete_removes_its_own_item_events(): void {
 		$slug    = 'thread-test-d1-item-events-' . wp_generate_password( 8, false );
 		$game_id = $this->make_game( $slug );
@@ -206,9 +186,8 @@ class GameDeleteWithContentTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The plain `delete()` must never destroy content, and must never orphan it either: while
-	 * the chronicle holds content it refuses, and the game and its characters stay exactly as
-	 * they were.
+	 * The plain `delete()` must never destroy content, and must never orphan it either: while the chronicle holds content
+	 * it refuses, and the game and its characters stay exactly as they were.
 	 */
 	public function test_plain_delete_refuses_while_the_chronicle_holds_content(): void {
 		$slug_a = 'thread-test-plain-delete-' . wp_generate_password( 8, false );

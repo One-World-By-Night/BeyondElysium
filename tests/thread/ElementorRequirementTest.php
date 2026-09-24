@@ -6,14 +6,8 @@ use BeyondElysium\Core\Elementor_Requirement;
 use WP_UnitTestCase;
 
 /**
- * Covers the Elementor dependency notice: that it stays silent when the
- * requirement is met, that it offers the correct next step for a site that
- * has Elementor installed-but-inactive versus not installed at all, and that
- * it never shows an action link to a user who could not perform it.
- *
- * The plugin header's `Requires Plugins: elementor` field is the real
- * enforcement on WordPress 6.5+; this notice is the fallback below that
- * version and for Elementor being switched off after activation.
+ * The Elementor dependency notice: silent when the requirement is met, and the right next step for an inactive or a
+ * missing Elementor.
  */
 class ElementorRequirementTest extends WP_UnitTestCase {
 
@@ -69,7 +63,7 @@ class ElementorRequirementTest extends WP_UnitTestCase {
 			$this->assertStringContainsString( 'Install Elementor', $output );
 		}
 
-		// Either action is state-changing, so it must never be a bare link.
+		// Either action is state-changing.
 		$this->assertStringContainsString( '_wpnonce', $output, 'The action link must be nonce-protected.' );
 	}
 

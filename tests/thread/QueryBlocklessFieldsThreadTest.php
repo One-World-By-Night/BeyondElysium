@@ -8,12 +8,8 @@ use BeyondElysium\Services\Query_Engine;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-051. A field-map.php entry names some fields without a block, because every
- * creature type keeps them on its own - Willpower, temporary Willpower, Rank, House, Breed,
- * Auspice, Pack, Totem, Faction. The query engine read `block` off the entry unconditionally, so
- * each of those fields raised a warning and resolved to nothing: a Query Tool condition, a
- * statistic, a sort, a report's conditions, or a rumor's target on Willpower or Auspice matched no
- * character at all.
+ * Query fields that name no block because every creature type keeps them on its own block: Willpower, Rank, House,
+ * Breed, Auspice, Pack, Totem, Faction.
  */
 class QueryBlocklessFieldsThreadTest extends WP_UnitTestCase {
 

@@ -5,36 +5,26 @@ namespace BeyondElysium\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Fuzzy string matcher used to resolve import trait names against a target
- * block's item catalog. Normalizes strings for comparison, measures edit
- * distance between a name and each candidate, and ranks the closest matches
- * for an unmatched name.
- *
- * Pure functions with no database access.
+ * Fuzzy string matcher used to resolve import trait names against a target block's item catalog: normalizes strings,
+ * measures edit distance and ranks the closest matches for an unmatched name.
  */
 class Fuzzy_Matcher {
 
 	/**
-	 * Normalizes a string for comparison. Lowercases and trims the value,
-	 * then collapses runs of punctuation or whitespace into a single space
-	 * so that punctuation acts as a word separator rather than being
-	 * deleted outright.
+	 * Normalizes a string for comparison.
 	 *
 	 * @param string $value
 	 * @return string
 	 */
 	public static function normalize( string $value ): string {
 		$value = strtolower( trim( $value ) );
-		// Punctuation separates words rather than being deleted.
+		// Punctuation separates words.
 		$value = preg_replace( '/[^\p{L}\p{N}]+/u', ' ', $value ) ?? $value;
 		return trim( $value );
 	}
 
 	/**
-	 * Determines whether two strings are within an edit-distance threshold
-	 * of each other. Computes the Levenshtein distance between the two
-	 * values and compares it against a threshold of 2 characters for
-	 * strings under 10 characters long, or 3 characters otherwise.
+	 * Determines whether two strings are within an edit-distance threshold of each other.
 	 *
 	 * @param string $a
 	 * @param string $b
@@ -46,13 +36,7 @@ class Fuzzy_Matcher {
 	}
 
 	/**
-	 * Finds up to three candidate names that best match an unmatched trait
-	 * name. Normalizes the input and each candidate, skips candidates that
-	 * cannot be within the edit-distance threshold, then scores the rest by
-	 * Levenshtein distance with `similar_text` percentage as a tiebreaker.
-	 *
-	 * Results are sorted by distance ascending and then similarity
-	 * percentage descending, and truncated to the top three.
+	 * Finds up to three candidate names that best match an unmatched trait name.
 	 *
 	 * @param string   $raw        The unmatched trait name, as imported.
 	 * @param string[] $candidates Real item names from the target block's catalog.

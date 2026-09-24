@@ -1,16 +1,6 @@
 <?php
 /**
  * Per-`object_type` property schemas for `be_world_objects.properties`.
- * Transcribed field-for-field from each GV class's `GetValue`
- * (`ItemClass`, `LocationClass`, `RoteClass`), plus `boon`, a restructuring
- * of `BoonClass` into a symmetric two-connection object.
- *
- * Types: 'string', 'text' (same storage, a hint for the editor's textarea vs
- * input), 'int', 'date', 'trait_list' (`[{name, count, note?}]`, the same
- * shape as a character sheet's, so the sheet renderers work on it unchanged).
- *
- * @see BE_PROCESS/releases/workflow-0.7.md Step 1b
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "World Objects"
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -30,8 +20,7 @@ return [
 		'negatives'      => 'trait_list',
 		'abilities'      => 'trait_list',
 		'availability'   => 'trait_list',
-		// 1.1.0 §3.12 item 2 - uses_left/expires_on derive used_up/expired (not stored) via
-		// World_Object::is_used_up()/is_expired(), never guessed client-side.
+		// uses_left and expires_on derive used_up and expired, which are not stored.
 		'uses_max'       => 'int',
 		'uses_left'      => 'int',
 		'expires_on'     => 'date',
@@ -59,15 +48,13 @@ return [
 		'grades'      => 'string',
 		'spheres'     => 'trait_list',
 	],
-	// 'status' is new; it records whether a boon has been repaid.
+	// 'status' records whether a boon has been repaid.
 	'boon'     => [
 		'boon_level'  => 'string',
 		'boon_date'   => 'date',
 		'terms'       => 'text',
 		'status'      => 'string',
 		'repaid_date' => 'date',
-		// How the boon was actually settled, optional (BE_PROCESS/releases/0.99.2-workflow.md) -
-		// "removed" is not a separate concept, a boon is repaid with this as the how.
 		'repaid_note' => 'text',
 	],
 ];

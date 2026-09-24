@@ -12,12 +12,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * A chronicle auto-approves by default (Decision 109), so nothing a player submits is looked at
- * first. A player buys Academics but types it in lower case; a Storyteller adds a homebrew
- * ability that isn't in the catalog. The purchase applies at once - under the catalog's name,
- * at the catalog's price. The homebrew entry, which no catalog prices, waits in the approval
- * queue until a Storyteller approves it (1.0.0-review F-030) - and prices it, since nothing else
- * can (1.3.3 E3/E4).
+ * A chronicle auto-approves by default.
  */
 class AutoApproveCatalogWorkflowTest extends WP_UnitTestCase {
 
@@ -72,7 +67,6 @@ class AutoApproveCatalogWorkflowTest extends WP_UnitTestCase {
 		$this->assertSame( 'Academics', $after_purchase->sheet_data['aacw-abilities'][0]['name'] );
 		$this->assertSame( 24, (int) $after_purchase->xp_unspent );
 
-		// The same player cannot sneak in something the catalog doesn't have.
 		$made_up = $this->dispatch( 'POST', "/be/v1/{$this->slug}/characters/{$character}/changes", [
 			'change_type' => 'add_trait',
 			'category'    => 'aacw-abilities',
@@ -90,8 +84,7 @@ class AutoApproveCatalogWorkflowTest extends WP_UnitTestCase {
 		$this->assertSame( 'pending', $homebrew->get_data()->status );
 		$this->assertCount( 1, Character::find( $character )->sheet_data['aacw-abilities'] );
 
-		// It shows in the queue. Nothing prices it, so approving it without a price is refused and
-		// it stays pending; the Storyteller's price, per dot, is what applies it and what is charged.
+		// It shows in the queue.
 		$queue = $this->dispatch( 'GET', "/be/v1/{$this->slug}/changes" )->get_data();
 		$this->assertSame( 'Chronicle Lore', $queue[0]->change_data['trait']['name'] );
 

@@ -3,13 +3,11 @@
 Pass A - the index oracle.
 
 Parses the Enlightened Grimoire's own "Index of Rotes" (printed 203-211,
-extracted here as index.txt) into (headword, [pages]) tuples. This is the
-ground truth Pass B's chapter-entry parse gets checked against (I1: index
-coverage) - so this pass runs first and its output is inspected before any
-chapter parsing starts, per the design doc's own sequencing.
+extracted here as index.txt) into (headword, [pages]) tuples. Pass B's
+chapter-entry parse is checked against this output.
 
 Never guesses a page number. An entry whose trailing number can't be found
-is emitted with pages=[] and flagged, not silently dropped or invented.
+is emitted with pages=[] and flagged.
 """
 import re
 import sys
@@ -59,9 +57,7 @@ def parse(lines):
             if headword:
                 entries.append({"headword": headword, "pages": pages})
             else:
-                # a trailing-number-only line with nothing accumulated - shouldn't
-                # happen given BARE_NUMBER already stripped pure-digit lines, but
-                # guard rather than silently drop.
+                # a trailing-number-only line with nothing accumulated
                 orphans.append(f"<orphan pages only: {pages}>")
         else:
             buf.append(line)
@@ -71,12 +67,10 @@ def parse(lines):
 
 
 def normalize(headword):
-    """Matching key per Decision 043: normalized, not exact.
+    """Matching key: normalized, not exact.
 
-    Hyphens are preserved (not collapsed to space or stripped) - "Burn Out"
-    and "Burn-Out" are two distinct, real rotes in this book (chapters.txt
-    confirms separate citations, pages 20 and 87), so folding the hyphen
-    away would silently merge two different catalog items.
+    Hyphens are preserved (not collapsed to space or stripped): "Burn Out" and
+    "Burn-Out" are two distinct rotes in this book.
     """
     h = headword.lower()
     h = re.sub(r"[’']", "'", h)

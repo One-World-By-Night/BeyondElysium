@@ -3,18 +3,12 @@
 namespace BeyondElysium\Tests\Unit;
 
 use BeyondElysium\Database\Seeder;
+use BeyondElysium\Services\Catalog_Reader;
 use BeyondElysium\Services\Field_Registry;
 use PHPUnit\Framework\TestCase;
 
 /**
  * The field registry (qkdata.gvd) and the field-storage map that sits on top of it.
- *
- * Both consumers - the template engine here in 0.3, and the query engine in 0.6 - depend
- * on this being exactly right: 231 real keys, the upstream `level` typo normalized, and
- * every *mapped* key pointing at a column or block that actually exists.
- *
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "qkdata.gvd - the 231-key registry"
- * @see BE_PROCESS/releases/workflow-0.3.md Step 0
  */
 class FieldRegistryTest extends TestCase {
 
@@ -78,8 +72,6 @@ class FieldRegistryTest extends TestCase {
 		$this->assertCount( 13, Field_Registry::for_inventory( 'player' ) );
 		$this->assertCount( 8, Field_Registry::for_inventory( 'rote' ) );
 
-		// qkdata.gvd declares no plot, rumor, or action keys, even though the engine
-		// parses for them - those entities expose keys through their own GetValue methods.
 		$this->assertCount( 0, Field_Registry::for_inventory( 'plot' ) );
 		$this->assertCount( 0, Field_Registry::for_inventory( 'rumor' ) );
 		$this->assertCount( 0, Field_Registry::for_inventory( 'action' ) );
@@ -128,9 +120,7 @@ class FieldRegistryTest extends TestCase {
 				break;
 
 			case 'stack_relative_list':
-				// Resolved per-character by Query_Engine (Decision 034) using the
-				// character's own stack_slug - there is no single fixed block to check
-				// against a static ground truth the way 'json' entries have.
+				// Resolved per-character by Query_Engine using the character's own stack_slug.
 				$this->assertNotEmpty( $entry['block_pattern'] ?? '', "{$key}: stack_relative_list entry must carry a block_pattern" );
 				$this->assertStringContainsString( '{stack}', $entry['block_pattern'], "{$key}: block_pattern must be stack-relative" );
 				$this->assertNotEmpty( $entry['filter_source'] ?? '', "{$key}: stack_relative_list entry must carry a filter_source" );
@@ -145,9 +135,7 @@ class FieldRegistryTest extends TestCase {
 	 * @return array<string,array{0:string,1:array}>
 	 */
 	public function map_entries(): array {
-		// Bootstrap and the block ground truth are loaded outside the constructor's usual
-		// path because a data provider runs before setUpBeforeClass(). Field_Registry::map()
-		// is pure file I/O and safe to call here.
+		// Bootstrap and the block ground truth are loaded outside the constructor's usual path.
 		$out = [];
 		foreach ( Field_Registry::map() as $key => $entry ) {
 			$out[ $key ] = [ $key, $entry ];
@@ -155,8 +143,38 @@ class FieldRegistryTest extends TestCase {
 		return $out;
 	}
 
+	/**
+	 * A whole-list entry can name a shared list no block carries any more (`met-abilities`, `met-merits`, `met-flaws`):
+	 * every stack then declares the block that answers for it, and each of those exists.
+	 */
+	private function assert_answered_by_every_stack( string $key, string $slug ): void {
+		$stacks = Catalog_Reader::stacks_to_seed();
+		$maps   = Catalog_Reader::replacement_maps();
+		$this->assertNotEmpty( $stacks );
+
+		foreach ( array_keys( $stacks ) as $stack ) {
+			$replacement = $maps[ $stack ][ $slug ] ?? null;
+			$this->assertNotNull( $replacement, "{$key}: block '{$slug}' does not exist and stack '{$stack}' declares no block for it" );
+			$this->assertArrayHasKey( $replacement, self::$blocks_by_slug, "{$key}: stack '{$stack}' answers '{$slug}' with '{$replacement}', which does not exist" );
+			$this->assertContains(
+				self::$blocks_by_slug[ $replacement ]['section_type'],
+				[ 'trait_list', 'tiered_power' ],
+				"{$key}: '{$replacement}' is referenced as a whole list but is a {$this->section_type_of( $replacement )}"
+			);
+		}
+	}
+
+	private function section_type_of( string $slug ): string {
+		return (string) ( self::$blocks_by_slug[ $slug ]['section_type'] ?? '' );
+	}
+
 	private function assert_json_entry_resolves( string $key, array $entry ): void {
 		if ( isset( $entry['block'] ) ) {
+			if ( ! isset( self::$blocks_by_slug[ $entry['block'] ] ) && ! isset( $entry['field'] ) && ! isset( $entry['pool'] ) ) {
+				$this->assert_answered_by_every_stack( $key, $entry['block'] );
+				return;
+			}
+
 			$this->assertArrayHasKey(
 				$entry['block'],
 				self::$blocks_by_slug,
@@ -185,8 +203,7 @@ class FieldRegistryTest extends TestCase {
 				return;
 			}
 
-			// Whole-list reference: only trait_list and tiered_power blocks are rendered
-			// that way (Step 4a/4b).
+			// Whole-list reference: only trait_list and tiered_power blocks are rendered that way.
 			$this->assertContains(
 				$block['section_type'],
 				[ 'trait_list', 'tiered_power' ],
@@ -195,8 +212,6 @@ class FieldRegistryTest extends TestCase {
 			return;
 		}
 
-		// No fixed block: the name must exist on at least one stack's block of the
-		// matching kind, since resolution happens against the character's own stack.
 		if ( isset( $entry['field'] ) ) {
 			$this->assertArrayHasKey(
 				$entry['field'],

@@ -5,11 +5,7 @@ namespace BeyondElysium\Core;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Defines Beyond Elysium's custom WordPress capabilities and the roles
- * that receive each one by default. Registers those capabilities onto
- * roles on activation and strips them back off on deactivation. The
- * capability list here is also the source other components (such as the
- * accessSchema role map) derive their own capability lists from.
+ * Defines Beyond Elysium's custom WordPress capabilities and the roles that receive each one by default.
  */
 class Capabilities {
 
@@ -18,24 +14,13 @@ class Capabilities {
 	 */
 	private const CAPS = [
 		'be_manage_games'        => [ 'administrator' ],
-		// GS-1 (guided-chronicle-setup-design.md §10 Q1, owner ruling 2026-09-13): an HST is
-		// a WordPress editor and needs both, so they can fork their own chronicle's catalog
-		// and templates through the setup checklist - v0.21.20's be_import precedent exactly.
-		// Both-or-neither with the game-scoped write routes added to Schema_Blocks_Controller
-		// in the same release: granting this site-wide alone, with no chronicle-scoped second
-		// layer to narrow it, would let any editor on the site edit the global catalog every
-		// chronicle shares (Authorization::check_request() only reaches the be_game_members
-		// layer when the route itself carries a game_slug URL param).
+		// Schema blocks and templates: an HST edits their own chronicle's copies.
 		'be_manage_schemas'      => [ 'administrator', 'editor' ],
 		'be_manage_templates'    => [ 'administrator', 'editor' ],
-		// Owner ruling, 1.0.0-checklist.md item 18 (2026-09-15): an HST saves their own
-		// chronicle's creature types, sub-faction restrictions, and new-character approval
-		// policy - previously be_manage_games only, unreachable by anyone but a site
-		// administrator. AST excluded (item 27, game-roles.php).
+		// Chronicle Setup: an HST saves their own chronicle's creature types, sub-faction restrictions and approval policy.
 		'be_manage_chronicle_setup' => [ 'administrator', 'editor' ],
 		'be_manage_characters'   => [ 'administrator', 'editor' ],
-		// Split from be_manage_characters (owner ruling, 1.0.0-checklist.md item 27): an AST
-		// keeps every other character power - edit, bulk XP/status/resets - but not this one.
+		// Deleting characters, separate from editing them.
 		'be_delete_characters'   => [ 'administrator', 'editor' ],
 		'be_edit_own_characters' => [ 'administrator', 'editor', 'author', 'contributor', 'subscriber' ],
 		'be_view_characters'     => [ 'administrator', 'editor', 'author', 'contributor', 'subscriber' ],
@@ -50,44 +35,22 @@ class Capabilities {
 		'be_customize_sheet'     => [ 'administrator', 'editor' ],
 		// Chronicle-scoped like be_manage_characters: create/edit/delete approval overrides.
 		'be_manage_approval_rules' => [ 'administrator', 'editor' ],
-		// A fifth chronicle role, `boons` (BE_PROCESS/releases/0.99.2-workflow.md), needs a
-		// narrower capability than be_manage_world_objects, which also covers items,
-		// locations and rotes - granting that would hand a Harpy everything, not just boons.
-		// Authorization::check_request() gates on the SITE-WIDE grant here first, then
-		// narrows further by the game-scoped role - so this must include every WP role a
-		// Harpy could plausibly be (a plain player, not necessarily WP staff), the same
-		// breadth be_view_characters/be_edit_own_characters/be_submit_actions already use.
-		// v0.21.20's be_import fix is the exact precedent: a game-scoped role grant alone
-		// is never enough on its own, both layers are required.
+		// Boons only, narrower than be_manage_world_objects.
 		'be_manage_boons'          => [ 'administrator', 'editor', 'author', 'contributor', 'subscriber' ],
-		// Chronicle-scoped like be_manage_approval_rules: edits the chronicle's own
-		// action-allocation and rumor-generation configuration. be_manage_games is
-		// excluded from every chronicle role (see game-roles.php), so it cannot gate this.
+		// Action allocation and rumor generation settings.
 		'be_manage_apr'            => [ 'administrator', 'editor' ],
-		// Same breadth as be_view_characters: a player printing a Sign-In Sheet at a
-		// live game is an ordinary use, not a Storyteller-only one. Row-level
-		// visibility (NPC hiding, [ST]-marked text) is enforced inside
-		// Report_Document/Query_Engine, not by narrowing this grant.
+		// Viewing and printing reports, including a player's Sign-In Sheet.
 		'be_view_reports'          => [ 'administrator', 'editor', 'author', 'contributor', 'subscriber' ],
-		// Chronicle-scoped like be_manage_plots; game-roles.php also grants it to narrator
-		// explicitly (a Narrator often runs the door at a game night) rather than deriving it.
+		// Game nights and attendance.
 		'be_manage_sessions'       => [ 'administrator', 'editor' ],
-		// 1.1.0 §3.10 (F1): sects, coteries, packs, courts and their positions - a
-		// dedicated capability rather than folding into be_manage_world_objects, since a
-		// faction is a chronicle-membership structure, not a catalog entity. hst/ast derive
-		// it via game-roles.php's own array_diff mechanism; narrator does not.
+		// Factions: sects, coteries, packs, courts and their positions.
 		'be_manage_factions'       => [ 'administrator', 'editor' ],
-		// Deliberately NOT folded into be_manage_schemas (1.2.0 releases/1.2.0-design-workflow.md
-		// §5.7): the person doing this work is a native speaker fixing one wrong catalog term,
-		// not someone who should be able to rewrite every catalog on the site. Site-wide, not
-		// chronicle-scoped - translations are site data and locale is per-install (Decision 106).
+		// Catalog term translations, site-wide.
 		'be_manage_translations'  => [ 'administrator', 'editor' ],
 	];
 
 	/**
-	 * Returns every custom capability this plugin defines, as a plain list
-	 * with the per-role grants stripped off. Used by game-roles.php to
-	 * build the chronicle-scoped role grants from the same source list.
+	 * Returns every custom capability this plugin defines, as a plain list with the per-role grants stripped off.
 	 *
 	 * @return string[]
 	 */
@@ -96,9 +59,7 @@ class Capabilities {
 	}
 
 	/**
-	 * Adds every capability in CAPS to each of its listed roles, via
-	 * WP_Role::add_cap(). Skips any role name that does not resolve to a
-	 * real WP_Role.
+	 * Adds every capability in CAPS to each of its listed roles, via WP_Role::add_cap().
 	 */
 	public static function register(): void {
 		foreach ( self::CAPS as $cap => $role_names ) {
@@ -112,9 +73,7 @@ class Capabilities {
 	}
 
 	/**
-	 * Removes every capability in CAPS from each of its listed roles, via
-	 * WP_Role::remove_cap(). Skips any role name that does not resolve to
-	 * a real WP_Role.
+	 * Removes every capability in CAPS from each of its listed roles, via WP_Role::remove_cap().
 	 */
 	public static function unregister(): void {
 		foreach ( self::CAPS as $cap => $role_names ) {

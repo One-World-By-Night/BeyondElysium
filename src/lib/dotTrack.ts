@@ -1,16 +1,13 @@
 /**
- * Pure logic behind an interactive dot track: which of `max` dots is filled, spent, or
- * overflow for a given permanent/temporary pair, and how a click or a +/- step changes
- * the track's value. Exports `computeDotStates()`, `nextTrackValueOnClick()`, and
- * `stepTrackValue()`, plus the shared `DotState` type.
+ * Pure logic behind an interactive dot track: which of `max` dots is filled, spent, or overflow for a given
+ * permanent/temporary pair, and how a click or a +/- step changes the track's value.
  */
 
 export type DotState = 'filled' | 'spent' | 'overflow' | 'empty';
 
 /**
- * Computes the filled/spent/overflow/empty state of each dot from 1 to `max` for a
- * track showing both a permanent and a temporary value. A temporary value above
- * permanent renders as overflow past the permanent mark rather than being clamped.
+ * Computes the filled/spent/overflow/empty state of each dot from 1 to `max` for a track showing both a permanent and
+ * a temporary value.
  */
 export function computeDotStates(
 	permanent: number,
@@ -41,9 +38,8 @@ export function computeDotStates(
 }
 
 /**
- * Computes a track's new value from a click on dot `clicked`: sets the value to
- * `clicked`, unless `clicked` already equals the current value, in which case it clears
- * down to `clicked - 1` so a value can be reduced one dot at a time.
+ * Computes a track's new value from a click on dot `clicked`: sets the value to `clicked`, unless `clicked` already
+ * equals the current value, in which case it clears down to `clicked - 1`.
  */
 export function nextTrackValueOnClick(
 	current: number,
@@ -53,9 +49,8 @@ export function nextTrackValueOnClick(
 }
 
 /**
- * Applies one +/- step to a track's current value, moving it by `delta` and clamping
- * the result to the range `[0, max]` so it can never fall below 0 or exceed the track's
- * maximum.
+ * Applies one +/- step to a track's current value, moving it by `delta` and clamping the result to the range `[0,
+ * max]`.
  */
 export function stepTrackValue(
 	current: number,

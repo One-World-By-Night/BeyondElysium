@@ -8,11 +8,6 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * REST controller for the site-wide authorization mode setting.
- *
- * Exposes a single GET/PUT endpoint pair for the `be_asc_enabled` toggle,
- * which switches the plugin between its two authorization modes. The setting
- * is not game-scoped: it applies across the whole site and is gated by the
- * `be_manage_games` capability, the same as other site-level actions.
  */
 class Authorization_Settings_Controller extends Base_Controller {
 
@@ -20,9 +15,6 @@ class Authorization_Settings_Controller extends Base_Controller {
 
 	/**
 	 * Registers the GET and PUT routes for the authorization settings resource.
-	 *
-	 * Both routes address the same single, unparameterized settings object
-	 * and share the same `be_manage_games` permission check.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/' . $this->rest_base, [
@@ -42,10 +34,6 @@ class Authorization_Settings_Controller extends Base_Controller {
 	/**
 	 * Returns the current authorization settings.
 	 *
-	 * Reports whether ASC-based authorization is enabled and whether the ASC
-	 * client functions are present, so an operator can distinguish "mode is
-	 * off" from "mode is on but nothing is installed to back it."
-	 *
 	 * @param \WP_REST_Request $request Unused - this resource is a single, unparameterized
 	 *                                  settings object, but the base class's signature
 	 *                                  still requires accepting it.
@@ -61,10 +49,6 @@ class Authorization_Settings_Controller extends Base_Controller {
 
 	/**
 	 * Updates the authorization mode setting and returns the new state.
-	 *
-	 * Writes the `asc_enabled` request parameter to the `be_asc_enabled`
-	 * option, then delegates to `get_item()` to build the response so both
-	 * endpoints always return the same shape.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response

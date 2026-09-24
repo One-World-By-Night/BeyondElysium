@@ -16,10 +16,7 @@ use BeyondElysium\Services\Release_Engine;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for a chronicle's release batches (1.1.0 §3.2) - scheduling rumors and
- * downtime answers to go out together, several between games, rather than the instant a
- * Storyteller writes them. Every route here requires be_manage_plots; a held plot or entry's
- * own visibility gate lives in Services\Audience, not here.
+ * REST controller for a chronicle's release batches.
  */
 class Release_Batches_Controller extends Base_Controller {
 
@@ -91,9 +88,7 @@ class Release_Batches_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Lists a chronicle's release batches, newest created first, optionally narrowed to one
-	 * status - the Releases tab's own Draft/Scheduled/Released lists. Each batch carries its
-	 * rumor and downtime-answer counts.
+	 * Lists a chronicle's release batches, newest created first, optionally narrowed to one status.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -114,8 +109,7 @@ class Release_Batches_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates a release batch: scheduled when release_at is given, draft otherwise. A
-	 * scheduled batch immediately gets its own single cron event.
+	 * Creates a release batch: scheduled when release_at is given, draft.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -150,10 +144,7 @@ class Release_Batches_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Updates a draft or scheduled batch's name, release_at, and/or status - draft or
-	 * scheduled only through this route, matching Release_Batch::update()'s own contract
-	 * (reaching released is Release_Engine::release()'s job alone). A released batch is
-	 * final and refuses every change with 409.
+	 * Updates a draft or scheduled batch's name, release_at, and/or status.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -204,8 +195,7 @@ class Release_Batches_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Deletes a draft or scheduled batch, returning its items to draft. A released batch is
-	 * final and can't be deleted.
+	 * Deletes a draft or scheduled batch, returning its items to draft.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -225,9 +215,8 @@ class Release_Batches_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Lists a batch's held items: rumors (held plots), downtime answers (held entries, with
-	 * their parent plot's title), and reveals (held secret_reveals, with the secret's own
-	 * title and the character's name, 1.1.0 §3.11).
+	 * Lists a batch's held items: rumors (held plots), downtime answers (held entries, with their parent plot's title),
+	 * and reveals (held secret_reveals, with the secret's own title and the character's name).
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -276,8 +265,7 @@ class Release_Batches_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Adds a plot or entry to a batch: sets held = 1 and this batch's id on it. Refused with
-	 * 409 once the batch is released - an item cannot join something already sent.
+	 * Adds a plot or entry to a batch: sets held = 1 and this batch's id on it.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -322,8 +310,7 @@ class Release_Batches_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Removes one item from a batch, returning it to draft (held stays 1, release_batch_id
-	 * clears) - hidden again if the batch had already gone out; emails already sent stay sent.
+	 * Removes one item from a batch, returning it to draft (held stays 1, release_batch_id clears).
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -387,11 +374,7 @@ class Release_Batches_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates a batch, fills it with the given items, and releases it, all in one request -
-	 * "Release now" on a single rumor or downtime answer with no pre-existing batch to add it
-	 * to. Creating and filling run in one transaction so a bad item leaves nothing behind;
-	 * the release itself runs afterward, in its own transaction, so a player is never emailed
-	 * about a release that then failed to commit.
+	 * Creates a batch, fills it with the given items, and releases it, all in one request.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -483,10 +466,8 @@ class Release_Batches_Controller extends Base_Controller {
 	}
 
 	/**
-	 * (Re)schedules a batch's single release event to match its current status/release_at,
-	 * clearing any older event first - a reschedule, an unschedule (back to draft), and a
-	 * batch that just reached released (nothing left to fire) all funnel through the same
-	 * clear-then-maybe-set shape.
+	 * (Re)schedules a batch's single release event to match its current status/release_at, clearing any older event
+	 * first.
 	 *
 	 * @param object $batch
 	 * @return void
@@ -505,11 +486,7 @@ class Release_Batches_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Resolves a batch named by the URL's {id}, confirming it belongs to the game named in
-	 * the URL. Reads the URL's own captured params rather than $request['id'] - add_item()'s
-	 * request body also has a field literally named `id` (the item being added), and
-	 * WP_REST_Request merges body params over URL params on that ambiguous accessor,
-	 * D32's exact defect class (Games_Controller::update_item(), 2026-09-09).
+	 * Resolves a batch named by the URL's {id}, confirming it belongs to the game named in the URL.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return object|\WP_Error
@@ -527,8 +504,7 @@ class Release_Batches_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404
-	 * status when no game matches.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

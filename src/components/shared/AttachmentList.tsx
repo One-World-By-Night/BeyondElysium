@@ -1,11 +1,5 @@
 /**
- * File uploads on a plot, item, or location (1.1.0 §2.6). Lists what's
- * already there with a direct download link for each, and, when the
- * viewer may manage this entity's files, an upload control and a delete
- * button per file. The server is the real authority on limits (10MB, and
- * a per-entity count cap) and on who may actually upload or delete - this
- * component surfaces whatever error it returns rather than re-deriving
- * either rule client-side.
+ * File uploads on a plot, item, or location.
  */
 import { useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -18,12 +12,16 @@ export interface AttachmentListProps {
 	entityType: AttachmentEntityType;
 	entityId: number;
 	attachments: Attachment[];
-	/** Shows the upload control and each file's delete button. */
+	/**
+	 * Shows the upload control and each file's delete button.
+	 */
 	canManage: boolean;
 	onChange: ( attachments: Attachment[] ) => void;
 }
 
-/** Formats a byte count as a short human-readable size, e.g. "1.4 MB". */
+/**
+ * Formats a byte count as a short human-readable size, e.g. "1.4 MB".
+ */
 function formatBytes( bytes: number ): string {
 	if ( bytes < 1024 ) {
 		return `${ bytes } B`;

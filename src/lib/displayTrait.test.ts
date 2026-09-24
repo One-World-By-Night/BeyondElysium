@@ -154,7 +154,6 @@ describe( 'displayTrait — edge cases', () => {
 		).toBe( 'Free Combo 0 XP' );
 	} );
 
-	// 1.2.11 D94: the owner's chosen shape for a count_is_cost block's default.
 	it( 'cost_xp: the price sits in parentheses after the name', () => {
 		expect(
 			displayTrait( { name: 'Draw Fire', total: 12 }, 'cost_xp' )
@@ -190,8 +189,7 @@ interface TraitDisplayFixtureExpected {
 }
 
 /**
- * Same fixture, same expected output as `tests/unit/Display/TraitDisplayParityTest.php`
- * - this is the TypeScript half of proving the two renderers agree.
+ * Same fixture, same expected output as `tests/unit/Display/TraitDisplayParityTest.php`.
  */
 describe( 'displayTrait — parity with Trait_Display.php', () => {
 	it( 'matches every shared fixture case', () => {

@@ -9,11 +9,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-035: the Approval Rules form opens with its level "(unset)", and a value-range
- * rule saved that way was created as auto-approve - so "Occult 4-5" with a citation attached
- * silently waved those purchases through, while the same inputs on a flat item rule required a
- * Storyteller. The page also could not show or set a Discipline level's own approval, although
- * the engine enforces one set elsewhere.
+ * The Approval Rules form opens with its level "(unset)", and a value-range rule saved that way was created as
+ * auto-approve.
  */
 class ApprovalRuleDefaultsThreadTest extends WP_UnitTestCase {
 
@@ -75,11 +72,6 @@ class ApprovalRuleDefaultsThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'auto', $level[0]['approval'] );
 	}
 
-	/**
-	 * 1.0.0-review F-034: a fork is a frozen full copy that no later catalog fix reaches, and
-	 * every rule write used to fork before checking its target - so a write that then failed
-	 * still froze the chronicle's copy of the whole block.
-	 */
 	public function test_a_rule_write_that_fails_leaves_no_fork_behind(): void {
 		$missing = $this->create_rule( [
 			'block_slug' => 'tard-abilities', 'target_type' => 'item', 'target_name' => 'Not In This Catalog', 'approval' => 'st',

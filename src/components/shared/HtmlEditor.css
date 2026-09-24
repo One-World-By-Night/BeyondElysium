@@ -1,6 +1,4 @@
-/* TinyMCE styles its own UI once window.wp.editor.initialize() runs; this only covers the
-   brief window before that (or the plain-textarea fallback when readOnly/wp.editor isn't
-   available at all). */
+/* TinyMCE styles its own UI once window.wp.editor.initialize() runs. */
 .be-html-editor__textarea {
 	display: block;
 	width: 100%;

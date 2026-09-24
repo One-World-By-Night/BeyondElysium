@@ -1,10 +1,6 @@
 <?php
 /**
- * Step 7a (workflow-0.6.md): 500 characters with realistic sheet_data, for measuring
- * Query_Engine's performance targets. Not hand-entered - randomized within realistic
- * bounds, run via `wp eval-file`.
- *
- * Usage: wp eval-file tests/fixtures/seed-500-characters.php --path=/path/to/wordpress
+ * 500 characters with realistic sheet_data, for measuring Query_Engine's performance targets.
  */
 
 use BeyondElysium\Models\Game;
@@ -88,9 +84,6 @@ for ( $i = 1; $i <= $to_create; $i++ ) {
 		'sheet_data'  => $sheet_data,
 	] );
 
-	// D27: xp_earned/xp_unspent are silently dropped by Character::create()'s own
-	// allowlist - only update_xp() actually sets them, via deltas against a fresh row's
-	// 0/0 default.
 	Character::update_xp( $character_id, random_int( 0, 200 ), random_int( 0, 30 ) );
 
 	if ( $i % 100 === 0 ) {

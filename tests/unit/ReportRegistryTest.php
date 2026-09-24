@@ -6,12 +6,7 @@ use BeyondElysium\Services\Field_Registry;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Structural integrity of `report-registry.php` - the 19 GV301 reports
- * (reports-cards-batch-design.md §3.1). Every `field`-sourced column must
- * resolve against `Field_Registry` for its report's own entity; every shape
- * must be one of the five `Report_Writer` actually draws.
- *
- * @see BE_PROCESS/design/reports-cards-batch-design.md
+ * Structural integrity of `report-registry.php`.
  */
 class ReportRegistryTest extends TestCase {
 
@@ -49,10 +44,7 @@ class ReportRegistryTest extends TestCase {
 	}
 
 	/**
-	 * A `field`-sourced column against a `char`/`item`/`loc`/`rote` entity must
-	 * resolve through Field_Registry - the same guarantee FieldRegistryTest
-	 * already holds the char inventory to, extended to every report's own
-	 * declared entity.
+	 * A `field`-sourced column against a `char`/`item`/`loc`/`rote` entity must resolve through Field_Registry.
 	 */
 	public function test_field_sourced_columns_resolve_against_field_registry(): void {
 		foreach ( self::$registry as $key => $report ) {
@@ -72,8 +64,7 @@ class ReportRegistryTest extends TestCase {
 	}
 
 	/**
-	 * Every column tuple is exactly `[ label, key, source ]` - a malformed row
-	 * would silently misbehave in Report_Document rather than failing loudly.
+	 * Every column tuple is exactly `[ label, key, source ]`.
 	 */
 	public function test_every_column_is_a_three_element_tuple(): void {
 		foreach ( self::$registry as $key => $report ) {
@@ -92,12 +83,6 @@ class ReportRegistryTest extends TestCase {
 		}
 	}
 
-	/**
-	 * 1.0.0-review F-072. Vampire Status Report's rows are characters, and its Date column read a
-	 * change's submission date through the ledger resolver - so it was blank for every row, with
-	 * nothing to say why. Each source reads one kind of row; a column may only use a source that
-	 * fits the rows its report builds.
-	 */
 	public function test_each_column_source_fits_the_rows_its_report_builds(): void {
 		foreach ( self::$registry as $key => $report ) {
 			$rows = ( $report['rows_from'] ?? null ) === 'ledger' ? 'change' : ( $report['entity'] ?? '' );

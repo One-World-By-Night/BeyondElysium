@@ -1,8 +1,5 @@
 /**
  * Admin page for importing chronicle content.
- * Combines the GEX character/world-object importer and the full .gv3
- * chronicle game-file importer into one page, switching between them
- * with tabs gated on the viewer's import capabilities.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -19,9 +16,6 @@ type Tab = 'gex' | 'gv3';
 
 /**
  * Renders the Import admin screen.
- * Hosts two import tools behind tabs - character and world-object GEX
- * files, and full chronicle .gv3 game files - showing only the tabs the
- * viewer's capabilities allow.
  */
 export function AdminImport() {
 	const [ games, setGames ] = useState< Game[] >( [] );
@@ -108,7 +102,6 @@ export function AdminImport() {
 							</label>
 						</div>
 
-						{ /* key={gameSlug} remounts both fresh when the chronicle changes. Waiting transfers and player-sent files wait above the wizard. */ }
 						{ gameSlug && (
 							<WaitingForReview
 								key={ `waiting-${ gameSlug }` }

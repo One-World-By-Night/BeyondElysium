@@ -11,25 +11,8 @@ use BeyondElysium\Services\Sheet_Document;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for signed-PDF character sheets: `GET /{game_slug}/sheets/pdf`
- * and its preflight, `GET /{game_slug}/sheets/availability`.
- *
- * `be_view_characters` gates the route the same broad way it gates
- * `Characters_Controller::get_item()` (every real WP role holds it) - the
- * real access control is the per-character D33 ownership check this
- * controller performs itself, identical to `Characters_Controller::get_item()`
- * and `Export_Controller::export_character()`'s own copies of the same rule:
- * a manager may request any character in the chronicle, a non-manager only
- * their own. A batch request fails closed - one denied or missing character
- * id fails the whole request rather than silently narrowing the result.
- *
- * Whether to sign is decided once, up front, from `Pdf_Signer::availability()`
- * and handed to `Pdf_Writer`, so the bytes and the filename always agree. With
- * no certificate the sheet still prints, stamped UNSIGNED on every page, with
- * an `-unsigned.pdf` filename (1.0.0-review F-042, owner ruling 2026-09-14);
- * it used to refuse with `503 signing_unavailable`.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md Section 4c, SP-9
+ * REST controller for signed-PDF character sheets: `GET /{game_slug}/sheets/pdf` and its preflight, `GET
+ * /{game_slug}/sheets/availability`.
  */
 class Sheets_Controller extends Base_Controller {
 
@@ -49,8 +32,6 @@ class Sheets_Controller extends Base_Controller {
 					'background'       => [ 'type' => 'boolean', 'default' => false ],
 					'notes'            => [ 'type' => 'boolean', 'default' => false ],
 					'xp_history'       => [ 'type' => 'boolean', 'default' => false ],
-					// 1.2.11 D94: default true. A count_is_cost block's price is labelled
-					// whenever it is shown, and shown unless the caller asks otherwise.
 					'show_cost'        => [ 'type' => 'boolean', 'default' => true ],
 				],
 			],
@@ -107,8 +88,7 @@ class Sheets_Controller extends Base_Controller {
 					403
 				);
 			}
-			// A character whose creature type is gone has no sheet to build: say so, rather than
-			// print a blank page or a batch one character short (1.0.0-review F-088).
+			// A character whose creature type is gone has no sheet to build: say so.
 			if ( Creature_Stack::find_by_slug( (string) $character->stack_slug ) === null ) {
 				return $this->error(
 					'creature_stack_not_found',
@@ -131,8 +111,7 @@ class Sheets_Controller extends Base_Controller {
 			'show_cost'        => (bool) $request->get_param( 'show_cost' ),
 		] );
 
-		// Signed only when an administrator switched secure printing on AND a usable
-		// certificate is configured (1.0.1 C2). Either missing prints UNSIGNED, never refuses.
+		// Signed only when an administrator switched secure printing on AND a usable certificate is configured.
 		$signed   = Pdf_Signer::should_sign()['ok'];
 		$bytes    = Pdf_Writer::write( $documents, $game, $signed );
 		$filename = ( count( $documents ) === 1
@@ -152,21 +131,13 @@ class Sheets_Controller extends Base_Controller {
 			return $game;
 		}
 
-		// The preflight answers "will this print be signed", which since 1.0.1 C2 is the
-		// opt-in AND the certificate - not the certificate alone. The `code` distinguishes
-		// them (`secure_printing_off` vs `cert_not_configured`) so the sheet can say which.
+		// The preflight answers "will this print be signed".
 		return $this->success( Pdf_Signer::should_sign() );
 	}
 
 	/**
-	 * Intercepts the normal JSON-serialize-and-serve step for exactly this
-	 * controller's `get_pdf()` route, matched by callback identity rather than
-	 * route-string parsing (Section 4c) - every other route, including this
-	 * controller's own `availability` route and every other controller's
-	 * responses, is untouched and serves JSON as usual. A thread test can
-	 * still dispatch the route and read `$response->get_data()['bytes']`
-	 * directly, since this filter only runs during the real HTTP serve path,
-	 * never during `WP_REST_Server::dispatch()` alone.
+	 * Intercepts the normal JSON-serialize-and-serve step for exactly this controller's `get_pdf()` route, matched by
+	 * callback identity.
 	 *
 	 * @param bool              $served
 	 * @param \WP_REST_Response $result
@@ -187,14 +158,12 @@ class Sheets_Controller extends Base_Controller {
 
 		header( 'Content-Type: application/pdf' );
 		header( 'Content-Disposition: attachment; filename="' . $data['filename'] . '"' );
-		echo $data['bytes']; // phpcs:ignore -- raw binary PDF bytes, not HTML output.
+		echo $data['bytes']; // phpcs:ignore
 		return true;
 	}
 
 	/**
-	 * Looks up the game record for the given slug and returns a 404 error
-	 * when no game matches it. Matches every other controller's own copy of
-	 * this helper - not shared via `Base_Controller`.
+	 * Looks up the game record for the given slug and returns a 404 error when no game matches it.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

@@ -7,10 +7,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Decision 041: one cosmetic override per character - `CharacterSheet.css` stays the
- * real default, this only ever adds a layer on top, gated by `be_customize_sheet`.
- *
- * @see BE_PROCESS/reference/DECISIONLOG.md Decision 041
+ * One cosmetic override per character.
  */
 class SheetStyleControllerTest extends WP_UnitTestCase {
 

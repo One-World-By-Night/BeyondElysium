@@ -6,27 +6,16 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Grapevine menu set parser, with two front ends over one normalized output.
- *
- * Grapevine ships menu sets in two serializations of the same data:
- *   XML   <grapevinemenus> ... Grapevine Menus XML.gvm
- *   GVBM  binary ............. Grapevine Menus.gvm, Dark Ages Menus.gvm, and what
- *                              chronicles actually save
- *
- * Both front ends produce the same normalized structure: a map of menu name
- * to its category, items, submenus, includes, and display flags.
- *
- * @see BE_PROCESS/reference/GV-SOURCEMAP.md "GVBM binary shape"
- * @see BE_PROCESS/releases/workflow-0.8.md Step 3
  */
 class GVM_Parser {
 
-	/** Binary menu-set header (PublicConstants.bas BinHeaderMenu). */
+	/**
+	 * Binary menu-set header (PublicConstants.bas BinHeaderMenu).
+	 */
 	const BINARY_HEADER = 'GVBM';
 
 	/**
-	 * Parses a menu file, selecting the binary or XML front end based on
-	 * the file's opening bytes. Delegates to `parse_binary()` when the
-	 * file starts with the GVBM binary header, otherwise treats it as XML.
+	 * Parses a menu file, selecting the binary or XML front end based on the file's opening bytes.
 	 *
 	 * @param string $path Absolute path.
 	 * @return array{version:float,description:string,menus:array}
@@ -45,28 +34,6 @@ class GVM_Parser {
 
 	/**
 	 * Parses a GVBM binary menu set into the normalized menu structure.
-	 * Reads the header, format version, description, and menu count, then
-	 * reads each menu's flags and item list in turn.
-	 *
-	 * Layout, from MenuSetClass::InputFromBinary and LinkedMenuList::InputFromBinary:
-	 *
-	 *   string  header "GVBM"
-	 *   double  version
-	 *   string  description
-	 *   int16   menu count
-	 *   per menu:
-	 *     string Name
-	 *     int32  Category       (enum: 4 bytes, only when version >= 2.397)
-	 *     int16  Alphabetized   (Boolean)
-	 *     int16  Negative       (Boolean)
-	 *     int16  Autonote       (Boolean)
-	 *     int16  Required       (Boolean)
-	 *     int32  Display        (enum: 4 bytes)
-	 *     int16  item count
-	 *     per item: string Name, string Cost, string Note
-	 *
-	 * Includes and submenus are stored as items, discriminated by the Cost field:
-	 * '+' marks an include, ':' marks a submenu, anything else is a real item.
 	 *
 	 * @param GV_Binary_Reader $reader Positioned at the start of the file.
 	 * @return array{version:float,description:string,menus:array}
@@ -89,7 +56,6 @@ class GVM_Parser {
 		for ( $i = 0; $i < $count; $i++ ) {
 			$name = $reader->string();
 
-			// Category is present only when the format version is 2.397 or later.
 			$category = $version >= 2.397 ? $reader->int32() : 1;
 
 			$alphabetized = $reader->bool();
@@ -153,10 +119,7 @@ class GVM_Parser {
 	}
 
 	/**
-	 * Parses an XML menu set into the same normalized structure the binary
-	 * front end produces. Reads each `<menu>` element's attributes and
-	 * walks its children to collect items, submenus, and includes by
-	 * element name.
+	 * Parses an XML menu set into the same normalized structure the binary front end produces.
 	 *
 	 * @param string $path Absolute path.
 	 * @return array{version:float,description:string,menus:array}

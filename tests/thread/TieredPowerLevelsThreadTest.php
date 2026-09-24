@@ -8,20 +8,7 @@ use BeyondElysium\Services\Power_Levels;
 use WP_UnitTestCase;
 
 /**
- * 1.2.10 §A/S2: a `tiered_power` family declares its ladder and separates it from its
- * above-ladder picks, so **nothing infers a rank any more**.
- *
- * This class previously asserted D66's tie-inference model - "a tier with one item gets a
- * real number, a tier with several gets `level: null` on all of them". That model is what
- * 1.2.10 removes, and D68 is why: `level: null` meant both "dots 1 and 2" and "six elder
- * powers" in one array, so the stepper read it as a ladder, the checklist read it as a pool,
- * and switching views was read as levels removed - the engine offered a refund for XP never
- * spent. Re-asserting tie-inference here would be asserting the defect.
- *
- * Measured against real seeded data (hence thread layer, not unit), because the whole point
- * is that this matches Grapevine's real menu data rather than an idealized shape.
- *
- * @see BE_PROCESS/releases/1.2.10-design-workflow.md §A, §A1b, §B
+ * A `tiered_power` family declares its ladder and separates it from its above-ladder picks; nothing infers a rank.
  */
 class TieredPowerLevelsThreadTest extends WP_UnitTestCase {
 
@@ -59,9 +46,7 @@ class TieredPowerLevelsThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_each_rungs_tier_follows_the_declared_quota_not_one_tier_per_rank(): void {
-		// The correction behind the 45 -> 27 repricing. A 2/2/1 ladder is basic, basic,
-		// intermediate, intermediate, advanced - never one tier per rank, which is what
-		// charged elder and master rates for ladder rungs.
+		// The correction behind the 45 -> 27 repricing.
 		$celerity = $this->family( 'vampire-disciplines', 'Celerity' );
 		$tiers    = array_column( Power_Levels::ladder( $celerity ), 'tier' );
 
@@ -87,8 +72,7 @@ class TieredPowerLevelsThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_named_elder_power_is_reachable_and_still_knows_its_rank(): void {
-		// Precision and Projectile are two real 12-XP Celerity powers. Both are picks at the
-		// same rank, which is legal and must not be collapsed or renumbered.
+		// Precision and Projectile are two real 12-XP Celerity powers.
 		$levels = $this->by_name( $this->family( 'vampire-disciplines', 'Celerity' ) );
 
 		$this->assertArrayHasKey( 'Precision', $levels );
@@ -98,9 +82,6 @@ class TieredPowerLevelsThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_wraith_innate_is_a_pick_below_the_ladder_never_a_rung(): void {
-		// MET-POWER-ACQUISITION.md: innate "sits below the ladder, is never counted in the
-		// rating." It is in `ranks` but absent from `ladder`, so it files as a pick - the
-		// same mechanism as an above-ladder rank, in the other direction.
 		$argos = $this->family( 'wraith-arcanoi', 'Argos' );
 
 		$innate = (array) ( $argos->elder->innate ?? [] );
@@ -111,8 +92,7 @@ class TieredPowerLevelsThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_the_three_containers_never_duplicate_a_power(): void {
-		// The containers partition the family. Measured across the whole real catalog while
-		// this was built: 5,518 levels in, 3,039 rungs + 503 picks + 1,976 overflow, exact.
+		// The containers partition the family.
 		foreach ( [ 'vampire-disciplines', 'wraith-arcanoi', 'mage-spheres' ] as $slug ) {
 			$block = Schema_Block::find_by_slug( $slug );
 			foreach ( $block->definition->powers as $power ) {

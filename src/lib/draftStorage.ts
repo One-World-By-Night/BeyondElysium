@@ -1,8 +1,6 @@
 /**
- * Saves, loads, and clears a per-character sheet-data draft in the browser's
- * `localStorage`, keyed by character id, as a local backup of in-progress edits. Exports
- * `saveDraft()`, `loadDraft()`, `clearDraft()`, `draftDiffersFrom()` for order-independent
- * comparison against the current sheet data, and the `StoredDraft` shape they share.
+ * Saves, loads, and clears a per-character sheet-data draft in the browser's `localStorage`, keyed by character id,
+ * as a local backup of in-progress edits.
  */
 
 import type { SheetData } from '../types/character';
@@ -19,9 +17,8 @@ function storageKey( characterId: number ): string {
 }
 
 /**
- * Serializes a character's sheet data together with the current timestamp and writes it
- * to `localStorage` under a per-character key. Any storage failure - a full quota,
- * private browsing, or storage disabled - is caught and silently ignored.
+ * Serializes a character's sheet data together with the current timestamp and writes it to `localStorage` under a
+ * per-character key.
  */
 export function saveDraft( characterId: number, sheetData: SheetData ): void {
 	try {
@@ -36,9 +33,8 @@ export function saveDraft( characterId: number, sheetData: SheetData ): void {
 }
 
 /**
- * Reads the stored draft for a character from `localStorage` and parses it as JSON,
- * validating that the result has the expected `sheetData`/`savedAt` shape before
- * returning it.
+ * Reads the stored draft for a character from `localStorage` and parses it as JSON, validating that the result has
+ * the expected `sheetData`/`savedAt` shape before returning it.
  *
  * @return The stored draft, or null if none exists, it's corrupt, or storage itself is
  *         unavailable - every one of those is treated identically: nothing to restore.
@@ -62,22 +58,16 @@ export function loadDraft( characterId: number ): StoredDraft | null {
 }
 
 /**
- * Removes the stored draft for a character from `localStorage`, if one exists. Any
- * storage failure is caught and silently ignored, the same as `saveDraft()`, since
- * clearing a draft that can't be read is a no-op rather than a failure.
+ * Removes the stored draft for a character from `localStorage`, if one exists.
  */
 export function clearDraft( characterId: number ): void {
 	try {
 		window.localStorage.removeItem( storageKey( characterId ) );
-	} catch {
-		// Clearing a draft that can't be read is a no-op, not a failure.
-	}
+	} catch {}
 }
 
 /**
- * Serializes a value to JSON with object keys sorted recursively, so two objects
- * holding the same data in a different key order serialize to the same string. Array
- * order is preserved; only object keys are sorted.
+ * Serializes a value to JSON with object keys sorted recursively.
  */
 function stableStringify( value: unknown ): string {
 	if ( Array.isArray( value ) ) {
@@ -97,9 +87,8 @@ function stableStringify( value: unknown ): string {
 }
 
 /**
- * Deep-equality check between a draft and the current sheet data, comparing them as
- * JSON-serializable structures regardless of object-key order. Returns true when the
- * two differ.
+ * Deep-equality check between a draft and the current sheet data, comparing them as JSON-serializable structures
+ * regardless of object-key order.
  */
 export function draftDiffersFrom(
 	draft: SheetData,

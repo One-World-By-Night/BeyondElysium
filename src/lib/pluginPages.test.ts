@@ -34,11 +34,7 @@ describe( 'pluginPageUrl', () => {
 	} );
 
 	/**
-	 * 1.2.11 D95, recovered from the live `chronicles.owbn.net` install rather than from
-	 * git: on a multisite subsite the origin alone drops the subsite path, so every link
-	 * the plugin built landed on the network root instead of the chronicle. The origin is
-	 * deliberately left as it is here - `homeUrl` winning is the whole point, and jsdom
-	 * will not let a test move the document across origins anyway.
+	 * A multisite subsite lives under a path of its network's origin.
 	 */
 	it( 'keeps a multisite subsite path, building from homeUrl rather than the origin', () => {
 		window.beyondElysium = {
@@ -69,7 +65,9 @@ describe( 'pluginPageUrl', () => {
 		);
 	} );
 
-	/** A payload from before this field existed must still build a usable link. */
+	/**
+	 * A payload from before this field existed must still build a usable link.
+	 */
 	it( 'falls back to the origin when homeUrl is absent', () => {
 		window.beyondElysium = {
 			restUrl: `${ ORIGIN }/wp-json/be/v1/`,

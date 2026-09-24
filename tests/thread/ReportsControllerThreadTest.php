@@ -16,10 +16,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * `Reports_Controller`'s two routes, dispatched as real REST requests -
- * mirrors `SheetsControllerThreadTest`'s own shape (reports-cards-batch-design.md).
- *
- * @see BE_PROCESS/design/reports-cards-batch-design.md §3.5
+ * `Reports_Controller`'s two routes, dispatched as real REST requests.
  */
 class ReportsControllerThreadTest extends WP_UnitTestCase {
 
@@ -92,7 +89,9 @@ class ReportsControllerThreadTest extends WP_UnitTestCase {
 		$this->assertStringStartsWith( '%PDF-', $response->get_data()['bytes'] );
 	}
 
-	/** 1.0.0-review F-042: with no signing certificate a report still prints, marked unsigned. */
+	/**
+	 * With no signing certificate a report still prints, marked unsigned.
+	 */
 	public function test_with_no_signing_certificate_a_report_prints_marked_unsigned(): void {
 		$cert_path = BE_PDF_SIGNING_CERT;
 		rename( $cert_path, $cert_path . '.hidden' );
@@ -215,10 +214,6 @@ class ReportsControllerThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// house-rules (v0.99.19, Decision 094) - the first report with no
-	// Grapevine counterpart, and the first to read the whole catalog rather
-	// than one entity.
-	// -------------------------------------------------------------------------
 
 	public function test_house_rules_pdf_renders_a_real_description(): void {
 		Schema_Block::create( [
@@ -286,9 +281,7 @@ class ReportsControllerThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// item-cards character_id scoping (item-cards-design.md) - narrows the
-	// chronicle-wide item-cards report to only the items connected to one
-	// character, via Connection::for_source(), never the conditions system.
+	// item-cards character_id scoping
 	// -------------------------------------------------------------------------
 
 	private function make_owned_character_with_items(): array {

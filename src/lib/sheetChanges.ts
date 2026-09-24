@@ -2,7 +2,9 @@ import type { SheetChange } from '../types/import';
 
 export type SheetChangeKind = 'added' | 'removed' | 'changed';
 
-/** Whether a difference adds something, takes something away, or changes a value. */
+/**
+ * Whether a difference adds something, takes something away, or changes a value.
+ */
 export function sheetChangeKind( change: SheetChange ): SheetChangeKind {
 	if ( change.here === null ) {
 		return 'added';
@@ -10,7 +12,9 @@ export function sheetChangeKind( change: SheetChange ): SheetChangeKind {
 	return change.arriving === null ? 'removed' : 'changed';
 }
 
-/** Groups differences by section, in the order each section first appears. */
+/**
+ * Groups differences by section, in the order each section first appears.
+ */
 export function groupSheetChanges(
 	changes: SheetChange[]
 ): Array< { section: string; changes: SheetChange[] } > {

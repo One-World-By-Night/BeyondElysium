@@ -7,14 +7,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Step 3a/3e audit finding: `update_item()` (single approve/reject) had no check that a
- * change was still `pending` before calling `Change_Engine::approve()`/`reject()`.
- * `Change_Engine::approve()` deliberately allows a second call on an already-`approved`
- * record - `Change_Engine::submit()`'s own auto-approve path relies on exactly that to
- * apply an auto-approved change's side effects right after creating it - so that method
- * can't be the thing guarding against a *client* re-approving through this route. Before
- * this fix, calling PUT .../changes/{id} with status=approved twice on the same change
- * would re-apply the sheet mutation and re-deduct XP a second time.
+ * `update_item()` (single approve/reject) refuses a change that is no longer `pending` before calling
+ * `Change_Engine::approve()`/`reject()`.
  */
 class ChangesControllerApprovalTest extends WP_UnitTestCase {
 
@@ -50,8 +44,8 @@ class ChangesControllerApprovalTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->st_id );
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters/{$this->character_id}/changes" );
 		$request->set_param( 'change_type', 'add_trait' );
-		$request->set_param( 'category', 'met-merits' );
-		$request->set_param( 'change_data', [ 'block_slug' => 'met-merits', 'trait' => [ 'name' => 'Iron Will' ] ] );
+		$request->set_param( 'category', 'vampire-merits' );
+		$request->set_param( 'change_data', [ 'block_slug' => 'vampire-merits', 'trait' => [ 'name' => 'Iron Will' ] ] );
 		return (int) $this->dispatch( $request )->get_data()->id;
 	}
 

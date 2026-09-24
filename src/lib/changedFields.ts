@@ -1,7 +1,5 @@
 /**
- * The fields of a form that differ from what was last loaded or saved, so a
- * save writes only what was edited and never puts back a stale copy of a
- * field someone else changed meanwhile (1.0.0-review F-076).
+ * The fields of a form that differ from what was last loaded or saved.
  */
 
 /**

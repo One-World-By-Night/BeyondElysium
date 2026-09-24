@@ -18,20 +18,15 @@ use BeyondElysium\Services\St_Visibility;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for world objects: items, locations, and rotes that exist
- * independently of any character. Supports listing with schema-driven
- * property filters, retrieving a single object with its connected
- * characters, and creating, updating, and deleting objects within a game.
+ * REST controller for world objects: items, locations, and rotes that exist independently of any character.
  */
 class World_Objects_Controller extends Base_Controller {
 
 	protected $rest_base = 'world-objects';
 
 	/**
-	 * Registers the REST routes for the world object collection and for
-	 * a single world object by id, both scoped to a game slug. Listing
-	 * and retrieval require be_view_characters; writes require
-	 * be_manage_world_objects.
+	 * Registers the REST routes for the world object collection and for a single world object by id, both scoped to a
+	 * game slug.
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/world-objects', [
@@ -73,9 +68,6 @@ class World_Objects_Controller extends Base_Controller {
 			],
 		] );
 
-		// Broad on purpose (1.1.0 §3.12 item 2): a player whose own character holds the item
-		// may use it too. use_item() does the real ownership check itself, the same
-		// broad-route-narrow-handler shape Changes_Controller::create_item() already uses.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/world-objects/(?P<id>\d+)/use', [
 			[
 				'methods'             => 'POST',
@@ -110,11 +102,7 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns a paginated list of world objects for a game. object_type,
-	 * rarity, and search are indexed column filters; any other query
-	 * parameter matching a schema field (optionally suffixed _min/_max)
-	 * filters on the object's properties, evaluated after the column
-	 * query.
+	 * Returns a paginated list of world objects for a game. object_type, rarity, and search are indexed column filters.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -131,8 +119,7 @@ class World_Objects_Controller extends Base_Controller {
 		$args       = [
 			'object_type' => $request->get_param( 'object_type' ),
 			'rarity'      => $request->get_param( 'rarity' ),
-			// For anyone but a Storyteller, search and property filters run on the redacted text below, so
-			// neither can confirm what Storyteller-only text says (F-046).
+			// For anyone but a Storyteller, search and property filters run on the redacted text below.
 			'search'      => $can_manage ? $search : '',
 			'orderby'     => $request->get_param( 'orderby' ) ?: 'name',
 			'order'       => $request->get_param( 'order' ) ?: 'ASC',
@@ -140,10 +127,6 @@ class World_Objects_Controller extends Base_Controller {
 		];
 
 		$items = World_Object::for_game( (int) $game->id, $args );
-		// Audience first, before redaction: a row this viewer cannot see at all needs no
-		// [ST]-text redaction, and total below must count only what survives (1.1.0 §2.5) -
-		// the same "filter the full set before slicing a page" rule §2.3's own list uses,
-		// never a SQL-side cutoff applied before the audience check.
 		if ( ! $can_manage ) {
 			$items = Audience::filter_world_objects( $items, get_current_user_id(), $request['game_slug'], false );
 		}
@@ -171,10 +154,8 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Filters a list of world objects by any request query parameter that
-	 * matches a property key defined in the object_type's schema,
-	 * honoring a _min/_max suffix for numeric range filtering. Returns
-	 * the items unchanged when object_type is empty.
+	 * Filters a list of world objects by any request query parameter that matches a property key defined in the
+	 * object_type's schema, honoring a _min/_max suffix for numeric range filtering.
 	 *
 	 * @param object[]          $items
 	 * @param \WP_REST_Request  $request
@@ -216,7 +197,7 @@ class World_Objects_Controller extends Base_Controller {
 					return $operator === 'min' ? (int) $actual >= (int) $value
 						: ( $operator === 'max' ? (int) $actual <= (int) $value : (int) $actual === (int) $value );
 				}
-				// A list - an item's abilities, a rote's spheres - matches by one entry's name (1.0.0-review F-095).
+				// A list - an item's abilities, a rote's spheres.
 				if ( $schema[ $key ] === 'trait_list' ) {
 					foreach ( is_array( $actual ) && $operator === 'eq' ? $actual : [] as $entry ) {
 						if ( strcasecmp( (string) ( ( (array) $entry )['name'] ?? '' ), (string) $value ) === 0 ) {
@@ -233,10 +214,7 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns a single world object with its connected characters resolved
-	 * to id, name, and connection label. Hides an NPC connection from a
-	 * viewer who cannot manage characters, so the object catalog does not
-	 * reveal ownership the viewer could not otherwise see.
+	 * Returns a single world object with its connected characters resolved to id, name, and connection label.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -254,9 +232,7 @@ class World_Objects_Controller extends Base_Controller {
 
 		$can_manage_objects = \BeyondElysium\Core\Authorization::can( 'be_manage_world_objects' );
 
-		// A rote or boon has no audience concept at all (1.1.0 §2.5); an item or location's own
-		// audience is checked against its own manage capability, matching how the list applies
-		// the identical rule via Audience::filter_world_objects().
+		// A rote or boon has no audience concept at all.
 		if ( ! $can_manage_objects && in_array( $object->object_type, [ 'item', 'location' ], true )
 			&& ! Audience::can_see( $object, $object->object_type, get_current_user_id(), $request['game_slug'], false ) ) {
 			return $this->error( 'not_found', __( 'World object not found in this game.', 'beyond-elysium' ), 404 );
@@ -274,47 +250,38 @@ class World_Objects_Controller extends Base_Controller {
 				continue;
 			}
 			$character = Character::find( (int) $character_id );
-			// An NPC connection is hidden from a viewer who cannot manage characters.
 			if ( $character && ( ! $character->is_npc || $can_manage ) ) {
 				$characters[] = [ 'id' => $character->id, 'name' => $character->name, 'label' => $connection->label ];
 			}
 		}
 
 		$object->connected_characters = $characters;
-		// "Based on {source}" (1.1.0 §3.12 item 1) - an orphaned based_on_id (its source since
-		// deleted) is silently dropped rather than shown as a broken reference, matching how
-		// ancestors() already stops quietly at a missing parent.
 		$based_on = null;
 		if ( ! empty( $object->based_on_id ) ) {
 			$source   = World_Object::find( (int) $object->based_on_id );
 			$based_on = $source ? [ 'id' => (int) $source->id, 'name' => $source->name ] : null;
 		}
 		$object->based_on = $based_on;
-		// Uses and expiry (1.1.0 §3.12 item 2) - derived on every read, never stored.
 		if ( $object->object_type === 'item' ) {
 			$object->used_up = World_Object::is_used_up( $object );
 			$object->expired = World_Object::is_expired( $object );
 		}
-		// A rote or boon has no attachment concept (1.1.0 §2.6 applies to item/location only).
+		// A rote or boon has no attachment concept (applies to item/location only).
 		if ( in_array( $object->object_type, [ 'item', 'location' ], true ) ) {
 			$object->attachments = array_map( [ Attachment::class, 'public_shape' ], Attachment::for_entity( $object->object_type, (int) $object->id ) );
 		}
-		// "Inside of" (1.1.0 §3.9 item 1): the breadcrumb ("Downtown › Elysium") reads
-		// ancestors nearest-first; the nested location list reads children.
+		// "Inside of": the breadcrumb reads ancestors nearest-first; the nested location list reads children.
 		if ( $object->object_type === 'location' ) {
 			$object->ancestors = array_map( static fn( $a ) => [ 'id' => (int) $a->id, 'name' => $a->name ], World_Object::ancestors( (int) $object->id ) );
 			$object->children  = array_map( static fn( $c ) => [ 'id' => (int) $c->id, 'name' => $c->name ], World_Object::children( (int) $object->id ) );
-			// Display over Grapevine text (§3.9 item 3): a real owner/parent link wins over the
-			// typed owner/where text, which is untouched underneath either way.
 			$object->display = \BeyondElysium\Models\Location_Link::resolve_owner_and_where( $object );
 		}
 		return $this->success( $object );
 	}
 
 	/**
-	 * Creates a new world object from a required name and object_type,
-	 * plus an optional description, rarity, cost, limitations, and a
-	 * properties object validated against the object_type's schema.
+	 * Creates a new world object from a required name and object_type, plus an optional description, rarity, cost,
+	 * limitations, and a properties object validated against the object_type's schema.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -380,12 +347,6 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Copies an item for a specific character (1.1.0 §3.12 item 1) - every field, property,
-	 * and audience_rules copied, the copy forced to `restricted` audience regardless of the
-	 * source's own, its upload (if any) copied to a brand-new private file so editing one
-	 * never touches the other, a `holds` connection from the character, and a `copied` item
-	 * event. All in one transaction: any failed step leaves nothing behind.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -472,11 +433,6 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Spends one use of an item that has `uses_max` set (1.1.0 §3.12 item 2). Allowed for a
-	 * manager, or for a player whose own character both is `character_id` and actually holds
-	 * this item. Locks the row for the length of the decrement so two uses in flight at once
-	 * can never both succeed past zero.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -559,13 +515,6 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Transfers an item's holder connection(s) to a new character, or clears them with no new
-	 * holder for `how=lost` (1.1.0 §3.12 item 4). Removes every existing character connection
-	 * on the item first - a physical item transfer is exclusive, unlike the shared-connection
-	 * model `Connections_Controller` still allows for a co-held item added by hand. Revoking
-	 * the item's verifiable-card codes (1.1.0 §3.13) is a deliberate no-op for now - that
-	 * feature doesn't exist yet.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -648,9 +597,6 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * An item's own history, oldest first (1.1.0 §3.12 item 3) - `be_manage_world_objects`
-	 * only, matching the design's own "staff can view" rule.
-	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -667,9 +613,7 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Revokes every unrevoked verification code issued for one item (1.1.0 §3.13). Manual, on
-	 * request - never automatic on a transfer, which leaves an old card live so it can report
-	 * a holder mismatch instead of simply vanishing.
+	 * Revokes every unrevoked verification code issued for one item.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -688,9 +632,7 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Whether a character has any connection to a world object at all - the "use" route's own
-	 * ownership check for a player (1.1.0 §3.12 item 2), and the "who's the existing holder"
-	 * check the transfer route needs before removing anything.
+	 * Whether a character has any connection to a world object at all.
 	 *
 	 * @param int $character_id
 	 * @param int $world_object_id
@@ -706,8 +648,8 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The character-side id of a connection touching a world object, whichever direction it
-	 * was written in, or null when the other side isn't a character at all (a plot, a tag).
+	 * The character-side id of a connection touching a world object, whichever direction it was written in, or null when
+	 * the other side isn't a character at all (a plot, a tag).
 	 *
 	 * @param object $connection A row from `Connection::for_entity()`.
 	 * @return int|null
@@ -723,13 +665,7 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Validates a requested `audience`/`audience_rules` pair (1.1.0 §2.5) - applies to `item`
-	 * and `location` the same as `everyone`/`storytellers`/`restricted` anywhere else; a rote
-	 * or boon has no audience concept, so a request naming one for either is simply ignored
-	 * rather than rejected, since this route's own `object_type` check already refuses a boon
-	 * outright and a rote has no reason to ever send these fields in the first place. This
-	 * route is `be_manage_world_objects`-only already (unlike a plot, which has a player-owned
-	 * path), so every caller here may set any value - no per-role narrowing is needed.
+	 * Validates a requested `audience`/`audience_rules` pair.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return array{audience?:string,audience_rules?:?array}|\WP_Error
@@ -763,12 +699,8 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Validates a requested `parent_id` (1.1.0 §3.9 item 1 - "Inside of"): meaningless for
-	 * anything but a location, must name a real location in this same game, and - on an
-	 * update, where `$self_id` is the object being changed - never itself. Cycle detection is
-	 * `World_Object::update()`'s own job (it alone knows the full ancestor chain); this only
-	 * catches the two checks cheap enough to make before ever calling it, for a clean
-	 * `400 invalid_parent` instead of a generic failure.
+	 * Validates a requested `parent_id` ("Inside of"): meaningless for anything but a location, must name a real
+	 * location in this same game.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @param object            $game
@@ -801,9 +733,7 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Updates an existing world object with any recognized fields present
-	 * in the request. Re-validates properties against the object_type's
-	 * schema when included, and returns the updated object.
+	 * Updates an existing world object with any recognized fields present in the request.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -817,7 +747,7 @@ class World_Objects_Controller extends Base_Controller {
 			return $this->boon_ledger_error();
 		}
 
-		// Cleaned exactly as a create cleans them (1.0.0-review F-067).
+		// Cleaned exactly as a create cleans them.
 		$data = $this->text_fields( $request );
 		if ( is_wp_error( $data ) ) {
 			return $data;
@@ -838,8 +768,7 @@ class World_Objects_Controller extends Base_Controller {
 		$data = array_merge( $data, $audience );
 
 		if ( $request->has_param( 'parent_id' ) ) {
-			// The object's own game_id, not a fresh resolve_game() lookup - resolve_object()
-			// above already confirmed this object belongs to the URL's game.
+			// The object's own game_id.
 			$parent_id = $this->resolve_parent_id( $request, (object) [ 'id' => $object->game_id ], $object->object_type, (int) $object->id );
 			if ( is_wp_error( $parent_id ) ) {
 				return $parent_id;
@@ -855,14 +784,13 @@ class World_Objects_Controller extends Base_Controller {
 			return $this->error( 'invalid_parent', $e->getMessage(), 400 );
 		}
 
-		// A Storyteller editing uses or expiry (1.1.0 §3.12 item 3, 'adjusted') - only when one
-		// of the three keys' value actually changed, never on an unrelated property edit.
+		// A Storyteller editing uses or expiry, when one of the three keys changed.
 		if ( $object->object_type === 'item' && array_key_exists( 'properties', $data ) ) {
 			$watched      = [ 'uses_max', 'uses_left', 'expires_on' ];
 			$new_properties = (array) $data['properties'];
 			$before       = array_intersect_key( $object->properties, array_flip( $watched ) );
 			$after        = array_intersect_key( $new_properties, array_flip( $watched ) );
-			if ( $before != $after ) { // phpcs:ignore Universal.Operators.StrictComparisons -- both sides are plain scalar-valued arrays; a loose diff here only cares whether the values differ, not their types.
+			if ( $before != $after ) { // phpcs:ignore Universal.Operators.StrictComparisons
 				Item_Event::record( [
 					'game_id'         => (int) $object->game_id,
 					'world_object_id' => (int) $object->id,
@@ -876,9 +804,7 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Deletes a world object after confirming it exists and belongs to
-	 * the requested game. Also removes any connections referencing the
-	 * object, so no connection is left pointing at a deleted object.
+	 * Deletes a world object after confirming it exists and belongs to the requested game.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -895,8 +821,6 @@ class World_Objects_Controller extends Base_Controller {
 			return $this->error( 'location_has_children', __( 'Move or delete this location\'s own children first.', 'beyond-elysium' ), 409 );
 		}
 
-		// Files first, while the rows naming them still exist: World_Object::delete() removes
-		// the attachment rows itself, but never the files (Models does not depend on Services).
 		if ( in_array( $object->object_type, [ 'item', 'location' ], true ) ) {
 			foreach ( Attachment::for_entity( $object->object_type, (int) $object->id ) as $attachment ) {
 				Attachment_Storage::delete( $attachment->stored_name, $attachment->original_name );
@@ -908,10 +832,8 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The text fields a request sets, cleaned the same way for a create and
-	 * an edit: name, rarity, and cost as plain text within their column
-	 * lengths, description and limitations through `wp_kses_post()`. A field
-	 * the request leaves out is left out here too.
+	 * The text fields a request sets, cleaned the same way for a create and an edit: name, rarity, and cost as plain text
+	 * within their column lengths, description and limitations through `wp_kses_post()`.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return array<string,string>|\WP_Error A 400 naming the first field over its length.
@@ -943,8 +865,7 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Refuses a boon on the generic routes: the Boon Ledger records, repays,
-	 * and keeps boons, and never deletes one (1.0.0-review F-068).
+	 * Refuses a boon on the generic routes: the Boon Ledger records, repays, and keeps boons.
 	 *
 	 * @return \WP_Error
 	 */
@@ -953,9 +874,8 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a world object by id and confirms it belongs to the game
-	 * identified by the given slug, returning a WP_Error with a 404
-	 * status when the game or the object cannot be found.
+	 * Looks up a world object by id and confirms it belongs to the game identified by the given slug, returning a
+	 * WP_Error with a 404 status when the game or the object cannot be found.
 	 *
 	 * @param int    $id
 	 * @param string $game_slug
@@ -974,9 +894,7 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a WP_Error
-	 * with a 404 status when no game matches. Used by route callbacks to
-	 * resolve the game_slug URL parameter before performing further work.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

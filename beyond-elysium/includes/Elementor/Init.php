@@ -18,20 +18,13 @@ use BeyondElysium\Elementor\Widgets\House_Rules;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Registers the Beyond Elysium Elementor category and every Elementor widget
- * this plugin defines. Hooks its registration callbacks onto Elementor's
- * `elements/categories_registered` and `widgets/register` actions, and each
- * callback is a no-op on any site where Elementor is not installed or active.
- *
- * @see BE_PROCESS/releases/workflow-0.3.md Step 7
+ * Registers the Beyond Elysium Elementor category and every Elementor widget this plugin defines.
  */
 class Init {
 
 	/**
-	 * Registers the WordPress action hooks that add the Beyond Elysium
-	 * Elementor category and register this plugin's widgets. Safe to call
-	 * unconditionally on every request; the hooked callbacks check for
-	 * Elementor themselves and do nothing when it is absent.
+	 * Registers the WordPress action hooks that add the Beyond Elysium Elementor category and register this plugin's
+	 * widgets.
 	 */
 	public static function register(): void {
 		add_action( 'elementor/elements/categories_registered', [ self::class, 'register_category' ] );
@@ -39,10 +32,7 @@ class Init {
 	}
 
 	/**
-	 * Adds the "Beyond Elysium" category to Elementor's list of element
-	 * categories so this plugin's widgets can be grouped together in the
-	 * editor's widget panel. Does nothing if Elementor has not finished
-	 * loading.
+	 * Adds the "Beyond Elysium" category to Elementor's list of element categories.
 	 *
 	 * @param \Elementor\Elements_Manager $elements_manager
 	 */
@@ -58,9 +48,8 @@ class Init {
 	}
 
 	/**
-	 * Registers each of this plugin's widget classes with Elementor's widget
-	 * manager, making them available for placement in the Elementor editor.
-	 * Does nothing if Elementor has not finished loading.
+	 * Registers each of this plugin's widget classes with Elementor's widget manager, making them available for placement
+	 * in the Elementor editor.
 	 *
 	 * @param \Elementor\Widgets_Manager $widgets_manager
 	 */

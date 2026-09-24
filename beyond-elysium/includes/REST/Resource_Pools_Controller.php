@@ -9,12 +9,6 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * REST controller for bulk resource-pool maintenance.
- *
- * Exposes a single endpoint that resets one named pool's temporary rating
- * back to its permanent one across a batch of characters at once -
- * bulk-operations-design.md's Item 1, the ordinary end-of-session
- * "everyone's Willpower/Blood refills" action, done today one character at
- * a time.
  */
 class Resource_Pools_Controller extends Base_Controller {
 
@@ -22,10 +16,6 @@ class Resource_Pools_Controller extends Base_Controller {
 
 	/**
 	 * Registers the resource-pools routes.
-	 *
-	 * Adds a single POST route that bulk-resets a named pool to its
-	 * permanent value across multiple characters at once, gated by
-	 * `be_manage_characters`.
 	 */
 	public function register_routes(): void {
 		// POST /be/v1/{game_slug}/resource-pools/bulk-reset.
@@ -39,15 +29,7 @@ class Resource_Pools_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Bulk-resets one resource pool's temporary rating to its permanent one
-	 * across multiple characters.
-	 *
-	 * Validates the character ID list, block slug, and pool name, then
-	 * resets the pool for each character that belongs to this game and
-	 * actually holds it - a character outside this game, or one who
-	 * doesn't hold the pool, is silently skipped rather than treated as an
-	 * error, matching `Change_Engine::bulk_award_xp()`'s own "count only
-	 * what actually applied" precedent.
+	 * Bulk-resets one resource pool's temporary rating to its permanent one across multiple characters.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error

@@ -5,27 +5,14 @@ namespace BeyondElysium\Core;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Repairs every stored reference to a chronicle's slug after Game::rename()
- * has already changed the slug on be_games, be_characters and
- * be_schema_blocks. Covers the three other places a slug is written into
- * content rather than a plugin table: a provisioned page's data-be-config
- * attribute, an Elementor-built page's _elementor_data widget settings, and
- * a House Rules shortcode typed onto a page or into an Elementor widget.
- * Idempotent - re-running against content that has already
- * been repaired (or never referenced the old slug at all) finds nothing
- * to change and reports zero. Never touches asc_role_path, which is
- * operator-entered text keyed to an external role tree and has no
- * relationship to the chronicle's own slug.
+ * Repairs every stored reference to a chronicle's slug after Game::rename() has already changed the slug on be_games,
+ * be_characters and be_schema_blocks.
  */
 class Game_Slug_References {
 
 	/**
-	 * Rewrites every gameSlug value inside a data-be-config attribute, and
-	 * every game_slug Elementor widget setting, from $old to $new. Called
-	 * after Game::rename()'s own transaction has already committed - this
-	 * runs outside it deliberately, since wp_update_post() fires save_post
-	 * and touches caches other plugins may react to, and none of that
-	 * should happen underneath a transaction that might still roll back.
+	 * Rewrites every gameSlug value inside a data-be-config attribute, and every game_slug Elementor widget setting, from
+	 * $old to $new.
 	 *
 	 * @param string $old
 	 * @param string $new
@@ -39,11 +26,8 @@ class Game_Slug_References {
 	}
 
 	/**
-	 * Finds every post whose content holds a House Rules shortcode for the
-	 * old slug - `[be_house_rules game="kony"]`, typed onto any page - and
-	 * rewrites its `game` attribute. The shortcode stores the slug as plain
-	 * text, not in the widget markup `repair_pages()` reads, so a rename left
-	 * it asking for a chronicle that no longer exists (1.0.0-review F-083).
+	 * Finds every post whose content holds a House Rules shortcode for the old slug - `[be_house_rules game="kony"]`,
+	 * typed onto any page - and rewrites its `game` attribute.
 	 *
 	 * @param string $old
 	 * @param string $new
@@ -77,10 +61,8 @@ class Game_Slug_References {
 	}
 
 	/**
-	 * Rewrites the `game` attribute of every House Rules shortcode in a piece
-	 * of text whose value is exactly the old slug - quoted either way or not
-	 * at all. A slug that merely starts with the old one, and the old slug in
-	 * ordinary prose, are left as they are.
+	 * Rewrites the `game` attribute of every House Rules shortcode in a piece of text whose value is exactly the old slug
+	 * - quoted either way or not at all.
 	 *
 	 * @param string $text
 	 * @param string $old
@@ -102,13 +84,8 @@ class Game_Slug_References {
 	}
 
 	/**
-	 * Finds every page whose content carries a data-be-widget block
-	 * referencing the old slug, and rewrites the gameSlug value inside its
-	 * JSON-encoded, HTML-attribute-escaped data-be-config attribute.
-	 * Operates on the decoded JSON value, never a blind string replace
-	 * across the whole post content - the config blob can carry other
-	 * keys (e.g. sheetPageUrl) that must survive untouched, and the old
-	 * slug could in principle appear in unrelated prose on the same page.
+	 * Finds every page whose content carries a data-be-widget block referencing the old slug, and rewrites the gameSlug
+	 * value inside its JSON-encoded, HTML-attribute-escaped data-be-config attribute.
 	 *
 	 * @param string $old
 	 * @param string $new
@@ -169,12 +146,8 @@ class Game_Slug_References {
 	}
 
 	/**
-	 * Finds every post carrying Elementor page-builder data that names the
-	 * old slug, and rewrites any widget's own game_slug setting from $old
-	 * to $new. Elementor stores its page tree as one JSON-encoded array of
-	 * nested elements per post, in the _elementor_data postmeta - walked
-	 * recursively here since a widget can be nested inside sections and
-	 * columns at any depth.
+	 * Finds every post carrying Elementor page-builder data that names the old slug, and rewrites any widget's own
+	 * game_slug setting from $old to $new.
 	 *
 	 * @param string $old
 	 * @param string $new
@@ -211,10 +184,8 @@ class Game_Slug_References {
 	}
 
 	/**
-	 * Recursively walks an Elementor element tree, rewriting any
-	 * settings.game_slug value that equals $old, in place, at any nesting
-	 * depth (sections contain columns contain widgets). Sets $changed by
-	 * reference so the caller only writes back a post that actually needed it.
+	 * Recursively walks an Elementor element tree, rewriting any settings.game_slug value that equals $old, in place, at
+	 * any nesting depth (sections contain columns contain widgets).
 	 *
 	 * @param array $elements
 	 * @param string $old
@@ -231,7 +202,7 @@ class Game_Slug_References {
 				$element['settings']['game_slug'] = $new;
 				$changed                          = true;
 			}
-			// A House Rules shortcode placed in a shortcode or text widget (F-083).
+			// A House Rules shortcode placed in a shortcode or text widget.
 			foreach ( ( is_array( $element['settings'] ?? null ) ? $element['settings'] : [] ) as $key => $value ) {
 				if ( is_string( $value ) && str_contains( $value, '[be_house_rules' ) ) {
 					$rewritten = self::rewrite_shortcodes( $value, $old, $new );

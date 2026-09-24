@@ -1,16 +1,5 @@
 /**
- * A small "AI Assist" button that sits next to an existing free-text field
- * (ai-writing-assist-design.md) - never wraps or replaces the field itself,
- * so no existing layout needs restructuring. Gated by whichever
- * management-tier capability already governs that field, resolved
- * server-side against the request's own field_context on every call - the
- * `capability` prop here only controls this button's own visibility, it is
- * never trusted as the real access check.
- *
- * Never auto-publishes anything: a suggestion always renders in a preview
- * popover with explicit Accept/Discard actions. Accept calls onAccept with
- * the suggestion text - the field's own existing save button is what
- * actually persists it, exactly like any other edit to that field.
+ * A small "AI Assist" button that sits next to an existing free-text field.
  */
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -20,24 +9,27 @@ import HelpButton from './HelpButton';
 import './AiAssistButton.css';
 
 export interface AiAssistButtonProps {
-	/** Which be_manage_* capability gates this field - checked client-side only for visibility; the server re-checks authoritatively against fieldContext. */
+	/**
+	 * Which be_manage_* capability gates this field.
+	 */
 	capability: string;
-	/** One of Services/Ai_Assist.php's FIELD_CONTEXTS keys. */
+	/**
+	 * One of Services/Ai_Assist.php's FIELD_CONTEXTS keys.
+	 */
 	fieldContext: string;
-	/** Omit for a site-wide field (Schema Block descriptions, Credits). */
+	/**
+	 * Omit for a site-wide field (Schema Block descriptions, Credits).
+	 */
 	gameSlug?: string;
-	/** The field's current value. A function is required for an otherwise-uncontrolled field (HtmlEditor/TinyMCE) so the button always reads the live content, not a stale render-time snapshot. */
+	/**
+	 * The field's current value.
+	 */
 	currentValue: string | ( () => string );
 	onAccept: ( suggestion: string ) => void;
 }
 
 /**
- * Renders nothing when the viewer doesn't hold the given capability - the
- * ordinary consequence of capability-gating this button per field, which is
- * also what keeps the feature invisible to anyone it isn't meant for (a
- * player never sees this next to their own character's biography, since
- * that field is gated on be_manage_characters here, not the plain
- * edit-tier capability that field's own save route accepts).
+ * Renders nothing when the viewer doesn't hold the given capability.
  */
 export function AiAssistButton( {
 	capability,

@@ -1,9 +1,5 @@
 /**
- * A single plot's full detail view - its overview, nested child plots, faction goals and
- * cliffhanger, entry timeline, and the manager action bar. Renders entries created by the
- * action allocator as formatted subaction summaries rather than raw content. The action
- * bar's buttons request the action allocator, rumor generator, or connection manager tool
- * via a callback prop; the caller decides how to present them.
+ * A single plot's full detail view.
  */
 import {
 	createInterpolateElement,
@@ -27,11 +23,17 @@ import './PlotThread.css';
 export interface PlotThreadProps {
 	gameSlug: string;
 	plotId: number;
-	/** Called with a child plot's id when the user clicks it, to select it instead. */
+	/**
+	 * Called with a child plot's id when the user clicks it, to select it instead.
+	 */
 	onSelectChild?: ( id: number ) => void;
-	/** Shows the Faction Goals/Cliffhanger editor and Timeline date field. */
+	/**
+	 * Shows the Faction Goals/Cliffhanger editor and Timeline date field.
+	 */
 	expandedEnabled?: boolean;
-	/** Opens one of the shared tools in the parent's modal. */
+	/**
+	 * Opens one of the shared tools in the parent's modal.
+	 */
 	onOpenTool?: ( tool: 'allocate' | 'rumors' | 'connect' ) => void;
 }
 
@@ -70,9 +72,7 @@ function isLedgerEntry( data: unknown ): data is LedgerEntryData {
 }
 
 /**
- * Renders one timeline entry's content. Entries created by the action allocator store
- * structured JSON describing a subaction, which is rendered as a formatted summary.
- * Every other entry is rendered as free-form HTML.
+ * Renders one timeline entry's content.
  */
 function renderEntryContent( content: string ) {
 	try {
@@ -151,11 +151,7 @@ function renderEntryContent( content: string ) {
 }
 
 /**
- * Renders one plot's full detail view: its own overview and cover image, any plots nested
- * under it, its faction goals and cliffhanger (when enabled), its entry timeline, and a
- * bar of game-night actions for managers. Visibility of manager-only content such as ST
- * notes is determined by what the server includes in the response for this viewer; the
- * component renders exactly what it receives.
+ * Renders one plot's full detail view.
  */
 export function PlotThread( {
 	gameSlug,
@@ -177,19 +173,15 @@ export function PlotThread( {
 	const [ factionGoals, setFactionGoals ] = useState< FactionGoal[] >( [] );
 	const [ saving, setSaving ] = useState( false );
 	const [ saveError, setSaveError ] = useState< string | null >( null );
-	// A draft, saved only on explicit click (like Overview/ST notes/Cliffhanger below) rather
-	// than on every AudiencePicker change - a multi-step rule build would otherwise PUT the
-	// server on every clause edit, matching neither this file's own established pattern nor
-	// what a half-built rule set should do.
+	// A draft, saved only on explicit click (like Overview/ST notes/Cliffhanger below).
 	const [ audienceDraft, setAudienceDraft ] =
 		useState< Plot[ 'audience' ] >( 'everyone' );
 	const [ audienceRulesDraft, setAudienceRulesDraft ] =
 		useState< Plot[ 'audience_rules' ] >( null );
 
 	/**
-	 * Fetches this plot from the API and stores it along with its overview draft,
-	 * cliffhanger, and faction goals in local state. Runs on mount and whenever the
-	 * plot id changes, ready for viewing or editing.
+	 * Fetches this plot from the API and stores it along with its overview draft, cliffhanger, and faction goals in local
+	 * state.
 	 */
 	function load() {
 		setLoading( true );
@@ -215,9 +207,8 @@ export function PlotThread( {
 	useEffect( load, [ gameSlug, plotId ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	/**
-	 * Sends a partial update for this plot to the API and, on success, replaces the local
-	 * plot state with the server's updated record. Returns whether the save succeeded so
-	 * callers can decide whether to leave edit mode.
+	 * Sends a partial update for this plot to the API and, on success, replaces the local plot state with the server's
+	 * record.
 	 */
 	async function save(
 		patch: Parameters< ReturnType< typeof api.plots >[ 'update' ] >[ 1 ]
@@ -251,9 +242,7 @@ export function PlotThread( {
 	}
 
 	/**
-	 * Opens the media library picker so a manager can choose a cover image for this plot.
-	 * If an image is chosen, saves its attachment id immediately via the API; does
-	 * nothing if the picker is dismissed without a selection.
+	 * Opens the media library picker.
 	 */
 	async function pickCover() {
 		const attachment = await pickMediaImage(
@@ -386,7 +375,6 @@ export function PlotThread( {
 				<h3 className="be-st-section__title">
 					{ __( 'Overview', 'beyond-elysium' ) }
 				</h3>
-				{ /* HtmlEditor stays mounted once opened; `hidden` toggles which view is visible rather than unmounting it. */ }
 				{ hasOpenedEditor && (
 					<div hidden={ ! editingOverview }>
 						<HtmlEditor
@@ -554,9 +542,6 @@ export function PlotThread( {
 				<h3 className="be-st-section__title">
 					{ __( 'Files', 'beyond-elysium' ) }
 				</h3>
-				{ /* Every viewer who can see this plot at all may also see its files; only a
-				 * Storyteller or this plot's own owner may upload or remove one - the exact
-				 * check Attachments_Controller::may_manage_attachments() itself enforces. */ }
 				<AttachmentList
 					gameSlug={ gameSlug }
 					entityType="plot"

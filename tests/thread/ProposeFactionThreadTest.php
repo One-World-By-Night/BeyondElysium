@@ -11,21 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * A player proposes a coterie/pack/cabal/motley for their own character (1.1.0 §3.10, F1); a
- * Storyteller approves it and the chronicle gains a new `be_factions` row with the proposer as
- * its first, leading member.
- *
- * The sharp edge this pins down (found while building it, not a repeat of D3): unlike every
- * other change type resolved through `resolve_rule_level()`, `propose_faction` carries no
- * `block_slug`, so nothing in that method's ordinary trait/tiered-power branches would ever
- * set a level for it - on a chronicle with auto-approve on, it would fall through to the
- * chronicle's own default and `Change_Engine::submit()` would call `approve()` directly with
- * zero capability check, since `Changes_Controller`'s gates only run on the manual-review
- * path. `resolve_rule_level()` now forces `propose_faction` to always resolve `'st'`, so it is
- * never eligible for that bypass on any chronicle - the same latent gap left open for
- * `propose_world_object` is logged as D63, not fixed here.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.10
+ * A player proposes a coterie/pack/cabal/motley for their own character.
  */
 class ProposeFactionThreadTest extends WP_UnitTestCase {
 
@@ -95,8 +81,7 @@ class ProposeFactionThreadTest extends WP_UnitTestCase {
 	public function test_a_disallowed_faction_type_is_refused_on_the_way_in(): void {
 		$response = $this->propose( [ 'change_data' => [ 'faction_type' => 'sect', 'name' => 'The Camarilla' ] ] );
 
-		// 'sect' is real, but Storyteller-only (Faction::PLAYER_PROPOSABLE_TYPES) - a
-		// player proposes their own coterie/pack/cabal/motley, never a whole sect.
+		// 'sect' is real, but Storyteller-only (Faction::PLAYER_PROPOSABLE_TYPES).
 		$this->assertSame( 400, $response->get_status() );
 	}
 
@@ -123,9 +108,7 @@ class ProposeFactionThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The gap this whole check exists for - a reviewer who can approve character changes but
-	 * holds no faction-management rights must be able to reject a faction proposal but never
-	 * to approve it, the same shape D3 established for `propose_world_object`.
+	 * A reviewer without faction rights cannot approve a faction proposal.
 	 */
 	public function test_a_reviewer_without_faction_rights_cannot_approve_it(): void {
 		$change_id = (int) ( (array) $this->propose()->get_data() )['id'];
@@ -156,13 +139,6 @@ class ProposeFactionThreadTest extends WP_UnitTestCase {
 		$this->assertCount( 0, Faction::for_game( $this->game_id ) );
 	}
 
-	/**
-	 * The specific bug found while building this: a chronicle with auto-approve on must
-	 * still require `be_manage_factions` for a faction proposal - `resolve_rule_level()`
-	 * forces `'st'` for `propose_faction` regardless of the chronicle's own default, so
-	 * `Change_Engine::submit()`'s auto-approve path (which bypasses `Changes_Controller`'s
-	 * gates entirely) is never reachable for this change type.
-	 */
 	public function test_auto_approve_chronicle_still_requires_manual_review(): void {
 		global $wpdb;
 		$wpdb->update( $wpdb->prefix . 'be_games', [ 'settings' => wp_json_encode( [ 'auto_approve' => true ] ) ], [ 'id' => $this->game_id ] );

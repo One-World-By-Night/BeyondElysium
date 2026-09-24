@@ -7,12 +7,8 @@ use BeyondElysium\Services\Cost_Engine;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The three held-state pricing functions PC-1 adds to `Cost_Engine`
- * (point-calculator-design.md §4, §5.1) - `Services\Point_Audit`'s only
- * source of numbers. Asserted against the real seeded catalog, not
- * synthetic fixtures, per the design doc's own instruction (§7 PC-1).
- *
- * @see BE_PROCESS/design/point-calculator-design.md
+ * The held-state pricing functions of `Cost_Engine`, asserted against the real seeded catalog:
+ * `Services\Point_Audit`'s only source of numbers.
  */
 class CostEngineHeldPricingTest extends TestCase {
 
@@ -34,14 +30,14 @@ class CostEngineHeldPricingTest extends TestCase {
 	// -------------------------------------------------------------------------
 
 	public function test_a_negative_block_prices_as_earned_not_spent(): void {
-		$result = Cost_Engine::price_held_trait_list_item( self::def( 'met-flaws' ), [ 'name' => 'Curiosity', 'count' => 2 ] );
+		$result = Cost_Engine::price_held_trait_list_item( self::def( 'vampire-flaws' ), [ 'name' => 'Curiosity', 'count' => 2 ] );
 
 		$this->assertSame( -4, $result['xp'], 'Curiosity is 2/dot on a negative block, x2 held' );
 		$this->assertNull( $result['unpriced_reason'] );
 	}
 
 	public function test_atomic_block_holding_the_same_name_twice_prices_each_line_independently(): void {
-		$definition = self::def( 'met-merits' );
+		$definition = self::def( 'vampire-merits' );
 		$first      = Cost_Engine::price_held_trait_list_item( $definition, [ 'name' => 'Iron Will', 'count' => 3 ] );
 		$second     = Cost_Engine::price_held_trait_list_item( $definition, [ 'name' => 'Iron Will', 'count' => 5 ] );
 
@@ -51,7 +47,7 @@ class CostEngineHeldPricingTest extends TestCase {
 	}
 
 	public function test_a_variable_range_cost_with_no_chosen_cost_prices_at_the_floor(): void {
-		$definition = self::def( 'met-merits' );
+		$definition = self::def( 'vampire-merits' );
 		$item       = self::find_item( $definition, 'Iron Will' );
 		$this->assertNotNull( $item, 'Iron Will is the design doc\'s own example of a real range-cost item' );
 		$this->assertSame( 'range', Cost_Engine::parse_cost_rule( (string) $item->cost )['type'] );
@@ -66,11 +62,7 @@ class CostEngineHeldPricingTest extends TestCase {
 	public function test_a_catalog_item_with_no_cost_is_unpriced_never_zero(): void {
 		$definition = self::def( 'met-physical-traits' );
 		$item       = self::$definitions['met-physical-traits']->items[0];
-		// 1.3.2: the declared file states `"cost": null` explicitly rather than omitting the
-		// key at all (format §4.1 - tier/group/subgroup/cost are present even when null, so
-		// "nobody set this" is distinguishable from "this file predates the field"). `isset()`
-		// reads false for both an absent key and a present-null one, so this still asserts
-		// exactly what it always has - no real cost - under either shape.
+		// The declared file states `"cost": null` explicitly.
 		$this->assertFalse( isset( $item->cost ), 'every met-physical-traits item carries no real cost (point-calculator-design.md §0)' );
 
 		$result = Cost_Engine::price_held_trait_list_item( $definition, [ 'name' => $item->name, 'count' => 3 ] );
@@ -80,21 +72,21 @@ class CostEngineHeldPricingTest extends TestCase {
 	}
 
 	public function test_a_held_name_not_in_the_catalog_is_unpriced_with_its_own_reason(): void {
-		$result = Cost_Engine::price_held_trait_list_item( self::def( 'met-merits' ), [ 'name' => 'Not A Real Merit', 'count' => 1 ] );
+		$result = Cost_Engine::price_held_trait_list_item( self::def( 'vampire-merits' ), [ 'name' => 'Not A Real Merit', 'count' => 1 ] );
 
 		$this->assertNull( $result['xp'] );
 		$this->assertSame( 'name_not_in_catalog', $result['unpriced_reason'] );
 	}
 
 	public function test_a_custom_entry_with_no_chosen_cost_is_unpriced(): void {
-		$result = Cost_Engine::price_held_trait_list_item( self::def( 'met-merits' ), [ 'name' => 'Homebrew Thing', 'custom' => true ] );
+		$result = Cost_Engine::price_held_trait_list_item( self::def( 'vampire-merits' ), [ 'name' => 'Homebrew Thing', 'custom' => true ] );
 
 		$this->assertNull( $result['xp'] );
 		$this->assertSame( 'custom_no_catalog_entry', $result['unpriced_reason'] );
 	}
 
 	public function test_a_custom_entry_with_a_chosen_cost_uses_it(): void {
-		$result = Cost_Engine::price_held_trait_list_item( self::def( 'met-merits' ), [ 'name' => 'Homebrew Thing', 'custom' => true, 'chosen_cost' => 2, 'count' => 3 ] );
+		$result = Cost_Engine::price_held_trait_list_item( self::def( 'vampire-merits' ), [ 'name' => 'Homebrew Thing', 'custom' => true, 'chosen_cost' => 2, 'count' => 3 ] );
 
 		$this->assertSame( 6, $result['xp'] );
 		$this->assertSame( 'chosen_cost', $result['basis'] );
@@ -104,23 +96,10 @@ class CostEngineHeldPricingTest extends TestCase {
 	// tiered_power
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Owner ruling, 1.0.0-review F-040: levels add up. A held Discipline at level five is priced as
-	 * every level up to it, not level five's own price.
-	 */
 	public function test_a_discipline_held_at_level_five_prices_every_level_up_to_it(): void {
 		$definition = self::def( 'vampire-disciplines' );
 		$this->assertNotEmpty( $definition->sequential ?? false, 'the seeded Disciplines ladder adds up' );
 
-		// 1.2.10 S6. This asserted **45** before the declared ladder existed, by summing
-		// `3+6+9+12+15` - one tier per rank, which charged **elder (12) and master (15)
-		// rates for ladder rungs**. No genre works that way. A 2/2/1 ladder is basic,
-		// basic, intermediate, intermediate, advanced, so five rungs are `3+3+6+6+9 = 27`,
-		// exactly as `1.2.10-design-workflow.md` specifies for a full ladder.
-		//
-		// The rung prices from its **rank**, not its own item, which is also what keeps
-		// D66's one miskeyed Animalism "advanced" row (cost 3 against every sibling's 9)
-		// from charging a real player 21 instead of 27.
 		$result = Cost_Engine::price_held_tiered_power( $definition, [ 'name' => 'Animalism', 'level' => 5 ], true );
 
 		$this->assertSame( 27, $result['xp'] );
@@ -131,16 +110,7 @@ class CostEngineHeldPricingTest extends TestCase {
 		$definition = self::def( 'mage-spheres' );
 		$this->assertNotEmpty( $definition->sequential ?? false, 'mage-spheres must be sequential for this test to mean anything' );
 
-		// Three rungs of mage-spheres' declared 2/2/1 ladder are basic, basic,
-		// intermediate. The scale comes from the block's own seeded data, which is the
-		// point this test has always made and still makes - only the data itself has
-		// changed since.
-		//
-		// D70: the GVM-seeded 5/10/15 was itself the non-specialty price, with the base
-		// meant to be 4/8/12 (owner ruling: reprice with no adjustment to existing XP).
-		// That catalog correction landed for real in 1.3.0's declared `mage-spheres.json`,
-		// ingested here for the first time - `4+4+8 = 16`, not the pre-correction `20`
-		// (`5+5+10`) this asserted before a declared file existed for this block.
+		// Three rungs of mage-spheres' declared 2/2/1 ladder are basic, basic, intermediate.
 		$result = Cost_Engine::price_held_tiered_power( $definition, [ 'name' => 'Correspondence', 'level' => 3 ], true );
 
 		$this->assertSame( 16, $result['xp'] );
@@ -148,12 +118,7 @@ class CostEngineHeldPricingTest extends TestCase {
 	}
 
 	/**
-	 * D77/S6b regression, watched failing first. Before the fix this scanned `$power->levels`
-	 * for a truthy `power_name` - and once a block declares `_meta`, every *rung* carries
-	 * `power_name` too (Celerity's own "Alacrity"/"Swiftness"), so the test found two rungs,
-	 * called them Elder picks, priced them successfully, and asserted a `basis` string
-	 * rather than a real number - passing green while testing the opposite of its own name.
-	 * Reads the real `elder` container instead and asserts actual XP.
+	 * Two distinct elder picks in one family each price flat and independently.
 	 */
 	public function test_two_distinct_elder_picks_in_one_family_each_price_flat_and_independently(): void {
 		$definition = self::def( 'vampire-disciplines' );
@@ -189,10 +154,8 @@ class CostEngineHeldPricingTest extends TestCase {
 	}
 
 	/**
-	 * D77/S6b regression, watched failing first: before the fix, buying a named pick
-	 * (elder-and-above) priced at 0 XP the moment the block declared `_meta` and its
-	 * `levels` narrowed to the ladder alone, since `elder_tier_cost()`/
-	 * `find_power_level_by_name()` searched only the ladder and never found the pick.
+	 * A named pick (elder-and-above) prices from the block's declared elder cost once the block declares `_meta` and its
+	 * `levels` narrow to the ladder alone.
 	 */
 	public function test_a_named_pick_survives_the_declared_ladder_split(): void {
 		$result = Cost_Engine::price_held_tiered_power( self::def( 'vampire-disciplines' ), [ 'name' => 'Celerity', 'power_name' => 'Precision' ], true );
@@ -211,14 +174,12 @@ class CostEngineHeldPricingTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// C1 - a stored level is a total, not a rung (1.2.10 §A')
+	// A stored level is a total
 	// -------------------------------------------------------------------------
 
 	/**
-	 * The design doc's own acceptance example, against the real seeded catalog: Celerity's
-	 * declared ladder is 2/2/1 at 3/6/9 (5 rungs, 3+3+6+6+9 = 27) and its elder rank costs
-	 * 12. A stored `level: 9` - one of the seven approved production PCs kept since inbound
-	 * migration (D41) - reads as the full ladder plus four unnamed picks at 12 each.
+	 * Against the real seeded catalog: Celerity's declared ladder is 2/2/1 at 3/6/9 (5 rungs, 3+3+6+6+9 = 27) and its
+	 * elder rank costs 12.
 	 */
 	public function test_a_stored_level_above_the_ceiling_reads_as_the_full_ladder_plus_picks(): void {
 		$result = Cost_Engine::price_held_tiered_power( self::def( 'vampire-disciplines' ), [ 'name' => 'Celerity', 'level' => 9 ], true );
@@ -249,15 +210,9 @@ class CostEngineHeldPricingTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// C2 - a non-rank tier is always a pick, never a rung (1.2.10 §A2d)
+	// A non-rank tier is always a pick
 	// -------------------------------------------------------------------------
 
-	/**
-	 * The importer's own "***" placeholder (`reference/MET-POWER-ACQUISITION.md`, "the
-	 * tier: *** fallback"): 1,637 production holdings carry this shape - `custom: true`,
-	 * `power_name` set, no stored cost anywhere. Owner ruling, 2026-09-21: honestly
-	 * unpriced, never guessed.
-	 */
 	public function test_a_placeholder_tier_custom_entry_resolves_to_one_unpriced_pick(): void {
 		$result = Cost_Engine::price_held_tiered_power(
 			self::def( 'vampire-disciplines' ),
@@ -281,9 +236,7 @@ class CostEngineHeldPricingTest extends TestCase {
 	}
 
 	/**
-	 * A placeholder-tier custom holding is never read as a ladder rung, even carrying a
-	 * `level` alongside it (D41's own numbered-total derivation) - `custom: true` always
-	 * routes to the pick path, never the numbered-ladder path.
+	 * A placeholder-tier custom holding is never read as a ladder rung.
 	 */
 	public function test_a_placeholder_tier_custom_entry_with_a_level_is_never_read_as_a_rung(): void {
 		$result = Cost_Engine::price_held_tiered_power(
@@ -296,11 +249,6 @@ class CostEngineHeldPricingTest extends TestCase {
 		$this->assertNotSame( 'sequential_sum', $result['basis'], 'never priced off the ladder' );
 	}
 
-	/**
-	 * C2's real-stored-cost case: an ST's own add_to_catalog opt-in (Import_Controller)
-	 * can teach the catalog a custom power by name after the fact - once that happens the
-	 * holding prices from the real catalog entry, not chosen_cost or unpriced.
-	 */
 	public function test_a_custom_entry_whose_power_name_now_matches_a_real_catalog_pick_prices_from_it(): void {
 		$result = Cost_Engine::price_held_tiered_power(
 			self::def( 'vampire-disciplines' ),
@@ -313,7 +261,7 @@ class CostEngineHeldPricingTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// D77/S6b - Decision 090: never a fabricated 0 for an unknown tier with no cost
+	// Never a fabricated 0 for an unknown tier with no cost
 	// -------------------------------------------------------------------------
 
 	public function test_an_unknown_tier_pick_with_no_cost_anywhere_is_unpriced_never_zero(): void {
@@ -359,7 +307,7 @@ class CostEngineHeldPricingTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// resource_pool (PC-9)
+	// resource_pool
 	// -------------------------------------------------------------------------
 
 	public function test_a_pool_with_no_cost_per_dot_is_unpriced_not_free(): void {
@@ -374,7 +322,7 @@ class CostEngineHeldPricingTest extends TestCase {
 	}
 
 	public function test_a_priced_pool_charges_only_dots_above_its_free_baseline(): void {
-		// Real seeded rate (PC-10): Willpower is 3 XP/dot, 2 free, for vampire.
+		// Real seeded rate: Willpower is 3 XP/dot, 2 free, for vampire.
 		$result = Cost_Engine::price_held_resource_pool( self::def( 'vampire-resources' ), 'Willpower', [ 'permanent' => 5, 'temporary' => 5 ] );
 
 		$this->assertSame( 9, $result['xp'], '(5 - 2 free) * 3/dot' );
@@ -387,12 +335,6 @@ class CostEngineHeldPricingTest extends TestCase {
 		$this->assertSame( 0, $result['xp'] );
 	}
 
-	/**
-	 * PC-10: the real seeded rates match the owner ruling exactly, cited per
-	 * line to its own GV301Source method (point-calculator-design.md §8.1).
-	 * Blood carries no rate at all - Grapevine's own point estimator never
-	 * prices it.
-	 */
 	public function test_pc10_seeded_rates_match_the_owner_ruling(): void {
 		$cases = [
 			[ 'vampire-resources',    'Willpower', 3, 2 ],
@@ -403,10 +345,7 @@ class CostEngineHeldPricingTest extends TestCase {
 			[ 'mage-resources',       'Willpower', 3, 5 ],
 			[ 'changeling-resources', 'Glamour',   3, 4 ],
 			[ 'changeling-resources', 'Willpower', 3, 3 ],
-			// 1.3.2: Banality was unpriced under the GVM path; the declared
-			// `changeling-resources.json` prices it for real (§2 of the 1.3 review index -
-			// "Changeling Banality | 2 (was unpriced) | 1.3.0"), landing here for the first
-			// time via ingestion rather than a GVM/CSV change. No free_dots declared.
+			// Banality was unpriced under the GVM path.
 			[ 'changeling-resources', 'Banality',  2, null ],
 		];
 
@@ -426,9 +365,7 @@ class CostEngineHeldPricingTest extends TestCase {
 		];
 		foreach ( $never_priced as [ $block_slug, $pool_name ] ) {
 			$pool = $this->find_pool( self::def( $block_slug ), $pool_name );
-			// 1.3.2: a declared resource_pool file states `"cost_per_dot": null` explicitly
-			// rather than omitting the key - see the identical note on the trait_list case
-			// above. isset() reads false either way.
+			// A declared resource_pool file states `"cost_per_dot": null` explicitly.
 			$this->assertFalse( isset( $pool->cost_per_dot ), "{$block_slug}.{$pool_name} must stay unpriced" );
 		}
 	}
@@ -493,19 +430,12 @@ class CostEngineHeldPricingTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Key order is not book order (found by 1.2.10's pre-deploy trace, 2026-09-22)
+	// Key order is not book order
 	// -------------------------------------------------------------------------
 
 	/**
-	 * A decoded JSON object keeps whatever key order it was written in, and the real seeded
-	 * ladder comes back as `{"basic":2,"advanced":1,"intermediate":2}` - **advanced before
-	 * intermediate**. Anything that walks that map to derive rung order or to find the rank
-	 * above the ladder gets the wrong answer.
-	 *
-	 * Neither bug was visible in a five-rung total, because addition commutes - which is
-	 * exactly why every existing test passed while a single-level purchase charged 9 for an
-	 * intermediate rung and every above-ceiling pick priced 9 instead of 12. `_meta.ranks` is
-	 * book order and is the only thing entitled to answer "which rank comes next".
+	 * A decoded JSON object keeps whatever key order it was written in, and the real seeded ladder comes back as
+	 * `{"basic":2,"advanced":1,"intermediate":2}`.
 	 *
 	 * @return object A block whose ladder map is deliberately out of book order.
 	 */
@@ -546,7 +476,7 @@ class CostEngineHeldPricingTest extends TestCase {
 	}
 
 	public function test_the_full_ladder_total_is_unchanged_by_key_order(): void {
-		// The total was always right, which is why this class of bug hid: 3+3+6+6+9 either way.
+		// The total was always right.
 		$result = Cost_Engine::price_held_tiered_power( self::out_of_order_block(), [ 'name' => 'Animalism', 'level' => 5 ], true );
 
 		$this->assertSame( 27, $result['xp'] );

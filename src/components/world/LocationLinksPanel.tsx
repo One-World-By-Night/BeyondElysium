@@ -1,8 +1,5 @@
 /**
- * A location's four named links (1.1.0 §3.9 item 2) - owner, domain, haven, based_at -
- * shown in the location editor. Deliberately a fixed-label picker, not the freeform
- * ConnectionManager every other world object gets: a location link is always one of these
- * four exact labels, from a character (a faction, once §3.10 exists).
+ * A location's four named links.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

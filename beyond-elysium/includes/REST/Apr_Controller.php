@@ -16,23 +16,15 @@ use BeyondElysium\Services\Rumor_Generator;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for a chronicle's Action & Rumor configuration and its
- * background-use ledger - one controller because they are one feature
- * (BE_PROCESS/design/background-ledger-apr-design.md): the ledger tracks what a
- * background use spends, the settings decide what a background grants to
- * spend in the first place.
+ * REST controller for a chronicle's Action & Rumor configuration and its background-use ledger.
  */
 class Apr_Controller extends Base_Controller {
 
 	protected $rest_base = 'apr-settings';
 
 	/**
-	 * Registers the settings routes (get/update the chronicle's thirteen APR
-	 * knobs, and the fork-aware background-name picker) and the ledger
-	 * routes (spendable backgrounds, recording/editing/clearing a use).
-	 * Non-numeric ledger path segments are registered before the numeric
-	 * `{id}` route so they are never shadowed by it, the same ordering
-	 * `Plots_Controller` documents for `/my/plots`.
+	 * Registers the settings routes (get/update the chronicle's thirteen APR knobs, and the fork-aware background-name
+	 * picker) and the ledger routes (spendable backgrounds, recording/editing/clearing a use).
 	 */
 	public function register_routes(): void {
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base, [
@@ -110,11 +102,7 @@ class Apr_Controller extends Base_Controller {
 	// --- Settings ---
 
 	/**
-	 * Returns the chronicle's full thirteen-knob Action & Rumor
-	 * configuration - stored values merged with Beyond Elysium's own
-	 * defaults for anything the chronicle has not configured yet. Never
-	 * labeled "Grapevine default" (§1.8): the client shows that distinction
-	 * only via get_background_options()/the Restore Grapevine defaults action.
+	 * Returns the chronicle's full thirteen-knob Action & Rumor configuration.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -132,13 +120,7 @@ class Apr_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Updates any subset of the chronicle's thirteen APR knobs. Reads the
-	 * game's current settings, replaces only the keys present in the
-	 * request within the nested `apr` object, and writes the whole settings
-	 * object back - never a from-scratch payload, so untouched keys (the
-	 * other action knobs, the rumor toggles, extended_health) survive
-	 * (§3.6/§5.6). Validates every field; an invalid value rejects the
-	 * whole request rather than silently dropping it.
+	 * Updates any subset of the chronicle's thirteen APR knobs.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -159,9 +141,7 @@ class Apr_Controller extends Base_Controller {
 			return $validated;
 		}
 
-		// Read-modify-write: the whole `settings` object is preserved, only its `apr`
-		// key's touched sub-fields change. Game::update() itself replaces `settings`
-		// wholesale and stays that way for every OTHER caller - the merge lives here.
+		// Read-modify-write: the whole `settings` object is preserved, only its `apr` key's touched sub-fields change.
 		$settings         = $game->settings ? (array) $game->settings : [];
 		$current_apr      = isset( $settings['apr'] ) ? (array) $settings['apr'] : [];
 		$settings['apr']  = array_merge( $current_apr, $validated );
@@ -182,10 +162,8 @@ class Apr_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns the fork-aware union of every background/influence name across
-	 * this chronicle's creature stacks, for the background_actions picker
-	 * and for validating a save against real catalog names rather than
-	 * Grapevine's own unvalidated free-text InputBox (§1.10/§5.6).
+	 * Returns the fork-aware union of every background/influence name across this chronicle's creature stacks, for the
+	 * background_actions picker and for validating a save against real catalog names.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -201,10 +179,8 @@ class Apr_Controller extends Base_Controller {
 	// --- Ledger ---
 
 	/**
-	 * Returns the backgrounds a character currently holds, each annotated
-	 * with its live budget when the character's most recent allocation
-	 * granted it one. Ownership-filtered exactly like a character's own
-	 * data - the same allocation privacy rule as Plots_Controller (§3.4/§5.8).
+	 * Returns the backgrounds a character currently holds, each annotated with its live budget when the character's most
+	 * recent allocation granted it one.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -219,7 +195,6 @@ class Apr_Controller extends Base_Controller {
 
 	/**
 	 * Returns a character's recorded background uses for one game date.
-	 * Ownership-filtered the same way get_spendable() is.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -239,8 +214,7 @@ class Apr_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Records one background use. A caller without be_manage_characters may
-	 * only record against their own character.
+	 * Records one background use.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -287,12 +261,7 @@ class Apr_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Edits a ledger entry's text, result, or cost. Setting `result` is ST
-	 * adjudication and requires be_manage_plots; setting `text`/`cost` is
-	 * available to be_manage_characters, or to the owning player via
-	 * be_submit_actions while no result has been recorded yet - the same
-	 * "not yet locked" shape Entries_Controller applies to a plain action
-	 * entry once an ST has responded (§5.7).
+	 * Edits a ledger entry's text, result, or cost.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -349,9 +318,7 @@ class Apr_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Deletes one ledger entry - Grapevine's "Clear this use". Available to
-	 * be_manage_characters, or to the owning player via be_submit_actions
-	 * while no result has been recorded yet.
+	 * Deletes one ledger entry.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -383,9 +350,7 @@ class Apr_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Clears every ledger entry for one character, optionally bounded to a
-	 * date range - honest about its scope in both directions, unlike
-	 * Grapevine's own version of this operation (§1.4).
+	 * Clears every ledger entry for one character, optionally bounded to a date range.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -410,8 +375,7 @@ class Apr_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Clears every ledger entry for one game date across the whole
-	 * chronicle - Grapevine's "Clear all for this Date".
+	 * Clears every ledger entry for one game date across the whole chronicle.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -434,10 +398,8 @@ class Apr_Controller extends Base_Controller {
 	// --- internals ---
 
 	/**
-	 * Resolves the game and character named in a request, and checks the
-	 * ownership rule a read-only ledger route needs: a manager sees any
-	 * character, anyone else only their own
-	 * (BE_PROCESS/design/background-ledger-apr-design.md §3.4/§5.8).
+	 * Resolves the game and character named in a request, and checks the ownership rule a read-only ledger route needs: a
+	 * manager sees any character, anyone else only their own.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return true|\WP_Error
@@ -461,22 +423,15 @@ class Apr_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a ledger entry by its plot-entry id, returning a 404 when it
-	 * does not exist, is not a ledger-managed entry, or belongs to a plot in
-	 * another chronicle than the one in the URL. Entry ids run across the
-	 * whole install, and the callers check only the caller's standing in the
-	 * URL's chronicle - without the plot check, a Storyteller of one chronicle
-	 * could adjudicate, rewrite, or delete another's (1.0.0-review F-052).
+	 * Looks up a ledger entry by its plot-entry id, returning a 404 when it does not exist, is not a ledger-managed
+	 * entry, or belongs to a plot in another chronicle than the one in the URL.
 	 *
 	 * @param int    $entry_id
 	 * @param object $game The chronicle the request is served for.
 	 * @return array|\WP_Error
 	 */
 	/**
-	 * Refuses a background-use write outside its game date's downtime window (1.1.0 §3.3) -
-	 * POST, PUT, and DELETE all check the same way, unlike Entries_Controller's own
-	 * edit-narrows-to-closed-only distinction, since the design names no such nuance for
-	 * background uses specifically. Never called for a manager.
+	 * Refuses a background-use write outside its game date's downtime window.
 	 *
 	 * @param int    $game_id
 	 * @param string $game_date `Y-m-d`.
@@ -513,9 +468,7 @@ class Apr_Controller extends Base_Controller {
 		if ( $row && $plot && (int) $plot->game_id === (int) $game->id ) {
 			foreach ( Background_Ledger::entries_for_plot( (int) $row->plot_id ) as $entry ) {
 				if ( (int) $entry['id'] === $entry_id ) {
-					// game_date lives on the plot, not the ledger entry's own JSON - carried
-					// here so a caller can check the downtime window (1.1.0 §3.3) without a
-					// second lookup.
+					// game_date lives on the plot.
 					$entry['game_date'] = $plot->game_date;
 					return $entry;
 				}
@@ -525,9 +478,8 @@ class Apr_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Reports whether the current user owns the character a ledger entry
-	 * belongs to, for the "is this my own not-yet-adjudicated entry" checks
-	 * update_background_use() and delete_background_use() both apply.
+	 * Reports whether the current user owns the character a ledger entry belongs to, for the "is this my own
+	 * not-yet-adjudicated entry" checks update_background_use() and delete_background_use() both apply.
 	 *
 	 * @param array $entry
 	 * @return bool
@@ -538,10 +490,8 @@ class Apr_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Validates an incoming (possibly partial) `apr` settings payload
-	 * against §5.6's rules. Returns the validated, normalized subset on
-	 * success - only the keys actually present in the request, so a
-	 * partial PUT never re-writes an untouched key back to a default.
+	 * Validates an incoming, possibly partial, `apr` settings payload and returns the validated, normalized subset of the
+	 * keys present in the request.
 	 *
 	 * @param array  $incoming
 	 * @param string $game_slug
@@ -615,8 +565,7 @@ class Apr_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a
-	 * WP_Error with a 404 status when no game matches.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

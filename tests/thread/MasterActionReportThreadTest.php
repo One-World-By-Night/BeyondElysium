@@ -14,14 +14,10 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-054 (Pass H intake, `t1-print-reports`, verified). The Master Action Report and
- * the Action and Rumor Report read every action entry as a player's free-text post:
- * - Character came from `Character::find( author_id )`, but `author_id` is the WordPress user
- *   who posted, so the column read "-", or named whichever character's row id matched that user id.
- * - An allocation's budget lines and its Background uses are action entries holding JSON, so the
- *   Action column printed that JSON, while the budget numbers sat in columns marked unmapped.
- * - Result was the first Storyteller response posted after the action anywhere on the plot, so
- *   on a plot where two players act, one player's row showed the answer written for the other.
+ * The master action report: a background use reads as its character's action with the Storyteller's result and budget,
+ * no row shows stored JSON, a post names the poster's character on the plot, on a plot where several players act no one
+ * is handed another's answer, turn-by-turn answers each go to the post they follow, and a budget line nobody used still
+ * prints its numbers.
  */
 class MasterActionReportThreadTest extends WP_UnitTestCase {
 

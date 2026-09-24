@@ -8,20 +8,11 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Static data-access model for saved search queries.
- *
- * Saved_Query is a Database\Manager CRUD model backed by the queries table.
- * Each row is one stored search - an inventory type, match-all/match-any
- * toggle, a JSON conditions payload, and a sort key/direction - scoped to one
- * game. "Most Recent Search" is a special row per (game, user) with
- * is_recent_search = 1, upserted automatically whenever that user runs a
- * query, letting them re-run their last search without saving it explicitly.
  */
 class Saved_Query {
 
 	/**
-	 * Look up a single saved query by its primary key. Returns the row with
-	 * its conditions field decoded and match_all/is_recent_search cast to
-	 * booleans, or null when no query with that ID exists.
+	 * Look up a single saved query by its primary key.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -36,10 +27,6 @@ class Saved_Query {
 
 	/**
 	 * Return a game's saved queries, newest-recent-search first then by name.
-	 * With `$viewer_id`, another user's "Most Recent Search" is left out - a
-	 * recent search is its owner's alone, while named saved queries are shared
-	 * with the chronicle (1.0.0-review F-028). Without it, every row (used when
-	 * deleting a game's content).
 	 *
 	 * @param int      $game_id
 	 * @param int|null $viewer_id
@@ -60,9 +47,7 @@ class Saved_Query {
 	}
 
 	/**
-	 * Insert a new saved query. JSON-encodes the conditions array, defaults
-	 * inventory to 'char' and sort_direction to 'asc', and defaults
-	 * created_by to the current user.
+	 * Insert a new saved query.
 	 *
 	 * @param array $data
 	 * @return int|false
@@ -85,9 +70,7 @@ class Saved_Query {
 	}
 
 	/**
-	 * Update a saved query. Writes only the fields present in $data,
-	 * JSON-encoding an array conditions payload and normalizing match_all to
-	 * an integer, then stamps updated_at.
+	 * Update a saved query.
 	 *
 	 * @param int   $id
 	 * @param array $data
@@ -115,9 +98,7 @@ class Saved_Query {
 	}
 
 	/**
-	 * Delete a single saved query by its primary key, including a
-	 * recent-search row if that is what the ID points to. Does not cascade to
-	 * anything else, and returns false if no row with that ID exists.
+	 * Delete a single saved query by its primary key, including a recent-search row if that is what the ID points to.
 	 *
 	 * @param int $id
 	 * @return bool
@@ -127,10 +108,7 @@ class Saved_Query {
 	}
 
 	/**
-	 * Upsert this user's "Most Recent Search" row for a game. Updates the
-	 * existing recent-search row for this (game, user) pair when one exists,
-	 * or creates it otherwise, so an ST can re-run their last search without
-	 * having explicitly saved it.
+	 * Upsert this user's "Most Recent Search" row for a game.
 	 *
 	 * @param int    $game_id
 	 * @param int    $wp_user_id
@@ -165,8 +143,6 @@ class Saved_Query {
 			self::create( $data );
 		}
 
-		// Two first runs at once each find no row and each make one. Every run keeps only the
-		// oldest, so however they interleave, one is left (1.0.0-review F-092).
 		$kept = $oldest();
 		$wpdb->query( $wpdb->prepare(
 			"DELETE FROM {$table} WHERE game_id = %d AND created_by = %d AND is_recent_search = 1 AND id <> %d",
@@ -178,9 +154,8 @@ class Saved_Query {
 	}
 
 	/**
-	 * Decode a row's conditions JSON field into an array, and cast its
-	 * match_all and is_recent_search fields to booleans, in place. Passes
-	 * null rows through unchanged.
+	 * Decode a row's conditions JSON field into an array, and cast its match_all and is_recent_search fields to booleans,
+	 * in place.
 	 *
 	 * @param object|null $row
 	 * @return object|null

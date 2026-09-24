@@ -9,14 +9,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The acceptance gate for GS-3 (guided-chronicle-setup-design.md §6.2):
- * `enabled_stacks` is a creation and picker filter, never a data filter. A
- * chronicle enabled to `['vampire']` that already holds a `werewolf`
- * character must still load it, resolve its template, list it, render its
- * sheet, and accept an approval against it - while the create picker offers
- * one option and a `werewolf` POST returns 400.
- *
- * @see BE_PROCESS/design/guided-chronicle-setup-design.md §6.2
+ * `enabled_stacks` is a creation and picker filter.
  */
 class EnabledStacksFilterTest extends WP_UnitTestCase {
 
@@ -36,8 +29,7 @@ class EnabledStacksFilterTest extends WP_UnitTestCase {
 			'created_by' => $this->manager_id,
 		] );
 
-		// Pre-existing werewolf character, created before this chronicle ever narrows
-		// its enabled_stacks - the exact scenario the binding rule exists to protect.
+		// Pre-existing werewolf character, created before this chronicle ever narrows its enabled_stacks.
 		$this->werewolf_character_id = Character::create( [
 			'name'       => 'Pre-existing Werewolf',
 			'owner_slug' => $this->game_slug,
@@ -121,9 +113,7 @@ class EnabledStacksFilterTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The merge helper lives in `Games_Controller::update_item()`, not the
-	 * model - `Game::update()` itself still writes `settings` wholesale by
-	 * design (R6), so this exercises the real REST path a UI actually uses.
+	 * The merge helper lives in `Games_Controller::update_item()`.
 	 */
 	public function test_saving_enabled_stacks_via_rest_does_not_clobber_a_sibling_settings_key(): void {
 		wp_set_current_user( $this->manager_id );

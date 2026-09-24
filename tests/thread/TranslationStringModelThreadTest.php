@@ -7,20 +7,13 @@ use BeyondElysium\Models\Translation_String;
 use WP_UnitTestCase;
 
 /**
- * B2 (1.2.0 releases/1.2.0-design-workflow.md §4, §5.3): Models\Translation_String's real CRUD,
- * its Name_Key-keyed lookups, upsert_from_scan()'s first_seen/last_seen discipline, and
- * list_for_review()/count_for_review()'s full filter vocabulary against real rows - not
- * hand-built fixtures the filters could pass against by construction.
- *
- * @see BE_PROCESS/releases/1.2.0-design-workflow.md §4, §5.3, §6
+ * Models\Translation_String's real CRUD, its Name_Key-keyed lookups, upsert_from_scan()'s first_seen/last_seen
+ * discipline, and list_for_review()/count_for_review()'s full filter vocabulary against real rows.
  */
 class TranslationStringModelThreadTest extends WP_UnitTestCase {
 
 	public function test_create_derives_source_key_from_source_text(): void {
-		// A distinctive fixture name, not a real catalog term: B8's migration now runs at
-		// bootstrap and permanently indexes the real catalog (including the real "Fortitude")
-		// before any test method runs, so a fixture sharing a real term's name now collides
-		// with it - found live, this exact line, after B8 landed.
+		// A distinctive fixture name.
 		$id  = Translation_String::create( [ 'source_text' => 'The Derived Key Fixture' ] );
 		$row = Translation_String::find( (int) $id );
 		$this->assertSame( 'derived key fixture', $row->source_key );
@@ -76,8 +69,8 @@ class TranslationStringModelThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The real point of upsert_from_scan(): a second scan of an already-known term refreshes
-	 * used_in/last_seen but never disturbs first_seen, and never creates a second row.
+	 * The real point of upsert_from_scan(): a second scan of an already-known term refreshes used_in/last_seen but never
+	 * disturbs first_seen.
 	 */
 	public function test_upsert_from_scan_refreshes_an_existing_row_without_duplicating_it(): void {
 		$first_id = Translation_String::upsert_from_scan( 'Rescan Me', [ 'block-a' ] );

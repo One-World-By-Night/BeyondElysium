@@ -1,8 +1,5 @@
 /**
  * Admin page for chronicle-scoped access control.
- * Covers chronicle membership and per-member roles, the site-wide
- * accessSchema toggle, each chronicle's accessSchema role path, and
- * per-chronicle notification settings.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -22,7 +19,9 @@ import './Admin.css';
 
 const ROLES: GameMemberRole[] = [ 'hst', 'ast', 'narrator', 'boons', 'player' ];
 
-/** Each role as the page names it, not its stored key. */
+/**
+ * Each role as the page names it.
+ */
 const ROLE_LABEL: Record< GameMemberRole, string > = {
 	hst: __( 'HST', 'beyond-elysium' ),
 	ast: __( 'AST', 'beyond-elysium' ),
@@ -34,9 +33,6 @@ const SEARCH_DEBOUNCE_MS = 300;
 
 /**
  * Renders the Chronicle Access admin screen.
- * Lists chronicles and their members, and lets staff toggle accessSchema,
- * edit a chronicle's accessSchema role path, toggle its notification
- * setting, change or remove a member's role, and add new members.
  */
 export function AdminChronicleAccess() {
 	const [ games, setGames ] = useState< Game[] >( [] );
@@ -63,8 +59,6 @@ export function AdminChronicleAccess() {
 
 	/**
 	 * Fetches the list of chronicles from the API.
-	 * Populates the chronicle dropdown and, when nothing is selected yet,
-	 * defaults the selection to the first chronicle returned.
 	 */
 	function loadGames() {
 		api.games
@@ -93,8 +87,6 @@ export function AdminChronicleAccess() {
 
 	/**
 	 * Fetches the membership list for one chronicle.
-	 * Does nothing when no chronicle slug is given, and tracks a loading
-	 * flag and any error while the request is in flight.
 	 */
 	function loadMembers( gameSlug: string ) {
 		if ( ! gameSlug ) {
@@ -156,8 +148,6 @@ export function AdminChronicleAccess() {
 
 	/**
 	 * Enables or disables the site-wide accessSchema integration.
-	 * Sends the new setting to the API and stores the returned settings
-	 * object, tracking a saving flag and any error along the way.
 	 */
 	async function toggleAsc( enabled: boolean ) {
 		setAscSaving( true );
@@ -179,8 +169,6 @@ export function AdminChronicleAccess() {
 
 	/**
 	 * Turns the uninstall delete-data behavior on or off, site-wide.
-	 * Off (the default) means a plain uninstall keeps every chronicle's
-	 * data untouched.
 	 */
 	async function toggleDeleteOnUninstall( enabled: boolean ) {
 		setDataSaving( true );
@@ -200,8 +188,8 @@ export function AdminChronicleAccess() {
 	}
 
 	/**
-	 * Fetches a full export of every plugin table and hands it to the
-	 * browser as a downloaded JSON file, timestamped in its name.
+	 * Fetches a full export of every plugin table and hands it to the browser as a downloaded JSON file, timestamped in
+	 * its name.
 	 */
 	async function exportData() {
 		setExporting( true );
@@ -239,8 +227,6 @@ export function AdminChronicleAccess() {
 
 	/**
 	 * Saves the edited accessSchema role path for the chronicle being edited.
-	 * Trims the draft value, persists it through the API, closes the edit
-	 * form on success, and reloads the chronicle list to reflect the change.
 	 */
 	async function saveRolePath() {
 		setAscRolePathSaving( true );
@@ -265,8 +251,6 @@ export function AdminChronicleAccess() {
 
 	/**
 	 * Turns a chronicle's approval/rejection email notifications on or off.
-	 * Persists the new setting through the API and reloads the chronicle
-	 * list so the change is reflected immediately.
 	 */
 	async function toggleNotifications( game: Game, enabled: boolean ) {
 		setNotificationsSaving( true );
@@ -290,8 +274,6 @@ export function AdminChronicleAccess() {
 
 	/**
 	 * Changes one member's role within the selected chronicle.
-	 * Persists the new role through the API and reloads the member list
-	 * to reflect the change.
 	 */
 	async function changeRole( wpUserId: number, role: GameMemberRole ) {
 		setError( null );
@@ -310,8 +292,6 @@ export function AdminChronicleAccess() {
 
 	/**
 	 * Removes one member from the selected chronicle after confirmation.
-	 * Prompts the viewer to confirm, then calls the API to drop the
-	 * member's chronicle-scoped access and reloads the member list.
 	 */
 	async function removeMember( wpUserId: number, name: string | null ) {
 		// eslint-disable-next-line no-alert
@@ -640,8 +620,6 @@ export function AdminChronicleAccess() {
 
 /**
  * Form for searching WordPress users and adding one to a chronicle.
- * Debounces a search query against the user search API, lets the viewer
- * pick a role, and adds the selected user to the chronicle at that role.
  */
 function AddMemberForm( {
 	gameSlug,
@@ -686,8 +664,6 @@ function AddMemberForm( {
 
 	/**
 	 * Adds the given WordPress user to the chronicle at the selected role.
-	 * Calls the API and notifies the parent on success, or reports the
-	 * error and re-enables the form on failure.
 	 */
 	async function add( wpUserId: number ) {
 		setSubmitting( true );

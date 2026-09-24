@@ -11,10 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-034. A chronicle's copy of a catalog block - made the first time the chronicle
- * changes the block, or sets one approval rule on it - was frozen: no plugin update and no
- * administrator's catalog fix ever reached it again. A copy now keeps what the chronicle changed
- * and takes everything else from the catalog, at every update and every catalog save.
+ * A chronicle's copy of a catalog block keeps what the chronicle changed and takes every later catalog update.
  */
 class ForkCatalogUpdateThreadTest extends WP_UnitTestCase {
 
@@ -42,7 +39,7 @@ class ForkCatalogUpdateThreadTest extends WP_UnitTestCase {
 	 * @return array<string,mixed>
 	 */
 	private function definition( string $game_slug = '' ): array {
-		return json_decode( wp_json_encode( Schema_Block::find_for_game( 'met-merits', $game_slug )->definition ), true );
+		return json_decode( wp_json_encode( Schema_Block::find_for_game( 'vampire-merits', $game_slug )->definition ), true );
 	}
 
 	/**
@@ -53,14 +50,16 @@ class ForkCatalogUpdateThreadTest extends WP_UnitTestCase {
 		return array_column( $definition['items'], null, 'name' );
 	}
 
-	/** Writes a copy's definition as an old copy would have it, recording nothing. */
+	/**
+	 * Writes a copy's changed definition, recording nothing.
+	 */
 	private function age_copy( callable $change ): void {
 		global $wpdb;
 		$definition = $change( $this->definition( $this->slug ) );
 		$wpdb->update(
 			$wpdb->prefix . 'be_schema_blocks',
 			[ 'definition' => wp_json_encode( $definition ) ],
-			[ 'slug' => 'met-merits', 'game_slug' => $this->slug ]
+			[ 'slug' => 'vampire-merits', 'game_slug' => $this->slug ]
 		);
 	}
 
@@ -75,7 +74,7 @@ class ForkCatalogUpdateThreadTest extends WP_UnitTestCase {
 		$definition['items'][0]['cost'] = '7';
 		$definition['items'][]          = [ 'name' => 'Thread Chronicle Merit', 'cost' => '2' ];
 
-		$response = $this->send( $this->hst, 'PUT', "/be/v1/{$this->slug}/schema-blocks/met-merits", [ 'definition' => $definition ] );
+		$response = $this->send( $this->hst, 'PUT', "/be/v1/{$this->slug}/schema-blocks/vampire-merits", [ 'definition' => $definition ] );
 		$this->assertSame( 200, $response->get_status() );
 		return [ $changed, $untouched, $other ];
 	}
@@ -83,7 +82,6 @@ class ForkCatalogUpdateThreadTest extends WP_UnitTestCase {
 	public function test_a_plugin_update_reaches_a_chronicles_copy_and_keeps_what_it_changed(): void {
 		[ $changed, $untouched, $other ] = $this->chronicle_edits_merits();
 
-		// A catalog fix since the copy was made: one merit's note, and a merit the copy lacks.
 		$this->age_copy( static function ( array $definition ) use ( $untouched, $other ) {
 			foreach ( $definition['items'] as $i => $item ) {
 				if ( $item['name'] === $untouched ) {
@@ -115,7 +113,7 @@ class ForkCatalogUpdateThreadTest extends WP_UnitTestCase {
 				$definition['items'][ $i ]['description'] = [ 'description' => '<p>House rule for everyone.</p>' ];
 			}
 		}
-		$this->assertSame( 200, $this->send( $admin, 'PUT', '/be/v1/schema-blocks/met-merits', [ 'definition' => $definition ] )->get_status() );
+		$this->assertSame( 200, $this->send( $admin, 'PUT', '/be/v1/schema-blocks/vampire-merits', [ 'definition' => $definition ] )->get_status() );
 
 		$copy = self::items( $this->definition( $this->slug ) );
 		$this->assertSame( '<p>House rule for everyone.</p>', $copy[ $untouched ]['description']['description'] ?? null );
@@ -125,7 +123,7 @@ class ForkCatalogUpdateThreadTest extends WP_UnitTestCase {
 	public function test_an_approval_rule_on_a_copy_survives_a_plugin_update(): void {
 		$merit    = $this->definition()['items'][0]['name'];
 		$response = $this->send( $this->hst, 'POST', "/be/v1/{$this->slug}/approval-rules", [
-			'block_slug' => 'met-merits', 'target_type' => 'item', 'target_name' => $merit, 'approval' => 'st', 'reason' => 'Ask first',
+			'block_slug' => 'vampire-merits', 'target_type' => 'item', 'target_name' => $merit, 'approval' => 'st', 'reason' => 'Ask first',
 		] );
 		$this->assertSame( 201, $response->get_status() );
 
@@ -137,14 +135,14 @@ class ForkCatalogUpdateThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_copy_made_before_copies_recorded_changes_keeps_its_differences(): void {
-		// A copy as the old code left it: the whole definition, nothing recorded.
+		// A copy holding the whole definition, with nothing recorded.
 		$copy                     = $this->definition();
 		$merit                    = $copy['items'][0]['name'];
 		$copy['items'][0]['cost'] = '11';
 		global $wpdb;
-		$global = Schema_Block::find_by_slug( 'met-merits' );
+		$global = Schema_Block::find_by_slug( 'vampire-merits' );
 		$wpdb->insert( $wpdb->prefix . 'be_schema_blocks', [
-			'slug' => 'met-merits', 'game_slug' => $this->slug, 'name' => $global->name, 'section_type' => 'trait_list',
+			'slug' => 'vampire-merits', 'game_slug' => $this->slug, 'name' => $global->name, 'section_type' => 'trait_list',
 			'definition' => wp_json_encode( $copy ), 'is_system' => 0, 'storyteller_only' => 0, 'version' => 1,
 			'created_by' => 1, 'created_at' => current_time( 'mysql' ), 'updated_at' => current_time( 'mysql' ),
 		] );

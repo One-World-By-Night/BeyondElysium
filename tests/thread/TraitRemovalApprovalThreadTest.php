@@ -10,15 +10,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * A player removing a discipline (or any tiered_power/trait_list entry) from their own
- * character goes through the same pending-change pipeline as adding one - `remove_trait` is
- * a real member of `Change_Validator::REST_CHANGE_TYPES`, and `TraitListEditor.tsx`/
- * `TieredPowerEditor.tsx` mark a row `_removed` locally rather than deleting it outright;
- * `computeChanges.ts` turns that into a `remove_trait` entry on submit, never a direct write.
- *
- * This pins the two things that make that safe: the removal sits `pending` and the sheet is
- * completely unaffected until a Storyteller reviews it, and rejecting it leaves the
- * discipline exactly where it was.
+ * A player removing a discipline (or any tiered_power/trait_list entry) from their own character goes through the
+ * same pending-change pipeline as adding one.
  */
 class TraitRemovalApprovalThreadTest extends WP_UnitTestCase {
 
@@ -43,7 +36,7 @@ class TraitRemovalApprovalThreadTest extends WP_UnitTestCase {
 			'sheet_data' => [
 				'vampire-identity'     => [ 'Clan' => 'Brujah' ],
 				'vampire-disciplines'  => [ [ 'name' => 'Celerity', 'level' => 1 ] ],
-				'met-merits'           => [ [ 'name' => 'Iron Will' ] ],
+				'vampire-merits'           => [ [ 'name' => 'Iron Will' ] ],
 			],
 		] );
 
@@ -128,12 +121,14 @@ class TraitRemovalApprovalThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'rejected', (string) Change::find( $change_id )->status );
 	}
 
-	/** The same pipeline for an ordinary trait_list entry, not only a tiered_power. */
+	/**
+	 * The same pipeline for an ordinary trait_list entry.
+	 */
 	public function test_removing_a_trait_list_entry_also_goes_through_approval(): void {
-		$change_id = $this->propose_removal( 'met-merits', [ 'name' => 'Iron Will' ] );
+		$change_id = $this->propose_removal( 'vampire-merits', [ 'name' => 'Iron Will' ] );
 
 		$sheet_before = Character::find( $this->character_id )->sheet_data;
-		$this->assertSame( [ 'Iron Will' ], array_column( $sheet_before['met-merits'], 'name' ) );
+		$this->assertSame( [ 'Iron Will' ], array_column( $sheet_before['vampire-merits'], 'name' ) );
 
 		wp_set_current_user( $this->hst_id );
 		$request = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/changes/{$change_id}" );
@@ -141,6 +136,6 @@ class TraitRemovalApprovalThreadTest extends WP_UnitTestCase {
 		$this->dispatch( $request );
 
 		$sheet_after = Character::find( $this->character_id )->sheet_data;
-		$this->assertSame( [], $sheet_after['met-merits'] );
+		$this->assertSame( [], $sheet_after['vampire-merits'] );
 	}
 }

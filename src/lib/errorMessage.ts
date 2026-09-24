@@ -1,8 +1,6 @@
 /**
- * Surfaces the server's own REST error message directly, falling back to a caller-given
- * message when the caught value carries none - the exact same shape 30 components each
- * hand-rolled independently (some with a fixed fallback baked in, some parameterized)
- * until this was extracted (1.1.1 audit).
+ * Surfaces the server's own REST error message directly, falling back to a caller-given message when the caught value
+ * carries none.
  */
 export interface RestError {
 	message?: string;

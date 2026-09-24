@@ -1,9 +1,5 @@
 /**
- * Site-wide brand accent default (1.2.7-design-workflow.md §E1/§E4) - the fallback
- * every chronicle's own Chronicle Setup accent color (AdminChronicleSetup.tsx) falls
- * through to when it sets none of its own. be_manage_games only, matching AI Assist's
- * own site-wide tab - an administrator's own call, since it applies across every
- * chronicle on the site by default.
+ * Site-wide brand accent default.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

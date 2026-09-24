@@ -13,10 +13,7 @@ use BeyondElysium\Services\Catalog_Reader;
 use WP_UnitTestCase;
 
 /**
- * 1.3.4: a brand-new install starts on the per-creature catalog. `declare_fresh_install()` is what
- * activation calls before it seeds anything, so stacks, templates and demo characters come up on the
- * per-creature blocks and there is nothing to re-key. An install that already exists is never flipped
- * by it: those stay where they are until somebody runs `apply()`.
+ * A new install is marked as on the per-creature catalog.
  */
 class FreshInstallDeclaredThreadTest extends WP_UnitTestCase {
 
@@ -27,20 +24,14 @@ class FreshInstallDeclaredThreadTest extends WP_UnitTestCase {
 		if ( ! Catalog_Reader::available() ) {
 			$this->markTestSkipped( 'no declared catalog in this checkout' );
 		}
-		// This database's plugin tables outlive a run, so start from an empty roster and a legacy
-		// install (both rolled back with the test).
 		global $wpdb;
 		$wpdb->query( 'DELETE FROM ' . Manager::table( 'characters' ) );
 		delete_option( Catalog_Cutover::OPTION );
-		delete_option( Catalog_Cutover::RECORD_OPTION );
-		Catalog_Cutover::reset_cache();
 	}
 
 	public function tearDown(): void {
 		delete_option( Catalog_Cutover::OPTION );
-		delete_option( Catalog_Cutover::RECORD_OPTION );
 		Option_Lock::release( Catalog_Cutover::LOCK );
-		Catalog_Cutover::reset_cache();
 		parent::tearDown();
 	}
 
@@ -51,43 +42,31 @@ class FreshInstallDeclaredThreadTest extends WP_UnitTestCase {
 		return array_column( (array) $found->stack_definition->sections, 'block_slug' );
 	}
 
-	public function test_a_new_install_is_declared_and_says_so(): void {
+	public function test_a_new_install_is_marked(): void {
 		$this->assertFalse( Catalog_Cutover::is_declared() );
 
 		$this->assertTrue( Catalog_Cutover::declare_fresh_install() );
 
 		$this->assertTrue( Catalog_Cutover::is_declared() );
-		$status = Catalog_Cutover::status();
-		$this->assertTrue( $status['declared'] );
-		$this->assertTrue( $status['fresh_install'] );
-		$this->assertSame( BE_VERSION, $status['plugin_version'] );
-		$this->assertNotNull( $status['applied_at'] );
-		$this->assertSame( 0, $status['characters_rekeyed'] );
 	}
 
 	public function test_stacks_seeded_afterwards_name_only_per_creature_blocks(): void {
-		// The control: on a legacy install the same seeding names the shared blocks, so the
-		// assertions below cannot pass by accident.
-		Seeder::seed_creature_stacks();
-		$this->assertContains( 'met-abilities', $this->sections( 'vampire' ) );
-
 		Catalog_Cutover::declare_fresh_install();
 		Seeder::seed_creature_stacks();
 
 		foreach ( self::STACKS as $stack ) {
-			// What a stack's catalog retired is that stack's own: `werewolf-rites` is retired for Fera
-			// and live for Werewolf.
-			$retired  = array_keys( Catalog_Cutover::replacement_map( $stack ) );
+			// What a stack replaced is that stack's own: `werewolf-rites` is replaced for Fera and kept for Werewolf.
+			$replaced = array_keys( Catalog_Reader::replacement_maps()[ $stack ] ?? [] );
 			$sections = $this->sections( $stack );
-			$this->assertContains( 'met-abilities', $retired, $stack );
+			$this->assertContains( 'met-abilities', $replaced, $stack );
 			$this->assertNotEmpty( $sections, $stack );
-			$this->assertSame( [], array_values( array_intersect( $sections, $retired ) ), "{$stack} still names a retired block" );
+			$this->assertSame( [], array_values( array_intersect( $sections, $replaced ) ), "{$stack} still names a replaced block" );
 		}
 		$this->assertContains( 'vampire-abilities', $this->sections( 'vampire' ) );
 		$this->assertContains( 'fera-rites', $this->sections( 'fera' ) );
 	}
 
-	public function test_an_install_that_already_holds_a_character_is_never_flipped(): void {
+	public function test_an_install_that_already_holds_a_character_is_not_marked(): void {
 		Game::create( [ 'slug' => 'fresh-guard', 'name' => 'Fresh Guard' ] );
 		Character::create( [
 			'name' => 'Already Here', 'stack_slug' => 'vampire', 'owner_type' => 'chronicle', 'owner_slug' => 'fresh-guard', 'status' => 'active',
@@ -97,19 +76,13 @@ class FreshInstallDeclaredThreadTest extends WP_UnitTestCase {
 		$this->assertFalse( Catalog_Cutover::declare_fresh_install() );
 
 		$this->assertFalse( Catalog_Cutover::is_declared() );
-		$this->assertFalse( get_option( Catalog_Cutover::RECORD_OPTION ) );
 	}
 
-	public function test_an_install_that_is_already_declared_keeps_its_own_record(): void {
+	public function test_an_install_that_is_already_marked_is_left_as_it_is(): void {
 		update_option( Catalog_Cutover::OPTION, 'declared', true );
-		update_option( Catalog_Cutover::RECORD_OPTION, [ 'applied_at' => '2026-09-23T00:00:00+00:00', 'actor' => 7, 'plugin_version' => '1.3.3' ], false );
 
 		$this->assertFalse( Catalog_Cutover::declare_fresh_install() );
-
-		$record = get_option( Catalog_Cutover::RECORD_OPTION );
-		$this->assertSame( 7, $record['actor'] );
-		$this->assertArrayNotHasKey( 'fresh_install', $record );
-		$this->assertFalse( Catalog_Cutover::status()['fresh_install'] );
+		$this->assertTrue( Catalog_Cutover::is_declared() );
 	}
 
 	public function test_a_build_without_a_declared_catalog_leaves_the_install_alone(): void {
@@ -123,24 +96,28 @@ class FreshInstallDeclaredThreadTest extends WP_UnitTestCase {
 		$this->assertFalse( Catalog_Cutover::is_declared() );
 	}
 
-	public function test_a_new_install_has_no_earlier_state_to_roll_back_to(): void {
-		Catalog_Cutover::declare_fresh_install();
-		$actor = self::factory()->user->create( [ 'role' => 'administrator' ] );
-
-		$result = Catalog_Cutover::rollback( $actor );
-
-		$this->assertSame( 'started_declared', $result['status'] );
+	public function test_ensure_declared_marks_an_empty_install_and_leaves_a_marked_one(): void {
+		$this->assertSame( [ 'status' => 'marked' ], Catalog_Cutover::ensure_declared() );
 		$this->assertTrue( Catalog_Cutover::is_declared() );
-		$this->assertTrue( Catalog_Cutover::status()['fresh_install'] );
+
+		$this->assertSame( [ 'status' => 'already_declared' ], Catalog_Cutover::ensure_declared() );
 	}
 
-	public function test_a_switched_install_does_not_read_as_a_new_one(): void {
-		$actor = self::factory()->user->create( [ 'role' => 'administrator' ] );
-		Catalog_Cutover::apply( $actor );
+	public function test_a_refusal_is_worded_for_each_reason(): void {
+		$this->assertStringContainsString( 'catalog files are missing', Catalog_Cutover::refusal_message( [ 'status' => 'refused', 'reason' => 'no_declared_catalog' ] ) );
+		$this->assertStringContainsString( 'already running', Catalog_Cutover::refusal_message( [ 'status' => 'locked' ] ) );
+		$this->assertStringContainsString( 'vampire -> vampire-abilities', Catalog_Cutover::refusal_message( [ 'status' => 'refused', 'reason' => 'declared_blocks_missing', 'missing' => [ 'vampire -> vampire-abilities' ] ] ) );
+		$this->assertStringContainsString( '3 characters exist but only 1 belong', Catalog_Cutover::refusal_message( [ 'status' => 'refused', 'reason' => 'characters_outside_any_chronicle', 'on_install' => 3, 'planned' => 1 ] ) );
+		$this->assertStringContainsString( 'character 7: boom', Catalog_Cutover::refusal_message( [ 'status' => 'partial', 'failed' => [ 7 => [ 'reason' => 'boom' ] ] ] ) );
 
-		$status = Catalog_Cutover::status();
-
-		$this->assertTrue( $status['declared'] );
-		$this->assertFalse( $status['fresh_install'] );
+		$gaps = [];
+		for ( $i = 1; $i <= 7; $i++ ) {
+			$gaps[] = [ 'character' => "Char {$i}", 'game' => 'g', 'name' => "Entry {$i}", 'block_to' => 'vampire-abilities' ];
+		}
+		$message = Catalog_Cutover::refusal_message( [ 'status' => 'refused', 'reason' => 'retention_gaps', 'retention_gaps' => $gaps ] );
+		$this->assertStringContainsString( '7 held entries would be lost', $message );
+		$this->assertStringContainsString( 'Char 1 (g): Entry 1 is not in vampire-abilities', $message );
+		$this->assertStringContainsString( 'and 2 more', $message );
+		$this->assertStringNotContainsString( 'Char 6', $message, 'only the first five are named' );
 	}
 }

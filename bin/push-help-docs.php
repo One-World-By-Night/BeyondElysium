@@ -1,15 +1,7 @@
 <?php
 /**
- * Creates or updates one BetterDocs "docs" post per entry in /tmp/help-docs.json (produced
- * by bin/sync-help-docs.js), all under a "Help" doc_category (created on first run), using
- * the same author and post_status the site's existing 4 top-level guide docs already use.
- * Idempotent by slug: re-running this after a content fix updates the matching post in
- * place rather than duplicating it.
- *
- * Run on the target site only, over SSH (see dev/ssh-to-beyondelysium.sh):
- *   1. scp dist/help-docs.json to /tmp/help-docs.json
- *   2. scp this file to /tmp/push-help-docs.php
- *   3. wp eval-file /tmp/push-help-docs.php
+ * Creates or updates one BetterDocs "docs" post per entry in /tmp/help-docs.json (produced by bin/sync-help-docs.js),
+ * all under a "Help" doc_category created on first run; idempotent by slug.
  */
 
 $json_path = '/tmp/help-docs.json';

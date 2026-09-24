@@ -1,13 +1,6 @@
 /**
- * The Chronicle Setup checklist (GS-5, guided-chronicle-setup-design.md §6.4; one folding list
- * since 1.3.6): a chronicle picker plus one status row per thing to set up, each computed live
- * server-side. No completion state of any kind is stored here or anywhere else (§5.5) - every
- * render re-fetches, and a row that goes from green to amber (an AST removed, say) is reflected
- * immediately, not on some later "recheck."
- *
- * A row for a page elsewhere links to it. A row for a setting on this page opens its controls
- * beneath it: open while the row needs attention, folded otherwise, and the viewer's own toggle
- * wins from then on.
+ * The Chronicle Setup checklist: a chronicle picker plus one status row per thing to set up, each computed live
+ * server-side.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf, _n } from '@wordpress/i18n';
@@ -37,10 +30,7 @@ const STATUS_LABEL: Record< SetupStatusItem[ 'status' ], string > = {
 };
 
 /**
- * Renders one checklist row: its status pill, title and detail, and one action - a **Go** link to
- * the page that does the job, or a button that opens this row's own controls (`panel`) beneath it.
- * A row the viewer cannot act on renders greyed, with its status still visible - useful even when
- * it cannot be changed from here. `children`, when given, replaces the action outright.
+ * Renders one checklist row: its status pill, title and detail, and one action.
  */
 function StatusRow( {
 	item,
@@ -186,9 +176,7 @@ export function AdminChronicleSetup() {
 	const currentGame = games.find( ( g ) => g.slug === gameSlug ) ?? null;
 
 	/**
-	 * Keeps this page's copy of a chronicle current with what the server just saved, so the
-	 * next save and the pickers never work from the settings the page first loaded with
-	 * (1.0.0-review F-066).
+	 * Keeps this page's copy of a chronicle current with what the server just saved.
 	 */
 	function applySaved( saved: Game ) {
 		setGames( ( prev ) =>
@@ -198,7 +186,9 @@ export function AdminChronicleSetup() {
 		reload();
 	}
 
-	/** A save that failed says so, rather than leaving the control as if it took (1.0.0-review F-106). */
+	/**
+	 * A save that failed says so.
+	 */
 	function saveFailed( error: unknown ) {
 		setSavingRow( null );
 		setSaveError(
@@ -227,9 +217,6 @@ export function AdminChronicleSetup() {
 			.catch( saveFailed );
 	}
 
-	// 1.2.7-design-workflow.md §E5 - same narrow be_manage_chronicle_setup route as
-	// saveStacks()/saveApproval() above, not saveExpandedPlots()'s full be_manage_games
-	// update(). An empty string clears the override (falls through to the site default).
 	function saveAccentColor( color: string ) {
 		setSavingRow( 'accent_color' );
 		setSaveError( null );
@@ -269,8 +256,7 @@ export function AdminChronicleSetup() {
 			.catch( saveFailed );
 	}
 
-	// 1.3.4: one purchase-list switch. Only the area being switched is sent, so the server keeps the
-	// other two exactly as they were.
+	// One purchase-list switch.
 	function savePurchaseScope( area: PurchaseArea, on: boolean ) {
 		setSavingRow( `purchase:${ area }` );
 		setSaveError( null );

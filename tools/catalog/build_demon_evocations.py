@@ -1,35 +1,25 @@
 """Restructures samples/research/demon/owbn/lores.json (the Demon: The Fallen
 Lore/Evocation extraction from the OWBN Fallen Genre Packet, 2021) into
-data/catalog/blocks/demon-evocations.json, conforming to
-BE_PROCESS/reference/CATALOG-JSON-FORMAT.md §4.2 (tiered_power, the
+data/catalog/blocks/demon-evocations.json, a tiered_power block (the
 _meta/levels/elder shape).
 
-Offline, one-time tooling. Not part of the plugin, not run at runtime, not
-run by bin/verify. Kept here so the method is reproducible and reviewable,
-matching tools/grimoire/'s precedent.
+Offline tooling: not part of the plugin, not run at runtime, not run by
+bin/verify.
 
 Requires the private research file at samples/research/demon/owbn/lores.json
-(never committed, never shipped) - a sibling repo-root directory to code/.
+(never committed, never shipped), a sibling directory of code/.
 
 Ladder: every House Lore has 2 Basic + 2 Intermediate + 1 Advanced Evocation
-(ladder 2/2/1 = 5, matching every other tiered_power block measured for the
-1.2.10 pilot) plus one named "Visage" ultimate power - the House Lore's own
-Advanced-tier signature ability, named after a Mesopotamian deity
-(e.g. "Bel, the Visage of the Celestials"). The two Common Lores (Fundament,
-Humanity) have no Visage: 5 Evocations, no elder pool.
+(ladder 2/2/1 = 5) plus one named "Visage" ultimate power, the House Lore's own
+Advanced-tier signature ability, named after a Mesopotamian deity (e.g. "Bel,
+the Visage of the Celestials"). The two Common Lores (Fundament, Humanity) have
+no Visage: 5 Evocations, no elder pool.
 
-Two of the 23 Lores carry more than the expected 6 (or 5) real named powers -
-Lore of the Winds (7: an extra "Immune to Falling Damage") and Lore of the
-Beast (8: "Previously Published MET Animal Forms" and "Animal Characteristics"
-beyond the normal Advanced slot). These are real content the extraction found
-in the book, not noise - confirmed by reading the source PDF directly for
-both (OWBN0052-Demon-Fallen Genre-2021.pdf, printed p. 66-69 and 105-109).
-Rather than guess which item is "the real" Advanced Evocation and discard or
-misfile the rest, the first two Basic / first two Intermediate / first
-Advanced items (in the source's own printed order) fill the declared 2/2/1
-ladder, the Visage goes to elder.visage as usual, and the genuine extra
-item(s) go to elder.bonus - a rank outside the ladder, so no orphan and no
-invented ceiling. See the 1.3.0 release report for the full reasoning.
+Lore of the Winds (7 powers) and Lore of the Beast (8 powers) carry more than
+the expected 6 (or 5). The first two Basic, first two Intermediate and first
+Advanced items, in the source's printed order, fill the 2/2/1 ladder; the
+Visage goes to elder.visage; the extra items go to elder.bonus, a rank outside
+the ladder.
 """
 
 import json

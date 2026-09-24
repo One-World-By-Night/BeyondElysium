@@ -14,13 +14,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.3.5: import reads the purchase lists a chronicle has opened (1.3.4). A Grapevine file's entry that
- * only another creature type's catalog has imports as the catalog entry it is, not as a custom one that
- * waits for a Storyteller's price - the purchase, the sheet and the audit already agreed, and import was
- * the one reader left on the character's own list alone. The chronicle's own switches decide it, one
- * area at a time, and a chronicle that has opened nothing imports exactly as it always did.
- *
- * Runs against the real declared catalog: a Vampire importing an Ability that only the Mage list holds.
+ * Import reads the purchase lists a chronicle has opened.
  */
 class ImportPurchaseScopeThreadTest extends WP_UnitTestCase {
 
@@ -37,13 +31,10 @@ class ImportPurchaseScopeThreadTest extends WP_UnitTestCase {
 		do_action( 'rest_api_init' );
 		Purchase_Scope::reset_cache();
 
-		// A new install starts on the per-creature catalog, so a Vampire's "Abilities" list lands on
-		// vampire-abilities. This test database is not new, so it is put there the way one would be.
+		// A new install starts on the per-creature catalog.
 		global $wpdb;
 		$wpdb->query( 'DELETE FROM ' . Manager::table( 'characters' ) );
 		delete_option( Catalog_Cutover::OPTION );
-		delete_option( Catalog_Cutover::RECORD_OPTION );
-		Catalog_Cutover::reset_cache();
 		Catalog_Cutover::declare_fresh_install();
 		Seeder::seed_creature_stacks();
 
@@ -54,7 +45,7 @@ class ImportPurchaseScopeThreadTest extends WP_UnitTestCase {
 		$this->game_id  = (int) $wpdb->insert_id;
 		$this->admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 
-		// Named from the catalog itself rather than assumed: an Ability the Mage list has and the Vampire list does not.
+		// Named from the catalog itself.
 		$vampire       = array_map( static fn( $item ) => $item->name, Schema_Block::find_by_slug( 'vampire-abilities' )->definition->items );
 		$only_mage     = array_values( array_filter( array_map( static fn( $item ) => $item->name, Schema_Block::find_by_slug( 'mage-abilities' )->definition->items ), static fn( $name ) => ! in_array( $name, $vampire, true ) ) );
 		$this->assertNotEmpty( $only_mage, 'the catalog has an Ability only Mage lists' );
@@ -63,8 +54,6 @@ class ImportPurchaseScopeThreadTest extends WP_UnitTestCase {
 
 	public function tearDown(): void {
 		delete_option( Catalog_Cutover::OPTION );
-		delete_option( Catalog_Cutover::RECORD_OPTION );
-		Catalog_Cutover::reset_cache();
 		Purchase_Scope::reset_cache();
 		parent::tearDown();
 	}
@@ -75,7 +64,9 @@ class ImportPurchaseScopeThreadTest extends WP_UnitTestCase {
 		Purchase_Scope::reset_cache();
 	}
 
-	/** A vampire record shaped like `GEX_Parser::parse_character_vampire()`, holding one Ability. */
+	/**
+	 * A vampire record shaped like `GEX_Parser::parse_character_vampire()`, holding one Ability.
+	 */
 	private function character( string $ability, string $name ): array {
 		return [
 			'race' => 'vampire', 'name' => $name, 'player' => 'Jane Doe',
@@ -103,7 +94,9 @@ class ImportPurchaseScopeThreadTest extends WP_UnitTestCase {
 		return [ $parsed, $build->invoke( null, $parsed, $this->game_slug, $this->game_id ) ];
 	}
 
-	/** Imports one character through the real preview and commit, and returns its stored Abilities. */
+	/**
+	 * Imports one character through the real preview and commit, and returns its stored Abilities.
+	 */
 	private function import_abilities( string $ability, string $name = 'Scope Importer' ): array {
 		wp_set_current_user( $this->admin_id );
 		[ $parsed, $preview ] = $this->preview( $ability, $name );

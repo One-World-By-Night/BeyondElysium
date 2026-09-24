@@ -8,22 +8,11 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Static data-access model for per-character cosmetic sheet overrides.
- *
- * Sheet_Style is a Database\Manager CRUD model backed by the
- * character_sheet_styles table. Each character may have at most one row,
- * holding an optional font, accent/background/text color, background image,
- * and per-section decorative graphics. CharacterSheet.css remains the default
- * appearance for every character; a row here only ever layers cosmetic
- * overrides on top, so a missing row simply means no customization.
- *
- * @see BE_PROCESS/reference/DECISIONLOG.md Decision 041
  */
 class Sheet_Style {
 
 	/**
-	 * Look up a character's sheet style override by character_id. Returns
-	 * the row with its section_graphics field decoded, or null when the
-	 * character has no override row.
+	 * Look up a character's sheet style override by character_id.
 	 *
 	 * @param int $character_id
 	 * @return object|null
@@ -37,9 +26,7 @@ class Sheet_Style {
 	}
 
 	/**
-	 * Create or replace a character's sheet style override. Always a full
-	 * upsert of every field - never a partial patch - since each character
-	 * has at most one override row.
+	 * Create or replace a character's sheet style override.
 	 *
 	 * @param int   $character_id
 	 * @param array $data font_family, accent_color, background_color, text_color,
@@ -77,9 +64,7 @@ class Sheet_Style {
 	}
 
 	/**
-	 * Delete a character's sheet style override row, if one exists. Used to
-	 * cascade a character deletion so no orphaned override remains behind
-	 * after the character itself is gone.
+	 * Delete a character's sheet style override row, if one exists.
 	 *
 	 * @param int $character_id
 	 * @return bool
@@ -90,8 +75,6 @@ class Sheet_Style {
 
 	/**
 	 * Decode a row's section_graphics JSON field into an array in place.
-	 * Passes null rows through unchanged, and normalizes an unparseable or
-	 * absent value to an empty array.
 	 *
 	 * @param object|null $row
 	 * @return object|null

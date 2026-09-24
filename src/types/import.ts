@@ -1,13 +1,10 @@
 /**
- * Type definitions for importing Grapevine exchange files: a
- * single character/game-data import job's preview and commit
- * shapes, plus the separate full game file (.gv3, GVBG) import
- * job's own preview and commit shapes.
+ * Type definitions for importing Grapevine exchange files.
  */
 
 /**
- * A count of each kind of record found in an import file, used to
- * summarize what an import job contains before it is committed.
+ * A count of each kind of record found in an import file, used to summarize what an import job contains before it is
+ * committed.
  */
 export interface ImportCounts {
 	players: number;
@@ -22,8 +19,8 @@ export interface ImportCounts {
 }
 
 /**
- * A candidate WordPress account suggested as a match for a player
- * named in the import file, identified by id and display name.
+ * A candidate WordPress account suggested as a match for a player named in the import file, identified by id and
+ * display name.
  */
 export interface PlayerMatchSuggestion {
 	wp_user_id: number;
@@ -31,9 +28,8 @@ export interface PlayerMatchSuggestion {
 }
 
 /**
- * A player named in the import file who has no confirmed
- * WordPress account yet, along with their source name and email
- * and any candidate accounts found that might match them.
+ * A player named in the import file who has no confirmed WordPress account yet, along with their source name and
+ * email and any candidate accounts found that might match them.
  */
 export interface PlayerNeedingMatch {
 	gv_name: string;
@@ -42,10 +38,7 @@ export interface PlayerNeedingMatch {
 }
 
 /**
- * A trait found in the import file that only partially matches
- * the current catalog. Carries the raw source text, the character
- * and block it belongs to, why it was flagged, and any close-match
- * suggestions to resolve it with.
+ * A trait found in the import file that only partially matches the current catalog.
  */
 export interface FlaggedTrait {
 	character: string;
@@ -57,8 +50,6 @@ export interface FlaggedTrait {
 
 /**
  * A trait found in the import file with no catalog match at all.
- * Carries the raw source text and the character and block it
- * belongs to, plus an optional reason it could not be resolved.
  */
 export interface UnresolvedTrait {
 	character: string;
@@ -68,36 +59,32 @@ export interface UnresolvedTrait {
 }
 
 /**
- * A parsed character from the import file that is already on this
- * site. `uuid`: the same character, already in this chronicle.
- * `uuid_elsewhere`: the same character, in another chronicle - it can
- * be skipped or copied as a new character, never overwritten from
- * here. `name`: a character with the same name, possibly a different
- * one. Every kind needs the importing Storyteller's decision.
+ * A parsed character from the import file that is already on this site.
  */
 export interface DuplicateCharacter {
 	character: string;
-	/** 0 when the match lives in another chronicle. */
+	/**
+	 * 0 when the match lives in another chronicle.
+	 */
 	existing_id: number;
 	existing_uuid: string;
 	matched_by: 'uuid' | 'uuid_elsewhere' | 'name';
 	/**
-	 * What differs from the sheet already in this chronicle. Only a transfer review sends it,
-	 * and never for a match in another chronicle.
+	 * What differs from the sheet already in this chronicle.
 	 */
 	changes?: SheetChange[];
 	/**
-	 * Whether Overwrite is a real option here - only a submission review sends this (F-122):
-	 * the existing character must already belong to the sender, or be an NPC.
+	 * Whether Overwrite is a real option here.
 	 */
 	overwrite_allowed?: boolean;
-	/** Who the existing character belongs to today, for display next to a disallowed Overwrite. Only a submission review sends this. */
+	/**
+	 * Who the existing character belongs to today, for display next to a disallowed Overwrite.
+	 */
 	existing_owner?: string | null;
 }
 
 /**
- * One difference between a sheet already here and the same character arriving. `here` is null
- * for something only arriving; `arriving` is null for something only here.
+ * One difference between a sheet already here and the same character arriving.
  */
 export interface SheetChange {
 	section: string;
@@ -107,10 +94,8 @@ export interface SheetChange {
 }
 
 /**
- * A parsed item, location, or rote from the import file whose
- * name already matches an existing world object in this game.
- * Uses the same conflict-resolution mechanism as
- * DuplicateCharacter, extended to world objects.
+ * A parsed item, location, or rote from the import file whose name already matches an existing world object in this
+ * game.
  */
 export interface DuplicateWorldObject {
 	type: 'item' | 'location' | 'rote';
@@ -119,10 +104,8 @@ export interface DuplicateWorldObject {
 }
 
 /**
- * The full preview of a parsed character/game-data import job,
- * returned both right after upload and on subsequent status
- * checks. Summarizes what was found, what needs player matching
- * or trait resolution, and what would be skipped as a duplicate.
+ * The full preview of a parsed character/game-data import job, returned both right after upload and on subsequent
+ * status checks.
  */
 export interface ImportPreview {
 	job_id: string;
@@ -138,18 +121,14 @@ export interface ImportPreview {
 }
 
 /**
- * How to handle one duplicate record found during import: leave
- * the existing record alone, overwrite it with the imported one,
- * or import the new record alongside it.
+ * How to handle one duplicate record found during import: leave the existing record alone, overwrite it with the
+ * imported one, or import the new record alongside it.
  */
 export type DuplicateAction = 'skip' | 'overwrite' | 'import_as_new';
 
 /**
- * A Storyteller's chosen fix for one flagged or unresolved trait
- * before an import is committed. apply_suggestion accepts one of
- * the trait's own suggested matches; keep_custom keeps the raw
- * imported name as-is instead. Only meaningful for a
- * tiered_power-classified block.
+ * A Storyteller's chosen fix for one flagged or unresolved trait before an import is committed. apply_suggestion
+ * accepts one of the trait's own suggested matches.
  */
 export interface TraitResolution {
 	character: string;
@@ -157,27 +136,27 @@ export interface TraitResolution {
 	raw: string;
 	action: 'apply_suggestion' | 'keep_custom';
 	suggestion_name?: string;
-	/** keep_custom only: also adds this power to the block's catalog; requires the be_manage_schemas capability. */
+	/**
+	 * keep_custom only: also adds this power to the block's catalog.
+	 */
 	add_to_catalog?: boolean;
 }
 
 /**
- * The Storyteller's resolution choices for a parsed import job,
- * submitted together when committing it. Covers how to handle
- * duplicate characters and world objects and how to resolve
- * flagged or unresolved traits.
+ * The Storyteller's resolution choices for a parsed import job, submitted together when committing it.
  */
 export interface ImportResolutions {
 	duplicates?: Record< string, DuplicateAction >;
-	/** Keyed by "{type}:{name}", e.g. "item:Sabbat Pack Ritual Dagger", matching DuplicateWorldObject. */
+	/**
+	 * Keyed by "{type}:{name}", e.g. "item:Sabbat Pack Ritual Dagger", matching DuplicateWorldObject.
+	 */
 	world_objects?: Record< string, DuplicateAction >;
 	traits?: TraitResolution[];
 }
 
 /**
- * A single record actually written by a committed import, and
- * which outcome it received: newly created, overwritten in place,
- * or skipped entirely.
+ * A single record actually written by a committed import, and which outcome it received: newly created, overwritten
+ * in place, or skipped entirely.
  */
 export interface ImportedEntity {
 	id: number;
@@ -186,9 +165,7 @@ export interface ImportedEntity {
 }
 
 /**
- * Response from committing a parsed import job. Lists the items,
- * locations, rotes, and characters actually written, plus counts
- * of anything this pass deliberately skipped.
+ * Response from committing a parsed import job.
  */
 export interface ImportCommitResult {
 	items: ImportedEntity[];
@@ -206,8 +183,7 @@ export interface ImportCommitResult {
 // ---------------------------------------------------------------------------
 
 /**
- * A minimal reference to an existing chronicle, offered as a
- * candidate merge target when importing a full game file.
+ * A minimal reference to an existing chronicle, offered as a candidate merge target when importing a full game file.
  */
 export interface ExistingGame {
 	slug: string;
@@ -215,10 +191,8 @@ export interface ExistingGame {
 }
 
 /**
- * Counts of record kinds a game file import deliberately does not
- * bring over, surfaced to the Storyteller rather than silently
- * dropped. apr_engine reports whether the source file used the
- * Action/Plot/Rumor engine at all.
+ * Counts of record kinds a game file import does not bring over, surfaced to the Storyteller. apr_engine reports
+ * whether the source file used the Action/Plot/Rumor engine at all.
  */
 export interface GameImportSkipped {
 	queries: number;
@@ -232,10 +206,7 @@ export interface GameImportSkipped {
 }
 
 /**
- * The full preview of a parsed game file import job. Extends the
- * character-import preview with the source chronicle's title, a
- * list of existing chronicles it could be merged into, and what
- * this pass skips.
+ * The full preview of a parsed game file import job.
  */
 export interface GameImportPreview extends ImportPreview {
 	chronicle_title: string;
@@ -244,18 +215,15 @@ export interface GameImportPreview extends ImportPreview {
 }
 
 /**
- * Where a committed game file import should land: as a brand new
- * chronicle with an optional name override, or merged into an
- * existing chronicle by slug.
+ * Where a committed game file import should land: as a brand new chronicle with an optional name override, or merged
+ * into an existing chronicle by slug.
  */
 export type GameImportTarget =
 	| { action: 'create_new'; name?: string }
 	| { action: 'merge'; game_slug: string };
 
 /**
- * Response from committing a game file import. Extends the
- * standard import commit result with the resulting chronicle's
- * identity and whether it was newly created or merged into.
+ * Response from committing a game file import.
  */
 export interface GameImportCommitResult extends ImportCommitResult {
 	game: { id: number; slug: string; name: string; created: boolean };

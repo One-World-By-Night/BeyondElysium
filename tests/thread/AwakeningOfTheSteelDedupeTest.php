@@ -8,28 +8,8 @@ use BeyondElysium\Models\Schema_Block;
 use WP_UnitTestCase;
 
 /**
- * `working.md`'s real data-quality finding, from before Blood Magic existed:
- * `vampire-disciplines` seeded "Awakening of the Steel" and "Dur An Ki: Awakening the
- * Steel" as two separate top-level families, byte-identical except for `note` text - two
- * source passes (GVM vs. MET-CSV overlay, Decision 043) that were never reconciled.
- * `Schema::dedupe_awakening_of_the_steel()` removes the bare duplicate and migrates any
- * held pick onto the surviving, more-informative tradition-prefixed name.
- *
- * **This precondition can no longer occur naturally** since the Blood Magic redesign
- * (BE_PROCESS/releases/0.99.2-workflow.md): every tradition-prefixed Discipline row, this one
- * included, moved out of `vampire-disciplines` into `vampire-blood-magic` under one bare
- * canonical name plus a `traditions` map - the exact class of duplication this one-off
- * migration existed to clean up is now prevented generically rather than fixed by hand
- * per name. The migration function itself is kept (a real environment upgrading from
- * before Blood Magic shipped may still carry the stale pre-fix data at the moment
- * `maybe_upgrade()` runs, in whichever order its migrations happen to execute), so this
- * file synthesizes both families directly rather than relying on the real seeded catalog
- * to already contain them - testing the function's own logic in isolation, not a shape
- * only true of catalogs seeded before Blood Magic existed.
- *
- * No manual tearDown() - `WP_UnitTestCase`'s own ambient transaction rolls back every
- * write this file makes, including to the real, shared `vampire-disciplines` row, the
- * same guarantee every other thread test in this project already relies on.
+ * The duplicate "Awakening of the Steel" family in `vampire-disciplines` is removed, keeping the tradition-prefixed
+ * "Dur An Ki: Awakening the Steel" entry.
  */
 class AwakeningOfTheSteelDedupeTest extends WP_UnitTestCase {
 
@@ -44,11 +24,8 @@ class AwakeningOfTheSteelDedupeTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Synthesizes both families directly onto `vampire-disciplines`, only adding whichever
-	 * one a prior dedupe run within the same test already removed - so every test starts
-	 * from a known "both present" state regardless of run order within this file. Neither
-	 * name is real seeded data any more (see the class docblock); this test exists to
-	 * cover the migration function's own logic, not to assume the current catalog's shape.
+	 * Synthesizes both families directly onto `vampire-disciplines`, only adding whichever one a prior dedupe run within
+	 * the same test already removed.
 	 */
 	private function ensure_both_families_present(): void {
 		$block      = Schema_Block::find_by_slug( 'vampire-disciplines' );
@@ -119,9 +96,7 @@ class AwakeningOfTheSteelDedupeTest extends WP_UnitTestCase {
 	public function test_refuses_to_remove_the_bare_entry_if_no_surviving_twin_exists(): void {
 		$this->ensure_both_families_present();
 
-		// Remove the real surviving entry for this one test only - the ambient test
-		// transaction restores it afterward, the same guarantee every other write in this
-		// file already relies on.
+		// Remove the real surviving entry for this one test only.
 		$block      = Schema_Block::find_by_slug( 'vampire-disciplines' );
 		$definition = $block->definition;
 		$definition->powers = array_values( array_filter(

@@ -74,8 +74,6 @@ describe( 'nextTrackValueOnClick', () => {
 } );
 
 describe( 'stepTrackValue', () => {
-	// working.md, user report: "I also hate the add/subtract willpower... All of this
-	// should be +/-." The stepper's own pure logic - one +/- step, clamped to [0, max].
 	it( 'increases by one', () => {
 		expect( stepTrackValue( 3, 1, 20 ) ).toBe( 4 );
 	} );

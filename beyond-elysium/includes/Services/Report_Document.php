@@ -19,20 +19,7 @@ use BeyondElysium\Services\Display\Change_Description;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Resolves one of the 19 `report-registry.php` entries down to a plain,
- * presentation-neutral document - the report-level sibling of
- * `Sheet_Document` (reports-cards-batch-design.md §3.2). No TCPDF reference
- * anywhere in this file; `Report_Writer` turns the returned array into pages
- * without needing to know how any of it was produced.
- *
- * Every `table`/`card` column whose registry source is `field` resolves
- * through `Query_Engine::resolve_value()` - the same field a GV301 report
- * token and the query builder both already read (GV-SOURCEMAP.md's own
- * finding: template tokens are query keys). `player` and `plot` are the two
- * genuinely new resolvers this item adds, since the query engine has never
- * dispatched to either (GV-SOURCEMAP.md's three-tier query table).
- *
- * @see BE_PROCESS/design/reports-cards-batch-design.md
+ * Resolves one of the 19 `report-registry.php` entries down to a plain, presentation-neutral document.
  */
 class Report_Document {
 
@@ -74,9 +61,7 @@ class Report_Document {
 	}
 
 	/**
-	 * The capability a caller needs to run a report in a chronicle, or null
-	 * when every member may (1.0.0-review F-047). A report that names none is
-	 * a Storyteller's.
+	 * The capability a caller needs to run a report in a chronicle, or null when every member may.
 	 *
 	 * @param array<string,mixed> $report A registry row.
 	 */
@@ -140,10 +125,8 @@ class Report_Document {
 	}
 
 	/**
-	 * Experience History: one synthetic row per approved `Change`, decorated
-	 * with the owning character's name and the totals after that change -
-	 * `resolve_ledger()` reads all of it off the same object rather than
-	 * `Report_Document` needing a second join pass per column.
+	 * Experience History: one synthetic row per approved `Change`, decorated with the owning character's name and the
+	 * totals after that change.
 	 *
 	 * @return array<int,object>
 	 */
@@ -157,10 +140,7 @@ class Report_Document {
 	}
 
 	/**
-	 * Player Point History: the same ledger, grouped by the WordPress user who
-	 * owns each character rather than by character - one row per approved
-	 * change on any character that WordPress user is attached to, in the
-	 * order they happened, with that player's characters' totals together.
+	 * Player Point History: the same ledger, grouped by the WordPress user who owns each character.
 	 *
 	 * @return array<int,object>
 	 */
@@ -195,10 +175,7 @@ class Report_Document {
 	}
 
 	/**
-	 * Stamps each change, in order, with the earned and unspent totals after
-	 * it - Grapevine's own per-entry "U/E" (`ExperienceHistoryNode`). Counted
-	 * back from today's real totals rather than up from zero, since XP that
-	 * arrived with an imported character has no change row (1.0.0-review F-071).
+	 * Stamps each change, in order, with the earned and unspent totals after it.
 	 *
 	 * @param array<int,object> $changes Approved changes, oldest first.
 	 * @return array<int,object>
@@ -224,16 +201,12 @@ class Report_Document {
 	 * @param array<string,mixed> $filters
 	 */
 	private static function build_card( array $report, object $game, array $filters, bool $can_manage ): array {
-		// Rote Cards for mages (1.1.0 §3.15, C1) - a genuinely different shape from every
-		// other card report: a held rote is a name in sheet_data, never a Connection, so this
-		// bypasses Query_Engine/Audience entirely rather than trying to make either speak a
-		// language they were never built to.
+		// Rote Cards, built from the character's held rotes in sheet_data.
 		if ( ! empty( $report['holder_block'] ) && ! empty( $filters['character_id'] ) ) {
 			return self::build_holder_block_card( $report, $game, (int) $filters['character_id'] );
 		}
 
-		// Rows are redacted before conditions run, so a card's conditions cannot confirm what
-		// Storyteller-only text says either (F-046).
+		// Rows are redacted before conditions run.
 		$options = $can_manage ? [] : [
 			'prepare_row' => static function ( $row ) use ( $game ): void {
 				St_Visibility::filter_world_object( $row, $game, false );
@@ -251,16 +224,10 @@ class Report_Document {
 		$rows = $result['results'];
 
 		if ( ! empty( $filters['character_id'] ) ) {
-			// Print My Items/a location a character knows of: connection to the named character
-			// is already the whole authorization (ownership-or-manager checked by the caller
-			// before this ever runs), so no separate audience check applies on top of it - the
-			// same "a connected character always sees it" rule 1.1.0 §2.5 states explicitly,
-			// applied here rather than re-derived through Audience::filter().
+			// Print My Items, or a location a character knows of: the connection to the character is the authorization.
 			$rows = self::filter_rows_connected_to_character( $rows, (int) $filters['character_id'] );
 		} elseif ( ! $can_manage ) {
-			// The general catalog view: a non-Storyteller browsing item-cards or location-cards
-			// only sees what their own characters' audience reaches (1.1.0 §2.5). rote-cards and
-			// every other card report are untouched - Audience has no opinion on rotes or boons.
+			// The general catalog view: a non-Storyteller sees only what their own characters' audience reaches.
 			$entity_type = [ 'item' => 'item', 'loc' => 'location' ][ $report['entity'] ] ?? null;
 			if ( $entity_type !== null ) {
 				$rows = Audience::filter( $rows, $entity_type, get_current_user_id(), $game->slug, false );
@@ -273,8 +240,7 @@ class Report_Document {
 			foreach ( $report['columns'] as [ $label, $key, $source ] ) {
 				$card[] = [ $label, self::resolve_one( $key, $source, $row, $game, $report['entity'] ) ];
 			}
-			// Verifiable item cards (1.1.0 §3.13) - only item-cards, the one card report an
-			// item can appear on; a location or rote card carries no verification code.
+			// Verifiable item cards - only item-cards, the one card report an item can appear.
 			if ( $report['entity'] === 'item' ) {
 				$card[] = [ 'Verify', self::verify_line_for_item( $row, $game ) ];
 			}
@@ -290,12 +256,7 @@ class Report_Document {
 	}
 
 	/**
-	 * Builds Rote Cards for one character's own held rotes (1.1.0 §3.15, C1) - a card per
-	 * entry in `sheet_data[holder_block]`, matched by normalized name (`Services\Name_Key`)
-	 * against the chronicle's own `rote` world objects. A held rote with no matching world
-	 * object still gets a card, built straight from the catalog item: name, note (level,
-	 * duration, spheres), and source - no description, since the rote catalog carries none by
-	 * license (Decision 093).
+	 * Builds Rote Cards for one character's own held rotes.
 	 *
 	 * @param array<string,mixed> $report
 	 * @param object              $game
@@ -357,9 +318,7 @@ class Report_Document {
 	}
 
 	/**
-	 * Issues (or reuses) a verification code for one printed item card and returns the line
-	 * printed on the card itself (1.1.0 §3.13) - "Verify: {site}/be-verify/?code=XXXX-XXXX",
-	 * the exact URL shape `Character_Exporter` already uses for a signed sheet's own code.
+	 * Issues (or reuses) a verification code for one printed item card and returns the line printed on the card itself.
 	 *
 	 * @param object $row  A decoded world_object row (already redacted for this viewer).
 	 * @param object $game
@@ -381,13 +340,7 @@ class Report_Document {
 	}
 
 	/**
-	 * Narrows an already-fetched card-report row set to only those connected
-	 * to the given character - the same `character -> world_object` read
-	 * `Character_Exporter.php`'s Equipment export already uses, applied here
-	 * instead of inventing a `conditions` pseudo-field (item-cards-design.md
-	 * §2). Runs after `conditions`/`logic` have already narrowed `$rows`, so a
-	 * request can still combine "this character's items" with "...of type
-	 * Weapon" for free.
+	 * Narrows an already-fetched card-report row set to only those connected to the given character.
 	 *
 	 * @param array<int,object> $rows
 	 * @return array<int,object>
@@ -431,8 +384,7 @@ class Report_Document {
 	}
 
 	/**
-	 * Plot Report: one narrative block per plot, its entries in date order -
-	 * the one shape that is prose rather than a table.
+	 * Plot Report: one narrative block per plot, its entries in date order.
 	 */
 	private static function build_narrative( array $report, object $game ): array {
 		$plots  = Plot::for_game( (int) $game->id );
@@ -465,9 +417,7 @@ class Report_Document {
 	}
 
 	/**
-	 * The chronicle's own game sessions (1.1.0 §3.1) - date, time, place, and notes ([ST]
-	 * stripped for a non-manager). Rows are empty, with the registry's own honest note, for a
-	 * chronicle that has never recorded a session.
+	 * The chronicle's own game sessions.
 	 */
 	private static function build_calendar( array $report, object $game, bool $can_manage ): array {
 		$sessions = Game_Session::for_game( (int) $game->id );
@@ -491,29 +441,12 @@ class Report_Document {
 	}
 
 	/**
-	 * Gathers every `description` (Decision 094 - the rich-text
-	 * reference/description/source note) actually set anywhere in this
-	 * chronicle's catalog, grouped by the schema block it lives on. Not
-	 * entity-scoped like every report above - this reads the whole catalog
-	 * (`Schema_Block::all_for_game()`, preferring a chronicle's own fork over
-	 * the shared global block, same as every other consumer) rather than one
-	 * row per character/plot/etc.
-	 *
-	 * Only `trait_list` items, `tiered_power` levels, and `tiered_power`
-	 * families carry a `description` today - `resource_pool` pools and
-	 * `identity_field` options only ever gained an approval schedule
-	 * (Decision 095), never a note field, so they contribute nothing here by
-	 * design, not by omission.
+	 * Gathers every `description` (the rich-text reference/description/source note) actually set anywhere in this
+	 * chronicle's catalog, grouped by the schema block it lives on.
 	 *
 	 * @return array<string,mixed>
 	 */
 	private static function build_house_rules( array $report, object $game ): array {
-		// all_for_game_by_types(), never all_for_game() - the latter's underlying
-		// all() sorts (`ORDER BY name`), which measurably overflows MySQL's sort
-		// buffer once the real catalog is this large (Schema_Block.php's own
-		// docblock: the Fera/Werewolf gift blocks, mage-rotes since v0.99.17).
-		// Only trait_list and tiered_power can carry a `description` at all, so
-		// this is also a tighter, cheaper read than fetching every block.
 		$blocks = Schema_Block::all_for_game_by_types( [ 'trait_list', 'tiered_power' ], (string) $game->slug );
 		$groups = [];
 
@@ -522,9 +455,6 @@ class Report_Document {
 			$entries    = [];
 
 			if ( $block->section_type === 'trait_list' ) {
-				// Cast to array: $definition decodes as nested stdClass (a generic
-				// `object` PHPStan can't know the shape of), and a plain array read
-				// avoids the "access to an undefined property" false positive.
 				foreach ( $definition->items ?? [] as $raw_item ) {
 					$item = (array) $raw_item;
 					if ( ! empty( $item['description'] ) ) {
@@ -581,10 +511,8 @@ class Report_Document {
 	}
 
 	/**
-	 * A plot-entity row for the table shape is either one action line (see
-	 * `action_rows()`) or a rumor-tagged `Plot` itself (`entry_type: 'rumor'`
-	 * - not a real Plot_Entry value, see the registry's own comment).
-	 * `Plot Report` (narrative) never reaches here.
+	 * A plot-entity row for the table shape: either one action line (see `action_rows()`) or a rumor-tagged `Plot`
+	 * itself.
 	 *
 	 * @return array<int,object>
 	 */
@@ -608,15 +536,7 @@ class Report_Document {
 	}
 
 	/**
-	 * One plot's action lines, each already resolved to the values its columns
-	 * print.
-	 *
-	 * An allocation plot (one with an `apr_actor` character) reads the way
-	 * Grapevine's own Master Action Report does: a line per budget line, and
-	 * each Background use recorded against one is its own line, carrying the
-	 * Storyteller's result and what is left of that budget after every use.
-	 * Budget lines and uses are stored as JSON action entries and never print
-	 * as text. A player's own post is its own line (1.0.0-review F-054).
+	 * One plot's action lines, each already resolved to the values its columns print.
 	 *
 	 * @return array<int,object>
 	 */
@@ -654,9 +574,8 @@ class Report_Document {
 	}
 
 	/**
-	 * One allocation-plot line: a Background use with its budget line, a
-	 * budget line nobody has used yet, or a use whose budget line is gone.
-	 * An empty value prints as a dash.
+	 * One allocation-plot line: a Background use with its budget line, a budget line nobody has used yet, or a use whose
+	 * budget line is gone.
 	 *
 	 * @param array<string,mixed>|null $use    A decoded Background_Ledger entry, or null for a budget line nobody has used.
 	 * @param array<string,mixed>|null $budget The budget line after spends, or null for a use with none.
@@ -677,16 +596,6 @@ class Report_Document {
 
 	/**
 	 * A plot's free-text action posts, in thread order.
-	 *
-	 * The poster is a WordPress user, not a character: the line names the
-	 * allocation plot's own character, else the poster's characters connected
-	 * to the plot, else the poster's one active character in this chronicle.
-	 *
-	 * A plot thread has no reply links, so a Storyteller response can only be
-	 * matched to the posts waiting since the last response. It becomes their
-	 * result when one character (or one poster) is waiting. When several
-	 * players are waiting, nothing says which post it answers, so each of
-	 * their lines points at the plot rather than guess.
 	 *
 	 * @return array<int,object>
 	 */
@@ -736,9 +645,8 @@ class Report_Document {
 	}
 
 	/**
-	 * The chronicle's player characters connected to a plot, in either
-	 * direction, grouped by the WordPress user who owns each - what a post's
-	 * author id is matched against.
+	 * The chronicle's player characters connected to a plot, in either direction, grouped by the WordPress user who owns
+	 * each.
 	 *
 	 * @return array<int,string[]>
 	 */
@@ -761,9 +669,8 @@ class Report_Document {
 	}
 
 	/**
-	 * The character a post's author acted as: their characters connected to
-	 * the plot, else their one active character in this chronicle, else a
-	 * dash - a user id is never read as a character id.
+	 * The character a post's author acted as: their characters connected to the plot, else their one active character in
+	 * this chronicle, else a dash.
 	 *
 	 * @param array<int,string[]> $posters
 	 */
@@ -779,8 +686,8 @@ class Report_Document {
 	}
 
 	/**
-	 * Whether an action entry is an allocator budget line or a Background
-	 * use: stored JSON the Action & Rumor system reads, never a post to print.
+	 * Whether an action entry is an allocator budget line or a Background use: stored JSON the Action & Rumor system
+	 * reads.
 	 */
 	private static function is_apr_entry( string $content ): bool {
 		$data = json_decode( $content, true );
@@ -822,8 +729,7 @@ class Report_Document {
 	}
 
 	private static function resolve_one( string $key, string $source, object $row, object $game, string $entity ): string {
-		// Display over Grapevine text (1.1.0 §3.9 item 3): a location's Owner/Where columns
-		// prefer a real link/parent name over the typed text, wherever one exists.
+		// A location's Owner and Where columns prefer a real link or parent name over the typed text.
 		if ( $entity === 'loc' && $source === 'field' && in_array( $key, [ 'owner', 'where' ], true ) ) {
 			$display = Location_Link::resolve_owner_and_where( $row );
 			return $display[ $key ] !== '' ? $display[ $key ] : '—';
@@ -888,13 +794,11 @@ class Report_Document {
 			case 'charname':
 				return (string) ( $row->name ?? '—' );
 			case 'matchvalue':
-				// What the query engine records for each match (1.0.0-review F-074).
+				// What the query engine records for each match.
 				return (string) ( ( $row->match_reason ?? '' ) !== '' ? $row->match_reason : '—' );
 			case 'sortvalue':
 				return (string) ( $row->sort_value ?? $row->name ?? '—' );
-			// 1.1.0 §3.12 item 2 - Item Cards' own "uses left / Expired" columns, read
-			// straight from the row's own properties (never through Query_Engine/
-			// Field_Registry - see report-registry.php's own comment on why).
+			// Item Cards' uses-left and Expired columns, read from the row's own properties.
 			case 'usesleft':
 				$uses_max = ( $row->properties['uses_max'] ?? null );
 				if ( $uses_max === null || $uses_max === '' ) {
@@ -913,10 +817,7 @@ class Report_Document {
 	}
 
 	/**
-	 * Experience History / Player Point History: one row per approved
-	 * change - reads through `resolve_columns()` once per `Change` row
-	 * rather than per character, so the caller (`build_table()`) supplies
-	 * `Change` rows directly for these two report keys (see `for_ledger_rows()`).
+	 * Experience History / Player Point History: one row per approved change.
 	 */
 	private static function resolve_ledger( string $key, object $row ): string {
 		$change_data = is_object( $row->change_data ?? null ) ? (array) $row->change_data : (array) ( $row->change_data ?? [] );
@@ -929,8 +830,7 @@ class Report_Document {
 			case 'changetext':
 				return Change_Description::describe( (string) ( $row->change_type ?? '' ), $change_data );
 			case 'reason':
-				// An award's reason lives in its change data; any other change's in its own reason
-				// or the submitter's note - the same order the Grapevine export reads (F-071).
+				// An award's reason lives in its change data; any other change's in its own reason or the submitter's note.
 				foreach ( [ $change_data['reason'] ?? null, $row->reason ?? null, $row->notes ?? null ] as $reason ) {
 					if ( trim( (string) $reason ) !== '' ) {
 						return (string) $reason;
@@ -949,9 +849,7 @@ class Report_Document {
 	}
 
 	/**
-	 * A character's outstanding boons, each naming the other party, as
-	 * Grapevine's Vampire Status Report lists them (1.0.0-review F-072). A
-	 * repaid boon stays on the Boon Ledger as history but no longer stands.
+	 * A character's outstanding boons, each naming the other party, as Grapevine's Vampire Status Report lists them.
 	 */
 	private static function resolve_boons( object $row ): string {
 		$lines = [];
@@ -983,9 +881,7 @@ class Report_Document {
 	}
 
 	/**
-	 * The items a character holds - its connections to item world objects -
-	 * by name (1.0.0-review F-073), the same connections the Grapevine export
-	 * writes as Equipment and Item Cards scope to.
+	 * The items a character holds.
 	 */
 	private static function resolve_equipment( object $row ): string {
 		$names = [];

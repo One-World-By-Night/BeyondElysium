@@ -1,8 +1,5 @@
 /**
- * "Who's Who" (1.1.0 §3.7 item 3): the NPC directory a plain player sees - one card per
- * NPC whose profile_audience reaches them, showing only its public projection (display
- * name, description, portrait) - never sheet_data, player, XP, notes, or status. A
- * Storyteller sees every NPC in the chronicle regardless of audience.
+ * "Who's Who": the NPC directory a plain player sees.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

@@ -7,15 +7,7 @@ use Elementor\Controls_Manager;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Elementor widget wrapper for House Rules - a live, front-end view of every
- * catalog item, tiered power level, or tiered power family carrying a
- * `description` note (Decision 094), grouped by schema block. Same shape as
- * `My_Plots`: a Content section exposing a Game Slug control, and a single
- * mount-point <div> the front-end script hydrates with the HouseRules React
- * component. The REST route behind it (`Reports_Controller::get_document()`)
- * enforces `be_view_reports`; this widget only places the mount point.
- *
- * @see BE_PROCESS/reference/DECISIONLOG.md Decision 094
+ * Elementor widget wrapper for House Rules.
  */
 class House_Rules extends Base_Widget {
 

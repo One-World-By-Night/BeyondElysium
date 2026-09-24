@@ -6,10 +6,8 @@ use BeyondElysium\Services\Custom_Rekey;
 use PHPUnit\Framework\TestCase;
 
 /**
- * 1.3.3 R2 (design §3.5): the re-key planner - block move, the six ordered matching tiers, the
- * five guards, the write shape and the per-row records. Pure, so every case here is a plain array
- * in, plain array out. Definitions are built the way `Schema_Block::decode_definition()` decodes
- * them (nested stdClass), because `Trait_Identity` reads that shape.
+ * The re-key planner - block move, the six ordered matching tiers, the five guards, the write shape and the per-row
+ * records.
  */
 class CustomRekeyTest extends TestCase {
 
@@ -43,7 +41,7 @@ class CustomRekeyTest extends TestCase {
 	}
 
 	/**
-	 * One block, one custom row, no moves - the shape most tier and guard cases need.
+	 * One block, one custom row, no moves.
 	 *
 	 * @param array<string,mixed> $row
 	 * @return array<string,mixed>
@@ -178,9 +176,7 @@ class CustomRekeyTest extends TestCase {
 	}
 
 	/**
-	 * `Fuzzy_Matcher::normalize()` folds every run of punctuation to a space, so a trailing
-	 * `*`, `^`, `†` or `#` never survives to the decoration tier: tier 2 already matches it. Both
-	 * end at the same catalog item; only the recorded tier differs, and the spec's order holds.
+	 * `Fuzzy_Matcher::normalize()` folds every run of punctuation to a space.
 	 *
 	 * @dataProvider symbol_decorations
 	 */
@@ -203,7 +199,9 @@ class CustomRekeyTest extends TestCase {
 		];
 	}
 
-	/** A bracket group keeps its words through normalize(), so this is what tier 4 actually catches. */
+	/**
+	 * A bracket group keeps its words through normalize().
+	 */
 	public function test_tier_decoration_strips_a_trailing_bracket_group_then_matches(): void {
 		$block = self::block( [ [ 'name' => 'Occult' ] ] );
 
@@ -301,8 +299,6 @@ class CustomRekeyTest extends TestCase {
 	}
 
 	public function test_the_colon_reading_wins_when_both_readings_resolve_to_real_items(): void {
-		// `Lore: Kindred (Sabbat)` reads as Lore + "Kindred (Sabbat)" (colon first, §3.5) even
-		// where a catalog item literally named `Lore: Kindred` would take the parenthesised label.
 		$block  = self::block( [ [ 'name' => 'Lore', 'allow_multiples' => true ], [ 'name' => 'Lore: Kindred', 'allow_multiples' => true ] ] );
 		$result = $this->plan_one( $block, self::custom( 'Lore: Kindred (Sabbat)' ) );
 
@@ -313,8 +309,6 @@ class CustomRekeyTest extends TestCase {
 	public function test_the_label_base_resolves_through_the_first_three_tiers_only(): void {
 		$block = self::block( [ [ 'name' => 'Occult' ] ] );
 
-		// A bracket-decorated base is not resolved by the label tier: it uses tiers 1-3 only,
-		// and stripping the bracket is tier 4. (A trailing symbol would resolve - normalized.)
 		$result = $this->plan_one( $block, self::custom( 'Occult [Sabbat]: Voodoo' ) );
 
 		$this->assertSame( 'no_match', self::only_record( $result )['reason'] );
@@ -370,7 +364,7 @@ class CustomRekeyTest extends TestCase {
 	}
 
 	public function test_guard_collision_keeps_a_row_that_would_duplicate_a_held_one(): void {
-		// kony character 125: catalog Clever x4 held, plus a custom "Clever (AfVisc)".
+		// A character holding the catalog Clever x4, plus a custom "Clever (AfVisc)".
 		$block  = self::block( [ [ 'name' => 'Clever' ] ] );
 		$sheet  = [ 'b' => [ [ 'name' => 'Clever', 'count' => 4 ], self::custom( 'Clever (AfVisc)' ) ] ];
 		$result = Custom_Rekey::plan_character( $sheet, [ 'b' => $block ], [], [ 'suggestions' => false ] );
@@ -484,7 +478,7 @@ class CustomRekeyTest extends TestCase {
 		$this->assertSame( 4, $result['sheet_data']['xp_unspent'] );
 	}
 
-	// --- R3: retention gaps and pre-existing duplicates -----------------------
+	// --- Retention gaps and pre-existing duplicates ---------------------------
 
 	private const MOVE = [ 'met-abilities' => 'vampire-abilities' ];
 
@@ -635,14 +629,10 @@ class CustomRekeyTest extends TestCase {
 		$this->assertSame( [], $result['duplicates'] );
 	}
 
-	// --- R10: a catalog row spelled another way is respelled, not a gap ---------
+	// --- A catalog row spelled another way is respelled, not a gap --------------
 
 	/**
-	 * Real corpus findings (R10): 38 rows in 37 characters were retention gaps that were not lost
-	 * content at all - the legacy catalog and the declared one spell the same item differently, in
-	 * case, a hyphen or a curly apostrophe, or the legacy catalog carries a typo the declared item
-	 * lists as an alias. Refusing a whole install over that would stop every cutover the moment
-	 * anyone imported one of these names; the row is renamed to the declared spelling instead.
+	 * Legacy spellings of a declared item: a respelling, not a gap.
 	 *
 	 * @return array<string,array{0:string,1:string,2:string}> legacy name, declared name, tier.
 	 */
@@ -740,8 +730,6 @@ class CustomRekeyTest extends TestCase {
 	}
 
 	public function test_a_catalog_row_only_a_rule_based_reading_would_match_is_still_a_gap(): void {
-		// The canonical tier reads `Group: Name (tier)` by a declared rule and the label tier splits a
-		// base from a label. Both interpret what a player wrote; a catalog row was never written by one.
 		$rules = Custom_Rekey::plan_character(
 			[ 'old-rituals' => [ [ 'name' => 'Thaum: Blood Walk (b)' ] ] ],
 			[ 'vampire-rituals' => self::rituals() ],

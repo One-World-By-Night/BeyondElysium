@@ -1,12 +1,10 @@
 /**
- * The ceiling a resource pool's dot tracker offers (1.0.0-review F-079).
+ * The ceiling a resource pool's dot tracker offers.
  */
 import type { ResourcePoolValue } from './displayTemper';
 
 /**
- * A pool's declared maximum when it has one. With none, ten dots, or one
- * more than the pool's highest value once it passes nine - so "+" is never
- * stuck against a ceiling the pool itself set.
+ * A pool's declared maximum when it has one.
  */
 export function trackerMax(
 	max: number | undefined,

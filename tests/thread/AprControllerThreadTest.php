@@ -9,11 +9,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Covers Apr_Controller's two halves through the real REST server: the
- * settings read-modify-write merge and its validation (§3.6/§5.6), chronicle-
- * scoped permission gating for be_manage_apr (§3.5/§5.7, the same shape
- * ApprovalRulesControllerTest already proved for be_manage_approval_rules),
- * and the ledger routes' ownership visibility (§3.4/§5.8).
+ * Apr_Controller's settings read-modify-write merge and its validation through the real REST server, with
+ * chronicle-scoped permission gating for be_manage_apr.
  */
 class AprControllerThreadTest extends WP_UnitTestCase {
 
@@ -167,7 +164,7 @@ class AprControllerThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 403, $this->dispatch( $request )->get_status() );
 	}
 
-	// --- ledger: ownership visibility (§3.4/§5.8) ---
+	// --- ledger: ownership visibility ---------------
 
 	public function test_the_owning_player_can_read_their_own_spendable(): void {
 		wp_set_current_user( $this->player_id );

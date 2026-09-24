@@ -1,16 +1,10 @@
 /**
- * Wraps the WordPress media library picker (`wp.media`) for selecting a single image
- * attachment. Exports `pickMediaImage()`, the only function in this file, which opens
- * the picker restricted to images and resolves once the user makes a selection or
- * cancels.
+ * Wraps the WordPress media library picker (`wp.media`) for selecting a single image attachment.
  */
 
 /**
- * Opens the WordPress media picker restricted to a single image and returns a promise
- * that resolves with the selected attachment's data, or null if the picker is closed
- * without a selection. WordPress's Select button closes the picker before it announces
- * the selection, so a close waits a moment for one before settling on null
- * (1.0.0-review F-097).
+ * Opens the WordPress media picker restricted to a single image and returns a promise that resolves with the selected
+ * attachment's data, or null if the picker is closed without a selection.
  */
 export function pickMediaImage(
 	title: string

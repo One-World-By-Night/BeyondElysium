@@ -1,9 +1,6 @@
 /**
- * SendGrapevineFile (F-122): anyone signed in reads an uploaded Grapevine file, picks which
- * character is theirs when the file holds more than one, says whether they're joining the
- * chronicle or visiting for a game, and sends it. Nothing is added to the chronicle until a
- * Storyteller reviews and accepts it. Reachable with no chronicle membership at all - the
- * chronicle picker lists every chronicle on the site, not just the sender's own.
+ * SendGrapevineFile: anyone signed in reads an uploaded Grapevine file, picks which character is theirs when the file
+ * holds more than one, says whether they're joining the chronicle or visiting for a game, and sends it.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';

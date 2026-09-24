@@ -1,24 +1,5 @@
-/*
- * Storyteller Toolkit (Decision 057).
- *
- * Design tokens are declared once here, on the shell, and inherited by every child
- * component's own stylesheet (PlotList.css, PlotThread.css, ActionAllocator.css,
- * EntryForm.css) through ordinary cascade - those files reference var(--be-st-*) rather
- * than repeating literals. The values deliberately match CharacterSheet.css /
- * CharacterEditor.css, which are this plugin's real, already-established front-end design
- * language; the Toolkit is not a third look.
- *
- * D34 applies throughout: hello-elementor's reset.css ships `input[type=x]{width:100%}` at
- * specificity (0,1,1) and a bare `button{...}` at (0,0,1), which beat any single plain
- * class (0,1,0) regardless of source order. Every form-element rule below is written at
- * two-class compound specificity for that reason.
- */
+/* Storyteller Toolkit design tokens, declared once on the shell and inherited by every child component. */
 
-/*
- * Declared on :root, not on .be-plot-manager - PlotThread.tsx is ALSO mounted by
- * MyPlotsFeed.tsx (a player's own feed), which is not inside the Toolkit shell, and
- * scoping the tokens to the shell would leave that surface unstyled.
- */
 :root {
 	--be-st-accent: var(--be-red-1);
 	--be-st-border: var(--be-gray-20);
@@ -30,7 +11,6 @@
 	--be-st-radius: 4px;
 }
 
-/* ST-only gate (Decision 057). Affordance only - the REST layer enforces the real rule. */
 .be-plot-manager__denied {
 	max-width: 34rem;
 	margin: 2rem auto;
@@ -92,10 +72,7 @@
 	flex-wrap: wrap;
 }
 
-/*
- * The shared button look, matching CharacterSheet.css's print/edit/style buttons: flat,
- * bordered, accent text on transparent, filling solid on hover.
- */
+/* The shared button look: flat, bordered, accent text on transparent, filling solid on hover. */
 .be-st-button.be-st-button,
 button.be-st-button.be-st-button {
 	display: inline-block;
@@ -248,15 +225,6 @@ button.be-st-button--quiet.be-st-button--quiet:hover:not(:disabled) {
 .be-plot-manager__detail {
 	max-width: 60rem;
 
-	/*
-	 * A known `position: sticky; bottom: 0` gotcha: on a page shorter than the viewport,
-	 * the sticky action bar's "stuck" render position (pinned near the viewport bottom)
-	 * doesn't line up with the flow space it reserves at its natural DOM position right
-	 * after the last section - it visually floats up and overlaps that section instead of
-	 * sitting cleanly below it. Reserving real space below the last section fixes it on
-	 * both short and long plots; found live testing a freshly-created plot with only a
-	 * Cliffhanger section above the bar.
-	 */
 	padding-bottom: 4rem;
 }
 
@@ -287,16 +255,6 @@ button.be-st-button--quiet.be-st-button--quiet:hover:not(:disabled) {
 	margin-top: 1rem;
 	padding: 0.75rem 1rem;
 
-	/*
-	 * D74's defect class, second instance. This bar's content is bounded - a fixed set of
-	 * buttons - so it cannot grow without limit the way `CharacterEditor`'s pending-changes
-	 * list did. But on a narrow viewport enough buttons wrap to make a sticky bar tall
-	 * enough to cover what it is pinned over, and there is no reason for a bar pinned to the
-	 * viewport to ever exceed a third of it. Capped so the rule in
-	 * `stickyOverflow.test.ts` holds with no exceptions. The `padding-bottom` reserve on
-	 * `__detail` above is a different fix for a different problem - short-page flow
-	 * reservation - and stays.
-	 */
 	max-height: 33vh;
 	overflow-y: auto;
 	border: 1px solid var(--be-st-border-strong);
@@ -305,7 +263,7 @@ button.be-st-button--quiet.be-st-button--quiet:hover:not(:disabled) {
 	box-shadow: 0 -2px 6px var(--be-shadow-1);
 }
 
-/* --- Modal bodies (reusing shared/Modal.tsx from Decision 053) --------------- */
+/* --- Modal bodies ------------------------------------------------------ */
 
 .be-st-modal-body {
 	display: flex;

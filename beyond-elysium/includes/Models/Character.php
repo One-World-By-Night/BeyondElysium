@@ -10,26 +10,16 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Static data-access model for player and NPC characters.
- *
- * Character is a Database\Manager CRUD model backed by the characters table. It
- * stores each character's header fields (name, status, ownership, XP totals)
- * together with its sheet_data JSON blob, resolves lookup by ID, UUID, or name
- * within a game, and cascades deletion to the connections, changes, snapshots,
- * and sheet style rows that reference it.
  */
 class Character {
 
 	/**
-	 * The full set of valid character statuses. Was `Characters_Controller::STATUSES`
-	 * until Decision 102 promoted it here so `bulk_update_status()` and the controller's
-	 * own single-character validation can't drift onto two different lists.
+	 * The full set of valid character statuses.
 	 */
 	const STATUSES = [ 'active', 'inactive', 'retired', 'dead', 'pending' ];
 
 	/**
-	 * Look up a single character by its primary key. Returns the row with its
-	 * sheet_data field decoded into an array, or null when no character with that
-	 * ID exists.
+	 * Look up a single character by its primary key.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -43,10 +33,7 @@ class Character {
 	}
 
 	/**
-	 * Lock a character's row until the surrounding transaction ends. Every
-	 * sheet write reads the whole sheet_data document and writes it back, so
-	 * two writers must take turns or one silently erases the other's change
-	 * (1.0.0-review F-015). Must run inside a Transaction.
+	 * Lock a character's row until the surrounding transaction ends.
 	 *
 	 * @param int $id
 	 * @return void
@@ -56,9 +43,7 @@ class Character {
 	}
 
 	/**
-	 * Find a character by its permanent UUID rather than the local auto-increment
-	 * ID. The UUID survives transfers between WordPress installations, so this is
-	 * the lookup external OWBN tools should use.
+	 * Find a character by its permanent UUID.
 	 *
 	 * @param string $uuid Canonical 36-character UUID.
 	 * @return object|null
@@ -76,9 +61,7 @@ class Character {
 	}
 
 	/**
-	 * Return characters belonging to one game's chronicle. Supports filtering by
-	 * status, stack, NPC flag, owning user, and name search, plus pagination and
-	 * sort order across name, status, dates, XP, stack, and player columns.
+	 * Return characters belonging to one game's chronicle.
 	 *
 	 * @param string $game_slug
 	 * @param array  $args Filters: status, stack_slug, is_npc, wp_user_id, search, per_page, offset, orderby, order.
@@ -108,9 +91,7 @@ class Character {
 	}
 
 	/**
-	 * Count the characters belonging to one game's chronicle that match the given
-	 * filters. Accepts the same status, stack, NPC, owner, and search filters as
-	 * all_for_game(), without pagination, and returns a plain integer total.
+	 * Count the characters belonging to one game's chronicle that match the given filters.
 	 *
 	 * @param string $game_slug
 	 * @param array  $args Same filters as all_for_game() (no pagination).
@@ -127,10 +108,7 @@ class Character {
 	}
 
 	/**
-	 * The shared WHERE-clause builder behind `all_for_game()` and `count_for_game()` -
-	 * both accept the identical filter vocabulary (status, stack, NPC flag, owning user,
-	 * name search) and had built it twice, byte-for-byte, until this was extracted
-	 * (1.1.1 audit).
+	 * The shared WHERE-clause builder behind `all_for_game()` and `count_for_game()`.
 	 *
 	 * @param string $game_slug
 	 * @param array  $args
@@ -170,8 +148,7 @@ class Character {
 	}
 
 	/**
-	 * Count every character of one creature type, in any chronicle - player,
-	 * NPC, active or not.
+	 * Count every character of one creature type, in any chronicle.
 	 *
 	 * @param string $stack_slug
 	 * @return int
@@ -183,9 +160,7 @@ class Character {
 	}
 
 	/**
-	 * Return character counts grouped by stack_slug for one game. Only stacks
-	 * with at least one character are present in the result; a dashboard renders
-	 * whichever keys show up rather than a fixed list of every known stack.
+	 * Return character counts grouped by stack_slug for one game.
 	 *
 	 * @param string $game_slug
 	 * @return array<string,int> stack_slug => count
@@ -207,9 +182,7 @@ class Character {
 	}
 
 	/**
-	 * Return character counts grouped by status for one game. Only statuses with
-	 * at least one character are present in the result, keyed by status value
-	 * rather than a fixed enumeration.
+	 * Return character counts grouped by status for one game.
 	 *
 	 * @param string $game_slug
 	 * @return array<string,int> status => count
@@ -231,9 +204,7 @@ class Character {
 	}
 
 	/**
-	 * Insert a new character row. Assigns a permanent UUID when the caller does
-	 * not supply a valid one, JSON-encodes sheet_data, creates an initial snapshot
-	 * of the new sheet, and ensures chronicle membership when an owning user is set.
+	 * Insert a new character row.
 	 *
 	 * @param array $data Character data.
 	 * @return int Insert ID, or 0 on failure.
@@ -257,10 +228,9 @@ class Character {
 		$insert['status']     = $insert['status'] ?? 'active';
 		$insert['is_npc']     = isset( $insert['is_npc'] ) ? (int) $insert['is_npc'] : 0;
 		$insert['owner_type'] = $insert['owner_type'] ?? 'chronicle';
-		// Meaningful only on an NPC (1.1.0 §3.7); a PC simply never reads it.
+		// Meaningful only on an NPC.
 		$insert['npc_detail'] = in_array( $insert['npc_detail'] ?? null, [ 'full', 'quick' ], true ) ? $insert['npc_detail'] : 'full';
 
-		// Assigns a new UUID unless the caller supplied a valid one.
 		if ( ! isset( $data['uuid'] ) || ! Uuid::is_valid( (string) $data['uuid'] ) ) {
 			$insert['uuid'] = Uuid::v7();
 		} else {
@@ -293,8 +263,6 @@ class Character {
 			self::ensure_player_membership( (string) $insert['owner_slug'], (int) $insert['wp_user_id'] );
 		}
 
-		// Every character in a chronicle has its own plot, and one whose plot can't be written
-		// isn't made either (owner, 2026-09-15).
 		$in_chronicle = $insert['owner_type'] === 'chronicle' && Game::find_by_slug( (string) ( $insert['owner_slug'] ?? '' ) );
 		if ( $in_chronicle && self::ensure_plot( (int) $id ) === null ) {
 			Transaction::rollback( $unit );
@@ -317,15 +285,13 @@ class Character {
 	}
 
 	/**
-	 * A character's own plot: linked to it as its actor - the link that keeps a
-	 * plot from every other player - and with no game date, which sets it apart
-	 * from the character's action rounds. Null when it has none.
+	 * A character's own plot: linked to it as its actor.
 	 *
 	 * @param int $id
 	 * @return int|null
 	 */
 	public static function plot_id( int $id ): ?int {
-		// 'apr_actor' is Services\Action_Allocator::ACTOR_LABEL - Models don't depend on Services.
+		// 'apr_actor' is Services\Action_Allocator::ACTOR_LABEL.
 		$plot_id = Manager::get_var(
 			'SELECT p.id FROM ' . Manager::table( 'plots' ) . ' p
 			 INNER JOIN ' . Manager::table( 'connections' ) . " c ON c.source_type = 'plot' AND c.source_id = p.id
@@ -338,11 +304,7 @@ class Character {
 	}
 
 	/**
-	 * A character's own plot, made now if it has none. Every character, PC or
-	 * NPC, has one (owner, 2026-09-15): its player and the chronicle's
-	 * Storytellers see it, and the character's action rounds sit under it. Holds
-	 * the character's row while it checks and writes, so two callers can't each
-	 * make one.
+	 * A character's own plot, made now if it has none.
 	 *
 	 * @param int $id
 	 * @return int|null Null for a character outside any existing chronicle, or when the plot couldn't be written - nothing is kept then.
@@ -364,10 +326,6 @@ class Character {
 			return null;
 		}
 
-		// 'restricted', not the schema default 'everyone': this is the character's own private
-		// action plot, and the 'apr_actor' connection written right below is what Audience finds
-		// to make that one character its audience (Services\Audience::RESTRICTED, duplicated as a
-		// literal per this codebase's Models-doesn't-depend-on-Services rule - see Plot::AUDIENCE_VALUES).
 		$plot_id = Plot::create( [
 			'game_id'      => (int) $game->id,
 			'title'        => self::plot_title( (string) $character->name, $id ),
@@ -394,9 +352,7 @@ class Character {
 	}
 
 	/**
-	 * Grant a WordPress user at least player membership in the chronicle that owns
-	 * a character. Looks up the game by slug and delegates to
-	 * Game_Member::ensure_player(), which never downgrades an existing role.
+	 * Grant a WordPress user at least player membership in the chronicle that owns a character.
 	 *
 	 * @param string $owner_slug
 	 * @param int    $wp_user_id
@@ -410,10 +366,7 @@ class Character {
 	}
 
 	/**
-	 * Update a character's header fields - everything except sheet_data. Writes
-	 * only the fields present in $data, stamps updated_at, and ensures chronicle
-	 * membership when wp_user_id is being set to a new owner or the character is
-	 * set active - which is how a Storyteller approves a join request.
+	 * Update a character's header fields.
 	 *
 	 * @param int   $id
 	 * @param array $data Fields to update.
@@ -462,7 +415,6 @@ class Character {
 		$update['updated_at'] = current_time( 'mysql' );
 		$result               = Manager::update( 'characters', $update, [ 'id' => $id ] );
 
-		// The character's own plot keeps the character's name, unless a Storyteller has retitled it.
 		if ( $result !== false && $old_name !== null && (string) $old_name !== (string) $update['name'] ) {
 			$plot_id = self::plot_id( $id );
 			$plot    = $plot_id ? Plot::find( $plot_id ) : null;
@@ -472,7 +424,7 @@ class Character {
 		}
 
 		if ( $result !== false && ! empty( $update['wp_user_id'] ) ) {
-			// Looks up just owner_slug rather than fetching the full character row.
+			// Looks up just owner_slug.
 			$owner_slug = Manager::get_var(
 				'SELECT owner_slug FROM ' . Manager::table( 'characters' ) . ' WHERE id = %d AND owner_type = %s',
 				$id,
@@ -483,7 +435,7 @@ class Character {
 			}
 		}
 
-		// Activating a character approves its player's join request, if it was one (F-033).
+		// Activating a character approves its player's join request, if it was one.
 		if ( $result !== false && ( $update['status'] ?? null ) === 'active' ) {
 			$owner = (array) Manager::get_row(
 				'SELECT owner_slug, wp_user_id FROM ' . Manager::table( 'characters' ) . ' WHERE id = %d AND owner_type = %s',
@@ -500,8 +452,6 @@ class Character {
 
 	/**
 	 * Replace a character's sheet_data column with a new JSON-encoded payload.
-	 * Leaves every other field - name, status, ownership, XP - untouched, and
-	 * stamps updated_at.
 	 *
 	 * @param int   $id
 	 * @param array $sheet_data
@@ -517,15 +467,7 @@ class Character {
 	}
 
 	/**
-	 * Resets one held resource pool's temporary rating back to its permanent one -
-	 * the ordinary end-of-session "Willpower/Blood refills" maintenance action,
-	 * bulk-operations-design.md's Item 1. Writes directly to sheet_data, never
-	 * routed through Change_Engine/character_changes, matching this project's own
-	 * convention that an ST-initiated direct correction is not an approvable
-	 * "change" (`Characters_Controller::create_item()`'s starting-sheet write is the
-	 * same principle). A character who doesn't hold the named pool at all, or whose
-	 * pool is stored as a bare scalar (the older shape - a single number with no
-	 * separate temporary to reset), is a no-op success, not a failure.
+	 * Resets one held resource pool's temporary rating back to its permanent one.
 	 *
 	 * @param int    $id
 	 * @param string $block_slug
@@ -550,13 +492,7 @@ class Character {
 	}
 
 	/**
-	 * Sets the same status on a batch of characters at once - bulk-operations-design.md's
-	 * Item 2. Every ID is checked against `$game_slug` before writing (the same
-	 * ownership check `Characters_Controller::update_item()` already applies to a single
-	 * character), so a bad or foreign ID in the list can never reach another
-	 * chronicle's character. Collects a result per ID instead of an all-or-nothing
-	 * transaction, matching `computeChanges.ts`'s own "collect every failure instead of
-	 * abandoning on the first" precedent from the character editor's submit path.
+	 * Sets the same status on a batch of characters at once.
 	 *
 	 * @param int[]  $ids
 	 * @param string $status     Validated by the caller against `self::STATUSES`.
@@ -578,9 +514,7 @@ class Character {
 	}
 
 	/**
-	 * Atomically adjust a character's XP counters. xp_earned is floored at zero;
-	 * xp_unspent is allowed to go negative, which lets a storyteller record an
-	 * approval that spends more than the character currently has unspent.
+	 * Atomically adjust a character's XP counters. xp_earned is floored at zero.
 	 *
 	 * @param int $id
 	 * @param int $earned_delta  Delta for xp_earned (can be negative for adjustments).
@@ -590,7 +524,6 @@ class Character {
 	public static function update_xp( int $id, int $earned_delta, int $unspent_delta ): bool {
 		global $wpdb;
 		$table  = Manager::table( 'characters' );
-		// CAST allows negative deltas on UNSIGNED columns; only xp_earned floors at 0.
 		$result = $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$table} SET xp_earned = GREATEST(0, CAST(xp_earned AS SIGNED) + %d), xp_unspent = CAST(xp_unspent AS SIGNED) + %d, updated_at = %s WHERE id = %d",
@@ -604,17 +537,7 @@ class Character {
 	}
 
 	/**
-	 * Delete a character by ID, cascading to everything that references it -
-	 * connections, changes, snapshots, and sheet style rows. Runs inside a
-	 * transaction so a failed delete leaves none of the cascade committed, even
-	 * when called from within another already-open transaction.
-	 *
-	 * Also removes the character's action allocation plots, and closes any
-	 * transfer still in motion the way a Storyteller would: a pending offer is
-	 * declined and its verification code revoked, a character abroad is
-	 * released, and a visiting copy's visit ends (1.0.0-review F-014). The
-	 * codes on printed and exported sheets stay, as the record that the
-	 * chronicle issued those documents.
+	 * Delete a character by ID, cascading to everything that references it.
 	 *
 	 * @param int $id
 	 * @return bool
@@ -644,17 +567,14 @@ class Character {
 	}
 
 	/**
-	 * Deletes every action allocation plot a character is the actor of. Only
-	 * that link keeps the plot - titled with the character's name, its entries
-	 * holding the character's Background ratings - hidden from other players,
-	 * so it can't outlive the character.
+	 * Deletes every action allocation plot a character is the actor of.
 	 *
 	 * @param int $id
 	 */
 	private static function delete_allocation_plots( int $id ): void {
 		global $wpdb;
 		$connections = Manager::table( 'connections' );
-		// 'apr_actor' is Services\Action_Allocator::ACTOR_LABEL - Models don't depend on Services.
+		// 'apr_actor' is Services\Action_Allocator::ACTOR_LABEL.
 		$plot_ids = $wpdb->get_col( $wpdb->prepare(
 			"SELECT source_id FROM {$connections}
 			 WHERE source_type = 'plot' AND target_type = 'character' AND target_id = %d AND label = %s",
@@ -691,10 +611,7 @@ class Character {
 	}
 
 	/**
-	 * Find a character by exact name within one game. Matches on name only,
-	 * scoped to the given chronicle, so a name shared with a character in a
-	 * different game is not considered a match. When more than one character
-	 * shares the name, returns the oldest row by ID rather than picking unpredictably.
+	 * Find a character by exact name within one game.
 	 *
 	 * @param string $name
 	 * @param string $game_slug
@@ -713,8 +630,6 @@ class Character {
 
 	/**
 	 * Return every character owned by a specific WordPress user within one game.
-	 * Matches on wp_user_id and owner_slug, ordered alphabetically by name, with
-	 * no pagination.
 	 *
 	 * @param int    $wp_user_id
 	 * @param string $game_slug
@@ -733,17 +648,7 @@ class Character {
 	}
 
 	/**
-	 * Decode a row's sheet_data JSON field into an array in place, and cast
-	 * is_npc to a real boolean. Passes null rows through unchanged, and
-	 * normalizes an unparseable or absent sheet_data value to an empty array
-	 * so callers never see a raw JSON string.
-	 *
-	 * is_npc is stored as tinyint(1) and $wpdb always returns column values as
-	 * strings regardless of their SQL type - every consumer of this row was
-	 * getting the literal string "0" for a non-NPC, which is truthy in both
-	 * PHP and JavaScript. Cast once here, at the one place every row-returning
-	 * method in this class already funnels through, rather than requiring
-	 * every future reader to remember to coerce it correctly itself.
+	 * Decode a row's sheet_data JSON field into an array in place, and cast is_npc to a real boolean.
 	 *
 	 * @param object|null $row Row from the database, or null when the query found nothing.
 	 * @return object|null The same row, or null when null was passed in.
@@ -758,9 +663,6 @@ class Character {
 		if ( $row && isset( $row->is_npc ) ) {
 			$row->is_npc = (bool) $row->is_npc;
 		}
-		// profile_audience_rules (1.1.0 §3.7) - null stays null; an unparseable value is logged
-		// and treated as null rather than the row being dropped, matching Plot::decode_row()'s
-		// own contract for its own audience_rules column.
 		if ( $row && property_exists( $row, 'profile_audience_rules' ) && is_string( $row->profile_audience_rules ) ) {
 			$decoded = json_decode( $row->profile_audience_rules, true );
 			if ( json_last_error() !== JSON_ERROR_NONE ) {
@@ -773,8 +675,8 @@ class Character {
 	}
 
 	/**
-	 * Encode a value for a JSON column, matching Plot::encode_json_field()'s exact contract:
-	 * null stays null, an array or object is JSON-encoded, anything else is cast to string.
+	 * Encode a value for a JSON column, matching Plot::encode_json_field()'s exact contract: null stays null, an array or
+	 * object is JSON-encoded, anything else is cast to string.
 	 *
 	 * @param mixed $value
 	 * @return string|null|false False when wp_json_encode() itself cannot encode the value.

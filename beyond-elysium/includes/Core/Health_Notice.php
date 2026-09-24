@@ -8,10 +8,7 @@ use BeyondElysium\Services\Pdf_Signer;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Shows an admin notice when one or more of this plugin's database
- * tables are missing. A missing table otherwise fails silently -
- * affected REST endpoints simply return empty results - so this is the
- * one place that surfaces the condition to site administrators.
+ * Shows an admin notice when one or more of this plugin's database tables are missing.
  */
 class Health_Notice {
 
@@ -19,19 +16,15 @@ class Health_Notice {
 	const DRIFT_TRANSIENT = 'be_chronicle_slug_drift_check';
 
 	/**
-	 * Hooks render() onto admin_notices, so the missing-tables check is
-	 * evaluated on every wp-admin page load and any resulting notice is
-	 * displayed there.
+	 * Hooks render() onto admin_notices.
 	 */
 	public static function register(): void {
 		add_action( 'admin_notices', [ self::class, 'render' ] );
 	}
 
 	/**
-	 * Renders an admin-notice error box listing any missing database
-	 * tables, visible only to users who can activate plugins. Checks a
-	 * short-lived transient cache before querying the database directly,
-	 * and outputs nothing when no tables are missing.
+	 * Renders an admin-notice error box listing any missing database tables, visible only to users who can activate
+	 * plugins.
 	 */
 	public static function render(): void {
 		// Visible only to users who can activate plugins.
@@ -39,7 +32,6 @@ class Health_Notice {
 			return;
 		}
 
-		// Caches the SHOW TABLES check in a 5-minute transient rather than querying every page load.
 		$missing = get_transient( self::TRANSIENT );
 		if ( $missing === false ) {
 			$missing = Schema::missing_tables();
@@ -56,21 +48,13 @@ class Health_Notice {
 			);
 		}
 
-		// Each independent of the missing-tables check above - a previous version of this
-		// method returned early when no tables were missing, before either call below,
-		// so neither notice could ever show on an install with a complete schema (which
-		// is every real install's ordinary, healthy state).
 		self::render_slug_drift();
 		self::render_signing_notice();
 		self::render_upgrade_error();
 	}
 
 	/**
-	 * Says when the last data upgrade did not finish - the version it was
-	 * upgrading to, and what stopped it - so a partial upgrade is never
-	 * silent (1.0.0-review F-064). It is tried again once its lock goes stale;
-	 * the notice clears when an upgrade finishes. Visible only to users who
-	 * can activate plugins.
+	 * Says when the last data upgrade did not finish: the version it was upgrading to and what stopped it.
 	 */
 	private static function render_upgrade_error(): void {
 		if ( ! current_user_can( 'activate_plugins' ) ) {
@@ -96,16 +80,7 @@ class Health_Notice {
 	}
 
 	/**
-	 * Warns when sheet signing is not configured on this install -
-	 * `Pdf_Signer::availability()`'s constants live only in `wp-config.php`,
-	 * so a chronicle without them prints every sheet and report stamped
-	 * UNSIGNED (1.0.0-review F-042) with no other visible cause. Names both
-	 * constants and a real `openssl` command to generate a key with, so the
-	 * fix is actionable from the notice alone
-	 * rather than sending an administrator to hunt for the design doc.
-	 * Visible only to users who can activate plugins; no transient cache -
-	 * `defined()`/`is_readable()` are cheap enough to check on every load,
-	 * unlike the missing-tables `SHOW TABLES` query above.
+	 * Warns when sheet signing is not configured on this install.
 	 */
 	private static function render_signing_notice(): void {
 		if ( ! current_user_can( 'activate_plugins' ) ) {
@@ -126,14 +101,8 @@ class Health_Notice {
 	}
 
 	/**
-	 * Warns when a games row's owbn_chronicle_post_id points at a post
-	 * whose own chronicle_slug no longer matches the row's slug. This is
-	 * the one condition Chronicle_Sync's own deferred rename branch would
-	 * need to notice and does not (BE_PROCESS/design/chronicle-rename-design.md
-	 * §5.3/CR-6) - surfacing it here means that gap is safe to leave
-	 * deferred, since an administrator finds out rather than the drift
-	 * silently persisting. Visible only to users who can activate plugins,
-	 * cached the same 5-minute-transient way as the missing-tables check.
+	 * Warns when a games row's owbn_chronicle_post_id points at a post whose chronicle_slug no longer matches the row's
+	 * slug.
 	 */
 	private static function render_slug_drift(): void {
 		if ( ! current_user_can( 'activate_plugins' ) ) {
@@ -175,17 +144,14 @@ class Health_Notice {
 	}
 
 	/**
-	 * Deletes the cached missing-tables transient, so the next admin page
-	 * load re-runs the real database check instead of reusing a stale
-	 * result.
+	 * Deletes the cached missing-tables transient.
 	 */
 	public static function clear_cache(): void {
 		delete_transient( self::TRANSIENT );
 	}
 
 	/**
-	 * Deletes the cached chronicle-slug-drift transient, so the next admin
-	 * page load re-runs the real check instead of reusing a stale result.
+	 * Deletes the cached chronicle-slug-drift transient.
 	 */
 	public static function clear_drift_cache(): void {
 		delete_transient( self::DRIFT_TRANSIENT );

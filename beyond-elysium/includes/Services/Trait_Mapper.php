@@ -6,9 +6,6 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Maps GV exchange-file trait lists and trait names onto BE schema blocks.
- * Pure functions operating on already-decoded block definitions - no DB
- * access, directly unit-testable, matching the `Query_Engine`/`Action_Allocator`
- * pure-core pattern.
  */
 class Trait_Mapper {
 
@@ -16,9 +13,7 @@ class Trait_Mapper {
 	private static $list_map = null;
 
 	/**
-	 * Loads gex-trait-list-map.php and caches its contents for the lifetime
-	 * of the request. Every subsequent call returns the same cached array
-	 * rather than re-reading the file.
+	 * Loads gex-trait-list-map.php and caches its contents for the lifetime of the request.
 	 *
 	 * @return array<string,array<string,array<string,mixed>>>
 	 */
@@ -30,10 +25,7 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Classifies a whole GV list - which of the five outcomes applies before
-	 * any individual trait inside it gets resolved. `{stack}` in a returned
-	 * `block_slug` is substituted with the real stack slug (the merged
-	 * `Influences`/`Backgrounds` case).
+	 * Classifies a whole GV list.
 	 *
 	 * @param string $stack_slug
 	 * @param string $gv_list_name Exactly the `LinkedTraitList.Name` value from the file.
@@ -55,20 +47,15 @@ class Trait_Mapper {
 
 		if ( isset( $entry['block_slug'] ) ) {
 			$entry['block_slug'] = str_replace( '{stack}', $stack_slug, $entry['block_slug'] );
-			// 1.3.3 C7: this file's own gex-trait-list-map.php names a retired GVM-era slug
-			// ("Abilities" -> met-abilities); a cut-over install needs the block that replaced
-			// it. A no-op in legacy (Catalog_Cutover::is_declared() false), which is also what
-			// every real unit test in tests/unit/TraitMapperTest.php exercises - get_option()
-			// has no WordPress behind it there, so it reads as the option never having been set.
-			$entry['block_slug'] = Catalog_Cutover::live_slug( $stack_slug, $entry['block_slug'] );
+			// Swaps the shared block the map names for the block the stack declares in its place.
+			$entry['block_slug'] = Catalog_Reader::current_slug( $stack_slug, $entry['block_slug'] );
 		}
 
 		return $entry;
 	}
 
 	/**
-	 * Resolves one raw trait name against one or more candidate blocks' real
-	 * catalogs, through a five-step order:
+	 * Resolves one raw trait name against one or more candidate blocks' real catalogs, through a five-step order:
 	 *
 	 *   1. exact match                              -> 'exact'
 	 *   2. case/whitespace-normalized match          -> 'normalized'
@@ -76,8 +63,8 @@ class Trait_Mapper {
 	 *   4. no match, block allows custom             -> 'custom'
 	 *   5. no match, block does not allow custom     -> 'unresolved'
 	 *
-	 * A name matching real items in more than one distinct candidate block is
-	 * flagged 'ambiguous' rather than silently resolved to the first hit.
+	 * A name matching real items in more than one distinct candidate block is flagged 'ambiguous' rather than silently
+	 * resolved to the first hit.
 	 *
 	 * @param string                 $raw_name  The trait name as it appears in the import.
 	 * @param array<int,object>      $blocks    One or more decoded `Schema_Block` rows (candidates).
@@ -118,10 +105,7 @@ class Trait_Mapper {
 			];
 		}
 
-		// Alias match (1.3.2 alias routing): the raw name is a recorded former name for a
-		// real catalog item (`Meditiation` -> `Meditation`) - as trustworthy as an exact
-		// match once it resolves, so it is checked before a fuzzy guess rather than after
-		// one.
+		// Alias match: the raw name is a recorded former name for a catalog item.
 		$alias_hits = self::hits_in_blocks( $raw_name, $blocks, static function ( $item_name, $item ) use ( $raw_name ) {
 			foreach ( (array) ( $item->aliases ?? [] ) as $alias ) {
 				if ( $alias === $raw_name ) {
@@ -158,19 +142,7 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Resolves one raw trait from a `tiered_power`-classified list against a
-	 * decoded `tiered_power` `Schema_Block`. Recognizes three raw name shapes:
-	 *
-	 *   - A named pick: `$raw_name` is `"{Family}: {Power}"`, optionally with
-	 *     its own tier as `"{Family}: {Power} ({tier})"`. The tier typically
-	 *     rides in the trait's separate `note` field instead, and `$raw_total`
-	 *     is the level's cost, not its level number.
-	 *   - A numbered rung: `$raw_name` is the bare family name and
-	 *     `$raw_total` is the level as a digit string.
-	 *   - A traditioned numbered rung: `$raw_name` is `"{Tradition}: {Family}"`
-	 *     where `{Family}` is itself a real top-level family. `$raw_total` is
-	 *     still that family's own numbered level; `{Tradition}` is carried
-	 *     through as `tradition` on a successful resolution.
+	 * Resolves one raw trait from a `tiered_power`-classified list against a decoded `tiered_power` `Schema_Block`.
 	 *
 	 * @param string $raw_name
 	 * @param string $raw_total
@@ -207,21 +179,17 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Strips a trailing `*` marker that Grapevine's export tool can attach
-	 * to a bare family name ("Auspex*"), a power name ("Spirit Manipulation*"),
-	 * or right after the family and before the colon
-	 * ("Thaumaturgy*: The Path of Blood").
+	 * Strips a trailing `*` marker that Grapevine's export tool can attach to a bare family name ("Auspex*"), a power
+	 * name ("Spirit Manipulation*"), or right after the family and before the colon ("Thaumaturgy*: The Path of Blood").
 	 */
 	private static function strip_export_decorations( string $raw_name ): string {
 		return trim( str_replace( '*', '', $raw_name ) );
 	}
 
 	/**
-	 * Strips a leading `"Combo: "`/`"Combination: "` label that Grapevine's
-	 * export text prefixes onto a held combo discipline, along with any
-	 * trailing constituent-disciplines note in parentheses or brackets
-	 * (`"Combo: Blood Sight (Aus 3, PoB 1)"` becomes `"Blood Sight"`). A
-	 * no-op for any name that does not start with this exact prefix.
+	 * Strips a leading `"Combo: "`/`"Combination: "` label from a held combo discipline's exported name, and any trailing
+	 * constituent-disciplines note in parentheses or brackets (`"Combo: Blood Sight (Aus 3, PoB 1)"` becomes `"Blood
+	 * Sight"`).
 	 */
 	private static function strip_combo_decorations( string $raw_name ): string {
 		if ( ! preg_match( '/^comb(?:o|ination)\s*:\s*/i', $raw_name, $prefix_match ) ) {
@@ -234,12 +202,8 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Splits `"{Tradition}: {Family}"` into `[tradition, family]` only when `{Family}` is
-	 * an EXACT match for a real top-level family - an unrecognized or misspelled suffix
-	 * deliberately does not qualify here (stays on the existing named-pick/suggestion path
-	 * instead of guessing this is a traditioned rung). `{Tradition}` itself is never
-	 * checked against anything - unlike a family name, a tradition name (Thaumaturgy,
-	 * Sadhana, Wanga, ...) is not itself a seeded catalog entry.
+	 * Splits `"{Tradition}: {Family}"` into `[tradition, family]` only when `{Family}` is an EXACT match for a real
+	 * top-level family.
 	 *
 	 * @param string   $raw_name
 	 * @param object[] $powers
@@ -258,7 +222,6 @@ class Trait_Mapper {
 			}
 		}
 
-		// Falls back to stripping a leading "The " from the family name, tried only after the exact check above.
 		if ( stripos( $family, 'the ' ) === 0 ) {
 			$stripped = trim( substr( $family, 4 ) );
 			foreach ( $powers as $power ) {
@@ -272,18 +235,8 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Splits `"{Tradition}: {AlternateName}"` for a blood-magic block only, where
-	 * `{AlternateName}` is that specific tradition's own name for a canonical path (the
-	 * per-power `traditions` map), not the block's bare canonical name -
-	 * `split_tradition_prefix()` already covers the bare-name case and is always tried
-	 * first. Confirmed against a real `.gex` file (Chase Ashford, 2026-09-11):
-	 * `"Dur-An-Ki: Path of Spirit"` for the catalog's own bare `"Rego Manes"` - Dur An Ki's
-	 * own name for that path, per the CSV's `"Rego Manes / Path of Spirit"` Group value.
-	 *
-	 * The tradition prefix is normalized first (so `"Dur-An-Ki"` matches the `"Dur An Ki"`
-	 * key the `traditions` map actually uses), then only that one tradition's own
-	 * alternate name is checked against the suffix - a coincidentally-similar alternate
-	 * name belonging to a DIFFERENT tradition must never match.
+	 * Splits `"{Tradition}: {AlternateName}"` for a blood-magic block only, where `{AlternateName}` is that specific
+	 * tradition's own name for a canonical path (the per-power `traditions` map).
 	 *
 	 * @param string   $raw_name Already export-decoration-stripped.
 	 * @param string   $raw_total
@@ -312,28 +265,7 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Resolves a raw tradition label against a blood-magic block's own known
-	 * tradition list, real .gex exports being nowhere near consistent about
-	 * spelling one (confirmed against a real file, 2026-09-11: "Dur-An-Ki",
-	 * "Sadhanna", "Eastern Necromancy" and "Hermetic Thaumaturgy" all appear
-	 * for what a chronicle's own catalog spells "Dur An Ki", "Sadhana" and
-	 * "Thaumaturgy (Camarilla|Anarch)").
-	 *
-	 * Two tiers, deliberately not three: an exact match once case, whitespace
-	 * and punctuation are normalized (catches "Dur-An-Ki" against "Dur An
-	 * Ki" - the hyphen becomes a space either way); then a fuzzy match, but
-	 * only when it is the single unambiguous candidate within the edit-
-	 * distance threshold (catches "Sadhanna" against "Sadhana", one stray
-	 * letter). A label matching neither - "Eastern Necromancy" and "Hermetic
-	 * Thaumaturgy" both fail on first letter and length alone - is left
-	 * exactly as the source file wrote it rather than guessed at: the power
-	 * and level this raw name resolved against are real either way, and a
-	 * wrong tradition GUESS is worse than an unnormalized but honest one a
-	 * human can still recognize and correct.
-	 *
-	 * A no-op (returns $raw unchanged) for a block that is not blood-magic
-	 * flagged, or carries no traditions list - ordinary tiered_power blocks
-	 * have no such list to normalize against.
+	 * Resolves a raw tradition label against a blood-magic block's own known tradition list.
 	 *
 	 * @param string $raw
 	 * @param object $block Decoded tiered_power Schema_Block.
@@ -355,17 +287,8 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Applies an ST's explicitly chosen resolution for a `fuzzy` match,
-	 * re-entering the same lookup an exact match would take but using the
-	 * chosen name in place of the raw one.
-	 *
-	 * For a `trait_list` resolution, `$chosen_name` is a full item name -
-	 * pass `$blocks`, leave `$block` null. For a `tiered_power` resolution,
-	 * `$chosen_name` is whichever half of the raw name was fuzzy: a bare
-	 * power name for a named pick, or a family name for a numbered rung -
-	 * pass `$block`, leave `$blocks` empty. `$raw_name` is still needed to
-	 * tell a named pick from a numbered rung the same way
-	 * `resolve_tiered_power_trait()` itself does.
+	 * Applies an ST's explicitly chosen resolution for a `fuzzy` match, re-entering the same lookup an exact match would
+	 * take but using the chosen name in place of the raw one.
 	 *
 	 * @param string      $raw_name
 	 * @param string      $raw_total
@@ -379,7 +302,6 @@ class Trait_Mapper {
 			$powers   = (array) ( $block->definition->powers ?? [] );
 			$raw_name = self::strip_export_decorations( $raw_name );
 
-			// Must agree with resolve_tiered_power_trait()'s own branch order for "Tradition: Family" names.
 			$tradition_split = self::split_tradition_prefix( $raw_name, $powers );
 			if ( $tradition_split !== null ) {
 				$result = self::resolve_numbered_power( $chosen_name, $raw_total, $powers, $block->slug );
@@ -400,17 +322,8 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Split `"{Family}: {Power}"` (tier parenthetical optional) into `[family, power_name]`,
-	 * or null when the raw name has no `Family:` shape at all - a bare family name for a
-	 * numbered rung never contains a colon.
-	 *
-	 * Splits on the **longest real catalog family the name actually starts with**, not on
-	 * the first colon: over a hundred real seeded families contain colons of their own
-	 * ("Akhu: Path of Blood", "Thaumaturgy (Camarilla): Alchemy", "Wanga: Ash Path"), so a
-	 * blind first-colon split mis-parses every one of them. Falls back to a first-colon
-	 * split only when no real family matches, so an unrecognized or misspelled family still
-	 * reaches `resolve_named_power()` (and its suggestions) as a named shape rather than
-	 * silently dropping through to the numbered-rung path.
+	 * Split `"{Family}: {Power}"` (tier parenthetical optional) into `[family, power_name]`, or null when the raw name
+	 * has no `Family:` shape at all.
 	 *
 	 * @param string   $raw_name
 	 * @param object[] $powers Decoded `definition->powers`; empty is allowed (fallback only).
@@ -436,12 +349,6 @@ class Trait_Mapper {
 			return $power_name === '' ? null : [ $best, $power_name ];
 		}
 
-		// A ladder family whose own name carries a colon (Kuei-Jin's three "Black Wind: X"
-		// aspects) is not a named pick at all - it is `raw_name` in full, exported bare with a
-		// `level`, not a "family: power" pair. Without this check the fallback below reads its
-		// own internal colon as a split, manufacturing a "Black Wind" family that does not
-		// exist and losing the real one. Checked only after the prefix loop above finds no
-		// "family: power_name" match, so a real named pick under a compound family is unaffected.
 		foreach ( $powers as $power ) {
 			if ( ( $power->name ?? null ) === $raw_name ) {
 				return null;
@@ -455,10 +362,7 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Resolves a named-pick power (`"{Family}: {Power}"`) against a family's
-	 * own levels: exact match first, then a normalized match, then a fuzzy
-	 * suggestion. Tries the power name both as given and with a trailing
-	 * parenthetical tier removed.
+	 * Resolves a named-pick power (`"{Family}: {Power}"`) against a family's own levels: exact match first.
 	 *
 	 * @param string   $family_name
 	 * @param string   $power_name
@@ -467,11 +371,7 @@ class Trait_Mapper {
 	 * @return array{outcome:string,block_slug?:string,family?:string,power_name?:string,tier?:string,suggestions?:string[]}
 	 */
 	private static function resolve_named_power( string $family_name, string $power_name, array $powers, string $block_slug ): array {
-		// 1.3.2 alias routing: an exact family-name match first, then a recorded `aliases`
-		// or `split_from` rename that stayed in this same block (`1.3.1-design-workflow.md`
-		// §11.7 item 1) - refused rather than guessed when more than one family answers
-		// (`Trait_Alias_Resolver`'s own ambiguity rule, e.g. Kuei-Jin's three `Black Wind`
-		// aspects).
+		// An exact family-name match first, then a recorded `aliases` or `split_from` rename within this block.
 		$power = Trait_Alias_Resolver::find_power_by_name( $powers, $family_name );
 		if ( $power === null ) {
 			return [ 'outcome' => 'unresolved', 'suggestions' => [] ];
@@ -487,9 +387,6 @@ class Trait_Mapper {
 		}
 
 		foreach ( $candidates as $candidate ) {
-			// A rung/pick's own recorded `aliases` (`Grave's Decay`'s rung answering to
-			// both `Dissolve the Flesh` and `Disolve`) are checked at the same "exact"
-			// confidence as the literal `power_name` - both are catalog-recorded facts.
 			$exact = Trait_Alias_Resolver::find_level_by_name( $levels, $candidate );
 			if ( $exact !== null ) {
 				return [
@@ -527,10 +424,8 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Resolves a numbered-rung power (a bare family name plus a numeric
-	 * level) against a family's own levels: exact match first, then a
-	 * normalized match, then a fuzzy suggestion. Returns unresolved when the
-	 * family matches but the given level does not exist on it.
+	 * Resolves a numbered-rung power (a bare family name plus a numeric level) against a family's own levels: exact match
+	 * first.
 	 *
 	 * @param string   $raw_name
 	 * @param string   $raw_total
@@ -544,10 +439,7 @@ class Trait_Mapper {
 		$outcome_if_found = 'exact';
 
 		if ( $power === null ) {
-			// 1.3.2 alias routing: a recorded `aliases` or `split_from` rename that stayed
-			// in this block - as trustworthy as an exact name, so checked before a
-			// normalized/fuzzy guess. Refused (not guessed) when more than one family
-			// answers (`Trait_Alias_Resolver`'s own ambiguity rule).
+			// An exact family-name match first, then a recorded `aliases` or `split_from` rename within this block.
 			$power = Trait_Alias_Resolver::find_power_by_name( $powers, $raw_name );
 			if ( $power !== null ) {
 				$outcome_if_found = 'exact';
@@ -590,10 +482,7 @@ class Trait_Mapper {
 			}
 		}
 
-		// D66 (1.2.5-design-workflow.md §A): a rank with several powers tied at one tier
-		// carries `level: null` on all of them, so no item above matches exactly - the
-		// rank itself is still real. Confirmed by tier presence instead: any item in the
-		// family whose tier resolves to this rank number makes the rung a genuine one.
+		// A rank with several powers tied at one tier carries no level, so it is confirmed by tier presence.
 		$tier = self::tier_for_rank( $level_num );
 		if ( $tier !== null ) {
 			foreach ( Power_Levels::all( $power ) as $level ) {
@@ -613,10 +502,7 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Maps a numbered rank (1=basic, 2=intermediate, ...) to its tier name.
-	 * Mirrors `Cost_Engine::tier_for_rank()`/`Database\Seeder::TIER_RANKS`
-	 * exactly; duplicated rather than shared across Services classes for one
-	 * lookup, matching `Cost_Engine`'s own established precedent for this.
+	 * Maps a numbered rank (1=basic, 2=intermediate,...) to its tier name.
 	 */
 	private static function tier_for_rank( int $rank ): ?string {
 		static $numbered = [
@@ -627,9 +513,7 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Finds the first item in a list whose named property matches exactly,
-	 * comparing case-sensitively. Used to look up a power or level by name
-	 * within an already-decoded catalog. Returns null when no item matches.
+	 * Finds the first item in a list whose named property matches exactly, comparing case-sensitively.
 	 *
 	 * @param object[] $items
 	 * @param string   $name
@@ -646,17 +530,13 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Collects every candidate block that has at least one item satisfying
-	 * `$predicate`, stopping at the first matching item per block. Used by
-	 * resolve_trait() to find exact and normalized matches across multiple
-	 * candidate blocks at once.
+	 * Collects every candidate block that has at least one item satisfying `$predicate`, stopping at the first matching item
+	 * per block. Used by resolve_trait() to find exact and normalized matches across multiple candidate blocks at once.
 	 *
-	 * @param string   $raw_name  Unused directly here - kept so every call site reads the
-	 *                            same way; each predicate closure captures it itself.
+	 * @param string   $raw_name  Unused directly here; each predicate closure captures it itself.
 	 * @param object[] $blocks
-	 * @param callable(string,object):bool $predicate Receives the item's own `name` and the
-	 *                            item itself, the latter for a 1.3.2 alias check against
-	 *                            `$item->aliases`.
+	 * @param callable(string,object):bool $predicate Receives the item's own `name` and the item itself, the latter for an alias
+	 *                            check against `$item->aliases`.
 	 * @return array<int,array{block_slug:string,item_name:string}>
 	 */
 	private static function hits_in_blocks( string $raw_name, array $blocks, callable $predicate ): array {
@@ -673,9 +553,8 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Returns a block's catalog items (`definition->items`) as a plain
-	 * array, or an empty array when the block has no items defined. A small
-	 * convenience wrapper used throughout this class's lookups.
+	 * Returns a block's catalog items (`definition->items`) as a plain array, or an empty array when the block has no
+	 * items defined.
 	 *
 	 * @param object $block A decoded Schema_Block row.
 	 * @return object[]
@@ -685,9 +564,7 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Checks whether a block's definition allows a custom, unrecognized
-	 * trait entry to be accepted rather than rejected as unresolved. Reads
-	 * the `allow_custom` flag from the block's definition.
+	 * Checks whether a block's definition allows a custom, unrecognized trait entry to be accepted.
 	 *
 	 * @param object $block
 	 * @return bool

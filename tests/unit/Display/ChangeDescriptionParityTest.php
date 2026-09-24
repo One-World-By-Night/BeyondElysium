@@ -6,13 +6,8 @@ use BeyondElysium\Services\Display\Change_Description;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `Change_Description.php` (authoritative) and `describeChange.ts` (the on-screen
- * approval queue / change history's own rendering) must agree - same change_type
- * and change_data in, same description string out. Both read the same fixture and
- * are checked against the same expected output; this half proves the PHP side,
- * `src/lib/describeChange.test.ts` proves the TypeScript side.
- *
- * @see BE_PROCESS/design/signed-pdf-design.md Section 3a, SP-5
+ * `Change_Description.php` (authoritative) and `describeChange.ts` (the on-screen approval queue / change history's
+ * own rendering) must agree.
  */
 class ChangeDescriptionParityTest extends TestCase {
 

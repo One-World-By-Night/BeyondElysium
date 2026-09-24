@@ -6,12 +6,7 @@ use BeyondElysium\Services\Downtime_Window;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `Downtime_Window::state_for()` (1.1.0 §3.3) is the pure core every other downtime check -
- * `state()`, `Entries_Controller`'s enforcement, `Apr_Controller`'s background-use checks -
- * ultimately calls. Pure and DB-free by design, so this test asserts the exact table the
- * design doc specifies rather than exercising it through a real request.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.3
+ * `Downtime_Window::state_for()` is the pure core every other downtime check.
  */
 class DowntimeWindowUnitTest extends TestCase {
 

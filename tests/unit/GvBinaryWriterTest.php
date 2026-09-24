@@ -7,11 +7,8 @@ use BeyondElysium\Services\GV_Binary_Writer;
 use PHPUnit\Framework\TestCase;
 
 /**
- * GX-5: `GV_Binary_Writer` - every primitive round-tripped through the real
- * `GV_Binary_Reader`, proving the writer is a genuine byte-for-byte inverse
- * rather than merely "close enough."
- *
- * @see BE_PROCESS/design/gex-export-transfer-design.md GX-5
+ * `GV_Binary_Writer` - every primitive round-tripped through the real `GV_Binary_Reader`, proving the writer is a
+ * genuine byte-for-byte inverse.
  */
 class GvBinaryWriterTest extends TestCase {
 
@@ -87,8 +84,7 @@ class GvBinaryWriterTest extends TestCase {
 		$w = ( new GV_Binary_Writer() )->string( 'Café Müller — a dash' );
 		$r = $this->reader( $w );
 
-		// Whatever survives round-trips cleanly - the point is no exception and no desync,
-		// not preserving characters ISO-8859-1 can't represent in the first place.
+		// Whatever survives round-trips cleanly.
 		$this->assertIsString( $r->string() );
 		$this->assertTrue( $r->eof() );
 	}

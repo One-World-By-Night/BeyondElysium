@@ -12,12 +12,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-111 (found triaging F-020). Committing a date's rumors wrote each one as a plot
- * and then a tag marking it a rumor, never checking either. A write that failed still answered
- * 201 with every rumor listed, and emailed each matched player about rumors that were never
- * saved. A tag that failed left an ordinary plot behind - which the next generation, finding no
- * rumor of that title, made again. Two generations at once could each find the date empty and
- * each write its rumors. A hand-written rumor whose tag failed was kept as an ordinary plot.
+ * (found triaging).
  */
 class RumorWritesThreadTest extends WP_UnitTestCase {
 
@@ -56,7 +51,9 @@ class RumorWritesThreadTest extends WP_UnitTestCase {
 		return true;
 	}
 
-	/** Fails inserts into one table after the first `$spared`, as a lost connection or lock timeout would. */
+	/**
+	 * Fails inserts into one table after the first `$spared`, as a lost connection or lock timeout would.
+	 */
 	public function break_inserts( string $query ): string {
 		global $wpdb;
 		if ( $this->broken_table === '' || ! preg_match( "/^\s*INSERT INTO `?{$wpdb->prefix}be_{$this->broken_table}`?/i", $query ) ) {
@@ -105,7 +102,7 @@ class RumorWritesThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_one_rumor_that_did_not_save_keeps_none_of_the_date(): void {
-		// The date's first rumor saves; the second doesn't.
+		// The date's first rumor saves.
 		$response = $this->with_failing_inserts( 'plots', fn() => $this->commit_rumors(), 1 );
 
 		$this->assertSame( 500, $response->get_status() );
@@ -129,7 +126,6 @@ class RumorWritesThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_another_generation_waits_while_one_checks_and_writes_the_date(): void {
-		// A committed chronicle, so a second connection's lock attempt measures this generation's hold.
 		$demo = Game::find_by_slug( 'be-demo' );
 		$this->assertNotNull( $demo, 'The demo chronicle is seeded.' );
 

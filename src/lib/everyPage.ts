@@ -1,14 +1,14 @@
 /**
- * Gathers every page of a paginated list, for a picker that must offer
- * the whole list rather than its first page (1.0.0-review F-080).
+ * Gathers every page of a paginated list, for a picker that must offer the whole list.
  */
 
-/** The most pages gathered - 10,000 rows at the routes' 100 a page. */
+/**
+ * The most pages gathered.
+ */
 const MAX_PAGES = 100;
 
 /**
- * Calls `fetchPage` for page 1, 2, ... until the gathered rows reach the
- * reported total or a page comes back empty.
+ * Calls `fetchPage` for page 1, 2,... until the gathered rows reach the reported total or a page comes back empty.
  */
 export async function everyPage< T >(
 	fetchPage: ( page: number ) => Promise< { items: T[]; total: number } >

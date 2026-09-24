@@ -1,11 +1,5 @@
 /**
- * The finer-grained sibling of EnabledStacksPicker: within an already-enabled
- * creature stack, restrict which values a real catalog-backed identity_field
- * (Vampire Clan/Sect, Werewolf Tribe, and similar) offers - "Vampire yes, but
- * no Sabbat." Engine-pure like its sibling: this reads whichever real
- * select/multiselect identity fields each enabled stack's own resolved
- * catalog actually declares, rather than a hardcoded field-name list, so a
- * future creature type or a renamed field needs no change here.
+ * The finer-grained sibling of EnabledStacksPicker.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -15,7 +9,9 @@ import './FactionRestrictionsPicker.css';
 
 export interface FactionRestrictionsPickerProps {
 	gameSlug: string;
-	/** null means "every real creature stack" - `enabled_stacks`' own absent-means-all convention, never "none". */
+	/**
+	 * null means "every real creature stack".
+	 */
 	enabledStacks: string[] | null;
 	restrictions: Record< string, Record< string, string[] > >;
 	onSave: ( stackSlug: string, fieldName: string, allowed: string[] ) => void;
@@ -29,7 +25,9 @@ interface RestrictableField {
 	options: string[];
 }
 
-/** A field is restrictable when it's a real catalog pick, not free text or an empty/dynamic list. */
+/**
+ * A field is restrictable when it's a real catalog pick.
+ */
 function isRestrictable( field: IdentityField ): boolean {
 	return (
 		( field.field_type === 'select' ||
@@ -50,8 +48,7 @@ export function FactionRestrictionsPicker( {
 	const [ drafts, setDrafts ] = useState< Record< string, Set< string > > >(
 		{}
 	);
-	// The effect below runs again when the stacks listed change, not each time the parent
-	// passes a new array.
+	// The effect below runs again when the stacks listed change.
 	const stacksKey =
 		enabledStacks === null ? 'all' : enabledStacks.join( ',' );
 

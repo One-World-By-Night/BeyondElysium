@@ -7,21 +7,13 @@ use BeyondElysium\Models\Schema_Block;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The single fork-aware lookup for a chronicle's merged `{stack}-backgrounds`
- * catalog. Replaces three independent copies of this same lookup
- * (Action_Allocator::catalog_sources(), Rumor_Generator::character_influences(),
- * Query_Engine::catalog_sources()/block_is_atomic()) that called
- * Schema_Block::find_by_slug() and were therefore blind to a chronicle's own
- * fork of the block - see BE_PROCESS/design/background-ledger-apr-design.md §3.1.
- *
- * @see BE_PROCESS/design/background-ledger-apr-design.md §5.2-5.3
+ * The single fork-aware lookup for a chronicle's merged `{stack}-backgrounds` catalog.
  */
 class Backgrounds_Catalog {
 
 	/**
-	 * Builds a name -> source map ('Influences', 'Backgrounds', 'Backgrounds,
-	 * <Type>') for every item in one merged backgrounds block, resolved
-	 * through this chronicle's own fork when one exists.
+	 * Builds a name -> source map ('Influences', 'Backgrounds', 'Backgrounds, <Type>') for every item in one merged
+	 * backgrounds block, resolved through this chronicle's own fork when one exists.
 	 *
 	 * @param string $block_slug
 	 * @param string $game_slug
@@ -41,8 +33,8 @@ class Backgrounds_Catalog {
 	}
 
 	/**
-	 * Returns the full catalog item list for one merged backgrounds block,
-	 * resolved through this chronicle's own fork when one exists.
+	 * Returns the full catalog item list for one merged backgrounds block, resolved through this chronicle's own fork
+	 * when one exists.
 	 *
 	 * @param string $block_slug
 	 * @param string $game_slug
@@ -54,16 +46,9 @@ class Backgrounds_Catalog {
 	}
 
 	/**
-	 * Returns every distinct background/influence name across every
-	 * `{stack}-backgrounds` block in the catalog, fork-aware, for the
-	 * background_actions picker and for validating a chronicle's chosen
-	 * list against real catalog names. Each name carries which stacks offer
-	 * it and whether it is Influence-sourced on any of them - an
-	 * Influence-sourced item is already granted unconditionally and is never
-	 * itself a valid background_actions entry.
-	 *
-	 * A stack with no backgrounds block at all (e.g. `bete`) simply
-	 * contributes nothing; this is not an error condition.
+	 * Returns every distinct background/influence name across every `{stack}-backgrounds` block in the catalog,
+	 * fork-aware, for the background_actions picker and for validating a chronicle's chosen list against real catalog
+	 * names.
 	 *
 	 * @param string $game_slug
 	 * @return array[] {name, stacks: string[], is_influence: bool}

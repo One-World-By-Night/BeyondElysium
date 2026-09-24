@@ -13,15 +13,13 @@ use BeyondElysium\Models\Plot_Entry;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The spotlight check (1.1.0 §3.14, A2) - every active, non-NPC character's own attention
- * profile, so a Storyteller can see who hasn't been touched by staff in a while. Flagged
- * first, then least recent attention.
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §3.14
+ * The spotlight check - every active, non-NPC character's own attention profile.
  */
 class Spotlight {
 
-	/** Days with no staff post before a character is flagged, absent a chronicle setting. */
+	/**
+	 * Days with no staff post before a character is flagged, absent a chronicle setting.
+	 */
 	const DEFAULT_SPOTLIGHT_DAYS = 42;
 
 	/**
@@ -31,9 +29,6 @@ class Spotlight {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public static function for_game( int $game_id, string $game_slug, array $settings ): array {
-		// $game->settings decodes as nested stdClass, not nested arrays (Game::decode_settings())
-		// - the sessions bucket itself needs its own cast, matching award_attendance_xp()'s own
-		// identical two-step cast for the same reason.
 		$sessions_settings = (array) ( $settings['sessions'] ?? [] );
 		$spotlight_days    = (int) ( $sessions_settings['spotlight_days'] ?? self::DEFAULT_SPOTLIGHT_DAYS );
 		$staff_ids      = Game_Member::staff_ids_for_game( $game_id );
@@ -67,9 +62,7 @@ class Spotlight {
 	}
 
 	/**
-	 * How many characters on the flagged list would show right now - `Game_Stats_Controller`'s
-	 * own `characters_needing_attention` count, computed the identical way `for_game()` flags a
-	 * row so the dashboard number and the Spotlight screen can never disagree.
+	 * How many characters on the flagged list would show right now.
 	 *
 	 * @param int    $game_id
 	 * @param string $game_slug
@@ -96,9 +89,7 @@ class Spotlight {
 	}
 
 	/**
-	 * Active, non-action plots connected to a character - the character's own permanent plot
-	 * (`game_date IS NULL`, `apr_actor`) and any action round (`game_date IS NOT NULL`) are
-	 * both excluded, matching `Plot::count_for_game()`'s own `exclude_character_plots` rule.
+	 * Active, non-action plots connected to a character.
 	 *
 	 * @param int $character_id
 	 * @return int
@@ -106,8 +97,6 @@ class Spotlight {
 	private static function active_plot_count( int $character_id ): int {
 		$count = 0;
 		foreach ( self::connected_plots( $character_id ) as $plot ) {
-			// A NULL game_date column round-trips through wpdb as PHP null OR '' depending on
-			// the driver - empty() catches both rather than trusting a strict null identity.
 			if ( $plot->status === 'active' && empty( $plot->game_date ) && empty( $plot->is_own_permanent_plot ) ) {
 				$count++;
 			}
@@ -116,8 +105,7 @@ class Spotlight {
 	}
 
 	/**
-	 * The newest non-note entry by a manager (hst/ast/narrator) on any plot connected to the
-	 * character - action rounds included, unlike `active_plots` above.
+	 * The newest non-note entry by a manager (hst/ast/narrator) on any plot connected to the character.
 	 *
 	 * @param int   $character_id
 	 * @param int[] $staff_ids
@@ -142,13 +130,7 @@ class Spotlight {
 	}
 
 	/**
-	 * Every plot connected to a character, regardless of connection label or direction - no
-	 * single existing helper covers this union (every other caller works with one specific
-	 * label), so this composes it from `Connection::for_entity()`. Each returned plot gains a
-	 * synthetic `is_own_permanent_plot` flag (an `apr_actor` connection to a `game_date IS
-	 * NULL` plot - `Character::ensure_plot()` creates exactly one of these for every
-	 * character, automatically) - `active_plot_count()`'s own exclusion, matching
-	 * `Plot::count_for_game()`'s `exclude_character_plots` rule.
+	 * Every plot connected to a character, regardless of connection label or direction.
 	 *
 	 * @param int $character_id
 	 * @return object[]

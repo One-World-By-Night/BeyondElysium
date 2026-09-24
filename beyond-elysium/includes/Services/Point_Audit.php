@@ -9,25 +9,7 @@ use BeyondElysium\Models\Schema_Block;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The itemised point audit (point-calculator-design.md). Resolves blocks,
- * walks every held entry, and calls `Cost_Engine`'s held-state pricing
- * functions - zero arithmetic of its own (§5.1). "Pricing lives in exactly
- * one place" (`Cost_Engine`'s own class docblock): every number this class
- * prints came out of `Cost_Engine`, so a previewed purchase and an audit
- * line can never disagree.
- *
- * A full-sheet total can never be presented as complete (§0, §4.5) - 71.8%
- * of real held lines could not be priced at the time this was measured.
- * `complete` is hardcoded `false` with no branch that can produce `true`.
- *
- * Callers must gate this on `be_manage_characters`, never a narrower
- * capability (§5.5): this class reads the character's full, unredacted
- * `sheet_data`, including Storyteller-only blocks, and a total computed
- * across them leaks their values arithmetically to anyone who can difference
- * the result against the public catalog. `Reports_Controller`-style REST
- * gating is the control, not a filter inside this class.
- *
- * @see BE_PROCESS/design/point-calculator-design.md
+ * The itemised point audit.
  */
 class Point_Audit {
 
@@ -84,11 +66,8 @@ class Point_Audit {
 	}
 
 	/**
-	 * §5.3's union walk: the stack's own declared sections (in display_order,
-	 * a negative_block_slug walked immediately after its own section), then
-	 * any held-but-undeclared slug last, flagged `undeclared` - the §3.2
-	 * detector. Returns walk order only; block lookup happens once, in bulk,
-	 * by the caller.
+	 * The union walk: the stack's own declared sections in display_order, with a negative_block_slug walked right after
+	 * its own section, then any held-but-undeclared slug last, flagged `undeclared`. Returns walk order only.
 	 *
 	 * @param array<int,object> $sections
 	 * @param string[]          $held_slugs
@@ -146,7 +125,9 @@ class Point_Audit {
 	}
 
 	/**
-	 * @param array<string,object> $blocks The character's blocks by slug, already loaded - threaded through for 1.3.2's `moved_from` cross-block resolution.
+	 * Builds the audit lines for a trait_list section.
+	 *
+	 * @param array<string,object> $blocks The character's blocks by slug, already loaded - threaded through `moved_from` cross-block resolution.
 	 * @return array<int,array<string,mixed>>
 	 */
 	private static function trait_list_lines( object $definition, array $entry, array $held_list, array $blocks = [] ): array {
@@ -161,9 +142,6 @@ class Point_Audit {
 				'block_slug'          => $entry['slug'],
 				'section_label'       => $entry['label'],
 				'section_type'        => 'trait_list',
-				// 1.2.11 D94: on a count_is_cost block the stored count is a flat XP
-				// price, so `×8` would read as eight copies of a power held once. The
-				// price is always named, including at 1, which `×N` hid entirely.
 				'label'               => ! empty( $definition->count_is_cost )
 					? sprintf( '%s (%d XP)', $name, $count )
 					: ( $count > 1 ? sprintf( '%s ×%d', $name, $count ) : $name ),
@@ -179,8 +157,10 @@ class Point_Audit {
 	}
 
 	/**
-	 * @param callable(string):bool $is_in_type The block's in-type check, looked up once for every held power (F-087).
-	 * @param array<string,object>  $blocks     The character's blocks by slug, already loaded - threaded through for 1.3.2's `moved_from` cross-block resolution.
+	 * Builds the audit lines for a tiered_power section.
+	 *
+	 * @param callable(string):bool $is_in_type The block's in-type check, looked up once for every held power.
+	 * @param array<string,object> $blocks The character's blocks by slug, already loaded - threaded through `moved_from` cross-block resolution.
 	 * @return array<int,array<string,mixed>>
 	 */
 	private static function tiered_power_lines( callable $is_in_type, object $definition, array $entry, array $held_list, array $blocks = [] ): array {
@@ -197,9 +177,7 @@ class Point_Audit {
 			} elseif ( ! empty( $held['level'] ) ) {
 				$label = $trait_name . ' ' . (int) $held['level'];
 			}
-			// Blood Magic's own display rule (0.99.2-workflow.md: "Tradition: PathName"),
-			// matching TieredPowerRenderer.tsx's withTradition() exactly so a blood-magic
-			// path reads the same on the audit as on the sheet (§5.6).
+			// Blood Magic reads as "Tradition: PathName", as on the sheet.
 			if ( ! empty( $held['tradition'] ) ) {
 				$label = $held['tradition'] . ': ' . $label;
 			}
@@ -226,8 +204,7 @@ class Point_Audit {
 	}
 
 	/**
-	 * Every declared pool gets its own line, held or not (§4.3) - an unheld
-	 * pool still exists on the character at its `default_start`.
+	 * Every declared pool gets its own line, held or not.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
@@ -257,7 +234,7 @@ class Point_Audit {
 	}
 
 	/**
-	 * Every declared field is `unpriced` - never `0`, never omitted (§4.4).
+	 * Every declared field is `unpriced`.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
@@ -332,9 +309,7 @@ class Point_Audit {
 	}
 
 	/**
-	 * An unpriced line's reason in words - the same words `PointAudit.tsx` shows beside each
-	 * line, so one translation serves the line and the summary (1.0.0-review F-085). A reason
-	 * with no label yet reads as its key with spaces.
+	 * An unpriced line's reason in words.
 	 */
 	public static function reason_label( string $reason ): string {
 		$labels = [
@@ -356,8 +331,6 @@ class Point_Audit {
 	 */
 	private static function caveat( int $unpriced_lines, array $unpriced_by_reason ): string {
 		if ( $unpriced_lines === 0 ) {
-			// Unreachable against any real character today (§0) - kept honest rather than
-			// asserting completeness even in the theoretical case every line prices.
 			return __( 'Every line on this sheet priced - the total is still not a bill.', 'beyond-elysium' );
 		}
 

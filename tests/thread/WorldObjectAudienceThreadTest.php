@@ -11,17 +11,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.1.0 U5: items and locations enforce their own audience, defaulting to `everyone` (a
- * catalog is normally public - owner ruled the storytellers-only default applies to plots
- * only), on every player-reachable reader: `World_Objects_Controller::get_items()`/`get_item()`
- * and the `item-cards`/`location-cards` reports. A character connected to an object always
- * sees it, whatever its audience - "Print My Items" and a character's own sheet must keep
- * working even when the object is otherwise storytellers-only.
- *
- * These tests fail against pre-U5 code: `World_Objects_Controller` applied no audience
- * enforcement at all (the original survey's own finding).
- *
- * @see BE_PROCESS/releases/1.1.0-design-workflow.md §2.5, U5
+ * Items and locations enforce their own audience, defaulting to `everyone`, on every player-reachable reader:
+ * `World_Objects_Controller::get_items()`/`get_item()` and the `item-cards`/`location-cards` reports.
  */
 class WorldObjectAudienceThreadTest extends WP_UnitTestCase {
 
@@ -101,12 +92,6 @@ class WorldObjectAudienceThreadTest extends WP_UnitTestCase {
 		$this->assertSame( Audience::EVERYONE, $object->audience );
 	}
 
-	/**
-	 * A real gap found writing U7's frontend: World_Objects_Controller enforced audience on
-	 * every reader (U5) but never actually read `audience`/`audience_rules` from a create or
-	 * update request at all - the model layer supported both since U1, but a Storyteller
-	 * setting either through the real API silently did nothing.
-	 */
 	public function test_a_manager_can_set_audience_on_create(): void {
 		wp_set_current_user( $this->make_manager() );
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/world-objects" );
@@ -156,11 +141,6 @@ class WorldObjectAudienceThreadTest extends WP_UnitTestCase {
 		$this->assertNotContains( 'Hidden Item', $names );
 	}
 
-	/**
-	 * The D38-class pagination proof, mirroring PlotAudienceThreadTest's own: fetching a
-	 * SQL-paginated page and then dropping invisible rows would silently truncate below
-	 * per_page while more real, visible items existed past an early cutoff.
-	 */
 	public function test_the_list_total_and_paging_reflect_only_what_is_actually_visible(): void {
 		foreach ( [ 'Open A', 'Open B', 'Open C' ] as $name ) {
 			$this->make_object( 'item', [ 'name' => $name, 'audience' => Audience::EVERYONE ] );
@@ -232,7 +212,7 @@ class WorldObjectAudienceThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// The connected-character exception (§2.5's own explicit rule)
+	// The connected-character exception
 	// -------------------------------------------------------------------------
 
 	public function test_a_character_connected_to_a_storytellers_only_item_can_still_see_it(): void {
@@ -270,8 +250,7 @@ class WorldObjectAudienceThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Seeds a minimal vampire-identity schema block with a Clan field, matching
-	 * AudienceThreadTest's own fixture, so `clan` resolves as a real queryable field.
+	 * Seeds a minimal vampire-identity schema block with a Clan field, matching AudienceThreadTest's own fixture.
 	 */
 	private function seed_vampire_identity_block(): string {
 		global $wpdb;

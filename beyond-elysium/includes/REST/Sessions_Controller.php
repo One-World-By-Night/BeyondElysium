@@ -16,8 +16,8 @@ use BeyondElysium\Services\St_Visibility;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for a chronicle's game sessions (1.1.0 §3.1): the calendar of game nights,
- * sign-in attendance, and awarding attendance XP once a session's roster is settled.
+ * REST controller for a chronicle's game sessions: the calendar of game nights, sign-in attendance, and awarding
+ * attendance XP once a session's roster is settled.
  */
 class Sessions_Controller extends Base_Controller {
 
@@ -103,10 +103,7 @@ class Sessions_Controller extends Base_Controller {
 			],
 		] );
 
-		// After-game reports (1.1.0 §3.14, A1) - broad on purpose (be_edit_own_characters, the
-		// widest role-granted capability in this plugin): a player files their own report;
-		// get_reports()/create_report()/update_report() each do the real ownership check
-		// themselves, the same broad-route-narrow-handler shape Changes_Controller uses.
+		// After-game reports, filed by the player.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/sessions/(?P<id>\d+)/reports', [
 			[
 				'methods'             => 'GET',
@@ -151,9 +148,7 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Lists a chronicle's sessions, soonest first, optionally narrowed to a date range - the
-	 * calendar view's own `from`/`to` params. Every member sees the calendar; the XP-awarded
-	 * fields are stripped for anyone without be_manage_sessions.
+	 * Lists a chronicle's sessions, soonest first, optionally narrowed to a date range.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -221,11 +216,7 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Updates an existing session. The four downtime fields (downtime_opens_at,
-	 * downtime_deadline_at, downtime_extensions, default_batch_id) additionally require
-	 * be_manage_apr - present but silently dropped for a caller who only holds
-	 * be_manage_sessions, the same "don't trust a field this caller can't set" rule this
-	 * codebase applies elsewhere rather than erroring on it.
+	 * Updates an existing session.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -278,8 +269,8 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Deletes a session, refused with 409 if it already has real data (currently attendance
-	 * only - see Game_Session::is_in_use()).
+	 * Deletes a session, refused with 409 if it already has real data (currently attendance only - see
+	 * Game_Session::is_in_use()).
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -316,8 +307,7 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Records a sign-in: a real, active, non-NPC character in this chronicle, or a visitor by
-	 * name. A character already signed in at this session is refused with 409.
+	 * Records a sign-in: a real, active, non-NPC character in this chronicle, or a visitor by name.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -380,8 +370,7 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Awards attendance XP once to every character signed in at a session. Refused with 409 if
-	 * already awarded, unless force is set.
+	 * Awards attendance XP once to every character signed in at a session.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -429,8 +418,7 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Lists after-game reports for a session (1.1.0 §3.14, A1) - staff see every report; a
-	 * player sees only their own.
+	 * Lists after-game reports for a session.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -462,8 +450,7 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates a report for the caller's own character at this session. The session's game_date
-	 * must be on or before today, and the report can't already exist for this character (409).
+	 * Creates a report for the caller's own character at this session.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -543,8 +530,7 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Marks a report read by a Storyteller. The report's own words are never editable through
-	 * this route or any other - staff read and mark, they never write.
+	 * Marks a report read by a Storyteller.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -564,8 +550,7 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Awards report XP once to every character with a report at a session - identical shape to
-	 * award_attendance_xp(), just keyed off who filed a report instead of who signed in.
+	 * Awards report XP once to every character with a report at a session.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -613,8 +598,8 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * The spotlight check (1.1.0 §3.14, A2) - every active, non-NPC character's own attention
-	 * profile, flagged first then least recent attention.
+	 * The spotlight check - every active, non-NPC character's own attention profile, flagged first then least recent
+	 * attention.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -630,9 +615,7 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Resolves the caller's own character named by the request's character_id param, refusing
-	 * one they don't own (a manager may still only ever file a report as themselves here - this
-	 * route is a player-authorship route, not a staff-on-behalf-of one).
+	 * Resolves the caller's own character named by the request's character_id param, refusing one they don't own.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return object|\WP_Error
@@ -669,8 +652,8 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Sets one character's own downtime deadline for this session, replacing (not adding to)
-	 * the session's own deadline for them alone (1.1.0 §3.3).
+	 * Sets one character's own downtime deadline for this session, replacing (not adding to) the session's own deadline
+	 * for them alone.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -699,8 +682,7 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Removes one character's downtime extension, returning them to the session's own
-	 * deadline.
+	 * Removes one character's downtime extension, returning them to the session's own deadline.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -719,11 +701,8 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Validates one release-schedule rule (1.1.1 §3): `weekly` needs a real weekday name,
-	 * `monthly` needs a day of month from 1 to 28 (no 29/30/31 ambiguity across short
-	 * months). Returns a clean, minimal rule object, or null when the rule is malformed -
-	 * the caller drops a null rather than the whole request, since one bad rule shouldn't
-	 * block every other one already saved.
+	 * Validates one release-schedule rule: `weekly` needs a real weekday name, `monthly` needs a day of month from 1 to
+	 * 28 (no 29/30/31 ambiguity across short months).
 	 *
 	 * @param mixed $rule
 	 * @return array{type:string,weekday?:string,day_of_month?:int,time:string}|null
@@ -755,12 +734,7 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Normalizes a stored release_schedule value into plain arrays throughout - `Game`'s own
-	 * `decode_settings()` runs `json_decode()` without the assoc flag, so every rule object
-	 * nested inside `release_schedule.rules` comes back as stdClass, not the plain array
-	 * `clean_release_rule()` itself always returns. Left uncast, the REST response would
-	 * still serialize to identical JSON (a client never sees the difference), but this keeps
-	 * the PHP-side shape consistent for anything reading the response array directly.
+	 * Normalizes a stored release_schedule value into plain arrays throughout.
 	 *
 	 * @param mixed $release_schedule
 	 * @return array{rules: array<int,array<string,mixed>>}
@@ -772,10 +746,8 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Updates this chronicle's session-related settings (attendance_xp, report_xp,
-	 * spotlight_days), merged into settings.sessions, and its recurring release-schedule
-	 * rules (§3), merged into the sibling settings.release_schedule - each stored
-	 * independently so saving one never clobbers the other.
+	 * Updates this chronicle's session settings (attendance_xp, report_xp, spotlight_days) and its recurring
+	 * release-schedule rules.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -822,9 +794,8 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Reads the four downtime fields from the request, gated on be_manage_apr in addition to
-	 * this controller's own be_manage_sessions - present but held by a caller without it are
-	 * silently dropped rather than erroring.
+	 * Reads the four downtime fields from the request, gated on be_manage_apr in addition to this controller's own
+	 * be_manage_sessions.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return array
@@ -851,8 +822,7 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Resolves a session named by a nested attendance route's {id}, confirming it belongs to
-	 * the game named in the URL.
+	 * Resolves a session named by a nested attendance route's {id}, confirming it belongs to the game named in the URL.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return object|\WP_Error
@@ -870,8 +840,8 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Strips the XP-awarded fields and any [ST]-marked notes text from a session for any
-	 * viewer without be_manage_sessions.
+	 * Strips the XP-awarded fields and any [ST]-marked notes text from a session for any viewer without
+	 * be_manage_sessions.
 	 *
 	 * @param object $session
 	 * @param bool   $can_manage
@@ -891,8 +861,7 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404
-	 * status when no game matches.
+	 * Looks up a game by its slug and returns the game object, or a WP_Error with a 404 status when no game matches.
 	 *
 	 * @param string $game_slug
 	 * @return object|\WP_Error

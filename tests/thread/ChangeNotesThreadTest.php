@@ -12,10 +12,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-032: character_changes had one `notes` column for two people. A player's
- * justification was replaced by the Storyteller's review note the moment the change was
- * reviewed, and every auto-approved change - every import's "Imported from ..." included - lost
- * its note the instant it was created. The reviewer now writes `review_notes`.
+ * Character_changes had one `notes` column for two people.
  */
 class ChangeNotesThreadTest extends WP_UnitTestCase {
 

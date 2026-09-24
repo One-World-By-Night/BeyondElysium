@@ -7,18 +7,12 @@ use BeyondElysium\Core\Print_Canvas;
 use WP_UnitTestCase;
 
 /**
- * Decision 052: printing showed a theme-owned box CSS could never fully hide, since it
- * never came from markup this plugin controls in the first place - fixed by routing one
- * specific page through a template that never calls the theme's own header.php/footer.php
- * at all. `is_page()`-dependent behavior needs the real WP query context `go_to()` sets up,
- * not previously used elsewhere in this suite - this is the first test that needs it.
+ * Printing showed a theme-owned box CSS could never fully hide.
  */
 class PrintCanvasTest extends WP_UnitTestCase {
 
 	public function test_uses_the_blank_canvas_template_on_the_print_page(): void {
-		// go_to( pretty URL ) depends on rewrite rules being flushed, not otherwise
-		// exercised anywhere in this suite - page_id is the unambiguous form go_to()
-		// itself resolves regardless of permalink structure.
+		// go_to(pretty URL) depends on rewrite rules being flushed.
 		$page_id = self::factory()->post->create( [
 			'post_type'  => 'page',
 			'post_name'  => Page_Provisioner::PRINT_SLUG,

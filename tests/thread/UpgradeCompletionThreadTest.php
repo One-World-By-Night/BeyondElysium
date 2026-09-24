@@ -7,12 +7,9 @@ use BeyondElysium\Database\Schema;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-064 (Pass H intake `t3-schema-seeder`). The upgrade recorded the new schema
- * version as its first step, then ran a dozen more. When a later one failed, the site already
- * read as upgraded: nothing retried, nothing said so, and the reseed, capabilities, and pages
- * for that version never landed. Now the version is recorded only once every step has run. A
- * failure is logged and shown to administrators, and retried once its lock goes stale rather
- * than on every request - and one request's upgrade is never run a second time alongside it.
+ * The upgrade records its version only when it completes: a failed step leaves the version unrecorded and says why, a
+ * failure is retried once its lock goes stale rather than on every request, an upgrade already running elsewhere is not
+ * run alongside it, and a finished upgrade records the version and lets the next one run.
  */
 class UpgradeCompletionThreadTest extends WP_UnitTestCase {
 
@@ -40,7 +37,9 @@ class UpgradeCompletionThreadTest extends WP_UnitTestCase {
 		throw new \RuntimeException( 'Page provisioning failed' );
 	}
 
-	/** Writes the lock row directly, the way another request holding it would have. */
+	/**
+	 * Writes the lock row directly, the way another request holding it would have.
+	 */
 	private function set_lock( ?int $since ): void {
 		global $wpdb;
 		$wpdb->delete( $wpdb->options, [ 'option_name' => 'be_upgrade_lock' ] );

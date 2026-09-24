@@ -10,10 +10,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * 1.0.0-review F-099 (Pass H intake `t1-risky-screens`). A change's approval level is worked out
- * when it's shown, never stored, so the Approval Queue filtered by level on the one page it had
- * already fetched: a level with nothing on page 1 read "Nothing pending." beside "Page 1 (25
- * total)" and an enabled Next, while its changes sat a page away.
+ * The approval queue's level filter pages through one approval level alone: a later page holds the rest of that level,
+ * and no filter pages the whole queue.
  */
 class ApprovalQueueLevelFilterThreadTest extends WP_UnitTestCase {
 

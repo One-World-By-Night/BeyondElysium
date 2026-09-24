@@ -6,12 +6,7 @@ use BeyondElysium\Core\Plugin;
 use WP_UnitTestCase;
 
 /**
- * `Plugin::enqueue_frontend()` used to call `wp_enqueue_media()`/`wp_enqueue_editor()`
- * unconditionally on every front-end page - measured at ~760KB of TinyMCE/media assets
- * loaded for an anonymous visitor to a page with no Beyond Elysium widget at all
- * (mobile-sheet-design.md §3.11). Both back editor-only affordances an anonymous visitor
- * can never reach, so this is gated on `is_user_logged_in()` (§9.1/MS-10) - the acceptance
- * gate for that fix.
+ * `Plugin::enqueue_frontend()` loads the media and editor assets only for logged-in users.
  */
 class EnqueueFrontendGateTest extends WP_UnitTestCase {
 

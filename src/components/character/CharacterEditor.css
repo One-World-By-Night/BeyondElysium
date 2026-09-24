@@ -2,9 +2,7 @@
 	margin-top: 0;
 }
 
-/* Decision 054 - a plain portrait/name header row; the image sits to the left at a fixed,
- * modest size so a very large upload never dominates the editor the way an unconstrained
- * <img> would. */
+/* A plain portrait/name header row. */
 .be-character-editor__header {
 	display: flex;
 	align-items: center;
@@ -31,8 +29,7 @@
 	cursor: pointer;
 }
 
-/* stylelint-disable @stylistic/max-line-length -- real BEM class names, ancestor-
-   qualified for D34 specificity, genuinely don't fit in 80 columns. */
+/* stylelint-disable @stylistic/max-line-length */
 .be-character-editor .be-character-editor__portrait-button:hover:not(:disabled),
 .be-character-editor .be-character-editor__portrait-button:focus-visible:not(:disabled) {
 	/* stylelint-enable @stylistic/max-line-length */
@@ -53,9 +50,7 @@
 	border-bottom: 1px solid var(--be-gray-21);
 }
 
-/* Mirrors CharacterSheet.css's own grid exactly - six tracks, each section spanning 2/3/6
-   per its own `width` (templateLayout.ts), so a real 50/50 or full-width row lands
-   correctly instead of three forced-equal columns. */
+/* Mirrors CharacterSheet.css's own grid exactly. */
 .be-character-editor__grid {
 	display: grid;
 	grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -69,18 +64,6 @@
 		grid-template-columns: 1fr;
 	}
 
-	/*
-	 * Step 8d (workflow-0.9.md) - a real bug, found live: each section carries its own
-	 * `grid-column: span N` INLINE style (CharacterEditor.tsx, N = 2/3/6 from the template's
-	 * desktop column width), and collapsing the parent to one explicit track above does
-	 * nothing to that inline style. CSS Grid then fabricates implicit columns to satisfy a
-	 * `span 2`/`span 3`/`span 6` request against a 1-column explicit grid, auto-sized to
-	 * their own min-content - confirmed live via computed styles, not guessed: this produced
-	 * six tracks, two of them a genuine 0px wide, and squeezed an entire trait-list section
-	 * into a 16px-wide box, wrapping every word letter-by-letter ("Graceful" as a vertical
-	 * G/r/a/c/e/f/u/l column). `!important` is the only way to beat an inline style from a
-	 * stylesheet - not a specificity workaround, the correct tool for this one case.
-	 */
 	.be-character-editor__section {
 		grid-column: 1 / -1 !important;
 	}
@@ -142,55 +125,24 @@
 	padding: 1rem;
 	margin-top: 1.5rem;
 
-	/*
-	 * D74: a `position: sticky; bottom: 0` panel whose content is unbounded covers the
-	 * page it is pinned over. One entry per queued change meant 7-8 changes obscured
-	 * 37-68% of the viewport, cutting into the trait editors above (owner-reported live,
-	 * 2026-09-21). This caps the whole panel as a backstop; the real cap is on the list
-	 * below, so the heading and the XP totals stay visible while only the list scrolls.
-	 * `PlotManager.css` has the same class of defect - see its own note there.
-	 */
 	max-height: 33vh;
 	overflow-y: auto;
 
-	/*
-	 * A flex column, so the list is the only part that ever scrolls and the heading,
-	 * totals and Submit/Discard row are always on screen.
-	 *
-	 * A fixed `18vh` cap on the list alone was not enough, found by this release's own
-	 * pre-deploy trace rather than by reasoning: at 375x812 the panel's 33vh is 268px,
-	 * and summary + an 18vh list + totals + actions comes to more than that - so the
-	 * **Submit and Discard buttons sat below the fold inside the panel** at only three
-	 * queued changes. Reachable by scrolling the panel, but a player has no reason to
-	 * think to. Letting the list take the leftover space instead fixes it at every
-	 * height without a second magic number.
-	 */
 	display: flex;
 	flex-direction: column;
 }
 
-/* The body has to pass the flex context down, or the list sizes to content inside it. */
 .be-character-editor__summary > .be-collapsible__body {
 	display: flex;
 	flex-direction: column;
 
-	/* Without min-height:0 a flex item refuses to shrink below its content, and the
-	 * overflow lands back on the panel - the exact thing this layout exists to prevent. */
 	min-height: 0;
 	flex: 1 1 auto;
 }
 
-/*
- * The unbounded part, and the only scroller. `flex: 1 1 auto` + `min-height: 0` lets it
- * absorb whatever space the fixed rows leave; `max-height` stays as the upper bound so a
- * tall viewport doesn't hand it an absurd amount.
- */
+/* The unbounded part, and the only scroller. */
 .be-character-editor__pending-list {
 
-	/* `0 1 auto`, never `1 1 auto`: shrink when the panel is tight, but never *grow* into
-	 * space the actions below still need. The first attempt at this used `1 1 auto` and
-	 * the list stretched to its own 18vh cap even holding three rows, pushing Submit and
-	 * Discard right back off the panel - the bug this layout was added to fix. */
 	flex: 0 1 auto;
 	min-height: 0;
 	max-height: 18vh;
@@ -198,24 +150,12 @@
 	margin: 0.5rem 0;
 }
 
-/* Never squeezed by the list above it - these are the panel's whole purpose. */
 .be-character-editor__totals,
 .be-character-editor__summary .be-character-editor__actions {
 	flex: 0 0 auto;
 }
 
-/*
- * At phone width every pending row wraps onto two lines, so the list reaches its 18vh cap
- * at three changes rather than six - and 58px of summary + 146px of list + totals +
- * actions exceeds the panel's own 33vh, pushing Submit and Discard past the fold.
- *
- * Flex shrink does not rescue it: the panel carries `overflow-y: auto` as its backstop, so
- * the browser satisfies the overflow by scrolling the panel rather than by shrinking the
- * list. The cap has to be small enough that the fixed rows always fit beside it.
- *
- * 12vh at 375x812 is 97px - two wrapped rows visible, the rest scrolled inside the list,
- * with the totals and both buttons always on screen. Measured, not estimated.
- */
+/* At phone width every pending row wraps onto two lines. */
 @media ( max-width: 768px ) {
 
 	.be-character-editor__pending-list {

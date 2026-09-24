@@ -1,6 +1,5 @@
 /**
- * Which `?` has the help panel open. One panel shows at a time across every widget on the
- * page: opening another screen's help closes the one before it (1.0.0-help.md H-1).
+ * Which `?` has the help panel open.
  */
 import { create } from 'zustand';
 

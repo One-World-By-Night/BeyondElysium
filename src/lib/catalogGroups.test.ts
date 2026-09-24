@@ -1,12 +1,6 @@
 import { groupCatalogItems, type GroupableItem } from './catalogGroups';
 import { identityGroupValues } from './identityGroups';
 
-/*
- * 1.2.9 U4. The rule these tests hold is **grouping is a sort, never a filter** - an
- * out-of-type Gift is legal (LotW Revised charges +1 outside breed, auspice or tribe, and
- * a surcharge means purchasable), so `preferred` may reorder sections and must never
- * remove, hide or empty one.
- */
 const gifts: GroupableItem[] = [
 	{ name: 'Persuasion', group: 'Homid' },
 	{ name: 'Razor Claws', group: 'Get of Fenris' },
@@ -27,9 +21,7 @@ describe( 'groupCatalogItems', () => {
 	} );
 
 	it( 'returns nothing at all when no item carries a group', () => {
-		// Merits, Flaws, Rituals and Combos - 2,523 items between them - stay flat, and
-		// the caller keeps its existing `options` path rather than rendering one
-		// pointless section holding everything.
+		// Merits, Flaws, Rituals and Combos.
 		expect(
 			groupCatalogItems( [
 				{ name: 'Iron Will' },
@@ -64,9 +56,7 @@ describe( 'groupCatalogItems', () => {
 	} );
 
 	it( 'ignores a preferred value that matches no section', () => {
-		// D71: four real werewolf-identity Tribe values do not equal their gift group
-		// (`Bone Gnawers` against `Bone Gnawer`). That must degrade to catalog order,
-		// never to a broken or emptied list.
+		// Four real werewolf-identity Tribe values do not equal their gift group (`Bone Gnawers` against `Bone Gnawer`).
 		expect(
 			groupCatalogItems( gifts, [ 'Bone Gnawers' ] ).map(
 				( s ) => s.label
@@ -89,9 +79,6 @@ describe( 'groupCatalogItems', () => {
 	} );
 
 	it( 'puts ungrouped items in a named section, last', () => {
-		// mage-rotes has 134 of these. Named rather than headingless, so a player can see
-		// it is a gap in the data; last because it is the least useful place to look,
-		// never because it is less available.
 		const sections = groupCatalogItems( [
 			...gifts,
 			{ name: 'Loose Rote' },
@@ -113,8 +100,7 @@ describe( 'groupCatalogItems', () => {
 
 describe( 'identityGroupValues', () => {
 	it( "reads every identity block's string values, whatever the creature type", () => {
-		// Decision 011: no creature-specific branch. Werewolf and Changeling go through
-		// exactly the same code.
+		// No creature-specific branch.
 		expect(
 			identityGroupValues( {
 				'werewolf-identity': {

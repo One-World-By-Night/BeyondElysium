@@ -5,18 +5,12 @@ namespace BeyondElysium\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Pure-logic edge cases for the filtering half of `Creature_Stack::all_for_game()`
- * (GS-2, guided-chronicle-setup-design.md §6.1) - absent, empty, and
- * unknown-slug handling, without a database. The database-backed cases
- * (a real chronicle, a real `settings.enabled_stacks`) are
- * `EnabledStacksFilterTest`'s job.
+ * Pure-logic edge cases for the filtering half of `Creature_Stack::all_for_game()`.
  */
 class CreatureStackAllForGameTest extends TestCase {
 
 	/**
-	 * Mirrors `Creature_Stack::all_for_game()`'s own filter closure exactly,
-	 * so this test exercises the identical logic without needing a database
-	 * or a `Game` row - `$enabled` stands in for `$game->settings->enabled_stacks`.
+	 * Mirrors `Creature_Stack::all_for_game()`'s own filter closure exactly.
 	 */
 	private function filter( array $stacks, $enabled ): array {
 		if ( ! is_array( $enabled ) || empty( $enabled ) ) {
