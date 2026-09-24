@@ -22,5 +22,15 @@
   { "name": "proposing a world object", "output": "Proposed item: Ashwood Stake" },
   { "name": "proposing a world object with no object_type", "output": "Proposed item: Ashwood Stake" },
   { "name": "proposing a faction", "output": "Proposed coterie: Coterie of Thorns" },
-  { "name": "proposing a faction with no faction_type", "output": "Proposed group: Coterie of Thorns" }
+  { "name": "proposing a faction with no faction_type", "output": "Proposed group: Coterie of Thorns" },
+  { "name": "a catalog update that moved rows and matched entries", "output": "Catalog update: 24 rows moved to their new catalog sections, 7 custom entries matched to the catalog" },
+  { "name": "a catalog update of exactly one row and one entry", "output": "Catalog update: 1 row moved to its new catalog section, 1 custom entry matched to the catalog" },
+  { "name": "a catalog update that only moved rows", "output": "Catalog update: 5 rows moved to their new catalog sections" },
+  { "name": "a catalog update that only matched entries", "output": "Catalog update: 2 custom entries matched to the catalog" },
+  { "name": "a catalog update that also corrected spellings", "output": "Catalog update: 24 rows moved to their new catalog sections, 7 custom entries matched to the catalog, 3 names spelled to match the catalog" },
+  { "name": "a catalog update of exactly one row and one spelling", "output": "Catalog update: 1 row moved to its new catalog section, 1 name spelled to match the catalog" },
+  { "name": "a catalog update that only corrected spellings", "output": "Catalog update: 2 names spelled to match the catalog" },
+  { "name": "a catalog update with no counts", "output": "Catalog update" },
+  { "name": "a catalog update undone", "output": "Catalog update undone" },
+  { "name": "a catalog update undone by force", "output": "Catalog update undone, including changes made since" }
 ]

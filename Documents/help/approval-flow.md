@@ -35,18 +35,22 @@ that default, in either direction - switching a chronicle to auto-approve never 
 waves through something a Storyteller flagged for review, even one with no reason text
 attached.
 
-**A custom entry always needs a Storyteller.** Typing a name that isn't in the catalog - where
-a section even allows it - always goes to a Storyteller, no matter how your chronicle's rules
-are set. There's no catalog price to check it against, so nothing can auto-approve it.
+**A custom entry always needs a Storyteller.** Typing a name that isn't in the catalog -
+where a section even allows it - always goes to a Storyteller, no matter how your
+chronicle's rules are set. There's no catalog price to check it against, so nothing can
+auto-approve it. It has no price of its own either: the Storyteller who approves it sets
+one, and until then your preview says "Price set by a Storyteller on approval" instead of
+showing a cost. It isn't free - it just hasn't been priced.
 
 **Numbered powers price every rung.** A fresh purchase at level 3 is priced for levels 1, 2,
 and 3 together, not level 3 alone - true whether the change ends up auto-approved or pending.
 
 **XP is charged on approval, not on submission.** Nothing comes out of your unspent
 experience until the change actually applies to the sheet - immediately, for something that
-auto-approves, or whenever a Storyteller clicks Approve. Rejecting a change costs nothing and
-leaves the sheet untouched. A Storyteller's own XP awards usually apply immediately, since
-they already carry a Storyteller's authority.
+auto-approves, or whenever a Storyteller clicks Approve. Rejecting a change costs nothing
+and leaves the sheet untouched. A Storyteller's own XP awards usually apply immediately,
+since they already carry a Storyteller's authority. For homebrew, the amount is whatever the
+Storyteller sets when they approve it.
 
 **The queue is tied to what a Storyteller was actually shown.** If you resubmit a change
 that's still pending, or someone else reviews it first, a Storyteller's Approve or Reject
@@ -94,7 +98,8 @@ Storyteller can never approve something different from what they saw.
   one choice, the strictest requirement among your picks applies.
 - **Approving several at once (Approve Selected) is the same click, repeated.** It applies
   the identical approval to every change you've checked - not a separate bulk mechanism with
-  its own rules.
+  its own rules. The one exception is homebrew that still needs a price: it can't be
+  approved in a batch, because nobody has said what it costs.
 - **Not everything goes through this queue at all.** Some things a Storyteller does directly
   - an XP award, for instance - are recorded as already decided, since a Storyteller's own
   action already carries that authority.

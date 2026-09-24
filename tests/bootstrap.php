@@ -110,6 +110,13 @@ if ( $be_wp_tests_dir && file_exists( $be_wp_tests_dir . '/includes/functions.ph
 		}
 	}
 
+	// English's own plural rule: one is singular, everything else - zero included - is plural.
+	if ( ! function_exists( '_n' ) ) {
+		function _n( string $single, string $plural, int $number, string $domain = 'default' ): string { // phpcs:ignore
+			return $number === 1 ? $single : $plural;
+		}
+	}
+
 	// Sheet_Document::use_portuguese() reads the site's own locale; with no WordPress and no
 	// site configured, that's WordPress's own default, `en_US` - never `pt_BR`.
 	if ( ! function_exists( 'get_locale' ) ) {
@@ -144,6 +151,19 @@ if ( $be_wp_tests_dir && file_exists( $be_wp_tests_dir . '/includes/functions.ph
 	if ( ! function_exists( 'force_balance_tags' ) ) {
 		function force_balance_tags( string $text ): string { // phpcs:ignore
 			return $text;
+		}
+	}
+
+	// 1.3.3 C7: Catalog_Cutover::is_declared() reads get_option( self::OPTION ) - real code
+	// that pure catalog/import code (Trait_Mapper::classify_list()) now calls unconditionally
+	// on the path to live_slug(). A process with no WordPress at all has no option table
+	// either, so "the option was never set" (WordPress's own real default: $default, unused
+	// here since Catalog_Cutover never passes one) is not a fiction to accommodate a test -
+	// it is the only thing "declared" could mean with no install behind it. Every unit test
+	// therefore runs as an implicit legacy install, exactly as it did before this option existed.
+	if ( ! function_exists( 'get_option' ) ) {
+		function get_option( string $name, $default = false ) { // phpcs:ignore
+			return $default;
 		}
 	}
 }

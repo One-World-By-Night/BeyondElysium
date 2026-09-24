@@ -20,11 +20,13 @@ defined( 'ABSPATH' ) || exit;
  *     seconds after one was assigned is worse than no checklist - every
  *     query here is a bounded COUNT(*) or a single-row read, so there is
  *     nothing worth caching.
- *  2. Capability `be_view_characters`, the widest capability that still
- *     requires a real user - `actionable` is reported per-row instead, so a
- *     read-only HST can see the checklist under today's permissions and an
- *     `editor` becomes actionable the moment GS-1 grants them the row's
- *     capability, with no route change needed.
+ *  2. Capability `be_manage_characters` - staff: an administrator or editor
+ *     site-wide, then narrowed by chronicle role to an HST or AST. `actionable`
+ *     is still reported per row, so an AST reads the checklist read-only and
+ *     an HST acts on the rows their own capability covers. It was
+ *     `be_view_characters` until 1.3.2.2 - "the widest capability that still
+ *     requires a real user" - which let any player read the chronicle's
+ *     governance settings; Chronicle Setup is for staff (owner, 2026-09-23).
  *  3. No `ORDER BY` on `schema_blocks` (v0.21.29's own sort-buffer overflow,
  *     `Schema_Block.php`'s own doc comment) - the fork count is a bare
  *     `COUNT(*) WHERE game_slug = %s`.
@@ -44,7 +46,7 @@ class Setup_Status_Controller extends Base_Controller {
 			[
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'get_status' ],
-				'permission_callback' => $this->permission( 'be_view_characters' ),
+				'permission_callback' => $this->permission( 'be_manage_characters' ),
 			],
 		] );
 	}

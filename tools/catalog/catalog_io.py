@@ -45,7 +45,7 @@ TRAIT_ITEM_ORDER = [
     'approval', 'reason', 'approval_by_value', 'prerequisites',
 ]
 TRAIT_DEF_ORDER = [
-    '_meta', 'alphabetize', 'atomic', 'allow_custom', 'allow_multiples',
+    '_meta', 'alphabetize', 'atomic', 'allow_custom', 'name_canonicalization', 'allow_multiples',
     'has_specializations', 'negative', 'flat_cost', 'categories',
 ]
 LEVEL_ORDER = ['level', 'tier', 'power_name', 'cost', 'note', 'source', 'description', 'alternatives']

@@ -30,7 +30,8 @@ default.
 - A summary line: "N item(s) need attention." or "Nothing needs attention."
 - The checklist - a table with a status pill, a title and detail line, and either an inline
   control or a **Go** button per row:
-  - **Creature types** - *Needs attention* until you've narrowed which of the eleven creature
+  - **Creature types** - *Needs attention* until you've narrowed which of the eleven
+    creature
     types this chronicle offers when someone creates a character; every type is open by
     default. Your chronicle's HST gets a checkbox per creature type and a **Save** button
     right here; at least one type must stay checked.
@@ -42,13 +43,17 @@ default.
   - **Front-end pages** - *Needs attention* if any of the four provisioned pages (My
     Chronicle, Storyteller Toolkit, and the print/verify pages) is missing, naming which.
     **Go** re-runs page provisioning.
-  - **Characters** - *Needs attention* until the chronicle has at least one character. **Go**
+  - **Characters** - *Needs attention* until the chronicle has at least one character.
+    **Go**
     opens the wp-admin Characters page for it.
   - **Approval rules**, **Catalog customisation**, and **Sheet templates** - always shown as
-    *Info*, reporting whether the chronicle has added any rules, forked any schema blocks, or
-    overridden any templates, or is still using Beyond Elysium's own defaults for each. **Go**
+    *Info*, reporting whether the chronicle has added any rules, forked any schema blocks,
+or
+    overridden any templates, or is still using Beyond Elysium's own defaults for each.
+**Go**
     opens the matching System Config tab.
-  - **Downtime actions & rumors** - always *Info*, reporting whether the chronicle has its own
+  - **Downtime actions & rumors** - always *Info*, reporting whether the chronicle has its
+    own
     Action & Rumor settings or is using the defaults. **Go** opens
     [Action & Rumor Settings](apr-settings.md).
   - **Demo chronicle** - shown only while the selected chronicle is the seeded demo. Always
@@ -58,6 +63,12 @@ default.
   a timeline entry - extra structure most chronicles never need. One checkbox and no
   separate Save; a site administrator's change takes effect immediately. Anyone who can't
   change it reads "A site administrator sets this." instead.
+- **Branding** - beneath that, one color: this chronicle's own accent, used for the
+  Storyteller Toolkit's and My Chronicle's own chrome (highlights, primary buttons). Your
+  chronicle's HST picks a color and it saves as soon as chosen, or clicks **Use site
+  default** to remove the override and fall back to whatever the site administrator set in
+  [Branding](branding.md). Unlike Plot Features above, any HST can set this, not only a site
+  administrator - it changes nothing but this one chronicle's own look.
 - **Sub-Faction Restrictions** - beneath that, one level finer than the Creature
   types row above: within a creature type you've already enabled, narrow a real catalog field
   to only the values your chronicle runs - a Vampire Sect or Clan, a Werewolf Tribe, and any
@@ -153,6 +164,7 @@ default.
 - [Chronicle Access](chronicle-access.md)
 - [Send a Grapevine File](send-grapevine-file.md)
 - [Action & Rumor Settings](apr-settings.md)
+- [Branding](branding.md)
 - [AI Assist Settings (Chronicle)](writing-assist-chronicle.md)
 - [Games](games.md)
 - [Admin Characters](admin-characters.md)

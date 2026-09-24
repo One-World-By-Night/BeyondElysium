@@ -21,7 +21,7 @@ own capability, so a page stays reachable even for a viewer who can't see every 
 | Items & Locations | — (single page) | — the catalog of world objects a character can be connected to |
 | Query Tool | Query Tool (`be_run_queries`), Reports (`be_view_reports`) | — the same query builder as the front-end Query Tool, plus the 20-report/cards/batch-output layer |
 | Import | — (single page) | Import, below |
-| Chronicle Setup | Chronicle Setup (`be_view_characters`), Chronicle Access (`be_manage_games`), Action & Rumor Settings (`be_manage_apr`) | Chronicle-Scoped Access, below; Chronicle Setup itself is a live checklist for a chronicle's own setup, see the [Storyteller Guide](st-guide.md) |
+| Chronicle Setup | Chronicle Setup (`be_manage_chronicle_setup`), Chronicle Access (`be_manage_games`), Action & Rumor Settings and AI Assist (`be_manage_apr`) - staff only: the page needs `be_manage_chronicle_setup`, so a player never sees it | Chronicle-Scoped Access, below; Chronicle Setup itself is a live checklist for a chronicle's own setup, see the [Storyteller Guide](st-guide.md) |
 | System Config | Games (`be_manage_games`), Schema Blocks (`be_manage_schemas`), Creature Stacks (`be_manage_games`), Templates (`be_manage_templates`), Approval Rules (`be_manage_approval_rules`), Translations (`be_manage_translations`) | Schema Blocks and Creature Stacks, Templates, Descriptions and Approval Schedules, Approval Rules, and Catalog Term Translation, all below |
 | Docs | — (single page, `be_view_characters`) | — this guide and its three siblings, rendered in-plugin |
 
@@ -204,6 +204,28 @@ to be - importing it needs no repository, no build, no deploy, and no developer.
 inline edit is for the other half of the job: a Storyteller spots a wrong term mid-session,
 searches it, fixes one field, and it is right on every sheet, every chronicle fork, and every
 printed PDF on the next page load - no ticket, no file, no deploy.
+
+## Switching a Site to the Declared Catalog
+
+Beyond Elysium ships two catalogs. Installs from before 1.3.3 use the old one, where
+Abilities, Merits, Flaws and Werewolf rites are shared by every creature type. The newer one
+gives each creature type its own lists, prices and groupings. A site changes from one to the
+other once, with WP-CLI, and can change back.
+
+```
+wp be cutover plan
+wp be cutover apply --user=<you> --yes
+wp be cutover rollback --user=<you> --yes
+wp be cutover status
+```
+
+`plan` is read-only and tells you exactly what `apply` would do, character by character.
+`apply` moves every character's rows into the new sections, matches the custom entries that
+are plainly a catalog item, and never touches XP. Each character keeps a snapshot of its
+sheet from before, so `rollback` restores it exactly. Read [Switching a Site to the Declared
+Catalog](help/catalog-cutover.md) before you run it: it says what is matched, what stays
+custom, when `apply` refuses, and why importing the characters again does worse than
+switching.
 
 ## Adding a Creature Type Without Code
 

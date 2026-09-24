@@ -4,6 +4,8 @@ All routes are under the `be/v1` namespace — e.g. `/wp-json/be/v1/games`. Ever
 
 `{game_slug}` scopes a route to one chronicle. A request naming a game slug the caller has no relationship to returns `404` (not `403`), so a chronicle's existence is never leaked to someone outside it.
 
+While a catalog cutover runs (`wp be cutover apply` or `rollback`, a few seconds), every write to a route here is answered `503 catalog_switch_in_progress` and reads are not affected. A run that died holding its lock stops refusing after two minutes. See [Switching a Site to the Declared Catalog](help/catalog-cutover.md).
+
 **Manually maintained against the controllers, not auto-generated** — the "generated so it cannot drift" tooling this ideally deserves (Step 9b, workflow-0.9.md) was not built this pass. A full re-audit against every `register_routes()` method in `includes/REST/` (2026-09-13) found this reference had drifted well past a single missed route — eleven whole controllers undocumented and two capabilities stated backwards - proof this really does need re-checking by hand after every release that touches a controller, not just when a route "feels" new. Worth building the real generator as a follow-up; until then, treat a controller you don't see a section for here as a sign this doc is behind, not a sign the controller doesn't exist.
 
 ## Authorization
@@ -83,12 +85,12 @@ The editing surface for the schedules described just above — one rule per cata
 | Method | Path | Capability | Notes |
 |---|---|---|---|
 | GET | `/{game_slug}/characters/{character_id}/changes` | `be_view_characters` | One character's change history |
-| POST | `/{game_slug}/characters/{character_id}/changes` | `be_edit_own_characters` | Submit a change — auto-approves and applies immediately if the block's approval rules allow it |
-| GET | `/{game_slug}/changes` | `be_manage_characters` | The approval queue — every pending (or filtered) change across the whole chronicle. Filters: `status`, `change_type`, `character_id`, and `approval_level` (`auto` or `st`), which pages and totals that level alone |
-| POST | `/{game_slug}/changes/batch-approve` | `be_manage_characters` | Approve several changes in one call |
+| POST | `/{game_slug}/characters/{character_id}/changes` | `be_edit_own_characters` | Submit a change — auto-approves and applies immediately if the block's approval rules allow it. A purchase with no catalog price (homebrew) is stored with `change_data.cost_pending: true` and `xp_cost` 0 and waits for a Storyteller to price it; it never auto-approves, and a player's own `chosen_cost` on homebrew is dropped. A Storyteller's `chosen_cost` on a custom trait prices it at submission: per dot, 0 to 500 |
+| GET | `/{game_slug}/changes` | `be_manage_characters` | The approval queue — every pending (or filtered) change across the whole chronicle. Filters: `status`, `change_type`, `character_id`, and `approval_level` (`auto` or `st`), which pages and totals that level alone. A change waiting for a price also carries `cost_units`, `{ per: "dot" or "pick", units, negative }`: what one price covers - the new dots for a trait list, one pick for a power - so a client can show the total as it is typed |
+| POST | `/{game_slug}/changes/batch-approve` | `be_manage_characters` | Approve several changes in one call. Returns `approved`, `skipped` (missing, already reviewed, edited since, or not allowed) and `needs_cost`: changes waiting for a price are never approved in a batch, and are named here instead |
 | GET | `/{game_slug}/my/changes` | `be_view_characters` | Only the caller's own pending changes, across every character they own |
-| POST | `/{game_slug}/characters/{character_id}/preview-changes` | `be_edit_own_characters` | Price a set of proposed changes without submitting them |
-| PUT | `/{game_slug}/changes/{id}` | `be_manage_characters` | Approve or reject; sends the submitting player a notification email unless they or the chronicle opted out |
+| POST | `/{game_slug}/characters/{character_id}/preview-changes` | `be_edit_own_characters` | Price a set of proposed changes without submitting them. Each result has `xp_cost`, `priced` and `unpriced_reason` (`custom_no_catalog_entry`): `priced: false` means no price exists yet and a Storyteller sets it at approval, so the `0` is not a price and does not move `running_xp_unspent` |
+| PUT | `/{game_slug}/changes/{id}` | `be_manage_characters` | Approve or reject; sends the submitting player a notification email unless they or the chronicle opted out. Approving a change with `cost_pending` needs `xp_cost`, a whole number from 0 to 500 - per dot for a trait list, the whole amount for a power: without it the response is 400 `cost_required`, and a value outside that range is 400 `invalid_param`. The price is stamped on the trait, the total is deducted, and `cost_pending` is cleared. `xp_cost` is not read for any other change |
 
 ## Snapshots
 
@@ -320,7 +322,7 @@ The player-initiated counterpart to Transfers: no Storyteller on the sending end
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| GET | `/{game_slug}/setup-status` | `be_view_characters` | The Chronicle Setup checklist's rows, computed live against real data every time — never stored, so nothing here goes stale between visits |
+| GET | `/{game_slug}/setup-status` | `be_manage_characters` | The Chronicle Setup checklist's rows, computed live against real data every time — never stored, so nothing here goes stale between visits. Staff only (an HST or AST): a player is refused. |
 
 ## Authorization Settings
 

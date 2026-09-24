@@ -16,7 +16,11 @@ defined( 'ABSPATH' ) || exit;
  * approval queue, filtered by status, change_type, and related fields.
  *
  * change_type values: add_trait, remove_trait, modify_trait, modify_resource,
- *                     modify_identity, xp_earn, xp_adjust, import_note
+ *                     modify_identity, xp_earn, xp_adjust, import_note,
+ *                     catalog_rekey, catalog_rekey_revert
+ *
+ * `import_note`, `catalog_rekey` and `catalog_rekey_revert` are records the system writes
+ * about itself, already approved and never priced: nothing submits them and no queue lists them.
  */
 class Change {
 
@@ -304,6 +308,38 @@ class Change {
 		}
 		// MySQL counts an UPDATE that writes identical values as zero rows, so zero means either
 		// "already reviewed" or "resubmitted unchanged within the same second" - tell them apart.
+		$status = Manager::get_var( 'SELECT status FROM ' . Manager::table( 'character_changes' ) . ' WHERE id = %d', $id );
+		return $status === 'pending';
+	}
+
+	/**
+	 * Writes the price a Storyteller set on a change that was waiting for one - its `xp_cost`, and
+	 * the change data with the price stamped onto its trait - while it is still pending. Called by
+	 * `Change_Engine::approve()` inside the same transaction that then applies the change, so the
+	 * record and the sheet agree on what was charged.
+	 *
+	 * Returns false when no still-pending row matched: a review that landed first leaves nothing to
+	 * price. A write of identical values reads as zero rows changed, so that case is told apart from
+	 * "already reviewed" by the status.
+	 *
+	 * @param int                      $id
+	 * @param float                    $xp_cost     Signed total.
+	 * @param array<string,mixed>|null $change_data Replaces the stored data when given.
+	 * @return bool
+	 */
+	public static function update_xp_cost( int $id, float $xp_cost, ?array $change_data = null ): bool {
+		$update = [ 'xp_cost' => $xp_cost ];
+		if ( $change_data !== null ) {
+			$update['change_data'] = wp_json_encode( $change_data );
+		}
+
+		$updated = Manager::update( 'character_changes', $update, [ 'id' => $id, 'status' => 'pending' ] );
+		if ( $updated === false ) {
+			return false;
+		}
+		if ( $updated > 0 ) {
+			return true;
+		}
 		$status = Manager::get_var( 'SELECT status FROM ' . Manager::table( 'character_changes' ) . ' WHERE id = %d', $id );
 		return $status === 'pending';
 	}

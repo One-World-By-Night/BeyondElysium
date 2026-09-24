@@ -21,7 +21,7 @@ import {
 	moveTo,
 	reorderErrorMessage,
 } from '../../lib/reorderArray';
-import { traitRowIdentity } from '../../lib/traitIdentity';
+import { traitRowIdentity, labelPrompt } from '../../lib/traitIdentity';
 import api from '../../api/client';
 import type { TraitListDefinition } from '../../types';
 import './TraitListEditor.css';
@@ -159,10 +159,15 @@ export function saveTraitDraft(
 		const next = [ ...rows ];
 		const target = next[ mergeIndex ];
 		const kept = mergedSpecialization( target.specialization, label );
+		// F2 (1.3.2.1): a merge is a count bump, so the target's own note describes the
+		// holding and is never overwritten - the draft's note is adopted only when the
+		// target had none, the same rule mergedSpecialization() applies to the label.
+		const keptNote = mergedSpecialization( target.note, draft.note );
 		next[ mergeIndex ] = {
 			...target,
 			count: ( target.count ?? 1 ) + draft.count,
 			...( kept ? { specialization: kept } : {} ),
+			...( keptNote ? { note: keptNote } : {} ),
 			// A chosen cost follows a new purchase, never a row being edited - unchanged here.
 			...( index === null ? chosen : {} ),
 		};
@@ -269,6 +274,24 @@ export function TraitListEditor( {
 		draftChoices && draft?.chosenCost !== undefined
 			? { chosen_cost: draft.chosenCost }
 			: {};
+
+	// F1 (1.3.2.1): which label the modal asks for, if any - "Specialization" for a block
+	// that has them, "Who or what?" for a name this block/item lets be held more than once
+	// (the label IS the identity there), or no field at all for a plain item.
+	const draftLabelPrompt = draft
+		? labelPrompt( definition, draft.name )
+		: null;
+	// The hint fires only for "Who or what?": leaving the label blank, or repeating one
+	// already used, adds to that existing holding rather than starting a new one.
+	const draftLabelAlreadyHeld =
+		draft && draftLabelPrompt === 'who_or_what'
+			? findTraitRowIndex(
+					data,
+					definition,
+					{ name: draft.name, specialization: draft.specialization },
+					draft.index
+			  ) !== -1
+			: false;
 
 	const saveDraft = () => {
 		if ( ! draft || ! draft.name ) {
@@ -767,20 +790,30 @@ export function TraitListEditor( {
 								</div>
 							) }
 
-							{ definition.has_specializations && (
+							{ draftLabelPrompt && (
 								<div className="be-trait-list-editor__modal-field">
 									<label
 										htmlFor={ `${ blockSlug }-trait-specialization` }
 									>
-										{ __(
-											'Specialization',
-											'beyond-elysium'
-										) }
+										{ draftLabelPrompt === 'who_or_what'
+											? __(
+													'Who or what?',
+													'beyond-elysium'
+											  )
+											: __(
+													'Specialization',
+													'beyond-elysium'
+											  ) }
 									</label>
 									<input
 										id={ `${ blockSlug }-trait-specialization` }
 										type="text"
 										value={ draft.specialization }
+										aria-describedby={
+											draftLabelAlreadyHeld
+												? `${ blockSlug }-trait-specialization-hint`
+												: undefined
+										}
 										onChange={ ( e ) =>
 											setDraft( {
 												...draft,
@@ -788,6 +821,17 @@ export function TraitListEditor( {
 											} )
 										}
 									/>
+									{ draftLabelAlreadyHeld && (
+										<p
+											id={ `${ blockSlug }-trait-specialization-hint` }
+											className="be-trait-list-editor__modal-hint"
+										>
+											{ __(
+												'Already on this sheet. Name this one to keep it separate, or leave it the same to add to it.',
+												'beyond-elysium'
+											) }
+										</p>
+									) }
 								</div>
 							) }
 

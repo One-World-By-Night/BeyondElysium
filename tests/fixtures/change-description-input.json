@@ -22,5 +22,15 @@
   { "name": "proposing a world object", "change_type": "propose_world_object", "change_data": { "object_type": "item", "name": "Ashwood Stake" } },
   { "name": "proposing a world object with no object_type", "change_type": "propose_world_object", "change_data": { "name": "Ashwood Stake" } },
   { "name": "proposing a faction", "change_type": "propose_faction", "change_data": { "faction_type": "coterie", "name": "Coterie of Thorns" } },
-  { "name": "proposing a faction with no faction_type", "change_type": "propose_faction", "change_data": { "name": "Coterie of Thorns" } }
+  { "name": "proposing a faction with no faction_type", "change_type": "propose_faction", "change_data": { "name": "Coterie of Thorns" } },
+  { "name": "a catalog update that moved rows and matched entries", "change_type": "catalog_rekey", "change_data": { "counts": { "moved_rows": 24, "rekeyed": 7 } } },
+  { "name": "a catalog update of exactly one row and one entry", "change_type": "catalog_rekey", "change_data": { "counts": { "moved_rows": 1, "rekeyed": 1 } } },
+  { "name": "a catalog update that only moved rows", "change_type": "catalog_rekey", "change_data": { "counts": { "moved_rows": 5, "rekeyed": 0 } } },
+  { "name": "a catalog update that only matched entries", "change_type": "catalog_rekey", "change_data": { "counts": { "moved_rows": 0, "rekeyed": 2 } } },
+  { "name": "a catalog update that also corrected spellings", "change_type": "catalog_rekey", "change_data": { "counts": { "moved_rows": 24, "rekeyed": 7, "respelled": 3 } } },
+  { "name": "a catalog update of exactly one row and one spelling", "change_type": "catalog_rekey", "change_data": { "counts": { "moved_rows": 1, "rekeyed": 0, "respelled": 1 } } },
+  { "name": "a catalog update that only corrected spellings", "change_type": "catalog_rekey", "change_data": { "counts": { "moved_rows": 0, "rekeyed": 0, "respelled": 2 } } },
+  { "name": "a catalog update with no counts", "change_type": "catalog_rekey", "change_data": {} },
+  { "name": "a catalog update undone", "change_type": "catalog_rekey_revert", "change_data": { "reverts": 41, "forced": false } },
+  { "name": "a catalog update undone by force", "change_type": "catalog_rekey_revert", "change_data": { "reverts": 41, "forced": true } }
 ]

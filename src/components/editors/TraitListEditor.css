@@ -107,6 +107,15 @@
 	border-radius: 3px;
 }
 
+/* F1 (1.3.2.1): the "Who or what?" hint when the typed label is already held. */
+.be-trait-list-editor__modal-hint {
+	margin: 0;
+	font-size: 0.75rem;
+	font-weight: 400;
+	text-transform: none;
+	color: var(--be-gray-6);
+}
+
 .be-trait-list-editor__modal-remove.be-trait-list-editor__modal-remove {
 	margin-right: auto;
 	padding: 0.15rem 0.4rem;

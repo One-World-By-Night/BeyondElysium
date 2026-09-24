@@ -35,8 +35,12 @@ Merits, Flaws, and similar, depending on the chronicle's own template).
 - **Count / Level** - a number, minimum 1.
 - **Cost** - shown only for an entry the catalog prices at a choice of costs, such as a Merit
   listed "1 or 3" or "3-5". It starts at the lowest, which is what you pay if you leave it.
-- **Specialization** - shown only for a section that supports one (for example, an Ability like
-  Academics can carry a specialization such as "Byzantine History").
+- **Specialization**, or **Who or what?** - shown for a section that supports a
+  specialization (for example, an Ability like Academics can carry one such as "Byzantine
+  History"), and also for an entry you can hold more than once even on a section that
+  doesn't otherwise use this field - see [Things to know](#things-to-know) below. Whichever
+  question is asked, leaving it blank (or repeating an answer you already used) adds to the
+  matching existing row instead of starting a new one.
 - **Note** - a free-text field, always available.
 - **Remove** / **Undo removal** - marks the entry for removal, or brings it back, without
   leaving the modal.
@@ -68,7 +72,14 @@ Merits, Flaws, and similar, depending on the chronicle's own template).
 ## Things to know
 
 - **Adding the same name again adds to it, not a duplicate row** - for most sections, choosing a name you already hold raises its existing count instead of creating a second entry, whatever specialization you type alongside it. A specialization labels one holding, so `Brawl 5 (Wrestling)` is a single Brawl at 5: picking a different focus doesn't buy you a second Brawl, it re-labels or adds to the one you have.
-- **A few entries really can be held more than once**, and those are the ones where the label is part of what you hold - two different Retainers, or two fields of study under one Ability. Your chronicle's own catalog says which entries work that way; for them, a new label is a new row with its own dots and its own cost, and repeating a label you already hold raises that row instead. A few sections - Merits and Flaws, for example - always keep each pick as its own row, however it is named.
+- **A few entries really can be held more than once**, and those are the ones where the
+  label is part of what you hold - two different Retainers, or two fields of study under one
+  Ability. For these, the modal asks **Who or what?** instead of Specialization, even on a
+  section (like Backgrounds) that doesn't otherwise show this field at all. Your chronicle's
+  own catalog says which entries work that way; for them, a new answer is a new row with its
+  own dots and its own cost, and repeating an answer you already used raises that row
+  instead. A few sections - Merits and Flaws, for example - always keep each pick as its own
+  row, however it is named.
 - **Re-labelling onto a label you already hold merges the two** - where a name can be held more than once, editing one row's label to match another row's combines them into the one you already had, rather than leaving two rows nothing can tell apart.
 - **A custom name always needs review.** Typing a name that isn't in the catalog only saves
   where this section allows custom entries at all, and even then it always goes to a

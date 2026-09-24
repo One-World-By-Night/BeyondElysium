@@ -20,7 +20,7 @@ class Schema {
 	 * release version. Compared against the stored VERSION_OPTION value by
 	 * maybe_upgrade() to decide whether migrations need to run.
 	 */
-	const DB_VERSION = '1.3.2';
+	const DB_VERSION = '1.3.3';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -3038,6 +3038,14 @@ class Schema {
 		// Must run after repair_stale_default_layouts() and the call above, which are what
 		// make the sheet_full layout this reads from correct in the first place.
 		self::repair_stale_npc_layouts();
+
+		// 1.3.3 C6: on an already-declared install, catches any template - global or a
+		// chronicle's own fork - still naming a slug this upgrade's own seed_schema_blocks()
+		// pass retired. A no-op on a legacy install (is_declared() false) and a no-op on a
+		// second run of a declared one (rewrite_templates() is idempotent by construction).
+		if ( \BeyondElysium\Services\Catalog_Cutover::is_declared() ) {
+			\BeyondElysium\Services\Catalog_Cutover::rewrite_templates();
+		}
 
 		// Must run last of the template repairs: it completes both sheet_full and npc_full from
 		// each stack's own declaration, so it needs the layouts above already correct (1.2.11 D92).

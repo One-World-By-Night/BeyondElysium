@@ -20,7 +20,7 @@ class ChangeValidatorTest extends TestCase {
 			] ],
 			'merits'      => (object) [ 'section_type' => 'trait_list', 'definition' => (object) [
 				'allow_custom' => true,
-				'items'        => [ (object) [ 'name' => 'Iron Will', 'cost' => '3' ] ],
+				'items'        => [ (object) [ 'name' => 'Iron Will', 'cost' => '3' ], (object) [ 'name' => 'Contacts', 'cost' => '1 or 3' ] ],
 			] ],
 			'disciplines' => (object) [ 'section_type' => 'tiered_power', 'definition' => (object) [
 				'powers' => [ (object) [ 'name' => 'Celerity', 'levels' => [
@@ -53,6 +53,39 @@ class ChangeValidatorTest extends TestCase {
 
 		$this->assertTrue( $result['ok'] );
 		$this->assertSame( 'Occult', $result['change_data']['trait']['name'] );
+	}
+
+	// --- 1.3.3 E2: a price is a Storyteller's to set on homebrew --------------------------
+
+	public function test_a_players_price_on_a_custom_entry_is_dropped(): void {
+		$result = $this->check( 'add_trait', [ 'block_slug' => 'merits', 'trait' => [ 'name' => 'Occult Library', 'count' => 3, 'custom' => true, 'chosen_cost' => 0 ] ] );
+
+		$this->assertTrue( $result['ok'] );
+		$this->assertTrue( $result['change_data']['trait']['custom'] );
+		$this->assertArrayNotHasKey( 'chosen_cost', $result['change_data']['trait'] );
+	}
+
+	public function test_a_managers_price_on_a_custom_entry_is_kept(): void {
+		$result = $this->check( 'add_trait', [ 'block_slug' => 'merits', 'trait' => [ 'name' => 'Occult Library', 'count' => 3, 'custom' => true, 'chosen_cost' => 2 ] ], [], true );
+
+		$this->assertSame( 2, $result['change_data']['trait']['chosen_cost'] );
+	}
+
+	public function test_a_players_choice_on_a_catalog_range_cost_is_kept(): void {
+		$result = $this->check( 'add_trait', [ 'block_slug' => 'merits', 'trait' => [ 'name' => 'Contacts', 'count' => 1, 'chosen_cost' => 3 ] ] );
+
+		$this->assertSame( 3, $result['change_data']['trait']['chosen_cost'], 'choosing among "1 or 3" is the one price a player legitimately sets' );
+	}
+
+	public function test_a_players_price_on_a_held_name_the_catalog_dropped_is_dropped_but_a_managers_is_kept(): void {
+		$sheet  = [ 'merits' => [ [ 'name' => 'Retired Perk', 'count' => 1, 'custom' => true ] ] ];
+		$change = [ 'block_slug' => 'merits', 'trait' => [ 'name' => 'Retired Perk', 'count' => 2, 'custom' => true, 'chosen_cost' => 1 ] ];
+
+		$player  = $this->check( 'modify_trait', $change, $sheet );
+		$manager = $this->check( 'modify_trait', $change, $sheet, true );
+
+		$this->assertArrayNotHasKey( 'chosen_cost', $player['change_data']['trait'], 'it would otherwise reach the held row through the merge a modify does' );
+		$this->assertSame( 1, $manager['change_data']['trait']['chosen_cost'] );
 	}
 
 	public function test_a_made_up_name_is_refused_where_custom_entries_are_not_allowed(): void {
@@ -182,6 +215,8 @@ class ChangeValidatorTest extends TestCase {
 
 	public function test_change_types_sections_and_blocks_are_checked(): void {
 		$this->assertSame( 'invalid_change_type', $this->check( 'import_note', [ 'block_slug' => 'abilities' ] )['code'] );
+		$this->assertSame( 'invalid_change_type', $this->check( 'catalog_rekey', [ 'block_slug' => 'abilities', 'trait' => [ 'name' => 'Occult' ] ] )['code'], 'written by the cutover, never submitted' );
+		$this->assertSame( 'invalid_change_type', $this->check( 'catalog_rekey_revert', [ 'block_slug' => 'abilities' ] )['code'] );
 		$this->assertSame( 'unknown_block', $this->check( 'add_trait', [ 'block_slug' => 'not-on-this-stack', 'trait' => [ 'name' => 'Occult' ] ] )['code'] );
 		$this->assertSame( 'wrong_section_type', $this->check( 'modify_resource', [ 'block_slug' => 'abilities', 'values' => [ 'Occult' => 1 ] ] )['code'] );
 	}

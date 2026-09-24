@@ -3299,6 +3299,10 @@ class Seeder {
 	 * @return array[]
 	 */
 	private static function get_stacks_to_seed(): array {
+		if ( \BeyondElysium\Services\Catalog_Cutover::is_declared() && \BeyondElysium\Services\Catalog_Reader::available() ) {
+			return array_values( \BeyondElysium\Services\Catalog_Reader::stacks_to_seed() );
+		}
+
 		$shared_sections = [
 			[ 'block_slug' => 'met-archetypes',  'label' => 'Archetypes',      'display_order' => 20, 'required' => false ],
 			[ 'block_slug' => 'met-abilities',   'label' => 'Abilities',       'display_order' => 30, 'required' => true  ],
@@ -4626,7 +4630,7 @@ class Seeder {
 
 		$fera = $werewolf_like( 'fera-identity', 'fera-backgrounds', 'fera-gifts' );
 
-		return [
+		return self::map_template_sections_through_live_slug( [
 			'vampire'    => $vampire,
 			'werewolf'   => $werewolf_like( 'werewolf-identity', 'werewolf-backgrounds', 'werewolf-gifts' ),
 			'mage'       => $mage,
@@ -4638,7 +4642,44 @@ class Seeder {
 			'kueijin'    => $kueijin,
 			'fera'       => $fera,
 			'bete'       => $fera,
-		];
+		] );
+	}
+
+	/**
+	 * 1.3.3 C5: every tuple's own slug (index 0), and every `title_refs[].block_slug`,
+	 * mapped through `Catalog_Cutover::live_slug()` for that tuple's own stack. A legacy
+	 * install never sees a change - `live_slug()` is the identity function until
+	 * `is_declared()` - but a declared one needs `default_template_sections()` naming the
+	 * live block, since this is what `seed_default_templates()` and, more importantly,
+	 * `Schema::repair_stale_default_layouts()`'s own "is this section still current"
+	 * comparison both read; without this, a repair would keep rewriting a cut-over
+	 * template back onto a retired slug forever.
+	 *
+	 * @param array<string,array<int,array>> $stacks stack slug => tuples, each
+	 *        `[block_slug, width, dot_mode]` or `[block_slug, width, dot_mode, title_refs]`.
+	 * @return array<string,array<int,array>>
+	 */
+	private static function map_template_sections_through_live_slug( array $stacks ): array {
+		$mapped = [];
+		foreach ( $stacks as $stack_slug => $tuples ) {
+			$mapped[ $stack_slug ] = array_map(
+				static function ( array $tuple ) use ( $stack_slug ) {
+					$tuple[0] = \BeyondElysium\Services\Catalog_Cutover::live_slug( $stack_slug, $tuple[0] );
+					if ( isset( $tuple[3] ) ) {
+						$tuple[3] = array_map(
+							static function ( array $ref ) use ( $stack_slug ) {
+								$ref['block_slug'] = \BeyondElysium\Services\Catalog_Cutover::live_slug( $stack_slug, $ref['block_slug'] );
+								return $ref;
+							},
+							$tuple[3]
+						);
+					}
+					return $tuple;
+				},
+				$tuples
+			);
+		}
+		return $mapped;
 	}
 
 	/**
@@ -4669,6 +4710,77 @@ class Seeder {
 	 * Option set once the demo chronicle has had its one chance to be seeded.
 	 */
 	const DEMO_SEEDED_OPTION = 'be_demo_seeded';
+
+	/**
+	 * The raw `demo-characters.php` fixtures, with every `sheet_data` key mapped through
+	 * `Catalog_Cutover::live_slug()` for that character's own stack (1.3.3 C8) - a no-op in
+	 * legacy, so `demo-characters.php` itself stays legacy-valid unedited (other suites,
+	 * `ExchangeRoundTripThreadTest`/`SeedDemoCharactersTest` among them, load it directly and
+	 * must keep seeing today's shape). `demon-lores` and the old `mortal-numina` entry are not
+	 * simple renames - the first retired outright into demon-abilities' own Lore
+	 * specializations, the second split into eight real blocks (D91/D90) - so
+	 * `rehome_retired_demo_content()` handles both explicitly, once declared, before the
+	 * generic per-key pass below; every other key here is a real 1:1 `replaces` pair
+	 * `live_slug()` follows on its own.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function demo_fixtures(): array {
+		$fixtures = require __DIR__ . '/demo-characters.php';
+		$declared = \BeyondElysium\Services\Catalog_Cutover::is_declared();
+
+		foreach ( $fixtures as &$f ) {
+			if ( ! is_array( $f['sheet_data'] ?? null ) ) {
+				continue;
+			}
+
+			$sheet_data = $declared ? self::rehome_retired_demo_content( $f['sheet_data'] ) : $f['sheet_data'];
+
+			$mapped = [];
+			foreach ( $sheet_data as $block_slug => $value ) {
+				$mapped[ \BeyondElysium\Services\Catalog_Cutover::live_slug( (string) $f['stack_slug'], (string) $block_slug ) ] = $value;
+			}
+			$f['sheet_data'] = $mapped;
+		}
+		unset( $f );
+
+		return $fixtures;
+	}
+
+	/**
+	 * The two demo holdings with no 1:1 `replaces` pair at all, handled by hand rather than
+	 * mechanically (1.3.3 C8):
+	 *
+	 * - `demon-lores` was retired outright (D91) - its items were never their own block, they
+	 *   are specialized `Lore` holdings on demon-abilities now, and that block's own Lore item
+	 *   is a rated Ability like any other, so each specialization gets a count the old
+	 *   atomic-membership shape never carried.
+	 * - The old `mortal-numina` catch-all was split into eight real blocks (D90). "Fomori
+	 *   Powers" was never a real item name in any shape, old or new - a placeholder demo entry
+	 *   a rename cannot preserve - so it stands in a real, atomic mortal-fomori pick instead.
+	 *
+	 * @param array<string,mixed> $sheet_data
+	 * @return array<string,mixed>
+	 */
+	private static function rehome_retired_demo_content( array $sheet_data ): array {
+		if ( isset( $sheet_data['demon-lores'] ) && is_array( $sheet_data['demon-lores'] ) ) {
+			$abilities = is_array( $sheet_data['met-abilities'] ?? null ) ? $sheet_data['met-abilities'] : [];
+			foreach ( $sheet_data['demon-lores'] as $lore ) {
+				if ( isset( $lore['name'] ) ) {
+					$abilities[] = [ 'name' => 'Lore', 'specialization' => $lore['name'], 'count' => 1 ];
+				}
+			}
+			$sheet_data['met-abilities'] = $abilities;
+			unset( $sheet_data['demon-lores'] );
+		}
+
+		if ( isset( $sheet_data['mortal-numina'] ) ) {
+			$sheet_data['mortal-fomori'] = [ [ 'name' => 'Berserker' ] ];
+			unset( $sheet_data['mortal-numina'] );
+		}
+
+		return $sheet_data;
+	}
 
 	/**
 	 * Seeds 22 demo characters (2 per creature stack, all 11 types) into a
@@ -4713,7 +4825,7 @@ class Seeder {
 			}
 		}
 
-		$fixtures = require __DIR__ . '/demo-characters.php';
+		$fixtures = self::demo_fixtures();
 
 		foreach ( $fixtures as $f ) {
 			$existing = Manager::get_row(

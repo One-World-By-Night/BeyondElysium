@@ -12,7 +12,7 @@ use WP_UnitTestCase;
  * `Setup_Status_Controller`'s row computation (GS-4,
  * guided-chronicle-setup-design.md §6.3-6.4) - each row's status derived
  * from real rows, never stored, plus `actionable` for an administrator, an
- * editor, and a subscriber.
+ * HST and an AST - and, since 1.3.2.2, a refusal for everyone who is not staff.
  *
  * @see BE_PROCESS/design/guided-chronicle-setup-design.md §6.3
  */
@@ -138,21 +138,33 @@ class SetupStatusControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The still-true negative case item 18 does not touch: a real chronicle member who
-	 * simply isn't an HST (a player here) reaches the route (be_view_characters) but gets
-	 * actionable:false on both rows, same as before this ruling.
+	 * 1.3.2.2, owner ruling 2026-09-23: Chronicle Setup is for staff. This route used to be
+	 * `be_view_characters` - "the widest capability that still requires a real user"
+	 * (guided-chronicle-setup-design.md 6.3), chosen so an HST could read the checklist before
+	 * they could act on it - and this case asserted that a player member got a 200 with every
+	 * row greyed. That let any player read the chronicle's governance settings, so the route now
+	 * needs `be_manage_characters` and a player, a narrator and a Harpy are each refused.
+	 *
+	 * @dataProvider non_staff_chronicle_roles
 	 */
-	public function test_a_player_member_sees_the_same_status_but_actionable_false(): void {
-		$game       = Game::find_by_slug( $this->game_slug );
-		$player_id  = self::factory()->user->create( [ 'role' => 'subscriber' ] );
-		Game_Member::set_role( (int) $game->id, $player_id, 'player' );
+	public function test_a_member_who_is_not_staff_is_refused_the_checklist( string $chronicle_role ): void {
+		$game      = Game::find_by_slug( $this->game_slug );
+		$member_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( (int) $game->id, $member_id, $chronicle_role );
 
-		$response = $this->dispatch( $player_id );
-		$data     = $response->get_data();
+		$response = $this->dispatch( $member_id );
 
-		$this->assertSame( 200, $response->get_status() );
-		$this->assertFalse( $this->row( $data['items'], 'enabled_stacks' )['actionable'] );
-		$this->assertFalse( $this->row( $data['items'], 'require_new_character_approval' )['actionable'] );
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertArrayNotHasKey( 'items', (array) $response->get_data(), 'no row leaks in the refusal' );
+	}
+
+	/** @return array<string,array{0:string}> */
+	public static function non_staff_chronicle_roles(): array {
+		return [
+			'a player'   => [ 'player' ],
+			'a narrator' => [ 'narrator' ],
+			'a Harpy'    => [ 'boons' ],
+		];
 	}
 
 	/**

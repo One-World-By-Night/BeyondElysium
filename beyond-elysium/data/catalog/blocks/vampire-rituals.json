@@ -10,11 +10,17 @@
       "Laws of the Night Revised (WW05013) - Rituals 2/4/6 (MET-POWER-ACQUISITION.md, Vampire)"
     ],
     "extracted": "2026-09-22",
-    "tool": "tools/catalog/build_vampire_rituals.py + rulings/vampire-rituals.json"
+    "tool": "tools/catalog/build_vampire_rituals.py + rulings/vampire-rituals.json",
+    "notes": "1.3.3 R1 (Q3) - name_canonicalization added for the re-key planner's canonical-tier matching tier (§3.5a); declared, not coded, per Decision 011."
   },
   "definition": {
     "atomic": true,
     "allow_custom": true,
+    "name_canonicalization": {
+      "form": "group_name_tier",
+      "tier_words": { "b": "Basic", "bas": "Basic", "basic": "Basic", "i": "Intermediate", "int": "Intermediate", "inter": "Intermediate", "intermediate": "Intermediate", "a": "Advanced", "adv": "Advanced", "advanced": "Advanced", "e": "Elder", "elder": "Elder", "m": "Master", "master": "Master" },
+      "group_aliases": { "Koldunic": "Koldunism", "Koldonic Sorcery": "Koldunism", "Koldunic Sorcery": "Koldunism", "Sadhanna": "Sadhana", "DAK": "Dur An Ki", "Thaum": "Thaumaturgy", "Hermetic Thaumaturgy": "Thaumaturgy" }
+    },
     "player_order": true,
     "allow_multiples": false,
     "items": [

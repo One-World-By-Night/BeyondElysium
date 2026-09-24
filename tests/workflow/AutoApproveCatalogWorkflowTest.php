@@ -16,7 +16,8 @@ use WP_UnitTestCase;
  * first. A player buys Academics but types it in lower case; a Storyteller adds a homebrew
  * ability that isn't in the catalog. The purchase applies at once - under the catalog's name,
  * at the catalog's price. The homebrew entry, which no catalog prices, waits in the approval
- * queue until a Storyteller approves it (1.0.0-review F-030).
+ * queue until a Storyteller approves it (1.0.0-review F-030) - and prices it, since nothing else
+ * can (1.3.3 E3/E4).
  */
 class AutoApproveCatalogWorkflowTest extends WP_UnitTestCase {
 
@@ -89,15 +90,28 @@ class AutoApproveCatalogWorkflowTest extends WP_UnitTestCase {
 		$this->assertSame( 'pending', $homebrew->get_data()->status );
 		$this->assertCount( 1, Character::find( $character )->sheet_data['aacw-abilities'] );
 
-		// It shows in the queue, and a Storyteller's approval applies it.
+		// It shows in the queue. Nothing prices it, so approving it without a price is refused and
+		// it stays pending; the Storyteller's price, per dot, is what applies it and what is charged.
 		$queue = $this->dispatch( 'GET', "/be/v1/{$this->slug}/changes" )->get_data();
 		$this->assertSame( 'Chronicle Lore', $queue[0]->change_data['trait']['name'] );
+
+		$unpriced = $this->dispatch( 'PUT', "/be/v1/{$this->slug}/changes/{$queue[0]->id}", [
+			'status'       => 'approved',
+			'review_token' => $queue[0]->review_token,
+		] );
+		$this->assertSame( 400, $unpriced->get_status() );
+		$this->assertSame( 'cost_required', $unpriced->as_error()->get_error_code() );
+		$this->assertSame( 'pending', Change::find( (int) $queue[0]->id )->status );
+		$this->assertSame( 24, (int) Character::find( $character )->xp_unspent );
+
 		$this->dispatch( 'PUT', "/be/v1/{$this->slug}/changes/{$queue[0]->id}", [
 			'status'       => 'approved',
 			'review_token' => $queue[0]->review_token,
+			'xp_cost'      => 2,
 		] );
 
 		$this->assertSame( 'approved', Change::find( (int) $queue[0]->id )->status );
 		$this->assertCount( 2, Character::find( $character )->sheet_data['aacw-abilities'] );
+		$this->assertSame( 22, (int) Character::find( $character )->xp_unspent );
 	}
 }

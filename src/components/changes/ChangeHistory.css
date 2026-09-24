@@ -46,6 +46,16 @@
 	font-style: italic;
 }
 
+.be-change-history__detail {
+	margin: 0.25rem 0 0;
+	font-size: 0.85rem;
+}
+
+.be-change-history__detail ul {
+	margin: 0.25rem 0 0 1.25rem;
+	padding: 0;
+}
+
 .be-change-history__error {
 	color: var(--be-red-5);
 }

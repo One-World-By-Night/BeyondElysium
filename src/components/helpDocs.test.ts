@@ -52,6 +52,7 @@ const WAITING_FOR_PILOT_REVIEW = [
 /** Pages no single screen owns: concepts and reference, reached by links from other pages. */
 const LINKED_ONLY = [
 	'approval-flow',
+	'catalog-cutover',
 	'chronicles',
 	'grapevine',
 	'roles',

@@ -3,6 +3,7 @@
 namespace BeyondElysium\Tests\Thread;
 
 use BeyondElysium\Database\Manager;
+use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\World_Object;
@@ -196,6 +197,21 @@ class CharacterExporterThreadTest extends WP_UnitTestCase {
 		$this->assertCount( 1, $character['experience']['history'] );
 		$this->assertSame( 0, $character['experience']['history'][0]['change_type'] ); // ecEarned
 		$this->assertSame( 5.0, $character['experience']['history'][0]['change'] );
+	}
+
+	public function test_a_catalog_update_is_not_an_experience_history_entry(): void {
+		foreach ( [ 'catalog_rekey', 'catalog_rekey_revert' ] as $type ) {
+			Change::create( [
+				'character_id' => $this->character_id, 'change_type' => $type, 'category' => 'catalog',
+				'change_data'  => [ 'counts' => [ 'moved_rows' => 3, 'rekeyed' => 1 ] ],
+				'xp_cost'      => 0, 'status' => 'approved', 'submitted_by' => 1,
+			] );
+		}
+
+		$character = GEX_Xml_Parser::parse_string( Character_Exporter::export( $this->character_id )['xml'] )['characters'][0];
+
+		$this->assertCount( 1, $character['experience']['history'], 'the earn, and nothing for either catalog record' );
+		$this->assertSame( 5.0, $character['experience']['unspent'] );
 	}
 
 	public function test_hide_st_strips_st_only_text_from_notes(): void {

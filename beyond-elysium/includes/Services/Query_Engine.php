@@ -386,15 +386,22 @@ class Query_Engine {
 				// own creature stack defines it on (field-map.php) - Willpower, Rank, Auspice. Read
 				// unconditionally until 1.0.0-review F-051, so each of those matched no one.
 				$block = $map['block'] ?? self::block_holding( $row, $map );
-				$data  = $block !== null ? ( $row->sheet_data[ $block ] ?? null ) : null;
-				if ( $data !== null ) {
+				// 1.3.3 C7: field-map.php/block_holding() both name a slug that may be retired on
+				// a cut-over install - the data itself now lives under the replacement key.
+				$live_block = $block !== null ? Catalog_Cutover::live_slug( (string) $row->stack_slug, $block ) : null;
+				$data       = $live_block !== null ? ( $row->sheet_data[ $live_block ] ?? null ) : null;
+				// $live_block !== null is checked explicitly alongside $data, rather than relied
+				// on as an implication of it, so this stays provably null-safe through the extra
+				// live_slug() step above (PHPStan's ternary-implies-non-null narrowing does not
+				// chain reliably through it).
+				if ( $data !== null && $live_block !== null ) {
 					if ( isset( $map['field'] ) ) {
 						$value = $data[ $map['field'] ] ?? null;
 					} elseif ( isset( $map['pool'] ) ) {
 						$value = $data[ $map['pool'] ][ $map['part'] ] ?? null;
 					} else {
-						$value  = self::normalize_list( $data, $block, (string) $row->owner_slug );
-						$atomic = self::block_is_atomic( $block, $row->owner_slug );
+						$value  = self::normalize_list( $data, $live_block, (string) $row->owner_slug );
+						$atomic = self::block_is_atomic( $live_block, $row->owner_slug );
 					}
 				}
 				break;

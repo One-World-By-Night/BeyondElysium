@@ -11,6 +11,15 @@ import { describeChange } from '../../lib/describeChange';
 import { everyPage } from '../../lib/everyPage';
 import { batchApproval, toggleSelection } from '../../lib/queueSelection';
 import type { QueueSelection } from '../../lib/queueSelection';
+import {
+	canApprove,
+	costNeededMessage,
+	isCostPending,
+	MAX_CUSTOM_PRICE,
+	parsePrice,
+	priceTotal,
+	priceUnitLabel,
+} from '../../lib/queuePrice';
 import type { ApprovalLevel } from '../../types';
 import type { Character, ChangeType, QueueChange } from '../../types/character';
 import { errorMessage } from '../../lib/errorMessage';
@@ -48,6 +57,69 @@ const CHANGE_TYPES: ChangeType[] = [
 ];
 
 /**
+ * The price box for a change waiting for one: what it is priced per (a dot, or the whole pick), the
+ * number field, and the total as it is typed. Required to approve; 0 is a real answer, so the box
+ * starts empty rather than at 0, and empty is what keeps Approve off.
+ */
+function PriceField( {
+	item,
+	value,
+	onChange,
+}: {
+	item: QueueChange;
+	value: string;
+	onChange: ( text: string ) => void;
+} ) {
+	const basis = item.cost_units ?? null;
+	const total = priceTotal( value, basis );
+	return (
+		<label className="be-approval-queue__price">
+			<span>{ priceUnitLabel( basis?.per ?? 'dot' ) }</span>
+			<input
+				type="number"
+				className="be-approval-queue__price-input"
+				min={ 0 }
+				max={ MAX_CUSTOM_PRICE }
+				step={ 1 }
+				inputMode="numeric"
+				required
+				value={ value }
+				onChange={ ( e ) => onChange( e.target.value ) }
+			/>
+			{ total !== null && basis && (
+				<span className="be-approval-queue__price-total">
+					{ basis.per === 'dot' &&
+						sprintf(
+							/* translators: %d: how many dots the price is multiplied by */
+							_n(
+								'× %d dot',
+								'× %d dots',
+								basis.units,
+								'beyond-elysium'
+							),
+							basis.units
+						) }{ ' ' }
+					{ basis.negative
+						? sprintf(
+								/* translators: %d: the total price in XP, recorded on a flaw's row */
+								__(
+									'= %d XP, recorded - a flaw deducts nothing',
+									'beyond-elysium'
+								),
+								total
+						  )
+						: sprintf(
+								/* translators: %d: the total price in XP */
+								__( '= %d XP', 'beyond-elysium' ),
+								total
+						  ) }
+				</span>
+			) }
+		</label>
+	);
+}
+
+/**
  * Renders the pending-changes queue for every character in the game, with filters for
  * character, change type, and approval level. Supports approving or rejecting a single
  * change, selecting multiple changes for a bulk approval, and paginating through results.
@@ -65,6 +137,8 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 	const [ selected, setSelected ] = useState< QueueSelection >( new Map() );
 	const [ rejecting, setRejecting ] = useState< number | null >( null );
 	const [ rejectNote, setRejectNote ] = useState( '' );
+	// What the Storyteller has typed as the price of each change waiting for one (1.3.3 E5).
+	const [ prices, setPrices ] = useState< Record< number, string > >( {} );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
 	const [ waitingCount, setWaitingCount ] = useState( 0 );
@@ -190,11 +264,15 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 	 * success, reloads the queue so the approved row drops out of the pending list; on
 	 * failure, shows the error message instead.
 	 */
-	async function approveOne( id: number ) {
+	async function approveOne( item: QueueChange ) {
+		const id = item.id;
+		// A change waiting for a price goes with the one typed for it; the server refuses it without.
+		const price = isCostPending( item ) ? parsePrice( prices[ id ] ) : null;
 		try {
 			await api.changes( gameSlug ).review( id, {
 				status: 'approved',
 				review_token: tokenFor( id ),
+				...( price !== null ? { xp_cost: price } : {} ),
 			} );
 			load();
 		} catch ( err: unknown ) {
@@ -257,8 +335,9 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 			setSelected( new Map() );
 			// load() clears any error first, so the skipped notice is set after it.
 			load();
+			const notices: string[] = [];
 			if ( result.skipped.length > 0 ) {
-				setError(
+				notices.push(
 					sprintf(
 						// translators: %d: number of changes not approved.
 						__(
@@ -268,6 +347,15 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 						result.skipped.length
 					)
 				);
+			}
+			// Waiting for a price is a different thing from skipped: the reviewer has to open each one.
+			if ( ( result.needs_cost ?? [] ).length > 0 ) {
+				notices.push(
+					costNeededMessage( ( result.needs_cost ?? [] ).length )
+				);
+			}
+			if ( notices.length > 0 ) {
+				setError( notices.join( ' ' ) );
 			}
 		} catch ( err: unknown ) {
 			setError(
@@ -417,6 +505,15 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 										<input
 											type="checkbox"
 											checked={ selected.has( item.id ) }
+											disabled={ isCostPending( item ) }
+											title={
+												isCostPending( item )
+													? __(
+															'Set a price first - this cannot be approved in a batch.',
+															'beyond-elysium'
+													  )
+													: undefined
+											}
 											onChange={ () =>
 												toggleSelected( item )
 											}
@@ -448,8 +545,19 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 											'beyond-elysium'
 										) }
 									>
-										{ item.xp_cost >= 0 ? '+' : '' }
-										{ item.xp_cost }
+										{ isCostPending( item ) ? (
+											<span className="be-approval-queue__unpriced">
+												{ __(
+													'Needs a price',
+													'beyond-elysium'
+												) }
+											</span>
+										) : (
+											<>
+												{ item.xp_cost >= 0 ? '+' : '' }
+												{ item.xp_cost }
+											</>
+										) }
 									</td>
 									{ /* Level/Submitted by/When: real information, but not what an ST triaging between
 									 * scenes needs first (mobile-sheet-design.md §5.5) - collapsed behind one native
@@ -537,11 +645,26 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 											'beyond-elysium'
 										) }
 									>
+										{ isCostPending( item ) && (
+											<PriceField
+												item={ item }
+												value={
+													prices[ item.id ] ?? ''
+												}
+												onChange={ ( text ) =>
+													setPrices( ( prev ) => ( {
+														...prev,
+														[ item.id ]: text,
+													} ) )
+												}
+											/>
+										) }
 										<button
 											type="button"
-											onClick={ () =>
-												approveOne( item.id )
+											disabled={
+												! canApprove( item, prices )
 											}
+											onClick={ () => approveOne( item ) }
 										>
 											{ __(
 												'Approve',

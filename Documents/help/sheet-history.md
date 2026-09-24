@@ -21,7 +21,12 @@ panel - see [Print / Export](sheet-print-export.md).
   - **Status** - Pending, Approved, or Rejected.
   - A plain description of the change, such as "Celerity 2 → 3," "Added Underworld Lore," or
     "+5 XP (session attendance)."
-  - Its **XP** cost, when the change has one.
+  - Its **XP** cost, when the change has one. A homebrew purchase still waiting for a price
+    reads **Price set on approval**.
+  - A **Catalog update** line, one per character, when a site is switched to the newer
+    catalog. Open **Matched entries** under it to see each custom entry that became a
+    catalog item, as "what it was → what it is". See [Switching a Site to the Declared
+    Catalog](catalog-cutover.md).
   - When it was submitted, and, once reviewed, when.
   - The submitter's own note, if there is one.
   - The Storyteller's note, labeled "Storyteller: ...," if there is one - kept separate from

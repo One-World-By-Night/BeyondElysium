@@ -125,8 +125,10 @@ class NotificationsTest extends WP_UnitTestCase {
 		// Two DIFFERENT traits - BE_PROCESS/releases/0.99.2-workflow.md's "Resubmitting creates
 		// duplicate pending changes" fix means two submissions of the exact same trait now
 		// collapse into one pending row, which this test must not rely on to get two ids.
+		// Both are real catalog merits: a homebrew one waits for a Storyteller's price (1.3.3 E3)
+		// and is never approved in a batch, which is not what this test is about.
 		$first  = $this->submit_change_as( $this->player_id, 'Iron Will' );
-		$second = $this->submit_change_as( $this->player_id, 'Nerves of Steel' );
+		$second = $this->submit_change_as( $this->player_id, 'Bruiser' );
 
 		wp_set_current_user( $this->st_id );
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/changes/batch-approve" );
@@ -137,7 +139,7 @@ class NotificationsTest extends WP_UnitTestCase {
 		$this->assertEqualsCanonicalizing( [ $first, $second ], $response->get_data()['approved'] ?? [] );
 		$this->assertCount( 1, $this->captured, 'one player, one summary mail - never one per change' );
 		$this->assertStringContainsString( 'Iron Will', $this->captured[0]['message'] );
-		$this->assertStringContainsString( 'Nerves of Steel', $this->captured[0]['message'], 'both changes are listed in the one summary' );
+		$this->assertStringContainsString( 'Bruiser', $this->captured[0]['message'], 'both changes are listed in the one summary' );
 	}
 
 	public function test_a_player_who_opted_out_receives_no_mail(): void {

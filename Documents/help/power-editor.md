@@ -33,18 +33,34 @@ Arts, and similar, depending on the chronicle's own template).
 - Each held power, one row:
   - Its name, and either a **List each level** / **Use stepper** toggle plus one of:
     - **Stepper** (the default) - **−** and **+** buttons around the current level.
-    - **Checklist** - one box per rung up to the family's own maximum, each labeled with that
-      rung's real named power (for example, Celerity's "Alacrity," "Swiftness," and so on).
-      Checking a box raises the level to that rung; unchecking one lowers it to just below that
-      rung.
-  - **Tradition** - a free-text field with suggestions, for the power's own tradition or source.
-    A Blood Magic power added before this section asked for one up front shows the placeholder
+    - **Checklist** - one box per rung on this section's ladder, each labeled with that
+      rung's
+      real named power (for example, Celerity's "Alacrity," "Swiftness," and so on).
+Checking a box raises the level to that rung; unchecking one lowers it to just below that
+rung.
+    The ladder is the same length for every power in a section - five rungs for Disciplines,
+    Arcanoi, Arts, Spheres and Realms alike - so the stepper stops at the same place
+whichever
+    power you are on.
+  - **Tradition** - a free-text field with suggestions, for the power's own tradition or
+    source.
+    A Blood Magic power added before this section asked for one up front shows the
+placeholder
     "Choose paradigm" until you set one - never forced, since a Storyteller's review is what
     actually checks it.
   - **Remove** / **Undo** - marks the power for removal, or brings it back.
-  - An Elder-and-above pick shows its family and power name together (for example, "Celerity:
-    Precision") with no stepper or checklist - only Remove/Undo, since it's a single named pick,
-    not a rated level.
+  - An Elder-and-above pick shows its family and power name together (for example,
+    "Celerity:
+    Precision") with no stepper or checklist - only Remove/Undo, since it's a single named
+pick,
+    not a rated level. Where an imported power's own name is all the catalog has, it shows
+once
+    rather than twice.
+- **Your Elder-and-above picks sit in their own list below the rated powers**, grouped under
+  a heading per rank - Elder, Master, Ascended, Methuselah. A rank you hold nothing at
+  simply isn't shown. There is deliberately **no count and no progress bar**: holding two
+  Master powers and no Elder ones is perfectly legal, and nothing here treats a rank as
+  something to fill.
 
 On a narrow screen, Tradition and Remove/Undo move behind a **Details** button that opens them
 in a small panel; the stepper or checklist stays on the row itself.
@@ -112,8 +128,13 @@ in a small panel; the stepper or checklist stays on the row itself.
   has picks past the numbered ladder.
 - **A name I typed says it isn't in the catalog.** Check the spelling. If it's genuinely new,
   this section may not accept custom entries at all - ask a Storyteller.
-- **The stepper won't go higher.** You're at that power's own maximum numbered level - an
+- **The stepper won't go higher.** You're at the top of this section's ladder - an
   Elder-and-above pick, if the family has any, is a separate control below the list.
+- **A power of mine shows a number higher than the ladder goes.** Some characters migrated
+  in with a single total covering the whole ladder *plus* powers above it - "Celerity 9"
+  meaning nine Celerity powers, not a ninth rung. Those keep their number and are left
+  alone. The stepper steps such a holding **down one at a time** rather than snapping it
+  back to the top of the ladder, so nothing is quietly dropped.
 - **Switching List each level / Use stepper changed every other power too.** That's expected -
   it's one setting for your whole sheet, not per power.
 

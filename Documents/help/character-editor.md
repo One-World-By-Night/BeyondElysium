@@ -95,10 +95,16 @@ their own text directly.
 The rest of the screen is the chronicle's own template, one box per section, in the same
 layout the read-only sheet uses:
 
-- **Trait lists** (Abilities, Backgrounds, Merits, and the like) - each held entry shows as a
-  compact row with an edit button. **+ Add** opens the same form for a new one: choose a name
-  from the catalog or type your own where the section allows it, set a count or level,
-  optionally a specialization and a note. **Adding a name you already hold raises that entry instead of starting a second one** - a specialization labels one holding, so a different focus does not buy a second Brawl; only entries the catalog marks as repeatable (two Retainers, two fields of study) get a row each, one per label. Removing a held entry marks it for removal rather than deleting it outright, so you can still undo it before you submit. See [Trait Lists](trait-editor.md).
+- **Trait lists** (Abilities, Backgrounds, Merits, and the like) - each held entry shows as
+  a compact row with an edit button. **+ Add** opens the same form for a new one: choose a
+  name from the catalog or type your own where the section allows it, set a count or level,
+  optionally a specialization (or, for a repeatable entry, a "Who or what?" answer) and a
+  note. **Adding a name you already hold raises that entry instead of starting a second
+  one** - a specialization labels one holding, so a different focus does not buy a second
+  Brawl; only entries the catalog marks as repeatable (two Retainers, two fields of study)
+  get a row each, one per answer. Removing a held entry marks it for removal rather than
+  deleting it outright, so you can still undo it before you submit. See [Trait
+  Lists](trait-editor.md).
 - **Powers** (Disciplines, Gifts, Arts, and other leveled catalogs) - add a power, then raise
   or lower it with a +/− stepper, or switch to a checklist that names every rung up to your
   current level. **Rated powers and Elder-and-above picks are two separate lists**: the rating
@@ -119,7 +125,9 @@ Everything you change in the sections above queues here instead of touching the 
 immediately:
 
 - A running list, one line per change, naming what changed and, once its price loads, its XP
-  cost and whether it needs Storyteller review.
+  cost and whether it needs Storyteller review. A trait or power that isn't in the catalog
+  reads "Price set by a Storyteller on approval" instead of a cost: it has no price yet, and
+  the total leaves it out until a Storyteller sets one.
 - **Total** XP across everything queued, and **Unspent after** - what your XP would be once
   it's all applied. As a player, this turns into a warning if it would go negative.
 - **Submit Changes** - sends every queued change to the server. As a player, this is disabled

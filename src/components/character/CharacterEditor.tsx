@@ -16,6 +16,7 @@ import AssigneePicker from '../shared/AssigneePicker';
 import AudiencePicker from '../shared/AudiencePicker';
 import SecretsPanel from '../shared/SecretsPanel';
 import CollapsiblePanel from '../shared/CollapsiblePanel';
+import { previewPriceLabel } from '../../lib/queuePrice';
 import { spanFor, sortedForFlow } from '../../lib/templateLayout';
 import { resolveSectionTitle } from '../../lib/resolveCrossBlockRef';
 import { pickMediaImage } from '../../lib/pickMediaImage';
@@ -1164,11 +1165,23 @@ export function CharacterEditor( {
 									{ preview && (
 										<>
 											{ ' ' }
-											({ preview.xp_cost >= 0 ? '+' : '' }
-											{ sprintf(
-												/* translators: %d: the XP cost or refund for this pending change */
-												__( '%d XP', 'beyond-elysium' ),
-												preview.xp_cost
+											(
+											{ /* Homebrew has no catalog price: the player is told a Storyteller sets it,
+											 * not shown the 0 the server holds in its place (1.3.3 E5). */ }
+											{ previewPriceLabel( preview ) ?? (
+												<>
+													{ preview.xp_cost >= 0
+														? '+'
+														: '' }
+													{ sprintf(
+														/* translators: %d: the XP cost or refund for this pending change */
+														__(
+															'%d XP',
+															'beyond-elysium'
+														),
+														preview.xp_cost
+													) }
+												</>
 											) }
 											, { preview.approval_level })
 										</>

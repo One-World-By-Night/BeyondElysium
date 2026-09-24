@@ -35,7 +35,15 @@ class Plugin {
 		Shortcodes::register();
 		Maintenance::register();
 		\BeyondElysium\REST\Url_Param_Guard::register();
+		\BeyondElysium\REST\Catalog_Switch_Guard::register();
 		Authorization::register();
+
+		// `wp be cutover ...` (1.3.3): the catalog cutover from a shell. The parent is registered first -
+		// WP-CLI defers a command whose parent it has not seen and would never show it.
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			\WP_CLI::add_command( 'be', \BeyondElysium\CLI\Be_Command::class );
+			\WP_CLI::add_command( 'be cutover', \BeyondElysium\CLI\Cutover_Command::class );
+		}
 
 		// Cleans up be_game_members rows when a user is deleted, single-site or multisite.
 		add_action( 'deleted_user', [ '\BeyondElysium\Models\Game_Member', 'remove_user_everywhere' ] );

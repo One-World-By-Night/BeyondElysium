@@ -425,7 +425,11 @@ class Catalog_Reader {
 				'game_line'        => (string) ( $definition['game_line'] ?? 'met' ),
 				'is_system'        => 1,
 				'stack_definition' => [
-					'sections'            => $definition['sections'] ?? [],
+					// 1.3.3 C2: `replaces` is data for `replacement_maps()`/`live_slug()` to
+					// read, not a `Creature_Stack::stack_definition` field - stripped here so
+					// it never reaches `mark_admin_stack_sections()`/the structured stack
+					// editor, neither of which knows the key.
+					'sections'            => self::strip_replaces( (array) ( $definition['sections'] ?? [] ) ),
 					'display_preferences' => $definition['display_preferences'] ?? [],
 				],
 				'creation_rules'   => $definition['creation_rules'] ?? [],
@@ -433,6 +437,56 @@ class Catalog_Reader {
 		}
 
 		return $stacks;
+	}
+
+	/**
+	 * @param array<int,mixed> $sections
+	 * @return array<int,mixed>
+	 */
+	private static function strip_replaces( array $sections ): array {
+		foreach ( $sections as &$section ) {
+			if ( is_array( $section ) ) {
+				unset( $section['replaces'] );
+			}
+		}
+		unset( $section );
+		return $sections;
+	}
+
+	/**
+	 * The retired->live block map each declared stack states via its sections' own `replaces`
+	 * (1.3.3 C1), keyed by stack slug. `Catalog_Cutover::live_slug()` and the re-key planner
+	 * both read this rather than the emitter's own `stack_repoint()` table, which this data
+	 * comes from but which is a build-time tool, not something the plugin ships or loads.
+	 *
+	 * @return array<string,array<string,string>> stack slug => [ retired slug => live slug ].
+	 */
+	public static function replacement_maps( string $root = self::DEFAULT_ROOT ): array {
+		$catalog = self::load( $root );
+		$maps    = [];
+
+		foreach ( $catalog['stacks'] as $slug => $data ) {
+			$map = [];
+			foreach ( (array) ( $data['definition']['sections'] ?? [] ) as $section ) {
+				if ( ! is_array( $section ) || ! is_array( $section['replaces'] ?? null ) ) {
+					continue;
+				}
+				$live = (string) ( $section['block_slug'] ?? '' );
+				if ( $live === '' ) {
+					continue;
+				}
+				foreach ( $section['replaces'] as $old ) {
+					if ( is_string( $old ) && $old !== '' ) {
+						$map[ $old ] = $live;
+					}
+				}
+			}
+			if ( $map !== [] ) {
+				$maps[ $slug ] = $map;
+			}
+		}
+
+		return $maps;
 	}
 
 	/**

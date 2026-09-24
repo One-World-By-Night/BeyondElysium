@@ -1,6 +1,10 @@
 import { addFilter, removeFilter } from '@wordpress/hooks';
 import { resetLocaleData, setLocaleData } from '@wordpress/i18n';
-import { describeChange } from './describeChange';
+import {
+	describeChange,
+	describeChangeCost,
+	describeChangeDetail,
+} from './describeChange';
 import changeDescriptionInput from '../../tests/fixtures/change-description-input.json';
 import changeDescriptionExpected from '../../tests/fixtures/change-description-expected.json';
 
@@ -106,7 +110,37 @@ describe( 'describeChange — parity with Change_Description.php', () => {
 describe( 'describeChange — translation', () => {
 	afterEach( () => {
 		removeFilter( 'i18n.gettext_beyond-elysium', 'beyond-elysium/test' );
+		removeFilter( 'i18n.ngettext_beyond-elysium', 'beyond-elysium/test' );
 		resetLocaleData( undefined, 'beyond-elysium' );
+	} );
+
+	it( "reads a catalog update in the reader's own plural forms", () => {
+		setLocaleData(
+			{
+				'': {
+					domain: 'beyond-elysium',
+					plural_forms: 'nplurals=2; plural=(n > 1);',
+				},
+				'Catalog update: %s': [ 'Atualização do catálogo: %s' ],
+				'%d row moved to its new catalog section': [
+					'%d linha movida para a nova seção do catálogo',
+					'%d linhas movidas para as novas seções do catálogo',
+				],
+				'%d custom entry matched to the catalog': [
+					'%d item personalizado associado ao catálogo',
+					'%d itens personalizados associados ao catálogo',
+				],
+			},
+			'beyond-elysium'
+		);
+
+		expect(
+			describeChange( 'catalog_rekey', {
+				counts: { moved_rows: 24, rekeyed: 1 },
+			} )
+		).toBe(
+			'Atualização do catálogo: 24 linhas movidas para as novas seções do catálogo, 1 item personalizado associado ao catálogo'
+		);
 	} );
 
 	it( "reads a translated chronicle's own words around the change's names", () => {
@@ -147,6 +181,11 @@ describe( 'describeChange — translation', () => {
 			'beyond-elysium/test',
 			( translation: string ) => `⟦${ translation }⟧`
 		);
+		addFilter(
+			'i18n.ngettext_beyond-elysium',
+			'beyond-elysium/test',
+			( translation: string ) => `⟦${ translation }⟧`
+		);
 
 		changeDescriptionInput.forEach( ( testCase ) => {
 			const described = describeChange(
@@ -173,5 +212,60 @@ describe( 'describeChange — translation', () => {
 				left: ownText,
 			} );
 		} );
+	} );
+} );
+
+describe( 'describeChangeDetail', () => {
+	const records = [
+		{ outcome: 'rekeyed', from: 'Alertness', to: 'Alertness' },
+		{
+			outcome: 'rekeyed',
+			from: 'Lore: Kindred',
+			to: 'Lore',
+			label: 'Kindred',
+		},
+		{ outcome: 'kept', from: 'Basket Weaving', reason: 'no_match' },
+		// A kept entry is not listed even if the record names the item it would have become.
+		{ outcome: 'kept', from: 'Brawling', to: 'Brawl', reason: 'collision' },
+	];
+
+	it( 'lists each entry a catalog update matched, and only those', () => {
+		expect( describeChangeDetail( 'catalog_rekey', { records } ) ).toEqual(
+			[ 'Alertness → Alertness', 'Lore: Kindred → Lore (Kindred)' ]
+		);
+	} );
+
+	it( 'lists nothing for a catalog update that matched nothing', () => {
+		expect(
+			describeChangeDetail( 'catalog_rekey', {
+				records: [ records[ 2 ] ],
+			} )
+		).toEqual( [] );
+		expect( describeChangeDetail( 'catalog_rekey', {} ) ).toEqual( [] );
+	} );
+
+	it( 'lists nothing for any other kind of change, even one that carries records', () => {
+		expect(
+			describeChangeDetail( 'catalog_rekey_revert', { records } )
+		).toEqual( [] );
+		expect( describeChangeDetail( 'import_note', { records } ) ).toEqual(
+			[]
+		);
+	} );
+} );
+
+describe( 'describeChangeCost', () => {
+	it( 'says nothing for a change that cost nothing, however the zero arrives', () => {
+		expect( describeChangeCost( 0 ) ).toBeNull();
+		expect( describeChangeCost( '0' ) ).toBeNull();
+		expect( describeChangeCost( '0.00' ) ).toBeNull();
+		expect( describeChangeCost( '' ) ).toBeNull();
+	} );
+
+	it( 'signs a cost and a refund', () => {
+		expect( describeChangeCost( '3.00' ) ).toBe( '+3 XP' );
+		expect( describeChangeCost( 12 ) ).toBe( '+12 XP' );
+		expect( describeChangeCost( -2 ) ).toBe( '-2 XP' );
+		expect( describeChangeCost( '-2.00' ) ).toBe( '-2 XP' );
 	} );
 } );

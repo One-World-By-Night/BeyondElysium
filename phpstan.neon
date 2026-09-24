@@ -12,6 +12,11 @@ parameters:
     bootstrapFiles:
         - tests/phpstan-bootstrap.php
 
+    # The few WP-CLI calls beyond-elysium/includes/CLI makes, declared for analysis only; WP-CLI is
+    # not a dependency of the plugin and no stubs package for it is installed.
+    scanFiles:
+        - tests/phpstan-wp-cli-stubs.php
+
     # Elementor ships no autoload map of its own; scanning its source directly is what
     # lets PHPStan resolve \Elementor\Widget_Base etc. without pulling a live Elementor
     # install into CI. Dev-only - vendor/ is gitignored, never shipped in dist.

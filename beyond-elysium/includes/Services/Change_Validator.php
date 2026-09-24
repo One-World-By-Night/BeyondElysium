@@ -25,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class Change_Validator {
 
-	/** Change types the REST route accepts. `import_note` is written by the importer itself, never submitted. */
+	/** Change types the REST route accepts. `import_note` (the importer) and `catalog_rekey`/`catalog_rekey_revert` (the catalog cutover) are written by the system itself, never submitted. */
 	const REST_CHANGE_TYPES = [ 'add_trait', 'remove_trait', 'modify_trait', 'modify_resource', 'modify_identity', 'xp_earn', 'xp_adjust', 'propose_world_object', 'propose_faction' ];
 
 	/** Keys a trait_list entry may carry. */
@@ -298,6 +298,13 @@ class Change_Validator {
 				return self::fail( 'invalid_param', 'chosen_cost must be a whole number.' );
 			}
 			$trait['chosen_cost'] = $cost;
+		}
+		// A player never prices their own homebrew (1.3.3 E2). On a name the catalog does not carry
+		// a price is a Storyteller's to set, at approval - and a client-sent one would reach the sheet
+		// through the merge a modify does, not only the quote. A catalog item keeps its own: a range
+		// cost is the one thing a player legitimately chooses.
+		if ( $resolved === null && ! $is_manager ) {
+			unset( $trait['chosen_cost'] );
 		}
 		foreach ( [ 'specialization', 'note' ] as $text_key ) {
 			if ( array_key_exists( $text_key, $trait ) ) {

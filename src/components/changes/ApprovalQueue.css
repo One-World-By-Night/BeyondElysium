@@ -37,6 +37,35 @@
 	display: flex;
 	gap: 0.35rem;
 	align-items: center;
+	flex-wrap: wrap;
+}
+
+/*
+ * A change waiting for a Storyteller's price (1.3.3 E5). The compound selector on the input beats
+ * hello-elementor's `input[type=number]` width rule, D34's failure mode; the group itself wraps
+ * rather than pushing Approve and Reject off a narrow card.
+ */
+.be-approval-queue__price {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.35rem;
+	margin-right: 0.35rem;
+}
+
+.be-approval-queue__price .be-approval-queue__price-input {
+	width: 4.5rem;
+	box-sizing: border-box;
+}
+
+.be-approval-queue__unpriced {
+	font-style: italic;
+	color: var(--be-gold-5);
+}
+
+.be-approval-queue__price-total {
+	font-size: 0.85rem;
+	color: var(--be-gray-6);
 }
 
 .be-approval-queue__error {

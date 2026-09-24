@@ -73,6 +73,7 @@ Every trait purchase, XP award, or sheet change a player submits becomes a **pen
 - Filter by character, change type, or approval level.
 - Approve or reject one at a time, with an optional note (a note is required on reject).
 - Select several and **Approve Selected** to clear a batch in one action — this applies each change individually (same sheet mutation and XP deduction as approving one at a time), it is a convenience over the loop, not a different approval mechanism.
+- **Homebrew waits for a price.** A trait or power that isn't in the catalog has no price, so the queue doesn't make one up. It shows **Needs a price** and a box for what it costs, per dot for a trait and for the whole pick for a power. You can't approve it until you've typed a number, and 0 counts. It can't go into a batch either. The player sees "Price set by a Storyteller on approval" until you do. See [Approval Queue](help/approval-queue.md#a-change-that-needs-a-price).
 - There are two approval levels: automatic, and Storyteller review. When a rule's reason says a coordinator's approval is needed (an OWBN bylaw, for example), getting it is the Storyteller's job before approving - Beyond Elysium has no separate coordinator step.
 
 **This queue works on a phone.** Triaging pending changes between scenes is a real phone surface, not just a desktop one — each pending change is a card with Approve/Reject at the top, the rest (level, submitted by, when) behind a **Details** disclosure.

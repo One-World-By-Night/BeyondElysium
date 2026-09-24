@@ -140,6 +140,20 @@ class Template {
 	}
 
 	/**
+	 * Every template row regardless of scope - global or chronicle-owned, any stack.
+	 * `Catalog_Cutover::rewrite_templates()` (1.3.3 C6) needs this: a chronicle's own
+	 * forked template left on a retired slug renders an empty section exactly like a
+	 * global one would, so the sweep cannot stop at globals() the way
+	 * `Schema::repair_stale_default_layouts()` deliberately does.
+	 *
+	 * @param array $args Filters: stack_slug, template_type.
+	 * @return array
+	 */
+	public static function all( array $args = [] ): array {
+		return self::rows( [ '1=1' ], [], $args );
+	}
+
+	/**
 	 * Insert a new template. A null or absent game_id makes it a global
 	 * template; validates the layout against the template schema before
 	 * inserting, and JSON-encodes it for storage.

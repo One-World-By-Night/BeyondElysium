@@ -228,6 +228,49 @@ describe( 'saveTraitDraft - adding', () => {
 	} );
 } );
 
+describe( 'saveTraitDraft - merging a note (F2, 1.3.2.1)', () => {
+	it( 'adopts the drafted note when the merge target had none', () => {
+		const rows = saveTraitDraft(
+			[ { name: 'Retainers', count: 3, specialization: 'Bob' } ],
+			backgrounds(),
+			{
+				name: 'Retainers',
+				count: 1,
+				specialization: 'Bob',
+				note: 'Ex-mercenary',
+			},
+			null
+		);
+
+		expect( rows ).toHaveLength( 1 );
+		expect( rows[ 0 ].note ).toBe( 'Ex-mercenary' );
+	} );
+
+	it( 'keeps the merge target note when both rows have one', () => {
+		const rows = saveTraitDraft(
+			[
+				{
+					name: 'Retainers',
+					count: 3,
+					specialization: 'Bob',
+					note: 'Loyal since 2019',
+				},
+			],
+			backgrounds(),
+			{
+				name: 'Retainers',
+				count: 1,
+				specialization: 'Bob',
+				note: 'Ex-mercenary',
+			},
+			null
+		);
+
+		expect( rows ).toHaveLength( 1 );
+		expect( rows[ 0 ].note ).toBe( 'Loyal since 2019' );
+	} );
+} );
+
 describe( 'saveTraitDraft - editing', () => {
 	it( 'merges into the pre-existing target when an edited label collides', () => {
 		const rows = saveTraitDraft(

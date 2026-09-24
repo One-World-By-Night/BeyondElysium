@@ -50,6 +50,20 @@ class TraitRowIdentityThreadTest extends WP_UnitTestCase {
 				[ 'name' => 'Generation', 'cost' => '1' ],
 			] ],
 		] );
+		// 1.3.2.1 F7: the real production shape - no `has_specializations` at all, only
+		// `allow_multiples` (every real `{stack}-backgrounds` block). Distinct from
+		// `tri-backgrounds` above, which sets `has_specializations` and so never exercised
+		// the gap F1 closed: the editor's own label field only ever rendered where
+		// `has_specializations` was true, so a plain Backgrounds-shaped block had no way to
+		// type a label at all.
+		Schema_Block::create( [
+			'slug' => 'tri-plain-backgrounds', 'name' => 'Plain Backgrounds', 'section_type' => 'trait_list', 'is_system' => 0,
+			'definition' => [ 'items' => [
+				[ 'name' => 'Retainers', 'cost' => '1', 'allow_multiples' => true ],
+				[ 'name' => 'Generation', 'cost' => '1' ],
+			] ],
+		] );
+
 		// The same two items under a block-wide default of true, and one item overriding it.
 		Schema_Block::create( [
 			'slug' => 'tri-studies', 'name' => 'Studies', 'section_type' => 'trait_list', 'is_system' => 0,
@@ -78,6 +92,7 @@ class TraitRowIdentityThreadTest extends WP_UnitTestCase {
 			'slug' => 'tri-stack', 'name' => 'Row Identity Creature', 'is_system' => 0, 'created_by' => 1,
 			'stack_definition' => [ 'sections' => [
 				[ 'block_slug' => 'tri-abilities' ], [ 'block_slug' => 'tri-backgrounds' ],
+				[ 'block_slug' => 'tri-plain-backgrounds' ],
 				[ 'block_slug' => 'tri-studies' ], [ 'block_slug' => 'tri-merits' ],
 				[ 'block_slug' => 'tri-disciplines' ],
 			] ],
@@ -132,6 +147,23 @@ class TraitRowIdentityThreadTest extends WP_UnitTestCase {
 
 		$this->assertSame( 201, $second->get_status() );
 		$this->assertCount( 2, $this->rows( 'tri-backgrounds' ) );
+	}
+
+	/**
+	 * 1.3.2.1 F1/F7 guard: the server path was always correct - this proves it end to end on
+	 * the real production shape (no `has_specializations`), not just on `tri-backgrounds`
+	 * above. Expected to pass unchanged; the gap this release closes is that the editor had
+	 * no field to type "Bob" or "Sue" into on a block shaped like this one.
+	 */
+	public function test_two_labelled_retainers_on_a_plain_backgrounds_block_are_two_rows(): void {
+		$this->assertSame( 201, $this->add( 'tri-plain-backgrounds', [ 'name' => 'Retainers', 'count' => 3, 'specialization' => 'Bob' ] )->get_status() );
+
+		$second = $this->add( 'tri-plain-backgrounds', [ 'name' => 'Retainers', 'count' => 2, 'specialization' => 'Sue' ] );
+
+		$this->assertSame( 201, $second->get_status() );
+		$rows = $this->rows( 'tri-plain-backgrounds' );
+		$this->assertCount( 2, $rows );
+		$this->assertSame( [ 'Bob', 'Sue' ], array_map( static fn( $row ) => $row['specialization'], $rows ) );
 	}
 
 	public function test_the_same_retainer_twice_is_still_one_holding(): void {

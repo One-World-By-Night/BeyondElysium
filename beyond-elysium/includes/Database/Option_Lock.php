@@ -47,6 +47,22 @@ class Option_Lock {
 	}
 
 	/**
+	 * When the lock was last claimed, or 0 when nobody holds it. Read with plain SQL, not
+	 * `get_option()`: `claim()` inserts with plain SQL, which a persistent object cache never hears
+	 * about, so `get_option()` can keep answering "no such option" for a lock that is held.
+	 *
+	 * @param string $name Option name for the lock row.
+	 * @return int Unix time of the claim.
+	 */
+	public static function held_since( string $name ): int {
+		global $wpdb;
+		return (int) $wpdb->get_var( $wpdb->prepare(
+			"SELECT CAST( option_value AS UNSIGNED ) FROM {$wpdb->options} WHERE option_name = %s",
+			$name
+		) );
+	}
+
+	/**
 	 * Releases the lock, letting the next request take it straight away.
 	 *
 	 * @param string $name Option name for the lock row.

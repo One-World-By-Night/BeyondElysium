@@ -216,7 +216,7 @@ export interface CharacterCollectionParams {
  * The kind of edit a character change represents: adding,
  * removing, or modifying a trait; adjusting a resource pool or
  * identity field; earning or spending XP; or recording an import
- * note.
+ * note or a catalog cutover.
  */
 export type ChangeType =
 	| 'add_trait'
@@ -227,6 +227,10 @@ export type ChangeType =
 	| 'xp_earn'
 	| 'xp_adjust'
 	| 'import_note'
+	// What a catalog cutover did to a sheet, and its undoing (1.3.3 R7). Written already approved by
+	// Catalog_Cutover, never submitted, never priced, never in the approval queue.
+	| 'catalog_rekey'
+	| 'catalog_rekey_revert'
 	// A player proposing a catalog item, location or rote for their own character (1.0.1 D3).
 	// Not sheet data: approving it writes a world object and connects it to the character.
 	| 'propose_world_object'
@@ -292,6 +296,12 @@ export interface ChangeReviewRequest {
 	notes?: string;
 	/** The review_token the queue issued; the server refuses the review if the change was edited since. */
 	review_token?: string;
+	/**
+	 * What a purchase waiting for a price costs, in whole XP from 0 to 500: per dot for a trait list,
+	 * for the whole pick for a power. Required to approve a change that is waiting for one, and read
+	 * for no other (1.3.3 E4).
+	 */
+	xp_cost?: number;
 }
 
 /**
@@ -331,6 +341,19 @@ export interface QueueChange extends CharacterChange {
 	submitted_by_name: string | null;
 	/** Identifies exactly the content shown; sent back with a review so a later edit is caught. */
 	review_token: string;
+	/** For a change waiting for a price: what one price would cover. Null for every other change. */
+	cost_units?: CostUnits | null;
+}
+
+/** What one price covers: each dot of a trait list, or a whole pick of a tiered power. */
+export type PriceUnit = 'dot' | 'pick';
+
+/** How the server says a change waiting for a price is priced: per what, over how many (1.3.3 E5). */
+export interface CostUnits {
+	per: PriceUnit;
+	units: number;
+	/** A flaw: the price is recorded on the row and nothing is deducted for it. */
+	negative?: boolean;
 }
 
 /**
@@ -350,6 +373,8 @@ export interface ActivityChange extends CharacterChange {
 export interface BatchApproveResponse {
 	approved: number[];
 	skipped: number[];
+	/** Changes left alone because they are waiting for a price; each needs its own review (1.3.3 E3). */
+	needs_cost?: number[];
 }
 
 // ---------------------------------------------------------------------------
@@ -367,6 +392,12 @@ export interface ChangePreviewResult {
 	approval_level: ApprovalLevel;
 	/** Citation naming the real-world approval authority, when the matched rule carries one. */
 	approval_reason: string | null;
+	/**
+	 * False when the purchase has no price yet - homebrew a Storyteller prices on approval - so the
+	 * screen says so instead of showing the 0 in `xp_cost` as if it were free (1.3.3 E2).
+	 */
+	priced?: boolean;
+	unpriced_reason?: string | null;
 	/** Present when the server would refuse this change on submit; the cost is then 0. */
 	error?: { code: string; message: string };
 }

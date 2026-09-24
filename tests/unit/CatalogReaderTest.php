@@ -110,6 +110,52 @@ class CatalogReaderTest extends TestCase {
 		$this->assertNull( $block['definition']['items'][0]['tier'] );
 	}
 
+	public function test_name_canonicalization_survives_ingestion_unmodified(): void {
+		// 1.3.3 R1 (§3.5a): declared block data the re-key planner reads generically - the
+		// reader must hand it through exactly as authored, key order and all, not strip or
+		// normalize a definition key it has no reason to know about.
+		$rule = [
+			'form'          => 'group_name_tier',
+			'tier_words'    => [ 'b' => 'Basic', 'int' => 'Intermediate' ],
+			'group_aliases' => [ 'Koldunic' => 'Koldunism' ],
+		];
+		$root = $this->build_catalog( [
+			'blocks/plain-rituals' => [
+				'slug'         => 'plain-rituals',
+				'name'         => 'Plain Rituals',
+				'kind'         => 'block',
+				'section_type' => 'trait_list',
+				'definition'   => [
+					'allow_custom'          => true,
+					'name_canonicalization' => $rule,
+					'items'                 => [
+						[ 'name' => 'Thaumaturgy: Blood Walk (basic)', 'tier' => 'basic', 'group' => 'Thaumaturgy', 'subgroup' => null ],
+					],
+				],
+			],
+		] );
+
+		$block = Catalog_Reader::blocks_to_seed( $root )['plain-rituals'];
+
+		$this->assertSame( $rule, $block['definition']['name_canonicalization'] );
+	}
+
+	public function test_a_block_without_name_canonicalization_gains_none(): void {
+		$root = $this->build_catalog( [
+			'blocks/plain-merits' => [
+				'slug'         => 'plain-merits',
+				'name'         => 'Plain Merits',
+				'kind'         => 'block',
+				'section_type' => 'trait_list',
+				'definition'   => [
+					'items' => [ [ 'name' => 'Iron Will', 'tier' => null, 'group' => null, 'subgroup' => null ] ],
+				],
+			],
+		] );
+
+		$this->assertArrayNotHasKey( 'name_canonicalization', Catalog_Reader::blocks_to_seed( $root )['plain-merits']['definition'] );
+	}
+
 	public function test_a_full_ladder_tiered_power_decodes_with_meta_and_split_containers_intact(): void {
 		$root = $this->build_catalog( [
 			'blocks/plain-disciplines' => $this->tiered_file( 'plain-disciplines', [
@@ -482,6 +528,54 @@ class CatalogReaderTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
+	// 1.3.3 C2: `replaces` (1.3.3 C1) is data for the cutover to read, never a
+	// `Creature_Stack::stack_definition` field.
+	// -------------------------------------------------------------------------
+
+	private function stack_with_replaces_fixture(): array {
+		$block = static fn( string $slug ) => [
+			'slug' => $slug, 'name' => $slug, 'kind' => 'block', 'section_type' => 'trait_list',
+			'definition' => [ 'items' => [ [ 'name' => 'Placeholder', 'cost' => '1', 'tier' => null, 'group' => null, 'subgroup' => null ] ] ],
+		];
+		return [
+			'blocks/test-stack-abilities' => $block( 'test-stack-abilities' ),
+			'blocks/test-stack-merits'    => $block( 'test-stack-merits' ),
+			'blocks/met-derangements'     => $block( 'met-derangements' ),
+			'stacks/test-stack' => [
+				'slug' => 'test-stack', 'name' => 'Test', 'kind' => 'stack',
+				'definition' => [ 'sections' => [
+					[ 'block_slug' => 'test-stack-abilities', 'label' => 'Abilities', 'display_order' => 1, 'required' => true, 'replaces' => [ 'met-abilities' ] ],
+					[ 'block_slug' => 'test-stack-merits', 'label' => 'Merits', 'display_order' => 2, 'required' => false, 'replaces' => [ 'met-merits' ] ],
+					[ 'block_slug' => 'met-derangements', 'label' => 'Derangements', 'display_order' => 3, 'required' => false ],
+				] ],
+			],
+			'stacks/plain-stack' => [
+				'slug' => 'plain-stack', 'name' => 'Plain', 'kind' => 'stack',
+				'definition' => [ 'sections' => [
+					[ 'block_slug' => 'met-derangements', 'label' => 'Derangements', 'display_order' => 1, 'required' => false ],
+				] ],
+			],
+		];
+	}
+
+	public function test_stacks_to_seed_strips_replaces_from_its_sections(): void {
+		$root  = $this->build_catalog( $this->stack_with_replaces_fixture() );
+		$stack = Catalog_Reader::stacks_to_seed( $root )['test-stack'];
+		foreach ( $stack['stack_definition']['sections'] as $section ) {
+			$this->assertArrayNotHasKey( 'replaces', $section );
+		}
+		// The rest of the section is untouched - stripping is subtractive only.
+		$this->assertSame( 'test-stack-abilities', $stack['stack_definition']['sections'][0]['block_slug'] );
+	}
+
+	public function test_replacement_maps_reads_every_stacks_own_replaces(): void {
+		$root = $this->build_catalog( $this->stack_with_replaces_fixture() );
+		$maps = Catalog_Reader::replacement_maps( $root );
+		$this->assertSame( [ 'met-abilities' => 'test-stack-abilities', 'met-merits' => 'test-stack-merits' ], $maps['test-stack'] );
+		$this->assertArrayNotHasKey( 'plain-stack', $maps, 'a stack that declares no `replaces` contributes no entry' );
+	}
+
+	// -------------------------------------------------------------------------
 	// Round trip against the real shipped catalog - the whole point of the format
 	// (measure against real authored files, not only hand-built fixtures).
 	// -------------------------------------------------------------------------
@@ -528,6 +622,56 @@ class CatalogReaderTest extends TestCase {
 		$this->assertNotNull( $block );
 		$this->assertSame( 'trait_list', $block['section_type'] );
 		$this->assertSame( 'mage-spheres', $block['definition']['_meta']['untiered']['derived_from'] );
+	}
+
+	public function test_round_trips_the_real_vampire_rituals_name_canonicalization(): void {
+		if ( ! Catalog_Reader::available() ) {
+			$this->markTestSkipped( 'no declared catalog in this checkout' );
+		}
+		$rule = Catalog_Reader::blocks_to_seed()['vampire-rituals']['definition']['name_canonicalization'] ?? null;
+		$this->assertNotNull( $rule, 'vampire-rituals declares its canonicalization rule' );
+		$this->assertSame( 'group_name_tier', $rule['form'] );
+		$this->assertSame( 'Intermediate', $rule['tier_words']['int'] );
+		$this->assertSame( 'Koldunism', $rule['group_aliases']['Koldunic'] );
+
+		// Every alias must resolve to a group the block's own items really carry - an alias to a
+		// group that does not exist would silently never match anything.
+		$groups = array_unique( array_column( Catalog_Reader::blocks_to_seed()['vampire-rituals']['definition']['items'], 'group' ) );
+		foreach ( $rule['group_aliases'] as $alias => $group ) {
+			$this->assertContains( $group, $groups, "alias \"{$alias}\" points at a group the catalog does not have" );
+		}
+	}
+
+	/**
+	 * 1.3.3 C2: a `replaces` pair can never cross section types - a stack cutover moves rows
+	 * between blocks by re-keying them, and `Custom_Rekey` (R2) assumes the target block reads
+	 * the same shape (`trait_list` row or `tiered_power` row) as the one it replaces. Checked
+	 * against the real GVM path (what a retired slug still seeds as, unreplaced) and the real
+	 * declared catalog (what replaces it) - every stack, every pair, not just Vampire's.
+	 */
+	public function test_every_replaced_pair_shares_a_section_type_with_its_retired_gvm_block(): void {
+		if ( ! Catalog_Reader::available() ) {
+			$this->markTestSkipped( 'no declared catalog in this checkout' );
+		}
+		$gvm_blocks = [];
+		foreach ( \BeyondElysium\Database\Seeder::get_gvm_blocks_to_seed() as $block ) {
+			$gvm_blocks[ $block['slug'] ] = $block;
+		}
+		$declared = Catalog_Reader::blocks_to_seed();
+		$maps     = Catalog_Reader::replacement_maps();
+		$this->assertNotEmpty( $maps, 'the real catalog declares at least one `replaces` map' );
+
+		foreach ( $maps as $stack => $map ) {
+			foreach ( $map as $old => $new ) {
+				$this->assertArrayHasKey( $old, $gvm_blocks, "{$stack}: retired block \"{$old}\" has no GVM counterpart to compare against" );
+				$this->assertArrayHasKey( $new, $declared, "{$stack}: replacement block \"{$new}\" is not itself a declared block" );
+				$this->assertSame(
+					$gvm_blocks[ $old ]['section_type'],
+					$declared[ $new ]['section_type'],
+					"{$stack}: \"{$new}\" replaces \"{$old}\" but they are different section types"
+				);
+			}
+		}
 	}
 
 	// -------------------------------------------------------------------------

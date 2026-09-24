@@ -39,6 +39,10 @@ class Cost_Engine {
 	 * its section type. Never mutates anything, so it is safe to call
 	 * repeatedly while a change is still being previewed.
 	 *
+	 * The number only - `quote_for_change()` is the same computation with the one fact a
+	 * bare number cannot carry, whether it is a price at all, and every caller that has to
+	 * tell "free" from "no price yet" asks that instead.
+	 *
 	 * @param object $character Character row with decoded (array) `sheet_data` and a
 	 *                           `stack_slug`.
 	 * @param array  $change    Shape: `change_type`, `change_data` (with `block_slug` plus
@@ -46,37 +50,63 @@ class Cost_Engine {
 	 * @return int Signed XP delta - positive costs, negative refunds.
 	 */
 	public static function cost_for_change( $character, array $change ): int {
+		return self::quote_for_change( $character, $change )['xp'];
+	}
+
+	/**
+	 * The most a Storyteller may price one unit of a custom purchase - a dot, or a whole pick.
+	 * The review route enforces the same ceiling on what it accepts.
+	 */
+	public const MAX_CUSTOM_PRICE = 500;
+
+	/**
+	 * `cost_for_change()` plus whether the figure is a price (1.3.3 E1, design 3.10). A custom
+	 * purchase has no catalog entry to price against, and until this it quietly cost 0 and was
+	 * approved at 0: indistinguishable from a free one. Now it is `priced: false` with a reason,
+	 * `xp` 0, and the caller holds it for a Storyteller's number.
+	 *
+	 * Only a CUSTOM purchase can be unpriced. A catalog item with no cost keeps pricing at 0,
+	 * exactly as it always has (owner ruling Q2, 2026-09-23).
+	 *
+	 * @param object $character  As `cost_for_change()`.
+	 * @param array  $change     As `cost_for_change()`.
+	 * @param bool   $by_manager Whether the submitter is a Storyteller. Only a Storyteller's own
+	 *                           `chosen_cost` on a custom trait is read as its price; a player never
+	 *                           prices their own homebrew.
+	 * @return array{xp:int,priced:bool,unpriced_reason:?string}
+	 */
+	public static function quote_for_change( $character, array $change, bool $by_manager = false ): array {
 		$change_data = $change['change_data'] ?? [];
 		$block_slug  = $change_data['block_slug'] ?? null;
 		if ( ! $block_slug ) {
-			return 0;
+			return self::quoted( 0 );
 		}
 
 		// Prefer this character's chronicle-specific fork of the block, if one exists.
 		$block = Schema_Block::find_for_game( $block_slug, (string) ( $character->owner_slug ?? '' ) );
 		if ( ! $block ) {
 			// A missing block has no cost rule to apply; default to zero.
-			return 0;
+			return self::quoted( 0 );
 		}
 
-		$sheet_data = is_array( $character->sheet_data ?? null ) ? $character->sheet_data : [];
+		$sheet_data  = is_array( $character->sheet_data ?? null ) ? $character->sheet_data : [];
 		$change_type = $change['change_type'] ?? '';
 
 		switch ( $block->section_type ) {
 			case 'trait_list':
-				return self::price_trait_list_change( $sheet_data, $block->definition, $block_slug, $change_type, $change_data );
+				return self::quote_trait_list_change( $sheet_data, $block->definition, $block_slug, $change_type, $change_data, $by_manager );
 
 			case 'tiered_power':
 				$trait_name = $change_data['trait']['name'] ?? '';
 				$in_type    = $trait_name !== '' ? self::is_in_type( $character, $block_slug, $trait_name ) : true;
-				return self::price_tiered_power_change( $sheet_data, $block->definition, $change_type, $change_data, $in_type );
+				return self::quote_tiered_power_change( $sheet_data, $block->definition, $change_type, $change_data, $in_type, $by_manager );
 
 			case 'resource_pool':
-				return self::price_resource_pool_change( $sheet_data, $block->definition, $block_slug, $change_data );
+				return self::quoted( self::price_resource_pool_change( $sheet_data, $block->definition, $block_slug, $change_data ) );
 
 			default:
 				// identity_field changes carry no XP cost.
-				return 0;
+				return self::quoted( 0 );
 		}
 	}
 
@@ -171,6 +201,206 @@ class Cost_Engine {
 
 		$chosen = (array) ( $identity_data['chosen_in_clan'] ?? [] );
 		return in_array( $trait_name, $chosen, true );
+	}
+
+	/**
+	 * A trait_list change, quoted. A catalog item is priced exactly as `price_trait_list_change()`
+	 * prices it. A custom one - flagged, or a held name the catalog no longer carries - is:
+	 *
+	 * - `add_trait`: unpriced, unless a manager sent its `chosen_cost`, which prices it at
+	 *   `sign x chosen_cost x count`;
+	 * - `modify_trait` raising the count: `sign x price x new dots`, from the manager's own
+	 *   `chosen_cost` or else the held row's, and unpriced when neither exists;
+	 * - anything that does not raise a count, and every `remove_trait`: 0, priced. A custom
+	 *   purchase is never refunded (owner, 2026-09-21: "we refund NOTHING").
+	 *
+	 * @param array<string,mixed> $sheet_data
+	 * @param array<string,mixed> $change_data
+	 * @return array{xp:int,priced:bool,unpriced_reason:?string}
+	 */
+	public static function quote_trait_list_change(
+		array $sheet_data,
+		$definition,
+		string $block_slug,
+		string $change_type,
+		array $change_data,
+		bool $by_manager = false
+	): array {
+		$trait = $change_data['trait'] ?? [];
+		$name  = $trait['name'] ?? null;
+		if ( $name === null ) {
+			return self::quoted( 0 );
+		}
+
+		if ( empty( $trait['custom'] ) && self::find_item( $definition, $name ) !== null ) {
+			return self::quoted( self::price_trait_list_change( $sheet_data, $definition, $block_slug, $change_type, $change_data ) );
+		}
+
+		$sign = ! empty( $definition->negative ) ? -1 : 1;
+		$own  = $by_manager ? self::usable_price( $trait['chosen_cost'] ?? null ) : null;
+
+		if ( 'add_trait' === $change_type ) {
+			if ( $own === null ) {
+				return self::unquoted();
+			}
+			return self::quoted( $sign * $own * max( 1, (int) ( $trait['count'] ?? 1 ) ) );
+		}
+
+		if ( 'modify_trait' === $change_type ) {
+			$held      = self::find_held_trait( $sheet_data, $block_slug, $definition, $trait, is_array( $change_data['previous'] ?? null ) ? $change_data['previous'] : null );
+			$old_count = $held['count'] ?? 0;
+			$new_count = array_key_exists( 'count', $trait ) ? max( 0, (int) $trait['count'] ) : $old_count;
+			if ( $new_count <= $old_count ) {
+				return self::quoted( 0 );
+			}
+			$unit = $own ?? ( isset( $held['chosen_cost'] ) ? (int) $held['chosen_cost'] : null );
+			if ( $unit === null ) {
+				return self::unquoted();
+			}
+			return self::quoted( $sign * $unit * ( $new_count - $old_count ) );
+		}
+
+		return self::quoted( 0 );
+	}
+
+	/**
+	 * A tiered_power change, quoted. A catalog family or pick is priced as
+	 * `price_tiered_power_change()` prices it. A custom family, or a custom pick under a real
+	 * one, has no catalog price: adding one, or raising a custom family's level, is unpriced -
+	 * a Storyteller prices it at approval - and a metadata edit or a removal is 0, priced.
+	 *
+	 * @param array<string,mixed> $sheet_data
+	 * @param array<string,mixed> $change_data
+	 * @return array{xp:int,priced:bool,unpriced_reason:?string}
+	 */
+	public static function quote_tiered_power_change(
+		array $sheet_data,
+		$definition,
+		string $change_type,
+		array $change_data,
+		bool $in_type,
+		bool $by_manager = false
+	): array {
+		$trait = $change_data['trait'] ?? [];
+		$name  = $trait['name'] ?? null;
+		if ( $name === null ) {
+			return self::quoted( 0 );
+		}
+
+		if ( empty( $trait['custom'] ) && ! self::is_unpriceable_power( $definition, $trait ) ) {
+			return self::quoted( self::price_tiered_power_change( $sheet_data, $definition, $change_type, $change_data, $in_type ) );
+		}
+
+		if ( 'add_trait' === $change_type ) {
+			return self::unquoted();
+		}
+		if ( 'modify_trait' === $change_type && self::raises_a_power( $sheet_data, (string) ( $change_data['block_slug'] ?? '' ), $trait ) ) {
+			return self::unquoted();
+		}
+		return self::quoted( 0 );
+	}
+
+	/**
+	 * How many units one price covers, so a Storyteller's number can become a total: dots for a
+	 * trait_list (a new row's count, or only the dots a raise adds), one pick for a tiered power
+	 * however many levels it names. Zero for a removal, a drop or an edit that buys nothing.
+	 *
+	 * @param array<string,mixed> $sheet_data
+	 * @param array<string,mixed> $change_data
+	 * @return array{per:string,units:int}
+	 */
+	public static function price_units( array $sheet_data, $definition, string $block_slug, string $change_type, array $change_data ): array {
+		$trait = $change_data['trait'] ?? [];
+
+		if ( isset( $definition->powers ) && ! isset( $definition->items ) ) {
+			$buys = 'add_trait' === $change_type
+				|| ( 'modify_trait' === $change_type && self::raises_a_power( $sheet_data, $block_slug, $trait ) );
+			return [ 'per' => 'pick', 'units' => $buys ? 1 : 0 ];
+		}
+
+		if ( 'add_trait' === $change_type ) {
+			return [ 'per' => 'dot', 'units' => max( 1, (int) ( $trait['count'] ?? 1 ) ) ];
+		}
+		if ( 'modify_trait' === $change_type && array_key_exists( 'count', $trait ) ) {
+			$held      = self::find_held_trait( $sheet_data, $block_slug, $definition, $trait, is_array( $change_data['previous'] ?? null ) ? $change_data['previous'] : null );
+			$old_count = $held['count'] ?? 0;
+			return [ 'per' => 'dot', 'units' => max( 0, max( 0, (int) $trait['count'] ) - $old_count ) ];
+		}
+		return [ 'per' => 'dot', 'units' => 0 ];
+	}
+
+	/**
+	 * What a Storyteller's price makes of a purchase that was waiting for one (1.3.3 E3): the change's
+	 * own data with the price stamped onto the trait - so the row that lands on the sheet carries it
+	 * and the Point Audit prices it the same way - and the signed total to deduct.
+	 *
+	 * A trait list is priced per dot: `price x units`, negative in a negative block, where the
+	 * caller deducts nothing for it, as ever. A tiered power is priced per pick, flat; raising a
+	 * custom family adds the new price to what its row already carries, so the row always stands for
+	 * everything paid on it and the audit's one figure per row is never short.
+	 *
+	 * @param array<string,mixed> $sheet_data
+	 * @param array<string,mixed> $change_data
+	 * @return array{change_data:array<string,mixed>,xp:int}
+	 */
+	public static function apply_set_price( array $sheet_data, $definition, string $block_slug, string $change_type, array $change_data, int $set_cost ): array {
+		$trait = is_array( $change_data['trait'] ?? null ) ? $change_data['trait'] : [];
+		$units = self::price_units( $sheet_data, $definition, $block_slug, $change_type, $change_data );
+
+		if ( 'pick' === $units['per'] ) {
+			$carried = 0;
+			if ( 'modify_trait' === $change_type && $units['units'] > 0 ) {
+				$held    = self::find_held_power( $sheet_data, $block_slug, (string) ( $trait['name'] ?? '' ), isset( $trait['power_name'] ) ? (string) $trait['power_name'] : null );
+				$carried = (int) ( $held['chosen_cost'] ?? 0 );
+			}
+			$trait['chosen_cost'] = $carried + $set_cost;
+			$xp                   = $units['units'] > 0 ? $set_cost : 0;
+		} else {
+			$trait['chosen_cost'] = $set_cost;
+			$xp                   = ( ! empty( $definition->negative ) ? -1 : 1 ) * $set_cost * $units['units'];
+		}
+
+		$change_data['trait'] = $trait;
+		unset( $change_data['cost_pending'] );
+		return [ 'change_data' => $change_data, 'xp' => $xp ];
+	}
+
+	/** @return array{xp:int,priced:bool,unpriced_reason:?string} */
+	private static function quoted( int $xp ): array {
+		return [ 'xp' => $xp, 'priced' => true, 'unpriced_reason' => null ];
+	}
+
+	/** @return array{xp:int,priced:bool,unpriced_reason:?string} */
+	private static function unquoted(): array {
+		return [ 'xp' => 0, 'priced' => false, 'unpriced_reason' => 'custom_no_catalog_entry' ];
+	}
+
+	/** A whole number from 0 to `MAX_CUSTOM_PRICE`, or null: what a price is allowed to be. */
+	private static function usable_price( $value ): ?int {
+		if ( $value === null || ! is_numeric( $value ) || (float) $value !== (float) (int) $value ) {
+			return null;
+		}
+		$price = (int) $value;
+		return $price >= 0 && $price <= self::MAX_CUSTOM_PRICE ? $price : null;
+	}
+
+	/** Whether a tiered change names a family, or a pick under one, that the catalog does not carry. */
+	private static function is_unpriceable_power( $definition, array $trait ): bool {
+		$power = self::find_power( $definition, (string) ( $trait['name'] ?? '' ) );
+		if ( $power === null ) {
+			return true;
+		}
+		$power_name = $trait['power_name'] ?? null;
+		return $power_name !== null && self::find_power_level_by_name( $power, (string) $power_name ) === null;
+	}
+
+	/** Whether a tiered `modify_trait` raises the level the character holds. */
+	private static function raises_a_power( array $sheet_data, string $block_slug, array $trait ): bool {
+		if ( ! array_key_exists( 'level', $trait ) ) {
+			return false;
+		}
+		$held = self::find_held_power( $sheet_data, $block_slug, (string) ( $trait['name'] ?? '' ), isset( $trait['power_name'] ) ? (string) $trait['power_name'] : null );
+		return (int) $trait['level'] > (int) ( $held['level'] ?? 0 );
 	}
 
 	/**
@@ -1096,7 +1326,7 @@ class Cost_Engine {
 	 * specific one to find that pick and no other, so adding or removing
 	 * one Elder+ pick never matches a sibling pick under the same family.
 	 *
-	 * @return array{level: int, power_name: ?string}|null
+	 * @return array{level: int, power_name: ?string, chosen_cost: ?int}|null
 	 */
 	private static function find_held_power( array $sheet_data, string $block_slug, string $name, ?string $power_name = null ): ?array {
 		foreach ( ( $sheet_data[ $block_slug ] ?? [] ) as $item ) {
@@ -1104,14 +1334,15 @@ class Cost_Engine {
 				continue;
 			}
 			$item_power_name = ( $item['power_name'] ?? '' ) !== '' ? $item['power_name'] : null;
+			$chosen          = isset( $item['chosen_cost'] ) ? (int) $item['chosen_cost'] : null;
 			if ( $power_name !== null ) {
 				if ( $item_power_name === $power_name ) {
-					return [ 'level' => (int) ( $item['level'] ?? 0 ), 'power_name' => $item_power_name ];
+					return [ 'level' => (int) ( $item['level'] ?? 0 ), 'power_name' => $item_power_name, 'chosen_cost' => $chosen ];
 				}
 				continue;
 			}
 			if ( $item_power_name === null ) {
-				return [ 'level' => (int) ( $item['level'] ?? 0 ), 'power_name' => null ];
+				return [ 'level' => (int) ( $item['level'] ?? 0 ), 'power_name' => null, 'chosen_cost' => $chosen ];
 			}
 		}
 		return null;

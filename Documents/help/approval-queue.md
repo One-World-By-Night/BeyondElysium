@@ -46,7 +46,7 @@ A table (stacked into cards on a narrow screen) with a checkbox per row, then:
 | --- | --- |
 | Character | Who the change is on |
 | Change | A plain description, such as a trait's old and new value |
-| XP | The cost, positive or negative |
+| XP | The cost, positive or negative. A homebrew purchase shows **Needs a price** until you set one |
 | Level | `auto` or `st` |
 | Approval Reason | Why it landed at that level, when there is one |
 | Submitted by | Who sent it |
@@ -59,8 +59,29 @@ Character, Change, XP, and Actions stay visible up top.
 ### Actions
 
 - **Approve** - applies the change immediately.
+- **A price box**, on a change that needs one - see [A change that needs a
+  price](#a-change-that-needs-a-price).
 - **Reject** - opens a text box ("Reason (required)") with **Confirm Reject** and **Cancel**.
   A reason is required; approving needs none.
+
+### A change that needs a price
+
+A trait or power that isn't in the catalog has no price, so the queue doesn't invent one. It
+shows **Needs a price** in the XP column and a box beside Approve for what it costs. For a
+trait list the box says **XP per dot** and shows the total as you type, such as "× 3 dots =
+6 XP". For a power it says **XP**, one price for the whole pick.
+
+- **Approve stays greyed out until the box holds a whole number from 0 to 500.** 0 counts:
+  sometimes free is the answer, and typing it says so on purpose.
+- **The row can't be ticked for a batch.** Its checkbox is disabled. Approve Selected leaves
+  such a change alone and tells you how many it left.
+- **The price goes on the sheet.** The row is saved with what you set, so the [Point
+  Audit](point-audit.md) reads back exactly what was charged.
+- **A flaw is recorded, not deducted.** In a section that gives points instead of costing
+  them, the total shows as recorded, and nothing comes off the player's XP.
+- **Raising a homebrew trait later.** A row that already has a price is raised at that
+  price, with no prompt. A row that never had one asks again, and the price you set covers
+  only the new dots.
 
 ### Pagination
 
@@ -85,6 +106,15 @@ Character, Change, XP, and Actions stay visible up top.
 
 1. Check the box on each change you want to approve.
 2. Click **Approve Selected (N)**.
+
+A change that needs a price can't be checked. Price and approve it on its own row.
+
+### Price a homebrew purchase
+
+1. Find the row marked **Needs a price**.
+2. Type what it costs in the box - per dot for a trait, the whole amount for a power.
+3. Check the total beside the box.
+4. Click **Approve**.
 
 ### Find one character's pending changes
 
@@ -121,6 +151,10 @@ Character, Change, XP, and Actions stay visible up top.
 - **Confirm Reject won't click.** Type a reason first - rejecting needs one.
 - **A batch approval skipped some changes.** Those were already reviewed, or edited, since the
   queue loaded. Reload and review them individually.
+- **A batch said some changes need a price.** Those are homebrew with no price yet. Open
+  each one, type what it costs, and approve it on its own.
+- **Approve is greyed out on one row.** It needs a price. Type a whole number from 0 to 500
+  in the box beside it.
 - **I don't see this tab at all.** You don't hold a Storyteller role in the chronicle
   currently selected - switch chronicles, or ask an HST/AST to check your role.
 

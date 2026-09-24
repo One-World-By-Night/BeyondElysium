@@ -29,7 +29,10 @@
         "block_slug": "fera-abilities",
         "label": "Abilities",
         "display_order": 30,
-        "required": true
+        "required": true,
+        "replaces": [
+          "met-abilities"
+        ]
       },
       {
         "block_slug": "fera-backgrounds",
@@ -68,7 +71,10 @@
         "block_slug": "fera-rites",
         "label": "Rites",
         "display_order": 61,
-        "required": false
+        "required": false,
+        "replaces": [
+          "werewolf-rites"
+        ]
       },
       {
         "block_slug": "werewolf-resources",
@@ -92,13 +98,19 @@
         "block_slug": "fera-merits",
         "label": "Merits",
         "display_order": 90,
-        "required": false
+        "required": false,
+        "replaces": [
+          "met-merits"
+        ]
       },
       {
         "block_slug": "fera-flaws",
         "label": "Flaws",
         "display_order": 91,
-        "required": false
+        "required": false,
+        "replaces": [
+          "met-flaws"
+        ]
       },
       {
         "block_slug": "met-derangements",

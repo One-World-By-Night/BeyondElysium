@@ -103,7 +103,8 @@ class Change_Engine {
 	 * joined into one comparison key - two submissions with the same key are the same
 	 * submission resubmitted, not two different edits. Returns null for a change_type this
 	 * guard deliberately never applies to: `xp_earn`/`xp_adjust` (an ST awarding XP twice may
-	 * be entirely intentional) and `import_note` (each import is its own real event).
+	 * be entirely intentional), `import_note` (each import is its own real event) and
+	 * `catalog_rekey`/`catalog_rekey_revert` (written already approved, never pending).
 	 *
 	 * @param string               $change_type
 	 * @param array<string,mixed>  $inner_data change_data's own nested payload (block_slug plus a trait/values/fields key).
@@ -206,9 +207,12 @@ class Change_Engine {
 	 * @param int         $reviewed_by
 	 * @param string|null $notes
 	 * @param string|null $expected_token The review_token() the reviewer was shown, if any.
-	 * @return bool False when the change is missing, no longer pending, changed since the token was taken, or could not be written.
+	 * @param int|null    $set_cost       What the reviewer says a purchase waiting for a price costs - a whole
+	 *                                    number of XP, 0 allowed, per dot for a trait list and per pick for a
+	 *                                    power. Required for a change with `cost_pending` and read for no other.
+	 * @return bool False when the change is missing, no longer pending, changed since the token was taken, could not be written, or is waiting for a price and was given none.
 	 */
-	public static function approve( int $change_id, int $reviewed_by, $notes, ?string $expected_token = null ): bool {
+	public static function approve( int $change_id, int $reviewed_by, $notes, ?string $expected_token = null, ?int $set_cost = null ): bool {
 		$savepoint = Transaction::begin( 'be_change_approve' );
 
 		$change = Change::find_for_update( $change_id );
@@ -256,12 +260,26 @@ class Change_Engine {
 			return true;
 		}
 
+		// A purchase no price exists for is priced here, by the reviewer, before anything is written
+		// (1.3.3 E3): the price lands on the change record and on the trait, so the sheet row carries
+		// it and the deduction below is the number that was set - never the stored 0 it used to be.
+		$priced_xp = null;
+		if ( ! empty( $change->change_data['cost_pending'] ) ) {
+			$priced = self::price_pending( $character, $change, $set_cost );
+			if ( $priced === null || ! Change::update_xp_cost( $change_id, $priced['xp'], $priced['change_data'] ) ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			$change->change_data = $priced['change_data'];
+			$priced_xp           = $priced['xp'];
+		}
+
 		// Apply change to sheet_data.
 		$new_sheet = self::apply_to_sheet( $character, $change );
 		$written   = Character::update_sheet_data( (int) $character->id, $new_sheet );
 
 		// Handle XP adjustments.
-		$xp_cost = (float) ( $change->xp_cost ?? 0 );
+		$xp_cost = (float) ( $priced_xp ?? $change->xp_cost ?? 0 );
 		if ( $change->change_type === 'xp_earn' ) {
 			$amount  = (int) ( $change->change_data['amount'] ?? 0 );
 			$written = $written && Character::update_xp( (int) $character->id, $amount, $amount );
@@ -287,6 +305,38 @@ class Change_Engine {
 
 		Transaction::commit( $savepoint );
 		return true;
+	}
+
+	/**
+	 * The change data and signed total once a Storyteller has priced a purchase that was waiting for
+	 * one, or null when it cannot be priced: no price given, one that is not a whole number from 0 to
+	 * `Cost_Engine::MAX_CUSTOM_PRICE`, or a change with no section and trait for a price to attach to.
+	 *
+	 * @param object   $character
+	 * @param object   $change
+	 * @param int|null $set_cost
+	 * @return array{change_data:array<string,mixed>,xp:int}|null
+	 */
+	private static function price_pending( $character, $change, ?int $set_cost ): ?array {
+		if ( $set_cost === null || $set_cost < 0 || $set_cost > Cost_Engine::MAX_CUSTOM_PRICE ) {
+			return null;
+		}
+		$change_data = is_array( $change->change_data ) ? $change->change_data : [];
+		$block_slug  = is_string( $change_data['block_slug'] ?? null ) ? $change_data['block_slug'] : '';
+		if ( $block_slug === '' || ! is_array( $change_data['trait'] ?? null ) ) {
+			return null;
+		}
+
+		// The block the sheet holds it under now: a change left pending across the catalog cutover
+		// still names the retired slug (`apply_to_sheet()` maps it the same way).
+		$live       = Catalog_Cutover::live_slug( (string) ( $character->stack_slug ?? '' ), $block_slug );
+		$definition = self::block_definition( (string) ( $character->owner_slug ?? '' ), $live );
+		if ( ! is_object( $definition ) ) {
+			return null;
+		}
+
+		$sheet = is_array( $character->sheet_data ) ? $character->sheet_data : [];
+		return Cost_Engine::apply_set_price( $sheet, $definition, $live, (string) $change->change_type, $change_data, $set_cost );
 	}
 
 	/**
@@ -452,6 +502,12 @@ class Change_Engine {
 		$sheet       = is_array( $character->sheet_data ) ? $character->sheet_data : [];
 		$change_data = is_array( $change->change_data ) ? $change->change_data : [];
 		$block_slug  = $change_data['block_slug'] ?? null;
+		// 1.3.3 C7: closes the race a pending change can outlive - a change submitted (or
+		// left pending) on a retired slug before the cutover lands in the live block whenever
+		// it is actually approved, no matter how long it sat in the queue.
+		if ( $block_slug !== null ) {
+			$block_slug = Catalog_Cutover::live_slug( (string) ( $character->stack_slug ?? '' ), $block_slug );
+		}
 
 		switch ( $change->change_type ) {
 			case 'add_trait':
@@ -523,7 +579,9 @@ class Change_Engine {
 			case 'xp_earn':
 			case 'xp_adjust':
 			case 'import_note':
-				// No sheet_data change; handled elsewhere.
+			case 'catalog_rekey':
+			case 'catalog_rekey_revert':
+				// No sheet_data change; handled elsewhere (the catalog ones were applied by Catalog_Cutover itself).
 				break;
 		}
 
@@ -589,6 +647,12 @@ class Change_Engine {
 		// A custom entry has no catalog price or rule of its own, so it always needs a
 		// Storyteller - even on a chronicle that auto-approves by default (1.0.0-review F-030).
 		if ( ! empty( $change_data['trait']['custom'] ) ) {
+			$level = 'st';
+		}
+
+		// Nor does any rule settle a purchase nobody has named a cost for: approving it on a
+		// chronicle's own auto-approve would deduct the stored 0, which is the defect (1.3.3 E3).
+		if ( ! empty( $change_data['cost_pending'] ) ) {
 			$level = 'st';
 		}
 

@@ -119,6 +119,35 @@ class Change_Description {
 			case 'import_note':
 				return ! empty( $change_data['reason'] ) ? $change_data['reason'] : __( 'Imported note', 'beyond-elysium' );
 
+			case 'catalog_rekey':
+				$counts  = (array) ( $change_data['counts'] ?? [] );
+				$moved     = (int) ( $counts['moved_rows'] ?? 0 );
+				$matched   = (int) ( $counts['rekeyed'] ?? 0 );
+				$respelled = (int) ( $counts['respelled'] ?? 0 );
+				$parts     = [];
+				if ( $moved > 0 ) {
+					/* translators: %d: how many rows the catalog update moved to their new section */
+					$parts[] = sprintf( _n( '%d row moved to its new catalog section', '%d rows moved to their new catalog sections', $moved, 'beyond-elysium' ), $moved );
+				}
+				if ( $matched > 0 ) {
+					/* translators: %d: how many custom entries the catalog update matched to a catalog item */
+					$parts[] = sprintf( _n( '%d custom entry matched to the catalog', '%d custom entries matched to the catalog', $matched, 'beyond-elysium' ), $matched );
+				}
+				if ( $respelled > 0 ) {
+					/* translators: %d: how many catalog names the catalog update respelled to the spelling the catalog now uses */
+					$parts[] = sprintf( _n( '%d name spelled to match the catalog', '%d names spelled to match the catalog', $respelled, 'beyond-elysium' ), $respelled );
+				}
+				if ( $parts === [] ) {
+					return __( 'Catalog update', 'beyond-elysium' );
+				}
+				/* translators: %s: what the catalog update did, e.g. "24 rows moved to their new catalog sections, 7 custom entries matched to the catalog" */
+				return sprintf( __( 'Catalog update: %s', 'beyond-elysium' ), implode( ', ', $parts ) );
+
+			case 'catalog_rekey_revert':
+				return ! empty( $change_data['forced'] )
+					? __( 'Catalog update undone, including changes made since', 'beyond-elysium' )
+					: __( 'Catalog update undone', 'beyond-elysium' );
+
 			case 'propose_world_object':
 				/* translators: 1: object type (item/location/rote), 2: its proposed name */
 				return sprintf(

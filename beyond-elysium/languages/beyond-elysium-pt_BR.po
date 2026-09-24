@@ -11285,3 +11285,97 @@ msgstr "Também neste nível: %s"
 
 msgid "Add Elder"
 msgstr "Adicionar Ancião"
+
+msgid "Who or what?"
+msgstr "Quem ou o quê?"
+
+msgid "Already on this sheet. Name this one to keep it separate, or leave it the same to add to it."
+msgstr "Já está nesta ficha. Dê um nome diferente a este para mantê-lo separado, ou deixe-o com o mesmo nome para somar a ele."
+
+msgid "Catalog update"
+msgstr "Atualização do catálogo"
+
+#. translators: %s: what the catalog update did, e.g. "24 rows moved to their new catalog sections, 7 custom entries matched to the catalog"
+#, php-format
+msgid "Catalog update: %s"
+msgstr "Atualização do catálogo: %s"
+
+#. translators: %d: how many rows the catalog update moved to their new section
+#, php-format
+msgid "%d row moved to its new catalog section"
+msgid_plural "%d rows moved to their new catalog sections"
+msgstr[0] "%d linha movida para a nova seção do catálogo"
+msgstr[1] "%d linhas movidas para as novas seções do catálogo"
+
+#. translators: %d: how many custom entries the catalog update matched to a catalog item
+#, php-format
+msgid "%d custom entry matched to the catalog"
+msgid_plural "%d custom entries matched to the catalog"
+msgstr[0] "%d item personalizado associado ao catálogo"
+msgstr[1] "%d itens personalizados associados ao catálogo"
+
+#. translators: %d: how many catalog names the catalog update respelled to the spelling the catalog now uses
+#, php-format
+msgid "%d name spelled to match the catalog"
+msgid_plural "%d names spelled to match the catalog"
+msgstr[0] "%d nome ajustado para a grafia do catálogo"
+msgstr[1] "%d nomes ajustados para a grafia do catálogo"
+
+msgid "Catalog update undone"
+msgstr "Atualização do catálogo desfeita"
+
+msgid "Catalog update undone, including changes made since"
+msgstr "Atualização do catálogo desfeita, incluindo as alterações feitas desde então"
+
+msgid "Matched entries"
+msgstr "Itens associados"
+
+msgid "Enter what this purchase costs before approving it. 0 is allowed."
+msgstr "Informe quanto esta compra custa antes de aprová-la. 0 é permitido."
+
+#. translators: %d: the most XP one price may be, 500
+#, php-format
+msgid "The price must be a whole number of XP from 0 to %d."
+msgstr "O preço deve ser um número inteiro de XP de 0 a %d."
+
+msgid "XP per dot"
+msgstr "XP por ponto"
+
+#. translators: %d: number of changes that need a price before they can be approved
+#, php-format
+msgid "%d change needs a price before it can be approved. Open it and enter one."
+msgid_plural "%d changes need a price before they can be approved. Open each one and enter one."
+msgstr[0] "%d alteração precisa de um preço antes de ser aprovada. Abra-a e informe um."
+msgstr[1] "%d alterações precisam de um preço antes de serem aprovadas. Abra cada uma e informe um."
+
+msgid "Price set by a Storyteller on approval"
+msgstr "Preço definido por um Narrador na aprovação"
+
+msgid "Price set on approval"
+msgstr "Preço definido na aprovação"
+
+msgid "Needs a price"
+msgstr "Precisa de um preço"
+
+msgid "Set a price first - this cannot be approved in a batch."
+msgstr "Defina um preço primeiro - esta alteração não pode ser aprovada em lote."
+
+#. translators: %d: how many dots the price is multiplied by
+#, php-format
+msgid "× %d dot"
+msgid_plural "× %d dots"
+msgstr[0] "× %d ponto"
+msgstr[1] "× %d pontos"
+
+#. translators: %d: the total price in XP, recorded on a flaw's row
+#, php-format
+msgid "= %d XP, recorded - a flaw deducts nothing"
+msgstr "= %d XP, registrado - um Defeito não deduz nada"
+
+#. translators: %d: the total price in XP
+#, php-format
+msgid "= %d XP"
+msgstr "= %d XP"
+
+msgid "The site is being moved to the new catalog and can't save anything for a moment. Try again in a minute."
+msgstr "O site está sendo movido para o novo catálogo e não pode salvar nada por um instante. Tente novamente em um minuto."

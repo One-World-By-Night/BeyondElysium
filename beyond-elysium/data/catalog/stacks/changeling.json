@@ -29,7 +29,10 @@
         "block_slug": "changeling-abilities",
         "label": "Abilities",
         "display_order": 30,
-        "required": true
+        "required": true,
+        "replaces": [
+          "met-abilities"
+        ]
       },
       {
         "block_slug": "changeling-backgrounds",
@@ -92,13 +95,19 @@
         "block_slug": "changeling-merits",
         "label": "Merits",
         "display_order": 90,
-        "required": false
+        "required": false,
+        "replaces": [
+          "met-merits"
+        ]
       },
       {
         "block_slug": "changeling-flaws",
         "label": "Flaws",
         "display_order": 91,
-        "required": false
+        "required": false,
+        "replaces": [
+          "met-flaws"
+        ]
       },
       {
         "block_slug": "met-derangements",

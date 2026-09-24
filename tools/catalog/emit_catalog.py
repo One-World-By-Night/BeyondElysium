@@ -1227,7 +1227,7 @@ def build_mortal_numina():
 
 # --- Stacks, templates, presets ----------------------------------------------------------------
 
-SECTION_ORDER = ['block_slug', 'label', 'display_order', 'required', 'in_type_source', 'negative_block_slug']
+SECTION_ORDER = ['block_slug', 'label', 'display_order', 'required', 'replaces', 'in_type_source', 'negative_block_slug']
 STACK_ADDITIONS = {
     # D5 moved every Mummy spell and ritual into mummy-formulae; without a section they would
     # vanish from the sheet.
@@ -1300,8 +1300,16 @@ def emit_stacks_and_templates(block_slugs):
         st = json.load(open(sp))
         sd = st['stack_definition']
         repoint = stack_repoint(st['slug'])
-        sections = [io.ordered(dict(s, block_slug=repoint.get(s['block_slug'], s['block_slug'])), SECTION_ORDER)
-                    for s in sd['sections']]
+        sections = []
+        for s in sd['sections']:
+            new_slug = repoint.get(s['block_slug'], s['block_slug'])
+            sec = dict(s, block_slug=new_slug)
+            # 1.3.3 C1: the retired->declared mapping stack_repoint() already applies becomes
+            # real data on the section it repoints, not just an emitter-internal table - the
+            # cutover (Catalog_Cutover) and the re-key planner both read this, not the table.
+            if new_slug != s['block_slug']:
+                sec['replaces'] = [s['block_slug']]
+            sections.append(io.ordered(sec, SECTION_ORDER))
         rules = copy.deepcopy(st['creation_rules']) or None
         for step in (rules or {}).get('steps', []) if isinstance(rules, dict) else []:
             step['sections'] = [repoint.get(x, x) for x in step.get('sections', [])]

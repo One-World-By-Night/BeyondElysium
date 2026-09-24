@@ -115,7 +115,14 @@ class Catalog_Validator {
 	 * @return string[]
 	 */
 	private static function validate_sections( array $sections, string $at, bool $is_stack ): array {
-		$errors = [];
+		$errors        = [];
+		$own_slugs     = [];
+		$replaced_here = [];
+		foreach ( $sections as $section ) {
+			if ( is_array( $section ) && is_string( $section['block_slug'] ?? null ) ) {
+				$own_slugs[] = $section['block_slug'];
+			}
+		}
 		foreach ( $sections as $i => $section ) {
 			$where = sprintf( '%s[%s]', $at, (string) $i );
 			if ( ! is_array( $section ) || ! is_string( $section['block_slug'] ?? null ) || $section['block_slug'] === '' ) {
@@ -132,6 +139,36 @@ class Catalog_Validator {
 				$join = $section['in_type_source'] ?? null;
 				if ( $join !== null && ( ! is_string( $join ) || ! preg_match( '/^[a-z0-9_-]+\\.[^.]+$/', $join ) ) ) {
 					$errors[] = sprintf( '%s ("%s") has `in_type_source` "%s" - it is a "block_slug.Field" join', $where, $section['block_slug'], is_string( $join ) ? $join : gettype( $join ) );
+				}
+				// 1.3.3 C1: `replaces` states, as data, the retired slug(s) this section's
+				// block took over for this stack - `Catalog_Cutover::live_slug()` and the
+				// re-key planner both read it. A retired slug can never also be a section this
+				// same stack still declares (the whole point of retiring it), and a slug can
+				// only ever be replaced once per stack - two sections both claiming to replace
+				// `met-abilities` would leave `live_slug()` unable to answer which one is right.
+				// Deliberately not checked here: whether a replaced slug is itself a declared
+				// block file elsewhere. `werewolf-rites` is real, live data for this exact
+				// reason - Werewolf's own stack still uses it directly while Fera/Bete replace
+				// it with `fera-rites` - so retirement is a per-stack fact, never a global one.
+				if ( array_key_exists( 'replaces', $section ) ) {
+					$replaces = $section['replaces'];
+					if ( ! is_array( $replaces ) || $replaces === [] || array_is_list( $replaces ) === false ) {
+						$errors[] = sprintf( '%s ("%s") `replaces` must be a non-empty list of slugs', $where, $section['block_slug'] );
+					} else {
+						foreach ( $replaces as $old ) {
+							if ( ! is_string( $old ) || $old === '' ) {
+								$errors[] = sprintf( '%s ("%s") `replaces` entries must be non-empty slug strings', $where, $section['block_slug'] );
+								continue;
+							}
+							if ( in_array( $old, $own_slugs, true ) ) {
+								$errors[] = sprintf( '%s ("%s") `replaces` names "%s", which this stack still declares as a section', $where, $section['block_slug'], $old );
+							}
+							if ( isset( $replaced_here[ $old ] ) ) {
+								$errors[] = sprintf( '%s ("%s") `replaces` names "%s", already claimed by section "%s" in this stack', $where, $section['block_slug'], $old, $replaced_here[ $old ] );
+							}
+							$replaced_here[ $old ] = $section['block_slug'];
+						}
+					}
 				}
 			}
 		}
@@ -284,6 +321,54 @@ class Catalog_Validator {
 				$errors[] = sprintf( '%s ("%s") has a non-string `cost` - a cost is free text ("1 or 3", "1-7"), not a number', $at, (string) ( $item['name'] ?? '?' ) );
 			}
 		}
+
+		if ( array_key_exists( 'name_canonicalization', $definition ) ) {
+			$errors = array_merge( $errors, self::validate_name_canonicalization( $definition['name_canonicalization'] ) );
+		}
+
+		return $errors;
+	}
+
+	/**
+	 * §3.5a (1.3.3 R1): a trait_list block's own rule for canonicalizing a custom row's raw
+	 * name against its real items, read generically by the re-key planner - declared today
+	 * only on `vampire-rituals`. `group_name_tier` is the only recognized `form`: the raw
+	 * `Group: Name (tier)` string, with `group_aliases`/`tier_words` normalizing known
+	 * spelling and abbreviation variants before the comparison.
+	 *
+	 * @param mixed $rule
+	 * @return string[]
+	 */
+	private static function validate_name_canonicalization( $rule ): array {
+		if ( ! is_array( $rule ) ) {
+			return [ '`name_canonicalization` must be an object' ];
+		}
+
+		$errors = [];
+		$form   = $rule['form'] ?? null;
+		if ( ! in_array( $form, [ 'group_name_tier' ], true ) ) {
+			$errors[] = sprintf( '`name_canonicalization.form` "%s" is not one of: group_name_tier', is_scalar( $form ) ? (string) $form : gettype( $form ) );
+		}
+
+		foreach ( [ 'tier_words', 'group_aliases' ] as $map_key ) {
+			if ( ! array_key_exists( $map_key, $rule ) ) {
+				continue;
+			}
+			if ( ! is_array( $rule[ $map_key ] ) ) {
+				$errors[] = sprintf( '`name_canonicalization.%s` must be an object', $map_key );
+				continue;
+			}
+			foreach ( $rule[ $map_key ] as $from => $to ) {
+				if ( ! is_string( $to ) || $to === '' ) {
+					$errors[] = sprintf( '`name_canonicalization.%s["%s"]` must be a non-empty string', $map_key, (string) $from );
+				}
+			}
+		}
+
+		if ( $form === 'group_name_tier' && ! array_key_exists( 'tier_words', $rule ) ) {
+			$errors[] = '`name_canonicalization` with form "group_name_tier" needs `tier_words`';
+		}
+
 		return $errors;
 	}
 

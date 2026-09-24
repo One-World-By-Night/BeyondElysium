@@ -257,7 +257,7 @@ return [
 			// 1.3.2: fera-gifts is now tiered_power - Resist Pain is an Ananasi pick, Heightened
 			// Senses a Gurahl: Ursine pick, both basic rank (fera-gifts.json).
 			'fera-gifts'          => [ [ 'name' => 'Ananasi', 'power_name' => 'Resist Pain' ], [ 'name' => 'Gurahl: Ursine', 'power_name' => 'Heightened Senses' ] ],
-			'werewolf-rites'      => [ [ 'name' => 'Rite of Motherhood' ] ],
+			'werewolf-rites'      => [ [ 'name' => 'Rite of Contrition' ] ],
 			'werewolf-resources'  => [ 'Rage' => [ 'permanent' => 3, 'temporary' => 3 ], 'Gnosis' => [ 'permanent' => 5, 'temporary' => 5 ], 'Willpower' => [ 'permanent' => 6, 'temporary' => 6 ] ],
 			'werewolf-renown'     => [ 'Honor' => [ 'permanent' => 3, 'temporary' => 3 ], 'Glory' => [ 'permanent' => 2, 'temporary' => 2 ], 'Wisdom' => [ 'permanent' => 4, 'temporary' => 4 ] ],
 		],
@@ -281,7 +281,7 @@ return [
 			// 1.3.2: Sense Wyrm is a Kitsune: Shinju pick, Falling Touch a Kitsune: Eji pick,
 			// both basic rank (fera-gifts.json).
 			'fera-gifts'          => [ [ 'name' => 'Kitsune: Shinju', 'power_name' => 'Sense Wyrm' ], [ 'name' => 'Kitsune: Eji', 'power_name' => 'Falling Touch' ] ],
-			'werewolf-rites'      => [ [ 'name' => 'Fertility Rite' ] ],
+			'werewolf-rites'      => [ [ 'name' => 'Rite of Talisman Dedication' ] ],
 			'werewolf-resources'  => [ 'Rage' => [ 'permanent' => 2, 'temporary' => 2 ], 'Gnosis' => [ 'permanent' => 6, 'temporary' => 6 ], 'Willpower' => [ 'permanent' => 5, 'temporary' => 5 ] ],
 			'werewolf-renown'     => [ 'Wisdom' => [ 'permanent' => 5, 'temporary' => 5 ], 'Glory' => [ 'permanent' => 2, 'temporary' => 2 ], 'Honor' => [ 'permanent' => 2, 'temporary' => 2 ] ],
 		],
@@ -306,7 +306,7 @@ return [
 			'fera-backgrounds'    => [ [ 'name' => 'Freak Factor', 'count' => 2 ], [ 'name' => 'Secrets', 'count' => 1 ] ],
 			// 1.3.2: same two picks as above, reused for this character - both basic rank.
 			'fera-gifts'          => [ [ 'name' => 'Gurahl: Ursine', 'power_name' => 'Heightened Senses' ], [ 'name' => 'Kitsune: Shinju', 'power_name' => 'Sense Wyrm' ] ],
-			'werewolf-rites'      => [ [ 'name' => 'Rite of Passage' ] ],
+			'werewolf-rites'      => [ [ 'name' => 'Rite of Contrition' ] ],
 			'werewolf-resources'  => [ 'Rage' => [ 'permanent' => 3, 'temporary' => 3 ], 'Gnosis' => [ 'permanent' => 4, 'temporary' => 4 ], 'Willpower' => [ 'permanent' => 5, 'temporary' => 5 ] ],
 			'werewolf-renown'     => [ 'Wisdom' => [ 'permanent' => 3, 'temporary' => 3 ], 'Glory' => [ 'permanent' => 2, 'temporary' => 2 ], 'Honor' => [ 'permanent' => 2, 'temporary' => 2 ] ],
 		],
@@ -329,7 +329,7 @@ return [
 			'fera-backgrounds'    => [ [ 'name' => 'Colony', 'count' => 2 ], [ 'name' => 'Go-en', 'count' => 1 ] ],
 			// 1.3.2: Razor Claws is a Bastet: Khan pick, basic rank (fera-gifts.json).
 			'fera-gifts'          => [ [ 'name' => 'Ananasi', 'power_name' => 'Resist Pain' ], [ 'name' => 'Bastet: Khan', 'power_name' => 'Razor Claws' ] ],
-			'werewolf-rites'      => [ [ 'name' => 'Rite of Passage' ] ],
+			'werewolf-rites'      => [ [ 'name' => 'Rite of Talisman Dedication' ] ],
 			'werewolf-resources'  => [ 'Rage' => [ 'permanent' => 4, 'temporary' => 4 ], 'Gnosis' => [ 'permanent' => 3, 'temporary' => 3 ], 'Willpower' => [ 'permanent' => 4, 'temporary' => 4 ] ],
 			'werewolf-renown'     => [ 'Glory' => [ 'permanent' => 2, 'temporary' => 2 ], 'Honor' => [ 'permanent' => 3, 'temporary' => 3 ], 'Wisdom' => [ 'permanent' => 2, 'temporary' => 2 ] ],
 		],

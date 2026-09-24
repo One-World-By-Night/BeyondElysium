@@ -55,6 +55,12 @@ class Trait_Mapper {
 
 		if ( isset( $entry['block_slug'] ) ) {
 			$entry['block_slug'] = str_replace( '{stack}', $stack_slug, $entry['block_slug'] );
+			// 1.3.3 C7: this file's own gex-trait-list-map.php names a retired GVM-era slug
+			// ("Abilities" -> met-abilities); a cut-over install needs the block that replaced
+			// it. A no-op in legacy (Catalog_Cutover::is_declared() false), which is also what
+			// every real unit test in tests/unit/TraitMapperTest.php exercises - get_option()
+			// has no WordPress behind it there, so it reads as the option never having been set.
+			$entry['block_slug'] = Catalog_Cutover::live_slug( $stack_slug, $entry['block_slug'] );
 		}
 
 		return $entry;

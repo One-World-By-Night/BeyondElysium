@@ -126,15 +126,17 @@ class Admin_Menu {
 			[ self::class, 'render_import' ]
 		);
 
-		// Chronicle Setup + Chronicle Access + Action & Rumor Settings - all three are
-		// "configure this one chronicle." be_view_characters (Chronicle Setup's own tab)
-		// is the widest capability among the three, so the page itself is reachable even
-		// when the other two tabs hide themselves for a read-only viewer.
+		// Chronicle Setup + Chronicle Access + Action & Rumor Settings + AI Assist - all
+		// "configure this one chronicle," and every one of them staff-only. The page takes the
+		// widest capability among its tabs, the rule System Config follows with
+		// be_manage_schemas: be_manage_chronicle_setup (administrator, editor) is held by
+		// everyone who holds any of the others. It used to be be_view_characters, which every
+		// role has, so a plain player was listed this page and could open it (1.3.2.2).
 		add_submenu_page(
 			'beyond-elysium',
 			__( 'Chronicle Setup', 'beyond-elysium' ),
 			__( 'Chronicle Setup', 'beyond-elysium' ),
-			'be_view_characters',
+			'be_manage_chronicle_setup',
 			'beyond-elysium-chronicle-setup-hub',
 			[ self::class, 'render_chronicle_setup_hub' ]
 		);
@@ -354,6 +356,8 @@ class Admin_Menu {
 				'be_import'                => current_user_can( 'be_import' ),
 				'be_manage_games'          => current_user_can( 'be_manage_games' ),
 				'be_manage_apr'            => current_user_can( 'be_manage_apr' ),
+				// Gates the Chronicle Setup hub's own first tab (1.3.2.2) - it had no gate at all.
+				'be_manage_chronicle_setup' => current_user_can( 'be_manage_chronicle_setup' ),
 				// admin-menu-consolidation-design.md: each of these now gates one tab inside a
 				// shared hub page rather than an entire wp-admin submenu of its own.
 				'be_manage_world_objects'  => current_user_can( 'be_manage_world_objects' ),

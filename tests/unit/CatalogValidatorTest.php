@@ -215,6 +215,79 @@ class CatalogValidatorTest extends TestCase {
 		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );
 	}
 
+	// --- R1 (1.3.3): name_canonicalization, §3.5a -----------------------------
+
+	/** @param array<string,mixed> $overrides */
+	private function canonicalization( array $overrides = [] ): array {
+		return array_merge( [
+			'form'          => 'group_name_tier',
+			'tier_words'    => [ 'b' => 'Basic', 'int' => 'Intermediate' ],
+			'group_aliases' => [ 'Koldunic' => 'Koldunism' ],
+		], $overrides );
+	}
+
+	/** @param mixed $rule */
+	private function trait_list_with_canonicalization( $rule ): array {
+		return $this->block( 'trait_list', [
+			'name_canonicalization' => $rule,
+			'items'                 => [ [ 'name' => 'Thaumaturgy: Blood Walk (basic)', 'tier' => 'basic', 'group' => 'Thaumaturgy', 'subgroup' => null ] ],
+		] );
+	}
+
+	public function test_a_trait_list_may_declare_name_canonicalization(): void {
+		$this->assertSame( [], Catalog_Validator::validate_block( $this->trait_list_with_canonicalization( $this->canonicalization() ), 'test-block' ) );
+	}
+
+	public function test_group_aliases_is_optional(): void {
+		$rule = $this->canonicalization();
+		unset( $rule['group_aliases'] );
+		$this->assertSame( [], Catalog_Validator::validate_block( $this->trait_list_with_canonicalization( $rule ), 'test-block' ) );
+	}
+
+	public function test_name_canonicalization_must_be_an_object(): void {
+		$this->assertRejects( $this->trait_list_with_canonicalization( 'group_name_tier' ), '`name_canonicalization` must be an object' );
+	}
+
+	public function test_name_canonicalization_form_must_be_a_recognized_value(): void {
+		$this->assertRejects(
+			$this->trait_list_with_canonicalization( $this->canonicalization( [ 'form' => 'group_tier_name' ] ) ),
+			'"group_tier_name" is not one of: group_name_tier'
+		);
+	}
+
+	public function test_name_canonicalization_form_is_required(): void {
+		$rule = $this->canonicalization();
+		unset( $rule['form'] );
+		$this->assertRejects( $this->trait_list_with_canonicalization( $rule ), 'is not one of: group_name_tier' );
+	}
+
+	public function test_a_tier_words_entry_must_be_a_non_empty_string(): void {
+		$this->assertRejects(
+			$this->trait_list_with_canonicalization( $this->canonicalization( [ 'tier_words' => [ 'b' => '' ] ] ) ),
+			'`name_canonicalization.tier_words["b"]` must be a non-empty string'
+		);
+	}
+
+	public function test_a_group_aliases_entry_must_be_a_non_empty_string(): void {
+		$this->assertRejects(
+			$this->trait_list_with_canonicalization( $this->canonicalization( [ 'group_aliases' => [ 'Koldunic' => 3 ] ] ) ),
+			'`name_canonicalization.group_aliases["Koldunic"]` must be a non-empty string'
+		);
+	}
+
+	public function test_a_canonicalization_map_must_be_an_object(): void {
+		$this->assertRejects(
+			$this->trait_list_with_canonicalization( $this->canonicalization( [ 'tier_words' => 'not a map' ] ) ),
+			'`name_canonicalization.tier_words` must be an object'
+		);
+	}
+
+	public function test_group_name_tier_requires_tier_words(): void {
+		$rule = $this->canonicalization();
+		unset( $rule['tier_words'] );
+		$this->assertRejects( $this->trait_list_with_canonicalization( $rule ), 'needs `tier_words`' );
+	}
+
 	public function test_a_family_with_no_picks_at_all_is_fine(): void {
 		// mage-spheres and changeling-realms have none; an absent `elder` is not an error.
 		$this->assertSame( [], Catalog_Validator::validate_block( $this->tiered( [ $this->ladder_family() ] ), 'test-block' ) );
@@ -384,6 +457,56 @@ class CatalogValidatorTest extends TestCase {
 		$def = $this->stack_definition();
 		$def['sections'][1]['in_type_source'] = 'Tribe';
 		$this->assertStringContainsString( '"block_slug.Field" join', implode( ' | ', Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def ), 'werewolf' ) ) );
+	}
+
+	/** 1.3.3 C1: `replaces` states which retired slug a section's block took over. */
+	public function test_a_section_may_declare_replaces(): void {
+		$def = $this->stack_definition();
+		$def['sections'][0]['replaces'] = [ 'met-identity' ];
+		$this->assertSame( [], Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def ), 'werewolf' ) );
+	}
+
+	public function test_replaces_must_be_a_non_empty_list(): void {
+		$def = $this->stack_definition();
+		$def['sections'][0]['replaces'] = 'met-identity';
+		$this->assertStringContainsString( '`replaces` must be a non-empty list', implode( ' | ', Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def ), 'werewolf' ) ) );
+
+		$def2 = $this->stack_definition();
+		$def2['sections'][0]['replaces'] = [];
+		$this->assertStringContainsString( '`replaces` must be a non-empty list', implode( ' | ', Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def2 ), 'werewolf' ) ) );
+	}
+
+	public function test_replaces_entries_must_be_non_empty_strings(): void {
+		$def = $this->stack_definition();
+		$def['sections'][0]['replaces'] = [ '' ];
+		$this->assertStringContainsString( '`replaces` entries must be non-empty slug strings', implode( ' | ', Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def ), 'werewolf' ) ) );
+	}
+
+	public function test_replaces_cannot_name_a_slug_this_stack_still_declares(): void {
+		$def = $this->stack_definition();
+		$def['sections'][0]['replaces'] = [ 'werewolf-gifts' ];
+		$this->assertStringContainsString( 'still declares as a section', implode( ' | ', Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def ), 'werewolf' ) ) );
+	}
+
+	public function test_a_slug_can_only_be_replaced_once_per_stack(): void {
+		$def = $this->stack_definition();
+		$def['sections'][0]['replaces'] = [ 'met-abilities' ];
+		$def['sections'][1]['replaces'] = [ 'met-abilities' ];
+		$this->assertStringContainsString( 'already claimed by section', implode( ' | ', Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def ), 'werewolf' ) ) );
+	}
+
+	/**
+	 * A `replaces` slug is allowed to be a real, live block file elsewhere - retirement is a
+	 * per-stack fact, not a global one. Real data: `werewolf-rites` is Werewolf's own live
+	 * Rites block, while Fera/Bete `replaces` it with `fera-rites` instead - a validator that
+	 * rejected this would reject the actual declared catalog (found running C1 for real).
+	 */
+	public function test_replaces_may_name_a_slug_that_is_a_live_block_for_another_stack(): void {
+		$def = $this->stack_definition();
+		unset( $def['creation_rules'] );
+		$def['sections'][0]['replaces'] = [ 'werewolf-rites' ];
+		$data = $this->file( 'stack', 'fera', $def );
+		$this->assertSame( [], Catalog_Validator::validate_references( $data, 'fera', [ 'werewolf-identity', 'werewolf-gifts', 'werewolf-tribes', 'met-physical-traits', 'met-physical-traits-neg', 'werewolf-rites' ], [ 'fera' ] ) );
 	}
 
 	public function test_a_template_slug_must_name_a_real_template_type(): void {

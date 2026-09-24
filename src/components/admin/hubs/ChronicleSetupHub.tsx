@@ -7,6 +7,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { TabStrip } from '../../shared/TabStrip';
 import { readTabFromUrl, writeTabToUrl } from '../../../lib/pluginPages';
+import { chronicleSetupTabKeys } from '../../../lib/hubTabs';
 import AdminChronicleSetup from '../AdminChronicleSetup';
 import AdminChronicleAccess from '../AdminChronicleAccess';
 import AdminAprSettings from '../AdminAprSettings';
@@ -20,6 +21,16 @@ const TABS = {
 	aiAssist: 'ai-assist',
 };
 
+/** What each tab is called; which of them a viewer gets is `chronicleSetupTabKeys()`'s call. */
+function tabLabels(): Record< string, string > {
+	return {
+		[ TABS.setup ]: __( 'Chronicle Setup', 'beyond-elysium' ),
+		[ TABS.access ]: __( 'Chronicle Access', 'beyond-elysium' ),
+		[ TABS.apr ]: __( 'Action & Rumor Settings', 'beyond-elysium' ),
+		[ TABS.aiAssist ]: __( 'AI Assist', 'beyond-elysium' ),
+	};
+}
+
 export function ChronicleSetupHub() {
 	const [ tab, setTab ] = useState( () => readTabFromUrl( TABS.setup ) );
 
@@ -27,22 +38,10 @@ export function ChronicleSetupHub() {
 		writeTabToUrl( tab );
 	}, [ tab ] );
 
-	const capabilities = window.beyondElysium?.capabilities;
-	const tabs: Tab[] = [
-		{ key: TABS.setup, label: __( 'Chronicle Setup', 'beyond-elysium' ) },
-		capabilities?.be_manage_games && {
-			key: TABS.access,
-			label: __( 'Chronicle Access', 'beyond-elysium' ),
-		},
-		capabilities?.be_manage_apr && {
-			key: TABS.apr,
-			label: __( 'Action & Rumor Settings', 'beyond-elysium' ),
-		},
-		capabilities?.be_manage_apr && {
-			key: TABS.aiAssist,
-			label: __( 'AI Assist', 'beyond-elysium' ),
-		},
-	].filter( Boolean ) as Tab[];
+	const labels = tabLabels();
+	const tabs: Tab[] = chronicleSetupTabKeys(
+		window.beyondElysium?.capabilities
+	).map( ( key ) => ( { key, label: labels[ key ] } ) );
 
 	useEffect( () => {
 		if ( tabs.length > 0 && ! tabs.some( ( t ) => t.key === tab ) ) {
@@ -50,6 +49,11 @@ export function ChronicleSetupHub() {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ tabs.map( ( t ) => t.key ).join( ',' ) ] );
+
+	// WordPress already keeps a viewer with none of these off the page; this is the second lock.
+	if ( tabs.length === 0 ) {
+		return null;
+	}
 
 	return (
 		<div className="be-admin-hub">

@@ -7,6 +7,8 @@ use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Creature_Stack;
+use BeyondElysium\Models\Schema_Block;
+use BeyondElysium\Services\Catalog_Cutover;
 use BeyondElysium\Services\Change_Engine;
 use BeyondElysium\Services\Change_Validator;
 use BeyondElysium\Services\Cost_Engine;
@@ -180,6 +182,13 @@ class Changes_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'Missing required field: change_data.', 'beyond-elysium' ), 400 );
 		}
 
+		// 1.3.3 C7: a browser tab opened before the cutover still submits the slug it loaded
+		// the sheet with. Mapped before validation, which otherwise checks a retired slug
+		// against a declared stack's own sections and refuses it as unknown.
+		if ( isset( $change_data['block_slug'] ) ) {
+			$change_data['block_slug'] = Catalog_Cutover::live_slug( (string) $character->stack_slug, $change_data['block_slug'] );
+		}
+
 		$is_manager = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
 
 		// Ownership check: player can only submit for their own character.
@@ -204,10 +213,18 @@ class Changes_Controller extends Base_Controller {
 		$change_data = $validation['change_data'];
 
 		// Server-computed XP cost; a non-manager is refused if it would leave xp_unspent negative.
-		$xp_cost = Cost_Engine::cost_for_change(
+		// `cost_pending` is set here, from the quote alone, when a purchase has no price yet, and a
+		// Storyteller sets one at approval (1.3.3 E2). The validator has already rebuilt `change_data`
+		// from the section and the trait, so nothing a client sends under that name survives to here.
+		$quote   = Cost_Engine::quote_for_change(
 			$character,
-			[ 'change_type' => $change_type, 'change_data' => $change_data ]
+			[ 'change_type' => $change_type, 'change_data' => $change_data ],
+			$is_manager
 		);
+		$xp_cost = $quote['xp'];
+		if ( ! $quote['priced'] ) {
+			$change_data['cost_pending'] = true;
+		}
 		if ( ! $is_manager && $xp_cost > (int) $character->xp_unspent ) {
 			return $this->error(
 				'insufficient_xp',
@@ -292,7 +309,16 @@ class Changes_Controller extends Base_Controller {
 			if ( $faction_denied ) {
 				return $faction_denied;
 			}
-			$result = Change_Engine::approve( (int) $request['id'], get_current_user_id(), $notes, $token );
+			// A purchase waiting for a price is approved at the one the reviewer names, and only
+			// then; a number offered for a change that already has a price is not read (1.3.3 E4).
+			$set_cost = null;
+			if ( ! empty( $change->change_data['cost_pending'] ) ) {
+				$set_cost = $this->reviewer_price( $request->get_param( 'xp_cost' ) );
+				if ( is_wp_error( $set_cost ) ) {
+					return $set_cost;
+				}
+			}
+			$result = Change_Engine::approve( (int) $request['id'], get_current_user_id(), $notes, $token, $set_cost );
 		} else {
 			$result = Change_Engine::reject( (int) $request['id'], get_current_user_id(), $notes, $token );
 		}
@@ -400,6 +426,7 @@ class Changes_Controller extends Base_Controller {
 				] )
 				: [ 'level' => 'st', 'reason' => null ];
 			$item->approval_level = $resolved['level'];
+			$item->cost_units     = $this->cost_units( $character, $item );
 
 			// 1.0.0-review F-116: the queue showed the raw wp_user_id ("1") here. A user
 			// deleted since submitting (or never valid) falls back to null, not a fatal.
@@ -411,6 +438,31 @@ class Changes_Controller extends Base_Controller {
 			$item->submitted_by_name = $submitters[ $submitter_id ];
 		}
 		return $items;
+	}
+
+	/**
+	 * What a Storyteller's price would cover for a purchase waiting for one - per dot or per pick, and
+	 * over how many - so the queue can show the total as it is typed. Null for any change that is not
+	 * waiting for a price. Worked out here, from the character's sheet as it is now, because the client
+	 * has neither the sheet nor the block (1.3.3 E5).
+	 *
+	 * @param object|null $character
+	 * @param object      $item      A change row.
+	 * @return array{per:string,units:int,negative:bool}|null
+	 */
+	private function cost_units( $character, object $item ): ?array {
+		$data = is_array( $item->change_data ) ? $item->change_data : [];
+		if ( ! $character || empty( $data['cost_pending'] ) ) {
+			return null;
+		}
+		$block_slug = Catalog_Cutover::live_slug( (string) $character->stack_slug, (string) ( $data['block_slug'] ?? '' ) );
+		$block      = Schema_Block::find_for_game( $block_slug, (string) $character->owner_slug );
+		if ( ! $block || ! is_object( $block->definition ) ) {
+			return null;
+		}
+		$sheet = is_array( $character->sheet_data ) ? $character->sheet_data : [];
+		return Cost_Engine::price_units( $sheet, $block->definition, $block_slug, (string) $item->change_type, $data )
+			+ [ 'negative' => ! empty( $block->definition->negative ) ];
 	}
 
 	/**
@@ -548,8 +600,9 @@ class Changes_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'Missing required field: change_ids.', 'beyond-elysium' ), 400 );
 		}
 
-		$approved = [];
-		$skipped  = [];
+		$approved   = [];
+		$skipped    = [];
+		$needs_cost = [];
 		// Optional { change id: review token } for exactly what the reviewer saw (F-031).
 		$tokens = (array) ( $request->get_param( 'review_tokens' ) ?? [] );
 
@@ -559,6 +612,14 @@ class Changes_Controller extends Base_Controller {
 
 			if ( is_wp_error( $change ) || $change->status !== 'pending' ) {
 				$skipped[] = $change_id;
+				continue;
+			}
+
+			// A purchase waiting for a price cannot be approved in bulk: nobody has said what it costs.
+			// Named separately from `skipped` (missing, already reviewed, not allowed) so the reviewer
+			// knows to open it and set one (1.3.3 E3).
+			if ( ! empty( $change->change_data['cost_pending'] ) ) {
+				$needs_cost[] = $change_id;
 				continue;
 			}
 
@@ -594,8 +655,9 @@ class Changes_Controller extends Base_Controller {
 
 		return $this->success(
 			[
-				'approved' => $approved,
-				'skipped'  => $skipped,
+				'approved'   => $approved,
+				'skipped'    => $skipped,
+				'needs_cost' => $needs_cost,
 			]
 		);
 	}
@@ -644,6 +706,11 @@ class Changes_Controller extends Base_Controller {
 		foreach ( $changes as $change ) {
 			$change = is_array( $change ) ? $change : [];
 
+			// 1.3.3 C7: same mapping as create_item(), before validation.
+			if ( isset( $change['change_data']['block_slug'] ) ) {
+				$change['change_data']['block_slug'] = Catalog_Cutover::live_slug( (string) $character->stack_slug, $change['change_data']['block_slug'] );
+			}
+
 			// Previewed through the same check as a submission, so a preview never shows a
 			// price for something the submit route would refuse.
 			$validation = Change_Validator::validate( $change, $stack['blocks'] ?? [], $sheet_data, $is_manager, $protected_fields );
@@ -651,6 +718,8 @@ class Changes_Controller extends Base_Controller {
 				$error     = $this->validation_error( $validation );
 				$results[] = [
 					'xp_cost'         => 0,
+					'priced'          => true,
+					'unpriced_reason' => null,
 					'approval_level'  => null,
 					'approval_reason' => null,
 					'error'           => [ 'code' => $error->get_error_code(), 'message' => $error->get_error_message() ],
@@ -659,7 +728,10 @@ class Changes_Controller extends Base_Controller {
 			}
 			$change['change_data'] = $validation['change_data'];
 
-			$cost = Cost_Engine::cost_for_change( $character, $change );
+			// `priced` false is a purchase no price exists for yet: the player is told a Storyteller
+			// sets it at approval, not that it costs 0 (1.3.3 E2).
+			$quote = Cost_Engine::quote_for_change( $character, $change, $is_manager );
+			$cost  = $quote['xp'];
 			$resolved = Change_Engine::resolve_approval_level(
 				$character,
 				(object) [
@@ -672,6 +744,8 @@ class Changes_Controller extends Base_Controller {
 
 			$results[] = [
 				'xp_cost'         => $cost,
+				'priced'          => $quote['priced'],
+				'unpriced_reason' => $quote['unpriced_reason'],
 				'approval_level'  => $resolved['level'],
 				'approval_reason' => $resolved['reason'],
 			];
@@ -739,6 +813,29 @@ class Changes_Controller extends Base_Controller {
 		$code    = (string) ( $result['code'] ?? 'invalid_param' );
 		$message = isset( $formats[ $code ] ) ? vsprintf( $formats[ $code ], $result['args'] ?? [] ) : (string) ( $result['message'] ?? '' );
 		return $this->error( $code, $message, 400 );
+	}
+
+	/**
+	 * The price a reviewer typed for a purchase that was waiting for one: a whole number of XP from
+	 * 0 to `Cost_Engine::MAX_CUSTOM_PRICE`, where 0 is a real answer ("free, on purpose"). Nothing at
+	 * all is `cost_required`; anything else that is not such a number is `invalid_param`.
+	 *
+	 * @param mixed $raw
+	 * @return int|\WP_Error
+	 */
+	private function reviewer_price( $raw ) {
+		if ( $raw === null || $raw === '' ) {
+			return $this->error( 'cost_required', __( 'Enter what this purchase costs before approving it. 0 is allowed.', 'beyond-elysium' ), 400 );
+		}
+		if ( ! is_numeric( $raw ) || (float) $raw !== (float) (int) $raw || (int) $raw < 0 || (int) $raw > Cost_Engine::MAX_CUSTOM_PRICE ) {
+			return $this->error(
+				'invalid_param',
+				/* translators: %d: the most XP one price may be, 500 */
+				sprintf( __( 'The price must be a whole number of XP from 0 to %d.', 'beyond-elysium' ), Cost_Engine::MAX_CUSTOM_PRICE ),
+				400
+			);
+		}
+		return (int) $raw;
 	}
 
 	/** @return \WP_Error The refusal for a review whose change was edited after it was shown. */

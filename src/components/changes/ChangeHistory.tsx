@@ -7,7 +7,12 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
-import { describeChange } from '../../lib/describeChange';
+import {
+	describeChange,
+	describeChangeCost,
+	describeChangeDetail,
+} from '../../lib/describeChange';
+import { isCostPending } from '../../lib/queuePrice';
 import type { CharacterChange } from '../../types/character';
 import './ChangeHistory.css';
 
@@ -21,6 +26,38 @@ const STATUS_LABEL: Record< CharacterChange[ 'status' ], string > = {
 	approved: __( 'Approved', 'beyond-elysium' ),
 	rejected: __( 'Rejected', 'beyond-elysium' ),
 };
+
+/** What a change cost or refunded; nothing at all when it was free. */
+function ChangeCost( { cost }: { cost: number | string } ) {
+	const text = describeChangeCost( cost );
+	return text ? (
+		<span className="be-change-history__cost">{ text }</span>
+	) : null;
+}
+
+/**
+ * The entries a catalog update matched, folded away under its one-line description so a long
+ * sheet does not push the rest of the history off the screen. Nothing for any other kind of change.
+ */
+function ChangeDetailList( { change }: { change: CharacterChange } ) {
+	const lines = describeChangeDetail(
+		change.change_type,
+		change.change_data
+	);
+	if ( lines.length === 0 ) {
+		return null;
+	}
+	return (
+		<details className="be-change-history__detail">
+			<summary>{ __( 'Matched entries', 'beyond-elysium' ) }</summary>
+			<ul>
+				{ lines.map( ( line, index ) => (
+					<li key={ index }>{ line }</li>
+				) ) }
+			</ul>
+		</details>
+	);
+}
 
 /**
  * Renders the full change history for one character as a list, each entry showing its
@@ -79,15 +116,12 @@ export function ChangeHistory( { characterId, gameSlug }: ChangeHistoryProps ) {
 					<span className="be-change-history__description">
 						{ describeChange( item.change_type, item.change_data ) }
 					</span>
-					{ item.xp_cost !== 0 && (
+					{ item.status === 'pending' && isCostPending( item ) ? (
 						<span className="be-change-history__cost">
-							{ item.xp_cost >= 0 ? '+' : '' }
-							{ sprintf(
-								/* translators: %d: the XP cost or refund for this change */
-								__( '%d XP', 'beyond-elysium' ),
-								item.xp_cost
-							) }
+							{ __( 'Price set on approval', 'beyond-elysium' ) }
 						</span>
+					) : (
+						<ChangeCost cost={ item.xp_cost } />
 					) }
 					<span className="be-change-history__meta">
 						{ sprintf(
@@ -117,6 +151,7 @@ export function ChangeHistory( { characterId, gameSlug }: ChangeHistoryProps ) {
 							) }
 						</p>
 					) }
+					<ChangeDetailList change={ item } />
 				</li>
 			) ) }
 		</ul>

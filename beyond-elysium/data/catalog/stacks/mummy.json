@@ -29,7 +29,10 @@
         "block_slug": "mummy-abilities",
         "label": "Abilities",
         "display_order": 30,
-        "required": true
+        "required": true,
+        "replaces": [
+          "met-abilities"
+        ]
       },
       {
         "block_slug": "mummy-backgrounds",
@@ -86,13 +89,19 @@
         "block_slug": "mummy-merits",
         "label": "Merits",
         "display_order": 90,
-        "required": false
+        "required": false,
+        "replaces": [
+          "met-merits"
+        ]
       },
       {
         "block_slug": "mummy-flaws",
         "label": "Flaws",
         "display_order": 91,
-        "required": false
+        "required": false,
+        "replaces": [
+          "met-flaws"
+        ]
       },
       {
         "block_slug": "met-derangements",
