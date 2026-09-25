@@ -4,6 +4,7 @@
 import {
 	createInterpolateElement,
 	useEffect,
+	useRef,
 	useState,
 } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -11,6 +12,7 @@ import api from '../../api/client';
 import TemplateLayoutEditor from './TemplateLayoutEditor';
 import type { Template, TemplateLayout } from '../../types';
 import { errorMessage } from '../../lib/errorMessage';
+import { useRevealOnOpen } from '../../lib/revealEditor';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
@@ -40,6 +42,8 @@ export function AdminTemplates() {
 	const [ error, setError ] = useState< string | null >( null );
 	const [ editingId, setEditingId ] = useState< number | null >( null );
 	const [ creating, setCreating ] = useState( false );
+	const editorRef = useRef< HTMLFormElement >( null );
+	useRevealOnOpen( editorRef, creating ? 'new' : editingId );
 	const [ scope, setScope ] = useState< Scope >( 'global' );
 	const [ form, setForm ] = useState( EMPTY_FORM );
 	const [ saving, setSaving ] = useState( false );
@@ -408,6 +412,7 @@ export function AdminTemplates() {
 
 			{ formOpen && (
 				<form
+					ref={ editorRef }
 					className="be-admin__form be-admin__form--wide"
 					onSubmit={ save }
 				>

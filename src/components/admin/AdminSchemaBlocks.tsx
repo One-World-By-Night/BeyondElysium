@@ -4,6 +4,7 @@
 import {
 	createInterpolateElement,
 	useEffect,
+	useRef,
 	useState,
 } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -11,6 +12,7 @@ import api from '../../api/client';
 import SchemaBlockDefinitionEditor from './SchemaBlockDefinitionEditor';
 import type { SchemaBlock, SectionType } from '../../types';
 import { errorMessage } from '../../lib/errorMessage';
+import { useRevealOnOpen } from '../../lib/revealEditor';
 import { everyPage } from '../../lib/everyPage';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
@@ -46,6 +48,8 @@ export function AdminSchemaBlocks() {
 	const [ error, setError ] = useState< string | null >( null );
 	const [ editingSlug, setEditingSlug ] = useState< string | null >( null );
 	const [ creating, setCreating ] = useState( false );
+	const editorRef = useRef< HTMLFormElement >( null );
+	useRevealOnOpen( editorRef, creating ? 'new' : editingSlug );
 	const [ form, setForm ] = useState( EMPTY_FORM );
 	const [ saving, setSaving ] = useState( false );
 	const [ showSystem, setShowSystem ] = useState( true );
@@ -361,6 +365,7 @@ export function AdminSchemaBlocks() {
 
 			{ ( creating || editingSlug !== null ) && (
 				<form
+					ref={ editorRef }
 					className="be-admin__form be-admin__form--wide"
 					onSubmit={ save }
 				>

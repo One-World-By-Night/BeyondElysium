@@ -1,13 +1,14 @@
 /**
  * Admin page for managing chronicles (games) site-wide.
  */
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { describeChronicleContent } from '../../lib/chronicleContent';
 import HtmlEditor from '../shared/HtmlEditor';
 import type { Game } from '../../types';
 import { errorMessage } from '../../lib/errorMessage';
+import { useRevealOnOpen } from '../../lib/revealEditor';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
@@ -24,6 +25,8 @@ export function AdminGames() {
 	const [ form, setForm ] = useState( EMPTY_FORM );
 	const [ saving, setSaving ] = useState( false );
 	const [ creating, setCreating ] = useState( false );
+	const editorRef = useRef< HTMLFormElement >( null );
+	useRevealOnOpen( editorRef, creating ? 'new' : editingSlug );
 	const [ renameNotice, setRenameNotice ] = useState< string | null >( null );
 
 	/**
@@ -262,7 +265,11 @@ export function AdminGames() {
 			) }
 
 			{ ( creating || editingSlug !== null ) && (
-				<form className="be-admin__form" onSubmit={ save }>
+				<form
+					ref={ editorRef }
+					className="be-admin__form"
+					onSubmit={ save }
+				>
 					<h2>
 						{ creating
 							? __( 'New Game', 'beyond-elysium' )

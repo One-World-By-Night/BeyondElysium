@@ -32,6 +32,8 @@ Beyond Elysium never has creature-specific code. Every character sheet is assemb
 
 Under **Beyond Elysium → System Config → Schema Blocks**, each block shows its section type, whether it's a system block (part of the shipped catalog) or a chronicle's own fork, and its full definition. A system block can be forked per-chronicle from the Storyteller side (see the Storyteller Guide) without ever touching the shared version every other chronicle uses. The copy keeps what the chronicle changed - values, approval rules, entries it added or removed - and takes everything else from the shared block, both when the plugin updates and when you save the shared block here.
 
+On Schema Blocks, Creature Stacks, Games, Templates and Approval Rules, clicking **Edit** or **+ New** scrolls the page to the editor and puts the cursor in its first field, so the form you opened is always the one in front of you.
+
 Under **Beyond Elysium → System Config → Creature Stacks**, each stack lists which blocks it uses and in what section/column they render.
 
 ## Descriptions and Approval Schedules on Catalog Items

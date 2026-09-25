@@ -60,6 +60,8 @@ copy keeps what the chronicle changed - values, approval rules, entries it added
 and takes everything else from the shared block, both when the plugin updates and when you save
 the shared block here.
 
+On Schema Blocks, Creature Stacks, Games, Templates and Approval Rules, clicking **Edit** or **+ New** scrolls the page to the editor and puts the cursor in its first field, so the form you opened is always the one in front of you.
+
 Under **Beyond Elysium → System Config → Creature Stacks**, each stack lists which blocks it uses and in
 what section/column they render.
 

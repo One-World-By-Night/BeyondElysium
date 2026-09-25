@@ -1,7 +1,7 @@
 /**
  * Admin page for a chronicle's approval rules.
  */
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import AiAssistButton from '../shared/AiAssistButton';
@@ -21,6 +21,7 @@ import type {
 	TraitListItem,
 } from '../../types';
 import { errorMessage } from '../../lib/errorMessage';
+import { useRevealOnOpen } from '../../lib/revealEditor';
 import { everyPage } from '../../lib/everyPage';
 import { preselectedChronicle, writeGameToUrl } from '../../lib/pluginPages';
 import './Admin.css';
@@ -82,6 +83,8 @@ export function AdminApprovalRules() {
 	const [ autoApproveByDefault, setAutoApproveByDefault ] = useState( false );
 
 	const [ editingId, setEditingId ] = useState< string | null >( null );
+	const editorRef = useRef< HTMLFormElement >( null );
+	useRevealOnOpen( editorRef, editingId );
 	const [ form, setForm ] = useState< ApprovalRuleRequest >( EMPTY_FORM );
 
 	useEffect( () => {
@@ -419,7 +422,11 @@ export function AdminApprovalRules() {
 				</table>
 			) }
 
-			<form className="be-admin__form" onSubmit={ save }>
+			<form
+				ref={ editorRef }
+				className="be-admin__form"
+				onSubmit={ save }
+			>
 				<h2>
 					{ editingId
 						? __( 'Edit Rule', 'beyond-elysium' )

@@ -1,7 +1,7 @@
 /**
  * Admin page for managing creature stack definitions.
  */
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import CreatureStackDefinitionEditor from './CreatureStackDefinitionEditor';
@@ -11,6 +11,7 @@ import type {
 	StackDefinition,
 } from '../../types';
 import { errorMessage } from '../../lib/errorMessage';
+import { useRevealOnOpen } from '../../lib/revealEditor';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
@@ -31,6 +32,8 @@ export function AdminCreatureStacks() {
 	const [ error, setError ] = useState< string | null >( null );
 	const [ editingSlug, setEditingSlug ] = useState< string | null >( null );
 	const [ creating, setCreating ] = useState( false );
+	const editorRef = useRef< HTMLFormElement >( null );
+	useRevealOnOpen( editorRef, creating ? 'new' : editingSlug );
 	const [ form, setForm ] = useState( EMPTY_FORM );
 	const [ saving, setSaving ] = useState( false );
 	// Whether system-seeded creature stacks are hidden from the list.
@@ -252,6 +255,7 @@ export function AdminCreatureStacks() {
 
 			{ ( creating || editingSlug !== null ) && (
 				<form
+					ref={ editorRef }
 					className="be-admin__form be-admin__form--wide"
 					onSubmit={ save }
 				>
