@@ -68,27 +68,81 @@ class Cross_Block_Ref {
 	}
 
 	/**
-	 * Resolves a resource pool's displayed name: returns `$pool->name` unless `name_lookup` maps the current value of its
-	 * `keyed_by` reference to an entry in `table`.
+	 * Resolves a resource pool's displayed name: returns `$pool->name` unless its `name_lookup` names it.
 	 *
 	 * @param object $pool       Has a `name` string and an optional `name_lookup`
-	 *                           object (a `keyed_by` ref plus a string=>string `table`).
+	 *                           object (a `keyed_by` ref, a string=>string `table`, optional `ignore_words`, an
+	 *                           optional `unmatched` name and an optional `otherwise` lookup of the same shape).
 	 * @param array  $sheet_data Character sheet data, keyed by block slug.
 	 * @return string
 	 */
 	public static function resolve_pool_name( object $pool, array $sheet_data ): string {
 		$name = (string) $pool->name;
 
-		if ( empty( $pool->name_lookup ) ) {
+		if ( empty( $pool->name_lookup ) || ! is_object( $pool->name_lookup ) ) {
 			return $name;
 		}
 
-		$key = self::resolve_cross_block_value( $pool->name_lookup->keyed_by, $sheet_data );
-		if ( $key === null ) {
-			return $name;
+		return self::resolve_name_lookup( $pool->name_lookup, $sheet_data ) ?? $name;
+	}
+
+	/**
+	 * The name a lookup gives for a character: its table's entry for the current value of `keyed_by`, else its
+	 * `unmatched` name when that value is set but not in the table, else whatever its `otherwise` lookup gives, else null.
+	 *
+	 * @param object $lookup
+	 * @param array  $sheet_data Character sheet data, keyed by block slug.
+	 */
+	public static function resolve_name_lookup( object $lookup, array $sheet_data ): ?string {
+		$key = is_object( $lookup->keyed_by ?? null ) ? self::resolve_cross_block_value( $lookup->keyed_by, $sheet_data ) : null;
+
+		if ( $key !== null ) {
+			$table = (array) ( $lookup->table ?? [] );
+			$found = isset( $lookup->ignore_words )
+				? self::loose_table_value( $table, $key, (array) $lookup->ignore_words )
+				: ( $table[ $key ] ?? null );
+			if ( $found !== null ) {
+				return (string) $found;
+			}
+			if ( isset( $lookup->unmatched ) ) {
+				return (string) $lookup->unmatched;
+			}
 		}
 
-		$table = (array) $pool->name_lookup->table;
-		return (string) ( $table[ $key ] ?? $name );
+		$otherwise = $lookup->otherwise ?? null;
+		return is_object( $otherwise ) ? self::resolve_name_lookup( $otherwise, $sheet_data ) : null;
+	}
+
+	/**
+	 * A name reduced for loose comparison: lower case, a trailing parenthetical dropped, anything but letters and digits
+	 * read as a space, and the ignored words removed.
+	 *
+	 * @param array<int,string> $ignore_words
+	 */
+	public static function loose_name( string $name, array $ignore_words ): string {
+		$ignore = array_map( 'strtolower', array_map( 'strval', $ignore_words ) );
+		$name   = (string) preg_replace( '/\s*\([^()]*\)\s*$/', '', strtolower( $name ) );
+		$words  = preg_split( '/[^a-z0-9]+/', $name ) ?: [];
+
+		return implode( ' ', array_filter( $words, static fn( string $word ): bool => $word !== '' && ! in_array( $word, $ignore, true ) ) );
+	}
+
+	/**
+	 * The table entry whose key reads the same as `$key` once both are reduced by `loose_name()`.
+	 *
+	 * @param array<string,mixed> $table
+	 * @param array<int,string>   $ignore_words
+	 */
+	private static function loose_table_value( array $table, string $key, array $ignore_words ): ?string {
+		$wanted = self::loose_name( $key, $ignore_words );
+		if ( $wanted === '' ) {
+			return null;
+		}
+		foreach ( $table as $entry => $value ) {
+			if ( self::loose_name( (string) $entry, $ignore_words ) === $wanted ) {
+				return (string) $value;
+			}
+		}
+		return null;
 	}
 }

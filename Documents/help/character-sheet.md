@@ -116,22 +116,14 @@ The same change-history list **View history** shows appears inline here once its
 
 - Storyteller-only text and NPC-only sections never reach a player's copy of this sheet - on
   screen or in any export or print - even on their own character.
-- A Quick NPC (see [Character Editor](character-editor.md)) shows its shorter Quick Stats
-  layout here instead of the full sheet, until a Storyteller upgrades it with **Make Full
-  NPC**. This is separate from the [Who's Who](whos-who.md) profile a player might see about
-  the same NPC.
-- Every dot - a trait's rating or a resource pool's point - is drawn the same size everywhere:
-  this sheet, the editor, and a signed PDF. The number always follows the dots too (a resource
-  pool shows "current/permanent" when they differ), and a section whose held items all carry a
-  plain count - most trait lists, never a note-only one like Merits or Rituals - shows its own
-  total after its title.
-- **XP History**, **Full power names**, and **Show XP costs** do double duty: ticking any of
-  them also changes this page, not only the file you print. **Background** and **Notes** only
-  decide what goes into the PDF - both always show at the bottom of this page. **Show XP costs**
-  only affects Combo Disciplines, where the number beside a combo is its flat XP price rather
-  than a rating, so it always reads "Draw Fire (12 XP)". It starts ticked; unticking it drops
-  the price rather than turning it back into dots. While editing, a separate toggle right above
-  your held combos does the same thing and remembers your choice next time.
+- A Quick NPC (see [Character Editor](character-editor.md)) shows its shorter Quick Stats layout here instead of the full sheet, until a Storyteller upgrades it with **Make Full NPC**. This is separate from the [Who's Who](whos-who.md) profile a player might see about the same NPC.
+- Every dot - a trait's rating or a resource pool's point - is drawn the same size everywhere: this sheet, the editor, and a signed PDF. The number always follows the dots too (a resource pool shows "current/permanent" when they differ), and a section whose held items all carry a plain count - most trait lists, never one like Merits or Rituals where each entry stands alone - shows its own total after its title. Combo Disciplines show how many combos you hold there, not the sum of their prices.
+- **Merits and Flaws** show their points, "Ambidextrous 1", "Acute Sense (Hearing) 2".
+- **Virtues** carry the names your Path uses, such as Conviction and Instinct on the Path of Caine, from the Paths of Enlightenment books. When the sheet doesn't know your Path's virtues, both names show, "Conscience/Conviction". A choice made on the sheet always wins.
+- **Bonds** (a Vampire's Vinculums and blood bonds) have their own section, each with its rating.
+- **Combos** always sit under Combo Disciplines with their XP price, never under Disciplines.
+- A power picked above the ladder shows its rank ("elder", "master") only when the catalog knows it.
+- **XP History**, **Full power names**, and **Show XP costs** do double duty: ticking any of them also changes this page, not only the file you print. **Background** and **Notes** only decide what goes into the PDF - both always show at the bottom of this page. **Show XP costs** only affects Combo Disciplines, where the number beside a combo is its flat XP price rather than a rating, so it always reads "Draw Fire (12 XP)". It starts ticked; unticking it drops the price rather than turning it back into dots. While editing, a separate toggle right above your held combos does the same thing and remembers your choice next time.
 - Without a signing certificate configured for this site, **Print / Export** and **Print My
   Items** still work, but every page comes back stamped UNSIGNED and the file name ends
   "-unsigned.pdf". Separately, a PDF reader saying "signature valid, signer not trusted"

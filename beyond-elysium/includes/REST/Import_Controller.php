@@ -835,7 +835,9 @@ class Import_Controller extends Base_Controller {
 
 	/**
 	 * Resolves one trait against a tiered_power block, falling back to a blood-magic sibling tiered_power block and then a
-	 * combo/ritae sibling trait_list block when the primary resolution comes back unresolved.
+	 * combo/ritae sibling trait_list block when the primary resolution comes back unresolved. A trait labelled as a combo
+	 * goes to the combo sibling first: its catalog entry when it holds one, otherwise a custom combo carrying the trait's
+	 * value as its cost.
 	 *
 	 * @param array<string,mixed> $trait
 	 * @param object              $block          Decoded tiered_power Schema_Block.
@@ -844,6 +846,18 @@ class Import_Controller extends Base_Controller {
 	 * @return array{0:array<string,mixed>,1:object} The resolution result and whichever block it actually resolved against.
 	 */
 	private static function resolve_tiered_power_with_fallbacks( array $trait, $block, array $classification, string $game_slug = '' ): array {
+		$combo_name = Trait_Mapper::combo_name( (string) $trait['name'] );
+		if ( $combo_name !== null && $combo_name !== '' && isset( $classification['combo_block_slug'] ) ) {
+			$combo_block = Schema_Block::find_for_game( $classification['combo_block_slug'], $game_slug );
+			if ( $combo_block && $combo_block->section_type === 'trait_list' ) {
+				$combo_result = Trait_Mapper::resolve_trait( (string) $trait['name'], [ $combo_block ] );
+				if ( in_array( $combo_result['outcome'], [ 'exact', 'normalized' ], true ) ) {
+					return [ $combo_result, $combo_block ];
+				}
+				return [ [ 'outcome' => 'custom', 'block_slug' => $combo_block->slug, 'matched_name' => $combo_name ], $combo_block ];
+			}
+		}
+
 		$result = Trait_Mapper::resolve_tiered_power_trait( $trait['name'], $trait['total'], $block );
 
 		if ( $result['outcome'] === 'unresolved' && isset( $classification['blood_magic_block_slug'] ) ) {
@@ -1068,10 +1082,14 @@ class Import_Controller extends Base_Controller {
 			}
 
 			if ( ! $filled ) {
-				// No open matching slot; appends a new one.
-				$target_power->levels[] = (object) ( $numbered_tier !== null
-					? [ 'tier' => $numbered_tier, 'cost' => '', 'power_name' => $power_name ]
-					: [ 'tier' => $raw_tier !== '' ? $raw_tier : 'elder', 'power_name' => $power_name ] );
+				// No open matching slot; appends a new one, carrying a tier only when the file names one.
+				if ( $numbered_tier !== null ) {
+					$target_power->levels[] = (object) [ 'tier' => $numbered_tier, 'cost' => '', 'power_name' => $power_name ];
+				} elseif ( $raw_tier !== '' ) {
+					$target_power->levels[] = (object) [ 'tier' => $raw_tier, 'power_name' => $power_name ];
+				} else {
+					$target_power->levels[] = (object) [ 'power_name' => $power_name ];
+				}
 			}
 
 			$definition->powers = $powers;

@@ -32,4 +32,18 @@ export function sectionTotal( traits: Trait[] ): number | null {
 	return sum;
 }
 
+/**
+ * The number shown after a trait_list section's title: the sum of every entry's total, or, for a block whose count is
+ * a price, how many entries are held.
+ */
+export function sectionCount(
+	traits: Trait[],
+	countIsCost?: boolean
+): number | null {
+	if ( countIsCost ) {
+		return traits.length === 0 ? null : traits.length;
+	}
+	return sectionTotal( traits );
+}
+
 export default sectionTotal;

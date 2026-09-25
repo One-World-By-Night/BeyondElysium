@@ -9,7 +9,6 @@ use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\Template;
-use BeyondElysium\Services\Display\Temper_Display;
 use BeyondElysium\Services\Sheet_Document;
 use WP_UnitTestCase;
 
@@ -151,37 +150,69 @@ class SheetDocumentThreadTest extends WP_UnitTestCase {
 		return $documents[0];
 	}
 
-	public function test_sections_are_returned_in_column_then_order_flow_sequence(): void {
+	public function test_body_sections_are_returned_in_column_then_order_flow_sequence(): void {
 		$document = $this->document( [ 'can_manage' => true ] );
 
 		$this->assertSame(
-			[ 'sheetdoc-identity', 'sheetdoc-secret', 'sheetdoc-resources', 'sheetdoc-disciplines', 'sheetdoc-abilities', 'sheetdoc-mystery' ],
+			[ 'sheetdoc-secret', 'sheetdoc-disciplines', 'sheetdoc-abilities', 'sheetdoc-mystery' ],
 			array_column( $document['sections'], 'block_slug' )
 		);
 	}
 
-	public function test_every_row_is_an_already_final_string(): void {
+	public function test_short_identity_fields_and_plain_pools_print_in_the_header(): void {
+		$document = $this->document( [ 'can_manage' => true ] );
+
+		$this->assertContains( [ 'Clan', 'Tremere' ], $document['header'] );
+		$this->assertContains( [ 'Blood', 'x10', 10 ], $document['header'] );
+		$this->assertLessThan(
+			array_search( [ 'Blood', 'x10', 10 ], $document['header'], true ),
+			array_search( [ 'Clan', 'Tremere' ], $document['header'], true ),
+			'header pairs follow the layout flow'
+		);
+	}
+
+	public function test_every_row_is_already_final_text(): void {
 		$document = $this->document( [ 'can_manage' => true ] );
 		$sections = array_column( $document['sections'], null, 'block_slug' );
 
-		$this->assertSame( [ [ 'label' => null, 'rows' => [ 'Occult x3', 'Larceny' ] ] ], $sections['sheetdoc-abilities']['groups'] );
-		$this->assertSame( [ 'Celerity 2' ], $sections['sheetdoc-disciplines']['rows'] );
-		$this->assertSame( [ 'Clan: Tremere' ], $sections['sheetdoc-identity']['rows'] );
 		$this->assertSame(
-			[ 'Blood: ' . Temper_Display::display( 10, 7 ) ],
-			$sections['sheetdoc-resources']['rows']
+			[ [ 'label' => null, 'rows' => [
+				[ 'text' => 'Occult x3', 'indent' => 0, 'circles' => 3 ],
+				[ 'text' => 'Larceny', 'indent' => 0, 'circles' => 1 ],
+			] ] ],
+			$sections['sheetdoc-abilities']['groups']
 		);
+		$this->assertSame( [ 'Celerity 2' ], $sections['sheetdoc-disciplines']['rows'] );
 
-		foreach ( array_merge( $sections['sheetdoc-abilities']['groups'][0]['rows'], $sections['sheetdoc-disciplines']['rows'] ) as $row ) {
+		foreach ( $sections['sheetdoc-abilities']['groups'][0]['rows'] as $row ) {
+			$this->assertIsString( $row['text'] );
+			$this->assertIsInt( $row['circles'] );
+		}
+		foreach ( $sections['sheetdoc-disciplines']['rows'] as $row ) {
 			$this->assertIsString( $row );
 		}
 	}
 
-	public function test_full_power_names_option_expands_named_rungs(): void {
+	public function test_a_section_with_nothing_held_is_left_out(): void {
+		Character::update_sheet_data( $this->character_id, [ 'sheetdoc-abilities' => [] ] );
+
+		$document = $this->document( [ 'can_manage' => true ] );
+
+		$this->assertNotContains( 'sheetdoc-abilities', array_column( $document['sections'], 'block_slug' ) );
+	}
+
+	public function test_full_power_names_option_lists_each_named_power_under_its_family(): void {
 		$document = $this->document( [ 'can_manage' => true, 'full_power_names' => true ] );
 		$sections = array_column( $document['sections'], null, 'block_slug' );
 
-		$this->assertSame( [ 'Alacrity, Swiftness' ], $sections['sheetdoc-disciplines']['rows'] );
+		$this->assertSame(
+			[
+				'Celerity 2',
+				[ 'text' => 'Alacrity', 'indent' => 1 ],
+				[ 'text' => 'Swiftness', 'indent' => 1 ],
+			],
+			$sections['sheetdoc-disciplines']['rows']
+		);
 	}
 
 	public function test_a_manager_sees_the_storyteller_only_section_and_its_value(): void {
@@ -218,7 +249,8 @@ class SheetDocumentThreadTest extends WP_UnitTestCase {
 		$slugs    = array_column( $document['sections'], 'block_slug' );
 
 		$this->assertNotContains( 'sheetdoc-secret', $slugs, 'the section itself must be absent, not merely empty' );
-		$this->assertContains( 'sheetdoc-identity', $slugs, 'an ordinary section is untouched' );
+		$this->assertContains( 'sheetdoc-abilities', $slugs, 'an ordinary section is untouched' );
+		$this->assertContains( [ 'Clan', 'Tremere' ], $document['header'], 'an ordinary header field is untouched' );
 	}
 
 	public function test_an_unrecognized_section_type_is_surfaced_not_dropped(): void {
@@ -235,8 +267,9 @@ class SheetDocumentThreadTest extends WP_UnitTestCase {
 		$document = $this->document( [ 'can_manage' => true ] );
 
 		$this->assertSame( 'Test Character', $document['title'] );
-		$this->assertContains( [ 'Name', 'Test Character' ], $document['header'] );
-		$this->assertContains( [ 'Type', 'Sheetdoc Test Stack' ], $document['header'] );
+		$this->assertSame( 'Sheetdoc Test Stack', $document['subtitle'] );
+		$this->assertSame( 'Printed', $document['header'][0][0] );
+		$this->assertContains( [ 'Status', 'Active' ], $document['header'] );
 		$this->assertNull( $document['portrait_path'], 'no image was ever attached to this character' );
 
 		$character = Character::find( $this->character_id );

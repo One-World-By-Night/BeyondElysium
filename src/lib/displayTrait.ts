@@ -1,6 +1,5 @@
 /**
- * Defines the twelve trait display modes and renders a single trait as a formatted string according to the selected
- * mode.
+ * Defines the trait display modes and renders a single trait as a formatted string according to the selected mode.
  */
 
 import { DOT } from './displayTemper';
@@ -18,7 +17,9 @@ export type DisplayType =
 	| 'simple_number'
 	| 'simple_note'
 	| 'cost_number'
-	| 'cost_xp';
+	| 'cost_xp'
+	| 'name_number'
+	| 'points';
 
 export interface Trait {
 	name: string;
@@ -38,6 +39,16 @@ export function parseTotal( total: Trait[ 'total' ] ): number {
 		return match ? parseInt( match[ 0 ], 10 ) : 0;
 	}
 	return 0;
+}
+
+/**
+ * Whether a trait carries a total at all: a number, or a string starting with one.
+ */
+function hasTotal( total: Trait[ 'total' ] ): boolean {
+	if ( typeof total === 'number' ) {
+		return Number.isFinite( total );
+	}
+	return typeof total === 'string' && /^-?\d+/.test( total.trim() );
 }
 
 /**
@@ -132,6 +143,13 @@ export function displayTrait(
 			return `${ trait.name } (${
 				note ? `${ priced }, ${ note }` : priced
 			})`;
+		}
+
+		case 'name_number':
+		case 'points': {
+			// The name, any note in parentheses, then the number: "Acting (Paths) 5". No number without a total.
+			const out = note ? `${ trait.name } (${ note })` : trait.name;
+			return hasTotal( trait.total ) ? `${ out } ${ total }` : out;
 		}
 
 		default:

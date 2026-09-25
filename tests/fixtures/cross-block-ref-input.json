@@ -109,6 +109,187 @@
                 }
             },
             "sheetData": { "vampire-identity": { "Morality Path": "Path of Caine" } }
+        },
+        {
+            "name": "the Path names the virtue when the character has not chosen one",
+            "pool": {
+                "name": "Conscience", "value_type": "integer", "default_start": 1,
+                "name_lookup": {
+                    "keyed_by": { "block_slug": "vampire-identity", "field": "Conscience or Conviction" },
+                    "table": { "Conscience": "Conscience", "Conviction": "Conviction" },
+                    "otherwise": {
+                        "keyed_by": { "block_slug": "vampire-identity", "field": "Morality Path" },
+                        "ignore_words": [ "the", "of", "and", "path", "morality" ],
+                        "table": { "Humanity": "Conscience", "Path of Caine": "Conviction", "Path of the Feral Heart": "Conviction", "Path of Honorable Accord": "Conscience", "Path of Power and the Inner Voice": "Conviction" },
+                        "unmatched": "Conscience/Conviction"
+                    }
+                }
+            },
+            "sheetData": { "vampire-identity": { "Morality Path": "Path of Caine" } }
+        },
+        {
+            "name": "a virtue the character chose wins over the Path",
+            "pool": {
+                "name": "Conscience", "value_type": "integer", "default_start": 1,
+                "name_lookup": {
+                    "keyed_by": { "block_slug": "vampire-identity", "field": "Conscience or Conviction" },
+                    "table": { "Conscience": "Conscience", "Conviction": "Conviction" },
+                    "otherwise": {
+                        "keyed_by": { "block_slug": "vampire-identity", "field": "Morality Path" },
+                        "ignore_words": [ "the", "of", "and", "path", "morality" ],
+                        "table": { "Humanity": "Conscience", "Path of Caine": "Conviction", "Path of the Feral Heart": "Conviction", "Path of Honorable Accord": "Conscience", "Path of Power and the Inner Voice": "Conviction" },
+                        "unmatched": "Conscience/Conviction"
+                    }
+                }
+            },
+            "sheetData": { "vampire-identity": { "Morality Path": "Path of Caine", "Conscience or Conviction": "Conscience" } }
+        },
+        {
+            "name": "the Path matches ignoring case",
+            "pool": {
+                "name": "Conscience", "value_type": "integer", "default_start": 1,
+                "name_lookup": {
+                    "keyed_by": { "block_slug": "vampire-identity", "field": "Conscience or Conviction" },
+                    "table": { "Conscience": "Conscience", "Conviction": "Conviction" },
+                    "otherwise": {
+                        "keyed_by": { "block_slug": "vampire-identity", "field": "Morality Path" },
+                        "ignore_words": [ "the", "of", "and", "path", "morality" ],
+                        "table": { "Humanity": "Conscience", "Path of Caine": "Conviction", "Path of the Feral Heart": "Conviction", "Path of Honorable Accord": "Conscience", "Path of Power and the Inner Voice": "Conviction" },
+                        "unmatched": "Conscience/Conviction"
+                    }
+                }
+            },
+            "sheetData": { "vampire-identity": { "Morality Path": "PATH OF CAINE" } }
+        },
+        {
+            "name": "the Path matches without its trailing note in parentheses",
+            "pool": {
+                "name": "Conscience", "value_type": "integer", "default_start": 1,
+                "name_lookup": {
+                    "keyed_by": { "block_slug": "vampire-identity", "field": "Conscience or Conviction" },
+                    "table": { "Conscience": "Conscience", "Conviction": "Conviction" },
+                    "otherwise": {
+                        "keyed_by": { "block_slug": "vampire-identity", "field": "Morality Path" },
+                        "ignore_words": [ "the", "of", "and", "path", "morality" ],
+                        "table": { "Humanity": "Conscience", "Path of Caine": "Conviction", "Path of the Feral Heart": "Conviction", "Path of Honorable Accord": "Conscience", "Path of Power and the Inner Voice": "Conviction" },
+                        "unmatched": "Conscience/Conviction"
+                    }
+                }
+            },
+            "sheetData": { "vampire-identity": { "Morality Path": "Caine(Nod)" } }
+        },
+        {
+            "name": "the Path matches without the words the lookup ignores",
+            "pool": {
+                "name": "Conscience", "value_type": "integer", "default_start": 1,
+                "name_lookup": {
+                    "keyed_by": { "block_slug": "vampire-identity", "field": "Conscience or Conviction" },
+                    "table": { "Conscience": "Conscience", "Conviction": "Conviction" },
+                    "otherwise": {
+                        "keyed_by": { "block_slug": "vampire-identity", "field": "Morality Path" },
+                        "ignore_words": [ "the", "of", "and", "path", "morality" ],
+                        "table": { "Humanity": "Conscience", "Path of Caine": "Conviction", "Path of the Feral Heart": "Conviction", "Path of Honorable Accord": "Conscience", "Path of Power and the Inner Voice": "Conviction" },
+                        "unmatched": "Conscience/Conviction"
+                    }
+                }
+            },
+            "sheetData": { "vampire-identity": { "Morality Path": "Morality: The Path of Feral Heart" } }
+        },
+        {
+            "name": "the Path matches with its punctuation read as spaces",
+            "pool": {
+                "name": "Conscience", "value_type": "integer", "default_start": 1,
+                "name_lookup": {
+                    "keyed_by": { "block_slug": "vampire-identity", "field": "Conscience or Conviction" },
+                    "table": { "Conscience": "Conscience", "Conviction": "Conviction" },
+                    "otherwise": {
+                        "keyed_by": { "block_slug": "vampire-identity", "field": "Morality Path" },
+                        "ignore_words": [ "the", "of", "and", "path", "morality" ],
+                        "table": { "Humanity": "Conscience", "Path of Caine": "Conviction", "Path of the Feral Heart": "Conviction", "Path of Honorable Accord": "Conscience", "Path of Power and the Inner Voice": "Conviction" },
+                        "unmatched": "Conscience/Conviction"
+                    }
+                }
+            },
+            "sheetData": { "vampire-identity": { "Morality Path": "Power and The Inner-Voice" } }
+        },
+        {
+            "name": "a Path the table does not hold gives the unmatched name",
+            "pool": {
+                "name": "Conscience", "value_type": "integer", "default_start": 1,
+                "name_lookup": {
+                    "keyed_by": { "block_slug": "vampire-identity", "field": "Conscience or Conviction" },
+                    "table": { "Conscience": "Conscience", "Conviction": "Conviction" },
+                    "otherwise": {
+                        "keyed_by": { "block_slug": "vampire-identity", "field": "Morality Path" },
+                        "ignore_words": [ "the", "of", "and", "path", "morality" ],
+                        "table": { "Humanity": "Conscience", "Path of Caine": "Conviction", "Path of the Feral Heart": "Conviction", "Path of Honorable Accord": "Conscience", "Path of Power and the Inner Voice": "Conviction" },
+                        "unmatched": "Conscience/Conviction"
+                    }
+                }
+            },
+            "sheetData": { "vampire-identity": { "Morality Path": "Path of the Grey Hunter" } }
+        },
+        {
+            "name": "a Path made only of ignored words matches nothing, so it reads as unmatched",
+            "pool": {
+                "name": "Conscience", "value_type": "integer", "default_start": 1,
+                "name_lookup": {
+                    "keyed_by": { "block_slug": "vampire-identity", "field": "Conscience or Conviction" },
+                    "table": { "Conscience": "Conscience", "Conviction": "Conviction" },
+                    "otherwise": {
+                        "keyed_by": { "block_slug": "vampire-identity", "field": "Morality Path" },
+                        "ignore_words": [ "the", "of", "and", "path", "morality" ],
+                        "table": { "Humanity": "Conscience", "Path of Caine": "Conviction", "Path of the Feral Heart": "Conviction", "Path of Honorable Accord": "Conscience", "Path of Power and the Inner Voice": "Conviction" },
+                        "unmatched": "Conscience/Conviction"
+                    }
+                }
+            },
+            "sheetData": { "vampire-identity": { "Morality Path": "The Path of" } }
+        },
+        {
+            "name": "no Path and no choice gives the pool its own name",
+            "pool": {
+                "name": "Conscience", "value_type": "integer", "default_start": 1,
+                "name_lookup": {
+                    "keyed_by": { "block_slug": "vampire-identity", "field": "Conscience or Conviction" },
+                    "table": { "Conscience": "Conscience", "Conviction": "Conviction" },
+                    "otherwise": {
+                        "keyed_by": { "block_slug": "vampire-identity", "field": "Morality Path" },
+                        "ignore_words": [ "the", "of", "and", "path", "morality" ],
+                        "table": { "Humanity": "Conscience", "Path of Caine": "Conviction", "Path of the Feral Heart": "Conviction", "Path of Honorable Accord": "Conscience", "Path of Power and the Inner Voice": "Conviction" },
+                        "unmatched": "Conscience/Conviction"
+                    }
+                }
+            },
+            "sheetData": { "vampire-identity": { "Clan": "Lasombra" } }
+        },
+        {
+            "name": "an exact lookup with no ignored words still compares exactly",
+            "pool": {
+                "name": "Conscience", "value_type": "integer", "default_start": 1,
+                "name_lookup": {
+                    "keyed_by": { "block_slug": "vampire-identity", "field": "Morality Path" },
+                    "table": { "Path of Caine": "Conviction" }
+                }
+            },
+            "sheetData": { "vampire-identity": { "Morality Path": "PATH OF CAINE" } }
+        },
+        {
+            "name": "an axis value the table does not hold falls through to the Path",
+            "pool": {
+                "name": "Conscience", "value_type": "integer", "default_start": 1,
+                "name_lookup": {
+                    "keyed_by": { "block_slug": "vampire-identity", "field": "Conscience or Conviction" },
+                    "table": { "Conscience": "Conscience", "Conviction": "Conviction" },
+                    "otherwise": {
+                        "keyed_by": { "block_slug": "vampire-identity", "field": "Morality Path" },
+                        "ignore_words": [ "the", "of", "and", "path", "morality" ],
+                        "table": { "Humanity": "Conscience", "Path of Caine": "Conviction", "Path of the Feral Heart": "Conviction", "Path of Honorable Accord": "Conscience", "Path of Power and the Inner Voice": "Conviction" },
+                        "unmatched": "Conscience/Conviction"
+                    }
+                }
+            },
+            "sheetData": { "vampire-identity": { "Morality Path": "Path of Caine", "Conscience or Conviction": "Undecided" } }
         }
     ]
 }

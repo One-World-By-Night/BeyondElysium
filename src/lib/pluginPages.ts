@@ -35,6 +35,7 @@ export const STORYTELLER_TABS = {
 	dashboard: 'dashboard',
 	myQueue: 'my-queue',
 	approvalQueue: 'approval-queue',
+	players: 'players',
 	plots: 'plots',
 	boonLedger: 'boon-ledger',
 	worldObjects: 'world-objects',

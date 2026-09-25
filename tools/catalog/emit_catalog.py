@@ -51,7 +51,8 @@ def emit_trait_list(slug, items=None, extra=None, sources=None, notes=None, name
     blk = live(slug)
     d = blk['definition']
     its = items if items is not None else [io.trait_item(i) for i in d['items']]
-    io.write('blocks', slug, name or blk['name'], 'block', io.trait_definition(d, its, extra),
+    io.write('blocks', slug, name or R.BLOCK_NAME_FIXES.get(slug) or blk['name'], 'block',
+             io.trait_definition(d, its, {**R.BLOCK_DEFINITION_FLAGS.get(slug, {}), **(extra or {})}),
              sources or [LIVE_SOURCE], section_type='trait_list', notes=notes)
     REPORT[slug] = {'items': len(its)}
 
@@ -370,14 +371,14 @@ def wraith_family(p, packet, spelling, costs):
     for n, (t, nm) in enumerate(plan, 1):
         moved = 'the book-sourced seed files this as an Innate Ability; the OWBN Arcanoi packet makes it a rung' \
             if io.norm(be_name(nm)) in book_innate else None
-        levels.append(io.level(n, t, be_name(nm), costs[t], note=moved, alternatives=alts.get(n)))
+        levels.append(io.level(n, t, be_name(nm), costs[t], source=moved, alternatives=alts.get(n)))
     innates = []
     for n in packet['innate']:
         innates.append(io.pick('innate', be_name(n), costs['innate']))
     on_ladder = {io.norm(lv['power_name']) for lv in levels}
     for n in innate_book:  # a book innate the packet dropped stays an innate
         if io.norm(n) not in {io.norm(i['power_name']) for i in innates} | on_ladder:
-            innates.append(io.pick('innate', n, costs['innate'], note='book-sourced innate; not in the OWBN Arcanoi packet'))
+            innates.append(io.pick('innate', n, costs['innate'], source='book-sourced innate; not in the OWBN Arcanoi packet'))
     return io.family(p['name'], levels, elder={'innate': innates}, source=p.get('source'))
 
 
@@ -986,6 +987,7 @@ def emit_merits():
             flags = {'atomic': True, 'allow_custom': True, 'allow_multiples': False}
             if negative:
                 flags['negative'] = True
+            flags['display'] = 'points'
             io.write('blocks', slug, 'Merits' if kind == 'merits' else 'Flaws', 'block', io.trait_definition(flags, items),
                      [f'Grapevine Menus XML.gvm: "{menu}" with its includes resolved' + (' and its own submenus (clan lists, Fae Gifts/Marks, Fomori Taints)' if menu != generic else ''),
                       'met-mechanics.csv Merit/Flaw rows routed by source (the Vampire research overlay to Vampire; generic-menu names to every stack)',
@@ -1359,6 +1361,13 @@ def emit_stacks_and_templates(block_slugs):
                     row['order'] = sec['order'] + n
                     expanded.append(row)
             layout['sections'] = expanded
+        for sec in layout.get('sections', []):
+            title = R.TEMPLATE_SECTION_TITLES.get(t['stack_slug'], {}).get(sec['block_slug'])
+            if title:
+                sec['title'] = title
+            former = R.TEMPLATE_FORMER_TITLES.get(t['stack_slug'], {}).get(sec['block_slug'])
+            if former:
+                sec['former_titles'] = list(former)
         if t['template_type'] in TEMPLATE_COMPLETE_TYPES and t['stack_slug'] in stack_sections:
             added = complete_template(layout, [b for b, _ in stack_sections[t['stack_slug']]],
                                       dict(stack_sections[t['stack_slug']]))
@@ -1409,6 +1418,38 @@ POOL_PRICES = {
         [LIVE_SOURCE, 'Laws of the East (WW05016) p. 125 - Virtue Traits Hun, Yin, Yang 3 each, P\'o 2 '
                       '(samples/research/kuei-jin/pools-and-xp.json). Demon Chi is never bought']),
 }
+
+def emit_vampire_bonds():
+    """The Vampire Bonds list: who the character is bound to and the rating, one row each, as Grapevine keeps it."""
+    d = OrderedDict([('alphabetize', True), ('atomic', False), ('allow_custom', True), ('allow_multiples', False),
+                     ('print_rings', False), ('items', []), ('display', 'multiplier')])
+    io.write('blocks', 'vampire-bonds', 'Vampire Bonds', 'block', d,
+             ['Grapevine 3.01 VampireClass.cls: BondList.Initialize "Bonds", alphabetized, not negative, not atomic, '
+              'multiplier display; each row a name and a rating'],
+             section_type='trait_list')
+    REPORT['vampire-bonds'] = {'items': 0}
+
+
+def path_virtue_lookup(axis_field, own, other, column):
+    """A virtue pool's name: the character's own choice on the axis field, else the one their Path names, else both
+    names when the Path is one the books do not cover."""
+    return {'name_lookup': OrderedDict([
+        ('table', OrderedDict([(own, own), (other, other)])),
+        ('keyed_by', OrderedDict([('field', axis_field), ('block_slug', 'vampire-identity')])),
+        ('otherwise', OrderedDict([
+            ('keyed_by', OrderedDict([('field', 'Morality Path'), ('block_slug', 'vampire-identity')])),
+            ('ignore_words', list(R.VAMPIRE_PATH_IGNORE_WORDS)),
+            ('table', OrderedDict((row[0], row[column]) for row in R.VAMPIRE_PATH_VIRTUES)),
+            ('unmatched', f'{own}/{other}'),
+        ])),
+    ])}
+
+
+POOL_PRICES['vampire-virtues'] = (
+    {'Conscience': path_virtue_lookup('Conscience or Conviction', 'Conscience', 'Conviction', 1),
+     'Self-Control': path_virtue_lookup('Self-Control or Instinct', 'Self-Control', 'Instinct', 2)},
+    [LIVE_SOURCE, 'Each Path of Enlightenment\'s two Virtues: Chaining the Beast pp. 34-107, Laws of the Night '
+                  'Revised p. 73 and the Mind\'s Eye Theatre Sabbat Guide pp. 78-79 (tools/catalog/rulings.py VAMPIRE_PATH_VIRTUES)'])
 
 SPECIAL = {'met-abilities', 'met-merits', 'met-flaws', 'werewolf-rites', 'changeling-arts', 'changeling-realms', 'wraith-arcanoi', 'mummy-hekau',
            'werewolf-gifts', 'fera-gifts', 'mortal-numina', 'mage-rotes'}
@@ -1468,6 +1509,7 @@ def main():
     emit_merits()
     normalise_demon_evocations()
     emit_mage_rotes_meta()
+    emit_vampire_bonds()
     build_mortal_numina()
     blocks = {p.stem for p in (io.CATALOG / 'blocks').glob('*.json')}
     emit_stacks_and_templates(blocks)

@@ -1,5 +1,6 @@
 import {
 	fetchMemberships,
+	isLinkedToAccessSchema,
 	readGameSlugFromUrl,
 	writeGameSlugToUrl,
 } from './useChronicleSwitcher';
@@ -68,5 +69,24 @@ describe( 'writeGameSlugToUrl', () => {
 		expect( params.get( 'tab' ) ).toBe( 'sheet' );
 		expect( params.get( 'character_id' ) ).toBe( '42' );
 		expect( params.get( 'game_slug' ) ).toBe( 'kony' );
+	} );
+} );
+
+describe( 'isLinkedToAccessSchema', () => {
+	const games = [
+		{ slug: 'kony', name: 'Kony', role: 'hst', asc_linked: true },
+		{ slug: 'demo', name: 'Demo', role: 'hst', asc_linked: false },
+		{ slug: 'old', name: 'Old', role: 'hst' },
+	];
+
+	it( 'is true only for a chronicle the site says is linked', () => {
+		expect( isLinkedToAccessSchema( games, 'kony' ) ).toBe( true );
+		expect( isLinkedToAccessSchema( games, 'demo' ) ).toBe( false );
+	} );
+
+	it( 'is false when the answer does not say, or the chronicle is not listed', () => {
+		expect( isLinkedToAccessSchema( games, 'old' ) ).toBe( false );
+		expect( isLinkedToAccessSchema( games, 'nowhere' ) ).toBe( false );
+		expect( isLinkedToAccessSchema( [], '' ) ).toBe( false );
 	} );
 } );

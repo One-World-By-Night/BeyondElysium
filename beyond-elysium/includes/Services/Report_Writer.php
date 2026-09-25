@@ -19,12 +19,13 @@ class Report_Writer {
 	private const CARD_HEIGHT = 76.2;  // 3in
 
 	/**
-	 * @param array<string,mixed> $document `Report_Document::build()`'s return value.
-	 * @param bool                $signed   False prints an unsigned copy, marked as one.
+	 * @param array<string,mixed> $document  `Report_Document::build()`'s return value.
+	 * @param bool                $signed    False prints an unsigned copy, marked as one.
+	 * @param string|null         $page_size `letter` or `a4`; anything else prints on the site's default.
 	 * @throws \RuntimeException When asked to sign and signing is not configured or its files are unreadable.
 	 */
-	public static function write( array $document, object $game, bool $signed = true ): string {
-		$pdf = new \TCPDF( 'P', 'mm', 'A4', true, 'UTF-8', false );
+	public static function write( array $document, object $game, bool $signed = true, ?string $page_size = null ): string {
+		$pdf = new \TCPDF( 'P', 'mm', Pdf_Writer::tcpdf_format( $page_size ), true, 'UTF-8', false );
 		if ( $signed ) {
 			Pdf_Signer::configure( $pdf, $game );
 		}
@@ -132,7 +133,7 @@ class Report_Writer {
 	}
 
 	/**
-	 * Draws the card grid at Grapevine's 5in×3in card size: one card per row and two rows per page on A4.
+	 * Draws the card grid at Grapevine's 5in×3in card size: one card per row, as many rows as fit the page.
 	 *
 	 * @param array<string,mixed> $document
 	 */

@@ -18,6 +18,7 @@ Look for a "Storyteller Toolkit" link in your site's navigation - this plugin cr
     [Game Dashboard](game-dashboard.md).
   - **Approval Queue** - every pending sheet change, in one list. See
     [Approval Queue](approval-queue.md).
+  - **Players** - add an existing OWbN account as a player, or take a player out (HST and AST). See [Players](chronicle-players.md).
   - **Plots & Rumors** - create and run plots, allocate actions, generate rumors. See
     [Plots & Rumors](plot-manager.md).
   - **Boon Ledger** - the chronicle's Harpy view. See [Boon Ledger](boon-ledger.md).

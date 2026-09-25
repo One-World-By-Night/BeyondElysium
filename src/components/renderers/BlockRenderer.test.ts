@@ -1,4 +1,5 @@
-import { toTraits } from './BlockRenderer';
+import { pointsFor, toPointTraits, toTraits } from './BlockRenderer';
+import pointCases from '../../../tests/fixtures/trait-points.json';
 import fixtureInput from '../../../tests/fixtures/trait-grouping-input.json';
 import fixtureExpected from '../../../tests/fixtures/trait-grouping-expected.json';
 
@@ -87,5 +88,56 @@ describe( 'toTraits — parity with Trait_Grouping::to_traits() (D25)', () => {
 
 			expect( normalized ).toEqual( fixtureExpected.toTraits[ i ] );
 		} );
+	} );
+} );
+
+describe( 'pointsFor - parity with Trait_Grouping::points_for()', () => {
+	pointCases.forEach( ( fixtureCase ) => {
+		it( `matches the shared fixture: ${ fixtureCase.name }`, () => {
+			const item =
+				fixtureCase.item_cost === null
+					? undefined
+					: { cost: fixtureCase.item_cost };
+			expect(
+				pointsFor(
+					fixtureCase.entry as Record< string, unknown >,
+					item
+				)
+			).toBe( fixtureCase.points );
+		} );
+	} );
+} );
+
+describe( 'toPointTraits', () => {
+	it( "carries each entry's points as its total", () => {
+		const definition = {
+			items: [
+				{ name: 'Daredevil', cost: '3' },
+				{ name: 'Ambidextrous', cost: '1' },
+			],
+		} as unknown as Parameters< typeof toPointTraits >[ 1 ];
+		expect(
+			toPointTraits(
+				[
+					{ name: 'Daredevil', count: 1 },
+					{ name: 'Alternate Sense', count: 14, note: 'Radar' },
+					{ name: 'Ambidextrous' },
+				],
+				definition
+			)
+		).toEqual( [
+			{ name: 'Daredevil', total: 3, note: undefined },
+			{ name: 'Alternate Sense', total: 14, note: 'Radar' },
+			{ name: 'Ambidextrous', total: 1, note: undefined },
+		] );
+	} );
+
+	it( 'leaves an entry with no points without a total', () => {
+		const definition = { items: [] } as unknown as Parameters<
+			typeof toPointTraits
+		>[ 1 ];
+		expect( toPointTraits( [ { name: 'Mystery' } ], definition ) ).toEqual(
+			[ { name: 'Mystery', total: undefined, note: undefined } ]
+		);
 	} );
 } );

@@ -1,0 +1,23 @@
+{
+  "format": 1,
+  "slug": "vampire-bonds",
+  "name": "Vampire Bonds",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "Grapevine 3.01 VampireClass.cls: BondList.Initialize \"Bonds\", alphabetized, not negative, not atomic, multiplier display; each row a name and a rating"
+    ],
+    "extracted": "2026-09-22",
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "alphabetize": true,
+    "atomic": false,
+    "allow_custom": true,
+    "allow_multiples": false,
+    "print_rings": false,
+    "items": [],
+    "display": "multiplier"
+  }
+}

@@ -15,6 +15,7 @@
     "alphabetize": true,
     "allow_custom": true,
     "allow_multiples": false,
+    "print_rings": false,
     "items": [
       {
         "name": "Acknowledged",

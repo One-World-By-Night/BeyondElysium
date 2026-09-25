@@ -39,6 +39,12 @@ describe( 'levelQualifier', () => {
 		expect( levelQualifier( 'legend' ) ).toBeUndefined();
 	} );
 
+	it( 'never reads a tier word inside a longer or hyphenated word', () => {
+		expect( levelQualifier( 'winter pack' ) ).toBeUndefined();
+		expect( levelQualifier( 'master-level working' ) ).toBeUndefined();
+		expect( levelQualifier( 'Winter pack, basic' ) ).toBe( 'Winter pack' );
+	} );
+
 	it( 'finds nothing in an empty or absent note', () => {
 		expect( levelQualifier( '' ) ).toBeUndefined();
 		expect( levelQualifier( null ) ).toBeUndefined();

@@ -12,8 +12,8 @@
     "output": "Dur-An-Ki: Something Unrecognizable (unmatched, imported as-is)"
   },
   {
-    "name": "a keep_custom power with neither a level nor a stored tier still falls back to \"elder\", never undefined",
-    "output": "Dur-An-Ki: Something Unrecognizable (elder)"
+    "name": "a keep_custom power with neither a level nor a stored tier prints its name alone, never undefined and never elder",
+    "output": "Dur-An-Ki: Something Unrecognizable"
   },
   {
     "name": "numericLabel: an ordinary numbered rung with no power_name just shows the level",
@@ -56,10 +56,8 @@
     "output": []
   },
   {
-    "name": "lists only the one specific power for an Elder-and-above pick - there is no stack beneath it",
-    "output": [
-      "Celerity: Blink (elder)"
-    ]
+    "name": "an Elder-and-above pick lists nothing beneath its own line, which already names it",
+    "output": []
   },
   {
     "name": "a non-sequential block still expands the full stack, not just the current rung",
@@ -87,12 +85,12 @@
     ]
   },
   {
-    "name": "a parser-placeholder tier (***) is never shown to a player; falls through to elder",
-    "output": "Combination: Sawafi Form (elder)"
+    "name": "a parser-placeholder tier (***) is never shown to a player, and nothing stands in for it",
+    "output": "Combination: Sawafi Form"
   },
   {
     "name": "an unknown tier is a placeholder too",
-    "output": "Combination: Sawafi Form (elder)"
+    "output": "Combination: Sawafi Form"
   },
   {
     "name": "a real stored tier still shows unchanged (Decision 074)",
@@ -114,8 +112,8 @@
     ]
   },
   {
-    "name": "a catalog level with no tier key at all falls through to elder, on both sides",
-    "output": "Untiered Family: No Tier Here (elder)"
+    "name": "a catalog level with no tier key at all prints no tier, on both sides",
+    "output": "Untiered Family: No Tier Here"
   },
   {
     "name": "a pick in the elder container resolves its own rank, not the hardcoded default",
@@ -146,8 +144,8 @@
     "output": "Valaren (Warrior) 4"
   },
   {
-    "name": "D80: the same, with no level - the placeholder tier still never prints",
-    "output": "Kineticism (~) (elder)"
+    "name": "D80: the same, with no level - the placeholder tier still never prints, and nothing stands in for it",
+    "output": "Kineticism (~)"
   },
   {
     "name": "a genuinely two-part custom name still prints family and power",
@@ -160,5 +158,25 @@
   {
     "name": "split shape: the second ladder, filed in overflow, names its own tradition too",
     "output": "Path of the Split Ladder: Stigmatize (basic \u00b7 Tremere)"
+  },
+  {
+    "name": "a family missing from the catalog lists nothing beneath its line, never its own label once per level",
+    "output": []
+  },
+  {
+    "name": "a custom power held under its family lists nothing beneath its line",
+    "output": []
+  },
+  {
+    "name": "a custom power held under its family prints the family, the power and the level once",
+    "output": "Mortis: Ash Path 5"
+  },
+  {
+    "name": "a pick filed under a rank with no tier of its own reads the rank it is filed under",
+    "output": "Ranked Only: Untiered Master Pick (master)"
+  },
+  {
+    "name": "a held power with neither a level nor a pick prints its name alone, with no number",
+    "output": "Heightened Senses"
   }
 ]

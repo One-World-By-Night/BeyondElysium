@@ -1838,6 +1838,7 @@ function ResourcePoolEditor( {
 		};
 		updatePool( index, {
 			name_lookup: {
+				...pool.name_lookup,
 				keyed_by: keyedBy,
 				table: pool.name_lookup?.table ?? {},
 			},
@@ -1851,7 +1852,9 @@ function ResourcePoolEditor( {
 			field: '',
 		};
 		const table = { ...( pool.name_lookup?.table ?? {} ), '': '' };
-		updatePool( index, { name_lookup: { keyed_by: keyedBy, table } } );
+		updatePool( index, {
+			name_lookup: { ...pool.name_lookup, keyed_by: keyedBy, table },
+		} );
 	}
 
 	function updateLookupRow(
@@ -1869,6 +1872,7 @@ function ResourcePoolEditor( {
 		}
 		updatePool( index, {
 			name_lookup: {
+				...pool.name_lookup,
 				keyed_by: pool.name_lookup?.keyed_by ?? {
 					block_slug: '',
 					field: '',
@@ -1884,12 +1888,14 @@ function ResourcePoolEditor( {
 		delete table[ key ];
 		if (
 			Object.keys( table ).length === 0 &&
-			! pool.name_lookup?.keyed_by.block_slug
+			! pool.name_lookup?.keyed_by.block_slug &&
+			! pool.name_lookup?.otherwise
 		) {
 			updatePool( index, { name_lookup: undefined } );
 		} else {
 			updatePool( index, {
 				name_lookup: {
+					...pool.name_lookup,
 					keyed_by: pool.name_lookup?.keyed_by ?? {
 						block_slug: '',
 						field: '',

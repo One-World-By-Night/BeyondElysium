@@ -35,7 +35,8 @@ return [
 		// Combo Disciplines/Ritae are not separate GEX lists.
 		'Disciplines' => [ 'outcome' => 'sheet_block', 'block_slug' => 'vampire-disciplines', 'blood_magic_block_slug' => 'vampire-blood-magic', 'combo_block_slug' => 'vampire-combo-disciplines' ],
 		'Rituals'     => [ 'outcome' => 'sheet_block', 'block_slug' => 'vampire-rituals', 'combo_block_slug' => 'vampire-ritae' ],
-		'Bonds'       => [ 'outcome' => 'preserve_as_note' ],
+		// `backfill`: the upgrade fills the block from a character's import record, where earlier imports kept this list.
+		'Bonds'       => [ 'outcome' => 'sheet_block', 'block_slug' => 'vampire-bonds', 'backfill' => true ],
 		'Miscellaneous' => [ 'outcome' => 'preserve_as_note' ],
 	],
 

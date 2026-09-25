@@ -159,5 +159,30 @@
 		"name": "cost_xp: a zero price is still labelled, never blank",
 		"trait": { "name": "Free Combo", "total": 0 },
 		"mode": "cost_xp"
+	},
+	{
+		"name": "name_number: the name then the number",
+		"trait": { "name": "Academics", "total": 5 },
+		"mode": "name_number"
+	},
+	{
+		"name": "name_number: a note sits between the name and the number",
+		"trait": { "name": "Acting", "total": 5, "note": "Paths" },
+		"mode": "name_number"
+	},
+	{
+		"name": "name_number: a total of 1 still shows",
+		"trait": { "name": "Initiated", "total": 1 },
+		"mode": "name_number"
+	},
+	{
+		"name": "name_number: no total prints the name alone, never a 0",
+		"trait": { "name": "Custom Merit" },
+		"mode": "name_number"
+	},
+	{
+		"name": "points: prints as name_number",
+		"trait": { "name": "Daredevil", "total": 3 },
+		"mode": "points"
 	}
 ]

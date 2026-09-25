@@ -111,16 +111,22 @@
         "column": 1,
         "display": "multiplier_dot",
         "collapsed": false,
-        "block_slug": "kueijin-abilities"
+        "block_slug": "kueijin-abilities",
+        "former_titles": [
+          "Kueijin Abilities"
+        ]
       },
       {
         "order": 12,
-        "title": "Kueijin Backgrounds",
+        "title": "Kuei-Jin Backgrounds",
         "width": "half",
         "column": 1,
         "display": "multiplier_dot",
         "collapsed": false,
-        "block_slug": "kueijin-backgrounds"
+        "block_slug": "kueijin-backgrounds",
+        "former_titles": [
+          "Kueijin Backgrounds"
+        ]
       },
       {
         "order": 13,
@@ -147,7 +153,10 @@
         "column": 1,
         "display": null,
         "collapsed": false,
-        "block_slug": "kueijin-merits"
+        "block_slug": "kueijin-merits",
+        "former_titles": [
+          "Kueijin Merits"
+        ]
       },
       {
         "order": 16,
@@ -156,7 +165,10 @@
         "column": 1,
         "display": null,
         "collapsed": false,
-        "block_slug": "kueijin-flaws"
+        "block_slug": "kueijin-flaws",
+        "former_titles": [
+          "Kueijin Flaws"
+        ]
       },
       {
         "order": 17,

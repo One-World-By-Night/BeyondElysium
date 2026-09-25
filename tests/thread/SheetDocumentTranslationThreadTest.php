@@ -127,10 +127,13 @@ class SheetDocumentTranslationThreadTest extends WP_UnitTestCase {
 		$sections = array_column( $document['sections'], null, 'block_slug' );
 
 		$this->assertSame(
-			[ [ 'label' => null, 'rows' => [ 'Sheetdoc I18n Occult Term x3', 'Sheetdoc I18n New Ability' ] ] ],
+			[ [ 'label' => null, 'rows' => [
+				[ 'text' => 'Sheetdoc I18n Occult Term x3', 'indent' => 0, 'circles' => 3 ],
+				[ 'text' => 'Sheetdoc I18n New Ability', 'indent' => 0, 'circles' => 1 ],
+			] ] ],
 			$sections['sheetdoc-i18n-abilities']['groups']
 		);
-		$this->assertSame( [ 'Sheetdoc I18n Celerity: Sheetdoc I18n Alacrity Term (elder)' ], $sections['sheetdoc-i18n-disciplines']['rows'] );
+		$this->assertSame( [ 'Sheetdoc I18n Celerity: Sheetdoc I18n Alacrity Term' ], $sections['sheetdoc-i18n-disciplines']['rows'] );
 	}
 
 	public function test_on_a_pt_br_site_the_pdf_sheet_matches_the_screens_own_translation_rule(): void {
@@ -140,10 +143,13 @@ class SheetDocumentTranslationThreadTest extends WP_UnitTestCase {
 		$sections = array_column( $document['sections'], null, 'block_slug' );
 
 		$this->assertSame(
-			[ [ 'label' => null, 'rows' => [ 'Ocultismo x3', 'Sheetdoc I18n New Ability' ] ] ],
+			[ [ 'label' => null, 'rows' => [
+				[ 'text' => 'Ocultismo x3', 'indent' => 0, 'circles' => 3 ],
+				[ 'text' => 'Sheetdoc I18n New Ability', 'indent' => 0, 'circles' => 1 ],
+			] ] ],
 			$sections['sheetdoc-i18n-abilities']['groups']
 		);
-		$this->assertSame( [ 'Sheetdoc I18n Celerity: Presteza (elder)' ], $sections['sheetdoc-i18n-disciplines']['rows'] );
+		$this->assertSame( [ 'Sheetdoc I18n Celerity: Presteza' ], $sections['sheetdoc-i18n-disciplines']['rows'] );
 	}
 
 	public function test_no_report_is_translated_by_this_change_a_real_logged_gap_not_a_regression(): void {

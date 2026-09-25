@@ -122,10 +122,10 @@ class Authorization {
 		$game    = \BeyondElysium\Models\Game::find_by_slug( (string) $game_slug );
 		$game_id = $game ? (int) $game->id : 0;
 
-		if ( self::asc_enabled() && $game && ! empty( $game->asc_role_path ) && function_exists( 'owc_asc_check_access' ) ) {
+		if ( $game && function_exists( 'owc_asc_check_access' ) ) {
 			foreach ( self::roles_granting( $capability ) as $role ) {
-				$role_path = self::normalize_role_path( rtrim( (string) $game->asc_role_path, '/' ) . '/' . $role );
-				if ( self::check_asc_role_path( $user->user_email, $role_path ) ) {
+				$role_path = self::asc_role_path( $game, $role );
+				if ( $role_path !== null && self::check_asc_role_path( $user->user_email, $role_path ) ) {
 					return true;
 				}
 			}
@@ -178,6 +178,42 @@ class Authorization {
 		}
 
 		return self::$asc_memo[ $memo_key ];
+	}
+
+	/**
+	 * A chronicle role's accessSchema path ("chronicle/kony/player"), or null when accessSchema is off or the chronicle
+	 * names no role path.
+	 */
+	public static function asc_role_path( object $game, string $role ): ?string {
+		if ( ! self::asc_enabled() || empty( $game->asc_role_path ) ) {
+			return null;
+		}
+		return self::normalize_role_path( rtrim( (string) $game->asc_role_path, '/' ) . '/' . $role );
+	}
+
+	/**
+	 * The highest chronicle role a user holds in a chronicle through accessSchema, from their cached accessSchema
+	 * roles, or null when they hold none there.
+	 */
+	public static function asc_role_in_game( \WP_User $user, object $game ): ?string {
+		if ( self::asc_role_path( $game, 'player' ) === null || ! function_exists( 'owc_asc_get_user_roles' ) ) {
+			return null;
+		}
+		$response = owc_asc_get_user_roles( self::CLIENT_ID, $user->user_email );
+		if ( ! is_array( $response ) || ! is_array( $response['roles'] ?? null ) ) {
+			return null;
+		}
+		$held = array_map( static fn( $path ): string => self::normalize_role_path( (string) $path ), $response['roles'] );
+
+		foreach ( array_keys( self::game_role_map() ) as $role ) {
+			$path = (string) self::asc_role_path( $game, (string) $role );
+			foreach ( $held as $held_path ) {
+				if ( $held_path === $path || strpos( $held_path, $path . '/' ) === 0 ) {
+					return (string) $role;
+				}
+			}
+		}
+		return null;
 	}
 
 	/**

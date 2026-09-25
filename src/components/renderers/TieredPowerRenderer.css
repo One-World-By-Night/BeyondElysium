@@ -14,7 +14,7 @@
 .be-tiered-power .be-tiered-power__rank-rows {
 	list-style: none;
 	margin: 0;
-	padding: 0;
+	padding: 0 0 0 1em;
 }
 
 .be-tiered-power .be-tiered-power__rank-rows li {

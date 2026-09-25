@@ -135,7 +135,8 @@ class Characters_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Finds an account to assign as a character's player, for a Storyteller of this chronicle.
+	 * Finds an account to assign as a character's player or to add as a player, for a Storyteller of this chronicle:
+	 * every account on the network, not only this site's.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response
@@ -152,6 +153,7 @@ class Characters_Controller extends Base_Controller {
 		}
 
 		$users = get_users( [
+			'blog_id'        => is_multisite() ? 0 : get_current_blog_id(),
 			'number'         => 20,
 			'orderby'        => 'display_name',
 			'order'          => 'ASC',

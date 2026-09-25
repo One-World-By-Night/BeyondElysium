@@ -50,6 +50,51 @@ class Trait_Grouping {
 	}
 
 	/**
+	 * Converts a trait_list block's held entries into `{name, total, note}` rows whose total is each entry's points.
+	 *
+	 * @param mixed  $data       Raw `sheet_data[block_slug]` value, already array-decoded JSON.
+	 * @param object $definition Decoded trait_list block definition (`items` catalog).
+	 * @return array<int,array{name:string,total:mixed,note:?string}>
+	 */
+	public static function to_point_traits( mixed $data, object $definition ): array {
+		$traits = self::to_traits( $data );
+		if ( $traits === [] ) {
+			return [];
+		}
+
+		$items = (array) ( $definition->items ?? [] );
+		foreach ( array_values( (array) $data ) as $index => $entry ) {
+			$entry                     = is_array( $entry ) ? $entry : [];
+			$traits[ $index ]['total'] = self::points_for( $entry, self::find_item_by_name( $items, (string) ( $entry['name'] ?? '' ) ) );
+		}
+		return $traits;
+	}
+
+	/**
+	 * One held entry's points: the cost the character chose, else a held count above 1, else the catalog item's fixed
+	 * cost, else the held count, or null when there is none.
+	 *
+	 * @param array<string,mixed> $entry A held entry.
+	 * @param object|null         $item  Its catalog item, when there is one.
+	 */
+	public static function points_for( array $entry, ?object $item ): ?int {
+		if ( isset( $entry['chosen_cost'] ) && is_numeric( $entry['chosen_cost'] ) ) {
+			return (int) $entry['chosen_cost'];
+		}
+
+		$count = isset( $entry['count'] ) && is_numeric( $entry['count'] ) ? (int) $entry['count'] : null;
+		if ( $count !== null && $count > 1 ) {
+			return $count;
+		}
+
+		$cost = trim( (string) ( $item->cost ?? '' ) );
+		if ( preg_match( '/^\d+$/', $cost ) ) {
+			return (int) $cost;
+		}
+		return $count;
+	}
+
+	/**
 	 * Groups a block's held trait rows into nested group/subgroup buckets, driven by each row's matching catalog item's
 	 * `group`/`subgroup` fields.
 	 *
@@ -210,6 +255,20 @@ class Trait_Grouping {
 			$sum += Trait_Display::parse_total( $total );
 		}
 		return $sum;
+	}
+
+	/**
+	 * The number shown after a trait_list section's title: the sum of every entry's total, or, for a block whose count is
+	 * a price, how many entries are held.
+	 *
+	 * @param array<int,array{name:string,total:mixed,note:?string}> $traits Already bridged via to_traits().
+	 * @return int|null
+	 */
+	public static function section_count( array $traits, bool $count_is_cost = false ): ?int {
+		if ( $count_is_cost ) {
+			return $traits === [] ? null : count( $traits );
+		}
+		return self::section_total( $traits );
 	}
 
 	/** @param mixed $total */

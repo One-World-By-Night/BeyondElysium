@@ -54,6 +54,7 @@ class CharacterExporterThreadTest extends WP_UnitTestCase {
 					[ 'name' => 'Bruised', 'count' => 3 ],
 					[ 'name' => 'Wounded', 'count' => 2 ],
 				],
+				'vampire-bonds'       => [ [ 'name' => 'Marcus', 'count' => 3, 'custom' => true ] ],
 			],
 		] );
 
@@ -85,13 +86,13 @@ class CharacterExporterThreadTest extends WP_UnitTestCase {
 			'target_type' => 'world_object', 'target_id' => $item_id, 'created_by' => 1,
 		] );
 
-		// A real import_note change, for the preserve_as_note (Bonds - no live BE model) backfill path.
+		// A real import_note change, for the preserve_as_note (Miscellaneous - no live BE model) backfill path.
 		Change_Engine::submit( $this->character_id, [
 			'change_type' => 'import_note', 'category' => 'import',
 			'change_data' => [
 				'source_file' => 'test.gex', 'imported_at' => current_time( 'mysql' ), 'action' => 'created',
 				'raw_record'  => [ 'trait_lists' => [
-					[ 'name' => 'Bonds', 'traits' => [
+					[ 'name' => 'Miscellaneous', 'traits' => [
 						[ 'name' => 'Sire', 'total' => '5', 'note' => '' ],
 					] ],
 				] ],
@@ -163,11 +164,19 @@ class CharacterExporterThreadTest extends WP_UnitTestCase {
 		$this->assertSame( [ '3', '2' ], array_column( $health, 'total' ) );
 	}
 
-	public function test_bonds_is_backfilled_from_the_import_note_raw_record(): void {
+	public function test_a_note_only_list_is_backfilled_from_the_import_note_raw_record(): void {
+		$result = GEX_Xml_Parser::parse_string( Character_Exporter::export( $this->character_id )['xml'] );
+		$misc   = $result['characters'][0]['trait_lists']['Miscellaneous']['traits'];
+
+		$this->assertSame( [ 'Sire' ], array_column( $misc, 'name' ) );
+	}
+
+	public function test_bonds_export_from_the_bonds_list(): void {
 		$result = GEX_Xml_Parser::parse_string( Character_Exporter::export( $this->character_id )['xml'] );
 		$bonds  = $result['characters'][0]['trait_lists']['Bonds']['traits'];
 
-		$this->assertSame( [ 'Sire' ], array_column( $bonds, 'name' ) );
+		$this->assertSame( [ 'Marcus' ], array_column( $bonds, 'name' ) );
+		$this->assertSame( [ '3' ], array_column( $bonds, 'total' ) );
 	}
 
 	public function test_xp_totals_and_history_reflect_the_real_approved_earn(): void {

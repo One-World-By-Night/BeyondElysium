@@ -37,6 +37,25 @@ class SheetDocumentSectionTotalTest extends TestCase {
 		$this->assertSame( "Abilities \u{00B7} 5", $entry['title'] );
 	}
 
+	public function test_a_section_whose_counts_are_prices_shows_how_many_it_holds_not_their_sum(): void {
+		$sections = [ [ 'block_slug' => 'vampire-combo-disciplines', 'title' => 'Combo Disciplines' ] ];
+		$blocks   = [
+			'vampire-combo-disciplines' => (object) [
+				'section_type' => 'trait_list',
+				'definition'   => (object) [ 'items' => [], 'atomic' => false, 'count_is_cost' => true ],
+			],
+		];
+		$sheet_data = [
+			'vampire-combo-disciplines' => [
+				[ 'name' => 'Draw Fire', 'count' => 12 ],
+				[ 'name' => 'Stunning Awe', 'count' => 7 ],
+			],
+		];
+
+		$entry = $this->sections( $sections, $blocks, $sheet_data )[0];
+		$this->assertSame( "Combo Disciplines \u{00B7} 2", $entry['title'] );
+	}
+
 	public function test_an_atomic_section_never_shows_a_total(): void {
 		$sections = [ [ 'block_slug' => 'vampire-rituals', 'title' => 'Rituals' ] ];
 		$blocks   = [

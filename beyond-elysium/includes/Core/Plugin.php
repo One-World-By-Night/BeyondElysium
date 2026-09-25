@@ -89,6 +89,8 @@ class Plugin {
 			'locale'   => get_locale(),
 			// The admin Import page URL.
 			'importPageUrl' => admin_url( 'admin.php?page=beyond-elysium-import' ),
+			// The paper sheets print on unless the viewer picks another.
+			'paperSize'     => \BeyondElysium\Services\Pdf_Writer::default_page_size(),
 			'capabilities' => [
 				'be_manage_plots'         => current_user_can( 'be_manage_plots' ),
 				'be_manage_characters'    => current_user_can( 'be_manage_characters' ),
@@ -144,6 +146,7 @@ class Plugin {
 			new \BeyondElysium\REST\Import_Controller(),
 			new \BeyondElysium\REST\Game_Import_Controller(),
 			new \BeyondElysium\REST\Game_Members_Controller(),
+			new \BeyondElysium\REST\Chronicle_Players_Controller(),
 			new \BeyondElysium\REST\Authorization_Settings_Controller(),
 			new \BeyondElysium\REST\Game_Stats_Controller(),
 			new \BeyondElysium\REST\Docs_Controller(),

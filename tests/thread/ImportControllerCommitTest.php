@@ -189,8 +189,8 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->admin_id );
 
 		$character = $this->synthetic_character( 'Iron Will', [
-			'Bonds' => [
-				'name'   => 'Bonds',
+			'Miscellaneous' => [
+				'name'   => 'Miscellaneous',
 				'traits' => [
 					[ 'name' => 'Sire', 'total' => '5', 'note' => '' ],
 				],
@@ -209,7 +209,7 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$preserved = $import_note->change_data['raw_record']['trait_lists'] ?? null;
 		$this->assertNotNull( $preserved, 'preserve_as_note lists must not be stripped from the raw_record.' );
 		$preserved_names = array_column( $preserved, 'name' );
-		$this->assertContains( 'Bonds', $preserved_names );
+		$this->assertContains( 'Miscellaneous', $preserved_names );
 		// Merits and Health Levels are both sheet_block-classified and already live in sheet_data.
 		$this->assertNotContains( 'Merits', $preserved_names );
 		$this->assertNotContains( 'Health Levels', $preserved_names );
@@ -790,6 +790,113 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$this->assertSame( 'elder', $power->levels[0]->tier );
 		$this->assertSame( 'Elder Path', $power->levels[0]->power_name );
 		$this->assertObjectNotHasProperty( 'level', $power->levels[0] );
+	}
+
+	/**
+	 * Bonds import into the Vampire Bonds list, one row per bond with its rating, and are not kept as a note.
+	 */
+	public function test_bonds_import_into_the_bonds_list_with_their_ratings(): void {
+		wp_set_current_user( $this->admin_id );
+
+		$character = $this->synthetic_character( 'Iron Will', [
+			'Bonds' => [
+				'name'   => 'Bonds',
+				'traits' => [
+					[ 'name' => 'SOC: Test-Only Talos', 'total' => '9', 'note' => '' ],
+					[ 'name' => 'Test-Only Regnant', 'total' => '2', 'note' => 'blood bond' ],
+				],
+			],
+		] );
+		$job_id = $this->inject_job( $this->synthetic_parsed( [ $character ] ) );
+
+		$response = $this->dispatch( $this->commit_request( $job_id ) );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+
+		$saved = Character::find( (int) $response->get_data()['characters'][0]['id'] );
+		$this->assertEquals(
+			[
+				[ 'name' => 'SOC: Test-Only Talos', 'count' => 9, 'custom' => true ],
+				[ 'name' => 'Test-Only Regnant', 'count' => 2, 'note' => 'blood bond', 'custom' => true ],
+			],
+			$saved->sheet_data['vampire-bonds'] ?? null
+		);
+
+		$changes     = \BeyondElysium\Models\Change::for_character( (int) $saved->id );
+		$import_note = current( array_filter( $changes, static fn( $c ) => $c->change_type === 'import_note' ) );
+		$kept        = array_column( (array) ( $import_note->change_data['raw_record']['trait_lists'] ?? [] ), 'name' );
+		$this->assertNotContains( 'Bonds', $kept );
+	}
+
+	/**
+	 * A trait labelled as a combo lands in the combo list: the catalog's entry when it holds one, otherwise a custom
+	 * combo whose count is the file's value, its cost.
+	 */
+	public function test_a_combo_in_the_disciplines_list_lands_in_the_combo_list_with_its_cost(): void {
+		wp_set_current_user( $this->admin_id );
+
+		$character = $this->synthetic_character( 'Iron Will' );
+		$character['trait_lists']['Disciplines'] = [
+			'name'   => 'Disciplines',
+			'traits' => [
+				[ 'name' => 'Combo: Test-Only Unlisted Combo (&)', 'total' => '12', 'note' => '' ],
+				[ 'name' => 'Combi. Discipline: Draw Fire', 'total' => '12', 'note' => '' ],
+				[ 'name' => 'Combo Test-Only Run-In Combo', 'total' => '9', 'note' => '' ],
+			],
+		];
+
+		$job_id = $this->inject_job( $this->synthetic_parsed( [ $character ] ) );
+		$job    = get_transient( 'be_import_job_' . $job_id );
+		$this->assertSame( [], $job['preview']['unresolved'], 'a labelled combo never waits on a Storyteller' );
+
+		$response = $this->dispatch( $this->commit_request( $job_id ) );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+
+		$saved = Character::find( (int) $response->get_data()['characters'][0]['id'] );
+		$this->assertSame(
+			[
+				[ 'name' => 'Test-Only Unlisted Combo (&)', 'count' => 12, 'custom' => true ],
+				[ 'name' => 'Draw Fire', 'count' => 12 ],
+				[ 'name' => 'Test-Only Run-In Combo', 'count' => 9, 'custom' => true ],
+			],
+			$saved->sheet_data['vampire-combo-disciplines'] ?? null
+		);
+		$this->assertArrayNotHasKey( 'vampire-disciplines', $saved->sheet_data, 'nothing labelled as a combo stays a discipline' );
+	}
+
+	/**
+	 * A pick the file gives no tier for is added with none, never as elder.
+	 */
+	public function test_add_to_catalog_adds_a_pick_with_no_tier_when_the_file_names_none(): void {
+		wp_set_current_user( $this->admin_id );
+
+		$family = 'Test-Only-Untiered-Tradition-' . wp_generate_password( 8, false );
+		$character = $this->synthetic_character( 'Iron Will' );
+		$character['trait_lists']['Disciplines'] = [
+			'name'   => 'Disciplines',
+			'traits' => [ [ 'name' => "{$family}: Unknown Path", 'total' => '', 'note' => '' ] ],
+		];
+
+		$job_id = $this->inject_job( $this->synthetic_parsed( [ $character ] ) );
+		$job    = get_transient( 'be_import_job_' . $job_id );
+		$entry  = $job['preview']['unresolved'][0];
+
+		$request = $this->commit_request( $job_id );
+		$request->set_param( 'resolutions', [
+			'traits' => [
+				[
+					'character' => $entry['character'], 'block' => $entry['block'], 'raw' => $entry['raw'],
+					'action' => 'keep_custom', 'add_to_catalog' => true,
+				],
+			],
+		] );
+		$this->assertSame( 200, $this->dispatch( $request )->get_status() );
+
+		$block = \BeyondElysium\Models\Schema_Block::find_for_game( 'vampire-disciplines', $this->game_slug );
+		$power = current( array_filter( $block->definition->powers, static fn( $p ) => $p->name === $family ) );
+		$this->assertNotFalse( $power );
+		$this->assertCount( 1, $power->levels );
+		$this->assertSame( 'Unknown Path', $power->levels[0]->power_name );
+		$this->assertObjectNotHasProperty( 'tier', $power->levels[0] );
 	}
 
 	/**

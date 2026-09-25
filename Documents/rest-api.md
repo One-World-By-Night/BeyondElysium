@@ -41,7 +41,7 @@ capability plus their row in `be_game_members` for that chronicle. See the
 | PUT | `/games/{slug}` | `be_manage_games` | Update name, slug, description, settings, `asc_role_path`, `notifications_enabled`. `settings` merges into what is stored, key by key; `settings.enabled_factions` merges one level further, stack by stack and field by field, so a write names only the fields it changes (an empty list lifts that field's restriction) |
 | DELETE | `/games/{slug}` | `be_manage_games` | Delete a chronicle. One that still holds content (characters, plots, world objects, its own templates or schema-block forks, named saved queries, verification codes, transfers) is refused with `409 chronicle_has_content` and `data.counts`, unless `?with_content=1` - which deletes all of it, memberships included, in one transaction. Nothing is ever left under the slug. `POST /games` refuses an explicit slug still holding a deleted chronicle's content (`409 slug_has_orphaned_content`), and a rename onto one is refused (`409 orphan_collision`) |
 | GET | `/games/{slug}/content` | `be_manage_games` | Counts what deleting the chronicle would delete with it (`characters`, `plots`, `world_objects`, `templates`, `schema_blocks`, `saved_queries`, `attestations`, `transfers`) - the Games screen names these in its one delete confirmation |
-| GET | `/my/games` | `be_view_characters` | Only the chronicles the caller actually holds a `be_game_members` row in, each with the role held there (`{slug, name, role}`) — the real data source for the My Chronicle / Storyteller Toolkit chronicle switcher |
+| GET | `/my/games` | `be_view_characters` | Only the chronicles the caller actually holds a `be_game_members` row in, each with the role held there and whether the chronicle is linked to accessSchema (`{slug, name, role, asc_linked}`; `asc_linked` is true when the site reads accessSchema and the chronicle names an `asc_role_path`), plus, when accessSchema is on, each chronicle whose `asc_role_path` grants the caller a role, with the highest role held there — the real data source for the My Chronicle / Storyteller Toolkit chronicle switcher |
 | GET | `/{game_slug}/my/capabilities` | logged in (any) | What the caller can actually do *in this one chronicle* — `be_manage_characters`, `be_manage_plots`, `be_manage_schemas`, `be_manage_connections`, `be_manage_boons`, each resolved through the same chronicle-scoped `Authorization::check_request()` every write route uses, not the site-wide snapshot every page load carries. An unresolvable `game_slug` or a caller with no relationship to this chronicle still returns `200` with every flag `false`, never an error — a switcher renders "no access here" rather than failing |
 
 ## Schema Blocks
@@ -119,7 +119,9 @@ resolution logic and by construction of the merge itself.
 | DELETE | `/{game_slug}/characters/{id}` | `be_manage_characters` | Delete, cascading its changes/snapshots/sheet style |
 | GET | `/{game_slug}/characters/statuses` | `be_manage_characters` | The fixed status vocabulary (`active`, `inactive`, `retired`, `dead`, `pending`) — sources the bulk-status picker rather than hardcoding the list a second time client-side |
 | POST | `/{game_slug}/characters/bulk-status` | `be_manage_characters` | Set the same status on a batch of characters. Returns a per-character result (`{results: [{id, success, error?}], updated}`), never all-or-nothing — one bad or foreign id in the batch fails only that entry |
-| GET | `/wp-users` | `be_manage_characters` | Not game-scoped — searches WordPress accounts for the "assign a player" picker |
+| GET | `/wp-users` | `be_manage_games` | Not game-scoped — a site administrator's search of WordPress accounts by display name, email or login |
+| GET | `/{game_slug}/wp-users` | `be_manage_characters` | A chronicle Storyteller's account search, for assigning a player to a character or adding a player: `search` needs at least three letters of a name, and an email address comes back only when the search is that exact address. On a multisite it searches every account on the network, not only this site's |
+
 
 ## Changes
 
@@ -380,6 +382,15 @@ game. It reuses the same review/accept/refuse shape Transfers already establishe
 | POST | `/{game_slug}/members` | `be_manage_games` | Add a member, or change an existing member's role |
 | DELETE | `/{game_slug}/members/{wp_user_id}` | `be_manage_games` | Remove a member's chronicle-scoped access |
 
+
+## Chronicle Players (for the chronicle's HST and AST)
+
+| Method | Path | Capability | Notes |
+|---|---|---|---|
+| GET | `/{game_slug}/players` | `be_manage_characters` | `{players: [{wp_user_id, display_name, since}], asc_role_path}` — the chronicle's player-role members, by display name, and the accessSchema player path. All three players routes answer `404 players_unavailable` for a chronicle not linked to accessSchema (the site does not read it, or the chronicle names no `asc_role_path`) |
+| POST | `/{game_slug}/players` | `be_manage_characters` | `wp_user_id` of an existing account. Joins them to the site as a subscriber when they are not on it (multisite), writes a `player` membership row, and grants `{asc_role_path}/player` through owbn-core, then refreshes that one account's cached roles. Returns `{status, site_added, asc: {attempted, granted, role_path, message}}` with `status` `added` (201), `already_player` or `staff` (200, a staff member left unchanged); `404 no_account` for an account that doesn't exist. A grant accessSchema refuses is reported in `asc` and the membership stands |
+| DELETE | `/{game_slug}/players/{wp_user_id}` | `be_manage_characters` | Removes the `player` membership row and revokes the player role; the account's characters are untouched. Returns `{status: removed or not_member, asc: {attempted, revoked, role_path, message}}`; `409 staff_member` for a staff member |
+
 ## Setup Status
 
 | Method | Path | Capability | Notes |
@@ -429,7 +440,7 @@ Site-wide, not game-scoped — lives on the Chronicle Access admin screen.
 
 | Method | Path | Capability | Notes |
 |---|---|---|---|
-| GET | `/{game_slug}/sheets/pdf` | `be_view_characters` | Returns PDF bytes for one or more characters (`character_ids`, comma-separated, max 50). A manager may request any character in the chronicle; a non-manager only their own — one denied or missing id fails the whole request, as does one whose creature type no longer exists (`404 creature_stack_not_found`, naming the character). Signed when the site has a signing certificate; without one the PDF is stamped UNSIGNED on every page and its filename ends `-unsigned.pdf`. Optional `full_power_names`, `background`, `notes`, `xp_history` |
+| GET | `/{game_slug}/sheets/pdf` | `be_view_characters` | Returns PDF bytes for one or more characters (`character_ids`, comma-separated, max 50). A manager may request any character in the chronicle; a non-manager only their own — one denied or missing id fails the whole request, as does one whose creature type no longer exists (`404 creature_stack_not_found`, naming the character). Signed when the site has a signing certificate; without one the PDF is stamped UNSIGNED on every page and its filename ends `-unsigned.pdf`. Optional `full_power_names`, `background`, `notes`, `xp_history`, `show_cost` (default on), and `page_size` (`letter` or `a4`; left out, the site's language decides: Letter for a US, Canadian, Mexican or Philippine locale, A4 otherwise; anything else is a 400) |
 | GET | `/{game_slug}/sheets/availability` | `be_view_characters` | Preflight: is signing configured on this site right now (`ok: false` means prints come out unsigned) |
 
 ## Verify

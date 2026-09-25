@@ -302,7 +302,8 @@ export function groupPickOptions(
 }
 
 /**
- * The rank a held pick sits under, for grouping the "held" list the same way the "add" picker is grouped.
+ * The rank a held pick sits under, for grouping the "held" list the same way the "add" picker is grouped, or an empty
+ * string when neither the catalog nor the row knows it.
  */
 export function pickRankOf(
 	definition: TieredPowerDefinition,
@@ -325,14 +326,17 @@ export function pickRankOf(
 			return tier;
 		}
 	}
-	return displayableTier( row.tier ) ?? 'elder';
+	return displayableTier( row.tier ) ?? '';
 }
 
 /**
- * Capitalizes a rank word ("elder" -> "Elder") for a section heading.
+ * Capitalizes a rank word ("elder" -> "Elder") for a section heading, or names the group of picks whose rank is not
+ * known.
  */
 function rankHeading( rank: string ): string {
-	return rank.length === 0 ? rank : rank[ 0 ].toUpperCase() + rank.slice( 1 );
+	return rank.length === 0
+		? __( 'Other', 'beyond-elysium' )
+		: rank[ 0 ].toUpperCase() + rank.slice( 1 );
 }
 
 /**

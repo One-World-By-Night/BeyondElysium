@@ -11547,3 +11547,135 @@ msgstr "Configurar"
 #, js-format
 msgid "%1$d of %2$d done."
 msgstr "%1$d de %2$d concluídos."
+
+#: build/index.js:1
+msgid "Paper"
+msgstr "Papel"
+
+#: build/index.js:1
+msgid "Letter"
+msgstr "Carta"
+
+#: build/index.js:1
+msgid "A4"
+msgstr "A4"
+
+#: build/index.js:1
+msgid "That account does not exist. They need to sign in through OWbN once first."
+msgstr "Essa conta não existe. A pessoa precisa entrar pelo OWbN uma vez antes."
+
+#: build/index.js:1
+msgid "That account does not exist."
+msgstr "Essa conta não existe."
+
+#: includes/REST/Chronicle_Players_Controller.php:137
+msgid "This chronicle is not linked to OWbN accessSchema, so its players are not managed here."
+msgstr "Esta crônica não está ligada ao accessSchema do OWbN, então os jogadores dela não são gerenciados aqui."
+
+#: build/index.js:1
+msgid "Only players are removed here. A staff role is changed on Chronicle Access."
+msgstr "Aqui só se removem jogadores. Um cargo da equipe é alterado em Acesso à Crônica."
+
+#: build/index.js:1
+msgid "%s is now a player here."
+msgstr "%s agora é um jogador aqui."
+
+#: build/index.js:1
+msgid "%s was already a player here."
+msgstr "%s já era um jogador aqui."
+
+#: build/index.js:1
+msgid "%1$s is on this chronicle’s staff (%2$s). Nothing changed."
+msgstr "%1$s faz parte da equipe desta crônica (%2$s). Nada foi alterado."
+
+#: build/index.js:1
+msgid "%s is no longer a player here. Their characters are unchanged."
+msgstr "%s não é mais um jogador aqui. Seus personagens não foram alterados."
+
+#: build/index.js:1
+msgid "%s was not a player here."
+msgstr "%s não era um jogador aqui."
+
+#: build/index.js:1
+msgid "They were added to this site too."
+msgstr "A pessoa também foi adicionada a este site."
+
+#: build/index.js:1
+msgid "OWbN role granted: %s."
+msgstr "Papel do OWbN concedido: %s."
+
+#: build/index.js:1
+msgid "OWbN role removed: %s."
+msgstr "Papel do OWbN removido: %s."
+
+#: build/index.js:1
+msgid "OWbN did not grant %1$s (%2$s). They are still a player here; an OWbN admin can grant the role."
+msgstr "O OWbN não concedeu %1$s (%2$s). A pessoa continua sendo um jogador aqui; um administrador do OWbN pode conceder o papel."
+
+#: build/index.js:1
+msgid "no reason given"
+msgstr "nenhum motivo informado"
+
+#: build/index.js:1
+msgid "OWbN did not remove %1$s (%2$s); an OWbN admin can remove the role."
+msgstr "O OWbN não removeu %1$s (%2$s); um administrador do OWbN pode remover o papel."
+
+#: build/index.js:1
+msgid "Failed to load the players."
+msgstr "Falha ao carregar os jogadores."
+
+#: build/index.js:1
+msgid "Failed to add the player."
+msgstr "Falha ao adicionar o jogador."
+
+#: build/index.js:1
+msgid "Failed to remove the player."
+msgstr "Falha ao remover o jogador."
+
+#: build/index.js:1
+msgid "Take %s out of this chronicle? Their characters stay as they are."
+msgstr "Tirar %s desta crônica? Seus personagens continuam como estão."
+
+#: build/index.js:1
+msgid "Add a player"
+msgstr "Adicionar um jogador"
+
+#: build/index.js:1
+msgid "Find an OWbN account"
+msgstr "Encontrar uma conta do OWbN"
+
+#: build/index.js:1
+msgid "At least three letters of a name, or an exact email"
+msgstr "Pelo menos três letras de um nome, ou um e-mail exato"
+
+#: build/index.js:1
+msgid "Someone with no OWbN account yet needs to sign in through OWbN once before you can add them."
+msgstr "Quem ainda não tem conta no OWbN precisa entrar pelo OWbN uma vez antes que você possa adicioná-lo."
+
+#: build/index.js:1
+msgid "No account matches."
+msgstr "Nenhuma conta encontrada."
+
+#: build/index.js:1
+msgid "Already a player"
+msgstr "Já é jogador"
+
+#: build/index.js:1
+msgid "Add as player"
+msgstr "Adicionar como jogador"
+
+#: build/index.js:1
+msgid "Players (%d)"
+msgstr "Jogadores (%d)"
+
+#: build/index.js:1
+msgid "Adding someone here also grants them %s in OWbN, and removing them takes it away. Someone given that role in OWbN directly can play here too, though they are not listed until they are added here."
+msgstr "Adicionar alguém aqui também lhe concede %s no OWbN, e removê-lo retira esse papel. Quem recebe esse papel diretamente no OWbN também pode jogar aqui, mas só aparece na lista depois de ser adicionado aqui."
+
+#: build/index.js:1
+msgid "No players yet."
+msgstr "Nenhum jogador ainda."
+
+#: build/index.js:1
+msgid "(account removed)"
+msgstr "(conta removida)"

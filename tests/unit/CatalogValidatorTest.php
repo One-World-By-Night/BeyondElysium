@@ -504,6 +504,18 @@ class CatalogValidatorTest extends TestCase {
 		$this->assertSame( [], Catalog_Validator::validate_file( $this->file( 'preset', 'approval-reason-presets', [ 'Coordinator Approval' ] ), 'approval-reason-presets' ) );
 	}
 
+	public function test_a_template_section_may_list_its_former_titles(): void {
+		$tpl = $this->file( 'template', 'werewolf.sheet_full', [ 'sections' => [ [ 'block_slug' => 'werewolf-identity', 'title' => 'Identity', 'former_titles' => [ 'Old Identity', 'Older Identity' ] ] ] ] );
+		$this->assertSame( [], Catalog_Validator::validate_file( $tpl, 'werewolf.sheet_full' ) );
+	}
+
+	public function test_former_titles_must_be_a_non_empty_list_of_titles(): void {
+		foreach ( [ 'Old Identity', [], [ '' ], [ 'Old Identity', 7 ], [ 'a' => 'Old Identity' ] ] as $former ) {
+			$tpl = $this->file( 'template', 'werewolf.sheet_full', [ 'sections' => [ [ 'block_slug' => 'werewolf-identity', 'former_titles' => $former ] ] ] );
+			$this->assertStringContainsString( '`former_titles` must be a non-empty list of titles', implode( ' | ', Catalog_Validator::validate_file( $tpl, 'werewolf.sheet_full' ) ), wp_json_encode( $former ) );
+		}
+	}
+
 	public function test_a_block_still_answers_to_every_block_rule_through_validate_file(): void {
 		$data = array_merge( $this->tiered( [ $this->ladder_family() ], [ 'ranks' => [] ] ), [ 'format' => 1, 'name' => 'T', 'kind' => 'block', 'provenance' => [ 'sources' => [ 'x' ] ] ] );
 		$this->assertStringContainsString( '`_meta.ranks` is empty', implode( ' | ', Catalog_Validator::validate_file( $data, 'test-block' ) ) );

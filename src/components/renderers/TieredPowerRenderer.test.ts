@@ -66,13 +66,13 @@ describe( 'elderLabel/numericLabel/namedLabel (Decision 074)', () => {
 		);
 	} );
 
-	it( 'a keep_custom power with neither a level nor a stored tier still falls back to "elder", never undefined', () => {
+	it( 'a keep_custom power with neither a level nor a stored tier prints its name alone, never "elder"', () => {
 		const held = {
 			name: 'Dur-An-Ki',
 			power_name: 'Something Unrecognizable',
 		};
 		expect( elderLabel( DEFINITION, held ) ).toBe(
-			'Dur-An-Ki: Something Unrecognizable (elder)'
+			'Dur-An-Ki: Something Unrecognizable'
 		);
 	} );
 
@@ -151,13 +151,19 @@ describe( 'namedModeRows (0.99.2, "Query beyond characters" sibling ask: full st
 		).toEqual( [] );
 	} );
 
-	it( 'lists only the one specific power for an Elder-and-above pick - there is no stack beneath it', () => {
+	it( 'an Elder-and-above pick lists nothing beneath its own line, which already names it', () => {
 		expect(
 			namedModeRows( DEFINITION, {
 				name: 'Celerity',
 				power_name: 'Blink',
 			} )
-		).toEqual( [ 'Celerity: Blink (elder)' ] );
+		).toEqual( [] );
+	} );
+
+	it( 'a family missing from the catalog lists nothing, never its own label once per level', () => {
+		expect(
+			namedModeRows( DEFINITION, { name: 'Mortis', level: 5 } )
+		).toEqual( [] );
 	} );
 
 	it( 'a non-sequential block still expands the full stack, not just the current rung', () => {
@@ -291,15 +297,13 @@ describe( 'placeholder tiers never reach a player (2026-09-21)', () => {
 		sequential: false,
 	} as never;
 
-	it( 'renders `***` as elder rather than printing the sentinel', () => {
+	it( 'prints no tier for `***` rather than printing the sentinel or guessing elder', () => {
 		const held = {
 			name: 'Combination',
 			tier: '***',
 			power_name: 'Sawafi Form',
 		} as never;
-		expect( elderLabel( DEF, held ) ).toBe(
-			'Combination: Sawafi Form (elder)'
-		);
+		expect( elderLabel( DEF, held ) ).toBe( 'Combination: Sawafi Form' );
 	} );
 
 	it( 'treats unknown and empty as placeholders too', () => {
@@ -310,7 +314,7 @@ describe( 'placeholder tiers never reach a player (2026-09-21)', () => {
 				power_name: 'Sawafi Form',
 			} as never;
 			expect( elderLabel( DEF, held ) ).toBe(
-				'Combination: Sawafi Form (elder)'
+				'Combination: Sawafi Form'
 			);
 		}
 	} );

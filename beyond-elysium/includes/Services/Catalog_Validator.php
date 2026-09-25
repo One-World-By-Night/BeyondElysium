@@ -119,6 +119,12 @@ class Catalog_Validator {
 				$errors[] = "{$where} names no `block_slug`";
 				continue;
 			}
+			if ( ! $is_stack && array_key_exists( 'former_titles', $section ) ) {
+				$former = $section['former_titles'];
+				if ( ! is_array( $former ) || $former === [] || ! array_is_list( $former ) || array_filter( $former, static fn( $title ): bool => ! is_string( $title ) || $title === '' ) !== [] ) {
+					$errors[] = sprintf( '%s ("%s") `former_titles` must be a non-empty list of titles', $where, $section['block_slug'] );
+				}
+			}
 			if ( $is_stack ) {
 				if ( ! is_string( $section['label'] ?? null ) || $section['label'] === '' ) {
 					$errors[] = sprintf( '%s ("%s") has no `label`', $where, $section['block_slug'] );
@@ -276,6 +282,9 @@ class Catalog_Validator {
 	 */
 	private static function validate_trait_list( array $definition ): array {
 		$errors = [];
+		if ( array_key_exists( 'print_rings', $definition ) && ! is_bool( $definition['print_rings'] ) ) {
+			$errors[] = '`print_rings` must be true or false';
+		}
 		foreach ( (array) $definition['items'] as $i => $item ) {
 			$at = sprintf( 'items[%s]', (string) $i );
 			if ( ! is_array( $item ) ) {

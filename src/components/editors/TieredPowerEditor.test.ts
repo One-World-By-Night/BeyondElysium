@@ -553,13 +553,13 @@ describe( 'pickRankOf', () => {
 		).toBe( 'methuselah' );
 	} );
 
-	it( 'falls back to "elder" as the last resort', () => {
+	it( 'reads no rank at all when nothing knows it, never "elder"', () => {
 		expect(
 			pickRankOf( def, {
 				name: 'Animalism',
 				power_name: 'Truly Unknown',
 			} )
-		).toBe( 'elder' );
+		).toBe( '' );
 	} );
 
 	it( 'never reads the placeholder tier "***" as a real rank', () => {
@@ -569,7 +569,7 @@ describe( 'pickRankOf', () => {
 				power_name: 'Imported Unresolved',
 				tier: '***',
 			} )
-		).toBe( 'elder' );
+		).toBe( '' );
 	} );
 } );
 

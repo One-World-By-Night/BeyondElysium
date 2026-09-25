@@ -5,7 +5,10 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { CSSProperties } from 'react';
-import { useChronicleSwitcher } from '../../lib/useChronicleSwitcher';
+import {
+	isLinkedToAccessSchema,
+	useChronicleSwitcher,
+} from '../../lib/useChronicleSwitcher';
 import { ChronicleSwitcher } from '../shared/ChronicleSwitcher';
 import { TabStrip } from '../shared/TabStrip';
 import { GameDashboard } from '../game/GameDashboard';
@@ -18,6 +21,7 @@ import { ReleaseBatches } from '../game/ReleaseBatches';
 import { DowntimeQueue } from '../game/DowntimeQueue';
 import { StaffQueue } from '../game/StaffQueue';
 import { FactionsAndPositions } from '../faction/FactionsAndPositions';
+import { ChroniclePlayers } from '../game/ChroniclePlayers';
 import {
 	playerTabUrl,
 	readTabFromUrl,
@@ -73,6 +77,11 @@ export function StorytellerToolkitPage() {
 			key: STORYTELLER_TABS.approvalQueue,
 			label: __( 'Approval Queue', 'beyond-elysium' ),
 		},
+		capabilities.be_manage_characters &&
+			isLinkedToAccessSchema( games, gameSlug ) && {
+				key: STORYTELLER_TABS.players,
+				label: __( 'Players', 'beyond-elysium' ),
+			},
 		capabilities.be_manage_plots && {
 			key: STORYTELLER_TABS.plots,
 			label: __( 'Plots & Rumors', 'beyond-elysium' ),
@@ -163,6 +172,13 @@ export function StorytellerToolkitPage() {
 
 						{ tab === STORYTELLER_TABS.approvalQueue && (
 							<ApprovalQueue
+								key={ gameSlug }
+								gameSlug={ gameSlug }
+							/>
+						) }
+
+						{ tab === STORYTELLER_TABS.players && (
+							<ChroniclePlayers
 								key={ gameSlug }
 								gameSlug={ gameSlug }
 							/>

@@ -12,7 +12,7 @@ class Schema {
 	/**
 	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.3.7';
+	const DB_VERSION = '1.3.8';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -2517,8 +2517,8 @@ class Schema {
 
 	/**
 	 * Every step of an upgrade, in order: tables, translation recovery, catalog reseed and the migrations after it, the
-	 * move onto per-creature lists, stacks and templates, retired-block removal, translation rescan, demo data and
-	 * capabilities.
+	 * move onto per-creature lists, combos moved into their combo lists, lists filled from import records, stacks and
+	 * templates, retired-block removal, translation rescan, demo data and capabilities.
 	 *
 	 * @param bool $fresh_install Whether no schema version was recorded before this upgrade.
 	 */
@@ -2547,6 +2547,12 @@ class Schema {
 		}
 		delete_option( 'be_catalog_cutover_record' );
 
+		// Moves combos held as picks in a power list into the combo list beside it.
+		\BeyondElysium\Services\Combo_Refile::run();
+
+		// Fills blocks from the lists earlier imports kept only in the import record.
+		\BeyondElysium\Services\Kept_List_Backfill::run();
+
 		Seeder::seed_creature_stacks();
 		Seeder::reconcile_stack_blocks();
 
@@ -2564,6 +2570,9 @@ class Schema {
 		self::repair_stale_npc_layouts();
 
 		self::complete_full_sheet_templates();
+
+		// Gives system templates the section titles their declared files name.
+		\BeyondElysium\Services\Template_Titles::run();
 
 		// Deletes each retired block that nothing names any more.
 		\BeyondElysium\Services\Retired_Blocks::remove_unused();

@@ -74,11 +74,29 @@ class SheetDocumentCostNumbersTest extends TestCase {
 	}
 
 	/**
-	 * An ordinary block is untouched by any of this, whichever way the option is set.
+	 * An ordinary block prints its rating, whichever way the option is set.
 	 */
 	public function test_an_unflagged_block_is_unaffected(): void {
 		$entry = $this->sections( $this->layout(), $this->combo_block( false, 'dot' ), $this->combo_sheet(), [ 'show_cost' => false ] )[0];
 
-		$this->assertSame( [ [ 'label' => null, 'rows' => [ 'Draw Fire ●●●●●●●●●●●● 12' ] ] ], $entry['groups'] );
+		$this->assertSame(
+			[ [ 'label' => null, 'rows' => [ [ 'text' => 'Draw Fire x12', 'indent' => 0, 'circles' => 12 ] ] ] ],
+			$entry['groups']
+		);
+	}
+
+	/**
+	 * Every dot and multiplier display prints the name and its multiplier beside that many rings.
+	 */
+	public function test_dot_and_multiplier_displays_print_the_multiplier_and_its_rings(): void {
+		foreach ( [ 'dot', 'dot_separate', 'simple_dots', 'multiplier', 'multiplier_dot' ] as $display ) {
+			$entry = $this->sections( $this->layout(), $this->combo_block( false, $display ), $this->combo_sheet() )[0];
+
+			$this->assertSame(
+				[ [ 'label' => null, 'rows' => [ [ 'text' => 'Draw Fire x12', 'indent' => 0, 'circles' => 12 ] ] ] ],
+				$entry['groups'],
+				$display
+			);
+		}
 	}
 }

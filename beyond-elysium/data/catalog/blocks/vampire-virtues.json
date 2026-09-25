@@ -6,7 +6,8 @@
   "section_type": "resource_pool",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh",
+      "Each Path of Enlightenment's two Virtues: Chaining the Beast pp. 34-107, Laws of the Night Revised p. 73 and the Mind's Eye Theatre Sabbat Guide pp. 78-79 (tools/catalog/rulings.py VAMPIRE_PATH_VIRTUES)"
     ],
     "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
@@ -20,11 +21,52 @@
         "max": 5,
         "name_lookup": {
           "table": {
+            "Conscience": "Conscience",
             "Conviction": "Conviction"
           },
           "keyed_by": {
             "field": "Conscience or Conviction",
             "block_slug": "vampire-identity"
+          },
+          "otherwise": {
+            "keyed_by": {
+              "field": "Morality Path",
+              "block_slug": "vampire-identity"
+            },
+            "ignore_words": [
+              "the",
+              "of",
+              "and",
+              "path",
+              "morality"
+            ],
+            "table": {
+              "Humanity": "Conscience",
+              "Path of the Beast": "Conviction",
+              "Path of the Feral Heart": "Conviction",
+              "Path of Blood": "Conviction",
+              "Path of Bones": "Conviction",
+              "Path of Caine": "Conviction",
+              "Path of Cathari": "Conviction",
+              "Path of Death and the Soul": "Conviction",
+              "Path of Honorable Accord": "Conscience",
+              "Path of Lilith": "Conviction",
+              "Path of Metamorphosis": "Conviction",
+              "Path of Night": "Conviction",
+              "Path of Orion": "Conviction",
+              "Path of Paradox": "Conviction",
+              "Path of Power and the Inner Voice": "Conviction",
+              "Path of Redemption": "Conscience",
+              "Path of Revelations": "Conviction",
+              "Path of Evil Revelations": "Conviction",
+              "Path of Typhon": "Conviction",
+              "Path of Entelechy": "Conviction",
+              "Path of the Hive": "Conviction",
+              "Path of the Scorched Heart": "Conviction",
+              "Path of Self-Focus": "Conviction",
+              "Sharia El-Sama": "Conscience"
+            },
+            "unmatched": "Conscience/Conviction"
           }
         }
       },
@@ -35,11 +77,52 @@
         "max": 5,
         "name_lookup": {
           "table": {
+            "Self-Control": "Self-Control",
             "Instinct": "Instinct"
           },
           "keyed_by": {
             "field": "Self-Control or Instinct",
             "block_slug": "vampire-identity"
+          },
+          "otherwise": {
+            "keyed_by": {
+              "field": "Morality Path",
+              "block_slug": "vampire-identity"
+            },
+            "ignore_words": [
+              "the",
+              "of",
+              "and",
+              "path",
+              "morality"
+            ],
+            "table": {
+              "Humanity": "Self-Control",
+              "Path of the Beast": "Instinct",
+              "Path of the Feral Heart": "Instinct",
+              "Path of Blood": "Self-Control",
+              "Path of Bones": "Self-Control",
+              "Path of Caine": "Instinct",
+              "Path of Cathari": "Instinct",
+              "Path of Death and the Soul": "Self-Control",
+              "Path of Honorable Accord": "Self-Control",
+              "Path of Lilith": "Instinct",
+              "Path of Metamorphosis": "Instinct",
+              "Path of Night": "Instinct",
+              "Path of Orion": "Instinct",
+              "Path of Paradox": "Self-Control",
+              "Path of Power and the Inner Voice": "Instinct",
+              "Path of Redemption": "Self-Control",
+              "Path of Revelations": "Instinct",
+              "Path of Evil Revelations": "Instinct",
+              "Path of Typhon": "Self-Control",
+              "Path of Entelechy": "Self-Control",
+              "Path of the Hive": "Instinct",
+              "Path of the Scorched Heart": "Self-Control",
+              "Path of Self-Focus": "Instinct",
+              "Sharia El-Sama": "Self-Control"
+            },
+            "unmatched": "Self-Control/Instinct"
           }
         }
       },

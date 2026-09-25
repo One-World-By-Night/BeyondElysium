@@ -46,6 +46,14 @@ export interface EligibleMember {
 }
 
 /**
+ * One line of a sheet document: its text, or its text with an indent and, for a rated trait or a pool, the rating a
+ * printed sheet draws as empty circles.
+ */
+export type SheetDocumentRow =
+	| string
+	| { text: string; indent?: number; circles?: number };
+
+/**
  * One resolved section of a casting brief (or a signed sheet).
  */
 export interface SheetDocumentSection {
@@ -55,8 +63,8 @@ export interface SheetDocumentSection {
 	column: number;
 	order: number;
 	span: number;
-	rows?: string[];
-	groups?: Array< { label: string | null; rows: string[] } >;
+	rows?: SheetDocumentRow[];
+	groups?: Array< { label: string | null; rows: SheetDocumentRow[] } >;
 }
 
 /**
@@ -64,7 +72,10 @@ export interface SheetDocumentSection {
  */
 export interface CastingBriefDocument {
 	title: string;
-	header: Array< [ string, string ] >;
+	/**
+	 * Label and value pairs; a pool's pair carries its permanent rating third.
+	 */
+	header: Array< [ string, string ] | [ string, string, number ] >;
 	sections: SheetDocumentSection[];
 	prose: Array< [ string, string ] >;
 	provenance_lines: string[];

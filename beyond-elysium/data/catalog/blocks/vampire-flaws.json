@@ -5886,6 +5886,7 @@
         "approval_by_value": [],
         "prerequisites": []
       }
-    ]
+    ],
+    "display": "points"
   }
 }

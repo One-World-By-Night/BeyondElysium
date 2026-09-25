@@ -109,6 +109,15 @@ When the upgrade can't move everyone it stops, and a notice across the top of wp
 
 When every character is moved, the shared Abilities, Merits and Flaws blocks and two blocks no creature type lists any more (Demon Lores and Mortal Numina) are deleted from Schema Blocks. A block something still uses stays, and the PHP error log names what uses it. Take a database backup before the upgrade, as you would for any.
 
+## Combos and Bonds Moved by the 1.3.8 Upgrade
+
+Two things earlier imports left in the wrong place are put right by the upgrade itself, one character at a time, each with a line in the character's history and a snapshot of the sheet before it:
+
+- **Combos filed under Disciplines.** A Grapevine import used to keep a combo it could not match ("Combo: Spy Master", "Combi: Draw Fire", and the other spellings) as a custom pick under Disciplines, printed with "(elder)". The upgrade moves each one into Combo Disciplines as a custom combo, keeping the value it held as its XP price. A combo the character already holds there is not doubled, and a divider row such as "Combo Powers-----" stays where it is. Where import lost the price entirely, the combo arrives with no price shown; the site's host can restore those prices from the characters' saved Grapevine files.
+- **Bonds kept only in the import record.** A Vampire's Bonds list used to be kept in the character's import history because the sheet had nowhere to show it. The upgrade fills each character's new Bonds section from their newest import record, when that section is still empty.
+
+XP is never touched. A character nothing applies to is left alone, and running the upgrade again changes nothing.
+
 ## Adding a Creature Type Without Code
 
 This is the point of the schema-driven design: a new creature type is configuration, every time, not a code change.
@@ -143,6 +152,8 @@ Under **Beyond Elysium → Chronicle Setup → Chronicle Access**, an admin cont
 - **Data Management** (site-wide, not per-chronicle): whether uninstalling the plugin also deletes its data, and a one-click full JSON export of every plugin table for a backup or a migration.
 
 If accessSchema is off, not installed, or unreachable for a given request, every permission check falls back to this membership table automatically — a chronicle can run entirely on plain WordPress capabilities with no OWBN plugin stack present at all.
+
+On a chronicle linked to accessSchema (accessSchema on for the site, and an `asc_role_path` on the chronicle), the HST and AST add and remove **players** themselves from the Storyteller Toolkit's **Players** tab; staff roles stay here. Adding a player there also grants `{asc_role_path}/player` through the owbn-core accessSchema client, and removing one revokes it. A chronicle that isn't linked has no Players tab and its players routes answer 404, so its members are managed here alone. The accessSchema server only accepts a grant sent with its read-write API key, so the key owbn-core holds on this site must be that one; with the read-only key, the player is still added here and the Storyteller is told OWbN refused the grant.
 
 ## What an HST Can and Cannot Do
 

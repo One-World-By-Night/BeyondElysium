@@ -147,7 +147,7 @@ class Trait_Mapper {
 	 * @param string $raw_name
 	 * @param string $raw_total
 	 * @param object $block Decoded `tiered_power` `Schema_Block` row.
-	 * @return array{outcome:string,block_slug?:string,family?:string,level?:int,power_name?:string,tier?:string,tradition?:string,suggestions?:string[]}
+	 * @return array{outcome:string,block_slug?:string,family?:string,level?:int,power_name?:string,tier?:string|null,tradition?:string,suggestions?:string[]}
 	 */
 	public static function resolve_tiered_power_trait( string $raw_name, string $raw_total, $block ): array {
 		$powers   = (array) ( $block->definition->powers ?? [] );
@@ -187,18 +187,33 @@ class Trait_Mapper {
 	}
 
 	/**
-	 * Strips a leading `"Combo: "`/`"Combination: "` label from a held combo discipline's exported name, and any trailing
-	 * constituent-disciplines note in parentheses or brackets (`"Combo: Blood Sight (Aus 3, PoB 1)"` becomes `"Blood
-	 * Sight"`).
+	 * A combo label at the start of a name: "Combo", "Combi", "Combination" and their plurals and common misspellings,
+	 * optionally followed by "Power", "Discipline" or "Dis", then any colon, dash or hash.
+	 */
+	private const COMBO_LABEL = '/^\s*comb(?:o|os|i|is|ination|inations|inatino|iniation|niation)?\b\.?(?:\s+(?:powers?|disciplines?|dis)\b\.?)?\s*[-\x{2013}\x{2014}:#]*\s*/iu';
+
+	/**
+	 * The name a combo carries after its label ("Combo: Draw Fire", "Combi. Discipline: Draw Fire" and "Combo Draw Fire"
+	 * all name "Draw Fire"): an empty string for a label with nothing after it, or null when the name has no combo label.
+	 */
+	public static function combo_name( string $raw_name ): ?string {
+		if ( ! preg_match( self::COMBO_LABEL, $raw_name, $label ) ) {
+			return null;
+		}
+		return trim( substr( $raw_name, strlen( $label[0] ) ) );
+	}
+
+	/**
+	 * Strips a leading combo label from a held combo discipline's exported name, and any trailing constituent-disciplines
+	 * note in parentheses or brackets (`"Combo: Blood Sight (Aus 3, PoB 1)"` becomes `"Blood Sight"`).
 	 */
 	private static function strip_combo_decorations( string $raw_name ): string {
-		if ( ! preg_match( '/^comb(?:o|ination)\s*:\s*/i', $raw_name, $prefix_match ) ) {
+		$name = self::combo_name( $raw_name );
+		if ( $name === null ) {
 			return $raw_name;
 		}
-		$stripped = substr( $raw_name, strlen( $prefix_match[0] ) );
 		// Strips one trailing "(...)" or "[...]" group at the very end only.
-		$stripped = (string) preg_replace( '/\s*[\(\[][^\(\)\[\]]*[\)\]]\s*$/', '', $stripped );
-		return trim( $stripped );
+		return trim( (string) preg_replace( '/\s*[\(\[][^\(\)\[\]]*[\)\]]\s*$/', '', $name ) );
 	}
 
 	/**
@@ -242,7 +257,7 @@ class Trait_Mapper {
 	 * @param string   $raw_total
 	 * @param object[] $powers
 	 * @param object   $block Decoded tiered_power Schema_Block, blood_magic-flagged.
-	 * @return array{outcome:string,block_slug?:string,family?:string,level?:int,power_name?:string,tier?:string,tradition?:string,suggestions?:string[]}|null Null when the raw name has no "X: Y" shape at all, or Y matches no tradition's alternate name.
+	 * @return array{outcome:string,block_slug?:string,family?:string,level?:int,power_name?:string,tier?:string|null,tradition?:string,suggestions?:string[]}|null Null when the raw name has no "X: Y" shape at all, or Y matches no tradition's alternate name.
 	 */
 	private static function resolve_blood_magic_alternate_prefix( string $raw_name, string $raw_total, array $powers, $block ): ?array {
 		if ( ! preg_match( '/^([^:]+):\s*(.+)$/', $raw_name, $m ) ) {
@@ -368,7 +383,7 @@ class Trait_Mapper {
 	 * @param string   $power_name
 	 * @param object[] $powers
 	 * @param string   $block_slug
-	 * @return array{outcome:string,block_slug?:string,family?:string,power_name?:string,tier?:string,suggestions?:string[]}
+	 * @return array{outcome:string,block_slug?:string,family?:string,power_name?:string,tier?:string|null,suggestions?:string[]}
 	 */
 	private static function resolve_named_power( string $family_name, string $power_name, array $powers, string $block_slug ): array {
 		// An exact family-name match first, then a recorded `aliases` or `split_from` rename within this block.
@@ -394,7 +409,7 @@ class Trait_Mapper {
 					'block_slug' => $block_slug,
 					'family'     => $power->name,
 					'power_name' => $exact->power_name,
-					'tier'       => $exact->tier,
+					'tier'       => $exact->tier ?? null,
 				];
 			}
 		}
@@ -408,7 +423,7 @@ class Trait_Mapper {
 						'block_slug' => $block_slug,
 						'family'     => $power->name,
 						'power_name' => $level->power_name,
-						'tier'       => $level->tier,
+						'tier'       => $level->tier ?? null,
 					];
 				}
 			}

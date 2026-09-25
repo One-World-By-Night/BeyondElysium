@@ -424,7 +424,7 @@
             "tier": "basic",
             "power_name": "Distraction",
             "cost": "4",
-            "note": "the book-sourced seed files this as an Innate Ability; the OWBN Arcanoi packet makes it a rung"
+            "source": "the book-sourced seed files this as an Innate Ability; the OWBN Arcanoi packet makes it a rung"
           },
           {
             "level": 2,
@@ -581,7 +581,7 @@
             "tier": "basic",
             "power_name": "Surge",
             "cost": "4",
-            "note": "the book-sourced seed files this as an Innate Ability; the OWBN Arcanoi packet makes it a rung",
+            "source": "the book-sourced seed files this as an Innate Ability; the OWBN Arcanoi packet makes it a rung",
             "alternatives": [
               {
                 "power_name": "Lightning's Bite",
@@ -852,7 +852,7 @@
             "tier": "basic",
             "power_name": "In Memoriam",
             "cost": "4",
-            "note": "the book-sourced seed files this as an Innate Ability; the OWBN Arcanoi packet makes it a rung"
+            "source": "the book-sourced seed files this as an Innate Ability; the OWBN Arcanoi packet makes it a rung"
           },
           {
             "level": 2,
@@ -963,7 +963,7 @@
             "tier": "basic",
             "power_name": "Ping",
             "cost": "4",
-            "note": "the book-sourced seed files this as an Innate Ability; the OWBN Arcanoi packet makes it a rung"
+            "source": "the book-sourced seed files this as an Innate Ability; the OWBN Arcanoi packet makes it a rung"
           },
           {
             "level": 2,

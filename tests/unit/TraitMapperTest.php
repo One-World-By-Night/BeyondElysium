@@ -179,8 +179,15 @@ class TraitMapperTest extends TestCase {
 		$this->assertSame( 'world_object', $result['outcome'] );
 	}
 
-	public function test_bonds_has_no_be_model_and_is_preserved_not_dropped(): void {
+	public function test_bonds_import_into_the_vampire_bonds_block_and_are_backfilled(): void {
 		$result = Trait_Mapper::classify_list( 'vampire', 'Bonds' );
+		$this->assertSame( 'sheet_block', $result['outcome'] );
+		$this->assertSame( 'vampire-bonds', $result['block_slug'] );
+		$this->assertTrue( $result['backfill'] );
+	}
+
+	public function test_a_list_with_no_be_model_is_preserved_not_dropped(): void {
+		$result = Trait_Mapper::classify_list( 'vampire', 'Miscellaneous' );
 		$this->assertSame( 'preserve_as_note', $result['outcome'] );
 	}
 

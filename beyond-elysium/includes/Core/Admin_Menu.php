@@ -267,6 +267,8 @@ class Admin_Menu {
 			'nonce'   => wp_create_nonce( 'wp_rest' ),
 			'version' => BE_VERSION,
 			'locale'  => get_locale(),
+			// The paper sheets print on unless the viewer picks another.
+			'paperSize' => \BeyondElysium\Services\Pdf_Writer::default_page_size(),
 			'capabilities' => [
 				'be_manage_plots'          => current_user_can( 'be_manage_plots' ),
 				'be_manage_characters'     => current_user_can( 'be_manage_characters' ),

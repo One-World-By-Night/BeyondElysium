@@ -109,6 +109,16 @@ export function groupByCategory(
 	return groups;
 }
 
+/**
+ * A group's heading, or null when it is the section's only group.
+ */
+export function groupHeading(
+	label: string | null,
+	groupCount: number
+): string | null {
+	return groupCount > 1 ? label : null;
+}
+
 export function sortIfAlphabetized(
 	traits: Trait[],
 	alphabetize?: boolean
@@ -166,7 +176,11 @@ export function TraitListRenderer( {
 			<div className="be-trait-list" data-block-slug={ blockSlug }>
 				{ nested.map( ( { group, subgroups } ) => (
 					<div className="be-trait-list__group" key={ group }>
-						<h4 className="be-trait-list__category">{ group }</h4>
+						{ groupHeading( group, nested.length ) && (
+							<h4 className="be-trait-list__category">
+								{ group }
+							</h4>
+						) }
 						{ subgroups.map( ( { subgroup, items } ) => (
 							<div
 								className="be-trait-list__subgroup"
@@ -214,7 +228,7 @@ export function TraitListRenderer( {
 					className="be-trait-list__group"
 					key={ group.label ?? index }
 				>
-					{ group.label && (
+					{ groupHeading( group.label, groups.length ) && (
 						<h4 className="be-trait-list__category">
 							{ group.label }
 						</h4>

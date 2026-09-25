@@ -127,13 +127,25 @@ class IdentityFieldOptionsTest extends TestCase {
 			[ 'block_slug' => 'vampire-identity', 'field' => 'Conscience or Conviction' ],
 			$conscience['name_lookup']['keyed_by']
 		);
-		$this->assertSame( [ 'Conviction' => 'Conviction' ], $conscience['name_lookup']['table'] );
+		$this->assertSame( [ 'Conscience' => 'Conscience', 'Conviction' => 'Conviction' ], $conscience['name_lookup']['table'] );
 
 		$this->assertEquals(
 			[ 'block_slug' => 'vampire-identity', 'field' => 'Self-Control or Instinct' ],
 			$self_control['name_lookup']['keyed_by']
 		);
-		$this->assertSame( [ 'Instinct' => 'Instinct' ], $self_control['name_lookup']['table'] );
+		$this->assertSame( [ 'Self-Control' => 'Self-Control', 'Instinct' => 'Instinct' ], $self_control['name_lookup']['table'] );
+	}
+
+	public function test_an_unchosen_virtue_is_named_by_the_path_and_an_unknown_path_names_both(): void {
+		foreach ( [ 'Conscience' => [ 'Conviction', 'Conscience/Conviction' ], 'Self-Control' => [ 'Instinct', 'Self-Control/Instinct' ] ] as $name => [ $caine, $both ] ) {
+			$otherwise = $this->pool( 'vampire-virtues', $name )['name_lookup']['otherwise'];
+
+			$this->assertEquals( [ 'block_slug' => 'vampire-identity', 'field' => 'Morality Path' ], $otherwise['keyed_by'] );
+			$this->assertSame( $name, $otherwise['table']['Humanity'] );
+			$this->assertSame( $caine, $otherwise['table']['Path of Caine'] );
+			$this->assertSame( $both, $otherwise['unmatched'] );
+			$this->assertContains( 'path', $otherwise['ignore_words'] );
+		}
 	}
 
 	public function test_courage_has_no_name_lookup_at_all(): void {

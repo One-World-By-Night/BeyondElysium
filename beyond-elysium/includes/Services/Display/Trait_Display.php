@@ -5,8 +5,8 @@ namespace BeyondElysium\Services\Display;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Renders a single trait's name, total, and note into one of twelve display-mode strings (dot ratings, x-multipliers,
- * cost annotations, and so on) that a trait list's `display` setting selects per trait.
+ * Renders a single trait's name, total, and note into one of the display-mode strings (dot ratings, x-multipliers, cost
+ * annotations, a plain number, and so on) that a trait list's `display` setting selects per trait.
  *
  * @see src/lib/displayTrait.ts
  */
@@ -21,7 +21,8 @@ class Trait_Display {
 	 *                      (int|float|string) and `note` (string) properties.
 	 * @param string $mode  One of: simple, multiplier, multiplier_dot, dot, cost,
 	 *                      note_only, cost_only, dot_separate, simple_dots,
-	 *                      simple_number, simple_note, cost_number, cost_xp.
+	 *                      simple_number, simple_note, cost_number, cost_xp,
+	 *                      name_number, points.
 	 * @param string $dot   Glyph used by dot-rendering modes, defaulting to the one dot a
 	 *                      resource pool's points use too.
 	 * @return string
@@ -99,6 +100,12 @@ class Trait_Display {
 				$inner  = $note !== '' ? "{$priced}, {$note}" : $priced;
 				return "{$trait->name} ({$inner})";
 
+			case 'name_number':
+			case 'points':
+				// The name, any note in parentheses, then the number: "Acting (Paths) 5". No number without a total.
+				$out = $note !== '' ? "{$trait->name} ({$note})" : $trait->name;
+				return self::has_total( $trait->total ?? null ) ? "{$out} {$total}" : $out;
+
 			default:
 				return $trait->name;
 		}
@@ -121,6 +128,18 @@ class Trait_Display {
 			return 0;
 		}
 		return 0;
+	}
+
+	/**
+	 * Whether a trait carries a total at all: a number, or a string starting with one.
+	 *
+	 * @param int|float|string|null $total
+	 */
+	public static function has_total( int|float|string|null $total ): bool {
+		if ( is_int( $total ) || is_float( $total ) ) {
+			return is_finite( (float) $total );
+		}
+		return is_string( $total ) && (bool) preg_match( '/^-?\d+/', trim( $total ) );
 	}
 
 	/**

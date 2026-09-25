@@ -190,6 +190,17 @@
 	cursor: pointer;
 }
 
+.be-character-sheet__print-paper.be-character-sheet__print-paper {
+	width: auto;
+	min-height: var(--be-tap-min, 32px);
+	padding: 0.2rem 0.5rem;
+	border: 1px solid var(--be-sheet-accent);
+	border-radius: 3px;
+	background: var(--be-gray-29);
+	color: inherit;
+	font-size: 0.85rem;
+}
+
 
 .be-character-sheet__prose {
 	margin-top: 1rem;

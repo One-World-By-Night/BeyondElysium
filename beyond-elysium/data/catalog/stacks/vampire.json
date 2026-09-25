@@ -93,6 +93,12 @@
         "required": false
       },
       {
+        "block_slug": "vampire-bonds",
+        "label": "Bonds",
+        "display_order": 65,
+        "required": false
+      },
+      {
         "block_slug": "vampire-statuses",
         "label": "Status",
         "display_order": 70,

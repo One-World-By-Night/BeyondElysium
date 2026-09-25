@@ -188,6 +188,15 @@
       },
       {
         "order": 19,
+        "title": "Bonds",
+        "width": "half",
+        "column": 1,
+        "display": null,
+        "collapsed": false,
+        "block_slug": "vampire-bonds"
+      },
+      {
+        "order": 20,
         "title": "Vampire Status",
         "width": "full",
         "column": 1,
@@ -196,7 +205,7 @@
         "block_slug": "vampire-statuses"
       },
       {
-        "order": 20,
+        "order": 21,
         "title": "Merits",
         "width": "third",
         "column": 1,
@@ -205,7 +214,7 @@
         "block_slug": "vampire-merits"
       },
       {
-        "order": 21,
+        "order": 22,
         "title": "Flaws",
         "width": "third",
         "column": 1,
@@ -214,7 +223,7 @@
         "block_slug": "vampire-flaws"
       },
       {
-        "order": 22,
+        "order": 23,
         "title": "Derangements",
         "width": "third",
         "column": 1,

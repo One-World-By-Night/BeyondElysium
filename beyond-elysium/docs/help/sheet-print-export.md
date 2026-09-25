@@ -18,6 +18,8 @@ Open the character's Sheet (My Chronicle → Characters, then click a name). In 
     **Full power names** also switches every leveled power's display, on screen and in the PDF,
     from a single number to the full list of named rungs you hold. **Background** and **Notes**
     always show at the bottom of the sheet either way.
+  - **Show XP costs** - on by default. Prints each Combo Discipline's XP price beside it, such as "Draw Fire (12 XP)"; off, the price is left out.
+  - **Paper** - Letter or A4. It starts on the paper your site's language uses (Letter for a US, Canadian, Mexican or Philippine site language, A4 everywhere else); pick the other one for a different printer.
   - A notice reading "This site has no signing certificate yet, so prints are marked
     UNSIGNED," shown only when that's true.
   - **Open PDF** - opens a PDF of the sheet in a new tab. Signed with the site's certificate
@@ -40,6 +42,12 @@ Open the character's Sheet (My Chronicle → Characters, then click a name). In 
 2. Check whichever of **Background**, **Notes**, **XP History**, or **Full power names** you want included.
 3. Click **Open PDF**. The PDF opens in a new tab - print or save it from there.
 
+### Print on the other paper size
+
+1. Pick **Print / Export** and click **Go**.
+2. Change **Paper** to Letter or A4.
+3. Click **Open PDF**.
+
 ### Print your items
 
 1. Pick **Print My Items** and click **Go**.
@@ -54,6 +62,16 @@ Open the character's Sheet (My Chronicle → Characters, then click a name). In 
 1. Pick **Export to Grapevine (.gex)** and click **Go**.
 2. Check **Include verification code**.
 3. Click **Download .gex file**.
+
+## What the PDF looks like
+
+- **The header** - the character's name on the left and creature type on the right, then short facts three to a row: printed and last-changed dates, status, player, XP earned and unspent, the identity fields (clan, sect, generation, nature and so on) and each resource's permanent rating (Blood, Willpower), each with a row of empty circles under it, one per point, in groups of five.
+- **The attributes** - Physical, Social and Mental side by side, each with its negative traits under "Negative".
+- **Everything else** in three columns, in the sheet's own order. A long list carries on into the next column and then the next page, with its title repeated and "(cont.)" added. On a light sheet the columns share the sections out evenly. A section with nothing in it is left out.
+- **Trait lines** put empty circles in a column on the left, one per point, and the name and number beside them: "Occult x3 (Rituals)", "Brawl x5", "Lore: Nod x4". A rating of 1 drops its "x1", and a rating above five carries on in a second row of circles. Fill a circle in when you spend a point. Attributes, Abilities, Backgrounds, Health and Virtues get circles, drawn as a light grey outline so the text stays in front. Negative traits, Statuses and Bonds print the number alone, since you don't spend points on them.
+- **Merits and Flaws** show their points, "Acute Sense (Hearing) 2", Combo Disciplines their XP price, and Disciplines and other powers a plain number. None of them get circles.
+- **Virtues** carry the names your Path uses, such as Conviction and Instinct on the Path of Caine. When the sheet doesn't know your Path's virtues, both names print, "Conscience/Conviction". A choice made on the sheet always wins.
+- **Full power names** - each power's family line, "Animalism 5", with its named powers listed beneath it. A pick above the ladder shows its rank ("elder", "master") only when the catalog knows it.
 
 ## Things to know
 

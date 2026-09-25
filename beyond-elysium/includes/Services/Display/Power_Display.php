@@ -23,9 +23,9 @@ class Power_Display {
 	}
 
 	/**
-	 * Builds a named label for an Elder-and-above held power: "Family: Power (tier)" using the tier looked up from the
-	 * catalog when the power is found there, or "Family: Power {level}" when the entry carries its own numbered level
-	 * instead.
+	 * Builds a named label for an Elder-and-above held power: "Family: Power (tier)" when the tier is known, from the
+	 * catalog or the entry itself, "Family: Power" when it is not, or "Family: Power {level}" when the entry carries its
+	 * own numbered level instead.
 	 *
 	 * @param object                                                                       $definition
 	 * @param array{name:string,level?:int,power_name?:string,tier?:string,tradition?:string} $held
@@ -51,15 +51,29 @@ class Power_Display {
 
 		// Prefers a fresh catalog tier lookup.
 		$tier = self::displayable_tier( $found->tier ?? null )
-			?? self::displayable_tier( $held['tier'] ?? null )
-			?? 'elder';
+			?? self::pick_rank( $power, (string) ( $held['power_name'] ?? '' ) )
+			?? self::displayable_tier( $held['tier'] ?? null );
 
-		$qualifier = self::seam_qualifier( $power, $found );
-		if ( null !== $qualifier ) {
-			return $stem . ' (' . $tier . ' · ' . $qualifier . ')';
+		$parts = array_values( array_filter( [ $tier, self::seam_qualifier( $power, $found ) ], static fn( $part ): bool => null !== $part ) );
+
+		return [] === $parts ? $stem : $stem . ' (' . implode( ' · ', $parts ) . ')';
+	}
+
+	/**
+	 * The rank a pick is filed under in its family's `elder` container, or null when it is not filed there.
+	 */
+	private static function pick_rank( ?object $power, string $power_name ): ?string {
+		if ( ! $power ) {
+			return null;
 		}
-
-		return $stem . ' (' . $tier . ')';
+		foreach ( (array) ( $power->elder ?? [] ) as $rank => $picks ) {
+			foreach ( (array) $picks as $pick ) {
+				if ( ( ( (object) $pick )->power_name ?? null ) === $power_name ) {
+					return self::displayable_tier( (string) $rank );
+				}
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -100,7 +114,7 @@ class Power_Display {
 		$at    = false;
 		$len   = 0;
 		foreach ( self::tier_needles() as $needle ) {
-			$found = strpos( $lower, $needle );
+			$found = self::standalone_position( $lower, $needle );
 			if ( false !== $found ) {
 				$at  = $found;
 				$len = strlen( $needle );
@@ -116,6 +130,25 @@ class Power_Display {
 		$rest = trim( (string) preg_replace( '/^\((.*)\)$/', '$1', $rest ) );
 
 		return '' === $rest ? null : $rest;
+	}
+
+	/**
+	 * Where a word stands on its own in a lower-cased note: not inside a longer word ("winter") or a hyphenated one
+	 * ("master-level"), or false.
+	 *
+	 * @return int|false
+	 */
+	private static function standalone_position( string $haystack, string $needle ) {
+		$from = 0;
+		while ( false !== ( $at = strpos( $haystack, $needle, $from ) ) ) {
+			$before = $at > 0 ? $haystack[ $at - 1 ] : '';
+			$after  = $haystack[ $at + strlen( $needle ) ] ?? '';
+			if ( ! preg_match( '/[a-z0-9-]/', $before ) && ! preg_match( '/[a-z0-9-]/', $after ) ) {
+				return $at;
+			}
+			$from = $at + 1;
+		}
+		return false;
 	}
 
 	/**
@@ -157,7 +190,7 @@ class Power_Display {
 
 	/**
 	 * Builds a numeric-mode label for one held power: delegates to elder_label() for a named Elder-and-above pick, or
-	 * renders "Family {level}" for a plain numeric holding.
+	 * renders "Family {level}" for a plain numeric holding, and the family alone when it holds no level.
 	 *
 	 * @param object                                                                       $definition
 	 * @param array{name:string,level?:int,power_name?:string,tier?:string,tradition?:string} $held
@@ -166,7 +199,7 @@ class Power_Display {
 		if ( ! empty( $held['power_name'] ) ) {
 			return self::elder_label( $definition, $held, $use_pt );
 		}
-		return isset( $held['level'] ) ? $held['name'] . ' ' . $held['level'] : $held['name'] . ' ?';
+		return isset( $held['level'] ) ? $held['name'] . ' ' . $held['level'] : $held['name'];
 	}
 
 	/**
@@ -189,7 +222,8 @@ class Power_Display {
 	}
 
 	/**
-	 * Builds the label list "named" mode shows for one held power: the single label for an Elder-and-above pick.
+	 * The power names "named" mode lists beneath a held power's own line: every named power from rank 1 up to the held
+	 * level, each once, or nothing for an Elder-and-above pick or a family with no named levels.
 	 *
 	 * @param object                                                                       $definition
 	 * @param array{name:string,level?:int,power_name?:string,tier?:string,tradition?:string} $held
@@ -197,28 +231,26 @@ class Power_Display {
 	 */
 	public static function named_mode_rows( object $definition, array $held, bool $use_pt = false ): array {
 		if ( ! empty( $held['power_name'] ) ) {
-			return [ self::named_label( $definition, $held, $held['level'] ?? null, $use_pt ) ];
+			return [];
 		}
 
 		$power     = self::find_power( $definition, $held['name'] );
 		$rows      = [];
-		$max_level = $held['level'] ?? 0;
+		$max_level = (int) ( $held['level'] ?? 0 );
 
 		for ( $level = 1; $level <= $max_level; $level++ ) {
-			$at_rank = self::find_levels_at_rank( $power, $level );
-			if ( empty( $at_rank ) ) {
-				$rows[] = self::numeric_label( $definition, $held, $use_pt );
-				continue;
-			}
-			foreach ( $at_rank as $entry ) {
-				$name_pt   = $use_pt ? ( $entry->power_name_pt ?? '' ) : '';
-				$label     = $name_pt !== '' ? $name_pt : ( $entry->power_name ?? '' );
+			foreach ( self::find_levels_at_rank( $power, $level ) as $entry ) {
+				$name_pt = $use_pt ? ( $entry->power_name_pt ?? '' ) : '';
+				$label   = $name_pt !== '' ? $name_pt : (string) ( $entry->power_name ?? '' );
+				if ( $label === '' ) {
+					continue;
+				}
 				$qualifier = self::seam_qualifier( $power, $entry );
 				$rows[]    = null !== $qualifier ? $label . ' (' . $qualifier . ')' : $label;
 			}
 		}
 
-		return $rows;
+		return array_values( array_unique( $rows ) );
 	}
 
 	/**

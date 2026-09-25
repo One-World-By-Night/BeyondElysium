@@ -30,5 +30,10 @@
 	{ "name": "cost_number: total 0 still shows the number, not dots", "output": "Free Combo 0 XP" },
 	{ "name": "cost_xp: the price sits in parentheses after the name", "output": "Draw Fire (12 XP)" },
 	{ "name": "cost_xp: a note joins the price inside the same parens", "output": "Emerge Unscathed (8 XP, Tremere)" },
-	{ "name": "cost_xp: a zero price is still labelled, never blank", "output": "Free Combo (0 XP)" }
+	{ "name": "cost_xp: a zero price is still labelled, never blank", "output": "Free Combo (0 XP)" },
+	{ "name": "name_number: the name then the number", "output": "Academics 5" },
+	{ "name": "name_number: a note sits between the name and the number", "output": "Acting (Paths) 5" },
+	{ "name": "name_number: a total of 1 still shows", "output": "Initiated 1" },
+	{ "name": "name_number: no total prints the name alone, never a 0", "output": "Custom Merit" },
+	{ "name": "points: prints as name_number", "output": "Daredevil 3" }
 ]

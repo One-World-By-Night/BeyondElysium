@@ -465,5 +465,66 @@ STACK_SECTION_REPLACEMENTS = {
     'demon': {'demon-lores': [('demon-evocations', 'Lores (Evocations)'), ('demon-rituals', 'Rituals')]},
     'kueijin': {},
 }
-# kueijin-shintai is new content: the section is added rather than replacing anything.
-STACK_EXTRA_SECTIONS = {'kueijin': [('kueijin-shintai', 'Shintai', 62)]}
+# kueijin-shintai and vampire-bonds are new content: each section is added rather than replacing anything.
+STACK_EXTRA_SECTIONS = {'kueijin': [('kueijin-shintai', 'Shintai', 62)],
+                        'vampire': [('vampire-bonds', 'Bonds', 65)]}
+
+# A block name the seeded catalog spells differently from the declared one.
+BLOCK_NAME_FIXES = {'kueijin-backgrounds': 'Kuei-Jin Backgrounds'}
+
+# Definition flags a block declares beyond what the seeded catalog carries, by block slug.
+BLOCK_DEFINITION_FLAGS = {
+    'vampire-statuses': {'print_rings': False},
+}
+
+# A full sheet's section title, by stack and block, where it differs from the seeded template's.
+TEMPLATE_SECTION_TITLES = {'kueijin': {'kueijin-backgrounds': 'Kuei-Jin Backgrounds'}}
+
+# The titles an installed template's section may still carry, by stack and block. The upgrade gives such a section
+# the title its declared template names.
+TEMPLATE_FORMER_TITLES = {
+    'kueijin': {
+        'kueijin-abilities': ['Kueijin Abilities'],
+        'kueijin-backgrounds': ['Kueijin Backgrounds'],
+        'kueijin-merits': ['Kueijin Merits'],
+        'kueijin-flaws': ['Kueijin Flaws'],
+    },
+}
+
+
+# --- Vampire: Paths of Enlightenment ------------------------------------------------------------
+#
+# The two Virtues each Path pairs with Courage: (Path, Conscience or Conviction, Self-Control or
+# Instinct, source). Each Path's own "Virtues" paragraph in Chaining the Beast (printed page given),
+# agreeing with Laws of the Night Revised's morality listing (p. 73) and the Mind's Eye Theatre
+# Sabbat Guide's Paths list (pp. 78-79) wherever those print the same Path. Chaining the Beast's
+# rules chapter gives the Path of Night as Conviction and Self-Control in a worked example; the
+# Path's own section, Laws of the Night Revised and the Sabbat Guide all give Conviction and Instinct.
+VAMPIRE_PATH_VIRTUES = [
+    ('Humanity', 'Conscience', 'Self-Control', 'Laws of the Night Revised p. 73'),
+    ('Path of the Beast', 'Conviction', 'Instinct', 'Chaining the Beast p. 34'),
+    ('Path of the Feral Heart', 'Conviction', 'Instinct', 'Sabbat Guide p. 79; Chaining the Beast p. 34, "the Path of the Beast in all its forms"'),
+    ('Path of Blood', 'Conviction', 'Self-Control', 'Chaining the Beast p. 39; Laws of the Night Revised p. 73'),
+    ('Path of Bones', 'Conviction', 'Self-Control', 'Chaining the Beast p. 43; Laws of the Night Revised p. 73'),
+    ('Path of Caine', 'Conviction', 'Instinct', 'Chaining the Beast p. 47; Sabbat Guide p. 78'),
+    ('Path of Cathari', 'Conviction', 'Instinct', 'Chaining the Beast p. 52; Sabbat Guide p. 79'),
+    ('Path of Death and the Soul', 'Conviction', 'Self-Control', 'Chaining the Beast p. 56; Sabbat Guide pp. 79, 91'),
+    ('Path of Honorable Accord', 'Conscience', 'Self-Control', 'Chaining the Beast p. 60; Sabbat Guide p. 79'),
+    ('Path of Lilith', 'Conviction', 'Instinct', 'Chaining the Beast p. 64; Sabbat Guide p. 79'),
+    ('Path of Metamorphosis', 'Conviction', 'Instinct', 'Chaining the Beast p. 69; Laws of the Night Revised p. 73'),
+    ('Path of Night', 'Conviction', 'Instinct', 'Chaining the Beast p. 74; Laws of the Night Revised p. 73'),
+    ('Path of Orion', 'Conviction', 'Instinct', 'Chaining the Beast p. 78'),
+    ('Path of Paradox', 'Conviction', 'Self-Control', 'Chaining the Beast p. 82; Laws of the Night Revised p. 73'),
+    ('Path of Power and the Inner Voice', 'Conviction', 'Instinct', 'Chaining the Beast p. 86; Sabbat Guide p. 79'),
+    ('Path of Redemption', 'Conscience', 'Self-Control', 'Chaining the Beast p. 91'),
+    ('Path of Revelations', 'Conviction', 'Instinct', 'Chaining the Beast p. 95'),
+    ('Path of Evil Revelations', 'Conviction', 'Instinct', 'Sabbat Guide p. 79; Chaining the Beast p. 95 as the Path of Revelations'),
+    ('Path of Typhon', 'Conviction', 'Self-Control', 'Chaining the Beast p. 100; Laws of the Night Revised p. 73'),
+    ('Path of Entelechy', 'Conviction', 'Self-Control', 'Chaining the Beast p. 102'),
+    ('Path of the Hive', 'Conviction', 'Instinct', 'Chaining the Beast p. 103'),
+    ('Path of the Scorched Heart', 'Conviction', 'Self-Control', 'Chaining the Beast p. 105'),
+    ('Path of Self-Focus', 'Conviction', 'Instinct', 'Chaining the Beast p. 106'),
+    ('Sharia El-Sama', 'Conscience', 'Self-Control', 'Chaining the Beast p. 107'),
+]
+# Words a held Path's spelling adds or drops without naming a different Path.
+VAMPIRE_PATH_IGNORE_WORDS = ['the', 'of', 'and', 'path', 'morality']

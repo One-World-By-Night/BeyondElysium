@@ -5,13 +5,33 @@ import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import HelpButton from '../shared/HelpButton';
-import type { CastingBriefDocument } from '../../types/npcCasting';
+import type {
+	CastingBriefDocument,
+	SheetDocumentRow,
+} from '../../types/npcCasting';
+import { sheetRow } from '../../lib/sheetDocument';
 import './CastingBrief.css';
 
 export interface CastingBriefProps {
 	gameSlug: string;
 	castingId: number;
 	onClose: () => void;
+}
+
+/**
+ * One row of the brief, indented when the document indents it.
+ */
+function BriefRow( { row }: { row: SheetDocumentRow } ) {
+	const { text, indent } = sheetRow( row );
+	return (
+		<li
+			className={
+				indent > 0 ? 'be-casting-brief__row--indented' : undefined
+			}
+		>
+			{ text }
+		</li>
+	);
 }
 
 export function CastingBrief( {
@@ -101,7 +121,7 @@ export function CastingBrief( {
 									<ul>
 										{ section.rows.map( ( row, i ) => (
 											// eslint-disable-next-line react/no-array-index-key
-											<li key={ i }>{ row }</li>
+											<BriefRow key={ i } row={ row } />
 										) ) }
 									</ul>
 								) }
@@ -116,10 +136,11 @@ export function CastingBrief( {
 												<ul>
 													{ group.rows.map(
 														( row, j ) => (
-															// eslint-disable-next-line react/no-array-index-key
-															<li key={ j }>
-																{ row }
-															</li>
+															<BriefRow
+																// eslint-disable-next-line react/no-array-index-key
+																key={ j }
+																row={ row }
+															/>
 														)
 													) }
 												</ul>

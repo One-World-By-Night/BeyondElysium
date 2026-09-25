@@ -1,4 +1,4 @@
-import { sectionTotal } from './sectionTotal';
+import { sectionCount, sectionTotal } from './sectionTotal';
 import type { Trait } from './displayTrait';
 import input from '../../tests/fixtures/trait-grouping-input.json';
 import expected from '../../tests/fixtures/trait-grouping-expected.json';
@@ -61,5 +61,32 @@ describe( 'sectionTotal — parity with Trait_Grouping::section_total()', () => 
 				sectionTotal( testCase.traits as unknown as Trait[] )
 			).toBe( expected.sectionTotal[ i ] );
 		} );
+	} );
+} );
+
+describe( 'sectionCount', () => {
+	it( 'sums the totals of an ordinary list', () => {
+		expect(
+			sectionCount( [
+				{ name: 'Occult', total: 3 },
+				{ name: 'Melee', total: 2 },
+			] )
+		).toBe( 5 );
+	} );
+
+	it( 'counts the entries of a list whose counts are prices, never summing the prices', () => {
+		expect(
+			sectionCount(
+				[
+					{ name: 'Draw Fire', total: 12 },
+					{ name: 'Stunning Awe', total: 7 },
+				],
+				true
+			)
+		).toBe( 2 );
+	} );
+
+	it( 'shows nothing for an empty list whose counts are prices', () => {
+		expect( sectionCount( [], true ) ).toBeNull();
 	} );
 } );

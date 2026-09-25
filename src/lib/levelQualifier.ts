@@ -23,6 +23,27 @@ const TIER_NEEDLES = [
 ];
 
 /**
+ * Where a word stands on its own in a lower-cased note: not inside a longer word ("winter") or a hyphenated one
+ * ("master-level"), or -1.
+ */
+function standaloneIndex( haystack: string, needle: string ): number {
+	const joined = /[a-z0-9-]/;
+	let from = 0;
+	for (;;) {
+		const at = haystack.indexOf( needle, from );
+		if ( at === -1 ) {
+			return -1;
+		}
+		const before = at === 0 ? '' : haystack[ at - 1 ];
+		const after = haystack[ at + needle.length ] ?? '';
+		if ( ! joined.test( before ) && ! joined.test( after ) ) {
+			return at;
+		}
+		from = at + 1;
+	}
+}
+
+/**
  * Whatever a note says beyond its tier word.
  */
 export function levelQualifier( note?: string | null ): string | undefined {
@@ -35,7 +56,7 @@ export function levelQualifier( note?: string | null ): string | undefined {
 	let at = -1;
 	let needleLength = 0;
 	for ( const needle of TIER_NEEDLES ) {
-		const found = lower.indexOf( needle );
+		const found = standaloneIndex( lower, needle );
 		if ( found !== -1 ) {
 			at = found;
 			needleLength = needle.length;

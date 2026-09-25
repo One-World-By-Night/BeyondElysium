@@ -5,7 +5,7 @@
 import { __ } from '@wordpress/i18n';
 import { localizedPowerName } from '../../lib/localizeName';
 import { seamQualifier } from '../../lib/levelQualifier';
-import { allLevels } from '../../lib/powerLevels';
+import { allLevels, pickRank } from '../../lib/powerLevels';
 import type {
 	TieredPowerDefinition,
 	TieredPower,
@@ -118,7 +118,8 @@ export function displayableTier( tier?: string | null ): string | undefined {
 }
 
 /**
- * Builds a named label for an Elder-and-above held power.
+ * Builds a named label for an Elder-and-above held power: its tier in parentheses when the catalog or the entry knows
+ * it, nothing when neither does.
  */
 export function elderLabel(
 	definition: TieredPowerDefinition,
@@ -138,23 +139,20 @@ export function elderLabel(
 	if ( held.level != null ) {
 		return `${ stem } ${ held.level }`;
 	}
+	const power = findPower( definition, held.name );
 	const tier =
 		displayableTier( found?.tier ) ??
-		displayableTier( held.tier ) ??
-		'elder';
+		displayableTier( pickRank( power, held.power_name as string ) ) ??
+		displayableTier( held.tier );
 	// On a family that is two ladders concatenated, the tier alone is ambiguous.
-	const qualifier = seamQualifier(
-		findPower( definition, held.name ),
-		found
-	);
-	return qualifier
-		? `${ stem } (${ tier } · ${ qualifier })`
-		: `${ stem } (${ tier })`;
+	const qualifier = seamQualifier( power, found );
+	const parts = [ tier, qualifier ].filter( ( part ) => !! part );
+	return parts.length > 0 ? `${ stem } (${ parts.join( ' · ' ) })` : stem;
 }
 
 /**
  * Builds a numeric-mode label for one held power: delegates to `elderLabel()` for a named Elder-and-above pick, or
- * renders "Family {level}" for a plain numeric holding.
+ * renders "Family {level}" for a plain numeric holding, and the family alone when it holds no level.
  */
 export function numericLabel(
 	definition: TieredPowerDefinition,
@@ -163,9 +161,7 @@ export function numericLabel(
 	if ( held.power_name ) {
 		return elderLabel( definition, held );
 	}
-	return held.level != null
-		? `${ held.name } ${ held.level }`
-		: `${ held.name } ?`;
+	return held.level != null ? `${ held.name } ${ held.level }` : held.name;
 }
 
 /**
@@ -190,31 +186,30 @@ export function namedLabel(
 }
 
 /**
- * Builds the label list "named" mode shows for one held power: the single label for an Elder-and-above pick.
+ * The power names "named" mode lists beneath a held power's own line: every named power from rank 1 up to the held
+ * level, each once, or nothing for an Elder-and-above pick or a family with no named levels.
  */
 export function namedModeRows(
 	definition: TieredPowerDefinition,
 	held: HeldPower
 ): string[] {
 	if ( held.power_name ) {
-		return [ namedLabel( definition, held, held.level ) ];
+		return [];
 	}
 	const power = findPower( definition, held.name );
 	const rows: string[] = [];
 	for ( let level = 1; level <= ( held.level ?? 0 ); level++ ) {
-		const atRank = findLevelsAtRank( power, level );
-		if ( atRank.length === 0 ) {
-			rows.push( numericLabel( definition, held ) );
-			continue;
-		}
-		for ( const entry of atRank ) {
+		for ( const entry of findLevelsAtRank( power, level ) ) {
 			// One rung of a concatenated family can hold powers from both ladders.
 			const label = localizedPowerName( entry );
+			if ( ! label ) {
+				continue;
+			}
 			const qualifier = seamQualifier( power, entry );
 			rows.push( qualifier ? `${ label } (${ qualifier })` : label );
 		}
 	}
-	return rows;
+	return Array.from( new Set( rows ) );
 }
 
 /**
@@ -252,17 +247,21 @@ export function TieredPowerRenderer( {
 							</li>
 						);
 					}
-					// Named mode: every row stacks on its own line.
+					// Named mode: the power's own line, then each named power beneath it.
 					const rows = namedModeRows( definition, held );
 					return (
 						<li key={ `${ held.name }-${ index }` }>
-							<ul className="be-tiered-power__rank-rows">
-								{ rows.map( ( row, rowIndex ) => (
-									<li key={ rowIndex }>
-										{ withTradition( held, row ) }
-									</li>
-								) ) }
-							</ul>
+							{ withTradition(
+								held,
+								numericLabel( definition, held )
+							) }
+							{ rows.length > 0 && (
+								<ul className="be-tiered-power__rank-rows">
+									{ rows.map( ( row, rowIndex ) => (
+										<li key={ rowIndex }>{ row }</li>
+									) ) }
+								</ul>
+							) }
 						</li>
 					);
 				} ) }

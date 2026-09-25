@@ -48,6 +48,18 @@ export async function fetchMemberships(
 	}
 }
 
+/**
+ * Whether the chronicle is linked to OWbN accessSchema. A chronicle not in the list is not.
+ */
+export function isLinkedToAccessSchema(
+	games: MyGame[],
+	gameSlug: string
+): boolean {
+	return (
+		games.find( ( game ) => game.slug === gameSlug )?.asc_linked === true
+	);
+}
+
 export interface ChronicleSwitcherState {
 	games: MyGame[];
 	gameSlug: string;

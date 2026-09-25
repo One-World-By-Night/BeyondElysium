@@ -114,12 +114,11 @@ sheet — this is purely visual and never changes what your character can do.
 
 ## 8. Printing Your Sheet
 
-**Print / Export** on your character's page generates a PDF rather than printing the
-page directly — it's the one way to get a copy of your sheet, whether you're keeping a
-record, handing a printout to a visiting chronicle's Storyteller, or bringing a copy to a
-game with spotty wifi. Three checkboxes control what's included: your background, your
-notes, and your full XP history; a fourth switches tiered powers (Disciplines, Gifts, and
-the like) from a single number to every named rung you've earned.
+
+**Print / Export** on your character's page generates a PDF rather than printing the page directly — it's the one way to get a copy of your sheet, whether you're keeping a record, handing a printout to a visiting chronicle's Storyteller, or bringing a copy to a game with spotty wifi. Three checkboxes control what's included: your background, your notes, and your full XP history; a fourth switches tiered powers (Disciplines, Gifts, and the like) from a single number to every named rung you've earned. **Paper** picks Letter or A4; it starts on the one your site's language uses.
+
+The PDF reads like a Grapevine sheet: your name and creature type, a block of short facts, your attributes side by side, then everything else in three columns, with a long list carrying on into the next column. The traits you spend points on and every pool have empty circles beside them, one per point, to fill in as you spend. Merits and Flaws show their points, combos their XP price, and your Virtues the names your Path uses. See [Print / Export](help/sheet-print-export.md#what-the-pdf-looks-like).
+
 
 Opening the PDF, you may see your reader report something like "signature valid, signer not
 trusted" rather than a plain green checkmark. That's expected, not a problem — it means the

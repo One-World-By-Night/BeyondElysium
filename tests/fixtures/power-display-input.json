@@ -231,6 +231,18 @@
             "note": "Basic (Tremere)"
           }
         ]
+      },
+      {
+        "name": "Ranked Only",
+        "levels": [],
+        "elder": {
+          "master": [
+            {
+              "level": null,
+              "power_name": "Untiered Master Pick"
+            }
+          ]
+        }
       }
     ]
   },
@@ -262,7 +274,7 @@
       }
     },
     {
-      "name": "a keep_custom power with neither a level nor a stored tier still falls back to \"elder\", never undefined",
+      "name": "a keep_custom power with neither a level nor a stored tier prints its name alone, never undefined and never elder",
       "method": "elder_label",
       "held": {
         "name": "Dur-An-Ki",
@@ -352,7 +364,7 @@
       }
     },
     {
-      "name": "lists only the one specific power for an Elder-and-above pick - there is no stack beneath it",
+      "name": "an Elder-and-above pick lists nothing beneath its own line, which already names it",
       "method": "named_mode_rows",
       "held": {
         "name": "Celerity",
@@ -384,7 +396,7 @@
       }
     },
     {
-      "name": "a parser-placeholder tier (***) is never shown to a player; falls through to elder",
+      "name": "a parser-placeholder tier (***) is never shown to a player, and nothing stands in for it",
       "method": "elder_label",
       "held": {
         "name": "Combination",
@@ -435,7 +447,7 @@
       }
     },
     {
-      "name": "a catalog level with no tier key at all falls through to elder, on both sides",
+      "name": "a catalog level with no tier key at all prints no tier, on both sides",
       "method": "elder_label",
       "held": {
         "name": "Untiered Family",
@@ -501,7 +513,7 @@
       }
     },
     {
-      "name": "D80: the same, with no level - the placeholder tier still never prints",
+      "name": "D80: the same, with no level - the placeholder tier still never prints, and nothing stands in for it",
       "method": "elder_label",
       "held": {
         "name": "Kineticism (~)",
@@ -533,6 +545,47 @@
       "held": {
         "name": "Path of the Split Ladder",
         "power_name": "Stigmatize"
+      }
+    },
+    {
+      "name": "a family missing from the catalog lists nothing beneath its line, never its own label once per level",
+      "method": "named_mode_rows",
+      "held": {
+        "name": "Mortis",
+        "level": 5
+      }
+    },
+    {
+      "name": "a custom power held under its family lists nothing beneath its line",
+      "method": "named_mode_rows",
+      "held": {
+        "name": "Mortis",
+        "power_name": "Ash Path",
+        "level": 5
+      }
+    },
+    {
+      "name": "a custom power held under its family prints the family, the power and the level once",
+      "method": "numeric_label",
+      "held": {
+        "name": "Mortis",
+        "power_name": "Ash Path",
+        "level": 5
+      }
+    },
+    {
+      "name": "a pick filed under a rank with no tier of its own reads the rank it is filed under",
+      "method": "elder_label",
+      "held": {
+        "name": "Ranked Only",
+        "power_name": "Untiered Master Pick"
+      }
+    },
+    {
+      "name": "a held power with neither a level nor a pick prints its name alone, with no number",
+      "method": "numeric_label",
+      "held": {
+        "name": "Heightened Senses"
       }
     }
   ]

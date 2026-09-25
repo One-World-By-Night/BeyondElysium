@@ -88,6 +88,10 @@ interface BeyondElysiumGlobal {
 	 * The wp-admin Import page's own URL.
 	 */
 	importPageUrl?: string;
+	/**
+	 * The paper this site prints on unless the viewer picks another.
+	 */
+	paperSize?: 'letter' | 'a4';
 }
 
 /**

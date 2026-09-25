@@ -13,7 +13,7 @@ import type {
 } from '../../types';
 import type { DisplayType, Trait } from '../../lib/displayTrait';
 import type { ResourcePoolValue } from '../../lib/displayTemper';
-import TraitListRenderer from './TraitListRenderer';
+import TraitListRenderer, { resolveTraitListMode } from './TraitListRenderer';
 import TieredPowerRenderer, { type HeldPower } from './TieredPowerRenderer';
 import ResourcePoolRenderer from './ResourcePoolRenderer';
 import IdentityFieldRenderer from './IdentityFieldRenderer';
@@ -61,7 +61,18 @@ export function BlockRenderer( {
 			return (
 				<TraitListRenderer
 					blockSlug={ blockSlug }
-					data={ toTraits( data ) }
+					data={
+						resolveTraitListMode(
+							definition as TraitListDefinition,
+							display ?? null,
+							showCost
+						) === 'points'
+							? toPointTraits(
+									data,
+									definition as TraitListDefinition
+							  )
+							: toTraits( data )
+					}
 					definition={ definition as TraitListDefinition }
 					display={ display ?? null }
 					showCost={ showCost }
@@ -149,6 +160,65 @@ export function toTraits( data: unknown ): Trait[] {
 			total: ( entry.total ?? entry.count ) as Trait[ 'total' ],
 			note: combinedNote,
 		};
+	} );
+}
+
+/**
+ * One held entry's points: the cost the character chose, else a held count above 1, else the catalog item's fixed
+ * cost, else the held count, or null when there is none.
+ */
+export function pointsFor(
+	entry: Record< string, unknown >,
+	item?: { cost?: string | null }
+): number | null {
+	const numeric = ( value: unknown ): number | null => {
+		if ( typeof value === 'number' ) {
+			return Number.isFinite( value ) ? Math.trunc( value ) : null;
+		}
+		if ( typeof value === 'string' && value.trim() !== '' ) {
+			const parsed = Number( value );
+			return Number.isFinite( parsed ) ? Math.trunc( parsed ) : null;
+		}
+		return null;
+	};
+
+	const chosen = numeric( entry.chosen_cost );
+	if ( chosen !== null ) {
+		return chosen;
+	}
+
+	const count = numeric( entry.count );
+	if ( count !== null && count > 1 ) {
+		return count;
+	}
+
+	const cost = ( item?.cost ?? '' ).trim();
+	if ( /^\d+$/.test( cost ) ) {
+		return parseInt( cost, 10 );
+	}
+	return count;
+}
+
+/**
+ * Converts a trait_list block's held entries into `Trait[]` whose total is each entry's points.
+ */
+export function toPointTraits(
+	data: unknown,
+	definition: TraitListDefinition
+): Trait[] {
+	const traits = toTraits( data );
+	if ( ! Array.isArray( data ) ) {
+		return traits;
+	}
+	const itemsByName = new Map(
+		( definition.items ?? [] ).map( ( item ) => [ item.name, item ] )
+	);
+	return traits.map( ( trait, index ) => {
+		const points = pointsFor(
+			( data[ index ] ?? {} ) as Record< string, unknown >,
+			itemsByName.get( trait.name )
+		);
+		return { ...trait, total: points ?? undefined };
 	} );
 }
 

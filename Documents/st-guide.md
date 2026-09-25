@@ -88,9 +88,9 @@ If accessSchema is off, unreachable, or a member has no accessSchema role for th
 chronicle, permissions fall back to this chronicle-membership table automatically — nothing
 breaks, and nothing needs configuring differently.
 
-A player is added to this table automatically the moment they create their first character
-or are assigned an existing one — you rarely need to add players by hand, only Storytellers
-and Narrators.
+
+A player is added to this table automatically the moment they create their first character or are assigned an existing one. On a chronicle linked to OWbN roles, an HST or AST adds or removes a player themselves from the **Players** tab of the [Storyteller Toolkit](help/chronicle-players.md): search for an existing OWbN account (every site on the network, by at least three letters of a name or an exact email), then **Add as player** or **Remove**. Adding also grants the chronicle's player role in OWbN and removing takes it away; the message says what OWbN did, and a player OWbN refuses is still added here. A chronicle that isn't linked has no Players tab, so ask a site administrator to add someone on Chronicle Access. Staff roles stay on Chronicle Access. A player who holds a role through accessSchema alone also sees the chronicle in their own chronicle list.
+
 
 ## 2. Seeding Schema
 
@@ -228,8 +228,10 @@ full `.gv3` game file exported from Grapevine 3.01.
   an existing one — the existing chronicle is always the protected base; the file only
   contributes characters, plots, items, and locations it doesn't already have, and anything
   that collides by name gets the same skip/overwrite/import-as-new choice.
-- Any trait the importer can't match automatically is flagged for manual resolution before
-  the import can complete — nothing partially imports.
+- Any trait the importer can't match automatically is flagged for manual resolution before the import can complete — nothing partially imports.
+- A Disciplines entry labelled as a combo ("Combo:", "Combi:", "Combination:" and their variants) always lands under Combo Disciplines: the catalog's entry when it holds one, otherwise a custom combo carrying the file's value as its XP price. It never waits on you as an unmatched Discipline.
+- A Vampire's Bonds (Vinculums and blood bonds) import into the Bonds section with their ratings.
+
 
 **Transfers from other chronicles.** When another chronicle sends you a character, it appears
 under **Waiting for Review** at the top of the Import page, and every HST and AST gets an
@@ -372,10 +374,9 @@ same as the roster and the approval queue.
 
 ## 11. Signed Character Sheets
 
-Every printed sheet is a PDF generated on your own site rather than captured from the
-browser. Once your site has a signing certificate, it's digitally signed — a Storyteller who
-receives one can be sure the trait values on it have not been edited after the fact. This replaces the old browser print entirely; there
-is only the one Print button now.
+
+Every printed sheet is a PDF generated on your own site rather than captured from the browser. It follows the Grapevine sheet: a header of short facts, the attributes side by side, then everything else in three columns, carrying on into the next column and page with "(cont.)"; the traits points are spent on and every pool carry one empty circle per point to fill in as it is spent (see [Print / Export](help/sheet-print-export.md#what-the-pdf-looks-like)). It prints on Letter when your site's language is set to a US, Canadian, Mexican or Philippine locale and on A4 otherwise; the print panel's **Paper** choice changes it for one print. Once your site has a signing certificate, it's digitally signed — a Storyteller who receives one can be sure the trait values on it have not been edited after the fact. This replaces the old browser print entirely; there is only the one Print button now.
+
 
 **Signing needs a certificate on your site's host.** This is a one-time setup per site (not
 per chronicle), done by whoever has SSH/hosting access — if that isn't you, this section is
@@ -628,7 +629,7 @@ trip a volunteer would use for a bulk translation pass rather than one term at a
 | Role | Access |
 |---|---|
 | HST | Everything in the chronicle — characters (including permanently deleting one), plots, queries, approval rules, schema and template customization, importing. Also the chronicle's own Creature types, Sub-Faction Restrictions, and New-character approval on Chronicle Setup. Creating, renaming, or deleting the chronicle itself, assigning its roles on Chronicle Access, and Plot Features are a site administrator's, by design. |
-| AST | Everything an HST can do except Approval Rules, catalog and template customization (forking a schema block or a template), permanently deleting a character, and the three Chronicle Setup settings above — an HST's alone. Keeps import, transfers, editing characters, and the bulk XP/status/reset operations. |
+| AST | Everything an HST can do, including adding and removing players on the Storyteller Toolkit's **Players** tab, except Approval Rules, catalog and template customization (forking a schema block or a template), permanently deleting a character, and the three Chronicle Setup settings above — an HST's alone. Keeps import, transfers, editing characters, and the bulk XP/status/reset operations. |
 | Narrator | Plots — creating and running them, responding to player actions, generating rumors, and the plot, action, and rumor reports. Can allocate actions for any character in the chronicle, seeing the full roster to do it, but cannot edit, delete, or create a character, and cannot use the Query Tool, which reads whole sheets and is for HSTs and ASTs. |
 | Boons (Harpy) | The boon ledger only — recording and repaying boons. No Storyteller powers over characters or plots. Can still look characters up (needed to know who owes whom) and view reports. |
 | Player | Creates and submits their own characters, and edits their own sheet — every edit still goes through the same approval process everyone else's does. Nothing outside their own characters, changes, and plot connections. |

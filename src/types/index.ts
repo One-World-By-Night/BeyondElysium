@@ -111,6 +111,10 @@ export interface MyGame {
 	slug: string;
 	name: string;
 	role: string;
+	/**
+	 * The chronicle is linked to OWbN accessSchema: the site reads it and the chronicle names its role path.
+	 */
+	asc_linked?: boolean;
 }
 
 /**
@@ -185,6 +189,41 @@ export type GameMemberRole = 'hst' | 'ast' | 'narrator' | 'boons' | 'player';
  * One user's membership record within a chronicle, recording which role they hold. name and user_email are enriched
  * server-side for display purposes and are not stored columns themselves.
  */
+/**
+ * One player of a chronicle, as its Storytellers see them.
+ */
+export interface ChroniclePlayer {
+	wp_user_id: number;
+	display_name: string | null;
+	since: string;
+}
+
+/**
+ * A chronicle's players, and the accessSchema role that also makes someone a player there, when the chronicle reads
+ * accessSchema.
+ */
+export interface ChroniclePlayerList {
+	players: ChroniclePlayer[];
+	asc_role_path: string | null;
+}
+
+/**
+ * What adding or removing a player did: `added`, `already_player`, `removed`, `not_member`, or `staff` for a staff
+ * member left unchanged; `asc` reports the accessSchema grant or revoke.
+ */
+export interface ChroniclePlayerResult {
+	status: 'added' | 'already_player' | 'removed' | 'not_member' | 'staff';
+	role?: GameMemberRole;
+	site_added?: boolean;
+	asc?: {
+		attempted: boolean;
+		granted?: boolean;
+		revoked?: boolean;
+		role_path?: string;
+		message?: string;
+	};
+}
+
 export interface GameMember {
 	id: number;
 	game_id: number;
@@ -397,6 +436,10 @@ export interface TraitListDefinition {
 	categories?: string[];
 	negative?: boolean;
 	/**
+	 * Whether a printed sheet draws each rating as empty circles to fill in; false prints the number alone.
+	 */
+	print_rings?: boolean;
+	/**
 	 * Whether re-adding a held trait appends a new entry.
 	 */
 	atomic?: boolean;
@@ -589,6 +632,25 @@ export interface CrossBlockRef {
 }
 
 /**
+ * Names a resource pool from another block's value: `table` maps that value to the name shown, compared exactly, or
+ * loosely when `ignore_words` is set; `otherwise` is tried when this lookup names nothing.
+ */
+export interface NameLookup {
+	keyed_by: CrossBlockRef;
+	table: Record< string, string >;
+	/**
+	 * Words dropped from both sides of a loose comparison, which also ignores case, punctuation and a trailing
+	 * parenthetical.
+	 */
+	ignore_words?: string[];
+	/**
+	 * The name shown when `keyed_by` has a value the table does not hold.
+	 */
+	unmatched?: string;
+	otherwise?: NameLookup;
+}
+
+/**
  * A single numeric resource pool, such as Blood Pool or Willpower, including its starting value, its bounds, and an
  * optional rule for overriding its displayed name based on another block's value.
  */
@@ -603,10 +665,7 @@ export interface ResourcePool {
 	/**
 	 * Overrides this pool's display name by looking up another block's value in table.
 	 */
-	name_lookup?: {
-		keyed_by: CrossBlockRef;
-		table: Record< string, string >;
-	};
+	name_lookup?: NameLookup;
 	/**
 	 * XP cost per dot above free_dots.
 	 */

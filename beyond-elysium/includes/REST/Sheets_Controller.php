@@ -33,6 +33,7 @@ class Sheets_Controller extends Base_Controller {
 					'notes'            => [ 'type' => 'boolean', 'default' => false ],
 					'xp_history'       => [ 'type' => 'boolean', 'default' => false ],
 					'show_cost'        => [ 'type' => 'boolean', 'default' => true ],
+					'page_size'        => [ 'type' => 'string', 'enum' => [ 'letter', 'a4' ] ],
 				],
 			],
 		] );
@@ -113,7 +114,7 @@ class Sheets_Controller extends Base_Controller {
 
 		// Signed only when an administrator switched secure printing on AND a usable certificate is configured.
 		$signed   = Pdf_Signer::should_sign()['ok'];
-		$bytes    = Pdf_Writer::write( $documents, $game, $signed );
+		$bytes    = Pdf_Writer::write( $documents, $game, $signed, $request->get_param( 'page_size' ) );
 		$filename = ( count( $documents ) === 1
 			? sanitize_file_name( (string) $documents[0]['title'] )
 			: sanitize_file_name( $request['game_slug'] ) . '-sheets' ) . ( $signed ? '' : '-unsigned' ) . '.pdf';

@@ -26,6 +26,8 @@ import type {
 	UpdateTemplateRequest,
 	GameMember,
 	GameMemberRole,
+	ChroniclePlayerList,
+	ChroniclePlayerResult,
 	AuthorizationSettings,
 	GameStats,
 	PlayerWithoutActiveCharacter,
@@ -1122,6 +1124,28 @@ export const gameMembers = ( gameSlug: string ) => ( {
 } );
 
 /**
+ * REST client factory for a chronicle's players, for its Storytellers: list them, make an existing account a player,
+ * or take a player out.
+ */
+export const chroniclePlayers = ( gameSlug: string ) => ( {
+	list: (): Promise< ChroniclePlayerList > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/players` } ),
+
+	add: ( wpUserId: number ): Promise< ChroniclePlayerResult > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/players`,
+			method: 'POST',
+			data: { wp_user_id: wpUserId },
+		} ),
+
+	remove: ( wpUserId: number ): Promise< ChroniclePlayerResult > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/players/${ wpUserId }`,
+			method: 'DELETE',
+		} ),
+} );
+
+/**
  * REST client for the plugin's site-wide authorization configuration: whether external access-control integration is
  * enabled.
  */
@@ -1455,6 +1479,10 @@ export const sheets = ( gameSlug: string ) => ( {
 			 * Default true server-side.
 			 */
 			showCost?: boolean;
+			/**
+			 * The site's own paper when left out.
+			 */
+			pageSize?: 'letter' | 'a4';
 		} = {}
 	): string => {
 		const params = new URLSearchParams( {
@@ -1474,6 +1502,9 @@ export const sheets = ( gameSlug: string ) => ( {
 		}
 		if ( options.showCost === false ) {
 			params.set( 'show_cost', '0' );
+		}
+		if ( options.pageSize ) {
+			params.set( 'page_size', options.pageSize );
 		}
 		params.set( '_wpnonce', window.beyondElysium?.nonce ?? '' );
 
@@ -3679,6 +3710,7 @@ const api = {
 	mySubmissions,
 	wpUsers,
 	gameMembers,
+	chroniclePlayers,
 	authorizationSettings,
 	dataManagement,
 	gameStats,

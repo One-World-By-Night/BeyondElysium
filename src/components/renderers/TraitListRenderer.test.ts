@@ -4,6 +4,7 @@ import {
 	groupByCategory,
 	sortIfAlphabetized,
 	groupsAndSorts,
+	groupHeading,
 } from './TraitListRenderer';
 import type { Trait, DisplayType } from '../../lib/displayTrait';
 import type { TraitListDefinition } from '../../types';
@@ -85,5 +86,19 @@ describe( 'groupsAndSorts', () => {
 		expect( groupsAndSorts( { items: [], player_order: true } ) ).toBe(
 			false
 		);
+	} );
+} );
+
+describe( 'groupHeading', () => {
+	it( 'names a group when the section has more than one', () => {
+		expect( groupHeading( 'Tremere', 2 ) ).toBe( 'Tremere' );
+	} );
+
+	it( 'leaves the only group unnamed', () => {
+		expect( groupHeading( 'Other', 1 ) ).toBeNull();
+	} );
+
+	it( 'keeps an unlabelled group unlabelled', () => {
+		expect( groupHeading( null, 3 ) ).toBeNull();
 	} );
 } );

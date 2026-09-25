@@ -23,7 +23,7 @@ import { characterEditorUrl, isPrintCanvasPath } from '../../lib/pluginPages';
 import { showsProseSection } from '../../lib/sheetProse';
 import { canIn } from '../../lib/chronicleCapabilities';
 import { sheetActions, type SheetAction } from '../../lib/sheetActions';
-import { sectionTotal } from '../../lib/sectionTotal';
+import { sectionCount } from '../../lib/sectionTotal';
 import { readCollapsed, setCollapsed } from '../../lib/panelCollapse';
 
 /**
@@ -155,6 +155,9 @@ export function CharacterSheet( {
 	// A count_is_cost block's held entries (Combo Disciplines) always name their XP price.
 	const [ printShowCost, setPrintShowCost ] = useState(
 		() => urlParams.get( 'print_hide_cost' ) !== '1'
+	);
+	const [ printPaper, setPrintPaper ] = useState< 'letter' | 'a4' >(
+		() => window.beyondElysium?.paperSize ?? 'letter'
 	);
 
 	// The viewer's own expand/collapse clicks, keyed by block_slug.
@@ -368,8 +371,9 @@ export function CharacterSheet( {
 			block.section_type === 'trait_list' &&
 			! ( block.definition as TraitListDefinition ).atomic
 		) {
-			const total = sectionTotal(
-				toTraits( character.sheet_data[ section.block_slug ] )
+			const total = sectionCount(
+				toTraits( character.sheet_data[ section.block_slug ] ),
+				( block.definition as TraitListDefinition ).count_is_cost
 			);
 			if ( total !== null ) {
 				title = `${ title } \u{00B7} ${ total }`;
@@ -642,6 +646,33 @@ export function CharacterSheet( {
 												'beyond-elysium'
 											) }
 										</label>
+										<label>
+											{ __( 'Paper', 'beyond-elysium' ) }
+											<select
+												className="be-character-sheet__print-paper"
+												value={ printPaper }
+												onChange={ ( e ) =>
+													setPrintPaper(
+														e.target.value === 'a4'
+															? 'a4'
+															: 'letter'
+													)
+												}
+											>
+												<option value="letter">
+													{ __(
+														'Letter',
+														'beyond-elysium'
+													) }
+												</option>
+												<option value="a4">
+													{ __(
+														'A4',
+														'beyond-elysium'
+													) }
+												</option>
+											</select>
+										</label>
 									</div>
 									{ pdfAvailability !== null &&
 										! pdfAvailability.ok && (
@@ -677,6 +708,7 @@ export function CharacterSheet( {
 														fullPowerNames:
 															printFullPowerNames,
 														showCost: printShowCost,
+														pageSize: printPaper,
 													} ),
 												'_blank'
 											)

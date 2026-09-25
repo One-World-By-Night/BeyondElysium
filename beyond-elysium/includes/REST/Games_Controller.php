@@ -163,7 +163,8 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns every chronicle the current user actually holds a membership row in, each with the role they hold there.
+	 * Returns every chronicle the current user actually holds a membership row in, each with the role they hold there and
+	 * whether the chronicle is linked to accessSchema.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response
@@ -172,16 +173,38 @@ class Games_Controller extends Base_Controller {
 		$memberships = Game_Member::for_user( get_current_user_id() );
 
 		$games = [];
+		$seen  = [];
 		foreach ( $memberships as $membership ) {
 			$game = Game::find( (int) $membership->game_id );
 			if ( ! $game ) {
 				continue;
 			}
-			$games[] = [
-				'slug' => $game->slug,
-				'name' => $game->name,
-				'role' => $membership->role,
+			$games[]                 = [
+				'slug'       => $game->slug,
+				'name'       => $game->name,
+				'role'       => $membership->role,
+				'asc_linked' => \BeyondElysium\Core\Authorization::asc_role_path( $game, 'player' ) !== null,
 			];
+			$seen[ (int) $game->id ] = true;
+		}
+
+		// A chronicle whose accessSchema role path grants the user a role, with the highest role they hold there.
+		if ( \BeyondElysium\Core\Authorization::asc_enabled() ) {
+			$user = wp_get_current_user();
+			foreach ( Game::all() as $game ) {
+				if ( isset( $seen[ (int) $game->id ] ) || empty( $game->asc_role_path ) ) {
+					continue;
+				}
+				$role = \BeyondElysium\Core\Authorization::asc_role_in_game( $user, $game );
+				if ( $role !== null ) {
+					$games[] = [
+						'slug'       => (string) ( $game->slug ?? '' ),
+						'name'       => (string) ( $game->name ?? '' ),
+						'role'       => $role,
+						'asc_linked' => true,
+					];
+				}
+			}
 		}
 
 		return $this->success( $games );
