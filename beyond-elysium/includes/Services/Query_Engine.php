@@ -596,7 +596,7 @@ class Query_Engine {
 	 * @param string $game_slug
 	 * @param array  $conditions
 	 * @param string $logic     'AND' or 'OR'.
-	 * @param array  $paging    `{sort: {field, direction}, page, per_page}`.
+	 * @param array  $paging    `{sort: {field, direction}, page, per_page, all}`. `per_page` is held to 100; `all` returns every match, sorted, with no page limit.
 	 * @param string $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
 	 * @param array  $options   See find_matches(): `exclude_npcs`, `prepare_row`.
 	 * @return array{results: object[], total: int}
@@ -615,6 +615,10 @@ class Query_Engine {
 				$keyed = array_map( static fn( $row ) => [ self::resolve_value( $row, $field, $inventory )['value'], $row ], $matches );
 				usort( $keyed, static fn( $a, $b ) => $direction * ( $a[0] <=> $b[0] ) );
 				$matches = array_column( $keyed, 1 );
+			}
+
+			if ( ! empty( $paging['all'] ) ) {
+				return [ 'results' => $matches, 'total' => $total ];
 			}
 
 			$per_page = min( 100, max( 1, (int) ( $paging['per_page'] ?? 20 ) ) );

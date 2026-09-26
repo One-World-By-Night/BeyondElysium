@@ -99,7 +99,7 @@ class Report_Document {
 				$game->slug,
 				(array) ( $filters['conditions'] ?? [] ),
 				(string) ( $filters['logic'] ?? 'AND' ),
-				[ 'per_page' => 1000, 'sort' => [ 'field' => $report['sort'] ?? 'name' ] ],
+				[ 'all' => true, 'sort' => [ 'field' => $report['sort'] ?? 'name' ] ],
 				$entity
 			);
 			$rows = $result['results'];
@@ -216,7 +216,7 @@ class Report_Document {
 			$game->slug,
 			(array) ( $filters['conditions'] ?? [] ),
 			(string) ( $filters['logic'] ?? 'AND' ),
-			[ 'per_page' => 1000, 'sort' => [ 'field' => 'name' ] ],
+			[ 'all' => true, 'sort' => [ 'field' => 'name' ] ],
 			$report['entity'],
 			$options
 		);

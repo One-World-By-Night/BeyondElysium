@@ -100,6 +100,51 @@ class QueryControllerThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'Most Recent Search', $saved_data[0]->name );
 	}
 
+	/**
+	 * A list view is paged at a hundred rows whatever a caller asks for, and reports the real total beside them.
+	 */
+	public function test_a_list_view_stays_capped_at_a_hundred_rows_and_reports_the_true_total(): void {
+		for ( $i = 1; $i <= 100; $i++ ) {
+			Character::create( [
+				'name' => sprintf( 'Bulk Character %03d', $i ), 'stack_slug' => 'vampire', 'status' => 'active',
+				'owner_type' => 'chronicle', 'owner_slug' => $this->game_slug,
+			] );
+		}
+
+		$admin = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		wp_set_current_user( $admin );
+
+		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/query" );
+		$request->set_param( 'conditions', [] );
+		$request->set_param( 'per_page', 1000 );
+		$response = $this->dispatch( $request );
+
+		$this->assertCount( 100, $response->get_data() );
+		$this->assertSame( '102', $response->get_headers()['X-WP-Total'] );
+	}
+
+	/**
+	 * Returning every row is for the report builder only; a request cannot ask for it.
+	 */
+	public function test_a_request_cannot_ask_for_every_row(): void {
+		for ( $i = 1; $i <= 100; $i++ ) {
+			Character::create( [
+				'name' => sprintf( 'Bulk Character %03d', $i ), 'stack_slug' => 'vampire', 'status' => 'active',
+				'owner_type' => 'chronicle', 'owner_slug' => $this->game_slug,
+			] );
+		}
+
+		$admin = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		wp_set_current_user( $admin );
+
+		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/query" );
+		$request->set_param( 'conditions', [] );
+		$request->set_param( 'all', true );
+		$response = $this->dispatch( $request );
+
+		$this->assertLessThanOrEqual( 100, count( $response->get_data() ) );
+	}
+
 	public function test_or_logic_returns_the_union(): void {
 		$admin = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		wp_set_current_user( $admin );

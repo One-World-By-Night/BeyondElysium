@@ -539,7 +539,8 @@ class Change_Engine {
 			return [ 'level' => 'st', 'reason' => null ];
 		}
 
-		if ( $change->change_type === 'propose_faction' ) {
+		// A proposed catalog item or faction always waits for a Storyteller.
+		if ( in_array( $change->change_type, [ 'propose_world_object', 'propose_faction' ], true ) ) {
 			return [ 'level' => 'st', 'reason' => null ];
 		}
 

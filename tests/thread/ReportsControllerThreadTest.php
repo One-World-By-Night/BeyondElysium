@@ -82,6 +82,81 @@ class ReportsControllerThreadTest extends WP_UnitTestCase {
 		$this->assertCount( 20, $response->get_data() );
 	}
 
+	/**
+	 * @return array<string,array{string}>
+	 */
+	public static function character_table_reports(): array {
+		return [
+			'character roster'      => [ 'character-roster' ],
+			'sign-in sheet'         => [ 'sign-in-sheet' ],
+			'search report'         => [ 'search-report' ],
+			'vampire status report' => [ 'vampire-status-report' ],
+			'character equipment'   => [ 'character-equipment' ],
+		];
+	}
+
+	/**
+	 * A report over characters lists every one of them, not the first hundred.
+	 *
+	 * @dataProvider character_table_reports
+	 */
+	public function test_a_character_report_lists_every_character_past_one_hundred( string $report_key ): void {
+		for ( $i = 1; $i <= 100; $i++ ) {
+			Character::create( [
+				'name'       => sprintf( 'Bulk Character %03d', $i ),
+				'owner_slug' => $this->game_slug,
+				'stack_slug' => 'rc-stack',
+				'wp_user_id' => $this->manager_id,
+				'sheet_data' => [ 'rc-identity' => [ 'Clan' => 'Ventrue' ] ],
+				'created_by' => $this->manager_id,
+			] );
+		}
+
+		$response = $this->dispatch( '/be/v1/' . $this->game_slug . '/reports/' . $report_key );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertCount( 101, $response->get_data()['rows'] );
+	}
+
+	public function test_a_narrowing_report_still_narrows(): void {
+		Character::create( [
+			'name'       => 'Second Character',
+			'owner_slug' => $this->game_slug,
+			'stack_slug' => 'rc-stack',
+			'wp_user_id' => $this->manager_id,
+			'sheet_data' => [ 'rc-identity' => [ 'Clan' => 'Toreador' ] ],
+			'created_by' => $this->manager_id,
+		] );
+
+		$response = $this->dispatch(
+			'/be/v1/' . $this->game_slug . '/reports/character-roster',
+			[ 'conditions' => wp_json_encode( [ [ 'field' => 'name', 'operator' => 'equals', 'find' => 'Second Character' ] ] ) ]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertCount( 1, $response->get_data()['rows'] );
+	}
+
+	/**
+	 * The card reports list every item, not the first hundred.
+	 */
+	public function test_item_cards_lists_every_item_past_one_hundred(): void {
+		$game_id = (int) Game::find_by_slug( $this->game_slug )->id;
+		for ( $i = 1; $i <= 101; $i++ ) {
+			World_Object::create( [
+				'game_id'     => $game_id,
+				'object_type' => 'item',
+				'name'        => sprintf( 'Bulk Item %03d', $i ),
+				'created_by'  => $this->manager_id,
+			] );
+		}
+
+		$response = $this->dispatch( '/be/v1/' . $this->game_slug . '/reports/item-cards' );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertCount( 101, $response->get_data()['cards'] );
+	}
+
 	public function test_character_roster_generates_real_signed_pdf_bytes(): void {
 		$response = $this->dispatch( '/be/v1/' . $this->game_slug . '/reports/character-roster/pdf' );
 

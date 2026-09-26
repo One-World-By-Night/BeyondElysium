@@ -168,6 +168,42 @@ class ProposeWorldObjectThreadTest extends WP_UnitTestCase {
 		$this->assertNotContains( 'Ashwood Stake', $names, 'Nothing may reach the catalog.' );
 	}
 
+	/**
+	 * A chronicle that approves most changes by default still holds a proposed item for a Storyteller.
+	 */
+	public function test_auto_approve_chronicle_still_requires_manual_review(): void {
+		global $wpdb;
+		$wpdb->update( $wpdb->prefix . 'be_games', [ 'settings' => wp_json_encode( [ 'auto_approve' => true ] ) ], [ 'id' => $this->game_id ] );
+
+		$response = $this->propose();
+
+		$this->assertSame( 201, $response->get_status() );
+		$this->assertSame( 'pending', ( (array) $response->get_data() )['status'] );
+
+		$names = array_map(
+			static fn( $o ) => $o->name,
+			World_Object::for_game( $this->game_id, [ 'per_page' => 50 ] )
+		);
+		$this->assertNotContains( 'Ashwood Stake', $names, 'Nothing may reach the catalog before a Storyteller decides.' );
+		$this->assertSame( [], Connection::for_source( 'character', $this->character_id ) );
+	}
+
+	public function test_a_storyteller_approving_on_an_auto_approve_chronicle_creates_the_item(): void {
+		global $wpdb;
+		$wpdb->update( $wpdb->prefix . 'be_games', [ 'settings' => wp_json_encode( [ 'auto_approve' => true ] ) ], [ 'id' => $this->game_id ] );
+
+		$change_id = (int) ( (array) $this->propose()->get_data() )['id'];
+
+		$this->assertSame( 200, $this->approve( $this->reviewer( 'hst' ), $change_id )->get_status() );
+
+		$names = array_map(
+			static fn( $o ) => $o->name,
+			World_Object::for_game( $this->game_id, [ 'per_page' => 50 ] )
+		);
+		$this->assertContains( 'Ashwood Stake', $names );
+		$this->assertCount( 1, Connection::for_source( 'character', $this->character_id ) );
+	}
+
 	public function test_rejecting_writes_nothing_to_the_catalog(): void {
 		$change_id = (int) ( (array) $this->propose()->get_data() )['id'];
 
