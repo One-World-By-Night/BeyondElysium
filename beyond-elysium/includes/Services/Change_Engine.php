@@ -492,6 +492,26 @@ class Change_Engine {
 				}
 				break;
 
+			case 'pool_spend':
+				if ( $block_slug ) {
+					if ( ! isset( $sheet[ $block_slug ] ) || ! is_array( $sheet[ $block_slug ] ) ) {
+						$sheet[ $block_slug ] = [];
+					}
+					$sheet[ $block_slug ][] = $change_data['trait'] ?? [];
+
+					$pool_block = (string) ( $change_data['pool_block'] ?? '' );
+					$pool_field = (string) ( $change_data['pool_field'] ?? '' );
+					$amount     = (int) ( $change_data['amount'] ?? 0 );
+					if ( $pool_block !== '' && $pool_field !== '' ) {
+						if ( ! isset( $sheet[ $pool_block ] ) || ! is_array( $sheet[ $pool_block ] ) ) {
+							$sheet[ $pool_block ] = [];
+						}
+						$current                            = (int) ( $sheet[ $pool_block ][ $pool_field ] ?? 0 );
+						$sheet[ $pool_block ][ $pool_field ] = $current - $amount;
+					}
+				}
+				break;
+
 			case 'xp_earn':
 			case 'xp_adjust':
 			case 'import_note':
@@ -731,6 +751,68 @@ class Change_Engine {
 			$count++;
 		}
 		return $count;
+	}
+
+	/**
+	 * Grants one trait_list item to a character, paid for from the resource pool its block names in `_meta.paid_from`
+	 * rather than the character's own XP - a Storyteller-only action, never reachable through the ordinary purchase
+	 * flow.
+	 *
+	 * @return array{ok: bool, error?: string, change_id?: int}
+	 */
+	public static function spend_pool_on_trait( int $character_id, string $block_slug, string $name, int $spent_by ): array {
+		$character = Character::find( $character_id );
+		if ( ! $character ) {
+			return [ 'ok' => false, 'error' => 'not_found' ];
+		}
+
+		$definition = self::block_definition( (string) ( $character->owner_slug ?? '' ), $block_slug );
+		$paid_from  = is_object( $definition ) ? ( $definition->_meta->paid_from ?? null ) : null;
+		if ( ! is_string( $paid_from ) || $paid_from === '' ) {
+			return [ 'ok' => false, 'error' => 'not_pool_funded' ];
+		}
+		[ $pool_block, $pool_field ] = array_pad( explode( '.', $paid_from, 2 ), 2, '' );
+		if ( $pool_block === '' || $pool_field === '' ) {
+			return [ 'ok' => false, 'error' => 'not_pool_funded' ];
+		}
+
+		$item = Trait_Alias_Resolver::find_item_by_name( (array) ( $definition->items ?? [] ), $name );
+		if ( $item === null ) {
+			return [ 'ok' => false, 'error' => 'unknown_item' ];
+		}
+		$amount = Cost_Engine::price_item_cost( (string) ( $item->cost ?? '0' ), null );
+
+		$sheet    = is_array( $character->sheet_data ) ? $character->sheet_data : [];
+		$pool_raw = $sheet[ $pool_block ][ $pool_field ] ?? 0;
+		$balance  = is_array( $pool_raw ) ? (int) ( $pool_raw['permanent'] ?? 0 ) : (int) $pool_raw;
+		if ( $balance < $amount ) {
+			return [ 'ok' => false, 'error' => 'insufficient_balance' ];
+		}
+
+		$change_id = Change::create( [
+			'character_id' => $character_id,
+			'change_type'  => 'pool_spend',
+			'category'     => $block_slug,
+			'change_data'  => [
+				'block_slug' => $block_slug,
+				'trait'      => [ 'name' => $item->name ?? $name ],
+				'pool_block' => $pool_block,
+				'pool_field' => $pool_field,
+				'amount'     => $amount,
+			],
+			'xp_cost'      => 0,
+			'status'       => 'pending',
+			'submitted_by' => $spent_by,
+		] );
+		if ( ! $change_id ) {
+			return [ 'ok' => false, 'error' => 'change_failed' ];
+		}
+
+		if ( ! self::approve( $change_id, $spent_by, null ) ) {
+			return [ 'ok' => false, 'error' => 'approve_failed' ];
+		}
+
+		return [ 'ok' => true, 'change_id' => $change_id ];
 	}
 
 	/**

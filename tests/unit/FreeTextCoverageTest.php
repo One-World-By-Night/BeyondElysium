@@ -31,6 +31,8 @@ class FreeTextCoverageTest extends TestCase {
 	private const KNOWN = [
 		'games.description'                         => 'filter_game',
 		'schema_blocks.fork_changes'                => self::STRUCTURED,
+		'creature_stacks.fork_changes'              => self::STRUCTURED,
+		'templates.fork_changes'                    => self::STRUCTURED,
 		'characters.biography'                      => 'filter_character',
 		'characters.notes'                          => 'filter_character',
 		'characters.rp_notes'                       => self::MANAGER_ONLY,

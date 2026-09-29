@@ -77,6 +77,20 @@ export function describeChronicleContent(
 			)
 		);
 	}
+	if ( counts.creature_stacks > 0 ) {
+		phrases.push(
+			sprintf(
+				/* translators: %d: number of creature types the chronicle has changed */
+				_n(
+					'%d customized creature type',
+					'%d customized creature types',
+					counts.creature_stacks,
+					'beyond-elysium'
+				),
+				counts.creature_stacks
+			)
+		);
+	}
 	if ( counts.saved_queries > 0 ) {
 		phrases.push(
 			sprintf(

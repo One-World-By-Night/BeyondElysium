@@ -136,6 +136,11 @@ export interface CreateCharacterRequest {
 	notes?: string;
 	rp_notes?: string;
 	sheet_data?: SheetData;
+	/**
+	 * Manager-only: a sheet that already exists, so the build takes neither the chronicle's starting XP nor its
+	 * creation charge.
+	 */
+	existing_character?: boolean;
 }
 
 /**
@@ -247,13 +252,19 @@ export type ChangeType =
 	| 'xp_earn'
 	| 'xp_adjust'
 	| 'import_note'
+	// A build's own cost, priced against its creature type's creation rules and charged once, at creation.
+	| 'creation_spend'
+	// A Storyteller granting a trait_list item paid for from a named resource pool rather than the character's own XP.
+	| 'pool_spend'
 	// What a catalog cutover did to a sheet, and its undoing.
 	| 'catalog_rekey'
 	| 'catalog_rekey_revert'
 	// A player proposing a catalog item, location or rote for their own character.
 	| 'propose_world_object'
 	// A player proposing a coterie/pack/cabal/motley for their own character.
-	| 'propose_faction';
+	| 'propose_faction'
+	// A character linked to or unlinked from a player's account.
+	| 'player_link';
 
 /**
  * The data carried by a single character change.
@@ -604,7 +615,14 @@ export interface PointAuditLine {
 		| 'innate_free'
 		| null;
 	unpriced_reason: string | null;
+	/**
+	 * How much a rank modifier changed this line's cost, signed.
+	 */
 	modifier: number | null;
+	/**
+	 * Which side's modifier that was.
+	 */
+	modifier_side: 'in_type' | 'out_of_type' | null;
 	undeclared_by_stack: boolean;
 }
 
@@ -626,4 +644,128 @@ export interface PointAudit {
 	variance: number;
 	complete: false;
 	caveat: string;
+}
+
+/**
+ * One section a `prioritized` creation step covered: what it holds against what the step allows.
+ */
+export interface CreationTallyPrioritizedSection {
+	section: string;
+	used: number;
+	allowed: number;
+	over: boolean;
+}
+
+/**
+ * One `budget` step's named quota, met or short.
+ */
+export interface CreationTallyQuota {
+	label: string;
+	min: number;
+	met: number;
+	ok: boolean;
+}
+
+/**
+ * One `limit` step's flag: an entry or section over, under, or above another entry's rating.
+ */
+export interface CreationTallyLimitFlag {
+	target: string;
+	reason: 'max_points' | 'max_rating' | 'min_rating' | 'ceiling';
+	value: number;
+	max?: number;
+	min?: number;
+	ceiling?: number;
+	ceiling_target?: string;
+}
+
+/**
+ * One `grant` step's entry, and, listed under `grants_missing`, one the draft sheet doesn't hold yet.
+ */
+export interface CreationTallyGrantEntry {
+	section: string;
+	name: string;
+	level?: number;
+	count?: number;
+	power_name?: string;
+}
+
+/**
+ * One step of a creation tally, in the book's order. The fields present depend on `kind`.
+ */
+export type CreationTallyStep =
+	| {
+			kind: 'prioritized';
+			label: string;
+			applies: boolean;
+			sections: CreationTallyPrioritizedSection[];
+	  }
+	| {
+			kind: 'budget';
+			label: string;
+			applies: boolean;
+			section: string;
+			used: number;
+			allowed: number;
+			over: boolean;
+			quotas: CreationTallyQuota[];
+	  }
+	| {
+			kind: 'earned';
+			label: string;
+			applies: boolean;
+			pool: string;
+			points: number;
+	  }
+	| {
+			kind: 'free';
+			label: string;
+			applies: boolean;
+			pool: string;
+			spent: number;
+	  }
+	| {
+			kind: 'limit';
+			label: string;
+			applies: boolean;
+			flags: CreationTallyLimitFlag[];
+	  }
+	| {
+			kind: 'grant';
+			label: string;
+			applies: boolean;
+			missing: CreationTallyGrantEntry[];
+	  }
+	| {
+			kind: 'start';
+			label: string;
+			applies: boolean;
+			target: string;
+			value: number | null;
+	  };
+
+/**
+ * One named pool a creation tally tracks: its own points, what it earned, what it spent, and what is left.
+ */
+export interface CreationTallyPool {
+	own: number;
+	earned: number;
+	spent: number;
+	left: number;
+}
+
+/**
+ * The creation tally envelope: every declared step's own report, each pool, every limit flag, missing grants, and
+ * the XP the build still needs against the chronicle's starting experience.
+ */
+export interface CreationTally {
+	steps: CreationTallyStep[];
+	pools: Record< string, CreationTallyPool >;
+	limits: CreationTallyLimitFlag[];
+	grants_missing: CreationTallyGrantEntry[];
+	xp: {
+		starting: number;
+		needed: number;
+		left: number;
+	};
 }

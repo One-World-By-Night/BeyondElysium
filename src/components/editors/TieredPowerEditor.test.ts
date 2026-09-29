@@ -94,7 +94,7 @@ function animalism(): TieredPower {
 	};
 }
 
-describe( 'ladderCeiling (1.2.10 §A - the D68 fix)', () => {
+describe( 'ladderCeiling', () => {
 	it( 'sums _meta.ladder when the block declares one', () => {
 		const def = metaDefinition( [ animalism() ] );
 		expect( ladderCeiling( def ) ).toBe( 5 );
@@ -209,7 +209,7 @@ describe( 'ladderRungLabel (checklist labels, no synthetic ladder for a custom p
 	/**
 	 * Amending this case.
 	 */
-	it( 'names a tied rung once and carries the rest as alternates, never comma-joined (D66/D93)', () => {
+	it( 'names a tied rung once and carries the rest as alternates, never comma-joined', () => {
 		const tied: TieredPower = {
 			name: 'Protean',
 			levels: [
@@ -236,7 +236,7 @@ describe( 'ladderRungLabel (checklist labels, no synthetic ladder for a custom p
 /**
  * ladderRung: one name per rung, the rest as alternates.
  */
-describe( 'ladderRung (D93 - one name per rung, the rest as alternates)', () => {
+describe( 'ladderRung (one name per rung, the rest as alternates)', () => {
 	/**
 	 * The real pre-split shape: every basic-tier name tied at rung 1, variants noted.
 	 */
@@ -589,7 +589,7 @@ describe( 'traditionOptionsFor (0.99.2 Blood magic, BM-4 - unaffected by the lev
 		sequential: false,
 	};
 
-	it( "puts a power's own real offering traditions first, but never narrows to just them (1.1.0 D5 - the Hunter's Wind/Dur An Ki bug)", () => {
+	it( "puts a power's own offering traditions first, but never narrows to just them", () => {
 		expect( traditionOptionsFor( bloodMagic, 'Path of Blood' ) ).toEqual( [
 			'Akhu',
 			'Necromancy',

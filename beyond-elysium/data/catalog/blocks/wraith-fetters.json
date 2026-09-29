@@ -1,0 +1,21 @@
+{
+  "format": 1,
+  "slug": "wraith-fetters",
+  "name": "Wraith Fetters",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "Oblivion (WW05400) p.68 - four Fetters at creation, each a player-named anchor to the Skinlands with a rating"
+    ],
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "alphabetize": true,
+    "atomic": false,
+    "allow_custom": true,
+    "allow_multiples": true,
+    "items": [],
+    "display": "multiplier"
+  }
+}

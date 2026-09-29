@@ -42,6 +42,7 @@
 
 .be-point-audit__line {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: baseline;
 	gap: 0.5rem;
 	padding: 0.3rem 0.5rem;
@@ -58,7 +59,8 @@
 }
 
 .be-point-audit__line-label {
-	flex: 1;
+	flex: 1 1 8rem;
+	min-width: 0;
 }
 
 .be-point-audit__line-xp {

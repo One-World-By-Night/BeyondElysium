@@ -227,7 +227,7 @@ describe( 'saveTraitDraft - adding', () => {
 	} );
 } );
 
-describe( 'saveTraitDraft - merging a note (F2, 1.3.2.1)', () => {
+describe( 'saveTraitDraft - merging a note', () => {
 	it( 'adopts the drafted note when the merge target had none', () => {
 		const rows = saveTraitDraft(
 			[ { name: 'Retainers', count: 3, specialization: 'Bob' } ],

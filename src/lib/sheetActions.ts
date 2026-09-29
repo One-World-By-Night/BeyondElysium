@@ -11,12 +11,14 @@ export type SheetAction =
 	| 'ledger'
 	| 'send'
 	| 'audit'
+	| 'tally'
 	| 'gex';
 
 export interface SheetActionFlags {
 	can_edit?: boolean;
 	can_customize_sheet?: boolean;
 	can_manage?: boolean;
+	status?: string;
 }
 
 /**
@@ -32,6 +34,7 @@ export function sheetActions( flags: SheetActionFlags ): SheetAction[] {
 		[ 'ledger', true ],
 		[ 'send', !! flags.can_manage ],
 		[ 'audit', !! flags.can_manage ],
+		[ 'tally', !! flags.can_manage && flags.status === 'pending' ],
 		[ 'gex', true ],
 	];
 	return offered

@@ -53,10 +53,9 @@ def main(snapshot_dir):
     doc = envelope(SLUG, 'Spheres', 'tiered_power', OrderedDict([
         ('sources', [
             "Laws of Ascension (WW05022) - Sphere 4/4/8/8/12 across Initiate, Apprentice, Disciple, "
-            "Adept, Master; non-specialty 5/10/15 (MET-POWER-ACQUISITION.md, Mage)",
+            "Adept, Master; non-specialty 5/10/15",
             'GVM: Spheres / Sphere Levels (family list and rank names)',
         ]),
-        ('extracted', '2026-09-22'),
         ('tool', 'tools/catalog/build_mage_spheres.py + rulings/mage-spheres.json'),
     ]), definition)
     path = write_block(doc)

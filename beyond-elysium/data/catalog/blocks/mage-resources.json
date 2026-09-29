@@ -6,9 +6,10 @@
   "section_type": "resource_pool",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_schema_blocks, dumped by tools/catalog/dump_live.sh",
+      "Laws of Ascension (WW05022) p.74 - a beginning mage assigns Arete 1 and Willpower 5",
+      "Laws of Ascension (WW05022) p.82 - a new Willpower Trait via Free Traits caps at 10 permanent"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -36,8 +37,8 @@
       {
         "name": "Willpower",
         "value_type": "integer",
-        "default_start": 3,
-        "max": 20,
+        "default_start": 5,
+        "max": 10,
         "cost_per_dot": 3,
         "free_dots": 5
       }

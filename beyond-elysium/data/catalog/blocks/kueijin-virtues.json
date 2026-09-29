@@ -1,0 +1,32 @@
+{
+  "format": 1,
+  "slug": "kueijin-virtues",
+  "name": "Kuei-Jin Chi Virtues",
+  "kind": "block",
+  "section_type": "resource_pool",
+  "provenance": {
+    "sources": [
+      "Laws of the East (WW05016) p. 45 - a character begins with one Trait in each Chi Virtue, plus four Traits to divide between them",
+      "Laws of the East (WW05016) p. 125 - a new Yin or Yang Trait costs 3 XP"
+    ],
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "pools": [
+      {
+        "name": "Yin Chi",
+        "value_type": "integer",
+        "default_start": 1,
+        "max": 10,
+        "cost_per_dot": 3
+      },
+      {
+        "name": "Yang Chi",
+        "value_type": "integer",
+        "default_start": 1,
+        "max": 10,
+        "cost_per_dot": 3
+      }
+    ]
+  }
+}

@@ -13,9 +13,8 @@
   "provenance": {
     "sources": [
       "Mind's Eye Theatre: The Masquerade 2nd Edition (WW05200) via samples/research/vampire/met/laws-of-the-night-2e-disciplines.json where it lists the family",
-      "Modern GVM levels noted '2nd ed.', split out of the base families by 1.3.1; untagged rungs are the shared printing"
+      "GVM levels noted '2nd ed.', kept apart from the base families; untagged rungs are the shared printing"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/build_vampire.py + rulings/vampire-blood-magic.json"
   },
   "definition": {

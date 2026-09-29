@@ -223,21 +223,26 @@ class CatalogReaderTest extends TestCase {
 	}
 
 	/**
-	 * mage-rotes' own shape: a trait_list carrying its own `_meta.untiered.derived_from`.
+	 * mage-rotes' own shape: a trait_list carrying its own `_meta.untiered.derived_from`, its items' prerequisites naming
+	 * the block they derive from.
 	 */
 	public function test_a_trait_lists_own_meta_untiered_survives_ingestion_unmodified(): void {
 		$root = $this->build_catalog( [
-			'blocks/plain-rotes' => [
+			'blocks/plain-spheres' => $this->tiered_file( 'plain-spheres', [ [ 'name' => 'Forces', 'levels' => self::five_rung_ladder(), 'elder' => [] ] ] ),
+			'blocks/plain-rotes'   => [
 				'slug'         => 'plain-rotes',
 				'name'         => 'Plain Rotes',
 				'kind'         => 'block',
 				'section_type' => 'trait_list',
 				'definition'   => [
-					'_meta'           => [ 'untiered' => [ 'derived_from' => 'mage-spheres', 'per_level' => 1 ] ],
+					'_meta'           => [ 'untiered' => [ 'derived_from' => 'plain-spheres', 'per_level' => 1 ] ],
 					'allow_multiples' => false,
 					'allow_custom'    => true,
 					'items'           => [
-						[ 'name' => 'Ball of Abysmal Flame', 'cost' => null, 'tier' => null, 'group' => null, 'subgroup' => null ],
+						[
+							'name' => 'Ball of Abysmal Flame', 'cost' => null, 'tier' => null, 'group' => null, 'subgroup' => null,
+							'prerequisites' => [ [ 'block_slug' => 'plain-spheres', 'power' => 'Forces', 'min_level' => 3 ] ],
+						],
 					],
 				],
 			],
@@ -245,8 +250,31 @@ class CatalogReaderTest extends TestCase {
 
 		$definition = Catalog_Reader::blocks_to_seed( $root )['plain-rotes']['definition'];
 
-		$this->assertSame( 'mage-spheres', $definition['_meta']['untiered']['derived_from'] );
+		$this->assertSame( 'plain-spheres', $definition['_meta']['untiered']['derived_from'] );
 		$this->assertSame( 1, $definition['_meta']['untiered']['per_level'] );
+		$this->assertSame( [ [ 'block_slug' => 'plain-spheres', 'power' => 'Forces', 'min_level' => 3 ] ], $definition['items'][0]['prerequisites'] );
+	}
+
+	public function test_a_list_deriving_its_costs_from_a_block_the_catalog_lacks_is_skipped(): void {
+		$root = $this->build_catalog( [
+			'blocks/orphan-rotes' => [
+				'slug'         => 'orphan-rotes',
+				'name'         => 'Orphan Rotes',
+				'kind'         => 'block',
+				'section_type' => 'trait_list',
+				'definition'   => [
+					'_meta' => [ 'untiered' => [ 'derived_from' => 'no-such-spheres', 'per_level' => 1 ] ],
+					'items' => [
+						[
+							'name' => 'Lost', 'cost' => null, 'tier' => null, 'group' => null, 'subgroup' => null,
+							'prerequisites' => [ [ 'block_slug' => 'no-such-spheres', 'power' => 'Forces', 'min_level' => 2 ] ],
+						],
+					],
+				],
+			],
+		] );
+
+		$this->assertArrayNotHasKey( 'orphan-rotes', Catalog_Reader::blocks_to_seed( $root ) );
 	}
 
 	/**
@@ -289,8 +317,31 @@ class CatalogReaderTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// mode: add - the merge reader
+	// Variants: seeded as their own content, folded onto a base per chronicle
 	// -------------------------------------------------------------------------
+
+	public function test_a_variant_seeds_as_its_own_content_with_a_descriptor_naming_its_base(): void {
+		$root = $this->build_catalog( [
+			'blocks/base-disciplines'    => $this->tiered_file( 'base-disciplines', [
+				[ 'name' => 'Animalism', 'levels' => self::five_rung_ladder(), 'elder' => [] ],
+			] ),
+			'blocks/edition-disciplines' => array_merge(
+				$this->tiered_file( 'edition-disciplines', [
+					[ 'name' => 'Animalism (Dark Ages)', 'source' => 'Animalism', 'levels' => self::five_rung_ladder(), 'elder' => [], 'split_from' => 'Animalism' ],
+				] ),
+				[ 'variant' => [ 'of' => 'base-disciplines', 'id' => 'dark-ages', 'label' => 'Dark Ages', 'mode' => 'add' ] ]
+			),
+		] );
+
+		$definition = Catalog_Reader::blocks_to_seed( $root )['edition-disciplines']['definition'];
+
+		$this->assertSame( [ 'Animalism (Dark Ages)' ], array_column( $definition['powers'], 'name' ), 'only what it adds' );
+		$this->assertSame( [ 'of' => 'base-disciplines', 'id' => 'dark-ages', 'label' => 'Dark Ages', 'mode' => 'add' ], $definition['_variant'] );
+		$this->assertSame(
+			[ 'base-disciplines' => [ [ 'slug' => 'edition-disciplines', 'of' => 'base-disciplines', 'id' => 'dark-ages', 'label' => 'Dark Ages', 'mode' => 'add' ] ] ],
+			Catalog_Reader::variants( $root )
+		);
+	}
 
 	public function test_add_variant_unions_elder_picks_into_a_same_named_base_family(): void {
 		$root = $this->build_catalog( [
@@ -321,7 +372,8 @@ class CatalogReaderTest extends TestCase {
 			),
 		] );
 
-		$definition = Catalog_Reader::blocks_to_seed( $root )['packet-gifts']['definition'];
+		$blocks     = Catalog_Reader::blocks_to_seed( $root );
+		$definition = Catalog_Reader::merge_add_variant( 'tiered_power', $blocks['base-gifts']['definition'], $blocks['packet-gifts']['definition'] );
 
 		$this->assertCount( 1, $definition['powers'], 'still one Homid family, not two' );
 		$this->assertCount( 1, $definition['powers'][0]['elder']['basic'], 'the base pick is kept' );
@@ -341,7 +393,8 @@ class CatalogReaderTest extends TestCase {
 			),
 		] );
 
-		$definition = Catalog_Reader::blocks_to_seed( $root )['edition-disciplines']['definition'];
+		$blocks     = Catalog_Reader::blocks_to_seed( $root );
+		$definition = Catalog_Reader::merge_add_variant( 'tiered_power', $blocks['base-disciplines']['definition'], $blocks['edition-disciplines']['definition'] );
 
 		$names = array_column( $definition['powers'], 'name' );
 		$this->assertContains( 'Animalism', $names, 'the base family is kept' );
@@ -432,57 +485,42 @@ class CatalogReaderTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// The out-of-type bridge (untouched Cost_Engine still reads the deprecated scalar).
+	// Per-rank modifiers seed as declared.
 	// -------------------------------------------------------------------------
 
-	public function test_a_flat_out_of_type_expression_bridges_to_the_deprecated_scalar(): void {
-		$root = $this->build_catalog( [
-			'blocks/flat-modifier' => $this->tiered_file(
-				'flat-modifier',
-				[ [ 'name' => 'Foo', 'levels' => self::five_rung_ladder(), 'elder' => [] ] ],
-				[ 'out_of_type' => [ 'basic' => '+1', 'intermediate' => '+1', 'advanced' => '+1' ] ]
-			),
-		] );
-
-		$definition = Catalog_Reader::blocks_to_seed( $root )['flat-modifier']['definition'];
-
-		$this->assertSame( 1, $definition['out_of_type_cost_modifier'] );
-	}
-
-	public function test_a_scaling_out_of_type_expression_is_never_flattened_into_a_wrong_scalar(): void {
+	public function test_a_per_rank_modifier_seeds_as_declared_with_no_flat_scalar(): void {
 		$root = $this->build_catalog( [
 			'blocks/scaling-modifier' => $this->tiered_file(
 				'scaling-modifier',
 				[ [ 'name' => 'Foo', 'levels' => self::five_rung_ladder(), 'elder' => [] ] ],
-				[ 'out_of_type' => [ 'basic' => '+1', 'intermediate' => '+2', 'advanced' => '+3' ] ]
+				[
+					'in_type'     => [ 'basic' => '-1', 'intermediate' => '-1', 'advanced' => '-1' ],
+					'out_of_type' => [ 'basic' => '+1', 'intermediate' => '+2', 'advanced' => '+3' ],
+				]
 			),
 		] );
 
 		$definition = Catalog_Reader::blocks_to_seed( $root )['scaling-modifier']['definition'];
 
-		$this->assertArrayNotHasKey( 'out_of_type_cost_modifier', $definition, 'a scaling expression cannot be a single flat scalar - left for 1.4.0, not guessed at' );
+		$this->assertSame( [ 'basic' => '+1', 'intermediate' => '+2', 'advanced' => '+3' ], $definition['_meta']['out_of_type'] );
+		$this->assertSame( [ 'basic' => '-1', 'intermediate' => '-1', 'advanced' => '-1' ], $definition['_meta']['in_type'] );
+		$this->assertArrayNotHasKey( 'out_of_type_cost_modifier', $definition );
 	}
 
-	public function test_an_explicit_deprecated_scalar_is_never_overwritten_by_the_bridge(): void {
+	public function test_a_file_carrying_the_retired_flat_modifier_is_skipped(): void {
 		$root = $this->build_catalog( [
-			'blocks/already-set' => array_merge(
-				$this->tiered_file(
-					'already-set',
-					[ [ 'name' => 'Foo', 'levels' => self::five_rung_ladder(), 'elder' => [] ] ],
-					[ 'out_of_type' => [ 'basic' => '+1', 'intermediate' => '+1', 'advanced' => '+1' ] ]
-				),
-				[]
+			'blocks/already-set' => $this->tiered_file(
+				'already-set',
+				[ [ 'name' => 'Foo', 'levels' => self::five_rung_ladder(), 'elder' => [] ] ],
+				[ 'out_of_type' => [ 'basic' => '+1', 'intermediate' => '+1', 'advanced' => '+1' ] ]
 			),
 		] );
-		// Inject the deprecated key directly into the fixture's definition to prove it wins.
 		$path = "{$root}/blocks/already-set.json";
 		$data = json_decode( (string) file_get_contents( $path ), true );
 		$data['definition']['out_of_type_cost_modifier'] = 9;
 		file_put_contents( $path, (string) wp_json_encode_for_test( $data ) );
 
-		$definition = Catalog_Reader::blocks_to_seed( $root )['already-set']['definition'];
-
-		$this->assertSame( 9, $definition['out_of_type_cost_modifier'] );
+		$this->assertArrayNotHasKey( 'already-set', Catalog_Reader::blocks_to_seed( $root ) );
 	}
 
 	// -------------------------------------------------------------------------
@@ -622,7 +660,8 @@ class CatalogReaderTest extends TestCase {
 		$this->assertSame( 'tiered_power', $block['section_type'] );
 		$this->assertSame( [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ], $block['definition']['_meta']['ladder'] );
 		$this->assertTrue( $block['definition']['sequential'] );
-		$this->assertSame( 1, $block['definition']['out_of_type_cost_modifier'] );
+		$this->assertSame( '+1', $block['definition']['_meta']['out_of_type']['basic'] );
+		$this->assertArrayNotHasKey( 'out_of_type_cost_modifier', $block['definition'] );
 	}
 
 	public function test_round_trips_a_real_pick_only_block_werewolf_gifts(): void {
@@ -638,12 +677,17 @@ class CatalogReaderTest extends TestCase {
 		if ( ! Catalog_Reader::available() ) {
 			$this->markTestSkipped( 'no declared catalog in this checkout' );
 		}
-		$block = Catalog_Reader::blocks_to_seed()['darkages-vampire_disciplines'] ?? null;
+		$blocks = Catalog_Reader::blocks_to_seed();
+		$block  = $blocks['darkages-vampire_disciplines'] ?? null;
 		$this->assertNotNull( $block );
-		$names = array_column( $block['definition']['powers'], 'name' );
-		// The variant's own families, plus every base family carried through untouched.
+		$own = array_column( $block['definition']['powers'], 'name' );
+		$this->assertContains( 'Animalism (Dark Ages)', $own );
+		$this->assertNotContains( 'Animalism', $own, 'the variant row holds what it adds' );
+		$this->assertSame( 'vampire-disciplines', $block['definition']['_variant']['of'] );
+
+		$names = array_column( Catalog_Reader::merge_add_variant( 'tiered_power', $blocks['vampire-disciplines']['definition'], $block['definition'] )['powers'], 'name' );
 		$this->assertContains( 'Animalism (Dark Ages)', $names );
-		$this->assertContains( 'Animalism', $names );
+		$this->assertContains( 'Animalism', $names, 'folded onto its base, every base family is carried through' );
 	}
 
 	public function test_round_trips_the_real_mage_rotes_trait_list_meta(): void {

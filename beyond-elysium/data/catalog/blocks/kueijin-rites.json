@@ -7,10 +7,9 @@
   "provenance": {
     "sources": [
       "Laws of the East (WW05016), p. 165-168",
-      "MET-POWER-ACQUISITION.md §3 (Kuei-Jin) - Rite 2/4/6, requiring the Rites Background at the matching level"
+      "Laws of the East (WW05016) - Rite 2/4/6, requiring the Rites Background at the matching level"
     ],
-    "extracted": "2026-09-21",
-    "tool": "manual - samples/research/kuei-jin/rites.json (laws_of_the_east array), cross-checked against MET-POWER-ACQUISITION.md"
+    "tool": "manual - samples/research/kuei-jin/rites.json (laws_of_the_east array), cross-checked against Laws of the East"
   },
   "definition": {
     "alphabetize": false,

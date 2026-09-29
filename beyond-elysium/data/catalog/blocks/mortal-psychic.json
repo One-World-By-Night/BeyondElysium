@@ -9,9 +9,7 @@
       "Grapevine Menus XML.gvm: the \"Psychic Phenomena\" container",
       "Rungs, costs and tiers from each item's own GVM cost and note (3/3/6/6/9); spells, rituals and formulae are separate purchases and go to mortal-hedge-magic-formulae"
     ],
-    "extracted": "2026-09-22",
-    "tool": "tools/catalog/emit_catalog.py",
-    "notes": "1.3.0 decision 8 - split out of the mortal-numina container, which copied other stacks' catalogues instead of referencing them."
+    "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
     "_meta": {

@@ -6,14 +6,34 @@
   "section_type": "identity_field",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh",
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_schema_blocks, dumped by tools/catalog/dump_live.sh",
       "Amenti: GVM menu(s) \"Amenti\", \"Capachoca\" (18 options)"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py",
-    "notes": "1.3.0 gap-audit class B: options from the Grapevine menus, `allow_custom` on so held free-text values stay valid."
+    "notes": "Options from the Grapevine menus, with `allow_custom` on so held free-text values stay valid.",
+    "primary_hekau_notes": "Laws of the Resurrection (WW05035) pp. 57-59, 61 - each of the five core Tem-akh names its own primary Hekau path (Kher-Minu Amulets, Khri-Habi Alchemy, Mesektet Celestial, Sakhmu Effigy, Sefekhi Necromancy). Udja-Sen and its own named ranks (Apepnu, Cabiri, Imhku, Ishmaelite, Shemsu-Heru, Wu T'ian, p.61's 'ranks of the Judged Ones') are Primary Hekau: Any - mapped to every real Hekau path by name, not left unmapped, since a mapped-but-empty identity value reads as matching nothing (always out of type), the opposite of what Any means. OWBN's own Capacocha names (Chaskimallki, Intimallki, Pachamallki, Teomallki, Uchumallki, from Mummy Players Guide, not this book) and the bare 'Other' option have no primary Hekau in any MET source found and are treated the same way."
   },
   "definition": {
+    "primary_hekau": {
+      "Kher-Minu": "Amulets",
+      "Khri-Habi": "Alchemy",
+      "Mesektet": "Celestial",
+      "Sakhmu": "Effigy",
+      "Sefekhi": "Necromancy",
+      "Udja-Sen": [ "Alchemy", "Amulets", "Celestial", "Effigy", "Necromancy", "Nomenclature" ],
+      "Apepnu": [ "Alchemy", "Amulets", "Celestial", "Effigy", "Necromancy", "Nomenclature" ],
+      "Cabiri": [ "Alchemy", "Amulets", "Celestial", "Effigy", "Necromancy", "Nomenclature" ],
+      "Imhku": [ "Alchemy", "Amulets", "Celestial", "Effigy", "Necromancy", "Nomenclature" ],
+      "Ishmaelite": [ "Alchemy", "Amulets", "Celestial", "Effigy", "Necromancy", "Nomenclature" ],
+      "Shemsu-Heru": [ "Alchemy", "Amulets", "Celestial", "Effigy", "Necromancy", "Nomenclature" ],
+      "Wu T'ian": [ "Alchemy", "Amulets", "Celestial", "Effigy", "Necromancy", "Nomenclature" ],
+      "Other": [ "Alchemy", "Amulets", "Celestial", "Effigy", "Necromancy", "Nomenclature" ],
+      "Chaskimallki": [ "Alchemy", "Amulets", "Celestial", "Effigy", "Necromancy", "Nomenclature" ],
+      "Intimallki": [ "Alchemy", "Amulets", "Celestial", "Effigy", "Necromancy", "Nomenclature" ],
+      "Pachamallki": [ "Alchemy", "Amulets", "Celestial", "Effigy", "Necromancy", "Nomenclature" ],
+      "Teomallki": [ "Alchemy", "Amulets", "Celestial", "Effigy", "Necromancy", "Nomenclature" ],
+      "Uchumallki": [ "Alchemy", "Amulets", "Celestial", "Effigy", "Necromancy", "Nomenclature" ]
+    },
     "fields": [
       {
         "name": "Amenti",

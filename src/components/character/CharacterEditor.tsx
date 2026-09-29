@@ -6,6 +6,7 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import useCharacterEditorStore from '../../store/characterEditorStore';
 import BlockEditor from '../editors/BlockEditor';
+import CreationTallyPanel from './CreationTallyPanel';
 import ConfirmDialog from '../shared/ConfirmDialog';
 import HtmlEditor from '../shared/HtmlEditor';
 import HelpButton from '../shared/HelpButton';
@@ -14,6 +15,7 @@ import AudiencePicker from '../shared/AudiencePicker';
 import SecretsPanel from '../shared/SecretsPanel';
 import CollapsiblePanel from '../shared/CollapsiblePanel';
 import { previewPriceLabel } from '../../lib/queuePrice';
+import { describeChange } from '../../lib/describeChange';
 import { spanFor, sortedForFlow } from '../../lib/templateLayout';
 import { resolveSectionTitle } from '../../lib/resolveCrossBlockRef';
 import { pickMediaImage } from '../../lib/pickMediaImage';
@@ -96,6 +98,8 @@ export function CharacterEditor( {
 	const [ creating, setCreating ] = useState( false );
 	const [ createError, setCreateError ] = useState< string | null >( null );
 	const [ createIsNpc, setCreateIsNpc ] = useState( false );
+	const [ createExistingCharacter, setCreateExistingCharacter ] =
+		useState( false );
 	// "New NPC asks Quick or Full".
 	const [ createNpcDetail, setCreateNpcDetail ] = useState<
 		'full' | 'quick'
@@ -377,7 +381,7 @@ export function CharacterEditor( {
 	const isNpc = isCreateMode ? createIsNpc : !! store.character?.is_npc;
 	const npcDetail = isCreateMode
 		? createNpcDetail
-		: store.character?.npc_detail ?? 'full';
+		: ( store.character?.npc_detail ?? 'full' );
 	const npcTemplateType = npcDetail === 'quick' ? 'npc_quick' : 'npc_full';
 	useEffect( () => {
 		if ( activeStackSlug ) {
@@ -447,7 +451,8 @@ export function CharacterEditor( {
 							...( createIsNpc
 								? { npc_detail: createNpcDetail }
 								: {} ),
-					  }
+							existing_character: createExistingCharacter,
+						}
 					: {} ),
 			} );
 
@@ -586,6 +591,38 @@ export function CharacterEditor( {
 								'beyond-elysium'
 							) }
 						</label>
+					</div>
+				) }
+
+				{ canFlagNpc && (
+					<div className="be-character-editor__field">
+						<label htmlFor="be-character-editor-existing">
+							<input
+								id="be-character-editor-existing"
+								type="checkbox"
+								checked={ createExistingCharacter }
+								onChange={ ( e ) =>
+									setCreateExistingCharacter(
+										e.target.checked
+									)
+								}
+							/>{ ' ' }
+							{ __(
+								'Existing character - a sheet that already exists, so its build takes no starting XP and costs nothing to create',
+								'beyond-elysium'
+							) }
+						</label>
+					</div>
+				) }
+
+				{ activeStack && ! createExistingCharacter && (
+					<div className="be-character-editor__field">
+						<h4>{ __( 'Build Tally', 'beyond-elysium' ) }</h4>
+						<CreationTallyPanel
+							gameSlug={ gameSlug }
+							stackSlug={ chosenStackSlug }
+							sheetData={ draftSheetData }
+						/>
 					</div>
 				) }
 
@@ -806,8 +843,11 @@ export function CharacterEditor( {
 							{ savingPortrait
 								? __( 'Saving…', 'beyond-elysium' )
 								: portraitUrl
-								? __( 'Change portrait…', 'beyond-elysium' )
-								: __( 'Add a portrait…', 'beyond-elysium' ) }
+									? __( 'Change portrait…', 'beyond-elysium' )
+									: __(
+											'Add a portrait…',
+											'beyond-elysium'
+										) }
 						</button>
 					) }
 					{ canFlagNpc && canManage && (
@@ -899,7 +939,7 @@ export function CharacterEditor( {
 								: __(
 										'Save Background & Notes',
 										'beyond-elysium'
-								  ) }
+									) }
 						</button>
 						{ headerSaveMessage && (
 							<span className="be-character-editor__header-text-status">
@@ -979,7 +1019,7 @@ export function CharacterEditor( {
 								: __(
 										"Choose a Who's Who portrait…",
 										'beyond-elysium'
-								  ) }
+									) }
 						</button>
 					</div>
 
@@ -1121,7 +1161,10 @@ export function CharacterEditor( {
 							const preview = store.previewCosts?.results[ i ];
 							return (
 								<li key={ i }>
-									{ change.change_type } — { change.category }
+									{ describeChange(
+										change.change_type,
+										change.change_data
+									) }
 									{ preview && (
 										<>
 											{ ' ' }

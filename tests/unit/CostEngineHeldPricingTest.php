@@ -32,7 +32,7 @@ class CostEngineHeldPricingTest extends TestCase {
 	public function test_a_negative_block_prices_as_earned_not_spent(): void {
 		$result = Cost_Engine::price_held_trait_list_item( self::def( 'vampire-flaws' ), [ 'name' => 'Curiosity', 'count' => 2 ] );
 
-		$this->assertSame( -4, $result['xp'], 'Curiosity is 2/dot on a negative block, x2 held' );
+		$this->assertSame( -2, $result['xp'], 'Curiosity is a 2-point flaw on a negative block, held once' );
 		$this->assertNull( $result['unpriced_reason'] );
 	}
 
@@ -49,7 +49,7 @@ class CostEngineHeldPricingTest extends TestCase {
 	public function test_a_variable_range_cost_with_no_chosen_cost_prices_at_the_floor(): void {
 		$definition = self::def( 'vampire-merits' );
 		$item       = self::find_item( $definition, 'Iron Will' );
-		$this->assertNotNull( $item, 'Iron Will is the design doc\'s own example of a real range-cost item' );
+		$this->assertNotNull( $item, 'Iron Will is a real range-cost item' );
 		$this->assertSame( 'range', Cost_Engine::parse_cost_rule( (string) $item->cost )['type'] );
 
 		$result = Cost_Engine::price_held_trait_list_item( $definition, [ 'name' => 'Iron Will', 'count' => 1 ] );
@@ -63,7 +63,7 @@ class CostEngineHeldPricingTest extends TestCase {
 		$definition = self::def( 'met-physical-traits' );
 		$item       = self::$definitions['met-physical-traits']->items[0];
 		// The declared file states `"cost": null` explicitly.
-		$this->assertFalse( isset( $item->cost ), 'every met-physical-traits item carries no real cost (point-calculator-design.md §0)' );
+		$this->assertFalse( isset( $item->cost ), 'every met-physical-traits item carries no real cost' );
 
 		$result = Cost_Engine::price_held_trait_list_item( $definition, [ 'name' => $item->name, 'count' => 3 ] );
 
@@ -88,7 +88,7 @@ class CostEngineHeldPricingTest extends TestCase {
 	public function test_a_custom_entry_with_a_chosen_cost_uses_it(): void {
 		$result = Cost_Engine::price_held_trait_list_item( self::def( 'vampire-merits' ), [ 'name' => 'Homebrew Thing', 'custom' => true, 'chosen_cost' => 2, 'count' => 3 ] );
 
-		$this->assertSame( 6, $result['xp'] );
+		$this->assertSame( 2, $result['xp'], 'a merit row is one purchase, charged its price once' );
 		$this->assertSame( 'chosen_cost', $result['basis'] );
 	}
 
@@ -278,13 +278,14 @@ class CostEngineHeldPricingTest extends TestCase {
 
 		$result = Cost_Engine::price_held_tiered_power( $definition, [ 'name' => 'Weird Power', 'power_name' => 'Odd One' ], true );
 
-		$this->assertNull( $result['xp'], 'a 0 here would be a false claim of "free" (Decision 090)' );
+		$this->assertNull( $result['xp'], 'a 0 here would be a false claim of "free"' );
 		$this->assertSame( 'catalog_item_has_no_cost', $result['unpriced_reason'] );
 	}
 
 	public function test_an_out_of_type_pick_carries_the_seeded_modifier(): void {
 		$definition = self::def( 'vampire-disciplines' );
-		$this->assertSame( 1, $definition->out_of_type_cost_modifier ?? null );
+		$this->assertSame( '+1', $definition->_meta->out_of_type->basic ?? null );
+		$this->assertObjectNotHasProperty( 'out_of_type_cost_modifier', $definition );
 
 		$in_type     = Cost_Engine::price_held_tiered_power( $definition, [ 'name' => 'Auspex', 'level' => 1 ], true );
 		$out_of_type = Cost_Engine::price_held_tiered_power( $definition, [ 'name' => 'Auspex', 'level' => 1 ], false );
@@ -313,7 +314,7 @@ class CostEngineHeldPricingTest extends TestCase {
 	public function test_a_pool_with_no_cost_per_dot_is_unpriced_not_free(): void {
 		$definition = self::def( 'vampire-resources' );
 		$blood      = $this->find_pool( $definition, 'Blood' );
-		$this->assertObjectNotHasProperty( 'cost_per_dot', $blood, 'Blood is never a priced pool - it scales with Generation (PC-10 owner ruling)' );
+		$this->assertObjectNotHasProperty( 'cost_per_dot', $blood, 'Blood is never a priced pool - it scales with Generation' );
 
 		$result = Cost_Engine::price_held_resource_pool( $definition, 'Blood', [ 'permanent' => 12, 'temporary' => 8 ] );
 

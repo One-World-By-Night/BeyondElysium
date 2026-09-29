@@ -3,6 +3,7 @@
 namespace BeyondElysium\Tests\Thread;
 
 use BeyondElysium\Models\Character;
+use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Schema_Block;
@@ -271,6 +272,15 @@ class SetupStatusControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 'info', $this->status_of( 'catalog_customisation' ) );
 	}
 
+	public function test_a_creature_type_layer_also_turns_the_catalog_row_green(): void {
+		Creature_Stack::hide_section( 'vampire', $this->game_slug, 'vampire-blood-magic' );
+		$this->assertSame( 'ok', $this->status_of( 'catalog_customisation' ) );
+
+		Creature_Stack::delete_for_game( 'vampire', $this->game_slug );
+
+		$this->assertSame( 'info', $this->status_of( 'catalog_customisation' ) );
+	}
+
 	public function test_choosing_a_default_approval_policy_turns_the_approval_row_green_either_way(): void {
 		foreach ( [ [ true, 'approved automatically' ], [ false, 'waits for Storyteller approval' ] ] as [ $auto, $wording ] ) {
 			Game::update( $this->game_slug, [ 'settings' => [ 'auto_approve' => $auto ] ] );
@@ -365,21 +375,21 @@ class SetupStatusControllerTest extends WP_UnitTestCase {
 	public function test_the_summary_counts_every_row_and_the_rows_there_are_to_do(): void {
 		$summary = $this->dispatch( $this->admin_id )->get_data()['summary'];
 
-		$this->assertSame( 14, $summary['total'] );
+		$this->assertSame( 16, $summary['total'] );
 		$this->assertSame( $summary['total'], $summary['attention'] + $summary['ok'] + $summary['info'] );
 
 		Game::update( $this->game_slug, [ 'settings' => [ 'accent_color' => '#123456' ] ] );
 		$after = $this->dispatch( $this->admin_id )->get_data()['summary'];
 		$this->assertSame( $summary['ok'] + 1, $after['ok'] );
-		$this->assertSame( 14, $after['total'] );
+		$this->assertSame( 16, $after['total'] );
 	}
 
 	public function test_the_demo_chronicles_own_row_is_not_something_to_do(): void {
 		$data = $this->dispatch_for_game( $this->admin_id, 'be-demo' )->get_data();
 
-		$this->assertCount( 15, $data['items'] );
-		$this->assertSame( 14, $data['summary']['total'], 'the demo row asks for nothing' );
-		$this->assertSame( 15, $data['summary']['attention'] + $data['summary']['ok'] + $data['summary']['info'] );
+		$this->assertCount( 17, $data['items'] );
+		$this->assertSame( 16, $data['summary']['total'], 'the demo row asks for nothing' );
+		$this->assertSame( 17, $data['summary']['attention'] + $data['summary']['ok'] + $data['summary']['info'] );
 	}
 
 	public function test_an_hst_can_act_on_the_setting_rows_a_site_administrator_does_not_have_to_be_for(): void {

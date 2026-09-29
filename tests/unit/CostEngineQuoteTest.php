@@ -46,7 +46,7 @@ class CostEngineQuoteTest extends TestCase {
 	public function test_a_catalog_item_with_no_cost_is_still_free_and_priced(): void {
 		$quote = Cost_Engine::quote_trait_list_change( [], self::block(), 'm', 'add_trait', self::change( 'm', [ 'name' => 'Free Perk', 'count' => 1 ] ) );
 
-		$this->assertSame( [ 'xp' => 0, 'priced' => true, 'unpriced_reason' => null ], $quote, 'Q2: only custom purchases are unpriced' );
+		$this->assertSame( [ 'xp' => 0, 'priced' => true, 'unpriced_reason' => null ], $quote, 'only custom purchases are unpriced' );
 	}
 
 	public function test_removing_a_catalog_item_is_priced_as_it_always_was(): void {

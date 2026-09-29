@@ -418,7 +418,6 @@ def main(snapshot_dir, da_path):
             variant_docs.append(envelope(vslug, f"{'Disciplines' if slug == VD else 'Blood Magic'} ({suffix})",
                                          'tiered_power', OrderedDict([
                 ('sources', variant_sources(variant)),
-                ('extracted', '2026-09-22'),
                 ('tool', 'tools/catalog/build_vampire.py + rulings/' + slug + '.json'),
             ]), vdef, variant=OrderedDict([('of', slug), ('id', variant), ('label', label), ('mode', 'add')])))
 
@@ -448,7 +447,6 @@ def main(snapshot_dir, da_path):
         d['powers'] = out[slug]
         doc = envelope(slug, title, 'tiered_power', OrderedDict([
             ('sources', base_sources(slug)),
-            ('extracted', '2026-09-22'),
             ('tool', 'tools/catalog/build_vampire.py + rulings/' + slug + '.json'),
         ]), d)
         print(write_block(doc), 'families=%d rungs=%d picks=%d overflow=%d' % partition(d))
@@ -463,7 +461,6 @@ def main(snapshot_dir, da_path):
         ('sources', ["Faith and Fire (WW05038), Chapter Four - Gargoyle body-modification powers, "
                      "'non-progressive... purchased individually (not leveled)', XP 3/6/9 by power",
                      'GVM: Gargoyle Powers (moved out of vampire-disciplines)']),
-        ('extracted', '2026-09-22'),
         ('tool', 'tools/catalog/build_vampire.py'),
     ]), gdef)), 'items=%d' % len(garg))
 
@@ -481,13 +478,13 @@ def block_meta(slug):
 def base_sources(slug):
     common = [
         'Laws of the Night Revised (WW05013) - Discipline 3/6/9 across a 2/2/1 ladder; Elder/Master/'
-        'Ascended/Methuselah 12/15/18/21 (Camarilla Guide), per MET-POWER-ACQUISITION.md',
-        'GVM: Disciplines (container) and met-mechanics.csv, as seeded by 1.2.10 (be_dev snapshot)',
-        'samples/research/vampire/ (owbn, met, tt) for spelling and short-ladder rulings - 1.3.0 §2 precedence',
+        'Ascended/Methuselah 12/15/18/21 (Camarilla Guide)',
+        'GVM: Disciplines (container) and met-mechanics.csv (tools/catalog/source/)',
+        'samples/research/vampire/ (owbn, met, tt) for spelling and short ladders',
     ]
     if slug == BM:
         common[0] = ('Tremere packet / Laws of the Night Revised - blood-magic paths 3/6/9 on the Discipline '
-                     'ladder, stored and exported as Disciplines (1.2.10 A3)')
+                     'ladder, stored and exported as Disciplines')
     return common
 
 
@@ -495,10 +492,10 @@ def variant_sources(variant):
     if variant == 'dark-ages':
         return ["Grapevine 3.0 'Dark Ages Menus.gvm' (for Faith and Fire, WW05038) - fills rungs the modern "
                 "menu's 'dark ages' tags leave empty",
-                "Modern GVM levels noted 'dark ages', split out of the base families by 1.3.1"]
+                "GVM levels noted 'dark ages', kept apart from the base families"]
     return ["Mind's Eye Theatre: The Masquerade 2nd Edition (WW05200) via samples/research/vampire/met/"
             "laws-of-the-night-2e-disciplines.json where it lists the family",
-            "Modern GVM levels noted '2nd ed.', split out of the base families by 1.3.1; untagged rungs are "
+            "GVM levels noted '2nd ed.', kept apart from the base families; untagged rungs are "
             "the shared printing"]
 
 

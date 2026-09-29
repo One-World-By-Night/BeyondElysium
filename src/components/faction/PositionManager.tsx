@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import { everyPage } from '../../lib/everyPage';
+import { sameId } from '../../lib/ids';
 import HelpButton from '../shared/HelpButton';
 import HtmlEditor from '../shared/HtmlEditor';
 import type {
@@ -62,14 +63,16 @@ export function PositionManager( {
 		if ( id === null ) {
 			return __( 'Vacant', 'beyond-elysium' );
 		}
-		return characters.find( ( c ) => c.id === id )?.name ?? `#${ id }`;
+		return (
+			characters.find( ( c ) => sameId( c.id, id ) )?.name ?? `#${ id }`
+		);
 	}
 
 	function factionName( id: number | null ): string {
 		if ( id === null ) {
 			return '';
 		}
-		return factions.find( ( f ) => f.id === id )?.name ?? `#${ id }`;
+		return factions.find( ( f ) => sameId( f.id, id ) )?.name ?? `#${ id }`;
 	}
 
 	return (
@@ -364,7 +367,7 @@ function PositionDetail( {
 			.catch( () => setHistory( [] ) );
 	}
 
-	useEffect( load, [ gameSlug, id ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect( load, [ gameSlug, id ] );
 
 	async function deletePosition() {
 		try {
@@ -428,10 +431,7 @@ function PositionDetail( {
 				) }
 			</p>
 			{ position.notes && (
-				<div
-					// eslint-disable-next-line react/no-danger
-					dangerouslySetInnerHTML={ { __html: position.notes } }
-				/>
+				<div dangerouslySetInnerHTML={ { __html: position.notes } } />
 			) }
 
 			<h4>{ __( 'History', 'beyond-elysium' ) }</h4>

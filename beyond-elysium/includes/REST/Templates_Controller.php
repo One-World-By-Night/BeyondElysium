@@ -108,13 +108,13 @@ class Templates_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates a new global template, available to every game, by delegating to create_template() with no game id.
+	 * Refuses to create a site template: the book's sheet templates are read-only.
 	 *
 	 * @param \WP_REST_Request $request
-	 * @return \WP_REST_Response|\WP_Error
+	 * @return \WP_Error
 	 */
 	public function create_global( $request ) {
-		return $this->create_template( $request, null );
+		return $this->book_read_only();
 	}
 
 	/**
@@ -132,31 +132,23 @@ class Templates_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Updates a global template by id, confirming it is global (not game-scoped) before applying the change.
+	 * Refuses to change a site template: the book's sheet templates are read-only.
 	 *
 	 * @param \WP_REST_Request $request
-	 * @return \WP_REST_Response|\WP_Error
+	 * @return \WP_Error
 	 */
 	public function update_global( $request ) {
-		$template = Template::find( (int) $request['id'] );
-		if ( ! $template || $template->game_id !== null ) {
-			return $this->error( 'not_found', __( 'Template not found.', 'beyond-elysium' ), 404 );
-		}
-		return $this->apply_update( $request, $template );
+		return $this->book_read_only();
 	}
 
 	/**
-	 * Deletes a global template by id, confirming it is global (not game-scoped) before deleting.
+	 * Refuses to delete a site template: the book's sheet templates are read-only.
 	 *
 	 * @param \WP_REST_Request $request
-	 * @return \WP_REST_Response|\WP_Error
+	 * @return \WP_Error
 	 */
 	public function delete_global( $request ) {
-		$template = Template::find( (int) $request['id'] );
-		if ( ! $template || $template->game_id !== null ) {
-			return $this->error( 'not_found', __( 'Template not found.', 'beyond-elysium' ), 404 );
-		}
-		return $this->apply_delete( $template );
+		return $this->book_read_only();
 	}
 
 	// Game scope
@@ -191,7 +183,7 @@ class Templates_Controller extends Base_Controller {
 			] );
 		}
 
-		$layout = Layout_Generator::generate_for_stack( $stack_slug );
+		$layout = Layout_Generator::generate_for_stack( $stack_slug, (string) $game->slug );
 		if ( $layout === null ) {
 			return $this->error( 'stack_not_found', __( 'Creature stack not found.', 'beyond-elysium' ), 404 );
 		}
@@ -285,13 +277,13 @@ class Templates_Controller extends Base_Controller {
 	// Shared helpers
 
 	/**
-	 * Shared creation logic for both global and game-scoped templates.
+	 * Creates a chronicle's own template.
 	 *
 	 * @param \WP_REST_Request $request
-	 * @param int|null         $game_id
+	 * @param int              $game_id
 	 * @return \WP_REST_Response|\WP_Error
 	 */
-	private function create_template( $request, ?int $game_id ) {
+	private function create_template( $request, int $game_id ) {
 		$stack_slug    = $request->get_param( 'stack_slug' );
 		$name          = $request->get_param( 'name' );
 		$template_type = $request->get_param( 'template_type' );
@@ -309,7 +301,8 @@ class Templates_Controller extends Base_Controller {
 			$decoded = json_decode( (string) wp_json_encode( $decoded ), true );
 		}
 
-		$validation_error = Template::validate_layout( $decoded );
+		$game             = \BeyondElysium\Models\Game::find( $game_id );
+		$validation_error = Template::validate_layout( $decoded, $game ? (string) $game->slug : '' );
 		if ( $validation_error ) {
 			return $this->error( 'invalid_layout', $validation_error->get_error_message(), 400 );
 		}
@@ -330,7 +323,7 @@ class Templates_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Shared update logic for both global and game-scoped templates.
+	 * Updates a chronicle's own template.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @param object           $template Existing template row.
@@ -353,7 +346,8 @@ class Templates_Controller extends Base_Controller {
 				$decoded = json_decode( (string) wp_json_encode( $decoded ), true );
 			}
 
-			$validation_error = Template::validate_layout( $decoded );
+			$game             = \BeyondElysium\Models\Game::find( (int) $template->game_id );
+			$validation_error = Template::validate_layout( $decoded, $game ? (string) $game->slug : '' );
 			if ( $validation_error ) {
 				return $this->error( 'invalid_layout', $validation_error->get_error_message(), 400 );
 			}
@@ -365,11 +359,12 @@ class Templates_Controller extends Base_Controller {
 			return $this->error( 'update_failed', __( 'Failed to update template.', 'beyond-elysium' ), 500 );
 		}
 
+
 		return $this->success( Template::find( (int) $template->id ) );
 	}
 
 	/**
-	 * Shared deletion logic for both global and game-scoped templates.
+	 * Deletes a chronicle's own template.
 	 *
 	 * @param object $template
 	 * @return \WP_REST_Response|\WP_Error

@@ -171,7 +171,7 @@ export function StatisticsView( {
 														result.maximum
 															? ( value /
 																	result.maximum ) *
-															  100
+																100
 															: 0
 													}%`,
 												} }

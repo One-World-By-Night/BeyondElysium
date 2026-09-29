@@ -225,7 +225,7 @@ class WorldObjectAudienceThreadTest extends WP_UnitTestCase {
 		$this->assertSame(
 			200,
 			$this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/world-objects/{$item_id}" ) )->get_status(),
-			'a connected character always sees the object, whatever its audience (1.1.0 §2.5)'
+			'a connected character always sees the object, whatever its audience'
 		);
 	}
 

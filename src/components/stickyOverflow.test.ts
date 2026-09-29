@@ -43,7 +43,7 @@ function ruleBodies(
 const files: string[] = [];
 findCssFiles( join( __dirname, '..' ), files );
 
-describe( 'a sticky bottom bar always caps its own height (D74)', () => {
+describe( 'a sticky bottom bar always caps its own height', () => {
 	it( 'finds stylesheets to scan', () => {
 		expect( files.length ).toBeGreaterThan( 20 );
 	} );

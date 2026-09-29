@@ -8,9 +8,9 @@
     "sources": [
       "Laws of the East (WW05016), p. 125 (Discipline 4/7/10, no out-of-type modifier), p. 133-160 (Disciplines)",
       "GVM: Disciplines, Kuei-Jin (family list and power names)",
-      "Owner rulings 2026-09-17 (samples/research/kuei-jin/NOTES.md): Equilibrium added; Black Wind is three separately rated powers"
+      "Equilibrium is included; Black Wind is three separately rated powers",
+      "Laws of the East (WW05016) p. 132-170 - each family's `group` is its own book category: Shintai, Chi Arts, Soul or Demon Arts. Hellweaving carries none - p. 168, reserved for akuma, not one of the three Basic Disciplines a new character chooses. Equilibrium's own `source` was the book's own citation and is corrected to its family name"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/build_kueijin_disciplines.py + rulings/kueijin-disciplines.json"
   },
   "definition": {
@@ -78,7 +78,8 @@
           }
         ],
         "elder": {},
-        "split_from": "Black Wind"
+        "split_from": "Black Wind",
+        "group": "Demon Arts"
       },
       {
         "name": "Black Wind: Ten Thousand Steps",
@@ -116,7 +117,8 @@
           }
         ],
         "elder": {},
-        "split_from": "Black Wind"
+        "split_from": "Black Wind",
+        "group": "Demon Arts"
       },
       {
         "name": "Black Wind: Tiger Slashing Heaven",
@@ -154,7 +156,8 @@
           }
         ],
         "elder": {},
-        "split_from": "Black Wind"
+        "split_from": "Black Wind",
+        "group": "Demon Arts"
       },
       {
         "name": "Blood Shintai",
@@ -191,7 +194,8 @@
             "cost": "10"
           }
         ],
-        "elder": {}
+        "elder": {},
+        "group": "Shintai"
       },
       {
         "name": "Bone Shintai",
@@ -228,7 +232,8 @@
             "cost": "10"
           }
         ],
-        "elder": {}
+        "elder": {},
+        "group": "Shintai"
       },
       {
         "name": "Chi'iu Muh",
@@ -265,7 +270,8 @@
             "cost": "10"
           }
         ],
-        "elder": {}
+        "elder": {},
+        "group": "Soul"
       },
       {
         "name": "Cultivation",
@@ -302,7 +308,8 @@
             "cost": "10"
           }
         ],
-        "elder": {}
+        "elder": {},
+        "group": "Soul"
       },
       {
         "name": "Demon Shintai",
@@ -356,7 +363,8 @@
           "Third Eye",
           "Wings"
         ],
-        "options_note": "Each level adds one Physical Trait in Demon form and one form characteristic chosen from this list (Laws of the East p. 142-143)."
+        "options_note": "Each level adds one Physical Trait in Demon form and one form characteristic chosen from this list (Laws of the East p. 142-143).",
+        "group": "Demon Arts"
       },
       {
         "name": "Flesh Shintai",
@@ -393,7 +401,8 @@
             "cost": "10"
           }
         ],
-        "elder": {}
+        "elder": {},
+        "group": "Shintai"
       },
       {
         "name": "Ghost-Flame Shintai",
@@ -430,7 +439,8 @@
             "cost": "10"
           }
         ],
-        "elder": {}
+        "elder": {},
+        "group": "Shintai"
       },
       {
         "name": "Hellweaving",
@@ -504,7 +514,8 @@
             "cost": "10"
           }
         ],
-        "elder": {}
+        "elder": {},
+        "group": "Soul"
       },
       {
         "name": "Jade Shintai",
@@ -541,7 +552,8 @@
             "cost": "10"
           }
         ],
-        "elder": {}
+        "elder": {},
+        "group": "Shintai"
       },
       {
         "name": "Obligation",
@@ -578,7 +590,8 @@
             "cost": "10"
           }
         ],
-        "elder": {}
+        "elder": {},
+        "group": "Soul"
       },
       {
         "name": "Tapestry",
@@ -615,7 +628,8 @@
             "cost": "10"
           }
         ],
-        "elder": {}
+        "elder": {},
+        "group": "Chi Arts"
       },
       {
         "name": "Yang Prana",
@@ -652,7 +666,8 @@
             "cost": "10"
           }
         ],
-        "elder": {}
+        "elder": {},
+        "group": "Chi Arts"
       },
       {
         "name": "Yin Prana",
@@ -689,11 +704,12 @@
             "cost": "10"
           }
         ],
-        "elder": {}
+        "elder": {},
+        "group": "Chi Arts"
       },
       {
         "name": "Equilibrium",
-        "source": "Laws of the East",
+        "source": "Equilibrium",
         "levels": [
           {
             "level": 1,
@@ -726,7 +742,8 @@
             "cost": "10"
           }
         ],
-        "elder": {}
+        "elder": {},
+        "group": "Chi Arts"
       }
     ]
   }

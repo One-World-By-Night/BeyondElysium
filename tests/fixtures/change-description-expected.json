@@ -1,36 +1,162 @@
 [
-  { "name": "true before/after for a tiered_power level change", "output": "Celerity 2 → 4" },
-  { "name": "degrades to only the new value when previous is absent", "output": "Celerity → level 4" },
-  { "name": "true before/after for a trait_list count change", "output": "Boon x1 → x3" },
-  { "name": "modify_trait with neither level nor count", "output": "Something updated" },
-  { "name": "adding a new tiered power", "output": "Added Fortitude 1" },
-  { "name": "adding a trait_list item with a specialization", "output": "Added Contacts (Police)" },
-  { "name": "adding a trait_list item with count > 1 and no specialization", "output": "Added Occult x3" },
-  { "name": "removing a trait", "output": "Removed Potence" },
-  { "name": "a resource pool change", "output": "Blood: 10 perm / 8 temp" },
-  { "name": "modify_resource with no values", "output": "Resource updated" },
-  { "name": "an identity field change", "output": "Clan → Toreador" },
-  { "name": "modify_identity with no fields", "output": "Identity updated" },
-  { "name": "a multiselect identity field change", "output": "Languages → English, Latin" },
-  { "name": "XP earn with a reason", "output": "+3 XP (Game attendance)" },
-  { "name": "XP earn with no reason", "output": "+5 XP" },
-  { "name": "XP adjust with a reason", "output": "XP adjusted by -2 (ST correction)" },
-  { "name": "an imported note with a reason", "output": "Migrated from legacy sheet" },
-  { "name": "an imported note with no reason", "output": "Imported note" },
-  { "name": "an imported note with an empty reason", "output": "Imported note" },
-  { "name": "an unrecognized change type", "output": "Unknown change" },
-  { "name": "proposing a world object", "output": "Proposed item: Ashwood Stake" },
-  { "name": "proposing a world object with no object_type", "output": "Proposed item: Ashwood Stake" },
-  { "name": "proposing a faction", "output": "Proposed coterie: Coterie of Thorns" },
-  { "name": "proposing a faction with no faction_type", "output": "Proposed group: Coterie of Thorns" },
-  { "name": "a catalog update that moved rows and matched entries", "output": "Catalog update: 24 rows moved to their new catalog sections, 7 custom entries matched to the catalog" },
-  { "name": "a catalog update of exactly one row and one entry", "output": "Catalog update: 1 row moved to its new catalog section, 1 custom entry matched to the catalog" },
-  { "name": "a catalog update that only moved rows", "output": "Catalog update: 5 rows moved to their new catalog sections" },
-  { "name": "a catalog update that only matched entries", "output": "Catalog update: 2 custom entries matched to the catalog" },
-  { "name": "a catalog update that also corrected spellings", "output": "Catalog update: 24 rows moved to their new catalog sections, 7 custom entries matched to the catalog, 3 names spelled to match the catalog" },
-  { "name": "a catalog update of exactly one row and one spelling", "output": "Catalog update: 1 row moved to its new catalog section, 1 name spelled to match the catalog" },
-  { "name": "a catalog update that only corrected spellings", "output": "Catalog update: 2 names spelled to match the catalog" },
-  { "name": "a catalog update with no counts", "output": "Catalog update" },
-  { "name": "a catalog update undone", "output": "Catalog update undone" },
-  { "name": "a catalog update undone by force", "output": "Catalog update undone, including changes made since" }
+ {
+  "name": "true before/after for a tiered_power level change",
+  "output": "Celerity 2 → 4"
+ },
+ {
+  "name": "degrades to only the new value when previous is absent",
+  "output": "Celerity → level 4"
+ },
+ {
+  "name": "true before/after for a trait_list count change",
+  "output": "Boon x1 → x3"
+ },
+ {
+  "name": "modify_trait with neither level nor count",
+  "output": "Something updated"
+ },
+ {
+  "name": "adding a new tiered power",
+  "output": "Added Fortitude 1"
+ },
+ {
+  "name": "adding a trait_list item with a specialization",
+  "output": "Added Contacts (Police)"
+ },
+ {
+  "name": "adding a trait_list item with count > 1 and no specialization",
+  "output": "Added Occult x3"
+ },
+ {
+  "name": "removing a trait",
+  "output": "Removed Potence"
+ },
+ {
+  "name": "a resource pool change",
+  "output": "Blood: 10 perm / 8 temp"
+ },
+ {
+  "name": "modify_resource with no values",
+  "output": "Resource updated"
+ },
+ {
+  "name": "an identity field change",
+  "output": "Clan → Toreador"
+ },
+ {
+  "name": "modify_identity with no fields",
+  "output": "Identity updated"
+ },
+ {
+  "name": "a multiselect identity field change",
+  "output": "Languages → English, Latin"
+ },
+ {
+  "name": "XP earn with a reason",
+  "output": "+3 XP (Game attendance)"
+ },
+ {
+  "name": "XP earn with no reason",
+  "output": "+5 XP"
+ },
+ {
+  "name": "XP adjust with a reason",
+  "output": "XP adjusted by -2 (ST correction)"
+ },
+ {
+  "name": "an imported note with a reason",
+  "output": "Migrated from legacy sheet"
+ },
+ {
+  "name": "an imported note with no reason",
+  "output": "Imported note"
+ },
+ {
+  "name": "an imported note with an empty reason",
+  "output": "Imported note"
+ },
+ {
+  "name": "an unrecognized change type",
+  "output": "Unknown change"
+ },
+ {
+  "name": "proposing a world object",
+  "output": "Proposed item: Ashwood Stake"
+ },
+ {
+  "name": "proposing a world object with no object_type",
+  "output": "Proposed item: Ashwood Stake"
+ },
+ {
+  "name": "proposing a faction",
+  "output": "Proposed coterie: Coterie of Thorns"
+ },
+ {
+  "name": "proposing a faction with no faction_type",
+  "output": "Proposed group: Coterie of Thorns"
+ },
+ {
+  "name": "a catalog update that moved rows and matched entries",
+  "output": "Catalog update: 24 rows moved to their new catalog sections, 7 custom entries matched to the catalog"
+ },
+ {
+  "name": "a catalog update of exactly one row and one entry",
+  "output": "Catalog update: 1 row moved to its new catalog section, 1 custom entry matched to the catalog"
+ },
+ {
+  "name": "a catalog update that only moved rows",
+  "output": "Catalog update: 5 rows moved to their new catalog sections"
+ },
+ {
+  "name": "a catalog update that only matched entries",
+  "output": "Catalog update: 2 custom entries matched to the catalog"
+ },
+ {
+  "name": "a catalog update that also corrected spellings",
+  "output": "Catalog update: 24 rows moved to their new catalog sections, 7 custom entries matched to the catalog, 3 names spelled to match the catalog"
+ },
+ {
+  "name": "a catalog update of exactly one row and one spelling",
+  "output": "Catalog update: 1 row moved to its new catalog section, 1 name spelled to match the catalog"
+ },
+ {
+  "name": "a catalog update that only corrected spellings",
+  "output": "Catalog update: 2 names spelled to match the catalog"
+ },
+ {
+  "name": "a catalog update with no counts",
+  "output": "Catalog update"
+ },
+ {
+  "name": "a catalog update undone",
+  "output": "Catalog update undone"
+ },
+ {
+  "name": "a catalog update undone by force",
+  "output": "Catalog update undone, including changes made since"
+ },
+ {
+  "name": "a character linked through an invite",
+  "output": "Linked to Jane Doe through an invite"
+ },
+ {
+  "name": "a character linked by a Storyteller",
+  "output": "Linked to Jane Doe"
+ },
+ {
+  "name": "a character unlinked",
+  "output": "Unlinked from Jane Doe"
+ },
+ {
+  "name": "a character build's own cost",
+  "output": "Overspent build"
+ },
+ {
+  "name": "a build cost with no reason",
+  "output": "Character build"
+ },
+ {
+  "name": "a trait granted from a named pool",
+  "output": "Granted Freudian Slip from Shadow XP"
+ }
 ]

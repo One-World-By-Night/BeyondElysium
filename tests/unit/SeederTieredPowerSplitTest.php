@@ -123,7 +123,7 @@ class SeederTieredPowerSplitTest extends TestCase {
 		] ] );
 
 		$this->assertSame( 5, array_sum( $meta['ladder'] ) );
-		$this->assertSame( 'vampire-identity.Clan', $meta['in_type_source'], 'D75: the join that makes the surcharge fire' );
+		$this->assertArrayNotHasKey( 'in_type_source', $meta, "an in-type rule lives on the creature type's section, never in a block's _meta" );
 		$this->assertSame( [ 'basic' => 3, 'intermediate' => 6, 'elder' => 12 ], $meta['costs'] );
 	}
 
@@ -144,8 +144,8 @@ class SeederTieredPowerSplitTest extends TestCase {
 		$this->assertSame( [ 'basic' => '+1', 'intermediate' => '+2', 'advanced' => '+3' ], $mage['out_of_type'], 'Mage scales' );
 
 		$wraith = $this->meta( 'wraith-arcanoi', [] );
-		$this->assertSame( '+0', $wraith['out_of_type']['innate'], "Wraith's Innate exemption is just +0" );
-		$this->assertSame( '-1', $wraith['out_of_type']['basic'], 'the Guild discount is a discount' );
+		$this->assertSame( '+0', $wraith['in_type']['innate'], "Wraith's Innate exemption is just +0" );
+		$this->assertSame( '-1', $wraith['in_type']['basic'], "the Guild's own discount is on its own Arcanos, never every Arcanos" );
 
 		$kuei = $this->meta( 'kueijin-disciplines', [] );
 		$this->assertArrayNotHasKey( 'out_of_type', $kuei, 'Kuei-Jin has no modifier in the chart at all' );

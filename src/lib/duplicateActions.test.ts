@@ -31,7 +31,7 @@ describe( 'duplicateActionsFor', () => {
 		] );
 	} );
 
-	it( 'drops Overwrite when the existing character belongs to someone else (F-122)', () => {
+	it( 'drops Overwrite when the existing character belongs to someone else', () => {
 		expect( duplicateActionsFor( 'name', true, false ) ).toEqual( [
 			'skip',
 			'import_as_new',

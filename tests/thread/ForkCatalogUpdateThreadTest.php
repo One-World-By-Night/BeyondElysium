@@ -103,21 +103,23 @@ class ForkCatalogUpdateThreadTest extends WP_UnitTestCase {
 		$this->assertArrayHasKey( $other, $copy, 'so did the merit the copy lacked' );
 	}
 
-	public function test_an_administrators_catalog_save_reaches_every_chronicles_copy(): void {
+	public function test_a_chronicles_description_on_its_copy_survives_a_plugin_update(): void {
 		[ , $untouched ] = $this->chronicle_edits_merits();
 
-		$admin      = self::factory()->user->create( [ 'role' => 'administrator' ] );
-		$definition = $this->definition();
+		$definition = $this->definition( $this->slug );
 		foreach ( $definition['items'] as $i => $item ) {
 			if ( $item['name'] === $untouched ) {
-				$definition['items'][ $i ]['description'] = [ 'description' => '<p>House rule for everyone.</p>' ];
+				$definition['items'][ $i ]['description'] = [ 'description' => '<p>Our house rule.</p>' ];
 			}
 		}
-		$this->assertSame( 200, $this->send( $admin, 'PUT', '/be/v1/schema-blocks/vampire-merits', [ 'definition' => $definition ] )->get_status() );
+		$this->assertSame( 200, $this->send( $this->hst, 'PUT', "/be/v1/{$this->slug}/schema-blocks/vampire-merits", [ 'definition' => $definition ] )->get_status() );
+
+		Seeder::seed_schema_blocks();
 
 		$copy = self::items( $this->definition( $this->slug ) );
-		$this->assertSame( '<p>House rule for everyone.</p>', $copy[ $untouched ]['description']['description'] ?? null );
+		$this->assertSame( '<p>Our house rule.</p>', $copy[ $untouched ]['description']['description'] ?? null );
 		$this->assertArrayHasKey( 'Thread Chronicle Merit', $copy );
+		$this->assertNotSame( '<p>Our house rule.</p>', self::items( $this->definition() )[ $untouched ]['description']['description'] ?? null, 'the book keeps its own' );
 	}
 
 	public function test_an_approval_rule_on_a_copy_survives_a_plugin_update(): void {

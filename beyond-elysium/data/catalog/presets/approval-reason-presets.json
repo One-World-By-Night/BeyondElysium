@@ -7,7 +7,6 @@
     "sources": [
       "includes/Database/approval-reason-presets.php"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": [

@@ -276,23 +276,23 @@ export function AdminApprovalRules() {
 
 	const items: TraitListItem[] =
 		activeBlock?.section_type === 'trait_list'
-			? ( activeBlock.definition as { items: TraitListItem[] } ).items ??
-			  []
+			? ( ( activeBlock.definition as { items: TraitListItem[] } )
+					.items ?? [] )
 			: [];
 	const powers: TieredPower[] =
 		activeBlock?.section_type === 'tiered_power'
-			? ( activeBlock.definition as { powers: TieredPower[] } ).powers ??
-			  []
+			? ( ( activeBlock.definition as { powers: TieredPower[] } )
+					.powers ?? [] )
 			: [];
 	const pools: ResourcePool[] =
 		activeBlock?.section_type === 'resource_pool'
-			? ( activeBlock.definition as { pools: ResourcePool[] } ).pools ??
-			  []
+			? ( ( activeBlock.definition as { pools: ResourcePool[] } ).pools ??
+				[] )
 			: [];
 	const fields: IdentityField[] =
 		activeBlock?.section_type === 'identity_field'
-			? ( activeBlock.definition as { fields: IdentityField[] } )
-					.fields ?? []
+			? ( ( activeBlock.definition as { fields: IdentityField[] } )
+					.fields ?? [] )
 			: [];
 	const selectedPower = powers.find( ( p ) => p.name === form.target_name );
 	const selectedField = fields.find( ( f ) => f.name === form.target_name );

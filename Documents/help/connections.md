@@ -26,9 +26,7 @@ Plots & Rumors access. The chronicle's Harpy and a plain player never see this p
 
 - A dropdown for what kind of thing to connect to: **Character in this chronicle**,
   **External (name only)**, **Plot**, **World object**, **Tag**.
-- Depending on that choice: a plain dropdown of names (character or plot, up to 100 loaded
-  for this chronicle), a **Search world objects…** box, a plain text box for an external
-  name, or nothing extra for a bare Tag.
+- Depending on that choice: a **Search characters…**, **Search plots…** or **Search world objects…** box that narrows the list as you type, a plain text box for an external name, or nothing extra for a bare Tag. The characters are every one in this chronicle, NPCs included and marked "(NPC)"; a name two of them share carries each one's number, such as "(#12)".
 - **Label** - a short free-text tag for the relationship (for example "sister" or "involved
   in"). Disabled for an External connection, since the name you typed already serves as the
   label.
@@ -45,7 +43,7 @@ Plots & Rumors access. The chronicle's Harpy and a plain player never see this p
 
 1. Open the plot (Storyteller Toolkit → Plots & Rumors).
 2. Click **Connect character** in its action bar.
-3. Leave the dropdown on **Character in this chronicle** and pick the character.
+3. Leave the dropdown on **Character in this chronicle**, type part of the character's name and pick them from the list.
 4. Optionally add a **Label** and **Notes**.
 5. Click **Add connection**.
 
@@ -88,9 +86,6 @@ Plots & Rumors access. The chronicle's Harpy and a plain player never see this p
   not copied. If one character's copy needs to become unique later (an heirloom, something
   that gets damaged or renamed), duplicate the item on the Items & Locations screen and
   connect that copy instead.
-- The character and plot pickers load up to 100 of each for this chronicle as a plain
-  dropdown - in a very large chronicle, unlike the world-object picker, there's no
-  search-as-you-type for those two.
 
 ## Troubleshooting
 

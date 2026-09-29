@@ -6,15 +6,79 @@
   "section_type": "identity_field",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh",
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_schema_blocks, dumped by tools/catalog/dump_live.sh",
       "Auspice: GVM menu(s) \"Auspice, Fera\" (50 options)",
       "Totem: GVM menu(s) \"Totems\" (137 options)"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py",
-    "notes": "1.3.0 gap-audit class B: options from the Grapevine menus, `allow_custom` on so held free-text values stay valid."
+    "notes": "Options from the Grapevine menus, with `allow_custom` on so held free-text values stay valid.",
+    "type_species_notes": "`type_species` maps each individual Fera Type to the shared family name `fera-gifts` groups its own powers under (Bastet's nine breeds share one `Bastet` Gift list; Mokole-mbembe, Makara and Zhong Lung all read `Mokole`'s). Verified against Mind's Eye Theatre Changing Breeds 1-3 and Hengeyokai: Nuwisha, Corax, Bastet's nine breeds (WW05019); Gurahl and its four tribes, Mokole and its Varna/stream names Makara and Zhong Lung (WW05024); Ananasi, Ratkin (WW05034); Kitsune (WW05036). Buzzard maps to itself - real, structured `Gifts, Buzzard`/`Rites, Buzzard` menu data exists in the legacy Grapevine source, but no Changing Breeds or Hengeyokai sourcebook in this library names it as a real Fera type; left in place, not removed, since it predates this catalog and isn't this pass's to adjudicate. Ajaba, Bitter-Grin, Breaker, Dumenkara, Gumagan, Hishtpah, Nagah, Purgers, Rokea, Vermin have no confirmed Gift-family match in this library and are left out of the map, reading as out of type until real per-species research is done. Gnosis/Rage/Willpower `start` values are only built for Nuwisha, Bastet and Gurahl this pass; Mokole's own Homid/Suchid breed Gnosis plus its six-Varna Rage table and auspice-Gift budget are real, book-confirmed (WW05024) but not yet wired into `creation_rules` - a Mokole character's resource pools stay a manual Storyteller entry until that's built."
   },
   "definition": {
+    "nuwisha_breed_gnosis": {
+      "Homid": 1,
+      "Latrani": 3
+    },
+    "bastet_breed_gnosis": {
+      "Homid": 2,
+      "Metis": 3,
+      "Feline": 4
+    },
+    "bastet_tribe_willpower": {
+      "Bagheera": 3,
+      "Balam": 2,
+      "Bubasti": 3,
+      "Ceilican": 2,
+      "Khan": 1,
+      "Pumonca": 2,
+      "Qualmi": 3,
+      "Simba": 1,
+      "Swara": 3
+    },
+    "bastet_tribe_rage": {
+      "Bagheera": 1,
+      "Balam": 3,
+      "Bubasti": 1,
+      "Ceilican": 2,
+      "Khan": 3,
+      "Pumonca": 2,
+      "Qualmi": 1,
+      "Simba": 3,
+      "Swara": 1
+    },
+    "gurahl_breed_gnosis": {
+      "Homid": 4,
+      "Ursine": 5
+    },
+    "gurahl_breed_rage": {
+      "Homid": 3,
+      "Ursine": 4
+    },
+    "type_species": {
+      "Ananasi": "Ananasi",
+      "Bagheera": "Bastet",
+      "Balam": "Bastet",
+      "Bubasti": "Bastet",
+      "Buzzard": "Buzzard",
+      "Ceilican": "Bastet",
+      "Corax": "Corax",
+      "Forest Walkers": "Gurahl",
+      "Gurahl": "Gurahl",
+      "Ice Stalkers": "Gurahl",
+      "Khan": "Bastet",
+      "Kitsune": "Kitsune",
+      "Makara": "Mokole",
+      "Mokole-mbembe": "Mokole",
+      "Mountain Guardians": "Gurahl",
+      "Nuwisha": "Nuwisha",
+      "Pumonca": "Bastet",
+      "Qualmi": "Bastet",
+      "Ratkin": "Ratkin",
+      "River Keepers": "Gurahl",
+      "Simba": "Bastet",
+      "Swara": "Bastet",
+      "Zhong Lung": "Mokole"
+    },
     "fields": [
       {
         "name": "Fera Type",
@@ -34,6 +98,7 @@
           "Dumenkara",
           "Forest Walkers",
           "Gumagan",
+          "Gurahl",
           "Hishtpah",
           "Ice Stalkers",
           "Khan",

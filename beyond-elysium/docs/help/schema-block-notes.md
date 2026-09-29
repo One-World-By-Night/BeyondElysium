@@ -1,6 +1,6 @@
 # Catalog Descriptions & Approval Schedules
 
-Three small editors that open from a row on the Schema Blocks screen: a public note about an item, power, level, pool, or field, and two finer approval schedules than a flat Approval setting alone can express.
+Four small editors that open from a row on the Schema Blocks screen: a public note about an item, power, level, pool, or field, two finer approval schedules than a flat Approval setting alone can express, and the prerequisite list behind a "cost follows another block" item.
 
 ## Who can use this
 
@@ -8,7 +8,7 @@ The same audience as [Schema Blocks](schema-blocks.md) itself, since these open 
 
 ## How to get there
 
-These aren't a screen of their own. Open [Schema Blocks](schema-blocks.md), edit a block, and click a **Description**, **Approval by value**, or **Approval by option** button on any row that offers one.
+These aren't a screen of their own. Open [Schema Blocks](schema-blocks.md), edit a block, and click a **Description**, **Approval by value**, **Approval by option**, or **Prerequisites** button on any row that offers one.
 
 ## The screen
 
@@ -31,6 +31,10 @@ Used on a trait list item or a resource pool. A table of ranges: **From**, **To*
 ### Approval by option
 
 Used on an identity field that has real options. One row per option the field currently offers, each with its own **Approval** dropdown (**Block default** leaves it with no override) and a **Reason** field, enabled once that option has an override. A multiselect field checks every value a player picks; the strictest requirement applies.
+
+### Prerequisites
+
+Used on a trait list item, or a tiered power, once that block's own **Cost by prerequisite** (trait list) or **Derived from block** (tiered power) is turned on - see [Schema Blocks](schema-blocks.md). A table of requirements: **Block**, **Power**, **Min level**, and **Remove**, plus **+ Add prerequisite**. Every row must be met for the item to price against the block it names - a rote that needs Correspondence 3 and Time 2 lists both as separate rows.
 
 ## Common tasks
 
@@ -56,12 +60,21 @@ Used on an identity field that has real options. One row per option the field cu
 3. Pick an **Approval** for the option that needs review.
 4. Click **Save** on the modal, then **Save** on the block.
 
+### Price an item by another block's tier
+
+1. Edit the block and turn on **Cost by prerequisite** (trait list) or **Derived from block** (tiered power) - see [Schema Blocks](schema-blocks.md).
+2. On the item, click **Prerequisites**.
+3. Click **+ Add prerequisite**, and pick the **Block**, **Power**, and **Min level** it needs.
+4. Repeat for every requirement the item has.
+5. Click **Save** on the modal, then **Save** on the block.
+
 ## Things to know
 
 - **This writes the exact same data the [Approval Rules](approval-rules.md) screen manages.** Change one, see it reflected in the other - Approval Rules just lists every rule flat, across every block, one target at a time, while these modals manage a whole schedule (every range, or every option) for one item or field at once.
 - **A Description is public.** Every member of a chronicle running this block can read it - on its own [House Rules](house-rules.md) page - not just Storytellers. It also isn't touched by Grapevine import or export, since it lives on the catalog definition, never on a character's own sheet.
 - **Approval by value checks the value being reached, never what a player held before.** Going straight from 2 to 5 is judged the same as going from 4 to 5.
 - **A tiered power's level has no Approval by value button** - each level is already its own row on the Powers table, with a plain Approval dropdown right there.
+- **Every prerequisite listed must be met - there's no "any of" option.** An item needing either of two things needs two separate items, each with its own single prerequisite.
 - **Nothing here writes until the block itself is saved.** Closing a modal with Save only stages that note or schedule; you still need to click Save on the block below it.
 - **Only formatting, lists, and tables survive a Description** - an image or anything else you paste in is stripped the moment it saves.
 - **Editing a shared system block's note or schedule, as a site administrator, changes it for every chronicle that hasn't made its own copy** - and, once there, it survives Beyond Elysium's own future updates, unlike the block's shipped catalog data (names, costs), which an update still refreshes.

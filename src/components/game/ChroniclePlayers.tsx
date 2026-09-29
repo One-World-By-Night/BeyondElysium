@@ -1,17 +1,32 @@
 /**
- * Storyteller Toolkit: Players. Finds an existing OWbN account and makes it a player in the chronicle, or takes a
- * player out.
+ * Storyteller Toolkit: Players. Invites a player by email with their characters, lists the invites waiting for someone
+ * to sign in, and lists the chronicle's players with their characters, which can be added to or unlinked.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { errorMessage } from '../../lib/errorMessage';
-import type { ChroniclePlayerList, ChroniclePlayerResult } from '../../types';
-import type { WpUserSummary } from '../../types/character';
+import { everyPage } from '../../lib/everyPage';
+import { pickerRows, type PickerRow } from '../../lib/characterPicker';
+import { inviteMessages, linkMessages } from '../../lib/playerInviteMessages';
+import type {
+	ChroniclePlayer,
+	ChroniclePlayerList,
+	ChroniclePlayerResult,
+	PlayerInvite,
+} from '../../types';
+import type { Character, WpUserSummary } from '../../types/character';
 import HelpButton from '../shared/HelpButton';
 import './ChroniclePlayers.css';
 
 const SEARCH_DEBOUNCE_MS = 300;
+
+/**
+ * Whether text reads as one email address.
+ */
+function looksLikeEmail( text: string ): boolean {
+	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test( text.trim() );
+}
 
 export interface ChroniclePlayersProps {
 	gameSlug: string;
@@ -133,20 +148,149 @@ export function resultMessages(
 	return lines;
 }
 
+/**
+ * A character's note in the picker: who holds it, or what email it waits for.
+ */
+function rowNote( row: PickerRow ): string {
+	switch ( row.state ) {
+		case 'linked':
+			return sprintf(
+				/* translators: %s: the player a character is linked to */
+				__( 'linked to %s', 'beyond-elysium' ),
+				row.note || __( 'another player', 'beyond-elysium' )
+			);
+		case 'waiting':
+			return sprintf(
+				/* translators: %s: the email address a character waits for */
+				__( 'waiting for %s', 'beyond-elysium' ),
+				row.note
+			);
+		case 'own':
+			return __( 'already theirs', 'beyond-elysium' );
+		default:
+			return '';
+	}
+}
+
+/**
+ * The chronicle's player characters as a filterable checklist; a character linked to an account cannot be ticked.
+ */
+function CharacterPicker( {
+	rows,
+	selected,
+	onToggle,
+	filter,
+	onFilter,
+}: {
+	rows: PickerRow[];
+	selected: Set< number >;
+	onToggle: ( id: number ) => void;
+	filter: string;
+	onFilter: ( text: string ) => void;
+} ) {
+	return (
+		<div className="be-chronicle-players__picker">
+			<input
+				type="search"
+				className="be-chronicle-players__search be-chronicle-players__search"
+				value={ filter }
+				placeholder={ __(
+					'Filter characters by name',
+					'beyond-elysium'
+				) }
+				aria-label={ __(
+					'Filter characters by name',
+					'beyond-elysium'
+				) }
+				onChange={ ( e ) => onFilter( e.target.value ) }
+			/>
+			{ rows.length === 0 ? (
+				<p className="be-chronicle-players__hint">
+					{ __( 'No character matches.', 'beyond-elysium' ) }
+				</p>
+			) : (
+				<ul className="be-chronicle-players__picker-list">
+					{ rows.map( ( row ) => (
+						<li key={ row.id }>
+							<label>
+								<input
+									type="checkbox"
+									checked={ selected.has( row.id ) }
+									disabled={
+										row.state === 'linked' ||
+										row.state === 'own'
+									}
+									onChange={ () => onToggle( row.id ) }
+								/>
+								<span>{ row.name }</span>
+								{ row.state !== 'free' && (
+									<span className="be-chronicle-players__email">
+										{ rowNote( row ) }
+									</span>
+								) }
+							</label>
+						</li>
+					) ) }
+				</ul>
+			) }
+			<p className="be-chronicle-players__hint">
+				{ sprintf(
+					/* translators: %d: how many characters are ticked */
+					__( '%d ticked', 'beyond-elysium' ),
+					selected.size
+				) }
+			</p>
+		</div>
+	);
+}
+
+/**
+ * A set with one id added or taken away.
+ */
+function toggled( set: Set< number >, id: number ): Set< number > {
+	const next = new Set( set );
+	if ( next.has( id ) ) {
+		next.delete( id );
+	} else {
+		next.add( id );
+	}
+	return next;
+}
+
 export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 	const [ list, setList ] = useState< ChroniclePlayerList | null >( null );
+	const [ invites, setInvites ] = useState< PlayerInvite[] >( [] );
+	const [ characters, setCharacters ] = useState< Character[] >( [] );
 	const [ error, setError ] = useState< string | null >( null );
-	const [ search, setSearch ] = useState( '' );
-	const [ results, setResults ] = useState< WpUserSummary[] >( [] );
-	const [ searching, setSearching ] = useState( false );
-	const [ busyId, setBusyId ] = useState< number | null >( null );
 	const [ messages, setMessages ] = useState< string[] >( [] );
+	const [ busy, setBusy ] = useState< string | null >( null );
+
+	const [ email, setEmail ] = useState( '' );
+	const [ lookup, setLookup ] = useState< WpUserSummary[] >( [] );
+	const [ selection, setSelection ] = useState< Set< number > >( new Set() );
+	const [ filter, setFilter ] = useState( '' );
+	const [ sendEmail, setSendEmail ] = useState( true );
+
+	const [ addFor, setAddFor ] = useState< number | null >( null );
+	const [ addSelection, setAddSelection ] = useState< Set< number > >(
+		new Set()
+	);
+	const [ addFilter, setAddFilter ] = useState( '' );
 
 	function load() {
-		api.chroniclePlayers( gameSlug )
-			.list()
-			.then( ( result ) => {
-				setList( result );
+		Promise.all( [
+			api.chroniclePlayers( gameSlug ).list(),
+			api.chroniclePlayers( gameSlug ).invites(),
+			everyPage( ( page ) =>
+				api
+					.characters( gameSlug )
+					.listPaginated( { page, per_page: 100 } )
+			),
+		] )
+			.then( ( [ players, open, all ] ) => {
+				setList( players );
+				setInvites( open );
+				setCharacters( all );
 				setError( null );
 			} )
 			.catch( ( err ) =>
@@ -161,49 +305,164 @@ export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 
 	useEffect( load, [ gameSlug ] );
 
+	// Looks up accounts by name while the email box holds a name rather than an address.
 	useEffect( () => {
-		const term = search.trim();
-		if ( term.length < 3 ) {
-			setResults( [] );
+		const term = email.trim();
+		if ( term.length < 3 || looksLikeEmail( term ) ) {
+			setLookup( [] );
 			return;
 		}
-		setSearching( true );
 		const timer = window.setTimeout( () => {
 			api.wpUsers
 				.searchForChronicle( gameSlug, term )
-				.then( ( found ) => setResults( found ) )
-				.catch( () => setResults( [] ) )
-				.finally( () => setSearching( false ) );
+				.then( ( found ) => setLookup( found ) )
+				.catch( () => setLookup( [] ) );
 		}, SEARCH_DEBOUNCE_MS );
 		return () => window.clearTimeout( timer );
-	}, [ search, gameSlug ] );
+	}, [ email, gameSlug ] );
 
-	const playerIds = new Set(
-		( list?.players ?? [] ).map( ( p ) => p.wp_user_id )
-	);
-
-	function add( user: WpUserSummary ) {
-		setBusyId( user.id );
+	function invite() {
+		const address = email.trim();
+		setBusy( 'invite' );
 		api.chroniclePlayers( gameSlug )
-			.add( user.id )
+			.invite( address, Array.from( selection ), sendEmail )
 			.then( ( result ) => {
-				setMessages( resultMessages( user.display_name, result ) );
+				setMessages( inviteMessages( address, result ) );
+				setEmail( '' );
+				setSelection( new Set() );
+				setFilter( '' );
+				setSendEmail( true );
 				load();
 			} )
 			.catch( ( err ) =>
 				setMessages( [
 					errorMessage(
 						err,
-						__( 'Failed to add the player.', 'beyond-elysium' )
+						__( 'Failed to send the invite.', 'beyond-elysium' )
 					),
 				] )
 			)
-			.finally( () => setBusyId( null ) );
+			.finally( () => setBusy( null ) );
 	}
 
-	function remove( wpUserId: number, name: string ) {
+	function cancel( pending: PlayerInvite ) {
 		if (
-			// eslint-disable-next-line no-alert
+			! window.confirm(
+				sprintf(
+					/* translators: %s: the email address invited */
+					__(
+						'Cancel the invite for %s? Its characters stop waiting for them.',
+						'beyond-elysium'
+					),
+					pending.email
+				)
+			)
+		) {
+			return;
+		}
+		setBusy( `invite-${ pending.id }` );
+		api.chroniclePlayers( gameSlug )
+			.cancelInvite( pending.id )
+			.then( () => {
+				setMessages( [
+					sprintf(
+						/* translators: %s: the email address invited */
+						__(
+							'The invite for %s is cancelled.',
+							'beyond-elysium'
+						),
+						pending.email
+					),
+				] );
+				load();
+			} )
+			.catch( ( err ) =>
+				setMessages( [
+					errorMessage(
+						err,
+						__( 'Failed to cancel the invite.', 'beyond-elysium' )
+					),
+				] )
+			)
+			.finally( () => setBusy( null ) );
+	}
+
+	function openAdd( player: ChroniclePlayer ) {
+		setAddFor( player.wp_user_id );
+		setAddSelection( new Set() );
+		setAddFilter( '' );
+	}
+
+	function addCharacters( player: ChroniclePlayer ) {
+		setBusy( `add-${ player.wp_user_id }` );
+		api.chroniclePlayers( gameSlug )
+			.linkCharacters( player.wp_user_id, Array.from( addSelection ) )
+			.then( ( result ) => {
+				setMessages(
+					linkMessages( player.display_name ?? '', result )
+				);
+				setAddFor( null );
+				load();
+			} )
+			.catch( ( err ) =>
+				setMessages( [
+					errorMessage(
+						err,
+						__( 'Failed to link the characters.', 'beyond-elysium' )
+					),
+				] )
+			)
+			.finally( () => setBusy( null ) );
+	}
+
+	function unlink(
+		player: ChroniclePlayer,
+		characterId: number,
+		name: string
+	) {
+		if (
+			! window.confirm(
+				sprintf(
+					/* translators: 1: a character's name, 2: the player's display name */
+					__( 'Unlink %1$s from %2$s?', 'beyond-elysium' ),
+					name,
+					player.display_name ?? ''
+				)
+			)
+		) {
+			return;
+		}
+		setBusy( `unlink-${ characterId }` );
+		api.chroniclePlayers( gameSlug )
+			.unlinkCharacter( player.wp_user_id, characterId )
+			.then( () => {
+				setMessages( [
+					sprintf(
+						/* translators: 1: a character's name, 2: the player's display name */
+						__( '%1$s is unlinked from %2$s.', 'beyond-elysium' ),
+						name,
+						player.display_name ?? ''
+					),
+				] );
+				load();
+			} )
+			.catch( ( err ) =>
+				setMessages( [
+					errorMessage(
+						err,
+						__(
+							'Failed to unlink the character.',
+							'beyond-elysium'
+						)
+					),
+				] )
+			)
+			.finally( () => setBusy( null ) );
+	}
+
+	function remove( player: ChroniclePlayer ) {
+		const name = player.display_name ?? '';
+		if (
 			! window.confirm(
 				sprintf(
 					/* translators: %s: the player's display name */
@@ -217,9 +476,9 @@ export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 		) {
 			return;
 		}
-		setBusyId( wpUserId );
+		setBusy( `remove-${ player.wp_user_id }` );
 		api.chroniclePlayers( gameSlug )
-			.remove( wpUserId )
+			.remove( player.wp_user_id )
 			.then( ( result ) => {
 				setMessages( resultMessages( name, result ) );
 				load();
@@ -232,8 +491,10 @@ export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 					),
 				] )
 			)
-			.finally( () => setBusyId( null ) );
+			.finally( () => setBusy( null ) );
 	}
+
+	const canInvite = looksLikeEmail( email ) && busy === null;
 
 	return (
 		<div className="be-chronicle-players">
@@ -257,36 +518,24 @@ export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 			) }
 
 			<section className="be-chronicle-players__add">
-				<h3>{ __( 'Add a player', 'beyond-elysium' ) }</h3>
+				<h3>{ __( 'Invite a player', 'beyond-elysium' ) }</h3>
 				<label className="be-chronicle-players__search-label">
-					{ __( 'Find an OWbN account', 'beyond-elysium' ) }
+					{ __( 'Their email address', 'beyond-elysium' ) }
 					<input
-						type="search"
-						className="be-chronicle-players__search"
-						value={ search }
+						type="text"
+						inputMode="email"
+						className="be-chronicle-players__search be-chronicle-players__search"
+						value={ email }
 						placeholder={ __(
-							'At least three letters of a name, or an exact email',
+							'An email address, or three letters of a name to look someone up',
 							'beyond-elysium'
 						) }
-						onChange={ ( e ) => setSearch( e.target.value ) }
+						onChange={ ( e ) => setEmail( e.target.value ) }
 					/>
 				</label>
-				<p className="be-chronicle-players__hint">
-					{ __(
-						'Someone with no OWbN account yet needs to sign in through OWbN once before you can add them.',
-						'beyond-elysium'
-					) }
-				</p>
-				{ search.trim().length >= 3 &&
-					! searching &&
-					results.length === 0 && (
-						<p className="be-chronicle-players__hint">
-							{ __( 'No account matches.', 'beyond-elysium' ) }
-						</p>
-					) }
-				{ results.length > 0 && (
+				{ lookup.length > 0 && (
 					<ul className="be-chronicle-players__list">
-						{ results.map( ( user ) => (
+						{ lookup.map( ( user ) => (
 							<li key={ user.id }>
 								<span className="be-chronicle-players__name">
 									{ user.display_name }
@@ -296,26 +545,119 @@ export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 										</span>
 									) }
 								</span>
-								{ playerIds.has( user.id ) ? (
-									<span className="be-chronicle-players__already">
-										{ __(
-											'Already a player',
-											'beyond-elysium'
-										) }
-									</span>
-								) : (
+								{ user.email && (
 									<button
 										type="button"
 										className="be-chronicle-players__button"
-										disabled={ busyId === user.id }
-										onClick={ () => add( user ) }
+										onClick={ () =>
+											setEmail( user.email ?? '' )
+										}
 									>
 										{ __(
-											'Add as player',
+											'Use this email',
 											'beyond-elysium'
 										) }
 									</button>
 								) }
+							</li>
+						) ) }
+					</ul>
+				) }
+
+				<p className="be-chronicle-players__hint">
+					{ __(
+						'Tick their characters. Someone who already has an OWbN account with this email becomes a player now; anyone else is linked the first time they sign in with it.',
+						'beyond-elysium'
+					) }
+				</p>
+				<CharacterPicker
+					rows={ pickerRows( characters, filter ) }
+					selected={ selection }
+					onToggle={ ( id ) =>
+						setSelection( ( prev ) => toggled( prev, id ) )
+					}
+					filter={ filter }
+					onFilter={ setFilter }
+				/>
+				<label className="be-chronicle-players__checkbox">
+					<input
+						type="checkbox"
+						checked={ sendEmail }
+						onChange={ ( e ) => setSendEmail( e.target.checked ) }
+					/>
+					{ __(
+						'Email them an invitation if they have no account yet',
+						'beyond-elysium'
+					) }
+				</label>
+				<p>
+					<button
+						type="button"
+						className="be-chronicle-players__button"
+						disabled={ ! canInvite }
+						onClick={ invite }
+					>
+						{ __( 'Invite', 'beyond-elysium' ) }
+					</button>
+				</p>
+			</section>
+
+			<section className="be-chronicle-players__waiting">
+				<h3>
+					{ sprintf(
+						/* translators: %d: how many invites wait for someone to sign in */
+						__( 'Waiting to sign in (%d)', 'beyond-elysium' ),
+						invites.length
+					) }
+				</h3>
+				{ invites.length === 0 ? (
+					<p className="be-chronicle-players__hint">
+						{ __( 'No invites are waiting.', 'beyond-elysium' ) }
+					</p>
+				) : (
+					<ul className="be-chronicle-players__list">
+						{ invites.map( ( pending ) => (
+							<li key={ pending.id }>
+								<span className="be-chronicle-players__name">
+									{ pending.email }
+									<span className="be-chronicle-players__email">
+										{ pending.characters.length > 0
+											? pending.characters
+													.map( ( c ) => c.name )
+													.join( ', ' )
+											: __(
+													'no characters',
+													'beyond-elysium'
+												) }
+									</span>
+									<span className="be-chronicle-players__email">
+										{ pending.invited_by
+											? sprintf(
+													/* translators: 1: who sent the invite, 2: when */
+													__(
+														'sent by %1$s, %2$s',
+														'beyond-elysium'
+													),
+													pending.invited_by,
+													pending.invited_at.slice(
+														0,
+														10
+													)
+												)
+											: pending.invited_at.slice(
+													0,
+													10
+												) }
+									</span>
+								</span>
+								<button
+									type="button"
+									className="be-chronicle-players__button be-chronicle-players__button--remove"
+									disabled={ busy !== null }
+									onClick={ () => cancel( pending ) }
+								>
+									{ __( 'Cancel', 'beyond-elysium' ) }
+								</button>
 							</li>
 						) ) }
 					</ul>
@@ -358,19 +700,116 @@ export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 											'beyond-elysium'
 										) }
 								</span>
-								<button
-									type="button"
-									className="be-chronicle-players__button be-chronicle-players__button--remove"
-									disabled={ busyId === player.wp_user_id }
-									onClick={ () =>
-										remove(
-											player.wp_user_id,
-											player.display_name ?? ''
-										)
-									}
-								>
-									{ __( 'Remove', 'beyond-elysium' ) }
-								</button>
+								<span className="be-chronicle-players__actions">
+									<button
+										type="button"
+										className="be-chronicle-players__button"
+										disabled={ busy !== null }
+										onClick={ () => openAdd( player ) }
+									>
+										{ __(
+											'Add characters',
+											'beyond-elysium'
+										) }
+									</button>
+									<button
+										type="button"
+										className="be-chronicle-players__button be-chronicle-players__button--remove"
+										disabled={ busy !== null }
+										onClick={ () => remove( player ) }
+									>
+										{ __( 'Remove', 'beyond-elysium' ) }
+									</button>
+								</span>
+								<ul className="be-chronicle-players__characters">
+									{ player.characters.length === 0 && (
+										<li className="be-chronicle-players__email">
+											{ __(
+												'No characters linked.',
+												'beyond-elysium'
+											) }
+										</li>
+									) }
+									{ player.characters.map( ( c ) => (
+										<li key={ c.id }>
+											<span>{ c.name }</span>
+											<button
+												type="button"
+												className="be-chronicle-players__unlink"
+												disabled={ busy !== null }
+												aria-label={ sprintf(
+													/* translators: %s: a character's name */
+													__(
+														'Unlink %s',
+														'beyond-elysium'
+													),
+													c.name
+												) }
+												onClick={ () =>
+													unlink(
+														player,
+														c.id,
+														c.name
+													)
+												}
+											>
+												{ __(
+													'Unlink',
+													'beyond-elysium'
+												) }
+											</button>
+										</li>
+									) ) }
+								</ul>
+								{ addFor === player.wp_user_id && (
+									<div className="be-chronicle-players__add-for">
+										<CharacterPicker
+											rows={ pickerRows(
+												characters,
+												addFilter,
+												player.wp_user_id
+											) }
+											selected={ addSelection }
+											onToggle={ ( id ) =>
+												setAddSelection( ( prev ) =>
+													toggled( prev, id )
+												)
+											}
+											filter={ addFilter }
+											onFilter={ setAddFilter }
+										/>
+										<p>
+											<button
+												type="button"
+												className="be-chronicle-players__button"
+												disabled={
+													addSelection.size === 0 ||
+													busy !== null
+												}
+												onClick={ () =>
+													addCharacters( player )
+												}
+											>
+												{ __(
+													'Link ticked characters',
+													'beyond-elysium'
+												) }
+											</button>{ ' ' }
+											<button
+												type="button"
+												className="be-chronicle-players__button"
+												onClick={ () =>
+													setAddFor( null )
+												}
+											>
+												{ __(
+													'Close',
+													'beyond-elysium'
+												) }
+											</button>
+										</p>
+									</div>
+								) }
 							</li>
 						) ) }
 					</ul>

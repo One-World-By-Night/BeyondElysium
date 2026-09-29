@@ -6,10 +6,10 @@
   "section_type": "resource_pool",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh",
-      "The Shining Host (WW05009) p. 117 - \"New Banality - Two experience per Trait\" (the OWBN C20 translations packet prices it 1: a variant, not the base)"
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_schema_blocks, dumped by tools/catalog/dump_live.sh",
+      "The Shining Host (WW05009) p. 117 - \"New Banality - Two experience per Trait\" (the OWBN C20 translations packet prices it 1: a variant, not the base)",
+      "The Shining Host (WW05009) p. 47-49 - starting Glamour/Willpower/Banality are set by Seeming: Childling 5/1/1, Wilder 4/2/3, Grump 3/3/5. The pool's own default_start (3/3/3) is a neutral placeholder for the book's own explicitly-unstated Nunnehi seemings (Youngling/Brave/Elder), p.48: \"There are no rules for creating Native American changelings... in this book\""
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {

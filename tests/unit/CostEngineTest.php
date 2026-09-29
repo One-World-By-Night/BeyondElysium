@@ -150,7 +150,7 @@ class CostEngineTest extends TestCase {
 			array_merge(
 				[
 					'sequential' => true,
-					'out_of_type_cost_modifier' => 1,
+					'_meta' => [ 'out_of_type' => [ 'basic' => '+1', 'intermediate' => '+1', 'advanced' => '+1', 'elder' => '+1' ] ],
 					'powers' => [
 						[
 							'name' => 'Celerity',
@@ -268,7 +268,7 @@ class CostEngineTest extends TestCase {
 	private function elder_power_block( array $levels ): object {
 		return self::definition( [
 			'sequential' => true,
-			'out_of_type_cost_modifier' => 2,
+			'_meta' => [ 'out_of_type' => [ 'elder' => '+2', 'master' => '+2', 'ascended' => '+2', 'methuselah' => '+2' ] ],
 			'powers' => [
 				[ 'name' => 'Celerity', 'levels' => $levels ],
 			],
@@ -413,51 +413,5 @@ class CostEngineTest extends TestCase {
 			3,
 			Cost_Engine::price_tiered_power_change( [], $definition, 'add_trait', $change_data, true )
 		);
-	}
-
-	// -----------------------------------------------------------------------
-	// is_in_type_pure
-	// -----------------------------------------------------------------------
-
-	public function test_in_clan_discipline_resolves_true(): void {
-		$identity_definition = self::definition(
-			[ 'clan_disciplines' => [ 'Brujah' => [ 'Celerity', 'Potence', 'Presence' ] ] ]
-		);
-		$sheet = [ 'identity' => [ 'Clan' => 'Brujah' ] ];
-
-		$this->assertTrue(
-			Cost_Engine::is_in_type_pure( $sheet, 'identity', 'Clan', 'Celerity', $identity_definition )
-		);
-	}
-
-	public function test_out_of_clan_discipline_resolves_false(): void {
-		$identity_definition = self::definition(
-			[ 'clan_disciplines' => [ 'Brujah' => [ 'Celerity', 'Potence', 'Presence' ] ] ]
-		);
-		$sheet = [ 'identity' => [ 'Clan' => 'Brujah' ] ];
-
-		$this->assertFalse(
-			Cost_Engine::is_in_type_pure( $sheet, 'identity', 'Clan', 'Dominate', $identity_definition )
-		);
-	}
-
-	public function test_caitiff_prices_against_chosen_in_clan_not_a_predefined_list(): void {
-		$identity_definition = self::definition(
-			[ 'clan_disciplines' => [ 'Brujah' => [ 'Celerity', 'Potence', 'Presence' ] ] ]
-		);
-		$sheet = [
-			'identity' => [
-				'Clan'           => 'Caitiff',
-				'chosen_in_clan' => [ 'Auspex', 'Fortitude', 'Obfuscate' ],
-			],
-		];
-
-		$this->assertTrue( Cost_Engine::is_in_type_pure( $sheet, 'identity', 'Clan', 'Auspex', $identity_definition ) );
-		$this->assertFalse( Cost_Engine::is_in_type_pure( $sheet, 'identity', 'Clan', 'Celerity', $identity_definition ) );
-	}
-
-	public function test_missing_identity_value_defaults_to_in_type(): void {
-		$identity_definition = self::definition( [ 'clan_disciplines' => [] ] );
-		$this->assertTrue( Cost_Engine::is_in_type_pure( [], 'identity', 'Clan', 'Celerity', $identity_definition ) );
 	}
 }

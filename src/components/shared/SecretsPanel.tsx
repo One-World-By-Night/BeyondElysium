@@ -5,6 +5,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { everyPage } from '../../lib/everyPage';
+import { sameId } from '../../lib/ids';
 import AudiencePicker from './AudiencePicker';
 import HtmlEditor from './HtmlEditor';
 import HelpButton from './HelpButton';
@@ -53,7 +54,7 @@ export function SecretsPanel( {
 			);
 	}
 
-	useEffect( load, [ gameSlug, entityType, entityId ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect( load, [ gameSlug, entityType, entityId ] );
 
 	useEffect( () => {
 		everyPage( ( page ) =>
@@ -126,7 +127,7 @@ export function SecretsPanel( {
 									/* translators: %d: number of secrets attached to this plot, item, location or NPC */
 									__( 'Secrets (%d)', 'beyond-elysium' ),
 									items.length
-							  )
+								)
 							: __( 'Secrets', 'beyond-elysium' ) }
 					</h4>
 					<HelpButton helpKey="secrets" />
@@ -250,7 +251,9 @@ function SecretRow( {
 	}
 
 	function characterName( id: number ): string {
-		return characters.find( ( c ) => c.id === id )?.name ?? `#${ id }`;
+		return (
+			characters.find( ( c ) => sameId( c.id, id ) )?.name ?? `#${ id }`
+		);
 	}
 
 	return (
@@ -272,7 +275,6 @@ function SecretRow( {
 				<div className="be-secrets-panel__row-body">
 					{ secret.content && (
 						<div
-							// eslint-disable-next-line react/no-danger
 							dangerouslySetInnerHTML={ {
 								__html: secret.content,
 							} }

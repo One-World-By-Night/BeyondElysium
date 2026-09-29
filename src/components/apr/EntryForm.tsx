@@ -191,7 +191,7 @@ export function EntryForm( {
 							? __(
 									'Public - everyone who can see this plot',
 									'beyond-elysium'
-							  )
+								)
 							: __( 'Public', 'beyond-elysium' ) }
 					</option>
 					<option value="storytellers">
@@ -199,11 +199,11 @@ export function EntryForm( {
 							? __(
 									'Storytellers and Narrators only',
 									'beyond-elysium'
-							  )
+								)
 							: __(
 									'Private - Storytellers and me only',
 									'beyond-elysium'
-							  ) }
+								) }
 					</option>
 					{ canManage && (
 						<option value="characters">
@@ -252,7 +252,7 @@ export function EntryForm( {
 							/* translators: %s: the entry type being written, e.g. "note" or "rumor" */
 							__( 'Write a %s…', 'beyond-elysium' ),
 							entryType
-					  ) }
+						) }
 			</p>
 			<HtmlEditor
 				id={ contentId }
@@ -268,7 +268,7 @@ export function EntryForm( {
 								capability: 'be_manage_plots',
 								fieldContext: 'plot_entry',
 								gameSlug,
-						  }
+							}
 						: undefined
 				}
 			/>

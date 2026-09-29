@@ -29,7 +29,7 @@ My Chronicle → Characters tab.
 
   Click a column header to sort by it; click again to reverse the order.
 - **Pagination** - Previous / Next, with the current page and the total count.
-- **Assign a player** (Storyteller-only modal) - search by at least three letters of a name, or an exact email address (a partial name match never shows an email); assign a result, unassign the current player, or record a pending email for someone who hasn't registered an account yet.
+- **Assign a player** (Storyteller-only modal) - search by at least three letters of a name, or an exact email address (a partial name match never shows an email); assign a result, unassign the current player, or record a pending email for someone who hasn't registered an account yet. A pending email is an invite: the character links itself to them the first time they sign in with that address, and on a chronicle linked to OWbN roles the invite also shows on the [Players](chronicle-players.md) tab.
 
 ## Common tasks
 

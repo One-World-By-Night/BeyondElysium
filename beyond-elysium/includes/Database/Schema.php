@@ -12,7 +12,7 @@ class Schema {
 	/**
 	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.3.8.2';
+	const DB_VERSION = '1.4.0';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -54,6 +54,7 @@ class Schema {
 		'queries',
 		'character_sheet_styles',
 		'game_members',
+		'player_invites',
 		'character_attestations',
 		'character_transfers',
 		'character_submissions',
@@ -129,10 +130,12 @@ class Schema {
 			KEY game_type (game_type)
 		) $charset_collate;" );
 
-		// be_schema_blocks: reusable character-sheet section definitions.
+		// be_schema_blocks: reusable character-sheet section definitions; game_slug is '' for the catalog block and a
+		// chronicle's slug for that chronicle's copy.
 		dbDelta( "CREATE TABLE {$prefix}schema_blocks (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			slug varchar(100) NOT NULL,
+			game_slug varchar(100) NOT NULL DEFAULT '',
 			name varchar(255) NOT NULL,
 			section_type varchar(20) NOT NULL,
 			definition json NOT NULL,
@@ -144,7 +147,7 @@ class Schema {
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
-			UNIQUE KEY slug (slug),
+			UNIQUE KEY slug_game (slug, game_slug),
 			KEY section_type (section_type)
 		) $charset_collate;" );
 
@@ -152,16 +155,18 @@ class Schema {
 		dbDelta( "CREATE TABLE {$prefix}creature_stacks (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			slug varchar(100) NOT NULL,
+			game_slug varchar(100) NOT NULL DEFAULT '',
 			name varchar(255) NOT NULL,
 			game_line varchar(100) NOT NULL DEFAULT 'met',
 			stack_definition json NOT NULL,
 			creation_rules json DEFAULT NULL,
+			fork_changes longtext DEFAULT NULL,
 			is_system tinyint(1) NOT NULL DEFAULT 0,
 			created_by bigint(20) unsigned NOT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
-			UNIQUE KEY slug (slug),
+			UNIQUE KEY slug_game (slug, game_slug),
 			KEY game_line (game_line)
 		) $charset_collate;" );
 
@@ -432,6 +437,7 @@ class Schema {
 			name varchar(255) NOT NULL,
 			template_type varchar(50) NOT NULL,
 			layout json NOT NULL,
+			fork_changes longtext DEFAULT NULL,
 			is_system tinyint(1) NOT NULL DEFAULT 0,
 			created_by bigint(20) unsigned NOT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -486,6 +492,22 @@ class Schema {
 			PRIMARY KEY  (id),
 			UNIQUE KEY game_user (game_id, wp_user_id),
 			KEY idx_wp_user (wp_user_id)
+		) $charset_collate;" );
+
+		// be_player_invites: an email a chronicle's Storyteller invited to play, open until the account with that email
+		// signs in or the invite is cancelled.
+		dbDelta( "CREATE TABLE {$prefix}player_invites (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			email varchar(191) NOT NULL,
+			invited_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			invited_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			accepted_at datetime DEFAULT NULL,
+			accepted_by bigint(20) unsigned DEFAULT NULL,
+			cancelled_at datetime DEFAULT NULL,
+			PRIMARY KEY  (id),
+			KEY game_email (game_id, email),
+			KEY email (email)
 		) $charset_collate;" );
 
 		// be_attachments: private uploads on a plot or world object.
@@ -802,6 +824,8 @@ class Schema {
 		self::carry_storyteller_only_to_forks();
 		// Records what each chronicle copy of a block has changed.
 		self::record_fork_changes();
+		self::drop_creature_stack_slug_index();
+		self::record_template_changes();
 		self::seed_character_plots();
 		self::preserve_existing_signing_choice();
 		self::add_audience_to_plots();
@@ -816,6 +840,7 @@ class Schema {
 		self::add_npc_profile_to_characters();
 		self::add_parent_id_to_world_objects();
 		self::add_based_on_id_to_world_objects();
+		\BeyondElysium\Services\Player_Invites::convert_pending_emails();
 	}
 
 	/**
@@ -1222,17 +1247,28 @@ class Schema {
 	}
 
 	/**
-	 * Records, for every chronicle copy of a catalog block made before copies recorded their own changes, how it differs
-	 * from the catalog block it came from.
+	 * Records, for every chronicle copy of a catalog block whose changes aren't recorded by path, how it differs from the
+	 * catalog block it came from.
 	 */
 	public static function record_fork_changes(): void {
 		global $wpdb;
-		$table = self::table( 'schema_blocks' );
-		$rows  = $wpdb->get_results(
+		$table   = self::table( 'schema_blocks' );
+		$records = $wpdb->get_results( "SELECT id, fork_changes FROM {$table} WHERE game_slug <> ''" ) ?: [];
+		$ids     = [];
+		foreach ( $records as $record ) {
+			if ( $record->fork_changes === null || ! Fork_Merge::is_by_path( json_decode( (string) $record->fork_changes, true ) ) ) {
+				$ids[] = (int) $record->id;
+			}
+		}
+		if ( $ids === [] ) {
+			return;
+		}
+
+		$rows = $wpdb->get_results(
 			"SELECT copy.id, copy.definition AS copy_definition, shared.definition AS shared_definition
 			 FROM {$table} copy
 			 INNER JOIN {$table} shared ON shared.slug = copy.slug AND shared.game_slug = ''
-			 WHERE copy.game_slug <> '' AND copy.fork_changes IS NULL"
+			 WHERE copy.id IN (" . implode( ',', $ids ) . ')'
 		) ?: [];
 
 		foreach ( $rows as $row ) {
@@ -1244,6 +1280,53 @@ class Schema {
 			$changes = Fork_Merge::changes_against( $shared, $copy );
 			if ( $wpdb->update( $table, [ 'fork_changes' => wp_json_encode( $changes ) ], [ 'id' => (int) $row->id ] ) === false ) {
 				error_log( 'Beyond Elysium: failed to record chronicle changes for schema block copy ' . (int) $row->id . ': ' . $wpdb->last_error );
+			}
+		}
+	}
+
+	/**
+	 * Drops `creature_stacks`' unique `slug` index once `slug_game` is there, so a chronicle's layer can share its
+	 * creature type's slug.
+	 */
+	public static function drop_creature_stack_slug_index(): void {
+		global $wpdb;
+		$table   = self::table( 'creature_stacks' );
+		$indexes = $wpdb->get_col( $wpdb->prepare(
+			"SELECT DISTINCT index_name FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = %s",
+			$table
+		) ) ?: [];
+		if ( ! in_array( 'slug', $indexes, true ) || ! in_array( 'slug_game', $indexes, true ) ) {
+			return;
+		}
+		if ( $wpdb->query( "ALTER TABLE {$table} DROP INDEX slug" ) === false ) {
+			error_log( 'Beyond Elysium: failed to drop the slug index on creature_stacks: ' . $wpdb->last_error );
+		}
+	}
+
+	/**
+	 * Records, for every chronicle's template that has a site template of the same creature type and kind and no
+	 * recorded changes, how it differs from that site template: every difference is the chronicle's, including what it
+	 * left out.
+	 */
+	public static function record_template_changes(): void {
+		global $wpdb;
+		$table = self::table( 'templates' );
+		$rows  = $wpdb->get_results(
+			"SELECT own.id, own.layout AS own_layout, site.layout AS site_layout
+			 FROM {$table} own
+			 INNER JOIN {$table} site ON site.game_id IS NULL AND site.stack_slug = own.stack_slug AND site.template_type = own.template_type
+			 WHERE own.game_id IS NOT NULL AND own.fork_changes IS NULL"
+		) ?: [];
+
+		foreach ( $rows as $row ) {
+			$own  = json_decode( (string) $row->own_layout, true );
+			$site = json_decode( (string) $row->site_layout, true );
+			if ( ! is_array( $own ) || ! is_array( $site ) ) {
+				continue;
+			}
+			$changes = Fork_Merge::changes_against( $site, $own, true );
+			if ( $wpdb->update( $table, [ 'fork_changes' => wp_json_encode( $changes ) ], [ 'id' => (int) $row->id ] ) === false ) {
+				error_log( 'Beyond Elysium: failed to record chronicle changes for template ' . (int) $row->id . ': ' . $wpdb->last_error );
 			}
 		}
 	}
@@ -2573,6 +2656,9 @@ class Schema {
 
 		// Gives system templates the section titles their declared files name.
 		\BeyondElysium\Services\Template_Titles::run();
+
+		// Brings this upgrade's template changes to every chronicle's template over a site template.
+		\BeyondElysium\Models\Template::refresh_layers();
 
 		// Deletes each retired block that nothing names any more.
 		\BeyondElysium\Services\Retired_Blocks::remove_unused();

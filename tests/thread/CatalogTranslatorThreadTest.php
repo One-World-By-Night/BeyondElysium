@@ -309,7 +309,7 @@ class CatalogTranslatorThreadTest extends WP_UnitTestCase {
 	 */
 	public function test_rescan_against_the_real_seeded_catalog_finds_the_measured_volume(): void {
 		$result = Catalog_Translator::rescan();
-		$this->assertGreaterThanOrEqual( 8000, $result['added'] + $result['updated'], '§1.2 measured 8,298 distinct strings across the real catalog' );
+		$this->assertGreaterThanOrEqual( 8000, $result['added'] + $result['updated'], 'the real catalog holds about 8,300 distinct strings' );
 		$this->assertSame( 0, $result['orphaned'], 'a from-scratch install has no prior scan to retire anything against' );
 	}
 

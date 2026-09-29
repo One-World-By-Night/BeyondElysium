@@ -536,13 +536,13 @@ export function TieredPowerEditor( {
 						power_name: pendingAdd.powerName,
 						...( pendingAdd.rank ? { tier: pendingAdd.rank } : {} ),
 						tradition: pendingParadigm,
-				  }
+					}
 				: {
 						name: pendingAdd.name,
 						level: 1,
 						...( pendingAdd.isCustom ? { custom: true } : {} ),
 						tradition: pendingParadigm,
-				  },
+					},
 		] );
 		setPendingAdd( null );
 		setPendingParadigm( '' );
@@ -782,11 +782,11 @@ export function TieredPowerEditor( {
 												? __(
 														'Use stepper',
 														'beyond-elysium'
-												  )
+													)
 												: __(
 														'List each level',
 														'beyond-elysium'
-												  ) }
+													) }
 										</button>
 									) }
 									{ showChecklist ? (
@@ -1019,11 +1019,11 @@ export function TieredPowerEditor( {
 																? __(
 																		'Choose paradigm',
 																		'beyond-elysium'
-																  )
+																	)
 																: __(
 																		'Tradition',
 																		'beyond-elysium'
-																  )
+																	)
 														}
 														aria-label={ sprintf(
 															/* translators: %s: the power family's own name */
@@ -1064,7 +1064,7 @@ export function TieredPowerEditor( {
 																	'beyond-elysium'
 																),
 																row.name
-														  )
+															)
 														: sprintf(
 																/* translators: %s: the power family's own name */
 																__(
@@ -1072,18 +1072,18 @@ export function TieredPowerEditor( {
 																	'beyond-elysium'
 																),
 																row.name
-														  )
+															)
 												}
 											>
 												{ row._removed
 													? __(
 															'Undo',
 															'beyond-elysium'
-													  )
+														)
 													: __(
 															'Remove',
 															'beyond-elysium'
-													  ) }
+														) }
 											</button>
 										</div>
 									) }
@@ -1190,11 +1190,11 @@ export function TieredPowerEditor( {
 																	? __(
 																			'Undo',
 																			'beyond-elysium'
-																	  )
+																		)
 																	: __(
 																			'Remove',
 																			'beyond-elysium'
-																	  ) }
+																		) }
 															</button>
 														) }
 													</li>

@@ -170,7 +170,8 @@ class Changes_Controller extends Base_Controller {
 			$stack['blocks'] ?? [],
 			is_array( $character->sheet_data ) ? $character->sheet_data : [],
 			$is_manager,
-			Change_Validator::protected_fields( $stack['stack'] ?? null )
+			Change_Validator::protected_fields( $stack['stack'] ?? null ),
+			Creature_Stack::closed_blocks( $stack['stack'] ?? null )
 		);
 		if ( ! $validation['ok'] ) {
 			return $this->validation_error( $validation );
@@ -609,12 +610,13 @@ class Changes_Controller extends Base_Controller {
 		$stack               = Creature_Stack::resolve( (string) $character->stack_slug, (string) $character->owner_slug );
 		$sheet_data          = is_array( $character->sheet_data ) ? $character->sheet_data : [];
 		$protected_fields    = Change_Validator::protected_fields( $stack['stack'] ?? null );
+		$closed_blocks       = Creature_Stack::closed_blocks( $stack['stack'] ?? null );
 
 		foreach ( $changes as $change ) {
 			$change = is_array( $change ) ? $change : [];
 
 			// Previewed through the same check as a submission.
-			$validation = Change_Validator::validate( $change, $stack['blocks'] ?? [], $sheet_data, $is_manager, $protected_fields );
+			$validation = Change_Validator::validate( $change, $stack['blocks'] ?? [], $sheet_data, $is_manager, $protected_fields, $closed_blocks );
 			if ( ! $validation['ok'] ) {
 				$error     = $this->validation_error( $validation );
 				$results[] = [
@@ -704,6 +706,8 @@ class Changes_Controller extends Base_Controller {
 			'unknown_option'       => __( '"%1$s" is not a choice for %2$s.', 'beyond-elysium' ),
 			/* translators: %s: an identity field, such as Clan */
 			'field_required'       => __( '%s cannot be cleared - ask a Storyteller.', 'beyond-elysium' ),
+			/* translators: %s: a sheet section, such as Blood Magic */
+			'section_hidden'       => __( '%s is hidden in this chronicle, so nothing new can be bought in it.', 'beyond-elysium' ),
 		];
 		$code    = (string) ( $result['code'] ?? 'invalid_param' );
 		$message = isset( $formats[ $code ] ) ? vsprintf( $formats[ $code ], $result['args'] ?? [] ) : (string) ( $result['message'] ?? '' );

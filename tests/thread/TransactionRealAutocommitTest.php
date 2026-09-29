@@ -17,7 +17,7 @@ class TransactionRealAutocommitTest extends TestCase {
 
 	public static function setUpBeforeClass(): void {
 		if ( ! defined( 'BE_WP_TESTS_AVAILABLE' ) || ! BE_WP_TESTS_AVAILABLE ) {
-			self::markTestSkipped( 'WP_TESTS_DIR not configured - see BE_PROCESS/now/PLATFORM.md.' );
+			self::markTestSkipped( 'WP_TESTS_DIR is not set.' );
 		}
 	}
 
@@ -66,7 +66,7 @@ class TransactionRealAutocommitTest extends TestCase {
 		$slug = 'txn-old-bug-' . wp_generate_password( 8, false );
 		self::$cleanup_slugs[] = $slug;
 
-		// Outer unit of work begins exactly like the pre-073 code did.
+		// Outer unit of work begins with the autocommit check.
 		$this->old_buggy_begin();
 		$wpdb->insert( $wpdb->prefix . 'be_games', [
 			'slug'       => $slug,
@@ -93,7 +93,7 @@ class TransactionRealAutocommitTest extends TestCase {
 			'demonstrates the actual bug: the old pattern cannot undo the outer row via ' .
 			'ROLLBACK once a nested call has opened its own START TRANSACTION - if this ' .
 			'assertion ever fails, MySQL stopped implicitly committing on nested START ' .
-			'TRANSACTION and D23/Decision 029/Decision 073\'s whole premise needs re-checking'
+			'TRANSACTION and the nesting guard in Database\\Transaction needs re-checking'
 		);
 	}
 

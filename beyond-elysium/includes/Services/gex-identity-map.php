@@ -234,9 +234,14 @@ return [
 				'fields' => [
 					'Hun'       => [ 'hun', 'temp_hun' ],
 					'Po'        => [ 'po', 'temp_po' ],
-					'Yin Chi'   => [ 'yin_chi', 'temp_yin_chi' ],
-					'Yang Chi'  => [ 'yang_chi', 'temp_yang_chi' ],
 					'Demon Chi' => [ 'demon_chi', 'temp_demon_chi' ],
+				],
+			],
+			[
+				'block'  => 'kueijin-virtues',
+				'fields' => [
+					'Yin Chi'  => [ 'yin_chi', 'temp_yin_chi' ],
+					'Yang Chi' => [ 'yang_chi', 'temp_yang_chi' ],
 				],
 			],
 		],

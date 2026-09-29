@@ -50,8 +50,7 @@ export interface EligibleMember {
  * printed sheet draws as empty circles.
  */
 export type SheetDocumentRow =
-	| string
-	| { text: string; indent?: number; circles?: number };
+	string | { text: string; indent?: number; circles?: number };
 
 /**
  * One resolved section of a casting brief (or a signed sheet).

@@ -6,6 +6,7 @@ import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import { canIn } from '../../lib/chronicleCapabilities';
 import { errorMessage } from '../../lib/errorMessage';
+import { sameId } from '../../lib/ids';
 import type { MyCapabilities } from '../../types';
 import type {
 	GameSession,
@@ -115,7 +116,7 @@ export function GameNights( { gameSlug, capabilities }: GameNightsProps ) {
 			} );
 	}
 
-	useEffect( load, [ gameSlug ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect( load, [ gameSlug ] );
 
 	useEffect( () => {
 		setOpensAt( toDatetimeLocalValue( selected?.downtime_opens_at ) );
@@ -753,7 +754,7 @@ export function GameNights( { gameSlug, capabilities }: GameNightsProps ) {
 								: __(
 										'Award attendance XP',
 										'beyond-elysium'
-								  ) }
+									) }
 						</button>
 						{ selected.attendance_xp_awarded_at && (
 							<button
@@ -841,11 +842,11 @@ export function GameNights( { gameSlug, capabilities }: GameNightsProps ) {
 										? __(
 												'Report XP already awarded',
 												'beyond-elysium'
-										  )
+											)
 										: __(
 												'Award report XP',
 												'beyond-elysium'
-										  ) }
+											) }
 								</button>
 								{ selected.report_xp_awarded_at && (
 									<button
@@ -941,15 +942,17 @@ export function GameNights( { gameSlug, capabilities }: GameNightsProps ) {
 									{ castings.map( ( c ) => (
 										<li key={ c.id }>
 											<strong>
-												{ npcs.find(
-													( n ) =>
-														n.id === c.character_id
+												{ npcs.find( ( n ) =>
+													sameId(
+														n.id,
+														c.character_id
+													)
 												)?.name ??
 													`#${ c.character_id }` }
 											</strong>
 											{ ' — ' }
-											{ members.find(
-												( m ) => m.id === c.wp_user_id
+											{ members.find( ( m ) =>
+												sameId( m.id, c.wp_user_id )
 											)?.name ?? `#${ c.wp_user_id }` }
 											<a
 												href={ api

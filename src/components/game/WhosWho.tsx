@@ -66,7 +66,6 @@ export function WhosWho( { gameSlug }: WhosWhoProps ) {
 							) }
 							<h3>{ npc.name }</h3>
 							{ npc.public_description && (
-								// eslint-disable-next-line react/no-danger
 								<div
 									className="be-whos-who__description"
 									dangerouslySetInnerHTML={ {

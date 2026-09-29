@@ -70,7 +70,7 @@ export function BlockRenderer( {
 							? toPointTraits(
 									data,
 									definition as TraitListDefinition
-							  )
+								)
 							: toTraits( data )
 					}
 					definition={ definition as TraitListDefinition }
@@ -95,8 +95,8 @@ export function BlockRenderer( {
 					blockSlug={ blockSlug }
 					data={
 						( data as
-							| Record< string, ResourcePoolValue >
-							| undefined ) ?? {}
+							Record< string, ResourcePoolValue > | undefined ) ??
+						{}
 					}
 					definition={ definition as ResourcePoolDefinition }
 					sheetData={ sheetData }

@@ -107,7 +107,7 @@ export function useChronicleSwitcher(): ChronicleSwitcherState {
 				setGameSlug( ( current ) =>
 					current && result.some( ( g ) => g.slug === current )
 						? current
-						: result[ 0 ]?.slug ?? ''
+						: ( result[ 0 ]?.slug ?? '' )
 				);
 				setLoadingGames( false );
 			}

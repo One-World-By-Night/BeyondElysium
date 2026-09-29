@@ -226,12 +226,24 @@ class ChangeValidatorTest extends TestCase {
 		$this->assertFalse( $bad['ok'] );
 	}
 
-	public function test_protected_fields_come_from_the_stacks_in_type_sources(): void {
-		$stack = (object) [ 'stack_definition' => (object) [ 'sections' => [
-			(object) [ 'block_slug' => 'vampire-disciplines', 'in_type_source' => 'vampire-identity.Clan' ],
-			(object) [ 'block_slug' => 'met-abilities' ],
-		] ] ];
+	public function test_protected_fields_are_every_field_the_stacks_in_type_tests_read(): void {
+		$stack = json_decode( (string) json_encode( [ 'stack_definition' => [ 'sections' => [
+			[ 'block_slug' => 'vampire-disciplines', 'in_type' => [
+				[ 'kind' => 'names', 'values' => [ 'map' => 'vampire-identity.clan_disciplines', 'by' => [ 'Clan' ] ] ],
+				[ 'kind' => 'chosen', 'values' => [ 'field' => 'vampire-identity.chosen_in_clan' ], 'when' => [ 'field' => 'vampire-identity.Sect', 'is' => [ 'Anarch' ] ] ],
+			] ],
+			[ 'block_slug' => 'werewolf-gifts', 'in_type' => [
+				[ 'kind' => 'all', 'tests' => [
+					[ 'kind' => 'names', 'values' => [ 'field' => [ 'werewolf-identity.Breed', 'werewolf-identity.Tribe' ] ] ],
+					[ 'kind' => 'names', 'values' => [ 'constant' => [ 'Homid' ] ] ],
+				] ],
+			] ],
+			[ 'block_slug' => 'met-abilities' ],
+		] ] ] ) );
 
-		$this->assertSame( [ 'vampire-identity.Clan' ], Change_Validator::protected_fields( $stack ) );
+		$this->assertSame(
+			[ 'vampire-identity.Clan', 'vampire-identity.Sect', 'vampire-identity.chosen_in_clan', 'werewolf-identity.Breed', 'werewolf-identity.Tribe' ],
+			Change_Validator::protected_fields( $stack )
+		);
 	}
 }

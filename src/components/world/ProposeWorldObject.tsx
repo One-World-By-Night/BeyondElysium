@@ -130,11 +130,11 @@ export function ProposeWorldObject( {
 								'beyond-elysium'
 							),
 							character.name
-					  )
+						)
 					: __(
 							'Something your character made, found, or holds. A Storyteller reviews it before it becomes real.',
 							'beyond-elysium'
-					  ) }
+						) }
 			</p>
 
 			{ error && (
@@ -199,8 +199,8 @@ export function ProposeWorldObject( {
 									kind === 'int'
 										? 'number'
 										: kind === 'date'
-										? 'date'
-										: 'text'
+											? 'date'
+											: 'text'
 								}
 								value={ String( properties[ key ] ?? '' ) }
 								onChange={ ( e ) =>

@@ -3,7 +3,7 @@ import pointCases from '../../../tests/fixtures/trait-points.json';
 import fixtureInput from '../../../tests/fixtures/trait-grouping-input.json';
 import fixtureExpected from '../../../tests/fixtures/trait-grouping-expected.json';
 
-describe( 'toTraits (D25)', () => {
+describe( 'toTraits', () => {
 	it( 'maps a stored entry\'s "count" field onto Trait.total', () => {
 		expect( toTraits( [ { name: 'Occult', count: 3 } ] ) ).toEqual( [
 			{ name: 'Occult', total: 3, note: undefined },
@@ -38,7 +38,7 @@ describe( 'toTraits (D25)', () => {
 		] );
 	} );
 
-	describe( 'specialization (same shape as D25 - a real field silently dropped)', () => {
+	describe( 'specialization (a real field is never dropped)', () => {
 		it( 'folds a bare specialization into note, same slot displayTrait() renders parenthetically', () => {
 			expect(
 				toTraits( [
@@ -74,7 +74,7 @@ describe( 'toTraits (D25)', () => {
  * Same fixture, same expected output as `tests/unit/Display/TraitGroupingParityTest.php`'s
  * `test_to_traits_reads_count_falling_back_to_total()`.
  */
-describe( 'toTraits — parity with Trait_Grouping::to_traits() (D25)', () => {
+describe( 'toTraits — parity with Trait_Grouping::to_traits()', () => {
 	fixtureInput.toTraits.forEach( ( testCase, i ) => {
 		it( `matches the shared fixture: ${ testCase.case }`, () => {
 			const result = toTraits( testCase.data );

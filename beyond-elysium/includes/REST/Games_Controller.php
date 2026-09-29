@@ -301,6 +301,11 @@ class Games_Controller extends Base_Controller {
 			'description' => $request->get_param( 'description' ) ?: '',
 			'settings'    => $settings,
 		];
+		foreach ( [ 'asc_role_path', 'notifications_enabled' ] as $field ) {
+			if ( $request->get_param( $field ) !== null ) {
+				$data[ $field ] = $request->get_param( $field );
+			}
+		}
 
 		$id = Game::create( $data );
 		if ( ! $id ) {
@@ -431,7 +436,7 @@ class Games_Controller extends Base_Controller {
 
 	/**
 	 * Saves exactly the Chronicle Setup settings an HST may set for their own chronicle: enabled_stacks,
-	 * enabled_factions, require_new_character_approval, accent_color and purchase_scope.
+	 * enabled_factions, require_new_character_approval, accent_color, purchase_scope and starting_xp.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -445,7 +450,7 @@ class Games_Controller extends Base_Controller {
 		}
 
 		$incoming = [];
-		foreach ( [ 'enabled_stacks', 'enabled_factions', 'require_new_character_approval', 'accent_color', 'purchase_scope' ] as $field ) {
+		foreach ( [ 'enabled_stacks', 'enabled_factions', 'require_new_character_approval', 'accent_color', 'purchase_scope', 'starting_xp' ] as $field ) {
 			$value = $request->get_param( $field );
 			if ( $value !== null ) {
 				$incoming[ $field ] = $value;
@@ -453,7 +458,14 @@ class Games_Controller extends Base_Controller {
 		}
 
 		if ( empty( $incoming ) ) {
-			return $this->error( 'invalid_param', __( 'At least one of enabled_stacks, enabled_factions, require_new_character_approval, accent_color, or purchase_scope is required.', 'beyond-elysium' ), 400 );
+			return $this->error( 'invalid_param', __( 'At least one of enabled_stacks, enabled_factions, require_new_character_approval, accent_color, purchase_scope, or starting_xp is required.', 'beyond-elysium' ), 400 );
+		}
+
+		if ( isset( $incoming['starting_xp'] ) && ( ! is_numeric( $incoming['starting_xp'] ) || (int) $incoming['starting_xp'] < 0 ) ) {
+			return $this->error( 'invalid_param', __( 'starting_xp must be a non-negative whole number.', 'beyond-elysium' ), 400 );
+		}
+		if ( isset( $incoming['starting_xp'] ) ) {
+			$incoming['starting_xp'] = (int) $incoming['starting_xp'];
 		}
 
 		// Empty string clears the override (falls through to the site-wide default).
@@ -610,7 +622,8 @@ class Games_Controller extends Base_Controller {
 
 	/**
 	 * Defines the request parameters accepted when creating a game: the required name, an optional slug and game_type, a
-	 * free-text description, and an arbitrary settings object, each with its sanitization rule.
+	 * free-text description, an arbitrary settings object, an accessSchema role path and a notifications switch, each
+	 * with its sanitization rule.
 	 *
 	 * @return array
 	 */
@@ -637,6 +650,23 @@ class Games_Controller extends Base_Controller {
 			],
 			'settings' => [
 				'type' => 'object',
+			],
+		] + self::link_params();
+	}
+
+	/**
+	 * The accessSchema role path and the notifications switch, each optional, on create and on update.
+	 *
+	 * @return array
+	 */
+	private static function link_params(): array {
+		return [
+			'asc_role_path' => [
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			],
+			'notifications_enabled' => [
+				'type' => 'boolean',
 			],
 		];
 	}
@@ -668,6 +698,6 @@ class Games_Controller extends Base_Controller {
 			'settings' => [
 				'type' => 'object',
 			],
-		];
+		] + self::link_params();
 	}
 }

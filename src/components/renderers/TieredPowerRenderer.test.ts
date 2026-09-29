@@ -36,7 +36,7 @@ const DEFINITION: TieredPowerDefinition = {
 	],
 };
 
-describe( 'elderLabel/numericLabel/namedLabel (Decision 074)', () => {
+describe( 'elderLabel/numericLabel/namedLabel', () => {
 	it( 'a genuine catalog-matched Elder+ pick shows its real catalog tier', () => {
 		const held = { name: 'Celerity', power_name: 'Blink' };
 		expect( elderLabel( DEFINITION, held ) ).toBe(
@@ -257,7 +257,7 @@ describe( 'label helpers — parity with Power_Display.php', () => {
 								definition,
 								fixtureCase.held,
 								fixtureCase.level
-						  )
+							)
 						: numericLabel( definition, fixtureCase.held );
 				return withTradition( fixtureCase.held, label );
 			}

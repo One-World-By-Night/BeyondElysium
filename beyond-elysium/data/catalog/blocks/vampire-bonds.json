@@ -8,7 +8,6 @@
     "sources": [
       "Grapevine 3.01 VampireClass.cls: BondList.Initialize \"Bonds\", alphabetized, not negative, not atomic, multiplier display; each row a name and a rating"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {

@@ -41,7 +41,7 @@ export function LocationLinksPanel( {
 			);
 	}
 
-	useEffect( load, [ gameSlug, locationId ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect( load, [ gameSlug, locationId ] );
 
 	useEffect( () => {
 		everyPage( ( page ) =>

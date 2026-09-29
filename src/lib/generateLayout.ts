@@ -19,10 +19,7 @@ export interface SchemaBlockLike {
 	slug: string;
 	name: string;
 	section_type:
-		| 'trait_list'
-		| 'tiered_power'
-		| 'resource_pool'
-		| 'identity_field';
+		'trait_list' | 'tiered_power' | 'resource_pool' | 'identity_field';
 	definition: {
 		items?: unknown[];
 		powers?: unknown[];

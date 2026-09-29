@@ -44,9 +44,8 @@ export function useImportDecisions< P extends ImportPreview >(
 	preview: P | null,
 	previewTarget = ''
 ): UseImportDecisionsResult {
-	const [ decisions, setDecisions ] = useState< ImportDecisions >(
-		noDecisions()
-	);
+	const [ decisions, setDecisions ] =
+		useState< ImportDecisions >( noDecisions() );
 
 	const madeFor = preview ? previewKey( preview.job_id, previewTarget ) : '';
 	const {
@@ -89,7 +88,7 @@ export function useImportDecisions< P extends ImportPreview >(
 					traitResolutions,
 					duplicateActions,
 					worldObjectActions
-			  )
+				)
 			: 0;
 	}
 

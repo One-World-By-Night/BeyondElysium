@@ -5,9 +5,11 @@
   "kind": "stack",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_creature_stacks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_creature_stacks, dumped by tools/catalog/dump_live.sh",
+      "Laws of the Hunt (WW05014) pp. 99-101, the Chapter Four creation summary: Attributes 6/4/3, Abilities 5, Backgrounds 3, Humanity 4, Willpower 3, 10 Free Traits",
+      "Laws of the Hunt (WW05014) pp. 154-155, the Free Trait cost chart: an Attribute, Ability, Willpower, Humanity, Background or Influence Trait each 1; a Merit its value; a basic Numina (Sorcery or Psychic Phenomena) 3 - the only way either is acquired at creation, since \"mortal hunters, unlike their prey, do not automatically get any supernatural powers\"",
+      "creation_rules covers only the baseline every Mortal shares. Theurgy, Martial Arts, Fomori Powers and Bioenhancements have no confirmed Free Trait creation cost in this book; Ghoul/Kinfolk/Kinain's own borrowed Discipline/Gift/Art budgets, and each of the 66 Associations' own individual creation bonus (a different bonus per Association, e.g. Inquisitors' bonus Church Influence Trait, p. 104-105), are left unmodeled - real per-Association research beyond this pass"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -171,6 +173,61 @@
       }
     ],
     "display_preferences": {},
-    "creation_rules": null
+    "creation_rules": {
+      "steps": [
+        {
+          "kind": "prioritized",
+          "label": "Attributes",
+          "sections": [
+            "met-physical-traits",
+            "met-social-traits",
+            "met-mental-traits"
+          ],
+          "amounts": [ 6, 4, 3 ]
+        },
+        {
+          "kind": "budget",
+          "label": "Abilities",
+          "section": "mortal-abilities",
+          "count": 5
+        },
+        {
+          "kind": "budget",
+          "label": "Backgrounds",
+          "section": "mortal-backgrounds",
+          "count": 3
+        },
+        {
+          "kind": "start",
+          "label": "Humanity",
+          "target": "mortal-resources.Humanity",
+          "value": 4
+        },
+        {
+          "kind": "start",
+          "label": "Willpower",
+          "target": "mortal-resources.Willpower",
+          "value": 3
+        },
+        {
+          "kind": "free",
+          "label": "Free Traits",
+          "pool": "Free Traits",
+          "points": 10,
+          "rates": {
+            "met-physical-traits": 1,
+            "met-social-traits": 1,
+            "met-mental-traits": 1,
+            "mortal-abilities": 1,
+            "mortal-backgrounds": 1,
+            "mortal-resources.Willpower": 1,
+            "mortal-resources.Humanity": 1,
+            "mortal-merits": "value",
+            "mortal-psychic": 3,
+            "mortal-hedge-magic": 3
+          }
+        }
+      ]
+    }
   }
 }

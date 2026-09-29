@@ -43,10 +43,11 @@ class Change_Validator {
 	 * @param array<string,object> $blocks             The character's stack blocks keyed by slug, each with `section_type` and a decoded `definition`.
 	 * @param array                $sheet_data         The character's current sheet_data.
 	 * @param bool                 $is_manager         Whether the submitter is a Storyteller of this chronicle.
-	 * @param string[]             $protected_fields   "block_slug.Field" identity fields a non-Storyteller may not clear - the ones Discipline pricing reads (in_type_source).
+	 * @param string[]             $protected_fields   "block_slug.Field" identity fields a non-Storyteller may not clear - the ones in-type pricing reads.
+	 * @param string[]             $closed_blocks      Blocks the chronicle's hidden sections show, where nothing new is bought.
 	 * @return array{ok:bool,change_data?:array,code?:string,message?:string}
 	 */
-	public static function validate( array $change, array $blocks, array $sheet_data, bool $is_manager, array $protected_fields = [] ): array {
+	public static function validate( array $change, array $blocks, array $sheet_data, bool $is_manager, array $protected_fields = [], array $closed_blocks = [] ): array {
 		$type = $change['change_type'] ?? '';
 		if ( ! is_string( $type ) || ! in_array( $type, self::REST_CHANGE_TYPES, true ) ) {
 			return self::fail( 'invalid_change_type', 'That kind of change cannot be submitted.' );
@@ -79,23 +80,26 @@ class Change_Validator {
 		$definition = $block->definition ?? new \stdClass();
 		$held       = $sheet_data[ $block_slug ] ?? [];
 
+		$held = is_array( $held ) ? $held : [];
 		switch ( $type ) {
 			case 'add_trait':
 			case 'remove_trait':
 			case 'modify_trait':
 				if ( $block->section_type === 'trait_list' ) {
-					return self::validate_trait_list( $type, $block_slug, $definition, is_array( $held ) ? $held : [], $data, $is_manager );
+					$result = self::validate_trait_list( $type, $block_slug, $definition, $held, $data, $is_manager );
+				} elseif ( $block->section_type === 'tiered_power' ) {
+					$result = self::validate_tiered_power( $type, $block_slug, $definition, $held, $data, $is_manager );
+				} else {
+					return self::fail( 'wrong_section_type', 'That change does not fit this section.' );
 				}
-				if ( $block->section_type === 'tiered_power' ) {
-					return self::validate_tiered_power( $type, $block_slug, $definition, is_array( $held ) ? $held : [], $data, $is_manager );
-				}
-				return self::fail( 'wrong_section_type', 'That change does not fit this section.' );
+				break;
 
 			case 'modify_resource':
 				if ( $block->section_type !== 'resource_pool' ) {
 					return self::fail( 'wrong_section_type', 'That change does not fit this section.' );
 				}
-				return self::validate_resource( $block_slug, $definition, is_array( $held ) ? $held : [], $data, $is_manager );
+				$result = self::validate_resource( $block_slug, $definition, $held, $data, $is_manager );
+				break;
 
 			default: // modify_identity - the only block-based type left after the allowlist check.
 				if ( $block->section_type !== 'identity_field' ) {
@@ -103,22 +107,86 @@ class Change_Validator {
 				}
 				return self::validate_identity( $block_slug, $definition, $data, $is_manager, $protected_fields );
 		}
+
+		if ( $result['ok'] && in_array( $block_slug, $closed_blocks, true ) && self::buys_something( $type, $block, $held, (array) $result['change_data'] ) ) {
+			return self::fail( 'section_hidden', '%s is hidden in this chronicle, so nothing new can be bought in it.', [ (string) ( $block->name ?? $block_slug ) ] );
+		}
+		return $result;
 	}
 
 	/**
-	 * The identity fields a stack's Discipline pricing reads, as "block_slug.Field".
+	 * Whether a validated change buys something: an added entry, a higher count or level than the one held, or a higher
+	 * permanent rating.
+	 *
+	 * @param string               $type
+	 * @param object               $block
+	 * @param array                $held
+	 * @param array<string,mixed>  $data The validated change_data.
+	 */
+	private static function buys_something( string $type, object $block, array $held, array $data ): bool {
+		if ( $type === 'add_trait' ) {
+			return true;
+		}
+
+		if ( $type === 'modify_resource' ) {
+			$values = (array) ( $data['values'] ?? [] );
+			$name   = (string) array_key_first( $values );
+			$value  = $values[ $name ] ?? null;
+			$new    = is_array( $value ) ? ( $value['permanent'] ?? null ) : $value;
+			if ( $new === null ) {
+				return false;
+			}
+			$old = $held[ $name ] ?? null;
+			$old = is_array( $old ) ? ( $old['permanent'] ?? null ) : $old;
+			if ( $old === null ) {
+				foreach ( ( $block->definition->pools ?? [] ) as $pool ) {
+					if ( ( $pool->name ?? null ) === $name ) {
+						$old = $pool->default_start ?? 0;
+					}
+				}
+			}
+			return (int) $new > (int) ( $old ?? 0 );
+		}
+
+		if ( $type !== 'modify_trait' ) {
+			return false;
+		}
+		$trait = (array) ( $data['trait'] ?? [] );
+		$name  = (string) ( $trait['name'] ?? '' );
+
+		if ( $block->section_type === 'trait_list' ) {
+			if ( ! array_key_exists( 'count', $trait ) ) {
+				return false;
+			}
+			$target = Trait_Identity::target_of( $block->definition, $trait, self::previous_snapshot( $data ) );
+			foreach ( $held as $row ) {
+				if ( is_array( $row ) && ( $row['name'] ?? null ) === $name && ( $target === null || Trait_Identity::of_row( $block->definition, $row ) === $target ) ) {
+					return (int) $trait['count'] > (int) ( $row['count'] ?? 0 );
+				}
+			}
+			return true;
+		}
+
+		if ( ! array_key_exists( 'level', $trait ) || $trait['level'] === null ) {
+			return false;
+		}
+		$pick = ( $trait['power_name'] ?? '' ) !== '' ? $trait['power_name'] : null;
+		foreach ( $held as $row ) {
+			if ( is_array( $row ) && ( $row['name'] ?? null ) === $name && ( ( $row['power_name'] ?? '' ) !== '' ? $row['power_name'] : null ) === $pick ) {
+				return (int) $trait['level'] > (int) ( $row['level'] ?? 0 );
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * The identity fields a stack's in-type tests read, as "block_slug.Field".
 	 *
 	 * @param object|null $stack A decoded creature stack row.
 	 * @return string[]
 	 */
 	public static function protected_fields( $stack ): array {
-		$fields = [];
-		foreach ( ( $stack->stack_definition->sections ?? [] ) as $section ) {
-			if ( ! empty( $section->in_type_source ) && is_string( $section->in_type_source ) ) {
-				$fields[] = $section->in_type_source;
-			}
-		}
-		return array_values( array_unique( $fields ) );
+		return In_Type::fields( $stack );
 	}
 
 	/**

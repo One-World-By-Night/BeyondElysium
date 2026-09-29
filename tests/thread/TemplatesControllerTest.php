@@ -3,11 +3,12 @@
 namespace BeyondElysium\Tests\Thread;
 
 use BeyondElysium\Models\Schema_Block;
+use BeyondElysium\Models\Template;
 use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The templates REST controller: permission matrix, and the cross-scope edit refusal.
+ * The templates REST controller: permission matrix, the book's templates read-only, and the cross-scope edit refusal.
  */
 class TemplatesControllerTest extends WP_UnitTestCase {
 
@@ -78,11 +79,27 @@ class TemplatesControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 403, $response->get_status() );
 	}
 
-	public function test_administrator_can_create_a_template(): void {
-		$admin = self::factory()->user->create( [ 'role' => 'administrator' ] );
-		wp_set_current_user( $admin );
+	public function test_the_books_templates_are_read_only_even_to_an_administrator(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$site_id = Template::create( [ 'stack_slug' => 'test-stack', 'name' => 'Site', 'template_type' => 'sheet_full', 'layout' => $this->layout() ] );
 
-		$response = $this->dispatch( 'POST', '/be/v1/templates', [
+		$created = $this->dispatch( 'POST', '/be/v1/templates', [
+			'stack_slug' => 'test-stack', 'name' => 'X', 'template_type' => 'npc_full', 'layout' => $this->layout(),
+		] );
+		$updated = $this->dispatch( 'PUT', "/be/v1/templates/{$site_id}", [ 'name' => 'Renamed' ] );
+		$deleted = $this->dispatch( 'DELETE', "/be/v1/templates/{$site_id}" );
+
+		foreach ( [ $created, $updated, $deleted ] as $response ) {
+			$this->assertSame( 403, $response->get_status() );
+			$this->assertSame( 'book_read_only', $response->as_error()->get_error_code() );
+		}
+		$this->assertSame( 'Site', Template::find( $site_id )->name );
+	}
+
+	public function test_an_administrator_creates_a_chronicles_template(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+
+		$response = $this->dispatch( 'POST', '/be/v1/thread-test-game-a/templates', [
 			'stack_slug' => 'test-stack', 'name' => 'X', 'template_type' => 'sheet_full', 'layout' => $this->layout(),
 		] );
 		$this->assertSame( 201, $response->get_status() );
@@ -93,7 +110,7 @@ class TemplatesControllerTest extends WP_UnitTestCase {
 		$layout                          = $this->layout();
 		$layout['sections'][0]['width'] = 'quarter';
 
-		$response = $this->dispatch( 'POST', '/be/v1/templates', [
+		$response = $this->dispatch( 'POST', '/be/v1/thread-test-game-a/templates', [
 			'stack_slug' => 'test-stack', 'name' => 'X', 'template_type' => 'sheet_full', 'layout' => $layout,
 		] );
 
@@ -116,11 +133,9 @@ class TemplatesControllerTest extends WP_UnitTestCase {
 		$admin = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		wp_set_current_user( $admin );
 
-		$created = $this->dispatch( 'POST', '/be/v1/templates', [
-			'stack_slug' => 'test-stack', 'name' => 'Global', 'template_type' => 'sheet_full', 'layout' => $this->layout(),
-		] )->get_data();
+		$site_id = Template::create( [ 'stack_slug' => 'test-stack', 'name' => 'Global', 'template_type' => 'sheet_full', 'layout' => $this->layout() ] );
 
-		$response = $this->dispatch( 'PUT', "/be/v1/thread-test-game-a/templates/{$created->id}", [ 'name' => 'Hijacked' ] );
+		$response = $this->dispatch( 'PUT', "/be/v1/thread-test-game-a/templates/{$site_id}", [ 'name' => 'Hijacked' ] );
 
 		$this->assertSame( 404, $response->get_status() );
 		$this->assertSame( 'not_found', $response->get_data()['code'] );
@@ -167,6 +182,6 @@ class TemplatesControllerTest extends WP_UnitTestCase {
 		$response = $this->dispatch( 'DELETE', "/be/v1/templates/{$id}" );
 
 		$this->assertSame( 403, $response->get_status() );
-		$this->assertSame( 'cannot_delete', $response->get_data()['code'] );
+		$this->assertSame( 'book_read_only', $response->get_data()['code'] );
 	}
 }

@@ -238,7 +238,7 @@ export function TraitListRenderer( {
 							? sortIfAlphabetized(
 									group.traits,
 									definition.alphabetize
-							  )
+								)
 							: group.traits
 						).map( ( trait, i ) => (
 							<li key={ `${ trait.name }-${ i }` }>

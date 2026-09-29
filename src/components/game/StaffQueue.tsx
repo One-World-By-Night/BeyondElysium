@@ -24,7 +24,7 @@ function queueHeading( label: string, count: number ): string {
 				__( '%1$s (%2$d)', 'beyond-elysium' ),
 				label,
 				count
-		  );
+			);
 }
 
 export interface StaffQueueProps {

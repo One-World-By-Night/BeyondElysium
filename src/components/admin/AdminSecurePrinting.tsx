@@ -130,11 +130,11 @@ export function AdminSecurePrinting() {
 								? __(
 										'Yes - prints are signed',
 										'beyond-elysium'
-								  )
+									)
 								: __(
 										'No - prints are stamped UNSIGNED',
 										'beyond-elysium'
-								  ) }
+									) }
 						</td>
 					</tr>
 					<tr>
@@ -159,7 +159,7 @@ export function AdminSecurePrinting() {
 								: __(
 										'Not set - fine if the key has no passphrase',
 										'beyond-elysium'
-								  ) }
+									) }
 						</td>
 					</tr>
 				</tbody>
@@ -258,7 +258,7 @@ define( 'BE_PDF_SIGNING_PASSPHRASE', 'your passphrase' );` }
 								: __(
 										'Generate a certificate',
 										'beyond-elysium'
-								  ) }
+									) }
 						</button>
 					</form>
 				</>

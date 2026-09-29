@@ -71,10 +71,12 @@ class PointAuditQueryCountThreadTest extends WP_UnitTestCase {
 
 	public function test_in_clan_and_out_of_clan_disciplines_still_price_apart(): void {
 		[ $report ] = $this->audit_brujah_holding( [ 'Celerity', 'Obfuscate' ] );
-		$modifier   = (int) ( Schema_Block::find_by_slug( 'vampire-disciplines' )->definition->out_of_type_cost_modifier ?? 0 );
+		$modifier   = (int) ltrim( (string) ( Schema_Block::find_by_slug( 'vampire-disciplines' )->definition->_meta->out_of_type->basic ?? '0' ), '+' );
 		$this->assertGreaterThan( 0, $modifier, 'The seeded catalog charges more for an out-of-clan Discipline.' );
 
 		$this->assertNull( $this->discipline_line( $report, 'Celerity' )['modifier'], 'Celerity is in-clan for a Brujah.' );
+		$this->assertNull( $this->discipline_line( $report, 'Celerity' )['modifier_side'] );
 		$this->assertSame( $modifier, $this->discipline_line( $report, 'Obfuscate' )['modifier'] );
+		$this->assertSame( 'out_of_type', $this->discipline_line( $report, 'Obfuscate' )['modifier_side'] );
 	}
 }

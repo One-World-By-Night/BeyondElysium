@@ -81,6 +81,6 @@ class ChangesControllerBudgetTest extends WP_UnitTestCase {
 		// Character still has only 2 XP unspent from setUp().
 		$response = $this->dispatch( $this->add_iron_will_request() );
 
-		$this->assertSame( 201, $response->get_status(), 'D19: an ST correcting a sheet may legitimately go negative.' );
+		$this->assertSame( 201, $response->get_status(), 'an ST correcting a sheet may legitimately go negative.' );
 	}
 }

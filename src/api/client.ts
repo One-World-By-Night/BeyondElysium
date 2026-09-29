@@ -9,14 +9,19 @@ import type {
 	MyCapabilities,
 	SchemaBlock,
 	CreatureStack,
+	StackDefinition,
+	CreationRules,
 	ResolvedStack,
 	CreateGameRequest,
 	UpdateGameRequest,
 	UpdateChronicleSetupRequest,
+	CatalogCorrection,
+	CatalogCorrections,
+	CorrectionPathStep,
+	CatalogVariantBase,
+	VariantUnmatched,
 	CreateSchemaBlockRequest,
 	UpdateSchemaBlockRequest,
-	CreateCreatureStackRequest,
-	UpdateCreatureStackRequest,
 	GameCollectionParams,
 	SchemaBlockCollectionParams,
 	CreatureStackCollectionParams,
@@ -28,6 +33,9 @@ import type {
 	GameMemberRole,
 	ChroniclePlayerList,
 	ChroniclePlayerResult,
+	CharacterLinkResult,
+	PlayerInvite,
+	PlayerInviteResult,
 	AuthorizationSettings,
 	GameStats,
 	PlayerWithoutActiveCharacter,
@@ -60,6 +68,7 @@ import type {
 	ExportCharacterOptions,
 	ExportCharacterResponse,
 	PointAudit,
+	CreationTally,
 	NpcProfile,
 	UpdateNpcProfileRequest,
 } from '../types/character';
@@ -388,44 +397,39 @@ export const schemaBlocks = {
 		} ),
 
 	/**
-	 * Creates a new schema block from the given request body. slug, name, and section_type identify and classify it.
+	 * Creates a chronicle's own schema block from the given request body. slug, name, and section_type identify and
+	 * classify it.
 	 */
 	create: (
 		data: CreateSchemaBlockRequest,
-		gameSlug?: string
+		gameSlug: string
 	): Promise< SchemaBlock > =>
 		apiFetch( {
-			path: `${ BASE }/${
-				gameSlug ? `${ gameSlug }/` : ''
-			}schema-blocks`,
+			path: `${ BASE }/${ gameSlug }/schema-blocks`,
 			method: 'POST',
 			data,
 		} ),
 
 	/**
-	 * Updates an existing schema block by slug.
+	 * Updates a chronicle's schema block by slug: its own, or its copy of the book's.
 	 */
 	update: (
 		slug: string,
 		data: UpdateSchemaBlockRequest,
-		gameSlug?: string
+		gameSlug: string
 	): Promise< SchemaBlock > =>
 		apiFetch( {
-			path: `${ BASE }/${
-				gameSlug ? `${ gameSlug }/` : ''
-			}schema-blocks/${ slug }`,
+			path: `${ BASE }/${ gameSlug }/schema-blocks/${ slug }`,
 			method: 'PUT',
 			data,
 		} ),
 
 	/**
-	 * Deletes a schema block by slug.
+	 * Deletes a chronicle's own schema block by slug.
 	 */
-	delete: ( slug: string, gameSlug?: string ): Promise< void > =>
+	delete: ( slug: string, gameSlug: string ): Promise< void > =>
 		apiFetch( {
-			path: `${ BASE }/${
-				gameSlug ? `${ gameSlug }/` : ''
-			}schema-blocks/${ slug }`,
+			path: `${ BASE }/${ gameSlug }/schema-blocks/${ slug }`,
 			method: 'DELETE',
 		} ),
 };
@@ -472,30 +476,97 @@ export const creatureStacks = {
 		} ),
 
 	/**
-	 * Creates a new creature stack from the given request body.
+	 * Creates a chronicle's own brand-new creature type: a slug, name and at least one section, built from nothing
+	 * rather than a layer over one the book declares.
 	 */
-	create: ( data: CreateCreatureStackRequest ): Promise< CreatureStack > =>
-		apiFetch( { path: `${ BASE }/creature-stacks`, method: 'POST', data } ),
+	create: (
+		gameSlug: string,
+		data: {
+			slug: string;
+			name: string;
+			game_line?: string;
+			sections: Array< {
+				block_slug: string;
+				label?: string;
+				display_order?: number;
+				required?: boolean;
+			} >;
+			creation_rules?: CreationRules;
+		}
+	): Promise< CreatureStack > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/creature-stacks`,
+			method: 'POST',
+			data,
+		} ),
 
 	/**
-	 * Updates an existing creature stack by slug with the given partial request body.
+	 * Saves a chronicle's own layer over one of the book's creature types: its creation_rules and/or
+	 * stack_definition.
 	 */
 	update: (
 		slug: string,
-		data: UpdateCreatureStackRequest
+		data: {
+			stack_definition?: StackDefinition;
+			creation_rules?: CreationRules;
+		},
+		gameSlug: string
 	): Promise< CreatureStack > =>
 		apiFetch( {
-			path: `${ BASE }/creature-stacks/${ slug }`,
+			path: `${ BASE }/${ gameSlug }/creature-stacks/${ slug }`,
 			method: 'PUT',
 			data,
 		} ),
 
 	/**
-	 * Deletes a creature stack by slug.
+	 * Removes a chronicle's own layer, so it reads as the book's creature type again.
 	 */
-	delete: ( slug: string ): Promise< void > =>
+	reset: ( slug: string, gameSlug: string ): Promise< void > =>
 		apiFetch( {
-			path: `${ BASE }/creature-stacks/${ slug }`,
+			path: `${ BASE }/${ gameSlug }/creature-stacks/${ slug }`,
+			method: 'DELETE',
+		} ),
+
+	/**
+	 * Adds a section for a block the chronicle can read to its own layer of a creature type.
+	 */
+	addSection: (
+		slug: string,
+		gameSlug: string,
+		blockSlug: string,
+		label?: string
+	): Promise< CreatureStack > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/creature-stacks/${ slug }/sections`,
+			method: 'POST',
+			data: { block_slug: blockSlug, label },
+		} ),
+
+	/**
+	 * Hides or shows one section of a chronicle's own layer of a creature type.
+	 */
+	updateSection: (
+		slug: string,
+		gameSlug: string,
+		blockSlug: string,
+		hidden: boolean
+	): Promise< CreatureStack > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/creature-stacks/${ slug }/sections/${ blockSlug }`,
+			method: 'PUT',
+			data: { hidden },
+		} ),
+
+	/**
+	 * Removes a section a chronicle added to its own layer. Refused for a section the book declares.
+	 */
+	removeSection: (
+		slug: string,
+		gameSlug: string,
+		blockSlug: string
+	): Promise< CreatureStack > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/creature-stacks/${ slug }/sections/${ blockSlug }`,
 			method: 'DELETE',
 		} ),
 };
@@ -505,7 +576,7 @@ export const creatureStacks = {
 // ---------------------------------------------------------------------------
 
 /**
- * REST client for the global templates collection: the reusable, non-chronicle-specific sheet layouts.
+ * REST client for the book's sheet templates, read-only: the layouts every chronicle uses unless it has its own.
  */
 export const templatesGlobal = {
 	/**
@@ -523,28 +594,6 @@ export const templatesGlobal = {
 	 */
 	get: ( id: number ): Promise< Template > =>
 		apiFetch( { path: `${ BASE }/templates/${ id }` } ),
-
-	/**
-	 * Creates a new global template from the given request body. name, template_type, and layout are required.
-	 */
-	create: ( data: CreateTemplateRequest ): Promise< Template > =>
-		apiFetch( { path: `${ BASE }/templates`, method: 'POST', data } ),
-
-	/**
-	 * Updates an existing global template by id with the given partial request body.
-	 */
-	update: ( id: number, data: UpdateTemplateRequest ): Promise< Template > =>
-		apiFetch( {
-			path: `${ BASE }/templates/${ id }`,
-			method: 'PUT',
-			data,
-		} ),
-
-	/**
-	 * Deletes a global template by id.
-	 */
-	delete: ( id: number ): Promise< void > =>
-		apiFetch( { path: `${ BASE }/templates/${ id }`, method: 'DELETE' } ),
 };
 /**
  * REST client factory for a single chronicle's template resolution.
@@ -609,12 +658,7 @@ export const templates = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 export type ApprovalRuleTargetType =
-	| 'item'
-	| 'power'
-	| 'level'
-	| 'item_range'
-	| 'pool_range'
-	| 'field_option';
+	'item' | 'power' | 'level' | 'item_range' | 'pool_range' | 'field_option';
 
 export interface ApprovalRule {
 	id: string;
@@ -1056,6 +1100,14 @@ export const characters = ( gameSlug: string ) => ( {
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/characters/${ id }/point-audit`,
 		} ),
+
+	/**
+	 * Fetches the creation tally for a pending character's own saved sheet.
+	 */
+	creationTally: ( id: number ): Promise< CreationTally > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/characters/${ id }/creation-tally`,
+		} ),
 } );
 
 /**
@@ -1141,6 +1193,64 @@ export const chroniclePlayers = ( gameSlug: string ) => ( {
 	remove: ( wpUserId: number ): Promise< ChroniclePlayerResult > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/players/${ wpUserId }`,
+			method: 'DELETE',
+		} ),
+
+	/**
+	 * The chronicle's open invites.
+	 */
+	invites: (): Promise< PlayerInvite[] > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/players/invites` } ),
+
+	/**
+	 * Invites an email with the given characters; an existing account is made a player and linked at once.
+	 */
+	invite: (
+		email: string,
+		characterIds: number[],
+		sendEmail: boolean
+	): Promise< PlayerInviteResult > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/players/invites`,
+			method: 'POST',
+			data: {
+				email,
+				character_ids: characterIds,
+				send_email: sendEmail,
+			},
+		} ),
+
+	/**
+	 * Cancels an open invite.
+	 */
+	cancelInvite: ( id: number ): Promise< { cancelled: boolean } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/players/invites/${ id }`,
+			method: 'DELETE',
+		} ),
+
+	/**
+	 * Links many characters to one of the chronicle's members.
+	 */
+	linkCharacters: (
+		wpUserId: number,
+		characterIds: number[]
+	): Promise< CharacterLinkResult > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/players/${ wpUserId }/characters`,
+			method: 'POST',
+			data: { character_ids: characterIds },
+		} ),
+
+	/**
+	 * Unlinks one character from the member it is linked to.
+	 */
+	unlinkCharacter: (
+		wpUserId: number,
+		characterId: number
+	): Promise< { unlinked: boolean } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/players/${ wpUserId }/characters/${ characterId }`,
 			method: 'DELETE',
 		} ),
 } );
@@ -1293,6 +1403,111 @@ export const gameStats = ( gameSlug: string ) => ( {
 export const setupStatus = ( gameSlug: string ) => ( {
 	get: (): Promise< SetupStatus > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/setup-status` } ),
+} );
+
+/**
+ * REST client factory for the creation tally: a draft build in progress, not yet saved.
+ */
+export const creationTally = ( gameSlug: string ) => ( {
+	/**
+	 * Tallies a draft build against its creature type's declared creation rules.
+	 */
+	draft: (
+		stackSlug: string,
+		sheetData: Record< string, unknown >
+	): Promise< CreationTally > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/creation-tally`,
+			method: 'POST',
+			data: { stack_slug: stackSlug, sheet_data: sheetData },
+		} ),
+} );
+
+/**
+ * REST client factory for the book variants a chronicle chooses: listing them, previewing the held entries a choice
+ * would unmatch, and choosing.
+ */
+export const catalogVariants = ( gameSlug: string ) => ( {
+	/**
+	 * Fetches every base block with variants and the ones the chronicle chose.
+	 */
+	list: (): Promise< { bases: CatalogVariantBase[] } > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/catalog-variants` } ),
+
+	/**
+	 * Fetches the held entries a choice of variants for a base block would leave unmatched.
+	 */
+	preview: (
+		base: string,
+		variants: string[]
+	): Promise< { unmatched: VariantUnmatched[] } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/catalog-variants/preview`,
+			method: 'POST',
+			data: { base, variants },
+		} ),
+
+	/**
+	 * Chooses a base block's variants.
+	 */
+	choose: (
+		base: string,
+		variants: string[]
+	): Promise< { bases: CatalogVariantBase[] } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/catalog-variants`,
+			method: 'PUT',
+			data: { base, variants },
+		} ),
+} );
+
+/**
+ * REST client factory for a chronicle's book corrections: listing them, and keeping or taking one or all.
+ */
+export const catalogCorrections = ( gameSlug: string ) => ( {
+	/**
+	 * Fetches the corrections the chronicle has to review.
+	 */
+	list: (): Promise< CatalogCorrections > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/catalog-corrections` } ),
+
+	/**
+	 * Keeps the chronicle's value at one correction.
+	 */
+	keep: (
+		kind: CatalogCorrection[ 'kind' ],
+		target: string,
+		path: CorrectionPathStep[]
+	): Promise< CatalogCorrections > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/catalog-corrections/keep`,
+			method: 'POST',
+			data: { kind, target, path },
+		} ),
+
+	/**
+	 * Keeps the chronicle's value at every correction.
+	 */
+	keepAll: (): Promise< CatalogCorrections > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/catalog-corrections/keep`,
+			method: 'POST',
+			data: { all: true },
+		} ),
+
+	/**
+	 * Takes the book's value at one correction.
+	 */
+	take: (
+		kind: CatalogCorrection[ 'kind' ],
+		target: string,
+		path: CorrectionPathStep[]
+	): Promise< CatalogCorrections > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/catalog-corrections/take`,
+			method: 'POST',
+			data: { kind, target, path },
+		} ),
 } );
 
 // ---------------------------------------------------------------------------
@@ -3426,10 +3641,7 @@ export interface TranslationUsage {
 }
 
 export type TranslationStatus =
-	| 'draft'
-	| 'needs_review'
-	| 'approved'
-	| 'conflict';
+	'draft' | 'needs_review' | 'approved' | 'conflict';
 
 /**
  * One row of `list()`: a catalog term left-joined with its translation for the requested locale.
@@ -3715,6 +3927,9 @@ const api = {
 	dataManagement,
 	gameStats,
 	setupStatus,
+	creationTally,
+	catalogCorrections,
+	catalogVariants,
 	docs,
 	credits,
 	aiAssist,

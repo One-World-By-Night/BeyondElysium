@@ -31,6 +31,7 @@ class Plugin {
 		\BeyondElysium\REST\Url_Param_Guard::register();
 		\BeyondElysium\REST\Catalog_Switch_Guard::register();
 		Authorization::register();
+		\BeyondElysium\Services\Player_Invites::register();
 
 		// Cleans up be_game_members rows when a user is deleted, single-site or multisite.
 		add_action( 'deleted_user', [ '\BeyondElysium\Models\Game_Member', 'remove_user_everywhere' ] );
@@ -161,7 +162,10 @@ class Plugin {
 			new \BeyondElysium\REST\Sheets_Controller(),
 			new \BeyondElysium\REST\Reports_Controller(),
 			new \BeyondElysium\REST\Point_Audit_Controller(),
+			new \BeyondElysium\REST\Creation_Tally_Controller(),
 			new \BeyondElysium\REST\Setup_Status_Controller(),
+			new \BeyondElysium\REST\Catalog_Corrections_Controller(),
+			new \BeyondElysium\REST\Catalog_Variants_Controller(),
 			new \BeyondElysium\REST\Ai_Assist_Controller(),
 			new \BeyondElysium\REST\Signing_Controller(),
 			new \BeyondElysium\REST\Attachments_Controller(),

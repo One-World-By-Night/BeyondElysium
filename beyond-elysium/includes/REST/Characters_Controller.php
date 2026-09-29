@@ -3,11 +3,14 @@
 namespace BeyondElysium\REST;
 
 use BeyondElysium\Database\Manager;
+use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\Transfer;
+use BeyondElysium\Services\Change_Engine;
+use BeyondElysium\Services\Creation_Tally;
 use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
@@ -65,6 +68,15 @@ class Characters_Controller extends Base_Controller {
 			[
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'bulk_status' ],
+				'permission_callback' => $this->permission( 'be_manage_characters' ),
+			],
+		] );
+
+		// Grants one trait_list item paid for from a named resource pool rather than the character's own XP.
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<id>\d+)/pool-purchases', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'spend_pool' ],
 				'permission_callback' => $this->permission( 'be_manage_characters' ),
 			],
 		] );
@@ -204,6 +216,44 @@ class Characters_Controller extends Base_Controller {
 			'results' => $results,
 			'updated' => count( array_filter( $results, static fn( $r ) => $r['success'] ) ),
 		] );
+	}
+
+	/**
+	 * Grants one trait_list item to a character, paid for from the resource pool its block names in `_meta.paid_from`.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function spend_pool( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$character = Character::find( (int) $request['id'] );
+		if ( ! $character || $character->owner_slug !== $request['game_slug'] ) {
+			return $this->error( 'character_not_found', __( 'Character not found in this game.', 'beyond-elysium' ), 404 );
+		}
+
+		$block_slug = (string) $request->get_param( 'block_slug' );
+		$name       = (string) $request->get_param( 'name' );
+		if ( $block_slug === '' || $name === '' ) {
+			return $this->error( 'invalid_param', __( 'block_slug and name are required.', 'beyond-elysium' ), 400 );
+		}
+
+		$result = Change_Engine::spend_pool_on_trait( (int) $character->id, $block_slug, $name, get_current_user_id() );
+		if ( ! $result['ok'] ) {
+			$messages = [
+				'not_found'            => __( 'Character not found.', 'beyond-elysium' ),
+				'not_pool_funded'      => __( 'This block has no `_meta.paid_from` pool to spend from.', 'beyond-elysium' ),
+				'unknown_item'         => __( 'That item is not in this block\'s catalog.', 'beyond-elysium' ),
+				'insufficient_balance' => __( 'The pool does not hold enough for this purchase.', 'beyond-elysium' ),
+			];
+			$error = (string) ( $result['error'] ?? 'spend_failed' );
+			return $this->error( $error, $messages[ $error ] ?? __( 'The purchase could not be completed.', 'beyond-elysium' ), 400 );
+		}
+
+		return $this->success( [ 'change_id' => $result['change_id'] ], 201 );
 	}
 
 	/**
@@ -410,6 +460,9 @@ class Characters_Controller extends Base_Controller {
 		// A non-manager's wp_user_id is always forced to their own id, never taken from the request.
 		$wp_user_id = $is_manager ? $request->get_param( 'wp_user_id' ) : get_current_user_id();
 
+		// Only a Storyteller may mark a sheet as one already in play, taking neither the starting XP nor the build's charge.
+		$existing_character = $is_manager && $request->get_param( 'existing_character' );
+
 		$requested_status = $request->get_param( 'status' );
 		if ( $requested_status && ! in_array( $requested_status, self::STATUSES, true ) ) {
 			return $this->error( 'invalid_param', sprintf( __( 'status must be one of: %s.', 'beyond-elysium' ), implode( ', ', self::STATUSES ) ), 400 );
@@ -446,7 +499,7 @@ class Characters_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'start_date must be a valid date (YYYY-MM-DD).', 'beyond-elysium' ), 400 );
 		}
 
-		// The starting sheet is written directly, never priced or turned into Change records.
+		// The starting sheet is written directly, each trait unpriced; only the build as a whole is priced, as one total.
 		$sheet_data = $request->get_param( 'sheet_data' );
 		if ( $sheet_data !== null && ! is_array( $sheet_data ) ) {
 			return $this->error( 'invalid_param', __( 'sheet_data must be an object.', 'beyond-elysium' ), 400 );
@@ -482,11 +535,22 @@ class Characters_Controller extends Base_Controller {
 					400
 				);
 			}
+
+			$hidden = Creature_Stack::find_closed_entry( $resolved['stack'], $sheet_data );
+			if ( $hidden !== null ) {
+				return $this->error(
+					'section_hidden',
+					/* translators: %s: a sheet section, such as Blood Magic */
+					sprintf( __( '%s is hidden in this chronicle, so nothing new can be bought in it.', 'beyond-elysium' ), $hidden ),
+					400
+				);
+			}
 		}
 
-		// Applies each block's own default_held starting template.
+		// Applies each block's own default_held starting template, where a hidden section doesn't close it.
+		$closed = Creature_Stack::closed_blocks( $resolved['stack'] );
 		foreach ( $resolved['blocks'] as $block_slug => $block ) {
-			if ( array_key_exists( $block_slug, $sheet_data ) ) {
+			if ( array_key_exists( $block_slug, $sheet_data ) || in_array( (string) $block_slug, $closed, true ) ) {
 				continue;
 			}
 			$default_held = $block->definition->default_held ?? null;
@@ -494,6 +558,10 @@ class Characters_Controller extends Base_Controller {
 				$sheet_data[ $block_slug ] = $default_held;
 			}
 		}
+
+		// The build's own cost, priced against the chronicle's creation rules; charged once the character exists.
+		$starting_xp   = (int) ( $game->settings->starting_xp ?? 0 );
+		$creation_cost = $existing_character ? 0 : Creation_Tally::for_stack( $resolved['stack'], $resolved['blocks'], $sheet_data, $request['game_slug'], $starting_xp )['xp']['needed'];
 
 		$data = [
 			'name'        => sanitize_text_field( $name ),
@@ -524,6 +592,31 @@ class Characters_Controller extends Base_Controller {
 		$id = Character::create( $data );
 		if ( ! $id ) {
 			return $this->error( 'create_failed', __( 'Failed to create character.', 'beyond-elysium' ), 500 );
+		}
+
+		if ( $starting_xp > 0 && ! $existing_character ) {
+			Character::update_xp( $id, $starting_xp, $starting_xp );
+			Change::create( [
+				'character_id' => $id,
+				'change_type'  => 'xp_earn',
+				'category'     => 'experience',
+				'change_data'  => [ 'amount' => $starting_xp, 'reason' => __( 'Starting experience', 'beyond-elysium' ) ],
+				'xp_cost'      => 0,
+				'status'       => 'approved',
+				'submitted_by' => get_current_user_id(),
+			] );
+		}
+		if ( $creation_cost > 0 ) {
+			Character::update_xp( $id, 0, -$creation_cost );
+			Change::create( [
+				'character_id' => $id,
+				'change_type'  => 'creation_spend',
+				'category'     => 'experience',
+				'change_data'  => [ 'reason' => __( 'Character build', 'beyond-elysium' ) ],
+				'xp_cost'      => $creation_cost,
+				'status'       => 'approved',
+				'submitted_by' => get_current_user_id(),
+			] );
 		}
 
 		$character = Character::find( $id );
@@ -619,7 +712,7 @@ class Characters_Controller extends Base_Controller {
 			} elseif ( ! is_email( $raw ) ) {
 				return $this->error( 'invalid_param', __( 'pending_player_email must be a valid email address.', 'beyond-elysium' ), 400 );
 			} else {
-				$data['pending_player_email'] = sanitize_email( $raw );
+				$data['pending_player_email'] = strtolower( sanitize_email( $raw ) );
 			}
 		}
 		if ( isset( $data['wp_user_id'] ) && $data['wp_user_id'] !== null && ! $request->has_param( 'pending_player_email' ) ) {
@@ -663,6 +756,11 @@ class Characters_Controller extends Base_Controller {
 		}
 
 		Character::update_header( (int) $request['id'], $data );
+
+		// A pending email waits as the chronicle's invite for that address.
+		if ( ! empty( $data['pending_player_email'] ) ) {
+			\BeyondElysium\Services\Player_Invites::hold( $game, (string) $data['pending_player_email'], get_current_user_id() );
+		}
 
 		$updated = Character::find( (int) $request['id'] );
 		if ( ! \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) ) {

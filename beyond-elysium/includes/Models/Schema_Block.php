@@ -17,6 +17,11 @@ class Schema_Block {
 	private static $valid_section_types = [ 'trait_list', 'tiered_power', 'resource_pool', 'identity_field' ];
 
 	/**
+	 * The option holding each base block's variants, by base slug, as the seeder read them from the catalog.
+	 */
+	const VARIANTS_OPTION = 'be_catalog_variants';
+
+	/**
 	 * Find a schema block by slug, always the global/system definition (game_slug = ''), regardless of whether any
 	 * chronicle has its own forked customization of the same slug.
 	 *
@@ -102,7 +107,7 @@ class Schema_Block {
 			'game_slug'    => $game_slug,
 			'name'         => $global->name,
 			'section_type' => $global->section_type,
-			'definition'   => wp_json_encode( Catalog_Translator::strip( $global->definition ) ),
+			'definition'   => wp_json_encode( self::under_for_game( $slug, $game_slug ) ),
 			'is_system'    => 0,
 			// A copy of a Storyteller-only block starts Storyteller-only.
 			'storyteller_only' => (int) ( $global->storyteller_only ?? 0 ),
@@ -480,7 +485,8 @@ class Schema_Block {
 	}
 
 	/**
-	 * What a chronicle's copy will have changed once this definition is saved: what it had recorded.
+	 * What a chronicle's copy will have changed once this definition is saved, over the catalog block as it now stands.
+	 * Null for a block with no catalog block beneath it.
 	 *
 	 * @param string       $slug
 	 * @param string       $game_slug
@@ -493,16 +499,27 @@ class Schema_Block {
 		if ( ! $row ) {
 			return null;
 		}
-
-		$stored   = self::as_array( $row->definition );
-		$incoming = self::as_array( $incoming );
-		$changes  = $row->fork_changes !== null ? self::as_array( $row->fork_changes ) : null;
-		if ( $changes === null ) {
-			$shared  = Manager::get_var( "SELECT definition FROM {$table} WHERE slug = %s AND game_slug = ''", $slug );
-			$changes = Fork_Merge::changes_against( self::as_array( $shared ), $stored );
+		if ( ! self::find_by_slug( $slug ) ) {
+			return null;
 		}
 
-		return Fork_Merge::stamp( $stored, $incoming, $changes );
+		$catalog = self::under_for_game( $slug, $game_slug );
+		$stored  = self::as_array( $row->definition );
+		return Fork_Merge::stamp( $stored, self::as_array( $incoming ), self::recorded_changes( $row->fork_changes, $catalog, $stored ), $catalog );
+	}
+
+	/**
+	 * A copy's changes by path: the ones it recorded, or, when it recorded none by path, how it differs from the catalog
+	 * block.
+	 *
+	 * @param mixed               $recorded The copy's stored change record.
+	 * @param array<string,mixed> $catalog  The catalog definition.
+	 * @param array<string,mixed> $copy     The chronicle's copy.
+	 * @return array<string,mixed>
+	 */
+	private static function recorded_changes( $recorded, array $catalog, array $copy ): array {
+		$changes = $recorded !== null ? self::as_array( $recorded ) : null;
+		return Fork_Merge::is_by_path( $changes ) ? (array) $changes : Fork_Merge::changes_against( $catalog, $copy );
 	}
 
 	/**
@@ -515,17 +532,17 @@ class Schema_Block {
 	public static function refresh_forks( string $slug ): int {
 		global $wpdb;
 		$table  = Manager::table( 'schema_blocks' );
-		$shared = Manager::get_var( "SELECT definition FROM {$table} WHERE slug = %s AND game_slug = ''", $slug );
-		if ( $shared === null ) {
+		$shared = Manager::get_var( "SELECT COUNT(*) FROM {$table} WHERE slug = %s AND game_slug = ''", $slug );
+		if ( (int) $shared === 0 ) {
 			return 0;
 		}
-		$catalog = self::as_array( $shared );
 
 		$rebuilt = 0;
-		$copies  = Manager::get_results( "SELECT id, definition, fork_changes FROM {$table} WHERE slug = %s AND game_slug <> ''", $slug );
+		$copies  = Manager::get_results( "SELECT id, game_slug, definition, fork_changes FROM {$table} WHERE slug = %s AND game_slug <> ''", $slug );
 		foreach ( $copies as $copy ) {
+			$catalog    = self::under_for_game( $slug, (string) $copy->game_slug );
 			$definition = self::as_array( $copy->definition );
-			$changes    = $copy->fork_changes !== null ? self::as_array( $copy->fork_changes ) : Fork_Merge::changes_against( $catalog, $definition );
+			$changes    = self::recorded_changes( $copy->fork_changes, $catalog, $definition );
 			$merged     = Fork_Merge::merge( $catalog, $definition, $changes );
 
 			$result = $wpdb->query( $wpdb->prepare(
@@ -542,6 +559,192 @@ class Schema_Block {
 			$rebuilt++;
 		}
 		return $rebuilt;
+	}
+
+	/**
+	 * Writes a chronicle's copy of a catalog block with its recorded changes.
+	 *
+	 * @param int                 $id         The copy's row.
+	 * @param array<string,mixed> $definition
+	 * @param array<string,mixed> $changes
+	 */
+	public static function store_copy( int $id, array $definition, array $changes ): bool {
+		global $wpdb;
+		$table = Manager::table( 'schema_blocks' );
+		return $wpdb->query( $wpdb->prepare(
+			"UPDATE {$table} SET definition = %s, fork_changes = %s, updated_at = %s, version = version + 1 WHERE id = %d AND game_slug <> ''",
+			wp_json_encode( $definition ),
+			wp_json_encode( $changes ),
+			current_time( 'mysql' ),
+			$id
+		) ) !== false;
+	}
+
+	/**
+	 * The definition beneath a chronicle's copy of a block: the book's, replaced by the variant the chronicle chose to
+	 * replace it with, then with each variant it chose to add folded in, in its order. The book's alone for the site or
+	 * a chronicle that chose none.
+	 *
+	 * @param string $slug
+	 * @param string $game_slug
+	 * @return array<string,mixed>
+	 */
+	public static function under_for_game( string $slug, string $game_slug ): array {
+		return self::under_with( $slug, self::chosen_variants( $slug, $game_slug ) );
+	}
+
+	/**
+	 * The book's definition of a block with these variants applied: a replacing one first takes its place, then each
+	 * adding one is folded in, in order.
+	 *
+	 * @param string                                                      $slug
+	 * @param array<int,array{slug:string,id:string,label:string,mode:string}> $variants
+	 * @return array<string,mixed>
+	 */
+	public static function under_with( string $slug, array $variants ): array {
+		$table = Manager::table( 'schema_blocks' );
+		$book  = Manager::get_row( "SELECT section_type, definition FROM {$table} WHERE slug = %s AND game_slug = ''", $slug );
+		if ( ! $book ) {
+			return [];
+		}
+		$definition = self::as_array( $book->definition );
+		foreach ( $variants as $variant ) {
+			$content = self::as_array( Manager::get_var( "SELECT definition FROM {$table} WHERE slug = %s AND game_slug = ''", $variant['slug'] ) );
+			unset( $content['_variant'] );
+			$definition = $variant['mode'] === 'replace'
+				? $content
+				: \BeyondElysium\Services\Catalog_Reader::merge_add_variant( (string) $book->section_type, $definition, $content );
+		}
+		return $definition;
+	}
+
+	/**
+	 * Blocks' names with the creature type each belongs to, such as "Vampire Disciplines": the book creature type whose
+	 * slug begins the block's, left off when the name already starts with it or no creature type's slug begins it.
+	 *
+	 * @param array<string,string> $names Names by block slug.
+	 * @return array<string,string> By block slug.
+	 */
+	public static function names_with_creature( array $names ): array {
+		$creatures = [];
+		foreach ( Creature_Stack::all() as $stack ) {
+			$creatures[ (string) $stack->slug ] = (string) $stack->name;
+		}
+		$labels = [];
+		foreach ( $names as $slug => $name ) {
+			$slug  = (string) $slug;
+			$owner = '';
+			foreach ( array_keys( $creatures ) as $creature ) {
+				if ( str_starts_with( $slug, $creature . '-' ) && strlen( $creature ) > strlen( $owner ) ) {
+					$owner = $creature;
+				}
+			}
+			$labels[ $slug ] = $owner === '' || stripos( $name, $creatures[ $owner ] ) === 0
+				? $name
+				/* translators: 1: a creature type, such as Vampire, 2: one of its blocks, such as Disciplines */
+				: sprintf( __( '%1$s %2$s', 'beyond-elysium' ), $creatures[ $owner ], $name );
+		}
+		return $labels;
+	}
+
+	/**
+	 * A block's own families or items, by name: `powers` for a tiered_power block, `items` for a trait_list one, empty
+	 * for anything else.
+	 *
+	 * @param object $definition
+	 * @return string[]
+	 */
+	public static function entry_names( object $definition ): array {
+		$entries = $definition->powers ?? $definition->items ?? [];
+		$names   = [];
+		foreach ( (array) $entries as $entry ) {
+			$name = is_object( $entry ) ? ( $entry->name ?? null ) : ( $entry['name'] ?? null );
+			if ( is_string( $name ) && $name !== '' ) {
+				$names[] = $name;
+			}
+		}
+		return $names;
+	}
+
+	/**
+	 * The variants a base block has, in the catalog's order.
+	 *
+	 * @param string $slug The base block's slug.
+	 * @return array<int,array{slug:string,id:string,label:string,mode:string}>
+	 */
+	public static function variants_of( string $slug ): array {
+		$variants = get_option( self::VARIANTS_OPTION, [] );
+		return is_array( $variants ) && isset( $variants[ $slug ] ) && is_array( $variants[ $slug ] ) ? array_values( $variants[ $slug ] ) : [];
+	}
+
+	/**
+	 * The variants a chronicle chose for a base block, the one replacing it first, then the ones adding to it in the
+	 * chronicle's order; unknown ids are left out.
+	 *
+	 * @param string $slug      The base block's slug.
+	 * @param string $game_slug
+	 * @return array<int,array{slug:string,id:string,label:string,mode:string}>
+	 */
+	public static function chosen_variants( string $slug, string $game_slug ): array {
+		if ( $game_slug === '' ) {
+			return [];
+		}
+		$game = Game::find_by_slug( $game_slug );
+		$ids  = $game ? (array) ( $game->settings->catalog_variants->$slug ?? [] ) : [];
+		if ( $ids === [] ) {
+			return [];
+		}
+		$by_id = [];
+		foreach ( self::variants_of( $slug ) as $variant ) {
+			$by_id[ $variant['id'] ] = $variant;
+		}
+		$chosen = [];
+		foreach ( $ids as $id ) {
+			if ( is_string( $id ) && isset( $by_id[ $id ] ) ) {
+				$chosen[] = $by_id[ $id ];
+			}
+		}
+		usort( $chosen, static fn( array $a, array $b ): int => ( $a['mode'] === 'replace' ? 0 : 1 ) <=> ( $b['mode'] === 'replace' ? 0 : 1 ) );
+		return $chosen;
+	}
+
+	/**
+	 * Rebuilds one chronicle's copy of a block from the definition beneath it as it now stands, keeping what the
+	 * chronicle changed.
+	 *
+	 * @param string $slug
+	 * @param string $game_slug
+	 * @return bool False when the chronicle has no copy or it could not be written.
+	 */
+	public static function refresh_fork_for_game( string $slug, string $game_slug ): bool {
+		$copy = Manager::get_row( 'SELECT id, definition, fork_changes FROM ' . Manager::table( 'schema_blocks' ) . ' WHERE slug = %s AND game_slug = %s', $slug, $game_slug );
+		if ( ! $copy || $game_slug === '' ) {
+			return false;
+		}
+		$under      = self::under_for_game( $slug, $game_slug );
+		$definition = self::as_array( $copy->definition );
+		$changes    = self::recorded_changes( $copy->fork_changes, $under, $definition );
+		return self::store_copy( (int) $copy->id, Fork_Merge::merge( $under, $definition, $changes ), $changes );
+	}
+
+	/**
+	 * A chronicle's copy of a block as stored, with its changes by path, or null when it has none.
+	 *
+	 * @param string $slug
+	 * @param string $game_slug
+	 * @return array{id:int,definition:array<string,mixed>,changes:array<string,mixed>}|null
+	 */
+	public static function copy_for_game( string $slug, string $game_slug ): ?array {
+		$copy = Manager::get_row( 'SELECT id, definition, fork_changes FROM ' . Manager::table( 'schema_blocks' ) . ' WHERE slug = %s AND game_slug = %s', $slug, $game_slug );
+		if ( ! $copy || $game_slug === '' ) {
+			return null;
+		}
+		$definition = self::as_array( $copy->definition );
+		return [
+			'id'         => (int) $copy->id,
+			'definition' => $definition,
+			'changes'    => self::recorded_changes( $copy->fork_changes, self::under_for_game( $slug, $game_slug ), $definition ),
+		];
 	}
 
 	/**

@@ -11,13 +11,16 @@ import type {
 	IdentityField,
 	IdentityFieldDefinition,
 	PowerLevel,
+	Prerequisite,
 	ResourcePool,
 	ResourcePoolDefinition,
 	SectionType,
 	TieredPower,
 	TieredPowerDefinition,
+	TieredPowerMeta,
 	TraitListDefinition,
 	TraitListItem,
+	TraitListMeta,
 } from '../../types';
 import Modal from '../shared/Modal';
 import HtmlEditor from '../shared/HtmlEditor';
@@ -215,7 +218,7 @@ function ApprovalByValueEditorButton( {
 							/* translators: %d: number of approval-by-value ranges already set */
 							__( 'Approval by value (%d)', 'beyond-elysium' ),
 							value.length
-					  )
+						)
 					: __( 'Approval by value', 'beyond-elysium' ) }
 			</button>
 			{ isOpen && (
@@ -376,6 +379,173 @@ function ApprovalByValueEditorButton( {
 	);
 }
 
+function PrerequisitesEditorButton( {
+	label,
+	value,
+	onSave,
+}: {
+	label: string;
+	value?: Prerequisite[];
+	onSave: ( prerequisites: Prerequisite[] ) => void;
+} ) {
+	const [ isOpen, setIsOpen ] = useState( false );
+	const [ draft, setDraft ] = useState< Prerequisite[] >( value ?? [] );
+
+	function open() {
+		setDraft( value ?? [] );
+		setIsOpen( true );
+	}
+
+	function save() {
+		onSave( draft.filter( ( p ) => p.block_slug && p.power ) );
+		setIsOpen( false );
+	}
+
+	function updatePrerequisite( i: number, patch: Partial< Prerequisite > ) {
+		setDraft(
+			draft.map( ( p, pi ) => ( pi === i ? { ...p, ...patch } : p ) )
+		);
+	}
+
+	function addPrerequisite() {
+		setDraft( [ ...draft, { block_slug: '', power: '', min_level: 1 } ] );
+	}
+
+	function removePrerequisite( i: number ) {
+		setDraft( draft.filter( ( _, pi ) => pi !== i ) );
+	}
+
+	return (
+		<>
+			<button
+				type="button"
+				className="be-def-editor__description-trigger"
+				onClick={ open }
+			>
+				{ value?.length
+					? sprintf(
+							/* translators: %d: number of prerequisites already set */
+							__( 'Prerequisites (%d)', 'beyond-elysium' ),
+							value.length
+						)
+					: __( 'Prerequisites', 'beyond-elysium' ) }
+			</button>
+			{ isOpen && (
+				<Modal
+					title={ sprintf(
+						/* translators: %s: the item's own name */
+						__( 'Prerequisites - %s', 'beyond-elysium' ),
+						label
+					) }
+					onClose={ () => setIsOpen( false ) }
+					footer={
+						<>
+							<button
+								type="button"
+								onClick={ () => setIsOpen( false ) }
+							>
+								{ __( 'Cancel', 'beyond-elysium' ) }
+							</button>
+							<button type="button" onClick={ save }>
+								{ __( 'Save', 'beyond-elysium' ) }
+							</button>
+						</>
+					}
+				>
+					<table className="be-def-editor__table">
+						<thead>
+							<tr>
+								<th>{ __( 'Block', 'beyond-elysium' ) }</th>
+								<th>{ __( 'Power', 'beyond-elysium' ) }</th>
+								<th>{ __( 'Min level', 'beyond-elysium' ) }</th>
+								<th />
+							</tr>
+						</thead>
+						<tbody>
+							{ draft.map( ( prerequisite, i ) => (
+								<tr key={ i }>
+									<td>
+										<input
+											type="text"
+											aria-label={ sprintf(
+												/* translators: %d: the prerequisite row's position in the list */
+												__(
+													'Block, row %d',
+													'beyond-elysium'
+												),
+												i + 1
+											) }
+											value={ prerequisite.block_slug }
+											onChange={ ( e ) =>
+												updatePrerequisite( i, {
+													block_slug: e.target.value,
+												} )
+											}
+										/>
+									</td>
+									<td>
+										<input
+											type="text"
+											aria-label={ sprintf(
+												/* translators: %d: the prerequisite row's position in the list */
+												__(
+													'Power, row %d',
+													'beyond-elysium'
+												),
+												i + 1
+											) }
+											value={ prerequisite.power }
+											onChange={ ( e ) =>
+												updatePrerequisite( i, {
+													power: e.target.value,
+												} )
+											}
+										/>
+									</td>
+									<td>
+										<input
+											type="number"
+											aria-label={ sprintf(
+												/* translators: %d: the prerequisite row's position in the list */
+												__(
+													'Minimum level, row %d',
+													'beyond-elysium'
+												),
+												i + 1
+											) }
+											value={ prerequisite.min_level }
+											onChange={ ( e ) =>
+												updatePrerequisite( i, {
+													min_level: Number(
+														e.target.value
+													),
+												} )
+											}
+										/>
+									</td>
+									<td>
+										<button
+											type="button"
+											onClick={ () =>
+												removePrerequisite( i )
+											}
+										>
+											{ __( 'Remove', 'beyond-elysium' ) }
+										</button>
+									</td>
+								</tr>
+							) ) }
+						</tbody>
+					</table>
+					<button type="button" onClick={ addPrerequisite }>
+						{ __( '+ Add prerequisite', 'beyond-elysium' ) }
+					</button>
+				</Modal>
+			) }
+		</>
+	);
+}
+
 /**
  * A per-row trigger that opens a modal editor for a per-option approval schedule on an identity_field (e.g. picking
  * "Antediluvian" needs Coordinator approval).
@@ -443,7 +613,7 @@ function ApprovalByOptionEditorButton( {
 							/* translators: %d: number of options with an approval override already set */
 							__( 'Approval by option (%d)', 'beyond-elysium' ),
 							overrideCount
-					  )
+						)
 					: __( 'Approval by option', 'beyond-elysium' ) }
 			</button>
 			{ isOpen && (
@@ -506,8 +676,7 @@ function ApprovalByOptionEditorButton( {
 												setOverride(
 													option,
 													e.target.value as
-														| ApprovalLevel
-														| ''
+														ApprovalLevel | ''
 												)
 											}
 										>
@@ -782,6 +951,38 @@ function TraitListEditor( {
 			)
 		).sort();
 
+	function updateMetaTL( patch: Partial< TraitListMeta > ) {
+		updateFlag( '_meta', { ...( definition._meta ?? {} ), ...patch } );
+	}
+
+	function toggleDerived( on: boolean ) {
+		if ( on ) {
+			updateMetaTL( {
+				untiered: { derived_from: '', per_level: 1 },
+			} );
+		} else {
+			updateMetaTL( { untiered: undefined } );
+		}
+	}
+
+	function setDerivedFrom( slug: string ) {
+		const current = definition._meta?.untiered ?? {
+			derived_from: '',
+			per_level: 1,
+		};
+		updateMetaTL( {
+			untiered: { ...current, derived_from: slug },
+		} );
+	}
+
+	function setPerLevel( perLevel: number ) {
+		const current = definition._meta?.untiered ?? {
+			derived_from: '',
+			per_level: 1,
+		};
+		updateMetaTL( { untiered: { ...current, per_level: perLevel } } );
+	}
+
 	return (
 		<div className="be-def-editor__section">
 			<h3>{ __( 'Global settings', 'beyond-elysium' ) }</h3>
@@ -858,6 +1059,44 @@ function TraitListEditor( {
 					/>
 				</label>
 			</div>
+			<h3>{ __( 'Cost by prerequisite', 'beyond-elysium' ) }</h3>
+			<div className="be-def-editor__flags">
+				<label>
+					<input
+						type="checkbox"
+						checked={ !! definition._meta?.untiered }
+						onChange={ ( e ) => toggleDerived( e.target.checked ) }
+					/>{ ' ' }
+					{ __(
+						'Priced from another block (an item with no cost of its own costs per_level for each level its prerequisites name)',
+						'beyond-elysium'
+					) }
+				</label>
+				{ definition._meta?.untiered && (
+					<>
+						<label>
+							{ __( 'Derived from block', 'beyond-elysium' ) }
+							<input
+								type="text"
+								value={ definition._meta.untiered.derived_from }
+								onChange={ ( e ) =>
+									setDerivedFrom( e.target.value )
+								}
+							/>
+						</label>
+						<label>
+							{ __( 'XP per level', 'beyond-elysium' ) }
+							<input
+								type="number"
+								value={ definition._meta.untiered.per_level }
+								onChange={ ( e ) =>
+									setPerLevel( Number( e.target.value ) )
+								}
+							/>
+						</label>
+					</>
+				) }
+			</div>
 
 			<h3>
 				{ sprintf(
@@ -881,6 +1120,14 @@ function TraitListEditor( {
 							<th>{ __( 'Reason', 'beyond-elysium' ) }</th>
 							<th>
 								{ __( 'Approval by value', 'beyond-elysium' ) }
+							</th>
+							{ definition._meta?.untiered && (
+								<th>
+									{ __( 'Prerequisites', 'beyond-elysium' ) }
+								</th>
+							) }
+							<th>
+								{ __( 'Allow multiples', 'beyond-elysium' ) }
 							</th>
 							<th />
 						</tr>
@@ -1044,8 +1291,7 @@ function TraitListEditor( {
 											updateItem( i, {
 												approval: ( e.target.value ||
 													undefined ) as
-													| ApprovalLevel
-													| undefined,
+													ApprovalLevel | undefined,
 											} )
 										}
 									>
@@ -1111,6 +1357,73 @@ function TraitListEditor( {
 											} )
 										}
 									/>
+								</td>
+								{ definition._meta?.untiered && (
+									<td
+										data-label={ __(
+											'Prerequisites',
+											'beyond-elysium'
+										) }
+									>
+										<PrerequisitesEditorButton
+											label={ item.name }
+											value={ item.prerequisites }
+											onSave={ ( prerequisites ) =>
+												updateItem( i, {
+													prerequisites:
+														prerequisites.length
+															? prerequisites
+															: undefined,
+												} )
+											}
+										/>
+									</td>
+								) }
+								<td
+									data-label={ __(
+										'Allow multiples',
+										'beyond-elysium'
+									) }
+								>
+									<select
+										aria-label={ sprintf(
+											/* translators: %s: the item's own name */
+											__(
+												'Allow multiples for %s',
+												'beyond-elysium'
+											),
+											item.name
+										) }
+										value={
+											item.allow_multiples === undefined
+												? ''
+												: item.allow_multiples
+													? 'true'
+													: 'false'
+										}
+										onChange={ ( e ) =>
+											updateItem( i, {
+												allow_multiples:
+													e.target.value === ''
+														? undefined
+														: e.target.value ===
+															'true',
+											} )
+										}
+									>
+										<option value="">
+											{ __(
+												'Block default',
+												'beyond-elysium'
+											) }
+										</option>
+										<option value="true">
+											{ __( 'Always', 'beyond-elysium' ) }
+										</option>
+										<option value="false">
+											{ __( 'Never', 'beyond-elysium' ) }
+										</option>
+									</select>
 								</td>
 								<td>
 									<button
@@ -1285,6 +1598,129 @@ function TieredPowerEditor( {
 		);
 	}
 
+	function updateMeta( patch: Partial< TieredPowerMeta > ) {
+		const current: TieredPowerMeta = definition._meta ?? {
+			ranks: [],
+			ladder: {},
+			costs: {},
+		};
+		updateFlag( '_meta', { ...current, ...patch } );
+	}
+
+	function stripRankKey< T >(
+		rec: Record< string, T > | undefined,
+		rank: string
+	): Record< string, T > | undefined {
+		if ( ! rec || ! ( rank in rec ) ) {
+			return rec;
+		}
+		const next = { ...rec };
+		delete next[ rank ];
+		return next;
+	}
+
+	function renameRankKey< T >(
+		rec: Record< string, T > | undefined,
+		oldRank: string,
+		newRank: string
+	): Record< string, T > | undefined {
+		if ( ! rec || ! ( oldRank in rec ) ) {
+			return rec;
+		}
+		const next: Record< string, T > = {};
+		for ( const [ key, value ] of Object.entries( rec ) ) {
+			next[ key === oldRank ? newRank : key ] = value;
+		}
+		return next;
+	}
+
+	function addRank() {
+		const meta = definition._meta ?? { ranks: [], ladder: {}, costs: {} };
+		updateMeta( { ranks: [ ...meta.ranks, '' ] } );
+	}
+
+	function renameRank( index: number, newName: string ) {
+		const meta = definition._meta ?? { ranks: [], ladder: {}, costs: {} };
+		const oldName = meta.ranks[ index ];
+		updateMeta( {
+			ranks: meta.ranks.map( ( r, i ) => ( i === index ? newName : r ) ),
+			ladder: renameRankKey( meta.ladder, oldName, newName ) ?? {},
+			costs: renameRankKey( meta.costs, oldName, newName ) ?? {},
+			in_type: renameRankKey( meta.in_type, oldName, newName ),
+			out_of_type: renameRankKey( meta.out_of_type, oldName, newName ),
+			levels: renameRankKey( meta.levels, oldName, newName ),
+		} );
+	}
+
+	function removeRank( index: number ) {
+		const meta = definition._meta ?? { ranks: [], ladder: {}, costs: {} };
+		const rank = meta.ranks[ index ];
+		updateMeta( {
+			ranks: meta.ranks.filter( ( _, i ) => i !== index ),
+			ladder: stripRankKey( meta.ladder, rank ) ?? {},
+			costs: stripRankKey( meta.costs, rank ) ?? {},
+			in_type: stripRankKey( meta.in_type, rank ),
+			out_of_type: stripRankKey( meta.out_of_type, rank ),
+			levels: stripRankKey( meta.levels, rank ),
+		} );
+	}
+
+	function setRankLadder( rank: string, rungs: number | undefined ) {
+		const meta = definition._meta ?? { ranks: [], ladder: {}, costs: {} };
+		const ladder = { ...meta.ladder };
+		if ( rungs === undefined ) {
+			delete ladder[ rank ];
+		} else {
+			ladder[ rank ] = rungs;
+		}
+		updateMeta( { ladder } );
+	}
+
+	function setRankCost( rank: string, cost: number | undefined ) {
+		const meta = definition._meta ?? { ranks: [], ladder: {}, costs: {} };
+		const costs = { ...meta.costs };
+		if ( cost === undefined ) {
+			delete costs[ rank ];
+		} else {
+			costs[ rank ] = cost;
+		}
+		updateMeta( { costs } );
+	}
+
+	function setRankModifier(
+		side: 'in_type' | 'out_of_type',
+		rank: string,
+		expression: string
+	) {
+		const meta = definition._meta ?? { ranks: [], ladder: {}, costs: {} };
+		const modifiers = { ...( meta[ side ] ?? {} ) };
+		if ( expression === '' ) {
+			delete modifiers[ rank ];
+		} else {
+			modifiers[ rank ] = expression;
+		}
+		updateMeta( { [ side ]: modifiers } as Partial< TieredPowerMeta > );
+	}
+
+	function toggleUntiered( on: boolean ) {
+		if ( on ) {
+			updateMeta( {
+				ranks: [],
+				ladder: {},
+				costs: {},
+				in_type: undefined,
+				out_of_type: undefined,
+				untiered: { cost_per_level: 0 },
+			} );
+		} else {
+			updateMeta( { untiered: undefined } );
+		}
+	}
+
+	function setUntieredCostPerLevel( cost: number ) {
+		updateMeta( { untiered: { cost_per_level: cost } } );
+	}
+
 	return (
 		<div className="be-def-editor__section">
 			<h3>{ __( 'Global settings', 'beyond-elysium' ) }</h3>
@@ -1303,21 +1739,6 @@ function TieredPowerEditor( {
 					) }
 				</label>
 				<label>
-					{ __( 'Out-of-type cost modifier', 'beyond-elysium' ) }{ ' ' }
-					<input
-						type="number"
-						value={ definition.out_of_type_cost_modifier ?? '' }
-						onChange={ ( e ) =>
-							updateFlag(
-								'out_of_type_cost_modifier',
-								e.target.value
-									? Number( e.target.value )
-									: undefined
-							)
-						}
-					/>
-				</label>
-				<label>
 					<input
 						type="checkbox"
 						checked={ !! definition.blood_magic }
@@ -1331,6 +1752,216 @@ function TieredPowerEditor( {
 					) }
 				</label>
 			</div>
+
+			<h3>{ __( 'Ranks & costs', 'beyond-elysium' ) }</h3>
+			<div className="be-def-editor__flags">
+				<label>
+					<input
+						type="checkbox"
+						checked={ !! definition._meta?.untiered }
+						onChange={ ( e ) => toggleUntiered( e.target.checked ) }
+					/>{ ' ' }
+					{ __(
+						'This is an untiered track (no rank vocabulary, a flat XP cost per level)',
+						'beyond-elysium'
+					) }
+				</label>
+			</div>
+
+			{ definition._meta?.untiered ? (
+				<label>
+					{ __( 'XP per level', 'beyond-elysium' ) }
+					<input
+						type="number"
+						value={ definition._meta.untiered.cost_per_level }
+						onChange={ ( e ) =>
+							setUntieredCostPerLevel( Number( e.target.value ) )
+						}
+					/>
+				</label>
+			) : (
+				<>
+					<table className="be-def-editor__table">
+						<thead>
+							<tr>
+								<th>{ __( 'Rank', 'beyond-elysium' ) }</th>
+								<th>
+									{ __( 'Ladder rungs', 'beyond-elysium' ) }
+								</th>
+								<th>{ __( 'Cost', 'beyond-elysium' ) }</th>
+								<th>
+									{ __(
+										'In-type modifier',
+										'beyond-elysium'
+									) }
+								</th>
+								<th>
+									{ __(
+										'Out-of-type modifier',
+										'beyond-elysium'
+									) }
+								</th>
+								<th />
+							</tr>
+						</thead>
+						<tbody>
+							{ ( definition._meta?.ranks ?? [] ).map(
+								( rank, ri ) => (
+									<tr key={ ri }>
+										<td>
+											<input
+												type="text"
+												aria-label={ sprintf(
+													/* translators: %d: the rank's position in the list */
+													__(
+														'Rank %d name',
+														'beyond-elysium'
+													),
+													ri + 1
+												) }
+												value={ rank }
+												onChange={ ( e ) =>
+													renameRank(
+														ri,
+														e.target.value
+													)
+												}
+											/>
+										</td>
+										<td>
+											<input
+												type="number"
+												aria-label={ sprintf(
+													/* translators: %s: the rank's own name */
+													__(
+														'Ladder rungs for %s',
+														'beyond-elysium'
+													),
+													rank
+												) }
+												value={
+													definition._meta?.ladder[
+														rank
+													] ?? ''
+												}
+												onChange={ ( e ) =>
+													setRankLadder(
+														rank,
+														e.target.value
+															? Number(
+																	e.target
+																		.value
+																)
+															: undefined
+													)
+												}
+											/>
+										</td>
+										<td>
+											<input
+												type="number"
+												aria-label={ sprintf(
+													/* translators: %s: the rank's own name */
+													__(
+														'Cost for %s',
+														'beyond-elysium'
+													),
+													rank
+												) }
+												value={
+													definition._meta?.costs[
+														rank
+													] ?? ''
+												}
+												onChange={ ( e ) =>
+													setRankCost(
+														rank,
+														e.target.value
+															? Number(
+																	e.target
+																		.value
+																)
+															: undefined
+													)
+												}
+											/>
+										</td>
+										<td>
+											<input
+												type="text"
+												placeholder="+N, -N, ×N"
+												aria-label={ sprintf(
+													/* translators: %s: the rank's own name */
+													__(
+														'In-type modifier for %s',
+														'beyond-elysium'
+													),
+													rank
+												) }
+												value={
+													definition._meta?.in_type?.[
+														rank
+													] ?? ''
+												}
+												onChange={ ( e ) =>
+													setRankModifier(
+														'in_type',
+														rank,
+														e.target.value
+													)
+												}
+											/>
+										</td>
+										<td>
+											<input
+												type="text"
+												placeholder="+N, -N, ×N"
+												aria-label={ sprintf(
+													/* translators: %s: the rank's own name */
+													__(
+														'Out-of-type modifier for %s',
+														'beyond-elysium'
+													),
+													rank
+												) }
+												value={
+													definition._meta
+														?.out_of_type?.[
+														rank
+													] ?? ''
+												}
+												onChange={ ( e ) =>
+													setRankModifier(
+														'out_of_type',
+														rank,
+														e.target.value
+													)
+												}
+											/>
+										</td>
+										<td>
+											<button
+												type="button"
+												onClick={ () =>
+													removeRank( ri )
+												}
+											>
+												{ __(
+													'Remove',
+													'beyond-elysium'
+												) }
+											</button>
+										</td>
+									</tr>
+								)
+							) }
+						</tbody>
+					</table>
+					<button type="button" onClick={ addRank }>
+						{ __( '+ Add rank', 'beyond-elysium' ) }
+					</button>
+				</>
+			) }
 
 			{ definition.blood_magic && (
 				<div className="be-def-editor__traditions">
@@ -1412,8 +2043,7 @@ function TieredPowerEditor( {
 								updatePower( pi, {
 									approval_override: ( e.target.value ||
 										undefined ) as
-										| ApprovalLevel
-										| undefined,
+										ApprovalLevel | undefined,
 								} )
 							}
 						>
@@ -1615,7 +2245,7 @@ function TieredPowerEditor( {
 													level: e.target.value
 														? Number(
 																e.target.value
-														  )
+															)
 														: null,
 												} )
 											}
@@ -1924,6 +2554,7 @@ function ResourcePoolEditor( {
 						<th>{ __( 'Min', 'beyond-elysium' ) }</th>
 						<th>{ __( 'Max', 'beyond-elysium' ) }</th>
 						<th>{ __( 'Step', 'beyond-elysium' ) }</th>
+						<th>{ __( 'Cost', 'beyond-elysium' ) }</th>
 						<th>{ __( 'Approval by value', 'beyond-elysium' ) }</th>
 						<th />
 					</tr>
@@ -2186,6 +2817,109 @@ function ResourcePoolEditor( {
 										} )
 									}
 								/>
+							</td>
+							<td>
+								<div className="be-def-editor__pool-cost">
+									<label>
+										{ __(
+											'Cost per dot',
+											'beyond-elysium'
+										) }
+										<input
+											type="number"
+											aria-label={ sprintf(
+												/* translators: %s: the resource pool's own name */
+												__(
+													'Cost per dot for %s',
+													'beyond-elysium'
+												),
+												pool.name
+											) }
+											disabled={ !! pool.sliding_cost }
+											value={ pool.cost_per_dot ?? '' }
+											onChange={ ( e ) =>
+												updatePool( i, {
+													cost_per_dot: e.target.value
+														? Number(
+																e.target.value
+															)
+														: undefined,
+												} )
+											}
+										/>
+									</label>
+									<label>
+										{ __( 'Free dots', 'beyond-elysium' ) }
+										<input
+											type="number"
+											aria-label={ sprintf(
+												/* translators: %s: the resource pool's own name */
+												__(
+													'Free dots for %s',
+													'beyond-elysium'
+												),
+												pool.name
+											) }
+											disabled={ !! pool.buy_down }
+											value={ pool.free_dots ?? '' }
+											onChange={ ( e ) =>
+												updatePool( i, {
+													free_dots: e.target.value
+														? Number(
+																e.target.value
+															)
+														: undefined,
+												} )
+											}
+										/>
+									</label>
+									<label>
+										<input
+											type="checkbox"
+											checked={ !! pool.sliding_cost }
+											disabled={ !! pool.buy_down }
+											onChange={ ( e ) =>
+												updatePool( i, {
+													sliding_cost: e.target
+														.checked
+														? { equals_level: true }
+														: undefined,
+													cost_per_dot: e.target
+														.checked
+														? undefined
+														: pool.cost_per_dot,
+												} )
+											}
+										/>{ ' ' }
+										{ __(
+											'Sliding (each dot costs its own level)',
+											'beyond-elysium'
+										) }
+									</label>
+									<label>
+										<input
+											type="checkbox"
+											checked={ !! pool.buy_down }
+											disabled={ !! pool.sliding_cost }
+											onChange={ ( e ) =>
+												updatePool( i, {
+													buy_down: e.target.checked,
+													sliding_cost: e.target
+														.checked
+														? undefined
+														: pool.sliding_cost,
+													free_dots: e.target.checked
+														? undefined
+														: pool.free_dots,
+												} )
+											}
+										/>{ ' ' }
+										{ __(
+											'Buy down (priced by lowering, not raising)',
+											'beyond-elysium'
+										) }
+									</label>
+								</div>
 							</td>
 							<td>
 								<ApprovalByValueEditorButton

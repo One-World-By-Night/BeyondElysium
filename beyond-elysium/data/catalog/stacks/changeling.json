@@ -5,9 +5,8 @@
   "kind": "stack",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_creature_stacks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_creature_stacks, dumped by tools/catalog/dump_live.sh"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -117,6 +116,130 @@
       }
     ],
     "display_preferences": {},
-    "creation_rules": null
+    "creation_rules": {
+      "steps": [
+        {
+          "kind": "prioritized",
+          "label": "Attributes",
+          "sections": [
+            "met-physical-traits",
+            "met-social-traits",
+            "met-mental-traits"
+          ],
+          "amounts": [ 7, 5, 3 ]
+        },
+        {
+          "kind": "budget",
+          "label": "Abilities",
+          "section": "changeling-abilities",
+          "count": 5
+        },
+        {
+          "kind": "budget",
+          "label": "Backgrounds",
+          "section": "changeling-backgrounds",
+          "count": 5
+        },
+        {
+          "kind": "budget",
+          "label": "Arts",
+          "section": "changeling-arts",
+          "count": 3
+        },
+        {
+          "kind": "budget",
+          "label": "Realms",
+          "section": "changeling-realms",
+          "count": 5
+        },
+        {
+          "kind": "start",
+          "label": "Beginning Glamour (Childling)",
+          "target": "changeling-resources.Glamour",
+          "value": 5,
+          "when": { "field": "changeling-identity.Seeming", "is": [ "Childling" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Beginning Willpower (Childling)",
+          "target": "changeling-resources.Willpower",
+          "value": 1,
+          "when": { "field": "changeling-identity.Seeming", "is": [ "Childling" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Beginning Banality (Childling)",
+          "target": "changeling-resources.Banality",
+          "value": 1,
+          "when": { "field": "changeling-identity.Seeming", "is": [ "Childling" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Beginning Glamour (Wilder)",
+          "target": "changeling-resources.Glamour",
+          "value": 4,
+          "when": { "field": "changeling-identity.Seeming", "is": [ "Wilder" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Beginning Willpower (Wilder)",
+          "target": "changeling-resources.Willpower",
+          "value": 2,
+          "when": { "field": "changeling-identity.Seeming", "is": [ "Wilder" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Beginning Banality (Wilder)",
+          "target": "changeling-resources.Banality",
+          "value": 3,
+          "when": { "field": "changeling-identity.Seeming", "is": [ "Wilder" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Beginning Glamour (Grump)",
+          "target": "changeling-resources.Glamour",
+          "value": 3,
+          "when": { "field": "changeling-identity.Seeming", "is": [ "Grump" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Beginning Willpower (Grump)",
+          "target": "changeling-resources.Willpower",
+          "value": 3,
+          "when": { "field": "changeling-identity.Seeming", "is": [ "Grump" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Beginning Banality (Grump)",
+          "target": "changeling-resources.Banality",
+          "value": 5,
+          "when": { "field": "changeling-identity.Seeming", "is": [ "Grump" ] }
+        },
+        {
+          "kind": "earned",
+          "label": "Flaws",
+          "pool": "Flaw Points",
+          "sources": [
+            { "section": "changeling-flaws", "rate": "value", "max": 15 }
+          ]
+        },
+        {
+          "kind": "free",
+          "label": "Flaw Points",
+          "pool": "Flaw Points",
+          "points": 0,
+          "rates": {
+            "met-physical-traits": 1,
+            "met-social-traits": 1,
+            "met-mental-traits": 1,
+            "changeling-abilities": 1,
+            "changeling-backgrounds": 1,
+            "changeling-arts": 3,
+            "changeling-realms": 2,
+            "changeling-merits": "value"
+          }
+        }
+      ]
+    }
   }
 }

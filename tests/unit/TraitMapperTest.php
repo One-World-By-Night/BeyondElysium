@@ -54,7 +54,7 @@ class TraitMapperTest extends TestCase {
 
 		$this->assertSame( 'fuzzy', $result['outcome'] );
 		$this->assertContains( 'Brawl', $result['suggestions'] );
-		$this->assertArrayNotHasKey( 'block_slug', $result, 'a fuzzy match must never resolve directly - Step 5e' );
+		$this->assertArrayNotHasKey( 'block_slug', $result, 'a fuzzy match must never resolve directly' );
 	}
 
 	public function test_no_match_with_allow_custom_imports_as_custom(): void {

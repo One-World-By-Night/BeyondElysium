@@ -22,12 +22,17 @@ interface ChangeDataLike {
 	amount?: number;
 	reason?: string;
 	name?: string;
+	pool_field?: string;
 	object_type?: string;
 	faction_type?: string;
 	// `catalog_rekey`: what the cutover did to one character's sheet (Catalog_Cutover::rekey_character()).
 	counts?: { moved_rows?: number; rekeyed?: number; respelled?: number };
 	records?: CatalogRekeyRecord[];
 	forced?: boolean;
+	// `player_link`: the account a character was linked to or unlinked from.
+	player?: string;
+	invite_id?: number;
+	unlinked?: boolean;
 }
 
 interface CatalogRekeyRecord {
@@ -67,13 +72,13 @@ export function describeChange(
 						name,
 						String( count ),
 						suffix
-				  )
+					)
 				: sprintf(
 						/* translators: 1: trait name, 2: specialization in parentheses, or nothing */
 						__( 'Added %1$s%2$s', 'beyond-elysium' ),
 						name,
 						suffix
-				  );
+					);
 		}
 
 		case 'remove_trait':
@@ -99,13 +104,13 @@ export function describeChange(
 							name,
 							String( previous.level ),
 							String( trait.level )
-					  )
+						)
 					: sprintf(
 							/* translators: 1: power name, 2: level after */
 							__( '%1$s → level %2$s', 'beyond-elysium' ),
 							name,
 							String( trait.level )
-					  );
+						);
 			}
 			if ( trait.count !== undefined ) {
 				return previous?.count !== undefined
@@ -115,13 +120,13 @@ export function describeChange(
 							name,
 							String( previous.count ),
 							String( trait.count )
-					  )
+						)
 					: sprintf(
 							/* translators: 1: trait name, 2: count after */
 							__( '%1$s → x%2$s', 'beyond-elysium' ),
 							name,
 							String( trait.count )
-					  );
+						);
 			}
 			/* translators: %s: trait name */
 			return sprintf( __( '%s updated', 'beyond-elysium' ), name );
@@ -175,6 +180,20 @@ export function describeChange(
 
 		case 'import_note':
 			return changeData.reason || __( 'Imported note', 'beyond-elysium' );
+
+		case 'creation_spend':
+			return (
+				( changeData.reason as string | undefined ) ||
+				__( 'Character build', 'beyond-elysium' )
+			);
+
+		case 'pool_spend':
+			return sprintf(
+				/* translators: 1: trait name, 2: the pool it was paid from */
+				__( 'Granted %1$s from %2$s', 'beyond-elysium' ),
+				changeData.trait?.name ?? __( 'Unknown', 'beyond-elysium' ),
+				changeData.pool_field ?? __( 'a pool', 'beyond-elysium' )
+			);
 
 		case 'catalog_rekey': {
 			const moved = changeData.counts?.moved_rows ?? 0;
@@ -238,7 +257,7 @@ export function describeChange(
 				? __(
 						'Catalog update undone, including changes made since',
 						'beyond-elysium'
-				  )
+					)
 				: __( 'Catalog update undone', 'beyond-elysium' );
 
 		case 'propose_world_object':
@@ -256,6 +275,32 @@ export function describeChange(
 				changeData.faction_type ?? __( 'group', 'beyond-elysium' ),
 				changeData.name ?? __( 'Unknown', 'beyond-elysium' )
 			);
+
+		case 'player_link': {
+			const player =
+				changeData.player || __( 'a player', 'beyond-elysium' );
+			if ( changeData.unlinked ) {
+				return sprintf(
+					/* translators: %s: the player's display name */
+					__( 'Unlinked from %s', 'beyond-elysium' ),
+					player
+				);
+			}
+			return changeData.invite_id
+				? sprintf(
+						/* translators: %s: the player's display name */
+						__(
+							'Linked to %s through an invite',
+							'beyond-elysium'
+						),
+						player
+					)
+				: sprintf(
+						/* translators: %s: the player's display name */
+						__( 'Linked to %s', 'beyond-elysium' ),
+						player
+					);
+		}
 
 		default:
 			return __( 'Unknown change', 'beyond-elysium' );

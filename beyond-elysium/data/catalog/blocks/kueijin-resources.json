@@ -6,10 +6,12 @@
   "section_type": "resource_pool",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh",
-      "Laws of the East (WW05016) p. 125 - Virtue Traits Hun, Yin, Yang 3 each, P'o 2 (samples/research/kuei-jin/pools-and-xp.json). Demon Chi is never bought"
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_schema_blocks, dumped by tools/catalog/dump_live.sh",
+      "Laws of the East (WW05016) p. 47 - a beginning character has one Trait in Hun and three in P'o; p. 125 - new Hun Trait costs 3 XP, new P'o Trait costs 2 XP. Demon Chi is never bought",
+      "Laws of the East (WW05016) p. 48 - characters begin with two Willpower Traits; p. 125 - a new Willpower Trait costs 3 XP",
+      "Laws of the East (WW05016) p. 49 - a character begins with one Trait in their chosen Dharma; Mandarin (the highest social rank) needs Dharma 6. Dharma is never bought with XP",
+      "Kuei-Jin - Genre & Mechanics (OWBN, 2022) p. 6 - recommended Willpower cap by Dharma: 4/6/8/10/12"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -17,7 +19,7 @@
       {
         "name": "Hun",
         "value_type": "integer",
-        "default_start": 3,
+        "default_start": 1,
         "max": 10,
         "cost_per_dot": 3
       },
@@ -29,24 +31,23 @@
         "cost_per_dot": 2
       },
       {
-        "name": "Yin Chi",
-        "value_type": "integer",
-        "default_start": 3,
-        "max": 10,
-        "cost_per_dot": 3
-      },
-      {
-        "name": "Yang Chi",
-        "value_type": "integer",
-        "default_start": 3,
-        "max": 10,
-        "cost_per_dot": 3
-      },
-      {
         "name": "Demon Chi",
         "value_type": "integer",
         "default_start": 0,
         "max": 10
+      },
+      {
+        "name": "Willpower",
+        "value_type": "integer",
+        "default_start": 2,
+        "max": 12,
+        "cost_per_dot": 3
+      },
+      {
+        "name": "Dharma",
+        "value_type": "integer",
+        "default_start": 1,
+        "max": 6
       }
     ]
   }

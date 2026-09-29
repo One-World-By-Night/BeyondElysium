@@ -5,6 +5,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { everyPage } from '../../lib/everyPage';
+import { sameId } from '../../lib/ids';
 import type { Character } from '../../types/character';
 import type { SessionAttendance } from '../../types/session';
 import './SignInRoster.css';
@@ -52,12 +53,14 @@ export function SignInRoster( { gameSlug, sessionId }: SignInRosterProps ) {
 			} );
 	}
 
-	useEffect( load, [ gameSlug, sessionId ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect( load, [ gameSlug, sessionId ] );
 
 	function attendanceFor(
 		characterId: number
 	): SessionAttendance | undefined {
-		return attendance.find( ( a ) => a.character_id === characterId );
+		return attendance.find( ( a ) =>
+			sameId( a.character_id, characterId )
+		);
 	}
 
 	async function toggle( character: Character ) {

@@ -1,7 +1,12 @@
 /**
- * Admin page for managing creature stack definitions.
+ * Admin page showing the book's creature stack definitions, read-only, or one chronicle's own layer, editable.
  */
-import { useEffect, useRef, useState } from '@wordpress/element';
+import {
+	createInterpolateElement,
+	useEffect,
+	useRef,
+	useState,
+} from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import CreatureStackDefinitionEditor from './CreatureStackDefinitionEditor';
@@ -15,40 +20,73 @@ import { useRevealOnOpen } from '../../lib/revealEditor';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
 
-const EMPTY_FORM = {
-	slug: '',
-	name: '',
-	game_line: 'met',
-	stackDefinition: { sections: [] } as StackDefinition,
-	creationRules: {} as CreationRules,
-};
-
 /**
- * Renders the Creature Stacks admin screen.
+ * Renders the Creature Stacks admin screen: the book's creature types, read-only; or, with a chronicle chosen, that
+ * chronicle's own layer, editable.
  */
 export function AdminCreatureStacks() {
 	const [ stacks, setStacks ] = useState< CreatureStack[] >( [] );
+	const [ bookStacks, setBookStacks ] = useState< CreatureStack[] >( [] );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
-	const [ editingSlug, setEditingSlug ] = useState< string | null >( null );
-	const [ creating, setCreating ] = useState( false );
-	const editorRef = useRef< HTMLFormElement >( null );
-	useRevealOnOpen( editorRef, creating ? 'new' : editingSlug );
-	const [ form, setForm ] = useState( EMPTY_FORM );
+	const [ viewing, setViewing ] = useState< CreatureStack | null >( null );
+	const [ draftDefinition, setDraftDefinition ] =
+		useState< StackDefinition | null >( null );
+	const [ draftRules, setDraftRules ] = useState< CreationRules | null >(
+		null
+	);
 	const [ saving, setSaving ] = useState( false );
+	const viewerRef = useRef< HTMLDivElement >( null );
+	useRevealOnOpen( viewerRef, viewing?.slug ?? null );
 	// Whether system-seeded creature stacks are hidden from the list.
 	const [ hideSystem, setHideSystem ] = useState( false );
 
+	const [ creating, setCreating ] = useState( false );
+	const [ newSlug, setNewSlug ] = useState( '' );
+	const [ newName, setNewName ] = useState( '' );
+	const [ newGameLine, setNewGameLine ] = useState( 'met' );
+	const [ newDefinition, setNewDefinition ] = useState< StackDefinition >( {
+		sections: [],
+		display_preferences: {},
+	} );
+	const [ newRules, setNewRules ] = useState< CreationRules >( {} );
+	const [ createSaving, setCreateSaving ] = useState( false );
+	const [ createError, setCreateError ] = useState< string | null >( null );
+	const creatorRef = useRef< HTMLDivElement >( null );
+
+	// Optional game_slug query param scopes the page to one chronicle, where its own layer is edited.
+	const gameSlug =
+		new URLSearchParams( window.location.search ).get( 'game_slug' ) ?? '';
+	const canEdit = gameSlug !== '';
+	useRevealOnOpen( creatorRef, creating ? gameSlug : null );
+
 	/**
-	 * Fetches the list of creature stacks from the API.
+	 * Fetches the creature stack list for the current scope (the book, or one chronicle's own layers) and the book's
+	 * own list, needed to tell a book section apart from one a chronicle added.
 	 */
 	function load() {
 		setLoading( true );
-		api.creatureStacks
-			.list()
-			.then( ( result ) => {
+		Promise.all( [
+			api.creatureStacks.list( {
+				...( gameSlug ? { game_slug: gameSlug } : {} ),
+				per_page: 100,
+			} ),
+			gameSlug
+				? api.creatureStacks.list( { per_page: 100 } )
+				: Promise.resolve< CreatureStack[] >( [] ),
+		] )
+			.then( ( [ result, book ] ) => {
 				setStacks( result );
+				setBookStacks( book );
 				setLoading( false );
+				if ( viewing ) {
+					const same = result.find(
+						( s ) => s.slug === viewing.slug
+					);
+					if ( same ) {
+						openStack( same );
+					}
+				}
 			} )
 			.catch( ( err: unknown ) => {
 				setError(
@@ -61,65 +99,35 @@ export function AdminCreatureStacks() {
 			} );
 	}
 
-	useEffect( load, [] );
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	useEffect( load, [ gameSlug ] );
 
 	const visible = hideSystem
 		? stacks.filter( ( s ) => ! s.is_system )
 		: stacks;
 
-	function startEdit( stack: CreatureStack ) {
-		setEditingSlug( stack.slug );
-		setCreating( false );
-		setForm( {
-			slug: stack.slug,
-			name: stack.name,
-			game_line: stack.game_line,
-			stackDefinition: stack.stack_definition,
-			creationRules: stack.creation_rules ?? {},
-		} );
+	function openStack( stack: CreatureStack ) {
+		setViewing( stack );
+		setDraftDefinition( stack.stack_definition );
+		setDraftRules( stack.creation_rules ?? {} );
 	}
 
-	function startCreate() {
-		setEditingSlug( null );
-		setCreating( true );
-		setForm( EMPTY_FORM );
-	}
-
-	function cancel() {
-		setEditingSlug( null );
-		setCreating( false );
-		setForm( EMPTY_FORM );
-	}
-
-	/**
-	 * Creates or updates a creature stack from the current form state.
-	 */
-	async function save( e: React.FormEvent ) {
-		e.preventDefault();
-		if ( ! form.name.trim() || ( creating && ! form.slug.trim() ) ) {
+	async function save() {
+		if ( ! viewing || ! draftDefinition || ! draftRules ) {
 			return;
 		}
-
 		setSaving( true );
 		setError( null );
 		try {
-			if ( creating ) {
-				await api.creatureStacks.create( {
-					slug: form.slug.trim(),
-					name: form.name.trim(),
-					game_line: form.game_line,
-					stack_definition: form.stackDefinition,
-					creation_rules: form.creationRules,
-				} );
-			} else if ( editingSlug ) {
-				await api.creatureStacks.update( editingSlug, {
-					name: form.name.trim(),
-					game_line: form.game_line,
-					stack_definition: form.stackDefinition,
-					creation_rules: form.creationRules,
-				} );
-			}
-			cancel();
+			const saved = await api.creatureStacks.update(
+				viewing.slug,
+				{
+					stack_definition: draftDefinition,
+					creation_rules: draftRules,
+				},
+				gameSlug
+			);
+			openStack( saved );
 			load();
 		} catch ( err: unknown ) {
 			setError(
@@ -133,16 +141,61 @@ export function AdminCreatureStacks() {
 		}
 	}
 
-	/**
-	 * Deletes a creature stack after confirmation.
-	 */
-	async function remove( stack: CreatureStack ) {
-		// eslint-disable-next-line no-alert
+	function startCreate() {
+		setViewing( null );
+		setNewSlug( '' );
+		setNewName( '' );
+		setNewGameLine( 'met' );
+		setNewDefinition( { sections: [], display_preferences: {} } );
+		setNewRules( {} );
+		setCreateError( null );
+		setCreating( true );
+	}
+
+	async function create() {
+		if ( ! newSlug || ! newName || newDefinition.sections.length === 0 ) {
+			setCreateError(
+				__(
+					'A slug, a name and at least one section are required.',
+					'beyond-elysium'
+				)
+			);
+			return;
+		}
+		setCreateSaving( true );
+		setCreateError( null );
+		try {
+			const saved = await api.creatureStacks.create( gameSlug, {
+				slug: newSlug,
+				name: newName,
+				game_line: newGameLine,
+				sections: newDefinition.sections,
+				creation_rules: newRules,
+			} );
+			setCreating( false );
+			load();
+			openStack( saved );
+		} catch ( err: unknown ) {
+			setCreateError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
+		} finally {
+			setCreateSaving( false );
+		}
+	}
+
+	async function resetToBook( stack: CreatureStack ) {
 		if (
 			! window.confirm(
 				sprintf(
-					// translators: %s: creature stack name.
-					__( 'Delete "%s"?', 'beyond-elysium' ),
+					// translators: %s: creature type name.
+					__(
+						'Reset "%s" to the book? This chronicle\'s own changes to it are lost.',
+						'beyond-elysium'
+					),
 					stack.name
 				)
 			)
@@ -150,7 +203,10 @@ export function AdminCreatureStacks() {
 			return;
 		}
 		try {
-			await api.creatureStacks.delete( stack.slug );
+			await api.creatureStacks.reset( stack.slug, gameSlug );
+			if ( viewing?.slug === stack.slug ) {
+				setViewing( null );
+			}
 			load();
 		} catch ( err: unknown ) {
 			setError(
@@ -162,12 +218,38 @@ export function AdminCreatureStacks() {
 		}
 	}
 
+	const bookSectionSlugs = viewing
+		? (
+				bookStacks.find( ( s ) => s.slug === viewing.slug )
+					?.stack_definition.sections ?? []
+			).map( ( s ) => s.block_slug )
+		: [];
+
 	return (
 		<div className="be-admin">
 			<div className="be-help-heading">
 				<h1>{ __( 'Creature Stacks', 'beyond-elysium' ) }</h1>
 				<HelpButton helpKey="creature-stacks" />
 			</div>
+			{ gameSlug && (
+				<p className="be-admin__game-scope-notice">
+					{ createInterpolateElement(
+						__(
+							'Editing for chronicle <slug/> - what is saved here belongs to that chronicle alone, over the book.',
+							'beyond-elysium'
+						),
+						{ slug: <strong>{ gameSlug }</strong> }
+					) }
+				</p>
+			) }
+			{ ! canEdit && (
+				<p className="be-admin__game-scope-notice">
+					{ __(
+						"This is the book: each creature type as released, read-only here. To change one for a chronicle you run, open that chronicle's Chronicle Setup.",
+						'beyond-elysium'
+					) }
+				</p>
+			) }
 			{ error && (
 				<div className="be-admin__error" role="alert">
 					{ error }
@@ -187,7 +269,84 @@ export function AdminCreatureStacks() {
 						stacks.filter( ( s ) => s.is_system ).length
 					) }
 				</label>
+				{ canEdit && (
+					<button type="button" onClick={ startCreate }>
+						{ __( '+ New Creature Stack', 'beyond-elysium' ) }
+					</button>
+				) }
 			</div>
+
+			{ creating && (
+				<div
+					ref={ creatorRef }
+					className="be-admin__form be-admin__form--wide"
+					tabIndex={ -1 }
+				>
+					<h2>{ __( 'New Creature Stack', 'beyond-elysium' ) }</h2>
+					<p className="be-admin__game-scope-notice">
+						{ __(
+							'Built for this chronicle alone, with no book counterpart - a genuinely new creature type, not a layer over one the book already declares.',
+							'beyond-elysium'
+						) }
+					</p>
+					{ createError && (
+						<div className="be-admin__error" role="alert">
+							{ createError }
+						</div>
+					) }
+					<label>
+						{ __( 'Name', 'beyond-elysium' ) }
+						<input
+							type="text"
+							value={ newName }
+							onChange={ ( e ) => setNewName( e.target.value ) }
+						/>
+					</label>
+					<label>
+						{ __( 'Slug', 'beyond-elysium' ) }
+						<input
+							type="text"
+							value={ newSlug }
+							onChange={ ( e ) => setNewSlug( e.target.value ) }
+						/>
+					</label>
+					<label>
+						{ __( 'Game Line', 'beyond-elysium' ) }
+						<input
+							type="text"
+							value={ newGameLine }
+							onChange={ ( e ) =>
+								setNewGameLine( e.target.value )
+							}
+						/>
+					</label>
+
+					<CreatureStackDefinitionEditor
+						stackDefinition={ newDefinition }
+						creationRules={ newRules }
+						onChangeStackDefinition={ setNewDefinition }
+						onChangeCreationRules={ setNewRules }
+					/>
+
+					<div className="be-admin__form-actions">
+						<button
+							type="button"
+							onClick={ create }
+							disabled={ createSaving }
+						>
+							{ createSaving
+								? __( 'Creating…', 'beyond-elysium' )
+								: __( 'Create', 'beyond-elysium' ) }
+						</button>
+						<button
+							type="button"
+							onClick={ () => setCreating( false ) }
+						>
+							{ __( 'Cancel', 'beyond-elysium' ) }
+						</button>
+					</div>
+				</div>
+			) }
 
 			{ loading ? (
 				<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
@@ -207,7 +366,7 @@ export function AdminCreatureStacks() {
 							<tr>
 								<td colSpan={ 5 }>
 									{ __(
-										'No custom creature stacks yet.',
+										'No custom creature stacks.',
 										'beyond-elysium'
 									) }
 								</td>
@@ -228,18 +387,26 @@ export function AdminCreatureStacks() {
 								<td>
 									<button
 										type="button"
-										onClick={ () => startEdit( stack ) }
+										onClick={ () => openStack( stack ) }
 									>
-										{ __( 'Edit', 'beyond-elysium' ) }
+										{ canEdit
+											? __( 'Edit', 'beyond-elysium' )
+											: __( 'View', 'beyond-elysium' ) }
 									</button>
-									{ ! stack.is_system && (
-										<button
-											type="button"
-											onClick={ () => remove( stack ) }
-										>
-											{ __( 'Delete', 'beyond-elysium' ) }
-										</button>
-									) }
+									{ canEdit &&
+										stack.game_slug === gameSlug && (
+											<button
+												type="button"
+												onClick={ () =>
+													resetToBook( stack )
+												}
+											>
+												{ __(
+													'Reset to book',
+													'beyond-elysium'
+												) }
+											</button>
+										) }
 								</td>
 							</tr>
 						) ) }
@@ -247,87 +414,74 @@ export function AdminCreatureStacks() {
 				</table>
 			) }
 
-			{ ! creating && editingSlug === null && (
-				<button type="button" onClick={ startCreate }>
-					{ __( '+ New Creature Stack', 'beyond-elysium' ) }
-				</button>
-			) }
-
-			{ ( creating || editingSlug !== null ) && (
-				<form
-					ref={ editorRef }
+			{ viewing && draftDefinition && draftRules && (
+				<div
+					ref={ viewerRef }
 					className="be-admin__form be-admin__form--wide"
-					onSubmit={ save }
+					tabIndex={ -1 }
 				>
 					<h2>
-						{ creating
-							? __( 'New Creature Stack', 'beyond-elysium' )
+						{ canEdit
+							? viewing.name
 							: sprintf(
-									/* translators: %s: the creature stack's slug being edited */
-									__( 'Edit %s', 'beyond-elysium' ),
-									editingSlug as string
-							  ) }
+									/* translators: %s: the creature stack's name */
+									__( '%s (read-only)', 'beyond-elysium' ),
+									viewing.name
+								) }
 					</h2>
-					<label>
-						{ __( 'Name', 'beyond-elysium' ) }
-						<input
-							type="text"
-							value={ form.name }
-							onChange={ ( e ) =>
-								setForm( { ...form, name: e.target.value } )
-							}
-							required
-						/>
-					</label>
-					{ creating && (
+					<fieldset
+						disabled={ ! canEdit }
+						className={ canEdit ? '' : 'be-admin__read-only' }
+					>
 						<label>
-							{ __( 'Slug', 'beyond-elysium' ) }
+							{ __( 'Name', 'beyond-elysium' ) }
 							<input
 								type="text"
-								value={ form.slug }
-								onChange={ ( e ) =>
-									setForm( { ...form, slug: e.target.value } )
-								}
-								required
+								value={ viewing.name }
+								readOnly
 							/>
 						</label>
-					) }
-					<label>
-						{ __( 'Game Line', 'beyond-elysium' ) }
-						<input
-							type="text"
-							value={ form.game_line }
-							onChange={ ( e ) =>
-								setForm( {
-									...form,
-									game_line: e.target.value,
-								} )
-							}
-						/>
-					</label>
+						<label>
+							{ __( 'Game Line', 'beyond-elysium' ) }
+							<input
+								type="text"
+								value={ viewing.game_line }
+								readOnly
+							/>
+						</label>
 
-					<CreatureStackDefinitionEditor
-						stackDefinition={ form.stackDefinition }
-						creationRules={ form.creationRules }
-						onChangeStackDefinition={ ( stackDefinition ) =>
-							setForm( { ...form, stackDefinition } )
-						}
-						onChangeCreationRules={ ( creationRules ) =>
-							setForm( { ...form, creationRules } )
-						}
-					/>
+						<CreatureStackDefinitionEditor
+							stackDefinition={ draftDefinition }
+							creationRules={ draftRules }
+							onChangeStackDefinition={ setDraftDefinition }
+							onChangeCreationRules={ setDraftRules }
+							gameSlug={ canEdit ? gameSlug : undefined }
+							stackSlug={ canEdit ? viewing.slug : undefined }
+							bookSectionSlugs={ bookSectionSlugs }
+							onSectionsPersisted={ load }
+						/>
+					</fieldset>
 
 					<div className="be-admin__form-actions">
-						<button type="submit" disabled={ saving }>
-							{ saving
-								? __( 'Saving…', 'beyond-elysium' )
-								: __( 'Save', 'beyond-elysium' ) }
-						</button>
-						<button type="button" onClick={ cancel }>
-							{ __( 'Cancel', 'beyond-elysium' ) }
+						{ canEdit && (
+							<button
+								type="button"
+								onClick={ save }
+								disabled={ saving }
+							>
+								{ saving
+									? __( 'Saving…', 'beyond-elysium' )
+									: __( 'Save', 'beyond-elysium' ) }
+							</button>
+						) }
+						<button
+							type="button"
+							onClick={ () => setViewing( null ) }
+						>
+							{ __( 'Close', 'beyond-elysium' ) }
 						</button>
 					</div>
-				</form>
+				</div>
 			) }
 		</div>
 	);

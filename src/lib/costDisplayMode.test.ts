@@ -28,7 +28,7 @@ describe( 'readStoredCostVisibility', () => {
 		expect( readStoredCostVisibility() ).toBe( true );
 	} );
 
-	it( 'ignores the retired 1.1.0 preference key', () => {
+	it( 'ignores the retired preference key', () => {
 		window.localStorage.setItem( 'be-cost-display-mode', 'dots' );
 		expect( readStoredCostVisibility() ).toBe( true );
 	} );

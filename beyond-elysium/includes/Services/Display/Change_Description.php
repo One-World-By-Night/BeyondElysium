@@ -98,6 +98,18 @@ class Change_Description {
 			case 'import_note':
 				return ! empty( $change_data['reason'] ) ? $change_data['reason'] : __( 'Imported note', 'beyond-elysium' );
 
+			case 'creation_spend':
+				return ! empty( $change_data['reason'] ) ? $change_data['reason'] : __( 'Character build', 'beyond-elysium' );
+
+			case 'pool_spend':
+				$trait = (array) ( $change_data['trait'] ?? [] );
+				/* translators: 1: trait name, 2: the pool it was paid from */
+				return sprintf(
+					__( 'Granted %1$s from %2$s', 'beyond-elysium' ),
+					$trait['name'] ?? __( 'Unknown', 'beyond-elysium' ),
+					$change_data['pool_field'] ?? __( 'a pool', 'beyond-elysium' )
+				);
+
 			case 'catalog_rekey':
 				$counts  = (array) ( $change_data['counts'] ?? [] );
 				$moved     = (int) ( $counts['moved_rows'] ?? 0 );
@@ -142,6 +154,21 @@ class Change_Description {
 					$change_data['faction_type'] ?? __( 'group', 'beyond-elysium' ),
 					$change_data['name'] ?? __( 'Unknown', 'beyond-elysium' )
 				);
+
+			case 'player_link':
+				$player = (string) ( $change_data['player'] ?? '' );
+				if ( $player === '' ) {
+					$player = __( 'a player', 'beyond-elysium' );
+				}
+				if ( ! empty( $change_data['unlinked'] ) ) {
+					/* translators: %s: the player's display name */
+					return sprintf( __( 'Unlinked from %s', 'beyond-elysium' ), $player );
+				}
+				return ! empty( $change_data['invite_id'] )
+					/* translators: %s: the player's display name */
+					? sprintf( __( 'Linked to %s through an invite', 'beyond-elysium' ), $player )
+					/* translators: %s: the player's display name */
+					: sprintf( __( 'Linked to %s', 'beyond-elysium' ), $player );
 
 			default:
 				return __( 'Unknown change', 'beyond-elysium' );

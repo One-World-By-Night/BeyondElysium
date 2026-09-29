@@ -1,5 +1,5 @@
 /**
- * Admin page for managing sheet Templates.
+ * Admin page for sheet Templates: the book's, read-only, and a chronicle's own.
  */
 import {
 	createInterpolateElement,
@@ -26,11 +26,6 @@ const EMPTY_FORM = {
 };
 
 /**
- * Which collection the open form writes to.
- */
-type Scope = 'global' | 'chronicle';
-
-/**
  * Renders the Templates admin page.
  */
 export function AdminTemplates() {
@@ -44,15 +39,14 @@ export function AdminTemplates() {
 	const [ creating, setCreating ] = useState( false );
 	const editorRef = useRef< HTMLFormElement >( null );
 	useRevealOnOpen( editorRef, creating ? 'new' : editingId );
-	const [ scope, setScope ] = useState< Scope >( 'global' );
+	const [ viewing, setViewing ] = useState< Template | null >( null );
+	const viewerRef = useRef< HTMLDivElement >( null );
+	useRevealOnOpen( viewerRef, viewing?.id ?? null );
 	const [ form, setForm ] = useState( EMPTY_FORM );
 	const [ saving, setSaving ] = useState( false );
 
 	const gameSlug =
 		new URLSearchParams( window.location.search ).get( 'game_slug' ) ?? '';
-	// Global templates are shared by every chronicle, so only a site administrator changes them.
-	const canEditGlobal =
-		!! window.beyondElysium?.capabilities?.be_manage_games;
 
 	/**
 	 * Fetches the global templates, and this chronicle's own when a game_slug is present, storing both in state.
@@ -93,28 +87,36 @@ export function AdminTemplates() {
 		};
 	}
 
-	function startEdit( template: Template, editScope: Scope ) {
+	function startEdit( template: Template ) {
+		setViewing( null );
 		setEditingId( template.id );
 		setCreating( false );
-		setScope( editScope );
 		setForm( formFrom( template ) );
 	}
 
-	function startCreate( createScope: Scope ) {
+	function startCreate() {
+		setViewing( null );
 		setEditingId( null );
 		setCreating( true );
-		setScope( createScope );
 		setForm( EMPTY_FORM );
 	}
 
 	/**
-	 * Opens a create form for this chronicle pre-filled from a global template.
+	 * Opens a create form for this chronicle pre-filled from a shared template.
 	 */
 	function startOverride( template: Template ) {
+		setViewing( null );
 		setEditingId( null );
 		setCreating( true );
-		setScope( 'chronicle' );
 		setForm( formFrom( template ) );
+	}
+
+	/**
+	 * Opens a shared template read-only.
+	 */
+	function startView( template: Template ) {
+		cancel();
+		setViewing( template );
 	}
 
 	function cancel() {
@@ -124,11 +126,11 @@ export function AdminTemplates() {
 	}
 
 	/**
-	 * Submits the create or edit form to the global or chronicle collection, depending on the form's scope.
+	 * Submits the create or edit form to this chronicle's templates.
 	 */
 	async function save( e: React.FormEvent ) {
 		e.preventDefault();
-		if ( ! form.name.trim() || ! form.template_type.trim() ) {
+		if ( ! form.name.trim() || ! form.template_type.trim() || ! gameSlug ) {
 			return;
 		}
 
@@ -138,10 +140,7 @@ export function AdminTemplates() {
 			layout: form.layout,
 			stack_slug: form.stack_slug.trim() || undefined,
 		};
-		const target =
-			scope === 'chronicle' && gameSlug
-				? api.templates( gameSlug )
-				: api.templatesGlobal;
+		const target = api.templates( gameSlug );
 
 		setSaving( true );
 		setError( null );
@@ -166,31 +165,42 @@ export function AdminTemplates() {
 	}
 
 	/**
-	 * Deletes a template after the user confirms via a browser dialog.
+	 * Whether a chronicle's own template overrides a real shared template with the same type and stack - the same pair
+	 * `startOverride()` copies from when creating it - rather than being custom, with no shared counterpart.
 	 */
-	async function remove( template: Template, removeScope: Scope ) {
-		const message =
-			removeScope === 'chronicle'
-				? // translators: %s: template name.
-				  __(
-						'Delete "%s"? This chronicle\'s sheets go back to the shared layout.',
-						'beyond-elysium'
-				  )
-				: // translators: %s: template name.
-				  __(
-						'Delete "%s"? Sheets resolving to it fall back to the next level (per-game, then generated).',
-						'beyond-elysium'
-				  );
-		// eslint-disable-next-line no-alert
-		if ( ! window.confirm( sprintf( message, template.name ) ) ) {
+	function isBookOverride( template: Template ): boolean {
+		return templates.some(
+			( t ) =>
+				t.template_type === template.template_type &&
+				( t.stack_slug ?? '' ) === ( template.stack_slug ?? '' )
+		);
+	}
+
+	/**
+	 * Deletes one of this chronicle's templates after the user confirms via a browser dialog; a shared override resets
+	 * to the shared layout instead of removing something with no shared counterpart.
+	 */
+	async function remove( template: Template ) {
+		const message = isBookOverride( template )
+			? // translators: %s: template name.
+				__(
+					'Reset "%s" to the shared layout? This chronicle\'s own changes to it are lost.',
+					'beyond-elysium'
+				)
+			: // translators: %s: template name.
+				__(
+					'Delete "%s"? This chronicle\'s sheets go back to the shared layout.',
+					'beyond-elysium'
+				);
+
+		if (
+			! gameSlug ||
+			! window.confirm( sprintf( message, template.name ) )
+		) {
 			return;
 		}
 		try {
-			if ( removeScope === 'chronicle' && gameSlug ) {
-				await api.templates( gameSlug ).delete( template.id );
-			} else {
-				await api.templatesGlobal.delete( template.id );
-			}
+			await api.templates( gameSlug ).delete( template.id );
 			load();
 		} catch ( err: unknown ) {
 			setError(
@@ -221,16 +231,11 @@ export function AdminTemplates() {
 					) }
 				</p>
 			) : (
-				<p>
-					{ canEditGlobal
-						? __(
-								'Shared sheet layouts every chronicle uses unless it has its own override.',
-								'beyond-elysium'
-						  )
-						: __(
-								'Shared sheet layouts every chronicle uses. Only a site administrator can change them - to customize a chronicle you run, open its Chronicle Setup and choose Sheet templates.',
-								'beyond-elysium'
-						  ) }
+				<p className="be-admin__game-scope-notice">
+					{ __(
+						"This is the book: the sheet layouts every chronicle uses unless it has its own, read-only here. To customize one for a chronicle you run, open that chronicle's Chronicle Setup and choose Sheet templates.",
+						'beyond-elysium'
+					) }
 				</p>
 			) }
 			{ error && (
@@ -284,21 +289,24 @@ export function AdminTemplates() {
 										<button
 											type="button"
 											onClick={ () =>
-												startEdit(
-													template,
-													'chronicle'
-												)
+												startEdit( template )
 											}
 										>
 											{ __( 'Edit', 'beyond-elysium' ) }
 										</button>
 										<button
 											type="button"
-											onClick={ () =>
-												remove( template, 'chronicle' )
-											}
+											onClick={ () => remove( template ) }
 										>
-											{ __( 'Delete', 'beyond-elysium' ) }
+											{ isBookOverride( template )
+												? __(
+														'Reset to book',
+														'beyond-elysium'
+													)
+												: __(
+														'Delete',
+														'beyond-elysium'
+													) }
 										</button>
 									</td>
 								</tr>
@@ -306,10 +314,7 @@ export function AdminTemplates() {
 						</tbody>
 					</table>
 					{ ! formOpen && (
-						<button
-							type="button"
-							onClick={ () => startCreate( 'chronicle' ) }
-						>
+						<button type="button" onClick={ startCreate }>
 							{ __(
 								'+ New Template for this chronicle',
 								'beyond-elysium'
@@ -336,7 +341,7 @@ export function AdminTemplates() {
 							<tr>
 								<td colSpan={ 5 }>
 									{ __(
-										'No global templates yet - sheets fall back to a generated layout.',
+										'No shared templates - sheets fall back to a generated layout.',
 										'beyond-elysium'
 									) }
 								</td>
@@ -372,31 +377,12 @@ export function AdminTemplates() {
 											) }
 										</button>
 									) }
-									{ canEditGlobal && ! gameSlug && (
-										<button
-											type="button"
-											onClick={ () =>
-												startEdit( template, 'global' )
-											}
-										>
-											{ __( 'Edit', 'beyond-elysium' ) }
-										</button>
-									) }
-									{ canEditGlobal &&
-										! gameSlug &&
-										! template.is_system && (
-											<button
-												type="button"
-												onClick={ () =>
-													remove( template, 'global' )
-												}
-											>
-												{ __(
-													'Delete',
-													'beyond-elysium'
-												) }
-											</button>
-										) }
+									<button
+										type="button"
+										onClick={ () => startView( template ) }
+									>
+										{ __( 'View', 'beyond-elysium' ) }
+									</button>
 								</td>
 							</tr>
 						) ) }
@@ -404,10 +390,50 @@ export function AdminTemplates() {
 				</table>
 			) }
 
-			{ canEditGlobal && ! gameSlug && ! formOpen && (
-				<button type="button" onClick={ () => startCreate( 'global' ) }>
-					{ __( '+ New Template', 'beyond-elysium' ) }
-				</button>
+			{ viewing && (
+				<div
+					ref={ viewerRef }
+					className="be-admin__form be-admin__form--wide"
+					tabIndex={ -1 }
+				>
+					<h2>
+						{ sprintf(
+							/* translators: %s: the template's name */
+							__( '%s (read-only)', 'beyond-elysium' ),
+							viewing.name
+						) }
+					</h2>
+					<fieldset disabled className="be-admin__read-only">
+						<label>
+							{ __( 'Template Type', 'beyond-elysium' ) }
+							<input
+								type="text"
+								value={ viewing.template_type }
+								readOnly
+							/>
+						</label>
+						<label>
+							{ __( 'Stack Slug', 'beyond-elysium' ) }
+							<input
+								type="text"
+								value={ viewing.stack_slug ?? '' }
+								readOnly
+							/>
+						</label>
+						<TemplateLayoutEditor
+							layout={ viewing.layout }
+							onChange={ () => undefined }
+						/>
+					</fieldset>
+					<div className="be-admin__form-actions">
+						<button
+							type="button"
+							onClick={ () => setViewing( null ) }
+						>
+							{ __( 'Close', 'beyond-elysium' ) }
+						</button>
+					</div>
+				</div>
 			) }
 
 			{ formOpen && (
@@ -418,17 +444,15 @@ export function AdminTemplates() {
 				>
 					<h2>
 						{ creating
-							? scope === 'chronicle'
-								? __(
-										'New template for this chronicle',
-										'beyond-elysium'
-								  )
-								: __( 'New Template', 'beyond-elysium' )
+							? __(
+									'New template for this chronicle',
+									'beyond-elysium'
+								)
 							: sprintf(
 									/* translators: %d: the numeric id of the template being edited */
 									__( 'Edit template #%d', 'beyond-elysium' ),
 									editingId as number
-							  ) }
+								) }
 					</h2>
 					<label>
 						{ __( 'Name', 'beyond-elysium' ) }

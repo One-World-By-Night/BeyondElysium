@@ -152,7 +152,6 @@ export function BackgroundLedger( {
 	}
 
 	async function clearForCharacter() {
-		// eslint-disable-next-line no-alert
 		if (
 			! window.confirm(
 				__(
@@ -168,7 +167,6 @@ export function BackgroundLedger( {
 	}
 
 	async function clearForDate() {
-		// eslint-disable-next-line no-alert
 		if (
 			! window.confirm(
 				sprintf(

@@ -40,6 +40,20 @@ abstract class Base_Controller extends \WP_REST_Controller {
 	}
 
 	/**
+	 * The refusal of a change to the book: the catalog, creature types and sheet templates as released, which change for
+	 * a chronicle only.
+	 *
+	 * @return \WP_Error
+	 */
+	protected function book_read_only(): \WP_Error {
+		return $this->error(
+			'book_read_only',
+			__( "The book is read-only. Make this change for a chronicle, from that chronicle's Chronicle Setup.", 'beyond-elysium' ),
+			403
+		);
+	}
+
+	/**
 	 * Builds a permission callback that checks a single WordPress capability.
 	 *
 	 * @param string $capability      WordPress capability.

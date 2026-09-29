@@ -24,9 +24,7 @@ instead of building it by hand again — pick whether you're joining or visiting
 a Storyteller there reviews and accepts it the same way. See
 [Send a Grapevine File](help/send-grapevine-file.md).
 
-If a Storyteller entered your character for you (from a Grapevine import or by hand), it may
-not be linked to your WordPress account yet. Ask them to use **Assign Player** on your
-character's row — until then, it doesn't appear in your list at all.
+If a Storyteller entered your character for you (from a Grapevine import or by hand), it may not be linked to your account yet, and until it is, it doesn't appear in your list. Your Storyteller can invite you by email with your characters from their **Players** tab: the first time you sign in through OWbN with that email address, you join the chronicle and your characters are there. They can also use **Assign Player** on a character's row.
 
 Your new character's **Health** section comes pre-filled — this isn't something you buy
 with your starting build. It's the standard Laws of the Night Revised Extended wound track

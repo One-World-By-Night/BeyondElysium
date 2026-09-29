@@ -8,10 +8,7 @@ import {
 } from '../components/renderers/TieredPowerRenderer';
 
 export type SectionTypeForHolding =
-	| 'trait_list'
-	| 'tiered_power'
-	| 'resource_pool'
-	| 'identity_field';
+	'trait_list' | 'tiered_power' | 'resource_pool' | 'identity_field';
 
 interface HeldTraitListEntry {
 	name: string;
@@ -52,7 +49,8 @@ export function describeResourcePoolHolding(
 	name: string,
 	value: HeldPoolValue | number
 ): string {
-	const permanent = typeof value === 'number' ? value : value.permanent ?? 0;
+	const permanent =
+		typeof value === 'number' ? value : ( value.permanent ?? 0 );
 	return `${ name } (${ permanent })`;
 }
 

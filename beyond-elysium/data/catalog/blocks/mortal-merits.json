@@ -10,9 +10,7 @@
       "met-mechanics.csv Merit/Flaw rows routed by source (the Vampire research overlay to Vampire; generic-menu names to every stack)",
       "Cost: the GVM item's own cost, else the CSV row, else captured research for this genre (cited per item); anything left is marked UNPRICED with its reason"
     ],
-    "extracted": "2026-09-22",
-    "tool": "tools/catalog/emit_catalog.py",
-    "notes": "1.3.0 D82 - replaces the shared met-merits (D20/D81 precedent)."
+    "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
     "atomic": true,

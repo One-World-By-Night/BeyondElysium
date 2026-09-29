@@ -72,9 +72,12 @@ function styleComments( path: string ): Comment[] {
 const files = [
 	...walk( join( ROOT, 'src' ), /\.(tsx?|css)$/ ),
 	...walk( join( ROOT, 'bin' ), /\.js$/ ),
-	...[ '.eslintrc.js', '.stylelintrc.js', 'webpack.config.js' ].map(
-		( name ) => join( ROOT, name )
-	),
+	...[
+		'eslint.config.cjs',
+		'.stylelintrc.js',
+		'vitest.config.mjs',
+		'webpack.config.js',
+	].map( ( name ) => join( ROOT, name ) ),
 ];
 
 describe( 'comments describe the code', () => {

@@ -1,20 +1,20 @@
 # Grimoire extractor
 
-Offline, one-time tooling that produced `tools/catalog/source/grimoire-rotes.csv` from `samples/data/Enlightened_Grimoire.pdf` (a Storytellers Vault title, never committed, never shipped - see `BE_PROCESS/design/mage-rotes-grimoire-design.md` §8.1). Not part of the plugin, not run at runtime, not run by `bin/verify`. Kept here so the method is reproducible and reviewable, not because it runs again on its own.
+Offline scripts that produced `tools/catalog/source/grimoire-rotes.csv` from `samples/data/Enlightened_Grimoire.pdf`, a Storytellers Vault title that is never committed and never shipped. None of them is part of the plugin, and nothing runs them: not the plugin, not `bin/verify`.
 
-Requires `pdftotext` (poppler-utils) and Python 3, nothing else.
+They need `pdftotext` (poppler-utils) and Python 3, nothing else.
 
 ## Pipeline
 
-1. `pdftotext -f 9 -l 198 Enlightened_Grimoire.pdf chapters.txt` (printed 8-197) and `pdftotext -f 204 -l 212 Enlightened_Grimoire.pdf index.txt` (printed 203-211, the book's own "Index of Rotes").
-2. `python3 pass_a_index.py index.txt` - parses the index into `(headword, pages)` tuples. This is the I1 oracle everything else is checked against, not itself a source of CSV rows.
-3. `python3 pass_b_chapters.py chapters.txt` - parses the chapter body, anchored on the sphere-requirement line's closed nine-word grammar (far more mechanically distinctive than a name or citation line). Emits `chapter-entries.json`: name, note (sphere text), citation, chapter (`group`), and a page number derived from the book's own footer digits.
-4. `python3 pass_c_emit.py` - keeps only chapter entries the index oracle also lists (I1: a chapter-only name is, empirically, almost always two names glued together by an unresolved column/page-break interleave, never a genuine index gap), applies the shipped CSV's own prose-leak and length guards, and writes `grimoire-rotes.csv`.
+1. `pdftotext -f 9 -l 198 Enlightened_Grimoire.pdf chapters.txt` (printed pages 8-197) and `pdftotext -f 204 -l 212 Enlightened_Grimoire.pdf index.txt` (printed pages 203-211, the book's own "Index of Rotes").
+2. `python3 pass_a_index.py index.txt` parses the index into `(headword, pages)` tuples: the list everything else is checked against, never a source of CSV rows itself.
+3. `python3 pass_b_chapters.py chapters.txt` parses the chapter text, anchored on the sphere-requirement line's closed nine-word grammar, which is far more distinctive than a name or citation line. It writes `chapter-entries.json`: name, note (the sphere text), citation, chapter (`group`), and a page number read from the book's own footer.
+4. `python3 pass_c_emit.py` keeps only the chapter entries the index also lists, since a name found only in the chapters is almost always two names run together across a column or page break, never a gap in the index. It applies the CSV's prose-leak and length guards and writes `grimoire-rotes.csv`.
 
-## What this run found
+## Coverage
 
-1096 index entries, 753 chapter entries parsed cleanly, 670 confirmed by both passes and shipped. The ~40% the index lists but chapter-parsing never resolved is the real column-and-page-break interleaving §3.4 of the design doc named as the hard case, confirmed rather than hand-waved: `pdftotext` preserves reading order within a column and across an ordinary page break (confirmed directly against two of the design doc's own named hard cases, `Doe's Password` and `Transephemeration Ray Projector`), but not reliably across every column break inside a two-column page. Extending coverage past 670 needs geometric (x, y) column reconstruction - the design doc's own Effort **L** path - and is left for a future pass rather than guessed at here (Decision 043's protected-base rule: a real tie or a real gap is left unmerged, never guessed).
+The index lists 1,096 rotes, the chapter parse reads 753 cleanly, and 670 are in both and in the CSV. `pdftotext` keeps reading order within a column and across an ordinary page break, but not reliably across every column break on a two-column page; `Doe's Password` and `Transephemeration Ray Projector` are two of the hard cases it gets right. Reading the rest needs each word's position on the page to rebuild the columns. A rote found by only one pass is left out, never guessed.
 
 ## Re-running
 
-The PDF and its raw extracted text never get committed - keep them in `samples/data/` (gitignored) and `tools/grimoire/out/` (also gitignored) if you re-run this by hand.
+The PDF and its extracted text are never committed: keep them in `samples/data/` and `tools/grimoire/out/`, both ignored by git.

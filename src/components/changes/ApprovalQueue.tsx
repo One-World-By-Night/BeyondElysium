@@ -99,12 +99,12 @@ function PriceField( {
 									'beyond-elysium'
 								),
 								total
-						  )
+							)
 						: sprintf(
 								/* translators: %d: the total price in XP */
 								__( '= %d XP', 'beyond-elysium' ),
 								total
-						  ) }
+							) }
 				</span>
 			) }
 		</label>
@@ -222,7 +222,7 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 		changeType,
 		approvalLevel,
 		page,
-	] ); // eslint-disable-line react-hooks/exhaustive-deps
+	] );
 
 	/**
 	 * Applies a filter from its first page, with nothing ticked.
@@ -489,7 +489,7 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 													? __(
 															'Set a price first - this cannot be approved in a batch.',
 															'beyond-elysium'
-													  )
+														)
 													: undefined
 											}
 											onChange={ () =>

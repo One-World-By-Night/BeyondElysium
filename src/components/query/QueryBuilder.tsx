@@ -45,7 +45,7 @@ export function QueryBuilder( {
 				( f ) =>
 					f.title.toLowerCase().includes( search.toLowerCase() ) ||
 					f.key.toLowerCase().includes( search.toLowerCase() )
-		  )
+			)
 		: fields;
 
 	function fieldFor( key: string ): QueryField | undefined {

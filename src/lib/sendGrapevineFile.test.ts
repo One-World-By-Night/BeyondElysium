@@ -30,7 +30,7 @@ describe( 'otherChroniclesFor', () => {
 		] );
 	} );
 
-	it( 'never repeats a chronicle the sender already belongs to (F-122)', () => {
+	it( 'never repeats a chronicle the sender already belongs to', () => {
 		const mine = [
 			myGame( 'kony', 'Kings of New York' ),
 			myGame( 'boston', 'Boston by Night' ),

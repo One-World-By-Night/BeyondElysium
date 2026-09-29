@@ -60,6 +60,27 @@ function groupBySection(
 }
 
 /**
+ * How a rank modifier changed a line's cost, signed and named by its side, such as "(+4 out-of-type)".
+ */
+function modifierText( line: PointAuditLine ): string {
+	const modifier = line.modifier ?? 0;
+	const amount =
+		modifier > 0 ? `+${ modifier }` : `−${ Math.abs( modifier ) }`;
+	if ( line.modifier_side === 'in_type' ) {
+		return sprintf(
+			/* translators: %s: how much the in-type modifier changed this line's cost, signed, such as −1 */
+			__( '(%s in-type)', 'beyond-elysium' ),
+			amount
+		);
+	}
+	return sprintf(
+		/* translators: %s: how much the out-of-type modifier changed this line's cost, signed, such as +4 */
+		__( '(%s out-of-type)', 'beyond-elysium' ),
+		amount
+	);
+}
+
+/**
  * Renders one line: a priced line shows its XP and basis.
  */
 function AuditLine( { line }: { line: PointAuditLine } ) {
@@ -92,11 +113,7 @@ function AuditLine( { line }: { line: PointAuditLine } ) {
 			</span>
 			{ line.modifier ? (
 				<span className="be-point-audit__line-modifier">
-					{ sprintf(
-						/* translators: %d: the out-of-type surcharge added to this line's cost */
-						__( '(+%d out-of-type)', 'beyond-elysium' ),
-						line.modifier
-					) }
+					{ modifierText( line ) }
 				</span>
 			) : null }
 		</li>

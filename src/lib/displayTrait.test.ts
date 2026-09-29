@@ -208,7 +208,7 @@ describe( 'displayTrait — parity with Trait_Display.php', () => {
 							testCase.trait,
 							testCase.mode,
 							testCase.dot
-					  )
+						)
 			).toBe( expectedCase.output );
 		} );
 	} );

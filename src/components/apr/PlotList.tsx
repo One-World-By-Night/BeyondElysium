@@ -110,7 +110,7 @@ export function PlotList( {
 		characterPlots,
 		search,
 		page,
-	] ); // eslint-disable-line react-hooks/exhaustive-deps
+	] );
 
 	/**
 	 * Applies a filter change and starts over at the first page, where a narrower list still has plots to show.
@@ -456,7 +456,7 @@ export function PlotList( {
 											: __(
 													'Restricted',
 													'beyond-elysium'
-											  ) }
+												) }
 									</span>
 								) }
 								<span>

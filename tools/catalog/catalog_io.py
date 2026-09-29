@@ -30,7 +30,6 @@ def _samples():
 
 
 SAMPLES = _samples()
-EXTRACTED = '2026-09-22'
 TOOL = 'tools/catalog/emit_catalog.py'
 
 # Blocks the emitter never writes and never copies data out of.
@@ -84,7 +83,6 @@ def write(sub, slug, name, kind, definition, sources, section_type=None, variant
         env['variant'] = variant
     prov = OrderedDict()
     prov['sources'] = sources
-    prov['extracted'] = EXTRACTED
     prov['tool'] = TOOL
     if notes:
         prov['notes'] = notes

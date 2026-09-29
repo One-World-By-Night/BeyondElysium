@@ -87,7 +87,6 @@ def main():
         'OWBN Fallen Genre Packet (2021), OWBN0052-Demon-Fallen Genre-2021.pdf, '
         'Chapter 5 (A Chorus of Angels: Rituals), printed p. 141-190',
     ]
-    doc['provenance']['extracted'] = '2026-09-21'
     doc['provenance']['tool'] = 'tools/catalog/build_demon_rituals.py'
 
     definition = OrderedDict()

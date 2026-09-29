@@ -204,7 +204,7 @@ export function PlotThread( {
 			} );
 	}
 
-	useEffect( load, [ gameSlug, plotId ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect( load, [ gameSlug, plotId ] );
 
 	/**
 	 * Sends a partial update for this plot to the API and, on success, replaces the local plot state with the server's
@@ -322,7 +322,7 @@ export function PlotThread( {
 									? __(
 											'Storytellers only',
 											'beyond-elysium'
-									  )
+										)
 									: __( 'Restricted', 'beyond-elysium' ) }
 							</span>
 						) }
@@ -332,7 +332,7 @@ export function PlotThread( {
 									? __(
 											'In a release batch',
 											'beyond-elysium'
-									  )
+										)
 									: __( 'Draft', 'beyond-elysium' ) }
 							</span>
 						) }
@@ -717,7 +717,7 @@ export function PlotThread( {
 											? __(
 													'In a release batch',
 													'beyond-elysium'
-											  )
+												)
 											: __( 'Draft', 'beyond-elysium' ) }
 									</span>
 								) }

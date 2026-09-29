@@ -32,9 +32,7 @@ export interface WorldObjectEditorProps {
 }
 
 type PropertyValue =
-	| string
-	| number
-	| Array< { name: string; count?: number; note?: string } >;
+	string | number | Array< { name: string; count?: number; note?: string } >;
 
 /**
  * Renders a create/edit form generated from the object type's property schema (`WORLD_OBJECT_SCHEMAS`): name,
@@ -58,8 +56,8 @@ export function WorldObjectEditor( {
 					/* translators: %s: name of the world object being duplicated */
 					__( 'Copy of %s', 'beyond-elysium' ),
 					source?.name ?? ''
-			  )
-			: source?.name ?? ''
+				)
+			: ( source?.name ?? '' )
 	);
 	const descriptionDraft = useRef( source?.description ?? '' );
 	const [ rarity, setRarity ] = useState( source?.rarity ?? '' );
@@ -72,11 +70,11 @@ export function WorldObjectEditor( {
 	>( ( source?.properties as Record< string, PropertyValue > ) ?? {} );
 	// Duplicating never carries the source's own audience forward either.
 	const [ audience, setAudience ] = useState< AudienceValue >(
-		isDuplicating ? 'everyone' : object?.audience ?? 'everyone'
+		isDuplicating ? 'everyone' : ( object?.audience ?? 'everyone' )
 	);
 	const [ audienceRules, setAudienceRules ] =
 		useState< AudienceRules | null >(
-			isDuplicating ? null : object?.audience_rules ?? null
+			isDuplicating ? null : ( object?.audience_rules ?? null )
 		);
 	const [ saving, setSaving ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
@@ -389,8 +387,8 @@ function PropertyField( {
 					type === 'int'
 						? 'number'
 						: type === 'date'
-						? 'date'
-						: 'text'
+							? 'date'
+							: 'text'
 				}
 				value={ ( value as string | number ) ?? '' }
 				onChange={ ( e ) =>

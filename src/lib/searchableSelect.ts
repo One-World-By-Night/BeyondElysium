@@ -14,8 +14,7 @@ export interface OptionGroup {
  * One rendered line of the dropdown: a section heading, or a selectable option.
  */
 export type OptionRow =
-	| { kind: 'heading'; label: string }
-	| { kind: 'option'; value: string };
+	{ kind: 'heading'; label: string } | { kind: 'option'; value: string };
 
 /**
  * Filters `options` down to the entries containing `query` as a case-insensitive substring match.

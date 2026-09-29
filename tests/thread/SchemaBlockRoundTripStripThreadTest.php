@@ -41,8 +41,8 @@ class SchemaBlockRoundTripStripThreadTest extends WP_UnitTestCase {
 		$fetched = Schema_Block::find_by_slug( 'roundtrip-fixture' );
 		$this->assertSame( 'Termo De Ida E Volta', $fetched->definition->items[0]->name_pt, 'sanity check: GET really is decorated' );
 
-		// The client's own PUT, echoing that decorated definition straight back.
-		$request = new WP_REST_Request( 'PUT', '/be/v1/schema-blocks/roundtrip-fixture' );
+		// A chronicle's own PUT, echoing that decorated definition straight back.
+		$request = new WP_REST_Request( 'PUT', '/be/v1/roundtrip-game/schema-blocks/roundtrip-fixture' );
 		$request->set_body_params( [ 'definition' => $fetched->definition ] );
 		$response = rest_do_request( $request );
 		$this->assertSame( 200, $response->get_status(), 'the PUT itself must succeed, not merely be rejected' );
@@ -50,9 +50,10 @@ class SchemaBlockRoundTripStripThreadTest extends WP_UnitTestCase {
 		// The real, raw, undecorated database row.
 		global $wpdb;
 		$raw = $wpdb->get_var( $wpdb->prepare(
-			"SELECT definition FROM {$wpdb->prefix}be_schema_blocks WHERE slug = %s AND game_slug = ''",
+			"SELECT definition FROM {$wpdb->prefix}be_schema_blocks WHERE slug = %s AND game_slug = 'roundtrip-game'",
 			'roundtrip-fixture'
 		) );
+		$this->assertNotNull( $raw );
 		$this->assertStringNotContainsString( '"name_pt"', $raw, 'a _pt key survived the round trip into permanent storage' );
 	}
 

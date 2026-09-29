@@ -36,7 +36,7 @@ class BooleanFlagCoverageTest extends TestCase {
 			[],
 			array_values( array_diff( $found, array_keys( self::KNOWN ) ) ),
 			"A tinyint(1) column exists that this guard does not know about.\n"
-			. "Decide how it is cast (bool, per the 1.0.1 ruling), cast it in its model's own\n"
+			. "Decide how it is cast (bool), cast it in its model's own\n"
 			. "decode, cover it in BooleanFlagTypesThreadTest, then add it to KNOWN here."
 		);
 	}

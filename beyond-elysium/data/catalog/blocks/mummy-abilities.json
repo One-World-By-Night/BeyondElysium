@@ -10,9 +10,8 @@
       "met-mechanics.csv Ability rows (General to every stack; Changing Breeds to Werewolf/Fera; Vampire to Vampire)",
       "Cost: Laws of the Resurrection (WW05035) PDF p. 117 - \"New Ability Trait - One Experience per Ability Trait up to five Traits\""
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py",
-    "notes": "1.3.0 D81 - replaces the shared met-abilities (D20 Backgrounds precedent). An Ability bought per field of study carries `allow_multiples: true` (owner ruling 2026-09-22; the editor reads it at 1.2.11). Per-item `source` says which menu or CSV row carries it; `Meditiation` (a CSV typo) is an alias of Meditation."
+    "notes": "An Ability bought per field of study carries `allow_multiples: true`. Per-item `source` says which menu or CSV row carries it; `Meditiation` (a CSV typo) is an alias of Meditation."
   },
   "definition": {
     "alphabetize": true,

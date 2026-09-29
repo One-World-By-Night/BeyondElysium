@@ -39,8 +39,8 @@ class DeclaredCatalogIngestionThreadTest extends WP_UnitTestCase {
 		$definition = $this->definition( 'vampire-disciplines' );
 
 		$this->assertEquals( [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ], (array) $definition->_meta->ladder );
-		// The declared file's own out_of_type_cost_modifier bridge (Catalog_Reader).
-		$this->assertSame( 1, $definition->out_of_type_cost_modifier );
+		$this->assertSame( '+1', $definition->_meta->out_of_type->basic );
+		$this->assertObjectNotHasProperty( 'out_of_type_cost_modifier', $definition );
 	}
 
 	public function test_celerity_ceiling_prices_identically_to_the_unit_fixture(): void {
@@ -51,7 +51,7 @@ class DeclaredCatalogIngestionThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'sequential_sum', $result['basis'] );
 	}
 
-	public function test_celerity_out_of_clan_charges_the_bridged_modifier_on_every_rung_and_pick(): void {
+	public function test_celerity_out_of_clan_charges_its_rank_modifier_on_every_rung_and_pick(): void {
 		$definition  = $this->definition( 'vampire-disciplines' );
 		$in_clan     = Cost_Engine::price_held_tiered_power( $definition, [ 'name' => 'Celerity', 'level' => 6 ], true );
 		$out_of_clan = Cost_Engine::price_held_tiered_power( $definition, [ 'name' => 'Celerity', 'level' => 6 ], false );
@@ -83,7 +83,16 @@ class DeclaredCatalogIngestionThreadTest extends WP_UnitTestCase {
 	public function test_argos_ceiling_prices_from_the_books_own_4_6_9_scale(): void {
 		$result = Cost_Engine::price_held_tiered_power( $this->definition( 'wraith-arcanoi' ), [ 'name' => 'Argos', 'level' => 5 ], true );
 
-		// 2 basic (4 each) + 2 intermediate (6 each) + 1 advanced (9) = 29.
+		// In-type here is the Harbinger buying their own Guild's Arcanos: the -1 discount applies to every rank but
+		// Innate. 2 basic (4-1 each) + 2 intermediate (6-1 each) + 1 advanced (9-1) = 6 + 10 + 8 = 24.
+		$this->assertSame( 24, $result['xp'] );
+		$this->assertSame( 'sequential_sum', $result['basis'] );
+	}
+
+	public function test_argos_ceiling_prices_full_out_of_guild(): void {
+		$result = Cost_Engine::price_held_tiered_power( $this->definition( 'wraith-arcanoi' ), [ 'name' => 'Argos', 'level' => 5 ], false );
+
+		// Out of Guild carries no modifier at all: 2 basic (4 each) + 2 intermediate (6 each) + 1 advanced (9) = 29.
 		$this->assertSame( 29, $result['xp'] );
 		$this->assertSame( 'sequential_sum', $result['basis'] );
 	}

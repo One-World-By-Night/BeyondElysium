@@ -82,7 +82,7 @@ export function WorldObjectList( {
 			} );
 	}
 
-	useEffect( load, [ gameSlug, objectType, search, copies, page ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect( load, [ gameSlug, objectType, search, copies, page ] );
 
 	function selectType( type: ObjectType ) {
 		setObjectType( type );
@@ -212,7 +212,7 @@ export function WorldObjectList( {
 														onSelect( item.id );
 													}
 												},
-										  }
+											}
 										: {} ) }
 								>
 									<td
@@ -247,11 +247,11 @@ export function WorldObjectList( {
 													? `${
 															item.properties
 																.damage_type
-													  } ${
+														} ${
 															item.properties
 																.damage_amount ??
 															''
-													  }`.trim()
+														}`.trim()
 													: '—' }
 											</td>
 											<td

@@ -9,6 +9,7 @@ import BlockRenderer, { toTraits } from '../renderers/BlockRenderer';
 import SheetStyleEditor from './SheetStyleEditor';
 import ChangeHistory from '../changes/ChangeHistory';
 import PointAudit from './PointAudit';
+import CreationTallyPanel from './CreationTallyPanel';
 import { ConnectionManager } from '../apr/ConnectionManager';
 import { BackgroundLedger } from '../apr/BackgroundLedger';
 import { TransferPanel } from './TransferPanel';
@@ -228,22 +229,22 @@ export function CharacterSheet( {
 				}
 
 				const httpStatus = isRestError( error )
-					? error.data?.status ?? null
+					? ( error.data?.status ?? null )
 					: null;
 				const message =
 					httpStatus === 403
 						? __(
 								'You do not have permission to view this character.',
 								'beyond-elysium'
-						  )
+							)
 						: httpStatus === 404
-						? __( 'No such character.', 'beyond-elysium' )
-						: isRestError( error ) && error.message
-						? error.message
-						: __(
-								'Failed to load the character sheet.',
-								'beyond-elysium'
-						  );
+							? __( 'No such character.', 'beyond-elysium' )
+							: isRestError( error ) && error.message
+								? error.message
+								: __(
+										'Failed to load the character sheet.',
+										'beyond-elysium'
+									);
 
 				setState( { status: 'error', httpStatus, message } );
 			}
@@ -323,12 +324,12 @@ export function CharacterSheet( {
 								'beyond-elysium'
 							),
 							notes.length
-					  ) +
+						) +
 							' ' +
 							notes.join( ' | ' )
 					: __( 'Exported.', 'beyond-elysium' )
 			);
-		} catch ( error ) {
+		} catch {
 			setExportNotice(
 				__( 'Export failed. Please try again.', 'beyond-elysium' )
 			);
@@ -354,7 +355,7 @@ export function CharacterSheet( {
 		const block = stack.blocks[ section.block_slug ];
 		if ( ! block ) {
 			// Skips rendering for a block the stack no longer has, instead of blanking the whole sheet.
-			// eslint-disable-next-line no-console
+
 			console.warn(
 				`[BE] Template section references unknown block "${ section.block_slug }" for stack "${ stack.stack.slug }".`
 			);
@@ -460,6 +461,7 @@ export function CharacterSheet( {
 		ledger: __( 'Background uses', 'beyond-elysium' ),
 		send: __( 'Send Sheet', 'beyond-elysium' ),
 		audit: __( 'Point audit', 'beyond-elysium' ),
+		tally: __( 'Build tally', 'beyond-elysium' ),
 		gex: __( 'Export to Grapevine (.gex)', 'beyond-elysium' ),
 	};
 
@@ -685,11 +687,11 @@ export function CharacterSheet( {
 													? __(
 															'Secure printing is switched off for this site, so prints are marked UNSIGNED.',
 															'beyond-elysium'
-													  )
+														)
 													: __(
 															'This site has no signing certificate yet, so prints are marked UNSIGNED.',
 															'beyond-elysium'
-													  ) }
+														) }
 											</p>
 										) }
 									<button
@@ -746,11 +748,11 @@ export function CharacterSheet( {
 											? __(
 													'Exporting…',
 													'beyond-elysium'
-											  )
+												)
 											: __(
 													'Download .gex file',
 													'beyond-elysium'
-											  ) }
+												) }
 									</button>
 								</div>
 							) }
@@ -774,6 +776,13 @@ export function CharacterSheet( {
 
 							{ openPanel === 'audit' && character.can_manage && (
 								<PointAudit
+									characterId={ characterId }
+									gameSlug={ gameSlug }
+								/>
+							) }
+
+							{ openPanel === 'tally' && character.can_manage && (
+								<CreationTallyPanel
 									characterId={ characterId }
 									gameSlug={ gameSlug }
 								/>
@@ -836,7 +845,7 @@ export function CharacterSheet( {
 										'beyond-elysium'
 									),
 								character.travelling_status.since
-						  )
+							)
 						: sprintf(
 								/* translators: 1: the home chronicle's name, 2: the date the transfer started */
 								__(
@@ -849,7 +858,7 @@ export function CharacterSheet( {
 										'beyond-elysium'
 									),
 								character.travelling_status.since
-						  ) }
+							) }
 				</div>
 			) }
 

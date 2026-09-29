@@ -357,11 +357,9 @@ export function computeChanges(
 							items: [],
 						},
 						( original[ blockSlug ] as
-							| EditableTrait[]
-							| undefined ) ?? [],
+							EditableTrait[] | undefined ) ?? [],
 						( current[ blockSlug ] as
-							| EditableTrait[]
-							| undefined ) ?? []
+							EditableTrait[] | undefined ) ?? []
 					)
 				);
 				break;
@@ -371,11 +369,9 @@ export function computeChanges(
 					...diffTieredPower(
 						blockSlug,
 						( original[ blockSlug ] as
-							| EditableHeldPower[]
-							| undefined ) ?? [],
+							EditableHeldPower[] | undefined ) ?? [],
 						( current[ blockSlug ] as
-							| EditableHeldPower[]
-							| undefined ) ?? []
+							EditableHeldPower[] | undefined ) ?? []
 					)
 				);
 				break;
@@ -385,11 +381,11 @@ export function computeChanges(
 					...diffResourcePool(
 						blockSlug,
 						( original[ blockSlug ] as
-							| Record< string, ResourcePoolValue >
-							| undefined ) ?? {},
+							Record< string, ResourcePoolValue > | undefined ) ??
+							{},
 						( current[ blockSlug ] as
-							| Record< string, ResourcePoolValue >
-							| undefined ) ?? {}
+							Record< string, ResourcePoolValue > | undefined ) ??
+							{}
 					)
 				);
 				break;

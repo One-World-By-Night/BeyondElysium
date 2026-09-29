@@ -112,7 +112,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function get_item( $request ) {
-		$game_slug = $this->write_scope( $request );
+		$game_slug = $this->scope( $request );
 		if ( is_wp_error( $game_slug ) ) {
 			return $game_slug;
 		}
@@ -124,12 +124,17 @@ class Schema_Blocks_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Creates a new global schema block from a required slug, name, and section_type.
+	 * Creates a chronicle's own schema block from a required slug, name, and section_type.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function create_item( $request ) {
+		$game_slug = $this->write_scope( $request );
+		if ( is_wp_error( $game_slug ) ) {
+			return $game_slug;
+		}
+
 		$slug         = $request->get_param( 'slug' );
 		$name         = $request->get_param( 'name' );
 		$section_type = $request->get_param( 'section_type' );
@@ -156,11 +161,6 @@ class Schema_Blocks_Controller extends Base_Controller {
 			$definition = $this->sanitize_definition( $section_type, $definition );
 		} else {
 			$definition = $this->default_definition( $section_type );
-		}
-
-		$game_slug = $this->write_scope( $request );
-		if ( is_wp_error( $game_slug ) ) {
-			return $game_slug;
 		}
 
 		// A slug already in use anywhere.
@@ -220,27 +220,18 @@ class Schema_Blocks_Controller extends Base_Controller {
 				return $validation_error;
 			}
 			$data['definition'] = $this->sanitize_definition( $section_type, $data['definition'] );
-
-			// What an administrator adds to a shared system block survives the next plugin update.
-			if ( $game_slug === '' && (int) $block->is_system === 1 && is_object( $block->definition ) ) {
-				$data['definition'] = \BeyondElysium\Database\Seeder::mark_admin_additions( $block->definition, $data['definition'] );
-			}
 		}
 
 		if ( ! empty( $data ) ) {
 			// A chronicle's first edit makes its copy of the block, and the save lands on that copy or nothing is kept.
 			$unit  = Transaction::begin( 'be_schema_block_save' );
-			$saved = ( $game_slug === '' || Schema_Block::find_or_create_fork_for_game( $request['slug'], $game_slug ) )
+			$saved = Schema_Block::find_or_create_fork_for_game( $request['slug'], $game_slug )
 				&& Schema_Block::update( $request['slug'], $data, $game_slug );
 			if ( ! $saved ) {
 				Transaction::rollback( $unit );
 				return $this->error( 'save_failed', __( 'Failed to update schema block.', 'beyond-elysium' ), 500 );
 			}
 			Transaction::commit( $unit );
-		}
-		// A catalog save reaches every chronicle's copy, past what each chronicle changed.
-		if ( $game_slug === '' && isset( $data['definition'] ) ) {
-			Schema_Block::refresh_forks( $request['slug'] );
 		}
 		return $this->success( Schema_Block::find_for_game( $request['slug'], $game_slug ) );
 	}
@@ -271,12 +262,12 @@ class Schema_Blocks_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns the chronicle a write targets: the `game_slug` in the route's own URL, or '' for the global catalog.
+	 * Returns the chronicle a request addresses: the `game_slug` in the route's own URL, or '' for the book.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return string|\WP_Error
 	 */
-	private function write_scope( \WP_REST_Request $request ) {
+	private function scope( \WP_REST_Request $request ) {
 		$from_url = (string) ( $request->get_url_params()['game_slug'] ?? '' );
 		$param    = $request->get_param( 'game_slug' );
 		if ( $from_url === '' && $param !== null && $param !== '' ) {
@@ -287,6 +278,17 @@ class Schema_Blocks_Controller extends Base_Controller {
 			);
 		}
 		return $from_url;
+	}
+
+	/**
+	 * Returns the chronicle a write targets. A write without one would change the book, which is read-only.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return string|\WP_Error
+	 */
+	private function write_scope( \WP_REST_Request $request ) {
+		$scope = $this->scope( $request );
+		return $scope === '' ? $this->book_read_only() : $scope;
 	}
 
 	/**

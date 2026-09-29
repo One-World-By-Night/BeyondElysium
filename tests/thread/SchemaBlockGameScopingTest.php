@@ -58,7 +58,7 @@ class SchemaBlockGameScopingTest extends WP_UnitTestCase {
 		$fork = Schema_Block::find_or_create_fork_for_game( $this->slug, 'game-a' );
 
 		$this->assertSame( 'Global Item', $fork->definition->items[0]->name );
-		$this->assertSame( 0, (int) $fork->is_system, 'a fork is never is_system - it must survive the reseed wipe (Decisions 078/080)' );
+		$this->assertSame( 0, (int) $fork->is_system, 'a fork is never is_system - it must survive the reseed wipe' );
 	}
 
 	public function test_forking_never_mutates_the_global_row(): void {

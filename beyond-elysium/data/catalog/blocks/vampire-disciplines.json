@@ -6,11 +6,10 @@
   "section_type": "tiered_power",
   "provenance": {
     "sources": [
-      "Laws of the Night Revised (WW05013) - Discipline 3/6/9 across a 2/2/1 ladder; Elder/Master/Ascended/Methuselah 12/15/18/21 (Camarilla Guide), per MET-POWER-ACQUISITION.md",
-      "GVM: Disciplines (container) and met-mechanics.csv, as seeded by 1.2.10 (be_dev snapshot)",
-      "samples/research/vampire/ (owbn, met, tt) for spelling and short-ladder rulings - 1.3.0 §2 precedence"
+      "Laws of the Night Revised (WW05013) - Discipline 3/6/9 across a 2/2/1 ladder; Elder/Master/Ascended/Methuselah 12/15/18/21 (Camarilla Guide)",
+      "GVM: Disciplines (container) and met-mechanics.csv (tools/catalog/source/)",
+      "samples/research/vampire/ (owbn, met, tt) for spelling and short ladders"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/build_vampire.py + rulings/vampire-disciplines.json"
   },
   "definition": {

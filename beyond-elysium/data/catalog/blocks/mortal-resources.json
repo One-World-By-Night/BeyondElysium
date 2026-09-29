@@ -6,9 +6,10 @@
   "section_type": "resource_pool",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_schema_blocks, dumped by tools/catalog/dump_live.sh",
+      "Laws of the Hunt (WW05014) p. 139 - \"Hunters begin play with a permanent Willpower of three Traits\"; p. 180 - \"your normal maximum Willpower cap of 10 Willpower Traits\"",
+      "Laws of the Hunt (WW05014) p. 138 - \"Mortal characters possess from one to five Humanity Traits\"; the creation summary (pp. 99-101) assigns 4, described as the rating that \"approximates that of most 'normal' humans\""
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -17,7 +18,7 @@
         "name": "Willpower",
         "value_type": "integer",
         "default_start": 3,
-        "max": 20
+        "max": 10
       },
       {
         "name": "True Faith",
@@ -28,8 +29,8 @@
       {
         "name": "Humanity",
         "value_type": "integer",
-        "default_start": 7,
-        "max": 10
+        "default_start": 4,
+        "max": 5
       }
     ]
   }

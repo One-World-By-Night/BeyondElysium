@@ -19,7 +19,7 @@ class GameRenameAtomicityTest extends TestCase {
 
 	public static function setUpBeforeClass(): void {
 		if ( ! defined( 'BE_WP_TESTS_AVAILABLE' ) || ! BE_WP_TESTS_AVAILABLE ) {
-			self::markTestSkipped( 'WP_TESTS_DIR not configured - see BE_PROCESS/now/PLATFORM.md.' );
+			self::markTestSkipped( 'WP_TESTS_DIR is not set.' );
 		}
 	}
 
@@ -81,8 +81,7 @@ class GameRenameAtomicityTest extends TestCase {
 			$slug,
 			Game::find( (int) $game_id )->slug,
 			'the game slug must revert to its pre-rename value once the OUTER caller rolls back - ' .
-			'if this fails, rename()\'s own inner transaction silently committed the outer one first, ' .
-			'exactly the bug class Decision 073 exists to prevent'
+			'if this fails, rename()\'s own inner transaction silently committed the outer one first'
 		);
 		$this->assertSame(
 			$slug,

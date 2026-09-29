@@ -5,9 +5,8 @@
   "kind": "stack",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_creature_stacks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_creature_stacks, dumped by tools/catalog/dump_live.sh"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -74,6 +73,12 @@
         "required": false
       },
       {
+        "block_slug": "kueijin-virtues",
+        "label": "Chi Virtues",
+        "display_order": 63,
+        "required": true
+      },
+      {
         "block_slug": "kueijin-resources",
         "label": "Resources",
         "display_order": 80,
@@ -111,6 +116,75 @@
       }
     ],
     "display_preferences": {},
-    "creation_rules": null
+    "creation_rules": {
+      "steps": [
+        {
+          "kind": "prioritized",
+          "label": "Attributes",
+          "sections": [
+            "met-physical-traits",
+            "met-social-traits",
+            "met-mental-traits"
+          ],
+          "amounts": [ 7, 5, 3 ]
+        },
+        {
+          "kind": "budget",
+          "label": "Abilities",
+          "section": "kueijin-abilities",
+          "count": 5
+        },
+        {
+          "kind": "budget",
+          "label": "Disciplines",
+          "section": "kueijin-disciplines",
+          "count": 3,
+          "filter": { "tier": "basic" },
+          "quotas": [
+            {
+              "label": "At least one Demon Art",
+              "min": 1,
+              "test": {
+                "kind": "facet",
+                "facet": "group",
+                "values": { "constant": [ "Demon Arts" ] }
+              }
+            }
+          ]
+        },
+        {
+          "kind": "budget",
+          "label": "Backgrounds",
+          "section": "kueijin-backgrounds",
+          "count": 5
+        },
+        {
+          "kind": "budget",
+          "label": "Chi Virtues",
+          "section": "kueijin-virtues",
+          "count": 4
+        },
+        {
+          "kind": "free",
+          "label": "Free Traits",
+          "pool": "Free Traits",
+          "points": 5,
+          "rates": {
+            "met-physical-traits": 1,
+            "met-social-traits": 1,
+            "met-mental-traits": 1,
+            "kueijin-abilities": 1,
+            "kueijin-backgrounds": 1,
+            "kueijin-resources.Hun": 3,
+            "kueijin-resources.Po": 1,
+            "kueijin-virtues.Yin Chi": 3,
+            "kueijin-virtues.Yang Chi": 3,
+            "kueijin-resources.Willpower": 3,
+            "kueijin-disciplines": 4,
+            "kueijin-merits": "value"
+          }
+        }
+      ]
+    }
   }
 }

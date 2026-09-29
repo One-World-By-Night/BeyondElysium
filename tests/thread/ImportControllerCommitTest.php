@@ -152,7 +152,7 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$character = Character::find( (int) $data['characters'][0]['id'] );
 		$this->assertSame( 'Synthetic Test Character', $character->name );
 		$this->assertSame( $this->game_slug, $character->owner_slug );
-		$this->assertNotEmpty( $character->uuid, 'D24: every imported character gets a fresh UUIDv7.' );
+		$this->assertNotEmpty( $character->uuid, 'every imported character gets a fresh UUIDv7.' );
 		$this->assertSame( 12, (int) $character->xp_earned );
 		$this->assertSame( 5, (int) $character->xp_unspent );
 
@@ -327,7 +327,7 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$first  = $this->dispatch( $this->commit_request( $job_id ) )->get_data();
 		$second = $this->dispatch( $this->commit_request( $job_id ) )->get_data();
 
-		$this->assertSame( $first, $second, 'V13: re-committing must return the same frozen result, not import again.' );
+		$this->assertSame( $first, $second, 're-committing must return the same frozen result, not import again.' );
 	}
 
 	public function test_a_player_role_user_is_refused(): void {
@@ -532,7 +532,7 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 		$this->assertSame( 'Thaumaturgy', $held[0]['name'] );
 		$this->assertSame( 'Not A Real Path', $held[0]['power_name'] );
 		$this->assertTrue( $held[0]['custom'] );
-		$this->assertArrayNotHasKey( 'level', $held[0], 'a custom pick has no seeded ladder position, same shape as an Elder+ pick (Decision 037)' );
+		$this->assertArrayNotHasKey( 'level', $held[0], 'a custom pick has no seeded ladder position, the same shape as an Elder+ pick' );
 
 		$change = \BeyondElysium\Models\Change::for_character( (int) $found->id )[0];
 		$this->assertSame( 'import_note', $change->change_type );

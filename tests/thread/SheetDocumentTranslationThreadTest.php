@@ -155,9 +155,7 @@ class SheetDocumentTranslationThreadTest extends WP_UnitTestCase {
 	public function test_no_report_is_translated_by_this_change_a_real_logged_gap_not_a_regression(): void {
 		$this->assertTrue(
 			true,
-			'See this test\'s own docblock and 1.2.0-design-workflow.md\'s B12 addendum - '
-			. 'the report half of T15 is a measured, honestly-logged gap, not something '
-			. 'this test can assert a passing behavior for.'
+			'Reports are not translated; this test records that as a known gap, not a behavior it can assert.'
 		);
 	}
 }

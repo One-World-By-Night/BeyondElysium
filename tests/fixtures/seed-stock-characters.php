@@ -404,7 +404,8 @@ $fixtures = [
 			'met-flaws'           => [ [ 'name' => 'Obsession', 'count' => 3 ] ],
 			'kueijin-backgrounds' => [ [ 'name' => 'Herd', 'count' => 2 ], [ 'name' => 'Rites', 'count' => 1 ] ],
 			'kueijin-disciplines' => [ [ 'name' => 'Cultivation', 'level' => 2 ], [ 'name' => 'Yin Prana', 'level' => 1 ] ],
-			'kueijin-resources'   => [ 'Hun' => [ 'permanent' => 5, 'temporary' => 5 ], 'Po' => [ 'permanent' => 3, 'temporary' => 3 ], 'Yin Chi' => [ 'permanent' => 4, 'temporary' => 4 ], 'Yang Chi' => [ 'permanent' => 3, 'temporary' => 3 ], 'Demon Chi' => [ 'permanent' => 0, 'temporary' => 0 ] ],
+			'kueijin-resources'   => [ 'Hun' => [ 'permanent' => 5, 'temporary' => 5 ], 'Po' => [ 'permanent' => 3, 'temporary' => 3 ], 'Demon Chi' => [ 'permanent' => 0, 'temporary' => 0 ] ],
+			'kueijin-virtues'     => [ 'Yin Chi' => [ 'permanent' => 4, 'temporary' => 4 ], 'Yang Chi' => [ 'permanent' => 3, 'temporary' => 3 ] ],
 		],
 	],
 	[
@@ -424,7 +425,8 @@ $fixtures = [
 			'met-flaws'           => [ [ 'name' => 'Vengeance', 'count' => 2 ] ],
 			'kueijin-backgrounds' => [ [ 'name' => 'Nushi', 'count' => 1 ], [ 'name' => 'Jade Talisman', 'count' => 1 ] ],
 			'kueijin-disciplines' => [ [ 'name' => 'Black Wind', 'level' => 2 ], [ 'name' => 'Bone Shintai', 'level' => 1 ] ],
-			'kueijin-resources'   => [ 'Hun' => [ 'permanent' => 3, 'temporary' => 3 ], 'Po' => [ 'permanent' => 5, 'temporary' => 5 ], 'Yin Chi' => [ 'permanent' => 3, 'temporary' => 3 ], 'Yang Chi' => [ 'permanent' => 4, 'temporary' => 4 ], 'Demon Chi' => [ 'permanent' => 1, 'temporary' => 1 ] ],
+			'kueijin-resources'   => [ 'Hun' => [ 'permanent' => 3, 'temporary' => 3 ], 'Po' => [ 'permanent' => 5, 'temporary' => 5 ], 'Demon Chi' => [ 'permanent' => 1, 'temporary' => 1 ] ],
+			'kueijin-virtues'     => [ 'Yin Chi' => [ 'permanent' => 3, 'temporary' => 3 ], 'Yang Chi' => [ 'permanent' => 4, 'temporary' => 4 ] ],
 		],
 	],
 
@@ -445,7 +447,7 @@ $fixtures = [
 			'met-merits'          => [ [ 'name' => 'Common Sense' ] ],
 			'met-flaws'           => [ [ 'name' => 'Insomnia', 'count' => 2 ] ],
 			'mortal-backgrounds'  => [ [ 'name' => 'Contacts', 'count' => 3 ], [ 'name' => 'Allies', 'count' => 1 ] ],
-			'mortal-resources'    => [ 'Willpower' => [ 'permanent' => 5, 'temporary' => 5 ], 'Humanity' => [ 'permanent' => 8, 'temporary' => 8 ], 'True Faith' => [ 'permanent' => 0, 'temporary' => 0 ] ],
+			'mortal-resources'    => [ 'Willpower' => [ 'permanent' => 5, 'temporary' => 5 ], 'Humanity' => [ 'permanent' => 5, 'temporary' => 5 ], 'True Faith' => [ 'permanent' => 0, 'temporary' => 0 ] ],
 		],
 	],
 	[
@@ -487,7 +489,7 @@ $fixtures = [
 			'met-flaws'           => [ [ 'name' => 'Haunted', 'count' => 2 ] ],
 			'mummy-backgrounds'   => [ [ 'name' => 'Tomb', 'count' => 2 ], [ 'name' => 'Artifact', 'count' => 1 ] ],
 			'mummy-hekau'         => [ [ 'name' => 'Alchemy', 'level' => 2 ], [ 'name' => 'Necromancy', 'level' => 1 ] ],
-			'mummy-resources'     => [ 'Sekhem' => [ 'permanent' => 5, 'temporary' => 5 ], 'Balance' => [ 'permanent' => 6, 'temporary' => 6 ], 'Willpower' => [ 'permanent' => 6, 'temporary' => 6 ] ],
+			'mummy-resources'     => [ 'Sekhem' => [ 'permanent' => 5, 'temporary' => 5 ], 'Balance' => [ 'permanent' => 5, 'temporary' => 5 ], 'Willpower' => [ 'permanent' => 6, 'temporary' => 6 ] ],
 		],
 	],
 	[

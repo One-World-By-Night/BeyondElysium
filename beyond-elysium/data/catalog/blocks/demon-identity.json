@@ -6,9 +6,8 @@
   "section_type": "identity_field",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_schema_blocks, dumped by tools/catalog/dump_live.sh"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -39,6 +38,24 @@
           "Reconciler"
         ]
       }
-    ]
+    ],
+    "house_lores": {
+      "Defiler": [ "Lore of Longing", "Lore of Storms", "Lore of Transfiguration" ],
+      "Devil": [ "Lore of the Celestials", "Lore of Flame", "Lore of Radiance" ],
+      "Devourer": [ "Lore of the Beast", "Lore of the Flesh", "Lore of the Wild" ],
+      "Fiend": [ "Lore of Light", "Lore of Patterns", "Lore of Portals" ],
+      "Malefactor": [ "Lore of the Earth", "Lore of Paths", "Lore of the Forge" ],
+      "Scourge": [ "Lore of Awakening", "Lore of the Firmament", "Lore of the Winds" ],
+      "Slayer": [ "Lore of Death", "Lore of the Realms", "Lore of the Spirit" ]
+    },
+    "house_torment": {
+      "Defiler": 3,
+      "Devil": 4,
+      "Devourer": 4,
+      "Fiend": 3,
+      "Malefactor": 3,
+      "Scourge": 3,
+      "Slayer": 4
+    }
   }
 }

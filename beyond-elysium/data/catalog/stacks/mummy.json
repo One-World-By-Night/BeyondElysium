@@ -5,9 +5,8 @@
   "kind": "stack",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_creature_stacks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_creature_stacks, dumped by tools/catalog/dump_live.sh"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -65,7 +64,16 @@
         "block_slug": "mummy-hekau",
         "label": "Hekau",
         "display_order": 60,
-        "required": true
+        "required": true,
+        "in_type": [
+          {
+            "kind": "names",
+            "values": {
+              "map": "mummy-identity.primary_hekau",
+              "by": [ "Amenti" ]
+            }
+          }
+        ]
       },
       {
         "block_slug": "mummy-formulae",
@@ -111,6 +119,85 @@
       }
     ],
     "display_preferences": {},
-    "creation_rules": null
+    "creation_rules": {
+      "steps": [
+        {
+          "kind": "prioritized",
+          "label": "Attributes",
+          "sections": [
+            "met-physical-traits",
+            "met-social-traits",
+            "met-mental-traits"
+          ],
+          "amounts": [ 6, 4, 3 ]
+        },
+        {
+          "kind": "free",
+          "label": "Rebirth Attributes",
+          "pool": "Rebirth Attributes",
+          "points": 2,
+          "rates": {
+            "met-physical-traits": 1,
+            "met-social-traits": 1,
+            "met-mental-traits": 1
+          }
+        },
+        {
+          "kind": "budget",
+          "label": "Abilities",
+          "section": "mummy-abilities",
+          "count": 10
+        },
+        {
+          "kind": "budget",
+          "label": "Backgrounds",
+          "section": "mummy-backgrounds",
+          "count": 5
+        },
+        {
+          "kind": "budget",
+          "label": "Hekau",
+          "section": "mummy-hekau",
+          "count": 3,
+          "filter": { "tier": "basic" },
+          "quotas": [
+            {
+              "label": "At least one in the primary Hekau path",
+              "min": 1,
+              "test": {
+                "kind": "names",
+                "values": {
+                  "map": "mummy-identity.primary_hekau",
+                  "by": [ "Amenti" ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "kind": "limit",
+          "label": "A Hekau path never outranks Balance",
+          "section": "mummy-hekau",
+          "max_rating": { "base": 0, "plus": "mummy-resources.Balance" }
+        },
+        {
+          "kind": "free",
+          "label": "Free Traits",
+          "pool": "Free Traits",
+          "points": 10,
+          "rates": {
+            "met-physical-traits": 1,
+            "met-social-traits": 1,
+            "met-mental-traits": 1,
+            "mummy-abilities": 1,
+            "mummy-backgrounds": 1,
+            "mummy-resources.Balance": 2,
+            "mummy-resources.Sekhem": 2,
+            "mummy-resources.Willpower": 3,
+            "mummy-merits": "value"
+          }
+        }
+      ]
+    }
   }
 }

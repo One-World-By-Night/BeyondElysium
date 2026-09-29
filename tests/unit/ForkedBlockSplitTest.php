@@ -49,7 +49,7 @@ class ForkedBlockSplitTest extends TestCase {
 	public function test_an_unmigrated_fork_prices_the_old_way(): void {
 		$result = Cost_Engine::price_held_tiered_power( $this->decoded( $this->flat_fork() ), [ 'name' => 'Animalism', 'level' => 5 ], true );
 
-		$this->assertSame( 45, $result['xp'], 'a flat fork falls through to the pre-1.2.10 one-tier-per-rank ladder' );
+		$this->assertSame( 45, $result['xp'], 'a flat fork falls through to the older one-tier-per-rank ladder' );
 	}
 
 	public function test_a_migrated_fork_prices_the_same_as_a_reseeded_global(): void {

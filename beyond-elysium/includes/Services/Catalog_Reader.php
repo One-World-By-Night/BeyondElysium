@@ -94,13 +94,25 @@ class Catalog_Reader {
 			}
 		}
 
+		$blocks_by_slug = [];
+		foreach ( $decoded as $entry ) {
+			if ( ( $entry['data']['kind'] ?? '' ) === 'block' ) {
+				$blocks_by_slug[ (string) ( $entry['data']['slug'] ?? $entry['stem'] ) ] = $entry['data'];
+			}
+		}
+
 		foreach ( $decoded as $path => $entry ) {
 			$stem = $entry['stem'];
 			$data = $entry['data'];
 
 			$errors = array_merge(
 				Catalog_Validator::validate_file( $data, $stem ),
-				Catalog_Validator::validate_references( $data, $stem, $block_slugs, $stack_slugs )
+				Catalog_Validator::validate_references( $data, $stem, $block_slugs, $stack_slugs ),
+				Catalog_Validator::validate_variant( $data, $blocks_by_slug[ (string) ( $data['variant']['of'] ?? '' ) ] ?? null ),
+				Catalog_Validator::validate_derived( $data, $blocks_by_slug[ (string) ( $data['definition']['_meta']['untiered']['derived_from'] ?? '' ) ] ?? null ),
+				Catalog_Validator::validate_in_type_refs( $data, $blocks_by_slug ),
+				Catalog_Validator::validate_identity_field_refs( $data, $blocks_by_slug ),
+				Catalog_Validator::validate_creation_rules_refs( $data, $blocks_by_slug )
 			);
 			if ( $errors !== [] ) {
 				$result['errors'][] = sprintf( '%s: %s', $path, implode( '; ', $errors ) );
@@ -139,7 +151,9 @@ class Catalog_Reader {
 	}
 
 	/**
-	 * Every declared block file, base and variant alike, as a `Schema_Block`-ready array keyed by slug.
+	 * Every declared block file, base and variant alike, as a `Schema_Block`-ready array keyed by slug. A variant keeps
+	 * its own file's content, what it adds to its base or all it replaces it with, under a `_variant` descriptor naming
+	 * the base, its id, label and mode.
 	 *
 	 * @return array<string,array{slug:string,name:string,section_type:string,definition:array,is_system:int,created_by:int}>
 	 */
@@ -152,19 +166,17 @@ class Catalog_Reader {
 			$definition   = (array) ( $data['definition'] ?? [] );
 			$variant      = is_array( $data['variant'] ?? null ) ? $data['variant'] : null;
 
-			if ( $variant !== null && ( $variant['mode'] ?? '' ) === 'add' ) {
+			if ( $variant !== null ) {
 				$base_slug = (string) ( $variant['of'] ?? '' );
-				$base      = $catalog['blocks'][ $base_slug ] ?? null;
-				if ( $base === null ) {
-					error_log( "Beyond Elysium: catalog variant \"{$slug}\" adds to \"{$base_slug}\", which has no valid declared file - skipped." );
+				if ( ! isset( $catalog['blocks'][ $base_slug ] ) ) {
+					error_log( "Beyond Elysium: catalog variant \"{$slug}\" varies \"{$base_slug}\", which has no valid declared file - skipped." );
 					continue;
 				}
-				$definition = self::merge_add_variant( $section_type, (array) $base['definition'], $definition );
+				$definition['_variant'] = self::variant_descriptor( $variant );
 			}
 
-			$definition = self::apply_definition_defaults( $section_type, $definition );
-			if ( $section_type === 'tiered_power' ) {
-				$definition = self::bridge_out_of_type_modifier( $definition );
+			if ( $variant === null || ( $variant['mode'] ?? '' ) === 'replace' ) {
+				$definition = self::apply_definition_defaults( $section_type, $definition );
 			}
 
 			$block = [
@@ -185,6 +197,41 @@ class Catalog_Reader {
 		}
 
 		return $blocks;
+	}
+
+	/**
+	 * The variants each base block has, by base slug: each variant's slug, id, label and mode, in the catalog's order.
+	 *
+	 * @return array<string,array<int,array{slug:string,id:string,label:string,mode:string}>>
+	 */
+	public static function variants( string $root = self::DEFAULT_ROOT ): array {
+		$catalog  = self::load( $root );
+		$variants = [];
+		foreach ( $catalog['blocks'] as $slug => $data ) {
+			$variant = is_array( $data['variant'] ?? null ) ? $data['variant'] : null;
+			$base    = (string) ( $variant['of'] ?? '' );
+			if ( $variant === null || ! isset( $catalog['blocks'][ $base ] ) ) {
+				continue;
+			}
+			$variants[ $base ][] = [ 'slug' => (string) $slug ] + self::variant_descriptor( $variant );
+		}
+		ksort( $variants );
+		return $variants;
+	}
+
+	/**
+	 * A variant's declaration as stored: the base it varies, its id, label and mode.
+	 *
+	 * @param array<string,mixed> $variant
+	 * @return array{of:string,id:string,label:string,mode:string}
+	 */
+	private static function variant_descriptor( array $variant ): array {
+		return [
+			'of'    => (string) ( $variant['of'] ?? '' ),
+			'id'    => (string) ( $variant['id'] ?? '' ),
+			'label' => (string) ( $variant['label'] ?? '' ),
+			'mode'  => ( $variant['mode'] ?? '' ) === 'replace' ? 'replace' : 'add',
+		];
 	}
 
 	/**
@@ -264,32 +311,6 @@ class Catalog_Reader {
 				'allow_custom'    => true,
 				'allow_multiples' => false,
 			], $definition );
-		}
-
-		return $definition;
-	}
-
-	/**
-	 * Bridges `_meta.out_of_type`, the per-rank expression, back onto the deprecated flat `out_of_type_cost_modifier`
-	 * scalar `Cost_Engine` still reads.
-	 *
-	 * @param array<string,mixed> $definition
-	 * @return array<string,mixed>
-	 */
-	private static function bridge_out_of_type_modifier( array $definition ): array {
-		if ( array_key_exists( 'out_of_type_cost_modifier', $definition ) ) {
-			return $definition;
-		}
-
-		$meta = is_array( $definition['_meta'] ?? null ) ? $definition['_meta'] : null;
-		$expr = $meta !== null && is_array( $meta['out_of_type'] ?? null ) ? $meta['out_of_type'] : null;
-		if ( $expr === null || $expr === [] ) {
-			return $definition;
-		}
-
-		$values = array_values( array_unique( array_values( $expr ) ) );
-		if ( count( $values ) === 1 && is_string( $values[0] ) && preg_match( '/^\+(\d+)$/', $values[0], $m ) ) {
-			$definition['out_of_type_cost_modifier'] = (int) $m[1];
 		}
 
 		return $definition;

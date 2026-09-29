@@ -45,7 +45,7 @@ function SectionBlock( { label, html }: { label: string; html: string } ) {
 	return (
 		<div className="be-house-rules__section">
 			<span className="be-house-rules__section-label">{ label }</span>
-			{ /* eslint-disable-next-line react/no-danger */ }
+			{  }
 			<div
 				className="be-house-rules__section-body"
 				dangerouslySetInnerHTML={ { __html: html } }

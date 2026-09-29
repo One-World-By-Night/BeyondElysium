@@ -135,7 +135,6 @@ export function AdminAprSettings() {
 	}
 
 	function restoreGrapevineDefaults() {
-		// eslint-disable-next-line no-alert
 		if (
 			! window.confirm(
 				__(

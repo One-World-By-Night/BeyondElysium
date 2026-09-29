@@ -110,7 +110,7 @@ class NotificationsTest extends WP_UnitTestCase {
 		$response = $this->dispatch( $request );
 
 		$this->assertSame( 'approved', $response->get_data()->status, 'xp_earn submitted by a manager auto-approves' );
-		$this->assertCount( 0, $this->captured, 'auto-approve is not a review action - Decision 087' );
+		$this->assertCount( 0, $this->captured, 'auto-approve is not a review action' );
 	}
 
 	public function test_batch_approving_two_changes_for_the_same_player_sends_one_mail(): void {

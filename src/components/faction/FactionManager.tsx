@@ -323,7 +323,7 @@ function FactionDetail( {
 			.catch( () => setMembers( [] ) );
 	}
 
-	useEffect( load, [ gameSlug, id ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect( load, [ gameSlug, id ] );
 
 	function loadCandidates() {
 		api.factions( gameSlug )
@@ -466,14 +466,13 @@ function FactionDetail( {
 			</p>
 			{ faction.description && (
 				<div
-					// eslint-disable-next-line react/no-danger
 					dangerouslySetInnerHTML={ { __html: faction.description } }
 				/>
 			) }
 			{ faction.goals && (
 				<div>
 					<strong>{ __( 'Goals:', 'beyond-elysium' ) }</strong>
-					{ /* eslint-disable-next-line react/no-danger */ }
+					{  }
 					<div
 						dangerouslySetInnerHTML={ { __html: faction.goals } }
 					/>

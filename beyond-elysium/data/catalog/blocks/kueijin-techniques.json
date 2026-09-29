@@ -8,7 +8,6 @@
     "sources": [
       "GVM: Bone Flower Techniques, Resplendent Crane Techniques (moved out of kueijin-disciplines - a Technique is one power with prerequisites, not a rated ladder)"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/build_kueijin_disciplines.py"
   },
   "definition": {

@@ -120,7 +120,6 @@ export function CastingBrief( {
 								{ section.rows && (
 									<ul>
 										{ section.rows.map( ( row, i ) => (
-											// eslint-disable-next-line react/no-array-index-key
 											<BriefRow key={ i } row={ row } />
 										) ) }
 									</ul>
@@ -128,7 +127,6 @@ export function CastingBrief( {
 								{ section.groups && (
 									<>
 										{ section.groups.map( ( group, i ) => (
-											// eslint-disable-next-line react/no-array-index-key
 											<div key={ i }>
 												{ group.label && (
 													<h4>{ group.label }</h4>
@@ -137,7 +135,6 @@ export function CastingBrief( {
 													{ group.rows.map(
 														( row, j ) => (
 															<BriefRow
-																// eslint-disable-next-line react/no-array-index-key
 																key={ j }
 																row={ row }
 															/>

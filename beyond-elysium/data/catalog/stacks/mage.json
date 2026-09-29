@@ -5,9 +5,8 @@
   "kind": "stack",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_creature_stacks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_creature_stacks, dumped by tools/catalog/dump_live.sh"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -65,7 +64,26 @@
         "block_slug": "mage-spheres",
         "label": "Spheres",
         "display_order": 60,
-        "required": true
+        "required": true,
+        "in_type": [
+          {
+            "kind": "names",
+            "values": {
+              "map": "mage-identity.tradition_specialty",
+              "by": [ "Tradition" ]
+            }
+          },
+          {
+            "kind": "chosen",
+            "values": {
+              "field": "mage-identity.Chosen Specialty Sphere"
+            },
+            "when": {
+              "field": "mage-identity.Tradition",
+              "is": [ "Orphan", "Hedge Wizard" ]
+            }
+          }
+        ]
       },
       {
         "block_slug": "mage-rotes",
@@ -111,6 +129,59 @@
       }
     ],
     "display_preferences": {},
-    "creation_rules": null
+    "creation_rules": {
+      "steps": [
+        {
+          "kind": "prioritized",
+          "label": "Attributes",
+          "sections": [
+            "met-physical-traits",
+            "met-social-traits",
+            "met-mental-traits"
+          ],
+          "amounts": [ 7, 5, 3 ]
+        },
+        {
+          "kind": "budget",
+          "label": "Abilities",
+          "section": "mage-abilities",
+          "count": 5
+        },
+        {
+          "kind": "budget",
+          "label": "Backgrounds",
+          "section": "mage-backgrounds",
+          "count": 7
+        },
+        {
+          "kind": "budget",
+          "label": "Spheres",
+          "section": "mage-spheres",
+          "count": 6
+        },
+        {
+          "kind": "limit",
+          "label": "A Sphere never outranks Arete",
+          "section": "mage-spheres",
+          "max_rating": { "base": 0, "plus": "mage-resources.Arete" }
+        },
+        {
+          "kind": "free",
+          "label": "Free Traits",
+          "pool": "Free Traits",
+          "points": 5,
+          "rates": {
+            "met-physical-traits": 1,
+            "met-social-traits": 1,
+            "met-mental-traits": 1,
+            "mage-abilities": 1,
+            "mage-backgrounds": 1,
+            "mage-resources.Arete": 2,
+            "mage-resources.Willpower": 3,
+            "mage-merits": "value"
+          }
+        }
+      ]
+    }
   }
 }

@@ -17,9 +17,7 @@ Character Sheet → pick **Point audit** in the actions list and click **Go** (S
 - **Priced N of M lines.** - how much of the sheet this audit could actually price.
 - A caveat sentence naming how many lines couldn't be priced and, when there is one, the most common reason.
 - The rest of the report, grouped under the sheet's own section headings. Each held line is either:
-  - **Priced** - its name (with a "×N" count above one), its XP cost, and, for a power bought
-    outside your character's own type, a "(+N out-of-type)" note. A line that gives XP back (a
-    Flaw, for example) shows its amount with a minus sign.
+  - **Priced** - its name, its XP cost, and, where a power's price depends on your character's own type, by how much: "(+N out-of-type)" for one bought outside it, "(−N in-type)" for one bought within it at a discount. On a list counted in dots, such as Abilities or Backgrounds, the name carries a "×N" count above one and the cost covers every dot. A Merit, Flaw, Ritual or other single purchase is priced once, whatever number it was imported with; where the catalog gives it a choice of costs, an imported number that is one of them is the cost chosen. A line that gives XP back (a Flaw, for example) shows its amount with a minus sign.
   - **Unpriced** - its name and a plain reason: "catalog item has no cost," "name not in
     catalog," "family not in catalog," "level has no cost," "custom, no catalog entry,"
     "identity field, no catalog cost," "resource pool has no pricing rule yet," or "held block

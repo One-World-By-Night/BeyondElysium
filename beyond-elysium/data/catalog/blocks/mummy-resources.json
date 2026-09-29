@@ -6,10 +6,12 @@
   "section_type": "resource_pool",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh",
-      "Laws of the Resurrection (WW05035) p. 116 - Sekhem 3, Willpower 3, Balance \"a number of Experience Traits equal to the level desired\""
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_schema_blocks, dumped by tools/catalog/dump_live.sh",
+      "Laws of the Resurrection (WW05035) p. 64 - a beginning Amenti assigns Balance 1, Willpower 5, Sekhem 1 (\"which, like any starting Amenti, begins with one Trait\")",
+      "Laws of the Resurrection (WW05035) p. 67 - Free Traits alone cannot raise Balance above 3 or Sekhem above the character's own Balance rating, not encoded as a structural cap here (matching this project's existing precedent of leaving a rating-tied ceiling flat, e.g. Vampire's Blood against Generation)",
+      "Laws of the Resurrection (WW05035) p. 67 - a maximum of 10 permanent Willpower Traits; p. 94-95 - Balance never exceeds 5 (\"even if the new Balance rating is less than five\")",
+      "Laws of the Resurrection (WW05035) p. 115 - new Willpower 3 XP/Trait, new Sekhem 3 XP/Trait, new Balance a number of Experience Traits equal to the level desired"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -17,15 +19,15 @@
       {
         "name": "Sekhem",
         "value_type": "integer",
-        "default_start": 3,
+        "default_start": 1,
         "max": 10,
         "cost_per_dot": 3
       },
       {
         "name": "Balance",
         "value_type": "integer",
-        "default_start": 5,
-        "max": 10,
+        "default_start": 1,
+        "max": 5,
         "sliding_cost": {
           "equals_level": true
         }
@@ -33,8 +35,8 @@
       {
         "name": "Willpower",
         "value_type": "integer",
-        "default_start": 3,
-        "max": 20,
+        "default_start": 5,
+        "max": 10,
         "cost_per_dot": 3
       }
     ]

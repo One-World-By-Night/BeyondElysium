@@ -36,7 +36,6 @@ export class ErrorBoundary extends Component<
 		error: Error,
 		info: { componentStack?: string | null }
 	): void {
-		// eslint-disable-next-line no-console
 		console.error(
 			`[BE] "${ this.props.label }" crashed:`,
 			error,

@@ -5,9 +5,8 @@
   "kind": "stack",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_creature_stacks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_creature_stacks, dumped by tools/catalog/dump_live.sh"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -65,7 +64,24 @@
         "block_slug": "werewolf-gifts",
         "label": "Gifts",
         "display_order": 60,
-        "required": true
+        "required": true,
+        "in_type": [
+          {
+            "kind": "facet",
+            "facet": "breed",
+            "values": { "field": "werewolf-identity.Breed" }
+          },
+          {
+            "kind": "facet",
+            "facet": "auspice",
+            "values": { "field": "werewolf-identity.Auspice" }
+          },
+          {
+            "kind": "facet",
+            "facet": "tribe",
+            "values": { "field": "werewolf-identity.Tribe" }
+          }
+        ]
       },
       {
         "block_slug": "werewolf-rites",
@@ -117,6 +133,139 @@
       }
     ],
     "display_preferences": {},
-    "creation_rules": null
+    "creation_rules": {
+      "steps": [
+        {
+          "kind": "prioritized",
+          "label": "Attributes",
+          "sections": [
+            "met-physical-traits",
+            "met-social-traits",
+            "met-mental-traits"
+          ],
+          "amounts": [ 7, 5, 3 ]
+        },
+        {
+          "kind": "budget",
+          "label": "Abilities",
+          "section": "werewolf-abilities",
+          "count": 5
+        },
+        {
+          "kind": "budget",
+          "label": "Backgrounds",
+          "section": "werewolf-backgrounds",
+          "count": 5
+        },
+        {
+          "kind": "budget",
+          "label": "Gifts",
+          "section": "werewolf-gifts",
+          "count": 3,
+          "filter": { "in_type": true, "tier": "basic" },
+          "quotas": [
+            {
+              "label": "One breed Gift",
+              "min": 1,
+              "test": { "kind": "facet", "facet": "breed", "values": { "field": "werewolf-identity.Breed" } }
+            },
+            {
+              "label": "One auspice Gift",
+              "min": 1,
+              "test": { "kind": "facet", "facet": "auspice", "values": { "field": "werewolf-identity.Auspice" } }
+            },
+            {
+              "label": "One tribe Gift",
+              "min": 1,
+              "test": { "kind": "facet", "facet": "tribe", "values": { "field": "werewolf-identity.Tribe" } }
+            }
+          ]
+        },
+        {
+          "kind": "start",
+          "label": "Rage",
+          "target": "werewolf-resources.Rage",
+          "lookup": { "map": "werewolf-identity.auspice_rage", "by": [ "Auspice" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Gnosis",
+          "target": "werewolf-resources.Gnosis",
+          "lookup": { "map": "werewolf-identity.breed_gnosis", "by": [ "Breed" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Willpower",
+          "target": "werewolf-resources.Willpower",
+          "lookup": { "map": "werewolf-identity.tribe_willpower", "by": [ "Tribe" ] },
+          "when": { "field": "werewolf-identity.Tribe", "is": [ "Bone Gnawers", "Children of Gaia", "Wendigo" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Beginning Renown (Theurge)",
+          "target": "werewolf-renown.Wisdom",
+          "value": 3,
+          "when": { "field": "werewolf-identity.Auspice", "is": [ "Theurge" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Beginning Renown (Philodox)",
+          "target": "werewolf-renown.Honor",
+          "value": 3,
+          "when": { "field": "werewolf-identity.Auspice", "is": [ "Philodox" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Beginning Renown (Galliard, Glory)",
+          "target": "werewolf-renown.Glory",
+          "value": 2,
+          "when": { "field": "werewolf-identity.Auspice", "is": [ "Galliard" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Beginning Renown (Galliard, Wisdom)",
+          "target": "werewolf-renown.Wisdom",
+          "value": 1,
+          "when": { "field": "werewolf-identity.Auspice", "is": [ "Galliard" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Beginning Renown (Ahroun, Glory)",
+          "target": "werewolf-renown.Glory",
+          "value": 2,
+          "when": { "field": "werewolf-identity.Auspice", "is": [ "Ahroun" ] }
+        },
+        {
+          "kind": "start",
+          "label": "Beginning Renown (Ahroun, Honor)",
+          "target": "werewolf-renown.Honor",
+          "value": 1,
+          "when": { "field": "werewolf-identity.Auspice", "is": [ "Ahroun" ] }
+        },
+        {
+          "kind": "budget",
+          "label": "Beginning Renown (Ragabash, any combination)",
+          "section": "werewolf-renown",
+          "count": 3,
+          "when": { "field": "werewolf-identity.Auspice", "is": [ "Ragabash" ] }
+        },
+        {
+          "kind": "free",
+          "label": "Free Traits",
+          "pool": "Free Traits",
+          "points": 5,
+          "rates": {
+            "met-physical-traits": 1,
+            "met-social-traits": 1,
+            "met-mental-traits": 1,
+            "werewolf-abilities": 1,
+            "werewolf-backgrounds": 1,
+            "werewolf-resources.Gnosis": 2,
+            "werewolf-resources.Willpower": 1,
+            "werewolf-merits": "value"
+          }
+        }
+      ]
+    }
   }
 }

@@ -294,7 +294,6 @@ export function AdminChronicleAccess() {
 	 * Removes one member from the selected chronicle after confirmation.
 	 */
 	async function removeMember( wpUserId: number, name: string | null ) {
-		// eslint-disable-next-line no-alert
 		if (
 			! window.confirm(
 				sprintf(

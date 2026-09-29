@@ -43,7 +43,7 @@ class CostEngineQuoteThreadTest extends WP_UnitTestCase {
 
 		$this->assertSame( 0, Cost_Engine::cost_for_change( $this->character, $change ), 'the bare number never read a price and still does not' );
 		$this->assertSame( [ 'xp' => 0, 'priced' => false, 'unpriced_reason' => 'custom_no_catalog_entry' ], Cost_Engine::quote_for_change( $this->character, $change ) );
-		$this->assertSame( [ 'xp' => 6, 'priced' => true, 'unpriced_reason' => null ], Cost_Engine::quote_for_change( $this->character, $change, true ) );
+		$this->assertSame( [ 'xp' => 2, 'priced' => true, 'unpriced_reason' => null ], Cost_Engine::quote_for_change( $this->character, $change, true ), 'a merit row is one purchase, charged the price once' );
 	}
 
 	public function test_a_block_the_character_does_not_have_is_priced_at_nothing(): void {

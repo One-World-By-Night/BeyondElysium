@@ -106,7 +106,7 @@ class RumorReleaseThreadTest extends WP_UnitTestCase {
 		$response = $this->generate( true );
 
 		$this->assertSame( 201, $response->get_status(), wp_json_encode( $response->get_data() ) );
-		$this->assertSame( [], $this->captured_mail, 'generation itself must never send mail - only a release does (item 3)' );
+		$this->assertSame( [], $this->captured_mail, 'generation itself must never send mail - only a release does' );
 	}
 
 	public function test_a_generated_rumor_is_held_with_no_batch_and_invisible_to_a_non_manager(): void {
@@ -115,7 +115,7 @@ class RumorReleaseThreadTest extends WP_UnitTestCase {
 
 		$plot = $this->find_rumor_plot( Rumor_Generator::PUBLIC_TITLE );
 		$this->assertNotNull( $plot );
-		$this->assertTrue( $plot->held, 'held from birth (item 2)' );
+		$this->assertTrue( $plot->held, 'held from birth' );
 		$this->assertNull( $plot->release_batch_id, 'a draft has no batch yet' );
 
 		wp_set_current_user( $player_id );
@@ -178,11 +178,11 @@ class RumorReleaseThreadTest extends WP_UnitTestCase {
 	public function test_the_migration_keeps_todays_visibility(): void {
 		delete_option( 'be_rumor_release_migrated' );
 
-		[ $player_id, ] = $this->make_player_character( 'Pre 1.1.0 Rumor Character' );
+		[ $player_id, ] = $this->make_player_character( 'Legacy Rumor Character' );
 
 		$plot_id = (int) Plot::create( [
 			'game_id'    => $this->game_id,
-			'title'      => 'A Pre-1.1.0 Rumor',
+			'title'      => 'A Legacy Rumor',
 			'created_by' => 1,
 			'audience'   => Audience::EVERYONE,
 		] );
@@ -206,14 +206,14 @@ class RumorReleaseThreadTest extends WP_UnitTestCase {
 		$this->assertSame( Audience::EVERYONE, $plot->audience, "the migration must never touch a rumor's existing audience" );
 		$this->assertTrue(
 			Audience::can_see( $plot, 'plot', $player_id, $this->game_slug, false ),
-			'a rumor visible before 1.1.0 must still be visible after the migration'
+			'a rumor visible before the migration must still be visible after it'
 		);
 	}
 
 	public function test_the_migration_runs_once_and_does_not_move_a_rumor_already_released_elsewhere(): void {
 		delete_option( 'be_rumor_release_migrated' );
 
-		$plot_id = (int) Plot::create( [ 'game_id' => $this->game_id, 'title' => 'A Pre-1.1.0 Rumor', 'created_by' => 1 ] );
+		$plot_id = (int) Plot::create( [ 'game_id' => $this->game_id, 'title' => 'A Legacy Rumor', 'created_by' => 1 ] );
 		Connection::create( [
 			'game_id'     => $this->game_id,
 			'source_type' => 'plot',

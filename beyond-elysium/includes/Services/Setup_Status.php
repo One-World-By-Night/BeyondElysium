@@ -25,10 +25,12 @@ class Setup_Status {
 			self::row_creature_types( $game ),
 			self::row_storytellers( $game ),
 			self::row_new_character_approval( $game ),
+			self::row_starting_xp( $game ),
 			self::row_front_end_pages( $game ),
 			self::row_characters( $game ),
 			self::row_approval_rules( $game ),
 			self::row_catalog_customisation( $game ),
+			self::row_book_variants( $game ),
 			self::row_sheet_templates( $game ),
 			self::row_downtime_and_rumors( $game ),
 			self::row_plot_features( $game ),
@@ -68,6 +70,7 @@ class Setup_Status {
 	private static function row_creature_types( object $game ): array {
 		$enabled = $game->settings->enabled_stacks ?? null;
 		$ok      = is_array( $enabled ) && ! empty( $enabled );
+		$total   = \BeyondElysium\Models\Creature_Stack::total_for_game( (string) $game->slug );
 
 		return [
 			'id'         => 'enabled_stacks',
@@ -75,11 +78,16 @@ class Setup_Status {
 			'title'      => __( 'Creature types', 'beyond-elysium' ),
 			'detail'     => $ok
 				? sprintf(
-					/* translators: %d: number of enabled creature types */
-					__( '%d of 11 creature types are enabled.', 'beyond-elysium' ),
-					count( $enabled )
+					/* translators: %1$d: number of enabled creature types. %2$d: how many exist to choose from. */
+					__( '%1$d of %2$d creature types are enabled.', 'beyond-elysium' ),
+					count( $enabled ),
+					$total
 				)
-				: __( 'All 11 creature types are available. Narrow this to what your chronicle actually runs.', 'beyond-elysium' ),
+				: sprintf(
+					/* translators: %d: how many creature types exist to choose from. */
+					__( 'All %d creature types are available. Narrow this to what your chronicle actually runs.', 'beyond-elysium' ),
+					$total
+				),
 			'fix'        => [ 'kind' => 'inline', 'capability' => 'be_manage_chronicle_setup' ],
 		];
 	}
@@ -124,6 +132,24 @@ class Setup_Status {
 					: __( 'A player-created character starts active immediately, with no Storyteller review.', 'beyond-elysium' ) )
 				: __( 'Not chosen yet. Today, unset means a new character goes active immediately with no Storyteller ever seeing it.', 'beyond-elysium' ),
 			'fix'        => [ 'kind' => 'inline', 'capability' => 'be_manage_chronicle_setup' ],
+		];
+	}
+
+	/**
+	 * @return array<string,mixed>
+	 */
+	private static function row_starting_xp( object $game ): array {
+		$xp = (int) ( $game->settings->starting_xp ?? 0 );
+
+		return [
+			'id'     => 'starting_xp',
+			'status' => $xp > 0 ? 'ok' : 'info',
+			'title'  => __( 'Starting experience', 'beyond-elysium' ),
+			'detail' => $xp > 0
+				/* translators: %d: how much experience a new character starts with */
+				? sprintf( __( 'A new character starts with %d experience, which its build can spend.', 'beyond-elysium' ), $xp )
+				: __( 'A new character starts with no experience beyond its build.', 'beyond-elysium' ),
+			'fix'    => [ 'kind' => 'inline', 'capability' => 'be_manage_chronicle_setup' ],
 		];
 	}
 
@@ -197,23 +223,65 @@ class Setup_Status {
 	}
 
 	/**
-	 * The Catalog customisation row of the setup checklist.
+	 * The Catalog customisation row of the setup checklist: needing attention while the chronicle has book corrections to
+	 * review.
 	 *
 	 * @return array<string,mixed>
 	 */
 	private static function row_catalog_customisation( object $game ): array {
 		global $wpdb;
-		$table = Manager::table( 'schema_blocks' );
-		$count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE game_slug = %s", $game->slug ) );
+		$blocks_table = Manager::table( 'schema_blocks' );
+		$stacks_table = Manager::table( 'creature_stacks' );
+		$block_count  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$blocks_table} WHERE game_slug = %s", $game->slug ) );
+		$stack_count  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$stacks_table} WHERE game_slug = %s", $game->slug ) );
+		$count        = $block_count + $stack_count;
+		$corrections  = Catalog_Corrections::count( $game );
+
+		if ( $corrections > 0 ) {
+			$detail = sprintf(
+				/* translators: %d: number of changes this chronicle made where the book has changed since */
+				_n( '%d book correction to review.', '%d book corrections to review.', $corrections, 'beyond-elysium' ),
+				$corrections
+			);
+		} elseif ( $count > 0 ) {
+			$detail = sprintf( /* translators: %d: number of forked schema blocks and creature types */ __( '%d schema block(s) or creature type(s) are customised for this chronicle.', 'beyond-elysium' ), $count );
+		} else {
+			$detail = __( 'This chronicle uses the shared catalog with no customisation.', 'beyond-elysium' );
+		}
 
 		return [
 			'id'         => 'catalog_customisation',
-			'status'     => $count > 0 ? 'ok' : 'info',
+			'status'     => $corrections > 0 ? 'attention' : ( $count > 0 ? 'ok' : 'info' ),
 			'title'      => __( 'Catalog customisation', 'beyond-elysium' ),
-			'detail'     => $count > 0
-				? sprintf( /* translators: %d: number of forked schema blocks */ __( '%d schema block(s) are customised for this chronicle.', 'beyond-elysium' ), $count )
-				: __( 'This chronicle uses the shared catalog with no customisation.', 'beyond-elysium' ),
+			'detail'     => $detail,
 			'fix'        => [ 'kind' => 'link', 'href' => 'admin.php?page=beyond-elysium-system-config&tab=schema-blocks&game_slug=' . rawurlencode( $game->slug ), 'capability' => 'be_manage_schemas' ],
+		];
+	}
+
+	/**
+	 * The Book variants row of the setup checklist: the variants the chronicle chose for its blocks.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function row_book_variants( object $game ): array {
+		$chosen = [];
+		foreach ( Catalog_Variants::for_game( $game ) as $base ) {
+			foreach ( $base['variants'] as $variant ) {
+				if ( in_array( $variant['id'], $base['chosen'], true ) ) {
+					/* translators: 1: a block, such as Disciplines, 2: a book variant of it, such as Dark Ages printings */
+					$chosen[] = sprintf( __( '%1$s: %2$s', 'beyond-elysium' ), $base['base_name'], $variant['label'] );
+				}
+			}
+		}
+
+		return [
+			'id'     => 'book_variants',
+			'status' => $chosen !== [] ? 'ok' : 'info',
+			'title'  => __( 'Book variants', 'beyond-elysium' ),
+			'detail' => $chosen !== []
+				? implode( '; ', $chosen ) . '.'
+				: __( 'This chronicle uses the book with no variants.', 'beyond-elysium' ),
+			'fix'    => [ 'kind' => 'inline', 'capability' => 'be_manage_schemas' ],
 		];
 	}
 

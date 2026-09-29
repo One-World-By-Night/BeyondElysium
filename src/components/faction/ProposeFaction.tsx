@@ -108,11 +108,11 @@ export function ProposeFaction( {
 								'beyond-elysium'
 							),
 							character.name
-					  )
+						)
 					: __(
 							'A coterie, pack, cabal, or motley your character leads. A Storyteller reviews it before it becomes real.',
 							'beyond-elysium'
-					  ) }
+						) }
 			</p>
 
 			{ error && (

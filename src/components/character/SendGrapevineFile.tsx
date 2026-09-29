@@ -148,7 +148,6 @@ export function SendGrapevineFile() {
 	}
 
 	async function withdraw( row: Submission ) {
-		// eslint-disable-next-line no-alert
 		if (
 			! window.confirm(
 				sprintf(
@@ -271,7 +270,7 @@ export function SendGrapevineFile() {
 								chosenCharacter.name,
 								chosenCharacter.stack_name ??
 									chosenCharacter.stack_slug
-						  )
+							)
 						: chosenCharacter?.reason }
 					{ chosenCharacter?.verifiable && (
 						<>

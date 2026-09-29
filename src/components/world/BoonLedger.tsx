@@ -5,6 +5,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import { canIn } from '../../lib/chronicleCapabilities';
+import { sameId } from '../../lib/ids';
 import type { MyCapabilities } from '../../types';
 import type { Boon } from '../../types/world';
 import HelpButton from '../shared/HelpButton';
@@ -56,7 +57,7 @@ export function BoonLedger( {
 			} );
 	}
 
-	useEffect( load, [ gameSlug, characterId ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect( load, [ gameSlug, characterId ] );
 
 	async function repay( id: number, note: string ) {
 		setError( null );
@@ -71,10 +72,10 @@ export function BoonLedger( {
 	}
 
 	const owed = characterId
-		? items.filter( ( b ) => b.owed_by.id === characterId )
+		? items.filter( ( b ) => sameId( b.owed_by.id, characterId ) )
 		: null;
 	const owedTo = characterId
-		? items.filter( ( b ) => b.owed_to.id === characterId )
+		? items.filter( ( b ) => sameId( b.owed_to.id, characterId ) )
 		: null;
 
 	return (
@@ -178,8 +179,7 @@ function BoonTable( {
 							( boon.properties.status as string ) ??
 							'outstanding';
 						const repaidNote = boon.properties.repaid_note as
-							| string
-							| undefined;
+							string | undefined;
 						return (
 							<tr
 								key={ boon.id }

@@ -5,6 +5,9 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { everyPage } from '../../lib/everyPage';
+import { errorMessage } from '../../lib/errorMessage';
+import { InTypeTestEditor } from './InTypeTestEditor';
+import { CreationRulesEditor } from './CreationRulesEditor';
 import type {
 	CreationRules,
 	SchemaBlock,
@@ -18,6 +21,20 @@ export interface CreatureStackDefinitionEditorProps {
 	creationRules: CreationRules;
 	onChangeStackDefinition: ( d: StackDefinition ) => void;
 	onChangeCreationRules: ( r: CreationRules ) => void;
+	/**
+	 * Present only when this stack is being edited for a chronicle: a section hidden, shown, added or removed is
+	 * saved at once, through that chronicle's own route.
+	 */
+	gameSlug?: string;
+	stackSlug?: string;
+	/**
+	 * The book's own section slugs: a section named here can be hidden but never removed.
+	 */
+	bookSectionSlugs?: string[];
+	/**
+	 * Called after a section is hidden, shown, added or removed, so the parent can reload.
+	 */
+	onSectionsPersisted?: () => void;
 }
 
 /**
@@ -28,13 +45,18 @@ export function CreatureStackDefinitionEditor( {
 	creationRules,
 	onChangeStackDefinition,
 	onChangeCreationRules,
+	gameSlug,
+	stackSlug,
+	bookSectionSlugs,
+	onSectionsPersisted,
 }: CreatureStackDefinitionEditorProps ) {
 	const [ blocks, setBlocks ] = useState< SchemaBlock[] >( [] );
-	const [ showRules, setShowRules ] = useState( false );
-	const [ rulesJson, setRulesJson ] = useState( () =>
-		JSON.stringify( creationRules ?? {}, null, 2 )
+	const [ savingSection, setSavingSection ] = useState< string | null >(
+		null
 	);
-	const [ rulesError, setRulesError ] = useState< string | null >( null );
+	const [ sectionError, setSectionError ] = useState< string | null >( null );
+	const [ addingBlockSlug, setAddingBlockSlug ] = useState( '' );
+	const [ addingLabel, setAddingLabel ] = useState( '' );
 
 	useEffect( () => {
 		// Fetches every schema block for the picker.
@@ -46,6 +68,7 @@ export function CreatureStackDefinitionEditor( {
 	}, [] );
 
 	const sections = stackDefinition.sections ?? [];
+	const canPersist = !! ( gameSlug && stackSlug );
 
 	function updateSection( index: number, patch: Partial< StackSection > ) {
 		const next = sections.map( ( s, i ) =>
@@ -54,7 +77,7 @@ export function CreatureStackDefinitionEditor( {
 		onChangeStackDefinition( { ...stackDefinition, sections: next } );
 	}
 
-	function addSection() {
+	function addSectionLocally() {
 		const nextOrder =
 			sections.length > 0
 				? Math.max( ...sections.map( ( s ) => s.display_order ) ) + 1
@@ -73,25 +96,89 @@ export function CreatureStackDefinitionEditor( {
 		} );
 	}
 
-	function removeSection( index: number ) {
+	function removeSectionLocally( index: number ) {
 		onChangeStackDefinition( {
 			...stackDefinition,
 			sections: sections.filter( ( _, i ) => i !== index ),
 		} );
 	}
 
-	/**
-	 * Parses the raw JSON textarea and, if valid, applies it as the new creation rules.
-	 */
-	function applyRules() {
+	async function toggleHidden( blockSlug: string, hidden: boolean ) {
+		if ( ! gameSlug || ! stackSlug ) {
+			return;
+		}
+		setSavingSection( blockSlug );
+		setSectionError( null );
 		try {
-			const parsed = JSON.parse( rulesJson );
-			setRulesError( null );
-			onChangeCreationRules( parsed );
-		} catch {
-			setRulesError(
-				__( 'Not valid JSON - not applied.', 'beyond-elysium' )
+			await api.creatureStacks.updateSection(
+				stackSlug,
+				gameSlug,
+				blockSlug,
+				hidden
 			);
+			onSectionsPersisted?.();
+		} catch ( err: unknown ) {
+			setSectionError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
+		} finally {
+			setSavingSection( null );
+		}
+	}
+
+	async function addSectionRemotely() {
+		if ( ! gameSlug || ! stackSlug || ! addingBlockSlug ) {
+			return;
+		}
+		setSavingSection( addingBlockSlug );
+		setSectionError( null );
+		try {
+			await api.creatureStacks.addSection(
+				stackSlug,
+				gameSlug,
+				addingBlockSlug,
+				addingLabel
+			);
+			setAddingBlockSlug( '' );
+			setAddingLabel( '' );
+			onSectionsPersisted?.();
+		} catch ( err: unknown ) {
+			setSectionError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
+		} finally {
+			setSavingSection( null );
+		}
+	}
+
+	async function removeSectionRemotely( blockSlug: string ) {
+		if ( ! gameSlug || ! stackSlug ) {
+			return;
+		}
+		setSavingSection( blockSlug );
+		setSectionError( null );
+		try {
+			await api.creatureStacks.removeSection(
+				stackSlug,
+				gameSlug,
+				blockSlug
+			);
+			onSectionsPersisted?.();
+		} catch ( err: unknown ) {
+			setSectionError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
+		} finally {
+			setSavingSection( null );
 		}
 	}
 
@@ -105,6 +192,9 @@ export function CreatureStackDefinitionEditor( {
 						sections.length
 					) }
 				</h3>
+				{ sectionError && (
+					<p className="be-admin__json-error">{ sectionError }</p>
+				) }
 				<table className="be-def-editor__table">
 					<thead>
 						<tr>
@@ -118,145 +208,240 @@ export function CreatureStackDefinitionEditor( {
 									'beyond-elysium'
 								) }
 							</th>
+							<th>{ __( 'In-type', 'beyond-elysium' ) }</th>
 							<th />
 						</tr>
 					</thead>
 					<tbody>
-						{ sections.map( ( section, i ) => (
-							<tr key={ i }>
-								<td>
-									<select
-										value={ section.block_slug }
-										onChange={ ( e ) =>
-											updateSection( i, {
-												block_slug: e.target.value,
-											} )
-										}
-									>
-										<option value="">
-											{ __(
-												'Select a block…',
-												'beyond-elysium'
-											) }
-										</option>
-										{ blocks.map( ( b ) => (
-											<option
-												key={ b.slug }
-												value={ b.slug }
-											>
-												{ b.name } ({ b.slug })
+						{ sections.map( ( section, i ) => {
+							const isBookSection = (
+								bookSectionSlugs ?? []
+							).includes( section.block_slug );
+							return (
+								<tr key={ i }>
+									<td>
+										<select
+											value={ section.block_slug }
+											onChange={ ( e ) =>
+												updateSection( i, {
+													block_slug: e.target.value,
+												} )
+											}
+										>
+											<option value="">
+												{ __(
+													'Select a block…',
+													'beyond-elysium'
+												) }
 											</option>
-										) ) }
-									</select>
-								</td>
-								<td>
-									<input
-										type="text"
-										value={ section.label }
-										onChange={ ( e ) =>
-											updateSection( i, {
-												label: e.target.value,
-											} )
-										}
-									/>
-								</td>
-								<td>
-									<input
-										type="number"
-										value={ section.display_order }
-										onChange={ ( e ) =>
-											updateSection( i, {
-												display_order: Number(
-													e.target.value
-												),
-											} )
-										}
-									/>
-								</td>
-								<td>
-									<input
-										type="checkbox"
-										checked={ section.required }
-										onChange={ ( e ) =>
-											updateSection( i, {
-												required: e.target.checked,
-											} )
-										}
-									/>
-								</td>
-								<td>
-									<select
-										value={
-											section.negative_block_slug ?? ''
-										}
-										onChange={ ( e ) =>
-											updateSection( i, {
-												negative_block_slug:
-													e.target.value || undefined,
-											} )
-										}
-									>
-										<option value="">
-											{ __( 'None', 'beyond-elysium' ) }
-										</option>
-										{ blocks.map( ( b ) => (
-											<option
-												key={ b.slug }
-												value={ b.slug }
-											>
-												{ b.name } ({ b.slug })
+											{ blocks.map( ( b ) => (
+												<option
+													key={ b.slug }
+													value={ b.slug }
+												>
+													{ b.name } ({ b.slug })
+												</option>
+											) ) }
+										</select>
+									</td>
+									<td>
+										<input
+											type="text"
+											value={ section.label }
+											onChange={ ( e ) =>
+												updateSection( i, {
+													label: e.target.value,
+												} )
+											}
+										/>
+									</td>
+									<td>
+										<input
+											type="number"
+											value={ section.display_order }
+											onChange={ ( e ) =>
+												updateSection( i, {
+													display_order: Number(
+														e.target.value
+													),
+												} )
+											}
+										/>
+									</td>
+									<td>
+										<input
+											type="checkbox"
+											checked={ section.required }
+											onChange={ ( e ) =>
+												updateSection( i, {
+													required: e.target.checked,
+												} )
+											}
+										/>
+									</td>
+									<td>
+										<select
+											value={
+												section.negative_block_slug ??
+												''
+											}
+											onChange={ ( e ) =>
+												updateSection( i, {
+													negative_block_slug:
+														e.target.value ||
+														undefined,
+												} )
+											}
+										>
+											<option value="">
+												{ __(
+													'None',
+													'beyond-elysium'
+												) }
 											</option>
-										) ) }
-									</select>
-								</td>
-								<td>
-									<button
-										type="button"
-										onClick={ () => removeSection( i ) }
-									>
-										{ __( 'Remove', 'beyond-elysium' ) }
-									</button>
-								</td>
-							</tr>
-						) ) }
+											{ blocks.map( ( b ) => (
+												<option
+													key={ b.slug }
+													value={ b.slug }
+												>
+													{ b.name } ({ b.slug })
+												</option>
+											) ) }
+										</select>
+									</td>
+									<td>
+										<InTypeTestEditor
+											label={
+												section.label ||
+												section.block_slug
+											}
+											value={ section.in_type }
+											onSave={ ( tests ) =>
+												updateSection( i, {
+													in_type:
+														tests.length > 0
+															? tests
+															: undefined,
+												} )
+											}
+										/>
+									</td>
+									<td>
+										{ canPersist ? (
+											<>
+												<label>
+													<input
+														type="checkbox"
+														checked={
+															!! section.hidden
+														}
+														disabled={
+															savingSection ===
+															section.block_slug
+														}
+														onChange={ ( e ) =>
+															toggleHidden(
+																section.block_slug,
+																e.target.checked
+															)
+														}
+													/>{ ' ' }
+													{ __(
+														'Hidden',
+														'beyond-elysium'
+													) }
+												</label>
+												{ ! isBookSection && (
+													<button
+														type="button"
+														disabled={
+															savingSection ===
+															section.block_slug
+														}
+														onClick={ () =>
+															removeSectionRemotely(
+																section.block_slug
+															)
+														}
+													>
+														{ __(
+															'Remove',
+															'beyond-elysium'
+														) }
+													</button>
+												) }
+											</>
+										) : (
+											<button
+												type="button"
+												onClick={ () =>
+													removeSectionLocally( i )
+												}
+											>
+												{ __(
+													'Remove',
+													'beyond-elysium'
+												) }
+											</button>
+										) }
+									</td>
+								</tr>
+							);
+						} ) }
 					</tbody>
 				</table>
-				<button type="button" onClick={ addSection }>
-					{ __( '+ Add section', 'beyond-elysium' ) }
-				</button>
+				{ canPersist ? (
+					<div className="be-in-type-editor__test-row">
+						<select
+							aria-label={ __(
+								'Block to add',
+								'beyond-elysium'
+							) }
+							value={ addingBlockSlug }
+							onChange={ ( e ) =>
+								setAddingBlockSlug( e.target.value )
+							}
+						>
+							<option value="">
+								{ __( 'Select a block…', 'beyond-elysium' ) }
+							</option>
+							{ blocks.map( ( b ) => (
+								<option key={ b.slug } value={ b.slug }>
+									{ b.name } ({ b.slug })
+								</option>
+							) ) }
+						</select>
+						<input
+							type="text"
+							aria-label={ __(
+								'Label (optional, the block’s own name otherwise)',
+								'beyond-elysium'
+							) }
+							placeholder={ __( 'Label', 'beyond-elysium' ) }
+							value={ addingLabel }
+							onChange={ ( e ) =>
+								setAddingLabel( e.target.value )
+							}
+						/>
+						<button
+							type="button"
+							disabled={ ! addingBlockSlug }
+							onClick={ addSectionRemotely }
+						>
+							{ __( '+ Add section', 'beyond-elysium' ) }
+						</button>
+					</div>
+				) : (
+					<button type="button" onClick={ addSectionLocally }>
+						{ __( '+ Add section', 'beyond-elysium' ) }
+					</button>
+				) }
 			</div>
 
-			<button
-				type="button"
-				className="be-def-editor__raw-toggle"
-				onClick={ () => setShowRules( ! showRules ) }
-			>
-				{ sprintf(
-					// translators: %s: "Hide" or "Show".
-					__(
-						'%s creation rules (advanced, JSON)',
-						'beyond-elysium'
-					),
-					showRules
-						? __( 'Hide', 'beyond-elysium' )
-						: __( 'Show', 'beyond-elysium' )
-				) }
-			</button>
-			{ showRules && (
-				<div className="be-def-editor__raw">
-					<textarea
-						rows={ 10 }
-						value={ rulesJson }
-						onChange={ ( e ) => setRulesJson( e.target.value ) }
-					/>
-					{ rulesError && (
-						<p className="be-admin__json-error">{ rulesError }</p>
-					) }
-					<button type="button" onClick={ applyRules }>
-						{ __( 'Apply JSON', 'beyond-elysium' ) }
-					</button>
-				</div>
-			) }
+			<CreationRulesEditor
+				value={ creationRules ?? {} }
+				onChange={ onChangeCreationRules }
+			/>
 		</div>
 	);
 }

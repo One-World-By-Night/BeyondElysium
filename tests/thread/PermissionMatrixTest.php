@@ -89,12 +89,11 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 
 			'POST games'          => [ 'POST', '/be/v1/games', 'be_manage_games', [ 'name' => 'Matrix Test Game' ] ],
 			'DELETE games'        => [ 'DELETE', '/be/v1/games/nonexistent-slug', 'be_manage_games' ],
-			// The global catalog every chronicle shares is a site administrator's to change.
-			'POST schema-blocks'  => [ 'POST', '/be/v1/schema-blocks', 'be_manage_games', [ 'slug' => 'matrix-test-block', 'name' => 'Matrix Test Block', 'section_type' => 'trait_list' ] ],
-			'DELETE schema-blocks' => [ 'DELETE', '/be/v1/schema-blocks/nonexistent', 'be_manage_games' ],
-			'POST creature-stacks' => [ 'POST', '/be/v1/creature-stacks', 'be_manage_games', [ 'slug' => 'matrix-test-stack', 'name' => 'Matrix Test Stack', 'stack_definition' => [] ] ],
-			'POST templates'      => [ 'POST', '/be/v1/templates', 'be_manage_games' ],
-			'DELETE templates'    => [ 'DELETE', '/be/v1/templates/999999', 'be_manage_games' ],
+			// A chronicle's own blocks and templates; the book's are read-only to everyone.
+			'POST schema-blocks (chronicle)'   => [ 'POST', "/be/v1/{$g}/schema-blocks", 'be_manage_schemas', [ 'slug' => 'matrix-test-block', 'name' => 'Matrix Test Block', 'section_type' => 'trait_list' ] ],
+			'DELETE schema-blocks (chronicle)' => [ 'DELETE', "/be/v1/{$g}/schema-blocks/nonexistent", 'be_manage_schemas' ],
+			'POST templates (chronicle)'       => [ 'POST', "/be/v1/{$g}/templates", 'be_manage_templates' ],
+			'DELETE templates (chronicle)'     => [ 'DELETE', "/be/v1/{$g}/templates/999999", 'be_manage_templates' ],
 			'POST import parse'   => [ 'POST', "/be/v1/{$g}/import/parse", 'be_import' ],
 
 			// ST-level management (editor+admin).

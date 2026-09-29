@@ -51,6 +51,9 @@ foreach ( $docs as $doc ) {
 		'post_author'  => $author_id,
 	];
 
+	// Slashed, the form wp_insert_post() and wp_update_post() take.
+	$postarr = wp_slash( $postarr );
+
 	if ( $existing ) {
 		$postarr['ID'] = $existing->ID;
 		$post_id       = wp_update_post( $postarr, true );

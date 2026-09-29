@@ -14,7 +14,6 @@
     "sources": [
       "OWBN Kuei-Jin Genre Packet (2022) - converted Disciplines and the three OWBN custom Disciplines, tiers as printed; priced by Laws of the East p. 125 (4/7/10)"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/build_kueijin_disciplines.py"
   },
   "definition": {

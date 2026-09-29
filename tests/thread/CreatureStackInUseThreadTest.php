@@ -12,8 +12,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * A creature type that characters still use is not deleted and one no character uses is; the point audit and a signed
- * sheet say the creature type is gone rather than the character.
+ * The point audit and a signed sheet say a character's creature type is gone rather than the character.
  */
 class CreatureStackInUseThreadTest extends WP_UnitTestCase {
 
@@ -46,36 +45,12 @@ class CreatureStackInUseThreadTest extends WP_UnitTestCase {
 		$this->vampire = (int) Character::create( [ 'name' => 'Plain Vampire', 'owner_slug' => $this->slug, 'stack_slug' => 'vampire', 'created_by' => $this->admin ] );
 	}
 
-	private function delete_stack( string $stack_slug ): \WP_REST_Response {
-		$request = new WP_REST_Request( 'DELETE', '/be/v1/creature-stacks/' . $stack_slug );
-		return rest_get_server()->dispatch( $request );
-	}
-
 	/**
 	 * A stack deleted before anything refused it, as it would be on a site that already did.
 	 */
 	private function remove_stack_row( string $stack_slug ): void {
 		global $wpdb;
 		$wpdb->delete( $wpdb->prefix . 'be_creature_stacks', [ 'slug' => $stack_slug ] );
-	}
-
-	public function test_a_creature_type_characters_still_use_is_not_deleted(): void {
-		Character::create( [ 'name' => 'Custom Two', 'owner_slug' => 'another-chronicle', 'stack_slug' => 'thread-custom-type', 'created_by' => $this->admin ] );
-
-		$response = $this->delete_stack( 'thread-custom-type' );
-
-		$this->assertSame( 409, $response->get_status() );
-		$this->assertSame( 'creature_stack_in_use', $response->as_error()->get_error_code() );
-		$this->assertSame( 2, $response->as_error()->get_error_data()['count'] );
-		$this->assertStringContainsString( '2 characters', $response->as_error()->get_error_message() );
-		$this->assertNotNull( Creature_Stack::find_by_slug( 'thread-custom-type' ) );
-	}
-
-	public function test_a_creature_type_no_character_uses_is_still_deleted(): void {
-		Character::delete( $this->orphan );
-
-		$this->assertSame( 204, $this->delete_stack( 'thread-custom-type' )->get_status() );
-		$this->assertNull( Creature_Stack::find_by_slug( 'thread-custom-type' ) );
 	}
 
 	public function test_the_point_audit_says_the_creature_type_is_gone_not_the_character(): void {

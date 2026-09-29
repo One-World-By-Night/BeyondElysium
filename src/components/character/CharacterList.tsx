@@ -12,6 +12,7 @@ import type {
 } from '../../types/character';
 import type { TravellingStatus } from '../../types/transfer';
 import { canIn } from '../../lib/chronicleCapabilities';
+import { sameId } from '../../lib/ids';
 import type { CreatureStack, MyCapabilities } from '../../types';
 import Modal from '../shared/Modal';
 import HelpButton from '../shared/HelpButton';
@@ -73,12 +74,12 @@ function travellingTitle( status: TravellingStatus ): string {
 				/* translators: %s: the chronicle it went to, or that no host is confirmed yet */
 				__( 'Travelling - %s', 'beyond-elysium' ),
 				other
-		  )
+			)
 		: sprintf(
 				/* translators: %s: the chronicle it came from */
 				__( 'Visiting from %s', 'beyond-elysium' ),
 				other
-		  );
+			);
 }
 
 function sheetLink(
@@ -223,7 +224,6 @@ export function CharacterList( {
 	}
 
 	async function remove( character: Character ): Promise< void > {
-		// eslint-disable-next-line no-alert
 		if (
 			! window.confirm(
 				sprintf(
@@ -408,11 +408,11 @@ export function CharacterList( {
 													? __(
 															'Travelling',
 															'beyond-elysium'
-													  )
+														)
 													: __(
 															'Visiting',
 															'beyond-elysium'
-													  ) }
+														) }
 											</span>
 										) }
 									</td>
@@ -465,7 +465,8 @@ export function CharacterList( {
 																character.id,
 																{
 																	wp_user_id:
-																		character.pending_match!
+																		character
+																			.pending_match!
 																			.id,
 																}
 															)
@@ -504,11 +505,11 @@ export function CharacterList( {
 													? __(
 															'Assign player',
 															'beyond-elysium'
-													  )
+														)
 													: __(
 															'Change player',
 															'beyond-elysium'
-													  ) }
+														) }
 											</button>
 											<button
 												type="button"
@@ -740,7 +741,7 @@ function AssignPlayerModal( {
 						? __(
 								'Type at least three letters of their name, or their exact email address.',
 								'beyond-elysium'
-						  )
+							)
 						: __( 'No users found.', 'beyond-elysium' ) }
 				</p>
 			) : (
@@ -760,7 +761,7 @@ function AssignPlayerModal( {
 								disabled={ submitting }
 								onClick={ () => assign( user.id ) }
 							>
-								{ user.id === character.wp_user_id
+								{ sameId( user.id, character.wp_user_id )
 									? __( 'Current', 'beyond-elysium' )
 									: __( 'Assign', 'beyond-elysium' ) }
 							</button>

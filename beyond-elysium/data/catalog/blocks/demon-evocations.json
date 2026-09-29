@@ -7,19 +7,16 @@
   "provenance": {
     "sources": [
       "OWBN Fallen Genre Packet (2021), OWBN0052-Demon-Fallen Genre-2021.pdf, Chapter 3 (Subtle Instruments: Lores), printed p. 44-129",
-      "MET-POWER-ACQUISITION.md §3 (Demon) - Lore 3/6/9, +1 outside House/Common"
+      "OWBN Fallen genre packet (2021), p. 43 - Lore 3/6/9, +1 outside House or Common"
     ],
-    "extracted": "2026-09-21",
-    "tool": "samples/research/demon/owbn/lores.json (extract_lores.py) restructured by hand into the 1.2.10 _meta/levels/elder shape"
+    "tool": "samples/research/demon/owbn/lores.json (extract_lores.py) restructured by hand into the _meta/levels/elder shape"
   },
   "definition": {
     "_meta": {
       "ranks": [
         "basic",
         "intermediate",
-        "advanced",
-        "visage",
-        "bonus"
+        "advanced"
       ],
       "ladder": {
         "basic": 2,
@@ -29,16 +26,12 @@
       "costs": {
         "basic": 3,
         "intermediate": 6,
-        "advanced": 9,
-        "visage": null,
-        "bonus": null
+        "advanced": 9
       },
       "out_of_type": {
         "basic": "+1",
         "intermediate": "+1",
-        "advanced": "+1",
-        "visage": "+1",
-        "bonus": "+1"
+        "advanced": "+1"
       },
       "levels": null,
       "categories": [
@@ -86,8 +79,7 @@
             "power_name": "Alter Memory",
             "cost": "9"
           }
-        ],
-        "elder": {}
+        ]
       },
       {
         "name": "Lore of the Celestials",
@@ -126,17 +118,7 @@
             "power_name": "Hand of Faith",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Bel, the Visage of the Celestials",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of Flame",
@@ -175,17 +157,7 @@
             "power_name": "Ride the Flames",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Nusku, the Visage of the Flames",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of Radiance",
@@ -224,17 +196,7 @@
             "power_name": "Revelation",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Qingu, the Visage of Radiance",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of Awakening",
@@ -273,17 +235,7 @@
             "power_name": "Restore Life",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Dagan, The Visage of Awakening",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of the Firmament",
@@ -322,17 +274,7 @@
             "power_name": "Many Places at Once",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Anshar, the Visage of the Firmament",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of the Winds",
@@ -371,25 +313,7 @@
             "power_name": "Cyclone",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Ellil, the Visage of the Winds",
-              "cost": null
-            }
-          ],
-          "bonus": [
-            {
-              "level": null,
-              "tier": "bonus",
-              "power_name": "Immune to Falling Damage",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of the Earth",
@@ -428,17 +352,7 @@
             "power_name": "Earthquake",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Kishar, the Visage of the Earth",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of Paths",
@@ -477,17 +391,7 @@
             "power_name": "Warp Path",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Antu, the Visage of Paths",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of the Forge",
@@ -526,17 +430,7 @@
             "power_name": "Imbue Object",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Mummu, the Visage of the Forge",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of Patterns",
@@ -575,17 +469,7 @@
             "power_name": "Twist Time",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Ninsun, the Visage of Patterns",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of Portals",
@@ -624,17 +508,7 @@
             "power_name": "Doorway into Darkness",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Nedu, the Visage of Portals",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of Light",
@@ -673,17 +547,7 @@
             "power_name": "Coherent Light",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Shamash, the Visage of Light",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of Longing",
@@ -722,17 +586,7 @@
             "power_name": "Inspire",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Ishhara, the Visage of Longing",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of Storms",
@@ -771,17 +625,7 @@
             "power_name": "Invoke the Storm",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Adad, the Visage of Storms",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of Transfiguration",
@@ -820,17 +664,7 @@
             "power_name": "Shapechange",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Mammetum, the Visage of Transfiguration",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of the Beast",
@@ -869,31 +703,7 @@
             "power_name": "Create Chimera",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Zaltu, the Visage of the Beast",
-              "cost": null
-            }
-          ],
-          "bonus": [
-            {
-              "level": null,
-              "tier": "bonus",
-              "power_name": "Previously Published MET Animal Forms",
-              "cost": null
-            },
-            {
-              "level": null,
-              "tier": "bonus",
-              "power_name": "Animal Characteristics",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of the Wild",
@@ -932,17 +742,7 @@
             "power_name": "Mutate Plant",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Ninurtu, the Visage of the Wild",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of the Flesh",
@@ -981,17 +781,7 @@
             "power_name": "Shape Flesh",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Aruru, the Visage of Flesh",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of Death",
@@ -1030,17 +820,7 @@
             "power_name": "Unlife",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Namtar, the Visage of Death",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of the Spirit",
@@ -1079,17 +859,7 @@
             "power_name": "Restore the Dead",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Nergal, the Visage of the Spirit",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of the Realms",
@@ -1128,17 +898,7 @@
             "power_name": "Pierce the Barrier",
             "cost": "9"
           }
-        ],
-        "elder": {
-          "visage": [
-            {
-              "level": null,
-              "tier": "visage",
-              "power_name": "Ereshkigal, the Visage of the Realms",
-              "cost": null
-            }
-          ]
-        }
+        ]
       },
       {
         "name": "Lore of the Fundament",
@@ -1177,8 +937,7 @@
             "power_name": "Manipulate Cohesion",
             "cost": "9"
           }
-        ],
-        "elder": {}
+        ]
       }
     ]
   }

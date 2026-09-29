@@ -217,7 +217,7 @@ class CharactersControllerWriteValidationTest extends WP_UnitTestCase {
 		$get_response = rest_get_server()->dispatch( $get_request );
 		$get_data     = $get_response->get_data();
 
-		$this->assertNotEmpty( $get_data->image_url, 'image_id alone is not useful to a client - the whole point of Decision 054 is a real, fetchable URL.' );
+		$this->assertNotEmpty( $get_data->image_url, 'image_id alone is not useful to a client; the response carries a real, fetchable URL.' );
 		$this->assertStringContainsString( 'canola', $get_data->image_url );
 	}
 }

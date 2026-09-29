@@ -1,0 +1,88 @@
+{
+  "format": 1,
+  "slug": "wraith-thorns",
+  "name": "Wraith Thorns",
+  "kind": "block",
+  "section_type": "trait_list",
+  "storyteller_only": true,
+  "provenance": {
+    "sources": [
+      "Oblivion (WW05400) pp.174-175 - the Shadow's own catalog of dark-mirror powers, four populated point tiers (One/Two/Three/Five - the book prints no Four-Point tier). p.69's own chargen text grants two points' worth at creation (one Two-Point Thorn, or two One-Point Thorns); a Thorn bought later is paid for from the Shadow's own separate Experience Traits (p.174), never the character's own XP - see wraith-shadow's Shadow XP pool."
+    ],
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "alphabetize": false,
+    "atomic": false,
+    "allow_custom": false,
+    "allow_multiples": false,
+    "items": [
+      {
+        "name": "Spectre Prestige",
+        "cost": "1",
+        "tier": "one_point",
+        "group": null,
+        "subgroup": null
+      },
+      {
+        "name": "Tainted Relic",
+        "cost": "1",
+        "tier": "one_point",
+        "group": null,
+        "subgroup": null
+      },
+      {
+        "name": "Shadow Traits",
+        "cost": "2",
+        "tier": "two_point",
+        "group": null,
+        "subgroup": null
+      },
+      {
+        "name": "Aura of Corruption",
+        "cost": "2",
+        "tier": "two_point",
+        "group": null,
+        "subgroup": null
+      },
+      {
+        "name": "Trick of the Light",
+        "cost": "3",
+        "tier": "three_point",
+        "group": null,
+        "subgroup": null
+      },
+      {
+        "name": "Bad Luck",
+        "cost": "3",
+        "tier": "three_point",
+        "group": null,
+        "subgroup": null
+      },
+      {
+        "name": "Freudian Slip",
+        "cost": "5",
+        "tier": "five_point",
+        "group": null,
+        "subgroup": null
+      },
+      {
+        "name": "Shadow Life",
+        "cost": "5",
+        "tier": "five_point",
+        "group": null,
+        "subgroup": null
+      },
+      {
+        "name": "Devil's Dare",
+        "cost": "5",
+        "tier": "five_point",
+        "group": null,
+        "subgroup": null
+      }
+    ],
+    "_meta": {
+      "paid_from": "wraith-shadow.Shadow XP"
+    }
+  }
+}

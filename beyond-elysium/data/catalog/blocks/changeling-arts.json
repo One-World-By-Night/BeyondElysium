@@ -6,16 +6,16 @@
   "section_type": "tiered_power",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh",
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_schema_blocks, dumped by tools/catalog/dump_live.sh",
       "OWBN0019 Changeling Mechanics Packet (2017) ch. 5 p. 28-38 - every Art in 2/2/1",
       "The Shining Host (WW05009) p. 130-140; Changeling Players Guide (WW07100) Autumn People errata",
       "Laws of the Hunt Revised (WW05014) p. 232-236 - the Dauntain Agendas Burnout, Stultify, Webcraft at 2/2/1",
       "The Autumn People (WW07004) p. 51-52 (Burnout, Stultify) and p. 65-66 (Stigmas)",
       "Laws of the Wild-style dot mapping: 1-2 Basic, 3-4 Intermediate, 5 Advanced; Arts 3/6/9 (OWBN0016 p. 7)"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py",
-    "notes": "Every correction and its evidence: tools/catalog/rulings.py (CHANGELING_*)."
+    "notes": "Every correction and its evidence: tools/catalog/rulings.py (CHANGELING_*).",
+    "out_of_type_notes": "The Shining Host (WW05009) has no innate in-type/out-of-type Art restriction at all - any Art costs the same 3/6/9 regardless of Kith, Court or House; only the optional Art Affinity Merit (5 Traits, p.113) discounts one player-chosen Art by 1 XP, a personal purchase this engine does not model. The `out_of_type` modifier removed here was never wired to any in_type test and had no basis in the book."
   },
   "definition": {
     "_meta": {
@@ -34,11 +34,7 @@
         "intermediate": 6,
         "advanced": 9
       },
-      "out_of_type": {
-        "basic": "+1",
-        "intermediate": "+1",
-        "advanced": "+1"
-      },
+      "out_of_type": null,
       "levels": null,
       "categories": null,
       "untiered": null

@@ -5,9 +5,8 @@
   "kind": "stack",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_creature_stacks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_creature_stacks, dumped by tools/catalog/dump_live.sh"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -65,13 +64,34 @@
         "block_slug": "demon-evocations",
         "label": "Lores (Evocations)",
         "display_order": 60,
-        "required": false
+        "required": false,
+        "in_type": [
+          {
+            "kind": "names",
+            "values": {
+              "map": "demon-identity.house_lores",
+              "by": [ "House" ]
+            }
+          },
+          {
+            "kind": "names",
+            "values": {
+              "constant": [ "Lore of Humanity", "Lore of the Fundament" ]
+            }
+          }
+        ]
       },
       {
         "block_slug": "demon-rituals",
         "label": "Rituals",
         "display_order": 61,
         "required": false
+      },
+      {
+        "block_slug": "demon-virtues",
+        "label": "Virtues",
+        "display_order": 70,
+        "required": true
       },
       {
         "block_slug": "demon-resources",
@@ -111,6 +131,64 @@
       }
     ],
     "display_preferences": {},
-    "creation_rules": null
+    "creation_rules": {
+      "steps": [
+        {
+          "kind": "prioritized",
+          "label": "Attributes",
+          "sections": [
+            "met-physical-traits",
+            "met-social-traits",
+            "met-mental-traits"
+          ],
+          "amounts": [ 7, 5, 3 ]
+        },
+        {
+          "kind": "budget",
+          "label": "Abilities",
+          "section": "demon-abilities",
+          "count": 5
+        },
+        {
+          "kind": "budget",
+          "label": "Backgrounds",
+          "section": "demon-backgrounds",
+          "count": 5
+        },
+        {
+          "kind": "budget",
+          "label": "Lores",
+          "section": "demon-evocations",
+          "count": 3,
+          "filter": { "tier": "basic" }
+        },
+        {
+          "kind": "budget",
+          "label": "Virtues",
+          "section": "demon-virtues",
+          "count": 3
+        },
+        {
+          "kind": "start",
+          "label": "Willpower",
+          "target": "demon-resources.Willpower",
+          "formula": "sum_top_two",
+          "of": [
+            "demon-virtues.Conscience",
+            "demon-virtues.Conviction",
+            "demon-virtues.Courage"
+          ]
+        },
+        {
+          "kind": "start",
+          "label": "Torment",
+          "target": "demon-resources.Torment",
+          "lookup": {
+            "map": "demon-identity.house_torment",
+            "by": [ "House" ]
+          }
+        }
+      ]
+    }
   }
 }

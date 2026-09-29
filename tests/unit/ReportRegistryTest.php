@@ -23,7 +23,7 @@ class ReportRegistryTest extends TestCase {
 		$this->assertCount(
 			20,
 			self::$registry,
-			'GV-SOURCEMAP.md counts 19 GV301 reports besides the 12 character sheets; House Rules (v0.99.19, Decision 094) is the first report with no Grapevine counterpart at all.'
+			'Grapevine has 19 reports besides the 12 character sheets; House Rules is the one report with no Grapevine counterpart.'
 		);
 	}
 

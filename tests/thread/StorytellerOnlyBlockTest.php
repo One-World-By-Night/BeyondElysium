@@ -125,7 +125,7 @@ class StorytellerOnlyBlockTest extends WP_UnitTestCase {
 	public function test_creating_a_block_through_the_rest_route_persists_the_flag(): void {
 		wp_set_current_user( $this->manager_id );
 
-		$request = new WP_REST_Request( 'POST', '/be/v1/schema-blocks' );
+		$request = new WP_REST_Request( 'POST', '/be/v1/st-only-test/schema-blocks' );
 		$request->set_body_params( [
 			'slug'             => 'made-via-rest',
 			'name'             => 'Made Via Rest',
@@ -138,7 +138,7 @@ class StorytellerOnlyBlockTest extends WP_UnitTestCase {
 		$this->assertSame( 201, $response->get_status() );
 		$this->assertSame(
 			1,
-			(int) Schema_Block::find_by_slug( 'made-via-rest' )->storyteller_only,
+			(int) Schema_Block::find_for_game( 'made-via-rest', 'st-only-test' )->storyteller_only,
 			'the create route must carry storyteller_only through, not silently drop it'
 		);
 	}

@@ -159,13 +159,19 @@ class GlobalCatalogWritesThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 201, $own->get_status() );
 	}
 
-	public function test_an_administrator_still_edits_the_global_catalog(): void {
+	public function test_not_even_an_administrator_changes_the_book(): void {
 		wp_set_current_user( $this->admin );
 
-		$response = $this->dispatch( 'PUT', "/be/v1/schema-blocks/{$this->block}", [ 'name' => 'Admin Renamed' ] );
+		$renamed = $this->dispatch( 'PUT', "/be/v1/schema-blocks/{$this->block}", [ 'name' => 'Admin Renamed' ] );
+		$created = $this->dispatch( 'POST', '/be/v1/schema-blocks', [ 'slug' => 'thread-book-block', 'name' => 'Book Block', 'section_type' => 'trait_list' ] );
+		$deleted = $this->dispatch( 'DELETE', "/be/v1/schema-blocks/{$this->block}" );
 
-		$this->assertSame( 200, $response->get_status() );
-		$this->assertSame( 'Admin Renamed', Schema_Block::find_by_slug( $this->block )->name );
+		foreach ( [ $renamed, $created, $deleted ] as $response ) {
+			$this->assertSame( 403, $response->get_status() );
+			$this->assertSame( 'book_read_only', $response->as_error()->get_error_code() );
+		}
+		$this->assertNotSame( 'Admin Renamed', Schema_Block::find_by_slug( $this->block )->name );
+		$this->assertNull( Schema_Block::find_by_slug( 'thread-book-block' ) );
 	}
 
 	private function fork_of( string $game_slug ) {

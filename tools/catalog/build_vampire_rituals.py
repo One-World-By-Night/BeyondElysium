@@ -75,10 +75,9 @@ def main(snapshot_dir):
         ('sources', [
             'GVM ritual menus (Rituals, Basic/Intermediate/Advanced/Superior, Assamite, Dark Thaumaturgy, '
             'Mortis, Gargoyle, Necromancy, Pisanob Necromancy, Revenant Creation, Sabbat) and '
-            'met-mechanics.csv, merged and labelled by gvm-block-map.php - as seeded by 1.2.10 (be_dev snapshot)',
-            'Laws of the Night Revised (WW05013) - Rituals 2/4/6 (MET-POWER-ACQUISITION.md, Vampire)',
+            'met-mechanics.csv, merged and labelled by menu',
+            'Laws of the Night Revised (WW05013) - Rituals 2/4/6',
         ]),
-        ('extracted', '2026-09-22'),
         ('tool', 'tools/catalog/build_vampire_rituals.py + rulings/vampire-rituals.json'),
     ]), definition)
     print(write_block(doc), dict(stats))

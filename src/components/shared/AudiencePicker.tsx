@@ -107,7 +107,9 @@ export function AudiencePicker( {
 	}, [] );
 
 	const rules =
-		audience === 'restricted' ? audienceRules ?? draftRules : draftRules;
+		audience === 'restricted'
+			? ( audienceRules ?? draftRules )
+			: draftRules;
 
 	useEffect( () => {
 		if (
@@ -139,7 +141,6 @@ export function AudiencePicker( {
 			cancelled = true;
 			clearTimeout( timer );
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ audience, rules.conditions, rules.logic, gameSlug, fields ] );
 
 	/**
@@ -235,13 +236,13 @@ export function AudiencePicker( {
 									? __(
 											'1 character currently matches these rules.',
 											'beyond-elysium'
-									  )
+										)
 									: matchCount +
-									  ' ' +
-									  __(
+										' ' +
+										__(
 											'characters currently match these rules.',
 											'beyond-elysium'
-									  ) }{ ' ' }
+										) }{ ' ' }
 								{ __(
 									'A character directly connected to this also always sees it, whether or not it matches.',
 									'beyond-elysium'

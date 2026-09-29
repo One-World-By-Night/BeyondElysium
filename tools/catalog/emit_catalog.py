@@ -33,8 +33,8 @@ import rulings as R  # noqa: E402
 DUMP = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE / 'out' / 'live'
 OUT = HERE / 'out'
 REPORT = OrderedDict()
-LIVE_SOURCE = ('Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm '
-               '+ met-mechanics.csv), dumped by tools/catalog/dump_live.sh')
+LIVE_SOURCE = ('Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into '
+               'wp_be_schema_blocks, dumped by tools/catalog/dump_live.sh')
 
 
 def live(slug):
@@ -95,7 +95,7 @@ def emit_identity(slug, field_patch=None, sources=None, notes=None, menus=None):
             out[k] = v
     io.write('blocks', slug, blk['name'], 'block', out, (sources or [LIVE_SOURCE]) + option_sources,
              section_type='identity_field',
-             notes=notes or ('1.3.0 gap-audit class B: options from the Grapevine menus, `allow_custom` on so held free-text values stay valid.' if option_sources else None))
+             notes=notes or ('Options from the Grapevine menus, with `allow_custom` on so held free-text values stay valid.' if option_sources else None))
     REPORT[slug] = {'fields': len(fields), 'option_lists': option_sources}
 
 
@@ -256,8 +256,7 @@ def emit_werewolf_rites():
                                   'categories': R.RITE_CATEGORIES}, fera_items),
              ['Grapevine Menus XML.gvm: the twelve species menus under "Rites, Fera" (Bastet and Mokole nest their own categories; Corax nests Buzzard, its own Fera type)',
               'Cost and tier from each item\'s own GVM cost and note (basic 2 / int. 4 / adv. 6)'],
-             section_type='trait_list',
-             notes='1.3.0, gap-audit class D. A block of its own rather than more groups inside werewolf-rites, following Decision 046\'s fera-gifts split - see the owner question.')
+             section_type='trait_list')
     REPORT['fera-rites'] = {'items': len(fera_items),
                             'by_group': dict(Counter(i['group'] for i in fera_items)),
                             'priced': sum(1 for i in fera_items if i['cost'])}
@@ -332,7 +331,7 @@ def emit_changeling():
         powers.append(io.family(p['name'], levels, source=p.get('source')))
     meta = io.meta([], {}, {}, untiered={'cost_per_level': 2})
     io.write('blocks', 'changeling-realms', blk['name'], 'block', tiered_def(d, meta, powers),
-             [LIVE_SOURCE, 'Realms cost 2 per level, no tier vocabulary (1.2.10 S7; 1.3.0 D8)'],
+             [LIVE_SOURCE, 'Realms cost 2 per level, with no tiers'],
              section_type='tiered_power')
     REPORT['changeling-realms'] = {'before': before, 'after': measure(powers)}
 
@@ -447,7 +446,7 @@ def emit_wraith():
               'OWBN0124 Wraith Arcanoi packet (2016) - the 2/2/1 arrangement for 16 Arcanoi plus Risen Fascinate',
               'Wraith: The Oblivion 2nd ed. (WW06600) p. 465-467 - Behest\'s Right and Left Hands'],
              section_type='tiered_power',
-             notes='Owner ruling 2026-09-21 (1.3.0 D1): the book is the base, the packet ships as the owbn-wraith_arcanoi variant. Evidence per family: tools/catalog/rulings.py (WRAITH_*).')
+             notes='The book is the base; the OWBN packet ships as the owbn-wraith_arcanoi variant. Evidence per family: tools/catalog/rulings.py (WRAITH_*).')
     REPORT['wraith-arcanoi'] = {'before': before, 'after': measure(base)}
 
     # The OWBN variant: the packet literally, at the packet's prices. Innate Abilities come "at no
@@ -527,9 +526,9 @@ def emit_mummy():
              [LIVE_SOURCE,
               'Laws of the Resurrection (WW05035) p. 116 - Hekau 3/6/9, +1 outside the primary path',
               'Laws of the Resurrection p. 120, "Working Magic" - the path rating is the ladder; spells and rituals are bought separately (mummy-formulae)',
-              'Ren-Hekau = Nomenclature, Ushabti = Effigy (research/mummy/NOTES.md; core book: "Effigy (called Ushabti in ancient Egypt)")'],
+              'Ren-Hekau = Nomenclature, Ushabti = Effigy (Mummy: The Resurrection: "Effigy (called Ushabti in ancient Egypt)")'],
              section_type='tiered_power',
-             notes='1.3.0 D5/D6. The formula menus split out to mummy-formulae; the 40 unknown-tier rungs resolve to basic/basic/intermediate/intermediate/advanced by the book\'s path-rating rule.')
+             notes='The formula menus are in mummy-formulae; a rung with no printed tier follows the book\'s path-rating rule: basic, basic, intermediate, intermediate, advanced.')
     REPORT['mummy-hekau'] = {'before': before, 'after': measure(powers)}
 
     fdef = OrderedDict([('alphabetize', False), ('atomic', True), ('allow_custom', True), ('allow_multiples', False),
@@ -540,7 +539,7 @@ def emit_mummy():
               'Laws of the Resurrection (WW05035) p. 116 - "New spell or ritual - One Experience for Basic, three for Intermediate and five for Advanced", +1 outside the primary path',
               'Laws of the Resurrection p. 120 - a formula needs the path rating its note names ("first basic" 1 ... "adv." 5)'],
              section_type='trait_list',
-             notes='1.3.0 D5. group = Hekau path, subgroup = spell / ritual / formula as the note names it. Costs repriced from the GVM\'s 2/4/6 to the book\'s 1/3/5 - forward-only, nothing refunded.')
+             notes='group = Hekau path, subgroup = spell / ritual / formula as the note names it. Costs are the book\'s 1/3/5.')
     REPORT['mummy-formulae'] = {'items': len(formulae), 'by_tier': dict(Counter(i['tier'] for i in formulae))}
 
 
@@ -624,12 +623,12 @@ def emit_gifts():
     fams = gift_families(base)
     wdef = OrderedDict([('_meta', gift_meta(['breed', 'tribe', 'auspice'], legend=True)),
                         ('atomic', True), ('allow_custom', True), ('powers', fams)])
-    common = [LIVE_SOURCE + ' (werewolf-gifts, a trait_list until 1.3.2\'s A4a conversion)',
+    common = [LIVE_SOURCE + ' (werewolf-gifts)',
               'Rank, variant and qualifier parsed from each gift\'s own GVM tier note ("int., wyld west")',
-              'Category axis joined from werewolf-identity\'s Breed / Auspice / Tribe options (format §9 pilot)']
+              'Category axis joined from werewolf-identity\'s Breed / Auspice / Tribe options']
     io.write('blocks', 'werewolf-gifts', 'Gifts', 'block', wdef, common, section_type='tiered_power',
-             notes='Pick-only: every Gift is bought by name, so the ladder is declared empty. "legend" is the GVM\'s own rank for two cost-12 tribal Gifts (owner question). ' +
-                   (f'Tribes with no identity option, filed under tribe: {", ".join(uncategorised)}.' if uncategorised else ''))
+             notes='Pick-only: every Gift is bought by name, so the ladder is declared empty. "legend" is the GVM\'s own rank for two cost-12 tribal Gifts.' +
+                   (f' Tribes with no identity option, filed under tribe: {", ".join(uncategorised)}.' if uncategorised else ''))
     REPORT['werewolf-gifts'] = {'families': len(fams), 'gifts': sum(len(v) for f in fams for v in f['elder'].values()),
                                 'unresolved_tier': unresolved, 'uncategorised_groups': uncategorised}
     labels = {'wyld-west': ('wyldwest', 'Laws of the Wyld West'), 'dark-ages': ('darkages', 'Dark Ages printings'),
@@ -641,7 +640,7 @@ def emit_gifts():
         io.write('blocks', slug, f'Gifts ({label})', 'block',
                  OrderedDict([('_meta', gift_meta(['breed', 'tribe', 'auspice'])), ('atomic', True),
                               ('allow_custom', True), ('powers', fams_v)]),
-                 common + [f'Carried as a variant, not base content (format §4b): "{vid}"'],
+                 common + [f'Carried as a variant, not base content: "{vid}"'],
                  section_type='tiered_power',
                  variant=OrderedDict([('of', 'werewolf-gifts'), ('id', vid), ('label', label), ('mode', 'add')]))
         REPORT[slug] = {'families': len(fams_v), 'gifts': sum(len(v) for f in fams_v for v in f['elder'].values())}
@@ -684,9 +683,9 @@ def emit_gifts():
     fams = gift_families(base)
     io.write('blocks', 'fera-gifts', 'Gifts', 'block',
              OrderedDict([('_meta', gift_meta(['species', 'subgroup'])), ('atomic', True), ('allow_custom', True), ('powers', fams)]),
-             [LIVE_SOURCE + ' (fera-gifts, a trait_list until 1.3.2\'s A4a conversion)',
+             [LIVE_SOURCE + ' (fera-gifts)',
               'Rank parsed from each gift\'s GVM tier note; the eight with none resolved by name from samples/research/fera/resolved.json (Changing Breeds 1-4)',
-              'Category: species (the GVM group) and subgroup (breed / auspice / camp), per 1.2.10 S4'],
+              'Category: species (the GVM group) and subgroup (breed / auspice / camp)'],
              section_type='tiered_power', notes='Pick-only, like werewolf-gifts.')
     REPORT['fera-gifts'] = {'families': len(fams), 'gifts': sum(len(v) for f in fams for v in f['elder'].values()),
                             'unresolved_tier': unresolved}
@@ -696,7 +695,7 @@ def emit_gifts():
         slug = f'{prefix}-fera_gifts'
         io.write('blocks', slug, f'Gifts ({label})', 'block',
                  OrderedDict([('_meta', gift_meta(['species', 'subgroup'])), ('atomic', True), ('allow_custom', True), ('powers', fams_v)]),
-                 [LIVE_SOURCE + ' (fera-gifts)', f'Carried as a variant, not base content (format §4b): "{vid}"'],
+                 [LIVE_SOURCE + ' (fera-gifts)', f'Carried as a variant, not base content: "{vid}"'],
                  section_type='tiered_power',
                  variant=OrderedDict([('of', 'fera-gifts'), ('id', vid), ('label', label), ('mode', 'add')]))
         REPORT[slug] = {'families': len(fams_v), 'gifts': sum(len(v) for f in fams_v for v in f['elder'].values())}
@@ -820,7 +819,7 @@ def emit_abilities():
                   'met-mechanics.csv Ability rows (General to every stack; Changing Breeds to Werewolf/Fera; Vampire to Vampire)',
                   'Cost: ' + R.ABILITY_COST_SOURCE[stack]],
                  section_type='trait_list',
-                 notes='1.3.0 D81 - replaces the shared met-abilities (D20 Backgrounds precedent). An Ability bought per field of study carries `allow_multiples: true` (owner ruling 2026-09-22; the editor reads it at 1.2.11). Per-item `source` says which menu or CSV row carries it; `Meditiation` (a CSV typo) is an alias of Meditation.')
+                 notes='An Ability bought per field of study carries `allow_multiples: true`. Per-item `source` says which menu or CSV row carries it; `Meditiation` (a CSV typo) is an alias of Meditation.')
         lore_item = index.get(io.norm('Lore'))
         report[slug] = {'items': len(items), 'creature_menu': sum(1 for i in items if f'GVM: {menu}' in (i['source'] or '') and 'GVM: Abilities;' not in (i['source'] or '') and i['name'] != 'Lore'),
                         'lore_specializations': len(lore_item['specializations']) if lore_item else 0,
@@ -978,7 +977,7 @@ def emit_merits():
                     unruled.append((slug, it['name'], it['source']))
                     continue
                 it['note'] = ((it['note'] + '; ') if it['note'] else '') + (
-                    ruling if gvm_side else 'UNPRICED: the cited book prints this cost; it was never captured (the met-mechanics.csv row has none) - 1.3.0 owner question 16')
+                    ruling if gvm_side else 'UNPRICED: the cited book prints this cost; the met-mechanics.csv row has none.')
                 if gvm_side:
                     unpriced_gvm += 1
                 else:
@@ -992,8 +991,7 @@ def emit_merits():
                      [f'Grapevine Menus XML.gvm: "{menu}" with its includes resolved' + (' and its own submenus (clan lists, Fae Gifts/Marks, Fomori Taints)' if menu != generic else ''),
                       'met-mechanics.csv Merit/Flaw rows routed by source (the Vampire research overlay to Vampire; generic-menu names to every stack)',
                       'Cost: the GVM item\'s own cost, else the CSV row, else captured research for this genre (cited per item); anything left is marked UNPRICED with its reason'],
-                     section_type='trait_list',
-                     notes='1.3.0 D82 - replaces the shared met-' + kind + ' (D20/D81 precedent).')
+                     section_type='trait_list')
             own_menus = {x[2] for x in own}
             report[slug] = {'items': len(items),
                             'from_creature_menus': sum(1 for i in items if any(f'GVM: {m}' in (i['source'] or '') for m in own_menus)),
@@ -1136,8 +1134,7 @@ def emit_numina_split(menus):
                  tiered_def({'atomic': True, 'allow_custom': True}, meta, powers),
                  [f'Grapevine Menus XML.gvm: the "{container_menus[0]}" container' + (f' with "{container_menus[1]}" filling any path it lacks' if len(container_menus) > 1 else ''),
                   'Rungs, costs and tiers from each item\'s own GVM cost and note (3/3/6/6/9); spells, rituals and formulae are separate purchases and go to mortal-hedge-magic-formulae'],
-                 section_type='tiered_power',
-                 notes='1.3.0 decision 8 - split out of the mortal-numina container, which copied other stacks\' catalogues instead of referencing them.')
+                 section_type='tiered_power')
         built[slug] = {'families': len(powers), 'levels': sum(len(f['levels']) for f in powers), 'stack': stack}
     for slug, name, menu, stack in R.NUMINA_FLAT_BLOCKS:
         items = [io.trait_item({'name': it.get('name')}, cost=it.get('cost'), source=f'GVM: {menu}',
@@ -1147,8 +1144,7 @@ def emit_numina_split(menus):
                  io.trait_definition({'alphabetize': True, 'atomic': True, 'allow_custom': True, 'allow_multiples': False}, items),
                  [f'Grapevine Menus XML.gvm: "{menu}"',
                   'Cost as the GVM carries it; an item the GVM leaves unpriced keeps `cost: null` rather than a guessed number'],
-                 section_type='trait_list',
-                 notes='1.3.0 decision 8 - split out of the mortal-numina container.')
+                 section_type='trait_list')
         built[slug] = {'items': len(items), 'stack': stack}
     for menu, group in R.NUMINA_FORMULAE_EXTRA.items():
         for it in menus[menu].findall('item'):
@@ -1168,7 +1164,7 @@ def emit_numina_split(menus):
              ['Grapevine Menus XML.gvm: the spell, ritual and formula entries inside each Sorcery, Theurgy and Martial Arts path menu, plus the four Benandanti Rituals',
               'Cost as the GVM carries it - the shared "Sorcery, Levels" menu prices a spell at its own rank (3/3/6/6/9) and a ritual at 2/2/4/4/6'],
              section_type='trait_list',
-             notes='1.3.0 decision 8 - the same shape as mummy-formulae: a path rating is the ladder, each named working is bought separately.')
+             notes='A path rating is the ladder; each named working is bought separately.')
     built['mortal-hedge-magic-formulae'] = {'items': len(rows), 'stack': 'mortal'}
     REPORT['numina_split'] = {'blocks': built, 'residual': residual}
     return built, residual
@@ -1473,7 +1469,7 @@ def main():
                     marked += 1
             emit_trait_list(slug, items=items, sources=[LIVE_SOURCE] + ([
                 'OWBN Hunter: Inquisition Packet (2021) p. 7-8 - Mob, Reliquary, Status, Flock, via samples/research/hunter/mortal/resolved.json'] if slug == 'mortal-backgrounds' else []),
-                notes='Backgrounds bought per individual carry `allow_multiples: true` on the item (owner ruling 2026-09-22); the editor asks "Who or what?" at 1.3.2.')
+                notes='Backgrounds bought per individual carry `allow_multiples: true` on the item, and the editor asks "Who or what?" for them.')
             REPORT[slug]['allow_multiples'] = marked
         elif st == 'trait_list' and slug == 'mortal-backgrounds-unused':
             items = [io.trait_item(i) for i in live(slug)['definition']['items']]

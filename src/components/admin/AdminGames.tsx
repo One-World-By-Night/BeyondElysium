@@ -161,7 +161,7 @@ export function AdminGames() {
 						// translators: %s: game/chronicle name.
 						__( 'Delete "%s"?', 'beyond-elysium' ),
 						game.name
-				  )
+					)
 				: sprintf(
 						// translators: 1: game/chronicle name, 2: what it holds, e.g. "12 characters, 3 plots".
 						__(
@@ -170,8 +170,8 @@ export function AdminGames() {
 						),
 						game.name,
 						holds
-				  );
-		// eslint-disable-next-line no-alert
+					);
+
 		if ( ! window.confirm( message ) ) {
 			return;
 		}
@@ -277,7 +277,7 @@ export function AdminGames() {
 									/* translators: %s: the chronicle's slug being edited */
 									__( 'Edit %s', 'beyond-elysium' ),
 									editingSlug as string
-							  ) }
+								) }
 					</h2>
 					<label>
 						{ __( 'Name', 'beyond-elysium' ) }
@@ -349,7 +349,7 @@ export function AdminGames() {
 											fieldContext:
 												'chronicle_description',
 											gameSlug: editingSlug,
-									  }
+										}
 									: undefined
 							}
 						/>

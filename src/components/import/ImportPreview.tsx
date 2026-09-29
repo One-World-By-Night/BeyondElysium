@@ -605,7 +605,7 @@ export function ImportPreview( {
 																	action: 'apply_suggestion',
 																	suggestion_name:
 																		value,
-															  }
+																}
 															: null
 													);
 												} }
@@ -648,7 +648,7 @@ export function ImportPreview( {
 																		block: trait.block,
 																		raw: trait.raw,
 																		action: 'keep_custom',
-																  }
+																	}
 																: null
 														)
 													}
@@ -777,7 +777,7 @@ export function ImportPreview( {
 																block: trait.block,
 																raw: trait.raw,
 																action: 'keep_custom',
-														  }
+															}
 														: null
 												)
 											}

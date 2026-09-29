@@ -253,7 +253,7 @@ export function TraitListEditor( {
 		? costChoices(
 				definition.items.find( ( item ) => item.name === draft.name )
 					?.cost
-		  )
+			)
 		: null;
 	const chosen =
 		draftChoices && draft?.chosenCost !== undefined
@@ -271,7 +271,7 @@ export function TraitListEditor( {
 					definition,
 					{ name: draft.name, specialization: draft.specialization },
 					draft.index
-			  ) !== -1
+				) !== -1
 			: false;
 
 	const saveDraft = () => {
@@ -638,7 +638,7 @@ export function TraitListEditor( {
 									/* translators: %1$s: trait or item name */
 									__( 'Edit %1$s', 'beyond-elysium' ),
 									draft.name
-							  )
+								)
 					}
 					onClose={ closeDraft }
 					footer={
@@ -778,11 +778,11 @@ export function TraitListEditor( {
 											? __(
 													'Who or what?',
 													'beyond-elysium'
-											  )
+												)
 											: __(
 													'Specialization',
 													'beyond-elysium'
-											  ) }
+												) }
 									</label>
 									<input
 										id={ `${ blockSlug }-trait-specialization` }

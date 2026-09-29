@@ -140,16 +140,13 @@ def main():
     doc['section_type'] = 'trait_list'
     doc['provenance'] = OrderedDict()
     doc['provenance']['sources'] = [
-        'Live seeded catalog (be_dev wp_be_schema_blocks, slug mage-rotes) - 670 of 804 '
-        'items already carry a group backfilled at v0.99.17 from '
-        'code/tools/catalog/source/grimoire-rotes.csv (Enlightened Grimoire: A Guide for '
-        'Mage 20th Anniversary Edition, Charles Siegel, 2018)',
+        'Seeded catalog (slug mage-rotes); 670 of 804 items carry a group from grimoire-rotes.csv '
+        '(Enlightened Grimoire: A Guide for Mage 20th Anniversary Edition, Charles Siegel, 2018)',
         '45 of the 134 previously ungrouped items classified this pass from real captured '
         'effect text in samples/research/mage/mage-rotes.csv (Laws of Ascension / Laws of '
         'Ascension Companion, MET corebooks) against the same 17-category scheme',
         '89 of the 134 remain ungrouped - see this script\'s module docstring',
     ]
-    doc['provenance']['extracted'] = '2026-09-21'
     doc['provenance']['tool'] = 'tools/catalog/build_mage_rotes.py'
 
     definition = OrderedDict()

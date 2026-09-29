@@ -130,8 +130,8 @@ export function AdminAiAssistSite() {
 			display === 'claude'
 				? claudeKey
 				: display === 'self_hosted'
-				? selfHostedKey
-				: openaiKey;
+					? selfHostedKey
+					: openaiKey;
 		if ( key === '' ) {
 			setTestResult( {
 				which: display,
@@ -247,7 +247,7 @@ export function AdminAiAssistSite() {
 										? __(
 												'•••••••• (configured - leave blank to keep)',
 												'beyond-elysium'
-										  )
+											)
 										: __( 'sk-…', 'beyond-elysium' )
 								}
 							/>
@@ -270,7 +270,7 @@ export function AdminAiAssistSite() {
 									: __(
 											'Test Connection',
 											'beyond-elysium'
-									  ) }
+										) }
 							</button>
 						</label>
 						{ testResult?.which === 'openai' && (
@@ -304,7 +304,7 @@ export function AdminAiAssistSite() {
 										? __(
 												'•••••••• (configured - leave blank to keep)',
 												'beyond-elysium'
-										  )
+											)
 										: __( 'sk-ant-…', 'beyond-elysium' )
 								}
 							/>
@@ -327,7 +327,7 @@ export function AdminAiAssistSite() {
 									: __(
 											'Test Connection',
 											'beyond-elysium'
-									  ) }
+										) }
 							</button>
 						</label>
 						{ testResult?.which === 'claude' && (
@@ -394,11 +394,11 @@ export function AdminAiAssistSite() {
 										? __(
 												'•••••••• (configured - leave blank to keep)',
 												'beyond-elysium'
-										  )
+											)
 										: __(
 												'many self-hosted servers accept any value here',
 												'beyond-elysium'
-										  )
+											)
 								}
 							/>
 							{ settings.has_openai_key && (
@@ -420,7 +420,7 @@ export function AdminAiAssistSite() {
 									: __(
 											'Test Connection',
 											'beyond-elysium'
-									  ) }
+										) }
 							</button>
 						</label>
 						<p className="description">

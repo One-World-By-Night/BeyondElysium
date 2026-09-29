@@ -78,7 +78,7 @@ class CatalogTransformationsTest extends TestCase {
 				$rungs = $this->rung_names( $family );
 				$this->assertFalse(
 					in_array( 'Ravages of the Beast', $rungs, true ) && in_array( 'Stigmatize', $rungs, true ),
-					"{$slug}:{$name} holds both paths again - D67 re-fused"
+					"{$slug}:{$name} holds both paths again - the family is fused"
 				);
 			}
 		}

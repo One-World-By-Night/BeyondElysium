@@ -6,9 +6,9 @@
   "section_type": "resource_pool",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_schema_blocks, dumped by tools/catalog/dump_live.sh",
+      "Demon-Fallen_Genre-2021.pdf p.12 - Faith starts at 3, additional dots cost 6 XP each; Torment starts at 3 or 4 by House (see demon-identity.house_torment), floor of 1 without Coordinator approval; Willpower starts at the sum of the two highest Virtues, additional dots cost 3 XP each, maximum permanent score 15 (also p.229)"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -17,19 +17,21 @@
         "name": "Faith",
         "value_type": "integer",
         "default_start": 3,
-        "max": 10
+        "max": 10,
+        "cost_per_dot": 6
       },
       {
         "name": "Torment",
         "value_type": "integer",
-        "default_start": 0,
+        "default_start": 3,
         "max": 10
       },
       {
         "name": "Willpower",
         "value_type": "integer",
         "default_start": 3,
-        "max": 20
+        "max": 15,
+        "cost_per_dot": 3
       }
     ]
   }

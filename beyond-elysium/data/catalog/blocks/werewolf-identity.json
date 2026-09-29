@@ -6,14 +6,31 @@
   "section_type": "identity_field",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_schema_blocks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh",
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_schema_blocks, dumped by tools/catalog/dump_live.sh",
       "Totem: GVM menu(s) \"Totems\" (137 options)"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py",
-    "notes": "1.3.0 gap-audit class B: options from the Grapevine menus, `allow_custom` on so held free-text values stay valid."
+    "notes": "Options from the Grapevine menus, with `allow_custom` on so held free-text values stay valid.",
+    "starting_pools_notes": "Laws of the Wild Revised Edition (WW05023) pp.67-71 - starting Gnosis is set by Breed (Homid 1, Metis 3, Lupus 5), starting Rage by Auspice (Ragabash 1, Theurge 2, Philodox 3, Galliard 4, Ahroun 5), starting Willpower by Tribe (3 for most, 4 for Bone Gnawers/Children of Gaia/Wendigo - the other 18 Tribe options are not detailed in this corebook and take the pool's own default of 3). Beginning Renown (p.68-69): Ragabash 3 in any combination (a real creation choice), Theurge 3 Wisdom, Philodox 3 Honor, Galliard 2 Glory + 1 Wisdom, Ahroun 2 Glory + 1 Honor."
   },
   "definition": {
+    "breed_gnosis": {
+      "Homid": 1,
+      "Metis": 3,
+      "Lupus": 5
+    },
+    "auspice_rage": {
+      "Ragabash": 1,
+      "Theurge": 2,
+      "Philodox": 3,
+      "Galliard": 4,
+      "Ahroun": 5
+    },
+    "tribe_willpower": {
+      "Bone Gnawers": 4,
+      "Children of Gaia": 4,
+      "Wendigo": 4
+    },
     "fields": [
       {
         "name": "Tribe",

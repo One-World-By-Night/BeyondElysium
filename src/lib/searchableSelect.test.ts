@@ -65,7 +65,7 @@ describe( 'canUseCustomEntry', () => {
 	} );
 } );
 
-describe( 'resolveBlurCommit (Decision 076)', () => {
+describe( 'resolveBlurCommit', () => {
 	const options = [ 'Celerity', 'Auspex' ];
 
 	it( 'commits a genuinely new value as custom when the block allows it', () => {

@@ -202,8 +202,8 @@ export function AdminAiAssistChronicle() {
 			display === 'claude'
 				? claudeKey
 				: display === 'self_hosted'
-				? selfHostedKey
-				: openaiKey;
+					? selfHostedKey
+					: openaiKey;
 		if ( key === '' ) {
 			setTestResult( {
 				which: display,
@@ -368,11 +368,11 @@ export function AdminAiAssistChronicle() {
 														? __(
 																'•••••••• (configured - leave blank to keep)',
 																'beyond-elysium'
-														  )
+															)
 														: __(
 																'sk-…',
 																'beyond-elysium'
-														  )
+															)
 												}
 											/>
 											{ settings.has_openai_key && (
@@ -398,11 +398,11 @@ export function AdminAiAssistChronicle() {
 													? __(
 															'Testing…',
 															'beyond-elysium'
-													  )
+														)
 													: __(
 															'Test Connection',
 															'beyond-elysium'
-													  ) }
+														) }
 											</button>
 										</label>
 										{ testResult?.which === 'openai' && (
@@ -447,11 +447,11 @@ export function AdminAiAssistChronicle() {
 														? __(
 																'•••••••• (configured - leave blank to keep)',
 																'beyond-elysium'
-														  )
+															)
 														: __(
 																'sk-ant-…',
 																'beyond-elysium'
-														  )
+															)
 												}
 											/>
 											{ settings.has_claude_key && (
@@ -477,11 +477,11 @@ export function AdminAiAssistChronicle() {
 													? __(
 															'Testing…',
 															'beyond-elysium'
-													  )
+														)
 													: __(
 															'Test Connection',
 															'beyond-elysium'
-													  ) }
+														) }
 											</button>
 										</label>
 										{ testResult?.which === 'claude' && (
@@ -570,11 +570,11 @@ export function AdminAiAssistChronicle() {
 														? __(
 																'•••••••• (configured - leave blank to keep)',
 																'beyond-elysium'
-														  )
+															)
 														: __(
 																'leave blank to use the site-wide key/server',
 																'beyond-elysium'
-														  )
+															)
 												}
 											/>
 											{ settings.has_openai_key && (
@@ -600,11 +600,11 @@ export function AdminAiAssistChronicle() {
 													? __(
 															'Testing…',
 															'beyond-elysium'
-													  )
+														)
 													: __(
 															'Test Connection',
 															'beyond-elysium'
-													  ) }
+														) }
 											</button>
 										</label>
 										{ testResult?.which ===

@@ -118,7 +118,7 @@ describe( 'characterEditorUrl', () => {
 } );
 
 describe( 'sendFileLinkUrl', () => {
-	it( 'points at Send a Grapevine File with the URL-encoded chronicle already picked (F-122)', () => {
+	it( 'points at Send a Grapevine File with the URL-encoded chronicle already picked', () => {
 		expect( sendFileLinkUrl( 'kings of new york' ) ).toBe(
 			`${ ORIGIN }/be-player/?tab=send-file&game_slug=kings%20of%20new%20york`
 		);

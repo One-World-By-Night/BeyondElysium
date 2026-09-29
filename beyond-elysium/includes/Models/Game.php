@@ -163,6 +163,12 @@ class Game {
 		if ( array_key_exists( 'owbn_chronicle_post_id', $data ) ) {
 			$insert['owbn_chronicle_post_id'] = $data['owbn_chronicle_post_id'];
 		}
+		if ( array_key_exists( 'asc_role_path', $data ) ) {
+			$insert['asc_role_path'] = $data['asc_role_path'];
+		}
+		if ( array_key_exists( 'notifications_enabled', $data ) ) {
+			$insert['notifications_enabled'] = $data['notifications_enabled'] ? 1 : 0;
+		}
 
 		return Manager::insert( 'games', $insert );
 	}
@@ -172,7 +178,7 @@ class Game {
 	 *
 	 * @param string $slug
 	 * @param array  $data Fields to update.
-	 * @return bool
+	 * @return bool False when no field is given or no chronicle has the slug.
 	 */
 	public static function update( string $slug, array $data ): bool {
 		$allowed = [ 'name', 'game_type', 'description', 'settings', 'asc_role_path', 'notifications_enabled', 'owbn_chronicle_post_id' ];
@@ -187,6 +193,11 @@ class Game {
 			return false;
 		}
 
+		// A slug no chronicle holds is refused.
+		if ( Manager::get_var( 'SELECT id FROM ' . Manager::table( 'games' ) . ' WHERE slug = %s', $slug ) === null ) {
+			return false;
+		}
+
 		if ( isset( $update['settings'] ) && is_array( $update['settings'] ) ) {
 			$update['settings'] = wp_json_encode( $update['settings'] );
 		}
@@ -198,12 +209,12 @@ class Game {
 	}
 
 	/**
-	 * Renames a chronicle: its own slug, every character's owner_slug, and every schema-block fork's game_slug, its
-	 * verification codes, and this site's side of its transfers, atomically, keyed by numeric id.
+	 * Renames a chronicle: its own slug, every character's owner_slug, every schema-block copy's and creature type
+	 * layer's game_slug, its verification codes, and this site's side of its transfers, atomically, keyed by numeric id.
 	 *
 	 * @param int    $game_id
 	 * @param string $new_slug
-	 * @return array{changed:bool,error?:string,message?:string,blocks?:string[],orphans?:array<string,int>,characters?:int,schema_blocks?:int,attestations?:int,transfers?:int,pages?:int,elementor?:int}
+	 * @return array{changed:bool,error?:string,message?:string,blocks?:string[],orphans?:array<string,int>,characters?:int,schema_blocks?:int,creature_stacks?:int,attestations?:int,transfers?:int,pages?:int,elementor?:int}
 	 */
 	public static function rename( int $game_id, string $new_slug ): array {
 		global $wpdb;
@@ -222,6 +233,7 @@ class Game {
 		$games_table       = Manager::table( 'games' );
 		$char_table        = Manager::table( 'characters' );
 		$block_table       = Manager::table( 'schema_blocks' );
+		$stack_table       = Manager::table( 'creature_stacks' );
 		$attestation_table = Manager::table( 'character_attestations' );
 		$transfer_table    = Manager::table( 'character_transfers' );
 
@@ -275,6 +287,13 @@ class Game {
 				$old_slug
 			)
 		);
+		$creature_stacks = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$stack_table} SET game_slug = %s WHERE game_slug = %s",
+				$new_slug,
+				$old_slug
+			)
+		);
 		$attestations = $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$attestation_table} SET game_slug = %s WHERE game_slug = %s",
@@ -311,6 +330,7 @@ class Game {
 			'changed'       => true,
 			'characters'    => (int) $characters,
 			'schema_blocks' => (int) $schema_blocks,
+			'creature_stacks' => (int) $creature_stacks,
 			'attestations'  => (int) $attestations,
 			'transfers'     => (int) $transfers,
 			'pages'         => $reference_counts['pages'],
@@ -374,6 +394,7 @@ class Game {
 			Manager::delete( 'templates', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'queries', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'schema_blocks', [ 'game_slug' => $slug ] ),
+			Manager::delete( 'creature_stacks', [ 'game_slug' => $slug ] ),
 			Manager::delete( 'character_attestations', [ 'game_slug' => $slug ] ),
 			$wpdb->query( $wpdb->prepare(
 				"DELETE FROM {$transfer_table} WHERE ( direction = 'outbound' AND home_slug = %s ) OR ( direction = 'inbound' AND host_slug = %s )",
@@ -426,7 +447,7 @@ class Game {
 	 * Counts everything stored under a chronicle that deleting its row alone would leave behind.
 	 *
 	 * @param object $game A games row.
-	 * @return array{characters:int,plots:int,world_objects:int,templates:int,schema_blocks:int,saved_queries:int,attestations:int,transfers:int,factions:int,positions:int,secrets:int,game_sessions:int,attendance:int,release_batches:int,notification_queue:int,npc_castings:int,after_game_reports:int}
+	 * @return array{characters:int,plots:int,world_objects:int,templates:int,schema_blocks:int,creature_stacks:int,saved_queries:int,attestations:int,transfers:int,factions:int,positions:int,secrets:int,game_sessions:int,attendance:int,release_batches:int,notification_queue:int,npc_castings:int,after_game_reports:int}
 	 */
 	public static function content_counts( object $game ): array {
 		$id   = (int) $game->id;
@@ -438,6 +459,7 @@ class Game {
 			'world_objects' => self::count_rows( 'world_objects', 'game_id = %d', $id ),
 			'templates' => self::count_rows( 'templates', 'game_id = %d', $id ),
 			'schema_blocks' => self::count_rows( 'schema_blocks', 'game_slug = %s', $slug ),
+			'creature_stacks' => self::count_rows( 'creature_stacks', 'game_slug = %s', $slug ),
 			'saved_queries' => self::count_rows( 'queries', 'game_id = %d AND is_recent_search = 0', $id ),
 			'attestations' => self::count_rows( 'character_attestations', 'game_slug = %s', $slug ),
 			'transfers' => self::count_rows( 'character_transfers', "( direction = 'outbound' AND home_slug = %s ) OR ( direction = 'inbound' AND host_slug = %s )", $slug, $slug ),
@@ -457,16 +479,17 @@ class Game {
 	 * Counts content stored under a slug that no chronicle holds.
 	 *
 	 * @param string $slug
-	 * @return array{characters:int,schema_blocks:int,attestations:int,transfers:int}
+	 * @return array{characters:int,schema_blocks:int,creature_stacks:int,attestations:int,transfers:int}
 	 */
 	public static function orphaned_content_counts( string $slug ): array {
 		if ( $slug === '' || self::find_by_slug( $slug ) ) {
-			return [ 'characters' => 0, 'schema_blocks' => 0, 'attestations' => 0, 'transfers' => 0 ];
+			return [ 'characters' => 0, 'schema_blocks' => 0, 'creature_stacks' => 0, 'attestations' => 0, 'transfers' => 0 ];
 		}
 
 		return [
 			'characters'    => self::count_rows( 'characters', "owner_type = 'chronicle' AND owner_slug = %s", $slug ),
 			'schema_blocks' => self::count_rows( 'schema_blocks', 'game_slug = %s', $slug ),
+			'creature_stacks' => self::count_rows( 'creature_stacks', 'game_slug = %s', $slug ),
 			'attestations'  => self::count_rows( 'character_attestations', 'game_slug = %s', $slug ),
 			'transfers'     => self::count_rows( 'character_transfers', "( direction = 'outbound' AND home_slug = %s ) OR ( direction = 'inbound' AND host_slug = %s )", $slug, $slug ),
 		];

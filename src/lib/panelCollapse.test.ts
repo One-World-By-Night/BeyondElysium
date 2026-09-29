@@ -24,7 +24,7 @@ describe( 'readCollapsed', () => {
 		expect( readCollapsed() ).toEqual( {} );
 	} );
 
-	it( 'ignores the pre-1.2.9 array shape', () => {
+	it( 'ignores the older array shape', () => {
 		// A stored bare array of collapsed ids lands on the defaults.
 		window.localStorage.setItem( 'be-collapsed-panels', '["a","b"]' );
 		expect( readCollapsed() ).toEqual( {} );

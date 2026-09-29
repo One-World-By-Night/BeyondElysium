@@ -100,7 +100,7 @@ export function AdminReports() {
 														statField,
 														statType:
 															'distribution',
-												  }
+													}
 												: {}
 										) }
 									>

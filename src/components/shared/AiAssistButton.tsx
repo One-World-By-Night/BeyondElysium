@@ -149,8 +149,14 @@ export function AiAssistButton( {
 									{ loading
 										? __( 'Generating…', 'beyond-elysium' )
 										: hasExistingText
-										? __( 'Polish this', 'beyond-elysium' )
-										: __( 'Generate', 'beyond-elysium' ) }
+											? __(
+													'Polish this',
+													'beyond-elysium'
+												)
+											: __(
+													'Generate',
+													'beyond-elysium'
+												) }
 								</button>
 							</>
 						)

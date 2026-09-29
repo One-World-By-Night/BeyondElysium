@@ -3,7 +3,6 @@
 namespace BeyondElysium\Services;
 
 use BeyondElysium\Models\Schema_Block;
-use BeyondElysium\Models\Creature_Stack;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -85,73 +84,14 @@ class Cost_Engine {
 	}
 
 	/**
-	 * Loads what `is_in_type()` needs for one block.
+	 * Loads what `is_in_type()` needs for one block: the block's section `in_type` tests on the character's creature type.
 	 *
 	 * @param object|null          $stack  The character's creature stack, when already loaded.
 	 * @param array<string,object> $blocks The character's chronicle's blocks by slug, fork-aware, when already loaded.
 	 * @return callable(string):bool
 	 */
 	public static function in_type_check( $character, string $block_slug, ?object $stack = null, array $blocks = [] ): callable {
-		$always = static fn( string $trait_name ): bool => true;
-
-		$stack = $stack ?? Creature_Stack::find_by_slug( $character->stack_slug );
-		if ( ! $stack ) {
-			return $always;
-		}
-
-		$in_type_source = null;
-		foreach ( ( $stack->stack_definition->sections ?? [] ) as $section ) {
-			if ( ( $section->block_slug ?? null ) === $block_slug && ! empty( $section->in_type_source ) ) {
-				$in_type_source = $section->in_type_source;
-				break;
-			}
-		}
-		if ( ! $in_type_source ) {
-			return $always;
-		}
-
-		$parts = explode( '.', $in_type_source, 2 );
-		if ( count( $parts ) !== 2 ) {
-			return $always;
-		}
-		[ $identity_block_slug, $field_name ] = $parts;
-
-		$identity_block = $blocks[ $identity_block_slug ] ?? Schema_Block::find_for_game( $identity_block_slug, (string) ( $character->owner_slug ?? '' ) );
-		if ( ! $identity_block ) {
-			return $always;
-		}
-
-		$sheet_data = is_array( $character->sheet_data ?? null ) ? $character->sheet_data : [];
-		$definition = $identity_block->definition;
-		return static fn( string $trait_name ): bool => self::is_in_type_pure( $sheet_data, $identity_block_slug, $field_name, $trait_name, $definition );
-	}
-
-	// Pure logic: DB-free, directly unit-tested.
-
-	/**
-	 * Determines whether a trait name is in-type for a given identity value.
-	 */
-	public static function is_in_type_pure(
-		array $sheet_data,
-		string $identity_block_slug,
-		string $field_name,
-		string $trait_name,
-		$identity_definition
-	): bool {
-		$identity_data  = $sheet_data[ $identity_block_slug ] ?? [];
-		$identity_value = $identity_data[ $field_name ] ?? null;
-		if ( ! $identity_value ) {
-			return true;
-		}
-
-		$clan_disciplines = (array) ( $identity_definition->clan_disciplines ?? [] );
-
-		if ( isset( $clan_disciplines[ $identity_value ] ) ) {
-			return in_array( $trait_name, (array) $clan_disciplines[ $identity_value ], true );
-		}
-
-		$chosen = (array) ( $identity_data['chosen_in_clan'] ?? [] );
-		return in_array( $trait_name, $chosen, true );
+		return In_Type::check( $character, $block_slug, $stack, $blocks );
 	}
 
 	/**
@@ -186,10 +126,13 @@ class Cost_Engine {
 			if ( $own === null ) {
 				return self::unquoted();
 			}
-			return self::quoted( $sign * $own * max( 1, (int) ( $trait['count'] ?? 1 ) ) );
+			return self::quoted( $sign * $own * self::row_units( $definition, (int) ( $trait['count'] ?? 1 ) ) );
 		}
 
 		if ( 'modify_trait' === $change_type ) {
+			if ( self::rows_are_purchases( $definition ) ) {
+				return self::quoted( 0 );
+			}
 			$held      = self::find_held_trait( $sheet_data, $block_slug, $definition, $trait, is_array( $change_data['previous'] ?? null ) ? $change_data['previous'] : null );
 			$old_count = $held['count'] ?? 0;
 			$new_count = array_key_exists( 'count', $trait ) ? max( 0, (int) $trait['count'] ) : $old_count;
@@ -256,6 +199,10 @@ class Cost_Engine {
 			return [ 'per' => 'pick', 'units' => $buys ? 1 : 0 ];
 		}
 
+		if ( self::rows_are_purchases( $definition ) ) {
+			return [ 'per' => 'pick', 'units' => 'add_trait' === $change_type ? 1 : 0 ];
+		}
+
 		if ( 'add_trait' === $change_type ) {
 			return [ 'per' => 'dot', 'units' => max( 1, (int) ( $trait['count'] ?? 1 ) ) ];
 		}
@@ -286,7 +233,7 @@ class Cost_Engine {
 				$carried = (int) ( $held['chosen_cost'] ?? 0 );
 			}
 			$trait['chosen_cost'] = $carried + $set_cost;
-			$xp                   = $units['units'] > 0 ? $set_cost : 0;
+			$xp                   = ( ! empty( $definition->negative ) ? -1 : 1 ) * ( $units['units'] > 0 ? $set_cost : 0 );
 		} else {
 			$trait['chosen_cost'] = $set_cost;
 			$xp                   = ( ! empty( $definition->negative ) ? -1 : 1 ) * $set_cost * $units['units'];
@@ -362,15 +309,20 @@ class Cost_Engine {
 			return 0;
 		}
 
-		$item = self::find_item( $definition, $name );
-		if ( ! $item || ! isset( $item->cost ) ) {
+		$item             = self::find_item( $definition, $name );
+		$unit_cost_string = $item ? self::item_cost( $definition, $item ) : null;
+		if ( $unit_cost_string === null ) {
 			return 0;
 		}
 
 		$negative = ! empty( $definition->negative );
 		$sign     = $negative ? -1 : 1;
 
-		$held       = self::find_held_trait( $sheet_data, $block_slug, $definition, $trait, is_array( $change_data['previous'] ?? null ) ? $change_data['previous'] : null );
+		$held = self::find_held_trait( $sheet_data, $block_slug, $definition, $trait, is_array( $change_data['previous'] ?? null ) ? $change_data['previous'] : null );
+		if ( self::rows_are_purchases( $definition ) ) {
+			return $sign * self::purchase_change_cost( $unit_cost_string, $change_type, $held, $trait );
+		}
+
 		$old_count  = $held['count'] ?? 0;
 		$old_chosen = $held['chosen_cost'] ?? null;
 
@@ -394,7 +346,6 @@ class Cost_Engine {
 			}
 		}
 
-		$unit_cost_string = (string) $item->cost;
 		$old_total        = $old_count > 0 ? self::price_item_cost( $unit_cost_string, $old_chosen ) * $old_count : 0;
 		$new_total        = $new_count > 0 ? self::price_item_cost( $unit_cost_string, $new_chosen ) * $new_count : 0;
 
@@ -424,13 +375,11 @@ class Cost_Engine {
 		}
 
 		$sequential = ! empty( $definition->sequential );
-		$modifier   = $in_type ? 0 : (int) ( $definition->out_of_type_cost_modifier ?? 0 );
-
 		$power_name = $trait['power_name'] ?? null;
 
 		if ( $power_name !== null ) {
 			$already_held = self::find_held_power( $sheet_data, $block_slug, $name, $power_name ) !== null;
-			$cost         = self::elder_tier_cost( $power, $power_name ) + $modifier;
+			$cost         = self::pick_cost( $definition, $power, (string) $power_name, $in_type );
 
 			if ( 'remove_trait' === $change_type ) {
 				return $already_held ? -$cost : 0;
@@ -458,11 +407,11 @@ class Cost_Engine {
 		}
 
 		if ( $sequential ) {
-			return self::sequential_step_cost( $definition, $power, $old_level, $new_level, $modifier );
+			return self::sequential_step_cost( $definition, $power, $old_level, $new_level, $in_type );
 		}
 
-		$old_cost = $old_level > 0 ? self::level_base_cost( $definition, $power, $old_level ) + $modifier : 0;
-		$new_cost = $new_level > 0 ? self::level_base_cost( $definition, $power, $new_level ) + $modifier : 0;
+		$old_cost = $old_level > 0 ? self::level_cost( $definition, $power, $old_level, $in_type ) : 0;
+		$new_cost = $new_level > 0 ? self::level_cost( $definition, $power, $new_level, $in_type ) : 0;
 		return $new_cost - $old_cost;
 	}
 
@@ -475,19 +424,20 @@ class Cost_Engine {
 
 		foreach ( $values as $pool_name => $new_value ) {
 			$pool_def = self::find_pool( $definition, (string) $pool_name );
-			if ( $pool_def === null || ! isset( $pool_def->cost_per_dot ) ) {
+			if ( $pool_def === null ) {
 				continue;
 			}
 
-			$free          = (int) ( $pool_def->free_dots ?? 0 );
 			$old_value     = $sheet_data[ $block_slug ][ $pool_name ] ?? null;
 			$old_permanent = self::pool_permanent_value( $old_value, (int) ( $pool_def->default_start ?? 0 ) );
 			$new_permanent = self::pool_permanent_value( $new_value, $old_permanent );
 
-			$old_chargeable = max( 0, $old_permanent - $free );
-			$new_chargeable = max( 0, $new_permanent - $free );
-
-			$total += ( $new_chargeable - $old_chargeable ) * (int) $pool_def->cost_per_dot;
+			$old_cost = self::pool_rating_cost( $pool_def, $old_permanent );
+			$new_cost = self::pool_rating_cost( $pool_def, $new_permanent );
+			if ( $old_cost === null || $new_cost === null ) {
+				continue;
+			}
+			$total += ! empty( $pool_def->buy_down ) ? max( 0, $new_cost - $old_cost ) : $new_cost - $old_cost;
 		}
 
 		return $total;
@@ -533,7 +483,7 @@ class Cost_Engine {
 
 		if ( ! empty( $held['custom'] ) ) {
 			if ( array_key_exists( 'chosen_cost', $held ) && $held['chosen_cost'] !== null ) {
-				$count = max( 1, (int) ( $held['count'] ?? 1 ) );
+				$count = self::row_units( $definition, (int) ( $held['count'] ?? 1 ) );
 				$sign  = ! empty( $definition->negative ) ? -1 : 1;
 				return [ 'xp' => $sign * (int) $held['chosen_cost'] * $count, 'basis' => 'chosen_cost', 'unpriced_reason' => null ];
 			}
@@ -554,15 +504,15 @@ class Cost_Engine {
 		if ( $item === null ) {
 			return [ 'xp' => null, 'basis' => 'catalog_cost', 'unpriced_reason' => 'name_not_in_catalog' ];
 		}
-		if ( ! isset( $item->cost ) || (string) $item->cost === '' ) {
+		$cost_string = self::item_cost( $definition, $item );
+		if ( $cost_string === null ) {
 			return [ 'xp' => null, 'basis' => 'catalog_cost', 'unpriced_reason' => 'catalog_item_has_no_cost' ];
 		}
 
-		$cost_string = (string) $item->cost;
 		$rule        = self::parse_cost_rule( $cost_string );
-		$chosen      = $held['chosen_cost'] ?? null;
+		$chosen      = self::rows_are_purchases( $definition ) ? self::purchase_choice( $cost_string, $held ) : ( $held['chosen_cost'] ?? null );
 		$unit_cost   = self::price_item_cost( $cost_string, $chosen );
-		$count       = max( 1, (int) ( $held['count'] ?? 1 ) );
+		$count       = self::row_units( $definition, (int) ( $held['count'] ?? 1 ) );
 		$sign        = ! empty( $definition->negative ) ? -1 : 1;
 
 		$basis = 'catalog_cost';
@@ -577,21 +527,21 @@ class Cost_Engine {
 	 * Prices one held `tiered_power` entry.
 	 *
 	 * @param array                $held       One entry from `sheet_data[block_slug]`: `name`, `level?`, `power_name?`, `custom?`/`keep_custom?`, `chosen_cost?`.
+	 * @param bool|null            $in_type    Whether the family is in-type for the character, or null to price it with no rank modifier.
 	 * @param string $block_slug The slug this row is held under (cross-block alias routing - omit to skip it).
 	 * @param array<string,object> $blocks     The character's other blocks, keyed by slug, for `moved_from` resolution - `Point_Audit`'s own already-loaded set.
 	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
 	 */
-	public static function price_held_tiered_power( $definition, array $held, bool $in_type, string $block_slug = '', array $blocks = [] ): array {
+	public static function price_held_tiered_power( $definition, array $held, ?bool $in_type, string $block_slug = '', array $blocks = [] ): array {
 		$name = $held['name'] ?? null;
 		if ( $name === null ) {
 			return [ 'xp' => null, 'basis' => 'flat_level', 'unpriced_reason' => 'held_block_not_in_catalog' ];
 		}
 
-		$power    = self::find_power( $definition, $name );
-		$modifier = $in_type ? 0 : (int) ( $definition->out_of_type_cost_modifier ?? 0 );
+		$power = self::find_power( $definition, $name );
 
 		if ( ! empty( $held['custom'] ) || ! empty( $held['keep_custom'] ) ) {
-			return self::price_held_custom_pick( $power, $held, $modifier );
+			return self::price_held_custom_pick( $definition, $power, $held, $in_type );
 		}
 
 		if ( $power === null && $block_slug !== '' && $blocks !== [] ) {
@@ -624,7 +574,7 @@ class Cost_Engine {
 			if ( ! isset( $level_entry->cost ) && ! isset( self::TIER_COSTS[ $tier ] ) ) {
 				return [ 'xp' => null, 'basis' => 'elder_pick', 'unpriced_reason' => 'catalog_item_has_no_cost' ];
 			}
-			$cost  = self::elder_tier_cost( $power, $power_name ) + $modifier;
+			$cost  = self::pick_cost( $definition, $power, (string) $power_name, $in_type );
 			$basis = isset( $level_entry->cost ) ? 'elder_pick' : 'tier_fallback';
 			return [ 'xp' => $cost, 'basis' => $basis, 'unpriced_reason' => null ];
 		}
@@ -635,9 +585,9 @@ class Cost_Engine {
 		}
 
 		if ( self::declares_ladder( $definition ) && ! empty( $definition->sequential ) ) {
-			$ceiling = count( self::ladder_tiers( $definition ) );
+			$ceiling = self::untiered_cost_per_level( $definition ) !== null ? count( Power_Levels::ladder( $power ) ) : count( self::ladder_tiers( $definition ) );
 			if ( $level > $ceiling ) {
-				return self::price_above_ceiling_total( $definition, $power, $ceiling, $level, $modifier );
+				return self::price_above_ceiling_total( $definition, $power, $ceiling, $level, $in_type );
 			}
 		}
 
@@ -646,42 +596,45 @@ class Cost_Engine {
 		}
 
 		if ( ! empty( $definition->sequential ) ) {
-			return [ 'xp' => self::sequential_step_cost( $definition, $power, 0, $level, $modifier ), 'basis' => 'sequential_sum', 'unpriced_reason' => null ];
+			return [ 'xp' => self::sequential_step_cost( $definition, $power, 0, $level, $in_type ), 'basis' => 'sequential_sum', 'unpriced_reason' => null ];
 		}
 
-		return [ 'xp' => self::level_base_cost( $definition, $power, $level ) + $modifier, 'basis' => 'flat_level', 'unpriced_reason' => null ];
+		return [ 'xp' => self::level_cost( $definition, $power, $level, $in_type ), 'basis' => 'flat_level', 'unpriced_reason' => null ];
 	}
 
 	/**
 	 * The above-ceiling case: the full declared ladder plus `(level - ceiling)` unnamed picks, each priced at the first
-	 * rank above the ladder; unpriced when the block declares no rank past its ladder.
+	 * rank above the ladder with that rank's modifier; unpriced when the block declares no rank past its ladder.
 	 *
 	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
 	 */
-	private static function price_above_ceiling_total( $definition, $power, int $ceiling, int $level, int $modifier ): array {
+	private static function price_above_ceiling_total( $definition, $power, int $ceiling, int $level, ?bool $in_type ): array {
 		$pick_rank = self::first_pick_rank( $definition );
 		$pick_cost = $pick_rank !== null ? ( self::block_tier_costs( $definition )[ $pick_rank ] ?? null ) : null;
 		if ( $pick_cost === null ) {
 			return [ 'xp' => null, 'basis' => 'sequential_sum', 'unpriced_reason' => 'level_above_ceiling_no_pick_rank' ];
 		}
 
-		$ladder_cost = self::sequential_step_cost( $definition, $power, 0, $ceiling, $modifier );
+		$ladder_cost = self::sequential_step_cost( $definition, $power, 0, $ceiling, $in_type );
 		$picks       = $level - $ceiling;
-		return [ 'xp' => $ladder_cost + $picks * ( $pick_cost + $modifier ), 'basis' => 'sequential_sum', 'unpriced_reason' => null ];
+		return [ 'xp' => $ladder_cost + $picks * self::apply_modifier( $pick_cost, self::rank_modifier( $definition, $pick_rank, $in_type ) ), 'basis' => 'sequential_sum', 'unpriced_reason' => null ];
 	}
 
 	/**
-	 * Prices a held custom/keep_custom tiered_power entry.
+	 * Prices a held custom/keep_custom tiered_power entry: a catalog pick's own cost with its rank's modifier, or the
+	 * Storyteller's price.
 	 *
 	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
 	 */
-	private static function price_held_custom_pick( $power, array $held, int $modifier ): array {
+	private static function price_held_custom_pick( $definition, $power, array $held, ?bool $in_type ): array {
 		$power_name = ( $held['power_name'] ?? '' ) !== '' ? $held['power_name'] : null;
 
 		if ( $power !== null && $power_name !== null ) {
 			$level_entry = self::find_power_level_by_name( $power, $power_name );
 			if ( $level_entry !== null && isset( $level_entry->cost ) ) {
-				return [ 'xp' => self::price_item_cost( (string) $level_entry->cost, null ) + $modifier, 'basis' => 'elder_pick', 'unpriced_reason' => null ];
+				$tier = strtolower( (string) ( $level_entry->tier ?? '' ) );
+				$cost = self::apply_modifier( self::price_item_cost( (string) $level_entry->cost, null ), self::rank_modifier( $definition, $tier !== '' ? $tier : null, $in_type ) );
+				return [ 'xp' => $cost, 'basis' => 'elder_pick', 'unpriced_reason' => null ];
 			}
 		}
 
@@ -703,15 +656,12 @@ class Cost_Engine {
 		if ( $pool_def === null ) {
 			return [ 'xp' => null, 'basis' => 'catalog_cost', 'unpriced_reason' => 'held_block_not_in_catalog' ];
 		}
-		if ( ! isset( $pool_def->cost_per_dot ) ) {
+
+		$cost = self::pool_rating_cost( $pool_def, self::pool_permanent_value( $value, (int) ( $pool_def->default_start ?? 0 ) ) );
+		if ( $cost === null ) {
 			return [ 'xp' => null, 'basis' => 'catalog_cost', 'unpriced_reason' => 'resource_pool_no_pricing_rule' ];
 		}
-
-		$permanent  = self::pool_permanent_value( $value, (int) ( $pool_def->default_start ?? 0 ) );
-		$free       = (int) ( $pool_def->free_dots ?? 0 );
-		$chargeable = max( 0, $permanent - $free );
-
-		return [ 'xp' => $chargeable * (int) $pool_def->cost_per_dot, 'basis' => 'catalog_cost', 'unpriced_reason' => null ];
+		return [ 'xp' => $cost, 'basis' => 'catalog_cost', 'unpriced_reason' => null ];
 	}
 
 	/**
@@ -730,6 +680,9 @@ class Cost_Engine {
 	 * True when a numbered rank is a real, purchasable position in this power's ladder.
 	 */
 	private static function rank_is_valid_for_power( $definition, $power, int $level ): bool {
+		if ( self::untiered_cost_per_level( $definition ) !== null ) {
+			return self::find_power_level( $power, $level ) !== null;
+		}
 		$exact = self::find_power_level( $power, $level );
 		if ( $exact !== null ) {
 			return isset( $exact->cost );
@@ -750,7 +703,7 @@ class Cost_Engine {
 	 * Maps a numbered rank (1=basic, 2=intermediate,...) to its tier name, using `TIER_COSTS`' own key order (`innate`
 	 * excluded - never a numbered rank).
 	 */
-	private static function tier_for_rank( $definition, int $rank ): ?string {
+	public static function tier_for_rank( $definition, int $rank ): ?string {
 		return self::ladder_tiers( $definition )[ $rank - 1 ] ?? null;
 	}
 
@@ -803,7 +756,7 @@ class Cost_Engine {
 	 * @param object|array $definition
 	 * @return string[]|null
 	 */
-	private static function meta_ranks( $definition ): ?array {
+	public static function meta_ranks( $definition ): ?array {
 		if ( is_object( $definition ) && isset( $definition->_meta->ranks ) ) {
 			return array_map( 'strval', (array) $definition->_meta->ranks );
 		}
@@ -839,10 +792,10 @@ class Cost_Engine {
 	}
 
 	/**
-	 * Computes the cost of moving a sequential power between two levels as the sum of every step's base cost in between:
-	 * raising level 2 to 4 costs the level-3 step plus the level-4 step.
+	 * Computes the cost of moving a sequential power between two levels as the sum of every step's cost in between, each
+	 * with its own rank's modifier: raising level 2 to 4 costs the level-3 step plus the level-4 step.
 	 */
-	private static function sequential_step_cost( $definition, $power, int $old_level, int $new_level, int $modifier ): int {
+	private static function sequential_step_cost( $definition, $power, int $old_level, int $new_level, ?bool $in_type ): int {
 		if ( $new_level === $old_level ) {
 			return 0;
 		}
@@ -852,15 +805,27 @@ class Cost_Engine {
 
 		$sum = 0;
 		for ( $level = $lo; $level <= $hi; $level++ ) {
-			$sum += self::level_base_cost( $definition, $power, $level ) + $modifier;
+			$sum += self::level_cost( $definition, $power, $level, $in_type );
 		}
 		return $direction * $sum;
+	}
+
+	/**
+	 * The cost of one level of a tiered power with its rank's modifier applied.
+	 */
+	private static function level_cost( $definition, $power, int $level, ?bool $in_type ): int {
+		return self::apply_modifier( self::level_base_cost( $definition, $power, $level ), self::rank_modifier( $definition, self::tier_for_rank( $definition, $level ), $in_type ) );
 	}
 
 	/**
 	 * Looks up the base cost of one level of a tiered power.
 	 */
 	private static function level_base_cost( $definition, $power, int $level ): int {
+		$per_level = self::untiered_cost_per_level( $definition );
+		if ( $per_level !== null ) {
+			return self::find_power_level( $power, $level ) !== null ? $per_level : 0;
+		}
+
 		$tier = self::tier_for_rank( $definition, $level );
 
 		if ( $tier !== null && self::declares_ladder( $definition ) ) {
@@ -1011,6 +976,71 @@ class Cost_Engine {
 		return $lo;
 	}
 
+	// Rows priced per purchase or per dot.
+
+	/**
+	 * Whether each row of a trait_list block is one purchase, priced once whatever its count.
+	 */
+	public static function rows_are_purchases( $definition ): bool {
+		return ! empty( $definition->atomic );
+	}
+
+	/**
+	 * How many units a trait_list row of `$count` is priced as: one on a block whose rows are single purchases, its
+	 * count otherwise.
+	 */
+	private static function row_units( $definition, int $count ): int {
+		return self::rows_are_purchases( $definition ) ? 1 : max( 1, $count );
+	}
+
+	/**
+	 * What an `add_trait`, `remove_trait` or `modify_trait` change costs on a block whose rows are single purchases:
+	 * the row's price after the change less its price before.
+	 *
+	 * @param array<string,mixed>|null $held  The held row the change targets, or null when there is none.
+	 * @param array<string,mixed>      $trait The change's trait.
+	 */
+	private static function purchase_change_cost( string $cost_string, string $change_type, ?array $held, array $trait ): int {
+		$before = 'add_trait' === $change_type ? null : $held;
+		$after  = null;
+		if ( 'add_trait' === $change_type ) {
+			$after = $trait;
+		} elseif ( 'modify_trait' === $change_type && $held !== null ) {
+			$after = array_merge( $held, array_intersect_key( $trait, [ 'count' => true, 'chosen_cost' => true ] ) );
+		}
+		return self::purchase_price( $cost_string, $after ) - self::purchase_price( $cost_string, $before );
+	}
+
+	/**
+	 * What one row of a block whose rows are single purchases costs, or 0 for no row.
+	 *
+	 * @param array<string,mixed>|null $row
+	 */
+	private static function purchase_price( string $cost_string, ?array $row ): int {
+		return $row === null ? 0 : self::price_item_cost( $cost_string, self::purchase_choice( $cost_string, $row ) );
+	}
+
+	/**
+	 * The cost a row of a block whose rows are single purchases chose for a variable-cost item: its `chosen_cost`, or
+	 * its `count` when that is one of the item's costs.
+	 *
+	 * @param array<string,mixed> $row
+	 */
+	private static function purchase_choice( string $cost_string, array $row ): ?int {
+		if ( isset( $row['chosen_cost'] ) ) {
+			return (int) $row['chosen_cost'];
+		}
+		$count = (int) ( $row['count'] ?? 0 );
+		$rule  = self::parse_cost_rule( $cost_string );
+		if ( 'set' === $rule['type'] ) {
+			return in_array( $count, $rule['values'], true ) ? $count : null;
+		}
+		if ( 'range' === $rule['type'] ) {
+			return $count >= $rule['values'][0] && $count <= $rule['values'][1] ? $count : null;
+		}
+		return null;
+	}
+
 	// Lookups.
 
 	/**
@@ -1095,18 +1125,138 @@ class Cost_Engine {
 	];
 
 	/**
-	 * Looks up the base cost of one Elder-and-above power pick by name within a tiered_power power's `levels` list.
+	 * The base cost of one pick: its own `cost`, or its tier's cost on the MET ladder.
 	 */
-	private static function elder_tier_cost( $power, string $power_name ): int {
-		foreach ( Power_Levels::all( $power ) as $power_level ) {
-			if ( ( $power_level->power_name ?? '' ) !== $power_name ) {
-				continue;
-			}
-			if ( isset( $power_level->cost ) ) {
-				return self::price_item_cost( (string) $power_level->cost, null );
-			}
-			return self::TIER_COSTS[ strtolower( (string) ( $power_level->tier ?? '' ) ) ] ?? 0;
+	private static function pick_base_cost( $power_level ): int {
+		if ( isset( $power_level->cost ) ) {
+			return self::price_item_cost( (string) $power_level->cost, null );
 		}
-		return 0;
+		return self::TIER_COSTS[ strtolower( (string) ( $power_level->tier ?? '' ) ) ] ?? 0;
+	}
+
+	/**
+	 * What one pick of a family costs, by power name or alias, with its rank's modifier applied; 0 when the family has
+	 * no such pick.
+	 */
+	private static function pick_cost( $definition, $power, string $power_name, ?bool $in_type ): int {
+		$power_level = self::find_power_level_by_name( $power, $power_name );
+		if ( $power_level === null ) {
+			return 0;
+		}
+		$tier = strtolower( (string) ( $power_level->tier ?? '' ) );
+		return self::apply_modifier( self::pick_base_cost( $power_level ), self::rank_modifier( $definition, $tier !== '' ? $tier : null, $in_type ) );
+	}
+
+	// Cost expressions.
+
+	/**
+	 * A cost with a modifier expression applied: `+N` or `-N` adds, `×N` (also `xN` or `*N`) multiplies, and the result
+	 * is never below zero. No expression, or one that is not of those forms, leaves the cost as it is.
+	 */
+	public static function apply_modifier( int $cost, ?string $expression ): int {
+		if ( $expression === null ) {
+			return $cost;
+		}
+		$expression = trim( $expression );
+		if ( preg_match( '/^([+-])(\d+)$/', $expression, $m ) ) {
+			return max( 0, $m[1] === '+' ? $cost + (int) $m[2] : $cost - (int) $m[2] );
+		}
+		if ( preg_match( '/^(?:×|x|X|\*)(\d+)$/u', $expression, $m ) ) {
+			return max( 0, $cost * (int) $m[1] );
+		}
+		return $cost;
+	}
+
+	/**
+	 * Whether a modifier expression is one `apply_modifier()` reads: `+N`, `-N` or `×N`.
+	 */
+	public static function is_modifier( string $expression ): bool {
+		return preg_match( '/^(?:[+-]\d+|(?:×|x|X|\*)\d+)$/u', trim( $expression ) ) === 1;
+	}
+
+	/**
+	 * The modifier a block declares for one rank on one side: `_meta.in_type` for an in-type purchase, `_meta.out_of_type`
+	 * for an out-of-type one; none for no rank, or when the side is not asked for.
+	 */
+	private static function rank_modifier( $definition, ?string $rank, ?bool $in_type ): ?string {
+		if ( $rank === null || $in_type === null ) {
+			return null;
+		}
+		$map = self::meta_value( $definition, $in_type ? 'in_type' : 'out_of_type' );
+		return is_array( $map ) && isset( $map[ $rank ] ) && is_string( $map[ $rank ] ) ? $map[ $rank ] : null;
+	}
+
+	/**
+	 * One key of a block's `_meta`, an object read as an array; null when the block has no such key.
+	 *
+	 * @param object|array $definition
+	 * @return mixed
+	 */
+	private static function meta_value( $definition, string $key ) {
+		$value = null;
+		if ( is_object( $definition ) ) {
+			$value = $definition->_meta->$key ?? null;
+		} elseif ( is_array( $definition ) ) {
+			$value = $definition['_meta'][ $key ] ?? null;
+		}
+		return is_object( $value ) ? (array) $value : $value;
+	}
+
+	/**
+	 * What one level of an untiered track costs (`_meta.untiered.cost_per_level`), or null for a ranked block or one whose
+	 * costs derive from another block.
+	 *
+	 * @param object|array $definition
+	 */
+	private static function untiered_cost_per_level( $definition ): ?int {
+		$untiered = self::meta_value( $definition, 'untiered' );
+		return is_array( $untiered ) && isset( $untiered['cost_per_level'] ) && is_numeric( $untiered['cost_per_level'] ) ? (int) $untiered['cost_per_level'] : null;
+	}
+
+	/**
+	 * A trait_list item's cost expression: its own `cost`, or on a block whose `_meta.untiered` derives its costs from
+	 * another block, `per_level` for each level the item's prerequisites in that block name; null when neither gives one.
+	 */
+	private static function item_cost( $definition, $item ): ?string {
+		if ( isset( $item->cost ) && (string) $item->cost !== '' ) {
+			return (string) $item->cost;
+		}
+		$untiered = self::meta_value( $definition, 'untiered' );
+		if ( ! is_array( $untiered ) || ! isset( $untiered['derived_from'], $untiered['per_level'] ) ) {
+			return null;
+		}
+		$levels = 0;
+		foreach ( (array) ( $item->prerequisites ?? [] ) as $prerequisite ) {
+			$prerequisite = (array) $prerequisite;
+			if ( ( $prerequisite['block_slug'] ?? null ) === $untiered['derived_from'] ) {
+				$levels += max( 0, (int) ( $prerequisite['min_level'] ?? 0 ) );
+			}
+		}
+		return $levels > 0 ? (string) ( $levels * (int) $untiered['per_level'] ) : null;
+	}
+
+	/**
+	 * What a pool's rating costs above its free dots: `cost_per_dot` for each dot, or with a `sliding_cost` that
+	 * `equals_level`, each dot's own level; null when the pool states neither.
+	 */
+	private static function pool_rating_cost( $pool_def, int $rating ): ?int {
+		if ( ! empty( $pool_def->buy_down ) ) {
+			if ( ! isset( $pool_def->cost_per_dot ) ) {
+				return null;
+			}
+			$start = (int) ( $pool_def->default_start ?? 0 );
+			return max( 0, $start - $rating ) * (int) $pool_def->cost_per_dot;
+		}
+
+		$free    = (int) ( $pool_def->free_dots ?? 0 );
+		$sliding = $pool_def->sliding_cost ?? null;
+		$sliding = is_object( $sliding ) ? (array) $sliding : $sliding;
+		if ( is_array( $sliding ) && ! empty( $sliding['equals_level'] ) ) {
+			return $rating > $free ? intdiv( $rating * ( $rating + 1 ) - $free * ( $free + 1 ), 2 ) : 0;
+		}
+		if ( ! isset( $pool_def->cost_per_dot ) ) {
+			return null;
+		}
+		return max( 0, $rating - $free ) * (int) $pool_def->cost_per_dot;
 	}
 }

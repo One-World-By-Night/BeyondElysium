@@ -40,7 +40,6 @@ export function WhatYouKnow( {
 					<strong>{ secret.title }</strong>
 					{ secret.content && (
 						<div
-							// eslint-disable-next-line react/no-danger
 							dangerouslySetInnerHTML={ {
 								__html: secret.content,
 							} }

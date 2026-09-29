@@ -7,8 +7,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Every field the declared schema added survives a real REST round trip, on the shared catalog block and on a
- * chronicle's own fork of it.
+ * Every field the declared schema added survives a real REST round trip on a chronicle's own copy of a catalog block,
+ * which leaves the book alone.
  */
 class DeclaredSchemaRoundTripThreadTest extends WP_UnitTestCase {
 
@@ -40,12 +40,8 @@ class DeclaredSchemaRoundTripThreadTest extends WP_UnitTestCase {
 	/**
 	 * @param array<string,mixed> $definition
 	 */
-	private function save( string $slug, array $definition, string $game_slug = '' ) {
-		// A chronicle's own block is written through that chronicle's route.
-		$route   = '' === $game_slug
-			? '/be/v1/schema-blocks/' . $slug
-			: '/be/v1/' . $game_slug . '/schema-blocks/' . $slug;
-		$request = new WP_REST_Request( 'PUT', $route );
+	private function save( string $slug, array $definition, string $game_slug = 'declared-meta-test-game' ) {
+		$request = new WP_REST_Request( 'PUT', '/be/v1/' . $game_slug . '/schema-blocks/' . $slug );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( (string) wp_json_encode( [ 'definition' => $definition ] ) );
 		return rest_get_server()->dispatch( $request );
@@ -76,7 +72,7 @@ class DeclaredSchemaRoundTripThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 12, $meta->costs->elder );
 		// The modifier is an expression, not a number - Demon's ×2 must survive as typed.
 		$this->assertSame( '×2', $meta->out_of_type->elder );
-		$this->assertSame( 5, $meta->levels->advanced, 'S5: Gifts sit at levels 1/3/5, not 1/2/3' );
+		$this->assertSame( 5, $meta->levels->advanced, 'Gifts sit at levels 1/3/5, not 1/2/3' );
 		$this->assertSame( [ 'breed', 'tribe', 'auspice' ], $meta->categories );
 	}
 
@@ -166,38 +162,33 @@ class DeclaredSchemaRoundTripThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A chronicle that forks the block keeps its own declared meta, and the shared catalog is never written through the
-	 * fork.
+	 * A chronicle's copy keeps its own declared meta, and the book is untouched.
 	 */
-	public function test_a_chronicle_fork_keeps_its_own_declared_meta(): void {
-		$this->save( $this->tiered, [
+	public function test_a_chronicle_copy_keeps_its_own_declared_meta(): void {
+		Schema_Block::update( $this->tiered, [ 'definition' => [
 			'_meta'  => [
 				'ranks'  => [ 'basic' ],
 				'ladder' => [ 'basic' => 2 ],
 				'costs'  => [ 'basic' => 3 ],
 			],
 			'powers' => [ [ 'name' => 'Animalism', 'levels' => [] ] ],
-		] );
+		] ] );
 
-		$forked = $this->save(
-			$this->tiered,
-			[
-				'_meta'  => [
-					'ranks'  => [ 'basic' ],
-					'ladder' => [ 'basic' => 2 ],
-					'costs'  => [ 'basic' => 5 ],
-				],
-				'powers' => [ [ 'name' => 'Animalism', 'levels' => [] ] ],
+		$forked = $this->save( $this->tiered, [
+			'_meta'  => [
+				'ranks'  => [ 'basic' ],
+				'ladder' => [ 'basic' => 2 ],
+				'costs'  => [ 'basic' => 5 ],
 			],
-			'declared-meta-test-game'
-		);
+			'powers' => [ [ 'name' => 'Animalism', 'levels' => [] ] ],
+		] );
 		$this->assertSame( 200, $forked->get_status() );
 
 		$for_game = Schema_Block::find_for_game( $this->tiered, 'declared-meta-test-game' );
-		$this->assertSame( 5, $for_game->definition->_meta->costs->basic, 'the fork holds its own house rate' );
+		$this->assertSame( 5, $for_game->definition->_meta->costs->basic, 'the copy holds its own house rate' );
 
 		$global = Schema_Block::find_by_slug( $this->tiered );
-		$this->assertSame( 3, $global->definition->_meta->costs->basic, 'the shared catalog is untouched' );
+		$this->assertSame( 3, $global->definition->_meta->costs->basic, 'the book is untouched' );
 	}
 
 	/**

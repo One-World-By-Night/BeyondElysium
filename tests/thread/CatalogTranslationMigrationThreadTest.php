@@ -47,13 +47,13 @@ class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 
 		global $wpdb;
 		$total_rows = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}be_translations WHERE locale = 'pt_BR'" );
-		$this->assertGreaterThanOrEqual( 2500, $total_rows, '§8\'s original measurement was 4,441; thousands of real rows either way' );
+		$this->assertGreaterThanOrEqual( 2500, $total_rows, 'thousands of real rows are migrated' );
 
 		$counts = get_option( 'be_catalog_translations_migration_counts' );
 		$this->assertIsArray( $counts );
 		$this->assertGreaterThanOrEqual( 0, $counts['db_conflicts'] );
 		$this->assertLessThan( 50, $counts['db_conflicts'], 'conflicts should be a small fraction of ~3,000+ db-sourced terms' );
-		$this->assertGreaterThanOrEqual( 1000, $counts['csv_added'], '§1.4(b)\'s CSV-only recovery is the whole point of pass 2' );
+		$this->assertGreaterThanOrEqual( 1000, $counts['csv_added'], 'pass 2 recovers the rows only the CSV carries' );
 	}
 
 	public function test_migration_is_idempotent_via_the_option_guard(): void {

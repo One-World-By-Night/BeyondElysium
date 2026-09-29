@@ -14,7 +14,6 @@
     "sources": [
       "OWBN Kuei-Jin Genre Packet (2022), p. 48-50 - Techniques, prerequisites as printed; the packet prints no XP cost, so cost is null rather than guessed"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/build_kueijin_disciplines.py"
   },
   "definition": {

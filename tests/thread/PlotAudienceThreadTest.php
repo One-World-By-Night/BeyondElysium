@@ -139,7 +139,7 @@ class PlotAudienceThreadTest extends WP_UnitTestCase {
 		$this->assertSame(
 			Audience::RESTRICTED,
 			$data->audience,
-			'A player can never widen their own plot at creation - only a Storyteller may (owner ruling, §2.3a).'
+			'A player can never widen their own plot at creation - only a Storyteller may.'
 		);
 	}
 
@@ -302,7 +302,7 @@ class PlotAudienceThreadTest extends WP_UnitTestCase {
 		$this->assertNotContains(
 			'Connected But Secret',
 			$titles,
-			'a connection alone must not override a stricter audience (1.1.0 §2.1)'
+			'a connection alone must not override a stricter audience'
 		);
 	}
 

@@ -7,6 +7,7 @@ const NONE: ChronicleContentCounts = {
 	world_objects: 0,
 	templates: 0,
 	schema_blocks: 0,
+	creature_stacks: 0,
 	saved_queries: 0,
 	attestations: 0,
 	transfers: 0,
@@ -41,6 +42,7 @@ describe( 'chronicleContent', () => {
 				world_objects: 1,
 				templates: 1,
 				schema_blocks: 1,
+				creature_stacks: 1,
 				saved_queries: 1,
 				attestations: 1,
 				transfers: 1,
@@ -55,7 +57,7 @@ describe( 'chronicleContent', () => {
 				after_game_reports: 1,
 			};
 			expect( describeChronicleContent( all ) ).toBe(
-				'1 character, 1 plot, 1 world object, 1 sheet template, 1 customized schema block, 1 saved query, 1 verification code, 1 transfer, 1 faction, 1 position, 1 secret, 1 game session, 1 attendance record, 1 release batch, 1 queued notification, 1 NPC casting, 1 after-game report'
+				'1 character, 1 plot, 1 world object, 1 sheet template, 1 customized schema block, 1 customized creature type, 1 saved query, 1 verification code, 1 transfer, 1 faction, 1 position, 1 secret, 1 game session, 1 attendance record, 1 release batch, 1 queued notification, 1 NPC casting, 1 after-game report'
 			);
 		} );
 

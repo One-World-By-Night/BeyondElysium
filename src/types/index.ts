@@ -87,6 +87,10 @@ export interface ChronicleContentCounts {
 	world_objects: number;
 	templates: number;
 	schema_blocks: number;
+	/**
+	 * Creature types the chronicle has changed.
+	 */
+	creature_stacks: number;
 	saved_queries: number;
 	attestations: number;
 	transfers: number;
@@ -173,6 +177,10 @@ export interface UpdateChronicleSetupRequest {
 	purchase_scope?: Partial<
 		Record< 'abilities' | 'backgrounds' | 'merits_flaws', boolean >
 	>;
+	/**
+	 * A non-negative whole number, or '' to clear it back to none.
+	 */
+	starting_xp?: number | string;
 }
 
 // ---------------------------------------------------------------------------
@@ -196,6 +204,58 @@ export interface ChroniclePlayer {
 	wp_user_id: number;
 	display_name: string | null;
 	since: string;
+	characters: NamedCharacter[];
+}
+
+/**
+ * A character by id and name.
+ */
+export interface NamedCharacter {
+	id: number;
+	name: string;
+}
+
+/**
+ * An open invite: the email, the characters waiting for it, who sent it and when.
+ */
+export interface PlayerInvite {
+	id: number;
+	email: string;
+	invited_by: string | null;
+	invited_at: string;
+	characters: NamedCharacter[];
+}
+
+/**
+ * A character an invite or a link left alone: `linked_elsewhere` (with who holds it), `already_linked`, `not_found` or
+ * `not_saved`.
+ */
+export interface SkippedCharacter {
+	id: number;
+	name?: string;
+	linked_to?: string;
+	reason: 'linked_elsewhere' | 'already_linked' | 'not_found' | 'not_saved';
+}
+
+/**
+ * What linking characters to a player did.
+ */
+export interface CharacterLinkResult {
+	linked: NamedCharacter[];
+	skipped: SkippedCharacter[];
+}
+
+/**
+ * What an invite did: `linked` when an account with the email existed and was made a player, `invited` when it waits.
+ */
+export interface PlayerInviteResult extends CharacterLinkResult {
+	status: 'linked' | 'invited';
+	invite_id?: number;
+	wp_user_id?: number;
+	display_name?: string;
+	player?: ChroniclePlayerResult;
+	held?: NamedCharacter[];
+	email_sent?: boolean;
 }
 
 /**
@@ -300,6 +360,90 @@ export interface SetupStatus {
 	summary: { attention: number; ok: number; info: number; total: number };
 }
 
+/**
+ * One step of the path to a change a chronicle made: a key into a map, or a one-item list naming an entry.
+ */
+export type CorrectionPathStep = string | number | [ string ];
+
+/**
+ * One change inside an entry the book no longer has.
+ */
+export interface CorrectionChange {
+	path: CorrectionPathStep[];
+	was: unknown;
+	was_set: boolean;
+	now: unknown;
+	now_set: boolean;
+	yours: unknown;
+	yours_set: boolean;
+}
+
+/**
+ * A book correction to review: a change a chronicle made where the book has changed since, from
+ * `GET /{game}/catalog-corrections`.
+ */
+export interface CatalogCorrection {
+	kind: 'block' | 'stack' | 'template';
+	/**
+	 * The block's or creature type's slug, or the template's id.
+	 */
+	target: string;
+	target_name: string;
+	path: CorrectionPathStep[];
+	/**
+	 * The name of each entry the path steps into, null for its other steps.
+	 */
+	labels: Array< string | null >;
+	/**
+	 * Whether the book removed the entry the change sits in.
+	 */
+	removed: boolean;
+	was?: unknown;
+	was_set?: boolean;
+	now: unknown;
+	now_set: boolean;
+	yours: unknown;
+	yours_set: boolean;
+	changes?: CorrectionChange[];
+}
+
+/**
+ * A chronicle's book corrections, with how many.
+ */
+export interface CatalogCorrections {
+	corrections: CatalogCorrection[];
+	count: number;
+}
+
+/**
+ * One book variant of a base block: printings it adds, or all it replaces the block with.
+ */
+export interface CatalogVariant {
+	id: string;
+	label: string;
+	mode: 'add' | 'replace';
+}
+
+/**
+ * A base block that has variants, with the ones a chronicle chose, from `GET /{game}/catalog-variants`.
+ */
+export interface CatalogVariantBase {
+	base: string;
+	base_name: string;
+	variants: CatalogVariant[];
+	chosen: string[];
+}
+
+/**
+ * An entry a character holds that a choice of variants would leave unmatched.
+ */
+export interface VariantUnmatched {
+	character_id: number;
+	character: string;
+	name: string;
+	power_name: string | null;
+}
+
 // ---------------------------------------------------------------------------
 // Schema Block — definition types per section_type
 // ---------------------------------------------------------------------------
@@ -309,10 +453,7 @@ export interface SetupStatus {
  * resource pool, or a set of free-form identity fields.
  */
 export type SectionType =
-	| 'trait_list'
-	| 'tiered_power'
-	| 'resource_pool'
-	| 'identity_field';
+	'trait_list' | 'tiered_power' | 'resource_pool' | 'identity_field';
 
 // --- trait_list ---
 
@@ -384,23 +525,28 @@ export interface TraitListItem {
 }
 
 /**
- * Declared mechanics for a trait_list block that has none of its own.
+ * Declared mechanics for a trait_list block.
  */
 export interface TraitListMeta {
+	/**
+	 * Items priced from another block: an item with no `cost` of its own costs `per_level` for each level its
+	 * prerequisites in that block name.
+	 */
 	untiered?: {
 		/**
-		 * Flat XP per level, for a track with no intrinsic cost of its own.
+		 * Slug of the block the items' prerequisites name, e.g. `mage-spheres` for Rotes.
 		 */
-		cost_per_level?: number;
+		derived_from: string;
 		/**
-		 * Slug of the block this track's cost is read from, e.g. `mage-spheres` for Rotes.
+		 * XP for each level an item's prerequisites in that block name.
 		 */
-		derived_from?: string;
-		/**
-		 * XP per level of the derived-from block's own rating.
-		 */
-		per_level?: number;
+		per_level: number;
 	};
+	/**
+	 * A named resource pool that pays for this list's items instead of the character's own XP, as
+	 * `"block_slug.Pool Name"`. Granted by a Storyteller, never bought by the player through the ordinary purchase flow.
+	 */
+	paid_from?: string;
 }
 
 /**
@@ -534,10 +680,6 @@ export interface TieredPower {
 }
 
 /**
- * The full definition of a tiered_power block: its catalog of powers plus the rules governing out-of-type cost,
- * whether levels must be taken in sequence, and approval.
- */
-/**
  * What a `tiered_power` block declares about its own mechanics.
  */
 export interface TieredPowerMeta {
@@ -554,13 +696,13 @@ export interface TieredPowerMeta {
 	 */
 	costs: Record< string, number >;
 	/**
-	 * The out-of-type modifier **per rank**, as an expression.
+	 * The in-type modifier per rank, as an expression: `+N`, `-N` or `×N`.
+	 */
+	in_type?: Record< string, string >;
+	/**
+	 * The out-of-type modifier per rank, as an expression: `+N`, `-N` or `×N`.
 	 */
 	out_of_type?: Record< string, string >;
-	/**
-	 * Where the in-type test reads the character's own value from, as `block-slug.Field`.
-	 */
-	in_type_source?: string;
 	/**
 	 * Category axes a family is filed under.
 	 */
@@ -576,31 +718,20 @@ export interface TieredPowerMeta {
 		/**
 		 * Flat XP per level, for a track with no ranks.
 		 */
-		cost_per_level?: number;
-		/**
-		 * Slug of the block this track's cost is read from, e.g. `mage-spheres` for Rotes.
-		 */
-		derived_from?: string;
-		/**
-		 * XP per level of the derived-from block's own rating.
-		 */
-		per_level?: number;
+		cost_per_level: number;
 	};
 }
 
+/**
+ * The full definition of a tiered_power block: its catalog of powers, its declared mechanics, whether levels must be
+ * taken in sequence, and approval.
+ */
 export interface TieredPowerDefinition {
 	powers: TieredPower[];
 	/**
 	 * Declared mechanics.
 	 */
 	_meta?: TieredPowerMeta;
-	/**
-	 * @deprecated Superseded by `_meta.out_of_type`, which is keyed per rank and holds an
-	 * expression. A single number cannot express Mage's scaling or Demon's doubling, and
-	 * every block carrying this declared the same inert `1`. Read only as a fallback
-	 * while blocks that predate `_meta` are still seeded.
-	 */
-	out_of_type_cost_modifier?: number;
 	sequential?: boolean;
 	approval_rules?: ApprovalRules;
 	/**
@@ -683,6 +814,11 @@ export interface ResourcePool {
 		 */
 		equals_level?: boolean;
 	};
+	/**
+	 * Priced the other way: lowering the pool below default_start is the purchase, each point costing cost_per_dot;
+	 * raising it back costs nothing.
+	 */
+	buy_down?: boolean;
 	/**
 	 * Per-value approval schedule, keyed on the pool's own PERMANENT value (never temporary - spending/regaining a point
 	 * of Willpower in play never needs approval; permanently raising it via XP might).
@@ -824,8 +960,48 @@ export interface StackSection {
 	display_order: number;
 	required: boolean;
 	negative_block_slug?: string;
-	in_type_source?: string;
+	/**
+	 * The tests that make a purchase from this section's block in-type, any one passing; every purchase is in-type
+	 * where there are none.
+	 */
+	in_type?: InTypeTest[];
+	/**
+	 * Nothing new can be bought in a hidden section; every read still shows it.
+	 */
+	hidden?: boolean;
 }
+
+/**
+ * Where an in-type test reads its values from: an identity field or list of fields as `block-slug.Field`, a map kept
+ * in an identity block as `block-slug.key` with the fields it is keyed by in the order tried, or a constant list.
+ */
+export type InTypeSource =
+	| { field: string | string[] }
+	| { map: string; by: string[] }
+	| { constant: string[] };
+
+/**
+ * Limits a test to characters whose field holds one of the values in `is`, or holds any value (`set: true`) or none
+ * (`set: false`).
+ */
+export type InTypeWhen =
+	{ field: string; is: string[] } | { field: string; set: boolean };
+
+/**
+ * One in-type test: the family's name is one of the values (`names`), its own value for a named facet is (`facet` - a
+ * trait_list item's `group`/`subgroup`, or one axis of a tiered_power family's `category_values`), it is one of the
+ * character's own picks (`chosen`), or every test in `tests` passes (`all`).
+ */
+export type InTypeTest =
+	| { kind: 'names'; values: InTypeSource; when?: InTypeWhen }
+	| {
+			kind: 'facet';
+			facet: string;
+			values: InTypeSource;
+			when?: InTypeWhen;
+	  }
+	| { kind: 'chosen'; values: { field: string }; when?: InTypeWhen }
+	| { kind: 'all'; tests: InTypeTest[]; when?: InTypeWhen };
 
 /**
  * The full sheet layout for a creature stack: the ordered list of sections it is made of, plus optional display
@@ -837,18 +1013,143 @@ export interface StackDefinition {
 }
 
 /**
- * A single step in a creature stack's guided character-creation flow, naming which sections it covers and the point
- * budget available for spending on them.
+ * Limits a creation step to characters whose field holds one of the values in `is`, none of the values in `not`, or
+ * holds any value (`set: true`) or none (`set: false`). A list of these, all of which must hold.
  */
-export interface CreationStep {
-	step: number;
-	label: string;
-	sections: string[];
-	budget?: { primary: number; secondary: number; tertiary: number };
-	budgets?: Record< string, number >;
-	prioritize?: boolean;
-	free_traits?: number;
+export interface CreationStepWhen {
+	field: string;
+	is?: string[];
+	not?: string[];
+	set?: boolean;
 }
+
+/**
+ * A `budget` step's filter: `in_type` and/or a rank ceiling (`tier`), and/or a named in-type test in place of the
+ * section's own.
+ */
+export interface CreationBudgetFilter {
+	in_type?: boolean;
+	tier?: string;
+	test?: InTypeTest;
+}
+
+/**
+ * One of a `budget` step's named quotas, met or short against the units its own `test` passes.
+ */
+export interface CreationQuota {
+	label: string;
+	test: InTypeTest;
+	min: number;
+}
+
+/**
+ * One of an `earned` step's sources: a section, its rate per unit (a number, or `'value'` for the unit's own price),
+ * and an optional cap on this source alone.
+ */
+export interface CreationEarnedSource {
+	section: string;
+	rate: number | 'value';
+	max?: number;
+}
+
+/**
+ * A `limit` step's computed maximum: a base, an optional field to add, and an optional cap.
+ */
+export interface CreationMaxRating {
+	base: number;
+	plus?: string;
+	cap?: number;
+}
+
+/**
+ * A `limit` step's ceiling: a fixed `"block.Name"`, or the entry a field names.
+ */
+export type CreationCeiling = string | { named_by: string };
+
+/**
+ * One fixed entry a `grant` step gives the character, counted against nothing.
+ */
+export interface CreationGrantEntry {
+	name: string;
+	level?: number;
+	count?: number;
+	power_name?: string;
+}
+
+/**
+ * A `grant` or `start` step's map lookup: a map kept in an identity block, keyed by the fields in `by`, tried in
+ * order.
+ */
+export interface CreationLookup {
+	map: string;
+	by: string[];
+}
+
+/**
+ * One step of a creature stack's declared creation rules, in the book's order. The fields present depend on `kind`.
+ */
+export type CreationStep =
+	| {
+			kind: 'prioritized';
+			label: string;
+			when?: CreationStepWhen | CreationStepWhen[];
+			sections: string[];
+			amounts: number[];
+	  }
+	| {
+			kind: 'budget';
+			label: string;
+			when?: CreationStepWhen | CreationStepWhen[];
+			section: string;
+			count: number;
+			filter?: CreationBudgetFilter;
+			quotas?: CreationQuota[];
+	  }
+	| {
+			kind: 'free';
+			label: string;
+			when?: CreationStepWhen | CreationStepWhen[];
+			pool: string;
+			points: number;
+			rates: Record< string, number | 'value' >;
+	  }
+	| {
+			kind: 'earned';
+			label: string;
+			when?: CreationStepWhen | CreationStepWhen[];
+			pool: string;
+			sources: CreationEarnedSource[];
+			max?: number;
+	  }
+	| {
+			kind: 'limit';
+			label: string;
+			when?: CreationStepWhen | CreationStepWhen[];
+			section: string;
+			max_points?: number;
+			max_rating?: number | CreationMaxRating;
+			min_rating?: number;
+			ceiling?: CreationCeiling;
+	  }
+	| {
+			kind: 'start';
+			label: string;
+			when?: CreationStepWhen | CreationStepWhen[];
+			target: string;
+			value?: number;
+			lookup?: CreationLookup;
+			formula?: 'average_up' | 'sum_top_two' | 'equal';
+			of?: string[];
+	  }
+	| {
+			kind: 'grant';
+			label: string;
+			when?: CreationStepWhen | CreationStepWhen[];
+			section: string;
+			entries?: CreationGrantEntry[];
+			from?: CreationLookup;
+			level?: number;
+	  };
 
 /**
  * The ordered set of character-creation steps for a creature stack, if it defines a guided creation flow.
@@ -871,6 +1172,10 @@ export interface CreatureStack {
 	created_by: number;
 	created_at: string;
 	updated_at: string;
+	/**
+	 * '' for the book; a chronicle's own slug for its layer over it.
+	 */
+	game_slug: string;
 }
 
 /**
@@ -880,27 +1185,6 @@ export interface CreatureStack {
 export interface ResolvedStack {
 	stack: CreatureStack;
 	blocks: Record< string, SchemaBlock >;
-}
-
-/**
- * Request body for creating a new creature stack. slug, name, and stack_definition are required.
- */
-export interface CreateCreatureStackRequest {
-	slug: string;
-	name: string;
-	game_line?: string;
-	stack_definition: StackDefinition;
-	creation_rules?: CreationRules;
-}
-
-/**
- * Request body for updating an existing creature stack.
- */
-export interface UpdateCreatureStackRequest {
-	name?: string;
-	game_line?: string;
-	stack_definition?: StackDefinition;
-	creation_rules?: CreationRules;
 }
 
 // ---------------------------------------------------------------------------

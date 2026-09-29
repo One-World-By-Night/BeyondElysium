@@ -6,7 +6,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The schema blocks routes: create, update and list, with real JSON bodies and the sanitizing each definition kind gets.
+ * The schema blocks routes: a chronicle's create and update and the book's list, with real JSON bodies and the
+ * sanitizing each definition kind gets.
  */
 class SchemaBlocksControllerTest extends WP_UnitTestCase {
 
@@ -17,6 +18,7 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 		do_action( 'rest_api_init' );
 		$this->admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		wp_set_current_user( $this->admin_id );
+		\BeyondElysium\Models\Game::create( [ 'slug' => 'thread-blocks-game', 'name' => 'Blocks Game' ] );
 	}
 
 	private function dispatch( WP_REST_Request $request ) {
@@ -44,7 +46,7 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 	}
 
 	public function test_creating_a_trait_list_block_with_a_real_json_body_succeeds(): void {
-		$request = new WP_REST_Request( 'POST', '/be/v1/schema-blocks' );
+		$request = new WP_REST_Request( 'POST', '/be/v1/thread-blocks-game/schema-blocks' );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( [
 			'slug'         => 'thread-test-trait-block',
@@ -62,7 +64,7 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 	}
 
 	public function test_creating_a_tiered_power_block_with_a_real_json_body_succeeds(): void {
-		$request = new WP_REST_Request( 'POST', '/be/v1/schema-blocks' );
+		$request = new WP_REST_Request( 'POST', '/be/v1/thread-blocks-game/schema-blocks' );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( [
 			'slug'         => 'thread-test-power-block',
@@ -75,7 +77,7 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_definition_missing_the_required_key_is_rejected(): void {
-		$request = new WP_REST_Request( 'POST', '/be/v1/schema-blocks' );
+		$request = new WP_REST_Request( 'POST', '/be/v1/thread-blocks-game/schema-blocks' );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( [
 			'slug'         => 'thread-test-bad-block',
@@ -91,7 +93,7 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 	}
 
 	public function test_updating_a_blocks_definition_with_a_real_json_body_succeeds(): void {
-		$create = new WP_REST_Request( 'POST', '/be/v1/schema-blocks' );
+		$create = new WP_REST_Request( 'POST', '/be/v1/thread-blocks-game/schema-blocks' );
 		$create->set_header( 'Content-Type', 'application/json' );
 		$create->set_body( wp_json_encode( [
 			'slug'         => 'thread-test-update-block',
@@ -101,7 +103,7 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 		] ) );
 		$this->dispatch( $create );
 
-		$update = new WP_REST_Request( 'PUT', '/be/v1/schema-blocks/thread-test-update-block' );
+		$update = new WP_REST_Request( 'PUT', '/be/v1/thread-blocks-game/schema-blocks/thread-test-update-block' );
 		$update->set_header( 'Content-Type', 'application/json' );
 		$update->set_body( wp_json_encode( [ 'definition' => [ 'items' => [ [ 'name' => 'Danger Sense' ] ] ] ] ) );
 		$response = $this->dispatch( $update );
@@ -113,7 +115,7 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 	// -------------------------------------------------------------------------
 
 	public function test_creating_a_trait_list_block_sanitizes_item_descriptions(): void {
-		$request = new WP_REST_Request( 'POST', '/be/v1/schema-blocks' );
+		$request = new WP_REST_Request( 'POST', '/be/v1/thread-blocks-game/schema-blocks' );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( [
 			'slug'         => 'thread-test-description-create',
@@ -138,7 +140,7 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 	}
 
 	public function test_updating_a_trait_list_items_description_is_sanitized(): void {
-		$create = new WP_REST_Request( 'POST', '/be/v1/schema-blocks' );
+		$create = new WP_REST_Request( 'POST', '/be/v1/thread-blocks-game/schema-blocks' );
 		$create->set_header( 'Content-Type', 'application/json' );
 		$create->set_body( wp_json_encode( [
 			'slug'         => 'thread-test-description-update',
@@ -148,7 +150,7 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 		] ) );
 		$this->dispatch( $create );
 
-		$update = new WP_REST_Request( 'PUT', '/be/v1/schema-blocks/thread-test-description-update' );
+		$update = new WP_REST_Request( 'PUT', '/be/v1/thread-blocks-game/schema-blocks/thread-test-description-update' );
 		$update->set_header( 'Content-Type', 'application/json' );
 		$update->set_body( wp_json_encode( [
 			'definition' => [ 'items' => [ [
@@ -164,7 +166,7 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_tiered_power_familys_and_levels_description_are_both_sanitized(): void {
-		$request = new WP_REST_Request( 'POST', '/be/v1/schema-blocks' );
+		$request = new WP_REST_Request( 'POST', '/be/v1/thread-blocks-game/schema-blocks' );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( [
 			'slug'         => 'thread-test-description-tiered',
@@ -190,7 +192,7 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 	// -------------------------------------------------------------------------
 
 	public function test_a_trait_list_items_approval_by_value_round_trips(): void {
-		$request = new WP_REST_Request( 'POST', '/be/v1/schema-blocks' );
+		$request = new WP_REST_Request( 'POST', '/be/v1/thread-blocks-game/schema-blocks' );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( [
 			'slug'         => 'thread-test-approval-by-value',
@@ -216,7 +218,7 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_tiered_power_levels_approval_round_trips(): void {
-		$request = new WP_REST_Request( 'POST', '/be/v1/schema-blocks' );
+		$request = new WP_REST_Request( 'POST', '/be/v1/thread-blocks-game/schema-blocks' );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( [
 			'slug'         => 'thread-test-approval-tiered-level',
@@ -235,7 +237,7 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_resource_pools_approval_by_value_round_trips(): void {
-		$request = new WP_REST_Request( 'POST', '/be/v1/schema-blocks' );
+		$request = new WP_REST_Request( 'POST', '/be/v1/thread-blocks-game/schema-blocks' );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( [
 			'slug'         => 'thread-test-approval-resource',
@@ -256,7 +258,7 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 	}
 
 	public function test_an_identity_fields_approval_by_option_round_trips(): void {
-		$request = new WP_REST_Request( 'POST', '/be/v1/schema-blocks' );
+		$request = new WP_REST_Request( 'POST', '/be/v1/thread-blocks-game/schema-blocks' );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( [
 			'slug'         => 'thread-test-approval-identity',

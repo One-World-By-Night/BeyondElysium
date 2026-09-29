@@ -1,5 +1,5 @@
 /**
- * Admin page for managing Schema Blocks.
+ * Admin page for Schema Blocks: the book's, read-only, and a chronicle's own and its copies of the book's.
  */
 import {
 	createInterpolateElement,
@@ -44,6 +44,7 @@ const EMPTY_FORM = {
  */
 export function AdminSchemaBlocks() {
 	const [ blocks, setBlocks ] = useState< SchemaBlock[] >( [] );
+	const [ bookBlocks, setBookBlocks ] = useState< SchemaBlock[] >( [] );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
 	const [ editingSlug, setEditingSlug ] = useState< string | null >( null );
@@ -57,13 +58,15 @@ export function AdminSchemaBlocks() {
 	const [ sectionTypeFilter, setSectionTypeFilter ] = useState<
 		SectionType | ''
 	>( '' );
-	// Optional game_slug query param scopes editing to one chronicle's custom blocks.
+	// Optional game_slug query param scopes the page to one chronicle, where its blocks are edited.
 	const gameSlug =
 		new URLSearchParams( window.location.search ).get( 'game_slug' ) ?? '';
-	// The shared catalog is a site administrator's to change.
-	const canEdit =
-		gameSlug !== '' ||
-		!! window.beyondElysium?.capabilities?.be_manage_games;
+	// The book is read-only; blocks are changed for a chronicle.
+	const canEdit = gameSlug !== '';
+	// A block named by `edit` opens once, when the list first loads.
+	const openOnLoad = useRef(
+		new URLSearchParams( window.location.search ).get( 'edit' ) ?? ''
+	);
 
 	/**
 	 * Fetches the schema block list for the current scope (global catalog, or one chronicle when a game_slug is present)
@@ -71,16 +74,34 @@ export function AdminSchemaBlocks() {
 	 */
 	function load() {
 		setLoading( true );
-		everyPage( ( page ) =>
-			api.schemaBlocks.listPaginated( {
-				...( gameSlug ? { game_slug: gameSlug } : {} ),
-				page,
-				per_page: 100,
-			} )
-		)
-			.then( ( result ) => {
+		Promise.all( [
+			everyPage( ( page ) =>
+				api.schemaBlocks.listPaginated( {
+					...( gameSlug ? { game_slug: gameSlug } : {} ),
+					page,
+					per_page: 100,
+				} )
+			),
+			gameSlug
+				? everyPage( ( page ) =>
+						api.schemaBlocks.listPaginated( {
+							page,
+							per_page: 100,
+						} )
+					)
+				: Promise.resolve< SchemaBlock[] >( [] ),
+		] )
+			.then( ( [ result, book ] ) => {
 				setBlocks( result );
+				setBookBlocks( book );
 				setLoading( false );
+				const named = result.find(
+					( block ) => block.slug === openOnLoad.current
+				);
+				openOnLoad.current = '';
+				if ( named ) {
+					startEdit( named );
+				}
 			} )
 			.catch( ( err: unknown ) => {
 				setError(
@@ -146,7 +167,11 @@ export function AdminSchemaBlocks() {
 	 */
 	async function save( e: React.FormEvent ) {
 		e.preventDefault();
-		if ( ! form.name.trim() || ( creating && ! form.slug.trim() ) ) {
+		if (
+			! canEdit ||
+			! form.name.trim() ||
+			( creating && ! form.slug.trim() )
+		) {
 			return;
 		}
 
@@ -162,7 +187,7 @@ export function AdminSchemaBlocks() {
 						storyteller_only: form.storyteller_only,
 						definition: form.definition as any,
 					},
-					gameSlug || undefined
+					gameSlug
 				);
 			} else if ( editingSlug ) {
 				await api.schemaBlocks.update(
@@ -173,7 +198,7 @@ export function AdminSchemaBlocks() {
 						storyteller_only: form.storyteller_only,
 						definition: form.definition as any,
 					},
-					gameSlug || undefined
+					gameSlug
 				);
 			}
 			cancel();
@@ -191,26 +216,43 @@ export function AdminSchemaBlocks() {
 	}
 
 	/**
-	 * Deletes a schema block after the user confirms via a browser dialog.
+	 * A chronicle's own row that shares its slug with a real book block is that book block's fork; deleting it resets
+	 * the chronicle to the book instead of removing something with no book counterpart.
+	 */
+	function isBookFork( block: SchemaBlock ): boolean {
+		return bookBlocks.some( ( b ) => b.slug === block.slug );
+	}
+
+	/**
+	 * Deletes a schema block after the user confirms via a browser dialog; a book fork resets to the book instead.
 	 */
 	async function remove( block: SchemaBlock ) {
-		// eslint-disable-next-line no-alert
-		if (
-			! window.confirm(
-				sprintf(
-					// translators: %s: schema block name.
-					__(
-						'Delete "%s"? Any creature stack or template referencing it will show a missing section.',
-						'beyond-elysium'
-					),
-					block.name
+		const confirmed = isBookFork( block )
+			? window.confirm(
+					sprintf(
+						// translators: %s: schema block name.
+						__(
+							'Reset "%s" to the book? This chronicle\'s own changes to it are lost.',
+							'beyond-elysium'
+						),
+						block.name
+					)
 				)
-			)
-		) {
+			: window.confirm(
+					sprintf(
+						// translators: %s: schema block name.
+						__(
+							'Delete "%s"? Any creature stack or template referencing it will show a missing section.',
+							'beyond-elysium'
+						),
+						block.name
+					)
+				);
+		if ( ! confirmed ) {
 			return;
 		}
 		try {
-			await api.schemaBlocks.delete( block.slug, gameSlug || undefined );
+			await api.schemaBlocks.delete( block.slug, gameSlug );
 			load();
 		} catch ( err: unknown ) {
 			setError(
@@ -242,7 +284,7 @@ export function AdminSchemaBlocks() {
 			{ ! canEdit && (
 				<p className="be-admin__game-scope-notice">
 					{ __(
-						"The shared catalog can only be changed by a site administrator. To customize blocks for a chronicle you run, open that chronicle's Chronicle Setup and choose Catalog customisation.",
+						"This is the book: the catalog as released, read-only here. To change a block for a chronicle you run, open that chronicle's Chronicle Setup and choose Catalog customisation.",
 						'beyond-elysium'
 					) }
 				</p>
@@ -325,29 +367,33 @@ export function AdminSchemaBlocks() {
 										: __( 'No', 'beyond-elysium' ) }
 								</td>
 								<td>
-									{ canEdit && (
-										<button
-											type="button"
-											onClick={ () => startEdit( block ) }
-										>
-											{ __( 'Edit', 'beyond-elysium' ) }
-										</button>
-									) }
-									{ /* A chronicle may delete only its own blocks - a global one is not its to remove. */ }
+									<button
+										type="button"
+										onClick={ () => startEdit( block ) }
+									>
+										{ canEdit
+											? __( 'Edit', 'beyond-elysium' )
+											: __( 'View', 'beyond-elysium' ) }
+									</button>
+									{ /* A chronicle deletes only its own blocks. */ }
 									{ ! block.is_system &&
 										canEdit &&
-										( gameSlug === '' ||
-											block.game_slug === gameSlug ) && (
+										block.game_slug === gameSlug && (
 											<button
 												type="button"
 												onClick={ () =>
 													remove( block )
 												}
 											>
-												{ __(
-													'Delete',
-													'beyond-elysium'
-												) }
+												{ isBookFork( block )
+													? __(
+															'Reset to book',
+															'beyond-elysium'
+														)
+													: __(
+															'Delete',
+															'beyond-elysium'
+														) }
 											</button>
 										) }
 								</td>
@@ -370,89 +416,110 @@ export function AdminSchemaBlocks() {
 					onSubmit={ save }
 				>
 					<h2>
-						{ creating
-							? __( 'New Schema Block', 'beyond-elysium' )
-							: sprintf(
-									/* translators: %s: the schema block's slug being edited */
-									__( 'Edit %s', 'beyond-elysium' ),
-									editingSlug as string
-							  ) }
+						{ creating &&
+							__( 'New Schema Block', 'beyond-elysium' ) }
+						{ ! creating &&
+							canEdit &&
+							sprintf(
+								/* translators: %s: the schema block's slug being edited */
+								__( 'Edit %s', 'beyond-elysium' ),
+								editingSlug as string
+							) }
+						{ ! creating &&
+							! canEdit &&
+							sprintf(
+								/* translators: %s: the schema block's slug */
+								__( '%s (read-only)', 'beyond-elysium' ),
+								editingSlug as string
+							) }
 					</h2>
-					<label>
-						{ __( 'Name', 'beyond-elysium' ) }
-						<input
-							type="text"
-							value={ form.name }
-							onChange={ ( e ) =>
-								setForm( { ...form, name: e.target.value } )
-							}
-							required
-						/>
-					</label>
-					{ creating && (
+					<fieldset
+						disabled={ ! canEdit }
+						className="be-admin__read-only"
+					>
 						<label>
-							{ __( 'Slug', 'beyond-elysium' ) }
+							{ __( 'Name', 'beyond-elysium' ) }
 							<input
 								type="text"
-								value={ form.slug }
+								value={ form.name }
 								onChange={ ( e ) =>
-									setForm( { ...form, slug: e.target.value } )
+									setForm( { ...form, name: e.target.value } )
 								}
 								required
 							/>
 						</label>
-					) }
-					<label>
-						{ __( 'Section Type', 'beyond-elysium' ) }
-						<select
-							value={ form.section_type }
-							onChange={ ( e ) =>
-								changeSectionType(
-									e.target.value as SectionType
-								)
-							}
-						>
-							{ SECTION_TYPES.map( ( t ) => (
-								<option key={ t } value={ t }>
-									{ t }
-								</option>
-							) ) }
-						</select>
-					</label>
+						{ creating && (
+							<label>
+								{ __( 'Slug', 'beyond-elysium' ) }
+								<input
+									type="text"
+									value={ form.slug }
+									onChange={ ( e ) =>
+										setForm( {
+											...form,
+											slug: e.target.value,
+										} )
+									}
+									required
+								/>
+							</label>
+						) }
+						<label>
+							{ __( 'Section Type', 'beyond-elysium' ) }
+							<select
+								value={ form.section_type }
+								onChange={ ( e ) =>
+									changeSectionType(
+										e.target.value as SectionType
+									)
+								}
+							>
+								{ SECTION_TYPES.map( ( t ) => (
+									<option key={ t } value={ t }>
+										{ t }
+									</option>
+								) ) }
+							</select>
+						</label>
 
-					<label>
-						<input
-							type="checkbox"
-							checked={ !! form.storyteller_only }
-							onChange={ ( e ) =>
-								setForm( {
-									...form,
-									storyteller_only: e.target.checked,
-								} )
+						<label>
+							<input
+								type="checkbox"
+								checked={ !! form.storyteller_only }
+								onChange={ ( e ) =>
+									setForm( {
+										...form,
+										storyteller_only: e.target.checked,
+									} )
+								}
+							/>
+							{ __(
+								'Storyteller only — hide this section and its data from players',
+								'beyond-elysium'
+							) }
+						</label>
+
+						<SchemaBlockDefinitionEditor
+							sectionType={ form.section_type }
+							definition={ form.definition }
+							onChange={ ( definition ) =>
+								setForm( { ...form, definition } )
 							}
 						/>
-						{ __(
-							'Storyteller only — hide this section and its data from players',
-							'beyond-elysium'
-						) }
-					</label>
-
-					<SchemaBlockDefinitionEditor
-						sectionType={ form.section_type }
-						definition={ form.definition }
-						onChange={ ( definition ) =>
-							setForm( { ...form, definition } )
-						}
-					/>
+					</fieldset>
 
 					<div className="be-admin__form-actions">
-						<button type="submit" disabled={ saving }>
-							{ saving
-								? __( 'Saving…', 'beyond-elysium' )
-								: __( 'Save', 'beyond-elysium' ) }
-						</button>
+						{ canEdit && (
+							<button type="submit" disabled={ saving }>
+								{ saving
+									? __( 'Saving…', 'beyond-elysium' )
+									: __( 'Save', 'beyond-elysium' ) }
+							</button>
+						) }
 						<button type="button" onClick={ cancel }>
-							{ __( 'Cancel', 'beyond-elysium' ) }
+							{ canEdit
+								? __( 'Cancel', 'beyond-elysium' )
+								: __( 'Close', 'beyond-elysium' ) }
 						</button>
 					</div>
 				</form>

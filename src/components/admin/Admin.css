@@ -20,6 +20,14 @@
 	background: var(--be-blue-7);
 }
 
+/* A read-only view: the fields show the book's values and take no input. */
+.be-admin__read-only {
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
 .be-admin__field-warning {
 	margin: -0.5rem 0 1rem;
 	padding: 0.5rem 0.75rem;
@@ -245,4 +253,47 @@
 .be-def-editor__inline-row button {
 	flex: 0 0 auto;
 	padding: 0 0.4rem;
+}
+
+.be-def-editor__pool-cost {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	min-width: 9rem;
+}
+
+.be-def-editor__pool-cost label {
+	display: flex;
+	align-items: center;
+	gap: 0.3rem;
+	font-size: 0.8rem;
+}
+
+.be-def-editor__pool-cost input[type="number"] {
+	width: 4.5rem;
+}
+
+.be-in-type-editor__test {
+	border-left: 2px solid var(--be-gray-4);
+	padding: 0.5rem 0 0.5rem 0.75rem;
+	margin-bottom: 0.5rem;
+}
+
+.be-in-type-editor__test-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: center;
+}
+
+.be-in-type-editor__when {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: center;
+	margin-top: 0.4rem;
+}
+
+.be-in-type-editor__nested {
+	margin-top: 0.5rem;
 }

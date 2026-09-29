@@ -83,12 +83,12 @@ export function ReportCards( {
 		<div className="be-report-cards">
 			{ data.cards.map( ( card, i ) => (
 				// A report card has no id of its own - resolve_one() names the row, not a key.
-				// eslint-disable-next-line react/no-array-index-key
+
 				<dl className="be-report-cards__card" key={ i }>
 					{ card.map( ( [ label, value ] ) => (
 						<div className="be-report-cards__field" key={ label }>
 							<dt>{ label }</dt>
-							{ /* eslint-disable-next-line react/no-danger */ }
+							{  }
 							<dd dangerouslySetInnerHTML={ { __html: value } } />
 						</div>
 					) ) }

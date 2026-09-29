@@ -355,7 +355,7 @@ RITE_CATEGORIES = ['Accord', 'Caern', 'Death', 'Mystic', 'Punishment', 'Renown',
 # A rite the GVM leaves unpriced that is not a Minor rite (Minor rites are unpriced - bought with
 # the Rites Background).
 RITE_UNPRICED = {
-    'Rite of Crash Space': 'UNPRICED: the GVM carries no cost and the Ratkin book is not captured - 1.3.0 owner question 16',
+    'Rite of Crash Space': "UNPRICED: the GVM carries no cost and the Ratkin book's price is not recorded.",
 }
 
 # --- Backgrounds bought per individual -----------------------------------------------------

@@ -4,7 +4,7 @@ function panel( html: string ): HTMLElement {
 	const el = document.createElement( 'form' );
 	el.innerHTML = html;
 	document.body.appendChild( el );
-	el.scrollIntoView = jest.fn();
+	el.scrollIntoView = vi.fn();
 	return el;
 }
 

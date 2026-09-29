@@ -2,7 +2,6 @@
 
 namespace BeyondElysium\Tests\Thread;
 
-use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\World_Object;
@@ -27,7 +26,6 @@ class FailedSaveResponsesThreadTest extends WP_UnitTestCase {
 			'slug' => 'fs-merits', 'name' => 'FS Merits', 'section_type' => 'trait_list', 'is_system' => 0,
 			'definition' => [ 'items' => [ [ 'name' => 'True Faith', 'cost' => '7' ] ] ],
 		] );
-		Creature_Stack::create( [ 'slug' => 'fs-stack', 'name' => 'FS Stack', 'stack_definition' => [ 'sections' => [] ] ] );
 
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
 	}
@@ -113,17 +111,11 @@ class FailedSaveResponsesThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_schema_block_save_that_did_not_land_is_not_reported_saved(): void {
-		$response = $this->send( 'PUT', '/be/v1/schema-blocks/fs-merits', [ 'name' => 'Renamed' ], 'UPDATE schema_blocks' );
+		$response = $this->send( 'PUT', "/be/v1/{$this->slug}/schema-blocks/fs-merits", [ 'name' => 'Renamed' ], 'UPDATE schema_blocks' );
 
 		$this->assertSame( 500, $response->get_status() );
-		$this->assertSame( 'FS Merits', Schema_Block::find_by_slug( 'fs-merits' )->name );
-	}
-
-	public function test_a_creature_stack_save_that_did_not_land_is_not_reported_saved(): void {
-		$response = $this->send( 'PUT', '/be/v1/creature-stacks/fs-stack', [ 'name' => 'Renamed' ], 'UPDATE creature_stacks' );
-
-		$this->assertSame( 500, $response->get_status() );
-		$this->assertSame( 'FS Stack', Creature_Stack::find_by_slug( 'fs-stack' )->name );
+		$this->assertSame( 'FS Merits', Schema_Block::find_for_game( 'fs-merits', $this->slug )->name );
+		$this->assertSame( '', Schema_Block::find_for_game( 'fs-merits', $this->slug )->game_slug, 'and no copy of the block was left behind' );
 	}
 
 	public function test_a_boon_repayment_that_did_not_land_is_not_reported_repaid(): void {

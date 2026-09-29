@@ -124,7 +124,7 @@ class ChronicleDeleteThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 204, $response->get_status() );
 		$this->assertNull( Game::find_by_slug( $game->slug ) );
 		$this->assertSame( 0, $this->rows( 'characters', 'owner_slug = %s', $game->slug ) );
-		$this->assertSame( 0, $this->rows( 'schema_blocks', 'game_slug = %s', $game->slug ), 'D42: forks go with their chronicle' );
+		$this->assertSame( 0, $this->rows( 'schema_blocks', 'game_slug = %s', $game->slug ), 'copies of blocks go with their chronicle' );
 		$this->assertSame( 0, $this->rows( 'character_attestations', 'game_slug = %s', $game->slug ) );
 		$this->assertSame( 0, $this->rows( 'character_transfers', 'home_slug = %s OR host_slug = %s', $game->slug, $game->slug ) );
 		$this->assertSame( 0, $this->rows( 'game_members', 'game_id = %d', $game->id ) );

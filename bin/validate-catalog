@@ -9,6 +9,9 @@
 defined( 'ABSPATH' ) || define( 'ABSPATH', __DIR__ . '/' );
 
 require_once __DIR__ . '/../beyond-elysium/includes/Services/Catalog_Validator.php';
+require_once __DIR__ . '/../beyond-elysium/includes/Services/Cost_Engine.php';
+require_once __DIR__ . '/../beyond-elysium/includes/Services/In_Type.php';
+require_once __DIR__ . '/../beyond-elysium/includes/Services/Creation_Tally.php';
 
 use BeyondElysium\Services\Catalog_Validator;
 
@@ -60,7 +63,14 @@ foreach ( $files as $path ) {
 	}
 }
 
-// Pass 2: each file on its own, then its references.
+$blocks_by_slug = [];
+foreach ( $decoded as $data ) {
+	if ( is_array( $data ) && ( $data['kind'] ?? '' ) === 'block' ) {
+		$blocks_by_slug[ (string) ( $data['slug'] ?? '' ) ] = $data;
+	}
+}
+
+// Pass 2: each file on its own, then its references and, for a variant, its base.
 foreach ( $decoded as $path => $data ) {
 	if ( is_string( $data ) ) {
 		printf( "  %s\n      %s\n", $path, $data );
@@ -71,7 +81,12 @@ foreach ( $decoded as $path => $data ) {
 	$stem   = pathinfo( $path, PATHINFO_FILENAME );
 	$errors = array_merge(
 		Catalog_Validator::validate_file( $data, $stem ),
-		Catalog_Validator::validate_references( $data, $stem, $block_slugs, $stack_slugs )
+		Catalog_Validator::validate_references( $data, $stem, $block_slugs, $stack_slugs ),
+		Catalog_Validator::validate_variant( $data, $blocks_by_slug[ (string) ( $data['variant']['of'] ?? '' ) ] ?? null ),
+		Catalog_Validator::validate_derived( $data, $blocks_by_slug[ (string) ( $data['definition']['_meta']['untiered']['derived_from'] ?? '' ) ] ?? null ),
+		Catalog_Validator::validate_in_type_refs( $data, $blocks_by_slug ),
+		Catalog_Validator::validate_identity_field_refs( $data, $blocks_by_slug ),
+		Catalog_Validator::validate_creation_rules_refs( $data, $blocks_by_slug )
 	);
 	if ( $errors === [] ) {
 		continue;

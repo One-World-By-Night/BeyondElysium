@@ -1,0 +1,23 @@
+{
+  "format": 1,
+  "slug": "wraith-shadow",
+  "name": "Wraith Shadow",
+  "kind": "block",
+  "section_type": "resource_pool",
+  "storyteller_only": true,
+  "provenance": {
+    "sources": [
+      "Oblivion (WW05400) p.174 - the Shadow's own Experience Traits, a pool separate from the Psyche's, that pay for Thorns; the book never states how a Shadow earns them, so this is a Storyteller-set balance, never player-visible or player-spent"
+    ],
+    "tool": "tools/catalog/emit_catalog.py"
+  },
+  "definition": {
+    "pools": [
+      {
+        "name": "Shadow XP",
+        "value_type": "integer",
+        "default_start": 0
+      }
+    ]
+  }
+}

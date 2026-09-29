@@ -272,7 +272,7 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 
 		$this->assertSame( 20, $this->unspent(), 'a negative block never deducts - and, as today, never refunds' );
 		$this->assertSame( 3, $this->held( $flaws )[0]['chosen_cost'] );
-		$this->assertSame( -6.0, (float) Change::find( $id )->xp_cost, 'the record keeps the sign a flaw always had' );
+		$this->assertSame( -3.0, (float) Change::find( $id )->xp_cost, 'the record keeps the sign a flaw always had, and a flaw row is priced once' );
 	}
 
 	public function test_raising_an_unpriced_custom_row_prices_only_the_new_dots(): void {

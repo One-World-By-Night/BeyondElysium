@@ -28,9 +28,9 @@ export function displayTemper( value: ResourcePoolValue ): string {
 	const dots =
 		temporary >= permanent
 			? DOT.repeat( Math.max( 0, permanent ) ) +
-			  OVERFLOW.repeat( Math.max( 0, temporary - permanent ) )
+				OVERFLOW.repeat( Math.max( 0, temporary - permanent ) )
 			: DOT.repeat( Math.max( 0, temporary ) ) +
-			  SPENT.repeat( Math.max( 0, permanent - temporary ) );
+				SPENT.repeat( Math.max( 0, permanent - temporary ) );
 
 	const glyphs = Array.from( dots );
 	const groups: string[] = [];

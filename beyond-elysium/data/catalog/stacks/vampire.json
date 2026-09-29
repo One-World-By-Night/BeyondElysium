@@ -5,9 +5,10 @@
   "kind": "stack",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_creature_stacks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_creature_stacks, dumped by tools/catalog/dump_live.sh",
+      "A Discipline is in-clan when the clan_disciplines map in vampire-identity lists it for the character's clan; Caitiff and Pander, who have no fixed clan Disciplines, count their own In-clan Disciplines (Laws of the Night Revised's character creation lets a Caitiff choose any three Basic Disciplines)",
+      "Character creation (Laws of the Night Revised, pp. 74-82, 121-122): Attributes 7/5/3; five Abilities; three basic in-clan Disciplines, a Caitiff or Pander's own choice of any three; five Backgrounds; five Free Traits, at one per Attribute, Ability, specialization or Background dot, two per Virtue, three per Willpower dot or basic Discipline dot, and a Merit's own value"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -66,7 +67,30 @@
         "label": "Disciplines",
         "display_order": 60,
         "required": true,
-        "in_type_source": "vampire-identity.Clan"
+        "in_type": [
+          {
+            "kind": "names",
+            "values": {
+              "map": "vampire-identity.clan_disciplines",
+              "by": [
+                "Clan"
+              ]
+            }
+          },
+          {
+            "kind": "chosen",
+            "values": {
+              "field": "vampire-identity.In-clan Disciplines"
+            },
+            "when": {
+              "field": "vampire-identity.Clan",
+              "is": [
+                "Caitiff",
+                "Pander"
+              ]
+            }
+          }
+        ]
       },
       {
         "block_slug": "vampire-blood-magic",
@@ -153,52 +177,80 @@
     "creation_rules": {
       "steps": [
         {
-          "step": 1,
-          "label": "Inspiration",
-          "sections": [
-            "vampire-identity"
-          ]
-        },
-        {
-          "step": 2,
+          "kind": "prioritized",
           "label": "Attributes",
-          "budget": {
-            "primary": 7,
-            "tertiary": 3,
-            "secondary": 5
-          },
           "sections": [
             "met-physical-traits",
             "met-social-traits",
             "met-mental-traits"
           ],
-          "prioritize": true
-        },
-        {
-          "step": 3,
-          "label": "Advantages",
-          "budgets": {
-            "vampire-abilities": 5,
-            "vampire-backgrounds": 5,
-            "vampire-disciplines": 3
-          },
-          "sections": [
-            "vampire-abilities",
-            "vampire-disciplines",
-            "vampire-backgrounds"
+          "amounts": [
+            7,
+            5,
+            3
           ]
         },
         {
-          "step": 4,
-          "label": "Last Touches",
-          "sections": [
-            "vampire-resources",
-            "vampire-virtues",
-            "vampire-merits",
-            "vampire-flaws",
-            "met-derangements"
-          ],
-          "free_traits": 5
+          "kind": "budget",
+          "label": "Abilities",
+          "section": "vampire-abilities",
+          "count": 5
+        },
+        {
+          "kind": "budget",
+          "label": "Disciplines",
+          "section": "vampire-disciplines",
+          "count": 3,
+          "filter": {
+            "in_type": true,
+            "tier": "basic"
+          },
+          "when": {
+            "field": "vampire-identity.Clan",
+            "not": [
+              "Caitiff",
+              "Pander"
+            ]
+          }
+        },
+        {
+          "kind": "budget",
+          "label": "Disciplines (Caitiff/Pander)",
+          "section": "vampire-disciplines",
+          "count": 3,
+          "filter": {
+            "tier": "basic"
+          },
+          "when": {
+            "field": "vampire-identity.Clan",
+            "is": [
+              "Caitiff",
+              "Pander"
+            ]
+          }
+        },
+        {
+          "kind": "budget",
+          "label": "Backgrounds",
+          "section": "vampire-backgrounds",
+          "count": 5
+        },
+        {
+          "kind": "free",
+          "label": "Free Traits",
+          "pool": "Free Traits",
+          "points": 5,
+          "rates": {
+            "met-physical-traits": 1,
+            "met-social-traits": 1,
+            "met-mental-traits": 1,
+            "vampire-abilities": 1,
+            "vampire-backgrounds": 1,
+            "vampire-virtues": 2,
+            "vampire-resources.Willpower": 3,
+            "vampire-disciplines": 3,
+            "vampire-merits": "value"
+          }
         }
       ]
     }

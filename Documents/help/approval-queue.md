@@ -67,9 +67,7 @@ Character, Change, XP, and Actions stay visible up top.
 ### A change that needs a price
 
 A trait or power that isn't in the catalog has no price, so the queue doesn't invent one. It
-shows **Needs a price** in the XP column and a box beside Approve for what it costs. For a
-trait list the box says **XP per dot** and shows the total as you type, such as "× 3 dots =
-6 XP". For a power it says **XP**, one price for the whole pick.
+shows **Needs a price** in the XP column and a box beside Approve for what it costs. For a trait counted in dots, such as an Ability or a Background, the box says **XP per dot** and shows the total as you type, such as "× 3 dots = 6 XP". For a single purchase, such as a Merit, Flaw or Ritual, and for a power, it says **XP**: one price for the whole purchase.
 
 - **Approve stays greyed out until the box holds a whole number from 0 to 500.** 0 counts:
   sometimes free is the answer, and typing it says so on purpose.
@@ -112,7 +110,7 @@ A change that needs a price can't be checked. Price and approve it on its own ro
 ### Price a homebrew purchase
 
 1. Find the row marked **Needs a price**.
-2. Type what it costs in the box - per dot for a trait, the whole amount for a power.
+2. Type what it costs in the box - per dot for a trait counted in dots, the whole amount for a single purchase or a power.
 3. Check the total beside the box.
 4. Click **Approve**.
 

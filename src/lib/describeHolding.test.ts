@@ -81,7 +81,7 @@ describe( 'describeHolding', () => {
 			);
 		} );
 
-		it( 'shows an em-dash for an unset value, never omits the line (§4.4)', () => {
+		it( 'shows an em-dash for an unset value, never omits the line', () => {
 			expect( describeIdentityFieldHolding( 'Sire', null ) ).toBe(
 				'Sire: —'
 			);

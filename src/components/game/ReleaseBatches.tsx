@@ -6,6 +6,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { canIn } from '../../lib/chronicleCapabilities';
 import { errorMessage } from '../../lib/errorMessage';
+import { sameId } from '../../lib/ids';
 import type { MyCapabilities } from '../../types';
 import type { ReleaseBatch, ReleaseBatchItems } from '../../types/releaseBatch';
 import type { ReleaseScheduleRule } from '../../types/session';
@@ -157,7 +158,7 @@ export function ReleaseBatches( {
 			} );
 	}
 
-	useEffect( load, [ gameSlug ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect( load, [ gameSlug ] );
 
 	function loadItems( batch: ReleaseBatch ) {
 		setItemsLoading( true );
@@ -231,7 +232,6 @@ export function ReleaseBatches( {
 	}
 
 	async function deleteBatch( batch: ReleaseBatch ) {
-		// eslint-disable-next-line no-alert
 		if (
 			! window.confirm(
 				__(
@@ -284,7 +284,6 @@ export function ReleaseBatches( {
 	}
 
 	async function releaseNow( batch: ReleaseBatch ) {
-		// eslint-disable-next-line no-alert
 		if (
 			! window.confirm(
 				__(
@@ -342,7 +341,7 @@ export function ReleaseBatches( {
 		itemId: number,
 		targetBatchId: number
 	) {
-		if ( ! selected || targetBatchId === selected.id ) {
+		if ( ! selected || sameId( targetBatchId, selected.id ) ) {
 			return;
 		}
 		setBusy( true );
@@ -478,11 +477,11 @@ export function ReleaseBatches( {
 												? __(
 														'Weekly',
 														'beyond-elysium'
-												  )
+													)
 												: __(
 														'Monthly',
 														'beyond-elysium'
-												  ) }
+													) }
 										</span>
 										{ rule.type === 'weekly' ? (
 											<select

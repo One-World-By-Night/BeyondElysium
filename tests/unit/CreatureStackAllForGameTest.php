@@ -35,7 +35,7 @@ class CreatureStackAllForGameTest extends TestCase {
 
 	public function test_empty_array_returns_all_eleven_not_zero(): void {
 		$result = $this->filter( $this->stacks(), [] );
-		$this->assertCount( 11, $result, 'an empty array must mean "all", never "none" - §9\'s named risk' );
+		$this->assertCount( 11, $result, 'an empty array must mean "all", never "none"' );
 	}
 
 	public function test_non_array_value_returns_all_eleven(): void {

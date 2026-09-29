@@ -14,20 +14,16 @@ export function mergeWaitingRows(
 	submissions: Submission[]
 ): WaitingRow[] {
 	const merged: WaitingRow[] = [
-		...transfers.map(
-			( row ): WaitingRow => ( {
-				kind: 'transfer',
-				at: row.initiated_at,
-				row,
-			} )
-		),
-		...submissions.map(
-			( row ): WaitingRow => ( {
-				kind: 'submission',
-				at: row.created_at,
-				row,
-			} )
-		),
+		...transfers.map( ( row ): WaitingRow => ( {
+			kind: 'transfer',
+			at: row.initiated_at,
+			row,
+		} ) ),
+		...submissions.map( ( row ): WaitingRow => ( {
+			kind: 'submission',
+			at: row.created_at,
+			row,
+		} ) ),
 	];
 	merged.sort( ( a, b ) => ( a.at < b.at ? 1 : -1 ) );
 	return merged;

@@ -168,7 +168,7 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 			'character_ids' => [ $character_id ],
 			'status'        => 'inactive',
 		] );
-		$this->assertNotSame( 403, $bulk->get_status(), 'an AST must keep the bulk status/XP/reset operations item 27 says they keep' );
+		$this->assertNotSame( 403, $bulk->get_status(), 'an AST keeps the bulk status, XP and reset operations' );
 	}
 
 	/**

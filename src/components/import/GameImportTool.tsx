@@ -132,7 +132,7 @@ export function GameImportTool() {
 					? {
 							action: 'create_new',
 							name: newChronicleName || preview.chronicle_title,
-					  }
+						}
 					: { action: 'merge', game_slug: mergeGameSlug };
 			const resolutions: ImportResolutions = {
 				duplicates: duplicateActions,
@@ -286,7 +286,7 @@ export function GameImportTool() {
 							? __(
 									', and action/rumor allocation settings',
 									'beyond-elysium'
-							  )
+								)
 							: '' }{ ' ' }
 						{ __(
 							'- none of these have an import destination yet, so they are left out rather than guessed at.',
@@ -431,11 +431,11 @@ export function GameImportTool() {
 									preview.existing_games.find(
 										( g ) => g.slug === mergeGameSlug
 									)?.name ?? mergeGameSlug
-							  )
+								)
 							: __(
 									'Resolve — new chronicle',
 									'beyond-elysium'
-							  ) }
+								) }
 					</h4>
 					<ImportPreview
 						preview={ preview }
@@ -491,7 +491,7 @@ export function GameImportTool() {
 											'beyond-elysium'
 										),
 										newChronicleName
-								  )
+									)
 								: sprintf(
 										/* translators: %s: name of the existing chronicle being merged into */
 										__(
@@ -501,7 +501,7 @@ export function GameImportTool() {
 										preview.existing_games.find(
 											( g ) => g.slug === mergeGameSlug
 										)?.name ?? mergeGameSlug
-								  ) }{ ' ' }
+									) }{ ' ' }
 							{ __(
 								'This creates or updates every record in one transaction - nothing is written unless all of it succeeds.',
 								'beyond-elysium'

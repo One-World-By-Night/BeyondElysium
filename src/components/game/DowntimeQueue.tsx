@@ -124,7 +124,7 @@ export function DowntimeQueue( {
 			} );
 	}
 
-	useEffect( loadQueue, [ gameSlug, gameDate ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect( loadQueue, [ gameSlug, gameDate ] );
 
 	function assign( plotId: number, assignedTo: number | null ) {
 		setRows( ( prev ) =>
@@ -221,11 +221,11 @@ export function DowntimeQueue( {
 						? __(
 								'Nothing unanswered for this date.',
 								'beyond-elysium'
-						  )
+							)
 						: __(
 								'No action plots for this date.',
 								'beyond-elysium'
-						  ) }
+							) }
 				</p>
 			) : (
 				<ul className="be-downtime-queue__list">

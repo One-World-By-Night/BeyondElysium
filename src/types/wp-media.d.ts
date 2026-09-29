@@ -15,11 +15,11 @@ interface WPMediaAttachment {
  * The media picker frame returned by wp.media().
  */
 interface WPMediaFrame {
-	open(): void;
-	on( event: 'select' | 'close', callback: () => void ): void;
-	state(): {
-		get( key: 'selection' ): {
-			first(): { toJSON(): WPMediaAttachment };
+	open: () => void;
+	on: ( event: 'select' | 'close', callback: () => void ) => void;
+	state: () => {
+		get: ( key: 'selection' ) => {
+			first: () => { toJSON: () => WPMediaAttachment };
 		};
 	};
 }

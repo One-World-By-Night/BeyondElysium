@@ -2,12 +2,15 @@
 
 namespace BeyondElysium\Models;
 
+use BeyondElysium\Database\Fork_Merge;
 use BeyondElysium\Database\Manager;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Static data-access model for character sheet layout templates.
+ * Static data-access model for character sheet layout templates: the site's templates (`game_id` null) and each
+ * chronicle's own. A chronicle's template of the same creature type and kind as a site template is a layer over it,
+ * holding the chronicle's resolved layout and the changes it made.
  */
 class Template {
 
@@ -130,11 +133,14 @@ class Template {
 	 * @return int Insert ID, or 0 on failure (including a layout that fails validation).
 	 */
 	public static function create( array $data ): int {
-		$layout = self::to_array_layout( $data['layout'] ?? null );
+		$layout  = self::to_array_layout( $data['layout'] ?? null );
+		$game_id = isset( $data['game_id'] ) ? (int) $data['game_id'] : null;
 
-		if ( self::validate_layout( $layout ) !== null ) {
+		if ( self::validate_layout( $layout, self::game_slug_for( $game_id ) ) !== null ) {
 			return 0;
 		}
+
+		$site = $game_id !== null ? self::site_row( (string) ( $data['stack_slug'] ?? '' ), (string) ( $data['template_type'] ?? '' ) ) : null;
 
 		$insert = [
 			'game_id'       => isset( $data['game_id'] ) ? (int) $data['game_id'] : null,
@@ -147,6 +153,9 @@ class Template {
 			'created_at'    => current_time( 'mysql' ),
 			'updated_at'    => current_time( 'mysql' ),
 		];
+		if ( $site ) {
+			$insert['fork_changes'] = wp_json_encode( Fork_Merge::changes_against( self::layout_of( $site ), (array) $layout, true ) );
+		}
 
 		$id = Manager::insert( 'templates', $insert );
 		return $id ?: 0;
@@ -160,7 +169,8 @@ class Template {
 	 * @return bool False when the template does not exist or a supplied layout is invalid.
 	 */
 	public static function update( int $id, array $data ): bool {
-		if ( ! self::find( $id ) ) {
+		$row = self::find( $id );
+		if ( ! $row ) {
 			return false;
 		}
 
@@ -174,10 +184,17 @@ class Template {
 
 		if ( array_key_exists( 'layout', $data ) ) {
 			$layout = self::to_array_layout( $data['layout'] );
-			if ( self::validate_layout( $layout ) !== null ) {
+			if ( self::validate_layout( $layout, self::game_slug_for( $row->game_id ) ) !== null ) {
 				return false;
 			}
 			$update['layout'] = wp_json_encode( $layout );
+
+			$site = $row->game_id !== null ? self::site_row( (string) $row->stack_slug, (string) $row->template_type ) : null;
+			if ( $site ) {
+				$under   = self::layout_of( $site );
+				$changes = self::recorded_changes( $row->fork_changes ?? null, $under, (array) $row->layout );
+				$update['fork_changes'] = wp_json_encode( Fork_Merge::stamp( (array) $row->layout, (array) $layout, $changes, $under ) );
+			}
 		}
 
 		if ( empty( $update ) ) {
@@ -187,6 +204,125 @@ class Template {
 		$update['updated_at'] = current_time( 'mysql' );
 		$result                = Manager::update( 'templates', $update, [ 'id' => $id ] );
 		return $result !== false;
+	}
+
+	/**
+	 * Rebuilds every chronicle's template that is a layer over a site template from that site template as it now stands,
+	 * keeping what each chronicle changed.
+	 *
+	 * @param string $stack_slug    Only this creature type's, when given.
+	 * @param string $template_type Only this kind, when given.
+	 * @return int How many were rebuilt.
+	 */
+	public static function refresh_layers( string $stack_slug = '', string $template_type = '' ): int {
+		global $wpdb;
+		$table  = Manager::table( 'templates' );
+		$where  = [ 'own.game_id IS NOT NULL' ];
+		$values = [];
+		if ( $stack_slug !== '' ) {
+			$where[]  = 'own.stack_slug = %s';
+			$values[] = $stack_slug;
+		}
+		if ( $template_type !== '' ) {
+			$where[]  = 'own.template_type = %s';
+			$values[] = $template_type;
+		}
+		$sql = "SELECT own.id, own.layout, own.fork_changes, site.layout AS site_layout FROM {$table} own
+			INNER JOIN {$table} site ON site.game_id IS NULL AND site.stack_slug = own.stack_slug AND site.template_type = own.template_type
+			WHERE " . implode( ' AND ', $where );
+		$rows = $wpdb->get_results( $values ? $wpdb->prepare( $sql, $values ) : $sql ) ?: [];
+
+		$rebuilt = 0;
+		foreach ( $rows as $row ) {
+			$under = json_decode( (string) $row->site_layout, true );
+			$copy  = json_decode( (string) $row->layout, true );
+			if ( ! is_array( $under ) || ! is_array( $copy ) ) {
+				continue;
+			}
+			$changes = self::recorded_changes( $row->fork_changes, $under, $copy );
+			$result  = $wpdb->update( $table, [
+				'layout'       => wp_json_encode( Fork_Merge::merge( $under, $copy, $changes ) ),
+				'fork_changes' => wp_json_encode( $changes ),
+				'updated_at'   => current_time( 'mysql' ),
+			], [ 'id' => (int) $row->id ] );
+			if ( $result === false ) {
+				error_log( 'Beyond Elysium: failed to bring site template changes to chronicle template ' . (int) $row->id . ': ' . $wpdb->last_error );
+				continue;
+			}
+			$rebuilt++;
+		}
+		return $rebuilt;
+	}
+
+	/**
+	 * Writes a chronicle's template with its recorded changes.
+	 *
+	 * @param int                 $id     The template's row.
+	 * @param array<string,mixed> $layout
+	 * @param array<string,mixed> $changes
+	 */
+	public static function store_layer( int $id, array $layout, array $changes ): bool {
+		global $wpdb;
+		$table = Manager::table( 'templates' );
+		return $wpdb->query( $wpdb->prepare(
+			"UPDATE {$table} SET layout = %s, fork_changes = %s, updated_at = %s WHERE id = %d AND game_id IS NOT NULL",
+			wp_json_encode( $layout ),
+			wp_json_encode( $changes ),
+			current_time( 'mysql' ),
+			$id
+		) ) !== false;
+	}
+
+	/**
+	 * Adds a section showing a block to a chronicle's template of one creature type and kind, after the others, making
+	 * the chronicle's template from the site's when it has none.
+	 *
+	 * @return bool False when neither exists, or the block is already shown.
+	 */
+	public static function add_section_for_game( string $stack_slug, string $template_type, int $game_id, string $block_slug, string $title ): bool {
+		$own = self::own_template( $stack_slug, $template_type, $game_id );
+		if ( ! $own ) {
+			return false;
+		}
+		$layout   = (array) $own->layout;
+		$sections = (array) ( $layout['sections'] ?? [] );
+		if ( in_array( $block_slug, array_column( $sections, 'block_slug' ), true ) ) {
+			return false;
+		}
+		$orders     = array_map( 'intval', array_column( $sections, 'order' ) );
+		$sections[] = [
+			'block_slug' => $block_slug,
+			'column'     => 1,
+			'order'      => ( $orders ? max( $orders ) : 0 ) + 1,
+			'title'      => $title,
+			'display'    => null,
+			'collapsed'  => false,
+			'width'      => 'full',
+		];
+		$layout['sections'] = $sections;
+		return self::update( (int) $own->id, [ 'layout' => $layout ] );
+	}
+
+	/**
+	 * Removes a section from a chronicle's own template of one creature type and kind.
+	 */
+	public static function remove_section_for_game( string $stack_slug, string $template_type, int $game_id, string $block_slug ): bool {
+		$own = Manager::get_row(
+			'SELECT * FROM ' . Manager::table( 'templates' ) . ' WHERE game_id = %d AND stack_slug = %s AND template_type = %s',
+			$game_id,
+			$stack_slug,
+			$template_type
+		);
+		$own = self::decode_layout( $own );
+		if ( ! $own ) {
+			return false;
+		}
+		$layout             = (array) $own->layout;
+		$layout['sections'] = array_values( array_filter(
+			(array) ( $layout['sections'] ?? [] ),
+			static fn( $section ): bool => ( $section['block_slug'] ?? null ) !== $block_slug
+		) );
+		return self::update( (int) $own->id, [ 'layout' => $layout ] );
 	}
 
 	/**
@@ -211,12 +347,14 @@ class Template {
 
 	/**
 	 * Validate a decoded layout against the template schema: version must be 1, columns an integer from 1 to 6, and every
-	 * section must name a known, non-duplicate block_slug with a column in range and a recognized display type.
+	 * section must name a non-duplicate block_slug the chronicle can read, with a column in range and a recognized display
+	 * type.
 	 *
-	 * @param mixed $layout
+	 * @param mixed  $layout
+	 * @param string $game_slug The chronicle whose template this is; '' for a site template, which shows book blocks only.
 	 * @return \WP_Error|null Null when valid.
 	 */
-	public static function validate_layout( $layout ): ?\WP_Error {
+	public static function validate_layout( $layout, string $game_slug = '' ): ?\WP_Error {
 		if ( ! is_array( $layout ) ) {
 			return new \WP_Error( 'invalid_layout', 'layout must be a JSON object.', [ 'status' => 400 ] );
 		}
@@ -250,7 +388,7 @@ class Template {
 			}
 			$seen_slugs[ $slug ] = true;
 
-			if ( ! Schema_Block::find_by_slug( $slug ) ) {
+			if ( ! Schema_Block::find_for_game( $slug, $game_slug ) ) {
 				return new \WP_Error( 'invalid_layout', "Unknown block_slug: {$slug}.", [ 'status' => 400 ] );
 			}
 
@@ -312,6 +450,84 @@ class Template {
 		$rows = $wpdb->get_results( $sql ) ?: [];
 
 		return array_values( array_filter( array_map( [ self::class, 'decode_layout' ], $rows ) ) );
+	}
+
+	/**
+	 * The site template of a creature type and kind, undecoded, or null.
+	 *
+	 * @return object|null
+	 */
+	private static function site_row( string $stack_slug, string $template_type ) {
+		return Manager::get_row(
+			'SELECT * FROM ' . Manager::table( 'templates' ) . ' WHERE game_id IS NULL AND stack_slug = %s AND template_type = %s',
+			$stack_slug,
+			$template_type
+		);
+	}
+
+	/**
+	 * A chronicle's own template of a creature type and kind, made from the site's when it has none.
+	 *
+	 * @return object|null
+	 */
+	private static function own_template( string $stack_slug, string $template_type, int $game_id ) {
+		$own = self::decode_layout( Manager::get_row(
+			'SELECT * FROM ' . Manager::table( 'templates' ) . ' WHERE game_id = %d AND stack_slug = %s AND template_type = %s',
+			$game_id,
+			$stack_slug,
+			$template_type
+		) );
+		if ( $own ) {
+			return $own;
+		}
+		$site = self::decode_layout( self::site_row( $stack_slug, $template_type ) );
+		if ( ! $site ) {
+			return null;
+		}
+		$id = self::create( [
+			'game_id'       => $game_id,
+			'stack_slug'    => $stack_slug,
+			'name'          => $site->name,
+			'template_type' => $template_type,
+			'layout'        => $site->layout,
+		] );
+		return $id ? self::find( $id ) : null;
+	}
+
+	/**
+	 * A stored template's layout as a plain array.
+	 *
+	 * @param object $row
+	 * @return array<string,mixed>
+	 */
+	private static function layout_of( object $row ): array {
+		$layout = is_string( $row->layout ) ? json_decode( $row->layout, true ) : json_decode( (string) wp_json_encode( $row->layout ), true );
+		return is_array( $layout ) ? $layout : [];
+	}
+
+	/**
+	 * A chronicle template's changes by path: the ones it recorded, or how it differs from the site template, counting
+	 * what it leaves out as left out.
+	 *
+	 * @param mixed               $recorded
+	 * @param array<string,mixed> $under
+	 * @param array<string,mixed> $copy
+	 * @return array<string,mixed>
+	 */
+	private static function recorded_changes( $recorded, array $under, array $copy ): array {
+		$changes = is_string( $recorded ) ? json_decode( $recorded, true ) : null;
+		return Fork_Merge::is_by_path( $changes ) ? (array) $changes : Fork_Merge::changes_against( $under, $copy, true );
+	}
+
+	/**
+	 * The slug of the chronicle a template belongs to; '' for a site template.
+	 */
+	private static function game_slug_for( ?int $game_id ): string {
+		if ( $game_id === null ) {
+			return '';
+		}
+		$game = Game::find( $game_id );
+		return $game ? (string) $game->slug : '';
 	}
 
 	/**

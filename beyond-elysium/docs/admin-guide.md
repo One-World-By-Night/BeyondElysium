@@ -14,7 +14,7 @@ Everything below lives under one top-level **Beyond Elysium** menu in wp-admin. 
 | Query Tool | Query Tool (`be_run_queries`), Reports (`be_view_reports`) | — the same query builder as the front-end Query Tool, plus the 20-report/cards/batch-output layer |
 | Import | — (single page) | Import, below |
 | Chronicle Setup | Chronicle Setup (`be_manage_chronicle_setup`), Chronicle Access (`be_manage_games`), Action & Rumor Settings and AI Assist (`be_manage_apr`) - staff only: the page needs `be_manage_chronicle_setup`, so a player never sees it | Chronicle-Scoped Access, below; Chronicle Setup itself is a live checklist for a chronicle's own setup, see the [Storyteller Guide](st-guide.md) |
-| System Config | Games (`be_manage_games`), Schema Blocks (`be_manage_schemas`), Creature Stacks (`be_manage_games`), Templates (`be_manage_templates`), Approval Rules (`be_manage_approval_rules`), Translations (`be_manage_translations`) | Schema Blocks and Creature Stacks, Templates, Descriptions and Approval Schedules, Approval Rules, and Catalog Term Translation, all below |
+| System Config | Games (`be_manage_games`), Schema Blocks (`be_manage_schemas` - view-only for the book, chronicle-scoped to edit), Creature Stacks (`be_manage_games` to view the book; `be_manage_schemas`, scoped to a chronicle, to build or edit one), Templates (`be_manage_templates` - view-only for the book, chronicle-scoped to edit), Approval Rules (`be_manage_approval_rules`), Translations (`be_manage_translations`) | Schema Blocks and Creature Stacks, Templates, Descriptions and Approval Schedules, Approval Rules, and Catalog Term Translation, all below |
 | Docs | — (single page, `be_view_characters`) | — this guide and its three siblings, rendered in-plugin |
 
 Two related pages live on the front end instead, not in wp-admin at all: the **Game Dashboard** (roster stats, roster health, upcoming plots) is the Dashboard tab on both the Storyteller Toolkit page (staff) and My Chronicle (players, their own stats only), and **Notifications** is a per-chronicle on/off switch on Chronicle Setup → Chronicle Access, with each player able to opt out individually on their own WordPress Profile page. The landing dashboard's own "What's where" reference links to both.
@@ -34,7 +34,23 @@ Under **Beyond Elysium → System Config → Schema Blocks**, each block shows i
 
 On Schema Blocks, Creature Stacks, Games, Templates and Approval Rules, clicking **Edit** or **+ New** scrolls the page to the editor and puts the cursor in its first field, so the form you opened is always the one in front of you.
 
-Under **Beyond Elysium → System Config → Creature Stacks**, each stack lists which blocks it uses and in what section/column they render.
+When a book update changes something a chronicle's own fork also changed, nothing is silently overwritten and nothing is silently lost either - Chronicle Setup's **Catalog customisation** row flags it as a **book correction** to review, naming exactly what the book now says against what the chronicle's own copy still says, with one click to keep the chronicle's value or take the book's new one. See [Chronicle Setup](help/chronicle-setup.md#the-screen) for the review panel itself.
+
+Under **Beyond Elysium → System Config → Creature Stacks**, each stack lists which blocks it uses and in what section/column they render. Every shipped creature type is read-only there, for everyone - a chronicle changes how one works for itself with its own layer instead, from [Chronicle Setup](help/chronicle-setup.md). Scoped to a chronicle, the same screen also lets a Storyteller build a wholly new creature type that belongs to that chronicle alone; see [Adding a Creature Type Without Code](#adding-a-creature-type-without-code) below.
+
+Some blocks ship with **variants** - alternate printings of the same catalog, such as Dark Ages Disciplines or OWBN's own Arcanoi packet - which a chronicle can swap in from Chronicle Setup's **Book variants** row without anyone ever touching the base block. A **replacing** variant stands in for the base entirely (one at a time); an **adding** variant folds additional content in alongside it (any number at once). Choosing or dropping one previews which held character entries would stop matching the catalog first, so a chronicle can decide with full information before anything writes; a character keeps whatever it already holds regardless. See [Chronicle Setup](help/chronicle-setup.md#the-screen) for the picker itself.
+
+A tiered power block's cost isn't always a flat number per level. Its **Global settings** carry a **Ranks & costs** table - one row per named rank (Basic, Intermediate, Advanced, Elder, and so on) with that rank's cost and its **in-type** and **out-of-type** modifiers (`+N`, `-N`, or `×N`), so a Brujah's in-clan Celerity and an out-of-clan Obfuscate price differently from the same catalog row. A block can instead be an **untiered track**, priced at a flat rate per level or **derived from another block's own tier** (a rote priced by the Sphere it needs) - the same "cost by prerequisite" idea a trait list item can carry too, each naming the specific entries it requires. A resource pool similarly carries **cost per dot**, **free dots**, and a choice between **Sliding** (each dot costs its own step's rate) and **Buy down** (priced by lowering the pool from its starting value, never both at once). See [Schema Blocks](help/schema-blocks.md) for every field.
+
+## Creation Rules
+
+Each creature stack can carry a **creation rules** document: a reorderable list of steps, edited from the stack's own screen, that governs how a brand-new character of that type gets built - not just priced. Beyond Elysium ships a real one for every creature type; a chronicle's own custom creature type can write one too, or leave it empty, which prices everything at the ordinary purchase cost with no free pools or budgets, exactly as every creature type behaved before this engine existed.
+
+A step is one of seven kinds: `prioritized` (a fixed split across sections, largest first - Attributes 7/5/3), `budget` (a free count of a section's entries, optionally filtered to in-type only or a tier ceiling, with quotas it can track), `free` (a pool of points spent on whatever a budget step didn't cover), `earned` (a pool filled from what the character already holds, such as a Flaw's own value), `limit` (flags a section or entry over a point total or a rating, for the Storyteller's attention only - it never blocks a save), `start` (an entry's starting value: fixed, looked up by another field, or a formula), and `grant` (a fixed entry the character begins with, free). Every step may carry an **Only when** condition. See [Creature Stacks](help/creature-stacks.md#the-creation-rules-editor) for the full editor.
+
+The **in-type test** a creature stack section carries is what a rank's in-type/out-of-type modifier above actually checks against: a section with no test declared treats everything as in-type. A test's `kind` - `names`, `facet` (a `group`/`subgroup`), `chosen` (something the player picked at creation), or `all` (every nested test must pass) - reads its values from a field on the character, a lookup map kept on an identity field, or a fixed list, with an optional condition for the case where a field being *unset* is itself the meaningful state (a ghoul is a Mortal with no Revenant Family). See [Creature Stacks](help/creature-stacks.md#the-in-type-test) for the editor.
+
+A character's own live progress against its type's creation rules - what each step still needs, each pool's balance, and what's left to buy at the ordinary price - renders as a **Build Tally** panel on the character-creation form, and again for a Storyteller reviewing a pending character's own build.
 
 ## Descriptions and Approval Schedules on Catalog Items
 
@@ -61,6 +77,8 @@ An item's flat approval setting ("this whole item needs Storyteller approval") c
 - **Identity fields** (Nature, Clan, Generation, …) — an **Approval by option** button lists every option the field offers with its own approval dropdown, for example requiring Storyteller approval to pick "Antediluvian" while every other option is automatic. A multiselect field checks every value a player picks and the strictest requirement applies.
 
 A value or option with no schedule entry falls back to the item's own flat `approval` setting, which in turn falls back to the block's overall default, which in turn falls back to the chronicle's own **default approval policy** - see [Approval Rules](#approval-rules) below - and see the [Storyteller Guide's approval section](st-guide.md#4-running-the-approval-queue) for how a resolved approval level reaches the queue.
+
+A **Prerequisites** button appears instead, on an item whose cost is derived from another block's tier (see [Creation Rules](#creation-rules) above) - a table of the specific entries and minimum levels it needs, every one of which must be met before it prices at all.
 
 ## Approval Rules
 
@@ -122,14 +140,16 @@ XP is never touched. A character nothing applies to is left alone, and running t
 
 ## Adding a Creature Type Without Code
 
-This is the point of the schema-driven design: a new creature type is configuration, every time, not a code change.
+This is the point of the schema-driven design: a new creature type is configuration, every time, not a code change. Every shipped creature type is read-only, everywhere, for everyone — a site administrator included — so a wholly new one is built the same way a chronicle changes anything else about its own catalog: scoped to that chronicle, from Chronicle Setup.
 
-1. **Build or reuse schema blocks.** If the new type needs traits nothing else uses yet (its own power list, its own resource pool), create those blocks first under **Schema Blocks → Add Block**, picking the right section type for each.
-2. **Create the creature stack.** Under **System Config → Creature Stacks → Add Stack**, give it a slug and name, then assemble it from existing and new blocks — set each block's column and display order.
-3. **Creation rules** can be stored on the stack definition alongside its block list (a starting dot allocation, a required identity field, and so on), but nothing reads them yet — character creation doesn't enforce them in this release.
-4. The new type is immediately available everywhere a creature stack is selectable — character creation, the roster filter, query building — with no further wiring.
+1. **Build or reuse schema blocks.** If the new type needs traits nothing else uses yet (its own power list, its own resource pool), create those blocks first from the chronicle's own [Chronicle Setup](help/chronicle-setup.md) → Catalog customisation — the new block belongs to that chronicle alone. The shared catalog itself is read-only to everyone, a site administrator included; there is no way to add to it directly.
+2. **Build the creature stack.** From [Chronicle Setup](help/chronicle-setup.md), find **Creature types**, and follow its link to Creature Stacks — this opens the screen already scoped to that chronicle. Click **+ New Creature Stack**, give it a slug and name, and assemble it from existing and new blocks with **+ Add section**, setting each one's label and display order. The type belongs to that chronicle alone; no other chronicle can see or use it.
+3. **Enable it.** Building the stack doesn't make it available on its own — back on [Chronicle Setup](help/chronicle-setup.md)'s **Creature types** row, enable the new type so a character can actually be created on it.
+4. **Creation rules**, stored on the stack alongside its section list, are a real, enforced rules engine — prioritized attribute allocation, budgeted purchases with in-type/out-of-type pricing, starting resource-pool values, and the rest of the grammar `CATALOG-JSON-FORMAT.md` documents. A new type with none declared simply prices its whole starting sheet as ordinary build XP, exactly as it always has.
+5. **A Template is optional, not required.** A creature type with no authored [Template](help/templates.md) still renders a sheet, generated from its own sections in a sensible default layout; build one when a chronicle wants it arranged differently.
+6. The new type is then available everywhere a creature stack is selectable for that chronicle — character creation, the roster filter, query building — with no further wiring.
 
-A custom type can be deleted only once no character in any chronicle is that type - a character can't change its type, and one whose type is gone would have no sheet to show, print, or audit.
+A chronicle's own creature type can be deleted only once no character anywhere is that type - a character can't change its type, and one whose type is gone would have no sheet to show, print, or audit.
 
 One thing a new type can't do: leave the site. Export to Grapevine and chronicle-to-chronicle transfers travel as Grapevine exchange files, and Grapevine has no race for a type you made up, so exporting or transferring one of its characters is refused with a message saying so. The shipped types all travel; Bête goes as the Fera it shares every block with and comes back as a Bête in Beyond Elysium.
 
@@ -141,7 +161,7 @@ A **template** controls how a creature stack's blocks are laid out on the render
 
 Under **Beyond Elysium → System Config → Templates**, a template names a creature stack, a set of section groupings, and per-block column/width/title overrides. A template can also reference another block's field for cross-block display (`title_refs`) or resolve a display name through a lookup block (`name_lookup`) — both used for cases like showing a power's governing Sphere or Discipline name inline rather than just its raw slug.
 
-Templates ship with the same system-vs-fork distinction as schema blocks: the default is shared, and a chronicle that wants its own layout forks it without affecting anyone else's.
+Templates ship with the same system-vs-fork distinction as schema blocks: the default is shared, and a chronicle that wants its own layout forks it without affecting anyone else's. The shared template itself is read-only, for everyone, a site administrator included - it's always **View** here; **Customize for this chronicle**, scoped to a chronicle, is the only way to change a layout.
 
 ## Chronicle-Scoped Access
 

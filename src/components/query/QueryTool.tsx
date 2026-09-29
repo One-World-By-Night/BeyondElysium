@@ -268,7 +268,6 @@ export function QueryTool( { gameSlug }: QueryToolProps ) {
 	}
 
 	async function renameSavedQuery( saved: SavedQuery ) {
-		// eslint-disable-next-line no-alert
 		const name = window.prompt(
 			__( 'Rename query', 'beyond-elysium' ),
 			saved.name

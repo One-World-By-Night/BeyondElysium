@@ -79,7 +79,6 @@ export function WhatIKnow( { gameSlug }: WhatIKnowProps ) {
 							</div>
 							{ row.content && (
 								<div
-									// eslint-disable-next-line react/no-danger
 									dangerouslySetInnerHTML={ {
 										__html: row.content,
 									} }

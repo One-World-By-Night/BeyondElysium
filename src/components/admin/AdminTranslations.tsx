@@ -169,7 +169,6 @@ export function AdminTranslations() {
 	);
 
 	function addLanguage() {
-		// eslint-disable-next-line no-alert
 		const code = window.prompt(
 			__(
 				'Locale code for the new language (e.g. es_ES):',
@@ -251,7 +250,7 @@ export function AdminTranslations() {
 								! r.translation_id
 									? 'draft'
 									: r.status ),
-					  }
+						}
 					: r
 			)
 		);
@@ -453,7 +452,7 @@ export function AdminTranslations() {
 									? Math.round(
 											( stats.translated / stats.total ) *
 												100
-									  )
+										)
 									: 0
 							)
 						) }
@@ -471,7 +470,7 @@ export function AdminTranslations() {
 								width: `${
 									stats.total
 										? ( stats.translated / stats.total ) *
-										  100
+											100
 										: 0
 								}%`,
 							} }
@@ -617,7 +616,6 @@ export function AdminTranslations() {
 							</thead>
 							<tbody>
 								{ importPreview.sample.map( ( s, i ) => (
-									// eslint-disable-next-line react/no-array-index-key
 									<tr key={ i }>
 										<td>{ s.source_text }</td>
 										<td>{ s.outcome }</td>

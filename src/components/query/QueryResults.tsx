@@ -111,7 +111,6 @@ export function QueryResults( {
 			.statuses()
 			.then( ( { statuses } ) => setStatusOptions( statuses ) )
 			.catch( () => setStatusOptions( [] ) );
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ canBulkManage, gameSlug ] );
 
 	const activePoolBlock = resourcePoolBlocks.find(
@@ -245,12 +244,12 @@ export function QueryResults( {
 							),
 							result.updated,
 							failed
-					  )
+						)
 					: sprintf(
 							/* translators: %d: number of characters updated */
 							__( 'Updated %d character(s).', 'beyond-elysium' ),
 							result.updated
-					  )
+						)
 			);
 			setSelected( new Set() );
 		} catch {

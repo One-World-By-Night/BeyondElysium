@@ -1,0 +1,58 @@
+.be-creation-tally__xp {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	margin-bottom: 0.75rem;
+	padding-bottom: 0.75rem;
+	border-bottom: 2px solid var(--be-gray-4);
+}
+
+.be-creation-tally__xp-left--over {
+	color: var(--be-red-6);
+}
+
+.be-creation-tally__pools {
+	list-style: none;
+	margin: 0 0 0.75rem;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem 1rem;
+	font-size: 0.9rem;
+}
+
+.be-creation-tally__steps {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.be-creation-tally__step {
+	padding: 0.3rem 0.5rem;
+	border-left: 3px solid transparent;
+}
+
+.be-creation-tally__step--over {
+	border-left-color: var(--be-red-6);
+}
+
+.be-creation-tally__step-label--over {
+	color: var(--be-red-6);
+}
+
+.be-creation-tally__sub {
+	list-style: none;
+	margin: 0.2rem 0 0;
+	padding: 0 0 0 1rem;
+	font-size: 0.85rem;
+	color: var(--be-gray-6);
+}
+
+.be-creation-tally__sub-line--over {
+	color: var(--be-red-6);
+}
+
+.be-creation-tally__status {
+	color: var(--be-gray-6);
+	font-style: italic;
+}

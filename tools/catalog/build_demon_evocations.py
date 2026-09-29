@@ -95,9 +95,8 @@ def main():
     doc['provenance']['sources'] = [
         'OWBN Fallen Genre Packet (2021), OWBN0052-Demon-Fallen Genre-2021.pdf, '
         'Chapter 3 (Subtle Instruments: Lores), printed p. 44-129',
-        'MET-POWER-ACQUISITION.md §3 (Demon) - Lore 3/6/9, +1 outside House/Common',
+        'OWBN Fallen genre packet (2021), p. 43 - Lore 3/6/9, +1 outside House or Common',
     ]
-    doc['provenance']['extracted'] = '2026-09-21'
     doc['provenance']['tool'] = 'tools/catalog/build_demon_evocations.py'
 
     meta = OrderedDict()

@@ -199,9 +199,10 @@ describe( 'describeChange — translation', () => {
 			} while ( left !== before );
 
 			const ownText =
-				testCase.change_type === 'import_note'
-					? ( testCase.change_data as { reason?: string } ).reason ??
-					  ''
+				testCase.change_type === 'import_note' ||
+				testCase.change_type === 'creation_spend'
+					? ( ( testCase.change_data as { reason?: string } )
+							.reason ?? '' )
 					: '';
 			expect( { case: testCase.name, left } ).toEqual( {
 				case: testCase.name,

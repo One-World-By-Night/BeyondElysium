@@ -184,7 +184,7 @@ class GameImportControllerTest extends WP_UnitTestCase {
 
 		// A blocked or failed create_new attempt must never leave a phantom chronicle.
 		$this->dispatch( $commit );
-		$this->assertSame( $before_games + 1, Game::count(), 'V13: re-committing must not import (or create a chronicle) twice' );
+		$this->assertSame( $before_games + 1, Game::count(), 're-committing must not import (or create a chronicle) twice' );
 	}
 
 	public function test_committing_a_merge_resolves_a_duplicate_by_overwriting_in_place(): void {

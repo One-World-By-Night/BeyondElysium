@@ -15,7 +15,6 @@
       "OWBN0124 Wraith Arcanoi packet (2016), Christian DeBats - Basic 4 / Intermediate 7 / Advanced 10; Innate Abilities free with the first Basic",
       "Arcanoi the packet does not cover are carried from the base file unchanged"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -99,7 +98,10 @@
               "level": null,
               "tier": "innate",
               "power_name": "Tempest Peek",
-              "cost": "0"
+              "cost": "0",
+              "aliases": [
+                "Tempestpeek"
+              ]
             },
             {
               "level": null,
@@ -236,7 +238,10 @@
             "level": 4,
             "tier": "intermediate",
             "power_name": "House Cleaning",
-            "cost": "7"
+            "cost": "7",
+            "aliases": [
+              "Housecleaning"
+            ]
           },
           {
             "level": 5,

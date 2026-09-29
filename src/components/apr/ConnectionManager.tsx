@@ -7,6 +7,9 @@ import api from '../../api/client';
 import { everyPage } from '../../lib/everyPage';
 import { SearchableSelect } from '../shared/SearchableSelect';
 import { groupCatalogItems } from '../../lib/catalogGroups';
+import { pickerNames } from '../../lib/pickerNames';
+import { otherEnd } from '../../lib/connectionEnds';
+import { idOf } from '../../lib/ids';
 import type { Character } from '../../types/character';
 import type { Connection, EntityType, Plot } from '../../types/plot';
 import type { ObjectType, WorldObject } from '../../types/world';
@@ -45,6 +48,15 @@ const PICK_MODES: { value: PickMode; label: string }[] = [
 ];
 
 /**
+ * What each searchable pick mode's box says before anything is typed.
+ */
+const SEARCH_PLACEHOLDERS: Partial< Record< PickMode, string > > = {
+	character: __( 'Search characters…', 'beyond-elysium' ),
+	plot: __( 'Search plots…', 'beyond-elysium' ),
+	world_object: __( 'Search world objects…', 'beyond-elysium' ),
+};
+
+/**
  * Lets an ST add and remove connections between one entity and characters, plots, world objects, or freeform tags.
  */
 export function ConnectionManager( {
@@ -63,7 +75,9 @@ export function ConnectionManager( {
 
 	const [ mode, setMode ] = useState< PickMode >( 'character' );
 	const [ targetId, setTargetId ] = useState( '' );
-	const [ worldObjectQuery, setWorldObjectQuery ] = useState( '' );
+	const [ query, setQuery ] = useState( '' );
+	// Counts form resets; the search box remounts empty on each.
+	const [ formRound, setFormRound ] = useState( 0 );
 	const [ externalName, setExternalName ] = useState( '' );
 	const [ label, setLabel ] = useState( '' );
 	const [ notes, setNotes ] = useState( '' );
@@ -89,15 +103,32 @@ export function ConnectionManager( {
 			} );
 	}
 
-	useEffect( load, [ gameSlug, entityType, entityId ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect( load, [ gameSlug, entityType, entityId ] );
 
-	// Loaded once per game; backs both the picker dropdowns and the connections list's id-to-name resolution.
+	// Loaded once per game; backs both the pickers and the connections list's id-to-name resolution.
 	useEffect( () => {
-		// Every page, not the first 100.
-		everyPage( ( page ) =>
-			api.characters( gameSlug ).listPaginated( { page, per_page: 100 } )
-		)
-			.then( setCharacters )
+		// Every page of player characters and of NPCs, each character once.
+		Promise.all( [
+			everyPage( ( page ) =>
+				api
+					.characters( gameSlug )
+					.listPaginated( { page, per_page: 100 } )
+			),
+			everyPage( ( page ) =>
+				api
+					.characters( gameSlug )
+					.listPaginated( { page, per_page: 100, is_npc: true } )
+			),
+		] )
+			.then( ( lists ) =>
+				setCharacters(
+					Array.from(
+						new Map(
+							lists.flat().map( ( c ) => [ c.id, c ] )
+						).values()
+					)
+				)
+			)
 			.catch( () => setCharacters( [] ) );
 		everyPage( ( page ) =>
 			api.plots( gameSlug ).listPaginated( { page, per_page: 100 } )
@@ -126,7 +157,7 @@ export function ConnectionManager( {
 		}
 		if ( type === 'character' ) {
 			return (
-				characters.find( ( c ) => c.id === id )?.name ??
+				characters.find( ( c ) => idOf( c.id ) === id )?.name ??
 				sprintf(
 					/* translators: %d: the character's numeric id, shown when its name can't be resolved */
 					__( 'character #%d', 'beyond-elysium' ),
@@ -136,7 +167,7 @@ export function ConnectionManager( {
 		}
 		if ( type === 'plot' ) {
 			return (
-				plots.find( ( p ) => p.id === id )?.title ??
+				plots.find( ( p ) => idOf( p.id ) === id )?.title ??
 				sprintf(
 					/* translators: %d: the plot's numeric id, shown when its title can't be resolved */
 					__( 'plot #%d', 'beyond-elysium' ),
@@ -146,7 +177,7 @@ export function ConnectionManager( {
 		}
 		if ( type === 'world_object' ) {
 			return (
-				worldObjects.find( ( w ) => w.id === id )?.name ??
+				worldObjects.find( ( w ) => idOf( w.id ) === id )?.name ??
 				sprintf(
 					/* translators: %d: the world object's numeric id, shown when its name can't be resolved */
 					__( 'world object #%d', 'beyond-elysium' ),
@@ -159,7 +190,8 @@ export function ConnectionManager( {
 
 	function resetForm() {
 		setTargetId( '' );
-		setWorldObjectQuery( '' );
+		setQuery( '' );
+		setFormRound( ( round ) => round + 1 );
 		setExternalName( '' );
 		setLabel( '' );
 		setNotes( '' );
@@ -218,56 +250,33 @@ export function ConnectionManager( {
 		}
 	}
 
-	/**
-	 * Returns the other end of a connection relative to this component's own entity.
-	 */
-	function otherEnd( connection: Connection ): {
-		type: EntityType;
-		id: number | null;
-		label: string | null;
-	} {
-		const isSource =
-			connection.source_type === entityType &&
-			connection.source_id === entityId;
-		return isSource
-			? {
-					type: connection.target_type,
-					id: connection.target_id,
-					label: connection.label,
-			  }
-			: {
-					type: connection.source_type,
-					id: connection.source_id,
-					label: connection.label,
-			  };
-	}
-
-	const pickerList: { value: string; text: string }[] =
+	const characterNames = useMemo(
+		() =>
+			pickerNames( characters, ( c ) =>
+				c.is_npc
+					? sprintf(
+							/* translators: %s: a non-player character's name */
+							__( '%s (NPC)', 'beyond-elysium' ),
+							c.name
+						)
+					: c.name
+			),
+		[ characters ]
+	);
+	const plotNames = useMemo(
+		() => pickerNames( plots, ( p ) => p.title ),
+		[ plots ]
+	);
+	const worldObjectDisplayToId = useMemo(
+		() => pickerNames( worldObjects, ( w ) => w.name ),
+		[ worldObjects ]
+	);
+	const searchNames =
 		mode === 'character'
-			? characters.map( ( c ) => ( {
-					value: String( c.id ),
-					text: c.name,
-			  } ) )
+			? characterNames
 			: mode === 'plot'
-			? plots.map( ( p ) => ( { value: String( p.id ), text: p.title } ) )
-			: [];
-
-	const worldObjectDisplayToId = useMemo( () => {
-		const nameCounts = new Map< string, number >();
-		for ( const w of worldObjects ) {
-			nameCounts.set( w.name, ( nameCounts.get( w.name ) ?? 0 ) + 1 );
-		}
-		const map = new Map< string, number >();
-		for ( const w of worldObjects ) {
-			const display =
-				( nameCounts.get( w.name ) ?? 0 ) > 1
-					? `${ w.name } (#${ w.id })`
-					: w.name;
-			map.set( display, w.id );
-		}
-		return map;
-	}, [ worldObjects ] );
-	const worldObjectOptions = Array.from( worldObjectDisplayToId.keys() );
+				? plotNames
+				: worldObjectDisplayToId;
 
 	const worldObjectGroups = useMemo( () => {
 		const byId = new Map( worldObjects.map( ( w ) => [ w.id, w ] ) );
@@ -294,7 +303,7 @@ export function ConnectionManager( {
 					onChange={ ( e ) => {
 						setMode( e.target.value as PickMode );
 						setTargetId( '' );
-						setWorldObjectQuery( '' );
+						setQuery( '' );
 					} }
 				>
 					{ PICK_MODES.map( ( m ) => (
@@ -311,36 +320,22 @@ export function ConnectionManager( {
 						onChange={ ( e ) => setExternalName( e.target.value ) }
 						placeholder={ __( 'Name…', 'beyond-elysium' ) }
 					/>
-				) : mode === 'tag' ? null : mode === 'world_object' ? (
+				) : mode === 'tag' ? null : (
 					<SearchableSelect
-						{ ...( worldObjectGroups.length > 0
+						key={ `${ mode }-${ formRound }` }
+						{ ...( mode === 'world_object' &&
+						worldObjectGroups.length > 0
 							? { groups: worldObjectGroups }
-							: { options: worldObjectOptions } ) }
-						value={ worldObjectQuery }
+							: { options: Array.from( searchNames.keys() ) } ) }
+						value={ query }
 						onChange={ ( display ) => {
-							setWorldObjectQuery( display );
-							const id = worldObjectDisplayToId.get( display );
+							setQuery( display );
+							const id = searchNames.get( display );
 							setTargetId( id !== undefined ? String( id ) : '' );
 						} }
-						placeholder={ __(
-							'Search world objects…',
-							'beyond-elysium'
-						) }
+						placeholder={ SEARCH_PLACEHOLDERS[ mode ] }
+						ariaLabel={ SEARCH_PLACEHOLDERS[ mode ] }
 					/>
-				) : (
-					<select
-						value={ targetId }
-						onChange={ ( e ) => setTargetId( e.target.value ) }
-					>
-						<option value="">
-							{ __( 'Select…', 'beyond-elysium' ) }
-						</option>
-						{ pickerList.map( ( o ) => (
-							<option key={ o.value } value={ o.value }>
-								{ o.text }
-							</option>
-						) ) }
-					</select>
 				) }
 
 				<input
@@ -352,11 +347,11 @@ export function ConnectionManager( {
 							? __(
 									'Role (e.g. visiting player, contact)',
 									'beyond-elysium'
-							  )
+								)
 							: __(
 									'Label (e.g. sister, involved in)',
 									'beyond-elysium'
-							  )
+								)
 					}
 					disabled={ mode === 'external' }
 					title={
@@ -364,7 +359,7 @@ export function ConnectionManager( {
 							? __(
 									'Set via the name field above for an external connection',
 									'beyond-elysium'
-							  )
+								)
 							: undefined
 					}
 				/>
@@ -401,7 +396,11 @@ export function ConnectionManager( {
 			) : (
 				<ul className="be-connection-manager__items">
 					{ items.map( ( connection ) => {
-						const other = otherEnd( connection );
+						const other = otherEnd(
+							connection,
+							entityType,
+							entityId
+						);
 						const isExternalTag = other.type === 'tag';
 						const name = isExternalTag
 							? other.label || __( 'external', 'beyond-elysium' )

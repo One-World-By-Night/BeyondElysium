@@ -134,10 +134,8 @@ def main(snapshot_dir):
             "Laws of the East (WW05016), p. 125 (Discipline 4/7/10, no out-of-type modifier), "
             "p. 133-160 (Disciplines)",
             'GVM: Disciplines, Kuei-Jin (family list and power names)',
-            'Owner rulings 2026-09-17 (samples/research/kuei-jin/NOTES.md): Equilibrium added; '
-            'Black Wind is three separately rated powers',
+            'Equilibrium is included; Black Wind is three separately rated powers',
         ]),
-        ('extracted', '2026-09-22'),
         ('tool', 'tools/catalog/build_kueijin_disciplines.py + rulings/kueijin-disciplines.json'),
     ]), definition)
     print(write_block(base), 'families=%d rungs=%d picks=%d overflow=%d' % partition(definition))
@@ -166,7 +164,6 @@ def main(snapshot_dir):
             'OWBN Kuei-Jin Genre Packet (2022) - converted Disciplines and the three OWBN custom '
             'Disciplines, tiers as printed; priced by Laws of the East p. 125 (4/7/10)',
         ]),
-        ('extracted', '2026-09-22'),
         ('tool', 'tools/catalog/build_kueijin_disciplines.py'),
     ]), vdef, variant=OrderedDict([
         ('of', SLUG), ('id', 'owbn'), ('label', 'OWBN Kuei-Jin Genre Packet (2022)'), ('mode', 'add'),
@@ -185,7 +182,6 @@ def main(snapshot_dir):
             'GVM: Bone Flower Techniques, Resplendent Crane Techniques (moved out of '
             'kueijin-disciplines - a Technique is one power with prerequisites, not a rated ladder)',
         ]),
-        ('extracted', '2026-09-22'),
         ('tool', 'tools/catalog/build_kueijin_disciplines.py'),
     ]), tdef)
     print(write_block(tech), 'items=%d' % len(techniques))
@@ -203,7 +199,6 @@ def main(snapshot_dir):
     otech = envelope('owbn-kueijin_techniques', 'Techniques (OWBN)', 'trait_list', OrderedDict([
         ('sources', ['OWBN Kuei-Jin Genre Packet (2022), p. 48-50 - Techniques, prerequisites as printed; '
                      'the packet prints no XP cost, so cost is null rather than guessed']),
-        ('extracted', '2026-09-22'),
         ('tool', 'tools/catalog/build_kueijin_disciplines.py'),
     ]), otdef, variant=OrderedDict([
         ('of', 'kueijin-techniques'), ('id', 'owbn'), ('label', 'OWBN Kuei-Jin Genre Packet (2022)'),

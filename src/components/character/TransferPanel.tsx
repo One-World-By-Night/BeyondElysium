@@ -187,7 +187,7 @@ export function TransferPanel( {
 										'beyond-elysium'
 									),
 								current.state
-						  )
+							)
 						: sprintf(
 								/* translators: 1: the home chronicle's name, 2: the date the visit started */
 								__(
@@ -200,7 +200,7 @@ export function TransferPanel( {
 										'beyond-elysium'
 									),
 								travellingStatus.since
-						  ) }
+							) }
 				</p>
 				{ current?.state === 'visiting' && (
 					<div className="be-transfer-panel__actions">

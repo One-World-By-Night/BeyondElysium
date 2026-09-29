@@ -12,11 +12,7 @@ export type DowntimeWindowState = 'none' | 'not_open' | 'open' | 'closed';
  * How a held downtime answer currently stands, for the queue's own "answer_release_state" column.
  */
 export type DowntimeAnswerReleaseState =
-	| 'not_answered'
-	| 'immediate'
-	| 'draft'
-	| 'scheduled'
-	| 'released';
+	'not_answered' | 'immediate' | 'draft' | 'scheduled' | 'released';
 
 /**
  * One row in the Storyteller downtime queue.

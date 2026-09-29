@@ -2,12 +2,13 @@
  * The list calls that read a page's totals from its headers ask api-fetch not to parse the response, and a failed one
  * then rejected with the raw response.
  */
+import type { Mock } from 'vitest';
 import apiFetch from '@wordpress/api-fetch';
 import api from './client';
 
-jest.mock( '@wordpress/api-fetch', () => jest.fn() );
+vi.mock( '@wordpress/api-fetch', () => ( { default: vi.fn() } ) );
 
-const mockedFetch = apiFetch as unknown as jest.Mock;
+const mockedFetch = apiFetch as unknown as Mock;
 
 const pages: Array< [ string, () => Promise< unknown > ] > = [
 	[ 'characters', () => api.characters( 'kony' ).listPaginated() ],

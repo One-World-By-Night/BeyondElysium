@@ -1,20 +1,21 @@
 /**
  * A Zustand store is a plain state container.
  */
-jest.mock( '../api/client', () => ( {
+vi.mock( '../api/client', () => ( {
 	__esModule: true,
 	default: {
-		characters: jest.fn(),
-		creatureStacks: { resolve: jest.fn() },
-		changes: jest.fn(),
+		characters: vi.fn(),
+		creatureStacks: { resolve: vi.fn() },
+		changes: vi.fn(),
 	},
 } ) );
 
+import type { Mock, Mocked } from 'vitest';
 import api from '../api/client';
 import { loadDraft, saveDraft } from '../lib/draftStorage';
 import { useCharacterEditorStore } from './characterEditorStore';
 
-const mockedApi = api as jest.Mocked< typeof api >;
+const mockedApi = api as Mocked< typeof api >;
 
 /**
  * Lets every already-settled promise callback run.
@@ -61,8 +62,8 @@ describe( 'characterEditorStore.submitChanges', () => {
 	beforeEach( () => {
 		resetStore();
 		// Whatever a submission leaves unsaved is priced again.
-		mockedApi.characters = jest.fn().mockReturnValue( {
-			previewChanges: jest.fn().mockResolvedValue( null ),
+		mockedApi.characters = vi.fn().mockReturnValue( {
+			previewChanges: vi.fn().mockResolvedValue( null ),
 		} ) as never;
 		// Two blocks so computeChanges produces two changes to submit in sequence.
 		useCharacterEditorStore.setState( {
@@ -87,12 +88,12 @@ describe( 'characterEditorStore.submitChanges', () => {
 		} );
 	} );
 
-	it( 'attempts every change even after an earlier one fails (workflow-0.9.md Step 0b), baselining only what succeeded', async () => {
-		const create = jest
+	it( 'attempts every change even after an earlier one fails, baselining only what succeeded', async () => {
+		const create = vi
 			.fn()
 			.mockResolvedValueOnce( { id: 1, status: 'approved' } )
 			.mockRejectedValueOnce( { message: 'server exploded' } );
-		mockedApi.changes = jest.fn().mockReturnValue( { create } ) as never;
+		mockedApi.changes = vi.fn().mockReturnValue( { create } ) as never;
 
 		const result = await useCharacterEditorStore.getState().submitChanges();
 
@@ -119,11 +120,11 @@ describe( 'characterEditorStore.submitChanges', () => {
 	} );
 
 	it( 'does not resubmit an already-succeeded block on a retry after a partial failure', async () => {
-		const create = jest
+		const create = vi
 			.fn()
 			.mockResolvedValueOnce( { id: 1, status: 'approved' } )
 			.mockRejectedValueOnce( { message: 'server exploded' } );
-		mockedApi.changes = jest.fn().mockReturnValue( { create } ) as never;
+		mockedApi.changes = vi.fn().mockReturnValue( { create } ) as never;
 
 		await useCharacterEditorStore.getState().submitChanges();
 		create.mockClear();
@@ -137,10 +138,10 @@ describe( 'characterEditorStore.submitChanges', () => {
 	} );
 
 	it( 'resets the baseline and reports full success when every change lands', async () => {
-		const create = jest
+		const create = vi
 			.fn()
 			.mockResolvedValue( { id: 1, status: 'approved' } );
-		mockedApi.changes = jest.fn().mockReturnValue( { create } ) as never;
+		mockedApi.changes = vi.fn().mockReturnValue( { create } ) as never;
 
 		const result = await useCharacterEditorStore.getState().submitChanges();
 
@@ -156,10 +157,10 @@ describe( 'characterEditorStore.submitChanges', () => {
 	} );
 
 	it( 'does NOT baseline a change that submitted successfully but landed pending review (real bug, user report 2026-09-11: a discipline edit appeared saved, then reverted the next time the character reloaded)', async () => {
-		const create = jest
+		const create = vi
 			.fn()
 			.mockResolvedValue( { id: 1, status: 'pending' } );
-		mockedApi.changes = jest.fn().mockReturnValue( { create } ) as never;
+		mockedApi.changes = vi.fn().mockReturnValue( { create } ) as never;
 
 		const result = await useCharacterEditorStore.getState().submitChanges();
 
@@ -175,11 +176,11 @@ describe( 'characterEditorStore.submitChanges', () => {
 	} );
 
 	it( 'baselines only the categories that were actually approved when a submission batch is mixed', async () => {
-		const create = jest
+		const create = vi
 			.fn()
 			.mockResolvedValueOnce( { id: 1, status: 'approved' } )
 			.mockResolvedValueOnce( { id: 2, status: 'pending' } );
-		mockedApi.changes = jest.fn().mockReturnValue( { create } ) as never;
+		mockedApi.changes = vi.fn().mockReturnValue( { create } ) as never;
 
 		const result = await useCharacterEditorStore.getState().submitChanges();
 		const state = useCharacterEditorStore.getState();
@@ -203,15 +204,15 @@ describe( 'characterEditorStore.submitChanges', () => {
 	 */
 	describe( 'while the requests are still out', () => {
 		let release: ( created: unknown ) => void;
-		let create: jest.Mock;
+		let create: Mock;
 
 		beforeEach( () => {
-			jest.useFakeTimers();
+			vi.useFakeTimers();
 			window.localStorage.clear();
-			mockedApi.characters = jest.fn().mockReturnValue( {
-				previewChanges: jest.fn().mockResolvedValue( null ),
+			mockedApi.characters = vi.fn().mockReturnValue( {
+				previewChanges: vi.fn().mockResolvedValue( null ),
 			} ) as never;
-			create = jest
+			create = vi
 				.fn()
 				.mockImplementationOnce(
 					() =>
@@ -220,14 +221,12 @@ describe( 'characterEditorStore.submitChanges', () => {
 						} )
 				)
 				.mockResolvedValue( { id: 2, status: 'approved' } );
-			mockedApi.changes = jest
-				.fn()
-				.mockReturnValue( { create } ) as never;
+			mockedApi.changes = vi.fn().mockReturnValue( { create } ) as never;
 		} );
 
 		afterEach( () => {
-			jest.clearAllTimers();
-			jest.useRealTimers();
+			vi.clearAllTimers();
+			vi.useRealTimers();
 		} );
 
 		it( 'keeps an edit made after Submit as unsaved, baselining only what was sent', async () => {
@@ -290,7 +289,7 @@ describe( 'characterEditorStore.submitChanges', () => {
 
 		it( 'prices what is left unsaved once the requests come back, and drops a preview that was already on its way', async () => {
 			let answerStalePreview: ( value: unknown ) => void = () => {};
-			const previewChanges = jest
+			const previewChanges = vi
 				.fn()
 				.mockImplementationOnce(
 					() =>
@@ -302,7 +301,7 @@ describe( 'characterEditorStore.submitChanges', () => {
 					results: [ { xp_cost: 1 } ],
 					running_xp_unspent: 8,
 				} );
-			mockedApi.characters = jest
+			mockedApi.characters = vi
 				.fn()
 				.mockReturnValue( { previewChanges } ) as never;
 
@@ -312,7 +311,7 @@ describe( 'characterEditorStore.submitChanges', () => {
 				.setBlockData( 'disciplines', [
 					{ name: 'Celerity', count: 1 },
 				] );
-			jest.advanceTimersByTime( 500 );
+			vi.advanceTimersByTime( 500 );
 			const submitting = useCharacterEditorStore
 				.getState()
 				.submitChanges();
@@ -347,23 +346,21 @@ describe( 'characterEditorStore.submitChanges', () => {
 
 		it( 'drops a preview for the character that was open before another one loaded', async () => {
 			let answerStalePreview: ( value: unknown ) => void = () => {};
-			mockedApi.characters = jest.fn().mockReturnValue( {
-				previewChanges: jest.fn().mockImplementationOnce(
+			mockedApi.characters = vi.fn().mockReturnValue( {
+				previewChanges: vi.fn().mockImplementationOnce(
 					() =>
 						new Promise( ( resolve ) => {
 							answerStalePreview = resolve;
 						} )
 				),
-				get: jest.fn().mockResolvedValue( {
+				get: vi.fn().mockResolvedValue( {
 					id: 2,
 					stack_slug: 'vampire',
 					sheet_data: { disciplines: [] },
 				} ),
 			} ) as never;
 			mockedApi.creatureStacks = {
-				resolve: jest
-					.fn()
-					.mockResolvedValue( { stack: {}, blocks: {} } ),
+				resolve: vi.fn().mockResolvedValue( { stack: {}, blocks: {} } ),
 			} as never;
 
 			useCharacterEditorStore
@@ -371,7 +368,7 @@ describe( 'characterEditorStore.submitChanges', () => {
 				.setBlockData( 'disciplines', [
 					{ name: 'Celerity', count: 3 },
 				] );
-			jest.advanceTimersByTime( 500 );
+			vi.advanceTimersByTime( 500 );
 			await useCharacterEditorStore.getState().loadCharacter( 2, 'kony' );
 			answerStalePreview( {
 				results: [ { xp_cost: 9 } ],
@@ -393,15 +390,15 @@ describe( 'characterEditorStore draft autosave', () => {
 	beforeEach( () => {
 		window.localStorage.clear();
 		resetStore();
-		mockedApi.characters = jest.fn().mockReturnValue( {
-			get: jest.fn().mockResolvedValue( {
+		mockedApi.characters = vi.fn().mockReturnValue( {
+			get: vi.fn().mockResolvedValue( {
 				id: 1,
 				stack_slug: 'vampire',
 				sheet_data: { disciplines: [] },
 			} ),
 		} ) as never;
 		mockedApi.creatureStacks = {
-			resolve: jest.fn().mockResolvedValue( { stack: {}, blocks: {} } ),
+			resolve: vi.fn().mockResolvedValue( { stack: {}, blocks: {} } ),
 		} as never;
 	} );
 
@@ -492,10 +489,10 @@ describe( 'characterEditorStore draft autosave', () => {
 
 	it( 'clears the stored draft once submitChanges() resolves with nothing left pending', async () => {
 		saveDraft( 1, { disciplines: [ { name: 'Celerity', count: 1 } ] } );
-		const create = jest
+		const create = vi
 			.fn()
 			.mockResolvedValue( { id: 1, status: 'approved' } );
-		mockedApi.changes = jest.fn().mockReturnValue( { create } ) as never;
+		mockedApi.changes = vi.fn().mockReturnValue( { create } ) as never;
 
 		await useCharacterEditorStore.getState().submitChanges();
 

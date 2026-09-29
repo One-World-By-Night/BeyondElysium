@@ -12,13 +12,14 @@ defined( 'ABSPATH' ) || exit;
 class Layout_Generator {
 
 	/**
-	 * Generates a layout for a creature stack.
+	 * Generates a layout for a creature stack: the book's, or a chronicle's own creature type when given.
 	 *
 	 * @param string $stack_slug
+	 * @param string $game_slug
 	 * @return array|null Layout array, or null if the stack does not exist.
 	 */
-	public static function generate_for_stack( string $stack_slug ): ?array {
-		$resolved = Creature_Stack::resolve( $stack_slug );
+	public static function generate_for_stack( string $stack_slug, string $game_slug = '' ): ?array {
+		$resolved = Creature_Stack::resolve( $stack_slug, $game_slug );
 		if ( ! $resolved ) {
 			return null;
 		}

@@ -6,6 +6,8 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf, _n } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
 import api from '../../api/client';
+import CatalogCorrections from './CatalogCorrections';
+import CatalogVariantsPicker from './CatalogVariantsPicker';
 import EnabledStacksPicker from './EnabledStacksPicker';
 import FactionRestrictionsPicker from './FactionRestrictionsPicker';
 import PurchaseListsPicker from './PurchaseListsPicker';
@@ -68,7 +70,7 @@ function StatusRow( {
 						__( 'Set up', 'beyond-elysium' ) }
 				</button>
 			) : (
-				note ?? null
+				( note ?? null )
 			);
 		} else if ( item.fix.kind === 'link' && item.fix.href ) {
 			action = (
@@ -126,6 +128,7 @@ export function AdminChronicleSetup() {
 	const [ openRows, setOpenRows ] = useState< Record< string, boolean > >(
 		{}
 	);
+	const [ startingXpDraft, setStartingXpDraft ] = useState( '' );
 
 	function copySendFileLink( url: string, inputEl: HTMLInputElement | null ) {
 		const done = () => {
@@ -175,6 +178,11 @@ export function AdminChronicleSetup() {
 
 	const currentGame = games.find( ( g ) => g.slug === gameSlug ) ?? null;
 
+	useEffect( () => {
+		const xp = currentGame?.settings?.starting_xp as number | undefined;
+		setStartingXpDraft( xp ? String( xp ) : '' );
+	}, [ gameSlug, currentGame?.settings?.starting_xp ] );
+
 	/**
 	 * Keeps this page's copy of a chronicle current with what the server just saved.
 	 */
@@ -222,6 +230,18 @@ export function AdminChronicleSetup() {
 		setSaveError( null );
 		api.games
 			.updateChronicleSetup( gameSlug, { accent_color: color } )
+			.then( applySaved )
+			.catch( saveFailed );
+	}
+
+	function saveStartingXp() {
+		setSavingRow( 'starting_xp' );
+		setSaveError( null );
+		api.games
+			.updateChronicleSetup( gameSlug, {
+				starting_xp:
+					startingXpDraft.trim() === '' ? '' : startingXpDraft,
+			} )
 			.then( applySaved )
 			.catch( saveFailed );
 	}
@@ -302,10 +322,26 @@ export function AdminChronicleSetup() {
 
 	const settings = currentGame?.settings;
 	const approvalChoice = settings?.require_new_character_approval as
-		| boolean
-		| undefined;
+		boolean | undefined;
+
+	const catalogRow = status?.items.find(
+		( item ) => item.id === 'catalog_customisation'
+	);
 
 	const panels: Record< string, ReactNode > = {
+		...( catalogRow?.status === 'attention'
+			? {
+					catalog_customisation: (
+						<CatalogCorrections
+							gameSlug={ gameSlug }
+							onChanged={ reload }
+						/>
+					),
+				}
+			: {} ),
+		book_variants: (
+			<CatalogVariantsPicker gameSlug={ gameSlug } onChanged={ reload } />
+		),
 		enabled_stacks: (
 			<EnabledStacksPicker
 				enabled={
@@ -313,6 +349,7 @@ export function AdminChronicleSetup() {
 				}
 				onSave={ saveStacks }
 				saving={ savingRow === 'enabled_stacks' }
+				gameSlug={ gameSlug }
 			/>
 		),
 		require_new_character_approval: (
@@ -343,6 +380,33 @@ export function AdminChronicleSetup() {
 				</label>
 			</div>
 		),
+		starting_xp: (
+			<div className="be-chronicle-setup__starting-xp">
+				<label htmlFor="be-chronicle-setup-starting-xp">
+					{ __(
+						'Experience a new character starts with',
+						'beyond-elysium'
+					) }
+				</label>
+				<input
+					id="be-chronicle-setup-starting-xp"
+					type="number"
+					min={ 0 }
+					step={ 1 }
+					value={ startingXpDraft }
+					onChange={ ( e ) => setStartingXpDraft( e.target.value ) }
+					disabled={ savingRow === 'starting_xp' }
+				/>
+				<button
+					type="button"
+					className="button button-primary"
+					onClick={ saveStartingXp }
+					disabled={ savingRow === 'starting_xp' }
+				>
+					{ __( 'Save', 'beyond-elysium' ) }
+				</button>
+			</div>
+		),
 		plot_features: (
 			<>
 				<p className="description">
@@ -357,8 +421,7 @@ export function AdminChronicleSetup() {
 						checked={ Boolean(
 							(
 								settings?.plots as
-									| { expanded_enabled?: boolean }
-									| undefined
+									{ expanded_enabled?: boolean } | undefined
 							 )?.expanded_enabled
 						) }
 						onChange={ ( e ) =>
@@ -447,7 +510,7 @@ export function AdminChronicleSetup() {
 						savingRow?.startsWith( 'purchase:' )
 							? ( savingRow.slice(
 									'purchase:'.length
-							  ) as PurchaseArea )
+								) as PurchaseArea )
 							: null
 					}
 					onChange={ savePurchaseScope }
@@ -551,7 +614,7 @@ export function AdminChronicleSetup() {
 									'beyond-elysium'
 								),
 								status.summary.attention
-						  )
+							)
 						: __( 'Nothing needs attention.', 'beyond-elysium' ) }
 				</p>
 			) }

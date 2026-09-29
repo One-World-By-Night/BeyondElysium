@@ -112,8 +112,8 @@ class PointAuditTest extends WP_UnitTestCase {
 			}
 		}
 
-		$this->assertNotNull( $blood_magic_line, 'a resolve()-only walk would never surface this line at all (§3.2)' );
-		$this->assertFalse( $blood_magic_line['undeclared_by_stack'], 'PC-4 declares vampire-blood-magic in the stack itself now' );
+		$this->assertNotNull( $blood_magic_line, 'a resolve()-only walk would never surface this line at all' );
+		$this->assertFalse( $blood_magic_line['undeclared_by_stack'], 'the vampire stack declares vampire-blood-magic itself' );
 
 		Character::delete( $character_id );
 	}

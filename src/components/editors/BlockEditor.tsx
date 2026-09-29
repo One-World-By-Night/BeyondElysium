@@ -103,8 +103,8 @@ export function BlockEditor( {
 					blockSlug={ blockSlug }
 					data={
 						( data as
-							| Record< string, ResourcePoolValue >
-							| undefined ) ?? {}
+							Record< string, ResourcePoolValue > | undefined ) ??
+						{}
 					}
 					definition={ definition as ResourcePoolDefinition }
 					onChange={

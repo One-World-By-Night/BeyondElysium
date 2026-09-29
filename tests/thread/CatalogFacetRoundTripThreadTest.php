@@ -7,8 +7,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * `group`, `subgroup` and `tier` survive a real REST round trip, on the shared catalog block and on a chronicle's own
- * fork of it.
+ * `group`, `subgroup` and `tier` survive a real REST round trip on a chronicle's own copy of a catalog block, which
+ * leaves the book alone.
  */
 class CatalogFacetRoundTripThreadTest extends WP_UnitTestCase {
 
@@ -31,18 +31,14 @@ class CatalogFacetRoundTripThreadTest extends WP_UnitTestCase {
 	/**
 	 * @param array<int,array<string,mixed>> $items
 	 */
-	private function save( array $items, string $game_slug = '' ) {
-		// A chronicle's own block is written through that chronicle's route.
-		$route   = '' === $game_slug
-			? '/be/v1/schema-blocks/' . $this->slug
-			: '/be/v1/' . $game_slug . '/schema-blocks/' . $this->slug;
-		$request = new WP_REST_Request( 'PUT', $route );
+	private function save( array $items, string $game_slug = 'facet-test-game' ) {
+		$request = new WP_REST_Request( 'PUT', '/be/v1/' . $game_slug . '/schema-blocks/' . $this->slug );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( (string) wp_json_encode( [ 'definition' => [ 'items' => $items ] ] ) );
 		return rest_get_server()->dispatch( $request );
 	}
 
-	public function test_all_three_facets_survive_a_save_on_the_catalog_block(): void {
+	public function test_all_three_facets_survive_a_save(): void {
 		$response = $this->save( [
 			[
 				'name'     => 'Mother\'s Touch',
@@ -59,22 +55,16 @@ class CatalogFacetRoundTripThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'basic', $item->tier );
 	}
 
-	public function test_a_chronicle_fork_keeps_its_own_facets_and_leaves_the_catalog_alone(): void {
-		$this->save( [
-			[ 'name' => 'Mother\'s Touch', 'group' => 'Theurge', 'tier' => 'basic' ],
-		] );
+	public function test_a_chronicle_copy_keeps_its_own_facets_and_leaves_the_book_alone(): void {
+		Schema_Block::update( $this->slug, [ 'definition' => [ 'items' => [ [ 'name' => 'Mother\'s Touch', 'group' => 'Theurge', 'tier' => 'basic' ] ] ] ] );
 
-		$forked = $this->save(
-			[ [ 'name' => 'Mother\'s Touch', 'group' => 'House Rule', 'tier' => 'intermediate' ] ],
-			'facet-test-game'
-		);
+		$forked = $this->save( [ [ 'name' => 'Mother\'s Touch', 'group' => 'House Rule', 'tier' => 'intermediate' ] ] );
 		$this->assertSame( 200, $forked->get_status() );
 
 		$for_game = Schema_Block::find_for_game( $this->slug, 'facet-test-game' );
 		$this->assertSame( 'House Rule', $for_game->definition->items[0]->group );
 		$this->assertSame( 'intermediate', $for_game->definition->items[0]->tier );
 
-		// The shared catalog is never written through a fork.
 		$global = Schema_Block::find_by_slug( $this->slug );
 		$this->assertSame( 'Theurge', $global->definition->items[0]->group );
 		$this->assertSame( 'basic', $global->definition->items[0]->tier );

@@ -75,7 +75,7 @@ class ChangeDescriptionTranslationThreadTest extends WP_UnitTestCase {
 				$left   = (string) preg_replace( '/⟦[^⟦⟧]*⟧/u', '', $left );
 			} while ( $left !== $before );
 
-			$own_text = $case['change_type'] === 'import_note' ? (string) ( $case['change_data']['reason'] ?? '' ) : '';
+			$own_text = in_array( $case['change_type'], [ 'import_note', 'creation_spend' ], true ) ? (string) ( $case['change_data']['reason'] ?? '' ) : '';
 			$this->assertSame( $own_text, $left, sprintf( 'case "%s" read "%s"', $case['name'], $described ) );
 		}
 	}

@@ -22,7 +22,7 @@ class Point_Audit {
 			return null;
 		}
 
-		$stack = Creature_Stack::find_by_slug( $character->stack_slug );
+		$stack = Creature_Stack::find_for_game( (string) $character->stack_slug, (string) ( $character->owner_slug ?? '' ) );
 		if ( $stack === null ) {
 			return null;
 		}
@@ -52,6 +52,7 @@ class Point_Audit {
 					'basis'           => null,
 					'unpriced_reason' => 'held_block_not_in_catalog',
 					'modifier'        => null,
+					'modifier_side'   => null,
 					'undeclared_by_stack' => $entry['undeclared'],
 				];
 				continue;
@@ -144,12 +145,13 @@ class Point_Audit {
 				'section_type'        => 'trait_list',
 				'label'               => ! empty( $definition->count_is_cost )
 					? sprintf( '%s (%d XP)', $name, $count )
-					: ( $count > 1 ? sprintf( '%s ×%d', $name, $count ) : $name ),
+					: ( $count > 1 && ! Cost_Engine::rows_are_purchases( $definition ) ? sprintf( '%s ×%d', $name, $count ) : $name ),
 				'xp'                  => $price['xp'],
 				'direction'           => ! empty( $definition->negative ) ? 'earned' : 'spent',
 				'basis'               => $price['basis'],
 				'unpriced_reason'     => $price['unpriced_reason'],
 				'modifier'            => null,
+				'modifier_side'       => null,
 				'undeclared_by_stack' => $entry['undeclared'],
 			];
 		}
@@ -170,6 +172,7 @@ class Point_Audit {
 			$trait_name = (string) ( $held['name'] ?? '' );
 			$in_type    = $trait_name !== '' ? $is_in_type( $trait_name ) : true;
 			$price      = Cost_Engine::price_held_tiered_power( $definition, $held, $in_type, $entry['slug'], $blocks );
+			$plain      = Cost_Engine::price_held_tiered_power( $definition, $held, null, $entry['slug'], $blocks );
 
 			$label = $trait_name;
 			if ( ! empty( $held['power_name'] ) ) {
@@ -182,10 +185,7 @@ class Point_Audit {
 				$label = $held['tradition'] . ': ' . $label;
 			}
 
-			$modifier = null;
-			if ( ! $in_type && $price['xp'] !== null && in_array( $price['basis'], [ 'flat_level', 'sequential_sum', 'elder_pick', 'tier_fallback' ], true ) ) {
-				$modifier = (int) ( $definition->out_of_type_cost_modifier ?? 0 );
-			}
+			$modifier = $price['xp'] !== null && $plain['xp'] !== null && $price['xp'] !== $plain['xp'] ? $price['xp'] - $plain['xp'] : null;
 
 			$lines[] = [
 				'block_slug'          => $entry['slug'],
@@ -197,6 +197,7 @@ class Point_Audit {
 				'basis'               => $price['basis'],
 				'unpriced_reason'     => $price['unpriced_reason'],
 				'modifier'            => $modifier,
+				'modifier_side'       => $modifier === null ? null : ( $in_type ? 'in_type' : 'out_of_type' ),
 				'undeclared_by_stack' => $entry['undeclared'],
 			];
 		}
@@ -227,6 +228,7 @@ class Point_Audit {
 				'basis'               => $price['basis'],
 				'unpriced_reason'     => $price['unpriced_reason'],
 				'modifier'            => null,
+				'modifier_side'       => null,
 				'undeclared_by_stack' => $entry['undeclared'],
 			];
 		}
@@ -254,6 +256,7 @@ class Point_Audit {
 				'basis'               => null,
 				'unpriced_reason'     => 'identity_field_no_catalog_cost',
 				'modifier'            => null,
+				'modifier_side'       => null,
 				'undeclared_by_stack' => $entry['undeclared'],
 			];
 		}

@@ -23,7 +23,7 @@ class ImportAtomicityRealAutocommitTest extends TestCase {
 
 	public static function setUpBeforeClass(): void {
 		if ( ! defined( 'BE_WP_TESTS_AVAILABLE' ) || ! BE_WP_TESTS_AVAILABLE ) {
-			self::markTestSkipped( 'WP_TESTS_DIR not configured - see BE_PROCESS/now/PLATFORM.md.' );
+			self::markTestSkipped( 'WP_TESTS_DIR is not set.' );
 		}
 	}
 

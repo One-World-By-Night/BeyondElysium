@@ -5,9 +5,8 @@
   "kind": "stack",
   "provenance": {
     "sources": [
-      "Live seeded catalog, be_dev wp_be_creature_stacks (1.2.10 seeder: Grapevine Menus XML.gvm + met-mechanics.csv), dumped by tools/catalog/dump_live.sh"
+      "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_creature_stacks, dumped by tools/catalog/dump_live.sh"
     ],
-    "extracted": "2026-09-22",
     "tool": "tools/catalog/emit_catalog.py"
   },
   "definition": {
@@ -65,13 +64,46 @@
         "block_slug": "wraith-arcanoi",
         "label": "Arcanoi",
         "display_order": 60,
-        "required": true
+        "required": true,
+        "in_type": [
+          {
+            "kind": "names",
+            "values": {
+              "map": "wraith-identity.guild_arcanoi",
+              "by": [ "Guild" ]
+            }
+          }
+        ]
+      },
+      {
+        "block_slug": "wraith-passions",
+        "label": "Passions",
+        "display_order": 61,
+        "required": false
+      },
+      {
+        "block_slug": "wraith-fetters",
+        "label": "Fetters",
+        "display_order": 62,
+        "required": false
+      },
+      {
+        "block_slug": "wraith-thorns",
+        "label": "Thorns",
+        "display_order": 63,
+        "required": false
       },
       {
         "block_slug": "wraith-resources",
         "label": "Resources",
         "display_order": 80,
         "required": true
+      },
+      {
+        "block_slug": "wraith-shadow",
+        "label": "Shadow",
+        "display_order": 81,
+        "required": false
       },
       {
         "block_slug": "wraith-merits",
@@ -99,6 +131,57 @@
       }
     ],
     "display_preferences": {},
-    "creation_rules": null
+    "creation_rules": {
+      "steps": [
+        {
+          "kind": "prioritized",
+          "label": "Attributes",
+          "sections": [
+            "met-physical-traits",
+            "met-social-traits",
+            "met-mental-traits"
+          ],
+          "amounts": [ 7, 5, 3 ]
+        },
+        {
+          "kind": "budget",
+          "label": "Abilities",
+          "section": "wraith-abilities",
+          "count": 5
+        },
+        {
+          "kind": "budget",
+          "label": "Arcanoi",
+          "section": "wraith-arcanoi",
+          "count": 5,
+          "filter": { "tier": "intermediate", "min_tier": "basic" }
+        },
+        {
+          "kind": "budget",
+          "label": "Passions",
+          "section": "wraith-passions",
+          "count": 6
+        },
+        {
+          "kind": "budget",
+          "label": "Fetters",
+          "section": "wraith-fetters",
+          "count": 4
+        },
+        {
+          "kind": "free",
+          "label": "Thorns",
+          "pool": "Thorn Points",
+          "points": 2,
+          "rates": { "wraith-thorns": "value" }
+        },
+        {
+          "kind": "grant",
+          "label": "Status",
+          "section": "wraith-backgrounds",
+          "entries": [ { "name": "Status", "count": 1 } ]
+        }
+      ]
+    }
   }
 }

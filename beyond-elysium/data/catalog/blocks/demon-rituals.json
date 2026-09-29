@@ -8,7 +8,6 @@
     "sources": [
       "OWBN Fallen Genre Packet (2021), OWBN0052-Demon-Fallen Genre-2021.pdf, Chapter 5 (A Chorus of Angels: Rituals), printed p. 141-190"
     ],
-    "extracted": "2026-09-21",
     "tool": "samples/research/demon/owbn/rituals.json (extract_rituals.py), field-mapped by hand into the catalog JSON format"
   },
   "definition": {

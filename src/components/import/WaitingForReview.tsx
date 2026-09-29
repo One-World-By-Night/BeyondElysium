@@ -140,12 +140,12 @@ export function WaitingForReview( { gameSlug }: WaitingForReviewProps ) {
 					__( '%1$s - visiting from %2$s', 'beyond-elysium' ),
 					sender,
 					entry.row.home_chronicle
-			  )
+				)
 			: sprintf(
 					/* translators: %s: sender's display name */
 					__( '%s - visiting', 'beyond-elysium' ),
 					sender
-			  );
+				);
 	}
 
 	function statusLabel( entry: Row ): string {
@@ -289,7 +289,7 @@ export function WaitingForReview( { gameSlug }: WaitingForReviewProps ) {
 								'beyond-elysium'
 							),
 							result.character.name
-					  )
+						)
 					: sprintf(
 							/* translators: 1: character name, 2: sender's display name */
 							__(
@@ -299,7 +299,7 @@ export function WaitingForReview( { gameSlug }: WaitingForReviewProps ) {
 							result.character.name,
 							submissionReview.submission.sender_name ??
 								__( 'the sender', 'beyond-elysium' )
-					  )
+						)
 			);
 			setSubmissionReview( null );
 			load();
@@ -320,7 +320,6 @@ export function WaitingForReview( { gameSlug }: WaitingForReviewProps ) {
 		action: 'refuse' | 'sendHome' | 'retain',
 		question: string
 	) {
-		// eslint-disable-next-line no-alert
 		if ( ! window.confirm( question ) ) {
 			return;
 		}
@@ -381,15 +380,15 @@ export function WaitingForReview( { gameSlug }: WaitingForReviewProps ) {
 				traitResolutions,
 				duplicateActions,
 				worldObjectActions
-		  )
+			)
 		: submissionReview
-		? blockingCount(
-				submissionReview.preview,
-				traitResolutions,
-				duplicateActions,
-				worldObjectActions
-		  )
-		: 0;
+			? blockingCount(
+					submissionReview.preview,
+					traitResolutions,
+					duplicateActions,
+					worldObjectActions
+				)
+			: 0;
 
 	return (
 		<section className="be-incoming-transfers">

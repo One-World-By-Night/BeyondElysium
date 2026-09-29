@@ -12,23 +12,31 @@ export interface EnabledStacksPickerProps {
 	enabled: string[] | null;
 	onSave: ( slugs: string[] ) => void;
 	saving?: boolean;
+	/**
+	 * The chronicle whose own creature types (built from nothing, not just the book's) should be offered too.
+	 */
+	gameSlug: string;
 }
 
 /**
- * Renders a checkbox per real creature stack, pre-checked to the chronicle's current `enabled_stacks` (every box
- * checked when the setting is absent - "all eleven" is the default, not a guess).
+ * Renders a checkbox per real creature stack - the book's, and this chronicle's own - pre-checked to the chronicle's
+ * current `enabled_stacks` (every box checked when the setting is absent - "every one that exists" is the default,
+ * not a guess).
  */
 export function EnabledStacksPicker( {
 	enabled,
 	onSave,
 	saving,
+	gameSlug,
 }: EnabledStacksPickerProps ) {
 	const [ stacks, setStacks ] = useState< CreatureStack[] >( [] );
 	const [ checked, setChecked ] = useState< Set< string > >( new Set() );
 
 	useEffect( () => {
-		api.creatureStacks.list().then( setStacks );
-	}, [] );
+		api.creatureStacks
+			.list( { game_slug: gameSlug, per_page: 100 } )
+			.then( setStacks );
+	}, [ gameSlug ] );
 
 	useEffect( () => {
 		if ( enabled === null ) {
@@ -77,6 +85,16 @@ export function EnabledStacksPicker( {
 					) }
 				</p>
 			) }
+			<p className="be-enabled-stacks-picker__build-link">
+				<a
+					href={ `admin.php?page=beyond-elysium-system-config&tab=creature-stacks&game_slug=${ encodeURIComponent( gameSlug ) }` }
+				>
+					{ __(
+						'Need a genuinely new creature type, not just one already here? Build one on Creature Stacks.',
+						'beyond-elysium'
+					) }
+				</a>
+			</p>
 			<button
 				type="button"
 				className="button button-primary"
