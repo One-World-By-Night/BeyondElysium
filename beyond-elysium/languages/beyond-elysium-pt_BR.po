@@ -13048,6 +13048,211 @@ msgstr "Desenvolvido por"
 msgid "BeyondElysium"
 msgstr "BeyondElysium"
 
+#. translators: %s: the signed amount that was just applied, e.g. "+5" or "-3"
+#: build/76.js:13
+#: build/165.js:77
+#: build/596.js:13
+#: build/985.js:129
+#, js-format
+msgid "%s applied"
+msgstr "%s aplicado"
+
+#. translators: %d: the largest number of rows one request accepts
+#: includes/REST/Experience_Controller.php:130
+#, php-format
+msgid "A single request can apply at most %d rows."
+msgstr "Uma única solicitação pode aplicar no máximo %d linhas."
+
+#: build/165.js:24
+#: build/985.js:36
+msgid "Amount"
+msgstr "Quantidade"
+
+#: build/76.js:8
+#: build/596.js:8
+#: build/985.js:53
+msgid "Apply"
+msgstr "Aplicar"
+
+#. translators: %d: how many characters have an amount waiting to be applied
+#: build/76.js:6
+#: build/596.js:6
+#: build/985.js:51
+#, js-format
+msgid "Apply All (%d)"
+msgstr "Aplicar tudo (%d)"
+
+#: build/76.js:3
+#: build/76.js:7
+#: build/596.js:3
+#: build/596.js:7
+#: build/985.js:48
+#: build/985.js:52
+msgid "Apply XP"
+msgstr "Aplicar XP"
+
+#. translators: %s: the character's own name
+#: build/76.js:8
+#: build/596.js:8
+#: build/985.js:53
+#, js-format
+msgid "Apply XP to %s"
+msgstr "Aplicar XP a %s"
+
+#: build/165.js:24
+#: build/985.js:36
+msgid "Can't be after today."
+msgstr "Não pode ser depois de hoje."
+
+#: build/76.js:6
+#: build/596.js:6
+#: build/985.js:51
+msgid "Clear amounts"
+msgstr "Limpar valores"
+
+#: build/76.js:13
+#: build/165.js:77
+#: build/596.js:13
+#: build/985.js:129
+msgid "Could not be applied."
+msgstr "Não pôde ser aplicado."
+
+#: build/165.js:24
+#: build/985.js:36
+msgid "Date played"
+msgstr "Data da sessão"
+
+#: includes/REST/Experience_Controller.php:137
+msgid "Each award needs a character_id and amount."
+msgstr "Cada concessão precisa de character_id e amount."
+
+#: includes/REST/Experience_Controller.php:142
+msgid "Each award needs a valid character_id."
+msgstr "Cada concessão precisa de um character_id válido."
+
+#: build/165.js:24
+#: build/985.js:36
+msgid "Earned experience at a game or event outside this chronicle? Ask your Storytellers to add it."
+msgstr "Ganhou experiência em um jogo ou evento fora desta crônica? Peça aos seus Narradores para adicioná-la."
+
+#: build/76.js:3
+#: build/596.js:3
+#: build/985.js:48
+msgid "Failed to apply XP. Try again."
+msgstr "Falha ao aplicar XP. Tente novamente."
+
+#: build/165.js:24
+#: build/985.js:36
+msgid "Failed to send the request. Try again."
+msgstr "Falha ao enviar a solicitação. Tente novamente."
+
+#: build/165.js:24
+#: build/985.js:36
+msgid "Request XP"
+msgstr "Solicitar XP"
+
+#: includes/Services/Change_Validator.php:346
+#, php-format
+msgid "Requested: %1$s, %2$s"
+msgstr "Solicitado: %1$s, %2$s"
+
+#: includes/Services/Change_Validator.php:347
+#, php-format
+msgid "Requested: %s"
+msgstr "Solicitado: %s"
+
+#: build/165.js:24
+#: build/985.js:36
+msgid "Send request"
+msgstr "Enviar solicitação"
+
+#: build/165.js:24
+#: build/985.js:36
+msgid "Sent. Your Storytellers will review it."
+msgstr "Enviado. Seus Narradores vão revisar."
+
+#: includes/REST/Experience_Controller.php:172
+msgid "That character isn't in this chronicle."
+msgstr "Esse personagem não está nesta crônica."
+
+#: includes/Services/Change_Engine.php:777
+msgid "That character no longer exists."
+msgstr "Esse personagem não existe mais."
+
+#: includes/Services/Change_Engine.php:786
+msgid "That would take XP Earned below zero."
+msgstr "Isso deixaria o XP Ganho abaixo de zero."
+
+#: includes/Services/Change_Engine.php:809
+msgid "The award could not be saved."
+msgstr "A concessão não pôde ser salva."
+
+#: includes/REST/Experience_Controller.php:145
+msgid "The same character cannot appear twice in one request."
+msgstr "O mesmo personagem não pode aparecer duas vezes em uma solicitação."
+
+#: build/165.js:24
+#: build/985.js:36
+msgid "Up to 2,000 characters."
+msgstr "Até 2.000 caracteres."
+
+#: build/165.js:24
+#: build/985.js:36
+msgid "Up to 200 characters."
+msgstr "Até 200 caracteres."
+
+#: build/165.js:24
+#: build/985.js:36
+msgid "Where you earned it"
+msgstr "Onde você ganhou"
+
+#. translators: 1: the lowest amount accepted, 2: the highest amount accepted
+#: build/76.js:10
+#: build/165.js:74
+#: build/596.js:10
+#: build/985.js:126
+#, js-format
+msgid "Whole number from %1$s to %2$s"
+msgstr "Número inteiro de %1$s a %2$s"
+
+#. translators: %s: the highest amount a request may ask for
+#: build/76.js:11
+#: build/165.js:75
+#: build/596.js:11
+#: build/985.js:127
+#, js-format
+msgid "Whole number from 1 to %s"
+msgstr "Número inteiro de 1 a %s"
+
+#. translators: %s: today's date in YYYY-MM-DD form
+#: build/76.js:12
+#: build/165.js:76
+#: build/596.js:12
+#: build/985.js:128
+#, js-format
+msgid "XP award, %s"
+msgstr "Concessão de XP, %s"
+
+#. translators: %d: the largest award accepted, in either direction
+#: includes/REST/Experience_Controller.php:156
+#, php-format
+msgid "amount must be a whole number other than zero, no larger than %1$d and no smaller than -%1$d."
+msgstr "amount deve ser um número inteiro diferente de zero, não maior que %1$d e não menor que -%1$d."
+
+#: includes/REST/Experience_Controller.php:151
+msgid "amount must be a whole number."
+msgstr "amount deve ser um número inteiro."
+
+#: includes/REST/Experience_Controller.php:126
+msgid "awards must be a non-empty array."
+msgstr "awards deve ser um array não vazio."
+
+#: build/76.js:5
+#: build/596.js:5
+#: build/985.js:50
+msgid "Applying…"
+msgstr "Aplicando…"
+
 #~ msgid "Missing required field: stack_definition."
 #~ msgstr "Campo obrigatório ausente: stack_definition."
 

@@ -520,6 +520,61 @@ export interface BulkXPResponse {
 }
 
 // ---------------------------------------------------------------------------
+// A player's own XP request
+// ---------------------------------------------------------------------------
+
+/**
+ * What a player tells their Storyteller about XP earned outside this chronicle - where, when, and any details -
+ * submitted as an ordinary `xp_earn` change's `change_data.request`.
+ */
+export interface XpRequestDetails {
+	where: string;
+	date?: string;
+	note?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Apply XP
+// ---------------------------------------------------------------------------
+
+/**
+ * One character's share of an apply-XP request: a positive amount awards, a negative amount takes XP back.
+ */
+export interface XpApplyRow {
+	character_id: number;
+	amount: number;
+}
+
+/**
+ * Request body for applying a different amount to each of several characters in one call, with one shared reason.
+ */
+export interface XpApplyRequest {
+	reason: string;
+	awards: XpApplyRow[];
+}
+
+/**
+ * One row's own result from an apply-XP request, in request order.
+ */
+export interface XpApplyResult {
+	character_id: number;
+	applied: boolean;
+	code?: string;
+	message?: string;
+	amount?: number;
+	xp_earned?: number;
+	xp_unspent?: number;
+}
+
+/**
+ * Response from an apply-XP request.
+ */
+export interface XpApplyResponse {
+	reason: string;
+	results: XpApplyResult[];
+}
+
+// ---------------------------------------------------------------------------
 // Bulk resource-pool reset
 // ---------------------------------------------------------------------------
 

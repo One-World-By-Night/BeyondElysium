@@ -51,6 +51,8 @@ import type {
 	ChangeReviewRequest,
 	BulkXPRequest,
 	BulkXPResponse,
+	XpApplyRequest,
+	XpApplyResponse,
 	BulkPoolResetRequest,
 	BulkPoolResetResponse,
 	BulkStatusRequest,
@@ -1821,6 +1823,17 @@ export const experience = ( gameSlug: string ) => ( {
 	bulkAward: ( data: BulkXPRequest ): Promise< BulkXPResponse > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/experience/bulk-award`,
+			method: 'POST',
+			data,
+		} ),
+
+	/**
+	 * Applies a different, Storyteller-chosen amount to each of several characters in one call - a positive amount
+	 * awards, a negative amount takes XP back.
+	 */
+	apply: ( data: XpApplyRequest ): Promise< XpApplyResponse > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/experience/apply`,
 			method: 'POST',
 			data,
 		} ),

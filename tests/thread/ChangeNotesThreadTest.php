@@ -54,7 +54,7 @@ class ChangeNotesThreadTest extends WP_UnitTestCase {
 		$submitted = $this->dispatch( 'POST', "/be/v1/{$this->slug}/characters/{$this->character}/changes", [
 			'change_type' => 'xp_earn',
 			'category'    => 'experience',
-			'change_data' => [ 'amount' => 2 ],
+			'change_data' => [ 'amount' => 2, 'request' => [ 'where' => 'Door duty' ] ],
 			'notes'       => 'Ran the door all night',
 		] );
 		$change_id = (int) $submitted->get_data()->id;

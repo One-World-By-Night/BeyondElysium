@@ -97,8 +97,8 @@ class ChronicleScopedHandlerChecksThreadTest extends WP_UnitTestCase {
 			'change_data' => [ 'amount' => 50 ],
 		] );
 
-		$this->assertSame( 201, $response->get_status() );
-		$this->assertSame( 'pending', $response->get_data()->status );
+		// Not a Storyteller of this chronicle, so xp_adjust is refused outright - nothing is even created to sit pending.
+		$this->assertSame( 400, $response->get_status() );
 		$this->assertSame( 0, (int) Character::find( $this->own_character )->xp_earned );
 	}
 

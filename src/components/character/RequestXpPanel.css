@@ -1,0 +1,57 @@
+.be-request-xp {
+	margin-bottom: 1rem;
+}
+
+.be-request-xp__hint {
+	margin: 0 0 0.75rem;
+	color: var(--be-gray-10);
+}
+
+.be-request-xp__field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin-bottom: 1rem;
+	max-width: 24rem;
+}
+
+.be-request-xp__field input,
+.be-request-xp__field textarea {
+	min-height: 2.75rem;
+}
+
+.be-request-xp__field textarea {
+	min-height: 5rem;
+	resize: vertical;
+}
+
+.be-request-xp__field-hint {
+	margin: 0;
+	font-size: 0.85rem;
+	color: var(--be-red-5);
+}
+
+.be-request-xp__error {
+	padding: 0.75rem 1rem;
+	margin-bottom: 0.75rem;
+	border: 1px solid var(--be-red-5);
+	border-radius: 4px;
+	color: var(--be-red-5);
+	background: var(--be-red-13);
+}
+
+.be-request-xp__sent {
+	font-weight: 600;
+}
+
+.be-request-xp__send.be-request-xp__send {
+	min-height: 2.75rem;
+	padding: 0 1.25rem;
+}
+
+@media (max-width: 768px) {
+
+	.be-request-xp__field {
+		max-width: none;
+	}
+}

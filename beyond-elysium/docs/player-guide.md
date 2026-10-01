@@ -34,6 +34,8 @@ Don't resubmit the same change while it's still pending — it queues a second, 
 
 Your unspent and total experience show on the editor. Spending it on a trait, power, or pool increase reduces what's left to spend, following your chronicle's own point costs. Powers are bought level by level: raising a Discipline (or an Art, Arcanos, Hekau path, or Numina) from 1 to 3 costs level 2 plus level 3, and a brand-new power at level 3 costs all three levels. A Storyteller can award you experience directly (session attendance, plot participation) — awards like this usually apply immediately, without needing your own submission.
 
+Earned experience somewhere this chronicle wouldn't otherwise know about — a game or event that doesn't run Beyond Elysium — open **Request XP** on your character's Edit tab, tell your Storytellers where and when, and send it. It always waits for a Storyteller to approve, however your chronicle handles other changes, and you'll get the usual email once they do. See [Character Editor](help/character-editor.md#request-xp).
+
 ## 3. Notifications
 
 When a Storyteller approves or rejects a change you submitted, you get one email — even if several of your changes were reviewed together, you get a single summary, not one email per change. If you'd rather not receive these, open your WordPress profile page and look for "Change Notifications" next to the sheet-customization option — uncheck it there. This is your own personal setting; a Storyteller doesn't need to be involved.

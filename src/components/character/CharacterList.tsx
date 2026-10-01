@@ -13,6 +13,14 @@ import type {
 import type { TravellingStatus } from '../../types/transfer';
 import { canIn } from '../../lib/chronicleCapabilities';
 import { sameId } from '../../lib/ids';
+import {
+	applyXpResults,
+	buildXpApplyRequest,
+	countXpEntries,
+	defaultXpReason,
+	parseXpEntry,
+	xpEntryHint,
+} from '../../lib/xpEntry';
 import type { CreatureStack, MyCapabilities } from '../../types';
 import Modal from '../shared/Modal';
 import HelpButton from '../shared/HelpButton';
@@ -128,6 +136,17 @@ export function CharacterList( {
 	// UI-only gate; the DELETE route itself re-checks be_manage_characters server-side.
 	const canManageCharacters = canIn( 'be_manage_characters', capabilities );
 
+	// Held by character id, so a typed amount survives paging, sorting, filtering and searching.
+	const [ xpEntries, setXpEntries ] = useState< Record< number, string > >(
+		{}
+	);
+	// Per-row "+5 applied" / refusal text; cleared whenever the list itself is re-fetched.
+	const [ xpNotes, setXpNotes ] = useState< Record< number, string > >( {} );
+	const [ xpReason, setXpReason ] = useState( () => defaultXpReason() );
+	const [ applyingXp, setApplyingXp ] = useState( false );
+	const [ xpError, setXpError ] = useState< string | null >( null );
+	const heldXpCount = countXpEntries( xpEntries );
+
 	// Debounce the search box; the request only fires 300ms after typing stops.
 	useEffect( () => {
 		const timer = setTimeout(
@@ -156,6 +175,8 @@ export function CharacterList( {
 	useEffect( () => {
 		let cancelled = false;
 		setLoading( true );
+		// Confirmation/refusal text is tied to this view; a fresh fetch starts it clean.
+		setXpNotes( {} );
 
 		const params: CharacterCollectionParams = {
 			page,
@@ -212,6 +233,68 @@ export function CharacterList( {
 		showNpcs,
 		refreshCount,
 	] );
+
+	// Warns before leaving the page while an Apply XP amount is still unsent.
+	useEffect( () => {
+		if ( ! canManageCharacters || heldXpCount === 0 ) {
+			return;
+		}
+		const handler = ( e: BeforeUnloadEvent ) => {
+			e.preventDefault();
+			e.returnValue = '';
+		};
+		window.addEventListener( 'beforeunload', handler );
+		return () => window.removeEventListener( 'beforeunload', handler );
+	}, [ canManageCharacters, heldXpCount ] );
+
+	async function applyXp(
+		request: ReturnType< typeof buildXpApplyRequest >
+	): Promise< void > {
+		if ( ! request ) {
+			return;
+		}
+		setApplyingXp( true );
+		setXpError( null );
+		try {
+			const response = await api.experience( gameSlug ).apply( request );
+			const outcome = applyXpResults( xpEntries, response.results );
+			setXpEntries( outcome.entries );
+			setXpNotes( ( prev ) => ( { ...prev, ...outcome.notes } ) );
+			if ( Object.keys( outcome.totals ).length > 0 ) {
+				setItems( ( prev ) =>
+					prev.map( ( character ) =>
+						outcome.totals[ character.id ]
+							? {
+									...character,
+									...outcome.totals[ character.id ],
+								}
+							: character
+					)
+				);
+			}
+		} catch ( err: unknown ) {
+			setXpError(
+				err instanceof Error
+					? err.message
+					: __( 'Failed to apply XP. Try again.', 'beyond-elysium' )
+			);
+		} finally {
+			setApplyingXp( false );
+		}
+	}
+
+	function applyXpToOne( characterId: number ): Promise< void > {
+		return applyXp(
+			buildXpApplyRequest(
+				{ [ characterId ]: xpEntries[ characterId ] ?? '' },
+				xpReason
+			)
+		);
+	}
+
+	function applyXpToAll(): Promise< void > {
+		return applyXp( buildXpApplyRequest( xpEntries, xpReason ) );
+	}
 
 	function toggleSort( column: SortableColumn ): void {
 		if ( column === orderby ) {
@@ -338,6 +421,9 @@ export function CharacterList( {
 								</th>
 							) ) }
 							{ canManageCharacters && (
+								<th>{ __( 'Apply XP', 'beyond-elysium' ) }</th>
+							) }
+							{ canManageCharacters && (
 								<th
 									className="be-character-list__actions-cell"
 									aria-label={ __(
@@ -355,7 +441,7 @@ export function CharacterList( {
 									colSpan={
 										COLUMNS.length +
 										1 +
-										( canManageCharacters ? 1 : 0 )
+										( canManageCharacters ? 2 : 0 )
 									}
 								>
 									{ __(
@@ -487,6 +573,28 @@ export function CharacterList( {
 										) }
 									</td>
 									{ canManageCharacters && (
+										<XpApplyCell
+											character={ character }
+											value={
+												xpEntries[ character.id ] ?? ''
+											}
+											note={ xpNotes[ character.id ] }
+											inputDisabled={ applyingXp }
+											reasonEmpty={
+												xpReason.trim() === ''
+											}
+											onChange={ ( value ) =>
+												setXpEntries( ( prev ) => ( {
+													...prev,
+													[ character.id ]: value,
+												} ) )
+											}
+											onApply={ () =>
+												applyXpToOne( character.id )
+											}
+										/>
+									) }
+									{ canManageCharacters && (
 										<td
 											className="be-character-list__actions-cell"
 											data-label={ __(
@@ -532,6 +640,52 @@ export function CharacterList( {
 				</table>
 			</div>
 
+			{ canManageCharacters && (
+				<div className="be-character-list__xp-bar">
+					{ xpError && (
+						<p className="be-character-list__error" role="alert">
+							{ xpError }
+						</p>
+					) }
+					<label>
+						{ __( 'Reason', 'beyond-elysium' ) }{ ' ' }
+						<input
+							type="text"
+							className="be-character-list__xp-bar-input"
+							value={ xpReason }
+							disabled={ applyingXp }
+							onChange={ ( e ) => setXpReason( e.target.value ) }
+						/>
+					</label>
+					<button
+						type="button"
+						className="be-character-list__xp-bar-button"
+						disabled={
+							applyingXp ||
+							heldXpCount === 0 ||
+							xpReason.trim() === ''
+						}
+						onClick={ () => applyXpToAll() }
+					>
+						{ applyingXp
+							? __( 'Applying…', 'beyond-elysium' )
+							: sprintf(
+									/* translators: %d: how many characters have an amount waiting to be applied */
+									__( 'Apply All (%d)', 'beyond-elysium' ),
+									heldXpCount
+								) }
+					</button>
+					<button
+						type="button"
+						className="be-character-list__xp-bar-button"
+						disabled={ applyingXp || heldXpCount === 0 }
+						onClick={ () => setXpEntries( {} ) }
+					>
+						{ __( 'Clear amounts', 'beyond-elysium' ) }
+					</button>
+				</div>
+			) }
+
 			<div className="be-character-list__pagination">
 				<button
 					type="button"
@@ -572,6 +726,67 @@ export function CharacterList( {
 				/>
 			) }
 		</div>
+	);
+}
+
+interface XpApplyCellProps {
+	character: Character;
+	value: string;
+	note?: string;
+	inputDisabled: boolean;
+	reasonEmpty: boolean;
+	onChange: ( value: string ) => void;
+	onApply: () => void;
+}
+
+/**
+ * One row's Apply XP box, Apply button, and any hint or confirmation/refusal text beneath it.
+ */
+function XpApplyCell( {
+	character,
+	value,
+	note,
+	inputDisabled,
+	reasonEmpty,
+	onChange,
+	onApply,
+}: XpApplyCellProps ) {
+	const parsed = parseXpEntry( value );
+	return (
+		<td
+			className="be-character-list__xp-cell"
+			data-label={ __( 'Apply XP', 'beyond-elysium' ) }
+		>
+			<div className="be-character-list__xp-entry">
+				<input
+					type="text"
+					inputMode="numeric"
+					className="be-character-list__xp-input"
+					aria-label={ sprintf(
+						/* translators: %s: the character's own name */
+						__( 'Apply XP to %s', 'beyond-elysium' ),
+						character.name
+					) }
+					value={ value }
+					disabled={ inputDisabled }
+					onChange={ ( e ) => onChange( e.target.value ) }
+				/>
+				<button
+					type="button"
+					className="be-character-list__xp-entry-apply"
+					disabled={
+						inputDisabled || parsed.kind !== 'amount' || reasonEmpty
+					}
+					onClick={ onApply }
+				>
+					{ __( 'Apply', 'beyond-elysium' ) }
+				</button>
+			</div>
+			{ parsed.kind === 'invalid' && (
+				<p className="be-character-list__xp-hint">{ xpEntryHint() }</p>
+			) }
+			{ note && <p className="be-character-list__xp-note">{ note }</p> }
+		</td>
 	);
 }
 

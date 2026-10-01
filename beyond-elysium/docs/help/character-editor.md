@@ -60,6 +60,18 @@ Shown only to a Storyteller editing an NPC, once it already exists - a write-up 
 
 Two rich-text fields, saved independently of everything else on this screen - typing here and clicking **Save Background & Notes** takes effect immediately, with no XP cost and no Storyteller review, regardless of what else is queued below. An **AI Assist** button appears next to each field only for a Storyteller, even on a player's own character; a player types their own text directly.
 
+### Request XP
+
+Shown only to a player, on their own character - not to a Storyteller editing it. Folded by default. For experience earned somewhere this chronicle can't see for itself, most often a game or event run outside Beyond Elysium entirely:
+
+- **Amount** - a whole number from 1 to 10,000.
+- **Where you earned it** - required, up to 200 characters.
+- **Date played** - optional; can't be after today.
+- **Details** - optional, up to 2,000 characters.
+- **Send request** - sends it right away, separately from anything queued in **Pending Changes** below, which stays queued. The panel then reads "Sent. Your Storytellers will review it." and clears.
+
+A request always waits for a Storyteller, whatever this chronicle's approval settings are, and shows in the Approval Queue with what you typed. See [Player Guide](../player-guide.md#2-editing-your-sheet) and [Approval Queue](approval-queue.md).
+
 ### Sheet sections
 
 The rest of the screen is the chronicle's own template, one box per section, in the same layout the read-only sheet uses:

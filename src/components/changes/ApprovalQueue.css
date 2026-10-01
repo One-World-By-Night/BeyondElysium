@@ -27,6 +27,14 @@
 	color: var(--be-gold-5);
 }
 
+.be-approval-queue__request-note {
+	max-width: 22rem;
+	margin: 0.25rem 0 0;
+	font-size: 0.85rem;
+	color: var(--be-gray-6);
+	white-space: pre-line;
+}
+
 .be-approval-queue__actions {
 	display: flex;
 	gap: 0.35rem;

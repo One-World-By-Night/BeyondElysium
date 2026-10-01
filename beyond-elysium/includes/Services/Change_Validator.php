@@ -36,6 +36,13 @@ class Change_Validator {
 	const MAX_TEXT  = 5000;
 
 	/**
+	 * Bounds on a player's own XP request, submitted with no Storyteller capability.
+	 */
+	const XP_REQUEST_MAX       = 10000;
+	const XP_REQUEST_WHERE_MAX = 200;
+	const XP_REQUEST_NOTE_MAX  = 2000;
+
+	/**
 	 * Validates one change and returns it normalized: unknown keys dropped, names set to the catalog's exact spelling,
 	 * numbers cast to integers, and `custom` set only where the block genuinely allows a custom entry.
 	 *
@@ -59,7 +66,10 @@ class Change_Validator {
 		}
 
 		if ( $type === 'xp_earn' || $type === 'xp_adjust' ) {
-			return self::validate_xp( $data );
+			if ( ! $is_manager && $type === 'xp_adjust' ) {
+				return self::fail( 'invalid_change_type', 'Only a Storyteller can adjust experience.' );
+			}
+			return self::validate_xp( $data, $is_manager );
 		}
 
 		// A proposed catalog item is not sheet data.
@@ -273,16 +283,93 @@ class Change_Validator {
 		return [ 'ok' => true, 'change_data' => $normalized ];
 	}
 
-	private static function validate_xp( array $data ): array {
+	/**
+	 * A Storyteller's own `xp_earn`/`xp_adjust` keeps today's shape: any non-zero whole number, an optional reason.
+	 * A player's submission is a request, never a direct adjustment: a positive amount only, a required
+	 * "where you earned it", an optional date no later than today, and optional details - the server builds the
+	 * stored reason itself so `Change_Engine` and every display twin need no change to read it.
+	 *
+	 * @param array $data
+	 * @param bool  $is_manager
+	 * @return array
+	 */
+	private static function validate_xp( array $data, bool $is_manager ): array {
 		$amount = self::to_int( $data['amount'] ?? null );
-		if ( $amount === null || $amount === 0 ) {
-			return self::fail( 'invalid_param', 'amount must be a whole number other than zero.' );
+
+		if ( $is_manager ) {
+			if ( $amount === null || $amount === 0 ) {
+				return self::fail( 'invalid_param', 'amount must be a whole number other than zero.' );
+			}
+			$normalized = [ 'amount' => $amount ];
+			if ( isset( $data['reason'] ) && is_string( $data['reason'] ) ) {
+				$normalized['reason'] = self::text( $data['reason'] );
+			}
+			return [ 'ok' => true, 'change_data' => $normalized ];
 		}
-		$normalized = [ 'amount' => $amount ];
-		if ( isset( $data['reason'] ) && is_string( $data['reason'] ) ) {
-			$normalized['reason'] = self::text( $data['reason'] );
+
+		if ( $amount === null || $amount < 1 || $amount > self::XP_REQUEST_MAX ) {
+			return self::fail( 'invalid_param', 'amount must be a whole number from 1 to %s.', [ (string) self::XP_REQUEST_MAX ] );
 		}
-		return [ 'ok' => true, 'change_data' => $normalized ];
+
+		$request = $data['request'] ?? null;
+		if ( ! is_array( $request ) ) {
+			return self::fail( 'invalid_param', 'A request needs to say where the XP was earned.' );
+		}
+
+		$where_raw = $request['where'] ?? null;
+		if (
+			! is_string( $where_raw ) ||
+			trim( $where_raw ) === '' ||
+			mb_strlen( trim( $where_raw ) ) > self::XP_REQUEST_WHERE_MAX
+		) {
+			return self::fail( 'invalid_param', 'A request needs to say where the XP was earned, up to %s characters.', [ (string) self::XP_REQUEST_WHERE_MAX ] );
+		}
+		$where = self::text( $where_raw, self::XP_REQUEST_WHERE_MAX );
+
+		$date = null;
+		if ( ! empty( $request['date'] ) ) {
+			if ( ! is_string( $request['date'] ) || ! self::is_real_past_date( $request['date'] ) ) {
+				return self::fail( 'invalid_param', 'date must be a real date no later than today.' );
+			}
+			$date = $request['date'];
+		}
+
+		$note = null;
+		if ( ! empty( $request['note'] ) ) {
+			if ( ! is_string( $request['note'] ) || mb_strlen( $request['note'] ) > self::XP_REQUEST_NOTE_MAX ) {
+				return self::fail( 'invalid_param', 'Details can run up to %s characters.', [ (string) self::XP_REQUEST_NOTE_MAX ] );
+			}
+			$note = self::text( $request['note'], self::XP_REQUEST_NOTE_MAX );
+		}
+
+		$reason = $date
+			? sprintf( __( 'Requested: %1$s, %2$s', 'beyond-elysium' ), $where, $date )
+			: sprintf( __( 'Requested: %s', 'beyond-elysium' ), $where );
+
+		return [
+			'ok'          => true,
+			'change_data' => [
+				'amount'  => $amount,
+				'reason'  => $reason,
+				'request' => [ 'where' => $where, 'date' => $date, 'note' => $note ],
+			],
+		];
+	}
+
+	/**
+	 * Whether a string is a real `YYYY-MM-DD` calendar date no later than today, in the site's own time zone.
+	 *
+	 * @param string $value
+	 * @return bool
+	 */
+	private static function is_real_past_date( string $value ): bool {
+		if ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $value, $m ) ) {
+			return false;
+		}
+		if ( ! checkdate( (int) $m[2], (int) $m[3], (int) $m[1] ) ) {
+			return false;
+		}
+		return $value <= current_time( 'Y-m-d' );
 	}
 
 	/**

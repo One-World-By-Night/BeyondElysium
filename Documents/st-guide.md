@@ -273,3 +273,14 @@ Approving needs catalog rights as well as character rights. An HST and an AST ha
 An item costs no experience. If your chronicle wants one to cost something, handle that as a separate change against the character's sheet.
 
 Players cannot edit an item once it is approved; it belongs to the catalog then. Edit it yourself from [Items & Locations](help/world-objects.md).
+
+## 21. Where Experience Comes From
+
+Four places feed a character's experience, each for a different moment:
+
+- **Game Nights** (§16) awards the same configured amount to everyone signed in, or everyone who filed a report - a one-time action per session.
+- **Query Tool** ([Bulk actions](help/query-tool.md#award-xp-reset-a-pool-or-set-status-for-a-group-of-characters)) awards one amount to a whole group of characters you've just queried.
+- **Apply XP**, on the [Characters list](help/character-list.md), is for a different amount per character: type one in each row and click Apply, or Apply All at once. A negative amount takes XP back, refused if it would take XP Earned below zero.
+- **Request XP**, on a player's own [Character Editor](help/character-editor.md#request-xp), is theirs to use for XP earned somewhere this chronicle can't see for itself. It always waits for your review, shows up in the Approval Queue with what they told you, and you approve or reject it exactly like any other change.
+
+All four write an ordinary entry to the character's history; none of them touches the Approval Queue except a player's own request.

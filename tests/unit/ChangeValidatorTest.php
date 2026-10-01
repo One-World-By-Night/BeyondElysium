@@ -219,11 +219,54 @@ class ChangeValidatorTest extends TestCase {
 	}
 
 	public function test_an_xp_change_needs_a_whole_nonzero_amount(): void {
-		$ok  = $this->check( 'xp_adjust', [ 'amount' => '5', 'reason' => '<b>Session</b>' ] );
-		$bad = $this->check( 'xp_adjust', [ 'amount' => 0 ] );
+		$ok  = $this->check( 'xp_adjust', [ 'amount' => '5', 'reason' => '<b>Session</b>' ], [], true );
+		$bad = $this->check( 'xp_adjust', [ 'amount' => 0 ], [], true );
 
 		$this->assertSame( [ 'amount' => 5, 'reason' => 'Session' ], $ok['change_data'] );
 		$this->assertFalse( $bad['ok'] );
+	}
+
+	public function test_only_a_manager_can_adjust_experience(): void {
+		$result = $this->check( 'xp_adjust', [ 'amount' => -5 ] );
+		$this->assertFalse( $result['ok'] );
+		$this->assertSame( 'invalid_change_type', $result['code'] );
+	}
+
+	public function test_a_players_xp_request_needs_a_whole_number_from_1_to_10000(): void {
+		$this->assertFalse( $this->check( 'xp_earn', [ 'amount' => 0, 'request' => [ 'where' => 'A game' ] ] )['ok'] );
+		$this->assertFalse( $this->check( 'xp_earn', [ 'amount' => -3, 'request' => [ 'where' => 'A game' ] ] )['ok'] );
+		$this->assertFalse( $this->check( 'xp_earn', [ 'amount' => 10001, 'request' => [ 'where' => 'A game' ] ] )['ok'] );
+		$this->assertFalse( $this->check( 'xp_earn', [ 'amount' => 2.5, 'request' => [ 'where' => 'A game' ] ] )['ok'] );
+
+		$ok = $this->check( 'xp_earn', [ 'amount' => 10000, 'request' => [ 'where' => 'A game' ] ] );
+		$this->assertTrue( $ok['ok'] );
+		$this->assertSame( 10000, $ok['change_data']['amount'] );
+	}
+
+	public function test_a_players_xp_request_needs_where_it_was_earned(): void {
+		$this->assertFalse( $this->check( 'xp_earn', [ 'amount' => 3 ] )['ok'] );
+		$this->assertFalse( $this->check( 'xp_earn', [ 'amount' => 3, 'request' => [] ] )['ok'] );
+		$this->assertFalse( $this->check( 'xp_earn', [ 'amount' => 3, 'request' => [ 'where' => '   ' ] ] )['ok'] );
+		$this->assertFalse( $this->check( 'xp_earn', [ 'amount' => 3, 'request' => [ 'where' => str_repeat( 'x', 201 ) ] ] )['ok'] );
+	}
+
+	public function test_a_players_xp_request_builds_its_own_reason(): void {
+		$dated = $this->check( 'xp_earn', [ 'amount' => 3, 'request' => [ 'where' => 'Kings of Chicago', 'date' => '2026-09-27' ] ] );
+		$this->assertSame( 'Requested: Kings of Chicago, 2026-09-27', $dated['change_data']['reason'] );
+
+		$undated = $this->check( 'xp_earn', [ 'amount' => 3, 'request' => [ 'where' => 'Kings of Chicago' ] ] );
+		$this->assertSame( 'Requested: Kings of Chicago', $undated['change_data']['reason'] );
+		$this->assertNull( $undated['change_data']['request']['date'] );
+	}
+
+	public function test_a_players_xp_request_rejects_a_bad_date_or_an_overlong_note(): void {
+		$this->assertFalse( $this->check( 'xp_earn', [ 'amount' => 3, 'request' => [ 'where' => 'A game', 'date' => 'not a date' ] ] )['ok'] );
+		$this->assertFalse( $this->check( 'xp_earn', [ 'amount' => 3, 'request' => [ 'where' => 'A game', 'date' => '2099-01-01' ] ] )['ok'] );
+		$this->assertFalse( $this->check( 'xp_earn', [ 'amount' => 3, 'request' => [ 'where' => 'A game', 'note' => str_repeat( 'x', 2001 ) ] ] )['ok'] );
+
+		$result = $this->check( 'xp_earn', [ 'amount' => 3, 'request' => [ 'where' => 'A game', 'note' => '<b>Ran the door</b>' ] ] );
+		$this->assertTrue( $result['ok'] );
+		$this->assertSame( 'Ran the door', $result['change_data']['request']['note'] );
 	}
 
 	public function test_protected_fields_are_every_field_the_stacks_in_type_tests_read(): void {

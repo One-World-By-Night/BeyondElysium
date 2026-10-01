@@ -12,7 +12,7 @@ class Schema {
 	/**
 	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.4.0';
+	const DB_VERSION = '1.4.0.1';
 
 	/**
 	 * Option key holding the installed schema version.

@@ -754,6 +754,74 @@ class Change_Engine {
 	}
 
 	/**
+	 * Applies one XP award or correction to a character, with a shared reason recorded against it. A positive amount
+	 * writes an approved xp_earn change; a negative amount writes an approved xp_adjust change and refuses rather than
+	 * taking XP Earned below zero.
+	 *
+	 * @param int    $character_id
+	 * @param int    $amount A whole number, never zero.
+	 * @param string $reason
+	 * @param int    $applied_by
+	 * @return array{applied: bool, code?: string, message?: string, amount?: int, xp_earned?: int, xp_unspent?: int}
+	 */
+	public static function apply_xp( int $character_id, int $amount, string $reason, int $applied_by ): array {
+		$savepoint = Transaction::begin( 'be_apply_xp' );
+
+		Character::lock( $character_id );
+		$character = Character::find( $character_id );
+		if ( ! $character ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'not_found',
+				'message' => __( 'That character no longer exists.', 'beyond-elysium' ),
+			];
+		}
+
+		if ( $amount < 0 && (int) $character->xp_earned + $amount < 0 ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'below_zero',
+				'message' => __( 'That would take XP Earned below zero.', 'beyond-elysium' ),
+			];
+		}
+
+		$change_id = Change::create( [
+			'character_id' => $character_id,
+			'change_type'  => $amount > 0 ? 'xp_earn' : 'xp_adjust',
+			'category'     => 'experience',
+			'change_data'  => [
+				'amount' => $amount,
+				'reason' => $reason,
+			],
+			'xp_cost'      => 0,
+			'status'       => 'approved',
+			'submitted_by' => $applied_by,
+			'notes'        => $reason,
+		] );
+
+		if ( ! $change_id || ! Character::update_xp( $character_id, $amount, $amount ) ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'write_failed',
+				'message' => __( 'The award could not be saved.', 'beyond-elysium' ),
+			];
+		}
+
+		Transaction::commit( $savepoint );
+
+		$updated = Character::find( $character_id );
+		return [
+			'applied'    => true,
+			'amount'     => $amount,
+			'xp_earned'  => (int) ( $updated->xp_earned ?? 0 ),
+			'xp_unspent' => (int) ( $updated->xp_unspent ?? 0 ),
+		];
+	}
+
+	/**
 	 * Grants one trait_list item to a character, paid for from the resource pool its block names in `_meta.paid_from`
 	 * rather than the character's own XP - a Storyteller-only action, never reachable through the ordinary purchase
 	 * flow.

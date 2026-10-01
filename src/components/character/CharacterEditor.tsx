@@ -13,6 +13,7 @@ import HelpButton from '../shared/HelpButton';
 import AssigneePicker from '../shared/AssigneePicker';
 import AudiencePicker from '../shared/AudiencePicker';
 import SecretsPanel from '../shared/SecretsPanel';
+import RequestXpPanel from './RequestXpPanel';
 import CollapsiblePanel from '../shared/CollapsiblePanel';
 import { previewPriceLabel } from '../../lib/queuePrice';
 import { describeChange } from '../../lib/describeChange';
@@ -1060,6 +1061,15 @@ export function CharacterEditor( {
 							</span>
 						) }
 					</div>
+				</div>
+			) }
+
+			{ canEdit && ! canManage && effectiveCharacterId && (
+				<div className="be-character-editor__section">
+					<RequestXpPanel
+						gameSlug={ gameSlug }
+						characterId={ effectiveCharacterId }
+					/>
 				</div>
 			) }
 

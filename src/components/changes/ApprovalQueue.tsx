@@ -38,6 +38,17 @@ function submitterLabel( item: QueueChange ): string {
 	);
 }
 
+/**
+ * The free-text details a player added to their own XP request, if any.
+ */
+function requestNote( item: QueueChange ): string | null {
+	const data = item.change_data as Record< string, unknown >;
+	const request = data?.request as Record< string, unknown > | undefined;
+	return typeof request?.note === 'string' && request.note !== ''
+		? request.note
+		: null;
+}
+
 const CHANGE_TYPES: ChangeType[] = [
 	'add_trait',
 	'remove_trait',
@@ -515,6 +526,11 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 										{ describeChange(
 											item.change_type,
 											item.change_data
+										) }
+										{ requestNote( item ) && (
+											<p className="be-approval-queue__request-note">
+												{ requestNote( item ) }
+											</p>
 										) }
 									</td>
 									<td

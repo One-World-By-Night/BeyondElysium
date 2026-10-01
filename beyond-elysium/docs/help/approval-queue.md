@@ -33,7 +33,7 @@ A table (stacked into cards on a narrow screen) with a checkbox per row, then:
 | Column | Shows |
 | --- | --- |
 | Character | Who the change is on |
-| Change | A plain description, such as a trait's old and new value |
+| Change | A plain description, such as a trait's old and new value. A player's own [XP request](character-editor.md#request-xp) reads "+N XP (Requested: where, date)," with any details they added shown underneath |
 | XP | The cost, positive or negative. A homebrew purchase shows **Needs a price** until you set one |
 | Level | `auto` or `st` |
 | Approval Reason | Why it landed at that level, when there is one |

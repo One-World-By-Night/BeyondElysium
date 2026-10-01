@@ -25,11 +25,13 @@ My Chronicle → Characters tab.
   | XP Earned | Total experience earned |
   | XP Unspent | Experience not yet spent |
   | Player | The assigned player's name. Storyteller-only extras: "(unassigned)" when nobody's linked, and a "now has an account - Confirm" prompt when a pending email match is found |
+  | Apply XP | Storyteller-only: a box for an amount and its own **Apply** button |
   | Actions | Storyteller-only: Assign player / Change player, Delete |
 
   Click a column header to sort by it; click again to reverse the order.
 - **Pagination** - Previous / Next, with the current page and the total count.
 - **Assign a player** (Storyteller-only modal) - search by at least three letters of a name, or an exact email address (a partial name match never shows an email); assign a result, unassign the current player, or record a pending email for someone who hasn't registered an account yet. A pending email is an invite: the character links itself to them the first time they sign in with that address, and on a chronicle linked to OWbN roles the invite also shows on the [Players](chronicle-players.md) tab.
+- **Apply XP** (Storyteller-only) - type a whole number in a row's box and click that row's **Apply**, or type one in several rows - across as many pages as you like - and click **Apply All** below the table once, with one **Reason** shared by every row it sends. A negative number takes XP back; it's refused, with a note under the box, if it would take XP Earned below zero. What you type stays there as you page, sort, filter, or search, until you apply or click **Clear amounts**. Applied XP is granted immediately, the same as a Storyteller's own award anywhere else - it never goes through the Approval Queue.
 
 ## Common tasks
 
@@ -62,6 +64,12 @@ My Chronicle → Characters tab.
 1. Click **Delete** on that character's row.
 2. Confirm. This permanently removes the character, its change history, snapshots, sheet style, and connections.
 
+### Give or take XP for one or more characters (Storyteller)
+
+1. Type a whole number in **Apply XP** for each character - a negative number takes XP back.
+2. Fill in **Reason** once, below the table.
+3. Click that row's **Apply**, or click **Apply All** to send every row you've typed, including ones on other pages.
+
 ## Things to know
 
 - As a player, this tab shows only characters linked to your account - not the rest of the chronicle's roster.
@@ -72,7 +80,9 @@ My Chronicle → Characters tab.
 ## Troubleshooting
 
 - **"No characters found."** Clear or adjust your Type, Status, or search filter.
-- **I don't see Assign player or Delete.** Those are Storyteller-only.
+- **I don't see Assign player, Apply XP, or Delete.** Those are Storyteller-only.
+- **Apply or Apply All won't click.** Type a reason, and a whole number from -10,000 to 10,000, other than zero.
+- **"That would take XP Earned below zero."** The negative amount is more than this character has earned; apply a smaller correction, or [Request XP](character-editor.md#request-xp) if a player needs it added first.
 - **A character I know exists isn't here.** If it isn't linked to your account and you're not a Storyteller, it won't appear - ask a Storyteller to assign it to you.
 - **"Failed to load characters."** Refresh the page.
 

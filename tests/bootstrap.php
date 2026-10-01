@@ -114,4 +114,14 @@ if ( $be_wp_tests_dir && file_exists( $be_wp_tests_dir . '/includes/functions.ph
 			return $default;
 		}
 	}
+
+	// A process with no WordPress has no configured site time zone; reads the current UTC time instead.
+	if ( ! function_exists( 'current_time' ) ) {
+		function current_time( string $type, $gmt = 0 ) { // phpcs:ignore
+			if ( $type === 'timestamp' ) {
+				return time();
+			}
+			return gmdate( $type === 'mysql' ? 'Y-m-d H:i:s' : $type );
+		}
+	}
 }
