@@ -60,6 +60,7 @@
       "Thaumaturgy (Camarilla)",
       "Wanga"
     ],
+    "tradition_aliases": { "Sadhanna": "Sadhana" },
     "powers": [
       {
         "name": "Movement of the Mind (2nd ed.)",

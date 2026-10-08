@@ -427,6 +427,12 @@ export interface ChangePreviewResult {
 	 * Present when the server would refuse this change on submit.
 	 */
 	error?: { code: string; message: string };
+	/**
+	 * True when this change fails real validation and can never be submitted as-is - distinct from `priced: false`,
+	 * which is an honestly-unpriced purchase a Storyteller still has to set a cost for at approval. `xp_cost` and
+	 * `priced` carry no real meaning when this is true; render `error` instead of a cost.
+	 */
+	invalid?: boolean;
 }
 
 /**

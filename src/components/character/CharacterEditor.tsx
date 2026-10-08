@@ -1170,7 +1170,14 @@ export function CharacterEditor( {
 						{ store.pendingChanges.map( ( change, i ) => {
 							const preview = store.previewCosts?.results[ i ];
 							return (
-								<li key={ i }>
+								<li
+									key={ i }
+									className={
+										preview?.invalid
+											? 'be-character-editor__pending--invalid'
+											: undefined
+									}
+								>
 									{ describeChange(
 										change.change_type,
 										change.change_data
@@ -1194,7 +1201,12 @@ export function CharacterEditor( {
 													) }
 												</>
 											) }
-											, { preview.approval_level })
+											{ ! preview.invalid && (
+												<>
+													, { preview.approval_level }
+												</>
+											) }
+											)
 										</>
 									) }
 								</li>

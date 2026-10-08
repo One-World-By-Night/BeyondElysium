@@ -626,6 +626,7 @@ class Changes_Controller extends Base_Controller {
 					'approval_level'  => null,
 					'approval_reason' => null,
 					'error'           => [ 'code' => $error->get_error_code(), 'message' => $error->get_error_message() ],
+					'invalid'         => true,
 				];
 				continue;
 			}
@@ -708,6 +709,8 @@ class Changes_Controller extends Base_Controller {
 			'field_required'       => __( '%s cannot be cleared - ask a Storyteller.', 'beyond-elysium' ),
 			/* translators: %s: a sheet section, such as Blood Magic */
 			'section_hidden'       => __( '%s is hidden in this chronicle, so nothing new can be bought in it.', 'beyond-elysium' ),
+			/* translators: 1: a path, such as Path of Blood, 2: its tradition */
+			'already_held'         => __( '%1$s (%2$s) is already on this sheet. Remove the other entry instead.', 'beyond-elysium' ),
 		];
 		$code    = (string) ( $result['code'] ?? 'invalid_param' );
 		$message = isset( $formats[ $code ] ) ? vsprintf( $formats[ $code ], $result['args'] ?? [] ) : (string) ( $result['message'] ?? '' );

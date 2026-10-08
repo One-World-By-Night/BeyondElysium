@@ -55,6 +55,7 @@
       "Thaumaturgy (Camarilla)",
       "Wanga"
     ],
+    "tradition_aliases": { "Sadhanna": "Sadhana" },
     "powers": [
       {
         "name": "Alchemy",

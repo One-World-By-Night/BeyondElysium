@@ -161,13 +161,13 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 6, $result['xp_cost'] );
 	}
 
-	public function test_a_refused_preview_row_keeps_its_shape(): void {
+	public function test_a_refused_preview_row_reports_itself_as_invalid_not_a_free_purchase(): void {
 		$result = $this->preview( $this->player_id, [
 			[ 'change_type' => 'add_trait', 'change_data' => [ 'block_slug' => 'no-such-block', 'trait' => $this->homebrew() ] ],
 		] )->get_data()['results'][0];
 
 		$this->assertArrayHasKey( 'error', $result );
-		$this->assertTrue( $result['priced'] );
+		$this->assertTrue( $result['invalid'], 'a row that fails validation must say so, not masquerade as a priced +0 XP purchase' );
 	}
 
 	// --- The Storyteller sets the price at approval -------------------------------------

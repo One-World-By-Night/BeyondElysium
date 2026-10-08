@@ -632,10 +632,23 @@ class Change_Validator {
 		}
 		if ( array_key_exists( 'tradition', $trait ) ) {
 			$trait['tradition'] = is_string( $trait['tradition'] ) ? self::text( $trait['tradition'], 200 ) : '';
-			if ( ! empty( $definition->blood_magic ) && $trait['tradition'] !== '' ) {
+			// A removal names the row that is leaving as it is stored; any other change names what the row becomes.
+			if ( $type !== 'remove_trait' && ! empty( $definition->blood_magic ) && $trait['tradition'] !== '' ) {
 				$allowed = self::blood_magic_traditions( $definition );
+				$typed   = $trait['tradition'];
+				$trait['tradition'] = Blood_Magic_Refile::canonical_tradition( $typed, $allowed, (array) ( $definition->tradition_aliases ?? [] ) );
 				if ( ! in_array( $trait['tradition'], $allowed, true ) ) {
-					return self::fail( 'unknown_tradition', '"%s" does not teach any power in this section.', [ self::text( $trait['tradition'], 200 ) ] );
+					// A tradition the row already carries is left as stored; only a new one has to be listed.
+					if ( $type !== 'modify_trait' || ! self::row_holds_tradition( $definition, $held, $trait, $data, $typed ) ) {
+						return self::fail( 'unknown_tradition', '"%s" does not teach any power in this section.', [ self::text( $trait['tradition'], 200 ) ] );
+					}
+					$trait['tradition'] = $typed;
+				}
+			}
+			if ( $type === 'modify_trait' && ! empty( $definition->blood_magic ) ) {
+				$taken = self::retradition_conflict( $definition, $held, $trait, $data );
+				if ( $taken !== null ) {
+					return $taken;
 				}
 			}
 		}
@@ -644,6 +657,66 @@ class Change_Validator {
 		}
 
 		return [ 'ok' => true, 'change_data' => self::with_display_keys( $data, [ 'block_slug' => $block_slug, 'trait' => $trait ] ) ];
+	}
+
+	/**
+	 * Whether the held row a change addresses is already stored under this tradition, spelled exactly so.
+	 *
+	 * @param object                   $definition
+	 * @param array<int|string,mixed>  $held
+	 * @param array<string,mixed>      $trait
+	 * @param array<string,mixed>      $data
+	 */
+	private static function row_holds_tradition( $definition, array $held, array $trait, array $data, string $tradition ): bool {
+		$previous = is_array( $data['previous'] ?? null ) ? $data['previous'] : null;
+		$identity = Trait_Identity::target_of( $definition, $trait, $previous );
+		if ( $identity === null ) {
+			return false;
+		}
+		$rows = array_values( $held );
+		foreach ( Trait_Identity::addressed_positions( $definition, $rows, $identity, Trait_Identity::tradition_of_target( $trait, $previous ) ) as $position ) {
+			if ( ( $rows[ $position ]['tradition'] ?? null ) === $tradition ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Refuses a change that would respell or move a held Blood Magic row into a path and tradition another held row
+	 * already carries, which would leave the sheet holding it twice.
+	 *
+	 * @param object                   $definition
+	 * @param array<int|string,mixed>  $held  The character's rows in this block.
+	 * @param array<string,mixed>      $trait The normalized trait, carrying the tradition the row will have.
+	 * @param array<string,mixed>      $data  The change's own data, whose `previous` names the row as it stands.
+	 * @return array<string,mixed>|null A failure, or null when the change is fine.
+	 */
+	private static function retradition_conflict( $definition, array $held, array $trait, array $data ): ?array {
+		$previous = is_array( $data['previous'] ?? null ) ? $data['previous'] : null;
+		$identity = Trait_Identity::target_of( $definition, $trait, $previous );
+		if ( $identity === null ) {
+			return null;
+		}
+
+		$rows      = array_values( $held );
+		$addressed = Trait_Identity::addressed_positions( $definition, $rows, $identity, Trait_Identity::tradition_of_target( $trait, $previous ) );
+		if ( $addressed === [] ) {
+			return null;
+		}
+		$target = $addressed[0];
+		$stored = (string) ( $rows[ $target ]['tradition'] ?? '' );
+		if ( (string) $trait['tradition'] === $stored ) {
+			return null;
+		}
+
+		$wanted = Fuzzy_Matcher::normalize( (string) $trait['tradition'] );
+		foreach ( Trait_Identity::addressed_positions( $definition, $rows, $identity, null ) as $position ) {
+			if ( $position !== $target && Fuzzy_Matcher::normalize( (string) ( $rows[ $position ]['tradition'] ?? '' ) ) === $wanted ) {
+				return self::fail( 'already_held', '%1$s (%2$s) is already on this sheet. Remove the other entry instead.', [ self::text( (string) $trait['name'], 200 ), (string) $trait['tradition'] ] );
+			}
+		}
+		return null;
 	}
 
 	/**

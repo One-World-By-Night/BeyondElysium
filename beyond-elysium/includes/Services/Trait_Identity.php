@@ -97,6 +97,56 @@ class Trait_Identity {
 	}
 
 	/**
+	 * The tradition a change names for the row it addresses: the `previous` snapshot's, which is the row as it stands
+	 * now, else the trait's own. Null when neither names one.
+	 *
+	 * @param array<string,mixed>      $trait    The change's own trait.
+	 * @param array<string,mixed>|null $previous The change's `previous` snapshot, when it carries one.
+	 * @return string|null
+	 */
+	public static function tradition_of_target( array $trait, ?array $previous ): ?string {
+		foreach ( [ $previous, $trait ] as $source ) {
+			if ( is_array( $source ) && isset( $source['tradition'] ) && is_string( $source['tradition'] ) && trim( $source['tradition'] ) !== '' ) {
+				return trim( $source['tradition'] );
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The positions of the held rows a change addresses: every row with its identity, narrowed to the rows stored under
+	 * the tradition the change names. A tradition spelled exactly as stored decides first, then one that matches
+	 * ignoring case and punctuation; when no row holds the tradition, or the change names none, every row with the
+	 * identity is addressed.
+	 *
+	 * @param object|null $definition
+	 * @param array<int|string,mixed> $held      `sheet_data[block_slug]`.
+	 * @param string                  $identity  From `target_of()`.
+	 * @param string|null             $tradition From `tradition_of_target()`.
+	 * @return int[]
+	 */
+	public static function addressed_positions( $definition, array $held, string $identity, ?string $tradition ): array {
+		$held = array_values( $held );
+		$all  = [];
+		foreach ( $held as $position => $row ) {
+			if ( is_array( $row ) && self::of_row( $definition, $row ) === $identity ) {
+				$all[] = $position;
+			}
+		}
+		if ( $tradition === null || count( $all ) < 2 ) {
+			return $all;
+		}
+
+		$exact = array_values( array_filter( $all, static fn( int $position ): bool => ( $held[ $position ]['tradition'] ?? null ) === $tradition ) );
+		if ( $exact !== [] ) {
+			return $exact;
+		}
+		$wanted = Fuzzy_Matcher::normalize( $tradition );
+		$loose  = array_values( array_filter( $all, static fn( int $position ): bool => Fuzzy_Matcher::normalize( (string) ( $held[ $position ]['tradition'] ?? '' ) ) === $wanted ) );
+		return $loose !== [] ? $loose : $all;
+	}
+
+	/**
 	 * Which held row a `modify_trait` or `remove_trait` addresses, as an identity.
 	 *
 	 * @param object|null $definition

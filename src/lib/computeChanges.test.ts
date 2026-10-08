@@ -347,6 +347,155 @@ describe( 'computeChanges — tiered_power', () => {
 	} );
 } );
 
+describe( 'computeChanges — tiered_power rows for one path in two traditions', () => {
+	const blocks = { magic: block( 'magic', 'tiered_power' ) };
+	const good = {
+		name: 'Awakening of the Steel',
+		level: 5,
+		custom: true,
+		tradition: 'Dur An Ki',
+	};
+	const stale = {
+		name: 'Awakening of the Steel',
+		level: 5,
+		tradition: 'Dur-An-Ki',
+	};
+
+	it( 'produces nothing when neither row was touched', () => {
+		const sheet: SheetData = { magic: [ good, stale ] };
+		expect( computeChanges( sheet, sheet, blocks ) ).toEqual( [] );
+	} );
+
+	it( 'removes the row that left and names its tradition', () => {
+		expect(
+			computeChanges(
+				{ magic: [ good, stale ] },
+				{ magic: [ good, { ...stale, _removed: true } ] },
+				blocks
+			)
+		).toEqual( [
+			{
+				change_type: 'remove_trait',
+				category: 'magic',
+				change_data: {
+					block_slug: 'magic',
+					trait: {
+						name: 'Awakening of the Steel',
+						tradition: 'Dur-An-Ki',
+					},
+				},
+			},
+		] );
+	} );
+
+	it( 'raises the row that was raised and names the tradition it had', () => {
+		expect(
+			computeChanges(
+				{ magic: [ good, stale ] },
+				{ magic: [ good, { ...stale, level: 4 } ] },
+				blocks
+			)
+		).toEqual( [
+			{
+				change_type: 'modify_trait',
+				category: 'magic',
+				change_data: {
+					block_slug: 'magic',
+					trait: {
+						name: 'Awakening of the Steel',
+						level: 4,
+						tradition: 'Dur-An-Ki',
+					},
+					previous: {
+						name: 'Awakening of the Steel',
+						level: 5,
+						tradition: 'Dur-An-Ki',
+					},
+				},
+			},
+		] );
+	} );
+
+	it( 'raises the first row of the two without losing the edit', () => {
+		const changes = computeChanges(
+			{ magic: [ good, stale ] },
+			{ magic: [ { ...good, level: 4 }, stale ] },
+			blocks
+		);
+		expect( changes ).toHaveLength( 1 );
+		expect( changes[ 0 ].change_data.trait ).toMatchObject( {
+			level: 4,
+			tradition: 'Dur An Ki',
+		} );
+		expect( changes[ 0 ].change_data.previous ).toMatchObject( {
+			level: 5,
+			tradition: 'Dur An Ki',
+		} );
+	} );
+
+	it( 'removes the first row of the two and names its tradition', () => {
+		expect(
+			computeChanges(
+				{ magic: [ good, stale ] },
+				{ magic: [ { ...good, _removed: true }, stale ] },
+				blocks
+			)
+		).toEqual( [
+			{
+				change_type: 'remove_trait',
+				category: 'magic',
+				change_data: {
+					block_slug: 'magic',
+					trait: {
+						name: 'Awakening of the Steel',
+						tradition: 'Dur An Ki',
+					},
+				},
+			},
+		] );
+	} );
+
+	it( 'reads a tradition respelled in place as a modify of that row', () => {
+		const changes = computeChanges(
+			{ magic: [ good, stale ] },
+			{ magic: [ good, { ...stale, tradition: 'Dur An Ki' } ] },
+			blocks
+		);
+		expect( changes ).toHaveLength( 1 );
+		expect( changes[ 0 ].change_type ).toBe( 'modify_trait' );
+		expect( changes[ 0 ].change_data.previous ).toMatchObject( {
+			tradition: 'Dur-An-Ki',
+		} );
+		expect( changes[ 0 ].change_data.trait ).toMatchObject( {
+			tradition: 'Dur An Ki',
+		} );
+	} );
+
+	it( 'leaves rows for each level of another path alone', () => {
+		const rungs = [ 1, 2, 3 ].map( ( level ) => ( {
+			name: 'Sepulchre Path',
+			level,
+			tradition: 'Necromancy',
+		} ) );
+		const sheet: SheetData = { magic: [ good, stale, ...rungs ] };
+		expect( computeChanges( sheet, sheet, blocks ) ).toEqual( [] );
+	} );
+
+	it( 'still matches by name alone where no path is held in two traditions', () => {
+		expect(
+			computeChanges(
+				{ magic: [ { name: 'Ash Path', level: 5 } ] },
+				{
+					magic: [
+						{ name: 'Ash Path', level: 5, tradition: 'Mortis' },
+					],
+				},
+				blocks
+			)
+		).toHaveLength( 1 );
+	} );
+} );
+
 describe( 'computeChanges — resource_pool', () => {
 	const blocks = { pools: block( 'pools', 'resource_pool' ) };
 

@@ -5443,6 +5443,11 @@ msgstr[1] ""
 msgid "Price set by a Storyteller on approval"
 msgstr "Preço definido por um Narrador na aprovação"
 
+#: build/35.js:37 build/165.js:73 build/532.js:107 build/741.js:69
+#: build/985.js:126
+msgid "This change cannot be submitted as written."
+msgstr "Esta alteração não pode ser enviada como está."
+
 #: build/55.js:1 build/139.js:2 build/532.js:31 build/771.js:1 build/985.js:94
 msgid "Reports"
 msgstr "Relatórios"
@@ -13252,6 +13257,12 @@ msgstr "awards deve ser um array não vazio."
 #: build/985.js:50
 msgid "Applying…"
 msgstr "Aplicando…"
+
+#. translators: 1: a path, such as Path of Blood, 2: its tradition
+#: includes/REST/Changes_Controller.php:712
+#, php-format
+msgid "%1$s (%2$s) is already on this sheet. Remove the other entry instead."
+msgstr "%1$s (%2$s) já está nesta ficha. Remova a outra entrada."
 
 #~ msgid "Missing required field: stack_definition."
 #~ msgstr "Campo obrigatório ausente: stack_definition."

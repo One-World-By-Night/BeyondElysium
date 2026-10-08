@@ -12,7 +12,7 @@ class Schema {
 	/**
 	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.4.0.1';
+	const DB_VERSION = '1.4.0.2';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -1922,10 +1922,7 @@ class Schema {
 	 * @return string[]
 	 */
 	private static function blood_magic_excluded_power_names(): array {
-		return [
-			'Quietus, Cruscitus / Warrior', 'Quietus, Hematus / Vizier',
-			'Quietus, Minhit Dume / Vizier', 'Quietus, Sorcerer',
-		];
+		return \BeyondElysium\Services\Blood_Magic_Refile::EXCLUDED_NAMES;
 	}
 
 	/**
@@ -2016,107 +2013,11 @@ class Schema {
 	}
 
 	/**
-	 * Moves a character's own held vampire-disciplines pick to vampire-blood-magic when its stored name identifies it as
-	 * a pre-Blood-Magic tradition-prefixed pick, splitting the name into the bare canonical path plus a `tradition`
-	 * field.
+	 * Moves every character's tradition-prefixed Disciplines picks into Blood Magic, folding each tradition to the
+	 * catalog's spelling and dropping a pick Blood Magic already holds.
 	 */
 	public static function migrate_blood_magic_held_picks(): void {
-		global $wpdb;
-		$table    = self::table( 'characters' );
-		$excluded = self::blood_magic_excluded_power_names();
-
-		// The 14 Blood Magic traditions.
-		$known_traditions = [
-			'Akhu', 'Bacaban', 'Dark Thaumaturgy', 'Dur An Ki', 'Judicium', 'Koldunism', 'Mortis',
-			'Nahuallotl', 'Necromancy', 'Sadhana', 'Sielanic', 'Thaumaturgy (Anarch)', 'Thaumaturgy (Camarilla)', 'Wanga',
-		];
-
-		$last_id = 0;
-		do {
-			$rows = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT id, sheet_data FROM {$table}
-					 WHERE id > %d
-					   AND JSON_CONTAINS_PATH( sheet_data, 'one', '$.\"vampire-disciplines\"' )
-					 ORDER BY id ASC
-					 LIMIT 200",
-					$last_id
-				),
-				ARRAY_A
-			);
-
-			foreach ( $rows as $row ) {
-				$last_id = (int) $row['id'];
-				$sheet   = json_decode( $row['sheet_data'], true );
-				$changed = false;
-
-				$held = is_array( $sheet['vampire-disciplines'] ?? null ) ? $sheet['vampire-disciplines'] : [];
-				$stay = [];
-				$move = [];
-
-				foreach ( $held as $entry ) {
-					if ( ! is_array( $entry ) || ! isset( $entry['name'] ) ) {
-						$stay[] = $entry;
-						continue;
-					}
-					$name  = (string) $entry['name'];
-					$colon = strpos( $name, ': ' );
-
-					if ( $colon !== false && ! in_array( $name, $excluded, true ) ) {
-						$entry['tradition'] = trim( substr( $name, 0, $colon ) );
-						$entry['name']      = trim( substr( $name, $colon + 2 ) );
-						$move[]             = $entry;
-						$changed            = true;
-						continue;
-					}
-
-					$tradition_match = ( ! empty( $entry['custom'] ) && isset( $entry['power_name'] ) )
-						? self::match_known_blood_magic_tradition( $name, $known_traditions )
-						: null;
-					if ( $tradition_match !== null ) {
-						$entry['tradition'] = $tradition_match;
-						$entry['name']      = $entry['power_name'];
-						unset( $entry['power_name'] );
-						$move[]  = $entry;
-						$changed = true;
-						continue;
-					}
-
-					$stay[] = $entry;
-				}
-
-				if ( ! $changed ) {
-					continue;
-				}
-
-				$sheet['vampire-disciplines'] = $stay;
-				$sheet['vampire-blood-magic'] = array_merge(
-					is_array( $sheet['vampire-blood-magic'] ?? null ) ? $sheet['vampire-blood-magic'] : [],
-					$move
-				);
-
-				$wpdb->update(
-					$table,
-					[ 'sheet_data' => wp_json_encode( $sheet ) ],
-					[ 'id' => (int) $row['id'] ],
-					[ '%s' ],
-					[ '%d' ]
-				);
-			}
-		} while ( count( $rows ) === 200 );
-	}
-
-	/**
-	 * @param string[] $known_traditions
-	 */
-	private static function match_known_blood_magic_tradition( string $raw, array $known_traditions ): ?string {
-		foreach ( $known_traditions as $tradition ) {
-			if ( \BeyondElysium\Services\Fuzzy_Matcher::normalize( $raw ) === \BeyondElysium\Services\Fuzzy_Matcher::normalize( $tradition ) ) {
-				return $tradition;
-			}
-		}
-		$suggestions = \BeyondElysium\Services\Fuzzy_Matcher::suggest( $raw, $known_traditions );
-		return count( $suggestions ) === 1 ? $suggestions[0] : null;
+		\BeyondElysium\Services\Blood_Magic_Refile::run();
 	}
 
 	/**

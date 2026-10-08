@@ -155,6 +155,10 @@
 	flex: 0 0 auto;
 }
 
+.be-character-editor__pending--invalid {
+	color: var(--be-red-1);
+}
+
 /* At phone width every pending row wraps onto two lines. */
 @media ( max-width: 768px ) {
 

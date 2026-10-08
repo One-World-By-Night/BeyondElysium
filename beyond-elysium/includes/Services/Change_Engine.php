@@ -109,12 +109,14 @@ class Change_Engine {
 				if ( ! is_string( $trait['name'] ?? null ) || $trait['name'] === '' ) {
 					return null;
 				}
-				$identity = Trait_Identity::target_of(
-					self::block_definition( $owner_slug, $block_slug ),
-					$trait,
-					is_array( $inner_data['previous'] ?? null ) ? $inner_data['previous'] : null
-				);
-				return $identity === null ? null : "{$block_slug}:{$identity}";
+				$previous = is_array( $inner_data['previous'] ?? null ) ? $inner_data['previous'] : null;
+				$identity = Trait_Identity::target_of( self::block_definition( $owner_slug, $block_slug ), $trait, $previous );
+				if ( $identity === null ) {
+					return null;
+				}
+				// The same path under another tradition is another holding.
+				$tradition = Trait_Identity::tradition_of_target( $trait, $previous );
+				return "{$block_slug}:{$identity}" . ( $tradition === null ? '' : "\0{$tradition}" );
 
 			case 'modify_resource':
 				$keys = array_keys( (array) ( $inner_data['values'] ?? [] ) );
@@ -444,14 +446,15 @@ class Change_Engine {
 				if ( $block_slug && isset( $sheet[ $block_slug ] ) && is_array( $sheet[ $block_slug ] ) ) {
 					$trait      = is_array( $change_data['trait'] ?? null ) ? $change_data['trait'] : $change_data;
 					$definition = self::block_definition( (string) ( $character->owner_slug ?? '' ), $block_slug );
-					$identity   = Trait_Identity::target_of( $definition, $trait, is_array( $change_data['previous'] ?? null ) ? $change_data['previous'] : null );
+					$previous   = is_array( $change_data['previous'] ?? null ) ? $change_data['previous'] : null;
+					$identity   = Trait_Identity::target_of( $definition, $trait, $previous );
 					if ( $identity !== null ) {
+						$leaving = Trait_Identity::addressed_positions( $definition, $sheet[ $block_slug ], $identity, Trait_Identity::tradition_of_target( $trait, $previous ) );
 						$sheet[ $block_slug ] = array_values(
 							array_filter(
-								$sheet[ $block_slug ],
-								static function ( $item ) use ( $definition, $identity ) {
-									return ! is_array( $item ) || Trait_Identity::of_row( $definition, $item ) !== $identity;
-								}
+								array_values( $sheet[ $block_slug ] ),
+								static fn( $item, int $position ): bool => ! in_array( $position, $leaving, true ),
+								ARRAY_FILTER_USE_BOTH
 							)
 						);
 					}
@@ -461,15 +464,14 @@ class Change_Engine {
 			case 'modify_trait':
 				if ( $block_slug && isset( $sheet[ $block_slug ] ) && is_array( $sheet[ $block_slug ] ) && is_array( $change_data['trait'] ?? null ) ) {
 					$definition = self::block_definition( (string) ( $character->owner_slug ?? '' ), $block_slug );
-					$identity   = Trait_Identity::target_of( $definition, $change_data['trait'], is_array( $change_data['previous'] ?? null ) ? $change_data['previous'] : null );
+					$previous   = is_array( $change_data['previous'] ?? null ) ? $change_data['previous'] : null;
+					$identity   = Trait_Identity::target_of( $definition, $change_data['trait'], $previous );
 					if ( $identity !== null ) {
-						foreach ( $sheet[ $block_slug ] as &$item ) {
-							if ( is_array( $item ) && Trait_Identity::of_row( $definition, $item ) === $identity ) {
-								$item = array_merge( $item, $change_data['trait'] );
-								break;
-							}
+						$sheet[ $block_slug ] = array_values( $sheet[ $block_slug ] );
+						$addressed            = Trait_Identity::addressed_positions( $definition, $sheet[ $block_slug ], $identity, Trait_Identity::tradition_of_target( $change_data['trait'], $previous ) );
+						if ( $addressed !== [] ) {
+							$sheet[ $block_slug ][ $addressed[0] ] = array_merge( $sheet[ $block_slug ][ $addressed[0] ], $change_data['trait'] );
 						}
-						unset( $item );
 					}
 				}
 				break;

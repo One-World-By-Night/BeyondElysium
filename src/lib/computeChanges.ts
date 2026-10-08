@@ -166,8 +166,138 @@ function tieredPowerKey( row: EditableHeldPower ): string {
 }
 
 /**
+ * The trait a change names for one held tiered-power row. A tradition is carried through verbatim.
+ */
+function powerTraitOf( row: EditableHeldPower ): {
+	name: string;
+	level?: number;
+	power_name?: string;
+	tradition?: string;
+} {
+	const trait: {
+		name: string;
+		level?: number;
+		power_name?: string;
+		tradition?: string;
+	} = {
+		name: row.name,
+		level: row.level,
+	};
+	if ( row.power_name ) {
+		trait.power_name = row.power_name;
+	}
+	if ( row.tradition ) {
+		trait.tradition = row.tradition;
+	}
+	return trait;
+}
+
+/**
+ * Whether a list holds one path under two different traditions, so a name alone cannot say which row is meant.
+ */
+function holdsTraditionTwins( rows: EditableHeldPower[] ): boolean {
+	const traditions = new Map< string, Set< string > >();
+	for ( const row of rows ) {
+		const key = tieredPowerKey( row );
+		const seen = traditions.get( key ) ?? new Set< string >();
+		seen.add( row.tradition ?? '' );
+		traditions.set( key, seen );
+	}
+	return [ ...traditions.values() ].some( ( seen ) => seen.size > 1 );
+}
+
+/**
+ * Diffs a tiered-power list that holds one path under two traditions. Rows are paired the way an editor edits them:
+ * first the row with the same path, tradition and level, then the same path and tradition, then the same path alone
+ * (a tradition that was changed in place). A removal names the tradition of the row that is leaving.
+ */
+function diffTieredPowerByTradition(
+	blockSlug: string,
+	original: EditableHeldPower[],
+	current: EditableHeldPower[]
+): ChangeRequest[] {
+	const partner: Array< number | null > = original.map( () => null );
+	const taken = new Set< number >();
+	const claim = (
+		matches: ( o: EditableHeldPower, c: EditableHeldPower ) => boolean
+	) => {
+		original.forEach( ( o, i ) => {
+			if ( partner[ i ] !== null ) {
+				return;
+			}
+			const at = current.findIndex(
+				( c, k ) => ! taken.has( k ) && matches( o, c )
+			);
+			if ( at !== -1 ) {
+				partner[ i ] = at;
+				taken.add( at );
+			}
+		} );
+	};
+	const sameKey = ( o: EditableHeldPower, c: EditableHeldPower ) =>
+		tieredPowerKey( o ) === tieredPowerKey( c );
+	const sameTradition = ( o: EditableHeldPower, c: EditableHeldPower ) =>
+		( o.tradition ?? '' ) === ( c.tradition ?? '' );
+	claim(
+		( o, c ) =>
+			sameKey( o, c ) && sameTradition( o, c ) && o.level === c.level
+	);
+	claim( ( o, c ) => sameKey( o, c ) && sameTradition( o, c ) );
+	claim( sameKey );
+
+	const changes: ChangeRequest[] = [];
+	original.forEach( ( o, i ) => {
+		const at = partner[ i ];
+		if ( at === null ) {
+			changes.push( {
+				change_type: 'remove_trait',
+				category: blockSlug,
+				change_data: {
+					block_slug: blockSlug,
+					trait: {
+						name: o.name,
+						...( o.power_name ? { power_name: o.power_name } : {} ),
+						...( o.tradition ? { tradition: o.tradition } : {} ),
+					},
+				},
+			} );
+			return;
+		}
+		const c = current[ at ];
+		if ( o.level !== c.level || o.tradition !== c.tradition ) {
+			const trait = powerTraitOf( c );
+			if ( o.tradition && ! c.tradition ) {
+				trait.tradition = '';
+			}
+			changes.push( {
+				change_type: 'modify_trait',
+				category: blockSlug,
+				change_data: {
+					block_slug: blockSlug,
+					trait,
+					previous: powerTraitOf( o ),
+				},
+			} );
+		}
+	} );
+	current.forEach( ( c, k ) => {
+		if ( ! taken.has( k ) ) {
+			changes.push( {
+				change_type: 'add_trait',
+				category: blockSlug,
+				change_data: {
+					block_slug: blockSlug,
+					trait: powerTraitOf( c ),
+				},
+			} );
+		}
+	} );
+	return changes;
+}
+
+/**
  * Diffs an original and current tiered-power list into add/remove/modify change requests, matching entries by
- * tieredPowerKey().
+ * tieredPowerKey(); a list that holds one path under two traditions is matched by tradition as well.
  */
 function diffTieredPower(
 	blockSlug: string,
@@ -176,6 +306,17 @@ function diffTieredPower(
 ): ChangeRequest[] {
 	const changes: ChangeRequest[] = [];
 	const effectiveCurrent = current.filter( ( row ) => ! row._removed );
+
+	if (
+		holdsTraditionTwins( original ) ||
+		holdsTraditionTwins( effectiveCurrent )
+	) {
+		return diffTieredPowerByTradition(
+			blockSlug,
+			original,
+			effectiveCurrent
+		);
+	}
 
 	const origByKey = new Map(
 		original.map( ( row ) => [ tieredPowerKey( row ), row ] )

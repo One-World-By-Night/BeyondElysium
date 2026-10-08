@@ -82,11 +82,23 @@ export function costNeededMessage( count: number ): string {
 }
 
 /**
- * What the player's preview says.
+ * What the player's preview says in place of a cost - the change is refused outright, or honestly unpriced and
+ * waiting for a Storyteller. Null means show the real cost.
  */
 export function previewPriceLabel( preview: {
 	priced?: boolean;
+	invalid?: boolean;
+	error?: { code: string; message: string };
 } ): string | null {
+	if ( preview.invalid ) {
+		return (
+			preview.error?.message ??
+			__(
+				'This change cannot be submitted as written.',
+				'beyond-elysium'
+			)
+		);
+	}
 	return preview.priced === false
 		? __( 'Price set by a Storyteller on approval', 'beyond-elysium' )
 		: null;

@@ -119,4 +119,24 @@ describe( 'previewPriceLabel', () => {
 		expect( previewPriceLabel( { priced: true } ) ).toBeNull();
 		expect( previewPriceLabel( {} ) ).toBeNull();
 	} );
+
+	it( 'shows the real validation error for an invalid change, not a price', () => {
+		expect(
+			previewPriceLabel( {
+				priced: true,
+				invalid: true,
+				error: {
+					code: 'unknown_tradition',
+					message:
+						'"Sadhanna" does not teach any power in this section.',
+				},
+			} )
+		).toBe( '"Sadhanna" does not teach any power in this section.' );
+	} );
+
+	it( 'falls back to a generic message when an invalid change carries no error', () => {
+		expect( previewPriceLabel( { priced: true, invalid: true } ) ).toBe(
+			'This change cannot be submitted as written.'
+		);
+	} );
 } );
