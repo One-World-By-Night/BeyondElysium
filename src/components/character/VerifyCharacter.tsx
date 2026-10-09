@@ -10,6 +10,7 @@ import type {
 	VerifyResponse,
 } from '../../types/verify';
 import HelpButton from '../shared/HelpButton';
+import { characterStatusLabel } from '../../lib/characterLabels';
 import './VerifyCharacter.css';
 
 type State =
@@ -332,7 +333,7 @@ function VerifyCharacterResult( { data }: { data: VerifyCharacterResponse } ) {
 				</div>
 				<div className="be-verify__fact">
 					<dt>{ __( 'Status', 'beyond-elysium' ) }</dt>
-					<dd>{ data.attested.status }</dd>
+					<dd>{ characterStatusLabel( data.attested.status ) }</dd>
 				</div>
 				<div className="be-verify__fact">
 					<dt>{ __( 'Experience', 'beyond-elysium' ) }</dt>

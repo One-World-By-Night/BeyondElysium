@@ -209,6 +209,8 @@ Four WordPress pages, created automatically the first time the plugin runs (or u
 
 If one of these pages is ever deleted by mistake, it is **not** recreated automatically on its own - a page, once created at a given slug, is never overwritten or replaced. Recover it from **Beyond Elysium → Chronicle Setup**: the **Front-end pages** checklist row turns red when any of the four is missing, with a **Fix** link that re-runs the same provisioning step (`?provision_pages=1`, `be_manage_games`-gated) the plugin already ran once automatically.
 
+**A floating button on the page.** A language switcher, a chat bubble or a dark-mode toggle pinned to the bottom of the screen can cover the Submit and Discard buttons of the character editor, and the Plot Manager's action bar, on a phone. Set `--be-bottom-clearance` to the height of the floating button, for example `:root { --be-bottom-clearance: 64px; }` in the theme's Additional CSS, and both bars sit that far above the bottom of the screen.
+
 ## Import
 
 Under **Beyond Elysium → Import**, an admin (not just a Storyteller) can import a full Grapevine game file (`.gv3`) to create a brand-new chronicle, or a character/game exchange file (`.gex`) the same way a Storyteller would from the chronicle side. See the [Storyteller Guide's import section](st-guide.md#5-importing-from-grapevine) for the duplicate-detection and merge behavior, which is identical from either surface.

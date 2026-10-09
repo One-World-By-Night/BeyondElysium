@@ -24,6 +24,11 @@ import {
 import type { CreatureStack, MyCapabilities } from '../../types';
 import Modal from '../shared/Modal';
 import HelpButton from '../shared/HelpButton';
+import {
+	characterStatusLabel,
+	creatureTypeName,
+} from '../../lib/characterLabels';
+import { useCreatureTypeNames } from '../../lib/useCreatureTypeNames';
 import './CharacterList.css';
 
 export interface CharacterListProps {
@@ -109,6 +114,7 @@ export function CharacterList( {
 	const [ searchInput, setSearchInput ] = useState( '' );
 	const [ search, setSearch ] = useState( '' );
 	const [ stacks, setStacks ] = useState< CreatureStack[] >( [] );
+	const creatureTypes = useCreatureTypeNames( gameSlug );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
 	const [ refreshCount, setRefreshCount ] = useState( 0 );
@@ -356,7 +362,7 @@ export function CharacterList( {
 					</option>
 					{ STATUS_OPTIONS.map( ( option ) => (
 						<option value={ option } key={ option }>
-							{ option }
+							{ characterStatusLabel( option ) }
 						</option>
 					) ) }
 				</select>
@@ -472,10 +478,15 @@ export function CharacterList( {
 											) }
 									</td>
 									<td data-label={ labelFor( 'stack_slug' ) }>
-										{ character.stack_slug }
+										{ creatureTypeName(
+											character.stack_slug,
+											creatureTypes
+										) }
 									</td>
 									<td data-label={ labelFor( 'status' ) }>
-										{ character.status }
+										{ characterStatusLabel(
+											character.status
+										) }
 									</td>
 									<td data-label={ labelFor( 'xp_earned' ) }>
 										{ character.xp_earned }

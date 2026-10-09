@@ -1,12 +1,13 @@
 <?php
 /**
- * Sets TranslatePress up for the help pages on beyondelysium.com, once TranslatePress and TranslatePress Developer are
- * installed and active. Run it with `wp eval-file`.
+ * Sets TranslatePress up for English and Portuguese (Brazil), once TranslatePress is installed and active. Run it with
+ * `wp eval-file`.
  *
  *   - Portuguese (Brazil) is the second language, its pages under /pt/.
- *   - The language switcher stays hidden unless BE_TP_SWITCHER=1.
- *   - The Developer add-on's SEO Pack is switched on: it is what translates an image's alt text.
- *   - The licence key in the file BE_TP_LICENSE_FILE is saved and checked with translatepress.com, then the file is
+ *   - The floating language switcher stays hidden unless BE_TP_SWITCHER=1, and names each language in its own
+ *     language ("English", "Português do Brasil").
+ *   - With TranslatePress Developer active, its SEO Pack is switched on (it translates an image's alt text), and the
+ *     licence key in the file BE_TP_LICENSE_FILE is saved and checked with translatepress.com, then the file is
  *     removed. Without the variable the licence is left alone.
  *
  * Running it again changes nothing.
@@ -16,10 +17,7 @@ if ( ! class_exists( 'TRP_Translate_Press' ) ) {
 	fwrite( STDERR, "TranslatePress is not active.\n" );
 	return;
 }
-if ( ! class_exists( 'TRP_Handle_Included_Addons' ) ) {
-	fwrite( STDERR, "TranslatePress Developer is not active.\n" );
-	return;
-}
+$developer = class_exists( 'TRP_Handle_Included_Addons' );
 
 $trp      = TRP_Translate_Press::get_trp_instance();
 $settings = $trp->get_component( 'settings' );
@@ -36,6 +34,7 @@ $wanted['url-slugs']             = [
 	'pt_BR' => 'pt',
 ];
 $wanted['trp-ls-floater']        = '1' === getenv( 'BE_TP_SWITCHER' ) ? 'yes' : 'no';
+$wanted['native_or_english_name'] = 'native_name';
 
 if ( $wanted === $current ) {
 	echo "Settings already as wanted.\n";
@@ -55,6 +54,11 @@ if ( ( $switcher['floater']['enabled'] ?? null ) !== $floating ) {
 	$switcher['floater']['enabled'] = $floating;
 	update_option( 'trp_language_switcher_settings', $switcher );
 	echo 'Floating language switcher: ' . ( $floating ? 'shown' : 'hidden' ) . "\n";
+}
+
+if ( ! $developer ) {
+	echo "TranslatePress Developer is not active: SEO Pack and licence left alone.\n";
+	return;
 }
 
 $add_ons = (array) get_option( 'trp_add_ons_settings', [] );

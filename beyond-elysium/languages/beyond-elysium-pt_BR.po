@@ -739,19 +739,47 @@ msgstr "Todos os status"
 
 #: includes/Elementor/Widgets/Character_List.php:75
 #: includes/Elementor/Widgets/Plot_Manager.php:64
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
 msgid "Active"
 msgstr "Ativo"
 
 #: includes/Elementor/Widgets/Character_List.php:76
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
 msgid "Inactive"
 msgstr "Inativo"
 
 #: includes/Elementor/Widgets/Character_List.php:77
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
 msgid "Retired"
 msgstr "Aposentado"
 
 #: includes/Elementor/Widgets/Character_List.php:78 build/139.js:2
 #: build/388.js:40
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
 msgid "Dead"
 msgstr "Morto"
 
@@ -9663,6 +9691,13 @@ msgstr "Rumor"
 #: build/708.js:7 build/708.js:50 build/722.js:20 build/741.js:8
 #: build/817.js:19 build/817.js:55 build/817.js:93 build/817.js:106
 #: build/887.js:23
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
 msgid "Other"
 msgstr "Outro"
 
@@ -10964,6 +10999,13 @@ msgstr "Imprimir"
 
 #: build/388.js:38 build/507.js:6 build/741.js:10 build/817.js:57
 #: build/817.js:88
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
 msgid "Pending"
 msgstr "Pendente"
 
@@ -15334,6 +15376,106 @@ msgstr "Você já pediu para entrar nesta crônica várias vezes hoje. Tente nov
 #: includes/REST/Npc_Profiles_Controller.php
 msgid "Only a Storyteller can set a character's public portrait here."
 msgstr "Somente um Narrador pode definir o retrato público de um personagem aqui."
+
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
+msgid "Sect"
+msgstr "Seita"
+
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
+msgid "Clan"
+msgstr "Clã"
+
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
+msgid "Coterie"
+msgstr "Coterie"
+
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
+msgid "Pack"
+msgstr "Matilha"
+
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
+msgid "Chantry"
+msgstr "Chantry"
+
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
+msgid "Court"
+msgstr "Corte"
+
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
+msgid "Cabal"
+msgstr "Cabala"
+
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
+msgid "Sept"
+msgstr "Septo"
+
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
+msgid "Motley"
+msgstr "Motley"
+
+#: build/10.js:44
+#: build/76.js:7
+#: build/301.js:108
+#: build/596.js:7
+#: build/805.js:105
+#: build/960.js:8
+#: build/997.js:2
+msgid "House"
+msgstr "Casa"
 
 #~ msgid "action"
 #~ msgid_plural "actions"

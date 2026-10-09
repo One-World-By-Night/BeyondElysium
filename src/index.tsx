@@ -4,6 +4,7 @@
 
 import { createRoot } from '@wordpress/element';
 import ErrorBoundary from './components/ErrorBoundary';
+import { markWidgetMount } from './lib/widgetMount';
 import PoweredByFooter from './components/shared/PoweredByFooter';
 import './styles/theme.css';
 import './styles/breakpoints.css';
@@ -128,7 +129,7 @@ async function hydrateWidgets(): Promise< void > {
 		try {
 			const { default: Component } = await loader();
 			const config = parseConfig( el );
-			el.classList.add( 'wp-dark-mode-ignore' );
+			markWidgetMount( el );
 			const root = createRoot( el );
 			// Admin pages already carry their own PHP-rendered memorial footer (Admin_Menu::render_mount()).
 			const isAdminWidget = widgetName.startsWith( 'admin-' );

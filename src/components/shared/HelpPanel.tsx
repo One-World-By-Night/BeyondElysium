@@ -220,6 +220,7 @@ export function HelpPanel( { helpKey, onClose }: HelpPanelProps ) {
 		// eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
 		<div
 			className="be-help-panel"
+			data-no-translation=""
 			role="dialog"
 			aria-modal="false"
 			aria-labelledby="be-help-panel-title"

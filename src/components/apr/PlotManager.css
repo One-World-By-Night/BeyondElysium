@@ -206,7 +206,7 @@
 
 .be-plot-manager__actions {
 	position: sticky;
-	bottom: 0;
+	bottom: var(--be-bottom-clearance, 0px);
 	z-index: 5;
 	display: flex;
 	flex-wrap: wrap;

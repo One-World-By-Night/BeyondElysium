@@ -7,6 +7,7 @@ import api from '../../api/client';
 import HtmlEditor from '../shared/HtmlEditor';
 import HelpButton from '../shared/HelpButton';
 import { PLAYER_PROPOSABLE_FACTION_TYPES } from '../../types/faction';
+import { factionTypeLabel } from '../../lib/characterLabels';
 import type { Character } from '../../types/character';
 import './ProposeFaction.css';
 
@@ -129,7 +130,7 @@ export function ProposeFaction( {
 				>
 					{ PLAYER_PROPOSABLE_FACTION_TYPES.map( ( t ) => (
 						<option key={ t } value={ t }>
-							{ t }
+							{ factionTypeLabel( t ) }
 						</option>
 					) ) }
 				</select>

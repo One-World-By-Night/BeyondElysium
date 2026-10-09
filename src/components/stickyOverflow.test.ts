@@ -55,9 +55,9 @@ describe( 'a sticky bottom bar always caps its own height', () => {
 			const css = withoutComments( readFileSync( file, 'utf8' ) );
 			for ( const { selector, body } of ruleBodies( css ) ) {
 				const sticky = /position\s*:\s*sticky/.test( body );
-				const pinnedToBottom = /bottom\s*:\s*0(?:px|rem|%)?\s*;/.test(
-					body
-				);
+				const pinnedToBottom =
+					/bottom\s*:\s*0(?:px|rem|%)?\s*;/.test( body ) ||
+					/bottom\s*:\s*var\(\s*--be-bottom-clearance/.test( body );
 				if ( ! sticky || ! pinnedToBottom ) {
 					continue;
 				}

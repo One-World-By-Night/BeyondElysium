@@ -44,6 +44,7 @@ import type {
 	TraitListDefinition,
 } from '../../types';
 import type { Character, SheetStyle } from '../../types/character';
+import { characterStatusLabel } from '../../lib/characterLabels';
 import './CharacterSheet.css';
 
 export interface CharacterSheetProps {
@@ -878,7 +879,7 @@ export function CharacterSheet( {
 					</div>
 					<div>
 						<dt>{ __( 'Status', 'beyond-elysium' ) }</dt>
-						<dd>{ character.status }</dd>
+						<dd>{ characterStatusLabel( character.status ) }</dd>
 					</div>
 					<div>
 						<dt>{ __( 'Player', 'beyond-elysium' ) }</dt>

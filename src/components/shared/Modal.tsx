@@ -39,6 +39,7 @@ export function Modal( { title, onClose, children, footer }: ModalProps ) {
 	return createPortal(
 		<div
 			className="be-modal__backdrop"
+			data-no-translation=""
 			role="presentation"
 			onClick={ onClose }
 		>

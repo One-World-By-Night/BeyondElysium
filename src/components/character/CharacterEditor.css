@@ -125,7 +125,8 @@
 
 .be-character-editor__summary {
 	position: sticky;
-	bottom: 0;
+	bottom: var(--be-bottom-clearance, 0px);
+	z-index: 5;
 	background: var(--be-gray-29);
 	border: 1px solid var(--be-gray-16);
 	border-radius: 4px;

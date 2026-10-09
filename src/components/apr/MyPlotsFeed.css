@@ -15,14 +15,22 @@
 
 .be-my-plots__item-button.be-my-plots__item-button {
 	display: flex;
+	flex-wrap: wrap;
 	justify-content: space-between;
+	gap: 0.15rem 0.75rem;
 	width: 100%;
 	text-align: left;
+	white-space: normal;
 	padding: 0.5rem 0.6rem;
 	border: none;
 	border-bottom: 1px solid var(--be-gray-21);
 	background: none;
 	cursor: pointer;
+}
+
+.be-my-plots__title {
+	min-width: 0;
+	overflow-wrap: anywhere;
 }
 
 .be-my-plots__item-button.be-my-plots__item-button:hover {

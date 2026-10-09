@@ -209,6 +209,8 @@ Quatro páginas do WordPress, criadas automaticamente na primeira vez que o plug
 
 Se uma destas páginas for excluída por engano, ela **não** é recriada sozinha automaticamente - uma página, depois de criada num dado slug, nunca é sobrescrita nem substituída. Recupere-a em **Beyond Elysium → Configuração da Crônica**: a linha **Páginas do front-end** da lista de conferência fica vermelha quando qualquer uma das quatro falta, com um link **Corrigir** que refaz o mesmo passo de provisionamento (`?provision_pages=1`, protegido por `be_manage_games`) que o plugin já rodou uma vez automaticamente.
 
+**Um botão flutuante na página.** Um seletor de idioma, um balão de chat ou um alternador de modo escuro fixo na parte de baixo da tela pode cobrir os botões Enviar e Descartar do editor de personagem, e a barra de ações do Gerenciador de Tramas, em um celular. Defina `--be-bottom-clearance` com a altura do botão flutuante, por exemplo `:root { --be-bottom-clearance: 64px; }` no CSS adicional do tema, e as duas barras ficam essa distância acima da base da tela.
+
 ## Importar
 
 Em **Beyond Elysium → Importar**, um administrador (não só um Narrador) pode importar um arquivo de jogo completo do Grapevine (`.gv3`) para criar uma crônica novinha, ou um arquivo de intercâmbio de personagem/jogo (`.gex`) do mesmo jeito que um Narrador faria pelo lado da crônica. Veja a [seção de importação do Guia do Narrador](st-guide.md#5-importando-do-grapevine) para o comportamento de detecção de duplicatas e mesclagem, que é idêntico por qualquer das duas superfícies.

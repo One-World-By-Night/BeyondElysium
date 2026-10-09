@@ -8,6 +8,8 @@ import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { everyPage } from '../../lib/everyPage';
 import { characterSheetUrl } from '../../lib/pluginPages';
+import { creatureTypeName } from '../../lib/characterLabels';
+import { useCreatureTypeNames } from '../../lib/useCreatureTypeNames';
 import {
 	edgeSummary,
 	groupEdges,
@@ -166,6 +168,7 @@ export function RelationshipChart( { gameSlug }: RelationshipChartProps ) {
 	const [ wholeChronicle, setWholeChronicle ] = useState( false );
 	const [ factionFilter, setFactionFilter ] = useState( '' );
 	const [ creatureTypeFilter, setCreatureTypeFilter ] = useState( '' );
+	const creatureTypeNames = useCreatureTypeNames( gameSlug );
 	const [ openPair, setOpenPair ] = useState< string | null >( null );
 
 	useEffect( () => {
@@ -422,7 +425,7 @@ export function RelationshipChart( { gameSlug }: RelationshipChartProps ) {
 						</option>
 						{ creatureTypes.map( ( slug ) => (
 							<option key={ slug } value={ slug }>
-								{ slug }
+								{ creatureTypeName( slug, creatureTypeNames ) }
 							</option>
 						) ) }
 					</select>

@@ -10,6 +10,12 @@ import type { Character, MyChangeAcrossGames } from '../../types/character';
 import type { StaffQueueCastingRow } from '../../types/staffQueue';
 import type { Faction, Position } from '../../types/faction';
 import HelpButton from '../shared/HelpButton';
+import {
+	characterStatusLabel,
+	creatureTypeName,
+	factionTypeLabel,
+} from '../../lib/characterLabels';
+import { useCreatureTypeNames } from '../../lib/useCreatureTypeNames';
 import './GameDashboard.css';
 
 /**
@@ -115,6 +121,7 @@ export function PlayerDashboard( {
 	const [ openCastingId, setOpenCastingId ] = useState< number | null >(
 		null
 	);
+	const creatureTypes = useCreatureTypeNames( gameSlug );
 
 	useEffect( () => {
 		setLoading( true );
@@ -208,7 +215,11 @@ export function PlayerDashboard( {
 										<span>{ c.name }</span>
 									) }
 									{ ' — ' }
-									{ c.stack_slug } ({ c.status })
+									{ creatureTypeName(
+										c.stack_slug,
+										creatureTypes
+									) }{ ' ' }
+									({ characterStatusLabel( c.status ) })
 								</li>
 							);
 						} ) }
@@ -224,7 +235,7 @@ export function PlayerDashboard( {
 							<li key={ `faction-${ faction.id }` }>
 								{ faction.name }
 								{ ' — ' }
-								{ faction.faction_type }
+								{ factionTypeLabel( faction.faction_type ) }
 							</li>
 						) ) }
 						{ myPositions.map( ( position ) => (

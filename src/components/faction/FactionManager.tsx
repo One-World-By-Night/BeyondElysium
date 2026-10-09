@@ -14,6 +14,7 @@ import {
 	type FactionMemberCandidate,
 } from '../../types/faction';
 import type { AudienceRules, AudienceValue } from '../../types/plot';
+import { factionTypeLabel } from '../../lib/characterLabels';
 import './FactionManager.css';
 
 export interface FactionManagerProps {
@@ -78,7 +79,7 @@ export function FactionManager( { gameSlug }: FactionManagerProps ) {
 							>
 								{ faction.name }
 								<span className="be-faction-manager__type">
-									{ faction.faction_type }
+									{ factionTypeLabel( faction.faction_type ) }
 								</span>
 							</button>
 						</li>
@@ -213,7 +214,7 @@ function FactionEditor( {
 				>
 					{ FACTION_TYPE_SUGGESTIONS.map( ( t ) => (
 						<option key={ t } value={ t }>
-							{ t }
+							{ factionTypeLabel( t ) }
 						</option>
 					) ) }
 				</select>
@@ -479,7 +480,7 @@ function FactionDetail( {
 				<HelpButton helpKey="factions" />
 			</div>
 			<p className="be-faction-manager__type">
-				{ faction.faction_type }
+				{ factionTypeLabel( faction.faction_type ) }
 				{ faction.status === 'disbanded' &&
 					` · ${ __( 'Disbanded', 'beyond-elysium' ) }` }
 				{ faction.created_via_proposal &&

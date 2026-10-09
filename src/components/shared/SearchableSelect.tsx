@@ -231,6 +231,7 @@ export function SearchableSelect( {
 	const dropdown = open && rowCount > 0 && listRect && (
 		<ul
 			className="be-searchable-select__list be-searchable-select__list--portaled"
+			data-no-translation=""
 			ref={ listRef }
 			id={ listboxId }
 			role="listbox"
